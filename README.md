@@ -8,7 +8,6 @@ PostgreSQL: The database (installed directly or via Docker).
 Package Manager: npm (comes with Node.js), yarn, or pnpm.
 
 ### 2. Get Source Code & Install Dependencies
-# 1. Clone the project
 ```bash
 git clone <your-git-repo-link>
 cd demo-app
