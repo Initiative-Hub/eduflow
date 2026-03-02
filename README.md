@@ -2,9 +2,13 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 ### 1. Prerequisites
+
 Node.js: (LTS version recommended, e.g., v18 or v20).
+
 Git: To clone the source code.
+
 PostgreSQL: The database (installed directly or via Docker).
+
 Package Manager: npm (comes with Node.js), yarn, or pnpm.
 
 ### 2. Get Source Code & Install Dependencies
