@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:all": "docker compose up -d && npx prisma generate && next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
