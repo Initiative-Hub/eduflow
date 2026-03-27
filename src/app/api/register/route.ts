@@ -8,7 +8,7 @@ export async function POST(req: Request) {
 
     if (!email || !password) {
       return NextResponse.json(
-        { message: 'Email và mật khẩu là bắt buộc.' },
+        { message: 'Email and password are required.' },
         { status: 400 }
       )
     }
@@ -19,7 +19,7 @@ export async function POST(req: Request) {
 
     if (existingUser) {
       return NextResponse.json(
-        { message: 'Email đã được sử dụng.' },
+        { message: 'Email is already in use.' },
         { status: 400 }
       )
     }
@@ -37,13 +37,13 @@ export async function POST(req: Request) {
     })
 
     return NextResponse.json(
-      { message: 'Đăng ký thành công.' },
+      { message: 'Registration successful.' },
       { status: 201 }
     )
   } catch (error) {
     console.error(error)
     return NextResponse.json(
-      { message: 'Đã có lỗi xảy ra. Vui lòng thử lại.' },
+      { message: 'An error occurred. Please try again.' },
       { status: 500 }
     )
   }
