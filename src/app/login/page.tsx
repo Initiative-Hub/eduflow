@@ -1,38 +1,38 @@
 // d:\PROJECTS\eduflow\app\login\page.tsx
-'use client'
+'use client';
 
-import { signIn } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { signIn } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 export default function LoginPage() {
-  const router = useRouter()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
+  const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
+    e.preventDefault();
+    setError('');
 
     try {
       const result = await signIn('credentials', {
         redirect: false,
         email,
         password,
-      })
+      });
 
       if (result?.error) {
-        setError('Email hoặc mật khẩu không đúng. Vui lòng thử lại.')
-        console.error(result.error)
+        setError('Email hoặc mật khẩu không đúng. Vui lòng thử lại.');
+        console.error(result.error);
       } else {
-        router.replace('/dashboard')
+        router.replace('/dashboard');
       }
     } catch (error) {
-      setError('Đã có lỗi xảy ra. Vui lòng thử lại.')
-      console.error(error)
+      setError('Đã có lỗi xảy ra. Vui lòng thử lại.');
+      console.error(error);
     }
-  }
+  };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
@@ -95,5 +95,5 @@ export default function LoginPage() {
         </form>
       </div>
     </div>
-  )
+  );
 }

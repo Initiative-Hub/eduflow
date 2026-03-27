@@ -15,13 +15,15 @@ describe('LogoutButton Component', () => {
 
   it('renders correctly with the Vietnamese label', () => {
     render(<LogoutButton />);
-    expect(screen.getByRole('button', { name: /đăng xuất/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /đăng xuất/i })
+    ).toBeInTheDocument();
   });
 
   it('calls signOut with correct parameters when clicked', () => {
     render(<LogoutButton />);
     const button = screen.getByRole('button', { name: /đăng xuất/i });
-    
+
     fireEvent.click(button);
 
     expect(signOut).toHaveBeenCalledTimes(1);

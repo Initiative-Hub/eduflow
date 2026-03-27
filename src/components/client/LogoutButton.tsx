@@ -1,7 +1,7 @@
 // d:\PROJECTS\eduflow\components\client\LogoutButton.tsx
-'use client'
+'use client';
 
-import { signOut } from 'next-auth/react'
+import { signOut } from 'next-auth/react';
 
 export default function LogoutButton() {
   return (
@@ -12,5 +12,5 @@ export default function LogoutButton() {
     >
       Đăng xuất
     </button>
-  )
+  );
 }

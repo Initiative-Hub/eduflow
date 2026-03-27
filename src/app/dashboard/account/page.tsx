@@ -1,11 +1,11 @@
 // d:\PROJECTS\eduflow\app\dashboard\account\page.tsx
-import { auth } from '@/lib/auth'
-import { redirect } from 'next/navigation'
+import { auth } from '@/lib/auth';
+import { redirect } from 'next/navigation';
 
 export default async function AccountInfoPage() {
-  const session = await auth()
+  const session = await auth();
   if (!session?.user) {
-    redirect('/login')
+    redirect('/login');
   }
 
   return (
@@ -24,5 +24,5 @@ export default async function AccountInfoPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
