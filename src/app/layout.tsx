@@ -1,7 +1,7 @@
 'use client';
 
-import Link from 'next/link';
 import { Geist, Geist_Mono } from 'next/font/google';
+import Link from 'next/link';
 import './globals.css';
 
 const geistSans = Geist({
