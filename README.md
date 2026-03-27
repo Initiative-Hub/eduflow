@@ -3,7 +3,7 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 ## Getting Started
 ### 1. Prerequisites
 
-Node.js: (LTS version recommended, e.g., v18 or v20).
+Node.js: (LTS version recommended, e.g., v25).
 
 Git: To clone the source code.
 
@@ -14,17 +14,17 @@ Package Manager: npm (comes with Node.js), yarn, or pnpm.
 ### 2. Get Source Code & Install Dependencies
 ```bash
 git clone <your-git-repo-link>
-cd demo-app
+cd eduflow
 
 # 2. Install dependencies
-npm install
+bun install
 ```
 
 ### 3. Configure Environment Variables (.env)
 Based on prisma/seed.ts and lib/auth.ts, the project requires specific environment variables. Create a file named .env in the root directory and add the following content:
 
 ```bash
-DATABASE_URL="postgresql://postgres:password@localhost:5432/demo_app_db?schema=public"
+DATABASE_URL="postgresql://postgres:password@localhost:5432/eduflow_db?schema=public"
 
 AUTH_SECRET="a_very_long_random_secret_string"
 ```
@@ -32,22 +32,16 @@ AUTH_SECRET="a_very_long_random_secret_string"
 ### 4. Initialize Database (Prisma & Seed)
 ```bash
 # 1. Create tables in the database based on prisma/schema.prisma
-npx prisma migrate dev --name init
+bun prisma:migrate
 
 # 2. (Important) Run the seed file to create sample data (Admin, User, Roles...)
 # This step runs the prisma/seed.ts file provided in the code
-npx prisma db seed
+bun prisma:seed
 ```
 
 ### 5. Run the Development Server
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
 bun dev
 ```
 

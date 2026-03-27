@@ -1,4 +1,4 @@
-// d:\PROJECTS\demo-app\middleware.ts
+// d:\PROJECTS\eduflow\middleware.ts
 import { auth } from '@/lib/auth'
 
 export default auth((req) => {

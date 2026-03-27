@@ -1,4 +1,4 @@
-// d:\PROJECTS\demo-app\app\dashboard\account\page.tsx
+// d:\PROJECTS\eduflow\app\dashboard\account\page.tsx
 import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 

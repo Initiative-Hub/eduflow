@@ -1,4 +1,4 @@
-// d:\PROJECTS\demo-app\app\login\page.tsx
+// d:\PROJECTS\eduflow\app\login\page.tsx
 'use client'
 
 import { signIn } from 'next-auth/react'

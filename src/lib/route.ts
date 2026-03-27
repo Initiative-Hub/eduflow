@@ -1,4 +1,4 @@
-// d:\PROJECTS\demo-app\lib\auth.ts
+// d:\PROJECTS\eduflow\lib\auth.ts
 import NextAuth from 'next-auth'
 import Credentials from 'next-auth/providers/credentials'
 import { prisma } from './prisma'
