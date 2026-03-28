@@ -5,8 +5,8 @@
   "scripts": {
     "clean": "rm bun.lock && bunx npkill --delete-all -y",
     "dev": "bun --bun next dev --turbopack",
-    "devx": "bun db:start && bun prisma:migrate && bun dev",
-    "devrs": "bun db:start && bun prisma:reset && bun dev",
+    "devx": "bun db:start && bun dev",
+    "devrs": "bun db:start && bun prisma:reset && bun prisma:seed && bun dev",
     "build": "bun --bun next build --turbopack",
     "start": "bun --bun next start",
     "test": "bun --bun vitest run",
@@ -26,7 +26,8 @@
     "prisma:migrate": "bun --bun prisma migrate dev",
     "prisma:deploy": "bun --bun prisma migrate deploy",
     "prisma:status": "bun --bun prisma migrate status",
-    "prisma:reset": "bun --bun prisma migrate reset"
+    "prisma:reset": "bun --bun prisma migrate reset",
+    "prisma:seed": "bun --bun prisma db seed"
   },
   "dependencies": {
     "@base-ui/react": "^1.3.0",
