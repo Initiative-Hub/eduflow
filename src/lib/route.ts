@@ -1,8 +1,8 @@
-// d:\PROJECTS\demo-app\lib\auth.ts
-import NextAuth from 'next-auth'
-import Credentials from 'next-auth/providers/credentials'
-import { prisma } from './prisma'
-import bcrypt from 'bcryptjs'
+// d:\PROJECTS\eduflow\lib\auth.ts
+import NextAuth from 'next-auth';
+import Credentials from 'next-auth/providers/credentials';
+import { prisma } from './prisma';
+import bcrypt from 'bcryptjs';
 
 export const {
   handlers: { GET, POST },
@@ -19,30 +19,30 @@ export const {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials.password) {
-          return null
+          return null;
         }
 
         const user = await prisma.user.findUnique({
           where: { email: credentials.email as string },
-        })
+        });
 
         if (!user || !user.password) {
           // User not found or password not set
-          return null
+          return null;
         }
 
         const isPasswordMatch = await bcrypt.compare(
           credentials.password as string,
           user.password
-        )
+        );
 
         if (isPasswordMatch) {
           // Return user object without password
-          const { password, ...userWithoutPassword } = user
-          return userWithoutPassword
+          const { password, ...userWithoutPassword } = user;
+          return userWithoutPassword;
         }
 
-        return null
+        return null;
       },
     }),
   ],
@@ -52,9 +52,9 @@ export const {
   callbacks: {
     async session({ session, token }) {
       if (token && session.user) {
-        session.user.id = token.sub as string
+        session.user.id = token.sub as string;
       }
-      return session
+      return session;
     },
   },
-})
+});

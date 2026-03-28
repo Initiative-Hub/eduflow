@@ -1,3 +1,4 @@
+name: eduflow
 services:
   db:
     image: postgres:17-alpine
@@ -5,9 +6,9 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: demo_app_db
+      POSTGRES_DB: eduflow_db
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 

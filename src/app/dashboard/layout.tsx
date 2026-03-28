@@ -1,34 +1,34 @@
-// d:\PROJECTS\demo-app\app\dashboard\layout.tsx
-import Link from 'next/link'
-import { auth } from '@/lib/auth'
-import { redirect } from 'next/navigation'
-import { prisma } from '@/lib/prisma'
-import LogoutButton from '@/components/client/LogoutButton'
+// d:\PROJECTS\eduflow\app\dashboard\layout.tsx
+import Link from 'next/link';
+import { auth } from '@/lib/auth';
+import { redirect } from 'next/navigation';
+import { prisma } from '@/lib/prisma';
+import LogoutButton from '@/components/client/LogoutButton';
 
 export default async function DashboardLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
-  const session = await auth()
+  const session = await auth();
   if (!session?.user) {
-    redirect('/login')
+    redirect('/login');
   }
 
   const menuItems: { name: string; href: string }[] = [
     { name: 'Trang chủ', href: '/dashboard' },
     // { name: 'Post của tôi', href: '/dashboard/my-posts' },
     { name: 'Account info', href: '/dashboard/account' },
-  ]
+  ];
 
   // Check if user is admin
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     include: { role: true },
-  })
+  });
 
   if (user?.role?.name === 'ADMIN') {
-    menuItems.push({ name: 'Users', href: '/dashboard/users' })
+    menuItems.push({ name: 'Users', href: '/dashboard/users' });
   }
 
   return (
@@ -55,5 +55,5 @@ export default async function DashboardLayout({
       </aside>
       <main className="flex-1 p-6 overflow-y-auto">{children}</main>
     </div>
-  )
+  );
 }

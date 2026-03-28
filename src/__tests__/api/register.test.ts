@@ -34,11 +34,17 @@ describe('POST /api/register', () => {
   });
 
   it('returns 400 if user already exists', async () => {
-    (prisma.user.findUnique as any).mockResolvedValue({ id: '1', email: 'exist@test.com' });
+    (prisma.user.findUnique as any).mockResolvedValue({
+      id: '1',
+      email: 'exist@test.com',
+    });
 
     const req = new Request('http://localhost/api/register', {
       method: 'POST',
-      body: JSON.stringify({ email: 'exist@test.com', password: 'password123' }),
+      body: JSON.stringify({
+        email: 'exist@test.com',
+        password: 'password123',
+      }),
     });
 
     const response = await POST(req);
