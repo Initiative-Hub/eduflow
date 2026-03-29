@@ -1,5 +1,5 @@
-import { useState } from "react";
-import type { UseDialogReturn } from "./dialog.types";
+import { useState } from 'react';
+import type { UseDialogReturn } from './dialog.types';
 
 export const useDialog = <T = unknown>(): UseDialogReturn<T> => {
   const [isOpen, setIsOpen] = useState(false);
