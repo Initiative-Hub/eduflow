@@ -1,16 +1,16 @@
 'use client';
 
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Inter, Lexend } from 'next/font/google';
 import Link from 'next/link';
 import './globals.css';
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
+const inter = Inter({
+  variable: '--font-inter',
   subsets: ['latin'],
 });
 
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
+const lexend = Lexend({
+  variable: '--font-lexend',
   subsets: ['latin'],
 });
 
@@ -22,7 +22,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${inter.variable} ${lexend.variable} font-sans antialiased`}
       >
         <header style={{ padding: '1rem', borderBottom: '1px solid #eaeaea' }}>
           <nav style={{ display: 'flex', gap: '1rem' }}>
