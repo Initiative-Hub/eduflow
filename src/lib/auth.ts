@@ -1,8 +1,9 @@
 // d:\PROJECTS\eduflow\lib\auth.ts
+
+import bcrypt from 'bcryptjs';
 import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import { prisma } from './prisma';
-import bcrypt from 'bcryptjs';
 
 export const {
   handlers: { GET, POST },
@@ -27,7 +28,7 @@ export const {
           where: { email: credentials.email as string },
         });
 
-        if (!user || !user.password) {
+        if (!user?.password) {
           // User not found or password not set
           return null;
         }

@@ -10,8 +10,8 @@ export default async function AccountInfoPage() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-6">Thông tin tài khoản</h1>
-      <div className="p-6 bg-white rounded-lg shadow">
+      <h1 className="mb-6 font-bold text-3xl">Thông tin tài khoản</h1>
+      <div className="rounded-lg bg-white p-6 shadow">
         <div className="space-y-4">
           <div>
             <h3 className="font-semibold">Tên người dùng:</h3>
