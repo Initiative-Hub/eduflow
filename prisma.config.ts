@@ -9,6 +9,6 @@ export default defineConfig({
     seed: 'bun --bun prisma/seed.ts',
   },
   datasource: {
-    url: 'postgresql://postgres:password@localhost:5433/eduflow_db?schema=public',
+    url: process.env.DATABASE_URL,
   },
 });
