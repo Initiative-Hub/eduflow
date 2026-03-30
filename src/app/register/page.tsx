@@ -1,6 +1,6 @@
 'use client';
 
-import { FormTemplate } from '@/components/form/form';
+import { FormTemplate } from '@/components/custom/form/form';
 import {
   registerDefaultValues,
   registerFields,

@@ -6,7 +6,7 @@ import axios, {
   type InternalAxiosRequestConfig,
 } from 'axios';
 import { toast } from 'sonner';
-import { BASE_URL } from './endpoints';
+import { API_URL } from './endpoints';
 import { getStatusMessage } from './status-codes';
 import type { ApiError } from './types';
 
@@ -20,7 +20,7 @@ class ApiClient {
 
   constructor() {
     this.axiosInstance = axios.create({
-      baseURL: BASE_URL,
+      baseURL: API_URL,
       headers: {
         'Content-Type': 'application/json',
       },

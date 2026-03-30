@@ -9,14 +9,14 @@ import {
   useForm,
 } from 'react-hook-form';
 import type { z } from 'zod';
-import { Button } from '../ui/button';
+import { Button } from '../../ui/button';
 import {
   Field,
   FieldContent,
   FieldDescription,
   FieldError,
   FieldLabel,
-} from '../ui/field';
+} from '../../ui/field';
 import type { FormFieldConfig } from './form.types';
 import { FieldRenderer } from './form-fields';
 

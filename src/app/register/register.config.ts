@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { FormFieldConfig } from '@/components/form/form.types';
+import type { FormFieldConfig } from '@/components/custom/form/form.types';
 
 export const registerSchema = z
   .object({

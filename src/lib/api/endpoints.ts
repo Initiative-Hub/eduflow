@@ -1,6 +1,9 @@
-export const BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8888/';
+import { PORT, PROD_MODE } from '@/constants/common';
 
-export const API_BASE = {
-  //TODO: UPDATE TO REAL ENDPOINT
-} as const;
+export const BASE_URL =
+  process.env.BASE_URL ||
+  (PROD_MODE ? 'https://eduflow.com' : `http://localhost:${PORT}`);
+
+export const API_URL =
+  process.env.API_URL ||
+  (PROD_MODE ? 'https://eduflow.com/api' : `http://localhost:${PORT}/api`);
