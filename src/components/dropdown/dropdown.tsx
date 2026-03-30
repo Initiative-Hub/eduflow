@@ -1,10 +1,10 @@
+import type { ReactNode } from 'react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import type { ReactNode } from 'react';
 
 export interface MenuItem {
   label: string;
