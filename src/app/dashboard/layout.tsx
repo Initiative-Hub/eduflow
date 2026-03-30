@@ -33,27 +33,27 @@ export default async function DashboardLayout({
 
   return (
     <div className="fixed inset-0 flex h-screen bg-gray-100">
-      <aside className="w-64 bg-gray-800 text-white flex flex-col">
-        <div className="p-4 border-b border-gray-700">
-          <h2 className="text-xl font-bold">LMS</h2>
-          <p className="text-sm text-gray-400">{session.user.email}</p>
+      <aside className="flex w-64 flex-col bg-gray-800 text-white">
+        <div className="border-gray-700 border-b p-4">
+          <h2 className="font-bold text-xl">LMS</h2>
+          <p className="text-gray-400 text-sm">{session.user.email}</p>
         </div>
-        <nav className="flex-1 p-4 space-y-2">
+        <nav className="flex-1 space-y-2 p-4">
           {menuItems.map((item) => (
             <Link
               key={item.name}
               href={item.href}
-              className="block px-4 py-2 rounded-md hover:bg-gray-700"
+              className="block rounded-md px-4 py-2 hover:bg-gray-700"
             >
               {item.name}
             </Link>
           ))}
         </nav>
-        <div className="p-4 border-t border-gray-700">
+        <div className="border-gray-700 border-t p-4">
           <LogoutButton />
         </div>
       </aside>
-      <main className="flex-1 p-6 overflow-y-auto">{children}</main>
+      <main className="flex-1 overflow-y-auto p-6">{children}</main>
     </div>
   );
 }

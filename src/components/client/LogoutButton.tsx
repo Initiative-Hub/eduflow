@@ -8,7 +8,7 @@ export default function LogoutButton() {
     <button
       type="button"
       onClick={() => signOut({ callbackUrl: '/login' })}
-      className="w-full px-4 py-2 text-left rounded-md hover:bg-gray-700"
+      className="w-full rounded-md px-4 py-2 text-left hover:bg-gray-700"
     >
       Đăng xuất
     </button>
