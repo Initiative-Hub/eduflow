@@ -4,6 +4,7 @@ on:
   push:
     branches-ignore:
       - main
+      - staging
       - production
 
 jobs:
