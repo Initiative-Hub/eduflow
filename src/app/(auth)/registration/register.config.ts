@@ -3,7 +3,8 @@ import type { FormFieldConfig } from '@/components/custom/form/form.types';
 
 export const registerSchema = z
   .object({
-    email: z.string().email('Please enter a valid email address.'),
+    fullname: z.string().min(1, 'Full Name cannot be empty'),
+    email: z.email('Please enter a valid email address.'),
     password: z.string().min(6, 'Password must be at least 6 characters.'),
     confirmPassword: z.string(),
   })
@@ -15,6 +16,14 @@ export const registerSchema = z
 export type RegisterFormData = z.infer<typeof registerSchema>;
 
 export const registerFields: FormFieldConfig[] = [
+  {
+    name: 'fullname',
+    label: 'Full Name',
+    type: 'text',
+    placeholder: 'Enter your name',
+    required: true,
+    colSpan: 2,
+  },
   {
     name: 'email',
     label: 'Email',
@@ -42,6 +51,7 @@ export const registerFields: FormFieldConfig[] = [
 ];
 
 export const registerDefaultValues: RegisterFormData = {
+  fullname: '',
   email: '',
   password: '',
   confirmPassword: '',

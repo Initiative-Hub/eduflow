@@ -44,14 +44,14 @@ export default function RootLayout({
                 Login
               </Link>
               <Link
-                href="/register"
+                href="/registration"
                 style={{
                   cursor: 'pointer',
                   color: 'blue',
                   textDecoration: 'underline',
                 }}
               >
-                Register
+                Registration
               </Link>
             </nav>
           </header>

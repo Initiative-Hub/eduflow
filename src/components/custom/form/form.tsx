@@ -98,7 +98,7 @@ export function FormTemplate<TData extends FieldValues>({
 
         <Button
           type="submit"
-          className="w-full cursor-pointer font-bold transition-all duration-200 hover:shadow-lg"
+          className="w-full cursor-pointer rounded-4xl py-6 font-bold text-xl transition-all duration-200 hover:shadow-lg"
         >
           {submitLabel}
         </Button>

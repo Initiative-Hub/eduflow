@@ -24,7 +24,7 @@ export default function RegisterPage() {
           defaultValues={registerDefaultValues}
           fields={registerFields}
           onSubmit={handleSubmit}
-          submitLabel="Register"
+          submitLabel="Create Account"
           isLoading={isLoading}
         >
           {error && <p className="text-red-600 text-sm">{error}</p>}
