@@ -75,4 +75,4 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Deploy migrations to staging
-        run: prisma migrate deploy
+        run: bunx prisma migrate deploy
