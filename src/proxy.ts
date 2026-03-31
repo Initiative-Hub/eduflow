@@ -1,3 +1,4 @@
+import { NextResponse } from 'next/server';
 import createMiddleware from 'next-intl/middleware';
 import { auth } from '@/lib/auth';
 import { routing } from './i18n/routing';
@@ -5,6 +6,10 @@ import { routing } from './i18n/routing';
 const intlMiddleware = createMiddleware(routing);
 
 export default auth((req) => {
+  if (req.nextUrl.pathname.startsWith('/api')) {
+    return NextResponse.next();
+  }
+
   if (!req.auth && req.nextUrl.pathname.startsWith('/dashboard')) {
     const newUrl = new URL('/login', req.nextUrl.origin);
     return Response.redirect(newUrl);
