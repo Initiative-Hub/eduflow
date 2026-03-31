@@ -1,3 +1,5 @@
+import { AuthSocialOptions } from '@/components/custom/auth/auth-social-options';
+
 export default function AuthLayout({
   children,
 }: {
@@ -21,6 +23,7 @@ export default function AuthLayout({
         </div>
 
         <div className="mt-8">{children}</div>
+        <AuthSocialOptions />
       </main>
     </div>
   );
