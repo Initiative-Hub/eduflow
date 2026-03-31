@@ -43,6 +43,16 @@ export default function RootLayout({
               >
                 Login
               </Link>
+              <Link
+                href="/register"
+                style={{
+                  cursor: 'pointer',
+                  color: 'blue',
+                  textDecoration: 'underline',
+                }}
+              >
+                Register
+              </Link>
             </nav>
           </header>
           <main>{children}</main>
