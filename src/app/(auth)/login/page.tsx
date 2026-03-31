@@ -4,6 +4,7 @@
 import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { useState } from 'react';
+import { AuthFormHeading } from '@/components/custom/auth/auth-form-heading';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -35,16 +36,17 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100">
-      <div className="w-full max-w-md space-y-6 rounded-lg bg-white p-8 shadow-md">
-        <h1 className="text-center font-bold text-2xl text-gray-900">
-          Đăng nhập
-        </h1>
+    <div className="space-y-6">
+      <AuthFormHeading
+        title="Welcome Back"
+        description="Enter your credentials to access your workspace."
+      />
+      <div className="w-full space-y-6">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label
               htmlFor="email"
-              className="block font-medium text-gray-700 text-sm"
+              className="block font-medium text-foreground text-sm"
             >
               Email
             </label>
@@ -56,13 +58,13 @@ export default function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
+              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 shadow-sm placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-ring"
             />
           </div>
           <div>
             <label
               htmlFor="password"
-              className="block font-medium text-gray-700 text-sm"
+              className="block font-medium text-foreground text-sm"
             >
               Mật khẩu
             </label>
@@ -74,21 +76,21 @@ export default function LoginPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
+              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 shadow-sm placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-ring"
             />
           </div>
           {error && <p className="text-red-600 text-sm">{error}</p>}
           <div>
             <button
               type="submit"
-              className="w-full rounded-md border border-transparent bg-indigo-600 px-4 py-2 font-medium text-sm text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+              className="w-full rounded-md border border-transparent bg-primary px-4 py-2 font-medium text-primary-foreground text-sm shadow-sm hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
             >
               Đăng nhập
             </button>
           </div>
-          <p className="text-center text-gray-600 text-sm">
+          <p className="text-center text-muted-foreground text-sm">
             Chưa có tài khoản?
-            <a href="/register" className="text-indigo-600 hover:underline">
+            <a href="/register" className="text-primary hover:underline">
               Đăng ký
             </a>
           </p>

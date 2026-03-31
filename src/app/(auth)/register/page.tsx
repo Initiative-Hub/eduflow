@@ -1,5 +1,6 @@
 'use client';
 
+import { AuthFormHeading } from '@/components/custom/auth/auth-form-heading';
 import { FormTemplate } from '@/components/custom/form/form';
 import {
   registerDefaultValues,
@@ -12,12 +13,12 @@ export default function RegisterPage() {
   const { error, isLoading, handleSubmit } = useRegister();
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100">
-      <div className="w-full max-w-md space-y-6 rounded-lg bg-white p-8 shadow-md">
-        <h1 className="text-center font-bold text-2xl text-gray-900">
-          Register
-        </h1>
-
+    <div className="space-y-6">
+      <AuthFormHeading
+        title="Join the Academy"
+        description="Begin your journey in the living library."
+      />
+      <div className="w-full space-y-6">
         <FormTemplate
           schema={registerSchema}
           defaultValues={registerDefaultValues}
