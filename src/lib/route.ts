@@ -36,7 +36,7 @@ export const {
           where: { email: credentials.email as string },
         });
 
-        if (!user || !user.password) {
+        if (!user?.password) {
           // User not found or password not set
           return null;
         }

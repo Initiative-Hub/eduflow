@@ -1,7 +1,7 @@
-import { describe, it, expect, vi } from 'vitest';
-import { POST } from '@/app/api/register/route';
-import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
+import { describe, expect, it, vi } from 'vitest';
+import { POST } from '@/app/api/auth/register/route';
+import { prisma } from '@/lib/prisma';
 
 // Mock dependencies
 vi.mock('@/lib/prisma', () => ({
