@@ -31,8 +31,8 @@ export const {
 
         const user = await prisma.user.findUnique({
           where: { email: credentials.email as string },
+          include: { role: true },
         });
-
         if (!user?.password) {
           // User not found or password not set
           return null;
@@ -61,6 +61,7 @@ export const {
       if (account?.provider === 'google' && user?.email) {
         let dbUser = await prisma.user.findUnique({
           where: { email: user.email },
+          include: { role: true },
         });
         if (!dbUser) {
           dbUser = await prisma.user.create({
@@ -71,15 +72,21 @@ export const {
                 connect: { name: 'USER' },
               },
             },
+            include: { role: true },
           });
         }
         token.sub = dbUser.id;
+        token.role = dbUser.role.name;
+      } else if (user) {
+        token.sub = user.id;
+        token.role = (user as any).role?.name || 'USER';
       }
       return token;
     },
     async session({ session, token }) {
       if (token && session.user) {
         session.user.id = token.sub as string;
+        (session.user as any).role = (token.role as string);
       }
       return session;
     },
