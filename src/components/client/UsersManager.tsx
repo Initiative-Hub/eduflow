@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-
+import { Input } from '../ui/input';
 type User = {
   id: string;
   email: string;
@@ -188,6 +188,7 @@ export default function UsersManager() {
         <div className="flex items-center gap-2">
           <select
             value={roleFilter}
+            aria-label="Items per page"
             onChange={(e) => setRoleFilter(e.target.value)}
             className="rounded-md border border-gray-300 px-3 py-2"
           >
@@ -199,6 +200,7 @@ export default function UsersManager() {
           </select>
           <select
             value={statusFilter}
+            aria-label="Status filter"
             onChange={(e) => setStatusFilter(e.target.value)}
             className="rounded-md border border-gray-300 px-3 py-2"
           >
@@ -244,7 +246,7 @@ export default function UsersManager() {
                     </div>
                     <div>
                       {editingId === u.id ? (
-                        <input
+                        <Input
                           value={editForm.name || ''}
                           onChange={(e) =>
                             setEditForm({ ...editForm, name: e.target.value })
@@ -263,6 +265,7 @@ export default function UsersManager() {
                     {editingId === u.id ? (
                       <select
                         value={editForm.role || ''}
+                        aria-label="Items per page"
                         onChange={(e) =>
                           setEditForm({ ...editForm, role: e.target.value })
                         }
@@ -336,6 +339,7 @@ export default function UsersManager() {
           <select
             value={itemsPerPage.toString()}
             onChange={(e) => handleItemsPerPageChange(e.target.value)}
+            aria-label="Items per page"
             className="rounded-md border border-gray-300 px-3 py-2"
           >
             <option value="4">4 per page</option>
@@ -421,6 +425,7 @@ export default function UsersManager() {
                 </label>
                 <select
                   value={newUserForm.role}
+                  aria-label="Select user role"
                   onChange={(e) =>
                     setNewUserForm({ ...newUserForm, role: e.target.value })
                   }
