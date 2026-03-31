@@ -2,8 +2,13 @@
 
 import { Inter, Lexend } from 'next/font/google';
 import Link from 'next/link';
-import './globals.css';
+import '../globals.css';
+import { notFound } from 'next/navigation';
+import { hasLocale } from 'next-intl';
+import { setRequestLocale } from 'next-intl/server';
+import type { ReactNode } from 'react';
 import { Toaster } from 'sonner';
+import { routing } from '@/i18n/routing';
 import Providers from '@/providers/providers';
 
 const inter = Inter({
@@ -16,11 +21,30 @@ const lexend = Lexend({
   subsets: ['latin'],
 });
 
-export default function RootLayout({
+interface RootLayoutProps {
+  children: ReactNode;
+  params: Promise<{
+    locale: string;
+  }>;
+}
+
+export function generateStaticParams() {
+  return routing.locales.map((locale) => ({ locale }));
+}
+
+export default async function RootLayout({
   children,
-}: {
-  children: React.ReactNode;
-}) {
+  params,
+}: RootLayoutProps) {
+  // Ensure that the incoming `locale` is valid
+  const { locale } = await params;
+  if (!hasLocale(routing.locales, locale)) {
+    notFound();
+  }
+
+  // Enable static rendering
+  setRequestLocale(locale);
+
   return (
     <html lang="en">
       <body
