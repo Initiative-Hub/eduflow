@@ -4,7 +4,7 @@
 import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { useState } from 'react';
-
+import { Button } from '@/components/ui/button';
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
@@ -85,6 +85,14 @@ export default function LoginPage() {
             >
               Đăng nhập
             </button>
+            <div>
+              <Button type='button' className='w-full border-gray-300 bg-white text-black' onClick={() => signIn('google', {callbackUrl: '/dashboard'})}>
+                <svg className='h-5 w-5' viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2ZM16.9899 10.0001H16.6665V10.0001H12V12H14.6665C14.3331 13.3334 13.3331 14.6667 12 14.6667C10.6665 14.6667 9.6665 13.3334 9.3331 12C9.3331 10.6667 10.6665 9.33337 12 9.33337C12.6665 9.33337 13.3331 9.6667 13.6665 10.0001H16.9899Z" fill="#4285F4" />
+                </svg>
+                Sign In with Google
+              </Button>
+            </div>
           </div>
           <p className="text-center text-gray-600 text-sm">
             Chưa có tài khoản?
