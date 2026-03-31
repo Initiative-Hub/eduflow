@@ -46,7 +46,7 @@ export default async function RootLayout({
   setRequestLocale(locale);
 
   return (
-    <html lang="en">
+    <html lang={locale}>
       <body
         className={`${inter.variable} ${lexend.variable} font-sans antialiased`}
       >
