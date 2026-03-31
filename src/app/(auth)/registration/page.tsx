@@ -29,6 +29,17 @@ export default function RegisterPage() {
         >
           {error && <p className="text-red-600 text-sm">{error}</p>}
         </FormTemplate>
+
+        <p className="px-6 text-center text-muted-foreground text-sm">
+          By signing up, you agree to the{' '}
+          <span className="cursor-pointer text-primary hover:underline">
+            Terms of Service
+          </span>{' '}
+          and our{' '}
+          <span className="cursor-pointer text-primary hover:underline">
+            Privacy Policy.
+          </span>
+        </p>
       </div>
     </div>
   );
