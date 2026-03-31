@@ -10,22 +10,6 @@ jobs:
     timeout-minutes: 15
     runs-on: ubuntu-latest
     services:
-      # Main Database Service
-      postgres:
-        image: postgres:17-alpine
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: eduflow_ci
-        ports:
-          - 5433:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres -d eduflow_ci"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-      # Shadow Database Service
       postgres-shadow:
         image: postgres:17-alpine
         env:
@@ -33,7 +17,7 @@ jobs:
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: eduflow_shadow
         ports:
-          - 5434:5432
+          - 5433:5432
         options: >-
           --health-cmd "pg_isready -U postgres -d eduflow_shadow"
           --health-interval 10s
@@ -41,8 +25,7 @@ jobs:
           --health-retries 5
 
     env:
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5433/eduflow_ci?schema=public
-      SHADOW_DATABASE_URL: postgresql://postgres:postgres@localhost:5434/eduflow_shadow?schema=public
+      SHADOW_DATABASE_URL: postgresql://postgres:postgres@localhost:5433/eduflow_shadow?schema=public
     
     steps:
       - uses: actions/checkout@v6
