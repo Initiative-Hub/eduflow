@@ -10,6 +10,7 @@ jobs:
     timeout-minutes: 15
     runs-on: ubuntu-latest
     services:
+      # Main Database Service
       postgres:
         image: postgres:17-alpine
         env:
@@ -23,9 +24,26 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+
+      # Shadow Database Service
+      postgres-shadow:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: eduflow_shadow
+        ports:
+          - 5434:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d eduflow_shadow"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5433/eduflow_ci?schema=public
-      SHADOW_DATABASE_URL: postgresql://postgres:postgres@localhost:5433/eduflow_shadow?schema=public
+      SHADOW_DATABASE_URL: postgresql://postgres:postgres@localhost:5434/eduflow_shadow?schema=public
+    
     steps:
       - uses: actions/checkout@v6
 
@@ -35,11 +53,6 @@ jobs:
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
-
-      - name: Create shadow database
-        env:
-          PGPASSWORD: postgres
-        run: psql -h localhost -U postgres -d postgres -c "CREATE DATABASE eduflow_shadow;"
 
       - name: Verify Prisma schema matches migrations
         run: |
