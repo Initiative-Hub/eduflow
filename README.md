@@ -36,7 +36,7 @@ DATABASE_URL="postgresql://postgres:password@localhost:5432/eduflow_db?schema=pu
 AUTH_SECRET="a_very_long_random_secret_string"
 ```
 
-### 5. Initialize Database (Prisma & Seed)
+### 5. Initialize Database (Prisma & Seed) 
 ```bash
 # 1. Create tables in the database based on prisma/schema.prisma
 bun prisma:migrate
