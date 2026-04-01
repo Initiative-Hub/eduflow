@@ -1,10 +1,10 @@
 // d:\PROJECTS\eduflow\lib\auth.ts
 
-import bcrypt from "bcryptjs";
-import NextAuth from "next-auth";
-import Credentials from "next-auth/providers/credentials";
-import Google from "next-auth/providers/google";
-import { prisma } from "./prisma";
+import bcrypt from 'bcryptjs';
+import NextAuth from 'next-auth';
+import Credentials from 'next-auth/providers/credentials';
+import Google from 'next-auth/providers/google';
+import { prisma } from './prisma';
 
 export const {
   handlers: { GET, POST },
@@ -19,10 +19,10 @@ export const {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     }),
     Credentials({
-      name: "Credentials",
+      name: 'Credentials',
       credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
+        email: { label: 'Email', type: 'email' },
+        password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials.password) {
@@ -54,11 +54,11 @@ export const {
     }),
   ],
   pages: {
-    signIn: "/login",
+    signIn: '/login',
   },
   callbacks: {
     async jwt({ token, user, account }) {
-      if (account?.provider === "google" && user?.email) {
+      if (account?.provider === 'google' && user?.email) {
         let dbUser = await prisma.user.findUnique({
           where: { email: user.email },
           include: { role: true },
@@ -69,7 +69,7 @@ export const {
               email: user.email,
               name: user.name,
               role: {
-                connect: { name: "USER" },
+                connect: { name: 'USER' },
               },
             },
             include: { role: true },
@@ -79,7 +79,7 @@ export const {
         token.role = dbUser.role.name;
       } else if (user) {
         token.sub = user.id;
-        token.role = (user as any).role?.name || "USER";
+        token.role = (user as any).role?.name || 'USER';
       }
       return token;
     },
