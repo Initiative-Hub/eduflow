@@ -6,6 +6,9 @@ export default auth((req) => {
     const newUrl = new URL('/login', req.nextUrl.origin);
     return Response.redirect(newUrl);
   }
+  if (req.auth && req.nextUrl.pathname === '/login') {
+    return Response.redirect(new URL('/dashboard', req.nextUrl.origin));
+  }
 });
 
 // Optionally, don't invoke Middleware on some paths
