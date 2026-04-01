@@ -6,8 +6,8 @@ import {
   registerDefaultValues,
   registerFields,
   registerSchema,
-} from './registration.config';
-import { useRegister } from './use-registration';
+} from './register.config';
+import { useRegister } from './use-register';
 
 export default function RegisterPage() {
   const { error, isLoading, handleSubmit } = useRegister();

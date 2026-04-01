@@ -7,9 +7,9 @@ export function AuthPageSwitcher() {
   const pathname = usePathname();
 
   const isLoginPage = pathname === '/login';
-  const isRegistrationPage = pathname === '/registration';
+  const isRegisterPage = pathname === '/register';
 
-  if (!isLoginPage && !isRegistrationPage) {
+  if (!isLoginPage && !isRegisterPage) {
     return null;
   }
 
@@ -19,7 +19,7 @@ export function AuthPageSwitcher() {
         <>
           New to the academy?{' '}
           <Link
-            href="/registration"
+            href="/register"
             className="font-semibold text-primary hover:underline"
           >
             Sign Up
