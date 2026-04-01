@@ -29,7 +29,7 @@
     "editor.defaultFormatter": "biomejs.biome"
   },
   "[typescriptreact]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "biomejs.biome"
   },
   "js/ts.tsdk.path": "node_modules/typescript/lib",
   "workbench.editor.customLabels.patterns": {
