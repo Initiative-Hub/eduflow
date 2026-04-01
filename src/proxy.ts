@@ -15,6 +15,10 @@ export default auth((req) => {
     return Response.redirect(newUrl);
   }
 
+  if (req.auth && req.nextUrl.pathname === '/login') {
+    return Response.redirect(new URL('/dashboard', req.nextUrl.origin));
+  }
+
   return intlMiddleware(req);
 });
 

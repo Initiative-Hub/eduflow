@@ -24,7 +24,7 @@ model User {
   id        String   @id @default(uuid())
   email     String   @unique
   name      String?
-  password  String   // Nên mã hóa password trong thực tế
+  password  String?   // Nên mã hóa password trong thực tế
   roleId    String
   role      Role     @relation(fields: [roleId], references: [id])
   posts     Post[]   // Quan hệ 1-nhiều với Post
