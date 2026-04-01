@@ -1,37 +1,37 @@
 // d:\PROJECTS\eduflow\app\login\page.tsx
-"use client";
+'use client';
 
-import { useRouter } from "next/navigation";
-import { signIn } from "next-auth/react";
-import { useState } from "react";
-import { AuthFormHeading } from "@/components/custom/auth/auth-form-heading";
-import { Button } from "@/components/ui/button";
+import { useRouter } from 'next/navigation';
+import { signIn } from 'next-auth/react';
+import { useState } from 'react';
+import { AuthFormHeading } from '@/components/custom/auth/auth-form-heading';
+import { Button } from '@/components/ui/button';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    setError('');
 
     try {
-      const result = await signIn("credentials", {
+      const result = await signIn('credentials', {
         redirect: false,
         email,
         password,
       });
 
       if (result?.error) {
-        setError("Email hoặc mật khẩu không đúng. Vui lòng thử lại.");
+        setError('Email hoặc mật khẩu không đúng. Vui lòng thử lại.');
         console.error(result.error);
       } else {
-        router.replace("/dashboard");
+        router.replace('/dashboard');
       }
     } catch (error) {
-      setError("Đã có lỗi xảy ra. Vui lòng thử lại.");
+      setError('Đã có lỗi xảy ra. Vui lòng thử lại.');
       console.error(error);
     }
   };
@@ -92,7 +92,7 @@ export default function LoginPage() {
               <Button
                 type="button"
                 className="w-full border-gray-300 bg-white text-black"
-                onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+                onClick={() => signIn('google', { callbackUrl: '/dashboard' })}
               >
                 <svg
                   className="h-5 w-5"
