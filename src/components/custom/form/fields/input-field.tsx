@@ -1,8 +1,8 @@
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, LockKeyhole, Mail } from 'lucide-react';
 import { useState } from 'react';
-import type { FormFieldConfig } from '../form.types';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import type { FormFieldConfig } from '../form.types';
 
 export const InputField = ({
   field,
@@ -29,7 +29,7 @@ export const InputField = ({
         type={inputType}
         placeholder={field.placeholder}
         disabled={field.disabled}
-        className={`w-full py-2 text-sm transition-all duration-200 focus:ring-2 focus:ring-offset-2 ${
+        className={`h-11 w-full rounded-xl border-border bg-muted/70 py-2 text-sm transition-all duration-200 focus:border-ring focus:ring-2 focus:ring-ring/30 focus:ring-offset-0 ${
           field.startAdornment ? 'pl-12' : 'px-4'
         } ${field.endAdornment || isPassword ? 'pr-10' : 'pr-4'}`}
         {...formField}
@@ -41,13 +41,13 @@ export const InputField = ({
           variant="ghost"
           size="icon"
           onClick={toggleVisibility}
-          className="absolute top-1/2 right-0 h-full -translate-y-1/2 px-3 text-gray-500 hover:bg-transparent hover:text-gray-700"
+          className="absolute top-1/2 right-0 h-full -translate-y-1/2 px-3 text-muted-foreground hover:bg-transparent hover:text-foreground"
         >
           {isVisible ? <EyeOff size={16} /> : <Eye size={16} />}
         </Button>
       ) : (
         field.endAdornment && (
-          <div className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-500 text-sm">
+          <div className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground text-sm">
             {field.endAdornment}
           </div>
         )

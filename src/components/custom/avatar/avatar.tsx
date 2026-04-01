@@ -16,11 +16,11 @@ interface AvatarTemplateProps {
   onUpload?: (file: File) => void | Promise<void>;
 }
 
-const AvatarTemplate = ({
+export function AvatarTemplate({
   avatarUrl,
   fallback = 'JD',
   onUpload,
-}: AvatarTemplateProps) => {
+}: AvatarTemplateProps) {
   const displayAvatarUrl = avatarUrl || DEFAULT_AVATAR_PLACEHOLDER;
   const {
     isModalOpen,
@@ -84,6 +84,4 @@ const AvatarTemplate = ({
       </DialogTemplate>
     </>
   );
-};
-
-export default AvatarTemplate;
+}
