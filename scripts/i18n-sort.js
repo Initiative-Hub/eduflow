@@ -80,7 +80,9 @@ function main() {
   if (failures.length > 0) {
     console.error('Failed to process translation files:');
     for (const failure of failures) {
-      console.error(`- ${path.relative(process.cwd(), failure.filePath)}: ${failure.error}`);
+      console.error(
+        `- ${path.relative(process.cwd(), failure.filePath)}: ${failure.error}`
+      );
     }
     process.exit(1);
   }

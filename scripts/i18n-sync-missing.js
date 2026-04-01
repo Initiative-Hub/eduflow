@@ -97,7 +97,11 @@ function main() {
   }
 
   const sortedTarget = sortObjectKeysDeep(target);
-  fs.writeFileSync(TARGET_FILE, `${JSON.stringify(sortedTarget, null, 2)}\n`, 'utf8');
+  fs.writeFileSync(
+    TARGET_FILE,
+    `${JSON.stringify(sortedTarget, null, 2)}\n`,
+    'utf8'
+  );
 
   console.log(`Added ${addedCount} missing key(s) to messages/vi.json.`);
   console.log('English values were copied as placeholders.');
