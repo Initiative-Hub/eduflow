@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/dialog';
 import type { DialogTemplateProps } from './dialog.types';
 
-export const DialogTemplate = ({
+export function DialogTemplate({
   isOpen,
   onOpenChange,
   title,
@@ -21,7 +21,7 @@ export const DialogTemplate = ({
   className = '',
   hideHeader = false,
   overlayClassName = 'fixed inset-0 z-50 bg-black/30',
-}: DialogTemplateProps) => {
+}: DialogTemplateProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogPortal>
@@ -49,4 +49,4 @@ export const DialogTemplate = ({
       </DialogPortal>
     </Dialog>
   );
-};
+}

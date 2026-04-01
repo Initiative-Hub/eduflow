@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { AuthFormHeading } from '@/components/auth/auth-form-heading';
-import { FormTemplate } from '@/components/custom/form/form';
+import { FormTemplate } from '@/components/custom/form';
 import { loginDefaultValues, loginFields, loginSchema } from './login.config';
 import { useLogin } from './use-login';
 

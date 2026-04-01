@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { FormFieldConfig } from '@/components/custom/form/form.types';
+import type { FormFieldConfig } from '@/components/custom/form';
 
 export const loginSchema = z.object({
   email: z.email('Please enter a valid email address.'),

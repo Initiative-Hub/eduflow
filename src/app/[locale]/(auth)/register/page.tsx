@@ -1,7 +1,7 @@
 'use client';
 
 import { AuthFormHeading } from '@/components/auth/auth-form-heading';
-import { FormTemplate } from '@/components/custom/form/form';
+import { FormTemplate } from '@/components/custom/form';
 import {
   registerDefaultValues,
   registerFields,
