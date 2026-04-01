@@ -70,6 +70,12 @@ export default async function RootLayout({
               >
                 Login
               </Link>
+              <Link
+                href="/register"
+                className="transition-colors hover:text-foreground/80"
+              >
+                Register
+              </Link>
             </nav>
             <LanguageSwitcher />
           </header>

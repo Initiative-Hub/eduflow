@@ -5,14 +5,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-
-export interface MenuItem {
-  label: string;
-  icon?: ReactNode;
-  onClick: () => void;
-  className?: string;
-  destructive?: boolean;
-}
+import type { MenuItem } from './dropdown.types';
 
 interface DropdownTemplateProps {
   trigger: ReactNode;
