@@ -1,11 +1,8 @@
+import type { ReactNode } from 'react';
+import { AuthPageSwitcher } from '@/components/auth/auth-page-switcher';
 import { AuthSocialOptions } from '@/components/auth/auth-social-options';
-import { AuthPageSwitcher } from '../../../components/auth/auth-page-switcher';
 
-export default function AuthLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4 py-8 md:px-8">
       <div className="pointer-events-none absolute inset-0">

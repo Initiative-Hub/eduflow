@@ -1,14 +1,14 @@
-// d:\PROJECTS\eduflow\app\dashboard\layout.tsx
 import Link from 'next/link';
-import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
-import { prisma } from '@/lib/prisma';
+import type { ReactNode } from 'react';
 import LogoutButton from '@/components/client/LogoutButton';
+import { auth } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
 
 export default async function DashboardLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   const session = await auth();
   if (!session?.user) {

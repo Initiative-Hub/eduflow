@@ -5,8 +5,6 @@ import { hasLocale } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
 import type { ReactNode } from 'react';
 import { Toaster } from 'sonner';
-import LanguageSwitcher from '@/components/client/LanguageSwitcher';
-import { Link } from '@/i18n/navigation';
 import { routing } from '@/i18n/routing';
 import Providers from '@/providers/providers';
 
@@ -49,38 +47,7 @@ export default async function RootLayout({
       <body
         className={`${inter.variable} ${lexend.variable} font-sans antialiased`}
       >
-        <Providers>
-          <header className="flex items-center justify-between gap-4 border-b px-4 py-4">
-            <nav className="flex items-center gap-4 font-medium text-sm">
-              <Link
-                href="/"
-                className="transition-colors hover:text-foreground/80"
-              >
-                Home
-              </Link>
-              <Link
-                href="/about"
-                className="transition-colors hover:text-foreground/80"
-              >
-                About
-              </Link>
-              <Link
-                href="/login"
-                className="transition-colors hover:text-foreground/80"
-              >
-                Login
-              </Link>
-              <Link
-                href="/register"
-                className="transition-colors hover:text-foreground/80"
-              >
-                Register
-              </Link>
-            </nav>
-            <LanguageSwitcher />
-          </header>
-          <main>{children}</main>
-        </Providers>
+        <Providers>{children}</Providers>
         <Toaster />
       </body>
     </html>
