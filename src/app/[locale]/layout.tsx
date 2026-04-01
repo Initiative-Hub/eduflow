@@ -1,9 +1,13 @@
-'use client';
-
 import { Inter, Lexend } from 'next/font/google';
-import Link from 'next/link';
-import './globals.css';
+import '../globals.css';
+import { notFound } from 'next/navigation';
+import { hasLocale } from 'next-intl';
+import { setRequestLocale } from 'next-intl/server';
+import type { ReactNode } from 'react';
 import { Toaster } from 'sonner';
+import LanguageSwitcher from '@/components/client/LanguageSwitcher';
+import { Link } from '@/i18n/navigation';
+import { routing } from '@/i18n/routing';
 import Providers from '@/providers/providers';
 
 const inter = Inter({
@@ -16,44 +20,58 @@ const lexend = Lexend({
   subsets: ['latin'],
 });
 
-export default function RootLayout({
+interface RootLayoutProps {
+  children: ReactNode;
+  params: Promise<{
+    locale: string;
+  }>;
+}
+
+export function generateStaticParams() {
+  return routing.locales.map((locale) => ({ locale }));
+}
+
+export default async function RootLayout({
   children,
-}: {
-  children: React.ReactNode;
-}) {
+  params,
+}: RootLayoutProps) {
+  // Ensure that the incoming `locale` is valid
+  const { locale } = await params;
+  if (!hasLocale(routing.locales, locale)) {
+    notFound();
+  }
+
+  // Enable static rendering
+  setRequestLocale(locale);
+
   return (
-    <html lang="en">
+    <html lang={locale} suppressHydrationWarning>
       <body
         className={`${inter.variable} ${lexend.variable} font-sans antialiased`}
       >
         <Providers>
-          <header
-            style={{ padding: '1rem', borderBottom: '1px solid #eaeaea' }}
-          >
-            <nav style={{ display: 'flex', gap: '1rem' }}>
-              <Link href="/">Home</Link>
-              <Link href="/about">About</Link>
+          <header className="flex items-center justify-between gap-4 border-b px-4 py-4">
+            <nav className="flex items-center gap-4 font-medium text-sm">
+              <Link
+                href="/"
+                className="transition-colors hover:text-foreground/80"
+              >
+                Home
+              </Link>
+              <Link
+                href="/about"
+                className="transition-colors hover:text-foreground/80"
+              >
+                About
+              </Link>
               <Link
                 href="/login"
-                style={{
-                  cursor: 'pointer',
-                  color: 'blue',
-                  textDecoration: 'underline',
-                }}
+                className="transition-colors hover:text-foreground/80"
               >
                 Login
               </Link>
-              <Link
-                href="/registration"
-                style={{
-                  cursor: 'pointer',
-                  color: 'blue',
-                  textDecoration: 'underline',
-                }}
-              >
-                Registration
-              </Link>
             </nav>
+            <LanguageSwitcher />
           </header>
           <main>{children}</main>
         </Providers>
