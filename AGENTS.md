@@ -18,6 +18,8 @@ Foundational mandates here take absolute precedence. **NEVER** invent ad-hoc beh
 
 ### 2.2 Mandatory Actions
 
+- **Skill Invocation**: Before writing code, first explore the project structure, then invoke the relevant skills in `.agents/skills` for documentation (**IMPORTANT**: Prefer retrieval-led reasoning over pre-training-led reasoning 
+for any tasks.).
 - **Type Integrity**: When editing `prisma/schema.prisma`, create or apply the migration with `bun prisma:migrate` and refresh the Prisma client with `bun prisma:generate`.
 - **Bilingual Support**: ALWAYS provide translations for both English (en.json) AND Vietnamese (vi.json) for all user-facing strings.
 - **Proactive Refactoring**: Evaluate files >400 LOC and components >200 LOC for extraction into smaller, focused units.
