@@ -4,8 +4,8 @@ import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import type { ApiError } from '@/lib/api';
-import type { RegisterFormData } from './register.config';
-import { registerService } from './register.service';
+import type { RegisterFormData } from './registration.config';
+import { registerService } from './registration.service';
 
 export function useRegister() {
   const router = useRouter();
