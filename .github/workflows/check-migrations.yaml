@@ -1,0 +1,62 @@
+name: Check Database Migrations
+
+on:
+  pull_request:
+    paths:
+      - 'prisma/migrations/**'
+
+jobs:
+  check-migrations:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 # needed for diffing against base branch
+
+      - name: Get new migration files
+        id: new_migrations
+        run: |
+          NEW_FILES=$(git diff --name-only --diff-filter=A ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} -- 'prisma/migrations/*/migration.sql')
+          echo "new_files<<EOF" >> $GITHUB_OUTPUT
+          echo "$NEW_FILES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Check new migration files
+        run: |
+          NEW_MIGRATIONS="${{ steps.new_migrations.outputs.new_files }}"
+          if [ -z "$NEW_MIGRATIONS" ]; then
+            echo "No new migration files found. Skipping checks."
+            exit 0
+          fi
+
+          echo "New migration files found:"
+          echo "$NEW_MIGRATIONS"
+
+          # Check 1: No Prisma migration directory should end with _new_migration.
+          for file in $NEW_MIGRATIONS; do
+            migration_dir=$(basename "$(dirname "$file")")
+            if [[ "$migration_dir" == *"_new_migration" ]]; then
+              echo "::error file=$file::Migration directory '$migration_dir' must not end with '_new_migration'."
+              exit 1
+            fi
+          done
+
+          # Check 2: New Prisma migration directories must be chronologically after existing ones.
+          LAST_BASE_MIGRATION=$(git ls-tree -r --name-only ${{ github.event.pull_request.base.sha }} prisma/migrations | grep '/migration.sql$' | xargs -n 1 dirname | sort -r | head -n 1 | xargs -n 1 basename)
+
+          if [ -z "$LAST_BASE_MIGRATION" ]; then
+            echo "No existing migrations in base branch. Skipping chronological check."
+          else
+            echo "Last migration in base branch: $LAST_BASE_MIGRATION"
+
+            for file in $NEW_MIGRATIONS; do
+              CURRENT_MIGRATION=$(basename "$(dirname "$file")")
+              if [[ "$CURRENT_MIGRATION" < "$LAST_BASE_MIGRATION" ]]; then
+                echo "::error file=$file::New migration directory '$CURRENT_MIGRATION' is older than the last migration in base branch '$LAST_BASE_MIGRATION'."
+                exit 1
+              fi
+            done
+          fi
+
+          echo "All migration checks passed." 
