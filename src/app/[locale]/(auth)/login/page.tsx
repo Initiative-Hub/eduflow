@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { AuthFormHeading } from '@/components/custom/auth/auth-form-heading';
+import { AuthFormHeading } from '@/components/auth/auth-form-heading';
 import { FormTemplate } from '@/components/custom/form/form';
 import { loginDefaultValues, loginFields, loginSchema } from './login.config';
 import { useLogin } from './use-login';

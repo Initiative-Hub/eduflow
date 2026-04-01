@@ -1,5 +1,5 @@
-import { AuthSocialOptions } from '@/components/custom/auth/auth-social-options';
-import { AuthPageSwitcher } from '../../../components/custom/auth/auth-page-switcher';
+import { AuthSocialOptions } from '@/components/auth/auth-social-options';
+import { AuthPageSwitcher } from '../../../components/auth/auth-page-switcher';
 
 export default function AuthLayout({
   children,
