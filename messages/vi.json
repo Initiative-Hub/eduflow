@@ -1,4 +1,34 @@
 {
+  "AuthVerifyOtp": {
+    "title": "Kiểm tra hộp thư",
+    "description": "Chúng tôi đã gửi mã xác minh 6 chữ số đến địa chỉ email của bạn:",
+    "form": {
+      "email": {
+        "label": "Email",
+        "placeholder": "Nhập email của bạn"
+      },
+      "otp": {
+        "label": "Mã xác minh",
+        "placeholder": "Nhập mã 6 chữ số",
+        "description": "Sử dụng mã trong hộp thư của bạn."
+      }
+    },
+    "actions": {
+      "verify": "Xác minh và tiếp tục",
+      "verifying": "Đang xác minh..."
+    },
+    "resend": {
+      "label": "Bạn chưa nhận được mã?",
+      "action": "Gửi lại OTP",
+      "loading": "Đang gửi lại...",
+      "cooldown": "Gửi lại sau {seconds}s"
+    },
+    "validation": {
+      "invalidEmail": "Vui lòng nhập địa chỉ email hợp lệ.",
+      "otpRequired": "Mã OTP là bắt buộc.",
+      "otpInvalid": "Mã OTP phải gồm đúng 6 chữ số."
+    }
+  },
   "HomePage": {
     "title": "Xin chào thế giới!"
   }

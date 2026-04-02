@@ -1,4 +1,34 @@
 {
+  "AuthVerifyOtp": {
+    "title": "Check your inbox",
+    "description": "We've sent a 6-digit verification code to your email address:",
+    "form": {
+      "email": {
+        "label": "Email",
+        "placeholder": "Enter your email"
+      },
+      "otp": {
+        "label": "Verification code",
+        "placeholder": "Enter 6-digit code",
+        "description": "Use the code from your inbox."
+      }
+    },
+    "actions": {
+      "verify": "Verify and Continue",
+      "verifying": "Verifying..."
+    },
+    "resend": {
+      "label": "Didn't receive the code?",
+      "action": "Resend OTP",
+      "loading": "Resending...",
+      "cooldown": "Resend in {seconds}s"
+    },
+    "validation": {
+      "invalidEmail": "Please enter a valid email address.",
+      "otpRequired": "OTP code is required.",
+      "otpInvalid": "OTP code must be exactly 6 digits."
+    }
+  },
   "HomePage": {
     "title": "Hello world!"
   }
