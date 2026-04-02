@@ -16,7 +16,7 @@ export const OtpField = ({
   const otpLength = field.otpLength ?? 4;
 
   return (
-    <div className="flex justify-start md:justify-center">
+    <div className="flex justify-center">
       <InputOTP
         id={field.name}
         maxLength={otpLength}
@@ -25,14 +25,14 @@ export const OtpField = ({
         onChange={formField.onChange}
         onBlur={formField.onBlur}
         disabled={field.disabled}
-        containerClassName="w-full md:w-auto"
+        containerClassName="w-full justify-center"
       >
-        <InputOTPGroup className="w-full md:w-auto">
+        <InputOTPGroup className="w-full justify-center gap-2 bg-transparent md:w-auto md:gap-3">
           {Array.from({ length: otpLength }).map((_, index) => (
             <InputOTPSlot
               key={`${field.name}-otp-slot-${index + 1}`}
               index={index}
-              className="h-11 w-full text-base md:w-11"
+              className="h-12 w-12 rounded-xl border-0 bg-primary/10 text-base first:rounded-xl last:rounded-xl data-[active=true]:border-0 data-[active=true]:bg-primary/15 data-[active=true]:ring-2 data-[active=true]:ring-primary/30"
             />
           ))}
         </InputOTPGroup>
