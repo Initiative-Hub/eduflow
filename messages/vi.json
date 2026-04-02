@@ -3,13 +3,13 @@
     "title": "Xin chào thế giới!"
   },
   "Layout": {
-    "newSession": "Phiên mới",
     "aiChat": "Trò chuyện AI",
-    "socraticTutor": "Gia sư Socratic",
-    "englishAssistant": "Trợ lý Tiếng Anh",
-    "writingAssistant": "Trợ lý Viết",
-    "studyAssistant": "Trợ lý Học tập",
     "aiTools": "Công cụ AI",
-    "studyHub": "Góc học tập"
+    "englishAssistant": "Trợ lý Tiếng Anh",
+    "newSession": "Phiên mới",
+    "socraticTutor": "Gia sư Socratic",
+    "studyAssistant": "Trợ lý Học tập",
+    "studyHub": "Góc học tập",
+    "writingAssistant": "Trợ lý Viết"
   }
 }

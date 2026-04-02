@@ -3,13 +3,13 @@
     "title": "Hello world!"
   },
   "Layout": {
-    "newSession": "New Session",
     "aiChat": "AI Chat",
-    "socraticTutor": "Socratic Tutor",
-    "englishAssistant": "English Assistant",
-    "writingAssistant": "Writing Assistant",
-    "studyAssistant": "Study Assistant",
     "aiTools": "AI Tools",
-    "studyHub": "Study Hub"
+    "englishAssistant": "English Assistant",
+    "newSession": "New Session",
+    "socraticTutor": "Socratic Tutor",
+    "studyAssistant": "Study Assistant",
+    "studyHub": "Study Hub",
+    "writingAssistant": "Writing Assistant"
   }
 }
