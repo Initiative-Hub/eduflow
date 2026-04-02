@@ -1,9 +1,10 @@
-import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import type { ReactNode } from 'react';
-import LogoutButton from '@/components/client/LogoutButton';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { AppSidebar } from '@/components/custom/app-sidebar';
+import { AppNavbar } from '@/components/custom/app-navbar';
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 
 export default async function DashboardLayout({
   children,
@@ -15,45 +16,29 @@ export default async function DashboardLayout({
     redirect('/login');
   }
 
-  const menuItems: { name: string; href: string }[] = [
-    { name: 'Trang chủ', href: '/dashboard' },
-    // { name: 'Post của tôi', href: '/dashboard/my-posts' },
-    { name: 'Account info', href: '/dashboard/account' },
-  ];
-
   // Check if user is admin
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     include: { role: true },
   });
 
-  if (user?.role?.name === 'ADMIN') {
-    menuItems.push({ name: 'Users', href: '/dashboard/users' });
-  }
-
   return (
-    <div className="fixed inset-0 flex h-screen bg-gray-100">
-      <aside className="flex w-64 flex-col bg-gray-800 text-white">
-        <div className="border-gray-700 border-b p-4">
-          <h2 className="font-bold text-xl">LMS</h2>
-          <p className="text-gray-400 text-sm">{session.user.email}</p>
-        </div>
-        <nav className="flex-1 space-y-2 p-4">
-          {menuItems.map((item) => (
-            <Link
-              key={item.name}
-              href={item.href}
-              className="block rounded-md px-4 py-2 hover:bg-gray-700"
-            >
-              {item.name}
-            </Link>
-          ))}
-        </nav>
-        <div className="border-gray-700 border-t p-4">
-          <LogoutButton />
-        </div>
-      </aside>
-      <main className="flex-1 overflow-y-auto p-6">{children}</main>
-    </div>
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset>
+        <AppNavbar />
+        <main className="relative flex flex-1 flex-col overflow-y-auto bg-background">
+          {/* Ambient Purple Glow Effects */}
+          <div className="pointer-events-none absolute inset-0 overflow-hidden">
+            <div className="absolute -top-[20%] -right-[10%] size-[500px] rounded-full bg-primary/10 blur-[120px]" />
+            <div className="absolute top-[40%] -left-[10%] size-[400px] rounded-full bg-primary/10 blur-[120px]" />
+            <div className="absolute -bottom-[20%] right-[20%] size-[450px] rounded-full bg-primary/10 blur-[120px]" />
+          </div>
+          <div className="relative z-10 mx-auto w-full max-w-7xl p-6 md:p-10 lg:p-12">
+            {children}
+          </div>
+        </main>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

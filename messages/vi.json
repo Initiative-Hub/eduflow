@@ -1,5 +1,15 @@
 {
   "HomePage": {
     "title": "Xin chào thế giới!"
+  },
+  "Layout": {
+    "newSession": "Phiên mới",
+    "aiChat": "Trò chuyện AI",
+    "socraticTutor": "Gia sư Socratic",
+    "englishAssistant": "Trợ lý Tiếng Anh",
+    "writingAssistant": "Trợ lý Viết",
+    "studyAssistant": "Trợ lý Học tập",
+    "aiTools": "Công cụ AI",
+    "studyHub": "Góc học tập"
   }
 }
