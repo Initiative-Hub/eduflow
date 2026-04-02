@@ -5,6 +5,7 @@ export type FieldType =
   | 'password'
   | 'email'
   | 'number'
+  | 'otp'
   | 'textarea'
   | 'select'
   | 'date'
@@ -52,8 +53,13 @@ interface TagInputFieldConfig {
   allowCreate?: boolean;
 }
 
+interface OtpFieldConfig {
+  otpLength?: number;
+}
+
 export type FormFieldConfig = BaseFieldConfig &
   SelectFieldConfig &
   DropzoneFieldConfig &
   SliderFieldConfig &
-  TagInputFieldConfig;
+  TagInputFieldConfig &
+  OtpFieldConfig;

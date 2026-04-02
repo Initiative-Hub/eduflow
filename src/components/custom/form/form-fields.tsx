@@ -2,6 +2,7 @@ import { BadgeGroupField } from './fields/badge-group-field';
 import { DatePickerField } from './fields/date-picker-field';
 import { DropzoneField } from './fields/dropzone-field';
 import { InputField } from './fields/input-field';
+import { OtpField } from './fields/otp-field';
 import { SelectField } from './fields/select-field';
 import { SliderField } from './fields/slider-field';
 import { SwitchField } from './fields/switch-field';
@@ -30,6 +31,8 @@ export const FieldRenderer = ({
       return <SliderField field={field} formField={formField} />;
     case 'switch':
       return <SwitchField field={field} formField={formField} />;
+    case 'otp':
+      return <OtpField field={field} formField={formField} />;
     default:
       return <InputField field={field} formField={formField} />;
   }
