@@ -1,6 +1,7 @@
 'use client';
 
 import { AuthFormHeading } from '@/components/auth/auth-form-heading';
+import { AuthSocialOptions } from '@/components/auth/auth-social-options';
 import { FormTemplate } from '@/components/custom/form';
 import {
   registerDefaultValues,
@@ -41,6 +42,7 @@ export default function RegisterPage() {
           </span>
         </p>
       </div>
+      <AuthSocialOptions />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { AuthFormHeading } from '@/components/auth/auth-form-heading';
 import { FormTemplate } from '@/components/custom/form';
 import { loginDefaultValues, loginFields, loginSchema } from './login.config';
 import { useLogin } from './use-login';
+import { AuthSocialOptions } from '@/components/auth/auth-social-options';
 
 export default function LoginPage() {
   const { error, isLoading, handleSubmit } = useLogin();
@@ -42,6 +43,7 @@ export default function LoginPage() {
           </div>
         </FormTemplate>
       </div>
+      <AuthSocialOptions />
     </div>
   );
 }

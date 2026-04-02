@@ -22,7 +22,6 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           </div>
 
           <div className="mt-8">{children}</div>
-          <AuthSocialOptions />
         </main>
 
         <AuthPageSwitcher />
