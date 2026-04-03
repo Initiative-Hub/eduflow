@@ -117,5 +117,15 @@
   },
   "HomePage": {
     "title": "Xin chào thế giới!"
+  },
+  "Layout": {
+    "aiChat": "Trò chuyện AI",
+    "aiTools": "Công cụ AI",
+    "englishAssistant": "Trợ lý Tiếng Anh",
+    "newSession": "Phiên mới",
+    "socraticTutor": "Gia sư Socratic",
+    "studyAssistant": "Trợ lý Học tập",
+    "studyHub": "Góc học tập",
+    "writingAssistant": "Trợ lý Viết"
   }
 }
