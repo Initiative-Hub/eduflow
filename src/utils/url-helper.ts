@@ -1,4 +1,3 @@
-const DEFAULT_REDIRECT_PATH = '/dashboard';
 const SANITIZE_BASE_ORIGIN = 'https://redirect.local';
 const ABSOLUTE_SCHEME_PATTERN = /^[a-zA-Z][a-zA-Z\d+\-.]*:/;
 
@@ -13,35 +12,32 @@ function hasControlCharacters(value: string): boolean {
   return false;
 }
 
-export function sanitizeNextUrl(
-  nextUrl: string | null | undefined,
-  fallback = DEFAULT_REDIRECT_PATH
-): string {
-  if (typeof nextUrl !== 'string') return fallback;
+export function sanitizeNextUrl(nextUrl: string | null): string | null {
+  if (typeof nextUrl !== 'string') return null;
 
   const trimmed = nextUrl.trim();
-  if (!trimmed) return fallback;
+  if (!trimmed) return null;
   if (hasControlCharacters(trimmed) || trimmed.includes('\\')) {
-    return fallback;
+    return null;
   }
   if (!trimmed.startsWith('/') && !ABSOLUTE_SCHEME_PATTERN.test(trimmed)) {
-    return fallback;
+    return null;
   }
   if (trimmed.startsWith('//')) {
-    return fallback;
+    return null;
   }
 
   try {
     const parsed = new URL(trimmed, SANITIZE_BASE_ORIGIN);
-    if (parsed.origin !== SANITIZE_BASE_ORIGIN) return fallback;
+    if (parsed.origin !== SANITIZE_BASE_ORIGIN) return null;
 
     const safePath = `${parsed.pathname}${parsed.search}${parsed.hash}`;
     if (!safePath.startsWith('/') || safePath.startsWith('//')) {
-      return fallback;
+      return null;
     }
 
-    return safePath || fallback;
+    return safePath;
   } catch {
-    return fallback;
+    return null;
   }
 }

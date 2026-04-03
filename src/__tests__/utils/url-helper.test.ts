@@ -17,6 +17,6 @@ describe('sanitizeNextUrl', () => {
     '/dashboard\r\nSet-Cookie: attack=true',
     '\\evil.example\\steal',
   ])('falls back for unsafe nextUrl value %s', (value) => {
-    expect(sanitizeNextUrl(value)).toBe('/dashboard');
+    expect(sanitizeNextUrl(value)).toBe(null);
   });
 });

@@ -21,23 +21,12 @@ const handleRedirect = ({
     req.cookies.has('better-auth.session_token') ||
     req.cookies.has('__Secure-better-auth.session_token');
 
-  // If current path ends with /login and user is logged in, redirect to dashboard page
-  if (
-    req.nextUrl.pathname !== '/' &&
-    AUTH_PATHS.some((path) => req.nextUrl.pathname.startsWith(path)) &&
-    hasSession
-  ) {
-    const nextUrl = req.nextUrl.searchParams.get('nextUrl');
-    const sanitizedNextUrl = sanitizeNextUrl(nextUrl);
-    const redirectUrl = new URL(sanitizedNextUrl, req.nextUrl.origin);
-
-    return { res: NextResponse.redirect(redirectUrl), redirect: true };
-  }
-
   // If current path is not public and user is not logged in, redirect to login page
   if (
     req.nextUrl.pathname !== '/' &&
-    !PUBLIC_PATHS.some((path) => req.nextUrl.pathname.startsWith(path)) &&
+    ![...PUBLIC_PATHS, ...AUTH_PATHS].some((path) =>
+      req.nextUrl.pathname.startsWith(path)
+    ) &&
     !hasSession
   ) {
     const loginUrl = new URL('/login', req.nextUrl.origin);
@@ -46,17 +35,32 @@ const handleRedirect = ({
       req.nextUrl.pathname + req.nextUrl.search
     );
 
+    console.log('Redirecting to login page with nextUrl:', loginUrl.toString());
+
     return { res: NextResponse.redirect(loginUrl), redirect: true };
   }
 
-  const nextRes = NextResponse.next(req);
+  // If current path ends with /login and user is logged in, redirect to dashboard page
+  if (
+    req.nextUrl.pathname !== '/' &&
+    AUTH_PATHS.some((path) => req.nextUrl.pathname.startsWith(path)) &&
+    hasSession
+  ) {
+    const nextUrl = req.nextUrl.searchParams.get('nextUrl');
+    const sanitizedNextUrl = sanitizeNextUrl(nextUrl) || '/dashboard';
+    const redirectUrl = new URL(sanitizedNextUrl, req.nextUrl.origin);
+
+    return { res: NextResponse.redirect(redirectUrl), redirect: true };
+  }
+
+  const nextRes = NextResponse.next();
 
   return { res: nextRes, redirect: false };
 };
 
 export function proxy(req: NextRequest) {
   if (req.nextUrl.pathname.startsWith('/api')) {
-    return NextResponse.next(req);
+    return NextResponse.next();
   }
 
   // Handle special cases for public, authenticating paths
