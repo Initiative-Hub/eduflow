@@ -1,4 +1,9 @@
 {
+  "AccountPage": {
+    "emailLabel": "Email:",
+    "title": "Account Information",
+    "usernameLabel": "Username:"
+  },
   "AuthForgotPassword": {
     "actions": {
       "backToLogin": "Back to Login",
@@ -115,11 +120,6 @@
       "otpInvalid": "OTP code must be exactly 6 digits.",
       "otpRequired": "OTP code is required."
     }
-  },
-  "AccountPage": {
-    "emailLabel": "Email:",
-    "title": "Account Information",
-    "usernameLabel": "Username:"
   },
   "Common": {
     "logout": "Log out"
