@@ -12,8 +12,9 @@ import {
   verifyOtpFields,
   verifyOtpSchema,
 } from './verify-otp.config';
+import { Suspense } from 'react';
 
-export default function VerifyOtpPage() {
+function VerifyOtpContent() {
   const t = useTranslations('AuthVerifyOtp');
   const searchParams = useSearchParams();
   const initialEmail = searchParams.get('email') || '';
@@ -89,5 +90,13 @@ export default function VerifyOtpPage() {
         </FormTemplate>
       </div>
     </div>
+  );
+}
+
+export default function VerifyOtpPage() {
+  return (
+    <Suspense>
+      <VerifyOtpContent />
+    </Suspense>
   );
 }
