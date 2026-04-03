@@ -1,4 +1,120 @@
 {
+  "AuthForgotPassword": {
+    "actions": {
+      "backToLogin": "Back to Login",
+      "send": "Send Reset Link"
+    },
+    "description": "Enter your email address and we'll send you a link to reset your password.",
+    "form": {
+      "email": {
+        "label": "Email address",
+        "placeholder": "name@gmail.com"
+      }
+    },
+    "success": {
+      "description": "If an account exists for {email}, you'll receive password reset instructions shortly.",
+      "title": "Check your inbox"
+    },
+    "title": "Reset Password",
+    "validation": {
+      "invalidEmail": "Please enter a valid email address."
+    }
+  },
+  "AuthLogin": {
+    "actions": {
+      "forgotPassword": "Forgot password?",
+      "signIn": "Sign In",
+      "signingIn": "Signing in..."
+    },
+    "description": "Enter your credentials to access your workspace.",
+    "form": {
+      "email": {
+        "label": "Email",
+        "placeholder": "Enter your email"
+      },
+      "password": {
+        "label": "Password",
+        "placeholder": "Enter your password"
+      }
+    },
+    "title": "Welcome Back",
+    "validation": {
+      "emptyPassword": "Password cannot be empty.",
+      "invalidEmail": "Please enter a valid email address."
+    }
+  },
+  "AuthPageSwitcher": {
+    "alreadyPart": "Already part of us?",
+    "newToAcademy": "New to the academy?",
+    "signIn": "Sign In",
+    "signUp": "Sign Up"
+  },
+  "AuthRegister": {
+    "actions": {
+      "createAccount": "Create Account",
+      "creatingAccount": "Creating Account..."
+    },
+    "agreement": {
+      "and": " and our ",
+      "privacy": "Privacy Policy.",
+      "text": "By signing up, you agree to the ",
+      "tos": "Terms of Service"
+    },
+    "description": "Begin your journey in the living library.",
+    "form": {
+      "confirmPassword": {
+        "label": "Confirm Password",
+        "placeholder": "Confirm your password"
+      },
+      "email": {
+        "label": "Email",
+        "placeholder": "Enter your email"
+      },
+      "fullname": {
+        "label": "Full Name",
+        "placeholder": "Enter your name"
+      },
+      "password": {
+        "label": "Password",
+        "placeholder": "Enter your password"
+      }
+    },
+    "title": "Join the Academy"
+  },
+  "AuthSocialOptions": {
+    "ariaLabel": "Social sign in options",
+    "orContinueWith": "Or Continue With"
+  },
+  "AuthVerifyOtp": {
+    "actions": {
+      "verify": "Verify and Continue",
+      "verifying": "Verifying..."
+    },
+    "description": "We've sent a 6-digit verification code to your email address:",
+    "form": {
+      "email": {
+        "label": "Email",
+        "placeholder": "Enter your email"
+      },
+      "otp": {
+        "description": "Use the code from your inbox.",
+        "label": "Verification code",
+        "placeholder": "Enter 6-digit code"
+      }
+    },
+    "resend": {
+      "action": "Resend OTP",
+      "cooldown": "Resend in {seconds}s",
+      "label": "Didn't receive the code?",
+      "loading": "Resending..."
+    },
+    "title": "Check your inbox",
+    "validation": {
+      "invalidEmail": "Please enter a valid email address.",
+      "otpInvalid": "OTP code must be exactly 6 digits.",
+      "otpRequired": "OTP code is required."
+    }
+  },
   "HomePage": {
     "title": "Hello world!"
   },

@@ -67,7 +67,7 @@ export function FormTemplate<TData extends FieldValues>({
                   data-invalid={fieldState.invalid}
                   className={`${field.colSpan === 1 ? 'col-span-1' : 'col-span-1 md:col-span-2'}`}
                 >
-                  {field.type !== 'switch' && (
+                  {field.type !== 'switch' && field.type !== 'otp' && (
                     <>
                       <FieldLabel className="text-sm">
                         {field.label}

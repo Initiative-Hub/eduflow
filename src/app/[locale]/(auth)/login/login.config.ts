@@ -11,17 +11,17 @@ export type LoginFormData = z.infer<typeof loginSchema>;
 export const loginFields: FormFieldConfig[] = [
   {
     name: 'email',
-    label: 'Email',
+    label: 'form.email.label',
     type: 'email',
-    placeholder: 'Enter your email',
+    placeholder: 'form.email.placeholder',
     required: true,
     colSpan: 2,
   },
   {
     name: 'password',
-    label: 'Password',
+    label: 'form.password.label',
     type: 'password',
-    placeholder: 'Enter your password',
+    placeholder: 'form.password.placeholder',
     required: true,
     colSpan: 2,
   },
