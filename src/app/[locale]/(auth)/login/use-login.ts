@@ -8,7 +8,7 @@ import type { LoginFormData } from './login.config';
 export function useLogin() {
   const router = useRouter();
 
-  const mutation = useMutation<void, Error, LoginFormData>({
+  const emailMutation = useMutation<void, Error, LoginFormData>({
     mutationFn: async (formData: LoginFormData) => {
       const { error } = await signIn.email({
         email: formData.email,
@@ -24,9 +24,26 @@ export function useLogin() {
     },
   });
 
+  const googleMutation = useMutation<void, Error, void>({
+    mutationFn: async () => {
+      const { error } = await signIn.social({
+        provider: 'google',
+        callbackURL: '/dashboard',
+      });
+
+      if (error) {
+        throw new Error('Failed to sign in with Google. Please try again.');
+      }
+    },
+  });
+
   return {
-    error: mutation.error?.message || '',
-    isLoading: mutation.isPending,
-    handleSubmit: mutation.mutate,
+    error: emailMutation.error?.message || '',
+    isLoading: emailMutation.isPending,
+    handleSubmit: emailMutation.mutate,
+
+    googleError: googleMutation.error?.message || '',
+    isGoogleLoading: googleMutation.isPending,
+    handleGoogleLogin: () => googleMutation.mutate(),
   };
 }

@@ -3,6 +3,7 @@
 import { Mail } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { Suspense } from 'react';
 import { FormTemplate } from '@/components/custom/form';
 import { Button } from '@/components/ui/button';
 import { useTranslatedFields } from '@/hooks/use-translated-fields';
@@ -12,7 +13,6 @@ import {
   verifyOtpFields,
   verifyOtpSchema,
 } from './verify-otp.config';
-import { Suspense } from 'react';
 
 function VerifyOtpContent() {
   const t = useTranslations('AuthVerifyOtp');
