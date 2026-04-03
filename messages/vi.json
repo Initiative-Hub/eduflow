@@ -1,36 +1,9 @@
 {
-  "AuthVerifyOtp": {
-    "title": "Kiểm tra hộp thư",
-    "description": "Chúng tôi đã gửi mã xác minh 6 chữ số đến địa chỉ email của bạn:",
-    "form": {
-      "email": {
-        "label": "Email",
-        "placeholder": "Nhập email của bạn"
-      },
-      "otp": {
-        "label": "Mã xác minh",
-        "placeholder": "Nhập mã 6 chữ số",
-        "description": "Sử dụng mã trong hộp thư của bạn."
-      }
-    },
-    "actions": {
-      "verify": "Xác minh và tiếp tục",
-      "verifying": "Đang xác minh..."
-    },
-    "resend": {
-      "label": "Bạn chưa nhận được mã?",
-      "action": "Gửi lại OTP",
-      "loading": "Đang gửi lại...",
-      "cooldown": "Gửi lại sau {seconds}s"
-    },
-    "validation": {
-      "invalidEmail": "Vui lòng nhập địa chỉ email hợp lệ.",
-      "otpRequired": "Mã OTP là bắt buộc.",
-      "otpInvalid": "Mã OTP phải gồm đúng 6 chữ số."
-    }
-  },
   "AuthForgotPassword": {
-    "title": "Đặt lại mật khẩu",
+    "actions": {
+      "backToLogin": "Quay lại đăng nhập",
+      "send": "Gửi liên kết đặt lại"
+    },
     "description": "Nhập địa chỉ email của bạn và chúng tôi sẽ gửi một liên kết để đặt lại mật khẩu.",
     "form": {
       "email": {
@@ -38,15 +11,44 @@
         "placeholder": "name@gmail.com"
       }
     },
-    "actions": {
-      "send": "Gửi liên kết đặt lại",
-      "backToLogin": "Quay lại đăng nhập"
-    },
     "success": {
-      "title": "Kiểm tra hộp thư",
-      "description": "Nếu có tài khoản cho {email}, bạn sẽ sớm nhận được hướng dẫn đặt lại mật khẩu."    },
+      "description": "Nếu có tài khoản cho {email}, bạn sẽ sớm nhận được hướng dẫn đặt lại mật khẩu.",
+      "title": "Kiểm tra hộp thư"
+    },
+    "title": "Đặt lại mật khẩu",
     "validation": {
-      "invalidEmail": "Vui lòng nhập địa chỉ email hợp lệ."    }
+      "invalidEmail": "Vui lòng nhập địa chỉ email hợp lệ."
+    }
+  },
+  "AuthVerifyOtp": {
+    "actions": {
+      "verify": "Xác minh và tiếp tục",
+      "verifying": "Đang xác minh..."
+    },
+    "description": "Chúng tôi đã gửi mã xác minh 6 chữ số đến địa chỉ email của bạn:",
+    "form": {
+      "email": {
+        "label": "Email",
+        "placeholder": "Nhập email của bạn"
+      },
+      "otp": {
+        "description": "Sử dụng mã trong hộp thư của bạn.",
+        "label": "Mã xác minh",
+        "placeholder": "Nhập mã 6 chữ số"
+      }
+    },
+    "resend": {
+      "action": "Gửi lại OTP",
+      "cooldown": "Gửi lại sau {seconds}s",
+      "label": "Bạn chưa nhận được mã?",
+      "loading": "Đang gửi lại..."
+    },
+    "title": "Kiểm tra hộp thư",
+    "validation": {
+      "invalidEmail": "Vui lòng nhập địa chỉ email hợp lệ.",
+      "otpInvalid": "Mã OTP phải gồm đúng 6 chữ số.",
+      "otpRequired": "Mã OTP là bắt buộc."
+    }
   },
   "HomePage": {
     "title": "Xin chào thế giới!"
