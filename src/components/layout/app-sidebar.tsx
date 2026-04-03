@@ -1,34 +1,33 @@
 'use client';
 
-import * as React from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import {
-  MessageSquare,
+  BookOpen,
   GraduationCap,
   Languages,
-  PenLine,
-  BookOpen,
-  Plus,
+  MessageSquare,
   PanelLeftClose,
   PanelLeftOpen,
+  PenLine,
+  Plus,
 } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-
+import type * as React from 'react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarFooter,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const t = useTranslations('Layout');
@@ -66,30 +65,30 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar
       collapsible="icon"
-      className="border-r-0 shadow-2xl z-40 bg-card"
+      className="z-40 border-r-0 bg-card shadow-2xl"
       {...props}
     >
-      <SidebarHeader className="p-5 flex flex-col gap-6 group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:gap-4 group-data-[collapsible=icon]:items-center">
-        <div className="flex items-center gap-3 px-1 mt-2 mb-1 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
+      <SidebarHeader className="flex flex-col gap-6 p-5 group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:gap-4 group-data-[collapsible=icon]:p-2">
+        <div className="mt-2 mb-1 flex items-center gap-3 px-1 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
             <GraduationCap className="size-6" strokeWidth={2.5} />
           </div>
           <div className="flex flex-col justify-center group-data-[collapsible=icon]:hidden">
-            <span className="font-bold text-xl tracking-tight leading-none text-primary">
+            <span className="font-bold text-primary text-xl leading-none tracking-tight">
               EduFlow
             </span>
-            <span className="text-xs font-bold tracking-widest text-muted-foreground/80 mt-1">
+            <span className="mt-1 font-bold text-muted-foreground/80 text-xs tracking-widest">
               ACADEMIC CURATOR
             </span>
           </div>
         </div>
         <Button
-          className="w-full justify-start rounded-xl font-semibold bg-gradient-to-br from-primary to-primary/80 text-primary-foreground hover:from-primary/90 hover:to-primary/70 shadow-md transition-all hover:shadow-lg py-6 px-4 group-data-[collapsible=icon]:w-12 group-data-[collapsible=icon]:h-12 group-data-[collapsible=icon]:!p-0 group-data-[collapsible=icon]:!justify-center group-data-[collapsible=icon]:mx-auto relative"
+          className="group-data-[collapsible=icon]:justify-center! relative w-full justify-start rounded-xl bg-linear-to-br from-primary to-primary/80 px-4 py-6 font-semibold text-primary-foreground shadow-md transition-all hover:from-primary/90 hover:to-primary/70 hover:shadow-lg group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:h-12 group-data-[collapsible=icon]:w-12 group-data-[collapsible=icon]:p-0!"
           size="lg"
         >
           <Plus
             data-icon="inline-start"
-            className="opacity-80 size-5 shrink-0 group-data-[collapsible=icon]:absolute group-data-[collapsible=icon]:top-1/2 group-data-[collapsible=icon]:left-1/2 group-data-[collapsible=icon]:-translate-x-1/2 group-data-[collapsible=icon]:-translate-y-1/2 group-data-[collapsible=icon]:m-0"
+            className="size-5 shrink-0 opacity-80 group-data-[collapsible=icon]:absolute group-data-[collapsible=icon]:top-1/2 group-data-[collapsible=icon]:left-1/2 group-data-[collapsible=icon]:m-0 group-data-[collapsible=icon]:-translate-x-1/2 group-data-[collapsible=icon]:-translate-y-1/2"
           />
           <span className="text-sm group-data-[collapsible=icon]:hidden">
             {t('newSession')}
@@ -99,7 +98,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>
-            <SidebarMenu className="gap-3 px-4 mt-2 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:items-center">
+            <SidebarMenu className="mt-2 gap-3 px-4 group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:px-0">
               {assistants.map((item) => {
                 const isActive =
                   item.url === '/dashboard'
@@ -114,13 +113,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       tooltip={{
                         children: item.name,
                       }}
-                      className={`
-                        h-[48px] rounded-xl font-medium transition-all duration-200
-                        /* Active State: Semantic background and primary text */
-                        data-[active=true]:bg-primary/10 data-[active=true]:text-primary 
-                        /* Inactive State: Semantic grey text */
-                        text-muted-foreground hover:bg-sidebar-accent hover:text-primary
-                      `}
+                      className={`/* Active State: Semantic background and primary text */ /* Inactive State: Semantic grey text */ h-12 rounded-xl font-medium text-muted-foreground transition-all duration-200 hover:bg-sidebar-accent hover:text-primary data-[active=true]:bg-primary/10 data-[active=true]:text-primary`}
                     >
                       <Link
                         href={item.url}
@@ -146,14 +139,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="p-4 border-t border-border/40 group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:pb-3">
+      <SidebarFooter className="border-border/40 border-t p-4 group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:pb-3">
         {/* Desktop Collapse Toggle */}
-        <div className="hidden md:flex justify-end group-data-[collapsible=icon]:justify-center">
+        <div className="hidden justify-end group-data-[collapsible=icon]:justify-center md:flex">
           <Button
             variant="ghost"
             size="icon"
             onClick={toggleSidebar}
-            className="text-muted-foreground hover:text-foreground rounded-full"
+            className="rounded-full text-muted-foreground hover:text-foreground"
           >
             {state === 'expanded' ? (
               <PanelLeftClose className="size-5" />
@@ -165,16 +158,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </div>
 
         {/* Mobile Avatar Layout */}
-        <div className="md:hidden flex items-center gap-3 p-2 rounded-xl hover:bg-muted/40 transition-colors cursor-pointer">
-          <Avatar className="size-10 cursor-pointer border hover:ring-2 hover:ring-primary/20 transition-all">
+        <div className="flex cursor-pointer items-center gap-3 rounded-xl p-2 transition-colors hover:bg-muted/40 md:hidden">
+          <Avatar className="size-10 cursor-pointer border transition-all hover:ring-2 hover:ring-primary/20">
             <AvatarImage src="" alt="User" />
-            <AvatarFallback className="bg-primary/10 text-primary font-bold text-sm">
+            <AvatarFallback className="bg-primary/10 font-bold text-primary text-sm">
               U
             </AvatarFallback>
           </Avatar>
           <div className="flex flex-col">
-            <span className="text-sm font-semibold text-foreground">User</span>
-            <span className="text-xs text-muted-foreground">Free Plan</span>
+            <span className="font-semibold text-foreground text-sm">User</span>
+            <span className="text-muted-foreground text-xs">Free Plan</span>
           </div>
         </div>
       </SidebarFooter>
