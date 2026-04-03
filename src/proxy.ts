@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import createMiddleware from 'next-intl/middleware';
 import { routing } from './i18n/routing';
 
@@ -11,7 +11,9 @@ export default async function middleware(req: NextRequest) {
   }
 
   // Check for better-auth session token
-  const hasSession = req.cookies.has('better-auth.session_token') || req.cookies.has('__Secure-better-auth.session_token');
+  const hasSession =
+    req.cookies.has('better-auth.session_token') ||
+    req.cookies.has('__Secure-better-auth.session_token');
 
   const isDashboard = req.nextUrl.pathname.includes('/dashboard');
   const isLogin = req.nextUrl.pathname.includes('/login');

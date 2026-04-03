@@ -19,10 +19,11 @@ export const verifyOtpService = {
     return result;
   },
   resendOtp: async (data: ResendOtpPayload) => {
-    const { data: result, error } = await authClient.emailOtp.sendVerificationOtp({
-      email: data.email,
-      type: 'email-verification',
-    });
+    const { data: result, error } =
+      await authClient.emailOtp.sendVerificationOtp({
+        email: data.email,
+        type: 'email-verification',
+      });
     if (error) throw error;
     return result;
   },
