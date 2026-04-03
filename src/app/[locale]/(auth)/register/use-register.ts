@@ -17,8 +17,9 @@ export function useRegister() {
         password: data.password,
       });
     },
-    onSuccess: () => {
-      router.replace('/login');
+    onSuccess: (_, variables) => {
+      const email = encodeURIComponent(variables.email);
+      router.replace(`/verify-otp?email=${email}`);
     },
     onError: (error) => toast.error(error.message),
   });

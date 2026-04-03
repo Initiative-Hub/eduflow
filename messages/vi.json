@@ -1,4 +1,120 @@
 {
+  "AuthForgotPassword": {
+    "actions": {
+      "backToLogin": "Quay lại đăng nhập",
+      "send": "Gửi liên kết đặt lại"
+    },
+    "description": "Nhập địa chỉ email của bạn và chúng tôi sẽ gửi một liên kết để đặt lại mật khẩu.",
+    "form": {
+      "email": {
+        "label": "Địa chỉ email",
+        "placeholder": "name@gmail.com"
+      }
+    },
+    "success": {
+      "description": "Nếu có tài khoản cho {email}, bạn sẽ sớm nhận được hướng dẫn đặt lại mật khẩu.",
+      "title": "Kiểm tra hộp thư"
+    },
+    "title": "Đặt lại mật khẩu",
+    "validation": {
+      "invalidEmail": "Vui lòng nhập địa chỉ email hợp lệ."
+    }
+  },
+  "AuthLogin": {
+    "actions": {
+      "forgotPassword": "Quên mật khẩu?",
+      "signIn": "Đăng nhập",
+      "signingIn": "Đang đăng nhập..."
+    },
+    "description": "Nhập thông tin đăng nhập của bạn để truy cập không gian làm việc.",
+    "form": {
+      "email": {
+        "label": "Email",
+        "placeholder": "Nhập email của bạn"
+      },
+      "password": {
+        "label": "Mật khẩu",
+        "placeholder": "Nhập mật khẩu của bạn"
+      }
+    },
+    "title": "Chào mừng trở lại",
+    "validation": {
+      "emptyPassword": "Mật khẩu không được để trống.",
+      "invalidEmail": "Vui lòng nhập địa chỉ email hợp lệ."
+    }
+  },
+  "AuthPageSwitcher": {
+    "alreadyPart": "Đã là thành viên?",
+    "newToAcademy": "Bạn chưa có tài khoản?",
+    "signIn": "Đăng nhập",
+    "signUp": "Đăng ký"
+  },
+  "AuthRegister": {
+    "actions": {
+      "createAccount": "Tạo tài khoản",
+      "creatingAccount": "Đang tạo tài khoản..."
+    },
+    "agreement": {
+      "and": " và ",
+      "privacy": "Chính sách Bảo mật của chúng tôi.",
+      "text": "Bằng cách đăng ký, bạn đồng ý với ",
+      "tos": "Điều khoản Dịch vụ"
+    },
+    "description": "Bắt đầu hành trình của bạn trong thư viện sống.",
+    "form": {
+      "confirmPassword": {
+        "label": "Xác nhận mật khẩu",
+        "placeholder": "Xác nhận mật khẩu của bạn"
+      },
+      "email": {
+        "label": "Email",
+        "placeholder": "Nhập email của bạn"
+      },
+      "fullname": {
+        "label": "Họ và tên",
+        "placeholder": "Nhập tên của bạn"
+      },
+      "password": {
+        "label": "Mật khẩu",
+        "placeholder": "Nhập mật khẩu của bạn"
+      }
+    },
+    "title": "Tham gia Học viện"
+  },
+  "AuthSocialOptions": {
+    "ariaLabel": "Tùy chọn đăng nhập qua mạng xã hội",
+    "orContinueWith": "Hoặc tiếp tục với"
+  },
+  "AuthVerifyOtp": {
+    "actions": {
+      "verify": "Xác minh và tiếp tục",
+      "verifying": "Đang xác minh..."
+    },
+    "description": "Chúng tôi đã gửi mã xác minh 6 chữ số đến địa chỉ email của bạn:",
+    "form": {
+      "email": {
+        "label": "Email",
+        "placeholder": "Nhập email của bạn"
+      },
+      "otp": {
+        "description": "Sử dụng mã trong hộp thư của bạn.",
+        "label": "Mã xác minh",
+        "placeholder": "Nhập mã 6 chữ số"
+      }
+    },
+    "resend": {
+      "action": "Gửi lại OTP",
+      "cooldown": "Gửi lại sau {seconds}s",
+      "label": "Bạn chưa nhận được mã?",
+      "loading": "Đang gửi lại..."
+    },
+    "title": "Kiểm tra hộp thư",
+    "validation": {
+      "invalidEmail": "Vui lòng nhập địa chỉ email hợp lệ.",
+      "otpInvalid": "Mã OTP phải gồm đúng 6 chữ số.",
+      "otpRequired": "Mã OTP là bắt buộc."
+    }
+  },
   "HomePage": {
     "title": "Xin chào thế giới!"
   }
