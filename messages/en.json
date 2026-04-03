@@ -117,5 +117,15 @@
   },
   "HomePage": {
     "title": "Hello world!"
+  },
+  "Layout": {
+    "aiChat": "AI Chat",
+    "aiTools": "AI Tools",
+    "englishAssistant": "English Assistant",
+    "newSession": "New Session",
+    "socraticTutor": "Socratic Tutor",
+    "studyAssistant": "Study Assistant",
+    "studyHub": "Study Hub",
+    "writingAssistant": "Writing Assistant"
   }
 }
