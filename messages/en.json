@@ -116,8 +116,20 @@
       "otpRequired": "OTP code is required."
     }
   },
+  "AccountPage": {
+    "emailLabel": "Email:",
+    "title": "Account Information",
+    "usernameLabel": "Username:"
+  },
+  "Common": {
+    "logout": "Log out"
+  },
   "HomePage": {
     "title": "Hello world!"
+  },
+  "LanguageSwitcher": {
+    "label": "Language",
+    "system": "System"
   },
   "Layout": {
     "aiChat": "AI Chat",

@@ -15,18 +15,18 @@ datasource db {
 
 model Role {
   id    String @id @default(uuid())
-  name  String @unique // Ví dụ: 'ADMIN', 'USER'
-  users User[] // Quan hệ 1-nhiều với User
+  name  String @unique // Example: 'ADMIN', 'USER'
+  users User[] // One-to-many relationship with User
 }
 
 model User {
   id            String    @id @default(uuid())
   email         String    @unique
   name          String?
-  password      String? // Nên mã hóa password trong thực tế
+  password      String? // Passwords should be hashed in real applications
   roleId        String
   role          Role      @relation(fields: [roleId], references: [id])
-  posts         Post[] // Quan hệ 1-nhiều với Post
+  posts         Post[] // One-to-many relationship with Post
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @default(now()) @updatedAt
   emailVerified Boolean   @default(false)
@@ -46,7 +46,7 @@ model Post {
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
-  // Map model "Post" thành tên bảng "posts" trong database nếu bạn muốn số nhiều
+  // Map the "Post" model to the "posts" table if you want a plural table name
   @@map("posts")
 }
 

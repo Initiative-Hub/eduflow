@@ -116,8 +116,20 @@
       "otpRequired": "Mã OTP là bắt buộc."
     }
   },
+  "AccountPage": {
+    "emailLabel": "Email:",
+    "title": "Thông tin tài khoản",
+    "usernameLabel": "Tên người dùng:"
+  },
+  "Common": {
+    "logout": "Đăng xuất"
+  },
   "HomePage": {
     "title": "Xin chào thế giới!"
+  },
+  "LanguageSwitcher": {
+    "label": "Ngôn ngữ",
+    "system": "Hệ thống"
   },
   "Layout": {
     "aiChat": "Trò chuyện AI",

@@ -10,7 +10,7 @@ const adapter = new PrismaPg({
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  console.log('Bắt đầu seed dữ liệu...');
+  console.log('Starting database seed...');
 
   // Hash passwords
   const hashedPasswordAdmin = await bcrypt.hash('securepassword123', 10);
@@ -18,7 +18,7 @@ async function main() {
   const hashedPasswordTeacher = await bcrypt.hash('teacherpass123', 10);
   const hashedPasswordStudent = await bcrypt.hash('studentpass123', 10);
 
-  // 1. Tạo Roles
+  // 1. Create roles
   const adminRole = await prisma.role.upsert({
     where: { name: 'ADMIN' },
     update: {},
@@ -56,10 +56,10 @@ async function main() {
   });
 
   console.log(
-    `Đã tạo Roles: ${adminRole.name}, ${userRole.name}, ${teacherRole.name}, ${studentRole.name}`
+    `Created roles: ${adminRole.name}, ${userRole.name}, ${teacherRole.name}, ${studentRole.name}`
   );
 
-  // 2. Tạo Users và gán Role
+  // 2. Create users and assign roles
   const user1 = await prisma.user.upsert({
     where: { email: 'admin@example.com' },
     update: {},
@@ -73,8 +73,8 @@ async function main() {
         create: [
           {
             id: randomUUID(),
-            title: 'Bài viết quản trị đầu tiên',
-            content: 'Nội dung bài viết quản trị...',
+            title: 'First admin post',
+            content: 'Admin post content...',
             published: true,
           },
         ],
@@ -95,14 +95,14 @@ async function main() {
         create: [
           {
             id: randomUUID(),
-            title: 'Xin chào cộng đồng',
-            content: 'Tôi là thành viên mới.',
+            title: 'Hello community',
+            content: 'I am a new member.',
             published: true,
           },
           {
             id: randomUUID(),
-            title: 'Bản nháp chưa đăng',
-            content: 'Nội dung này chưa public.',
+            title: 'Unpublished draft',
+            content: 'This content is not public yet.',
             published: false,
           },
         ],
@@ -110,7 +110,7 @@ async function main() {
     },
   });
 
-  // mới: teacher và student accounts
+  // Additional teacher and student accounts
   const teacherUser = await prisma.user.upsert({
     where: { email: 'teacher@example.com' },
     update: {},
@@ -138,7 +138,7 @@ async function main() {
   console.log({ user1, user2, teacherUser, studentUser });
 
   console.log({ user1, user2 });
-  console.log('Seed dữ liệu thành công!');
+  console.log('Database seed completed successfully!');
 }
 
 main()

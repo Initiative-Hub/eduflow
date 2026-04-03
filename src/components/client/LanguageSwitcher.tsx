@@ -2,7 +2,7 @@
 
 import { useMutation } from '@tanstack/react-query';
 import { CheckIcon, GlobeIcon, MonitorIcon } from 'lucide-react';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -30,6 +30,7 @@ const locales = supportedLocales.map((code) => ({
 
 export default function LanguageSwitcher() {
   const locale = useLocale();
+  const t = useTranslations('LanguageSwitcher');
   const router = useRouter();
 
   const { mutate: updateLocale, isPending } = useMutation({
@@ -67,7 +68,7 @@ export default function LanguageSwitcher() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-full">
-        <DropdownMenuLabel>Language</DropdownMenuLabel>
+        <DropdownMenuLabel>{t('label')}</DropdownMenuLabel>
         <DropdownMenuGroup>
           {locales.map(({ code, label }) => {
             const isActive = code === locale;
@@ -101,7 +102,7 @@ export default function LanguageSwitcher() {
         >
           <span className="flex items-center gap-2">
             <MonitorIcon />
-            <span>System</span>
+            <span>{t('system')}</span>
           </span>
         </DropdownMenuItem>
       </DropdownMenuContent>
