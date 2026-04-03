@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { sanitizeNextUrl } from '@/utils/url-helper';
+import { sanitizeUrl } from '@/utils/url-helper';
 
-describe('sanitizeNextUrl', () => {
+describe('sanitizeUrl', () => {
   it('keeps a safe relative return path intact', () => {
-    expect(sanitizeNextUrl('  /dashboard?tab=profile#section  ')).toBe(
+    expect(sanitizeUrl('  /dashboard?tab=profile#section  ')).toBe(
       '/dashboard?tab=profile#section'
     );
   });
@@ -17,6 +17,6 @@ describe('sanitizeNextUrl', () => {
     '/dashboard\r\nSet-Cookie: attack=true',
     '\\evil.example\\steal',
   ])('falls back for unsafe nextUrl value %s', (value) => {
-    expect(sanitizeNextUrl(value)).toBe(null);
+    expect(sanitizeUrl(value)).toBe(null);
   });
 });

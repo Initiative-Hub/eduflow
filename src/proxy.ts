@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import createMiddleware from 'next-intl/middleware';
 import { routing } from '@/i18n/routing';
-import { sanitizeNextUrl } from '@/utils/url-helper';
+import { sanitizeUrl } from '@/utils/url-helper';
 import { AUTH_PATHS, PUBLIC_PATHS } from './constants/common';
 
 const intlMiddleware = createMiddleware(routing);
@@ -35,8 +35,6 @@ const handleRedirect = ({
       req.nextUrl.pathname + req.nextUrl.search
     );
 
-    console.log('Redirecting to login page with nextUrl:', loginUrl.toString());
-
     return { res: NextResponse.redirect(loginUrl), redirect: true };
   }
 
@@ -47,7 +45,7 @@ const handleRedirect = ({
     hasSession
   ) {
     const nextUrl = req.nextUrl.searchParams.get('nextUrl');
-    const sanitizedNextUrl = sanitizeNextUrl(nextUrl) || '/dashboard';
+    const sanitizedNextUrl = sanitizeUrl(nextUrl) || '/dashboard';
     const redirectUrl = new URL(sanitizedNextUrl, req.nextUrl.origin);
 
     return { res: NextResponse.redirect(redirectUrl), redirect: true };

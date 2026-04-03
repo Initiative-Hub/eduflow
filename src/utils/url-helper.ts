@@ -12,10 +12,10 @@ function hasControlCharacters(value: string): boolean {
   return false;
 }
 
-export function sanitizeNextUrl(nextUrl: string | null): string | null {
-  if (typeof nextUrl !== 'string') return null;
+export function sanitizeUrl(url: string | null): string | null {
+  if (typeof url !== 'string') return null;
 
-  const trimmed = nextUrl.trim();
+  const trimmed = url.trim();
   if (!trimmed) return null;
   if (hasControlCharacters(trimmed) || trimmed.includes('\\')) {
     return null;

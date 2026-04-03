@@ -1,20 +1,24 @@
 'use client';
 
 import { useMutation } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import type { ApiError } from '@/lib/api';
+import { sanitizeUrl } from '@/utils/url-helper';
 import type { LoginFormData } from './login.config';
 import { loginService } from './login.service';
 
 export function useLogin() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const emailMutation = useMutation<void, ApiError, LoginFormData>({
     mutationFn: async (formData: LoginFormData) => {
       await loginService.login(formData);
     },
     onSuccess: () => {
-      router.replace('/dashboard');
+      const nextUrl = searchParams.get('nextUrl');
+      const sanitizedUrl = sanitizeUrl(nextUrl) || '/dashboard';
+      router.replace(sanitizedUrl);
     },
   });
 
