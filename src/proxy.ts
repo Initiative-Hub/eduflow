@@ -11,7 +11,9 @@ export default async function middleware(req: NextRequest) {
   }
 
   // Check for better-auth session token
-  const hasSession = req.cookies.has('better-auth.session_token') || req.cookies.has('__Secure-better-auth.session_token');
+  const hasSession =
+    req.cookies.has('better-auth.session_token') ||
+    req.cookies.has('__Secure-better-auth.session_token');
 
   const isDashboard = req.nextUrl.pathname.includes('/dashboard');
   const isLogin = req.nextUrl.pathname.includes('/login');
