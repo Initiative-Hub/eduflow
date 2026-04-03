@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { Menu, GraduationCap } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
+import LanguageSwitcher from '@/components/client/LanguageSwitcher';
 import { useSidebar } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -31,7 +32,7 @@ export function AppNavbar() {
             className="relative flex flex-col items-center justify-center whitespace-nowrap"
           >
             <span
-              className={`text-[15px] transition-colors pb-1.5 ${pathname === '/dashboard' || pathname.startsWith('/dashboard/socratic') || pathname.startsWith('/dashboard/english') || pathname.startsWith('/dashboard/writing') || pathname.startsWith('/dashboard/study') ? 'font-bold text-primary' : 'font-medium text-muted-foreground hover:text-foreground'}`}
+              className={`text-sm transition-colors pb-1.5 ${pathname === '/dashboard' || pathname.startsWith('/dashboard/socratic') || pathname.startsWith('/dashboard/english') || pathname.startsWith('/dashboard/writing') || pathname.startsWith('/dashboard/study') ? 'font-bold text-primary' : 'font-medium text-muted-foreground hover:text-foreground'}`}
             >
               {t('aiTools')}
             </span>
@@ -40,7 +41,7 @@ export function AppNavbar() {
               pathname.startsWith('/dashboard/english') ||
               pathname.startsWith('/dashboard/writing') ||
               pathname.startsWith('/dashboard/study')) && (
-              <div className="absolute bottom-0 h-[3px] w-full rounded-full bg-primary" />
+              <div className="absolute bottom-0 h-0.5 w-full rounded-full bg-primary" />
             )}
           </Link>
           <Link
@@ -48,12 +49,12 @@ export function AppNavbar() {
             className="relative flex flex-col items-center justify-center"
           >
             <span
-              className={`text-[15px] transition-colors pb-1.5 ${pathname.startsWith('/dashboard/course') ? 'font-bold text-primary' : 'font-medium text-muted-foreground hover:text-foreground'}`}
+              className={`text-sm transition-colors pb-1.5 ${pathname.startsWith('/dashboard/course') ? 'font-bold text-primary' : 'font-medium text-muted-foreground hover:text-foreground'}`}
             >
               {t('studyHub')}
             </span>
             {pathname.startsWith('/dashboard/course') && (
-              <div className="absolute bottom-0 h-[3px] w-full rounded-full bg-primary" />
+              <div className="absolute bottom-0 h-0.5 w-full rounded-full bg-primary" />
             )}
           </Link>
         </nav>
@@ -71,6 +72,8 @@ export function AppNavbar() {
             User
           </span>
         </div>
+
+        <LanguageSwitcher />
 
         {/* Custom Hamburger Trigger for Mobile */}
         <div className="md:hidden ml-1 flex items-center">
