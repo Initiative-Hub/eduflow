@@ -1,4 +1,9 @@
 {
+  "AccountPage": {
+    "emailLabel": "Email:",
+    "title": "Thông tin tài khoản",
+    "usernameLabel": "Tên người dùng:"
+  },
   "AuthForgotPassword": {
     "actions": {
       "backToLogin": "Quay lại đăng nhập",
@@ -115,11 +120,6 @@
       "otpInvalid": "Mã OTP phải gồm đúng 6 chữ số.",
       "otpRequired": "Mã OTP là bắt buộc."
     }
-  },
-  "AccountPage": {
-    "emailLabel": "Email:",
-    "title": "Thông tin tài khoản",
-    "usernameLabel": "Tên người dùng:"
   },
   "Common": {
     "logout": "Đăng xuất"
