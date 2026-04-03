@@ -43,6 +43,38 @@
       "invalidEmail": "Please enter a valid email address."
     }
   },
+  "AuthRegister": {
+    "title": "Join the Academy",
+    "description": "Begin your journey in the living library.",
+    "form": {
+      "fullname": {
+        "label": "Full Name",
+        "placeholder": "Enter your name"
+      },
+      "email": {
+        "label": "Email",
+        "placeholder": "Enter your email"
+      },
+      "password": {
+        "label": "Password",
+        "placeholder": "Enter your password"
+      },
+      "confirmPassword": {
+        "label": "Confirm Password",
+        "placeholder": "Confirm your password"
+      }
+    },
+    "actions": {
+      "createAccount": "Create Account",
+      "creatingAccount": "Creating Account..."
+    },
+    "agreement": {
+      "text": "By signing up, you agree to the ",
+      "tos": "Terms of Service",
+      "and": " and our ",
+      "privacy": "Privacy Policy."
+    }
+  },
   "AuthVerifyOtp": {
     "actions": {
       "verify": "Verify and Continue",

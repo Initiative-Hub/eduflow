@@ -1,8 +1,10 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { AuthFormHeading } from '@/components/auth/auth-form-heading';
 import { AuthSocialOptions } from '@/components/auth/auth-social-options';
 import { FormTemplate } from '@/components/custom/form';
+import { useTranslatedFields } from '@/hooks/use-translated-fields';
 import {
   registerDefaultValues,
   registerFields,
@@ -11,34 +13,37 @@ import {
 import { useRegister } from './use-register';
 
 export default function RegisterPage() {
+  const t = useTranslations('AuthRegister');
+  const translatedFields = useTranslatedFields(registerFields, 'AuthRegister');
+
   const { error, isLoading, handleSubmit } = useRegister();
 
   return (
     <div className="space-y-6">
       <AuthFormHeading
-        title="Join the Academy"
-        description="Begin your journey in the living library."
+        title={t('title')}
+        description={t('description')}
       />
       <div className="w-full space-y-6">
         <FormTemplate
           schema={registerSchema}
           defaultValues={registerDefaultValues}
-          fields={registerFields}
+          fields={translatedFields}
           onSubmit={handleSubmit}
-          submitLabel="Create Account"
+          submitLabel={isLoading ? t('actions.creatingAccount') : t('actions.createAccount')}
           isLoading={isLoading}
         >
           {error && <p className="text-red-600 text-sm">{error}</p>}
         </FormTemplate>
 
         <p className="px-6 text-center text-muted-foreground text-sm">
-          By signing up, you agree to the{' '}
+          {t('agreement.text')}
           <span className="cursor-pointer text-primary hover:underline">
-            Terms of Service
-          </span>{' '}
-          and our{' '}
+            {t('agreement.tos')}
+          </span>
+          {t('agreement.and')}
           <span className="cursor-pointer text-primary hover:underline">
-            Privacy Policy.
+            {t('agreement.privacy')}
           </span>
         </p>
       </div>
