@@ -1,15 +1,13 @@
 'use client';
 
-import { zodResolver } from '@hookform/resolvers/zod';
 import { Mail } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useForm } from 'react-hook-form';
 import { FormTemplate } from '@/components/custom/form';
 import { Button } from '@/components/ui/button';
+import { useTranslatedFields } from '@/hooks/use-translated-fields';
 import { useVerifyOtp } from './use-verify-otp';
 import {
-  type VerifyOtpFormData,
   verifyOtpDefaultValues,
   verifyOtpFields,
   verifyOtpSchema,
@@ -19,11 +17,10 @@ export default function VerifyOtpPage() {
   const t = useTranslations('AuthVerifyOtp');
   const searchParams = useSearchParams();
   const initialEmail = searchParams.get('email') || '';
-
-  const form = useForm<VerifyOtpFormData>({
-    resolver: zodResolver(verifyOtpSchema),
-    defaultValues: verifyOtpDefaultValues,
-  });
+  const translatedFields = useTranslatedFields(
+    verifyOtpFields,
+    'AuthVerifyOtp'
+  );
 
   const {
     error,
@@ -56,7 +53,7 @@ export default function VerifyOtpPage() {
         <FormTemplate
           schema={verifyOtpSchema}
           defaultValues={verifyOtpDefaultValues}
-          fields={verifyOtpFields}
+          fields={translatedFields}
           onSubmit={(values) =>
             handleVerify({
               email: initialEmail,
@@ -68,7 +65,6 @@ export default function VerifyOtpPage() {
           }
           isLoading={isVerifying}
           className="gap-5"
-          form={form}
         >
           {error && <p className="text-destructive text-sm">{error}</p>}
 
