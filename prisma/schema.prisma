@@ -13,7 +13,6 @@ datasource db {
   provider = "postgresql"
 }
 
-
 model Role {
   id    String @id @default(uuid())
   name  String @unique // Ví dụ: 'ADMIN', 'USER'
@@ -24,24 +23,24 @@ model User {
   id        String   @id @default(uuid())
   email     String   @unique
   name      String?
-  password  String?   // Nên mã hóa password trong thực tế
+  password  String? // Nên mã hóa password trong thực tế
   roleId    String
   role      Role     @relation(fields: [roleId], references: [id])
-  posts     Post[]   // Quan hệ 1-nhiều với Post
+  posts     Post[] // Quan hệ 1-nhiều với Post
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 }
 
 model Post {
-  id        String @id @default(uuid())
+  id        String   @id @default(uuid())
   title     String
   content   String?
   published Boolean  @default(false)
   authorId  String
   author    User     @relation(fields: [authorId], references: [id])
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 
   // Map model "Post" thành tên bảng "posts" trong database nếu bạn muốn số nhiều
-  @@map("posts") 
+  @@map("posts")
 }
