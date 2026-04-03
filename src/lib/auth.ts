@@ -56,6 +56,7 @@ export const auth = betterAuth({
   },
   plugins: [
     emailOTP({
+      sendVerificationOnSignUp: true,
       async sendVerificationOTP({ email, otp, type }) {
         const isEmailVerification = type === 'email-verification';
         const isForgotPassword = type === 'forget-password';

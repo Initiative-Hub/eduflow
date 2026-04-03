@@ -42,22 +42,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     },
     {
       name: t('socraticTutor'),
-      url: '/dashboard/socratic',
+      url: '/socratic',
       icon: GraduationCap,
     },
     {
       name: t('englishAssistant'),
-      url: '/dashboard/english',
+      url: '/english',
       icon: Languages,
     },
     {
       name: t('writingAssistant'),
-      url: '/dashboard/writing',
+      url: '/writing',
       icon: PenLine,
     },
     {
       name: t('studyAssistant'),
-      url: '/dashboard/study',
+      url: '/study',
       icon: BookOpen,
     },
   ];

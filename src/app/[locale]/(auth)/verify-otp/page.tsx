@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import { Suspense, useEffect } from 'react';
 import { FormTemplate } from '@/components/custom/form';
 import { Button } from '@/components/ui/button';
+import { DEV_MODE, LOCAL_MAILPIT_URL } from '@/constants/common';
 import { useTranslatedFields } from '@/hooks/use-translated-fields';
 import { useVerifyOtp } from './use-verify-otp';
 import {
@@ -27,6 +28,10 @@ function VerifyOtpContent() {
     verifyOtpFields,
     'AuthVerifyOtp'
   );
+
+  const openMailpit = () => {
+    window.open(LOCAL_MAILPIT_URL, '_blank');
+  };
 
   const {
     error,
@@ -82,6 +87,17 @@ function VerifyOtpContent() {
           className="gap-5"
         >
           {error && <p className="text-destructive text-sm">{error}</p>}
+
+          {DEV_MODE && (
+            <Button
+              variant="outline"
+              className="w-full rounded-full"
+              onClick={openMailpit}
+            >
+              <Mail size={18} className="mr-1" />
+              {t('actions.openMailpit')}
+            </Button>
+          )}
 
           <div className="flex items-center justify-center gap-1 text-sm">
             <span className="text-muted-foreground">{t('resend.label')}</span>

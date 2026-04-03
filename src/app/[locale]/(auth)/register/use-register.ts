@@ -3,6 +3,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { DEV_MODE, LOCAL_MAILPIT_URL } from '@/constants/common';
 import type { ApiError } from '@/lib/api';
 import type { RegisterFormData } from './register.config';
 import { registerService } from './register.service';
@@ -17,15 +18,19 @@ export function useRegister() {
         password: formData.password,
         name: formData.fullname,
       });
-
-      await registerService.sendVerificationOtp(formData.email);
     },
     onSuccess: (_, variables) => {
+      if (DEV_MODE) {
+        window.open(LOCAL_MAILPIT_URL, '_blank');
+      }
+
       router.replace(
         `/verify-otp?email=${encodeURIComponent(variables.email)}`
       );
     },
-    onError: (error) => toast.error(error.message),
+    onError: (error) => {
+      toast.error(error.message);
+    },
   });
 
   return {
