@@ -19,7 +19,8 @@ export function AuthPageSwitcher() {
     <p className="text-center text-muted-foreground text-sm">
       {isLoginPage ? (
         <>
-          {t('newToAcademy')} <Link
+          {t('newToAcademy')}{' '}
+          <Link
             href="/register"
             className="font-semibold text-primary hover:underline"
           >
@@ -28,7 +29,8 @@ export function AuthPageSwitcher() {
         </>
       ) : (
         <>
-          {t('alreadyPart')} <Link
+          {t('alreadyPart')}{' '}
+          <Link
             href="/login"
             className="font-semibold text-primary hover:underline"
           >

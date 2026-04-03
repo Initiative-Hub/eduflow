@@ -20,17 +20,18 @@ export default function RegisterPage() {
 
   return (
     <div className="space-y-6">
-      <AuthFormHeading
-        title={t('title')}
-        description={t('description')}
-      />
+      <AuthFormHeading title={t('title')} description={t('description')} />
       <div className="w-full space-y-6">
         <FormTemplate
           schema={registerSchema}
           defaultValues={registerDefaultValues}
           fields={translatedFields}
           onSubmit={handleSubmit}
-          submitLabel={isLoading ? t('actions.creatingAccount') : t('actions.createAccount')}
+          submitLabel={
+            isLoading
+              ? t('actions.creatingAccount')
+              : t('actions.createAccount')
+          }
           isLoading={isLoading}
         >
           {error && <p className="text-red-600 text-sm">{error}</p>}
