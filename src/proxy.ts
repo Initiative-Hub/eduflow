@@ -5,12 +5,13 @@ import { routing } from './i18n/routing';
 
 const intlMiddleware = createMiddleware(routing);
 
-export default async function middleware(req: NextRequest) {
+export default async function proxy(req: NextRequest) {
   if (req.nextUrl.pathname.startsWith('/api')) {
     return NextResponse.next();
   }
 
-  // Check for better-auth session token
+  // Check for better-auth session token.
+  // Since this is an Edge Function, we can't use the `getSession` function from better-auth, so we check for the presence of the session token cookie instead.
   const hasSession =
     req.cookies.has('better-auth.session_token') ||
     req.cookies.has('__Secure-better-auth.session_token');

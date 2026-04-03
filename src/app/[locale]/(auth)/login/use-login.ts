@@ -2,38 +2,33 @@
 
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { signIn } from '@/lib/auth-client';
+import type { ApiError } from '@/lib/api';
 import type { LoginFormData } from './login.config';
+import { loginService } from './login.service';
 
 export function useLogin() {
   const router = useRouter();
 
-  const emailMutation = useMutation<void, Error, LoginFormData>({
+  const emailMutation = useMutation<void, ApiError, LoginFormData>({
     mutationFn: async (formData: LoginFormData) => {
-      const { error } = await signIn.email({
-        email: formData.email,
-        password: formData.password,
-      });
-
-      if (error) {
-        throw new Error('Invalid email or password. Please try again.');
-      }
+      await loginService.login(formData);
     },
     onSuccess: () => {
       router.replace('/dashboard');
     },
   });
 
-  const googleMutation = useMutation<void, Error, void>({
+  const googleMutation = useMutation<void, ApiError, void>({
     mutationFn: async () => {
-      const { error } = await signIn.social({
-        provider: 'google',
-        callbackURL: '/dashboard',
-      });
+      const result = await loginService.signInWithSocial('google');
 
-      if (error) {
-        throw new Error('Failed to sign in with Google. Please try again.');
+      if (!result.url) {
+        throw {
+          message: 'Failed to sign in with Google. Please try again.',
+        } satisfies ApiError;
       }
+
+      window.location.assign(result.url);
     },
   });
 

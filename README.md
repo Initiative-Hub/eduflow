@@ -28,12 +28,20 @@ bun db:start
 ```
 
 ### 4. Configure Environment Variables (.env.local)
-Based on prisma/seed.ts and lib/auth.ts, the project requires specific environment variables.
+Based on `prisma/seed.ts` and `src/lib/auth.ts`, the project requires specific environment variables.
 Create a file named .env.local in the root directory and add the following content:
 ```bash
 DATABASE_URL="postgresql://postgres:password@localhost:5432/eduflow_db?schema=public"
 
-AUTH_SECRET="a_very_long_random_secret_string"
+NEXT_PUBLIC_BETTER_AUTH_URL="http://localhost:3000/api/auth"
+BETTER_AUTH_SECRET="a_very_long_random_secret_string_at_least_32_characters"
+
+GOOGLE_CLIENT_ID="your_google_client_id"
+GOOGLE_CLIENT_SECRET="your_google_client_secret"
+GITHUB_CLIENT_ID="your_github_client_id"
+GITHUB_CLIENT_SECRET="your_github_client_secret"
+MICROSOFT_CLIENT_ID="your_microsoft_client_id"
+MICROSOFT_CLIENT_SECRET="your_microsoft_client_secret"
 ```
 
 ### 5. Initialize Database (Prisma & Seed) 

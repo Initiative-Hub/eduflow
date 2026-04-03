@@ -1,13 +1,17 @@
+import { apiClient } from '@/lib/api';
+
 export type ForgotPasswordResetResult = {
-  success: true;
+  success?: true;
   email: string;
 };
 
 export const forgotPasswordService = {
   resetPassword: async (email: string): Promise<ForgotPasswordResetResult> => {
-    return Promise.resolve({
+    await apiClient.post('/auth/forgot-password', { email });
+
+    return {
       success: true,
       email,
-    });
+    };
   },
 };

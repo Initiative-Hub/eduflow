@@ -3,29 +3,24 @@
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { authClient, signUp } from '@/lib/auth-client';
+import type { ApiError } from '@/lib/api';
 import type { RegisterFormData } from './register.config';
+import { registerService } from './register.service';
 
 export function useRegister() {
   const router = useRouter();
 
-  const mutation = useMutation<void, Error, RegisterFormData>({
+  const mutation = useMutation<void, ApiError, RegisterFormData>({
     mutationFn: async (formData: RegisterFormData) => {
-      const { error } = await signUp.email({
+      await registerService.register({
         email: formData.email,
         password: formData.password,
         name: formData.fullname,
       });
 
-      if (error) {
-        throw new Error(error.message || 'Registration failed');
-      }
+      await registerService.sendVerificationOtp(formData.email);
     },
-    onSuccess: async (_, variables) => {
-      await authClient.emailOtp.sendVerificationOtp({
-        email: variables.email,
-        type: 'email-verification',
-      });
+    onSuccess: (_, variables) => {
       router.replace(
         `/verify-otp?email=${encodeURIComponent(variables.email)}`
       );

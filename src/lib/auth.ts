@@ -10,7 +10,10 @@ const transporter = nodemailer.createTransport({
   secure: false,
   ignoreTLS: true,
 });
+
 export const auth = betterAuth({
+  secret: process.env.BETTER_AUTH_SECRET,
+
   database: prismaAdapter(prisma, {
     provider: 'postgresql',
   }),
@@ -33,6 +36,10 @@ export const auth = betterAuth({
       clientId: process.env.GOOGLE_CLIENT_ID as string,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
     },
+    github: {
+      clientId: process.env.GITHUB_CLIENT_ID as string,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
+    },
     microsoft: {
       clientId: process.env.MICROSOFT_CLIENT_ID as string,
       clientSecret: process.env.MICROSOFT_CLIENT_SECRET as string,
@@ -50,24 +57,31 @@ export const auth = betterAuth({
   plugins: [
     emailOTP({
       async sendVerificationOTP({ email, otp, type }) {
-        if (type === 'email-verification') {
-          try {
-            await transporter.sendMail({
-              from: '"Local Dev" <test@localhost.com>',
-              to: email,
-              subject: 'Your Verification Code',
-              html: `
-                <div style="font-family: sans-serif; padding: 20px;">
-                  <h2>Welcome!</h2>
-                  <p>Your one-time password is: <strong style="font-size: 24px; letter-spacing: 4px;">${otp}</strong></p>
-                  <p>This code is valid for a few minutes.</p>
-                </div>
-              `,
-            });
-            console.log(`OTP [${otp}] caught by Mailpit for ${email}`);
-          } catch (error) {
-            console.error('Failed to send local OTP:', error);
-          }
+        const isEmailVerification = type === 'email-verification';
+        const isForgotPassword = type === 'forget-password';
+
+        if (!isEmailVerification && !isForgotPassword) {
+          return;
+        }
+
+        try {
+          await transporter.sendMail({
+            from: '"Local Dev" <test@localhost.com>',
+            to: email,
+            subject: isEmailVerification
+              ? 'Your Verification Code'
+              : 'Your Password Reset Code',
+            html: `
+              <div style="font-family: sans-serif; padding: 20px;">
+                <h2>${isEmailVerification ? 'Welcome!' : 'Reset your password'}</h2>
+                <p>Your one-time password is: <strong style="font-size: 24px; letter-spacing: 4px;">${otp}</strong></p>
+                <p>This code is valid for a few minutes.</p>
+              </div>
+            `,
+          });
+          console.log(`OTP [${otp}] caught by Mailpit for ${email}`);
+        } catch (error) {
+          console.error('Failed to send local OTP:', error);
         }
       },
     }),
