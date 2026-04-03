@@ -2,17 +2,14 @@ import { headers } from 'next/headers';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
 
-const registerSchema = z.object({
+const verifyOtpSchema = z.object({
   email: z.email(),
-  password: z.string().min(8),
-  name: z.string().min(1),
-  callbackURL: z.string().optional(),
-  rememberMe: z.boolean().optional(),
+  otp: z.string().length(6),
 });
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const parsedBody = registerSchema.safeParse(body);
+  const parsedBody = verifyOtpSchema.safeParse(body);
 
   if (!parsedBody.success) {
     return Response.json(
@@ -24,7 +21,7 @@ export async function POST(request: Request) {
     );
   }
 
-  return auth.api.signUpEmail({
+  return auth.api.verifyEmailOTP({
     body: parsedBody.data,
     headers: await headers(),
     asResponse: true,

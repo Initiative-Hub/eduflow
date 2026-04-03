@@ -30,28 +30,28 @@ export function AppNavbar() {
             className="relative flex flex-col items-center justify-center whitespace-nowrap"
           >
             <span
-              className={`pb-1.5 text-sm transition-colors ${pathname === '/dashboard' || pathname.startsWith('/dashboard/socratic') || pathname.startsWith('/dashboard/english') || pathname.startsWith('/dashboard/writing') || pathname.startsWith('/dashboard/study') ? 'font-bold text-primary' : 'font-medium text-muted-foreground hover:text-foreground'}`}
+              className={`pb-1.5 text-sm transition-colors ${pathname === '/dashboard' || pathname.startsWith('/socratic') || pathname.startsWith('/english') || pathname.startsWith('/writing') || pathname.startsWith('/study') ? 'font-bold text-primary' : 'font-medium text-muted-foreground hover:text-foreground'}`}
             >
               {t('aiTools')}
             </span>
             {(pathname === '/dashboard' ||
-              pathname.startsWith('/dashboard/socratic') ||
-              pathname.startsWith('/dashboard/english') ||
-              pathname.startsWith('/dashboard/writing') ||
-              pathname.startsWith('/dashboard/study')) && (
+              pathname.startsWith('/socratic') ||
+              pathname.startsWith('/english') ||
+              pathname.startsWith('/writing') ||
+              pathname.startsWith('/study')) && (
               <div className="absolute bottom-0 h-0.5 w-full rounded-full bg-primary" />
             )}
           </Link>
           <Link
-            href="/dashboard/course"
+            href="/course"
             className="relative flex flex-col items-center justify-center"
           >
             <span
-              className={`pb-1.5 text-sm transition-colors ${pathname.startsWith('/dashboard/course') ? 'font-bold text-primary' : 'font-medium text-muted-foreground hover:text-foreground'}`}
+              className={`pb-1.5 text-sm transition-colors ${pathname.startsWith('/course') ? 'font-bold text-primary' : 'font-medium text-muted-foreground hover:text-foreground'}`}
             >
               {t('studyHub')}
             </span>
-            {pathname.startsWith('/dashboard/course') && (
+            {pathname.startsWith('/course') && (
               <div className="absolute bottom-0 h-0.5 w-full rounded-full bg-primary" />
             )}
           </Link>

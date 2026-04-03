@@ -1,9 +1,10 @@
 // d:\PROJECTS\eduflow\app\dashboard\account\page.tsx
 import { auth } from '@/lib/auth';
+import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 export default async function AccountInfoPage() {
-  const session = await auth();
+  const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) {
     redirect('/login');
   }

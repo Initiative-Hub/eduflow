@@ -1,9 +1,12 @@
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
+import { useLogin } from '@/app/[locale]/(auth)/login/use-login';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '../ui/spinner';
 
 export function AuthSocialOptions() {
   const t = useTranslations('AuthSocialOptions');
+  const { handleGoogleLogin, isGoogleLoading } = useLogin();
 
   return (
     <section className="mt-8 space-y-5" aria-label={t('ariaLabel')}>
@@ -19,17 +22,25 @@ export function AuthSocialOptions() {
         <Button
           type="button"
           variant="outline"
+          onClick={handleGoogleLogin}
+          disabled={isGoogleLoading}
           className="h-12 cursor-pointer rounded-2xl border-border bg-card font-semibold text-foreground hover:bg-muted/40"
         >
-          <span className="inline-flex size-6 items-center justify-center rounded-sm bg-primary/10 font-bold text-primary text-xs">
-            <Image
-              src="/icons/brands/google.svg"
-              alt="Google"
-              width={16}
-              height={16}
-            />
-          </span>
-          Google
+          {isGoogleLoading ? (
+            <Spinner className="size-4 animate-spin" />
+          ) : (
+            <>
+              <span className="inline-flex size-6 items-center justify-center rounded-sm bg-primary/10 font-bold text-primary text-xs">
+                <Image
+                  src="/icons/brands/google.svg"
+                  alt="Google"
+                  width={16}
+                  height={16}
+                />
+              </span>
+              Google
+            </>
+          )}
         </Button>
 
         <Button
@@ -40,7 +51,7 @@ export function AuthSocialOptions() {
           <span className="inline-flex size-6 items-center justify-center rounded-sm bg-primary/10 font-bold text-primary text-xs">
             <Image
               src="/icons/brands/microsoft.svg"
-              alt="Google"
+              alt="Microsoft"
               width={16}
               height={16}
             />

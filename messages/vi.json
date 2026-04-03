@@ -87,6 +87,7 @@
   },
   "AuthVerifyOtp": {
     "actions": {
+      "openMailpit": "Mở Mailpit",
       "verify": "Xác minh và tiếp tục",
       "verifying": "Đang xác minh..."
     },

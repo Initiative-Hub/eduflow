@@ -87,6 +87,7 @@
   },
   "AuthVerifyOtp": {
     "actions": {
+      "openMailpit": "Open Mailpit",
       "verify": "Verify and Continue",
       "verifying": "Verifying..."
     },

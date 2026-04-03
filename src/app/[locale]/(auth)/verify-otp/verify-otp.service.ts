@@ -11,9 +11,9 @@ type ResendOtpPayload = {
 
 export const verifyOtpService = {
   verifyOtp: async (data: VerifyOtpPayload) => {
-    return apiClient.post('/auth/verify-otp', data);
+    return apiClient.post('/auth/otp/verify', data);
   },
   resendOtp: async (data: ResendOtpPayload) => {
-    return apiClient.post('/auth/resend-otp', data);
+    return apiClient.post('/auth/otp/resend', data);
   },
 };
