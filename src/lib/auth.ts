@@ -6,6 +6,15 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: 'postgresql',
   }),
+
+  advanced: {
+    database: {
+      generateId: () => {
+        return crypto.randomUUID();
+      },
+    },
+  },
+
   emailAndPassword: {
     enabled: true,
     autoSignIn: true,
@@ -21,6 +30,7 @@ export const auth = betterAuth({
       roleId: {
         type: 'string',
         required: false,
+        input: false,
       },
     },
   },
@@ -30,17 +40,15 @@ export const auth = betterAuth({
         before: async (user) => {
           const defaultRole = await prisma.role.findUnique({
             where: { name: 'USER' },
+            select: { id: true },
           });
 
-          if (defaultRole) {
-            return {
-              data: {
-                ...user,
-                roleId: defaultRole.id,
-              },
-            };
-          }
-          return { data: user };
+          return {
+            data: {
+              ...user,
+              roleId: defaultRole?.id || null,
+            },
+          };
         },
       },
     },

@@ -14,7 +14,7 @@ export function useRegister() {
       const { error } = await signUp.email({
         email: formData.email,
         password: formData.password,
-        name: formData.email.split('@')[0],
+        name: formData.fullname,
       });
 
       if (error) {
