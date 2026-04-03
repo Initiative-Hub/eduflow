@@ -1,4 +1,4 @@
-import { apiClient } from '@/lib/api';
+import { authClient } from '@/lib/auth-client';
 
 type VerifyOtpPayload = {
   email: string;
@@ -11,9 +11,19 @@ type ResendOtpPayload = {
 
 export const verifyOtpService = {
   verifyOtp: async (data: VerifyOtpPayload) => {
-    return apiClient.post('/auth/verify-otp', data);
+    const { data: result, error } = await authClient.emailOtp.verifyEmail({
+      email: data.email,
+      otp: data.otp,
+    });
+    if (error) throw error;
+    return result;
   },
   resendOtp: async (data: ResendOtpPayload) => {
-    return apiClient.post('/auth/resend-otp', data);
+    const { data: result, error } = await authClient.emailOtp.sendVerificationOtp({
+      email: data.email,
+      type: 'email-verification',
+    });
+    if (error) throw error;
+    return result;
   },
 };

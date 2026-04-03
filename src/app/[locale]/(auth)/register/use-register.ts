@@ -3,7 +3,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { signUp } from '@/lib/auth-client';
+import { authClient, signUp } from '@/lib/auth-client';
 import type { RegisterFormData } from './register.config';
 
 export function useRegister() {
@@ -21,8 +21,14 @@ export function useRegister() {
         throw new Error(error.message || 'Registration failed');
       }
     },
-    onSuccess: () => {
-      router.replace(`/dashboard`);
+    onSuccess: async (_, variables) => {
+      await authClient.emailOtp.sendVerificationOtp({
+        email: variables.email,
+        type: 'email-verification',
+      });
+      router.replace(
+        `/verify-otp?email=${encodeURIComponent(variables.email)}`
+      );
     },
     onError: (error) => toast.error(error.message),
   });

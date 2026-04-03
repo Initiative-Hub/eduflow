@@ -1,4 +1,5 @@
 name: eduflow
+
 services:
   db:
     image: postgres:17-alpine
@@ -11,6 +12,17 @@ services:
       - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
+  
+  mailpit:
+    image: axllent/mailpit
+    container_name: eduflow_mailpit
+    restart: always
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+    environment:
+      MP_MAX_MESSAGES: 500
 
 volumes:
   postgres_data:
