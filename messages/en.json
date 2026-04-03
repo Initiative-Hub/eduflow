@@ -29,6 +29,27 @@
       "otpInvalid": "OTP code must be exactly 6 digits."
     }
   },
+  "AuthForgotPassword": {
+    "title": "Reset Password",
+    "description": "Enter your email address and we'll send you a link to reset your password.",
+    "form": {
+      "email": {
+        "label": "Email address",
+        "placeholder": "name@gmail.com"
+      }
+    },
+    "actions": {
+      "send": "Send Reset Link",
+      "backToLogin": "Back to Login"
+    },
+    "success": {
+      "title": "Check your inbox",
+      "description": "If an account exists for {email}, you'll receive password reset instructions shortly."
+    },
+    "validation": {
+      "invalidEmail": "Please enter a valid email address."
+    }
+  },
   "HomePage": {
     "title": "Hello world!"
   }

@@ -29,6 +29,25 @@
       "otpInvalid": "Mã OTP phải gồm đúng 6 chữ số."
     }
   },
+  "AuthForgotPassword": {
+    "title": "Đặt lại mật khẩu",
+    "description": "Nhập địa chỉ email của bạn và chúng tôi sẽ gửi một liên kết để đặt lại mật khẩu.",
+    "form": {
+      "email": {
+        "label": "Địa chỉ email",
+        "placeholder": "name@gmail.com"
+      }
+    },
+    "actions": {
+      "send": "Gửi liên kết đặt lại",
+      "backToLogin": "Quay lại đăng nhập"
+    },
+    "success": {
+      "title": "Kiểm tra hộp thư",
+      "description": "Nếu có tài khoản cho {email}, bạn sẽ sớm nhận được hướng dẫn đặt lại mật khẩu."    },
+    "validation": {
+      "invalidEmail": "Vui lòng nhập địa chỉ email hợp lệ."    }
+  },
   "HomePage": {
     "title": "Xin chào thế giới!"
   }
