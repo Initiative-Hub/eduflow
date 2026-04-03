@@ -1,26 +1,32 @@
 import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 import createMiddleware from 'next-intl/middleware';
-import { auth } from '@/lib/auth';
 import { routing } from './i18n/routing';
 
 const intlMiddleware = createMiddleware(routing);
 
-export default auth((req) => {
+export default async function middleware(req: NextRequest) {
   if (req.nextUrl.pathname.startsWith('/api')) {
     return NextResponse.next();
   }
 
-  if (!req.auth && req.nextUrl.pathname.startsWith('/dashboard')) {
+  // Check for better-auth session token
+  const hasSession = req.cookies.has('better-auth.session_token') || req.cookies.has('__Secure-better-auth.session_token');
+
+  const isDashboard = req.nextUrl.pathname.includes('/dashboard');
+  const isLogin = req.nextUrl.pathname.includes('/login');
+
+  if (!hasSession && isDashboard) {
     const newUrl = new URL('/login', req.nextUrl.origin);
-    return Response.redirect(newUrl);
+    return NextResponse.redirect(newUrl);
   }
 
-  if (req.auth && req.nextUrl.pathname === '/login') {
-    return Response.redirect(new URL('/dashboard', req.nextUrl.origin));
+  if (hasSession && isLogin) {
+    return NextResponse.redirect(new URL('/dashboard', req.nextUrl.origin));
   }
 
   return intlMiddleware(req);
-});
+}
 
 export const config = {
   matcher: [
