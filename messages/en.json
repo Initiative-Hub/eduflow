@@ -44,36 +44,36 @@
     }
   },
   "AuthRegister": {
-    "title": "Join the Academy",
-    "description": "Begin your journey in the living library.",
-    "form": {
-      "fullname": {
-        "label": "Full Name",
-        "placeholder": "Enter your name"
-      },
-      "email": {
-        "label": "Email",
-        "placeholder": "Enter your email"
-      },
-      "password": {
-        "label": "Password",
-        "placeholder": "Enter your password"
-      },
-      "confirmPassword": {
-        "label": "Confirm Password",
-        "placeholder": "Confirm your password"
-      }
-    },
     "actions": {
       "createAccount": "Create Account",
       "creatingAccount": "Creating Account..."
     },
     "agreement": {
-      "text": "By signing up, you agree to the ",
-      "tos": "Terms of Service",
       "and": " and our ",
-      "privacy": "Privacy Policy."
-    }
+      "privacy": "Privacy Policy.",
+      "text": "By signing up, you agree to the ",
+      "tos": "Terms of Service"
+    },
+    "description": "Begin your journey in the living library.",
+    "form": {
+      "confirmPassword": {
+        "label": "Confirm Password",
+        "placeholder": "Confirm your password"
+      },
+      "email": {
+        "label": "Email",
+        "placeholder": "Enter your email"
+      },
+      "fullname": {
+        "label": "Full Name",
+        "placeholder": "Enter your name"
+      },
+      "password": {
+        "label": "Password",
+        "placeholder": "Enter your password"
+      }
+    },
+    "title": "Join the Academy"
   },
   "AuthVerifyOtp": {
     "actions": {

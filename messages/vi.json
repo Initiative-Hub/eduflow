@@ -44,36 +44,36 @@
     }
   },
   "AuthRegister": {
-    "title": "Tham gia Học viện",
-    "description": "Bắt đầu hành trình của bạn trong thư viện sống.",
-    "form": {
-      "fullname": {
-        "label": "Họ và tên",
-        "placeholder": "Nhập tên của bạn"
-      },
-      "email": {
-        "label": "Email",
-        "placeholder": "Nhập email của bạn"
-      },
-      "password": {
-        "label": "Mật khẩu",
-        "placeholder": "Nhập mật khẩu của bạn"
-      },
-      "confirmPassword": {
-        "label": "Xác nhận mật khẩu",
-        "placeholder": "Xác nhận mật khẩu của bạn"
-      }
-    },
     "actions": {
       "createAccount": "Tạo tài khoản",
       "creatingAccount": "Đang tạo tài khoản..."
     },
     "agreement": {
-      "text": "Bằng cách đăng ký, bạn đồng ý với ",
-      "tos": "Điều khoản Dịch vụ",
       "and": " và ",
-      "privacy": "Chính sách Bảo mật của chúng tôi."
-    }
+      "privacy": "Chính sách Bảo mật của chúng tôi.",
+      "text": "Bằng cách đăng ký, bạn đồng ý với ",
+      "tos": "Điều khoản Dịch vụ"
+    },
+    "description": "Bắt đầu hành trình của bạn trong thư viện sống.",
+    "form": {
+      "confirmPassword": {
+        "label": "Xác nhận mật khẩu",
+        "placeholder": "Xác nhận mật khẩu của bạn"
+      },
+      "email": {
+        "label": "Email",
+        "placeholder": "Nhập email của bạn"
+      },
+      "fullname": {
+        "label": "Họ và tên",
+        "placeholder": "Nhập tên của bạn"
+      },
+      "password": {
+        "label": "Mật khẩu",
+        "placeholder": "Nhập mật khẩu của bạn"
+      }
+    },
+    "title": "Tham gia Học viện"
   },
   "AuthVerifyOtp": {
     "actions": {
