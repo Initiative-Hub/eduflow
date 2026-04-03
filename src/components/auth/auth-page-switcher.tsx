@@ -1,10 +1,12 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 export function AuthPageSwitcher() {
   const pathname = usePathname();
+  const t = useTranslations('AuthPageSwitcher');
 
   const isLoginPage = pathname === '/login';
   const isRegisterPage = pathname === '/register';
@@ -17,22 +19,20 @@ export function AuthPageSwitcher() {
     <p className="text-center text-muted-foreground text-sm">
       {isLoginPage ? (
         <>
-          New to the academy?{' '}
-          <Link
+          {t('newToAcademy')} <Link
             href="/register"
             className="font-semibold text-primary hover:underline"
           >
-            Sign Up
+            {t('signUp')}
           </Link>
         </>
       ) : (
         <>
-          Already part of us?{' '}
-          <Link
+          {t('alreadyPart')} <Link
             href="/login"
             className="font-semibold text-primary hover:underline"
           >
-            Sign In
+            {t('signIn')}
           </Link>
         </>
       )}

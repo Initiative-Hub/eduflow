@@ -43,6 +43,12 @@
       "invalidEmail": "Please enter a valid email address."
     }
   },
+  "AuthPageSwitcher": {
+    "alreadyPart": "Already part of us?",
+    "newToAcademy": "New to the academy?",
+    "signIn": "Sign In",
+    "signUp": "Sign Up"
+  },
   "AuthRegister": {
     "actions": {
       "createAccount": "Create Account",
@@ -74,6 +80,10 @@
       }
     },
     "title": "Join the Academy"
+  },
+  "AuthSocialOptions": {
+    "ariaLabel": "Social sign in options",
+    "orContinueWith": "Or Continue With"
   },
   "AuthVerifyOtp": {
     "actions": {

@@ -43,6 +43,12 @@
       "invalidEmail": "Vui lòng nhập địa chỉ email hợp lệ."
     }
   },
+  "AuthPageSwitcher": {
+    "alreadyPart": "Đã là thành viên?",
+    "newToAcademy": "Bạn chưa có tài khoản?",
+    "signIn": "Đăng nhập",
+    "signUp": "Đăng ký"
+  },
   "AuthRegister": {
     "actions": {
       "createAccount": "Tạo tài khoản",
@@ -74,6 +80,10 @@
       }
     },
     "title": "Tham gia Học viện"
+  },
+  "AuthSocialOptions": {
+    "ariaLabel": "Tùy chọn đăng nhập qua mạng xã hội",
+    "orContinueWith": "Hoặc tiếp tục với"
   },
   "AuthVerifyOtp": {
     "actions": {

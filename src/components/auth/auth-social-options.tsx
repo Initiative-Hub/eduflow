@@ -1,13 +1,16 @@
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 
 export function AuthSocialOptions() {
+  const t = useTranslations('AuthSocialOptions');
+
   return (
-    <section className="mt-8 space-y-5" aria-label="Social sign in options">
+    <section className="mt-8 space-y-5" aria-label={t('ariaLabel')}>
       <div className="flex items-center gap-4">
         <span className="h-px flex-1 bg-border" />
         <p className="font-semibold text-muted-foreground text-xs uppercase tracking-widest">
-          Or Continue With
+          {t('orContinueWith')}
         </p>
         <span className="h-px flex-1 bg-border" />
       </div>
