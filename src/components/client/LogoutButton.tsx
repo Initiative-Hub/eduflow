@@ -1,4 +1,3 @@
-// d:\PROJECTS\eduflow\components\client\LogoutButton.tsx
 'use client';
 
 import { useTranslations } from 'next-intl';

@@ -1,5 +1,3 @@
-// d:\PROJECTS\eduflow\app\dashboard\account\page.tsx
-
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
