@@ -20,6 +20,29 @@
       "invalidEmail": "Vui lòng nhập địa chỉ email hợp lệ."
     }
   },
+  "AuthLogin": {
+    "actions": {
+      "forgotPassword": "Quên mật khẩu?",
+      "signIn": "Đăng nhập",
+      "signingIn": "Đang đăng nhập..."
+    },
+    "description": "Nhập thông tin đăng nhập của bạn để truy cập không gian làm việc.",
+    "form": {
+      "email": {
+        "label": "Email",
+        "placeholder": "Nhập email của bạn"
+      },
+      "password": {
+        "label": "Mật khẩu",
+        "placeholder": "Nhập mật khẩu của bạn"
+      }
+    },
+    "title": "Chào mừng trở lại",
+    "validation": {
+      "emptyPassword": "Mật khẩu không được để trống.",
+      "invalidEmail": "Vui lòng nhập địa chỉ email hợp lệ."
+    }
+  },
   "AuthVerifyOtp": {
     "actions": {
       "verify": "Xác minh và tiếp tục",

@@ -20,6 +20,29 @@
       "invalidEmail": "Please enter a valid email address."
     }
   },
+  "AuthLogin": {
+    "actions": {
+      "forgotPassword": "Forgot password?",
+      "signIn": "Sign In",
+      "signingIn": "Signing in..."
+    },
+    "description": "Enter your credentials to access your workspace.",
+    "form": {
+      "email": {
+        "label": "Email",
+        "placeholder": "Enter your email"
+      },
+      "password": {
+        "label": "Password",
+        "placeholder": "Enter your password"
+      }
+    },
+    "title": "Welcome Back",
+    "validation": {
+      "emptyPassword": "Password cannot be empty.",
+      "invalidEmail": "Please enter a valid email address."
+    }
+  },
   "AuthVerifyOtp": {
     "actions": {
       "verify": "Verify and Continue",
