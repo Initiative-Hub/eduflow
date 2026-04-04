@@ -8,12 +8,15 @@ import LanguageSwitcher from '@/components/client/LanguageSwitcher';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { useSidebar } from '@/components/ui/sidebar';
+import { useSession } from '@/lib/auth-client';
 
 export function AppNavbar() {
   const t = useTranslations('Layout');
   const pathname = usePathname();
   const { toggleSidebar } = useSidebar();
+  const { data: sessionData } = useSession();
 
+  console.log(sessionData, 'session');
   return (
     <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between overflow-hidden border-border/40 border-b bg-background/95 px-3 shadow-sm backdrop-blur supports-backdrop-filter:bg-background/60 md:px-8">
       <div className="flex h-full min-w-0 flex-1 items-center gap-2 md:gap-8">
@@ -61,14 +64,22 @@ export function AppNavbar() {
         {/* Account Actions / Profile (Desktop Only) */}
         <div className="mr-2 hidden cursor-pointer items-center gap-3 rounded-full p-1 transition-colors hover:bg-muted/40 md:flex">
           <Avatar className="size-8 cursor-pointer border transition-all hover:ring-2 hover:ring-primary/20">
-            <AvatarImage src="" alt="User" />
+            <AvatarImage
+              src={sessionData?.user?.image || ''}
+              alt={sessionData?.user?.name || 'User'}
+            />
             <AvatarFallback className="bg-primary/10 font-bold text-primary text-xs">
-              U
+              {sessionData?.user?.name?.[0]?.toUpperCase() || 'U'}
             </AvatarFallback>
           </Avatar>
-          <span className="pr-2 font-semibold text-foreground text-sm">
-            User
-          </span>
+          <div className="flex min-w-0 flex-col pr-2">
+            <span className="max-w-[150px] truncate font-semibold text-foreground text-sm">
+              {sessionData?.user?.name || 'User'}
+            </span>
+            <span className="truncate text-muted-foreground text-xs">
+              {(sessionData?.user as any)?.role || 'User'}
+            </span>
+          </div>
         </div>
 
         <LanguageSwitcher />

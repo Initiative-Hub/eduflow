@@ -1,6 +1,6 @@
 import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
-import { emailOTP } from 'better-auth/plugins';
+import { customSession, emailOTP } from 'better-auth/plugins';
 import nodemailer from 'nodemailer';
 import { prisma } from './prisma';
 
@@ -55,6 +55,22 @@ export const auth = betterAuth({
     },
   },
   plugins: [
+    customSession(async ({ user, session }) => {
+      const roleId = (user as any).roleId as string | undefined;
+      if (!roleId) return { user: { ...user, role: null }, session };
+      
+      const roleRow = await prisma.role.findUnique({
+        where: { id: roleId },
+      });
+
+      return {
+        user: {
+          ...user,
+          role: roleRow?.name || null,
+        },
+        session,
+      };
+    }),
     emailOTP({
       sendVerificationOnSignUp: true,
       async sendVerificationOTP({ email, otp, type }) {
