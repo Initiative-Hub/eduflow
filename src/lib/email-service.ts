@@ -69,9 +69,7 @@ export const emailService = {
       `,
       });
       if (process.env.NODE_ENV === 'development') {
-        console.log(
-          `Verification OTP [${otp}] sent to Mailpit for ${email}`
-        );
+        console.log(`Verification OTP [${otp}] sent to Mailpit for ${email}`);
       }
     } catch (error) {
       console.error('Failed to send verification OTP:', error);
