@@ -43,10 +43,10 @@ export const emailService = {
       `,
       });
       if (process.env.NODE_ENV === 'development') {
-        console.log(`✅ Password reset link sent to Mailpit for ${user.email}`);
+        console.log(`Password reset link sent to Mailpit for ${user.email}`);
       }
     } catch (error) {
-      console.error('❌ Failed to send reset link:', error);
+      console.error('Failed to send reset link:', error);
       throw error;
     }
   },
@@ -70,11 +70,11 @@ export const emailService = {
       });
       if (process.env.NODE_ENV === 'development') {
         console.log(
-          `✅ Verification OTP [${otp}] sent to Mailpit for ${email}`
+          `Verification OTP [${otp}] sent to Mailpit for ${email}`
         );
       }
     } catch (error) {
-      console.error('❌ Failed to send verification OTP:', error);
+      console.error('Failed to send verification OTP:', error);
       throw error;
     }
   },
