@@ -2,33 +2,72 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import createMiddleware from 'next-intl/middleware';
 import { routing } from '@/i18n/routing';
+import { auth } from '@/lib/auth';
 import { sanitizeUrl } from '@/utils/url-helper';
 import { AUTH_PATHS, PUBLIC_PATHS } from './constants/common';
 
 const intlMiddleware = createMiddleware(routing);
 
-const handleRedirect = ({
+interface SessionData {
+  user: {
+    role: string | null;
+    id: string;
+    createdAt: Date;
+    updatedAt: Date;
+    email: string;
+    emailVerified: boolean;
+    name: string;
+    image?: string | null | undefined;
+  };
+  session: {
+    id: string;
+    createdAt: Date;
+    updatedAt: Date;
+    userId: string;
+    expiresAt: Date;
+    token: string;
+    ipAddress?: string | null | undefined;
+    userAgent?: string | null | undefined;
+  };
+}
+
+function hasActiveSession(sessionData: SessionData | null): boolean {
+  if (!sessionData?.user?.id || !sessionData?.session?.id) return false;
+
+  const expiresAt = sessionData.session.expiresAt;
+
+  const expiresAtTimestamp = new Date(expiresAt).getTime();
+  if (Number.isNaN(expiresAtTimestamp)) return false;
+
+  return expiresAtTimestamp > Date.now();
+}
+
+const handleRedirect = async ({
   req,
 }: {
   req: NextRequest;
-}): {
+}): Promise<{
   res: NextResponse;
   redirect: boolean;
-} => {
-  // Check for better-auth session token.
-  // Since this is an Edge Function, we can't use the `getSession` function from better-auth, so we check for the presence of the session token cookie instead.
-  const hasSession =
-    req.cookies.has('better-auth.session_token') ||
-    req.cookies.has('__Secure-better-auth.session_token');
+}> => {
+  let hasSession = false;
+  try {
+    const sessionData = await auth.api.getSession({ headers: req.headers });
+    hasSession = hasActiveSession(sessionData);
+  } catch {
+    hasSession = false;
+  }
+
+  const isAuthPath = AUTH_PATHS.some((path) =>
+    req.nextUrl.pathname.startsWith(path)
+  );
+  const isPublicPath = PUBLIC_PATHS.some((path) =>
+    req.nextUrl.pathname.startsWith(path)
+  );
+  const isProtectedPath = !isPublicPath && !isAuthPath;
 
   // If current path is not public and user is not logged in, redirect to login page
-  if (
-    req.nextUrl.pathname !== '/' &&
-    ![...PUBLIC_PATHS, ...AUTH_PATHS].some((path) =>
-      req.nextUrl.pathname.startsWith(path)
-    ) &&
-    !hasSession
-  ) {
+  if (req.nextUrl.pathname !== '/' && isProtectedPath && !hasSession) {
     const loginUrl = new URL('/login', req.nextUrl.origin);
     loginUrl.searchParams.set(
       'nextUrl',
@@ -39,11 +78,7 @@ const handleRedirect = ({
   }
 
   // If current path ends with /login and user is logged in, redirect to dashboard page
-  if (
-    req.nextUrl.pathname !== '/' &&
-    AUTH_PATHS.some((path) => req.nextUrl.pathname.startsWith(path)) &&
-    hasSession
-  ) {
+  if (req.nextUrl.pathname !== '/' && isAuthPath && hasSession) {
     const nextUrl = req.nextUrl.searchParams.get('nextUrl');
     const sanitizedNextUrl = sanitizeUrl(nextUrl) || '/dashboard';
     const redirectUrl = new URL(sanitizedNextUrl, req.nextUrl.origin);
@@ -56,13 +91,13 @@ const handleRedirect = ({
   return { res: nextRes, redirect: false };
 };
 
-export function proxy(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   if (req.nextUrl.pathname.startsWith('/api')) {
     return NextResponse.next();
   }
 
   // Handle special cases for public, authenticating paths
-  const { res: nextRes, redirect } = handleRedirect({ req });
+  const { res: nextRes, redirect } = await handleRedirect({ req });
   if (redirect) return nextRes;
 
   return intlMiddleware(req);

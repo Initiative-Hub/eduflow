@@ -197,7 +197,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <span className="truncate font-semibold text-foreground text-sm">
                 {sessionData?.user?.name || 'User'}
               </span>
-              <span className="max-w-[120px] truncate text-muted-foreground text-xs">
+              <span className="max-w-30 truncate text-muted-foreground text-xs">
                 {sessionData?.user?.email || 'Free Plan'}
               </span>
             </div>
