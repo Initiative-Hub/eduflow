@@ -3,6 +3,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { LOCAL_MAILPIT_URL } from '@/constants/common';
 import type { ApiError } from '@/lib/api';
 import { verifyOtpService } from './verify-otp.service';
 
@@ -55,6 +56,10 @@ export function useVerifyOtp() {
     resendMutation.mutate({ email });
   };
 
+  const openMailpit = () => {
+    window.open(LOCAL_MAILPIT_URL, '_blank');
+  };
+
   return {
     error: verifyMutation.error?.message || resendMutation.error?.message || '',
     isVerifying: verifyMutation.isPending,
@@ -62,5 +67,6 @@ export function useVerifyOtp() {
     cooldownSeconds,
     handleVerify: verifyMutation.mutate,
     handleResend,
+    openMailpit,
   };
 }

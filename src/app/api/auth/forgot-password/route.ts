@@ -20,8 +20,14 @@ export async function POST(request: Request) {
     );
   }
 
-  return auth.api.requestPasswordResetEmailOTP({
-    body: parsedBody.data,
+  const { email } = parsedBody.data;
+  const origin = (await headers()).get('origin') || 'http://localhost:3000';
+
+  return auth.api.requestPasswordReset({
+    body: {
+      email,
+      redirectTo: `${origin}/reset-password`,
+    },
     headers: await headers(),
     asResponse: true,
   });

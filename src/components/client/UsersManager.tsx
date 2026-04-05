@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Button } from '../ui/button';
 import { Input } from '../ui/input';
+
 type User = {
   id: string;
   email: string;
@@ -178,12 +180,12 @@ export default function UsersManager() {
               className="flex-1 rounded-md border border-gray-300 px-4 py-2"
             />
           </div>
-          <button
+          <Button
             onClick={() => setShowAddModal(true)}
             className="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
           >
             + Add New User
-          </button>
+          </Button>
         </div>
         <div className="flex items-center gap-2">
           <select
@@ -294,30 +296,30 @@ export default function UsersManager() {
                   <td className="px-6 py-4">
                     {editingId === u.id ? (
                       <>
-                        <button
+                        <Button
                           onClick={saveEdit}
                           className="mr-2 text-green-600 hover:text-green-800"
                         >
                           Save
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                           onClick={() => setEditingId(null)}
                           className="text-gray-600 hover:text-gray-800"
                         >
                           Cancel
-                        </button>
+                        </Button>
                       </>
                     ) : (
                       <>
-                        <button
+                        <Button
                           onClick={() => startEdit(u)}
                           className="mr-3 text-blue-600 hover:text-blue-800"
                         >
                           ✏️
-                        </button>
-                        <button className="text-red-600 hover:text-red-800">
+                        </Button>
+                        <Button className="text-red-600 hover:text-red-800">
                           🗑️
-                        </button>
+                        </Button>
                       </>
                     )}
                   </td>
@@ -351,13 +353,13 @@ export default function UsersManager() {
 
         <div className="flex gap-2">
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-            <button
+            <Button
               key={page}
               onClick={() => setCurrentPage(page)}
               className={`rounded px-3 py-1 ${currentPage === page ? 'bg-blue-600 text-white' : 'border border-gray-300 text-gray-600'}`}
             >
               {page}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
@@ -440,7 +442,7 @@ export default function UsersManager() {
             </div>
 
             <div className="mt-6 flex gap-2">
-              <button
+              <Button
                 onClick={() => {
                   setShowAddModal(false);
                   setNewUserForm({
@@ -455,14 +457,14 @@ export default function UsersManager() {
                 disabled={addingUser}
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={handleAddUser}
                 className="flex-1 rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
                 disabled={addingUser}
               >
                 {addingUser ? 'Creating...' : 'Create User'}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
