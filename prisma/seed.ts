@@ -1,7 +1,7 @@
 // prisma/seed.ts
 import { randomUUID } from 'node:crypto';
 import { PrismaPg } from '@prisma/adapter-pg';
-import bcrypt from 'bcryptjs';
+import { hashPassword } from 'better-auth/crypto';
 import { PrismaClient } from '../src/generated/prisma';
 
 const adapter = new PrismaPg({
@@ -13,10 +13,10 @@ async function main() {
   console.log('Starting database seed...');
 
   // Hash passwords
-  const hashedPasswordAdmin = await bcrypt.hash('securepassword123', 10);
-  const hashedPasswordMember = await bcrypt.hash('memberpassword123', 10);
-  const hashedPasswordTeacher = await bcrypt.hash('teacherpass123', 10);
-  const hashedPasswordStudent = await bcrypt.hash('studentpass123', 10);
+  const hashedPasswordAdmin = await hashPassword('securepassword123');
+  const hashedPasswordMember = await hashPassword('memberpassword123');
+  const hashedPasswordTeacher = await hashPassword('teacherpass123');
+  const hashedPasswordStudent = await hashPassword('studentpass123');
 
   // 1. Create roles
   const adminRole = await prisma.role.upsert({
@@ -67,15 +67,15 @@ async function main() {
       id: randomUUID(),
       email: 'admin@example.com',
       name: 'Admin User',
-      password: hashedPasswordAdmin,
       roleId: adminRole.id,
-      posts: {
+      emailVerified: true,
+      accounts: {
         create: [
           {
             id: randomUUID(),
-            title: 'First admin post',
-            content: 'Admin post content...',
-            published: true,
+            accountId: 'admin@example.com',
+            providerId: 'credential',
+            password: hashedPasswordAdmin,
           },
         ],
       },
@@ -89,21 +89,15 @@ async function main() {
       id: randomUUID(),
       email: 'member@example.com',
       name: 'Member User',
-      password: hashedPasswordMember,
       roleId: userRole.id,
-      posts: {
+      emailVerified: true,
+      accounts: {
         create: [
           {
             id: randomUUID(),
-            title: 'Hello community',
-            content: 'I am a new member.',
-            published: true,
-          },
-          {
-            id: randomUUID(),
-            title: 'Unpublished draft',
-            content: 'This content is not public yet.',
-            published: false,
+            accountId: 'member@example.com',
+            providerId: 'credential',
+            password: hashedPasswordMember,
           },
         ],
       },
@@ -118,8 +112,18 @@ async function main() {
       id: randomUUID(),
       email: 'teacher@example.com',
       name: 'Teacher User',
-      password: hashedPasswordTeacher,
       roleId: teacherRole.id,
+      emailVerified: true,
+      accounts: {
+        create: [
+          {
+            id: randomUUID(),
+            accountId: 'teacher@example.com',
+            providerId: 'credential',
+            password: hashedPasswordTeacher,
+          },
+        ],
+      },
     },
   });
 
@@ -130,8 +134,18 @@ async function main() {
       id: randomUUID(),
       email: 'student@example.com',
       name: 'Student User',
-      password: hashedPasswordStudent,
       roleId: studentRole.id,
+      emailVerified: true,
+      accounts: {
+        create: [
+          {
+            id: randomUUID(),
+            accountId: 'student@example.com',
+            providerId: 'credential',
+            password: hashedPasswordStudent,
+          },
+        ],
+      },
     },
   });
 

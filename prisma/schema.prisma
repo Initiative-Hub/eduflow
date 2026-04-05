@@ -20,20 +20,21 @@ model Role {
 }
 
 model User {
-  id            String    @id @default(uuid())
-  email         String    @unique
-  name          String?
-  password      String? // Passwords should be hashed in real applications
-  roleId        String
-  role          Role      @relation(fields: [roleId], references: [id])
-  posts         Post[] // One-to-many relationship with Post
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @default(now()) @updatedAt
+  id            String    @id
+  name          String
+  email         String
   emailVerified Boolean   @default(false)
   image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  roleId        String?
   sessions      Session[]
   accounts      Account[]
+  role          Role?     @relation(fields: [roleId], references: [id])
+  posts         Post[]
 
+  @@unique([email])
+  @@map("user")
 }
 
 model Post {
