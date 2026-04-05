@@ -1,8 +1,9 @@
 import nodemailer from 'nodemailer';
+import { DEV_MODE } from '@/constants/common';
 
 const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_SERVER_HOST || 'localhost',
-  port: Number.parseInt(process.env.EMAIL_SERVER_PORT || '1025'),
+  host: process.env.EMAIL_SERVER_HOST || '127.0.0.1',
+  port: Number.parseInt(process.env.EMAIL_SERVER_PORT || '1025', 10), // Default Mailpit port
   auth:
     process.env.EMAIL_SERVER_USER && process.env.EMAIL_SERVER_PASSWORD
       ? {
@@ -10,7 +11,7 @@ const transporter = nodemailer.createTransport({
           pass: process.env.EMAIL_SERVER_PASSWORD,
         }
       : undefined,
-  secure: process.env.EMAIL_SERVER_SECURE === 'true',
+  secure: !DEV_MODE, // Use secure connection in production
 });
 
 const from = process.env.EMAIL_FROM || '"EduFlow" <test@localhost.com>';
@@ -18,7 +19,8 @@ const from = process.env.EMAIL_FROM || '"EduFlow" <test@localhost.com>';
 export const emailService = {
   sendPasswordReset: async (
     user: { name: string; email: string },
-    url: string
+    url: string,
+    expiration: number
   ) => {
     try {
       await transporter.sendMail({
@@ -34,7 +36,7 @@ export const emailService = {
               Reset Password
             </a>
           </div>
-          <p style="color: #666; font-size: 14px;">This link will expire shortly. If you didn't request this, you can safely ignore this email.</p>
+          <p style="color: #666; font-size: 14px;">This link will expire in ${Math.floor(expiration / 60)} minutes. If you didn't request this, you can safely ignore this email.</p>
           <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
           <p style="font-size: 12px; color: #999;">
             Or copy and paste this link in your browser: <br/> ${url}
@@ -42,7 +44,7 @@ export const emailService = {
         </div>
       `,
       });
-      if (process.env.NODE_ENV === 'development') {
+      if (DEV_MODE) {
         console.log(`Password reset link sent to Mailpit for ${user.email}`);
       }
     } catch (error) {

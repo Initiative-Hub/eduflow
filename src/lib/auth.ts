@@ -4,6 +4,8 @@ import { customSession, emailOTP } from 'better-auth/plugins';
 import { emailService } from './email-service';
 import { prisma } from './prisma';
 
+const RESET_PASSWORD_TOKEN_EXPIRATION = 15 * 60; // 15 minutes in seconds
+
 export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET,
 
@@ -24,8 +26,13 @@ export const auth = betterAuth({
     autoSignIn: true,
     requireEmailVerification: true,
     sendResetPassword: async ({ user, url }) => {
-      await emailService.sendPasswordReset(user, url);
+      await emailService.sendPasswordReset(
+        user,
+        url,
+        RESET_PASSWORD_TOKEN_EXPIRATION
+      );
     },
+    resetPasswordTokenExpiresIn: RESET_PASSWORD_TOKEN_EXPIRATION,
   },
 
   socialProviders: {
