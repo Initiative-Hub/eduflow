@@ -1,3 +1,5 @@
+'use client';
+
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { useLogin } from '@/app/[locale]/(auth)/login/use-login';

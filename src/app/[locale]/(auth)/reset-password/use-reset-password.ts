@@ -1,21 +1,16 @@
 'use client';
 
 import { useMutation } from '@tanstack/react-query';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import type { ResetPasswordFormData } from './reset-password.config';
 import { resetPasswordService } from './reset-password.service';
 
-export function useResetPassword() {
+export function useResetPassword(token: string) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const token = searchParams.get('token');
 
   const mutation = useMutation({
     mutationFn: async ({ password }: ResetPasswordFormData) => {
-      if (!token) {
-        throw new Error('Invalid or missing token');
-      }
       return resetPasswordService.resetPassword(password, token);
     },
     onSuccess: () => {
@@ -35,6 +30,5 @@ export function useResetPassword() {
     isLoading: mutation.isPending,
     isSuccess: mutation.isSuccess,
     handleSubmit: (values: ResetPasswordFormData) => mutation.mutate(values),
-    hasToken: !!token,
   };
 }
