@@ -4,6 +4,33 @@
     "title": "Thông tin tài khoản",
     "usernameLabel": "Tên người dùng:"
   },
+  "AuthResetPassword": {
+    "actions": {
+      "backToForgot": "Quay lại yêu cầu đặt lại",
+      "backToLogin": "Quay lại đăng nhập",
+      "reset": "Cập nhật mật khẩu"
+    },
+    "description": "Tạo một mật khẩu mới mạnh để bảo mật tài khoản của bạn.",
+    "form": {
+      "confirmPassword": {
+        "label": "Xác nhận mật khẩu mới",
+        "placeholder": "Nhập lại mật khẩu mới của bạn"
+      },
+      "password": {
+        "label": "Mật khẩu mới",
+        "placeholder": "Ít nhất 8 ký tự"
+      }
+    },
+    "invalidToken": {
+      "description": "Liên kết này không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu liên kết đặt lại mật khẩu mới.",
+      "title": "Liên kết không hợp lệ"
+    },
+    "success": {
+      "description": "Mật khẩu của bạn đã được cập nhật thành công. Bây giờ bạn có thể sử dụng mật khẩu mới để đăng nhập.",
+      "title": "Đã cập nhật mật khẩu"
+    },
+    "title": "Tạo mật khẩu mới"
+  },
   "AuthForgotPassword": {
     "actions": {
       "backToLogin": "Quay lại đăng nhập",

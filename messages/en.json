@@ -4,6 +4,33 @@
     "title": "Account Information",
     "usernameLabel": "Username:"
   },
+  "AuthResetPassword": {
+    "actions": {
+      "backToForgot": "Back to Reset Request",
+      "backToLogin": "Back to Login",
+      "reset": "Update Password"
+    },
+    "description": "Create a new strong password to secure your account.",
+    "form": {
+      "confirmPassword": {
+        "label": "Confirm New Password",
+        "placeholder": "Repeat your new password"
+      },
+      "password": {
+        "label": "New Password",
+        "placeholder": "At least 8 characters"
+      }
+    },
+    "invalidToken": {
+      "description": "This link is invalid or has expired. Please request a new password reset link.",
+      "title": "Invalid Reset Link"
+    },
+    "success": {
+      "description": "Your password has been successfully updated. You can now use your new password to sign in.",
+      "title": "Password updated"
+    },
+    "title": "Create New Password"
+  },
   "AuthForgotPassword": {
     "actions": {
       "backToLogin": "Back to Login",

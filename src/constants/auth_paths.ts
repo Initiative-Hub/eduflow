@@ -5,6 +5,7 @@ export const APP_AUTH_PATHS = [
   '/register',
   '/verify-otp',
   '/forgot-password',
+  '/reset-password',
 ].reduce((acc: string[], path) => {
   // Add the original path
   acc.push(path);

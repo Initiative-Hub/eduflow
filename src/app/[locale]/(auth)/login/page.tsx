@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+import { Suspense } from 'react';
 import { AuthFormHeading } from '@/components/auth/auth-form-heading';
 import { AuthSocialOptions } from '@/components/auth/auth-social-options';
 import { FormTemplate } from '@/components/custom/form';
@@ -9,7 +10,7 @@ import { useTranslatedFields } from '@/hooks/use-translated-fields';
 import { loginDefaultValues, loginFields, loginSchema } from './login.config';
 import { useLogin } from './use-login';
 
-export default function LoginPage() {
+function LoginContent() {
   const t = useTranslations('AuthLogin');
   const translatedFields = useTranslatedFields(loginFields, 'AuthLogin');
 
@@ -47,5 +48,13 @@ export default function LoginPage() {
       </div>
       <AuthSocialOptions />
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginContent />
+    </Suspense>
   );
 }

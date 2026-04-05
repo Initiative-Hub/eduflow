@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { Suspense } from 'react';
 import { AuthFormHeading } from '@/components/auth/auth-form-heading';
 import { AuthSocialOptions } from '@/components/auth/auth-social-options';
 import { FormTemplate } from '@/components/custom/form';
@@ -12,7 +13,7 @@ import {
 } from './register.config';
 import { useRegister } from './use-register';
 
-export default function RegisterPage() {
+function RegisterContent() {
   const t = useTranslations('AuthRegister');
   const translatedFields = useTranslatedFields(registerFields, 'AuthRegister');
 
@@ -50,5 +51,13 @@ export default function RegisterPage() {
       </div>
       <AuthSocialOptions />
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense>
+      <RegisterContent />
+    </Suspense>
   );
 }
