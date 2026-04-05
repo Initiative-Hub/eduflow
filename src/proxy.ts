@@ -8,30 +8,9 @@ import { AUTH_PATHS, PUBLIC_PATHS } from './constants/common';
 
 const intlMiddleware = createMiddleware(routing);
 
-interface SessionData {
-  user: {
-    role: string | null;
-    id: string;
-    createdAt: Date;
-    updatedAt: Date;
-    email: string;
-    emailVerified: boolean;
-    name: string;
-    image?: string | null | undefined;
-  };
-  session: {
-    id: string;
-    createdAt: Date;
-    updatedAt: Date;
-    userId: string;
-    expiresAt: Date;
-    token: string;
-    ipAddress?: string | null | undefined;
-    userAgent?: string | null | undefined;
-  };
-}
-
-function hasActiveSession(sessionData: SessionData | null): boolean {
+function hasActiveSession(
+  sessionData: Awaited<ReturnType<typeof auth.api.getSession>> | null
+): boolean {
   if (!sessionData?.user?.id || !sessionData?.session?.id) return false;
 
   const expiresAt = sessionData.session.expiresAt;
