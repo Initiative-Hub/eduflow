@@ -1,18 +1,3 @@
--- DropForeignKey
-ALTER TABLE "User" DROP CONSTRAINT "User_roleId_fkey";
-
--- DropForeignKey
-ALTER TABLE "account" DROP CONSTRAINT "account_userId_fkey";
-
--- DropForeignKey
-ALTER TABLE "posts" DROP CONSTRAINT "posts_authorId_fkey";
-
--- DropForeignKey
-ALTER TABLE "session" DROP CONSTRAINT "session_userId_fkey";
-
--- DropTable
-DROP TABLE "posts";
-
 -- CreateTable
 CREATE TABLE "user" (
     "id" TEXT NOT NULL,
@@ -39,8 +24,26 @@ SELECT gen_random_uuid()::text, "email", 'credential', "id", "password", "create
 FROM "User"
 WHERE "password" IS NOT NULL;
 
+-- DropForeignKey
+ALTER TABLE "User" DROP CONSTRAINT "User_roleId_fkey";
+
+-- DropForeignKey
+ALTER TABLE "account" DROP CONSTRAINT "account_userId_fkey";
+
+-- DropForeignKey
+ALTER TABLE "session" DROP CONSTRAINT "session_userId_fkey";
+
+-- DropForeignKey
+ALTER TABLE "posts" DROP CONSTRAINT "posts_authorId_fkey";
+
 -- DropTable
 DROP TABLE "User";
+
+-- AddForeignKey
+ALTER TABLE "user" ADD CONSTRAINT "user_roleId_fkey" FOREIGN KEY ("roleId") REFERENCES "Role"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "posts" ADD CONSTRAINT "posts_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "user"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "session" ADD CONSTRAINT "session_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
