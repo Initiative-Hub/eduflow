@@ -3,7 +3,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { ApiError } from '@/lib/api';
-import { useLoadingStore } from '@/store/useLoadingStore';
+import { useLoadingStore } from '@/stores/useLoadingStore';
 import { sanitizeUrl } from '@/utils/url-helper';
 import type { LoginFormData } from './login.config';
 import { loginService } from './login.service';

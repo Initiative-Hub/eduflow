@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useEffect } from 'react';
 import { Spinner } from '@/components/ui/spinner';
-import { useLoadingStore } from '@/store/useLoadingStore';
+import { useLoadingStore } from '@/stores/useLoadingStore';
 
 export function GlobalLoader() {
   const pathname = usePathname();

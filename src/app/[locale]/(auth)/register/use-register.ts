@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { DEV_MODE, LOCAL_MAILPIT_URL } from '@/constants/common';
 import type { ApiError } from '@/lib/api';
-import { useLoadingStore } from '@/store/useLoadingStore';
+import { useLoadingStore } from '@/stores/useLoadingStore';
 import type { RegisterFormData } from './register.config';
 import { registerService } from './register.service';
 

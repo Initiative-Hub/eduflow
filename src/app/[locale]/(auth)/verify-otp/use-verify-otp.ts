@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { LOCAL_MAILPIT_URL } from '@/constants/common';
 import type { ApiError } from '@/lib/api';
-import { useLoadingStore } from '@/store/useLoadingStore';
+import { useLoadingStore } from '@/stores/useLoadingStore';
 import { verifyOtpService } from './verify-otp.service';
 
 type VerifyOtpPayload = {
