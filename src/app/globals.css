@@ -47,8 +47,12 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 
   @keyframes loader-slide {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
   }
   --animation-loader-slide: loader-slide 2s infinite ease-in-out;
 }
