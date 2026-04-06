@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { AppNavbar } from '@/components/layout/app-navbar';
 import { AppSidebar } from '@/components/layout/app-sidebar';
+import UserLoader from '@/components/UserLoader';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { auth } from '@/lib/auth';
 
@@ -18,6 +19,7 @@ export default async function DashboardLayout({
 
   return (
     <SidebarProvider>
+      <UserLoader />
       <AppSidebar />
       <SidebarInset>
         <AppNavbar />

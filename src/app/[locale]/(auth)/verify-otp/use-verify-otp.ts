@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { LOCAL_MAILPIT_URL } from '@/constants/common';
 import type { ApiError } from '@/lib/api';
+import { useLoadingStore } from '@/stores/useLoadingStore';
 import { verifyOtpService } from './verify-otp.service';
 
 type VerifyOtpPayload = {
@@ -17,6 +18,7 @@ const RESEND_COOLDOWN_SECONDS = 60;
 export function useVerifyOtp() {
   const router = useRouter();
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
+  const setLoading = useLoadingStore((state) => state.setLoading);
 
   useEffect(() => {
     if (cooldownSeconds <= 0) {
@@ -32,19 +34,28 @@ export function useVerifyOtp() {
 
   const verifyMutation = useMutation<void, ApiError, VerifyOtpPayload>({
     mutationFn: async (data) => {
+      setLoading(true);
       await verifyOtpService.verifyOtp(data);
     },
     onSuccess: () => {
       router.replace('/login');
     },
+    onError: () => {
+      setLoading(false);
+    },
   });
 
   const resendMutation = useMutation<void, ApiError, { email: string }>({
     mutationFn: async ({ email }) => {
+      setLoading(true);
       await verifyOtpService.resendOtp({ email });
     },
     onSuccess: () => {
       setCooldownSeconds(RESEND_COOLDOWN_SECONDS);
+      setLoading(false);
+    },
+    onError: () => {
+      setLoading(false);
     },
   });
 

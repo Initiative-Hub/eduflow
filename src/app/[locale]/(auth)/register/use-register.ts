@@ -5,14 +5,17 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { DEV_MODE, LOCAL_MAILPIT_URL } from '@/constants/common';
 import type { ApiError } from '@/lib/api';
+import { useLoadingStore } from '@/stores/useLoadingStore';
 import type { RegisterFormData } from './register.config';
 import { registerService } from './register.service';
 
 export function useRegister() {
   const router = useRouter();
+  const setLoading = useLoadingStore((state) => state.setLoading);
 
   const mutation = useMutation<void, ApiError, RegisterFormData>({
     mutationFn: async (formData: RegisterFormData) => {
+      setLoading(true);
       await registerService.register({
         email: formData.email,
         password: formData.password,
@@ -29,6 +32,7 @@ export function useRegister() {
       );
     },
     onError: (error) => {
+      setLoading(false);
       toast.error(error.message);
     },
   });
