@@ -3,7 +3,7 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 ## Getting Started
 ### 1. Prerequisites
 
-Node.js: (LTS version recommended, e.g., v25).
+Node.js: (LTS version recommended, e.g., v25)
 
 Git: To clone the source code.
 
