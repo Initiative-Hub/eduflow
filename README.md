@@ -10,7 +10,7 @@ Git: To clone the source code.
 PostgreSQL: The database (installed directly or via Docker).
 
 Package Manager: Bun.
-
+á
 ### 2. Get Source Code & Install Dependencie
 ```bash
 # 1. Clone the repository
