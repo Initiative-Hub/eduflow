@@ -3,11 +3,11 @@
 
 import { useEffect } from 'react';
 import { useSession } from '@/lib/auth-client';
-import { useAppStore } from '@/store/useAppState';
+import { useLoadingStore } from '@/store/useLoadingStore';
 
 export function AuthSync() {
   const { isPending } = useSession();
-  const setLoading = useAppStore((state) => state.setLoading);
+  const setLoading = useLoadingStore((state) => state.setLoading);
 
   useEffect(() => {
     setLoading(isPending);

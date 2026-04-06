@@ -5,14 +5,14 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { DEV_MODE, LOCAL_MAILPIT_URL } from '@/constants/common';
 import type { ApiError } from '@/lib/api';
-import { useAppStore } from '@/store/useAppState';
+import { useLoadingStore } from '@/store/useLoadingStore';
 import type { RegisterFormData } from './register.config';
 import { registerService } from './register.service';
 
 export function useRegister() {
   const router = useRouter();
-  const setLoading = useAppStore((state) => state.setLoading);
-  const isGlobalLoading = useAppStore((state) => state.isLoading);
+  const setLoading = useLoadingStore((state) => state.setLoading);
+  const isGlobalLoading = useLoadingStore((state) => state.isLoading);
 
   const mutation = useMutation<void, ApiError, RegisterFormData>({
     mutationFn: async (formData: RegisterFormData) => {

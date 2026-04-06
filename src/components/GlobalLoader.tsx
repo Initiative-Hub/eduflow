@@ -5,12 +5,12 @@ import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useEffect } from 'react';
 import { Spinner } from '@/components/ui/spinner';
-import { useAppStore } from '@/store/useAppState';
+import { useLoadingStore } from '@/store/useLoadingStore';
 
 export function GlobalLoader() {
   const pathname = usePathname();
-  const isLoading = useAppStore((state) => state.isLoading);
-  const setLoading = useAppStore((state) => state.setLoading);
+  const isLoading = useLoadingStore((state) => state.isLoading);
+  const setLoading = useLoadingStore((state) => state.setLoading);
   const t = useTranslations('Loading');
 
   useEffect(() => {

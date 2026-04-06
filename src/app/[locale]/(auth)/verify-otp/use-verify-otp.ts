@@ -3,9 +3,9 @@
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { useAppStore } from '@/store/useAppState';
 import { LOCAL_MAILPIT_URL } from '@/constants/common';
 import type { ApiError } from '@/lib/api';
+import { useLoadingStore } from '@/store/useLoadingStore';
 import { verifyOtpService } from './verify-otp.service';
 
 type VerifyOtpPayload = {
@@ -18,8 +18,8 @@ const RESEND_COOLDOWN_SECONDS = 60;
 export function useVerifyOtp() {
   const router = useRouter();
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
-  const setLoading = useAppStore((state) => state.setLoading);
-  const isGlobalLoading = useAppStore((state) => state.isLoading);
+  const setLoading = useLoadingStore((state) => state.setLoading);
+  const isGlobalLoading = useLoadingStore((state) => state.isLoading);
 
   useEffect(() => {
     if (cooldownSeconds <= 0) {

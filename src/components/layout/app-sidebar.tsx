@@ -30,14 +30,14 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { authClient, useSession } from '@/lib/auth-client';
-import { useAppStore } from '@/store/useAppState';
+import { useLoadingStore } from '@/store/useLoadingStore';
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const t = useTranslations('Layout');
   const tCommon = useTranslations('Common');
   const pathname = usePathname();
   const router = useRouter();
-  const setLoading = useAppStore((state) => state.setLoading);
+  const setLoading = useLoadingStore((state) => state.setLoading);
 
   const { data: sessionData } = useSession();
   const { state, toggleSidebar } = useSidebar();

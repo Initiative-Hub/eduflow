@@ -3,7 +3,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { ApiError } from '@/lib/api';
-import { useAppStore } from '@/store/useAppState';
+import { useLoadingStore } from '@/store/useLoadingStore';
 import { sanitizeUrl } from '@/utils/url-helper';
 import type { LoginFormData } from './login.config';
 import { loginService } from './login.service';
@@ -11,8 +11,8 @@ import { loginService } from './login.service';
 export function useLogin() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const setLoading = useAppStore((state) => state.setLoading);
-  const isGlobalLoading = useAppStore((state) => state.isLoading);
+  const setLoading = useLoadingStore((state) => state.setLoading);
+  const isGlobalLoading = useLoadingStore((state) => state.isLoading);
 
   const emailMutation = useMutation<void, ApiError, LoginFormData>({
     mutationFn: async (formData: LoginFormData) => {
