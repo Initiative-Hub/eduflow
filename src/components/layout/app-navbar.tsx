@@ -4,6 +4,7 @@ import { GraduationCap, Menu } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+
 import LanguageSwitcher from '@/components/client/LanguageSwitcher';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -16,7 +17,6 @@ export function AppNavbar() {
   const { toggleSidebar } = useSidebar();
   const { data: sessionData } = useSession();
 
-  console.log(sessionData, 'session');
   return (
     <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between overflow-hidden border-border/40 border-b bg-background/95 px-3 shadow-sm backdrop-blur supports-backdrop-filter:bg-background/60 md:px-8">
       <div className="flex h-full min-w-0 flex-1 items-center gap-2 md:gap-8">

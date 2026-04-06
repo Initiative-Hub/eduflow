@@ -3,6 +3,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { useAppStore } from '@/store/useAppState';
 import { LOCAL_MAILPIT_URL } from '@/constants/common';
 import type { ApiError } from '@/lib/api';
 import { verifyOtpService } from './verify-otp.service';
@@ -17,6 +18,8 @@ const RESEND_COOLDOWN_SECONDS = 60;
 export function useVerifyOtp() {
   const router = useRouter();
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
+  const setLoading = useAppStore((state) => state.setLoading);
+  const isGlobalLoading = useAppStore((state) => state.isLoading);
 
   useEffect(() => {
     if (cooldownSeconds <= 0) {
@@ -32,19 +35,28 @@ export function useVerifyOtp() {
 
   const verifyMutation = useMutation<void, ApiError, VerifyOtpPayload>({
     mutationFn: async (data) => {
+      setLoading(true);
       await verifyOtpService.verifyOtp(data);
     },
     onSuccess: () => {
       router.replace('/login');
     },
+    onError: () => {
+      setLoading(false);
+    },
   });
 
   const resendMutation = useMutation<void, ApiError, { email: string }>({
     mutationFn: async ({ email }) => {
+      setLoading(true);
       await verifyOtpService.resendOtp({ email });
     },
     onSuccess: () => {
       setCooldownSeconds(RESEND_COOLDOWN_SECONDS);
+      setLoading(false);
+    },
+    onError: () => {
+      setLoading(false);
     },
   });
 
@@ -62,8 +74,8 @@ export function useVerifyOtp() {
 
   return {
     error: verifyMutation.error?.message || resendMutation.error?.message || '',
-    isVerifying: verifyMutation.isPending,
-    isResending: resendMutation.isPending,
+    isVerifying: verifyMutation.isPending || isGlobalLoading,
+    isResending: resendMutation.isPending || isGlobalLoading,
     cooldownSeconds,
     handleVerify: verifyMutation.mutate,
     handleResend,

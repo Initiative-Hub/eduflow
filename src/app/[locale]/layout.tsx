@@ -5,6 +5,7 @@ import { hasLocale } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
 import type { ReactNode } from 'react';
 import { Toaster } from 'sonner';
+import { GlobalLoader } from '@/components/GlobalLoader';
 import { routing } from '@/i18n/routing';
 import Providers from '@/providers/providers';
 
@@ -39,7 +40,6 @@ export default async function RootLayout({
     notFound();
   }
 
-  // Enable static rendering
   setRequestLocale(locale);
 
   return (
@@ -47,7 +47,10 @@ export default async function RootLayout({
       <body
         className={`${inter.variable} ${lexend.variable} font-sans antialiased`}
       >
-        <Providers>{children}</Providers>
+        <Providers>
+          <GlobalLoader />
+          {children}
+        </Providers>
         <Toaster />
       </body>
     </html>

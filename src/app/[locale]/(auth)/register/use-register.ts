@@ -5,14 +5,18 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { DEV_MODE, LOCAL_MAILPIT_URL } from '@/constants/common';
 import type { ApiError } from '@/lib/api';
+import { useAppStore } from '@/store/useAppState';
 import type { RegisterFormData } from './register.config';
 import { registerService } from './register.service';
 
 export function useRegister() {
   const router = useRouter();
+  const setLoading = useAppStore((state) => state.setLoading);
+  const isGlobalLoading = useAppStore((state) => state.isLoading);
 
   const mutation = useMutation<void, ApiError, RegisterFormData>({
     mutationFn: async (formData: RegisterFormData) => {
+      setLoading(true);
       await registerService.register({
         email: formData.email,
         password: formData.password,
@@ -29,13 +33,14 @@ export function useRegister() {
       );
     },
     onError: (error) => {
+      setLoading(false);
       toast.error(error.message);
     },
   });
 
   return {
     error: mutation.error?.message || '',
-    isLoading: mutation.isPending,
+    isLoading: mutation.isPending || isGlobalLoading,
     handleSubmit: mutation.mutate,
   };
 }
