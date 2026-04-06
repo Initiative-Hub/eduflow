@@ -19,7 +19,6 @@ export function useVerifyOtp() {
   const router = useRouter();
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
   const setLoading = useLoadingStore((state) => state.setLoading);
-  const isGlobalLoading = useLoadingStore((state) => state.isLoading);
 
   useEffect(() => {
     if (cooldownSeconds <= 0) {
@@ -74,8 +73,8 @@ export function useVerifyOtp() {
 
   return {
     error: verifyMutation.error?.message || resendMutation.error?.message || '',
-    isVerifying: verifyMutation.isPending || isGlobalLoading,
-    isResending: resendMutation.isPending || isGlobalLoading,
+    isVerifying: verifyMutation.isPending,
+    isResending: resendMutation.isPending,
     cooldownSeconds,
     handleVerify: verifyMutation.mutate,
     handleResend,

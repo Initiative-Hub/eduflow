@@ -12,7 +12,6 @@ import { registerService } from './register.service';
 export function useRegister() {
   const router = useRouter();
   const setLoading = useLoadingStore((state) => state.setLoading);
-  const isGlobalLoading = useLoadingStore((state) => state.isLoading);
 
   const mutation = useMutation<void, ApiError, RegisterFormData>({
     mutationFn: async (formData: RegisterFormData) => {
@@ -40,7 +39,7 @@ export function useRegister() {
 
   return {
     error: mutation.error?.message || '',
-    isLoading: mutation.isPending || isGlobalLoading,
+    isLoading: mutation.isPending,
     handleSubmit: mutation.mutate,
   };
 }

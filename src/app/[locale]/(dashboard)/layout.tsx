@@ -1,9 +1,9 @@
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import type { ReactNode } from 'react';
-import { AuthSync } from '@/components/AsyncAuth';
 import { AppNavbar } from '@/components/layout/app-navbar';
 import { AppSidebar } from '@/components/layout/app-sidebar';
+import UserLoader from '@/components/UserLoader';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { auth } from '@/lib/auth';
 
@@ -19,7 +19,7 @@ export default async function DashboardLayout({
 
   return (
     <SidebarProvider>
-      <AuthSync />
+      <UserLoader />
       <AppSidebar />
       <SidebarInset>
         <AppNavbar />

@@ -12,7 +12,6 @@ export function useLogin() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const setLoading = useLoadingStore((state) => state.setLoading);
-  const isGlobalLoading = useLoadingStore((state) => state.isLoading);
 
   const emailMutation = useMutation<void, ApiError, LoginFormData>({
     mutationFn: async (formData: LoginFormData) => {
@@ -50,11 +49,11 @@ export function useLogin() {
 
   return {
     error: emailMutation.error?.message || '',
-    isLoading: emailMutation.isPending || isGlobalLoading,
+    isLoading: emailMutation.isPending,
     handleSubmit: emailMutation.mutate,
 
     googleError: googleMutation.error?.message || '',
-    isGoogleLoading: googleMutation.isPending || isGlobalLoading,
+    isGoogleLoading: googleMutation.isPending,
     handleGoogleLogin: () => googleMutation.mutate(),
   };
 }
