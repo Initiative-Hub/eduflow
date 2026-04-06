@@ -13,8 +13,6 @@ jobs:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-      VERCEL_GIT_COMMIT_AUTHOR_LOGIN: ${{ secrets.VERCEL_USERNAME }}
-      VERCEL_GIT_COMMIT_AUTHOR_NAME: ${{ secrets.VERCEL_NAME }}
     steps:
       - name: Check out code
         uses: actions/checkout@v6
