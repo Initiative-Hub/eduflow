@@ -1,5 +1,10 @@
 import { GraduationCap } from 'lucide-react';
+import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
+
+export const metadata: Metadata = {
+  title: 'Socratic Tutor',
+};
 
 export default async function SocraticTutorPage() {
   const t = await getTranslations('Layout');

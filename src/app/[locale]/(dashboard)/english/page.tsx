@@ -1,5 +1,10 @@
 import { Languages } from 'lucide-react';
+import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
+
+export const metadata: Metadata = {
+  title: 'English Assistant',
+};
 
 export default async function EnglishAssistantPage() {
   const t = await getTranslations('Layout');

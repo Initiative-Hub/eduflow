@@ -10,6 +10,10 @@ type VerifyOtpPageProps = {
   }>;
 };
 
+export const metadata = {
+  title: 'Email Verification',
+};
+
 export default async function VerifyOtpPage({
   searchParams,
 }: VerifyOtpPageProps) {

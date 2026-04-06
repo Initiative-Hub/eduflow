@@ -1,4 +1,5 @@
 import { ArrowLeft } from 'lucide-react';
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { AuthFormHeading } from '@/components/auth/auth-form-heading';
@@ -10,6 +11,10 @@ type ResetPasswordPageProps = {
   searchParams: Promise<{
     token?: string;
   }>;
+};
+
+export const metadata: Metadata = {
+  title: 'Reset Password',
 };
 
 export default async function ResetPasswordPage({

@@ -1,8 +1,13 @@
+import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { AuthFormHeading } from '@/components/auth/auth-form-heading';
 import { AuthSocialOptions } from '@/components/auth/auth-social-options';
 import { LoginClient } from './client';
 import { loginFields } from './login.config';
+
+export const metadata: Metadata = {
+  title: 'Login',
+};
 
 export default async function LoginPage() {
   const t = await getTranslations('AuthLogin');

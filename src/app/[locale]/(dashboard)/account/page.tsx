@@ -1,7 +1,12 @@
+import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { auth } from '@/lib/auth';
+
+export const metadata: Metadata = {
+  title: 'Account Information',
+};
 
 export default async function AccountInfoPage() {
   const t = await getTranslations('AccountPage');

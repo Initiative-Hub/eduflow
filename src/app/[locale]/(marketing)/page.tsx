@@ -9,10 +9,10 @@ export default async function Home() {
       <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between bg-white px-16 py-32 sm:items-start dark:bg-black">
         <Image
           className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
+          src="/branding.png"
+          alt="EduFlow logo"
+          width={250}
+          height={50}
           priority
         />
         <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">

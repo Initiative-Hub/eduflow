@@ -1,8 +1,13 @@
+import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { AuthFormHeading } from '@/components/auth/auth-form-heading';
 import { AuthSocialOptions } from '@/components/auth/auth-social-options';
 import { RegisterClient } from './client';
 import { registerFields } from './register.config';
+
+export const metadata: Metadata = {
+  title: 'Register',
+};
 
 export default async function RegisterPage() {
   const t = await getTranslations('AuthRegister');

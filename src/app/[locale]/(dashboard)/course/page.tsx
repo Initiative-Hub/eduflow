@@ -1,5 +1,10 @@
 import { Library } from 'lucide-react';
+import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
+
+export const metadata: Metadata = {
+  title: 'Study Hub',
+};
 
 export default async function StudyHubPage() {
   const t = await getTranslations('Layout');
