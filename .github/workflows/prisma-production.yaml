@@ -14,6 +14,8 @@ jobs:
   check-prerequisites:
     name: Check prerequisites
     runs-on: ubuntu-latest
+    permissions:
+      actions: read
     outputs:
       should_deploy: ${{ steps.check_vercel.outputs.should_deploy }}
     # Only check if manually triggered or if workflow_run succeeded
