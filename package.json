@@ -22,6 +22,7 @@
     "lint:fix": "bun --bun biome lint --write",
     "format-and-lint": "bun --bun biome check",
     "format-and-lint:fix": "bun --bun biome check --write",
+    "stop": "bun db:stop",
     "db:start": "docker compose -f ./prisma/docker-compose.yml up -d",
     "db:stop": "docker compose -f ./prisma/docker-compose.yml down",
     "db:reset": "bun prisma:reset && bun prisma:generate && bun prisma:seed",
