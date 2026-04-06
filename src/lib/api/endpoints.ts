@@ -1,9 +1,6 @@
-import { PORT, PROD_MODE } from '@/constants/common';
+import { PORT } from '@/constants/common';
 
-export const BASE_URL =
-  process.env.BASE_URL ||
-  (PROD_MODE ? 'https://eduflow.com' : `http://localhost:${PORT}`);
-
+export const APP_URL =
+  process.env.NEXT_PUBLIC_APP_URL || `http://localhost:${PORT}`;
 export const API_URL =
-  process.env.API_URL ||
-  (PROD_MODE ? 'https://eduflow.com/api' : `http://localhost:${PORT}/api`);
+  process.env.NEXT_PUBLIC_API_URL || `http://localhost:${PORT}/api`;
