@@ -13,7 +13,7 @@ export default async function RootLoading() {
           <Spinner className="h-10 w-10 text-primary" />
         </div>
       </div>
-      <div className='fade-in slide-in-from-bottom-5 mt-8 flex animate-in flex-col items-center space-y-2 duration-700'>
+      <div className="fade-in slide-in-from-bottom-5 mt-8 flex animate-in flex-col items-center space-y-2 duration-700">
         <h2 className="font-bold text-2xl text-primary tracking-tight">
           {t('eduFlow')}
         </h2>
