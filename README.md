@@ -5,7 +5,7 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 Node.js: (LTS version recommended, e.g., v25)
 
-Git: To clone the source code.
+Git: To clone the source code
 
 PostgreSQL: The database (installed directly or via Docker).
 
