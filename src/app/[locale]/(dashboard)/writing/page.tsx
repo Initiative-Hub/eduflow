@@ -1,15 +1,7 @@
 import { PenLine } from 'lucide-react';
-import { headers } from 'next/headers';
-import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
-import { auth } from '@/lib/auth';
 
 export default async function WritingAssistantPage() {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user?.id) {
-    redirect('/login');
-  }
-
   const t = await getTranslations('Layout');
 
   return (
