@@ -63,6 +63,5 @@ jobs:
       - name: Build Project Artifacts
         if: steps.check_commits.outputs.skip_build != 'true'
         run: |
-          echo $VERCEL_GIT_COMMIT_AUTHOR_LOGIN
+          echo ${{ secrets.VERCEL_USERNAME }}
           vercel build --token=$VERCEL_TOKEN
-          
