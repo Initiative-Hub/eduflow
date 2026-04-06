@@ -48,7 +48,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       fetchOptions: {
         onSuccess: () => {
           router.push('/login');
-          setLoading(false);
         },
       },
     });

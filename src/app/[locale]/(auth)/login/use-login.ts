@@ -17,10 +17,7 @@ export function useLogin() {
   const emailMutation = useMutation<void, ApiError, LoginFormData>({
     mutationFn: async (formData: LoginFormData) => {
       setLoading(true);
-      try {
-        await loginService.login(formData);
-      } finally {
-      }
+      await loginService.login(formData);
     },
     onSuccess: () => {
       const nextUrl = searchParams.get('nextUrl');

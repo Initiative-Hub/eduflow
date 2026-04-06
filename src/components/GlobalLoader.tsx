@@ -1,12 +1,11 @@
 'use client';
 
 import { AnimatePresence, motion } from 'framer-motion';
+import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useEffect } from 'react';
 import { Spinner } from '@/components/ui/spinner';
 import { useAppStore } from '@/store/useAppState';
-
-import { usePathname } from 'next/navigation';
 
 export function GlobalLoader() {
   const pathname = usePathname();
@@ -15,7 +14,6 @@ export function GlobalLoader() {
   const t = useTranslations('Loading');
 
   useEffect(() => {
-    // Hide loading once navigation completes and the layout re-renders
     if (pathname) {
       setLoading(false);
     }
