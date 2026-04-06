@@ -48,6 +48,9 @@ jobs:
       - name: Install dependencies
         if: steps.check_commits.outputs.skip_build != 'true'
         run: bun install
+      
+      - name: Generate Prisma client
+        run: bunx prisma generate
 
       - name: Install Vercel CLI
         if: steps.check_commits.outputs.skip_build != 'true'
