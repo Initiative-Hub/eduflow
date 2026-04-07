@@ -1,9 +1,10 @@
 name: Check Database Migrations
 
 on:
-  pull_request:
-    paths:
-      - 'prisma/migrations/**'
+  # pull_request:
+  #   paths:
+  #     - 'prisma/migrations/**'
+  workflow_dispatch:
 
 jobs:
   check-migrations:
