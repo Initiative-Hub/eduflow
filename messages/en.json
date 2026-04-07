@@ -167,5 +167,20 @@
     "studyAssistant": "Study Assistant",
     "studyHub": "Study Hub",
     "writingAssistant": "Writing Assistant"
+  },
+  "NavbarAvatar": {
+    "fallback": {
+      "role": "Student",
+      "user": "User"
+    },
+    "menu": {
+      "english": "English",
+      "language": "Language",
+      "profile": "Profile",
+      "settings": "Settings",
+      "signOut": "Sign out",
+      "system": "System",
+      "vietnamese": "Tiếng Việt"
+    }
   }
 }

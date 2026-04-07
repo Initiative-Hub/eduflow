@@ -167,5 +167,20 @@
     "studyAssistant": "Trợ lý Học tập",
     "studyHub": "Góc học tập",
     "writingAssistant": "Trợ lý Viết"
+  },
+  "NavbarAvatar": {
+    "fallback": {
+      "role": "Học viên",
+      "user": "Người dùng"
+    },
+    "menu": {
+      "english": "English",
+      "language": "Ngôn ngữ",
+      "profile": "Hồ sơ",
+      "settings": "Cài đặt",
+      "signOut": "Đăng xuất",
+      "system": "Hệ thống",
+      "vietnamese": "Tiếng Việt"
+    }
   }
 }

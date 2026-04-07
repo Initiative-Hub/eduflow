@@ -1,11 +1,10 @@
 'use client';
 
-import { LogOut, Settings, User } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 import { DropdownTemplate } from '@/components/custom/dropdown/dropdown';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { authClient } from '@/lib/auth-client';
+import { useNavbarAvatarMenu } from './navbar-avatar-menu';
 
 interface NavbarAvatarProps {
   name?: string | null;
@@ -14,53 +13,30 @@ interface NavbarAvatarProps {
 }
 
 export function NavbarAvatar({ name, image, role }: NavbarAvatarProps) {
-  const router = useRouter();
-
-  const handleSignOut = async () => {
-    await authClient.signOut();
-    router.push('/login');
-  };
+  const t = useTranslations('NavbarAvatar');
+  const { items } = useNavbarAvatarMenu();
 
   const trigger = (
     <div className="mr-2 hidden cursor-pointer items-center gap-4 rounded-full px-2 py-1 transition-colors hover:bg-muted/40 md:flex">
       <div className="flex min-w-0 flex-col items-end">
         <span className="max-w-40 truncate font-bold text-base text-foreground leading-tight">
-          {name || 'User'}
+          {name || t('fallback.user')}
         </span>
         <span className="truncate font-semibold text-muted-foreground text-xs uppercase tracking-wide">
-          {role || 'Student'}
+          {role || t('fallback.role')}
         </span>
       </div>
       <Avatar
         size="lg"
         className="cursor-pointer border-2 border-border transition-all hover:ring-2 hover:ring-primary/20"
       >
-        <AvatarImage src={image || ''} alt={name || 'User'} />
+        <AvatarImage src={image || ''} alt={name || t('fallback.user')} />
         <AvatarFallback className="bg-primary/10 font-bold text-primary text-sm">
           {name?.[0]?.toUpperCase() || 'U'}
         </AvatarFallback>
       </Avatar>
     </div>
   );
-
-  const items = [
-    {
-      label: 'Profile',
-      icon: <User className="size-4" />,
-      onClick: () => router.push('/profile'),
-    },
-    {
-      label: 'Settings',
-      icon: <Settings className="size-4" />,
-      onClick: () => router.push('/settings'),
-    },
-    {
-      label: 'Sign out',
-      icon: <LogOut className="size-4" />,
-      onClick: handleSignOut,
-      destructive: true,
-    },
-  ];
 
   return <DropdownTemplate trigger={trigger} items={items} align="end" />;
 }
