@@ -4,7 +4,6 @@ import { Bell, GraduationCap, Menu } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import LanguageSwitcher from '@/components/client/LanguageSwitcher';
 import { NavbarAvatar } from '@/components/layout/navbar-avatar';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -79,8 +78,6 @@ export function AppNavbar() {
           image={sessionData?.user?.image}
           role={(sessionData?.user as any)?.role}
         />
-
-        {/* <LanguageSwitcher /> */}
 
         {/* Custom Hamburger Trigger for Mobile */}
         <div className="ml-1 flex items-center md:hidden">
