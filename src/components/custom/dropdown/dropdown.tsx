@@ -25,7 +25,11 @@ export const DropdownTemplate = ({
         {items.map((item, index) => (
           <DropdownMenuItem
             key={index}
-            className={`cursor-pointer gap-2 ${item.destructive ? 'text-destructive' : ''} ${item.className || ''}`}
+            className={`cursor-pointer gap-2 ${
+              item.destructive
+                ? 'text-destructive focus:bg-destructive/20 focus:text-destructive'
+                : 'focus:bg-primary/20 focus:text-primary'
+            } ${item.className || ''}`}
             onClick={item.onClick}
           >
             {item.icon}
