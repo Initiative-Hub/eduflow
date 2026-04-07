@@ -1,13 +1,12 @@
 'use client';
 
-import { GraduationCap, Menu } from 'lucide-react';
+import { Bell, GraduationCap, Menu } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-
-import LanguageSwitcher from '@/components/client/LanguageSwitcher';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { NavbarAvatar } from '@/components/layout/navbar-avatar';
 import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 import { useSidebar } from '@/components/ui/sidebar';
 import { useSession } from '@/lib/auth-client';
 
@@ -61,28 +60,25 @@ export function AppNavbar() {
         </nav>
       </div>
       <div className="flex items-center gap-2">
-        {/* Account Actions / Profile (Desktop Only) */}
-        <div className="mr-2 hidden cursor-pointer items-center gap-3 rounded-full p-1 transition-colors hover:bg-muted/40 md:flex">
-          <Avatar className="size-8 cursor-pointer border transition-all hover:ring-2 hover:ring-primary/20">
-            <AvatarImage
-              src={sessionData?.user?.image || ''}
-              alt={sessionData?.user?.name || 'User'}
-            />
-            <AvatarFallback className="bg-primary/10 font-bold text-primary text-xs">
-              {sessionData?.user?.name?.[0]?.toUpperCase() || 'U'}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex min-w-0 flex-col pr-2">
-            <span className="max-w-[150px] truncate font-semibold text-foreground text-sm">
-              {sessionData?.user?.name || 'User'}
-            </span>
-            <span className="truncate text-muted-foreground text-xs">
-              {(sessionData?.user as any)?.role || 'User'}
-            </span>
-          </div>
-        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="relative shrink-0 rounded-full text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+          aria-label="Notifications"
+        >
+          <Bell className="size-5" />
+          <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-destructive ring-1 ring-background" />
+        </Button>
 
-        <LanguageSwitcher />
+        <Separator orientation="vertical" className="hidden md:block" />
+
+        {/* Account Actions / Profile (Desktop Only) */}
+        <NavbarAvatar
+          name={sessionData?.user?.name}
+          email={sessionData?.user?.email}
+          image={sessionData?.user?.image}
+          role={(sessionData?.user as any)?.role}
+        />
 
         {/* Custom Hamburger Trigger for Mobile */}
         <div className="ml-1 flex items-center md:hidden">
