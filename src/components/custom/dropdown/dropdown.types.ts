@@ -1,9 +1,13 @@
 import type { ReactNode } from 'react';
 
 export interface MenuItem {
-  label: string;
+  type?: 'item' | 'separator' | 'custom' | 'submenu';
+  label?: string;
   icon?: ReactNode;
-  onClick: () => void;
+  onClick?: () => void;
   className?: string;
   destructive?: boolean;
+  content?: ReactNode;
+  items?: MenuItem[];
+  rightNode?: ReactNode;
 }
