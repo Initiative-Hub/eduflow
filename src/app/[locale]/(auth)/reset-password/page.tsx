@@ -2,7 +2,7 @@ import { ArrowLeft } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
-import { AuthFormHeading } from '@/components/auth/auth-form-heading';
+import { AuthFormHeading } from '@/components/auth';
 import { validateResetPasswordToken } from '@/lib/token-validation';
 import { ResetPasswordClient } from './client';
 import { resetPasswordFields } from './reset-password.config';

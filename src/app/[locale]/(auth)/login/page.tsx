@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
-import { AuthFormHeading } from '@/components/auth/auth-form-heading';
-import { AuthSocialOptions } from '@/components/auth/auth-social-options';
+import { AuthFormHeading, AuthSocialOptions } from '@/components/auth';
 import { LoginClient } from './client';
 import { loginFields } from './login.config';
 

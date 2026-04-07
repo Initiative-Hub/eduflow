@@ -1,6 +1,6 @@
 import { getTranslations } from 'next-intl/server';
 
-export default async function AuthFooter() {
+export async function AuthFooter() {
   const t = await getTranslations('AuthFooter');
 
   const footerLinks = [

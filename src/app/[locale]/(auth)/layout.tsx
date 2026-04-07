@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react';
-import AuthFooter from '@/components/auth/auth-footer';
-import { AuthPageSwitcher } from '@/components/auth/auth-page-switcher';
+import { AuthFooter, AuthPageSwitcher } from '@/components/auth';
 
 export default async function AuthLayout({
   children,
