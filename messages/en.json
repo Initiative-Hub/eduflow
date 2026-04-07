@@ -170,12 +170,18 @@
   },
   "NavbarAvatar": {
     "fallback": {
+      "email": "user@edu.flow",
       "role": "Student",
       "user": "User"
     },
     "menu": {
+      "academicPulse": "Academic Pulse",
+      "aiBadge": "AI",
+      "darkMode": "Dark Mode",
       "english": "English",
+      "helpCenter": "Help Center",
       "language": "Language",
+      "languagePreference": "Language Preference",
       "profile": "Profile",
       "settings": "Settings",
       "signOut": "Sign out",

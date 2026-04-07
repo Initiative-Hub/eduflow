@@ -1,24 +1,39 @@
 import { useMutation } from '@tanstack/react-query';
 import {
   CheckIcon,
+  CircleHelp,
   Globe,
   LogOut,
   MonitorIcon,
+  Moon,
   Settings,
+  Sparkles,
   User,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
+import { useTheme } from 'next-themes';
 
 import type { MenuItem } from '@/components/custom/dropdown/dropdown.types';
+import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import type { Locale } from '@/i18n/routing';
 import { apiClient } from '@/lib/api';
 import { authClient } from '@/lib/auth-client';
 
-export function useNavbarAvatarMenu() {
+interface UseNavbarAvatarMenuProps {
+  name?: string | null;
+  email?: string | null;
+}
+
+export function useNavbarAvatarMenu({
+  name,
+  email,
+}: UseNavbarAvatarMenuProps = {}) {
   const router = useRouter();
   const locale = useLocale();
   const t = useTranslations('NavbarAvatar');
+  const { setTheme, theme } = useTheme();
 
   const handleSignOut = async () => {
     await authClient.signOut();
@@ -47,57 +62,98 @@ export function useNavbarAvatarMenu() {
 
   const items: MenuItem[] = [
     {
+      type: 'custom',
+      className: 'px-2 py-3',
+      content: (
+        <div className="flex flex-col space-y-1">
+          <p className="font-bold text-foreground text-sm leading-none lg:text-base">
+            {name || t('fallback.user')}
+          </p>
+          <p className="text-muted-foreground text-xs leading-none">
+            {email || t('fallback.email')}
+          </p>
+        </div>
+      ),
+    },
+    { type: 'separator' },
+    {
       type: 'item',
       label: t('menu.profile'),
-      icon: <User className="size-4" />,
+      icon: <User className="size-5 fill-primary text-primary" />,
       onClick: () => router.push('/profile'),
+      className: 'font-bold py-3 px-2',
     },
     {
       type: 'item',
       label: t('menu.settings'),
-      icon: <Settings className="size-4" />,
+      icon: <Settings className="size-5 fill-primary text-primary" />,
       onClick: () => router.push('/settings'),
-    },
-    {
-      type: 'separator',
-    },
-    {
-      type: 'submenu',
-      label: t('menu.language'),
-      icon: <Globe className="size-4" />,
-      items: [
-        {
-          type: 'item',
-          label: t('menu.english'),
-          rightNode: locale === 'en' ? <CheckIcon className="size-4" /> : null,
-          onClick: () => updateLocale('en'),
-        },
-        {
-          type: 'item',
-          label: t('menu.vietnamese'),
-          rightNode: locale === 'vi' ? <CheckIcon className="size-4" /> : null,
-          onClick: () => updateLocale('vi'),
-        },
-        {
-          type: 'separator',
-        },
-        {
-          type: 'item',
-          label: t('menu.system'),
-          icon: <MonitorIcon className="size-4" />,
-          onClick: () => clearLocalePreference(),
-        },
-      ],
-    },
-    {
-      type: 'separator',
+      className: 'font-bold py-3 px-2',
     },
     {
       type: 'item',
+      label: t('menu.darkMode'),
+      icon: <Moon className="size-5 fill-primary text-primary" />,
+      rightNode: (
+        <Switch
+          checked={theme === 'dark'}
+          onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
+        />
+      ),
+      onClick: () => setTheme(theme === 'dark' ? 'light' : 'dark'),
+      className: 'font-bold py-3 px-2',
+    },
+    { type: 'separator' },
+    {
+      type: 'item',
+      label: t('menu.helpCenter'),
+      icon: (
+        <CircleHelp className="size-5 fill-primary text-primary-foreground" />
+      ),
+      onClick: () => router.push('/help'),
+      className: 'font-bold py-3 px-2',
+    },
+    { type: 'separator' },
+    {
+      type: 'submenu',
+      label: t('menu.languagePreference', {
+        defaultMessage: 'Language Preference',
+      }),
+      icon: <Globe className="size-5 text-primary" />,
+      className: 'font-bold py-3 px-2',
+      items: [
+        {
+          type: 'item',
+          label: t('menu.english', { defaultMessage: 'English' }),
+          rightNode: locale === 'en' ? <CheckIcon className="size-4" /> : null,
+          onClick: () => updateLocale('en'),
+          className: 'font-bold py-2',
+        },
+        {
+          type: 'item',
+          label: t('menu.vietnamese', { defaultMessage: 'Tiếng Việt' }),
+          rightNode: locale === 'vi' ? <CheckIcon className="size-4" /> : null,
+          onClick: () => updateLocale('vi'),
+          className: 'font-bold py-2',
+        },
+        { type: 'separator' },
+        {
+          type: 'item',
+          label: t('menu.system', { defaultMessage: 'System' }),
+          icon: <MonitorIcon className="size-4" />,
+          onClick: () => clearLocalePreference(),
+          className: 'font-bold py-2',
+        },
+      ],
+    },
+    { type: 'separator' },
+    {
+      type: 'item',
       label: t('menu.signOut'),
-      icon: <LogOut className="size-4" />,
+      icon: <LogOut className="size-5 text-destructive" />,
       onClick: handleSignOut,
       destructive: true,
+      className: 'font-bold py-3 px-2 text-destructive',
     },
   ];
 

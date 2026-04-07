@@ -16,6 +16,7 @@ interface DropdownTemplateProps {
   trigger: ReactNode;
   items: MenuItem[];
   align?: 'start' | 'center' | 'end';
+  className?: string;
 }
 
 const renderMenuItem = (item: MenuItem, index: number) => {
@@ -75,11 +76,12 @@ export const DropdownTemplate = ({
   trigger,
   items,
   align = 'end',
+  className,
 }: DropdownTemplateProps) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
-      <DropdownMenuContent align={align}>
+      <DropdownMenuContent align={align} className={className}>
         {items.map((item, index) => renderMenuItem(item, index))}
       </DropdownMenuContent>
     </DropdownMenu>

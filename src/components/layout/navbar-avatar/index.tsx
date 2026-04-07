@@ -8,13 +8,14 @@ import { useNavbarAvatarMenu } from './navbar-avatar-menu';
 
 interface NavbarAvatarProps {
   name?: string | null;
+  email?: string | null;
   image?: string | null;
   role?: string | null;
 }
 
-export function NavbarAvatar({ name, image, role }: NavbarAvatarProps) {
+export function NavbarAvatar({ name, email, image, role }: NavbarAvatarProps) {
   const t = useTranslations('NavbarAvatar');
-  const { items } = useNavbarAvatarMenu();
+  const { items } = useNavbarAvatarMenu({ name, email });
 
   const trigger = (
     <div className="mr-2 hidden cursor-pointer items-center gap-4 rounded-full px-2 py-1 transition-colors hover:bg-muted/40 md:flex">
@@ -38,5 +39,12 @@ export function NavbarAvatar({ name, image, role }: NavbarAvatarProps) {
     </div>
   );
 
-  return <DropdownTemplate trigger={trigger} items={items} align="end" />;
+  return (
+    <DropdownTemplate
+      trigger={trigger}
+      items={items}
+      align="end"
+      className="w-72"
+    />
+  );
 }

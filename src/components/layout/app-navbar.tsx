@@ -75,6 +75,7 @@ export function AppNavbar() {
         {/* Account Actions / Profile (Desktop Only) */}
         <NavbarAvatar
           name={sessionData?.user?.name}
+          email={sessionData?.user?.email}
           image={sessionData?.user?.image}
           role={(sessionData?.user as any)?.role}
         />

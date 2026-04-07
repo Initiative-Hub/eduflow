@@ -170,12 +170,18 @@
   },
   "NavbarAvatar": {
     "fallback": {
+      "email": "user@edu.flow",
       "role": "Học viên",
       "user": "Người dùng"
     },
     "menu": {
+      "academicPulse": "Academic Pulse",
+      "aiBadge": "AI",
+      "darkMode": "Chế độ tối",
       "english": "English",
+      "helpCenter": "Trung tâm trợ giúp",
       "language": "Ngôn ngữ",
+      "languagePreference": "Tùy chọn ngôn ngữ",
       "profile": "Hồ sơ",
       "settings": "Cài đặt",
       "signOut": "Đăng xuất",
