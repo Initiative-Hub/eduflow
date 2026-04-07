@@ -4,10 +4,10 @@ import { Bell, GraduationCap, Menu } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-
 import LanguageSwitcher from '@/components/client/LanguageSwitcher';
 import { NavbarAvatar } from '@/components/layout/navbar-avatar';
 import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 import { useSidebar } from '@/components/ui/sidebar';
 import { useSession } from '@/lib/auth-client';
 
@@ -71,6 +71,8 @@ export function AppNavbar() {
           <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-destructive ring-1 ring-background" />
         </Button>
 
+        <Separator orientation="vertical" className="hidden md:block" />
+
         {/* Account Actions / Profile (Desktop Only) */}
         <NavbarAvatar
           name={sessionData?.user?.name}
@@ -78,7 +80,7 @@ export function AppNavbar() {
           role={(sessionData?.user as any)?.role}
         />
 
-        <LanguageSwitcher />
+        {/* <LanguageSwitcher /> */}
 
         {/* Custom Hamburger Trigger for Mobile */}
         <div className="ml-1 flex items-center md:hidden">

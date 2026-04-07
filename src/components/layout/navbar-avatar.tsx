@@ -21,7 +21,27 @@ export function NavbarAvatar({ name, image, role }: NavbarAvatarProps) {
     router.push('/login');
   };
 
-  const trigger = <NavbarAvatarTrigger name={name} image={image} role={role} />;
+  const trigger = (
+    <div className="mr-2 hidden cursor-pointer items-center gap-4 rounded-full px-2 py-1 transition-colors hover:bg-muted/40 md:flex">
+      <div className="flex min-w-0 flex-col items-end">
+        <span className="max-w-40 truncate font-bold text-base text-foreground leading-tight">
+          {name || 'User'}
+        </span>
+        <span className="truncate font-semibold text-muted-foreground text-xs uppercase tracking-wide">
+          {role || 'Student'}
+        </span>
+      </div>
+      <Avatar
+        size="lg"
+        className="cursor-pointer border-2 border-border transition-all hover:ring-2 hover:ring-primary/20"
+      >
+        <AvatarImage src={image || ''} alt={name || 'User'} />
+        <AvatarFallback className="bg-primary/10 font-bold text-primary text-sm">
+          {name?.[0]?.toUpperCase() || 'U'}
+        </AvatarFallback>
+      </Avatar>
+    </div>
+  );
 
   const items = [
     {
@@ -43,25 +63,4 @@ export function NavbarAvatar({ name, image, role }: NavbarAvatarProps) {
   ];
 
   return <DropdownTemplate trigger={trigger} items={items} align="end" />;
-}
-
-function NavbarAvatarTrigger({ name, image, role }: NavbarAvatarProps) {
-  return (
-    <div className="mr-2 hidden cursor-pointer items-center gap-3 rounded-full p-1 transition-colors hover:bg-muted/40 md:flex">
-      <Avatar className="size-8 cursor-pointer border transition-all hover:ring-2 hover:ring-primary/20">
-        <AvatarImage src={image || ''} alt={name || 'User'} />
-        <AvatarFallback className="bg-primary/10 font-bold text-primary text-xs">
-          {name?.[0]?.toUpperCase() || 'U'}
-        </AvatarFallback>
-      </Avatar>
-      <div className="flex min-w-0 flex-col pr-2">
-        <span className="max-w-37 truncate font-semibold text-foreground text-sm">
-          {name || 'User'}
-        </span>
-        <span className="truncate text-muted-foreground text-xs">
-          {role || 'User'}
-        </span>
-      </div>
-    </div>
-  );
 }
