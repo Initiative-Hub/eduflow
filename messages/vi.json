@@ -4,6 +4,14 @@
     "title": "Thông tin tài khoản",
     "usernameLabel": "Tên người dùng:"
   },
+  "AuthFooter": {
+    "brand": "EduFlow",
+    "cookieSettings": "Cài đặt Cookie",
+    "copyright": "© 2026 EduFlow Academic Atelier. Bảo lưu mọi quyền.",
+    "helpCenter": "Trung tâm Hỗ trợ",
+    "privacyPolicy": "Chính sách Bảo mật",
+    "termsOfService": "Điều khoản Dịch vụ"
+  },
   "AuthForgotPassword": {
     "actions": {
       "backToLogin": "Quay lại đăng nhập",

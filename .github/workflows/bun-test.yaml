@@ -1,9 +1,9 @@
 name: Bun Test Runner
 
 on:
-  push:
-    branches-ignore:
-      - production
+  # push:
+  #   branches-ignore:
+  #     - production
   workflow_dispatch:
 
 jobs:

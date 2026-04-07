@@ -1,9 +1,10 @@
 name: Vercel GitFlow Preview Deployment
 
 on:
-  push:
-    branches-ignore:
-      - production
+  # push:
+  #   branches-ignore:
+  #     - staging
+  #     - production
   workflow_dispatch:
 
 jobs:
