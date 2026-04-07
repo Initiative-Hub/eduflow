@@ -144,7 +144,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="border-border/40 border-t p-4 group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:pb-3">
-        <div className="flex w-full items-center justify-between p-2 md:justify-end">
+        <div className="flex w-full items-center justify-between md:justify-end">
           {sessionData ? (
             <div className="block md:hidden">
               <NavbarAvatar

@@ -12,22 +12,20 @@ import {
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useTheme } from 'next-themes';
-
 import type { MenuItem } from '@/components/custom/dropdown/dropdown.types';
+import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import type { Locale } from '@/i18n/routing';
 import { apiClient } from '@/lib/api';
 import { authClient } from '@/lib/auth-client';
 
-interface UseNavbarAvatarMenuProps {
-  name?: string | null;
-  email?: string | null;
+interface useAvatarMenuProps {
+  name: string;
+  email: string;
+  role?: string;
 }
 
-export function useNavbarAvatarMenu({
-  name,
-  email,
-}: UseNavbarAvatarMenuProps = {}) {
+export function useAvatarMenu({ name, email, role }: useAvatarMenuProps) {
   const router = useRouter();
   const locale = useLocale();
   const t = useTranslations('NavbarAvatar');
@@ -63,13 +61,18 @@ export function useNavbarAvatarMenu({
       type: 'custom',
       className: 'px-2 py-3',
       content: (
-        <div className="flex flex-col space-y-1">
-          <p className="font-bold text-foreground text-sm leading-none lg:text-base">
-            {name || t('fallback.user')}
-          </p>
-          <p className="text-muted-foreground text-xs leading-none">
-            {email || t('fallback.email')}
-          </p>
+        <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-1">
+            <p className="font-bold text-foreground text-sm leading-none lg:text-base">
+              {name || t('fallback.user')}
+            </p>
+            <p className="text-muted-foreground text-xs leading-none">
+              {email || t('fallback.email')}
+            </p>
+          </div>
+          <Badge variant="outline" className="uppercase">
+            {role || t('fallback.role')}
+          </Badge>
         </div>
       ),
     },
