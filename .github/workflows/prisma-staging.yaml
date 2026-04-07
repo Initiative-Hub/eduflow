@@ -1,13 +1,13 @@
 name: Prisma Staging Migration
 
 on:
-  workflow_run:
-    workflows:
-      - "Vercel GitFlow Staging Deployment"
-    types:
-      - completed
-    branches:
-      - staging
+  # workflow_run:
+  #   workflows:
+  #     - "Vercel GitFlow Staging Deployment"
+  #   types:
+  #     - completed
+  #   branches:
+  #     - staging
   workflow_dispatch:
 
 jobs:

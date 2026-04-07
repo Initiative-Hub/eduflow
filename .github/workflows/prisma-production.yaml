@@ -1,13 +1,13 @@
 name: Prisma Production Migration
 
 on:
-  workflow_run:
-    workflows:
-      - "Vercel GitFlow Production Deployment"
-    types:
-      - completed
-    branches:
-      - production
+  # workflow_run:
+  #   workflows:
+  #     - "Vercel GitFlow Production Deployment"
+  #   types:
+  #     - completed
+  #   branches:
+  #     - production
   workflow_dispatch:
 
 jobs:

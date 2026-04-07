@@ -1,11 +1,12 @@
 name: Branch Name Check
 
 on:
-  push:
-    branches-ignore:
-      - main
-      - staging
-      - production
+  # push:
+  #   branches-ignore:
+  #     - main
+  #     - staging
+  #     - production
+  workflow_dispatch:
 
 jobs:
   check-branch-name:
