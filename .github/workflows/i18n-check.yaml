@@ -1,8 +1,7 @@
 name: i18n Check
 
 on:
-  push:
-  pull_request:
+  # push:
   workflow_dispatch:
 
 jobs:

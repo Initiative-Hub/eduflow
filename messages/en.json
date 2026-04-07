@@ -4,6 +4,14 @@
     "title": "Account Information",
     "usernameLabel": "Username:"
   },
+  "AuthFooter": {
+    "brand": "EduFlow",
+    "cookieSettings": "Cookie Settings",
+    "copyright": "© 2026 EduFlow Academic Atelier. All rights reserved.",
+    "helpCenter": "Help Center",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service"
+  },
   "AuthForgotPassword": {
     "actions": {
       "backToLogin": "Back to Login",

@@ -1,9 +1,9 @@
 name: Vercel GitFlow Production Deployment
 
 on:
-  push:
-    branches:
-      - production
+  # push:
+  #   branches:
+  #     - production
   workflow_dispatch:
 
 jobs:

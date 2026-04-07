@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
-import { AuthFormHeading } from '@/components/auth/auth-form-heading';
+import { AuthFormHeading } from '@/components/auth';
 import { ForgotPasswordClient } from './client';
 import { forgotPasswordFields } from './forgot-password.config';
 
