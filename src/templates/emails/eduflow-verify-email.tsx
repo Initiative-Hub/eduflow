@@ -77,7 +77,7 @@ export function EduFlowVerifyEmail({ otp }: EduFlowVerifyEmailProps) {
 }
 
 EduFlowVerifyEmail.PreviewProps = {
-  otp: '596853',
+  otp: '666666',
 } satisfies EduFlowVerifyEmailProps;
 
 export default EduFlowVerifyEmail;
