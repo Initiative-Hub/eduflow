@@ -14,7 +14,7 @@ import {
 import { APP_URL } from '@/lib/api/endpoints';
 
 interface EduFlowVerifyEmailProps {
-  otp?: string;
+  otp: string;
 }
 
 export function EduFlowVerifyEmail({ otp }: EduFlowVerifyEmailProps) {
