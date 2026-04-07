@@ -34,7 +34,11 @@ const renderMenuItem = (item: MenuItem, index: number) => {
   if (item.type === 'submenu') {
     return (
       <DropdownMenuSub key={index}>
-        <DropdownMenuSubTrigger className={item.className}>
+        <DropdownMenuSubTrigger
+          className={`cursor-pointer gap-2 focus:bg-primary/20 focus:text-primary data-[state=open]:bg-primary/20 data-[state=open]:text-primary ${
+            item.className || ''
+          }`}
+        >
           {item.icon}
           {item.label}
           {item.rightNode && <div className="ml-auto">{item.rightNode}</div>}
