@@ -36,7 +36,7 @@ export function AppNavbar() {
             >
               {t('aiTools')}
             </span>
-            {(pathname === '/dashboard' ||
+            {(pathname === '/' ||
               pathname.startsWith('/socratic') ||
               pathname.startsWith('/english') ||
               pathname.startsWith('/writing') ||

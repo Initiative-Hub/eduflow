@@ -56,7 +56,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const assistants = [
     {
       name: t('aiChat'),
-      url: '/dashboard',
+      url: '/',
       icon: MessageSquare,
     },
     {
@@ -120,8 +120,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenu className="mt-2 gap-3 px-4 group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:px-0">
               {assistants.map((item) => {
                 const isActive =
-                  item.url === '/dashboard'
-                    ? pathname === '/dashboard'
+                  item.url === '/'
+                    ? pathname === '/'
                     : pathname.startsWith(item.url);
 
                 return (
