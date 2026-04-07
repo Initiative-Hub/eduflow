@@ -24,14 +24,14 @@ export function EduFlowVerifyEmail({ otp }: EduFlowVerifyEmailProps) {
       <Preview>Your EduFlow verification code</Preview>
       <Tailwind>
         <Body className="bg-slate-100 px-4 py-8 font-sans text-slate-950">
-          <Container className="mx-auto max-w-150 overflow-hidden rounded-3xl border border-slate-200 border-solid bg-white shadow-sm">
+          <Container className="mx-auto max-w-[600px] overflow-hidden rounded-3xl border border-slate-200 border-solid bg-white shadow-sm">
             <Section className="border-slate-200 border-b border-solid bg-white px-8 py-8 text-center">
               <Img
                 src={`${APP_URL}/branding.png`}
                 alt="EduFlow logo"
                 width="180"
                 height="49"
-                className="mx-auto h-auto w-45 max-w-full"
+                className="mx-auto h-auto w-[180px] max-w-full"
               />
             </Section>
 
