@@ -13,16 +13,13 @@ import {
   Tailwind,
   Text,
 } from '@react-email/components';
+import { APP_URL } from '@/lib/api/endpoints';
 
 interface EduFlowResetPasswordEmailProps {
   expirationMinutes?: number;
   resetPasswordUrl?: string;
   userName?: string;
 }
-
-const baseUrl = process.env.VERCEL_URL
-  ? `https://${process.env.VERCEL_URL}`
-  : '';
 
 export function EduFlowResetPasswordEmail({
   expirationMinutes,
@@ -38,7 +35,7 @@ export function EduFlowResetPasswordEmail({
           <Container className="mx-auto max-w-150 overflow-hidden rounded-3xl border border-slate-200 border-solid bg-white shadow-sm">
             <Section className="border-slate-200 border-b border-solid bg-white px-8 py-8 text-center">
               <Img
-                src={`${baseUrl}/static/branding.png`}
+                src={`${APP_URL}/branding.png`}
                 alt="EduFlow logo"
                 width="180"
                 height="49"
