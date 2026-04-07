@@ -9,9 +9,10 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useSidebar } from '@/components/ui/sidebar';
 import { useSession } from '@/lib/auth-client';
+import { cn } from '@/lib/utils';
 
 export function AppNavbar() {
-  const t = useTranslations('Layout');
+  const t = useTranslations();
   const pathname = usePathname();
   const { toggleSidebar } = useSidebar();
   const { data: sessionData } = useSession();
@@ -28,13 +29,22 @@ export function AppNavbar() {
 
         <nav className="no-scrollbar -mb-1 flex flex-1 items-center gap-4 overflow-x-auto pb-1 md:gap-8">
           <Link
-            href="/dashboard"
+            href="/"
             className="relative flex flex-col items-center justify-center whitespace-nowrap"
           >
             <span
-              className={`pb-1.5 text-sm transition-colors ${pathname === '/dashboard' || pathname.startsWith('/socratic') || pathname.startsWith('/english') || pathname.startsWith('/writing') || pathname.startsWith('/study') ? 'font-bold text-primary' : 'font-medium text-muted-foreground hover:text-foreground'}`}
+              className={cn(
+                `pb-1.5 text-sm transition-colors`,
+                pathname === '/' ||
+                  pathname.startsWith('/socratic') ||
+                  pathname.startsWith('/english') ||
+                  pathname.startsWith('/writing') ||
+                  pathname.startsWith('/study')
+                  ? 'font-bold text-primary'
+                  : 'font-medium text-muted-foreground hover:text-foreground'
+              )}
             >
-              {t('aiTools')}
+              {t('Layout.aiTools')}
             </span>
             {(pathname === '/' ||
               pathname.startsWith('/socratic') ||
@@ -51,7 +61,7 @@ export function AppNavbar() {
             <span
               className={`pb-1.5 text-sm transition-colors ${pathname.startsWith('/course') ? 'font-bold text-primary' : 'font-medium text-muted-foreground hover:text-foreground'}`}
             >
-              {t('studyHub')}
+              {t('Layout.studyHub')}
             </span>
             {pathname.startsWith('/course') && (
               <div className="absolute bottom-0 h-0.5 w-full rounded-full bg-primary" />
@@ -73,12 +83,25 @@ export function AppNavbar() {
         <Separator orientation="vertical" className="hidden md:block" />
 
         {/* Account Actions / Profile (Desktop Only) */}
-        <NavbarAvatar
-          name={sessionData?.user?.name}
-          email={sessionData?.user?.email}
-          image={sessionData?.user?.image}
-          role={(sessionData?.user as any)?.role}
-        />
+        {sessionData ? (
+          <div className="hidden md:block">
+            <NavbarAvatar
+              name={sessionData?.user?.name}
+              email={sessionData?.user?.email}
+              image={sessionData?.user?.image}
+              role={(sessionData?.user as any)?.role}
+            />
+          </div>
+        ) : (
+          <div className="hidden items-center gap-2 font-heading md:flex">
+            <Button asChild>
+              <Link href="/login">{t('NavbarAvatar.actions.login')}</Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link href="/register">{t('NavbarAvatar.actions.register')}</Link>
+            </Button>
+          </div>
+        )}
 
         {/* Custom Hamburger Trigger for Mobile */}
         <div className="ml-1 flex items-center md:hidden">

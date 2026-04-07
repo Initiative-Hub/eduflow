@@ -18,7 +18,7 @@ export function NavbarAvatar({ name, email, image, role }: NavbarAvatarProps) {
   const { items } = useNavbarAvatarMenu({ name, email });
 
   const trigger = (
-    <div className="mr-2 hidden cursor-pointer items-center gap-4 rounded-full px-2 py-1 transition-colors hover:bg-muted/40 md:flex">
+    <div className="mr-2 flex cursor-pointer items-center gap-4 rounded-full px-2 py-1 transition-colors hover:bg-muted/40">
       <div className="flex min-w-0 flex-col items-end">
         <span className="max-w-40 truncate font-bold text-base text-foreground leading-tight">
           {name || t('fallback.user')}

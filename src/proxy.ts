@@ -56,7 +56,7 @@ const handleRedirect = async ({
   // If current path ends with /login and user is logged in, redirect to dashboard page
   if (isAuthPath && hasSession) {
     const nextUrl = req.nextUrl.searchParams.get('nextUrl');
-    const sanitizedNextUrl = sanitizeUrl(nextUrl) || '/dashboard';
+    const sanitizedNextUrl = sanitizeUrl(nextUrl) || '/';
     const redirectUrl = new URL(sanitizedNextUrl, req.nextUrl.origin);
 
     return { res: NextResponse.redirect(redirectUrl), redirect: true };
