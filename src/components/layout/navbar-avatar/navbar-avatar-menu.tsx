@@ -7,7 +7,6 @@ import {
   MonitorIcon,
   Moon,
   Settings,
-  Sparkles,
   User,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -15,7 +14,6 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useTheme } from 'next-themes';
 
 import type { MenuItem } from '@/components/custom/dropdown/dropdown.types';
-import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import type { Locale } from '@/i18n/routing';
 import { apiClient } from '@/lib/api';

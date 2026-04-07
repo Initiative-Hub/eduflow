@@ -179,7 +179,7 @@
   "NavbarAvatar": {
     "fallback": {
       "email": "user@edu.flow",
-      "role": "Học viên",
+      "role": "N/A",
       "user": "Người dùng"
     },
     "menu": {
