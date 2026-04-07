@@ -20,20 +20,25 @@ model Role {
 }
 
 model User {
-  id            String    @id
+  id            String   @id @default(uuid())
   name          String
-  email         String
-  emailVerified Boolean   @default(false)
+  email         String   @unique
+  emailVerified Boolean  @default(false)
   image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
   roleId        String?
+
+  // relations
+  role          Role?           @relation(fields: [roleId], references: [id])
   sessions      Session[]
   accounts      Account[]
-  role          Role?     @relation(fields: [roleId], references: [id])
   posts         Post[]
+  files         FileInventory[]
+  enrollments   Enrollment[]
+  coursesTaught Course[]        @relation("TeacherCourses")
+  verifications Verification[]
 
-  @@unique([email])
   @@map("user")
 }
 
@@ -45,16 +50,15 @@ model Post {
   authorId  String
   author    User     @relation(fields: [authorId], references: [id])
   createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+  updatedAt DateTime @updatedAt
 
-  // Map the "Post" model to the "posts" table if you want a plural table name
   @@map("posts")
 }
 
 model Session {
-  id        String   @id
+  id        String   @id @default(uuid())
   expiresAt DateTime
-  token     String
+  token     String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   ipAddress String?
@@ -62,13 +66,12 @@ model Session {
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([token])
   @@index([userId])
   @@map("session")
 }
 
 model Account {
-  id                    String    @id
+  id                    String    @id @default(uuid())
   accountId             String
   providerId            String
   userId                String
@@ -87,14 +90,82 @@ model Account {
   @@map("account")
 }
 
-model Verification {
-  id         String   @id
-  identifier String
-  value      String
-  expiresAt  DateTime
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+model FileInventory {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fileName     String
+  fileSize     Int
+  mimeType     String
+  cloudStorage String?
+  vectorDbId   String?  @map("vector_db_id")
+  uploadedAt   DateTime @default(now()) @map("uploaded_at")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  @@index([identifier])
+  @@index([userId])
+  @@map("file_inventory")
+}
+
+model Verification {
+  id         String    @id @default(uuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  identifier String    @unique
+  code       String?
+  expiresAt  DateTime?
+
+  @@index([userId])
   @@map("verification")
+}
+
+// ---- Course / Enrollment / Module / Lesson models based on ERD ----
+model Course {
+  id          String       @id @default(uuid())
+  teacherId   String
+  teacher     User         @relation("TeacherCourses", fields: [teacherId], references: [id])
+  title       String
+  description String?
+  isPublished Boolean      @default(false)
+  modules     Module[]
+  enrollments Enrollment[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@map("course")
+}
+
+model Enrollment {
+  id         String   @id @default(uuid())
+  studentId  String
+  student    User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  courseId   String
+  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  enrolledAt DateTime @default(now()) @map("enrolled_at")
+
+  @@index([studentId])
+  @@index([courseId])
+  @@map("enrollment")
+}
+
+model Module {
+  id         String   @id @default(uuid())
+  courseId   String
+  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title      String
+  orderIndex Int      @default(0) @map("order_index")
+  lessons    Lesson[]
+
+  @@map("module")
+}
+
+model Lesson {
+  id         String @id @default(uuid())
+  moduleId   String
+  module     Module @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  title      String
+  content    Json?
+  orderIndex Int    @default(0) @map("order_index")
+
+  @@map("lesson")
 }
