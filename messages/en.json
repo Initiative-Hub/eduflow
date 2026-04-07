@@ -175,5 +175,26 @@
     "studyAssistant": "Study Assistant",
     "studyHub": "Study Hub",
     "writingAssistant": "Writing Assistant"
+  },
+  "NavbarAvatar": {
+    "fallback": {
+      "email": "user@edu.flow",
+      "role": "N/A",
+      "user": "User"
+    },
+    "menu": {
+      "academicPulse": "Academic Pulse",
+      "aiBadge": "AI",
+      "darkMode": "Dark Mode",
+      "english": "English",
+      "helpCenter": "Help Center",
+      "language": "Language",
+      "languagePreference": "Language Preference",
+      "profile": "Profile",
+      "settings": "Settings",
+      "signOut": "Sign out",
+      "system": "System",
+      "vietnamese": "Tiếng Việt"
+    }
   }
 }

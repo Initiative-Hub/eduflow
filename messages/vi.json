@@ -175,5 +175,26 @@
     "studyAssistant": "Trợ lý Học tập",
     "studyHub": "Góc học tập",
     "writingAssistant": "Trợ lý Viết"
+  },
+  "NavbarAvatar": {
+    "fallback": {
+      "email": "user@edu.flow",
+      "role": "N/A",
+      "user": "Người dùng"
+    },
+    "menu": {
+      "academicPulse": "Academic Pulse",
+      "aiBadge": "AI",
+      "darkMode": "Chế độ tối",
+      "english": "English",
+      "helpCenter": "Trung tâm trợ giúp",
+      "language": "Ngôn ngữ",
+      "languagePreference": "Tùy chọn ngôn ngữ",
+      "profile": "Hồ sơ",
+      "settings": "Cài đặt",
+      "signOut": "Đăng xuất",
+      "system": "Hệ thống",
+      "vietnamese": "Tiếng Việt"
+    }
   }
 }
