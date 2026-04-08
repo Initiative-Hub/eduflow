@@ -177,6 +177,10 @@
     "writingAssistant": "Trợ lý Viết"
   },
   "NavbarAvatar": {
+    "actions": {
+      "login": "Đăng nhập",
+      "register": "Đăng ký"
+    },
     "fallback": {
       "email": "user@edu.flow",
       "role": "N/A",

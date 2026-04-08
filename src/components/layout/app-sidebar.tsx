@@ -4,7 +4,6 @@ import {
   BookOpen,
   GraduationCap,
   Languages,
-  LogOut,
   MessageSquare,
   PanelLeftClose,
   PanelLeftOpen,
@@ -12,10 +11,9 @@ import {
   Plus,
 } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import type * as React from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
   Sidebar,
@@ -29,34 +27,21 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { authClient, useSession } from '@/lib/auth-client';
-import { useLoadingStore } from '@/stores/useLoadingStore';
+import { useSession } from '@/lib/auth-client';
+import { NavbarAvatar } from './navbar-avatar';
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const t = useTranslations('Layout');
-  const tCommon = useTranslations('Common');
+  const tNavbarAvatar = useTranslations('NavbarAvatar');
   const pathname = usePathname();
-  const router = useRouter();
-  const setLoading = useLoadingStore((state) => state.setLoading);
 
   const { data: sessionData } = useSession();
   const { state, toggleSidebar } = useSidebar();
 
-  const handleLogout = async () => {
-    setLoading(true);
-    await authClient.signOut({
-      fetchOptions: {
-        onSuccess: () => {
-          router.push('/login');
-        },
-      },
-    });
-  };
-
   const assistants = [
     {
       name: t('aiChat'),
-      url: '/dashboard',
+      url: '/',
       icon: MessageSquare,
     },
     {
@@ -120,8 +105,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenu className="mt-2 gap-3 px-4 group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:px-0">
               {assistants.map((item) => {
                 const isActive =
-                  item.url === '/dashboard'
-                    ? pathname === '/dashboard'
+                  item.url === '/'
+                    ? pathname === '/'
                     : pathname.startsWith(item.url);
 
                 return (
@@ -159,18 +144,28 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="border-border/40 border-t p-4 group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:pb-3">
-        {/* Desktop Collapse Toggle */}
-        <div className="hidden w-full items-center justify-between group-data-[collapsible=icon]:justify-center md:flex">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleLogout}
-            className="rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive group-data-[collapsible=icon]:hidden"
-            title={tCommon('logout')}
-          >
-            <LogOut className="size-5" />
-            <span className="sr-only">Logout</span>
-          </Button>
+        <div className="flex w-full items-center justify-between md:justify-end">
+          {sessionData ? (
+            <div className="block md:hidden">
+              <NavbarAvatar
+                name={sessionData?.user?.name}
+                email={sessionData?.user?.email}
+                image={sessionData?.user?.image}
+                role={(sessionData?.user as any)?.role}
+              />
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 font-heading md:hidden">
+              <Button asChild>
+                <Link href="/login">{tNavbarAvatar('actions.login')}</Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link href="/register">
+                  {tNavbarAvatar('actions.register')}
+                </Link>
+              </Button>
+            </div>
+          )}
           <Button
             variant="ghost"
             size="icon"
@@ -183,38 +178,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <PanelLeftOpen className="size-5" />
             )}
             <span className="sr-only">Toggle Sidebar</span>
-          </Button>
-        </div>
-
-        <div className="flex w-full items-center justify-between rounded-xl p-2 transition-colors hover:bg-muted/40 md:hidden">
-          <div className="flex min-w-0 cursor-pointer items-center gap-3">
-            <Avatar className="size-10 shrink-0 cursor-pointer border transition-all hover:ring-2 hover:ring-primary/20">
-              <AvatarImage
-                src={sessionData?.user?.image || ''}
-                alt={sessionData?.user?.name || 'User'}
-              />
-              <AvatarFallback className="bg-primary/10 font-bold text-primary text-sm">
-                {sessionData?.user?.name?.[0]?.toUpperCase() || 'U'}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex min-w-0 flex-col">
-              <span className="truncate font-semibold text-foreground text-sm">
-                {sessionData?.user?.name || 'User'}
-              </span>
-              <span className="max-w-30 truncate text-muted-foreground text-xs">
-                {sessionData?.user?.email || 'Free Plan'}
-              </span>
-            </div>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleLogout}
-            className="ml-1 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-            title={tCommon('logout')}
-          >
-            <LogOut className="size-5" />
-            <span className="sr-only">{tCommon('logout')}</span>
           </Button>
         </div>
       </SidebarFooter>

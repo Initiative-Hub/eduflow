@@ -177,6 +177,10 @@
     "writingAssistant": "Writing Assistant"
   },
   "NavbarAvatar": {
+    "actions": {
+      "login": "Login",
+      "register": "Register"
+    },
     "fallback": {
       "email": "user@edu.flow",
       "role": "N/A",

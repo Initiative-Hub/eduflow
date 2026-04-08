@@ -11,7 +11,9 @@ export const APP_AUTH_PATHS = [
   acc.push(path);
 
   // Add localized paths
-  const localizedPaths = supportedLocales.map((locale) => `/${locale}${path}`);
+  const localizedPaths = supportedLocales.map((locale) =>
+    path === '/' ? `/${locale}` : `/${locale}${path}`
+  );
   acc.push(...localizedPaths);
 
   return acc;
