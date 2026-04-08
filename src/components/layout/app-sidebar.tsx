@@ -3,7 +3,6 @@
 import {
   BookOpen,
   Cloud,
-  Cog,
   GraduationCap,
   Languages,
   MessageSquare,
@@ -12,6 +11,7 @@ import {
   PenLine,
   Plus,
   School,
+  Settings,
   Sparkles,
   User,
 } from 'lucide-react';
@@ -43,64 +43,74 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: sessionData } = useSession();
   const { state, toggleSidebar } = useSidebar();
 
-  const assistants = [
+  type SidebarItem = {
+    name: string;
+    url: string;
+    icon: React.ReactElement;
+    exact?: boolean;
+  };
+
+  const sidebarIconClassName =
+    'size-5 fill-primary/60 text-primary/80 transition-colors group-hover/menu-button:fill-primary group-hover/menu-button:text-primary group-data-[active=true]/menu-button:fill-primary group-data-[active=true]/menu-button:text-primary';
+
+  const assistants: SidebarItem[] = [
     {
       name: t('aiChat'),
       url: '/',
-      icon: MessageSquare,
+      icon: <MessageSquare className={sidebarIconClassName} />,
       exact: true,
     },
     {
       name: t('socraticTutor'),
       url: '/socratic',
-      icon: GraduationCap,
+      icon: <GraduationCap className={sidebarIconClassName} />,
     },
     {
       name: t('englishAssistant'),
       url: '/english',
-      icon: Languages,
+      icon: <Languages className={sidebarIconClassName} />,
     },
     {
       name: t('writingAssistant'),
       url: '/writing',
-      icon: PenLine,
+      icon: <PenLine className={sidebarIconClassName} />,
     },
     {
       name: t('studyAssistant'),
       url: '/study',
-      icon: BookOpen,
+      icon: <BookOpen className={sidebarIconClassName} />,
     },
   ];
 
-  const settingsItems = [
+  const settingsItems: SidebarItem[] = [
     {
       name: t('settingsProfile'),
       url: '/profile',
-      icon: User,
+      icon: <User className={sidebarIconClassName} />,
       exact: true,
     },
     {
       name: t('settingsAcademicContext'),
       url: '/settings/academic-context',
-      icon: School,
+      icon: <School className={sidebarIconClassName} />,
       exact: true,
     },
     {
       name: t('settingsSystemSettings'),
       url: '/settings',
-      icon: Cog,
+      icon: <Settings className={sidebarIconClassName} />,
       exact: true,
     },
     {
       name: t('settingsAiPreferences'),
       url: '/settings/ai-preferences',
-      icon: Sparkles,
+      icon: <Sparkles className={sidebarIconClassName} />,
       exact: true,
     },
     {
       name: t('settingsIntegrations'),
       url: '/settings/integrations',
-      icon: Cloud,
+      icon: <Cloud className={sidebarIconClassName} />,
       exact: true,
     },
   ];
@@ -173,20 +183,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       tooltip={{
                         children: item.name,
                       }}
-                      className={`h-12 rounded-xl font-medium text-muted-foreground transition-all duration-200 hover:bg-sidebar-accent hover:text-primary data-[active=true]:bg-primary/10 data-[active=true]:text-primary`}
+                      className="h-12 rounded-xl font-medium text-muted-foreground transition-all duration-200 hover:bg-sidebar-accent hover:text-primary data-[active=true]:bg-primary/10 data-[active=true]:text-primary"
                     >
                       <Link
                         href={item.url}
                         className="flex items-center gap-3.5 px-2"
                       >
-                        <item.icon
-                          className={`size-6 transition-colors ${
-                            isActive
-                              ? 'text-primary'
-                              : 'text-muted-foreground/70 group-hover/menu-button:text-primary'
-                          }`}
-                          strokeWidth={isActive ? 2.5 : 2}
-                        />
+                        {item.icon}
+
                         <span className="text-sm tracking-tight">
                           {item.name}
                         </span>
