@@ -13,11 +13,7 @@ datasource db {
   provider = "postgresql"
 }
 
-model Role {
-  id    String @id @default(uuid())
-  name  String @unique // Example: 'ADMIN', 'USER'
-  users User[] // One-to-many relationship with User
-}
+// ---- START BETTER AUTH CORE TABLES (BE CAUTIOUS WHEN MODIFYING THEM) ----
 
 model User {
   id            String   @id @default(uuid())
@@ -35,24 +31,10 @@ model User {
   accounts      Account[]
   posts         Post[]
   files         FileInventory[]
-  enrollments   Enrollment[]
   coursesTaught Course[]        @relation("TeacherCourses")
-  verifications Verification[]
+  enrollments   Enrollment[]
 
   @@map("user")
-}
-
-model Post {
-  id        String   @id @default(uuid())
-  title     String
-  content   String?
-  published Boolean  @default(false)
-  authorId  String
-  author    User     @relation(fields: [authorId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("posts")
 }
 
 model Session {
@@ -90,6 +72,39 @@ model Account {
   @@map("account")
 }
 
+model Verification {
+  id         String   @id @default(uuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+// ---- END BETTER AUTH CORE TABLES ----
+
+model Role {
+  id    String @id @default(uuid())
+  name  String @unique // Example: 'ADMIN', 'USER'
+  users User[] // One-to-many relationship with User
+}
+
+model Post {
+  id        String   @id @default(uuid())
+  title     String
+  content   String?
+  published Boolean  @default(false)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("posts")
+}
+
 model FileInventory {
   id           String   @id @default(uuid())
   userId       String
@@ -105,18 +120,6 @@ model FileInventory {
 
   @@index([userId])
   @@map("file_inventory")
-}
-
-model Verification {
-  id         String    @id @default(uuid())
-  userId     String
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  identifier String    @unique
-  code       String?
-  expiresAt  DateTime?
-
-  @@index([userId])
-  @@map("verification")
 }
 
 // ---- Course / Enrollment / Module / Lesson models based on ERD ----
