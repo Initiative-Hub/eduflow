@@ -13,13 +13,12 @@ async function main() {
   console.log('Starting database seed...');
 
   // Hash passwords
-  const hashedPasswordAdmin = await hashPassword('securepassword123');
-  const hashedPasswordMember = await hashPassword('memberpassword123');
-  const hashedPasswordTeacher = await hashPassword('teacherpass123');
-  const hashedPasswordStudent = await hashPassword('studentpass123');
+  const hashedPasswordAdmin = await hashPassword('password123');
+  const hashedPasswordTeacher = await hashPassword('password123');
+  const hashedPasswordStudent = await hashPassword('password123');
 
   // 1. Create roles
-  const adminRole = await prisma.role.upsert({
+  const adminRole = await prisma.platformRole.upsert({
     where: { name: 'ADMIN' },
     update: {},
     create: {
@@ -28,16 +27,7 @@ async function main() {
     },
   });
 
-  const userRole = await prisma.role.upsert({
-    where: { name: 'USER' },
-    update: {},
-    create: {
-      id: randomUUID(),
-      name: 'USER',
-    },
-  });
-
-  const teacherRole = await prisma.role.upsert({
+  const teacherRole = await prisma.platformRole.upsert({
     where: { name: 'TEACHER' },
     update: {},
     create: {
@@ -46,7 +36,7 @@ async function main() {
     },
   });
 
-  const studentRole = await prisma.role.upsert({
+  const studentRole = await prisma.platformRole.upsert({
     where: { name: 'STUDENT' },
     update: {},
     create: {
@@ -56,11 +46,11 @@ async function main() {
   });
 
   console.log(
-    `Created roles: ${adminRole.name}, ${userRole.name}, ${teacherRole.name}, ${studentRole.name}`
+    `Created roles: ${adminRole.name}, ${teacherRole.name}, ${studentRole.name}`
   );
 
   // 2. Create users and assign roles
-  const user1 = await prisma.user.upsert({
+  const adminUser = await prisma.user.upsert({
     where: { email: 'admin@example.com' },
     update: {},
     create: {
@@ -82,29 +72,6 @@ async function main() {
     },
   });
 
-  const user2 = await prisma.user.upsert({
-    where: { email: 'member@example.com' },
-    update: {},
-    create: {
-      id: randomUUID(),
-      email: 'member@example.com',
-      name: 'Member User',
-      roleId: userRole.id,
-      emailVerified: true,
-      accounts: {
-        create: [
-          {
-            id: randomUUID(),
-            accountId: 'member@example.com',
-            providerId: 'credential',
-            password: hashedPasswordMember,
-          },
-        ],
-      },
-    },
-  });
-
-  // Additional teacher and student accounts
   const teacherUser = await prisma.user.upsert({
     where: { email: 'teacher@example.com' },
     update: {},
@@ -149,9 +116,7 @@ async function main() {
     },
   });
 
-  console.log({ user1, user2, teacherUser, studentUser });
-
-  console.log({ user1, user2 });
+  console.log({ adminUser, teacherUser, studentUser });
   console.log('Database seed completed successfully!');
 }
 

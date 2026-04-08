@@ -65,7 +65,7 @@ export const auth = betterAuth({
       const roleId = (user as any).roleId as string | undefined;
       if (!roleId) return { user: { ...user, role: null }, session };
 
-      const roleRow = await prisma.role.findUnique({
+      const roleRow = await prisma.platformRole.findUnique({
         where: { id: roleId },
       });
 
@@ -92,8 +92,8 @@ export const auth = betterAuth({
     user: {
       create: {
         before: async (user) => {
-          const defaultRole = await prisma.role.findUnique({
-            where: { name: 'USER' },
+          const defaultRole = await prisma.platformRole.findUnique({
+            where: { name: 'STUDENT' },
             select: { id: true },
           });
 

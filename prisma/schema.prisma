@@ -26,7 +26,7 @@ model User {
   roleId        String?
 
   // relations
-  role          Role?           @relation(fields: [roleId], references: [id])
+  role          PlatformRole?   @relation(fields: [roleId], references: [id])
   sessions      Session[]
   accounts      Account[]
   posts         Post[]
@@ -86,10 +86,77 @@ model Verification {
 
 // ---- END BETTER AUTH CORE TABLES ----
 
-model Role {
-  id    String @id @default(uuid())
-  name  String @unique // Example: 'ADMIN', 'USER'
-  users User[] // One-to-many relationship with User
+enum PlatformRoleName {
+  ADMIN
+  TEACHER
+  STUDENT
+}
+
+enum CourseRoleName {
+  OWNER
+  TEACHER
+  STUDENT
+}
+
+enum PlatformPermissionKey {
+  MANAGE_USERS
+  ENABLE_DISABLE_COURSE
+  MANAGE_PLATFORM_SETTINGS
+}
+
+enum CoursePermissionKey {
+  MANAGE_MEMBERS
+  EDIT_CONTENT
+  VIEW_ANALYTICS
+  GRADE_ASSESSMENTS
+}
+
+model PlatformRole {
+  id          String               @id @default(uuid())
+  name        PlatformRoleName     @unique
+  users       User[]
+  permissions PlatformPermission[]
+
+  @@map("platform_role")
+}
+
+model CourseRole {
+  id          String             @id @default(uuid())
+  name        CourseRoleName     @unique
+  enrollments Enrollment[]
+  permissions CoursePermission[]
+
+  @@map("course_role")
+}
+
+model PlatformPermission {
+  id             String                @id @default(uuid())
+  platformRoleId String                @map("platform_role_id")
+  platformRole   PlatformRole          @relation(fields: [platformRoleId], references: [id], onDelete: Cascade)
+  permission     PlatformPermissionKey
+  enabled        Boolean               @default(true)
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  @@unique([platformRoleId, permission])
+  @@index([platformRoleId, enabled])
+  @@map("platform_permissions")
+}
+
+model CoursePermission {
+  id           String              @id @default(uuid())
+  courseId     String              @map("course_id")
+  course       Course              @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseRoleId String              @map("course_role_id")
+  courseRole   CourseRole          @relation(fields: [courseRoleId], references: [id], onDelete: Cascade)
+  permission   CoursePermissionKey
+  enabled      Boolean             @default(true)
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  @@unique([courseId, courseRoleId, permission])
+  @@index([courseId, courseRoleId, enabled])
+  @@map("course_permissions")
 }
 
 model Post {
@@ -124,29 +191,34 @@ model FileInventory {
 
 // ---- Course / Enrollment / Module / Lesson models based on ERD ----
 model Course {
-  id          String       @id @default(uuid())
+  id          String             @id @default(uuid())
   teacherId   String
-  teacher     User         @relation("TeacherCourses", fields: [teacherId], references: [id])
+  teacher     User               @relation("TeacherCourses", fields: [teacherId], references: [id])
   title       String
   description String?
-  isPublished Boolean      @default(false)
+  isPublished Boolean            @default(false)
   modules     Module[]
   enrollments Enrollment[]
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  permissions CoursePermission[]
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
 
   @@map("course")
 }
 
 model Enrollment {
-  id         String   @id @default(uuid())
+  id         String     @id @default(uuid())
   studentId  String
-  student    User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  student    User       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  roleId     String
+  role       CourseRole @relation(fields: [roleId], references: [id], onDelete: Restrict)
   courseId   String
-  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  enrolledAt DateTime @default(now()) @map("enrolled_at")
+  course     Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  enrolledAt DateTime   @default(now()) @map("enrolled_at")
 
   @@index([studentId])
+  @@index([roleId])
+  @@index([courseId, roleId])
   @@index([courseId])
   @@map("enrollment")
 }
