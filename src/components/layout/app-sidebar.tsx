@@ -2,6 +2,8 @@
 
 import {
   BookOpen,
+  Cloud,
+  Cog,
   GraduationCap,
   Languages,
   MessageSquare,
@@ -9,6 +11,9 @@ import {
   PanelLeftOpen,
   PenLine,
   Plus,
+  School,
+  Sparkles,
+  User,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -43,6 +48,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       name: t('aiChat'),
       url: '/',
       icon: MessageSquare,
+      exact: true,
     },
     {
       name: t('socraticTutor'),
@@ -65,6 +71,43 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       icon: BookOpen,
     },
   ];
+
+  const settingsItems = [
+    {
+      name: t('settingsProfile'),
+      url: '/profile',
+      icon: User,
+      exact: true,
+    },
+    {
+      name: t('settingsAcademicContext'),
+      url: '/settings/academic-context',
+      icon: School,
+      exact: true,
+    },
+    {
+      name: t('settingsSystemSettings'),
+      url: '/settings',
+      icon: Cog,
+      exact: true,
+    },
+    {
+      name: t('settingsAiPreferences'),
+      url: '/settings/ai-preferences',
+      icon: Sparkles,
+      exact: true,
+    },
+    {
+      name: t('settingsIntegrations'),
+      url: '/settings/integrations',
+      icon: Cloud,
+      exact: true,
+    },
+  ];
+
+  const isSettingsContext =
+    pathname === '/profile' || pathname.startsWith('/settings');
+  const menuItems = isSettingsContext ? settingsItems : assistants;
 
   return (
     <Sidebar
@@ -102,12 +145,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>
+            {isSettingsContext ? (
+              <div className="px-5 pt-2 pb-1 group-data-[collapsible=icon]:hidden">
+                <h2 className="font-bold text-foreground text-lg leading-tight">
+                  {t('settingsHeading')}
+                </h2>
+                <p className="mt-1 text-muted-foreground text-sm leading-tight">
+                  {t('settingsSubheading')}
+                </p>
+              </div>
+            ) : null}
             <SidebarMenu className="mt-2 gap-3 px-4 group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:px-0">
-              {assistants.map((item) => {
-                const isActive =
-                  item.url === '/'
-                    ? pathname === '/'
-                    : pathname.startsWith(item.url);
+              {menuItems.map((item) => {
+                const isActive = item.exact
+                  ? pathname === item.url
+                  : pathname === item.url ||
+                    pathname.startsWith(`${item.url}/`);
 
                 return (
                   <SidebarMenuItem key={item.name}>
@@ -117,7 +170,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       tooltip={{
                         children: item.name,
                       }}
-                      className={`/* Active State: Semantic background and primary text */ /* Inactive State: Semantic grey text */ h-12 rounded-xl font-medium text-muted-foreground transition-all duration-200 hover:bg-sidebar-accent hover:text-primary data-[active=true]:bg-primary/10 data-[active=true]:text-primary`}
+                      className={`h-12 rounded-xl font-medium text-muted-foreground transition-all duration-200 hover:bg-sidebar-accent hover:text-primary data-[active=true]:bg-primary/10 data-[active=true]:text-primary`}
                     >
                       <Link
                         href={item.url}
