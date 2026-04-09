@@ -202,28 +202,28 @@
     }
   },
   "RoleSelection": {
-    "title": "Welcome to the {brand} Ecosystem",
-    "description": "Select your path to continue. Our platform adapts its intelligence based on your institutional role.",
-    "student": {
-      "role": "A Student",
-      "description": "Access course materials, track your research progress, and join academic seminars within your department.",
-      "path": "Learner Path"
-    },
-    "educator": {
-      "role": "An Educator",
-      "description": "Curate research collections, manage citations, and lead your academic community with advanced analytical tools.",
-      "path": "Curator Path"
-    },
     "actions": {
       "select": "Select"
     },
+    "description": "Select your path to continue. Our platform adapts its intelligence based on your institutional role.",
+    "educator": {
+      "description": "Curate research collections, manage citations, and lead your academic community with advanced analytical tools.",
+      "path": "Curator Path",
+      "role": "An Educator"
+    },
     "partner": {
-      "question": "Institutional partner?",
-      "action": "Register your university"
+      "action": "Register your university",
+      "question": "Institutional partner?"
+    },
+    "student": {
+      "description": "Access course materials, track your research progress, and join academic seminars within your department.",
+      "path": "Learner Path",
+      "role": "A Student"
     },
     "success": {
-      "title": "Welcome aboard!",
-      "description": "Your role has been updated. Redirecting you to your workspace..."
-    }
+      "description": "Your role has been updated. Redirecting you to your workspace...",
+      "title": "Welcome aboard!"
+    },
+    "title": "Welcome to the {brand} Ecosystem"
   }
 }
