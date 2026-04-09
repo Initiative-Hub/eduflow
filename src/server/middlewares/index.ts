@@ -78,3 +78,19 @@ export function withValidation(
     }
   };
 }
+export function withNoRole(
+  handler: (
+    req: Request,
+    context: SessionContext
+  ) => Promise<NextResponse> | NextResponse
+) {
+  return async (req: Request, context: SessionContext) => {
+    if (context.me?.role) {
+      return NextResponse.json(
+        { message: 'Your role is already defined and cannot be changed.' },
+        { status: 400 }
+      );
+    }
+    return await handler(req, context);
+  };
+}

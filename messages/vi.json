@@ -220,6 +220,10 @@
     "partner": {
       "question": "Đối tác tổ chức?",
       "action": "Đăng ký trường học của bạn"
+    },
+    "success": {
+      "title": "Chào mừng bạn!",
+      "description": "Vai trò của bạn đã được cập nhật. Đang chuyển hướng bạn đến không gian làm việc..."
     }
   }
 }

@@ -220,6 +220,10 @@
     "partner": {
       "question": "Institutional partner?",
       "action": "Register your university"
+    },
+    "success": {
+      "title": "Welcome aboard!",
+      "description": "Your role has been updated. Redirecting you to your workspace..."
     }
   }
 }
