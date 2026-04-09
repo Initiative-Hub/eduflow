@@ -157,6 +157,7 @@
     }
   },
   "Common": {
+    "comingSoon": "Sẽ sớm có.",
     "logout": "Đăng xuất"
   },
   "HomePage": {
@@ -171,6 +172,13 @@
     "aiTools": "Công cụ AI",
     "englishAssistant": "Trợ lý Tiếng Anh",
     "newSession": "Phiên mới",
+    "settingsAcademicContext": "Bối cảnh học tập",
+    "settingsAiPreferences": "Tùy chọn AI",
+    "settingsHeading": "Cài đặt EduFlow",
+    "settingsIntegrations": "Tích hợp",
+    "settingsProfile": "Hồ sơ",
+    "settingsSubheading": "Quản lý không gian học thuật của bạn",
+    "settingsSystemSettings": "Cài đặt hệ thống",
     "socraticTutor": "Gia sư Socratic",
     "studyAssistant": "Trợ lý Học tập",
     "studyHub": "Góc học tập",
