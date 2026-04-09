@@ -20,7 +20,7 @@ export function useLogin() {
     },
     onSuccess: () => {
       const nextUrl = searchParams.get('nextUrl');
-      const sanitizedUrl = sanitizeUrl(nextUrl) || '/dashboard';
+      const sanitizedUrl = sanitizeUrl(nextUrl) || '/';
       router.replace(sanitizedUrl);
     },
     onError: () => {

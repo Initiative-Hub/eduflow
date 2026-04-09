@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import DashboardHomePage from '../dashboard/page';
+import HomePage from '../page';
 
 export const metadata: Metadata = {
   title: 'My Posts',
@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 
 // Reuse the dashboard home page because the content is identical.
 export default function MyPostsPage() {
-  return <DashboardHomePage />;
+  return <HomePage />;
 }

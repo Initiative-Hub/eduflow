@@ -47,11 +47,11 @@ MICROSOFT_CLIENT_SECRET="your_microsoft_client_secret"
 ### 5. Initialize Database (Prisma & Seed) 
 ```bash
 # 1. Create tables in the database based on prisma/schema.prisma
-bun prisma:migrate
+bun db:migrate
 
 # 2. (Important) Run the seed file to create sample data (Admin, User, Roles...)
 # This step runs the prisma/seed.ts file provided in the code
-bun prisma:seed
+bun db:seed
 ```
 
 ### 6. Run the Development Server

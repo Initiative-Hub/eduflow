@@ -17,7 +17,7 @@ export async function validateResetPasswordToken(
     },
   });
 
-  if (!verification || verification.expiresAt <= new Date()) {
+  if (!verification?.expiresAt || verification.expiresAt <= new Date()) {
     return {
       isValid: false,
       message: 'Invalid or expired reset token',

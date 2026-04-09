@@ -1,0 +1,41 @@
+name: eduflow
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: always
+    environment: 
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=password
+      - POSTGRES_PASSWORD=eduflow_db
+    ports: 
+      - "5433:5432"
+    networks: 
+      - prisma-network
+    healthcheck: 
+      test: ["CMD-SHELL", "pg_isready -U prisma -d postgres"] 
+      interval: 5s
+      timeout: 2s
+      retries: 20
+    volumes: 
+      - postgres_data:/var/lib/postgresql/data
+    command: postgres -c listen_addresses='*'
+    logging: 
+      options: 
+        max-size: "10m"
+        max-file: "3"
+
+  mailpit:
+    image: axllent/mailpit
+    container_name: eduflow_mailpit
+    restart: always
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+    environment:
+      MP_MAX_MESSAGES: 500
+
+networks: 
+  prisma-network: 
+volumes: 
+  postgres_data: 
