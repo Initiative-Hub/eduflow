@@ -3,8 +3,8 @@ import { sanitizeUrl } from '@/utils/url-helper';
 
 describe('sanitizeUrl', () => {
   it('keeps a safe relative return path intact', () => {
-    expect(sanitizeUrl('  /dashboard?tab=profile#section  ')).toBe(
-      '/dashboard?tab=profile#section'
+    expect(sanitizeUrl('  /?tab=profile#section  ')).toBe(
+      '/?tab=profile#section'
     );
   });
 
@@ -14,7 +14,7 @@ describe('sanitizeUrl', () => {
     '///evil.example/steal',
     'javascript:alert(1)',
     '  ',
-    '/dashboard\r\nSet-Cookie: attack=true',
+    '/\r\nSet-Cookie: attack=true',
     '\\evil.example\\steal',
   ])('falls back for unsafe nextUrl value %s', (value) => {
     expect(sanitizeUrl(value)).toBe(null);

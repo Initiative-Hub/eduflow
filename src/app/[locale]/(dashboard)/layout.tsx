@@ -1,22 +1,14 @@
-import { headers } from 'next/headers';
-import { redirect } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { AppNavbar } from '@/components/layout/app-navbar';
 import { AppSidebar } from '@/components/layout/app-sidebar';
 import UserLoader from '@/components/UserLoader';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
-import { auth } from '@/lib/auth';
 
 export default async function DashboardLayout({
   children,
 }: {
   children: ReactNode;
 }) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user?.id) {
-    redirect('/login');
-  }
-
   return (
     <SidebarProvider>
       <UserLoader />

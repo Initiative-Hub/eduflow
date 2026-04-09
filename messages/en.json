@@ -157,6 +157,7 @@
     }
   },
   "Common": {
+    "comingSoon": "Coming soon.",
     "logout": "Log out"
   },
   "HomePage": {
@@ -171,9 +172,41 @@
     "aiTools": "AI Tools",
     "englishAssistant": "English Assistant",
     "newSession": "New Session",
+    "settingsAcademicContext": "Academic Context",
+    "settingsAiPreferences": "AI Preferences",
+    "settingsHeading": "EduFlow Settings",
+    "settingsIntegrations": "Integrations",
+    "settingsProfile": "Profile",
+    "settingsSubheading": "Manage your scholarly workspace",
+    "settingsSystemSettings": "System Settings",
     "socraticTutor": "Socratic Tutor",
     "studyAssistant": "Study Assistant",
     "studyHub": "Study Hub",
     "writingAssistant": "Writing Assistant"
+  },
+  "NavbarAvatar": {
+    "actions": {
+      "login": "Login",
+      "register": "Register"
+    },
+    "fallback": {
+      "email": "user@edu.flow",
+      "role": "N/A",
+      "user": "User"
+    },
+    "menu": {
+      "academicPulse": "Academic Pulse",
+      "aiBadge": "AI",
+      "darkMode": "Dark Mode",
+      "english": "English",
+      "helpCenter": "Help Center",
+      "language": "Language",
+      "languagePreference": "Language Preference",
+      "profile": "Profile",
+      "settings": "Settings",
+      "signOut": "Sign out",
+      "system": "System",
+      "vietnamese": "Tiếng Việt"
+    }
   }
 }

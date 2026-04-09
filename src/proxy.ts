@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import createMiddleware from 'next-intl/middleware';
 import { routing } from '@/i18n/routing';
 import { auth } from '@/lib/auth';
+import { isPathMatched } from '@/utils/path-helper';
 import { sanitizeUrl } from '@/utils/url-helper';
 import { AUTH_PATHS, PUBLIC_PATHS } from './constants/common';
 
@@ -37,16 +38,12 @@ const handleRedirect = async ({
     hasSession = false;
   }
 
-  const isAuthPath = AUTH_PATHS.some((path) =>
-    req.nextUrl.pathname.startsWith(path)
-  );
-  const isPublicPath = PUBLIC_PATHS.some((path) =>
-    req.nextUrl.pathname.startsWith(path)
-  );
+  const isAuthPath = isPathMatched(req.nextUrl.pathname, AUTH_PATHS);
+  const isPublicPath = isPathMatched(req.nextUrl.pathname, PUBLIC_PATHS);
   const isProtectedPath = !isPublicPath && !isAuthPath;
 
   // If current path is not public and user is not logged in, redirect to login page
-  if (req.nextUrl.pathname !== '/' && isProtectedPath && !hasSession) {
+  if (isProtectedPath && !hasSession) {
     const loginUrl = new URL('/login', req.nextUrl.origin);
     loginUrl.searchParams.set(
       'nextUrl',
@@ -57,9 +54,9 @@ const handleRedirect = async ({
   }
 
   // If current path ends with /login and user is logged in, redirect to dashboard page
-  if (req.nextUrl.pathname !== '/' && isAuthPath && hasSession) {
+  if (isAuthPath && hasSession) {
     const nextUrl = req.nextUrl.searchParams.get('nextUrl');
-    const sanitizedNextUrl = sanitizeUrl(nextUrl) || '/dashboard';
+    const sanitizedNextUrl = sanitizeUrl(nextUrl) || '/';
     const redirectUrl = new URL(sanitizedNextUrl, req.nextUrl.origin);
 
     return { res: NextResponse.redirect(redirectUrl), redirect: true };

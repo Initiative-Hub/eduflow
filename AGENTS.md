@@ -20,7 +20,7 @@ Foundational mandates here take absolute precedence. **NEVER** invent ad-hoc beh
 
 - **Skill Invocation**: Before writing code, first explore the project structure, then invoke the relevant skills in `.agents/skills` for documentation (**IMPORTANT**: Prefer retrieval-led reasoning over pre-training-led reasoning 
 for any tasks.).
-- **Type Integrity**: When editing `prisma/schema.prisma`, create or apply the migration with `bun prisma:migrate` and refresh the Prisma client with `bun prisma:generate`.
+- **Type Integrity**: When editing `prisma/schema.prisma`, create or apply the migration with `bun db:migrate` and refresh the Prisma client with `bun db:generate`.
 - **Bilingual Support**: ALWAYS provide translations for both English (en.json) AND Vietnamese (vi.json) for all user-facing strings.
 - **Proactive Refactoring**: Evaluate files >400 LOC and components >200 LOC for extraction into smaller, focused units.
 - **Unified Verification**: If your changes touch TypeScript/JavaScript files (or root scripts/config that affect repo-wide checks), end your session with `bun type-check`.
@@ -45,8 +45,8 @@ for any tasks.).
 ### 4.1 Database Migrations
 
 1. Use `prisma/schema.prisma` as the source of truth for database changes.
-2. Create/apply migrations with `bun prisma:migrate`.
-3. Refresh the generated client with `bun prisma:generate` after schema edits or before build-time type checks.
+2. Create/apply migrations with `bun db:migrate`.
+3. Refresh the generated client with `bun db:generate` after schema edits or before build-time type checks.
 4. Use `bun db:start` to start local PostgreSQL and `bun db:reset` for a clean reset/seed cycle.
 
 ### 4.2 UI & Navigation
@@ -93,7 +93,7 @@ for any tasks.).
 
 ### 6.4 Tooling & CI
 
-- **Focused Tests**: For focused validation, run package-local vitest files directly when possible (for example `bun --bun vitest run src/...`) instead of the whole suite.
+- **Focused Tests**: For focused validation, run package-local vitest files directly when possible (for example `vitest run src/...`) instead of the whole suite.
 - **Type Check**: After TypeScript or JavaScript edits, finish with `bun type-check`.
 - **Formatting**: Use `bun format:fix` before verification if the change is formatting-sensitive.
 - **Shell Paths**: Quote file paths that include `(`, `)`, `[`, or `]` when running shell or git commands.

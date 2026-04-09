@@ -2,20 +2,23 @@
 
 import {
   BookOpen,
+  Cloud,
   GraduationCap,
   Languages,
-  LogOut,
   MessageSquare,
   PanelLeftClose,
   PanelLeftOpen,
   PenLine,
   Plus,
+  School,
+  Settings,
+  Sparkles,
+  User,
 } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import type * as React from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
   Sidebar,
@@ -29,57 +32,92 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { authClient, useSession } from '@/lib/auth-client';
-import { useLoadingStore } from '@/stores/useLoadingStore';
+import { useSession } from '@/lib/auth-client';
+import { NavbarAvatar } from './navbar-avatar';
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const t = useTranslations('Layout');
-  const tCommon = useTranslations('Common');
+  const tNavbarAvatar = useTranslations('NavbarAvatar');
   const pathname = usePathname();
-  const router = useRouter();
-  const setLoading = useLoadingStore((state) => state.setLoading);
 
   const { data: sessionData } = useSession();
   const { state, toggleSidebar } = useSidebar();
 
-  const handleLogout = async () => {
-    setLoading(true);
-    await authClient.signOut({
-      fetchOptions: {
-        onSuccess: () => {
-          router.push('/login');
-        },
-      },
-    });
+  type SidebarItem = {
+    name: string;
+    url: string;
+    icon: React.ReactElement;
+    exact?: boolean;
   };
 
-  const assistants = [
+  const sidebarIconClassName =
+    'size-5 fill-primary/60 text-primary/80 transition-colors group-hover/menu-button:fill-primary group-hover/menu-button:text-primary group-data-[active=true]/menu-button:fill-primary group-data-[active=true]/menu-button:text-primary';
+
+  const assistants: SidebarItem[] = [
     {
       name: t('aiChat'),
-      url: '/dashboard',
-      icon: MessageSquare,
+      url: '/',
+      icon: <MessageSquare className={sidebarIconClassName} />,
+      exact: true,
     },
     {
       name: t('socraticTutor'),
       url: '/socratic',
-      icon: GraduationCap,
+      icon: <GraduationCap className={sidebarIconClassName} />,
     },
     {
       name: t('englishAssistant'),
       url: '/english',
-      icon: Languages,
+      icon: <Languages className={sidebarIconClassName} />,
     },
     {
       name: t('writingAssistant'),
       url: '/writing',
-      icon: PenLine,
+      icon: <PenLine className={sidebarIconClassName} />,
     },
     {
       name: t('studyAssistant'),
       url: '/study',
-      icon: BookOpen,
+      icon: <BookOpen className={sidebarIconClassName} />,
     },
   ];
+
+  const settingsItems: SidebarItem[] = [
+    {
+      name: t('settingsProfile'),
+      url: '/profile',
+      icon: <User className={sidebarIconClassName} />,
+      exact: true,
+    },
+    {
+      name: t('settingsAcademicContext'),
+      url: '/settings/academic-context',
+      icon: <School className={sidebarIconClassName} />,
+      exact: true,
+    },
+    {
+      name: t('settingsSystemSettings'),
+      url: '/settings',
+      icon: <Settings className={sidebarIconClassName} />,
+      exact: true,
+    },
+    {
+      name: t('settingsAiPreferences'),
+      url: '/settings/ai-preferences',
+      icon: <Sparkles className={sidebarIconClassName} />,
+      exact: true,
+    },
+    {
+      name: t('settingsIntegrations'),
+      url: '/settings/integrations',
+      icon: <Cloud className={sidebarIconClassName} />,
+      exact: true,
+    },
+  ];
+
+  const isSettingsContext =
+    pathname === '/profile' || pathname.startsWith('/settings');
+  const menuItems = isSettingsContext ? settingsItems : assistants;
 
   return (
     <Sidebar
@@ -88,7 +126,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       {...props}
     >
       <SidebarHeader className="flex flex-col gap-6 p-5 group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:gap-4 group-data-[collapsible=icon]:p-2">
-        <div className="mt-2 mb-1 flex items-center gap-3 px-1 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
+        <Link
+          href="/"
+          className="mt-2 mb-1 flex items-center gap-3 rounded-lg px-1 outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-primary/50 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
+        >
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
             <GraduationCap className="size-6" strokeWidth={2.5} />
           </div>
@@ -100,7 +141,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               ACADEMIC CURATOR
             </span>
           </div>
-        </div>
+        </Link>
         <Button
           className="group-data-[collapsible=icon]:justify-center! relative w-full justify-start rounded-xl bg-linear-to-br from-primary to-primary/80 px-4 py-6 font-semibold text-primary-foreground shadow-md transition-all hover:from-primary/90 hover:to-primary/70 hover:shadow-lg group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:h-12 group-data-[collapsible=icon]:w-12 group-data-[collapsible=icon]:p-0!"
           size="lg"
@@ -117,12 +158,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>
+            {isSettingsContext ? (
+              <div className="px-5 pt-2 pb-1 group-data-[collapsible=icon]:hidden">
+                <h2 className="font-bold text-foreground text-lg leading-tight">
+                  {t('settingsHeading')}
+                </h2>
+                <p className="mt-1 text-muted-foreground text-sm leading-tight">
+                  {t('settingsSubheading')}
+                </p>
+              </div>
+            ) : null}
             <SidebarMenu className="mt-2 gap-3 px-4 group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:px-0">
-              {assistants.map((item) => {
-                const isActive =
-                  item.url === '/dashboard'
-                    ? pathname === '/dashboard'
-                    : pathname.startsWith(item.url);
+              {menuItems.map((item) => {
+                const isActive = item.exact
+                  ? pathname === item.url
+                  : pathname === item.url ||
+                    pathname.startsWith(`${item.url}/`);
 
                 return (
                   <SidebarMenuItem key={item.name}>
@@ -132,20 +183,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       tooltip={{
                         children: item.name,
                       }}
-                      className={`/* Active State: Semantic background and primary text */ /* Inactive State: Semantic grey text */ h-12 rounded-xl font-medium text-muted-foreground transition-all duration-200 hover:bg-sidebar-accent hover:text-primary data-[active=true]:bg-primary/10 data-[active=true]:text-primary`}
+                      className="h-12 rounded-xl font-medium text-muted-foreground transition-all duration-200 hover:bg-sidebar-accent hover:text-primary data-[active=true]:bg-primary/10 data-[active=true]:text-primary"
                     >
                       <Link
                         href={item.url}
                         className="flex items-center gap-3.5 px-2"
                       >
-                        <item.icon
-                          className={`size-6 transition-colors ${
-                            isActive
-                              ? 'text-primary'
-                              : 'text-muted-foreground/70 group-hover/menu-button:text-primary'
-                          }`}
-                          strokeWidth={isActive ? 2.5 : 2}
-                        />
+                        {item.icon}
+
                         <span className="text-sm tracking-tight">
                           {item.name}
                         </span>
@@ -159,18 +204,28 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="border-border/40 border-t p-4 group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:pb-3">
-        {/* Desktop Collapse Toggle */}
-        <div className="hidden w-full items-center justify-between group-data-[collapsible=icon]:justify-center md:flex">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleLogout}
-            className="rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive group-data-[collapsible=icon]:hidden"
-            title={tCommon('logout')}
-          >
-            <LogOut className="size-5" />
-            <span className="sr-only">Logout</span>
-          </Button>
+        <div className="flex w-full items-center justify-between md:justify-end">
+          {sessionData ? (
+            <div className="block md:hidden">
+              <NavbarAvatar
+                name={sessionData?.user?.name}
+                email={sessionData?.user?.email}
+                image={sessionData?.user?.image}
+                role={(sessionData?.user as any)?.role}
+              />
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 font-heading md:hidden">
+              <Button asChild>
+                <Link href="/login">{tNavbarAvatar('actions.login')}</Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link href="/register">
+                  {tNavbarAvatar('actions.register')}
+                </Link>
+              </Button>
+            </div>
+          )}
           <Button
             variant="ghost"
             size="icon"
@@ -183,38 +238,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <PanelLeftOpen className="size-5" />
             )}
             <span className="sr-only">Toggle Sidebar</span>
-          </Button>
-        </div>
-
-        <div className="flex w-full items-center justify-between rounded-xl p-2 transition-colors hover:bg-muted/40 md:hidden">
-          <div className="flex min-w-0 cursor-pointer items-center gap-3">
-            <Avatar className="size-10 shrink-0 cursor-pointer border transition-all hover:ring-2 hover:ring-primary/20">
-              <AvatarImage
-                src={sessionData?.user?.image || ''}
-                alt={sessionData?.user?.name || 'User'}
-              />
-              <AvatarFallback className="bg-primary/10 font-bold text-primary text-sm">
-                {sessionData?.user?.name?.[0]?.toUpperCase() || 'U'}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex min-w-0 flex-col">
-              <span className="truncate font-semibold text-foreground text-sm">
-                {sessionData?.user?.name || 'User'}
-              </span>
-              <span className="max-w-30 truncate text-muted-foreground text-xs">
-                {sessionData?.user?.email || 'Free Plan'}
-              </span>
-            </div>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleLogout}
-            className="ml-1 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-            title={tCommon('logout')}
-          >
-            <LogOut className="size-5" />
-            <span className="sr-only">{tCommon('logout')}</span>
           </Button>
         </div>
       </SidebarFooter>

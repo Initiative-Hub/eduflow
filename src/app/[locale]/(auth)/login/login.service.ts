@@ -11,10 +11,7 @@ export const loginService = {
   login: async (data: LoginFormData) => {
     return apiClient.post('/auth/login', data);
   },
-  signInWithSocial: async (
-    provider: SocialProvider,
-    callbackURL = '/dashboard'
-  ) => {
+  signInWithSocial: async (provider: SocialProvider, callbackURL = '/') => {
     return apiClient.post<SocialSignInResult>(`/auth/social/${provider}`, {
       callbackURL,
     });
