@@ -200,5 +200,26 @@
       "system": "Hệ thống",
       "vietnamese": "Tiếng Việt"
     }
+  },
+  "RoleSelection": {
+    "title": "Chào mừng bạn đến với Hệ sinh thái {brand}",
+    "description": "Chọn con đường của bạn để tiếp tục. Nền tảng của chúng tôi sẽ điều chỉnh trí tuệ nhân tạo dựa trên vai trò của bạn.",
+    "student": {
+      "role": "Sinh viên",
+      "description": "Truy cập tài liệu khóa học, theo dõi tiến trình nghiên cứu và tham gia các buổi thảo luận học thuật.",
+      "path": "Lộ trình Học tập"
+    },
+    "educator": {
+      "role": "Giảng viên",
+      "description": "Xây dựng bộ sưu tập nghiên cứu, quản lý trích dẫn và dẫn dắt cộng đồng học thuật của bạn.",
+      "path": "Lộ trình Giảng dạy"
+    },
+    "actions": {
+      "select": "Lựa chọn"
+    },
+    "partner": {
+      "question": "Đối tác tổ chức?",
+      "action": "Đăng ký trường học của bạn"
+    }
   }
 }

@@ -200,5 +200,26 @@
       "system": "System",
       "vietnamese": "Tiếng Việt"
     }
+  },
+  "RoleSelection": {
+    "title": "Welcome to the {brand} Ecosystem",
+    "description": "Select your path to continue. Our platform adapts its intelligence based on your institutional role.",
+    "student": {
+      "role": "A Student",
+      "description": "Access course materials, track your research progress, and join academic seminars within your department.",
+      "path": "Learner Path"
+    },
+    "educator": {
+      "role": "An Educator",
+      "description": "Curate research collections, manage citations, and lead your academic community with advanced analytical tools.",
+      "path": "Curator Path"
+    },
+    "actions": {
+      "select": "Select"
+    },
+    "partner": {
+      "question": "Institutional partner?",
+      "action": "Register your university"
+    }
   }
 }

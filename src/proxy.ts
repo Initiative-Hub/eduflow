@@ -31,18 +31,29 @@ const handleRedirect = async ({
   redirect: boolean;
 }> => {
   let hasSession = false;
-  try {
-    const sessionData = await auth.api.getSession({ headers: req.headers });
+  let userRole: string | null = null;
+  const sessionData = await auth.api.getSession({ headers: req.headers });
+
+  if (sessionData) {
     hasSession = hasActiveSession(sessionData);
-  } catch {
-    hasSession = false;
+    userRole = (sessionData.user as any).role;
   }
 
   const isAuthPath = isPathMatched(req.nextUrl.pathname, AUTH_PATHS);
   const isPublicPath = isPathMatched(req.nextUrl.pathname, PUBLIC_PATHS);
   const isProtectedPath = !isPublicPath && !isAuthPath;
+  const isRolePath = isPathMatched(req.nextUrl.pathname, ['/role']);
 
-  // If current path is not public and user is not logged in, redirect to login page
+  if (hasSession && !userRole && !isRolePath && !isAuthPath) {
+    const roleUrl = new URL('/role', req.nextUrl.origin);
+    return { res: NextResponse.redirect(roleUrl), redirect: true };
+  }
+
+  if (hasSession && userRole && isRolePath) {
+    const dashboardUrl = new URL('/', req.nextUrl.origin);
+    return { res: NextResponse.redirect(dashboardUrl), redirect: true };
+  }
+
   if (isProtectedPath && !hasSession) {
     const loginUrl = new URL('/login', req.nextUrl.origin);
     loginUrl.searchParams.set(
@@ -53,7 +64,6 @@ const handleRedirect = async ({
     return { res: NextResponse.redirect(loginUrl), redirect: true };
   }
 
-  // If current path ends with /login and user is logged in, redirect to dashboard page
   if (isAuthPath && hasSession) {
     const nextUrl = req.nextUrl.searchParams.get('nextUrl');
     const sanitizedNextUrl = sanitizeUrl(nextUrl) || '/';
