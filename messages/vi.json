@@ -15,7 +15,8 @@
   "AuthForgotPassword": {
     "actions": {
       "backToLogin": "Quay lại đăng nhập",
-      "send": "Gửi liên kết đặt lại"
+      "send": "Gửi liên kết đặt lại",
+      "sending": "Đang gửi..."
     },
     "description": "Nhập địa chỉ email của bạn và chúng tôi sẽ gửi một liên kết để đặt lại mật khẩu.",
     "form": {
