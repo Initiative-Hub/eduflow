@@ -36,7 +36,7 @@ const handleRedirect = async ({
 
   if (sessionData) {
     hasSession = hasActiveSession(sessionData);
-    userRole = (sessionData.user as any).role;
+    userRole = sessionData.user?.role;
   }
 
   const isAuthPath = isPathMatched(req.nextUrl.pathname, AUTH_PATHS);
