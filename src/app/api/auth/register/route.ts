@@ -1,6 +1,7 @@
 import { headers } from 'next/headers';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
 
 const registerSchema = z.object({
   email: z.email(),
@@ -24,8 +25,24 @@ export async function POST(request: Request) {
     );
   }
 
+  const normalizedEmail = parsedBody.data.email.toLowerCase();
+  const existingUser = await prisma.user.findUnique({
+    where: { email: normalizedEmail },
+    select: { id: true },
+  });
+
+  if (existingUser) {
+    return Response.json(
+      { message: 'An account already exists for this email address.' },
+      { status: 409 }
+    );
+  }
+
   return auth.api.signUpEmail({
-    body: parsedBody.data,
+    body: {
+      ...parsedBody.data,
+      email: normalizedEmail,
+    },
     headers: await headers(),
     asResponse: true,
   });
