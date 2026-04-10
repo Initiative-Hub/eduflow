@@ -15,7 +15,8 @@
   "AuthForgotPassword": {
     "actions": {
       "backToLogin": "Back to Login",
-      "send": "Send Reset Link"
+      "send": "Send Reset Link",
+      "sending": "Sending..."
     },
     "description": "Enter your email address and we'll send you a link to reset your password.",
     "form": {

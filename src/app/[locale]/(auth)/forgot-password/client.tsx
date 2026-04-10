@@ -28,7 +28,7 @@ export function ForgotPasswordClient({ fields }: ForgotPasswordClientProps) {
         defaultValues={forgotPasswordDefaultValues}
         fields={translatedFields}
         onSubmit={handleSubmit}
-        submitLabel={t('actions.send')}
+        submitLabel={isLoading ? t('actions.sending') : t('actions.send')}
         isLoading={isLoading}
         className="gap-5"
       />
