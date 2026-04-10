@@ -24,7 +24,10 @@ export function withAuth(
         );
       }
 
-      if (!allowedRoles.includes(sessionData.user.role || '')) {
+      if (
+        allowedRoles.length > 0 &&
+        !allowedRoles.includes(sessionData.user.role || '')
+      ) {
         return NextResponse.json(
           { message: 'Forbidden. Insufficient permissions.' },
           { status: 403 }
