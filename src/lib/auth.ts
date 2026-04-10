@@ -91,24 +91,4 @@ export const auth = betterAuth({
       },
     }),
   ],
-
-  databaseHooks: {
-    user: {
-      create: {
-        before: async (user) => {
-          const defaultRole = await prisma.platformRole.findUnique({
-            where: { name: 'STUDENT' },
-            select: { id: true },
-          });
-
-          return {
-            data: {
-              ...user,
-              roleId: defaultRole?.id || null,
-            },
-          };
-        },
-      },
-    },
-  },
 });
