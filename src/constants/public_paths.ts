@@ -7,6 +7,7 @@ export const APP_PUBLIC_PATHS = [
   '/english',
   '/socratic',
   '/my-posts',
+  '/api-docs',
   '/study',
   '/writing',
 ].reduce((acc: string[], path) => {

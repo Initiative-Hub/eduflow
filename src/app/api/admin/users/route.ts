@@ -1,8 +1,86 @@
+/**
+ * @swagger
+ * /api/admin/users:
+ *   get:
+ *     tags:
+ *       - Admin
+ *     summary: List users (admin only)
+ *     security:
+ *       - SessionCookie: []
+ *     responses:
+ *       200:
+ *         description: List of users
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *   put:
+ *     tags:
+ *       - Admin
+ *     summary: Update a user (admin only)
+ *     security:
+ *       - SessionCookie: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               id:
+ *                 type: string
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               role:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Updated user
+ *       400:
+ *         description: Missing id
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *   post:
+ *     tags:
+ *       - Admin
+ *     summary: Create a user (admin only)
+ *     security:
+ *       - SessionCookie: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *               name:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               role:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: User created
+ *       400:
+ *         description: Invalid payload
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ */
+
+import bcrypt from 'bcryptjs';
+import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { headers } from 'next/headers';
 import { prisma } from '@/lib/prisma';
-import bcrypt from 'bcryptjs';
 
 export async function GET() {
   try {

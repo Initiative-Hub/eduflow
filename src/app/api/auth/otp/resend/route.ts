@@ -1,3 +1,25 @@
+/**
+ * @swagger
+ * /api/auth/otp/resend:
+ *   post:
+ *     tags:
+ *       - Auth
+ *     summary: Resend verification OTP
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: OTP resent
+ *       400:
+ *         description: Invalid payload
+ */
 import { headers } from 'next/headers';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
