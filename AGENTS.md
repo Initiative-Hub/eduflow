@@ -113,3 +113,7 @@ At the **END** of every session, you MUST:
 2. Update `AGENTS.md` with durable standards/rules (no chronological logs).
 3. Eliminate redundancy—ensure new knowledge isn't already covered by specialized skills.
 4. Propose future improvements to the human partner.
+
+### New Notes
+
+- In Vitest unit tests, prefer a typed `prismaMock` helper (casting `prisma` to a mock shape) instead of `vi.mocked`, which may be unavailable in the current test runtime.
