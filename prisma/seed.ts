@@ -50,11 +50,12 @@ async function main() {
   );
 
   // 2. Create users and assign roles
+  const adminUserId = randomUUID();
   const adminUser = await prisma.user.upsert({
     where: { email: 'admin@example.com' },
     update: {},
     create: {
-      id: randomUUID(),
+      id: adminUserId,
       email: 'admin@example.com',
       name: 'Admin User',
       roleId: adminRole.id,
@@ -63,7 +64,7 @@ async function main() {
         create: [
           {
             id: randomUUID(),
-            accountId: 'admin@example.com',
+            accountId: adminUserId,
             providerId: 'credential',
             password: hashedPasswordAdmin,
           },
@@ -72,11 +73,12 @@ async function main() {
     },
   });
 
+  const teacherUserId = randomUUID();
   const teacherUser = await prisma.user.upsert({
     where: { email: 'teacher@example.com' },
     update: {},
     create: {
-      id: randomUUID(),
+      id: teacherUserId,
       email: 'teacher@example.com',
       name: 'Teacher User',
       roleId: teacherRole.id,
@@ -85,7 +87,7 @@ async function main() {
         create: [
           {
             id: randomUUID(),
-            accountId: 'teacher@example.com',
+            accountId: teacherUserId,
             providerId: 'credential',
             password: hashedPasswordTeacher,
           },
@@ -94,11 +96,12 @@ async function main() {
     },
   });
 
+  const studentUserId = randomUUID();
   const studentUser = await prisma.user.upsert({
     where: { email: 'student@example.com' },
     update: {},
     create: {
-      id: randomUUID(),
+      id: studentUserId,
       email: 'student@example.com',
       name: 'Student User',
       roleId: studentRole.id,
@@ -107,7 +110,7 @@ async function main() {
         create: [
           {
             id: randomUUID(),
-            accountId: 'student@example.com',
+            accountId: studentUserId,
             providerId: 'credential',
             password: hashedPasswordStudent,
           },

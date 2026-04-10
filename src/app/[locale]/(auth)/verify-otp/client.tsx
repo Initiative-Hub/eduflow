@@ -59,7 +59,7 @@ export function VerifyOtpClient({ email, fields }: VerifyOtpClientProps) {
         )}
 
         <div className="flex items-center justify-center gap-1 text-sm">
-          <span className="text-muted-foreground">{t('resend')}</span>
+          <span className="text-muted-foreground">{t('resend.action')}</span>
           <Button
             type="button"
             variant="ghost"
