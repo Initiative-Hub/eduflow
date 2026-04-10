@@ -8,7 +8,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { AllSetScreen } from '@/components/custom/role-selection/all-set-screen';
+import { AllSetScreen } from '@/components/role-selection/all-set-screen';
 import { Button } from '@/components/ui/button';
 import { Link } from '@/i18n/navigation';
 import {
