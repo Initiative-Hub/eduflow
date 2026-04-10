@@ -35,6 +35,10 @@ export const auth = betterAuth({
     resetPasswordTokenExpiresIn: RESET_PASSWORD_TOKEN_EXPIRATION,
   },
 
+  emailVerification: {
+    autoSignInAfterVerification: true,
+  },
+
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID as string,
