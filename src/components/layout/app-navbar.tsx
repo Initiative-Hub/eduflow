@@ -86,10 +86,10 @@ export function AppNavbar() {
         {sessionData ? (
           <div className="hidden md:block">
             <NavbarAvatar
-              name={sessionData?.user?.name}
-              email={sessionData?.user?.email}
-              image={sessionData?.user?.image}
-              role={(sessionData?.user as any)?.role}
+              name={sessionData.user.name}
+              email={sessionData.user.email}
+              image={sessionData.user.image}
+              role={(sessionData.user as any)?.role}
             />
           </div>
         ) : (

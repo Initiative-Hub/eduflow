@@ -35,6 +35,10 @@ export const auth = betterAuth({
     resetPasswordTokenExpiresIn: RESET_PASSWORD_TOKEN_EXPIRATION,
   },
 
+  emailVerification: {
+    autoSignInAfterVerification: true,
+  },
+
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID as string,
@@ -87,24 +91,4 @@ export const auth = betterAuth({
       },
     }),
   ],
-
-  databaseHooks: {
-    user: {
-      create: {
-        before: async (user) => {
-          const defaultRole = await prisma.platformRole.findUnique({
-            where: { name: 'STUDENT' },
-            select: { id: true },
-          });
-
-          return {
-            data: {
-              ...user,
-              roleId: defaultRole?.id || null,
-            },
-          };
-        },
-      },
-    },
-  },
 });
