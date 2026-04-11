@@ -2,12 +2,12 @@ import { supportedLocales } from '@/i18n/routing';
 
 export const APP_PUBLIC_PATHS = [
   '/',
+  '/docs',
   '/landing',
   '/course',
   '/english',
   '/socratic',
   '/my-posts',
-  '/api-docs',
   '/study',
   '/writing',
 ].reduce((acc: string[], path) => {

@@ -1,6 +1,6 @@
 import { createSwaggerSpec } from 'next-swagger-doc';
 
-const defaultCookieName = 'better-auth.session';
+const defaultCookieName = 'better-auth.session_token';
 
 export const getApiDocs = async () => {
   const cookieName = process.env.BETTER_AUTH_COOKIE_NAME ?? defaultCookieName;

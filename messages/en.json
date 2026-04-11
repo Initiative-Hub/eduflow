@@ -5,7 +5,7 @@
     "usernameLabel": "Username:"
   },
   "ApiDocsPage": {
-    "cookieHint": "Sign in in another tab to reuse your Better Auth session cookie.",
+    "cookieHint": "Sign in another tab to reuse your Better Auth session cookie.",
     "description": "Explore and test the EduFlow API endpoints.",
     "title": "API Reference"
   },
