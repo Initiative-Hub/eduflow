@@ -22,7 +22,7 @@ import { ChatView } from './chat-view';
 import { LandingView } from './landing-view';
 
 interface AIClientProps {
-  userName: string;
+  userName?: string;
 }
 
 export type ViewState = 'home' | 'library';
@@ -153,7 +153,7 @@ export function AIClient({ userName }: AIClientProps) {
         <AnimatePresence mode="wait">
           {!isChatting ? (
             <LandingView
-              userName={userName}
+              userName={userName ?? 'User'}
               view={view}
               setView={setView}
               suggestions={suggestions}

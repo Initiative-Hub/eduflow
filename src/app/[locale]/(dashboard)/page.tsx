@@ -8,13 +8,13 @@ export default async function HomePage() {
   const t = await getTranslations('Layout');
   const session = await auth.api.getSession({ headers: await headers() });
 
-  if (!session?.user) {
-    redirect('/login');
-  }
+  // if (!session?.user) {
+  //   redirect('/landing');
+  // }
 
   return (
     <div className="flex flex-1 flex-col">
-      <AIClient userName={session.user.name} />
+      <AIClient userName={session?.user?.name} />
     </div>
   );
 }
