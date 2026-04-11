@@ -1,3 +1,30 @@
+/**
+ * @swagger
+ * /api/v1/user/role:
+ *   put:
+ *     tags:
+ *       - User
+ *     summary: Update the current user's platform role
+ *     security:
+ *       - SessionCookie: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               role:
+ *                 type: string
+ *                 enum: [STUDENT, TEACHER]
+ *     responses:
+ *       200:
+ *         description: Role updated
+ *       400:
+ *         description: Invalid payload
+ *       401:
+ *         description: Unauthorized
+ */
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withAuth, withNoRole, withValidation } from '@/server/middlewares';

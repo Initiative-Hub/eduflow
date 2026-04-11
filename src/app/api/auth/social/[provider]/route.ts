@@ -1,3 +1,34 @@
+/**
+ * @swagger
+ * /api/auth/social/{provider}:
+ *   post:
+ *     tags:
+ *       - Auth
+ *     summary: Sign in with a social provider
+ *     parameters:
+ *       - in: path
+ *         name: provider
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum: [google, github, microsoft]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               callbackURL:
+ *                 type: string
+ *               errorCallbackURL:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Social sign-in response
+ *       400:
+ *         description: Invalid payload
+ */
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';

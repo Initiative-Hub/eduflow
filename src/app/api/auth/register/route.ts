@@ -1,3 +1,35 @@
+/**
+ * @swagger
+ * /api/auth/register:
+ *   post:
+ *     tags:
+ *       - Auth
+ *     summary: Register a new account
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               name:
+ *                 type: string
+ *               callbackURL:
+ *                 type: string
+ *               rememberMe:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: Account created
+ *       400:
+ *         description: Invalid payload
+ *       409:
+ *         description: Email already exists
+ */
 import { headers } from 'next/headers';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';

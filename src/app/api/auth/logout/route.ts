@@ -1,3 +1,16 @@
+/**
+ * @swagger
+ * /api/auth/logout:
+ *   post:
+ *     tags:
+ *       - Auth
+ *     summary: Sign out the current session
+ *     security:
+ *       - SessionCookie: []
+ *     responses:
+ *       200:
+ *         description: Signed out
+ */
 import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';
 

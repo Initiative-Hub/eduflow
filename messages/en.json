@@ -4,6 +4,11 @@
     "title": "Account Information",
     "usernameLabel": "Username:"
   },
+  "ApiDocsPage": {
+    "cookieHint": "Sign in another tab to reuse your Better Auth session cookie.",
+    "description": "Explore and test the EduFlow API endpoints.",
+    "title": "API Reference"
+  },
   "AuthFooter": {
     "brand": "EduFlow",
     "cookieSettings": "Cookie Settings",

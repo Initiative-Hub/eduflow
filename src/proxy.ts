@@ -78,7 +78,7 @@ const handleRedirect = async ({
 };
 
 export async function proxy(req: NextRequest) {
-  if (req.nextUrl.pathname.startsWith('/api')) {
+  if (req.nextUrl.pathname.startsWith('/api/')) {
     return NextResponse.next();
   }
 
