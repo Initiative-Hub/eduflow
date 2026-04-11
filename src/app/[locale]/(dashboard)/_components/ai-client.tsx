@@ -1,5 +1,7 @@
 'use client';
 
+import { useChat } from '@ai-sdk/react';
+import { DefaultChatTransport } from 'ai';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   BadgeInfo,
@@ -25,20 +27,23 @@ interface AIClientProps {
 
 export type ViewState = 'home' | 'library';
 
-export interface Message {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-}
+const chatTransport = new DefaultChatTransport({
+  api: '/api/chat',
+});
 
 export function AIClient({ userName }: AIClientProps) {
   const t = useTranslations('AIChat');
-  const [inputValue, setInputValue] = useState('');
   const [view, setView] = useState<ViewState>('home');
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  const { messages, status, sendMessage, stop } = useChat({
+    transport: chatTransport,
+    onError(error) {
+      console.error('Chat error:', error);
+    },
+  });
+
+  const isStreaming = status === 'streaming' || status === 'submitted';
   const isChatting = messages.length > 0;
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: We use these as triggers to scroll to bottom
@@ -46,33 +51,15 @@ export function AIClient({ userName }: AIClientProps) {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages.length, isTyping]);
+  }, [messages.length, isStreaming]);
 
   const handleSubmit = (e?: React.FormEvent, customValue?: string) => {
     e?.preventDefault();
-    const finalValue = customValue || inputValue;
-    if (!finalValue.trim()) return;
 
-    const userMessage: Message = {
-      id: crypto.randomUUID(),
-      role: 'user',
-      content: finalValue.trim(),
-    };
+    const text = customValue || '';
+    if (!text.trim()) return;
 
-    setMessages((prev) => [...prev, userMessage]);
-    setInputValue('');
-    setIsTyping(true);
-
-    // Mock AI response
-    setTimeout(() => {
-      const aiMessage: Message = {
-        id: crypto.randomUUID(),
-        role: 'assistant',
-        content: `I am currently in development mode. You asked: "${userMessage.content}". How can I assist you further with your scholarly inquiry?`,
-      };
-      setMessages((prev) => [...prev, aiMessage]);
-      setIsTyping(false);
-    }, 1500);
+    void sendMessage({ text: text.trim() });
   };
 
   const suggestions = [
@@ -172,14 +159,13 @@ export function AIClient({ userName }: AIClientProps) {
               suggestions={suggestions}
               extendedPrompts={extendedPrompts}
               onSelectPrompt={(text) => {
-                setInputValue(text);
-                handleSubmit(undefined, text);
+                void sendMessage({ text });
               }}
             />
           ) : (
             <ChatView
               messages={messages}
-              isTyping={isTyping}
+              isStreaming={isStreaming}
               scrollRef={scrollRef}
             />
           )}
@@ -187,11 +173,10 @@ export function AIClient({ userName }: AIClientProps) {
       </div>
 
       <ChatInput
-        inputValue={inputValue}
-        setInputValue={setInputValue}
         handleSubmit={handleSubmit}
-        isTyping={isTyping}
+        isStreaming={isStreaming}
         isChatting={isChatting}
+        onStop={stop}
       />
     </div>
   );

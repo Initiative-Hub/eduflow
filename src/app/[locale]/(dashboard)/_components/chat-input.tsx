@@ -1,34 +1,48 @@
 'use client';
 
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowUp, Library, Loader2, Paperclip, Settings2 } from 'lucide-react';
+import {
+  ArrowUp,
+  Library,
+  Loader2,
+  Paperclip,
+  Settings2,
+  Square,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
 interface ChatInputProps {
-  inputValue: string;
-  setInputValue: (value: string) => void;
-  handleSubmit: (e?: React.FormEvent) => void;
-  isTyping: boolean;
+  handleSubmit: (e?: React.FormEvent, customValue?: string) => void;
+  isStreaming: boolean;
   isChatting: boolean;
+  onStop: () => void;
 }
 
 export function ChatInput({
-  inputValue,
-  setInputValue,
   handleSubmit,
-  isTyping,
+  isStreaming,
   isChatting,
+  onStop,
 }: ChatInputProps) {
   const t = useTranslations('AIChat');
+  const [inputValue, setInputValue] = useState('');
+
+  const onFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inputValue.trim() || isStreaming) return;
+    handleSubmit(e, inputValue);
+    setInputValue('');
+  };
 
   return (
     <motion.div
       layout
       className={`relative z-20 w-full max-w-3xl space-y-4 pt-8 pb-4 ${isChatting ? 'mt-auto' : ''}`}
     >
-      <form onSubmit={handleSubmit} className="group relative">
+      <form onSubmit={onFormSubmit} className="group relative">
         <div className="absolute inset-x-0 -top-px -bottom-px rounded-[2rem] bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 transition-opacity duration-500 group-focus-within:opacity-100" />
         <div className="relative flex items-center rounded-[2rem] border border-border bg-white p-2 shadow-xl transition-all group-focus-within:border-primary/30 group-focus-within:shadow-2xl dark:bg-zinc-950">
           <Button
@@ -45,18 +59,25 @@ export function ChatInput({
             placeholder={t('placeholder')}
             className="h-12 border-0 bg-transparent text-lg placeholder:text-muted-foreground/50 focus-visible:ring-0"
           />
-          <Button
-            type="submit"
-            className="size-11 rounded-full shadow-lg shadow-primary/20 transition-all hover:scale-105"
-            size="icon"
-            disabled={!inputValue.trim() || isTyping}
-          >
-            {isTyping ? (
-              <Loader2 className="size-5 animate-spin" />
-            ) : (
+          {isStreaming ? (
+            <Button
+              type="button"
+              onClick={onStop}
+              className="size-11 rounded-full bg-destructive shadow-lg shadow-destructive/20 transition-all hover:scale-105 hover:bg-destructive/90"
+              size="icon"
+            >
+              <Square className="size-4" />
+            </Button>
+          ) : (
+            <Button
+              type="submit"
+              className="size-11 rounded-full shadow-lg shadow-primary/20 transition-all hover:scale-105"
+              size="icon"
+              disabled={!inputValue.trim()}
+            >
               <ArrowUp className="size-5" />
-            )}
-          </Button>
+            </Button>
+          )}
         </div>
       </form>
 

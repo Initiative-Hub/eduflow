@@ -97,6 +97,7 @@ for any tasks.).
 - **Type Check**: After TypeScript or JavaScript edits, finish with `bun type-check`.
 - **Formatting**: Use `bun format:fix` before verification if the change is formatting-sensitive.
 - **Shell Paths**: Quote file paths that include `(`, `)`, `[`, or `]` when running shell or git commands.
+- **AI SDK v6 Imports**: In React clients, import hooks such as `useChat` from `@ai-sdk/react`, not `ai/react`; pair them with an explicit transport such as `TextStreamChatTransport` or `DefaultChatTransport` from `ai`.
 
 ### 6.5 Type Safety & Platform Details
 

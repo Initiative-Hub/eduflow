@@ -4,6 +4,53 @@
     "title": "Thông tin tài khoản",
     "usernameLabel": "Tên người dùng:"
   },
+  "AIChat": {
+    "categories": {
+      "artHistory": "LỊCH SỬ NGHỆ THUẬT",
+      "history": "LỊCH SỬ",
+      "literature": "VĂN HỌC",
+      "mathematics": "TOÁN HỌC",
+      "methodology": "PHƯƠNG PHÁP LUẬN",
+      "philosophy": "TRIẾT HỌC",
+      "science": "KHOA HỌC"
+    },
+    "criticalThinking": "Tư duy phản biện đang hoạt động",
+    "exploreMore": "Khám phá thêm các gợi ý học thuật",
+    "footer": {
+      "academicDraft": "Dự thảo học thuật Lexend",
+      "responseDisclaimer": "Phản hồi của AI có thể thay đổi"
+    },
+    "philosophicalLogic": "Cưỡng chế logic triết học",
+    "placeholder": "Đặt câu hỏi học thuật...",
+    "promptLibrary": {
+      "description": "Chọn một khung truy vấn chuyên biệt để hướng dẫn phiên làm việc của bạn.",
+      "hist": {
+        "description": "Phân tích các tác động kinh tế xã hội trên các khu vực khác nhau.",
+        "title": "Lịch sử thực dân so sánh"
+      },
+      "lit": {
+        "description": "Phân tích các chủ đề và mô-típ trong văn học cổ điển.",
+        "title": "Phân tích cấu trúc tự sự"
+      },
+      "math": {
+        "description": "Nhận giải thích rõ ràng cho các chứng minh toán học phức tạp.",
+        "title": "Đạo hàm tích phân từng bước"
+      },
+      "phil": {
+        "description": "Khám phá các khung triết học cho công nghệ hiện đại.",
+        "title": "Đạo đức của trí tuệ nhân tạo"
+      },
+      "title": "Thư viện gợi ý học thuật"
+    },
+    "subtitle": "Chọn một điểm bắt đầu hoặc hỏi bất kỳ điều gì để bắt đầu cuộc tìm hiểu.",
+    "suggestions": {
+      "brainstorm": "Giúp tôi lên ý tưởng cho luận văn về nghệ thuật Phục hưng",
+      "socratic": "Giải thích phương pháp Socratic bằng thuật ngữ đơn giản",
+      "trends": "Tóm tắt các xu hướng mới nhất về năng lượng tái tạo"
+    },
+    "thinking": "EduFlow AI đang suy nghĩ...",
+    "title": "Chào học giả {name}. Bạn đã sẵn sàng đào sâu kiến thức chưa?"
+  },
   "ApiDocsPage": {
     "cookieHint": "Hãy đăng nhập ở tab khác để dùng lại cookie phiên Better Auth.",
     "description": "Khám phá và thử các điểm cuối API của EduFlow.",
@@ -239,51 +286,5 @@
       "title": "Chào mừng bạn!"
     },
     "title": "Chào mừng bạn đến với Hệ sinh thái {brand}"
-  },
-  "AIChat": {
-    "title": "Chào học giả {name}. Bạn đã sẵn sàng đào sâu kiến thức chưa?",
-    "subtitle": "Chọn một điểm bắt đầu hoặc hỏi bất kỳ điều gì để bắt đầu cuộc tìm hiểu.",
-    "exploreMore": "Khám phá thêm các gợi ý học thuật",
-    "placeholder": "Đặt câu hỏi học thuật...",
-    "criticalThinking": "Tư duy phản biện đang hoạt động",
-    "philosophicalLogic": "Cưỡng chế logic triết học",
-    "suggestions": {
-      "socratic": "Giải thích phương pháp Socratic bằng thuật ngữ đơn giản",
-      "brainstorm": "Giúp tôi lên ý tưởng cho luận văn về nghệ thuật Phục hưng",
-      "trends": "Tóm tắt các xu hướng mới nhất về năng lượng tái tạo"
-    },
-    "categories": {
-      "methodology": "PHƯƠNG PHÁP LUẬN",
-      "artHistory": "LỊCH SỬ NGHỆ THUẬT",
-      "science": "KHOA HỌC",
-      "mathematics": "TOÁN HỌC",
-      "literature": "VĂN HỌC",
-      "philosophy": "TRIẾT HỌC",
-      "history": "LỊCH SỬ"
-    },
-    "promptLibrary": {
-      "title": "Thư viện gợi ý học thuật",
-      "description": "Chọn một khung truy vấn chuyên biệt để hướng dẫn phiên làm việc của bạn.",
-      "math": {
-        "title": "Đạo hàm tích phân từng bước",
-        "description": "Nhận giải thích rõ ràng cho các chứng minh toán học phức tạp."
-      },
-      "lit": {
-        "title": "Phân tích cấu trúc tự sự",
-        "description": "Phân tích các chủ đề và mô-típ trong văn học cổ điển."
-      },
-      "phil": {
-        "title": "Đạo đức của trí tuệ nhân tạo",
-        "description": "Khám phá các khung triết học cho công nghệ hiện đại."
-      },
-      "hist": {
-        "title": "Lịch sử thực dân so sánh",
-        "description": "Phân tích các tác động kinh tế xã hội trên các khu vực khác nhau."
-      }
-    },
-    "footer": {
-      "responseDisclaimer": "Phản hồi của AI có thể thay đổi",
-      "academicDraft": "Dự thảo học thuật Lexend"
-    }
   }
 }
