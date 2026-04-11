@@ -20,13 +20,13 @@ export function AuthSocialOptions() {
         <span className="h-px flex-1 bg-border" />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4">
         <Button
           type="button"
           variant="outline"
           onClick={handleGoogleLogin}
           disabled={isGoogleLoading}
-          className="h-12 cursor-pointer rounded-2xl border-border bg-card font-semibold text-foreground hover:bg-muted/40"
+          className="h-12 cursor-pointer gap-2 rounded-2xl border-border bg-card font-semibold text-foreground hover:bg-muted/40"
         >
           {isGoogleLoading ? (
             <Spinner className="size-4 animate-spin" />
@@ -43,22 +43,6 @@ export function AuthSocialOptions() {
               Google
             </>
           )}
-        </Button>
-
-        <Button
-          type="button"
-          variant="outline"
-          className="h-12 cursor-pointer rounded-2xl border-border bg-card font-semibold text-foreground hover:bg-muted/40"
-        >
-          <span className="inline-flex size-6 items-center justify-center rounded-sm bg-primary/10 font-bold text-primary text-xs">
-            <Image
-              src="/icons/brands/microsoft.svg"
-              alt="Microsoft"
-              width={16}
-              height={16}
-            />
-          </span>
-          Microsoft
         </Button>
       </div>
     </section>
