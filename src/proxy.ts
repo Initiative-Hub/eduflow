@@ -39,10 +39,15 @@ const handleRedirect = async ({
     userRole = sessionData.user?.role;
   }
 
+  const isApiPath = isPathMatched(req.nextUrl.pathname, ['/api']);
+  const isRolePath = isPathMatched(req.nextUrl.pathname, ['/role']);
   const isAuthPath = isPathMatched(req.nextUrl.pathname, AUTH_PATHS);
   const isPublicPath = isPathMatched(req.nextUrl.pathname, PUBLIC_PATHS);
   const isProtectedPath = !isPublicPath && !isAuthPath;
-  const isRolePath = isPathMatched(req.nextUrl.pathname, ['/role']);
+
+  if (isApiPath) {
+    return { res: NextResponse.next(), redirect: true };
+  }
 
   if (hasSession && !userRole && !isRolePath && !isAuthPath) {
     const roleUrl = new URL('/role', req.nextUrl.origin);
@@ -54,7 +59,7 @@ const handleRedirect = async ({
     return { res: NextResponse.redirect(dashboardUrl), redirect: true };
   }
 
-  if (isProtectedPath && !hasSession) {
+  if (!hasSession && isProtectedPath) {
     const loginUrl = new URL('/login', req.nextUrl.origin);
     loginUrl.searchParams.set(
       'nextUrl',
@@ -64,7 +69,7 @@ const handleRedirect = async ({
     return { res: NextResponse.redirect(loginUrl), redirect: true };
   }
 
-  if (isAuthPath && hasSession) {
+  if (hasSession && isAuthPath) {
     const nextUrl = req.nextUrl.searchParams.get('nextUrl');
     const sanitizedNextUrl = sanitizeUrl(nextUrl) || '/';
     const redirectUrl = new URL(sanitizedNextUrl, req.nextUrl.origin);
@@ -78,10 +83,6 @@ const handleRedirect = async ({
 };
 
 export async function proxy(req: NextRequest) {
-  if (req.nextUrl.pathname.startsWith('/api/')) {
-    return NextResponse.next();
-  }
-
   // Handle special cases for public, authenticating paths
   const { res: nextRes, redirect } = await handleRedirect({ req });
   if (redirect) return nextRes;
