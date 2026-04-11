@@ -239,5 +239,44 @@
       "title": "Welcome aboard!"
     },
     "title": "Welcome to the {brand} Ecosystem"
+  },
+  "ProfilePage": {
+    "title": "Profile",
+    "subtitle": "Manage your personal information",
+    "sections": {
+      "personalInfo": "Personal Information",
+      "accountDetails": "Account Details"
+    },
+    "form": {
+      "name": {
+        "label": "Full Name",
+        "placeholder": "Your full name"
+      },
+      "bio": {
+        "label": "Bio",
+        "placeholder": "Tell us a little about yourself..."
+      }
+    },
+    "fields": {
+      "email": "Email Address",
+      "role": "Role",
+      "memberSince": "Member Since",
+      "emailVerified": "Email Verified",
+      "emailNotVerified": "Not Verified"
+    },
+    "actions": {
+      "save": "Save settings",
+      "saving": "Saving...",
+      "discard": "Discard changes"
+    },
+    "toast": {
+      "saved": "Profile updated",
+      "savedDesc": "Your profile has been saved.",
+      "discarded": "Changes discarded"
+    },
+    "validation": {
+      "nameRequired": "Full name is required.",
+      "nameTooShort": "Name must be at least 2 characters."
+    }
   }
 }

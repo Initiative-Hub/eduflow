@@ -239,5 +239,44 @@
       "title": "Chào mừng bạn!"
     },
     "title": "Chào mừng bạn đến với Hệ sinh thái {brand}"
+  },
+  "ProfilePage": {
+    "title": "Hồ sơ",
+    "subtitle": "Quản lý thông tin cá nhân của bạn",
+    "sections": {
+      "personalInfo": "Thông tin cá nhân",
+      "accountDetails": "Chi tiết tài khoản"
+    },
+    "form": {
+      "name": {
+        "label": "Họ và tên",
+        "placeholder": "Tên đầy đủ của bạn"
+      },
+      "bio": {
+        "label": "Giới thiệu",
+        "placeholder": "Hãy kể đôi điều về bản thân bạn..."
+      }
+    },
+    "fields": {
+      "email": "Địa chỉ email",
+      "role": "Vai trò",
+      "memberSince": "Thành viên từ",
+      "emailVerified": "Email đã xác minh",
+      "emailNotVerified": "Chưa xác minh"
+    },
+    "actions": {
+      "save": "Lưu cài đặt không gian làm việc",
+      "saving": "Đang lưu...",
+      "discard": "Huỷ thay đổi"
+    },
+    "toast": {
+      "saved": "Đã cập nhật hồ sơ",
+      "savedDesc": "Hồ sơ của bạn đã được lưu.",
+      "discarded": "Đã huỷ thay đổi"
+    },
+    "validation": {
+      "nameRequired": "Họ và tên là bắt buộc.",
+      "nameTooShort": "Tên phải có ít nhất 2 ký tự."
+    }
   }
 }
