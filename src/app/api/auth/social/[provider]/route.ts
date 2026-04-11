@@ -4,14 +4,14 @@
  *   post:
  *     tags:
  *       - Auth
- *     summary: Sign in with a social provider
+ *     summary: Sign in with Google
  *     parameters:
  *       - in: path
  *         name: provider
  *         required: true
  *         schema:
  *           type: string
- *           enum: [google, github, microsoft]
+ *           enum: [google]
  *     requestBody:
  *       required: true
  *       content:
@@ -34,7 +34,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
 
-const providerSchema = z.enum(['google', 'github', 'microsoft']);
+const providerSchema = z.enum(['google']);
 const socialSignInSchema = z.object({
   callbackURL: z.string().optional(),
   errorCallbackURL: z.string().optional(),
