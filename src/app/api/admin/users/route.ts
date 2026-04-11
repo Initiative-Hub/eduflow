@@ -84,22 +84,20 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET() {
   try {
-    const session = await auth.api.getSession({ headers: await headers() });
-    if (!session?.user?.id) {
+    const sessionData = await auth.api.getSession({ headers: await headers() });
+    if (!sessionData) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
-    const me = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      include: { role: true },
-    });
-    if (!me || me.role?.name !== 'ADMIN') {
+    if (!sessionData.user.role || sessionData.user.role !== 'ADMIN') {
+      console.log(sessionData);
       return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
     }
 
     const users = await prisma.user.findMany({
       include: { role: true },
     });
+
     const out = users.map((u) => ({
       id: u.id,
       email: u.email,

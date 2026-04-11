@@ -2,7 +2,7 @@ import { supportedLocales } from '@/i18n/routing';
 
 export const APP_PUBLIC_PATHS = [
   '/',
-  '/docs',
+  '/api-docs',
   '/landing',
   '/course',
   '/english',
