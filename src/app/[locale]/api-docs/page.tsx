@@ -1,7 +1,13 @@
 import { getTranslations } from 'next-intl/server';
 import { SwaggerDocs } from '@/components/swagger/swagger-docs';
+import 'swagger-ui-react/swagger-ui.css';
+import { redirect } from 'next/navigation';
 
 export default async function ApiDocsPage() {
+  if (process.env.NODE_ENV === 'production') {
+    redirect('/');
+  }
+
   const t = await getTranslations('ApiDocsPage');
 
   return (
