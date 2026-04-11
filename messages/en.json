@@ -239,5 +239,51 @@
       "title": "Welcome aboard!"
     },
     "title": "Welcome to the {brand} Ecosystem"
+  },
+  "AIChat": {
+    "title": "Greetings, Scholar {name}. Ready to dive deep?",
+    "subtitle": "Pick a starting point or ask anything to begin your inquiry.",
+    "exploreMore": "Explore more scholarly prompts",
+    "placeholder": "Ask a scholarly question...",
+    "criticalThinking": "Critical Thinking Active",
+    "philosophicalLogic": "Philosophical Logic Enforced",
+    "suggestions": {
+      "socratic": "Explain the Socratic method in simple terms",
+      "brainstorm": "Help me brainstorm a thesis on Renaissance art",
+      "trends": "Summarize the latest trends in renewable energy"
+    },
+    "categories": {
+      "methodology": "METHODOLOGY",
+      "artHistory": "ART HISTORY",
+      "science": "SCIENCE",
+      "mathematics": "MATHEMATICS",
+      "literature": "LITERATURE",
+      "philosophy": "PHILOSOPHY",
+      "history": "HISTORY"
+    },
+    "promptLibrary": {
+      "title": "Scholarly Prompt Library",
+      "description": "Select a specialized inquiry framework to guide your session.",
+      "math": {
+        "title": "Step-by-step calculus derivation",
+        "description": "Get clear explanations for complex mathematical proofs."
+      },
+      "lit": {
+        "title": "Analyze narrative structure",
+        "description": "Deconstruct themes and motifs in classical literature."
+      },
+      "phil": {
+        "title": "Ethics of artificial intelligence",
+        "description": "Explore philosophical frameworks for modern technology."
+      },
+      "hist": {
+        "title": "Comparative colonial history",
+        "description": "Analyze socio-economic impacts across different regions."
+      }
+    },
+    "footer": {
+      "responseDisclaimer": "AI response may vary",
+      "academicDraft": "Lexend Academic Draft"
+    }
   }
 }
