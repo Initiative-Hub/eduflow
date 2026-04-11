@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { ChatInput } from './chat-input';
 import { ChatView } from './chat-view';
@@ -40,6 +41,9 @@ export function AIClient({ userName }: AIClientProps) {
     transport: chatTransport,
     onError(error) {
       console.error('Chat error:', error);
+      toast.error(
+        error.message || 'An error occurred while sending the message.'
+      );
     },
   });
 
@@ -111,7 +115,7 @@ export function AIClient({ userName }: AIClientProps) {
     <div className="relative flex h-full flex-1 flex-col items-center overflow-x-hidden px-4 py-8 md:px-0">
       {/* Background Ambient Glow */}
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden">
-        <div className="h-[500px] w-[500px] rounded-full bg-primary/5 blur-[120px]" />
+        <div className="h-125 w-125 rounded-full bg-primary/5 blur-[120px]" />
       </div>
 
       {/* Top Badges - Only show when not chatting */}
@@ -149,7 +153,7 @@ export function AIClient({ userName }: AIClientProps) {
       </AnimatePresence>
 
       {/* Main Content Area */}
-      <div className="relative z-10 flex w-full max-w-5xl flex-1 flex-col justify-center overflow-hidden">
+      <div className="relative z-10 flex w-full flex-1 flex-col justify-center overflow-hidden">
         <AnimatePresence mode="wait">
           {!isChatting ? (
             <LandingView
