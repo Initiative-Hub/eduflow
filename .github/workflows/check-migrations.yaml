@@ -1,14 +1,14 @@
 name: Check Database Migrations
 
 on:
-  # pull_request:
-  #   paths:
-  #     - 'prisma/migrations/**'
+  pull_request:
+    paths:
+      - 'prisma/migrations/**'
   workflow_dispatch:
 
 jobs:
   check-migrations:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Checkout code
         uses: actions/checkout@v6

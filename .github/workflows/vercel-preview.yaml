@@ -1,15 +1,15 @@
 name: Vercel GitFlow Preview Deployment
 
 on:
-  # push:
-  #   branches-ignore:
-  #     - staging
-  #     - production
+  push:
+    branches-ignore:
+      - staging
+      - production
   workflow_dispatch:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_STAGING_PROJECT_ID }}

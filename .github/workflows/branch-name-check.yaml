@@ -1,17 +1,17 @@
 name: Branch Name Check
 
 on:
-  # push:
-  #   branches-ignore:
-  #     - main
-  #     - staging
-  #     - production
+  push:
+    branches-ignore:
+      - main
+      - staging
+      - production
   workflow_dispatch:
 
 jobs:
   check-branch-name:
     name: Check branch name
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Check branch name
         run: |

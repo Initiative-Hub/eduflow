@@ -1,14 +1,14 @@
 name: Biome Check
 
 on:
-  # push:
+  push:
   workflow_dispatch:
 
 jobs:
   format:
     name: Biome Format Check
     timeout-minutes: 10
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     permissions:
       contents: read
       pull-requests: read
@@ -62,7 +62,7 @@ jobs:
   lint:
     name: Biome Lint Check
     timeout-minutes: 10
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     permissions:
       contents: read
       pull-requests: read
@@ -121,7 +121,7 @@ jobs:
 
   apply-format:
     name: Apply Format
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [format]
     if: ${{ needs.format.outputs.has_issues == 'true' }}
     permissions:
@@ -184,7 +184,7 @@ jobs:
 
   close-outdated-format-pr:
     name: Close Outdated Format PR
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [format]
     if: ${{ needs.format.outputs.has_issues == 'false' }}
     permissions:
@@ -257,7 +257,7 @@ jobs:
 
   comment:
     name: Comment on PR
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [format, lint]
     permissions:
       contents: write
