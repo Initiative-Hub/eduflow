@@ -18,7 +18,7 @@
     "mailpit:stop": "docker compose down mailpit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "type-check": "tsc --build",
+    "type-check": "bun db:generate && tsc --build",
     "i18n:key-parity": "bun --bun scripts/i18n-key-parity.js",
     "i18n:sort": "bun --bun scripts/i18n-sort.js",
     "i18n:sort:check": "bun --bun scripts/i18n-sort.js --check",
