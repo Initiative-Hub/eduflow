@@ -1,15 +1,15 @@
 name: Bun Test Runner
 
 on:
-  # push:
-  #   branches-ignore:
-  #     - production
+  push:
+    branches-ignore:
+      - production
   workflow_dispatch:
 
 jobs:
   test:
     name: Unit and Integration Tests
-    runs-on: ubuntu-latest
+    runs-on: arc-runner-set
     timeout-minutes: 15
     steps:
       - name: Checkout

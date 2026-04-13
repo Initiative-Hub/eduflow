@@ -1,19 +1,19 @@
 name: Prisma Staging Migration
 
 on:
-  # workflow_run:
-  #   workflows:
-  #     - "Vercel GitFlow Staging Deployment"
-  #   types:
-  #     - completed
-  #   branches:
-  #     - staging
+  workflow_run:
+    workflows:
+      - "Vercel GitFlow Staging Deployment"
+    types:
+      - completed
+    branches:
+      - staging
   workflow_dispatch:
 
 jobs:
   check-prerequisites:
     name: Check prerequisites
-    runs-on: ubuntu-latest
+    runs-on: arc-runner-set
     permissions:
       actions: read
     outputs:
@@ -56,7 +56,7 @@ jobs:
   deploy:
     name: Migrate staging database
     timeout-minutes: 15
-    runs-on: ubuntu-latest
+    runs-on: arc-runner-set
     needs: check-prerequisites
     if: needs.check-prerequisites.outputs.should_deploy == 'true'
 
