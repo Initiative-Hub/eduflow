@@ -1,3 +1,27 @@
+/**
+ * @swagger
+ * /api/auth/reset-password:
+ *   post:
+ *     tags:
+ *       - Auth
+ *     summary: Reset password using token
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               password:
+ *                 type: string
+ *               token:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Password reset
+ *       400:
+ *         description: Invalid payload
+ */
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { validateResetPasswordToken } from '@/lib/token-validation';

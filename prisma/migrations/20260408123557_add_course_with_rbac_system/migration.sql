@@ -25,6 +25,9 @@ ALTER TABLE "posts" ALTER COLUMN "updatedAt" DROP DEFAULT;
 -- DropTable
 DROP TABLE "Role";
 
+-- Clear existing roleIds to prevent foreign key constraint failures
+UPDATE "user" SET "roleId" = NULL;
+
 -- CreateTable
 CREATE TABLE "platform_role" (
     "id" TEXT NOT NULL,

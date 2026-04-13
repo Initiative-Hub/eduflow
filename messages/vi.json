@@ -4,6 +4,11 @@
     "title": "Thông tin tài khoản",
     "usernameLabel": "Tên người dùng:"
   },
+  "ApiDocsPage": {
+    "cookieHint": "Hãy đăng nhập ở tab khác để dùng lại cookie phiên Better Auth.",
+    "description": "Khám phá và thử các điểm cuối API của EduFlow.",
+    "title": "Tài liệu API"
+  },
   "AuthFooter": {
     "brand": "EduFlow",
     "cookieSettings": "Cài đặt Cookie",
