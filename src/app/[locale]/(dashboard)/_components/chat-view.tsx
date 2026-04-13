@@ -4,6 +4,7 @@ import type { UIMessage } from 'ai';
 import { motion } from 'framer-motion';
 import { Bot, Loader2, User } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { Streamdown } from 'streamdown';
 
 interface ChatViewProps {
   messages: UIMessage[];
@@ -40,6 +41,11 @@ export function ChatView({ messages, isStreaming, scrollRef }: ChatViewProps) {
           const text = getMessageText(message);
           if (!text) return null;
 
+          const isAnimatingAssistantMessage =
+            isStreaming &&
+            message.id === messages[messages.length - 1]?.id &&
+            message.role === 'assistant';
+
           return (
             <motion.div
               key={message.id}
@@ -59,9 +65,22 @@ export function ChatView({ messages, isStreaming, scrollRef }: ChatViewProps) {
               <div
                 className={`max-w-[80%] rounded-2xl px-5 py-3 shadow-sm ${message.role === 'assistant' ? 'border border-border bg-white dark:bg-zinc-900' : 'bg-primary text-primary-foreground'}`}
               >
-                <p className="whitespace-pre-wrap text-[15px] leading-relaxed">
-                  {text}
-                </p>
+                {message.role === 'assistant' ? (
+                  <Streamdown
+                    caret="block"
+                    className="text-[15px] leading-relaxed"
+                    controls={false}
+                    isAnimating={isAnimatingAssistantMessage}
+                    mode="streaming"
+                    skipHtml
+                  >
+                    {text}
+                  </Streamdown>
+                ) : (
+                  <p className="whitespace-pre-wrap text-[15px] leading-relaxed">
+                    {text}
+                  </p>
+                )}
               </div>
             </motion.div>
           );
