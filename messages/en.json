@@ -245,7 +245,8 @@
     "subtitle": "Manage your personal information",
     "sections": {
       "personalInfo": "Personal Information",
-      "accountDetails": "Account Details"
+      "accountDetails": "Account Details",
+      "security": "Security"
     },
     "form": {
       "name": {
@@ -262,7 +263,23 @@
       "role": "Role",
       "memberSince": "Member Since",
       "emailVerified": "Email Verified",
-      "emailNotVerified": "Not Verified"
+      "emailNotVerified": "Not Verified",
+      "loginMethod": "Login Method",
+      "passwordStatus": "Password",
+      "passwordSet": "Set",
+      "passwordNotSet": "Not Set",
+      "browser": "Current Browser",
+      "browserUnknown": "Unknown"
+    },
+    "providers": {
+      "credential": "Email & Password",
+      "google": "Google",
+      "unknown": "Unknown"
+    },
+    "roles": {
+      "admin": "Admin",
+      "teacher": "Teacher",
+      "student": "Student"
     },
     "actions": {
       "save": "Save settings",

@@ -245,7 +245,8 @@
     "subtitle": "Quản lý thông tin cá nhân của bạn",
     "sections": {
       "personalInfo": "Thông tin cá nhân",
-      "accountDetails": "Chi tiết tài khoản"
+      "accountDetails": "Chi tiết tài khoản",
+      "security": "Bảo mật"
     },
     "form": {
       "name": {
@@ -262,7 +263,23 @@
       "role": "Vai trò",
       "memberSince": "Thành viên từ",
       "emailVerified": "Email đã xác minh",
-      "emailNotVerified": "Chưa xác minh"
+      "emailNotVerified": "Chưa xác minh",
+      "loginMethod": "Phương thức đăng nhập",
+      "passwordStatus": "Mật khẩu",
+      "passwordSet": "Đã đặt",
+      "passwordNotSet": "Chưa đặt",
+      "browser": "Trình duyệt hiện tại",
+      "browserUnknown": "Không xác định"
+    },
+    "providers": {
+      "credential": "Email & Mật khẩu",
+      "google": "Google",
+      "unknown": "Không xác định"
+    },
+    "roles": {
+      "admin": "Quản trị viên",
+      "teacher": "Giảng viên",
+      "student": "Học viên"
     },
     "actions": {
       "save": "Lưu cài đặt không gian làm việc",

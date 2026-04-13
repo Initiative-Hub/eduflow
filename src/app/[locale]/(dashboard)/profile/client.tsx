@@ -16,6 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { AccountDetailsCard } from './account-details-card';
+import { SecurityInfoCard } from './security-info-card';
 import {
   profileDefaultValues,
   profileSchema,
@@ -30,6 +31,9 @@ interface ProfileClientProps {
   role?: string | null;
   createdAt: string;
   emailVerified: boolean;
+  provider: string;
+  hasPassword: boolean;
+  userAgent: string | null;
 }
 
 export function ProfileClient({
@@ -39,6 +43,9 @@ export function ProfileClient({
   role,
   createdAt,
   emailVerified,
+  provider,
+  hasPassword,
+  userAgent,
 }: ProfileClientProps) {
   const t = useTranslations('ProfilePage');
   const { handleSubmit, isLoading } = useProfile();
@@ -149,11 +156,18 @@ export function ProfileClient({
           </CardContent>
         </Card>
 
-        {/* Account details (read-only) */}
+        {/* Account details */}
         <AccountDetailsCard
           role={role}
           createdAt={createdAt}
           emailVerified={emailVerified}
+        />
+
+        {/* Security info */}
+        <SecurityInfoCard
+          provider={provider}
+          hasPassword={hasPassword}
+          userAgent={userAgent}
         />
 
         {/* Action bar */}
