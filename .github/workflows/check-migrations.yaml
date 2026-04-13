@@ -8,7 +8,7 @@ on:
 
 jobs:
   check-migrations:
-    runs-on: arc-runner-set
+    runs-on: self-hosted
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
