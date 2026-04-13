@@ -215,6 +215,62 @@
       "vietnamese": "Tiếng Việt"
     }
   },
+  "ProfilePage": {
+    "actions": {
+      "discard": "Huỷ thay đổi",
+      "save": "Lưu cài đặt không gian làm việc",
+      "saving": "Đang lưu..."
+    },
+    "fields": {
+      "browser": "Trình duyệt hiện tại",
+      "browserUnknown": "Không xác định",
+      "email": "Địa chỉ email",
+      "emailNotVerified": "Chưa xác minh",
+      "emailVerified": "Email đã xác minh",
+      "loginMethod": "Phương thức đăng nhập",
+      "memberSince": "Thành viên từ",
+      "passwordNotSet": "Chưa đặt",
+      "passwordSet": "Đã đặt",
+      "passwordStatus": "Mật khẩu",
+      "role": "Vai trò"
+    },
+    "form": {
+      "bio": {
+        "label": "Giới thiệu",
+        "placeholder": "Hãy kể đôi điều về bản thân bạn..."
+      },
+      "name": {
+        "label": "Họ và tên",
+        "placeholder": "Tên đầy đủ của bạn"
+      }
+    },
+    "providers": {
+      "credential": "Email & Mật khẩu",
+      "google": "Google",
+      "unknown": "Không xác định"
+    },
+    "roles": {
+      "admin": "Quản trị viên",
+      "student": "Học viên",
+      "teacher": "Giảng viên"
+    },
+    "sections": {
+      "accountDetails": "Chi tiết tài khoản",
+      "personalInfo": "Thông tin cá nhân",
+      "security": "Bảo mật"
+    },
+    "subtitle": "Quản lý thông tin cá nhân của bạn",
+    "title": "Hồ sơ",
+    "toast": {
+      "discarded": "Đã huỷ thay đổi",
+      "saved": "Đã cập nhật hồ sơ",
+      "savedDesc": "Hồ sơ của bạn đã được lưu."
+    },
+    "validation": {
+      "nameRequired": "Họ và tên là bắt buộc.",
+      "nameTooShort": "Tên phải có ít nhất 2 ký tự."
+    }
+  },
   "RoleSelection": {
     "actions": {
       "select": "Lựa chọn"

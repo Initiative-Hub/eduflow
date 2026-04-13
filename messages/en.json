@@ -215,6 +215,62 @@
       "vietnamese": "Tiếng Việt"
     }
   },
+  "ProfilePage": {
+    "actions": {
+      "discard": "Discard changes",
+      "save": "Save settings",
+      "saving": "Saving..."
+    },
+    "fields": {
+      "browser": "Current Browser",
+      "browserUnknown": "Unknown",
+      "email": "Email Address",
+      "emailNotVerified": "Not Verified",
+      "emailVerified": "Email Verified",
+      "loginMethod": "Login Method",
+      "memberSince": "Member Since",
+      "passwordNotSet": "Not Set",
+      "passwordSet": "Set",
+      "passwordStatus": "Password",
+      "role": "Role"
+    },
+    "form": {
+      "bio": {
+        "label": "Bio",
+        "placeholder": "Tell us a little about yourself..."
+      },
+      "name": {
+        "label": "Full Name",
+        "placeholder": "Your full name"
+      }
+    },
+    "providers": {
+      "credential": "Email & Password",
+      "google": "Google",
+      "unknown": "Unknown"
+    },
+    "roles": {
+      "admin": "Admin",
+      "student": "Student",
+      "teacher": "Teacher"
+    },
+    "sections": {
+      "accountDetails": "Account Details",
+      "personalInfo": "Personal Information",
+      "security": "Security"
+    },
+    "subtitle": "Manage your personal information",
+    "title": "Profile",
+    "toast": {
+      "discarded": "Changes discarded",
+      "saved": "Profile updated",
+      "savedDesc": "Your profile has been saved."
+    },
+    "validation": {
+      "nameRequired": "Full name is required.",
+      "nameTooShort": "Name must be at least 2 characters."
+    }
+  },
   "RoleSelection": {
     "actions": {
       "select": "Select"
