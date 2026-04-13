@@ -4,6 +4,11 @@
     "title": "Thông tin tài khoản",
     "usernameLabel": "Tên người dùng:"
   },
+  "ApiDocsPage": {
+    "cookieHint": "Hãy đăng nhập ở tab khác để dùng lại cookie phiên Better Auth.",
+    "description": "Khám phá và thử các điểm cuối API của EduFlow.",
+    "title": "Tài liệu API"
+  },
   "AuthFooter": {
     "brand": "EduFlow",
     "cookieSettings": "Cài đặt Cookie",
@@ -15,7 +20,8 @@
   "AuthForgotPassword": {
     "actions": {
       "backToLogin": "Quay lại đăng nhập",
-      "send": "Gửi liên kết đặt lại"
+      "send": "Gửi liên kết đặt lại",
+      "sending": "Đang gửi..."
     },
     "description": "Nhập địa chỉ email của bạn và chúng tôi sẽ gửi một liên kết để đặt lại mật khẩu.",
     "form": {
@@ -208,5 +214,30 @@
       "system": "Hệ thống",
       "vietnamese": "Tiếng Việt"
     }
+  },
+  "RoleSelection": {
+    "actions": {
+      "select": "Lựa chọn"
+    },
+    "description": "Chọn con đường của bạn để tiếp tục. Nền tảng của chúng tôi sẽ điều chỉnh trí tuệ nhân tạo dựa trên vai trò của bạn.",
+    "educator": {
+      "description": "Xây dựng bộ sưu tập nghiên cứu, quản lý trích dẫn và dẫn dắt cộng đồng học thuật của bạn.",
+      "path": "Lộ trình Giảng dạy",
+      "role": "Giảng viên"
+    },
+    "partner": {
+      "action": "Đăng ký trường học của bạn",
+      "question": "Đối tác tổ chức?"
+    },
+    "student": {
+      "description": "Truy cập tài liệu khóa học, theo dõi tiến trình nghiên cứu và tham gia các buổi thảo luận học thuật.",
+      "path": "Lộ trình Học tập",
+      "role": "Sinh viên"
+    },
+    "success": {
+      "description": "Vai trò của bạn đã được cập nhật. Đang chuyển hướng bạn đến không gian làm việc...",
+      "title": "Chào mừng bạn!"
+    },
+    "title": "Chào mừng bạn đến với Hệ sinh thái {brand}"
   }
 }

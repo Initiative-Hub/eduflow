@@ -1,14 +1,14 @@
 name: Vercel GitFlow Production Deployment
 
 on:
-  # push:
-  #   branches:
-  #     - production
+  push:
+    branches:
+      - production
   workflow_dispatch:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PRODUCTION_PROJECT_ID }}
@@ -48,9 +48,6 @@ jobs:
       - name: Install dependencies
         if: steps.check_commits.outputs.skip_build != 'true'
         run: bun install
-      
-      - name: Generate Prisma client
-        run: bunx prisma generate
 
       - name: Install Vercel CLI
         if: steps.check_commits.outputs.skip_build != 'true'

@@ -1,3 +1,27 @@
+/**
+ * @swagger
+ * /api/auth/otp/verify:
+ *   post:
+ *     tags:
+ *       - Auth
+ *     summary: Verify email OTP
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *               otp:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: OTP verified
+ *       400:
+ *         description: Invalid payload
+ */
 import { headers } from 'next/headers';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';

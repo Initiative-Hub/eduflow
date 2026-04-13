@@ -1,9 +1,40 @@
+/**
+ * @swagger
+ * /api/auth/social/{provider}:
+ *   post:
+ *     tags:
+ *       - Auth
+ *     summary: Sign in with Google
+ *     parameters:
+ *       - in: path
+ *         name: provider
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum: [google]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               callbackURL:
+ *                 type: string
+ *               errorCallbackURL:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Social sign-in response
+ *       400:
+ *         description: Invalid payload
+ */
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
 
-const providerSchema = z.enum(['google', 'github', 'microsoft']);
+const providerSchema = z.enum(['google']);
 const socialSignInSchema = z.object({
   callbackURL: z.string().optional(),
   errorCallbackURL: z.string().optional(),

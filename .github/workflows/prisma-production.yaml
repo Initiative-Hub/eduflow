@@ -1,19 +1,19 @@
 name: Prisma Production Migration
 
 on:
-  # workflow_run:
-  #   workflows:
-  #     - "Vercel GitFlow Production Deployment"
-  #   types:
-  #     - completed
-  #   branches:
-  #     - production
+  workflow_run:
+    workflows:
+      - "Vercel GitFlow Production Deployment"
+    types:
+      - completed
+    branches:
+      - production
   workflow_dispatch:
 
 jobs:
   check-prerequisites:
     name: Check prerequisites
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     permissions:
       actions: read
     outputs:
@@ -56,7 +56,7 @@ jobs:
   deploy:
     name: Migrate production database
     timeout-minutes: 15
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: check-prerequisites
     if: needs.check-prerequisites.outputs.should_deploy == 'true'
     env:

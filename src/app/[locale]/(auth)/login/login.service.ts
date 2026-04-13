@@ -1,7 +1,7 @@
 import { apiClient } from '@/lib/api';
 import type { LoginFormData } from './login.config';
 
-type SocialProvider = 'google' | 'github' | 'microsoft';
+type SocialProvider = 'google';
 
 type SocialSignInResult = {
   url: string;

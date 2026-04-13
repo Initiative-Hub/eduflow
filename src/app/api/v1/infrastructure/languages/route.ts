@@ -1,3 +1,33 @@
+/**
+ * @swagger
+ * /api/v1/infrastructure/languages:
+ *   post:
+ *     tags:
+ *       - Infrastructure
+ *     summary: Set preferred locale cookie
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               locale:
+ *                 type: string
+ *                 example: en
+ *     responses:
+ *       200:
+ *         description: Locale cookie set
+ *       500:
+ *         description: Invalid locale
+ *   delete:
+ *     tags:
+ *       - Infrastructure
+ *     summary: Clear preferred locale cookie
+ *     responses:
+ *       200:
+ *         description: Locale cookie cleared
+ */
 import { cookies as c } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { LOCALE_COOKIE_NAME } from '@/constants/common';

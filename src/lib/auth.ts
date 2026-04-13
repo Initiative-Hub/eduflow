@@ -35,18 +35,14 @@ export const auth = betterAuth({
     resetPasswordTokenExpiresIn: RESET_PASSWORD_TOKEN_EXPIRATION,
   },
 
+  emailVerification: {
+    autoSignInAfterVerification: true,
+  },
+
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID as string,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
-    },
-    github: {
-      clientId: process.env.GITHUB_CLIENT_ID as string,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
-    },
-    microsoft: {
-      clientId: process.env.MICROSOFT_CLIENT_ID as string,
-      clientSecret: process.env.MICROSOFT_CLIENT_SECRET as string,
     },
   },
 
@@ -87,24 +83,4 @@ export const auth = betterAuth({
       },
     }),
   ],
-
-  databaseHooks: {
-    user: {
-      create: {
-        before: async (user) => {
-          const defaultRole = await prisma.platformRole.findUnique({
-            where: { name: 'STUDENT' },
-            select: { id: true },
-          });
-
-          return {
-            data: {
-              ...user,
-              roleId: defaultRole?.id || null,
-            },
-          };
-        },
-      },
-    },
-  },
 });

@@ -4,6 +4,11 @@
     "title": "Account Information",
     "usernameLabel": "Username:"
   },
+  "ApiDocsPage": {
+    "cookieHint": "Sign in another tab to reuse your Better Auth session cookie.",
+    "description": "Explore and test the EduFlow API endpoints.",
+    "title": "API Reference"
+  },
   "AuthFooter": {
     "brand": "EduFlow",
     "cookieSettings": "Cookie Settings",
@@ -15,7 +20,8 @@
   "AuthForgotPassword": {
     "actions": {
       "backToLogin": "Back to Login",
-      "send": "Send Reset Link"
+      "send": "Send Reset Link",
+      "sending": "Sending..."
     },
     "description": "Enter your email address and we'll send you a link to reset your password.",
     "form": {
@@ -208,5 +214,30 @@
       "system": "System",
       "vietnamese": "Tiếng Việt"
     }
+  },
+  "RoleSelection": {
+    "actions": {
+      "select": "Select"
+    },
+    "description": "Select your path to continue. Our platform adapts its intelligence based on your institutional role.",
+    "educator": {
+      "description": "Curate research collections, manage citations, and lead your academic community with advanced analytical tools.",
+      "path": "Curator Path",
+      "role": "An Educator"
+    },
+    "partner": {
+      "action": "Register your university",
+      "question": "Institutional partner?"
+    },
+    "student": {
+      "description": "Access course materials, track your research progress, and join academic seminars within your department.",
+      "path": "Learner Path",
+      "role": "A Student"
+    },
+    "success": {
+      "description": "Your role has been updated. Redirecting you to your workspace...",
+      "title": "Welcome aboard!"
+    },
+    "title": "Welcome to the {brand} Ecosystem"
   }
 }
