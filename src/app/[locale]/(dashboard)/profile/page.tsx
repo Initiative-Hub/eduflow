@@ -3,6 +3,7 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { auth } from '@/lib/auth';
+import { UserService } from '@/services/UserService';
 import { ProfileClient } from './client';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -16,25 +17,23 @@ export default async function ProfilePage() {
     redirect('/login');
   }
 
-  const user = session.user as {
-    id: string;
-    name: string;
-    email: string;
-    image?: string | null;
-    role?: string | null;
-    createdAt: Date;
-    emailVerified: boolean;
-  };
+  const data = await UserService.getProfileData(
+    session.user.id,
+    session.session.userAgent
+  );
 
   return (
     <section className="space-y-6">
       <ProfileClient
-        name={user.name}
-        email={user.email}
-        image={user.image}
-        role={user.role}
-        createdAt={user.createdAt.toISOString()}
-        emailVerified={user.emailVerified}
+        name={data.basicInfo.name}
+        email={data.basicInfo.email}
+        image={data.basicInfo.image}
+        role={data.basicInfo.role}
+        createdAt={new Date(data.basicInfo.createdAt).toISOString()}
+        emailVerified={data.basicInfo.emailVerified}
+        provider={data.securityInfo.provider}
+        hasPassword={data.securityInfo.hasPassword}
+        userAgent={data.securityInfo.userAgent}
       />
     </section>
   );

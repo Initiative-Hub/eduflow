@@ -1,7 +1,7 @@
 'use client';
 
 import { BadgeCheck, ShieldAlert } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -30,12 +30,20 @@ export function AccountDetailsCard({
   emailVerified,
 }: AccountDetailsCardProps) {
   const t = useTranslations('ProfilePage');
+  const locale = useLocale();
 
-  const memberSince = new Date(createdAt).toLocaleDateString(undefined, {
+  const memberSince = new Date(createdAt).toLocaleDateString(locale, {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
   });
+
+  const roleKey = role?.toLowerCase() as
+    | 'admin'
+    | 'teacher'
+    | 'student'
+    | undefined;
+  const roleLabel = roleKey ? t(`roles.${roleKey}`) : '—';
 
   return (
     <Card className="shadow-sm">
@@ -54,7 +62,7 @@ export function AccountDetailsCard({
             </dt>
             <dd>
               <Badge variant={getRoleBadgeVariant(role)} className="capitalize">
-                {role?.toLowerCase() ?? '—'}
+                {roleLabel}
               </Badge>
             </dd>
           </div>
