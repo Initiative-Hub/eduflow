@@ -9,7 +9,7 @@ on:
 jobs:
   test:
     name: Unit and Integration Tests
-    runs-on: arc-runner-set
+    runs-on: self-hosted
     timeout-minutes: 15
     steps:
       - name: Checkout

@@ -9,7 +9,7 @@ on:
 
 jobs:
   deploy:
-    runs-on: arc-runner-set
+    runs-on: self-hosted
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_STAGING_PROJECT_ID }}
