@@ -1,15 +1,15 @@
 name: Vercel GitFlow Preview Deployment
 
 on:
-  # push:
-  #   branches-ignore:
-  #     - staging
-  #     - production
+  push:
+    branches-ignore:
+      - staging
+      - production
   workflow_dispatch:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_STAGING_PROJECT_ID }}
@@ -50,18 +50,11 @@ jobs:
       - name: Install dependencies
         if: steps.check_commits.outputs.skip_build != 'true'
         run: bun install
-      
-      - name: Generate Prisma client
-        run: bunx prisma generate
-
-      - name: Install Vercel CLI
-        if: steps.check_commits.outputs.skip_build != 'true'
-        run: bun install --global vercel@latest
 
       - name: Pull Vercel Environment Information
         if: steps.check_commits.outputs.skip_build != 'true'
-        run: vercel pull --yes --environment=preview --token=$VERCEL_TOKEN
+        run: bun vercel pull --yes --environment=preview --token=$VERCEL_TOKEN
 
       - name: Build Project Artifacts
         if: steps.check_commits.outputs.skip_build != 'true'
-        run: vercel build --token=$VERCEL_TOKEN
+        run: bun vercel build --token=$VERCEL_TOKEN
