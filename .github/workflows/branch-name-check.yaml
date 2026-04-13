@@ -11,7 +11,7 @@ on:
 jobs:
   check-branch-name:
     name: Check branch name
-    runs-on: self-hosted
+    runs-on: arc-runner-set
     steps:
       - name: Check branch name
         run: |

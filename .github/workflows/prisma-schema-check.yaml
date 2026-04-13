@@ -8,7 +8,7 @@ jobs:
   prisma-schema-check:
     name: Verify Prisma schema matches migrations
     timeout-minutes: 15
-    runs-on: self-hosted
+    runs-on: arc-runner-set
     services:
       postgres-shadow:
         image: postgres:17-alpine
