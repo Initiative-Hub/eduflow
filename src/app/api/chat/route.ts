@@ -19,11 +19,15 @@ import { AIService } from '@/services/AIService';
  *                 items:
  *                   type: object
  *                   properties:
+ *                     id:
+ *                       type: string
  *                     role:
  *                       type: string
  *                       enum: [user, assistant, system]
- *                     text:
- *                       type: string
+ *                     parts:
+ *                       type: array
+ *                       items:
+ *                         type: any
  *     responses:
  *       200:
  *         description: Streamed AI response

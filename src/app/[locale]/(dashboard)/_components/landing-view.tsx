@@ -11,12 +11,24 @@ import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 
+interface LandingSuggestionItem {
+  text: string;
+  category: string;
+  icon: React.ReactNode;
+}
+interface LandingExtendedPromptItem {
+  title: string;
+  category: string;
+  description: string;
+  icon: React.ReactNode;
+}
+
 interface LandingViewProps {
   userName: string;
   view: 'home' | 'library';
   setView: (view: 'home' | 'library') => void;
-  suggestions: any[];
-  extendedPrompts: any[];
+  suggestions: LandingSuggestionItem[];
+  extendedPrompts: LandingExtendedPromptItem[];
   onSelectPrompt: (text: string) => void;
 }
 
