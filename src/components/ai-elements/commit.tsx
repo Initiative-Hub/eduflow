@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import { cn } from "@/lib/utils";
+} from '@/components/ui/collapsible';
+import { cn } from '@/lib/utils';
 import {
   CheckIcon,
   CopyIcon,
@@ -15,15 +15,15 @@ import {
   GitCommitIcon,
   MinusIcon,
   PlusIcon,
-} from "lucide-react";
-import type { ComponentProps, HTMLAttributes } from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+} from 'lucide-react';
+import type { ComponentProps, HTMLAttributes } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 export type CommitProps = ComponentProps<typeof Collapsible>;
 
 export const Commit = ({ className, children, ...props }: CommitProps) => (
   <Collapsible
-    className={cn("rounded-lg border bg-background", className)}
+    className={cn('rounded-lg border bg-background', className)}
     {...props}
   >
     {children}
@@ -40,7 +40,7 @@ export const CommitHeader = ({
   <CollapsibleTrigger asChild {...props}>
     <div
       className={cn(
-        "group flex cursor-pointer items-center justify-between gap-4 p-3 text-left transition-colors hover:opacity-80",
+        'group flex cursor-pointer items-center justify-between gap-4 p-3 text-left transition-colors hover:opacity-80',
         className
       )}
     >
@@ -56,7 +56,7 @@ export const CommitHash = ({
   children,
   ...props
 }: CommitHashProps) => (
-  <span className={cn("font-mono text-xs", className)} {...props}>
+  <span className={cn('font-mono text-xs', className)} {...props}>
     <GitCommitIcon className="mr-1 inline-block size-3" />
     {children}
   </span>
@@ -69,7 +69,7 @@ export const CommitMessage = ({
   children,
   ...props
 }: CommitMessageProps) => (
-  <span className={cn("font-medium text-sm", className)} {...props}>
+  <span className={cn('font-medium text-sm', className)} {...props}>
     {children}
   </span>
 );
@@ -83,7 +83,7 @@ export const CommitMetadata = ({
 }: CommitMetadataProps) => (
   <div
     className={cn(
-      "flex items-center gap-2 text-muted-foreground text-xs",
+      'flex items-center gap-2 text-muted-foreground text-xs',
       className
     )}
     {...props}
@@ -100,7 +100,7 @@ export const CommitSeparator = ({
   ...props
 }: CommitSeparatorProps) => (
   <span className={className} {...props}>
-    {children ?? "•"}
+    {children ?? '•'}
   </span>
 );
 
@@ -111,7 +111,7 @@ export const CommitInfo = ({
   children,
   ...props
 }: CommitInfoProps) => (
-  <div className={cn("flex flex-1 flex-col", className)} {...props}>
+  <div className={cn('flex flex-1 flex-col', className)} {...props}>
     {children}
   </div>
 );
@@ -123,7 +123,7 @@ export const CommitAuthor = ({
   children,
   ...props
 }: CommitAuthorProps) => (
-  <div className={cn("flex items-center", className)} {...props}>
+  <div className={cn('flex items-center', className)} {...props}>
     {children}
   </div>
 );
@@ -137,7 +137,7 @@ export const CommitAuthorAvatar = ({
   className,
   ...props
 }: CommitAuthorAvatarProps) => (
-  <Avatar className={cn("size-8", className)} {...props}>
+  <Avatar className={cn('size-8', className)} {...props}>
     <AvatarFallback className="text-xs">{initials}</AvatarFallback>
   </Avatar>
 );
@@ -146,15 +146,15 @@ export type CommitTimestampProps = HTMLAttributes<HTMLTimeElement> & {
   date: Date;
 };
 
-const relativeTimeFormat = new Intl.RelativeTimeFormat("en", {
-  numeric: "auto",
+const relativeTimeFormat = new Intl.RelativeTimeFormat('en', {
+  numeric: 'auto',
 });
 
 const formatRelativeDate = (date: Date) => {
   const days = Math.round(
     (date.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
   );
-  return relativeTimeFormat.format(days, "day");
+  return relativeTimeFormat.format(days, 'day');
 };
 
 export const CommitTimestamp = ({
@@ -163,7 +163,7 @@ export const CommitTimestamp = ({
   children,
   ...props
 }: CommitTimestampProps) => {
-  const [formatted, setFormatted] = useState("");
+  const [formatted, setFormatted] = useState('');
 
   const updateFormatted = useCallback(() => {
     setFormatted(formatRelativeDate(date));
@@ -175,7 +175,7 @@ export const CommitTimestamp = ({
 
   return (
     <time
-      className={cn("text-xs", className)}
+      className={cn('text-xs', className)}
       dateTime={date.toISOString()}
       {...props}
     >
@@ -195,7 +195,7 @@ export const CommitActions = ({
   ...props
 }: CommitActionsProps) => (
   <div
-    className={cn("flex items-center gap-1", className)}
+    className={cn('flex items-center gap-1', className)}
     onClick={handleActionsClick}
     onKeyDown={handleActionsKeyDown}
     role="group"
@@ -225,8 +225,8 @@ export const CommitCopyButton = ({
   const timeoutRef = useRef<number>(0);
 
   const copyToClipboard = useCallback(async () => {
-    if (typeof window === "undefined" || !navigator?.clipboard?.writeText) {
-      onError?.(new Error("Clipboard API not available"));
+    if (typeof window === 'undefined' || !navigator?.clipboard?.writeText) {
+      onError?.(new Error('Clipboard API not available'));
       return;
     }
 
@@ -256,7 +256,7 @@ export const CommitCopyButton = ({
 
   return (
     <Button
-      className={cn("size-7 shrink-0", className)}
+      className={cn('size-7 shrink-0', className)}
       onClick={copyToClipboard}
       size="icon"
       variant="ghost"
@@ -274,7 +274,7 @@ export const CommitContent = ({
   children,
   ...props
 }: CommitContentProps) => (
-  <CollapsibleContent className={cn("border-t p-3", className)} {...props}>
+  <CollapsibleContent className={cn('border-t p-3', className)} {...props}>
     {children}
   </CollapsibleContent>
 );
@@ -286,7 +286,7 @@ export const CommitFiles = ({
   children,
   ...props
 }: CommitFilesProps) => (
-  <div className={cn("space-y-1", className)} {...props}>
+  <div className={cn('space-y-1', className)} {...props}>
     {children}
   </div>
 );
@@ -300,7 +300,7 @@ export const CommitFile = ({
 }: CommitFileProps) => (
   <div
     className={cn(
-      "flex items-center justify-between gap-2 rounded px-2 py-1 text-sm hover:bg-muted/50",
+      'flex items-center justify-between gap-2 rounded px-2 py-1 text-sm hover:bg-muted/50',
       className
     )}
     {...props}
@@ -316,27 +316,27 @@ export const CommitFileInfo = ({
   children,
   ...props
 }: CommitFileInfoProps) => (
-  <div className={cn("flex min-w-0 items-center gap-2", className)} {...props}>
+  <div className={cn('flex min-w-0 items-center gap-2', className)} {...props}>
     {children}
   </div>
 );
 
 const fileStatusStyles = {
-  added: "text-green-600 dark:text-green-400",
-  deleted: "text-red-600 dark:text-red-400",
-  modified: "text-yellow-600 dark:text-yellow-400",
-  renamed: "text-blue-600 dark:text-blue-400",
+  added: 'text-green-600 dark:text-green-400',
+  deleted: 'text-red-600 dark:text-red-400',
+  modified: 'text-yellow-600 dark:text-yellow-400',
+  renamed: 'text-blue-600 dark:text-blue-400',
 };
 
 const fileStatusLabels = {
-  added: "A",
-  deleted: "D",
-  modified: "M",
-  renamed: "R",
+  added: 'A',
+  deleted: 'D',
+  modified: 'M',
+  renamed: 'R',
 };
 
 export type CommitFileStatusProps = HTMLAttributes<HTMLSpanElement> & {
-  status: "added" | "modified" | "deleted" | "renamed";
+  status: 'added' | 'modified' | 'deleted' | 'renamed';
 };
 
 export const CommitFileStatus = ({
@@ -347,7 +347,7 @@ export const CommitFileStatus = ({
 }: CommitFileStatusProps) => (
   <span
     className={cn(
-      "font-medium font-mono text-xs",
+      'font-medium font-mono text-xs',
       fileStatusStyles[status],
       className
     )}
@@ -364,7 +364,7 @@ export const CommitFileIcon = ({
   ...props
 }: CommitFileIconProps) => (
   <FileIcon
-    className={cn("size-3.5 shrink-0 text-muted-foreground", className)}
+    className={cn('size-3.5 shrink-0 text-muted-foreground', className)}
     {...props}
   />
 );
@@ -376,7 +376,7 @@ export const CommitFilePath = ({
   children,
   ...props
 }: CommitFilePathProps) => (
-  <span className={cn("truncate font-mono text-xs", className)} {...props}>
+  <span className={cn('truncate font-mono text-xs', className)} {...props}>
     {children}
   </span>
 );
@@ -390,7 +390,7 @@ export const CommitFileChanges = ({
 }: CommitFileChangesProps) => (
   <div
     className={cn(
-      "flex shrink-0 items-center gap-1 font-mono text-xs",
+      'flex shrink-0 items-center gap-1 font-mono text-xs',
       className
     )}
     {...props}
@@ -415,7 +415,7 @@ export const CommitFileAdditions = ({
 
   return (
     <span
-      className={cn("text-green-600 dark:text-green-400", className)}
+      className={cn('text-green-600 dark:text-green-400', className)}
       {...props}
     >
       {children ?? (
@@ -444,7 +444,7 @@ export const CommitFileDeletions = ({
 
   return (
     <span
-      className={cn("text-red-600 dark:text-red-400", className)}
+      className={cn('text-red-600 dark:text-red-400', className)}
       {...props}
     >
       {children ?? (

@@ -1,12 +1,9 @@
-"use client";
+'use client';
 
-import { Button } from "@/components/ui/button";
-import {
-  ButtonGroup,
-  ButtonGroupText,
-} from "@/components/ui/button-group";
-import { cn } from "@/lib/utils";
-import type { Experimental_SpeechResult as SpeechResult } from "ai";
+import { Button } from '@/components/ui/button';
+import { ButtonGroup, ButtonGroupText } from '@/components/ui/button-group';
+import { cn } from '@/lib/utils';
+import type { Experimental_SpeechResult as SpeechResult } from 'ai';
 import {
   MediaControlBar,
   MediaController,
@@ -18,12 +15,12 @@ import {
   MediaTimeDisplay,
   MediaTimeRange,
   MediaVolumeRange,
-} from "media-chrome/react";
-import type { ComponentProps, CSSProperties } from "react";
+} from 'media-chrome/react';
+import type { ComponentProps, CSSProperties } from 'react';
 
 export type AudioPlayerProps = Omit<
   ComponentProps<typeof MediaController>,
-  "audio"
+  'audio'
 >;
 
 export const AudioPlayer = ({
@@ -36,26 +33,26 @@ export const AudioPlayer = ({
     data-slot="audio-player"
     style={
       {
-        "--media-background-color": "transparent",
-        "--media-button-icon-height": "1rem",
-        "--media-button-icon-width": "1rem",
-        "--media-control-background": "transparent",
-        "--media-control-hover-background": "var(--color-accent)",
-        "--media-control-padding": "0",
-        "--media-font": "var(--font-sans)",
-        "--media-font-size": "10px",
-        "--media-icon-color": "currentColor",
-        "--media-preview-time-background": "var(--color-background)",
-        "--media-preview-time-border-radius": "var(--radius-md)",
-        "--media-preview-time-text-shadow": "none",
-        "--media-primary-color": "var(--color-primary)",
-        "--media-range-bar-color": "var(--color-primary)",
-        "--media-range-track-background": "var(--color-secondary)",
-        "--media-secondary-color": "var(--color-secondary)",
-        "--media-text-color": "var(--color-foreground)",
-        "--media-tooltip-arrow-display": "none",
-        "--media-tooltip-background": "var(--color-background)",
-        "--media-tooltip-border-radius": "var(--radius-md)",
+        '--media-background-color': 'transparent',
+        '--media-button-icon-height': '1rem',
+        '--media-button-icon-width': '1rem',
+        '--media-control-background': 'transparent',
+        '--media-control-hover-background': 'var(--color-accent)',
+        '--media-control-padding': '0',
+        '--media-font': 'var(--font-sans)',
+        '--media-font-size': '10px',
+        '--media-icon-color': 'currentColor',
+        '--media-preview-time-background': 'var(--color-background)',
+        '--media-preview-time-border-radius': 'var(--radius-md)',
+        '--media-preview-time-text-shadow': 'none',
+        '--media-primary-color': 'var(--color-primary)',
+        '--media-range-bar-color': 'var(--color-primary)',
+        '--media-range-track-background': 'var(--color-secondary)',
+        '--media-secondary-color': 'var(--color-secondary)',
+        '--media-text-color': 'var(--color-foreground)',
+        '--media-tooltip-arrow-display': 'none',
+        '--media-tooltip-background': 'var(--color-background)',
+        '--media-tooltip-border-radius': 'var(--radius-md)',
         ...style,
       } as CSSProperties
     }
@@ -65,10 +62,10 @@ export const AudioPlayer = ({
   </MediaController>
 );
 
-export type AudioPlayerElementProps = Omit<ComponentProps<"audio">, "src"> &
+export type AudioPlayerElementProps = Omit<ComponentProps<'audio'>, 'src'> &
   (
     | {
-        data: SpeechResult["audio"];
+        data: SpeechResult['audio'];
       }
     | {
         src: string;
@@ -81,7 +78,7 @@ export const AudioPlayerElement = ({ ...props }: AudioPlayerElementProps) => (
     data-slot="audio-player-element"
     slot="media"
     src={
-      "src" in props
+      'src' in props
         ? props.src
         : `data:${props.data.mediaType};base64,${props.data.base64}`
     }
@@ -108,7 +105,7 @@ export const AudioPlayerPlayButton = ({
 }: AudioPlayerPlayButtonProps) => (
   <Button asChild size="icon-sm" variant="outline">
     <MediaPlayButton
-      className={cn("bg-transparent", className)}
+      className={cn('bg-transparent', className)}
       data-slot="audio-player-play-button"
       {...props}
     />
@@ -159,7 +156,7 @@ export const AudioPlayerTimeDisplay = ({
 }: AudioPlayerTimeDisplayProps) => (
   <ButtonGroupText asChild className="bg-transparent">
     <MediaTimeDisplay
-      className={cn("tabular-nums", className)}
+      className={cn('tabular-nums', className)}
       data-slot="audio-player-time-display"
       {...props}
     />
@@ -174,7 +171,7 @@ export const AudioPlayerTimeRange = ({
 }: AudioPlayerTimeRangeProps) => (
   <ButtonGroupText asChild className="bg-transparent">
     <MediaTimeRange
-      className={cn("", className)}
+      className={cn('', className)}
       data-slot="audio-player-time-range"
       {...props}
     />
@@ -191,7 +188,7 @@ export const AudioPlayerDurationDisplay = ({
 }: AudioPlayerDurationDisplayProps) => (
   <ButtonGroupText asChild className="bg-transparent">
     <MediaDurationDisplay
-      className={cn("tabular-nums", className)}
+      className={cn('tabular-nums', className)}
       data-slot="audio-player-duration-display"
       {...props}
     />
@@ -206,7 +203,7 @@ export const AudioPlayerMuteButton = ({
 }: AudioPlayerMuteButtonProps) => (
   <ButtonGroupText asChild className="bg-transparent">
     <MediaMuteButton
-      className={cn("", className)}
+      className={cn('', className)}
       data-slot="audio-player-mute-button"
       {...props}
     />
@@ -223,7 +220,7 @@ export const AudioPlayerVolumeRange = ({
 }: AudioPlayerVolumeRangeProps) => (
   <ButtonGroupText asChild className="bg-transparent">
     <MediaVolumeRange
-      className={cn("", className)}
+      className={cn('', className)}
       data-slot="audio-player-volume-range"
       {...props}
     />
