@@ -2,6 +2,9 @@ name: TypeScript Type Check
 
 on:
   push:
+    branches-ignore:
+      - staging
+      - production
   workflow_dispatch:
 
 jobs:

@@ -3,6 +3,7 @@ name: Bun Test Runner
 on:
   push:
     branches-ignore:
+      - staging
       - production
   workflow_dispatch:
 
