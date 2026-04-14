@@ -27,7 +27,7 @@
  */
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { withAuth, withValidation } from '@/server/middlewares';
+import { withAuth, withValidation } from '@/lib/api/middlewares';
 import { UserService } from '@/services/UserService';
 
 const updateRoleSchema = z.object({
