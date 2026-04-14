@@ -16,6 +16,11 @@
       "sourceType": "github",
       "computedHash": "77faba608ea949351d1757e29e6cb726f6ec5937f7595be0593038a7d2d76bb9"
     },
+    "streamdown": {
+      "source": "vercel/streamdown",
+      "sourceType": "github",
+      "computedHash": "c842552c75b80abb74ef8f92481d34684c709884dd2df22c2ab3b183aee582fe"
+    },
     "test-driven-development": {
       "source": "obra/superpowers",
       "sourceType": "github",

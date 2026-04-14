@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { withAuth } from '@/server/middlewares';
+import { withAuth } from '@/lib/api/middlewares';
 import { UserService } from '@/services/UserService';
 
 export const GET = withAuth([], async (_req, sessionData) => {

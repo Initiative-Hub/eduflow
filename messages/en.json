@@ -4,6 +4,53 @@
     "title": "Account Information",
     "usernameLabel": "Username:"
   },
+  "AIChat": {
+    "categories": {
+      "artHistory": "ART HISTORY",
+      "history": "HISTORY",
+      "literature": "LITERATURE",
+      "mathematics": "MATHEMATICS",
+      "methodology": "METHODOLOGY",
+      "philosophy": "PHILOSOPHY",
+      "science": "SCIENCE"
+    },
+    "criticalThinking": "Critical Thinking Active",
+    "exploreMore": "Explore more scholarly prompts",
+    "footer": {
+      "academicDraft": "Lexend Academic Draft",
+      "responseDisclaimer": "AI response may vary"
+    },
+    "philosophicalLogic": "Philosophical Logic Enforced",
+    "placeholder": "Ask a scholarly question...",
+    "promptLibrary": {
+      "description": "Select a specialized inquiry framework to guide your session.",
+      "hist": {
+        "description": "Analyze socio-economic impacts across different regions.",
+        "title": "Comparative colonial history"
+      },
+      "lit": {
+        "description": "Deconstruct themes and motifs in classical literature.",
+        "title": "Analyze narrative structure"
+      },
+      "math": {
+        "description": "Get clear explanations for complex mathematical proofs.",
+        "title": "Step-by-step calculus derivation"
+      },
+      "phil": {
+        "description": "Explore philosophical frameworks for modern technology.",
+        "title": "Ethics of artificial intelligence"
+      },
+      "title": "Scholarly Prompt Library"
+    },
+    "subtitle": "Pick a starting point or ask anything to begin your inquiry.",
+    "suggestions": {
+      "brainstorm": "Help me brainstorm a thesis on Renaissance art",
+      "socratic": "Explain the Socratic method in simple terms",
+      "trends": "Summarize the latest trends in renewable energy"
+    },
+    "thinking": "EduFlow AI is reflecting...",
+    "title": "Greetings, Scholar {name}. Ready to dive deep?"
+  },
   "ApiDocsPage": {
     "cookieHint": "Sign in another tab to reuse your Better Auth session cookie.",
     "description": "Explore and test the EduFlow API endpoints.",

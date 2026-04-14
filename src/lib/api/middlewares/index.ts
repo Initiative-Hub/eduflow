@@ -7,10 +7,11 @@ export function withAuth(
   allowedRoles: string[],
   handler: (
     req: Request,
-    sessionData: Awaited<ReturnType<typeof auth.api.getSession>>
+    sessionData: Awaited<ReturnType<typeof auth.api.getSession>>,
+    ...args: any[]
   ) => Promise<NextResponse> | NextResponse
 ) {
-  return async (req: Request) => {
+  return async (req: Request, ...args: any[]) => {
     try {
       // Check session
       const sessionData = await auth.api.getSession({
@@ -34,7 +35,7 @@ export function withAuth(
         );
       }
 
-      return await handler(req, sessionData);
+      return await handler(req, sessionData, ...args);
     } catch (error) {
       console.error('Auth Middleware Error:', error);
       return NextResponse.json(
@@ -69,33 +70,5 @@ export function withValidation<T extends z.ZodRawShape>(
         { status: 400 }
       );
     }
-  };
-}
-
-export function withNoRole(
-  handler: (
-    req: Request,
-    sessionData: Awaited<ReturnType<typeof auth.api.getSession>>
-  ) => Promise<NextResponse> | NextResponse
-) {
-  return async (
-    req: Request,
-    sessionData: Awaited<ReturnType<typeof auth.api.getSession>>
-  ) => {
-    if (!sessionData) {
-      return NextResponse.json(
-        { message: 'Unauthorized. Please log in.' },
-        { status: 401 }
-      );
-    }
-
-    if (sessionData.user.role) {
-      return NextResponse.json(
-        { message: 'Your role is already defined and cannot be changed.' },
-        { status: 400 }
-      );
-    }
-
-    return await handler(req, sessionData);
   };
 }
