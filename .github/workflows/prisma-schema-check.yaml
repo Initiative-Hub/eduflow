@@ -7,6 +7,10 @@ on:
       - production
   workflow_dispatch:
 
+concurrency:
+  group: self-hosted-global
+  cancel-in-progress: false
+
 jobs:
   prisma-schema-check:
     name: Verify Prisma schema matches migrations
