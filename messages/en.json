@@ -266,7 +266,8 @@
     "actions": {
       "discard": "Discard changes",
       "save": "Save settings",
-      "saving": "Saving..."
+      "saving": "Saving...",
+      "setPassword": "Set password"
     },
     "fields": {
       "browser": "Current Browser",
@@ -311,11 +312,25 @@
     "toast": {
       "discarded": "Changes discarded",
       "saved": "Profile updated",
-      "savedDesc": "Your profile has been saved."
+      "savedDesc": "Your profile has been saved.",
+      "passwordSet": "Password set",
+      "passwordSetDesc": "You can now use this password to sign in."
+    },
+    "setPasswordDialog": {
+      "title": "Set Password",
+      "description": "Create a password for your account to sign in with email directly.",
+      "label": "New Password",
+      "placeholder": "Enter new password",
+      "confirmLabel": "Confirm Password",
+      "confirmPlaceholder": "Repeat new password",
+      "submit": "Set Password"
     },
     "validation": {
       "nameRequired": "Full name is required.",
-      "nameTooShort": "Name must be at least 2 characters."
+      "nameTooShort": "Name must be at least 2 characters.",
+      "passwordTooShort": "Password must be at least 8 characters.",
+      "confirmPasswordRequired": "Please confirm your password.",
+      "passwordsMustMatch": "Passwords do not match."
     }
   },
   "RoleSelection": {

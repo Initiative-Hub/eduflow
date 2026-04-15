@@ -33,3 +33,15 @@ export const profileDefaultValues = (name: string): ProfileFormData => ({
   name,
   bio: '',
 });
+
+export const setPasswordSchema = z
+  .object({
+    password: z.string().min(8, 'validation.passwordTooShort'),
+    confirmPassword: z.string().min(1, 'validation.confirmPasswordRequired'),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'validation.passwordsMustMatch',
+    path: ['confirmPassword'],
+  });
+
+export type SetPasswordFormData = z.infer<typeof setPasswordSchema>;
