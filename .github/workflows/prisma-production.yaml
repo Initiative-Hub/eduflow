@@ -10,74 +10,68 @@ on:
       - production
   workflow_dispatch:
 
-concurrency:
-  group: self-hosted-global
-  cancel-in-progress: false
-
 jobs:
-  check-prerequisites:
-    name: Check prerequisites
+  deploy:
+    name: Migrate production database
+    timeout-minutes: 15
     runs-on: self-hosted
     permissions:
       actions: read
-    outputs:
-      should_deploy: ${{ steps.check_vercel.outputs.should_deploy }}
-    # Only check if manually triggered or if workflow_run succeeded
     if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    env:
+      DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
     steps:
       - name: Check Vercel deployment status
         id: check_vercel
-        if: github.event_name != 'workflow_dispatch'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           SHOULD_DEPLOY=false
 
-          echo "Checking prerequisites for production migration..."
-
-          # Check Vercel production deployment status
-          echo "Checking Vercel production deployment status..."
-          VERCEL_RUN=$(gh api \
-            repos/${{ github.repository }}/actions/workflows/vercel-production.yaml/runs \
-            --jq '.workflow_runs[0] | {conclusion: .conclusion, status: .status, created_at: .created_at}')
-
-          VERCEL_CONCLUSION=$(echo "$VERCEL_RUN" | jq -r '.conclusion')
-          VERCEL_STATUS=$(echo "$VERCEL_RUN" | jq -r '.status')
-
-          echo "Vercel production deployment status: $VERCEL_STATUS"
-          echo "Vercel production deployment conclusion: $VERCEL_CONCLUSION"
-
-          if [ "$VERCEL_CONCLUSION" == "success" ]; then
-            echo "✅ Vercel production deployment completed successfully."
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "Manual dispatch detected. Proceeding with production migration."
             SHOULD_DEPLOY=true
           else
-            echo "❌ Vercel production deployment has not completed successfully. Cannot proceed with production migration."
-            SHOULD_DEPLOY=false
+            echo "Checking prerequisites for production migration..."
+            echo "Checking Vercel production deployment status..."
+
+            VERCEL_RUN=$(gh api \
+              repos/${{ github.repository }}/actions/workflows/vercel-production.yaml/runs \
+              --jq '.workflow_runs[0] | {conclusion: .conclusion, status: .status, created_at: .created_at}')
+
+            VERCEL_CONCLUSION=$(echo "$VERCEL_RUN" | jq -r '.conclusion')
+            VERCEL_STATUS=$(echo "$VERCEL_RUN" | jq -r '.status')
+
+            echo "Vercel production deployment status: $VERCEL_STATUS"
+            echo "Vercel production deployment conclusion: $VERCEL_CONCLUSION"
+
+            if [ "$VERCEL_CONCLUSION" = "success" ]; then
+              echo "✅ Vercel production deployment completed successfully."
+              SHOULD_DEPLOY=true
+            else
+              echo "❌ Vercel production deployment has not completed successfully. Cannot proceed with production migration."
+            fi
           fi
 
           echo "should_deploy=$SHOULD_DEPLOY" >> $GITHUB_OUTPUT
 
-  deploy:
-    name: Migrate production database
-    timeout-minutes: 15
-    runs-on: self-hosted
-    needs: check-prerequisites
-    if: needs.check-prerequisites.outputs.should_deploy == 'true'
-    env:
-      DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
-    steps:
       - uses: actions/checkout@v6
+        if: steps.check_vercel.outputs.should_deploy == 'true'
 
       - uses: oven-sh/setup-bun@v2
+        if: steps.check_vercel.outputs.should_deploy == 'true'
         with:
           bun-version: "1.3.11"
 
       - uses: actions/setup-node@v6
+        if: steps.check_vercel.outputs.should_deploy == 'true'
         with:
           node-version: 25
 
       - name: Install dependencies
+        if: steps.check_vercel.outputs.should_deploy == 'true'
         run: bun install --frozen-lockfile
 
       - name: Deploy migrations to production
+        if: steps.check_vercel.outputs.should_deploy == 'true'
         run: bunx prisma migrate deploy

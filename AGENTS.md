@@ -97,7 +97,6 @@ for any tasks.).
 - **Type Check**: After TypeScript or JavaScript edits, finish with `bun type-check`.
 - **Formatting**: Use `bun format:fix` before verification if the change is formatting-sensitive.
 - **Shell Paths**: Quote file paths that include `(`, `)`, `[`, or `]` when running shell or git commands.
-- **Self-Hosted Workflow Serialization**: For GitHub Actions workflows that run on shared `self-hosted` runners, add a workflow-level `concurrency` block with a shared group and `cancel-in-progress: false` so one workflow run fully finishes before another starts.
 
 ### 6.5 Type Safety & Platform Details
 

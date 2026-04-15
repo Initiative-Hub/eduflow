@@ -7,13 +7,9 @@ on:
       - production
   workflow_dispatch:
 
-concurrency:
-  group: self-hosted-global
-  cancel-in-progress: false
-
 jobs:
-  i18n-sort-check:
-    name: Translation Sort Check
+  i18n-check:
+    name: i18n Check
     runs-on: self-hosted
     timeout-minutes: 10
     permissions:
@@ -32,24 +28,6 @@ jobs:
 
       - name: Check translation sorting
         run: bun i18n:sort:check
-
-  i18n-key-parity-check:
-    name: Key Parity Check
-    runs-on: self-hosted
-    timeout-minutes: 10
-    permissions:
-      contents: read
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v6
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: "1.3.11"
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
 
       - name: Check locale key parity
         run: bun i18n:key-parity
