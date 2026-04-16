@@ -79,13 +79,13 @@ export function SecurityInfoCard({
                   </>
                 )}
               </div>
-              {!hasPassword && onSetPassword && (
+              {!hasPassword && (
                 <Button
-                  variant="outline"
+                  type="button"
                   size="sm"
                   onClick={onSetPassword}
                   disabled={isResetting}
-                  className="h-8 w-full justify-start px-0 font-semibold text-primary hover:bg-transparent hover:text-primary/80"
+                  className="h-8 cursor-pointer bg-primary font-semibold hover:bg-primary/90"
                 >
                   {isResetting ? (
                     <Loader2 className="mr-2 size-3 animate-spin" />

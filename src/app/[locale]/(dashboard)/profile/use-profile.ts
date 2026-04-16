@@ -36,6 +36,7 @@ export function useProfile({
 
   const updateMutation = useMutation<void, Error, ProfileFormData>({
     mutationFn: async (data: ProfileFormData) => {
+      console.log('Updating profile with data:', data);
       await profileService.update(data);
     },
     onSuccess: () => {

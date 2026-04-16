@@ -45,3 +45,27 @@ export const setPasswordSchema = z
   });
 
 export type SetPasswordFormData = z.infer<typeof setPasswordSchema>;
+
+export const setPasswordDefaultValues: SetPasswordFormData = {
+  password: '',
+  confirmPassword: '',
+};
+
+export const setPasswordFields: FormFieldConfig[] = [
+  {
+    name: 'password',
+    label: 'setPasswordDialog.label',
+    type: 'password',
+    placeholder: 'setPasswordDialog.placeholder',
+    required: true,
+    colSpan: 2,
+  },
+  {
+    name: 'confirmPassword',
+    label: 'setPasswordDialog.confirmLabel',
+    type: 'password',
+    placeholder: 'setPasswordDialog.confirmPlaceholder',
+    required: true,
+    colSpan: 2,
+  },
+];
