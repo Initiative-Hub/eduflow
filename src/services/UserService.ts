@@ -1,4 +1,6 @@
 import type { PlatformRoleName } from '@/generated/prisma';
+import { auth } from '@/lib/auth';
+import { emailService } from '@/lib/email-service';
 import { prisma } from '@/lib/prisma';
 
 export class UserService {
@@ -84,6 +86,28 @@ export class UserService {
       data: {
         name: data.name,
       },
+    });
+  }
+
+  static async setPassword(
+    password: string,
+    user: { name: string; email: string },
+    headersList: Headers
+  ) {
+    if (!password || password.length < 8) {
+      throw new Error('Password must be at least 8 characters long.');
+    }
+
+    await auth.api.setPassword({
+      body: {
+        newPassword: password,
+      },
+      headers: headersList,
+    });
+
+    await emailService.sendPasswordChangedNotification({
+      name: user.name,
+      email: user.email,
     });
   }
 }
