@@ -1,7 +1,12 @@
-'use client';
-
-import { BadgeCheck, Monitor, Shield, ShieldAlert } from 'lucide-react';
+import {
+  BadgeCheck,
+  Loader2,
+  Monitor,
+  Shield,
+  ShieldAlert,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { parseBrowser } from '@/utils/browser-helper';
 
@@ -9,23 +14,22 @@ interface SecurityInfoCardProps {
   provider: string;
   hasPassword: boolean;
   userAgent: string | null;
+  onSetPassword?: () => void;
+  isResetting?: boolean;
 }
 
 export function SecurityInfoCard({
   provider,
   hasPassword,
   userAgent,
+  onSetPassword,
+  isResetting,
 }: SecurityInfoCardProps) {
   const t = useTranslations('ProfilePage');
 
-  const providerKey = (
-    ['credential', 'google', 'github'].includes(provider) ? provider : 'unknown'
-  ) as keyof {
-    credential: string;
-    google: string;
-    github: string;
-    unknown: string;
-  };
+  const providerKey = ['credential', 'google'].includes(provider)
+    ? provider
+    : 'unknown';
 
   const providerLabel = t(`providers.${providerKey}`);
   const browserLabel = userAgent
@@ -57,21 +61,37 @@ export function SecurityInfoCard({
             <dt className="mb-1.5 font-semibold text-muted-foreground text-xs uppercase tracking-wider">
               {t('fields.passwordStatus')}
             </dt>
-            <dd className="flex items-center gap-1.5">
-              {hasPassword ? (
-                <>
-                  <BadgeCheck className="size-4 text-primary" />
-                  <span className="font-medium text-primary text-sm">
-                    {t('fields.passwordSet')}
-                  </span>
-                </>
-              ) : (
-                <>
-                  <ShieldAlert className="size-4 text-muted-foreground" />
-                  <span className="font-medium text-muted-foreground text-sm">
-                    {t('fields.passwordNotSet')}
-                  </span>
-                </>
+            <dd className="space-y-2">
+              <div className="flex items-center gap-1.5">
+                {hasPassword ? (
+                  <>
+                    <BadgeCheck className="size-4 text-primary" />
+                    <span className="font-medium text-primary text-sm">
+                      {t('fields.passwordSet')}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <ShieldAlert className="size-4 text-muted-foreground" />
+                    <span className="font-medium text-muted-foreground text-sm">
+                      {t('fields.passwordNotSet')}
+                    </span>
+                  </>
+                )}
+              </div>
+              {!hasPassword && (
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={onSetPassword}
+                  disabled={isResetting}
+                  className="h-8 cursor-pointer bg-primary font-semibold hover:bg-primary/90"
+                >
+                  {isResetting ? (
+                    <Loader2 className="mr-2 size-3 animate-spin" />
+                  ) : null}
+                  {t('actions.setPassword')}
+                </Button>
               )}
             </dd>
           </div>

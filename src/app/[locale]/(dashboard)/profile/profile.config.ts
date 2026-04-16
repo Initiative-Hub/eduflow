@@ -6,6 +6,7 @@ export const profileSchema = z.object({
     .string()
     .min(1, 'validation.nameRequired')
     .min(2, 'validation.nameTooShort'),
+  email: z.string(),
   bio: z.string().optional(),
 });
 
@@ -29,7 +30,38 @@ export const profileFields: FormFieldConfig[] = [
   },
 ];
 
-export const profileDefaultValues = (name: string): ProfileFormData => ({
-  name,
-  bio: '',
-});
+export const setPasswordSchema = z
+  .object({
+    password: z.string().min(8, 'validation.passwordTooShort'),
+    confirmPassword: z.string().min(1, 'validation.confirmPasswordRequired'),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'validation.passwordsMustMatch',
+    path: ['confirmPassword'],
+  });
+
+export type SetPasswordFormData = z.infer<typeof setPasswordSchema>;
+
+export const setPasswordDefaultValues: SetPasswordFormData = {
+  password: '',
+  confirmPassword: '',
+};
+
+export const setPasswordFields: FormFieldConfig[] = [
+  {
+    name: 'password',
+    label: 'setPasswordDialog.label',
+    type: 'password',
+    placeholder: 'setPasswordDialog.placeholder',
+    required: true,
+    colSpan: 2,
+  },
+  {
+    name: 'confirmPassword',
+    label: 'setPasswordDialog.confirmLabel',
+    type: 'password',
+    placeholder: 'setPasswordDialog.confirmPlaceholder',
+    required: true,
+    colSpan: 2,
+  },
+];

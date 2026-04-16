@@ -17,23 +17,22 @@ export default async function ProfilePage() {
     redirect('/login');
   }
 
-  const data = await UserService.getProfileData(
+  const profileData = await UserService.getProfileData(
     session.user.id,
     session.session.userAgent
   );
 
+  const initialBasicInfo = {
+    ...profileData.basicInfo,
+    createdAt: profileData.basicInfo.createdAt.toISOString(),
+    updatedAt: profileData.basicInfo.updatedAt.toISOString(),
+  };
+
   return (
     <section className="space-y-6">
       <ProfileClient
-        name={data.basicInfo.name}
-        email={data.basicInfo.email}
-        image={data.basicInfo.image}
-        role={data.basicInfo.role}
-        createdAt={new Date(data.basicInfo.createdAt).toISOString()}
-        emailVerified={data.basicInfo.emailVerified}
-        provider={data.securityInfo.provider}
-        hasPassword={data.securityInfo.hasPassword}
-        userAgent={data.securityInfo.userAgent}
+        initialBasicInfo={initialBasicInfo}
+        initialSecurityInfo={profileData.securityInfo}
       />
     </section>
   );

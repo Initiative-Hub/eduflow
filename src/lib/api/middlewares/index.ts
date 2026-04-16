@@ -7,7 +7,7 @@ export function withAuth(
   allowedRoles: string[],
   handler: (
     req: Request,
-    sessionData: Awaited<ReturnType<typeof auth.api.getSession>>,
+    sessionData: NonNullable<Awaited<ReturnType<typeof auth.api.getSession>>>,
     ...args: any[]
   ) => Promise<NextResponse> | NextResponse
 ) {

@@ -2,6 +2,7 @@ import { render } from '@react-email/components';
 import nodemailer from 'nodemailer';
 import { createElement } from 'react';
 import { DEV_MODE } from '@/constants/common';
+import { EduFlowPasswordChangedEmail } from '@/templates/emails/eduflow-password-changed';
 import { EduFlowResetPasswordEmail } from '@/templates/emails/eduflow-reset-password';
 import { EduFlowVerifyEmail } from '@/templates/emails/eduflow-verify-email';
 
@@ -66,6 +67,32 @@ export const emailService = {
     } catch (error) {
       console.error('Failed to send verification OTP:', error);
       throw error;
+    }
+  },
+
+  sendPasswordChangedNotification: async (user: {
+    name: string;
+    email: string;
+  }) => {
+    try {
+      const html = await render(
+        createElement(EduFlowPasswordChangedEmail, {
+          userName: user.name,
+        })
+      );
+
+      await transporter.sendMail({
+        from,
+        to: user.email,
+        subject: 'Your password has been changed',
+        html,
+      });
+
+      if (DEV_MODE) {
+        console.log(`Password change notification sent to ${user.email}`);
+      }
+    } catch (error) {
+      console.error('Failed to send password change notification:', error);
     }
   },
 };

@@ -63,3 +63,20 @@ export const POST = withAuth(['ADMIN'], async (_req) => {
     );
   }
 });
+export const PATCH = withAuth([], async (req, session) => {
+  try {
+    const userId = session?.user?.id as string;
+    const body = await req.json();
+
+    const updatedUser = await UserService.updateBasicInfo(userId, {
+      name: body.name,
+    });
+
+    return NextResponse.json(updatedUser);
+  } catch (error: any) {
+    return NextResponse.json(
+      { message: error.message || 'Internal Server Error' },
+      { status: 500 }
+    );
+  }
+});

@@ -266,7 +266,8 @@
     "actions": {
       "discard": "Huỷ thay đổi",
       "save": "Lưu cài đặt không gian làm việc",
-      "saving": "Đang lưu..."
+      "saving": "Đang lưu...",
+      "setPassword": "Thiết lập mật khẩu"
     },
     "fields": {
       "browser": "Trình duyệt hiện tại",
@@ -306,16 +307,30 @@
       "personalInfo": "Thông tin cá nhân",
       "security": "Bảo mật"
     },
+    "setPasswordDialog": {
+      "confirmLabel": "Xác nhận mật khẩu",
+      "confirmPlaceholder": "Nhập lại mật khẩu mới",
+      "description": "Tạo mật khẩu cho tài khoản để đăng nhập bằng email trực tiếp.",
+      "label": "Mật khẩu mới",
+      "placeholder": "Nhập mật khẩu mới",
+      "submit": "Thiết lập mật khẩu",
+      "title": "Thiết lập mật khẩu"
+    },
     "subtitle": "Quản lý thông tin cá nhân của bạn",
     "title": "Hồ sơ",
     "toast": {
       "discarded": "Đã huỷ thay đổi",
+      "passwordSet": "Đã thiết lập mật khẩu",
+      "passwordSetDesc": "Bây giờ bạn có thể dùng mật khẩu này để đăng nhập.",
       "saved": "Đã cập nhật hồ sơ",
       "savedDesc": "Hồ sơ của bạn đã được lưu."
     },
     "validation": {
+      "confirmPasswordRequired": "Vui lòng xác nhận mật khẩu.",
       "nameRequired": "Họ và tên là bắt buộc.",
-      "nameTooShort": "Tên phải có ít nhất 2 ký tự."
+      "nameTooShort": "Tên phải có ít nhất 2 ký tự.",
+      "passwordsMustMatch": "Mật khẩu không khớp.",
+      "passwordTooShort": "Mật khẩu phải có ít nhất 8 ký tự."
     }
   },
   "RoleSelection": {

@@ -1,4 +1,6 @@
 import type { PlatformRoleName } from '@/generated/prisma';
+import { auth } from '@/lib/auth';
+import { emailService } from '@/lib/email-service';
 import { prisma } from '@/lib/prisma';
 
 export class UserService {
@@ -28,15 +30,21 @@ export class UserService {
     userId: string,
     userAgent: string | null | undefined
   ) {
-    const account = await prisma.account.findFirst({
+    const accounts = await prisma.account.findMany({
       where: { userId },
       select: { providerId: true, password: true },
     });
 
+    const hasPassword = accounts.some(
+      (acc) => acc.password !== null && acc.password !== undefined
+    );
+    const primaryProvider =
+      accounts.find((acc) => acc.providerId !== 'credential')?.providerId ??
+      'credential';
+
     return {
-      provider: account?.providerId ?? 'unknown',
-      hasPassword:
-        account?.password !== null && account?.password !== undefined,
+      provider: primaryProvider,
+      hasPassword,
       userAgent: userAgent ?? null,
     };
   }
@@ -46,8 +54,8 @@ export class UserService {
     userAgent: string | null | undefined
   ) {
     const [basicInfo, securityInfo] = await Promise.all([
-      this.getBasicInfo(userId),
-      this.getSecurityInfo(userId, userAgent),
+      UserService.getBasicInfo(userId),
+      UserService.getSecurityInfo(userId, userAgent),
     ]);
 
     return {
@@ -69,6 +77,37 @@ export class UserService {
       where: { id: userId },
       data: { roleId: role.id },
       include: { role: true },
+    });
+  }
+
+  static async updateBasicInfo(userId: string, data: { name?: string }) {
+    return await prisma.user.update({
+      where: { id: userId },
+      data: {
+        name: data.name,
+      },
+    });
+  }
+
+  static async setPassword(
+    password: string,
+    user: { name: string; email: string },
+    headersList: Headers
+  ) {
+    if (!password || password.length < 8) {
+      throw new Error('Password must be at least 8 characters long.');
+    }
+
+    await auth.api.setPassword({
+      body: {
+        newPassword: password,
+      },
+      headers: headersList,
+    });
+
+    await emailService.sendPasswordChangedNotification({
+      name: user.name,
+      email: user.email,
     });
   }
 }
