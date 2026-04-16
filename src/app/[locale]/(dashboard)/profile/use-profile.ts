@@ -4,20 +4,34 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import type { ProfileFormData } from './profile.config';
-import { profileService } from './profile.service';
+import {
+  profileService,
+  type UserBasicInfo,
+  type UserSecurityInfo,
+} from './profile.service';
 
-export function useProfile() {
+interface UseProfileOptions {
+  initialBasicInfo: UserBasicInfo;
+  initialSecurityInfo: UserSecurityInfo;
+}
+
+export function useProfile({
+  initialBasicInfo,
+  initialSecurityInfo,
+}: UseProfileOptions) {
   const t = useTranslations('ProfilePage');
   const queryClient = useQueryClient();
 
   const basicInfoQuery = useQuery({
     queryKey: ['user-basic-info'],
     queryFn: profileService.getBasicInfo,
+    initialData: initialBasicInfo,
   });
 
   const securityInfoQuery = useQuery({
     queryKey: ['user-security-info'],
     queryFn: profileService.getSecurityInfo,
+    initialData: initialSecurityInfo,
   });
 
   const updateMutation = useMutation<void, Error, ProfileFormData>({

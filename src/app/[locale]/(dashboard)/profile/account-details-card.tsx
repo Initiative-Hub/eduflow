@@ -5,12 +5,10 @@ import { useLocale, useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-type BadgeVariant = 'destructive' | 'secondary' | 'outline';
-
-function getRoleBadgeVariant(role: string | null | undefined): BadgeVariant {
+function getRoleBadgeVariant(role: string | null) {
   switch (role) {
     case 'ADMIN':
-      return 'destructive';
+      return 'default';
     case 'TEACHER':
       return 'secondary';
     default:
@@ -19,7 +17,7 @@ function getRoleBadgeVariant(role: string | null | undefined): BadgeVariant {
 }
 
 interface AccountDetailsCardProps {
-  role?: string | null;
+  role: string | null;
   createdAt: string; // ISO string
   emailVerified: boolean;
 }
@@ -38,11 +36,7 @@ export function AccountDetailsCard({
     day: 'numeric',
   });
 
-  const roleKey = role?.toLowerCase() as
-    | 'admin'
-    | 'teacher'
-    | 'student'
-    | undefined;
+  const roleKey = role?.toLowerCase();
   const roleLabel = roleKey ? t(`roles.${roleKey}`) : '—';
 
   return (
@@ -57,7 +51,7 @@ export function AccountDetailsCard({
         <dl className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {/* Role */}
           <div className="rounded-xl bg-muted/50 px-4 py-3">
-            <dt className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <dt className="mb-1.5 font-semibold text-muted-foreground text-xs uppercase tracking-wider">
               {t('fields.role')}
             </dt>
             <dd>
@@ -69,7 +63,7 @@ export function AccountDetailsCard({
 
           {/* Member since */}
           <div className="rounded-xl bg-muted/50 px-4 py-3">
-            <dt className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <dt className="mb-1.5 font-semibold text-muted-foreground text-xs uppercase tracking-wider">
               {t('fields.memberSince')}
             </dt>
             <dd className="font-medium text-foreground text-sm">
@@ -79,7 +73,7 @@ export function AccountDetailsCard({
 
           {/* Email verification */}
           <div className="rounded-xl bg-muted/50 px-4 py-3">
-            <dt className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <dt className="mb-1.5 font-semibold text-muted-foreground text-xs uppercase tracking-wider">
               {t('fields.email')}
             </dt>
             <dd className="flex items-center gap-1.5">

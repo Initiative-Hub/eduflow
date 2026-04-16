@@ -25,10 +25,19 @@ import {
   type SetPasswordFormData,
   setPasswordSchema,
 } from './profile.config';
+import type { UserBasicInfo, UserSecurityInfo } from './profile.service';
 import { SecurityInfoCard } from './security-info-card';
 import { useProfile } from './use-profile';
 
-export function ProfileClient() {
+interface ProfileClientProps {
+  initialBasicInfo: UserBasicInfo;
+  initialSecurityInfo: UserSecurityInfo;
+}
+
+export function ProfileClient({
+  initialBasicInfo,
+  initialSecurityInfo,
+}: ProfileClientProps) {
   const t = useTranslations('ProfilePage');
   const [isSetPasswordDialogOpen, setIsSetPasswordDialogOpen] = useState(false);
 
@@ -40,7 +49,7 @@ export function ProfileClient() {
     isSettingPassword,
     handleSubmit,
     handleSetPassword,
-  } = useProfile();
+  } = useProfile({ initialBasicInfo, initialSecurityInfo });
 
   const form = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -66,6 +75,7 @@ export function ProfileClient() {
   }, [basicInfo, form]);
 
   const isDirty = form.formState.isDirty;
+  const isActionDisabled = !isDirty || isSaving;
 
   function handleDiscard() {
     if (basicInfo) {
@@ -214,16 +224,17 @@ export function ProfileClient() {
               type="button"
               variant="ghost"
               onClick={handleDiscard}
-              disabled={!isDirty || isSaving}
-              className="w-full cursor-pointer font-semibold text-muted-foreground hover:text-foreground sm:w-auto"
+              disabled={isActionDisabled}
+              className="w-full cursor-pointer font-semibold text-muted-foreground hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:bg-transparent disabled:text-muted-foreground/50 sm:w-auto"
             >
               {t('actions.discard')}
             </Button>
             <Button
               type="submit"
-              disabled={isSaving}
-              className="w-full cursor-pointer bg-primary px-6 font-semibold text-primary-foreground sm:w-auto"
+              disabled={isActionDisabled}
+              className="w-full cursor-pointer bg-primary px-6 font-semibold text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:bg-primary/60 sm:w-auto"
             >
+              {isSaving ? <Loader2 className="size-4 animate-spin" /> : null}
               {isSaving ? t('actions.saving') : t('actions.save')}
             </Button>
           </div>

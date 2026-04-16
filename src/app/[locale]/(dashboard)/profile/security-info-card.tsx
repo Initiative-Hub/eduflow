@@ -27,14 +27,9 @@ export function SecurityInfoCard({
 }: SecurityInfoCardProps) {
   const t = useTranslations('ProfilePage');
 
-  const providerKey = (
-    ['credential', 'google', 'github'].includes(provider) ? provider : 'unknown'
-  ) as keyof {
-    credential: string;
-    google: string;
-    github: string;
-    unknown: string;
-  };
+  const providerKey = ['credential', 'google'].includes(provider)
+    ? provider
+    : 'unknown';
 
   const providerLabel = t(`providers.${providerKey}`);
   const browserLabel = userAgent
