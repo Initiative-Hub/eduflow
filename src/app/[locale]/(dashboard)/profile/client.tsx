@@ -13,7 +13,6 @@ import { AccountDetailsCard } from './account-details-card';
 import { PersonalInfoCard } from './personal-info-card';
 import {
   type ProfileFormData,
-  profileDefaultValues,
   profileSchema,
   type SetPasswordFormData,
   setPasswordDefaultValues,
@@ -54,6 +53,7 @@ export function ProfileClient({
     resolver: zodResolver(profileSchema),
     defaultValues: {
       name: '',
+      email: '',
       bio: '',
     },
   });
@@ -65,18 +65,22 @@ export function ProfileClient({
 
   // Update form when basicInfo is loaded
   useEffect(() => {
-    if (basicInfo) {
-      form.reset(profileDefaultValues(basicInfo.name));
-    }
+    form.reset({
+      name: basicInfo.name,
+      email: basicInfo.email,
+      bio: '',
+    });
   }, [basicInfo, form]);
 
   const isDirty = form.formState.isDirty;
   const isActionDisabled = !isDirty || isSaving;
 
   const handleDiscard = () => {
-    if (basicInfo) {
-      form.reset(profileDefaultValues(basicInfo.name));
-    }
+    form.reset({
+      name: basicInfo.name,
+      email: basicInfo.email,
+      bio: '',
+    });
   };
 
   const handlePasswordSubmit = (data: SetPasswordFormData) => {
@@ -96,10 +100,6 @@ export function ProfileClient({
     );
   }
 
-  if (!basicInfo || !securityInfo) {
-    return null;
-  }
-
   return (
     <>
       <FormProvider {...form}>
@@ -117,11 +117,7 @@ export function ProfileClient({
             </p>
           </div>
 
-          <PersonalInfoCard
-            name={basicInfo.name}
-            email={basicInfo.email}
-            image={basicInfo.image}
-          />
+          <PersonalInfoCard name={basicInfo.name} image={basicInfo.image} />
 
           {/* Account details */}
           <AccountDetailsCard

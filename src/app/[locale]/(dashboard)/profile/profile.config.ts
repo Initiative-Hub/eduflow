@@ -6,6 +6,7 @@ export const profileSchema = z.object({
     .string()
     .min(1, 'validation.nameRequired')
     .min(2, 'validation.nameTooShort'),
+  email: z.string(),
   bio: z.string().optional(),
 });
 
@@ -28,11 +29,6 @@ export const profileFields: FormFieldConfig[] = [
     colSpan: 2,
   },
 ];
-
-export const profileDefaultValues = (name: string): ProfileFormData => ({
-  name,
-  bio: '',
-});
 
 export const setPasswordSchema = z
   .object({

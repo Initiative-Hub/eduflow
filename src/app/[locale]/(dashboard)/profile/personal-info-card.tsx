@@ -17,11 +17,10 @@ import type { ProfileFormData } from './profile.config';
 
 interface PersonalInfoCardProps {
   name: string;
-  email: string;
   image: string | null;
 }
 
-export function PersonalInfoCard({ name, email, image }: PersonalInfoCardProps) {
+export function PersonalInfoCard({ name, image }: PersonalInfoCardProps) {
   const t = useTranslations('ProfilePage');
   const form = useFormContext<ProfileFormData>();
 
@@ -70,7 +69,7 @@ export function PersonalInfoCard({ name, email, image }: PersonalInfoCardProps) 
                 </FieldLabel>
                 <Input
                   id="profile-email"
-                  value={email}
+                  {...form.register('email')}
                   readOnly
                   disabled
                   className="h-10 cursor-not-allowed opacity-70"
