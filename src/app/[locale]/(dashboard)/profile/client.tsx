@@ -20,9 +20,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { AccountDetailsCard } from './account-details-card';
 import {
   type ProfileFormData,
-  type SetPasswordFormData,
   profileDefaultValues,
   profileSchema,
+  type SetPasswordFormData,
   setPasswordSchema,
 } from './profile.config';
 import { SecurityInfoCard } from './security-info-card';
@@ -235,26 +235,30 @@ export function ProfileClient() {
         isOpen={isSetPasswordDialogOpen}
         onOpenChange={setIsSetPasswordDialogOpen}
         hideHeader
-        className="max-w-md rounded-2xl border-none bg-white p-0 shadow-2xl overflow-hidden"
+        className="max-w-md overflow-hidden rounded-2xl border-none bg-white p-0 shadow-2xl"
       >
-        <div className="bg-primary/5 p-8 text-center border-b border-primary/10">
+        <div className="border-primary/10 border-b bg-primary/5 p-8 text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
             <Shield className="size-8" />
           </div>
-          <h2 className="text-xl font-bold text-foreground">
+          <h2 className="font-bold text-foreground text-xl">
             {t('setPasswordDialog.title')}
           </h2>
-          <p className="mt-2 text-sm text-muted-foreground px-4">
+          <p className="mt-2 px-4 text-muted-foreground text-sm">
             {t('setPasswordDialog.description')}
           </p>
         </div>
 
         <form onSubmit={onPasswordSubmit} className="space-y-5 p-8">
           <FieldGroup className="space-y-4">
-            <Field data-invalid={!!passwordForm.formState.errors.password || undefined}>
+            <Field
+              data-invalid={
+                !!passwordForm.formState.errors.password || undefined
+              }
+            >
               <FieldLabel
                 htmlFor="dialog-password"
-                className="font-bold text-muted-foreground text-[10px] uppercase tracking-widest"
+                className="font-bold text-[10px] text-muted-foreground uppercase tracking-widest"
               >
                 {t('setPasswordDialog.label')}
               </FieldLabel>
@@ -264,17 +268,21 @@ export function ProfileClient() {
                   type="password"
                   placeholder={t('setPasswordDialog.placeholder')}
                   {...passwordForm.register('password')}
-                  className="h-11 rounded-xl bg-background border-muted-foreground/20 focus:border-primary focus:ring-primary/20"
+                  className="h-11 rounded-xl border-muted-foreground/20 bg-background focus:border-primary focus:ring-primary/20"
                   aria-invalid={!!passwordForm.formState.errors.password}
                 />
               </div>
               <FieldError errors={[passwordForm.formState.errors.password]} />
             </Field>
 
-            <Field data-invalid={!!passwordForm.formState.errors.confirmPassword || undefined}>
+            <Field
+              data-invalid={
+                !!passwordForm.formState.errors.confirmPassword || undefined
+              }
+            >
               <FieldLabel
                 htmlFor="dialog-confirm-password"
-                className="font-bold text-muted-foreground text-[10px] uppercase tracking-widest"
+                className="font-bold text-[10px] text-muted-foreground uppercase tracking-widest"
               >
                 {t('setPasswordDialog.confirmLabel')}
               </FieldLabel>
@@ -284,18 +292,20 @@ export function ProfileClient() {
                   type="password"
                   placeholder={t('setPasswordDialog.confirmPlaceholder')}
                   {...passwordForm.register('confirmPassword')}
-                  className="h-11 rounded-xl bg-background border-muted-foreground/20 focus:border-primary focus:ring-primary/20"
+                  className="h-11 rounded-xl border-muted-foreground/20 bg-background focus:border-primary focus:ring-primary/20"
                   aria-invalid={!!passwordForm.formState.errors.confirmPassword}
                 />
               </div>
-              <FieldError errors={[passwordForm.formState.errors.confirmPassword]} />
+              <FieldError
+                errors={[passwordForm.formState.errors.confirmPassword]}
+              />
             </Field>
           </FieldGroup>
 
           <Button
             type="submit"
             disabled={isSettingPassword}
-            className="w-full bg-primary py-6 font-bold text-base shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all active:scale-[0.98] rounded-xl text-white"
+            className="w-full rounded-xl bg-primary py-6 font-bold text-base text-white shadow-lg shadow-primary/20 transition-all hover:shadow-primary/30 hover:shadow-xl active:scale-[0.98]"
           >
             {isSettingPassword ? (
               <Loader2 className="mr-2 size-5 animate-spin" />
