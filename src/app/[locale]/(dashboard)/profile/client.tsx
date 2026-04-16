@@ -1,14 +1,12 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, Shield, User } from 'lucide-react';
+import { Loader2, Shield } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { AvatarTemplate } from '@/components/custom/avatar';
 import { DialogTemplate } from '@/components/custom/dialog';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Field,
   FieldError,
@@ -16,8 +14,8 @@ import {
   FieldLabel,
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { AccountDetailsCard } from './account-details-card';
+import { PersonalInfoCard } from './personal-info-card';
 import {
   type ProfileFormData,
   profileDefaultValues,
@@ -121,86 +119,11 @@ export function ProfileClient({
             </p>
           </div>
 
-          {/* Personal information card */}
-          <Card className="shadow-sm">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <User className="size-4 text-primary" />
-                {t('sections.personalInfo')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {/* Avatar on left, fields on right */}
-              <div className="flex flex-col gap-8 sm:flex-row sm:items-start">
-                {/* Avatar */}
-                <div className="shrink-0 self-center sm:self-start">
-                  <AvatarTemplate
-                    avatarUrl={basicInfo.image ?? undefined}
-                    fallback={basicInfo.name.slice(0, 2).toUpperCase()}
-                  />
-                </div>
-
-                {/* Fields */}
-                <FieldGroup className="flex-1">
-                  {/* Name & Email */}
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <Field
-                      data-invalid={!!form.formState.errors.name || undefined}
-                    >
-                      <FieldLabel
-                        htmlFor="profile-name"
-                        className="font-semibold text-muted-foreground text-xs uppercase tracking-wider"
-                      >
-                        {t('form.name.label')}
-                      </FieldLabel>
-                      <Input
-                        id="profile-name"
-                        placeholder={t('form.name.placeholder')}
-                        {...form.register('name')}
-                        className="h-10"
-                        aria-invalid={!!form.formState.errors.name}
-                      />
-                      <FieldError errors={[form.formState.errors.name]} />
-                    </Field>
-
-                    <Field>
-                      <FieldLabel
-                        htmlFor="profile-email"
-                        className="font-semibold text-muted-foreground text-xs uppercase tracking-wider"
-                      >
-                        {t('fields.email')}
-                      </FieldLabel>
-                      <Input
-                        id="profile-email"
-                        value={basicInfo.email}
-                        readOnly
-                        disabled
-                        className="h-10 cursor-not-allowed opacity-70"
-                      />
-                    </Field>
-                  </div>
-
-                  {/* Bio */}
-                  <Field>
-                    <FieldLabel
-                      htmlFor="profile-bio"
-                      className="font-semibold text-muted-foreground text-xs uppercase tracking-wider"
-                    >
-                      {t('form.bio.label')}
-                    </FieldLabel>
-                    <Textarea
-                      id="profile-bio"
-                      placeholder={t('form.bio.placeholder')}
-                      {...form.register('bio')}
-                      rows={4}
-                      className="resize-none"
-                    />
-                    <FieldError errors={[form.formState.errors.bio]} />
-                  </Field>
-                </FieldGroup>
-              </div>
-            </CardContent>
-          </Card>
+          <PersonalInfoCard
+            name={basicInfo.name}
+            email={basicInfo.email}
+            image={basicInfo.image}
+          />
 
           {/* Account details */}
           <AccountDetailsCard
