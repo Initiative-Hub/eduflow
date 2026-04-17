@@ -38,7 +38,7 @@ const getS3Client = () => {
   const region = ensureEnv('AWS_REGION');
   const accessKeyId = ensureEnv('AWS_ACCESS_KEY_ID');
   const secretAccessKey = ensureEnv('AWS_SECRET_ACCESS_KEY');
-  const endpoint = process.env.AWS_S3_ENDPOINT;
+  const endpoint = ensureEnv('AWS_S3_ENDPOINT');
 
   s3Client = new S3Client({
     region,

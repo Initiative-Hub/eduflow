@@ -19,7 +19,7 @@ const transporter = nodemailer.createTransport({
   secure: !DEV_MODE, // Use secure connection in production
 });
 
-const from = process.env.EMAIL_FROM || '"EduFlow" <test@localhost.com>';
+const from = process.env.EMAIL_FROM || '"EduFlow" <noreply@edu-flow.me>';
 
 export const emailService = {
   sendPasswordReset: async (

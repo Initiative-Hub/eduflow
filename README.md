@@ -21,26 +21,46 @@ cd eduflow
 bun install
 ```
 
-### 3. Start PostgreSQL Database
-You can start the PostgreSQL database using Docker with the provided docker-compose.yml file:
+### 3. Local Services
+Start all the required local services (PostgreSQL, Mailpit, MinIO) using Docker Compose:
 ```bash
-bun db:start
+bun start:all
+```
+
+#### 3.1 Database
+After starting the local services, you can interact with the PostgreSQL database using the connection string:
+```bash
+postgresql://postgres:password@localhost:5432/eduflow_db?schema=public
+```
+
+#### 3.2 Mailpit
+Mailpit runs alongside PostgreSQL in the same Docker Compose stack. After starting the services, open the Mailpit UI at:
+```bash
+http://localhost:8025
+```
+
+#### 3.3 MinIO
+MinIO is also included in the Docker Compose stack for avatar and file storage. After starting the services, the MinIO console is available at:
+```bash
+http://localhost:9001
 ```
 
 ### 4. Configure Environment Variables (.env.local)
-Based on `prisma/seed.ts` and `src/lib/auth.ts`, the project requires specific environment variables.
-Create a file named .env.local in the root directory and add the following content:
+Create a `.env.local` file in the root directory and add the following content:
 ```bash
 DATABASE_URL="postgresql://postgres:password@localhost:5432/eduflow_db?schema=public"
 
 NEXT_PUBLIC_BETTER_AUTH_URL="http://localhost:3000/api/auth"
 BETTER_AUTH_SECRET="a_very_long_random_secret_string_at_least_32_characters"
 
-GOOGLE_CLIENT_ID="your_google_client_id"
-GOOGLE_CLIENT_SECRET="your_google_client_secret"
+AWS_REGION="local"
+AWS_ACCESS_KEY_ID="minioadmin"
+AWS_SECRET_ACCESS_KEY="minioadmin"
+
+AWS_S3_ENDPOINT="http://localhost:9000"
 ```
 
-### 5. Initialize Database (Prisma & Seed) 
+### 5. Initialize Database (Prisma & Seed)
 ```bash
 # 1. Create tables in the database based on prisma/schema.prisma
 bun db:migrate
@@ -55,7 +75,7 @@ bun db:seed
 bun dev
 ```
 
-### Alternatively, you can combine the above two steps into one command:
+### Alternatively, you can start both the local services and the development server with one command:
 ```bash
 bun devx
 ```
