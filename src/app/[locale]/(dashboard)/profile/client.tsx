@@ -19,19 +19,10 @@ import {
   setPasswordFields,
   setPasswordSchema,
 } from './profile.config';
-import type { UserBasicInfo, UserSecurityInfo } from './profile.service';
 import { SecurityInfoCard } from './security-info-card';
 import { useProfile } from './use-profile';
 
-interface ProfileClientProps {
-  initialBasicInfo: UserBasicInfo;
-  initialSecurityInfo: UserSecurityInfo;
-}
-
-export function ProfileClient({
-  initialBasicInfo,
-  initialSecurityInfo,
-}: ProfileClientProps) {
+export default function ProfileClient() {
   const t = useTranslations('ProfilePage');
   const translatedPasswordFields = useTranslatedFields(
     setPasswordFields,
@@ -47,7 +38,7 @@ export function ProfileClient({
     isSettingPassword,
     handleSubmit,
     handleSetPassword,
-  } = useProfile({ initialBasicInfo, initialSecurityInfo });
+  } = useProfile();
 
   const form = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -65,6 +56,7 @@ export function ProfileClient({
 
   // Update form when basicInfo is loaded
   useEffect(() => {
+    if (!basicInfo) return;
     form.reset({
       name: basicInfo.name,
       email: basicInfo.email,
@@ -76,6 +68,7 @@ export function ProfileClient({
   const isActionDisabled = !isDirty || isSaving;
 
   const handleDiscard = () => {
+    if (!basicInfo) return;
     form.reset({
       name: basicInfo.name,
       email: basicInfo.email,
@@ -100,23 +93,23 @@ export function ProfileClient({
     );
   }
 
+  if (!basicInfo || !securityInfo) return null;
+
   return (
     <>
+      {/* Page header */}
+      <div className="fade-in animate-in duration-300">
+        <h1 className="font-bold text-2xl text-foreground tracking-tight">
+          {t('title')}
+        </h1>
+        <p className="mt-1 text-muted-foreground text-sm">{t('subtitle')}</p>
+      </div>
+
       <FormProvider {...form}>
         <form
           onSubmit={form.handleSubmit((data) => handleSubmit(data))}
           className="flex flex-col gap-8"
         >
-          {/* Page header */}
-          <div className="fade-in animate-in duration-300">
-            <h1 className="font-bold text-2xl text-foreground tracking-tight">
-              {t('title')}
-            </h1>
-            <p className="mt-1 text-muted-foreground text-sm">
-              {t('subtitle')}
-            </p>
-          </div>
-
           <PersonalInfoCard name={basicInfo.name} image={basicInfo.image} />
 
           {/* Account details */}
