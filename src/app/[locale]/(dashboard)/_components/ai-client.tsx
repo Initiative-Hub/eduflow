@@ -28,16 +28,18 @@ interface AIClientProps {
 
 export type ViewState = 'home' | 'library';
 
-const chatTransport = new DefaultChatTransport({
-  api: '/api/chat',
-});
-
 export function AIClient({ userName }: AIClientProps) {
   const t = useTranslations('AIChat');
   const [view, setView] = useState<ViewState>('home');
 
   const { messages, status, sendMessage, stop } = useChat({
-    transport: chatTransport,
+    transport: new DefaultChatTransport({
+      api: '/api/chat',
+      body: {
+        provider: 'google',
+        model: 'gemini-2.5-pro',
+      },
+    }),
     onError(error) {
       console.error('Chat error:', error);
       toast.error(

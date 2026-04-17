@@ -1,38 +1,12 @@
-import { google } from '@ai-sdk/google';
-import type { UIMessage } from 'ai';
-import { convertToModelMessages, smoothStream, streamText } from 'ai';
+export const DEFAULT_PROVIDER = 'ai-gateway' as const;
 
-export class AIService {
-  /**
-   * Validates that the required API key is present.
-   * @throws Error if the key is missing.
-   */
-  static assertApiKey(): void {
-    if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
-      throw new Error(
-        'Missing GOOGLE_GENERATIVE_AI_API_KEY in environment variables.'
-      );
-    }
-  }
+export const DEFAULT_MODELS = {
+  'ai-gateway': 'google/gemini-2.5-flash',
+  google: 'gemini-2.5-flash',
+  openrouter: 'openai/gpt-4o-mini',
+} as const;
 
-  static async streamChat(messages: UIMessage[]) {
-    AIService.assertApiKey();
-
-    return streamText({
-      experimental_transform: smoothStream(),
-      model: google('gemini-2.5-flash'),
-      providerOptions: {
-        google: {
-          safetySettings,
-        },
-      },
-      system: SYSTEM_PROMPT,
-      messages: await convertToModelMessages(messages),
-    });
-  }
-}
-
-const safetySettings = [
+export const safetySettings = [
   {
     category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
     threshold: 'BLOCK_NONE',
@@ -51,7 +25,7 @@ const safetySettings = [
   },
 ];
 
-const SYSTEM_PROMPT = `
+export const SYSTEM_PROMPT = `
   You are EduFlow AI, an educational assistant for students and teachers.
 
   Core behavior (always required):
