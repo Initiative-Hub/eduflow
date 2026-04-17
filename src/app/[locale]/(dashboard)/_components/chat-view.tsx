@@ -4,12 +4,20 @@ import type { UIMessage } from 'ai';
 import { motion } from 'framer-motion';
 import { Bot, Loader2, User } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { Streamdown } from 'streamdown';
+import {
+  Conversation,
+  ConversationContent,
+  ConversationScrollButton,
+} from '@/components/ai-elements/conversation';
+import {
+  Message,
+  MessageContent,
+  MessageResponse,
+} from '@/components/ai-elements/message';
 
 interface ChatViewProps {
   messages: UIMessage[];
   isStreaming: boolean;
-  scrollRef: React.RefObject<HTMLDivElement | null>;
 }
 
 /**
@@ -23,7 +31,7 @@ function getMessageText(message: UIMessage): string {
     .join('');
 }
 
-export function ChatView({ messages, isStreaming, scrollRef }: ChatViewProps) {
+export function ChatView({ messages, isStreaming }: ChatViewProps) {
   const t = useTranslations('AIChat');
 
   return (
@@ -33,77 +41,86 @@ export function ChatView({ messages, isStreaming, scrollRef }: ChatViewProps) {
       animate={{ opacity: 1, y: 0 }}
       className="flex h-[calc(100vh-280px)] w-full flex-col"
     >
-      <div
-        ref={scrollRef}
-        className="custom-scrollbar flex-1 space-y-6 overflow-y-auto scroll-smooth py-4 pr-4"
-      >
-        {messages.map((message) => {
-          const text = getMessageText(message);
-          if (!text) return null;
+      <Conversation className="flex-1">
+        <ConversationContent className="custom-scrollbar gap-6 py-4 pr-4">
+          {messages.map((message) => {
+            const text = getMessageText(message);
+            if (!text) return null;
 
-          const isAnimatingAssistantMessage =
-            isStreaming &&
-            message.id === messages[messages.length - 1]?.id &&
-            message.role === 'assistant';
+            const isAnimatingAssistantMessage =
+              isStreaming &&
+              message.id === messages[messages.length - 1]?.id &&
+              message.role === 'assistant';
 
-          return (
+            return (
+              <Message
+                from={message.role}
+                key={message.id}
+                className="max-w-full"
+              >
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`flex items-start gap-4 ${message.role === 'assistant' ? '' : 'flex-row-reverse'}`}
+                >
+                  <div
+                    className={`flex size-10 shrink-0 items-center justify-center rounded-xl border ${message.role === 'assistant' ? 'border-primary/20 bg-primary/10 text-primary' : 'border-zinc-200 bg-zinc-100 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400'}`}
+                  >
+                    {message.role === 'assistant' ? (
+                      <Bot className="size-5" />
+                    ) : (
+                      <User className="size-5" />
+                    )}
+                  </div>
+                  <MessageContent
+                    className={`max-w-[80%] rounded-2xl px-5 py-3 shadow-sm ${
+                      message.role === 'assistant'
+                        ? 'border border-border bg-white dark:bg-zinc-900'
+                        : 'group-[.is-user]:ml-0 group-[.is-user]:rounded-2xl group-[.is-user]:bg-primary group-[.is-user]:px-5 group-[.is-user]:py-3 group-[.is-user]:text-primary-foreground'
+                    }`}
+                  >
+                    {message.role === 'assistant' ? (
+                      <MessageResponse
+                        caret="block"
+                        className="text-[15px] leading-relaxed"
+                        controls={false}
+                        isAnimating={isAnimatingAssistantMessage}
+                        mode="streaming"
+                        skipHtml
+                      >
+                        {text}
+                      </MessageResponse>
+                    ) : (
+                      <p className="whitespace-pre-wrap text-[15px] leading-relaxed">
+                        {text}
+                      </p>
+                    )}
+                  </MessageContent>
+                </motion.div>
+              </Message>
+            );
+          })}
+
+          {isStreaming && messages.at(-1)?.role !== 'assistant' && (
             <motion.div
-              key={message.id}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className={`flex items-start gap-4 ${message.role === 'assistant' ? '' : 'flex-row-reverse'}`}
+              className="flex items-start gap-4"
             >
-              <div
-                className={`flex size-10 shrink-0 items-center justify-center rounded-xl border ${message.role === 'assistant' ? 'border-primary/20 bg-primary/10 text-primary' : 'border-zinc-200 bg-zinc-100 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400'}`}
-              >
-                {message.role === 'assistant' ? (
-                  <Bot className="size-5" />
-                ) : (
-                  <User className="size-5" />
-                )}
+              <div className="flex size-10 shrink-0 animate-pulse items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
+                <Bot className="size-5" />
               </div>
-              <div
-                className={`max-w-[80%] rounded-2xl px-5 py-3 shadow-sm ${message.role === 'assistant' ? 'border border-border bg-white dark:bg-zinc-900' : 'bg-primary text-primary-foreground'}`}
-              >
-                {message.role === 'assistant' ? (
-                  <Streamdown
-                    caret="block"
-                    className="text-[15px] leading-relaxed"
-                    controls={false}
-                    isAnimating={isAnimatingAssistantMessage}
-                    mode="streaming"
-                    skipHtml
-                  >
-                    {text}
-                  </Streamdown>
-                ) : (
-                  <p className="whitespace-pre-wrap text-[15px] leading-relaxed">
-                    {text}
-                  </p>
-                )}
+              <div className="flex items-center gap-2 rounded-2xl border border-border bg-white px-5 py-3 shadow-sm dark:bg-zinc-900">
+                <Loader2 className="size-4 animate-spin text-primary" />
+                <span className="font-medium text-muted-foreground text-sm">
+                  {t('thinking')}
+                </span>
               </div>
             </motion.div>
-          );
-        })}
-
-        {isStreaming && messages.at(-1)?.role !== 'assistant' && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-start gap-4"
-          >
-            <div className="flex size-10 shrink-0 animate-pulse items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
-              <Bot className="size-5" />
-            </div>
-            <div className="flex items-center gap-2 rounded-2xl border border-border bg-white px-5 py-3 shadow-sm dark:bg-zinc-900">
-              <Loader2 className="size-4 animate-spin text-primary" />
-              <span className="font-medium text-muted-foreground text-sm">
-                {t('thinking')}
-              </span>
-            </div>
-          </motion.div>
-        )}
-      </div>
+          )}
+        </ConversationContent>
+        <ConversationScrollButton className="bottom-2 shadow-sm" />
+      </Conversation>
     </motion.div>
   );
 }

@@ -4,8 +4,14 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowUp, Library, Paperclip, Settings2, Square } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
+import {
+  PromptInput,
+  PromptInputButton,
+  type PromptInputMessage,
+  PromptInputSubmit,
+  PromptInputTextarea,
+} from '@/components/ai-elements/prompt-input';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 
 interface ChatInputProps {
   handleSubmit: (e?: React.FormEvent, customValue?: string) => void;
@@ -23,10 +29,9 @@ export function ChatInput({
   const t = useTranslations('AIChat');
   const [inputValue, setInputValue] = useState('');
 
-  const onFormSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!inputValue.trim() || isStreaming) return;
-    handleSubmit(e, inputValue);
+  const onPromptSubmit = (message: PromptInputMessage) => {
+    if (isStreaming || !message.text.trim()) return;
+    handleSubmit(undefined, message.text);
     setInputValue('');
   };
 
@@ -35,44 +40,39 @@ export function ChatInput({
       layout
       className={`relative w-full space-y-4 pt-8 pb-4 ${isChatting ? 'mt-auto' : ''}`}
     >
-      <form onSubmit={onFormSubmit} className="group relative">
+      <div className="group relative mx-auto max-w-3xl">
         <div className="absolute inset-x-0 -top-px -bottom-px rounded-[2rem] bg-linear-to-r from-transparent via-primary/50 to-transparent opacity-0 transition-opacity duration-500 group-focus-within:opacity-100" />
-        <div className="relative flex items-center rounded-[2rem] border border-border bg-white p-2 shadow-xl transition-all group-focus-within:border-primary/30 group-focus-within:shadow-2xl dark:bg-zinc-950">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="ml-1 size-11 rounded-full text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary"
-          >
+
+        <PromptInput
+          className="relative *:data-[slot=input-group]:rounded-[2rem] *:data-[slot=input-group]:border-border *:data-[slot=input-group]:bg-white *:data-[slot=input-group]:p-2 *:data-[slot=input-group]:shadow-xl *:data-[slot=input-group]:transition-all *:data-[slot=input-group]:group-focus-within:border-primary/30 *:data-[slot=input-group]:group-focus-within:shadow-2xl dark:*:data-[slot=input-group]:bg-zinc-950"
+          onSubmit={onPromptSubmit}
+        >
+          <PromptInputButton className="ml-1 size-11 rounded-full text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary">
             <Paperclip className="size-5" />
-          </Button>
-          <Input
+          </PromptInputButton>
+
+          <PromptInputTextarea
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             placeholder={t('placeholder')}
-            className="h-12 border-0 bg-transparent text-lg placeholder:text-muted-foreground/50 focus-visible:ring-0"
+            className="h-12 max-h-12 min-h-12 px-1 text-lg leading-normal placeholder:text-muted-foreground/50"
           />
-          {isStreaming ? (
-            <Button
-              type="button"
-              onClick={onStop}
-              className="size-11 rounded-full bg-destructive shadow-destructive/20 shadow-lg transition-all hover:scale-105 hover:bg-destructive/90"
-              size="icon"
-            >
+
+          <PromptInputSubmit
+            className="size-11 rounded-full transition-all hover:scale-105"
+            disabled={!isStreaming && !inputValue.trim()}
+            onStop={onStop}
+            status={isStreaming ? 'streaming' : 'ready'}
+            variant={isStreaming ? 'destructive' : 'default'}
+          >
+            {isStreaming ? (
               <Square className="size-4" />
-            </Button>
-          ) : (
-            <Button
-              type="submit"
-              className="size-11 rounded-full shadow-lg shadow-primary/20 transition-all hover:scale-105"
-              size="icon"
-              disabled={!inputValue.trim()}
-            >
+            ) : (
               <ArrowUp className="size-5" />
-            </Button>
-          )}
-        </div>
-      </form>
+            )}
+          </PromptInputSubmit>
+        </PromptInput>
+      </div>
 
       <AnimatePresence>
         {!isChatting && (

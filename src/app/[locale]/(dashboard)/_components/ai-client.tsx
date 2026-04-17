@@ -15,7 +15,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { ChatInput } from './chat-input';
@@ -35,7 +35,6 @@ const chatTransport = new DefaultChatTransport({
 export function AIClient({ userName }: AIClientProps) {
   const t = useTranslations('AIChat');
   const [view, setView] = useState<ViewState>('home');
-  const scrollRef = useRef<HTMLDivElement>(null);
 
   const { messages, status, sendMessage, stop } = useChat({
     transport: chatTransport,
@@ -49,13 +48,6 @@ export function AIClient({ userName }: AIClientProps) {
 
   const isStreaming = status === 'streaming' || status === 'submitted';
   const isChatting = messages.length > 0;
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: We use these as triggers to scroll to bottom
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [messages.length, isStreaming]);
 
   const handleSubmit = (e?: React.FormEvent, customValue?: string) => {
     e?.preventDefault();
@@ -167,11 +159,7 @@ export function AIClient({ userName }: AIClientProps) {
               }}
             />
           ) : (
-            <ChatView
-              messages={messages}
-              isStreaming={isStreaming}
-              scrollRef={scrollRef}
-            />
+            <ChatView messages={messages} isStreaming={isStreaming} />
           )}
         </AnimatePresence>
       </div>
