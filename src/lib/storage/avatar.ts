@@ -7,7 +7,9 @@ import {
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 const DEFAULT_READ_EXPIRES_SECONDS = 30 * 60;
-export const AVATAR_MAX_FILE_SIZE_BYTES = 2 * 1024 * 1024;
+const AVATAR_BUCKET_NAME = 'eduflow-avatars';
+
+export const AVATAR_MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 export const AVATAR_ALLOWED_CONTENT_TYPES = [
   'image/png',
   'image/jpeg',
@@ -50,8 +52,6 @@ const getS3Client = () => {
 
   return s3Client;
 };
-
-const getBucket = () => ensureEnv('AWS_S3_BUCKET_NAME');
 
 const normalizeExtension = (extension: string) => {
   const trimmed = extension.trim().toLowerCase();
@@ -115,7 +115,7 @@ export const createAvatarReadSignedUrl = async ({
   expiresInSeconds?: number;
 }) => {
   const command = new GetObjectCommand({
-    Bucket: getBucket(),
+    Bucket: AVATAR_BUCKET_NAME,
     Key: objectKey,
   });
 
@@ -134,7 +134,7 @@ export const uploadAvatarObject = async ({
   body: Uint8Array;
 }) => {
   const command = new PutObjectCommand({
-    Bucket: getBucket(),
+    Bucket: AVATAR_BUCKET_NAME,
     Key: objectKey,
     ContentType: contentType,
     Body: body,
@@ -145,7 +145,7 @@ export const uploadAvatarObject = async ({
 
 export const deleteAvatarObject = async (objectKey: string) => {
   const command = new DeleteObjectCommand({
-    Bucket: getBucket(),
+    Bucket: AVATAR_BUCKET_NAME,
     Key: objectKey,
   });
 
