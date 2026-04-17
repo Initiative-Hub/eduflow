@@ -276,8 +276,8 @@
       "new": "New avatar",
       "remove": "Remove avatar",
       "save": "Save avatar",
-      "saveError": "Failed to save avatar changes.",
       "saved": "Avatar updated",
+      "saveError": "Failed to save avatar changes.",
       "title": "Avatar",
       "upload": "Upload avatar"
     },

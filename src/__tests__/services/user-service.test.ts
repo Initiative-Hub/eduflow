@@ -14,6 +14,12 @@ vi.mock('@/lib/prisma', () => ({
   },
 }));
 
+vi.mock('@/lib/storage/avatar', () => ({
+  createAvatarReadSignedUrl: vi.fn(({ objectKey }) =>
+    Promise.resolve(objectKey)
+  ),
+}));
+
 describe('UserService', () => {
   const prismaMock = prisma as unknown as {
     platformRole: {
