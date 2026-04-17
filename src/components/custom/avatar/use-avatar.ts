@@ -99,18 +99,6 @@ export const useAvatar = ({
     [onAvatarChange]
   );
 
-  const handleRemoveAvatar = useCallback(() => {
-    if (previewObjectUrlRef.current) {
-      if (previewObjectUrlRef.current !== committedObjectUrlRef.current) {
-        URL.revokeObjectURL(previewObjectUrlRef.current);
-      }
-      previewObjectUrlRef.current = null;
-    }
-
-    setDraftFile(null);
-    setDraftAvatarUrl(null);
-  }, []);
-
   const handleFileSelect = useCallback(
     (file: File) => {
       if (!file.type.startsWith('image/')) {
@@ -138,31 +126,40 @@ export const useAvatar = ({
     [maxFileSizeBytes]
   );
 
-  const handleSaveAvatar = useCallback(async () => {
-    setIsSaving(true);
-    try {
-      await emitAvatarChange({
-        file: draftFile,
-        previewUrl: draftAvatarUrl,
-      });
+  const handleSaveAvatar = useCallback(
+    async (modeOverride?: 'save' | 'remove') => {
+      const mode = modeOverride ?? (draftAvatarUrl ? 'save' : 'remove');
+      const nextDraftAvatarUrl = mode === 'remove' ? null : draftAvatarUrl;
+      const nextDraftFile = mode === 'remove' ? null : draftFile;
 
-      if (draftFile && draftAvatarUrl) {
-        committedObjectUrlRef.current = draftAvatarUrl;
+      setIsSaving(true);
+      try {
+        await emitAvatarChange({
+          file: nextDraftFile,
+          previewUrl: nextDraftAvatarUrl,
+          mode,
+        });
+
+        if (nextDraftFile && nextDraftAvatarUrl) {
+          committedObjectUrlRef.current = nextDraftAvatarUrl;
+        }
+
+        if (!nextDraftAvatarUrl && committedObjectUrlRef.current) {
+          URL.revokeObjectURL(committedObjectUrlRef.current);
+          committedObjectUrlRef.current = null;
+        }
+
+        setCommittedAvatarUrl(nextDraftAvatarUrl);
+        setDraftFile(null);
+        setDraftAvatarUrl(nextDraftAvatarUrl);
+        previewObjectUrlRef.current = null;
+        setIsModalOpen(false);
+      } finally {
+        setIsSaving(false);
       }
-
-      if (!draftAvatarUrl && committedObjectUrlRef.current) {
-        URL.revokeObjectURL(committedObjectUrlRef.current);
-        committedObjectUrlRef.current = null;
-      }
-
-      setCommittedAvatarUrl(draftAvatarUrl);
-      setDraftFile(null);
-      previewObjectUrlRef.current = null;
-      setIsModalOpen(false);
-    } finally {
-      setIsSaving(false);
-    }
-  }, [draftAvatarUrl, draftFile, emitAvatarChange]);
+    },
+    [draftAvatarUrl, draftFile, emitAvatarChange]
+  );
 
   return {
     committedAvatarUrl,
@@ -175,7 +172,6 @@ export const useAvatar = ({
     handleDialogChange,
     handleFileSelect,
     handleOpenModal,
-    handleRemoveAvatar,
     handleSaveAvatar,
   };
 };

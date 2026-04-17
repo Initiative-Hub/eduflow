@@ -2,8 +2,20 @@ import type { PlatformRoleName } from '@/generated/prisma';
 import { auth } from '@/lib/auth';
 import { emailService } from '@/lib/email-service';
 import { prisma } from '@/lib/prisma';
+import { createAvatarReadSignedUrl } from '@/lib/storage/avatar';
 
 export class UserService {
+  private static async resolveAvatarImage(image: string | null) {
+    if (!image) return null;
+
+    try {
+      return await createAvatarReadSignedUrl({ objectKey: image });
+    } catch (error) {
+      console.error('Failed to create avatar signed URL:', error);
+      return null;
+    }
+  }
+
   static async getBasicInfo(userId: string) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -14,12 +26,14 @@ export class UserService {
       throw new Error('User not found');
     }
 
+    const signedAvatarUrl = await UserService.resolveAvatarImage(user.image);
+
     return {
       id: user.id,
       email: user.email,
       name: user.name,
       role: user.role?.name ?? null,
-      image: user.image ?? null,
+      image: signedAvatarUrl,
       emailVerified: user.emailVerified,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
@@ -86,6 +100,29 @@ export class UserService {
       data: {
         name: data.name,
       },
+    });
+  }
+
+  static async getAvatarPath(userId: string) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { image: true },
+    });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    return user.image;
+  }
+
+  static async setAvatarPath(userId: string, avatarPath: string | null) {
+    return await prisma.user.update({
+      where: { id: userId },
+      data: {
+        image: avatarPath,
+      },
+      select: { image: true },
     });
   }
 

@@ -1,6 +1,7 @@
 export interface AvatarChangePayload {
   file: File | null;
   previewUrl: string | null;
+  mode: 'save' | 'remove';
 }
 
 export interface AvatarTemplateProps {

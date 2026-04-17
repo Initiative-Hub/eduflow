@@ -30,7 +30,6 @@ export function AvatarTemplate({
     handleOpenModal,
     handleFileSelect,
     handleDialogChange,
-    handleRemoveAvatar,
     handleSaveAvatar,
   } = useAvatar({
     initialAvatarUrl: avatarUrl ?? null,
@@ -118,7 +117,14 @@ export function AvatarTemplate({
               <Button
                 type="button"
                 variant="destructive"
-                onClick={handleRemoveAvatar}
+                onClick={async () => {
+                  try {
+                    await handleSaveAvatar('remove');
+                    toast.success(t('avatar.saved'));
+                  } catch {
+                    toast.error(t('avatar.saveError'));
+                  }
+                }}
                 disabled={isSaving}
               >
                 {t('avatar.remove')}
