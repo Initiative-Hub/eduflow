@@ -55,7 +55,7 @@ export function AppNavbar() {
             )}
           </Link>
           <Link
-            href="/course"
+            href="/courses"
             className="relative flex flex-col items-center justify-center"
           >
             <span
