@@ -17,6 +17,9 @@ interface ChatInputProps {
   handleSubmit: (e?: React.FormEvent, customValue?: string) => void;
   isStreaming: boolean;
   isChatting: boolean;
+  isLimitReached: boolean;
+  limitCount: number;
+  userMessageCount: number;
   onStop: () => void;
 }
 
@@ -24,16 +27,23 @@ export function ChatInput({
   handleSubmit,
   isStreaming,
   isChatting,
+  isLimitReached,
+  limitCount,
+  userMessageCount,
   onStop,
 }: ChatInputProps) {
   const t = useTranslations('AIChat');
   const [inputValue, setInputValue] = useState('');
 
   const onPromptSubmit = (message: PromptInputMessage) => {
-    if (isStreaming || !message.text.trim()) return;
+    if (isStreaming || isLimitReached || !message.text.trim()) return;
     handleSubmit(undefined, message.text);
     setInputValue('');
   };
+
+  const inputPlaceholder = isLimitReached
+    ? t('limitReachedPlaceholder', { count: limitCount })
+    : t('placeholder');
 
   return (
     <motion.div
@@ -54,13 +64,14 @@ export function ChatInput({
           <PromptInputTextarea
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            placeholder={t('placeholder')}
+            placeholder={inputPlaceholder}
             className="h-12 max-h-12 min-h-12 px-1 text-lg leading-normal placeholder:text-muted-foreground/50"
+            disabled={isLimitReached}
           />
 
           <PromptInputSubmit
             className="size-11 rounded-full transition-all hover:scale-105"
-            disabled={!isStreaming && !inputValue.trim()}
+            disabled={isLimitReached || (!isStreaming && !inputValue.trim())}
             onStop={onStop}
             status={isStreaming ? 'streaming' : 'ready'}
             variant={isStreaming ? 'destructive' : 'default'}
@@ -107,6 +118,15 @@ export function ChatInput({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {isLimitReached && (
+        <p className="text-center font-medium text-muted-foreground text-sm">
+          {t('limitReachedHelper', {
+            count: limitCount,
+            used: userMessageCount,
+          })}
+        </p>
+      )}
     </motion.div>
   );
 }

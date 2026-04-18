@@ -1,16 +1,7 @@
 import { S3Client } from '@aws-sdk/client-s3';
+import { ensureEnv } from '../utils';
 
 let s3Client: S3Client | null = null;
-
-const ensureEnv = (name: string) => {
-  const value = process.env[name];
-
-  if (!value) {
-    throw new Error(`Missing required env var: ${name}`);
-  }
-
-  return value;
-};
 
 export const createS3Client = () => {
   if (s3Client) {

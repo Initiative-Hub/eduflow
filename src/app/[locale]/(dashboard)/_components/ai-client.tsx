@@ -18,6 +18,10 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
+import {
+  getUserMessageCount,
+  hasReachedUserMessageLimit,
+} from '@/utils/chat-limit';
 import { ChatInput } from './chat-input';
 import { ChatView } from './chat-view';
 import { LandingView } from './landing-view';
@@ -28,6 +32,8 @@ interface AIClientProps {
 
 export type ViewState = 'home' | 'library';
 
+const MAX_USER_MESSAGES = 5;
+
 export function AIClient({ userName }: AIClientProps) {
   const t = useTranslations('AIChat');
   const [view, setView] = useState<ViewState>('home');
@@ -35,10 +41,10 @@ export function AIClient({ userName }: AIClientProps) {
   const { messages, status, sendMessage, stop } = useChat({
     transport: new DefaultChatTransport({
       api: '/api/chat',
-      body: {
-        provider: 'google',
-        model: 'gemini-2.5-pro',
-      },
+      // body: {
+      //   provider: 'google',
+      //   model: 'gemini-2.5-pro',
+      // },
     }),
     onError(error) {
       console.error('Chat error:', error);
@@ -50,12 +56,26 @@ export function AIClient({ userName }: AIClientProps) {
 
   const isStreaming = status === 'streaming' || status === 'submitted';
   const isChatting = messages.length > 0;
+  const userMessageCount = getUserMessageCount(messages);
+  const isLimitReached = hasReachedUserMessageLimit(
+    messages,
+    MAX_USER_MESSAGES
+  );
+
+  const notifyLimitReached = () => {
+    toast.error(t('limitReachedToast', { count: MAX_USER_MESSAGES }));
+  };
 
   const handleSubmit = (e?: React.FormEvent, customValue?: string) => {
     e?.preventDefault();
 
     const text = customValue || '';
     if (!text.trim()) return;
+
+    if (isLimitReached) {
+      notifyLimitReached();
+      return;
+    }
 
     void sendMessage({ text: text.trim() });
   };
@@ -157,6 +177,10 @@ export function AIClient({ userName }: AIClientProps) {
               suggestions={suggestions}
               extendedPrompts={extendedPrompts}
               onSelectPrompt={(text) => {
+                if (isLimitReached) {
+                  notifyLimitReached();
+                  return;
+                }
                 void sendMessage({ text });
               }}
             />
@@ -170,6 +194,9 @@ export function AIClient({ userName }: AIClientProps) {
         handleSubmit={handleSubmit}
         isStreaming={isStreaming}
         isChatting={isChatting}
+        isLimitReached={isLimitReached}
+        limitCount={MAX_USER_MESSAGES}
+        userMessageCount={userMessageCount}
         onStop={stop}
       />
     </div>
