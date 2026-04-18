@@ -16,6 +16,8 @@
     "email:export": "email export -d ./src/templates/emails",
     "mailpit:start": "docker compose up -d mailpit",
     "mailpit:stop": "docker compose down mailpit",
+    "redis:start": "docker compose up -d redis",
+    "redis:stop": "docker compose down redis",
     "test": "vitest run",
     "test:watch": "vitest",
     "type-check": "bun db:generate && tsc --build",
