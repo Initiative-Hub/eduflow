@@ -15,6 +15,8 @@
     "db:stop": "docker compose down postgres",
     "mailpit:start": "docker compose up -d mailpit",
     "mailpit:stop": "docker compose down mailpit",
+    "redis:start": "docker compose up -d redis",
+    "redis:stop": "docker compose down redis",
     "s3:start": "docker compose up -d minio minio-init",
     "s3:stop": "docker compose down minio minio-init",
     "s3:reset": "docker compose up -d minio-reset",
