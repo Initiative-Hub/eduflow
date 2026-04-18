@@ -1,23 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
-  ALLOWED_CONTENT_TYPES,
   extensionFromFileName,
   extensionFromMimeType,
   normalizeExtension,
 } from '@/utils/file-helper';
 
 describe('file-helper', () => {
-  describe('ALLOWED_CONTENT_TYPES', () => {
-    it('exposes the supported image content types in the expected order', () => {
-      expect(ALLOWED_CONTENT_TYPES).toEqual([
-        'image/png',
-        'image/jpeg',
-        'image/jpg',
-        'image/webp',
-      ]);
-    });
-  });
-
   describe('normalizeExtension', () => {
     it('trims whitespace and lowercases the extension', () => {
       expect(normalizeExtension('  PNG  ')).toBe('png');

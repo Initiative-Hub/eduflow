@@ -2,13 +2,13 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withAuth } from '@/lib/api/middlewares';
 import {
+  ALLOWED_CONTENT_TYPES,
   AVATAR_MAX_FILE_SIZE_BYTES,
   buildAvatarObjectKey,
   deleteAvatarObject,
   uploadAvatarObject,
 } from '@/lib/storage/avatar';
 import { UserService } from '@/services/UserService';
-import { ALLOWED_CONTENT_TYPES } from '@/utils/file-helper';
 
 const uploadAvatarMetaSchema = z.object({
   fileName: z.string().min(1),

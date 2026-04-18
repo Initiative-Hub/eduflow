@@ -7,7 +7,6 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import {
   extensionFromFileName,
   extensionFromMimeType,
-  type ImageContentType,
 } from '@/utils/file-helper';
 import { createS3Client } from './s3-client';
 
@@ -15,6 +14,14 @@ const DEFAULT_READ_EXPIRES_SECONDS = 30 * 60;
 const AVATAR_BUCKET_NAME = 'eduflow-avatars';
 
 export const AVATAR_MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
+export const ALLOWED_CONTENT_TYPES = [
+  'image/png',
+  'image/jpeg',
+  'image/jpg',
+  'image/webp',
+] as const;
+
+type ImageContentType = (typeof ALLOWED_CONTENT_TYPES)[number];
 
 export const buildAvatarPrefix = (userId: string) => `users/${userId}/avatars/`;
 
