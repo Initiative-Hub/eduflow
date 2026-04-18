@@ -1,5 +1,7 @@
 'use client';
 
+import { useChat } from '@ai-sdk/react';
+import { DefaultChatTransport } from 'ai';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   BadgeInfo,
@@ -13,38 +15,112 @@ import {
   Zap,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { Badge } from '@/components/ui/badge';
-import { useChatController } from '../use-chat';
-import { ChatInput } from './chat-input';
-import { ChatView } from './chat-view';
-import { LandingView } from './landing-view';
+import { Badge } from '../../../../../../components/ui/badge';
+import { usePathname } from '../../../../../../i18n/navigation';
+import { useChatSessionStore } from '../../../../../../stores/useChatSessionStore';
+import {
+  getUserMessageCount,
+  hasReachedUserMessageLimit,
+} from '../../../../../../utils/chat-limit';
+import { ChatInput } from '../../../_components/chat-input';
+import { ChatView } from '../../../_components/chat-view';
+import { LandingView } from '../../../_components/landing-view';
 
 interface AIClientProps {
   userName?: string;
-  chatId?: string;
+  chatId: string;
 }
 
 export type ViewState = 'home' | 'library';
 
+const MAX_USER_MESSAGES = 5;
+
 export function AIClient({ userName, chatId }: AIClientProps) {
   const t = useTranslations('AIChat');
+  const pathname = usePathname();
   const [view, setView] = useState<ViewState>('home');
+  const lastPendingSendRef = useRef<string | null>(null);
   const {
+    pendingMessage,
+    pendingChatId,
+    optimisticChatId,
+    optimisticMessages,
+    clearPendingMessage,
+    clearPendingChatId,
+    setOptimisticChatId,
+    clearOptimisticMessages,
+  } = useChatSessionStore();
+
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport({
+        api: '/api/chat',
+        body: { chatId },
+      }),
+    [chatId]
+  );
+
+  const { messages, status, sendMessage, stop } = useChat({
+    id: chatId,
+    transport,
+    onError(error) {
+      console.error('Chat error:', error);
+      toast.error(
+        error.message || 'An error occurred while sending the message.'
+      );
+    },
+  });
+
+  const isStreaming = status === 'streaming' || status === 'submitted';
+  const optimisticForChat =
+    optimisticChatId === chatId ? optimisticMessages : [];
+  const displayMessages = messages.length > 0 ? messages : optimisticForChat;
+  const isChatting = displayMessages.length > 0;
+  const userMessageCount = getUserMessageCount(displayMessages);
+  const isLimitReached = hasReachedUserMessageLimit(
     displayMessages,
-    isStreaming,
-    isChatting,
-    isLimitReached,
-    userMessageCount,
-    startChat,
-    stop,
-    maxMessages,
-  } = useChatController({ chatId });
+    MAX_USER_MESSAGES
+  );
 
   const notifyLimitReached = () => {
-    toast.error(t('limitReachedToast', { count: maxMessages }));
+    toast.error(t('limitReachedToast', { count: MAX_USER_MESSAGES }));
   };
+
+  useEffect(() => {
+    if (!pendingMessage || !pendingChatId) return;
+    if (pendingChatId !== chatId) return;
+    if (!pathname?.includes(`/chat/${pendingChatId}`)) return;
+
+    const pendingKey = `${pendingChatId}:${pendingMessage}`;
+    if (lastPendingSendRef.current === pendingKey) return;
+
+    lastPendingSendRef.current = pendingKey;
+    clearPendingMessage();
+    clearPendingChatId();
+
+    void sendMessage({ text: pendingMessage });
+  }, [
+    clearPendingChatId,
+    clearPendingMessage,
+    pendingMessage,
+    pendingChatId,
+    chatId,
+    pathname,
+    sendMessage,
+  ]);
+
+  useEffect(() => {
+    if (messages.length === 0 || optimisticMessages.length === 0) return;
+    clearOptimisticMessages();
+    setOptimisticChatId(null);
+  }, [
+    messages.length,
+    optimisticMessages.length,
+    clearOptimisticMessages,
+    setOptimisticChatId,
+  ]);
 
   const handleSubmit = (e?: React.FormEvent, customValue?: string) => {
     e?.preventDefault();
@@ -57,7 +133,7 @@ export function AIClient({ userName, chatId }: AIClientProps) {
       return;
     }
 
-    void startChat(text.trim());
+    void sendMessage({ text: text.trim() });
   };
 
   const suggestions = [
@@ -107,12 +183,10 @@ export function AIClient({ userName, chatId }: AIClientProps) {
 
   return (
     <div className="relative flex h-full flex-1 flex-col items-center overflow-x-hidden px-4 py-8 md:px-0">
-      {/* Background Ambient Glow */}
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden">
         <div className="h-125 w-125 rounded-full bg-primary/5 blur-[120px]" />
       </div>
 
-      {/* Top Badges - Only show when not chatting */}
       <AnimatePresence>
         {!isChatting && (
           <motion.div
@@ -146,7 +220,6 @@ export function AIClient({ userName, chatId }: AIClientProps) {
         )}
       </AnimatePresence>
 
-      {/* Main Content Area */}
       <div className="relative z-10 flex w-full flex-1 flex-col justify-center overflow-hidden">
         <AnimatePresence mode="wait">
           {!isChatting ? (
@@ -156,12 +229,12 @@ export function AIClient({ userName, chatId }: AIClientProps) {
               setView={setView}
               suggestions={suggestions}
               extendedPrompts={extendedPrompts}
-              onSelectPrompt={(text) => {
+              onSelectPrompt={(text: string) => {
                 if (isLimitReached) {
                   notifyLimitReached();
                   return;
                 }
-                void startChat(text);
+                void sendMessage({ text });
               }}
             />
           ) : (
@@ -175,7 +248,7 @@ export function AIClient({ userName, chatId }: AIClientProps) {
         isStreaming={isStreaming}
         isChatting={isChatting}
         isLimitReached={isLimitReached}
-        limitCount={maxMessages}
+        limitCount={MAX_USER_MESSAGES}
         userMessageCount={userMessageCount}
         onStop={stop}
       />
