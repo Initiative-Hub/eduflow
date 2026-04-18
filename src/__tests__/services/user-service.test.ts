@@ -15,6 +15,10 @@ vi.mock('@/lib/prisma', () => ({
 }));
 
 vi.mock('@/lib/storage/avatar', () => ({
+  isAbsoluteHttpUrl: vi.fn(
+    (url: string) => url.startsWith('http://') || url.startsWith('https://')
+  ),
+  isAvatarObjectKey: vi.fn((key: string) => key.startsWith('avatars/')),
   createAvatarReadSignedUrl: vi.fn(({ objectKey }) =>
     Promise.resolve(objectKey)
   ),
