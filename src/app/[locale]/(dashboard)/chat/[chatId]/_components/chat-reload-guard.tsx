@@ -13,9 +13,16 @@ export function ChatReloadGuard() {
     const navigationEntry = entries[0] as
       | PerformanceNavigationTiming
       | undefined;
-    const isReload = navigationEntry?.type === 'reload';
+    if (!navigationEntry || navigationEntry.type !== 'reload') return;
+    if (typeof window === 'undefined') return;
 
-    if (isReload) {
+    try {
+      const navigationUrl = new URL(navigationEntry.name);
+      const currentPath = window.location.pathname;
+
+      if (navigationUrl.pathname !== currentPath) return;
+      router.replace('/');
+    } catch {
       router.replace('/');
     }
   }, [router]);
