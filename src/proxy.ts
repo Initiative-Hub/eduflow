@@ -1,5 +1,4 @@
-import type { NextRequest } from 'next/server';
-import { NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import createMiddleware from 'next-intl/middleware';
 import { routing } from '@/i18n/routing';
 import { auth } from '@/lib/auth';
@@ -8,6 +7,29 @@ import { sanitizeUrl } from '@/utils/url-helper';
 import { AUTH_PATHS, PUBLIC_PATHS } from './constants/common';
 
 const intlMiddleware = createMiddleware(routing);
+
+export async function middleware(req: NextRequest) {
+  const { res: authRes, redirect } = await handleRedirect({ req });
+
+  const finalResponse = redirect ? authRes : intlMiddleware(req);
+
+  const guestSession = req.cookies.get('guest_session');
+
+  if (!guestSession) {
+    const newGuestId = `guest_${crypto.randomUUID()}`;
+
+    finalResponse.cookies.set({
+      name: 'guest_session',
+      value: newGuestId,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 60 * 60 * 24, // 24 hours
+      path: '/',
+    });
+  }
+
+  return finalResponse;
+}
 
 function hasActiveSession(
   sessionData: Awaited<ReturnType<typeof auth.api.getSession>> | null

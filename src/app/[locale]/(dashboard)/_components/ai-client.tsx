@@ -1,7 +1,7 @@
 'use client';
 
 import { useChat } from '@ai-sdk/react';
-import { DefaultChatTransport } from 'ai';
+import { DefaultChatTransport, type UIMessage } from 'ai';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   BadgeInfo,
@@ -15,9 +15,11 @@ import {
   Zap,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
+import { useRouter } from '@/i18n/navigation';
+import { useChatSessionStore } from '@/stores/useChatSessionStore';
 import {
   getUserMessageCount,
   hasReachedUserMessageLimit,
@@ -28,24 +30,43 @@ import { LandingView } from './landing-view';
 
 interface AIClientProps {
   userName?: string;
+  chatId?: string;
 }
 
 export type ViewState = 'home' | 'library';
 
 const MAX_USER_MESSAGES = 5;
 
-export function AIClient({ userName }: AIClientProps) {
+export function AIClient({ userName, chatId: initialChatId }: AIClientProps) {
   const t = useTranslations('AIChat');
+  const router = useRouter();
   const [view, setView] = useState<ViewState>('home');
+  const [chatId, setChatId] = useState(initialChatId);
+  const {
+    pendingMessage,
+    optimisticChatId,
+    optimisticMessages,
+    setPendingMessage,
+    clearPendingMessage,
+    setOptimisticChatId,
+    setOptimisticMessages,
+    clearOptimisticMessages,
+  } = useChatSessionStore();
+
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport({
+        api: '/api/chat',
+        body: chatId ? { chatId } : undefined,
+      }),
+    [chatId]
+  );
+
+  const chatOptions = chatId ? { id: chatId } : {};
 
   const { messages, status, sendMessage, stop } = useChat({
-    transport: new DefaultChatTransport({
-      api: '/api/chat',
-      // body: {
-      //   provider: 'google',
-      //   model: 'gemini-2.5-pro',
-      // },
-    }),
+    ...chatOptions,
+    transport,
     onError(error) {
       console.error('Chat error:', error);
       toast.error(
@@ -55,15 +76,78 @@ export function AIClient({ userName }: AIClientProps) {
   });
 
   const isStreaming = status === 'streaming' || status === 'submitted';
-  const isChatting = messages.length > 0;
-  const userMessageCount = getUserMessageCount(messages);
+  const optimisticForChat =
+    optimisticChatId && optimisticChatId === chatId ? optimisticMessages : [];
+  const displayMessages = messages.length > 0 ? messages : optimisticForChat;
+  const isChatting = displayMessages.length > 0;
+  const userMessageCount = getUserMessageCount(displayMessages);
   const isLimitReached = hasReachedUserMessageLimit(
-    messages,
+    displayMessages,
     MAX_USER_MESSAGES
   );
 
   const notifyLimitReached = () => {
     toast.error(t('limitReachedToast', { count: MAX_USER_MESSAGES }));
+  };
+
+  useEffect(() => {
+    if (!pendingMessage || !chatId) return;
+
+    void sendMessage({ text: pendingMessage });
+    clearPendingMessage();
+  }, [clearPendingMessage, pendingMessage, chatId, sendMessage]);
+
+  useEffect(() => {
+    if (messages.length === 0 || optimisticMessages.length === 0) return;
+    clearOptimisticMessages();
+    setOptimisticChatId(null);
+  }, [
+    messages.length,
+    optimisticMessages.length,
+    clearOptimisticMessages,
+    setOptimisticChatId,
+  ]);
+
+  const createUserMessage = (text: string): UIMessage => ({
+    id: `msg_${crypto.randomUUID()}`,
+    role: 'user',
+    parts: [{ type: 'text', text }],
+  });
+
+  const createChat = async (text: string) => {
+    const response = await fetch('/api/chat/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ firstMessage: text }),
+    });
+
+    if (!response.ok) {
+      const data = (await response.json()) as { error?: string };
+      throw new Error(data.error || 'Failed to create chat.');
+    }
+
+    const data = (await response.json()) as { chatId: string };
+    return data.chatId;
+  };
+
+  const startChat = async (text: string) => {
+    if (!chatId) {
+      try {
+        const newChatId = await createChat(text);
+        setChatId(newChatId);
+        setOptimisticChatId(newChatId);
+        setOptimisticMessages([createUserMessage(text)]);
+        setPendingMessage(text);
+        router.push(`/chat/${newChatId}`);
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : 'Unable to start chat.';
+        toast.error(message);
+      }
+      return;
+    }
+
+    void sendMessage({ text });
   };
 
   const handleSubmit = (e?: React.FormEvent, customValue?: string) => {
@@ -77,7 +161,7 @@ export function AIClient({ userName }: AIClientProps) {
       return;
     }
 
-    void sendMessage({ text: text.trim() });
+    void startChat(text.trim());
   };
 
   const suggestions = [
@@ -181,11 +265,11 @@ export function AIClient({ userName }: AIClientProps) {
                   notifyLimitReached();
                   return;
                 }
-                void sendMessage({ text });
+                void startChat(text);
               }}
             />
           ) : (
-            <ChatView messages={messages} isStreaming={isStreaming} />
+            <ChatView messages={displayMessages} isStreaming={isStreaming} />
           )}
         </AnimatePresence>
       </div>

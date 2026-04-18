@@ -1,3 +1,4 @@
+import { cookies } from 'next/headers';
 import { z } from 'zod';
 import { ChatProviderFactory } from '@/services/ai/ChatProviderFactory';
 import { DEFAULT_PROVIDER } from '@/services/ai/chat-provider.constants';
@@ -5,7 +6,8 @@ import type {
   ChatProvider,
   StreamChatInput,
 } from '@/services/ai/chat-provider.types';
-
+import { CacheService } from '@/services/CacheService';
+import { buildNewChatData } from '@/services/chat/chat-session';
 /**
  * @swagger
  * /api/chat:
@@ -44,6 +46,8 @@ import type {
  *                 type: string
  *               providerOptions:
  *                 type: object
+ *               chatId:
+ *                 type: string
  *     responses:
  *       200:
  *         description: Streamed AI response
@@ -60,8 +64,8 @@ const chatRequestSchema = z.object({
   model: z.string().min(1).optional(),
   apiKey: z.string().min(1).optional(),
   providerOptions: z.custom<StreamChatInput['providerOptions']>().optional(),
+  chatId: z.string().min(1).optional(),
 });
-
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -73,22 +77,87 @@ export async function POST(req: Request) {
           error: 'Invalid request payload',
           details: parsedBody.error.flatten(),
         }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const cookieStore = await cookies();
+    let guestSession = cookieStore.get('guest_session');
+    let guestId = guestSession?.value;
+
+    if (!guestId) {
+      guestId = `guest_${crypto.randomUUID()}`;
+      cookieStore.set('guest_session', guestId, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 60 * 60 * 24,
+        path: '/',
+      });
+      guestSession = cookieStore.get('guest_session');
+    }
+
+    const limitStatus = await CacheService.checkGuestLimit(guestId);
+
+    if (!limitStatus.allowed) {
+      return new Response(
+        JSON.stringify({
+          error: limitStatus.message,
+          remaining: limitStatus.remaining,
+        }),
         {
-          status: 400,
+          status: 429,
           headers: { 'Content-Type': 'application/json' },
         }
       );
     }
 
+    let isNewChat = !parsedBody.data.chatId;
+    const chatId = parsedBody.data.chatId || `chat_${crypto.randomUUID()}`;
+
+    let chatData: any;
+
+    if (!isNewChat) {
+      chatData = await CacheService.getCache<any>(chatId);
+    }
+
+    if (!chatData) {
+      const firstMessage = parsedBody.data.messages[0] as {
+        parts?: Array<{ type?: string; text?: string }>;
+        content?: string;
+      };
+      isNewChat = true;
+      chatData = buildNewChatData({
+        guestId,
+        firstMessage: firstMessage.content ?? '',
+      });
+      chatData.messages = parsedBody.data.messages;
+    } else {
+      if (chatData.guestId !== guestId) {
+        return new Response(JSON.stringify({ error: 'Access denied' }), {
+          status: 403,
+        });
+      }
+
+      chatData.messages = [...chatData.messages, ...parsedBody.data.messages];
+    }
+
+    await CacheService.setCache(chatId, chatData, { ttlSeconds: 86400 });
+
     const provider = ChatProviderFactory.create(
       parsedBody.data.provider ?? DEFAULT_PROVIDER
     );
 
-    const result = await provider.streamChat(
-      parsedBody.data as StreamChatInput
-    );
+    const { chatId: _chatId, ...chatInput } = parsedBody.data;
 
-    return result.toUIMessageStreamResponse();
+    const result = await provider.streamChat(chatInput as StreamChatInput);
+
+    const response = result.toUIMessageStreamResponse();
+
+    if (isNewChat) {
+      response.headers.set('X-Chat-Id', chatId);
+    }
+
+    return response;
   } catch (error: unknown) {
     const message =
       error instanceof Error ? error.message : 'Unknown error occurred';
