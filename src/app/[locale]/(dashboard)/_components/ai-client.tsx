@@ -15,10 +15,10 @@ import {
   Zap,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
-import { useRouter } from '@/i18n/navigation';
+import { usePathname, useRouter } from '@/i18n/navigation';
 import { useChatSessionStore } from '@/stores/useChatSessionStore';
 import {
   getUserMessageCount,
@@ -40,14 +40,19 @@ const MAX_USER_MESSAGES = 5;
 export function AIClient({ userName, chatId: initialChatId }: AIClientProps) {
   const t = useTranslations('AIChat');
   const router = useRouter();
+  const pathname = usePathname();
   const [view, setView] = useState<ViewState>('home');
-  const [chatId, setChatId] = useState(initialChatId);
+  const [chatId] = useState(initialChatId);
+  const lastPendingSendRef = useRef<string | null>(null);
   const {
     pendingMessage,
+    pendingChatId,
     optimisticChatId,
     optimisticMessages,
     setPendingMessage,
     clearPendingMessage,
+    setPendingChatId,
+    clearPendingChatId,
     setOptimisticChatId,
     setOptimisticMessages,
     clearOptimisticMessages,
@@ -91,11 +96,27 @@ export function AIClient({ userName, chatId: initialChatId }: AIClientProps) {
   };
 
   useEffect(() => {
-    if (!pendingMessage || !chatId) return;
+    if (!pendingMessage || !pendingChatId || !chatId) return;
+    if (pendingChatId !== chatId) return;
+    if (!pathname?.includes(`/chat/${pendingChatId}`)) return;
+
+    const pendingKey = `${pendingChatId}:${pendingMessage}`;
+    if (lastPendingSendRef.current === pendingKey) return;
+
+    lastPendingSendRef.current = pendingKey;
+    clearPendingMessage();
+    clearPendingChatId();
 
     void sendMessage({ text: pendingMessage });
-    clearPendingMessage();
-  }, [clearPendingMessage, pendingMessage, chatId, sendMessage]);
+  }, [
+    clearPendingChatId,
+    clearPendingMessage,
+    pendingMessage,
+    pendingChatId,
+    chatId,
+    pathname,
+    sendMessage,
+  ]);
 
   useEffect(() => {
     if (messages.length === 0 || optimisticMessages.length === 0) return;
@@ -134,10 +155,10 @@ export function AIClient({ userName, chatId: initialChatId }: AIClientProps) {
     if (!chatId) {
       try {
         const newChatId = await createChat(text);
-        setChatId(newChatId);
         setOptimisticChatId(newChatId);
         setOptimisticMessages([createUserMessage(text)]);
         setPendingMessage(text);
+        setPendingChatId(newChatId);
         router.push(`/chat/${newChatId}`);
       } catch (error) {
         const message =

@@ -5,6 +5,7 @@ describe('useChatSessionStore', () => {
   afterEach(() => {
     useChatSessionStore.setState({
       pendingMessage: null,
+      pendingChatId: null,
       optimisticChatId: null,
       optimisticMessages: [],
     });
@@ -21,6 +22,19 @@ describe('useChatSessionStore', () => {
     clearPendingMessage();
 
     expect(useChatSessionStore.getState().pendingMessage).toBeNull();
+  });
+
+  it('stores and clears a pending chat id', () => {
+    const { setPendingChatId, clearPendingChatId } =
+      useChatSessionStore.getState();
+
+    setPendingChatId('chat-1');
+
+    expect(useChatSessionStore.getState().pendingChatId).toBe('chat-1');
+
+    clearPendingChatId();
+
+    expect(useChatSessionStore.getState().pendingChatId).toBeNull();
   });
 
   it('stores and clears optimistic messages', () => {

@@ -23,19 +23,20 @@ export async function POST(req: Request) {
     }
 
     const cookieStore = await cookies();
-    let guestSession = cookieStore.get('guest_session');
-    let guestId = guestSession?.value;
+    const guestSession = cookieStore.get('guest_session');
+    const previousGuestId = guestSession?.value;
 
-    if (!guestId) {
-      guestId = `guest_${crypto.randomUUID()}`;
-      cookieStore.set('guest_session', guestId, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 60 * 60 * 24,
-        path: '/',
-      });
-      guestSession = cookieStore.get('guest_session');
+    if (previousGuestId) {
+      await CacheService.deleteCache(`guest_usage:${previousGuestId}`);
     }
+
+    const guestId = `guest_${crypto.randomUUID()}`;
+    cookieStore.set('guest_session', guestId, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 60 * 60 * 24,
+      path: '/',
+    });
 
     const chatId = `chat_${crypto.randomUUID()}`;
     const chatData = buildNewChatData({
