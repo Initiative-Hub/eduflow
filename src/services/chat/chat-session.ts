@@ -14,6 +14,6 @@ export const buildNewChatData = ({
   return {
     guestId,
     title,
-    messages: [] as unknown[],
+    messageCount: 0,
   };
 };

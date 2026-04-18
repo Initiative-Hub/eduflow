@@ -130,7 +130,7 @@ export async function POST(req: Request) {
         guestId,
         firstMessage: firstMessage.content ?? '',
       });
-      chatData.messages = parsedBody.data.messages;
+      chatData.messageCount = parsedBody.data.messages.length;
     } else {
       if (chatData.guestId !== guestId) {
         return new Response(JSON.stringify({ error: 'Access denied' }), {
@@ -138,7 +138,8 @@ export async function POST(req: Request) {
         });
       }
 
-      chatData.messages = [...chatData.messages, ...parsedBody.data.messages];
+      chatData.messageCount =
+        (chatData.messageCount ?? 0) + parsedBody.data.messages.length;
     }
 
     await CacheService.setCache(chatId, chatData, { ttlSeconds: 86400 });

@@ -44,6 +44,8 @@ export async function POST(req: Request) {
       firstMessage: parsedBody.data.firstMessage ?? '',
     });
 
+    chatData.messageCount = parsedBody.data.firstMessage?.trim() ? 1 : 0;
+
     await CacheService.setCache(chatId, chatData, { ttlSeconds: 86400 });
 
     return new Response(JSON.stringify({ chatId }), {

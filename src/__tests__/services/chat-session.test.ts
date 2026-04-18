@@ -11,7 +11,7 @@ describe('buildNewChatData', () => {
     expect(result).toEqual({
       guestId: 'guest-1',
       title: 'Hello world from the chat',
-      messages: [],
+      messageCount: 0,
     });
   });
 

@@ -10,5 +10,10 @@ export default async function ChatPage({ params }: ChatPageProps) {
   const session = await auth.api.getSession({ headers: await headers() });
   const { chatId } = await params;
 
-  return <AIClient userName={session?.user?.name} chatId={chatId} />;
+  return (
+    <>
+      {/* <ChatReloadGuard /> */}
+      <AIClient userName={session?.user?.name} chatId={chatId} />
+    </>
+  );
 }
