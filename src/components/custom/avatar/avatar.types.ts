@@ -14,4 +14,5 @@ export interface UseAvatarProps {
   initialAvatarUrl?: string | null;
   onAvatarChange?: (payload: AvatarChangePayload) => void | Promise<void>;
   maxFileSizeBytes?: number;
+  allowedContentTypes?: string[];
 }

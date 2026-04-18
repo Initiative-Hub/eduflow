@@ -8,13 +8,6 @@ import { DialogTemplate } from '../dialog';
 import type { AvatarTemplateProps } from './avatar.types';
 import { useAvatar } from './use-avatar';
 
-const ACCEPTED_IMAGE_TYPES = [
-  'image/png',
-  'image/jpeg',
-  'image/jpg',
-  'image/webp',
-];
-
 export function AvatarTemplate({
   avatarUrl,
   fallback = 'JD',
@@ -27,6 +20,8 @@ export function AvatarTemplate({
     hasPendingChanges,
     isModalOpen,
     isSaving,
+    maxFileSizeBytes,
+    allowedContentTypes,
     handleOpenModal,
     handleFileSelect,
     handleDialogChange,
@@ -94,7 +89,7 @@ export function AvatarTemplate({
               <input
                 id="avatar-upload"
                 type="file"
-                accept={ACCEPTED_IMAGE_TYPES.join(',')}
+                accept={allowedContentTypes.join(',')}
                 disabled={isSaving}
                 className="hidden"
                 onChange={(event) => {
@@ -105,7 +100,11 @@ export function AvatarTemplate({
 
                   const result = handleFileSelect(file);
                   if (result !== 'ok') {
-                    toast.error(t('avatar.fileValidationError'));
+                    toast.error(t('avatar.fileValidationError'), {
+                      description: t('avatar.fileValidationError', {
+                        maxFileSize: maxFileSizeBytes / (1024 * 1024),
+                      }),
+                    });
                   }
 
                   event.target.value = '';

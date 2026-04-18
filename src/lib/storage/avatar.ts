@@ -23,6 +23,19 @@ export const ALLOWED_CONTENT_TYPES = [
 
 type ImageContentType = (typeof ALLOWED_CONTENT_TYPES)[number];
 
+export function isAbsoluteHttpUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+export function isAvatarObjectKey(value: string) {
+  return value.startsWith('users/') && value.includes('/avatars/');
+}
+
 export const buildAvatarPrefix = (userId: string) => `users/${userId}/avatars/`;
 
 export const buildAvatarObjectKey = ({

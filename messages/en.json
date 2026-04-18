@@ -272,7 +272,7 @@
     "avatar": {
       "description": "Choose a new avatar image.",
       "edit": "Edit",
-      "fileValidationError": "Please upload a valid image under 2 MB.",
+      "fileValidationError": "Please upload a valid image under {maxFileSize} MB.",
       "new": "New avatar",
       "remove": "Remove avatar",
       "save": "Save avatar",

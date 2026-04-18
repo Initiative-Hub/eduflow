@@ -2,17 +2,23 @@ import type { PlatformRoleName } from '@/generated/prisma';
 import { auth } from '@/lib/auth';
 import { emailService } from '@/lib/email-service';
 import { prisma } from '@/lib/prisma';
-import { createAvatarReadSignedUrl } from '@/lib/storage/avatar';
+import {
+  createAvatarReadSignedUrl,
+  isAbsoluteHttpUrl,
+  isAvatarObjectKey,
+} from '@/lib/storage/avatar';
 
 export class UserService {
   private static async resolveAvatarImage(image: string | null) {
     if (!image) return null;
 
+    if (isAbsoluteHttpUrl(image) || !isAvatarObjectKey(image)) return image;
+
     try {
       return await createAvatarReadSignedUrl({ objectKey: image });
     } catch (error) {
       console.error('Failed to create avatar signed URL:', error);
-      return null;
+      return image;
     }
   }
 
@@ -26,14 +32,14 @@ export class UserService {
       throw new Error('User not found');
     }
 
-    const signedAvatarUrl = await UserService.resolveAvatarImage(user.image);
+    const avatarUrl = await UserService.resolveAvatarImage(user.image);
 
     return {
       id: user.id,
       email: user.email,
       name: user.name,
       role: user.role?.name ?? null,
-      image: signedAvatarUrl,
+      image: avatarUrl,
       emailVerified: user.emailVerified,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,

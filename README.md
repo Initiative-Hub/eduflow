@@ -48,7 +48,7 @@ http://localhost:9001
 ### 4. Configure Environment Variables (.env.local)
 Create a `.env.local` file in the root directory and add the following content:
 ```bash
-DATABASE_URL="postgresql://postgres:password@localhost:5432/eduflow_db?schema=public"
+DATABASE_URL="postgresql://postgres:password@localhost:5433/eduflow_db?schema=public"
 
 NEXT_PUBLIC_BETTER_AUTH_URL="http://localhost:3000/api/auth"
 BETTER_AUTH_SECRET="a_very_long_random_secret_string_at_least_32_characters"

@@ -272,7 +272,7 @@
     "avatar": {
       "description": "Chọn ảnh đại diện mới.",
       "edit": "Chỉnh sửa",
-      "fileValidationError": "Vui lòng tải ảnh hợp lệ dưới 2 MB.",
+      "fileValidationError": "Vui lòng tải ảnh hợp lệ dưới {maxFileSize} MB.",
       "new": "Ảnh đại diện mới",
       "remove": "Xóa ảnh đại diện",
       "save": "Lưu ảnh đại diện",

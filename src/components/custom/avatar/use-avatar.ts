@@ -2,11 +2,18 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { AvatarChangePayload, UseAvatarProps } from './avatar.types';
 
 const DEFAULT_MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
+const DEFAULT_ALLOWED_CONTENT_TYPES = [
+  'image/png',
+  'image/jpeg',
+  'image/jpg',
+  'image/webp',
+];
 
 export const useAvatar = ({
   initialAvatarUrl,
   onAvatarChange,
   maxFileSizeBytes = DEFAULT_MAX_FILE_SIZE_BYTES,
+  allowedContentTypes = DEFAULT_ALLOWED_CONTENT_TYPES,
 }: UseAvatarProps = {}) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -101,7 +108,7 @@ export const useAvatar = ({
 
   const handleFileSelect = useCallback(
     (file: File) => {
-      if (!file.type.startsWith('image/')) {
+      if (!allowedContentTypes.includes(file.type)) {
         return 'invalid_type' as const;
       }
 
@@ -123,7 +130,7 @@ export const useAvatar = ({
 
       return 'ok' as const;
     },
-    [maxFileSizeBytes]
+    [maxFileSizeBytes, allowedContentTypes]
   );
 
   const handleSaveAvatar = useCallback(
@@ -169,6 +176,7 @@ export const useAvatar = ({
     isModalOpen,
     isSaving,
     maxFileSizeBytes,
+    allowedContentTypes,
     handleDialogChange,
     handleFileSelect,
     handleOpenModal,
