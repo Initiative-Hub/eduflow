@@ -36,7 +36,7 @@ export function AIClient({ userName }: AIClientProps) {
     transport: new DefaultChatTransport({
       api: '/api/chat',
       body: {
-        provider: 'google',
+        provider: 'openrouter',
         model: 'gemini-2.5-pro',
       },
     }),
