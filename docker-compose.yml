@@ -35,6 +35,16 @@ services:
     environment:
       MP_MAX_MESSAGES: 500
 
+  redis: 
+    image: redis:alpine
+    container_name: eduflow_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    networks:
+      - prisma-network
+    command: redis-server --save 60 1 --loglevel warning
+
 networks: 
   prisma-network: 
 volumes: 
