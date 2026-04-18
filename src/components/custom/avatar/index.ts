@@ -1,2 +1,6 @@
 export { AvatarTemplate } from './avatar';
-export type { HeadlessAvatarProps, UseAvatarProps } from './avatar.types';
+export type {
+  AvatarChangePayload,
+  AvatarTemplateProps,
+  UseAvatarProps,
+} from './avatar.types';

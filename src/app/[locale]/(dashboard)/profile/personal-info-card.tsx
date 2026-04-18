@@ -3,6 +3,7 @@
 import { User } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useFormContext } from 'react-hook-form';
+import type { AvatarChangePayload } from '@/components/custom/avatar';
 import { AvatarTemplate } from '@/components/custom/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -18,9 +19,14 @@ import type { ProfileFormData } from './profile.config';
 interface PersonalInfoCardProps {
   name: string;
   image: string | null;
+  onAvatarChange: (payload: AvatarChangePayload) => Promise<void>;
 }
 
-export function PersonalInfoCard({ name, image }: PersonalInfoCardProps) {
+export function PersonalInfoCard({
+  name,
+  image,
+  onAvatarChange,
+}: PersonalInfoCardProps) {
   const t = useTranslations('ProfilePage');
   const form = useFormContext<ProfileFormData>();
 
@@ -38,6 +44,7 @@ export function PersonalInfoCard({ name, image }: PersonalInfoCardProps) {
             <AvatarTemplate
               avatarUrl={image ?? undefined}
               fallback={name.slice(0, 2).toUpperCase()}
+              onAvatarChange={onAvatarChange}
             />
           </div>
 
