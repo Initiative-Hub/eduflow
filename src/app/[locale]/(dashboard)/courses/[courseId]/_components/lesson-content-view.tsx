@@ -18,9 +18,7 @@ export function LessonContentView({
         {contentText ? (
           <div className="whitespace-pre-wrap">{contentText}</div>
         ) : (
-          <p className="text-muted-foreground italic">
-            {t('empty')}
-          </p>
+          <p className="text-muted-foreground italic">{t('empty')}</p>
         )}
       </div>
     </div>

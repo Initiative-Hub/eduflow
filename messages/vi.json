@@ -40,9 +40,9 @@
         "description": "Tạo một mô-đun mới để tổ chức các bài học của bạn.",
         "submit": "Tạo mô-đun",
         "fields": {
-            "title": "Tiêu đề mô-đun",
-            "titlePlaceholder": "VD: Bắt đầu",
-            "titleRequired": "Tiêu đề mô-đun là bắt buộc"
+          "title": "Tiêu đề mô-đun",
+          "titlePlaceholder": "VD: Bắt đầu",
+          "titleRequired": "Tiêu đề mô-đun là bắt buộc"
         }
       }
     },
@@ -62,32 +62,32 @@
       "noLessons": "Chưa có bài học nào"
     },
     "AddLessonDialog": {
-        "title": "Thêm bài học",
-        "description": "Cung cấp tiêu đề cho bài học mới trong mô-đun này.",
-        "submit": "Thêm bài học",
-        "fields": {
-            "title": "Tiêu đề bài học",
-            "titlePlaceholder": "VD: Giới thiệu chung",
-            "titleRequired": "Tiêu đề bài học là bắt buộc"
-        }
+      "title": "Thêm bài học",
+      "description": "Cung cấp tiêu đề cho bài học mới trong mô-đun này.",
+      "submit": "Thêm bài học",
+      "fields": {
+        "title": "Tiêu đề bài học",
+        "titlePlaceholder": "VD: Giới thiệu chung",
+        "titleRequired": "Tiêu đề bài học là bắt buộc"
+      }
     },
     "LessonEditor": {
-        "title": "Tiêu đề bài học",
-        "content": "Nội dung bài học",
-        "cancel": "Hủy",
-        "save": "Lưu",
-        "saving": "Đang lưu...",
-        "writeReview": "Soạn/Xem lại"
+      "title": "Tiêu đề bài học",
+      "content": "Nội dung bài học",
+      "cancel": "Hủy",
+      "save": "Lưu",
+      "saving": "Đang lưu...",
+      "writeReview": "Soạn/Xem lại"
     },
     "LessonView": {
-        "empty": "Nội dung bài học trống."
+      "empty": "Nội dung bài học trống."
     },
     "LessonPage": {
-        "notFound": "Không tìm thấy bài học."
+      "notFound": "Không tìm thấy bài học."
     },
     "LessonPagination": {
-        "previous": "Trước",
-        "next": "Tiếp theo"
+      "previous": "Trước",
+      "next": "Tiếp theo"
     }
   },
   "AccountPage": {

@@ -40,9 +40,9 @@
         "description": "Create a new module to organize your lessons.",
         "submit": "Create Module",
         "fields": {
-            "title": "Module Title",
-            "titlePlaceholder": "E.g., Getting Started",
-            "titleRequired": "Module Title is required"
+          "title": "Module Title",
+          "titlePlaceholder": "E.g., Getting Started",
+          "titleRequired": "Module Title is required"
         }
       }
     },
@@ -62,32 +62,32 @@
       "noLessons": "No lessons yet"
     },
     "AddLessonDialog": {
-        "title": "Add Lesson",
-        "description": "Provide a title for the new lesson within this module.",
-        "submit": "Add Lesson",
-        "fields": {
-            "title": "Lesson Title",
-            "titlePlaceholder": "E.g., Introduction to the topic",
-            "titleRequired": "Lesson Title is required"
-        }
+      "title": "Add Lesson",
+      "description": "Provide a title for the new lesson within this module.",
+      "submit": "Add Lesson",
+      "fields": {
+        "title": "Lesson Title",
+        "titlePlaceholder": "E.g., Introduction to the topic",
+        "titleRequired": "Lesson Title is required"
+      }
     },
     "LessonEditor": {
-        "title": "Lesson Title",
-        "content": "Lesson Content",
-        "cancel": "Cancel",
-        "save": "Save",
-        "saving": "Saving...",
-        "writeReview": "Write/Review"
+      "title": "Lesson Title",
+      "content": "Lesson Content",
+      "cancel": "Cancel",
+      "save": "Save",
+      "saving": "Saving...",
+      "writeReview": "Write/Review"
     },
     "LessonView": {
-        "empty": "Lesson content is empty."
+      "empty": "Lesson content is empty."
     },
     "LessonPage": {
-        "notFound": "Lesson not found."
+      "notFound": "Lesson not found."
     },
     "LessonPagination": {
-        "previous": "Previous",
-        "next": "Next"
+      "previous": "Previous",
+      "next": "Next"
     }
   },
   "AccountPage": {

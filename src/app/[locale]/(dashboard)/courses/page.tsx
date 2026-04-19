@@ -25,9 +25,7 @@ export default function CoursesPage() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
-          <p className="text-muted-foreground mt-1">
-            {t('description')}
-          </p>
+          <p className="text-muted-foreground mt-1">{t('description')}</p>
         </div>
         <Button onClick={() => dialog.open()}>
           <Plus className="mr-2 h-4 w-4" /> {t('newCourse')}

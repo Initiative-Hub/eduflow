@@ -36,9 +36,7 @@ export function LessonEditor({
         />
       </div>
       <div className="space-y-2 flex-1 flex flex-col">
-        <label className="text-sm font-medium">
-          {t('content')}
-        </label>
+        <label className="text-sm font-medium">{t('content')}</label>
         <Textarea
           className="flex-1 min-h-[400px] resize-none font-mono text-sm leading-relaxed p-4"
           value={editContent}
