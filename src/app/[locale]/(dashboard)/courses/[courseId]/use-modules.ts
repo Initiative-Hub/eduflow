@@ -17,6 +17,13 @@ export interface Module {
   lessons: Lesson[];
 }
 
+/**
+ * Fetches modules (with lightweight lesson summaries) for a course and
+ * exposes mutations for creating modules and lessons.
+ *
+ * Note: `useLesson` and `useUpdateLesson` live in `./use-lesson.ts` so that
+ * the lesson detail page doesn't pull in the full module mutation surface.
+ */
 export function useModules(courseId: string) {
   const queryClient = useQueryClient();
 
@@ -48,35 +55,21 @@ export function useModules(courseId: string) {
       toast.success('Lesson created successfully!');
     },
     onError: (err: any) => {
-      console.error('Create lesson error:', err);
       toast.error(
         err.response?.data?.message || err.message || 'Failed to create lesson'
       );
     },
   });
 
-  const updateLessonMutation = useMutation({
-    mutationFn: (data: { lessonId: string; title?: string; content?: any }) =>
-      apiClient.patch<Lesson>(`/v1/lessons/${data.lessonId}`, {
-        title: data.title,
-        content: data.content,
-      }),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['modules', courseId] });
-      queryClient.invalidateQueries({ queryKey: ['lesson', variables.lessonId] });
-      toast.success('Lesson saved successfully!');
-    },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message || 'Failed to update lesson');
-    },
-  });
-
-  // Helper function to get previous/next lesson
+  /** Returns the prev/next lesson relative to `currentLessonId` across all modules. */
   const getAdjacentLessons = (currentLessonId: string) => {
     if (!query.data) return { prev: null, next: null };
+
     const allLessons = query.data.flatMap((module) => module.lessons);
     const currentIndex = allLessons.findIndex((l) => l.id === currentLessonId);
+
     if (currentIndex === -1) return { prev: null, next: null };
+
     return {
       prev: currentIndex > 0 ? allLessons[currentIndex - 1] : null,
       next:
@@ -97,22 +90,6 @@ export function useModules(courseId: string) {
     isCreatingLesson: createLessonMutation.isPending,
     handleCreateLesson: createLessonMutation.mutate,
 
-    isUpdatingLesson: updateLessonMutation.isPending,
-    handleUpdateLesson: updateLessonMutation.mutate,
     getAdjacentLessons,
-  };
-}
-
-export function useLesson(lessonId: string) {
-  const query = useQuery({
-    queryKey: ['lesson', lessonId],
-    queryFn: () => apiClient.get<Lesson>(`/v1/lessons/${lessonId}`),
-    enabled: !!lessonId,
-  });
-
-  return {
-    lesson: query.data,
-    isLoading: query.isLoading,
-    isError: query.isError,
   };
 }

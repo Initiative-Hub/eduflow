@@ -1,7 +1,5 @@
-export default function SettingsPage() {
-  return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold">Settings (Coming Soon)</h1>
-    </div>
-  );
+import { ComingSoonPage } from '@/components/custom/coming-soon-page';
+
+export default function CourseSettingsPage() {
+  return <ComingSoonPage title="Course Settings" />;
 }

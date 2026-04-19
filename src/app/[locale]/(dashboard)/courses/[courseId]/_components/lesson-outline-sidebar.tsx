@@ -1,32 +1,22 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useModules } from '../use-modules';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
-import {
-  Plus,
-  BookOpen,
-  FileText,
-} from 'lucide-react';
+import { BookOpen, Plus } from 'lucide-react';
 import { useDialog } from '@/components/custom/dialog/use-dialog';
 import { DialogTemplate } from '@/components/custom/dialog/dialog';
 import { FormTemplate } from '@/components/custom/form';
 import { z } from 'zod';
+import type { FormFieldConfig } from '@/components/custom/form';
 import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
+import { ModuleLessonList } from './module-lesson-list';
 
 const createModuleSchema = z.object({
   title: z.string().min(1, 'Module Title is required'),
 });
 
-const createModuleFields = [
+const createModuleFields: FormFieldConfig[] = [
   {
     name: 'title',
     label: 'Module Title',
@@ -41,7 +31,7 @@ interface LessonOutlineSidebarProps {
   courseId: string;
   activeLessonId?: string;
   onSelectLesson?: (id: string) => void;
-  className?: string; // Add className prop here to fix the typescript error
+  className?: string;
 }
 
 export function LessonOutlineSidebar({
@@ -56,9 +46,7 @@ export function LessonOutlineSidebar({
   const dialog = useDialog();
 
   const onCreateSubmit = (data: { title: string }) => {
-    handleCreateModule(data, {
-      onSuccess: () => dialog.close(),
-    });
+    handleCreateModule(data, { onSuccess: () => dialog.close() });
   };
 
   const handleSelectLesson = (lessonId: string) => {
@@ -106,44 +94,11 @@ export function LessonOutlineSidebar({
             </Button>
           </div>
         ) : (
-          <Accordion type="multiple" className="w-full">
-            {modules.map((module) => (
-              <AccordionItem
-                key={module.id}
-                value={module.id}
-                className="border-b-0"
-              >
-                <AccordionTrigger className="py-3 px-2 rounded-md hover:bg-muted/50 transition-colors">
-                  <div className="flex items-center text-sm font-medium">
-                    {module.title}
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="pb-3 px-1">
-                  <div className="flex flex-col space-y-1 mt-1 pl-4 border-l-2 ml-3">
-                    {module.lessons.map((lesson) => (
-                      <button
-                        key={lesson.id}
-                        onClick={() => handleSelectLesson(lesson.id)}
-                        className={`flex items-center text-sm py-2 px-3 rounded-md transition-colors text-left ${
-                          activeLessonId === lesson.id
-                            ? 'bg-primary/10 text-primary font-medium'
-                            : 'hover:bg-muted text-muted-foreground hover:text-foreground'
-                        }`}
-                      >
-                        <FileText className="w-4 h-4 mr-2 opacity-70 shrink-0" />
-                        <span className="truncate">{lesson.title}</span>
-                      </button>
-                    ))}
-                    {module.lessons.length === 0 && (
-                      <p className="text-xs text-muted-foreground py-2 px-3">
-                        No lessons yet
-                      </p>
-                    )}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
+          <ModuleLessonList
+            modules={modules}
+            activeLessonId={activeLessonId}
+            onSelectLesson={handleSelectLesson}
+          />
         )}
       </div>
 
@@ -156,7 +111,7 @@ export function LessonOutlineSidebar({
         <FormTemplate
           schema={createModuleSchema}
           defaultValues={{ title: '' }}
-          fields={createModuleFields as any}
+          fields={createModuleFields}
           onSubmit={onCreateSubmit}
           submitLabel="Create Module"
           isLoading={isCreatingModule}
