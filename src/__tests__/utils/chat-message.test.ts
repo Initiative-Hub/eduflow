@@ -10,9 +10,9 @@ describe('chat message helpers', () => {
         { type: 'text', text: ' world' },
         { type: 'tool-call', toolCallId: '1' },
       ],
-    };
+    } as UIMessage;
 
-    expect(getMessageText(message as UIMessage)).toBe('Hello world');
+    expect(getMessageText(message)).toBe('Hello world');
   });
 
   it('creates a preview capped at a max length', () => {
