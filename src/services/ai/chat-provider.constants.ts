@@ -1,4 +1,4 @@
-export const DEFAULT_PROVIDER = 'openrouter' as const;
+export const DEFAULT_PROVIDER = 'ai-gateway' as const;
 
 export const DEFAULT_MODELS = {
   'ai-gateway': 'google/gemini-2.5-flash',
