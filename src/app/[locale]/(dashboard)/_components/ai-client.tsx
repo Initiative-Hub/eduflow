@@ -1,5 +1,6 @@
 'use client';
 
+import type { UIMessage } from 'ai';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   BadgeInfo,
@@ -24,11 +25,12 @@ import { LandingView } from './landing-view';
 interface AIClientProps {
   userName?: string;
   chatId?: string;
+  initialMessages?: UIMessage[];
 }
 
 export type ViewState = 'home' | 'library';
 
-export function AIClient({ userName, chatId }: AIClientProps) {
+export function AIClient({ userName, chatId, initialMessages }: AIClientProps) {
   const t = useTranslations('AIChat');
   const [view, setView] = useState<ViewState>('home');
   const {
@@ -40,7 +42,7 @@ export function AIClient({ userName, chatId }: AIClientProps) {
     startChat,
     stop,
     maxMessages,
-  } = useChatController({ chatId });
+  } = useChatController({ chatId, initialMessages });
 
   const notifyLimitReached = () => {
     toast.error(t('limitReachedToast', { count: maxMessages }));

@@ -14,6 +14,11 @@
       "philosophy": "PHILOSOPHY",
       "science": "SCIENCE"
     },
+    "chatNotFound": {
+      "action": "Start a new chat",
+      "description": "This chat doesn't exist or has expired.",
+      "title": "Chat not found"
+    },
     "criticalThinking": "Critical Thinking Active",
     "exploreMore": "Explore more scholarly prompts",
     "footer": {

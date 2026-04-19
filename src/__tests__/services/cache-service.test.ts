@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { CacheService } from '@/services/CacheService';
 
 const mockRedis = vi.hoisted(() => ({
   connect: vi.fn().mockResolvedValue(undefined),
@@ -14,8 +15,6 @@ const mockRedis = vi.hoisted(() => ({
 vi.mock('redis', () => ({
   createClient: vi.fn(() => mockRedis),
 }));
-
-import { CacheService } from '@/services/CacheService';
 
 describe('CacheService', () => {
   beforeEach(() => {

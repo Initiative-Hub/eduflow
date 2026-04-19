@@ -14,6 +14,11 @@
       "philosophy": "TRIẾT HỌC",
       "science": "KHOA HỌC"
     },
+    "chatNotFound": {
+      "action": "Bắt đầu cuộc trò chuyện mới",
+      "description": "Cuộc trò chuyện này không tồn tại hoặc đã hết hạn.",
+      "title": "Không tìm thấy cuộc trò chuyện"
+    },
     "criticalThinking": "Tư duy phản biện đang hoạt động",
     "exploreMore": "Khám phá thêm các gợi ý học thuật",
     "footer": {

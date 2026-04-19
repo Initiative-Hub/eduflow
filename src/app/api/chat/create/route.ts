@@ -1,10 +1,10 @@
 import { cookies } from 'next/headers';
 import { z } from 'zod';
 import { CacheService } from '@/services/CacheService';
-import { buildNewChatData } from '@/services/chat/chat-session';
+import { buildNewChatData } from '@/utils/chat-session';
 
 const createChatSchema = z.object({
-  firstMessage: z.string().optional(),
+  firstMessage: z.string().min(1),
 });
 
 export async function POST(req: Request) {
@@ -26,25 +26,25 @@ export async function POST(req: Request) {
     const guestSession = cookieStore.get('guest_session');
     const previousGuestId = guestSession?.value;
 
-    if (previousGuestId) {
-      await CacheService.deleteCache(`guest_usage:${previousGuestId}`);
-    }
+    let guestId: string;
 
-    const guestId = `guest_${crypto.randomUUID()}`;
-    cookieStore.set('guest_session', guestId, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 60 * 60 * 24,
-      path: '/',
-    });
+    if (previousGuestId) {
+      guestId = previousGuestId;
+    } else {
+      guestId = `guest_${crypto.randomUUID()}`;
+      cookieStore.set('guest_session', guestId, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 60 * 60 * 24,
+        path: '/',
+      });
+    }
 
     const chatId = `chat_${crypto.randomUUID()}`;
     const chatData = buildNewChatData({
       guestId,
-      firstMessage: parsedBody.data.firstMessage ?? '',
+      firstMessage: parsedBody.data.firstMessage,
     });
-
-    chatData.messageCount = parsedBody.data.firstMessage?.trim() ? 1 : 0;
 
     await CacheService.setCache(chatId, chatData, { ttlSeconds: 86400 });
 

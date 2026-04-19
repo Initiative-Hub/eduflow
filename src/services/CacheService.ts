@@ -1,19 +1,4 @@
-import { createClient, type RedisClientType } from 'redis';
-
-const globalForRedis = global as unknown as { redis: RedisClientType };
-
-export const redis =
-  globalForRedis.redis || createClient({ url: process.env.REDIS_URL });
-
-redis.on('error', (err) => console.log('Redis Client Error', err));
-
-if (!redis.isOpen) {
-  redis.connect();
-}
-
-if (process.env.NODE_ENV !== 'production') {
-  globalForRedis.redis = redis;
-}
+import { redis } from '@/lib/redis/client';
 
 export class CacheService {
   static async getCache<T>(key: string): Promise<T | null> {
@@ -56,20 +41,22 @@ export class CacheService {
 
   /**
    * Checks the rate limit for a guest session.
-   * Max 5 prompts per 24 hours.
+   * Max 10 prompts per 24 hours.
    */
   static async checkGuestLimit(guestSessionId: string) {
-    const MAX_PROMPTS = 5;
+    const MAX_PROMPTS = 10;
     const cacheKey = `guest_usage:${guestSessionId}`;
 
     try {
-      const currentUsage = await redis.incr(cacheKey);
+      const rawUsage = await redis.get(cacheKey);
+      const currentUsage = Number(rawUsage ?? 0);
 
-      if (currentUsage === 1) {
-        await redis.expire(cacheKey, 86400);
+      if (!rawUsage || currentUsage <= 0) {
+        await redis.set(cacheKey, '1', { EX: 86400 });
+        return { allowed: true, remaining: MAX_PROMPTS - 1 };
       }
 
-      if (currentUsage > MAX_PROMPTS) {
+      if (currentUsage >= MAX_PROMPTS) {
         return {
           allowed: false,
           message: 'Limit reached. Please register to unlock full features.',
@@ -77,7 +64,9 @@ export class CacheService {
         };
       }
 
-      return { allowed: true, remaining: MAX_PROMPTS - currentUsage };
+      const nextUsage = await redis.incr(cacheKey);
+
+      return { allowed: true, remaining: MAX_PROMPTS - nextUsage };
     } catch (error) {
       console.error('Redis error checking limit:', error);
       return {

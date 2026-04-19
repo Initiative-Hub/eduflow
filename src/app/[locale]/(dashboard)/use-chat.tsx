@@ -17,10 +17,12 @@ const MAX_USER_MESSAGES = 5;
 
 interface UseChatControllerOptions {
   chatId?: string;
+  initialMessages?: UIMessage[];
 }
 
 export const useChatController = ({
   chatId: initialChatId,
+  initialMessages = [],
 }: UseChatControllerOptions) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -41,18 +43,20 @@ export const useChatController = ({
 
   const transport = useMemo(
     () =>
-      new DefaultChatTransport({
-        api: '/api/chat',
-        body: initialChatId ? { chatId: initialChatId } : undefined,
-      }),
+      initialChatId
+        ? new DefaultChatTransport({
+            api: `/api/chat/${initialChatId}`,
+          })
+        : undefined,
     [initialChatId]
   );
 
-  const chatOptions = initialChatId ? { id: initialChatId } : {};
+  const chatOptions = transport ? { transport } : {};
 
   const { messages, status, sendMessage, stop } = useChat({
+    id: initialChatId,
+    messages: initialMessages,
     ...chatOptions,
-    transport,
     onError(error) {
       console.error('Chat error:', error);
       toast.error(

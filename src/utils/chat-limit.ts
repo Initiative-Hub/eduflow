@@ -1,13 +1,9 @@
-export type ChatMessageRole = 'user' | 'assistant' | 'system';
+import type { UIMessage } from '@ai-sdk/react';
 
-export interface ChatMessageLike {
-  role: ChatMessageRole;
-}
-
-export const getUserMessageCount = (messages: readonly ChatMessageLike[]) =>
+export const getUserMessageCount = (messages: UIMessage[]) =>
   messages.filter((message) => message.role === 'user').length;
 
 export const hasReachedUserMessageLimit = (
-  messages: readonly ChatMessageLike[],
+  messages: UIMessage[],
   limit: number
 ) => getUserMessageCount(messages) >= limit;

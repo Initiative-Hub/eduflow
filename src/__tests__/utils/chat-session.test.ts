@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildNewChatData } from '@/services/chat/chat-session';
+import { buildNewChatData } from '@/utils/chat-session';
 
 describe('buildNewChatData', () => {
   it('creates a new chat payload with a trimmed title', () => {
@@ -12,6 +12,7 @@ describe('buildNewChatData', () => {
       guestId: 'guest-1',
       title: 'Hello world from the chat',
       messageCount: 0,
+      messages: [],
     });
   });
 
