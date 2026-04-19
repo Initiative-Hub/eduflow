@@ -1,56 +1,57 @@
-import { Button } from '@base-ui/react';
+import { Loader2, UserIcon } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { toast } from 'sonner';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-  Dropzone,
-  DropzoneContent,
-  DropzoneEmptyState,
-} from '@/components/ui/dropzone';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 import { DialogTemplate } from '../dialog';
+import type { AvatarTemplateProps } from './avatar.types';
 import { useAvatar } from './use-avatar';
-
-const DEFAULT_AVATAR_PLACEHOLDER = './assets/avatar-placeholder.jpg';
-
-interface AvatarTemplateProps {
-  avatarUrl?: string;
-  fallback?: string;
-  onUpload?: (file: File) => void | Promise<void>;
-}
 
 export function AvatarTemplate({
   avatarUrl,
   fallback = 'JD',
-  onUpload,
+  onAvatarChange,
 }: AvatarTemplateProps) {
-  const displayAvatarUrl = avatarUrl || DEFAULT_AVATAR_PLACEHOLDER;
+  const t = useTranslations('ProfilePage');
   const {
+    committedAvatarUrl,
+    draftAvatarUrl,
+    hasPendingChanges,
     isModalOpen,
-    isUploading,
-    selectedFile,
+    isSaving,
+    maxFileSizeBytes,
+    allowedContentTypes,
     handleOpenModal,
-    handleFileDrop,
-    handleConfirmUpload,
+    handleFileSelect,
     handleDialogChange,
-  } = useAvatar({ onUpload });
+    handleSaveAvatar,
+  } = useAvatar({
+    initialAvatarUrl: avatarUrl ?? null,
+    onAvatarChange,
+  });
+
+  const activeAvatarUrl = committedAvatarUrl || undefined;
 
   return (
     <>
       <div className="group relative">
-        <Avatar className="h-24 w-24 border-4 border-background md:h-40 md:w-40 lg:h-52 lg:w-52">
+        <Avatar className="h-24 w-24 border border-foreground md:h-40 md:w-40 lg:h-52 lg:w-52">
           <AvatarImage
-            src={displayAvatarUrl}
+            src={activeAvatarUrl}
             alt="user-avatar"
             className="h-full w-full rounded-full object-cover"
           />
-          <AvatarFallback className="font-bold text-base md:text-4xl">
+          <AvatarFallback className="font-semibold text-base md:text-4xl">
             {fallback}
           </AvatarFallback>
 
           <div
-            className="absolute inset-0 flex cursor-pointer items-center justify-center rounded-full bg-black/50 text-center opacity-0 transition-opacity group-hover:opacity-100"
+            className="absolute inset-0 z-10 flex cursor-pointer items-center justify-center rounded-full bg-black/50 text-center opacity-0 transition-opacity group-hover:opacity-100"
             onClick={handleOpenModal}
           >
             <span className="px-1 text-white text-xs sm:text-sm md:text-lg">
-              Upload Image
+              {t('avatar.edit')}
             </span>
           </div>
         </Avatar>
@@ -59,27 +60,95 @@ export function AvatarTemplate({
       <DialogTemplate
         isOpen={isModalOpen}
         onOpenChange={handleDialogChange}
-        title="Upload Avatar"
-        description="Choose a new avatar image to upload."
+        title={t('avatar.title')}
+        description={t('avatar.description')}
+        className="w-full max-w-md rounded-xl"
       >
-        <div className="flex flex-col gap-4">
-          <Dropzone
-            accept={{ 'image/*': ['.png', '.jpg', '.jpeg', '.gif', '.webp'] }}
-            maxSize={5 * 1024 * 1024}
-            maxFiles={1}
-            src={selectedFile}
-            onDrop={handleFileDrop}
-          >
-            <DropzoneContent />
-            <DropzoneEmptyState />
-          </Dropzone>
+        <div className="grid gap-4">
+          <div className="flex justify-center">
+            <Avatar className="h-32 w-32 overflow-visible text-3xl">
+              <AvatarImage
+                src={draftAvatarUrl || undefined}
+                alt="avatar-preview"
+                className="rounded-full object-cover"
+              />
+              <AvatarFallback className="font-semibold">
+                {fallback || <UserIcon className="size-10" />}
+              </AvatarFallback>
+            </Avatar>
+          </div>
 
-          <Button
-            onClick={handleConfirmUpload}
-            disabled={selectedFile.length === 0 || isUploading}
-          >
-            {isUploading ? 'Uploading...' : 'Upload Avatar'}
-          </Button>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <div>
+              <Label
+                htmlFor="avatar-upload"
+                className="inline-block cursor-pointer rounded-md border px-4 py-2 text-center text-sm"
+              >
+                {draftAvatarUrl ? t('avatar.new') : t('avatar.upload')}
+              </Label>
+              <input
+                id="avatar-upload"
+                type="file"
+                accept={allowedContentTypes.join(',')}
+                disabled={isSaving}
+                className="hidden"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (!file || isSaving) {
+                    return;
+                  }
+
+                  const result = handleFileSelect(file);
+                  if (result !== 'ok') {
+                    toast.error(t('avatar.fileValidationError'), {
+                      description: t('avatar.fileValidationError', {
+                        maxFileSize: maxFileSizeBytes / (1024 * 1024),
+                      }),
+                    });
+                  }
+
+                  event.target.value = '';
+                }}
+              />
+            </div>
+
+            {draftAvatarUrl && (
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={async () => {
+                  try {
+                    await handleSaveAvatar('remove');
+                    toast.success(t('avatar.saved'));
+                  } catch {
+                    toast.error(t('avatar.saveError'));
+                  }
+                }}
+                disabled={isSaving}
+              >
+                {t('avatar.remove')}
+              </Button>
+            )}
+
+            <Button
+              type="button"
+              onClick={async () => {
+                try {
+                  await handleSaveAvatar();
+                  toast.success(t('avatar.saved'));
+                } catch {
+                  toast.error(t('avatar.saveError'));
+                }
+              }}
+              disabled={!hasPendingChanges || isSaving}
+            >
+              {isSaving ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                t('avatar.save')
+              )}
+            </Button>
+          </div>
         </div>
       </DialogTemplate>
     </>

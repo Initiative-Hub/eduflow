@@ -360,6 +360,18 @@
       "saving": "Saving...",
       "setPassword": "Set password"
     },
+    "avatar": {
+      "description": "Choose a new avatar image.",
+      "edit": "Edit",
+      "fileValidationError": "Please upload a valid image under {maxFileSize} MB.",
+      "new": "New avatar",
+      "remove": "Remove avatar",
+      "save": "Save avatar",
+      "saved": "Avatar updated",
+      "saveError": "Failed to save avatar changes.",
+      "title": "Avatar",
+      "upload": "Upload avatar"
+    },
     "fields": {
       "browser": "Current Browser",
       "browserUnknown": "Unknown",

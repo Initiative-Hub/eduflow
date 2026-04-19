@@ -37,7 +37,7 @@ export function AIClient({ userName }: AIClientProps) {
       api: '/api/chat',
       body: {
         provider: 'openrouter',
-        model: 'google/gemma-4-31b-it',
+        model: 'gemini-2.5-pro',
       },
     }),
     onError(error) {

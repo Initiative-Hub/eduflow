@@ -3,11 +3,12 @@ name: eduflow
 services:
   postgres:
     image: postgres:17-alpine
+    container_name: eduflow_postgres
     restart: always
     environment: 
-      - POSTGRES_DB=postgres
-      - POSTGRES_USER=password
-      - POSTGRES_PASSWORD=eduflow_db
+      - POSTGRES_DB=eduflow_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
     ports: 
       - "5433:5432"
     networks: 
@@ -35,6 +36,47 @@ services:
     environment:
       MP_MAX_MESSAGES: 500
 
+  minio:
+    image: minio/minio:latest
+    container_name: eduflow_minio
+    restart: always
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    command: server /data --console-address ':9001'
+    volumes:
+      - minio_data:/data
+
+  minio-init:
+    image: minio/mc:latest
+    container_name: eduflow_minio_init
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      until mc alias set local http://minio:9000 minioadmin minioadmin; do
+        sleep 1;
+      done;
+      mc mb --ignore-existing local/eduflow-avatars;
+      mc anonymous set none local/eduflow-avatars;
+      "
+  minio-reset:
+    image: minio/mc:latest
+    container_name: eduflow_minio_reset
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      until mc alias set local http://minio:9000 minioadmin minioadmin; do
+        sleep 1;
+      done;
+      mc rm --force --recursive local/eduflow-avatars;
+      mc mb --ignore-existing local/eduflow-avatars;
+      mc anonymous set none local/eduflow-avatars;
+      "
   redis: 
     image: redis:alpine
     container_name: eduflow_redis
@@ -49,3 +91,4 @@ networks:
   prisma-network: 
 volumes: 
   postgres_data: 
+  minio_data:

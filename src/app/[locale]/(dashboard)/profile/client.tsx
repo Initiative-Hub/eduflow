@@ -35,8 +35,10 @@ export default function ProfileClient() {
     securityInfo,
     isLoading,
     isSaving,
+    isAvatarSaving,
     isSettingPassword,
     handleSubmit,
+    handleAvatarChange,
     handleSetPassword,
   } = useProfile();
 
@@ -65,7 +67,7 @@ export default function ProfileClient() {
   }, [basicInfo, form]);
 
   const isDirty = form.formState.isDirty;
-  const isActionDisabled = !isDirty || isSaving;
+  const isActionDisabled = !isDirty || isSaving || isAvatarSaving;
 
   const handleDiscard = () => {
     if (!basicInfo) return;
@@ -110,7 +112,11 @@ export default function ProfileClient() {
           onSubmit={form.handleSubmit((data) => handleSubmit(data))}
           className="flex flex-col gap-8"
         >
-          <PersonalInfoCard name={basicInfo.name} image={basicInfo.image} />
+          <PersonalInfoCard
+            name={basicInfo.name}
+            image={basicInfo.image}
+            onAvatarChange={handleAvatarChange}
+          />
 
           {/* Account details */}
           <AccountDetailsCard
