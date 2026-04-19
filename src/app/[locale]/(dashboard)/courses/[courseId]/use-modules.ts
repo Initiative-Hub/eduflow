@@ -6,7 +6,7 @@ export interface Lesson {
   id: string;
   title: string;
   orderIndex: number;
-  content: any; 
+  content: Record<string, unknown> | null;
 }
 
 export interface Module {
@@ -22,8 +22,7 @@ export function useModules(courseId: string) {
 
   const query = useQuery({
     queryKey: ['modules', courseId],
-    queryFn: () =>
-      apiClient.get<Module[]>(`/v1/courses/${courseId}/modules`),
+    queryFn: () => apiClient.get<Module[]>(`/v1/courses/${courseId}/modules`),
     enabled: !!courseId,
   });
 
@@ -36,6 +35,23 @@ export function useModules(courseId: string) {
     },
     onError: () => {
       toast.error('Failed to create module');
+    },
+  });
+
+  const createLessonMutation = useMutation({
+    mutationFn: (data: { moduleId: string; title: string }) =>
+      apiClient.post<Lesson>(`/v1/modules/${data.moduleId}/lessons`, {
+        title: data.title,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['modules', courseId] });
+      toast.success('Lesson created successfully!');
+    },
+    onError: (err: any) => {
+      console.error('Create lesson error:', err);
+      toast.error(
+        err.response?.data?.message || err.message || 'Failed to create lesson'
+      );
     },
   });
 
@@ -57,12 +73,15 @@ export function useModules(courseId: string) {
   // Helper function to get previous/next lesson
   const getAdjacentLessons = (currentLessonId: string) => {
     if (!query.data) return { prev: null, next: null };
-    const allLessons = query.data.flatMap(module => module.lessons);
-    const currentIndex = allLessons.findIndex(l => l.id === currentLessonId);
+    const allLessons = query.data.flatMap((module) => module.lessons);
+    const currentIndex = allLessons.findIndex((l) => l.id === currentLessonId);
     if (currentIndex === -1) return { prev: null, next: null };
     return {
       prev: currentIndex > 0 ? allLessons[currentIndex - 1] : null,
-      next: currentIndex < allLessons.length - 1 ? allLessons[currentIndex + 1] : null,
+      next:
+        currentIndex < allLessons.length - 1
+          ? allLessons[currentIndex + 1]
+          : null,
     };
   };
 
@@ -70,10 +89,13 @@ export function useModules(courseId: string) {
     modules: query.data || [],
     isLoading: query.isLoading,
     isError: query.isError,
-    
+
     isCreatingModule: createModuleMutation.isPending,
     handleCreateModule: createModuleMutation.mutate,
-    
+
+    isCreatingLesson: createLessonMutation.isPending,
+    handleCreateLesson: createLessonMutation.mutate,
+
     isUpdatingLesson: updateLessonMutation.isPending,
     handleUpdateLesson: updateLessonMutation.mutate,
     getAdjacentLessons,

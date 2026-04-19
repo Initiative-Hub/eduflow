@@ -51,8 +51,9 @@ export const POST = withAuth([], async (req, sessionData) => {
 
     return NextResponse.json(course, { status: 201 });
   } catch (error: any) {
+    console.error('Create course error:', error);
     return NextResponse.json(
-      { message: error.message || 'Internal Server Error' },
+      { message: 'Internal Server Error' },
       { status: 500 }
     );
   }

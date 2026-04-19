@@ -2,6 +2,23 @@ import { prisma } from '@/lib/prisma';
 import { CourseRoleName, CoursePermissionKey } from '@/generated/prisma';
 
 export class LessonService {
+  static async createLesson(data: { moduleId: string; title: string }) {
+    const lastLesson = await prisma.lesson.findFirst({
+      where: { moduleId: data.moduleId },
+      orderBy: { orderIndex: 'desc' },
+    });
+
+    const newOrderIndex = lastLesson ? lastLesson.orderIndex + 1 : 0;
+
+    return await prisma.lesson.create({
+      data: {
+        moduleId: data.moduleId,
+        title: data.title,
+        orderIndex: newOrderIndex,
+      },
+    });
+  }
+
   static async updateLesson(
     lessonId: string,
     userId: string,

@@ -9,7 +9,13 @@ import { useDialog } from '@/components/custom/dialog/use-dialog';
 import { BookOpen } from 'lucide-react';
 
 export default function CoursesPage() {
-  const { courses, isLoading, isCreating, handleCreateCourse, handleTogglePublish } = useCourses();
+  const {
+    courses,
+    isLoading,
+    isCreating,
+    handleCreateCourse,
+    handleTogglePublish,
+  } = useCourses();
   const dialog = useDialog();
 
   const onCreateSubmit = (data: { title: string; description?: string }) => {

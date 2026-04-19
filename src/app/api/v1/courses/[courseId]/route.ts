@@ -14,7 +14,7 @@ export const PATCH = withAuth([], async (req, sessionData, { params }) => {
     }
 
     const userId = sessionData.user.id;
-    const { courseId } = params;
+    const { courseId } = await params;
 
     const body = await req.json();
     const parsed = patchCourseSchema.safeParse(body);
@@ -34,8 +34,9 @@ export const PATCH = withAuth([], async (req, sessionData, { params }) => {
     if (error.message === 'Unauthorized') {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 403 });
     }
+    console.error('Update course error:', error);
     return NextResponse.json(
-      { message: error.message || 'Internal Server Error' },
+      { message: 'Internal Server Error' },
       { status: 500 }
     );
   }

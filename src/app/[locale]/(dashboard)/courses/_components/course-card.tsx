@@ -56,7 +56,7 @@ export function CourseCard({
         </div>
         <div className="flex items-center gap-1">
           <Users className="w-4 h-4" />
-          <span>{enrollmentsCount} Students</span>
+          <span>{enrollmentsCount} Members</span>
         </div>
       </CardContent>
       <CardFooter className="pt-4 border-t">

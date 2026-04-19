@@ -20,7 +20,6 @@ export function AppNavbar() {
   return (
     <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between overflow-hidden border-border/40 border-b bg-background/95 px-3 shadow-sm backdrop-blur supports-backdrop-filter:bg-background/60 md:px-8">
       <div className="flex h-full min-w-0 flex-1 items-center gap-2 md:gap-8">
-        {/* Mobile Logo (Hidden on Desktop) */}
         <div className="mr-2 flex shrink-0 items-center gap-2 md:hidden">
           <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
             <GraduationCap className="size-5" strokeWidth={2.5} />
@@ -61,7 +60,7 @@ export function AppNavbar() {
             <span
               className={`pb-1.5 text-sm transition-colors ${pathname.startsWith('/course') ? 'font-bold text-primary' : 'font-medium text-muted-foreground hover:text-foreground'}`}
             >
-              {t('Layout.studyHub')}
+              {t('Layout.courses')}
             </span>
             {pathname.startsWith('/course') && (
               <div className="absolute bottom-0 h-0.5 w-full rounded-full bg-primary" />

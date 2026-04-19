@@ -41,7 +41,9 @@ export function useCourses() {
       }),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['courses'] });
-      toast.success(`Course ${variables.isPublished ? 'published' : 'unpublished'}`);
+      toast.success(
+        `Course ${variables.isPublished ? 'published' : 'unpublished'}`
+      );
     },
     onError: () => {
       toast.error('Failed to update course status');
@@ -52,10 +54,10 @@ export function useCourses() {
     courses: query.data || [],
     isLoading: query.isLoading,
     isError: query.isError,
-    
+
     isCreating: createCourseMutation.isPending,
     handleCreateCourse: createCourseMutation.mutate,
-    
+
     handleTogglePublish: togglePublishMutation.mutate,
   };
 }

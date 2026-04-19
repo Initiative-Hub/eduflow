@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useModules } from '../use-modules';
 import {
@@ -9,11 +10,18 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
-import { Plus, BookOpen, FileText } from 'lucide-react';
+import {
+  Plus,
+  BookOpen,
+  FileText,
+  PanelRightClose,
+  PanelRightOpen,
+} from 'lucide-react';
 import { useDialog } from '@/components/custom/dialog/use-dialog';
 import { DialogTemplate } from '@/components/custom/dialog/dialog';
 import { FormTemplate } from '@/components/custom/form';
 import { z } from 'zod';
+import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 const createModuleSchema = z.object({
@@ -35,16 +43,20 @@ interface LessonOutlineSidebarProps {
   courseId: string;
   activeLessonId?: string;
   onSelectLesson?: (id: string) => void;
+  className?: string; // Add className prop here to fix the typescript error
 }
 
 export function LessonOutlineSidebar({
   courseId,
   activeLessonId,
   onSelectLesson,
+  className,
 }: LessonOutlineSidebarProps) {
   const router = useRouter();
-  const { modules, isLoading, isCreatingModule, handleCreateModule } = useModules(courseId);
+  const { modules, isLoading, isCreatingModule, handleCreateModule } =
+    useModules(courseId);
   const dialog = useDialog();
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const onCreateSubmit = (data: { title: string }) => {
     handleCreateModule(data, {
@@ -53,7 +65,6 @@ export function LessonOutlineSidebar({
   };
 
   const handleSelectLesson = (lessonId: string) => {
-    // Use provided callback if available, otherwise navigate
     if (onSelectLesson) {
       onSelectLesson(lessonId);
     } else {
@@ -61,13 +72,53 @@ export function LessonOutlineSidebar({
     }
   };
 
-  return (
-    <div className="w-80 border-r bg-card/30 flex flex-col h-[calc(100vh-4rem)]">
-      <div className="p-4 border-b flex items-center justify-between">
-        <h2 className="font-semibold text-lg">Course Curriculum</h2>
-        <Button variant="ghost" size="icon" onClick={() => dialog.open()}>
-          <Plus className="w-5 h-5" />
+  if (isCollapsed) {
+    return (
+      <div
+        className={cn(
+          'flex flex-col border-l bg-card/30 items-center py-4 w-16 transition-all duration-300',
+          className
+        )}
+      >
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setIsCollapsed(false)}
+          title="Expand contents"
+        >
+          <PanelRightOpen className="w-5 h-5" />
         </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={cn(
+        'w-80 border-l bg-card/30 flex flex-col h-full transition-all duration-300',
+        className
+      )}
+    >
+      <div className="p-4 border-b flex items-center justify-between">
+        <h2 className="font-semibold text-lg">Course Contents</h2>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => dialog.open()}
+            title="Add module"
+          >
+            <Plus className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsCollapsed(true)}
+            title="Collapse contents"
+          >
+            <PanelRightClose className="w-4 h-4" />
+          </Button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4">
@@ -110,7 +161,7 @@ export function LessonOutlineSidebar({
                             : 'hover:bg-muted text-muted-foreground hover:text-foreground'
                         }`}
                       >
-                        <FileText className="w-4 h-4 mr-2 opacity-70" />
+                        <FileText className="w-4 h-4 mr-2 opacity-70 shrink-0" />
                         <span className="truncate">{lesson.title}</span>
                       </button>
                     ))}
