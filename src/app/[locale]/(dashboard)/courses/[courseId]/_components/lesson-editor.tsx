@@ -2,6 +2,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Save } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface LessonEditorProps {
   editTitle: string;
@@ -22,10 +23,12 @@ export function LessonEditor({
   onCancel,
   onSave,
 }: LessonEditorProps) {
+  const t = useTranslations('Courses.LessonEditor');
+
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <label className="text-sm font-medium">Lesson Title</label>
+        <label className="text-sm font-medium">{t('title')}</label>
         <Input
           value={editTitle}
           onChange={(e) => setEditTitle(e.target.value)}
@@ -34,22 +37,22 @@ export function LessonEditor({
       </div>
       <div className="space-y-2 flex-1 flex flex-col">
         <label className="text-sm font-medium">
-          Lesson Content (Markdown / Text)
+          {t('content')}
         </label>
         <Textarea
           className="flex-1 min-h-[400px] resize-none font-mono text-sm leading-relaxed p-4"
           value={editContent}
           onChange={(e) => setEditContent(e.target.value)}
-          placeholder="Write your lesson content here..."
+          placeholder={t('writeReview')}
         />
       </div>
       <div className="flex justify-end gap-2">
         <Button variant="outline" onClick={onCancel}>
-          Cancel
+          {t('cancel')}
         </Button>
         <Button onClick={onSave} disabled={isUpdatingLesson}>
           <Save className="w-4 h-4 mr-2" />
-          Save Changes
+          {isUpdatingLesson ? t('saving') : t('save')}
         </Button>
       </div>
     </div>

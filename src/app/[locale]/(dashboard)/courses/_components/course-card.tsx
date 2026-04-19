@@ -10,6 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { BookOpen, Users, Settings } from 'lucide-react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 interface CourseCardProps {
   id: string;
@@ -30,6 +31,8 @@ export function CourseCard({
   enrollmentsCount,
   onTogglePublish,
 }: CourseCardProps) {
+  const t = useTranslations('Courses.Card');
+
   return (
     <Card className="flex flex-col h-full hover:shadow-md transition-shadow">
       <CardHeader>
@@ -39,24 +42,24 @@ export function CourseCard({
               {title}
             </CardTitle>
             <CardDescription className="line-clamp-2 mt-2 min-h-10">
-              {description || 'No description provided.'}
+              {description || t('noDescription')}
             </CardDescription>
           </div>
           <Switch
             checked={isPublished}
             onCheckedChange={(val) => onTogglePublish(id, val)}
-            aria-label="Toggle publish status"
+            aria-label={t('togglePublish')}
           />
         </div>
       </CardHeader>
       <CardContent className="flex gap-4 text-sm text-foreground/60 mt-auto">
         <div className="flex items-center gap-1">
           <BookOpen className="w-4 h-4" />
-          <span>{modulesCount} Modules</span>
+          <span>{t('modules', { count: modulesCount })}</span>
         </div>
         <div className="flex items-center gap-1">
           <Users className="w-4 h-4" />
-          <span>{enrollmentsCount} Members</span>
+          <span>{t('members', { count: enrollmentsCount })}</span>
         </div>
       </CardContent>
       <CardFooter className="pt-4 border-t">
@@ -64,7 +67,7 @@ export function CourseCard({
           <Button variant="outline" className="w-full" asChild>
             <Link href={`/courses/${id}`}>
               <Settings className="w-4 h-4 mr-2" />
-              Manage
+              {t('manage')}
             </Link>
           </Button>
         </div>

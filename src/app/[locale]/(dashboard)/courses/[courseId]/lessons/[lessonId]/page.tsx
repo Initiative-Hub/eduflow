@@ -9,8 +9,11 @@ import { LessonHeader } from '../../_components/lesson-header';
 import { LessonEditor } from '../../_components/lesson-editor';
 import { LessonPagination } from '../../_components/lesson-pagination';
 import { LessonContentView } from '../../_components/lesson-content-view';
+import { useTranslations } from 'next-intl';
 
 export default function LessonDetailsPage() {
+  const tH = useTranslations('Courses.LessonHeader');
+  const tP = useTranslations('Courses.LessonPage');
   const params = useParams();
   const courseId = params.courseId as string;
   const lessonId = params.lessonId as string;
@@ -54,8 +57,8 @@ export default function LessonDetailsPage() {
       <LessonHeader
         courseId={courseId}
         lessonId={lessonId}
-        currentModuleTitle={currentModule?.title || 'Modules'}
-        currentLessonTitle={lesson?.title || 'Lesson'}
+        currentModuleTitle={currentModule?.title || tH('modules')}
+        currentLessonTitle={lesson?.title || tH('lesson')}
         isEditing={isEditing}
         setIsEditing={setIsEditing}
         setEditTitle={setEditTitle}
@@ -73,7 +76,7 @@ export default function LessonDetailsPage() {
           </div>
         ) : !lesson ? (
           <p className="text-muted-foreground text-center py-10 w-full">
-            Lesson not found.
+            {tP('notFound')}
           </p>
         ) : isEditing ? (
           <LessonEditor

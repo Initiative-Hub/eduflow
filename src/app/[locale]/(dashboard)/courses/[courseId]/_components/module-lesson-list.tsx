@@ -7,6 +7,7 @@ import {
 import { FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Module } from '../use-modules';
+import { useTranslations } from 'next-intl';
 
 interface ModuleLessonListProps {
   modules: Module[];
@@ -23,6 +24,8 @@ export function ModuleLessonList({
   activeLessonId,
   onSelectLesson,
 }: ModuleLessonListProps) {
+  const t = useTranslations('Courses.ModuleAccordion');
+
   return (
     <Accordion type="multiple" className="w-full">
       {modules.map((module) => (
@@ -52,7 +55,7 @@ export function ModuleLessonList({
               ))}
               {module.lessons.length === 0 && (
                 <p className="text-xs text-muted-foreground py-2 px-3">
-                  No lessons yet
+                  {t('noLessons')}
                 </p>
               )}
             </div>

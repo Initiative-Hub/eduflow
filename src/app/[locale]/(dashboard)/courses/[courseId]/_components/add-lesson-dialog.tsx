@@ -6,6 +6,7 @@ import {
   lessonFields,
   type CreateLessonFormData,
 } from '../create-lesson.config';
+import { useTranslations } from 'next-intl';
 
 interface AddLessonDialogProps {
   isOpen: boolean;
@@ -20,19 +21,27 @@ export function AddLessonDialog({
   onSubmit,
   isLoading,
 }: AddLessonDialogProps) {
+  const t = useTranslations('Courses.AddLessonDialog');
+
+  const translatedFields = lessonFields.map((field) => ({
+    ...field,
+    label: t(`fields.${field.name}`),
+    placeholder: t(`fields.${field.name}Placeholder`),
+  }));
+
   return (
     <DialogTemplate
       isOpen={isOpen}
       onOpenChange={onOpenChange}
-      title="Add Lesson"
-      description="Provide a title for the new lesson within this module."
+      title={t('title')}
+      description={t('description')}
     >
       <FormTemplate
         schema={createLessonSchema}
         defaultValues={createLessonDefaultValues}
-        fields={lessonFields}
+        fields={translatedFields}
         onSubmit={onSubmit}
-        submitLabel="Create Lesson"
+        submitLabel={t('submit')}
         isLoading={isLoading}
       />
     </DialogTemplate>

@@ -7,8 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { useDialog } from '@/components/custom/dialog/use-dialog';
 import { BookOpen } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 export default function CoursesPage() {
+  const t = useTranslations('Courses');
   const {
     courses,
     isLoading,
@@ -22,13 +24,13 @@ export default function CoursesPage() {
     <div className="space-y-8">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Courses</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
           <p className="text-muted-foreground mt-1">
-            Manage and publish your courses here.
+            {t('description')}
           </p>
         </div>
         <Button onClick={() => dialog.open()}>
-          <Plus className="mr-2 h-4 w-4" /> New Course
+          <Plus className="mr-2 h-4 w-4" /> {t('newCourse')}
         </Button>
       </div>
 
@@ -55,13 +57,12 @@ export default function CoursesPage() {
           <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
             <BookOpen className="h-6 w-6 text-primary" />
           </div>
-          <h2 className="text-xl font-semibold mb-2">No courses yet</h2>
+          <h2 className="text-xl font-semibold mb-2">{t('noCourses')}</h2>
           <p className="text-muted-foreground mb-6 max-w-100">
-            You haven't created any courses. Click the button below to create
-            your first one.
+            {t('noCoursesDescription')}
           </p>
           <Button onClick={() => dialog.open()}>
-            Create Your First Course
+            {t('createFirstCourse')}
           </Button>
         </div>
       ) : (

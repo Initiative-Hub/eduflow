@@ -1,4 +1,95 @@
 {
+  "Courses": {
+    "title": "Courses",
+    "description": "Manage and publish your courses here.",
+    "newCourse": "New Course",
+    "noCourses": "No courses yet",
+    "noCoursesDescription": "You haven't created any courses. Click the button below to create your first one.",
+    "createFirstCourse": "Create Your First Course",
+    "Card": {
+      "noDescription": "No description provided.",
+      "modules": "{count, plural, =1 {1 Module} other {# Modules}}",
+      "members": "{count, plural, =1 {1 Member} other {# Members}}",
+      "manage": "Manage",
+      "togglePublish": "Toggle publish status"
+    },
+    "CreateDialog": {
+      "title": "Create New Course",
+      "description": "Enter the basics for your new course to get started.",
+      "submit": "Create Course",
+      "fields": {
+        "title": "Course Title",
+        "titlePlaceholder": "Enter course title",
+        "titleRequired": "Course Title is required",
+        "description": "Description",
+        "descriptionPlaceholder": "Describe your course (optional)"
+      }
+    },
+    "LessonHeader": {
+      "edit": "Edit Lesson",
+      "lesson": "Lesson",
+      "modules": "Modules"
+    },
+    "LessonOutline": {
+      "title": "Contents",
+      "addModule": "Add module",
+      "noModules": "No modules yet.",
+      "addFirstModule": "Add your first module",
+      "Dialog": {
+        "title": "Add Module",
+        "description": "Create a new module to organize your lessons.",
+        "submit": "Create Module",
+        "fields": {
+            "title": "Module Title",
+            "titlePlaceholder": "E.g., Getting Started",
+            "titleRequired": "Module Title is required"
+        }
+      }
+    },
+    "SettingsPage": "Course Settings",
+    "AssessmentsPage": "Assessments",
+    "ChatPage": "Course AI Chat",
+    "FilesPage": "Files",
+    "MembersPage": "Members",
+    "AnalyticsPage": "Analytics",
+    "CourseModules": {
+      "title": "Course Modules",
+      "description": "Organize your curriculum into modules and lessons.",
+      "noModules": "No modules yet. Create your first module to begin.",
+      "addModule": "Add Module"
+    },
+    "ModuleAccordion": {
+      "noLessons": "No lessons yet"
+    },
+    "AddLessonDialog": {
+        "title": "Add Lesson",
+        "description": "Provide a title for the new lesson within this module.",
+        "submit": "Add Lesson",
+        "fields": {
+            "title": "Lesson Title",
+            "titlePlaceholder": "E.g., Introduction to the topic",
+            "titleRequired": "Lesson Title is required"
+        }
+    },
+    "LessonEditor": {
+        "title": "Lesson Title",
+        "content": "Lesson Content",
+        "cancel": "Cancel",
+        "save": "Save",
+        "saving": "Saving...",
+        "writeReview": "Write/Review"
+    },
+    "LessonView": {
+        "empty": "Lesson content is empty."
+    },
+    "LessonPage": {
+        "notFound": "Lesson not found."
+    },
+    "LessonPagination": {
+        "previous": "Previous",
+        "next": "Next"
+    }
+  },
   "AccountPage": {
     "emailLabel": "Email:",
     "title": "Account Information",

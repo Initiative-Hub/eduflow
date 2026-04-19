@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { BookOpen, Plus } from 'lucide-react';
 import Link from 'next/link';
 import type { Module } from '../use-modules';
+import { useTranslations } from 'next-intl';
 
 interface ModuleAccordionItemProps {
   moduleItem: Module;
@@ -20,6 +21,9 @@ export function ModuleAccordionItem({
   courseId,
   onAddLesson,
 }: ModuleAccordionItemProps) {
+  const tAccordion = useTranslations('Courses.ModuleAccordion');
+  const tDialog = useTranslations('Courses.AddLessonDialog');
+
   return (
     <AccordionItem
       value={moduleItem.id}
@@ -45,7 +49,7 @@ export function ModuleAccordionItem({
             }}
           >
             <Plus className="w-4 h-4 mr-1" />
-            Add lesson
+            {tDialog('submit')}
           </Button>
         </div>
 
@@ -53,7 +57,7 @@ export function ModuleAccordionItem({
           <div className="divide-y">
             {moduleItem.lessons.length === 0 ? (
               <div className="p-4 text-muted-foreground italic text-center">
-                No lessons in this module. Add one above.
+                {tAccordion('noLessons')}
               </div>
             ) : (
               moduleItem.lessons.map((lesson) => (

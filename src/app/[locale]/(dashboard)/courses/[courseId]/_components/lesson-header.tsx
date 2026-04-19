@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/popover';
 import { useRouter } from 'next/navigation';
 import { LessonOutline } from './lesson-outline';
+import { useTranslations } from 'next-intl';
 
 interface LessonHeaderProps {
   courseId: string;
@@ -39,6 +40,7 @@ export function LessonHeader({
   setShowOutline,
 }: LessonHeaderProps) {
   const router = useRouter();
+  const t = useTranslations('Courses.LessonHeader');
 
   return (
     <div className="sticky top-0 z-30 flex items-center justify-between border-b border-foreground/20 dark:border-border bg-transparent -mt-6 md:-mt-10 lg:-mt-12 -mx-6 md:-mx-10 lg:-mx-12 px-6 md:px-10 lg:px-12 py-3">
@@ -92,7 +94,7 @@ export function LessonHeader({
             }}
           >
             <Edit3 className="w-4 h-4 mr-2" />
-            Edit Lesson
+            {t('edit')}
           </Button>
         )}
       </div>

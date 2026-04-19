@@ -1,3 +1,5 @@
+import { useTranslations } from 'next-intl';
+
 interface LessonContentViewProps {
   title: string;
   contentText: string;
@@ -7,6 +9,8 @@ export function LessonContentView({
   title,
   contentText,
 }: LessonContentViewProps) {
+  const t = useTranslations('Courses.LessonView');
+
   return (
     <div className="space-y-8 flex-1">
       <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
@@ -15,7 +19,7 @@ export function LessonContentView({
           <div className="whitespace-pre-wrap">{contentText}</div>
         ) : (
           <p className="text-muted-foreground italic">
-            No content has been added to this lesson yet.
+            {t('empty')}
           </p>
         )}
       </div>

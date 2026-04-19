@@ -10,8 +10,10 @@ import { Plus } from 'lucide-react';
 import { ModuleAccordionItem } from '../_components/module-accordion-item';
 import { AddLessonDialog } from '../_components/add-lesson-dialog';
 import type { CreateLessonFormData } from '../create-lesson.config';
+import { useTranslations } from 'next-intl';
 
 export default function CourseModulesPage() {
+  const t = useTranslations('Courses.CourseModules');
   const params = useParams();
   const courseId = params.courseId as string;
 
@@ -50,9 +52,9 @@ export default function CourseModulesPage() {
     <div className="space-y-8">
       <div className="flex justify-between items-end pb-4 border-b">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Course Modules</h1>
+          <h1 className="text-2xl font-bold text-foreground">{t('title')}</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Organize your course syllabus and materials
+            {t('description')}
           </p>
         </div>
         <div className="flex gap-2">
@@ -64,7 +66,7 @@ export default function CourseModulesPage() {
           />
           <Button onClick={onCreateModule} disabled={isCreatingModule}>
             <Plus className="w-4 h-4 mr-1" />
-            Add Module
+            {t('addModule')}
           </Button>
         </div>
       </div>
@@ -76,7 +78,7 @@ export default function CourseModulesPage() {
         </div>
       ) : modules.length === 0 ? (
         <div className="text-center p-12 border border-dashed rounded-xl bg-card/50 text-muted-foreground">
-          No modules found. Create one to get started!
+          {t('noModules')}
         </div>
       ) : (
         <Accordion type="multiple" className="space-y-4">

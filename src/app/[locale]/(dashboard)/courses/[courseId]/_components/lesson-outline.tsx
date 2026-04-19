@@ -11,6 +11,7 @@ import { z } from 'zod';
 import type { FormFieldConfig } from '@/components/custom/form';
 import { cn } from '@/lib/utils';
 import { ModuleLessonList } from './module-lesson-list';
+import { useTranslations } from 'next-intl';
 
 const createModuleSchema = z.object({
   title: z.string().min(1, 'Module Title is required'),
@@ -44,6 +45,14 @@ export function LessonOutline({
   const { modules, isLoading, isCreatingModule, handleCreateModule } =
     useModules(courseId);
   const dialog = useDialog();
+  const t = useTranslations('Courses.LessonOutline');
+  const tDialog = useTranslations('Courses.LessonOutline.Dialog');
+
+  const translatedFields = createModuleFields.map((field) => ({
+    ...field,
+    label: tDialog(`fields.${field.name}`),
+    placeholder: tDialog(`fields.${field.name}Placeholder`),
+  }));
 
   const onCreateSubmit = (data: { title: string }) => {
     handleCreateModule(data, { onSuccess: () => dialog.close() });
@@ -65,13 +74,13 @@ export function LessonOutline({
       )}
     >
       <div className="p-4 border-b flex items-center justify-between">
-        <h2 className="font-semibold text-lg">Contents</h2>
+        <h2 className="font-semibold text-lg">{t('title')}</h2>
         <div className="flex items-center gap-1">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => dialog.open()}
-            title="Add module"
+            title={t('addModule')}
           >
             <Plus className="w-4 h-4" />
           </Button>
@@ -88,9 +97,9 @@ export function LessonOutline({
         ) : modules.length === 0 ? (
           <div className="text-center p-6 text-muted-foreground flex flex-col items-center">
             <BookOpen className="w-8 h-8 mb-2 opacity-50" />
-            <p className="text-sm">No modules yet.</p>
+            <p className="text-sm">{t('noModules')}</p>
             <Button variant="link" onClick={() => dialog.open()}>
-              Add your first module
+              {t('addFirstModule')}
             </Button>
           </div>
         ) : (
@@ -105,15 +114,15 @@ export function LessonOutline({
       <DialogTemplate
         isOpen={dialog.isOpen}
         onOpenChange={dialog.setIsOpen}
-        title="Add Module"
-        description="Create a new module to organize your lessons."
+        title={tDialog('title')}
+        description={tDialog('description')}
       >
         <FormTemplate
           schema={createModuleSchema}
           defaultValues={{ title: '' }}
-          fields={createModuleFields}
+          fields={translatedFields}
           onSubmit={onCreateSubmit}
-          submitLabel="Create Module"
+          submitLabel={tDialog('submit')}
           isLoading={isCreatingModule}
         />
       </DialogTemplate>
