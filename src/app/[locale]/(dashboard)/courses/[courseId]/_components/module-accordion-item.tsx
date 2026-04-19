@@ -15,10 +15,6 @@ interface ModuleAccordionItemProps {
   onAddLesson: (moduleId: string) => void;
 }
 
-/**
- * A single module row inside the course modules accordion.
- * Extracted from the modules page to keep each level of the tree small.
- */
 export function ModuleAccordionItem({
   moduleItem,
   courseId,
@@ -37,7 +33,7 @@ export function ModuleAccordionItem({
         </AccordionTrigger>
 
         {/* Absolutely positioned so it doesn't nest inside the trigger */}
-        <div className="absolute right-12 top-[13px] z-10">
+        <div className="absolute right-12 top-3.25 z-10">
           <Button
             size="sm"
             variant="default"

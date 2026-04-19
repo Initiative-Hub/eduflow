@@ -14,10 +14,6 @@ interface AddLessonDialogProps {
   isLoading: boolean;
 }
 
-/**
- * Modal dialog for creating a new lesson inside a module.
- * Extracted from the course modules page to keep that file under 100 lines.
- */
 export function AddLessonDialog({
   isOpen,
   onOpenChange,

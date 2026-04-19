@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import { useModules } from '../../use-modules';
 import { useLesson, useUpdateLesson } from '../../use-lesson';
 import { parseLessonContent } from '@/lib/lesson-content';
-import { LessonNavigationHeader } from '../../_components/lesson-navigation-header';
+import { LessonHeader } from '../../_components/lesson-header';
 import { LessonEditor } from '../../_components/lesson-editor';
 import { LessonPagination } from '../../_components/lesson-pagination';
 import { LessonContentView } from '../../_components/lesson-content-view';
@@ -51,7 +51,7 @@ export default function LessonDetailsPage() {
 
   return (
     <div className="space-y-8 pb-10">
-      <LessonNavigationHeader
+      <LessonHeader
         courseId={courseId}
         lessonId={lessonId}
         currentModuleTitle={currentModule?.title || 'Modules'}

@@ -27,19 +27,19 @@ const createModuleFields: FormFieldConfig[] = [
   },
 ];
 
-interface LessonOutlineSidebarProps {
+interface LessonOutlineProps {
   courseId: string;
   activeLessonId?: string;
   onSelectLesson?: (id: string) => void;
   className?: string;
 }
 
-export function LessonOutlineSidebar({
+export function LessonOutline({
   courseId,
   activeLessonId,
   onSelectLesson,
   className,
-}: LessonOutlineSidebarProps) {
+}: LessonOutlineProps) {
   const router = useRouter();
   const { modules, isLoading, isCreatingModule, handleCreateModule } =
     useModules(courseId);

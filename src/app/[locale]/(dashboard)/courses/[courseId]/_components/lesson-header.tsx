@@ -1,4 +1,6 @@
-import { ChevronRight, Edit3, Eye, Menu } from 'lucide-react';
+'use client';
+
+import { ChevronRight, Edit3, Menu } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import {
@@ -6,10 +8,10 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { LessonOutlineSidebar } from './lesson-outline-sidebar';
 import { useRouter } from 'next/navigation';
+import { LessonOutline } from './lesson-outline';
 
-interface LessonNavigationHeaderProps {
+interface LessonHeaderProps {
   courseId: string;
   lessonId: string;
   currentModuleTitle: string;
@@ -23,7 +25,7 @@ interface LessonNavigationHeaderProps {
   setShowOutline: (val: boolean) => void;
 }
 
-export function LessonNavigationHeader({
+export function LessonHeader({
   courseId,
   lessonId,
   currentModuleTitle,
@@ -35,7 +37,7 @@ export function LessonNavigationHeader({
   originalContent,
   showOutline,
   setShowOutline,
-}: LessonNavigationHeaderProps) {
+}: LessonHeaderProps) {
   const router = useRouter();
 
   return (
@@ -53,9 +55,9 @@ export function LessonNavigationHeader({
           </PopoverTrigger>
           <PopoverContent
             align="start"
-            className="w-[320px] p-0 h-[66vh] flex flex-col overflow-hidden"
+            className="p-0 w-80 h-[66vh] flex flex-col overflow-hidden"
           >
-            <LessonOutlineSidebar
+            <LessonOutline
               courseId={courseId}
               activeLessonId={lessonId}
               onSelectLesson={(id) => {
@@ -68,12 +70,12 @@ export function LessonNavigationHeader({
         </Popover>
         <Link
           href={`/courses/${courseId}`}
-          className="hover:text-primary transition-colors truncate max-w-[120px] md:max-w-[200px]"
+          className="hover:text-primary transition-colors truncate max-w-30 md:max-w-50"
         >
           {currentModuleTitle}
         </Link>
         <ChevronRight className="w-4 h-4 shrink-0 opacity-50" />
-        <span className="font-medium text-foreground truncate max-w-[150px] md:max-w-xs">
+        <span className="font-medium text-foreground truncate max-w-37.5 md:max-w-xs">
           {currentLessonTitle}
         </span>
       </div>

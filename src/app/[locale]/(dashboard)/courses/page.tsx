@@ -18,16 +18,6 @@ export default function CoursesPage() {
   } = useCourses();
   const dialog = useDialog();
 
-  const onCreateSubmit = (data: { title: string; description?: string }) => {
-    handleCreateCourse(data, {
-      onSuccess: () => dialog.close(),
-    });
-  };
-
-  const handleTogglePublishWrapper = (id: string, isPublished: boolean) => {
-    handleTogglePublish({ courseId: id, isPublished });
-  };
-
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
@@ -45,7 +35,9 @@ export default function CoursesPage() {
       <CreateCourseDialog
         isOpen={dialog.isOpen}
         onOpenChange={dialog.setIsOpen}
-        onSubmit={onCreateSubmit}
+        onSubmit={(data) =>
+          handleCreateCourse(data, { onSuccess: () => dialog.close() })
+        }
         isLoading={isCreating}
       />
 
@@ -83,7 +75,7 @@ export default function CoursesPage() {
               isPublished={course.isPublished}
               modulesCount={course._count?.modules || 0}
               enrollmentsCount={course._count?.enrollments || 0}
-              onTogglePublish={handleTogglePublishWrapper}
+              onTogglePublish={handleTogglePublish}
             />
           ))}
         </div>

@@ -3,10 +3,6 @@ interface LessonContentViewProps {
   contentText: string;
 }
 
-/**
- * Read-only view of a lesson — renders the title and parsed content text.
- * Extracted from the lesson detail page to keep the page component lean.
- */
 export function LessonContentView({
   title,
   contentText,

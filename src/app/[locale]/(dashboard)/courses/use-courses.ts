@@ -56,8 +56,12 @@ export function useCourses() {
     isError: query.isError,
 
     isCreating: createCourseMutation.isPending,
-    handleCreateCourse: createCourseMutation.mutate,
+    handleCreateCourse: (
+      data: { title: string; description?: string },
+      options?: { onSuccess?: () => void }
+    ) => createCourseMutation.mutate(data, options),
 
-    handleTogglePublish: togglePublishMutation.mutate,
+    handleTogglePublish: (id: string, isPublished: boolean) =>
+      togglePublishMutation.mutate({ courseId: id, isPublished }),
   };
 }

@@ -16,8 +16,7 @@ interface ModuleLessonListProps {
 
 /**
  * Accordion list of modules and their lessons.
- * Used inside `LessonOutlineSidebar` (popover outline panel).
- * Extracted to isolate the tree rendering from sidebar chrome and dialog logic.
+ * Used inside `LessonOutline` (popover outline panel).
  */
 export function ModuleLessonList({
   modules,
