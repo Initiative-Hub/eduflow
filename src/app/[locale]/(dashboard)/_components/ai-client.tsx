@@ -1,7 +1,6 @@
 'use client';
 
-import { useChat } from '@ai-sdk/react';
-import { DefaultChatTransport } from 'ai';
+import type { UIMessage } from 'ai';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   BadgeInfo,
@@ -18,38 +17,36 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
+import { useChatController } from '../use-chat';
 import { ChatInput } from './chat-input';
 import { ChatView } from './chat-view';
 import { LandingView } from './landing-view';
 
 interface AIClientProps {
   userName?: string;
+  chatId?: string;
+  initialMessages?: UIMessage[];
 }
 
 export type ViewState = 'home' | 'library';
 
-export function AIClient({ userName }: AIClientProps) {
+export function AIClient({ userName, chatId, initialMessages }: AIClientProps) {
   const t = useTranslations('AIChat');
   const [view, setView] = useState<ViewState>('home');
+  const {
+    displayMessages,
+    isStreaming,
+    isChatting,
+    isLimitReached,
+    userMessageCount,
+    startChat,
+    stop,
+    maxMessages,
+  } = useChatController({ chatId, initialMessages });
 
-  const { messages, status, sendMessage, stop } = useChat({
-    transport: new DefaultChatTransport({
-      api: '/api/chat',
-      body: {
-        provider: 'openrouter',
-        model: 'gemini-2.5-pro',
-      },
-    }),
-    onError(error) {
-      console.error('Chat error:', error);
-      toast.error(
-        error.message || 'An error occurred while sending the message.'
-      );
-    },
-  });
-
-  const isStreaming = status === 'streaming' || status === 'submitted';
-  const isChatting = messages.length > 0;
+  const notifyLimitReached = () => {
+    toast.error(t('limitReachedToast', { count: maxMessages }));
+  };
 
   const handleSubmit = (e?: React.FormEvent, customValue?: string) => {
     e?.preventDefault();
@@ -57,7 +54,12 @@ export function AIClient({ userName }: AIClientProps) {
     const text = customValue || '';
     if (!text.trim()) return;
 
-    void sendMessage({ text: text.trim() });
+    if (isLimitReached) {
+      notifyLimitReached();
+      return;
+    }
+
+    void startChat(text.trim());
   };
 
   const suggestions = [
@@ -157,11 +159,15 @@ export function AIClient({ userName }: AIClientProps) {
               suggestions={suggestions}
               extendedPrompts={extendedPrompts}
               onSelectPrompt={(text) => {
-                void sendMessage({ text });
+                if (isLimitReached) {
+                  notifyLimitReached();
+                  return;
+                }
+                void startChat(text);
               }}
             />
           ) : (
-            <ChatView messages={messages} isStreaming={isStreaming} />
+            <ChatView messages={displayMessages} isStreaming={isStreaming} />
           )}
         </AnimatePresence>
       </div>
@@ -170,6 +176,9 @@ export function AIClient({ userName }: AIClientProps) {
         handleSubmit={handleSubmit}
         isStreaming={isStreaming}
         isChatting={isChatting}
+        isLimitReached={isLimitReached}
+        limitCount={maxMessages}
+        userMessageCount={userMessageCount}
         onStop={stop}
       />
     </div>
