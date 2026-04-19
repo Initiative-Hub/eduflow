@@ -61,8 +61,9 @@ export function useModules(courseId: string) {
         title: data.title,
         content: data.content,
       }),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['modules', courseId] });
+      queryClient.invalidateQueries({ queryKey: ['lesson', variables.lessonId] });
       toast.success('Lesson saved successfully!');
     },
     onError: (err: any) => {
@@ -99,5 +100,19 @@ export function useModules(courseId: string) {
     isUpdatingLesson: updateLessonMutation.isPending,
     handleUpdateLesson: updateLessonMutation.mutate,
     getAdjacentLessons,
+  };
+}
+
+export function useLesson(lessonId: string) {
+  const query = useQuery({
+    queryKey: ['lesson', lessonId],
+    queryFn: () => apiClient.get<Lesson>(`/v1/lessons/${lessonId}`),
+    enabled: !!lessonId,
+  });
+
+  return {
+    lesson: query.data,
+    isLoading: query.isLoading,
+    isError: query.isError,
   };
 }

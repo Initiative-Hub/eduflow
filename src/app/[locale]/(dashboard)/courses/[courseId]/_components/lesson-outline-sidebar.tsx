@@ -14,8 +14,6 @@ import {
   Plus,
   BookOpen,
   FileText,
-  PanelRightClose,
-  PanelRightOpen,
 } from 'lucide-react';
 import { useDialog } from '@/components/custom/dialog/use-dialog';
 import { DialogTemplate } from '@/components/custom/dialog/dialog';
@@ -56,7 +54,6 @@ export function LessonOutlineSidebar({
   const { modules, isLoading, isCreatingModule, handleCreateModule } =
     useModules(courseId);
   const dialog = useDialog();
-  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const onCreateSubmit = (data: { title: string }) => {
     handleCreateModule(data, {
@@ -72,26 +69,6 @@ export function LessonOutlineSidebar({
     }
   };
 
-  if (isCollapsed) {
-    return (
-      <div
-        className={cn(
-          'flex flex-col border-l bg-card/30 items-center py-4 w-16 transition-all duration-300',
-          className
-        )}
-      >
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setIsCollapsed(false)}
-          title="Expand contents"
-        >
-          <PanelRightOpen className="w-5 h-5" />
-        </Button>
-      </div>
-    );
-  }
-
   return (
     <div
       className={cn(
@@ -100,7 +77,7 @@ export function LessonOutlineSidebar({
       )}
     >
       <div className="p-4 border-b flex items-center justify-between">
-        <h2 className="font-semibold text-lg">Course Contents</h2>
+        <h2 className="font-semibold text-lg">Contents</h2>
         <div className="flex items-center gap-1">
           <Button
             variant="ghost"
@@ -109,14 +86,6 @@ export function LessonOutlineSidebar({
             title="Add module"
           >
             <Plus className="w-4 h-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setIsCollapsed(true)}
-            title="Collapse contents"
-          >
-            <PanelRightClose className="w-4 h-4" />
           </Button>
         </div>
       </div>
@@ -144,7 +113,7 @@ export function LessonOutlineSidebar({
                 value={module.id}
                 className="border-b-0"
               >
-                <AccordionTrigger className="hover:no-underline py-3 px-2 rounded-md hover:bg-muted/50 transition-colors">
+                <AccordionTrigger className="py-3 px-2 rounded-md hover:bg-muted/50 transition-colors">
                   <div className="flex items-center text-sm font-medium">
                     {module.title}
                   </div>

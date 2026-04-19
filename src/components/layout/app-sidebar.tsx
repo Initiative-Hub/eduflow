@@ -14,6 +14,10 @@ import {
   Settings,
   Sparkles,
   User,
+  FileText,
+  Files,
+  Users,
+  LineChart,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -34,6 +38,7 @@ import {
 } from '@/components/ui/sidebar';
 import { useSession } from '@/lib/auth-client';
 import { NavbarAvatar } from './navbar-avatar';
+import { useCourses } from '@/app/[locale]/(dashboard)/courses/use-courses';
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const t = useTranslations('Layout');
@@ -115,9 +120,62 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     },
   ];
 
+  const match = pathname.match(/\/courses\/([^\/]+)/);
+  const courseId = match ? match[1] : null;
+
+  const { courses } = useCourses();
+  const currentCourse = courseId ? courses.find((c) => c.id === courseId) : null;
+
+  const courseItems: SidebarItem[] = courseId
+    ? [
+        {
+          name: 'Modules (Home)',
+          url: `/courses/${courseId}`,
+          icon: <BookOpen className={sidebarIconClassName} />,
+          exact: true,
+        },
+        {
+          name: 'Course AI Chat',
+          url: `/courses/${courseId}/chat`,
+          icon: <MessageSquare className={sidebarIconClassName} />,
+        },
+        {
+          name: 'Assessments',
+          url: `/courses/${courseId}/assessments`,
+          icon: <FileText className={sidebarIconClassName} />,
+        },
+        {
+          name: 'Files',
+          url: `/courses/${courseId}/files`,
+          icon: <Files className={sidebarIconClassName} />,
+        },
+        {
+          name: 'Members',
+          url: `/courses/${courseId}/members`,
+          icon: <Users className={sidebarIconClassName} />,
+        },
+        {
+          name: 'Analytics',
+          url: `/courses/${courseId}/analytics`,
+          icon: <LineChart className={sidebarIconClassName} />,
+        },
+        {
+          name: 'Settings',
+          url: `/courses/${courseId}/settings`,
+          icon: <Settings className={sidebarIconClassName} />,
+        },
+      ]
+    : [];
+
   const isSettingsContext =
     pathname === '/profile' || pathname.startsWith('/settings');
-  const menuItems = isSettingsContext ? settingsItems : assistants;
+
+  let menuItems = assistants;
+  if (isSettingsContext) {
+    menuItems = settingsItems;
+  } else if (courseId) {
+    menuItems = courseItems;
+  }
 
   return (
     <Sidebar
@@ -142,18 +200,29 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </span>
           </div>
         </Link>
-        <Button
-          className="group-data-[collapsible=icon]:justify-center! relative w-full justify-start rounded-xl bg-linear-to-br from-primary to-primary/80 px-4 py-6 font-semibold text-primary-foreground shadow-md transition-all hover:from-primary/90 hover:to-primary/70 hover:shadow-lg group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:h-12 group-data-[collapsible=icon]:w-12 group-data-[collapsible=icon]:p-0!"
-          size="lg"
-        >
-          <Plus
-            data-icon="inline-start"
-            className="size-5 shrink-0 opacity-80 group-data-[collapsible=icon]:absolute group-data-[collapsible=icon]:top-1/2 group-data-[collapsible=icon]:left-1/2 group-data-[collapsible=icon]:m-0 group-data-[collapsible=icon]:-translate-x-1/2 group-data-[collapsible=icon]:-translate-y-1/2"
-          />
-          <span className="text-sm group-data-[collapsible=icon]:hidden">
-            {t('newSession')}
-          </span>
-        </Button>
+        {!pathname.includes('/courses/') ? (
+          <Button
+            className="group-data-[collapsible=icon]:justify-center! relative w-full justify-start rounded-xl bg-linear-to-br from-primary to-primary/80 px-4 py-6 font-semibold text-primary-foreground shadow-md transition-all hover:from-primary/90 hover:to-primary/70 hover:shadow-lg group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:h-12 group-data-[collapsible=icon]:w-12 group-data-[collapsible=icon]:p-0!"
+            size="lg"
+          >
+            <Plus
+              data-icon="inline-start"
+              className="size-5 shrink-0 opacity-80 group-data-[collapsible=icon]:absolute group-data-[collapsible=icon]:top-1/2 group-data-[collapsible=icon]:left-1/2 group-data-[collapsible=icon]:m-0 group-data-[collapsible=icon]:-translate-x-1/2 group-data-[collapsible=icon]:-translate-y-1/2"
+            />
+            <span className="text-sm group-data-[collapsible=icon]:hidden">
+              {t('newSession')}
+            </span>
+          </Button>
+        ) : currentCourse ? (
+          <div className="flex flex-col gap-1 w-full px-2 group-data-[collapsible=icon]:hidden">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-1">
+              Course
+            </span>
+            <h2 className="font-bold text-foreground text-[1rem] leading-tight line-clamp-2">
+              {currentCourse.title}
+            </h2>
+          </div>
+        ) : null}
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>

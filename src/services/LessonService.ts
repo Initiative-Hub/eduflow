@@ -19,12 +19,7 @@ export class LessonService {
     });
   }
 
-  static async updateLesson(
-    lessonId: string,
-    userId: string,
-    data: { title?: string; content?: any }
-  ) {
-    // Fetch lesson with module & course to check permissions
+  private static async checkLessonPermission(lessonId: string, userId: string) {
     const lesson = await prisma.lesson.findUnique({
       where: { id: lessonId },
       include: {
@@ -48,17 +43,15 @@ export class LessonService {
     }
 
     const course = lesson.module.course;
-
-    // Check if the user is the course creator (OWNER conceptually)
     const isTeacher = course.teacherId === userId;
-
-    // Or check if the user has an enrollment with a role that has EDIT_CONTENT permission
     let hasEditPermission = false;
+    let hasViewPermission = false;
 
     if (!isTeacher && course.enrollments.length > 0) {
       const userRoleId = course.enrollments[0].roleId;
 
-      const permissionCheck = await prisma.coursePermission.findFirst({
+      // Check edit permissions
+      const editPermissionCheck = await prisma.coursePermission.findFirst({
         where: {
           courseId: course.id,
           courseRoleId: userRoleId,
@@ -68,14 +61,42 @@ export class LessonService {
       });
 
       if (
-        permissionCheck ||
-        course.enrollments[0].role.name === CourseRoleName.OWNER
+        editPermissionCheck ||
+        course.enrollments[0].role.name === CourseRoleName.OWNER ||
+        course.enrollments[0].role.name === CourseRoleName.TEACHER
       ) {
         hasEditPermission = true;
+        hasViewPermission = true;
       }
+
+      // If enrolled, you have view permission automatically for this project's simplified scope
+      hasViewPermission = true;
+    } else if (isTeacher) {
+      hasEditPermission = true;
+      hasViewPermission = true;
     }
 
-    if (!isTeacher && !hasEditPermission) {
+    return { lesson, hasEditPermission, hasViewPermission };
+  }
+
+  static async getLessonById(lessonId: string, userId: string) {
+    const { lesson, hasViewPermission } = await this.checkLessonPermission(lessonId, userId);
+
+    if (!hasViewPermission) {
+      throw new Error('Unauthorized: Missing view permission');
+    }
+
+    return lesson;
+  }
+
+  static async updateLesson(
+    lessonId: string,
+    userId: string,
+    data: { title?: string; content?: any }
+  ) {
+    const { hasEditPermission } = await this.checkLessonPermission(lessonId, userId);
+
+    if (!hasEditPermission) {
       throw new Error('Unauthorized: Missing EDIT_CONTENT permission');
     }
 

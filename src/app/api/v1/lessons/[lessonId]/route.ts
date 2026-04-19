@@ -8,14 +8,14 @@ const patchLessonSchema = z.object({
   content: z.any().optional(),
 });
 
-export const PATCH = withAuth([], async (req, sessionData, { params }) => {
+export const PATCH = withAuth([], async (req, sessionData, context: any) => {
   try {
     if (!sessionData) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
     const userId = sessionData.user.id;
-    const { lessonId } = params;
+    const { lessonId } = await context.params;
 
     const body = await req.json();
     const parsed = patchLessonSchema.safeParse(body);
@@ -31,11 +31,48 @@ export const PATCH = withAuth([], async (req, sessionData, { params }) => {
 
     return NextResponse.json(updatedLesson);
   } catch (error: any) {
-    if (error.message.includes('Unauthorized')) {
+    console.error('Update lesson error:', error);
+    if (error.message?.includes('Unauthorized')) {
       return NextResponse.json({ message: error.message }, { status: 403 });
     }
     return NextResponse.json(
-      { message: error.message || 'Internal Server Error' },
+      { message: 'An internal error occurred while saving the lesson.' },
+      { status: 500 }
+    );
+  }
+});
+
+export const GET = withAuth([], async (req, sessionData, context: any) => {
+  try {
+    if (!sessionData) {
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    }
+
+    const userId = sessionData.user.id;
+    
+    const params = await context?.params;
+    let lessonId = params?.lessonId;
+    if (!lessonId) {
+      const urlMatches = req.url.match(/\/lessons\/([^/?]+)/);
+      lessonId = urlMatches ? urlMatches[1] : null;
+    }
+
+    if (!lessonId) {
+      return NextResponse.json({ message: 'Missing lessonId' }, { status: 400 });
+    }
+
+    const lesson = await LessonService.getLessonById(lessonId, userId);
+    return NextResponse.json(lesson);
+  } catch (error: any) {
+    console.error('Get lesson error:', error);
+    if (error.message?.includes('Unauthorized')) {
+      return NextResponse.json({ message: error.message }, { status: 403 });
+    }
+    if (error.message?.includes('not found')) {
+      return NextResponse.json({ message: 'Lesson not found' }, { status: 404 });
+    }
+    return NextResponse.json(
+      { message: 'An internal error occurred while fetching the lesson.' },
       { status: 500 }
     );
   }
