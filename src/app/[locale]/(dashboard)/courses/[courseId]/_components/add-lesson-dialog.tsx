@@ -1,12 +1,12 @@
+import { useTranslations } from 'next-intl';
 import { DialogTemplate } from '@/components/custom/dialog/dialog';
 import { FormTemplate } from '@/components/custom/form';
 import {
-  createLessonSchema,
-  createLessonDefaultValues,
-  lessonFields,
   type CreateLessonFormData,
+  createLessonDefaultValues,
+  createLessonSchema,
+  lessonFields,
 } from '../create-lesson.config';
-import { useTranslations } from 'next-intl';
 
 interface AddLessonDialogProps {
   isOpen: boolean;

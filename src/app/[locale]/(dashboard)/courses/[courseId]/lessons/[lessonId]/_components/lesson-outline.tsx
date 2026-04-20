@@ -1,17 +1,17 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { useModules } from '../use-modules';
-import { Button } from '@/components/ui/button';
 import { BookOpen, Plus } from 'lucide-react';
-import { useDialog } from '@/components/custom/dialog/use-dialog';
-import { DialogTemplate } from '@/components/custom/dialog/dialog';
-import { FormTemplate } from '@/components/custom/form';
-import { z } from 'zod';
-import type { FormFieldConfig } from '@/components/custom/form';
-import { cn } from '@/lib/utils';
-import { ModuleLessonList } from './module-lesson-list';
+import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { z } from 'zod';
+import { DialogTemplate } from '@/components/custom/dialog/dialog';
+import { useDialog } from '@/components/custom/dialog/use-dialog';
+import type { FormFieldConfig } from '@/components/custom/form';
+import { FormTemplate } from '@/components/custom/form';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import { useModules } from '../../../use-modules';
+import { ModuleLessonList } from './module-lesson-list';
 
 const createModuleSchema = z.object({
   title: z.string().min(1, 'Module Title is required'),
@@ -69,11 +69,11 @@ export function LessonOutline({
   return (
     <div
       className={cn(
-        'w-80 border-l bg-card/30 flex flex-col h-full transition-all duration-300',
+        'flex h-full w-80 flex-col border-l bg-card/30 transition-all duration-300',
         className
       )}
     >
-      <div className="p-4 border-b flex items-center justify-between">
+      <div className="flex items-center justify-between border-b p-4">
         <h2 className="font-semibold text-lg">{t('title')}</h2>
         <div className="flex items-center gap-1">
           <Button
@@ -82,7 +82,7 @@ export function LessonOutline({
             onClick={() => dialog.open()}
             title={t('addModule')}
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="h-4 w-4" />
           </Button>
         </div>
       </div>
@@ -91,12 +91,12 @@ export function LessonOutline({
         {isLoading ? (
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-10 bg-muted animate-pulse rounded-md" />
+              <div key={i} className="h-10 animate-pulse rounded-md bg-muted" />
             ))}
           </div>
         ) : modules.length === 0 ? (
-          <div className="text-center p-6 text-muted-foreground flex flex-col items-center">
-            <BookOpen className="w-8 h-8 mb-2 opacity-50" />
+          <div className="flex flex-col items-center p-6 text-center text-muted-foreground">
+            <BookOpen className="mb-2 h-8 w-8 opacity-50" />
             <p className="text-sm">{t('noModules')}</p>
             <Button variant="link" onClick={() => dialog.open()}>
               {t('addFirstModule')}

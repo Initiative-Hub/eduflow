@@ -1,13 +1,13 @@
+import { FileText } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import { FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { Module } from '../use-modules';
-import { useTranslations } from 'next-intl';
+import type { Module } from '../../../use-modules';
 
 interface ModuleLessonListProps {
   modules: Module[];
@@ -30,31 +30,32 @@ export function ModuleLessonList({
     <Accordion type="multiple" className="w-full">
       {modules.map((module) => (
         <AccordionItem key={module.id} value={module.id} className="border-b-0">
-          <AccordionTrigger className="py-3 px-2 rounded-md hover:bg-muted/50 transition-colors">
-            <div className="flex items-center text-sm font-medium">
+          <AccordionTrigger className="rounded-md px-2 py-3 transition-colors hover:bg-muted/50">
+            <div className="flex items-center font-medium text-sm">
               {module.title}
             </div>
           </AccordionTrigger>
 
-          <AccordionContent className="pb-3 px-1">
-            <div className="flex flex-col space-y-1 mt-1 pl-4 border-l-2 ml-3">
+          <AccordionContent className="px-1 pb-3">
+            <div className="mt-1 ml-3 flex flex-col space-y-1 border-l-2 pl-4">
               {module.lessons.map((lesson) => (
                 <button
+                  type="button"
                   key={lesson.id}
                   onClick={() => onSelectLesson(lesson.id)}
                   className={cn(
-                    'flex items-center text-sm py-2 px-3 rounded-md transition-colors text-left',
+                    'flex items-center rounded-md px-3 py-2 text-left text-sm transition-colors',
                     activeLessonId === lesson.id
-                      ? 'bg-primary/10 text-primary font-medium'
-                      : 'hover:bg-muted text-muted-foreground hover:text-foreground'
+                      ? 'bg-primary/10 font-medium text-primary'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                   )}
                 >
-                  <FileText className="w-4 h-4 mr-2 opacity-70 shrink-0" />
+                  <FileText className="mr-2 h-4 w-4 shrink-0 opacity-70" />
                   <span className="truncate">{lesson.title}</span>
                 </button>
               ))}
               {module.lessons.length === 0 && (
-                <p className="text-xs text-muted-foreground py-2 px-3">
+                <p className="px-3 py-2 text-muted-foreground text-xs">
                   {t('noLessons')}
                 </p>
               )}

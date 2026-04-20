@@ -1,6 +1,6 @@
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface LessonReference {
   id: string;
@@ -19,13 +19,13 @@ export function LessonPagination({
   next,
 }: LessonPaginationProps) {
   return (
-    <div className="flex flex-col w-full">
-      <div className="flex items-center justify-between mt-12 pt-6 border-t font-medium">
+    <div className="flex w-full flex-col">
+      <div className="mt-12 flex items-center justify-between border-t pt-6 font-medium">
         {prev ? (
-          <Button variant="outline" asChild className="h-auto py-3 px-4">
+          <Button variant="outline" asChild className="h-auto px-4 py-3">
             <Link href={`/courses/${courseId}/lessons/${prev.id}`}>
-              <ChevronLeft className="w-4 h-4 mr-2" />
-              <span className="max-w-37.5 md:max-w-50 truncate">
+              <ChevronLeft className="mr-2 h-4 w-4" />
+              <span className="max-w-37.5 truncate md:max-w-50">
                 {prev.title}
               </span>
             </Link>
@@ -35,12 +35,12 @@ export function LessonPagination({
         )}
 
         {next ? (
-          <Button variant="outline" asChild className="h-auto py-3 px-4">
+          <Button variant="outline" asChild className="h-auto px-4 py-3">
             <Link href={`/courses/${courseId}/lessons/${next.id}`}>
-              <span className="max-w-37.5 md:max-w-50 truncate">
+              <span className="max-w-37.5 truncate md:max-w-50">
                 {next.title}
               </span>
-              <ChevronRight className="w-4 h-4 ml-2" />
+              <ChevronRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
         ) : (

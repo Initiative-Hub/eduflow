@@ -1,15 +1,15 @@
 'use client';
 
-import { useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { useModules } from '../../use-modules';
-import { useLesson, useUpdateLesson } from '../../use-lesson';
-import { parseLessonContent } from '@/lib/lesson-content';
-import { LessonHeader } from '../../_components/lesson-header';
-import { LessonEditor } from '../../_components/lesson-editor';
-import { LessonPagination } from '../../_components/lesson-pagination';
-import { LessonContentView } from '../../_components/lesson-content-view';
 import { useTranslations } from 'next-intl';
+import { useMemo, useState } from 'react';
+import { parseLessonContent } from '@/lib/lesson-content';
+import { useModules } from '../../use-modules';
+import { LessonContentView } from './_components/lesson-content-view';
+import { LessonEditor } from './_components/lesson-editor';
+import { LessonHeader } from './_components/lesson-header';
+import { LessonPagination } from './_components/lesson-pagination';
+import { useLesson, useUpdateLesson } from './use-lesson';
 
 export default function LessonDetailsPage() {
   const tH = useTranslations('Courses.LessonHeader');
@@ -68,14 +68,14 @@ export default function LessonDetailsPage() {
         setShowOutline={setShowOutline}
       />
 
-      <div className="flex flex-col w-full">
+      <div className="flex w-full flex-col">
         {isLoading ? (
-          <div className="space-y-4 animate-pulse w-full">
-            <div className="h-10 w-2/3 bg-muted rounded-md" />
-            <div className="h-64 w-full bg-muted rounded-md" />
+          <div className="w-full animate-pulse space-y-4">
+            <div className="h-10 w-2/3 rounded-md bg-muted" />
+            <div className="h-64 w-full rounded-md bg-muted" />
           </div>
         ) : !lesson ? (
-          <p className="text-muted-foreground text-center py-10 w-full">
+          <p className="w-full py-10 text-center text-muted-foreground">
             {tP('notFound')}
           </p>
         ) : isEditing ? (

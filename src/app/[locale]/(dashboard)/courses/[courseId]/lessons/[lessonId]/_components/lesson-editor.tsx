@@ -1,8 +1,8 @@
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
 import { Save } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 
 interface LessonEditorProps {
   editTitle: string;
@@ -28,17 +28,17 @@ export function LessonEditor({
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <label className="text-sm font-medium">{t('title')}</label>
+        <label className="font-medium text-sm">{t('title')}</label>
         <Input
           value={editTitle}
           onChange={(e) => setEditTitle(e.target.value)}
           className="font-semibold text-lg"
         />
       </div>
-      <div className="space-y-2 flex-1 flex flex-col">
-        <label className="text-sm font-medium">{t('content')}</label>
+      <div className="flex flex-1 flex-col space-y-2">
+        <label className="font-medium text-sm">{t('content')}</label>
         <Textarea
-          className="flex-1 min-h-[400px] resize-none font-mono text-sm leading-relaxed p-4"
+          className="min-h-100 flex-1 resize-none p-4 font-mono text-sm leading-relaxed"
           value={editContent}
           onChange={(e) => setEditContent(e.target.value)}
           placeholder={t('writeReview')}
@@ -49,7 +49,7 @@ export function LessonEditor({
           {t('cancel')}
         </Button>
         <Button onClick={onSave} disabled={isUpdatingLesson}>
-          <Save className="w-4 h-4 mr-2" />
+          <Save className="mr-2 h-4 w-4" />
           {isUpdatingLesson ? t('saving') : t('save')}
         </Button>
       </div>

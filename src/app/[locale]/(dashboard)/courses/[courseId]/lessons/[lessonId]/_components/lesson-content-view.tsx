@@ -12,9 +12,9 @@ export function LessonContentView({
   const t = useTranslations('Courses.LessonView');
 
   return (
-    <div className="space-y-8 flex-1">
-      <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
-      <div className="prose prose-sm md:prose-base dark:prose-invert max-w-none min-h-[400px]">
+    <div className="flex-1 space-y-8">
+      <h1 className="font-bold text-3xl tracking-tight">{title}</h1>
+      <div className="prose prose-sm md:prose-base dark:prose-invert min-h-100 max-w-none">
         {contentText ? (
           <div className="whitespace-pre-wrap">{contentText}</div>
         ) : (

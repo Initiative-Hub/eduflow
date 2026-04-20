@@ -2,15 +2,15 @@
 
 import { ChevronRight, Edit3, Menu } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { useRouter } from 'next/navigation';
 import { LessonOutline } from './lesson-outline';
-import { useTranslations } from 'next-intl';
 
 interface LessonHeaderProps {
   courseId: string;
@@ -43,21 +43,21 @@ export function LessonHeader({
   const t = useTranslations('Courses.LessonHeader');
 
   return (
-    <div className="sticky top-0 z-30 flex items-center justify-between border-b border-foreground/20 dark:border-border bg-transparent -mt-6 md:-mt-10 lg:-mt-12 -mx-6 md:-mx-10 lg:-mx-12 px-6 md:px-10 lg:px-12 py-3">
-      <div className="flex items-center gap-2 text-sm text-muted-foreground mr-4">
+    <div className="sticky top-0 z-30 -mx-6 -mt-6 flex items-center justify-between border-foreground/20 border-b bg-transparent px-6 py-3 md:-mx-10 md:-mt-10 md:px-10 lg:-mx-12 lg:-mt-12 lg:px-12 dark:border-border">
+      <div className="mr-4 flex items-center gap-2 text-muted-foreground text-sm">
         <Popover open={showOutline} onOpenChange={setShowOutline}>
           <PopoverTrigger asChild>
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 -ml-2 text-muted-foreground mr-1 shrink-0 hover:bg-muted/60"
+              className="mr-1 -ml-2 h-8 w-8 shrink-0 text-muted-foreground hover:bg-muted/60"
             >
-              <Menu className="w-4 h-4" />
+              <Menu className="h-4 w-4" />
             </Button>
           </PopoverTrigger>
           <PopoverContent
             align="start"
-            className="p-0 w-80 h-[66vh] flex flex-col overflow-hidden"
+            className="flex h-[66vh] w-80 flex-col overflow-hidden p-0"
           >
             <LessonOutline
               courseId={courseId}
@@ -66,18 +66,18 @@ export function LessonHeader({
                 setShowOutline(false);
                 router.push(`/courses/${courseId}/lessons/${id}`);
               }}
-              className="w-full h-full border-none bg-transparent"
+              className="h-full w-full border-none bg-transparent"
             />
           </PopoverContent>
         </Popover>
         <Link
           href={`/courses/${courseId}`}
-          className="hover:text-primary transition-colors truncate max-w-30 md:max-w-50"
+          className="max-w-30 truncate transition-colors hover:text-primary md:max-w-50"
         >
           {currentModuleTitle}
         </Link>
-        <ChevronRight className="w-4 h-4 shrink-0 opacity-50" />
-        <span className="font-medium text-foreground truncate max-w-37.5 md:max-w-xs">
+        <ChevronRight className="h-4 w-4 shrink-0 opacity-50" />
+        <span className="max-w-37.5 truncate font-medium text-foreground md:max-w-xs">
           {currentLessonTitle}
         </span>
       </div>
@@ -93,7 +93,7 @@ export function LessonHeader({
               setIsEditing(true);
             }}
           >
-            <Edit3 className="w-4 h-4 mr-2" />
+            <Edit3 className="mr-2 h-4 w-4" />
             {t('edit')}
           </Button>
         )}

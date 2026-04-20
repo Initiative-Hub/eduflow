@@ -1,16 +1,16 @@
 'use client';
 
-import { useState } from 'react';
-import { useParams } from 'next/navigation';
-import { useModules } from '../use-modules';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Accordion } from '@/components/ui/accordion';
 import { Plus } from 'lucide-react';
-import { ModuleAccordionItem } from '../_components/module-accordion-item';
-import { AddLessonDialog } from '../_components/add-lesson-dialog';
-import type { CreateLessonFormData } from '../create-lesson.config';
+import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { useState } from 'react';
+import { Accordion } from '@/components/ui/accordion';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { AddLessonDialog } from '../_components/add-lesson-dialog';
+import { ModuleAccordionItem } from '../_components/module-accordion-item';
+import type { CreateLessonFormData } from '../create-lesson.config';
+import { useModules } from '../use-modules';
 
 export default function CourseModulesPage() {
   const t = useTranslations('Courses.CourseModules');
@@ -50,10 +50,10 @@ export default function CourseModulesPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex justify-between items-end pb-4 border-b">
+      <div className="flex items-end justify-between border-b pb-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">{t('title')}</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <h1 className="font-bold text-2xl text-foreground">{t('title')}</h1>
+          <p className="mt-1 text-muted-foreground text-sm">
             {t('description')}
           </p>
         </div>
@@ -65,7 +65,7 @@ export default function CourseModulesPage() {
             className="w-64 border-foreground/30 dark:border-border"
           />
           <Button onClick={onCreateModule} disabled={isCreatingModule}>
-            <Plus className="w-4 h-4 mr-1" />
+            <Plus className="mr-1 h-4 w-4" />
             {t('addModule')}
           </Button>
         </div>
@@ -73,11 +73,11 @@ export default function CourseModulesPage() {
 
       {isLoading ? (
         <div className="animate-pulse space-y-4">
-          <div className="h-16 bg-muted rounded-md w-full" />
-          <div className="h-16 bg-muted rounded-md w-full" />
+          <div className="h-16 w-full rounded-md bg-muted" />
+          <div className="h-16 w-full rounded-md bg-muted" />
         </div>
       ) : modules.length === 0 ? (
-        <div className="text-center p-12 border border-dashed rounded-xl bg-card/50 text-muted-foreground">
+        <div className="rounded-xl border border-dashed bg-card/50 p-12 text-center text-muted-foreground">
           {t('noModules')}
         </div>
       ) : (
