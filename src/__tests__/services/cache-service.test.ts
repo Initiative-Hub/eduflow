@@ -33,7 +33,7 @@ const mockRateLimitConstructor = vi.hoisted(() =>
       return mockRateLimit;
     }),
     {
-      fixedWindow: vi.fn(),
+      slidingWindow: vi.fn(),
     }
   )
 );
@@ -43,7 +43,7 @@ vi.mock('@upstash/redis', () => ({
 }));
 
 vi.mock('@upstash/ratelimit', () => ({
-  MultiRegionRatelimit: mockRateLimitConstructor,
+  Ratelimit: mockRateLimitConstructor,
 }));
 
 describe('CacheService', () => {
@@ -66,7 +66,7 @@ describe('CacheService', () => {
   });
 
   it('returns parsed values from getCache', async () => {
-    mockRedis.get.mockResolvedValueOnce(JSON.stringify({ ok: true }));
+    mockRedis.get.mockResolvedValueOnce({ ok: true });
 
     const result = await CacheService.getCache<{ ok: boolean }>('flag');
 
