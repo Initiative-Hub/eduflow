@@ -34,6 +34,12 @@ import {
 } from '@/components/ui/sidebar';
 import { useSession } from '@/lib/auth-client';
 import { NavbarAvatar } from './navbar-avatar';
+import { useCourses } from '@/app/[locale]/(dashboard)/courses/use-courses';
+import {
+  getCourseNavItems,
+  sidebarIconClassName,
+  type SidebarItem,
+} from './sidebar-config';
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const t = useTranslations('Layout');
@@ -42,16 +48,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const { data: sessionData } = useSession();
   const { state, toggleSidebar } = useSidebar();
-
-  type SidebarItem = {
-    name: string;
-    url: string;
-    icon: React.ReactElement;
-    exact?: boolean;
-  };
-
-  const sidebarIconClassName =
-    'size-5 fill-primary/60 text-primary/80 transition-colors group-hover/menu-button:fill-primary group-hover/menu-button:text-primary group-data-[active=true]/menu-button:fill-primary group-data-[active=true]/menu-button:text-primary';
 
   const assistants: SidebarItem[] = [
     {
@@ -115,9 +111,27 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     },
   ];
 
+  const match = pathname.match(/\/courses\/([^/]+)/);
+  const courseId = match ? match[1] : null;
+
+  const { courses } = useCourses();
+  const currentCourse = courseId
+    ? courses.find((c) => c.id === courseId)
+    : null;
+
+  const courseItems = courseId
+    ? getCourseNavItems(courseId, sidebarIconClassName)
+    : [];
+
   const isSettingsContext =
     pathname === '/profile' || pathname.startsWith('/settings');
-  const menuItems = isSettingsContext ? settingsItems : assistants;
+
+  let menuItems = assistants;
+  if (isSettingsContext) {
+    menuItems = settingsItems;
+  } else if (courseId) {
+    menuItems = courseItems;
+  }
 
   return (
     <Sidebar
@@ -142,19 +156,32 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </span>
           </div>
         </Link>
-        <Button
-          className="group-data-[collapsible=icon]:justify-center! relative w-full justify-start rounded-xl bg-linear-to-br from-primary to-primary/80 px-4 py-6 font-semibold text-primary-foreground shadow-md transition-all hover:from-primary/90 hover:to-primary/70 hover:shadow-lg group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:h-12 group-data-[collapsible=icon]:w-12 group-data-[collapsible=icon]:p-0!"
-          size="lg"
-        >
-          <Plus
-            data-icon="inline-start"
-            className="size-5 shrink-0 opacity-80 group-data-[collapsible=icon]:absolute group-data-[collapsible=icon]:top-1/2 group-data-[collapsible=icon]:left-1/2 group-data-[collapsible=icon]:m-0 group-data-[collapsible=icon]:-translate-x-1/2 group-data-[collapsible=icon]:-translate-y-1/2"
-          />
-          <span className="text-sm group-data-[collapsible=icon]:hidden">
-            {t('newSession')}
-          </span>
-        </Button>
+
+        {!pathname.includes('/courses/') ? (
+          <Button
+            className="group-data-[collapsible=icon]:justify-center! relative w-full justify-start rounded-xl bg-linear-to-br from-primary to-primary/80 px-4 py-6 font-semibold text-primary-foreground shadow-md transition-all hover:from-primary/90 hover:to-primary/70 hover:shadow-lg group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:h-12 group-data-[collapsible=icon]:w-12 group-data-[collapsible=icon]:p-0!"
+            size="lg"
+          >
+            <Plus
+              data-icon="inline-start"
+              className="size-5 shrink-0 opacity-80 group-data-[collapsible=icon]:absolute group-data-[collapsible=icon]:top-1/2 group-data-[collapsible=icon]:left-1/2 group-data-[collapsible=icon]:m-0 group-data-[collapsible=icon]:-translate-x-1/2 group-data-[collapsible=icon]:-translate-y-1/2"
+            />
+            <span className="text-sm group-data-[collapsible=icon]:hidden">
+              {t('newSession')}
+            </span>
+          </Button>
+        ) : currentCourse ? (
+          <div className="flex flex-col gap-1 w-full px-2 group-data-[collapsible=icon]:hidden">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-1">
+              Course
+            </span>
+            <h2 className="font-bold text-foreground text-[1rem] leading-tight line-clamp-2">
+              {currentCourse.title}
+            </h2>
+          </div>
+        ) : null}
       </SidebarHeader>
+
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>
@@ -180,9 +207,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     <SidebarMenuButton
                       asChild
                       isActive={isActive}
-                      tooltip={{
-                        children: item.name,
-                      }}
+                      tooltip={{ children: item.name }}
                       className="h-12 rounded-xl font-medium text-muted-foreground transition-all duration-200 hover:bg-sidebar-accent hover:text-primary data-[active=true]:bg-primary/10 data-[active=true]:text-primary"
                     >
                       <Link
@@ -190,7 +215,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         className="flex items-center gap-3.5 px-2"
                       >
                         {item.icon}
-
                         <span className="text-sm tracking-tight">
                           {item.name}
                         </span>
@@ -203,6 +227,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
       <SidebarFooter className="border-border/40 border-t p-4 group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:pb-3">
         <div className="flex w-full items-center justify-between md:justify-end">
           {sessionData ? (

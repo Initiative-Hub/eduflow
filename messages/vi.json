@@ -221,6 +221,97 @@
     "comingSoon": "Sẽ sớm có.",
     "logout": "Đăng xuất"
   },
+  "Courses": {
+    "AddLessonDialog": {
+      "description": "Cung cấp tiêu đề cho bài học mới trong mô-đun này.",
+      "fields": {
+        "title": "Tiêu đề bài học",
+        "titlePlaceholder": "VD: Giới thiệu chung",
+        "titleRequired": "Tiêu đề bài học là bắt buộc"
+      },
+      "submit": "Thêm bài học",
+      "title": "Thêm bài học"
+    },
+    "AnalyticsPage": "Phân tích",
+    "AssessmentsPage": "Bài kiểm tra",
+    "Card": {
+      "manage": "Quản lý",
+      "members": "{count, plural, =1 {1 Thành viên} other {# Thành viên}}",
+      "modules": "{count, plural, =1 {1 Mô-đun} other {# Mô-đun}}",
+      "noDescription": "Không có mô tả nào được cung cấp.",
+      "togglePublish": "Chuyển đổi trạng thái xuất bản"
+    },
+    "ChatPage": "Trò chuyện AI",
+    "CourseModules": {
+      "addModule": "Thêm mô-đun",
+      "description": "Tổ chức chương trình giảng dạy của bạn thành các mô-đun và bài học.",
+      "noModules": "Chưa có mô-đun nào. Tạo mô-đun đầu tiên của bạn để bắt đầu.",
+      "title": "Mô-đun"
+    },
+    "CreateDialog": {
+      "description": "Nhập các thông tin cơ bản cho khóa học mới của bạn để bắt đầu.",
+      "fields": {
+        "description": "Mô tả",
+        "descriptionPlaceholder": "Mô tả khóa học của bạn (tùy chọn)",
+        "title": "Tiêu đề khóa học",
+        "titlePlaceholder": "Nhập tiêu đề khóa học",
+        "titleRequired": "Tiêu đề khóa học là bắt buộc"
+      },
+      "submit": "Tạo khóa học",
+      "title": "Tạo khóa học mới"
+    },
+    "createFirstCourse": "Tạo khóa học đầu tiên của bạn",
+    "description": "Quản lý và xuất bản các khóa học của bạn tại đây.",
+    "FilesPage": "Tài liệu",
+    "LessonEditor": {
+      "cancel": "Hủy",
+      "content": "Nội dung bài học",
+      "save": "Lưu",
+      "saving": "Đang lưu...",
+      "title": "Tiêu đề bài học",
+      "writeReview": "Soạn/Xem lại"
+    },
+    "LessonHeader": {
+      "edit": "Chỉnh sửa bài học",
+      "lesson": "Bài học",
+      "modules": "Mô-đun"
+    },
+    "LessonOutline": {
+      "addFirstModule": "Thêm mô-đun đầu tiên của bạn",
+      "addModule": "Thêm mô-đun",
+      "Dialog": {
+        "description": "Tạo một mô-đun mới để tổ chức các bài học của bạn.",
+        "fields": {
+          "title": "Tiêu đề mô-đun",
+          "titlePlaceholder": "VD: Bắt đầu",
+          "titleRequired": "Tiêu đề mô-đun là bắt buộc"
+        },
+        "submit": "Tạo mô-đun",
+        "title": "Thêm mô-đun"
+      },
+      "noModules": "Chưa có mô-đun nào.",
+      "title": "Nội dung"
+    },
+    "LessonPage": {
+      "notFound": "Không tìm thấy bài học."
+    },
+    "LessonPagination": {
+      "next": "Tiếp theo",
+      "previous": "Trước"
+    },
+    "LessonView": {
+      "empty": "Nội dung bài học trống."
+    },
+    "MembersPage": "Thành viên",
+    "ModuleAccordion": {
+      "noLessons": "Chưa có bài học nào"
+    },
+    "newCourse": "Khóa học mới",
+    "noCourses": "Chưa có khóa học nào",
+    "noCoursesDescription": "Bạn chưa tạo bất kỳ khóa học nào. Nhấp vào nút bên dưới để tạo khóa học đầu tiên.",
+    "SettingsPage": "Cài đặt khóa học",
+    "title": "Các khóa học"
+  },
   "HomePage": {
     "title": "Xin chào thế giới!"
   },
@@ -231,6 +322,7 @@
   "Layout": {
     "aiChat": "Trò chuyện AI",
     "aiTools": "Công cụ AI",
+    "courses": "Khóa học",
     "englishAssistant": "Trợ lý Tiếng Anh",
     "newSession": "Phiên mới",
     "settingsAcademicContext": "Bối cảnh học tập",
@@ -242,7 +334,6 @@
     "settingsSystemSettings": "Cài đặt hệ thống",
     "socraticTutor": "Gia sư Socratic",
     "studyAssistant": "Trợ lý Học tập",
-    "studyHub": "Góc học tập",
     "writingAssistant": "Trợ lý Viết"
   },
   "NavbarAvatar": {
