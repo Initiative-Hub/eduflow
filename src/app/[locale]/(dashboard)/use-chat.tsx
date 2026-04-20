@@ -46,17 +46,19 @@ export const useChatController = ({
       initialChatId
         ? new DefaultChatTransport({
             api: `/api/chat/${initialChatId}`,
+            body: {
+              provider: 'openrouter',
+              model: 'gemini-2.5-flash',
+            },
           })
         : undefined,
     [initialChatId]
   );
 
-  const chatOptions = transport ? { transport } : {};
-
   const { messages, status, sendMessage, stop } = useChat({
     id: initialChatId,
     messages: initialMessages,
-    ...chatOptions,
+    transport,
     onError(error) {
       console.error('Chat error:', error);
       toast.error(

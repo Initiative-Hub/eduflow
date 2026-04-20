@@ -22,7 +22,7 @@ bun install
 ```
 
 ### 3. Local Services
-Start all the required local services (PostgreSQL, Mailpit, MinIO) using Docker Compose:
+Start all the required local services (PostgreSQL, Mailpit, MinIO, Redis, and SRH) using Docker Compose:
 ```bash
 bun start:all
 ```
@@ -45,6 +45,12 @@ MinIO is also included in the Docker Compose stack for avatar and file storage. 
 http://localhost:9001
 ```
 
+#### 3.4 SRH
+SRH is the local Upstash-compatible Redis HTTP proxy. The app talks to SRH instead of the raw Redis TCP port during development, and the service is available at:
+```bash
+http://localhost:8079
+```
+
 ### 4. Configure Environment Variables (.env.local)
 Create a `.env.local` file in the root directory and add the following content:
 ```bash
@@ -58,6 +64,9 @@ AWS_ACCESS_KEY_ID="minioadmin"
 AWS_SECRET_ACCESS_KEY="minioadmin"
 
 AWS_S3_ENDPOINT="http://localhost:9000"
+
+UPSTASH_REDIS_REST_URL="http://localhost:8079"
+UPSTASH_REDIS_REST_TOKEN="example_token"
 ```
 
 ### 5. Initialize Database (Prisma & Seed)

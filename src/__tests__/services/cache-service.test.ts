@@ -1,19 +1,49 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CacheService } from '@/services/CacheService';
 
+vi.hoisted(() => {
+  process.env.UPSTASH_REDIS_REST_URL = 'https://example.upstash.io';
+  process.env.UPSTASH_REDIS_REST_TOKEN = 'test-token';
+});
+
 const mockRedis = vi.hoisted(() => ({
-  connect: vi.fn().mockResolvedValue(undefined),
-  on: vi.fn(),
-  isOpen: false,
   get: vi.fn(),
   set: vi.fn().mockResolvedValue('OK'),
   del: vi.fn().mockResolvedValue(1),
-  incr: vi.fn(),
-  expire: vi.fn(),
 }));
 
-vi.mock('redis', () => ({
-  createClient: vi.fn(() => mockRedis),
+const mockRateLimit = vi.hoisted(() => ({
+  limit: vi.fn(),
+}));
+
+const mockRedisClientConstructor = vi.hoisted(() =>
+  Object.assign(
+    vi.fn(function MockRedis() {
+      return mockRedis;
+    }),
+    {
+      fromEnv: vi.fn(() => mockRedis),
+    }
+  )
+);
+
+const mockRateLimitConstructor = vi.hoisted(() =>
+  Object.assign(
+    vi.fn(function MockRateLimit() {
+      return mockRateLimit;
+    }),
+    {
+      fixedWindow: vi.fn(),
+    }
+  )
+);
+
+vi.mock('@upstash/redis', () => ({
+  Redis: mockRedisClientConstructor,
+}));
+
+vi.mock('@upstash/ratelimit', () => ({
+  MultiRegionRatelimit: mockRateLimitConstructor,
 }));
 
 describe('CacheService', () => {
@@ -31,7 +61,7 @@ describe('CacheService', () => {
     expect(mockRedis.set).toHaveBeenCalledWith(
       'user:1',
       JSON.stringify({ id: 'user-1' }),
-      { EX: 300 }
+      { ex: 300 }
     );
   });
 
@@ -59,12 +89,45 @@ describe('CacheService', () => {
     expect(mockRedis.set).toHaveBeenCalledWith(
       'session:1',
       JSON.stringify({ active: true }),
-      { EX: 120 }
+      { ex: 120 }
     );
 
     const deleteOrder = mockRedis.del.mock.invocationCallOrder[0];
     const setOrder = mockRedis.set.mock.invocationCallOrder[0];
 
     expect(deleteOrder).toBeLessThan(setOrder);
+  });
+
+  it('allows the first guest request with a 24 hour rate limit', async () => {
+    mockRateLimit.limit.mockResolvedValueOnce({ success: true, remaining: 9 });
+
+    const result = await CacheService.checkGuestLimit('guest-1');
+
+    expect(mockRateLimit.limit).toHaveBeenCalledWith('guest_usage:guest-1');
+    expect(result).toEqual({ allowed: true, remaining: 9 });
+  });
+
+  it('denies the guest request when the limit is exceeded', async () => {
+    mockRateLimit.limit.mockResolvedValueOnce({ success: false, remaining: 0 });
+
+    const result = await CacheService.checkGuestLimit('guest-1');
+
+    expect(result).toEqual({
+      allowed: false,
+      message: 'Limit reached. Please register to unlock full features.',
+      remaining: 0,
+    });
+  });
+
+  it('fails closed when the rate limit backend errors', async () => {
+    mockRateLimit.limit.mockRejectedValueOnce(new Error('backend unavailable'));
+
+    const result = await CacheService.checkGuestLimit('guest-1');
+
+    expect(result).toEqual({
+      allowed: false,
+      message: 'Service temporarily unavailable.',
+      remaining: 0,
+    });
   });
 });

@@ -65,6 +65,7 @@ services:
       "
   minio-reset:
     image: minio/mc:latest
+    profiles: ["optional"]
     container_name: eduflow_minio_reset
     depends_on:
       - minio
@@ -86,6 +87,21 @@ services:
     networks:
       - prisma-network
     command: redis-server --save 60 1 --loglevel warning
+
+  srh:
+    image: hiett/serverless-redis-http:latest
+    container_name: eduflow_srh
+    restart: always
+    depends_on:
+      - redis
+    ports:
+      - "8079:80"
+    environment:
+      SRH_MODE: env
+      SRH_TOKEN: example_token
+      SRH_CONNECTION_STRING: redis://redis:6379
+    networks:
+      - prisma-network
 
 networks: 
   prisma-network: 
