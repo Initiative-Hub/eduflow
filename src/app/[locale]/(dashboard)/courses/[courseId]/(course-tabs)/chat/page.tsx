@@ -1,5 +1,5 @@
-import { ComingSoonPage } from '@/components/custom/coming-soon-page';
+import { ComingSoon } from '@/components/layout/coming-soon';
 
 export default function CourseChatPage() {
-  return <ComingSoonPage title="Course AI Chat" />;
+  return <ComingSoon title="Course AI Chat" backLabel="Return to Course" />;
 }

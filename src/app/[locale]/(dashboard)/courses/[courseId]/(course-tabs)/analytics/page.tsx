@@ -1,5 +1,5 @@
-import { ComingSoonPage } from '@/components/custom/coming-soon-page';
+import { ComingSoon } from '@/components/layout/coming-soon';
 
 export default function AnalyticsPage() {
-  return <ComingSoonPage title="Analytics" />;
+  return <ComingSoon title="Analytics" backLabel="Return to Course" />;
 }
