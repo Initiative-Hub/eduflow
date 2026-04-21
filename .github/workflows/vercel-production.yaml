@@ -55,7 +55,7 @@ jobs:
 
       - name: Build Project Artifacts
         if: steps.check_commits.outputs.skip_build != 'true'
-        run: bun vercel build --prod --token=$VERCEL_TOKEN
+        run: bun vercel build --token=$VERCEL_TOKEN
 
       - name: Deploy Project Artifacts to Vercel
         if: steps.check_commits.outputs.skip_build != 'true'
