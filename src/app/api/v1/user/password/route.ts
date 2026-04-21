@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { withAuth } from '@/lib/api/middlewares';
 import { UserService } from '@/services/UserService';
 
-export const POST = withAuth([], async (req, session) => {
+export const POST = withAuth(async (req, session) => {
   try {
     const { password } = await req.json();
 

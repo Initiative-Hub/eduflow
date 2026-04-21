@@ -4,7 +4,6 @@ import axios, {
   type AxiosRequestConfig,
   type AxiosResponse,
 } from 'axios';
-import { toast } from 'sonner';
 import { API_URL } from './endpoints';
 import { getStatusMessage } from './status-codes';
 import type { ApiError } from './types';
@@ -32,26 +31,11 @@ class ApiClient {
       },
       async (error: AxiosError<ApiError>) => {
         const status = error.response?.status;
-        const requestUrl = error.config?.url || '';
         const serverMessage = error.response?.data?.message;
-        const message =
-          typeof serverMessage === 'string'
-            ? serverMessage
-            : getStatusMessage(status);
+        const message = serverMessage || getStatusMessage(status);
+        const details = error.response?.data?.details;
 
-        const isAuthEndpoint = requestUrl.includes('/auth/');
-
-        if (status === 403) {
-          toast.error('You do not have permission to access this resource.');
-        } else if (!isAuthEndpoint && status !== 404) {
-          toast.error(message);
-        }
-
-        return Promise.reject({
-          message,
-          status,
-          details: error.response?.data?.details,
-        });
+        return Promise.reject({ message, details, status });
       }
     );
   }

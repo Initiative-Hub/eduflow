@@ -1,5 +1,5 @@
+import { CoursePermissionKey, CourseRoleName } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
-import { CourseRoleName, CoursePermissionKey } from '@/generated/prisma';
 
 /**
  * Loads a lesson with its full ownership chain and resolves edit/view

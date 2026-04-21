@@ -16,7 +16,7 @@ const uploadAvatarMetaSchema = z.object({
   size: z.number().int().positive().max(AVATAR_MAX_FILE_SIZE_BYTES),
 });
 
-export const POST = withAuth([], async (req, session) => {
+export const POST = withAuth(async (req, session) => {
   try {
     const formData = await req.formData();
     const input = formData.get('file');
@@ -79,7 +79,7 @@ export const POST = withAuth([], async (req, session) => {
   }
 });
 
-export const DELETE = withAuth([], async (_req, session) => {
+export const DELETE = withAuth(async (_req, session) => {
   const userId = session.user.id;
 
   try {
