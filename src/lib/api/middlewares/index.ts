@@ -1,13 +1,13 @@
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import type { z } from 'zod';
-import { auth } from '@/lib/auth';
+import { auth, type Session } from '@/lib/auth';
 import { getPlatformPermissions } from '@/lib/permissions/platform-permission';
 
 export function withAuth(
   handler: (
     req: Request,
-    sessionData: NonNullable<Awaited<ReturnType<typeof auth.api.getSession>>>,
+    sessionData: Session,
     ...args: any[]
   ) => Promise<NextResponse> | NextResponse
 ) {
@@ -39,7 +39,7 @@ export function withRoles(
   allowedRoles: string[],
   handler: (
     req: Request,
-    sessionData: NonNullable<Awaited<ReturnType<typeof auth.api.getSession>>>,
+    sessionData: Session,
     ...args: any[]
   ) => Promise<NextResponse> | NextResponse
 ) {
@@ -84,7 +84,7 @@ export function withPermissions(
   allowedPermissions: string[],
   handler: (
     req: Request,
-    sessionData: NonNullable<Awaited<ReturnType<typeof auth.api.getSession>>>,
+    sessionData: Session,
     ...args: any[]
   ) => Promise<NextResponse> | NextResponse
 ) {
