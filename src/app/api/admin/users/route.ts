@@ -77,23 +77,12 @@
  */
 
 import bcrypt from 'bcryptjs';
-import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { withRoles } from '@/lib/api/middlewares';
 import { prisma } from '@/lib/prisma';
 
-export async function GET() {
+export const GET = withRoles(['ADMIN'], async (_req, _sessionData) => {
   try {
-    const sessionData = await auth.api.getSession({ headers: await headers() });
-    if (!sessionData) {
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-    }
-
-    if (!sessionData.user.role || sessionData.user.role !== 'ADMIN') {
-      console.log(sessionData);
-      return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
-    }
-
     const users = await prisma.user.findMany({
       include: { role: true },
     });
@@ -109,56 +98,10 @@ export async function GET() {
     console.error(error);
     return NextResponse.json({ message: 'Server error' }, { status: 500 });
   }
-}
+});
 
-export async function PUT(req: Request) {
+export const POST = withRoles(['ADMIN'], async (req, _sessionData) => {
   try {
-    const session = await auth.api.getSession({ headers: await headers() });
-    if (!session?.user?.id) {
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-    }
-
-    const me = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      include: { role: true },
-    });
-    if (!me || me.role?.name !== 'ADMIN') {
-      return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
-    }
-
-    const { id, name, email, role } = await req.json();
-    if (!id) {
-      return NextResponse.json({ message: 'Missing id' }, { status: 400 });
-    }
-
-    const data: any = {};
-    if (name !== undefined) data.name = name;
-    if (email !== undefined) data.email = email;
-    if (role !== undefined) data.role = { connect: { name: role } };
-
-    const updated = await prisma.user.update({ where: { id }, data });
-    return NextResponse.json({ message: 'Updated', id: updated.id });
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json({ message: 'Server error' }, { status: 500 });
-  }
-}
-
-export async function POST(req: Request) {
-  try {
-    const session = await auth.api.getSession({ headers: await headers() });
-    if (!session?.user?.id) {
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-    }
-
-    const me = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      include: { role: true },
-    });
-    if (!me || me.role?.name !== 'ADMIN') {
-      return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
-    }
-
     const { email, name, password, role } = await req.json();
     if (!email || !password) {
       return NextResponse.json(
@@ -188,4 +131,24 @@ export async function POST(req: Request) {
     console.error(error);
     return NextResponse.json({ message: 'Server error' }, { status: 500 });
   }
-}
+});
+
+export const PUT = withRoles(['ADMIN'], async (req, _sessionData) => {
+  try {
+    const { id, name, email, role } = await req.json();
+    if (!id) {
+      return NextResponse.json({ message: 'Missing id' }, { status: 400 });
+    }
+
+    const data: any = {};
+    if (name !== undefined) data.name = name;
+    if (email !== undefined) data.email = email;
+    if (role !== undefined) data.role = { connect: { name: role } };
+
+    const updated = await prisma.user.update({ where: { id }, data });
+    return NextResponse.json({ message: 'Updated', id: updated.id });
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ message: 'Server error' }, { status: 500 });
+  }
+});

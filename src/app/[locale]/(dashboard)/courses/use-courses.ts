@@ -1,6 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api/api-client';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { apiClient } from '@/lib/api/api-client';
 
 export interface Course {
   id: string;
@@ -16,7 +16,6 @@ export interface Course {
 
 export function useCourses() {
   const queryClient = useQueryClient();
-
   const query = useQuery({
     queryKey: ['courses'],
     queryFn: () => apiClient.get<Course[]>('/v1/courses'),

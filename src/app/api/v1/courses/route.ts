@@ -1,14 +1,10 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { withAuth } from '@/lib/api/middlewares';
 import { CourseService } from '@/services/CourseService';
-import { z } from 'zod';
 
-export const GET = withAuth([], async (_req, sessionData) => {
+export const GET = withAuth(async (_req, sessionData) => {
   try {
-    if (!sessionData) {
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-    }
-
     const userId = sessionData.user.id;
     const courses = await CourseService.getCoursesByTeacher(userId);
 
@@ -26,12 +22,8 @@ const createCourseSchema = z.object({
   description: z.string().optional(),
 });
 
-export const POST = withAuth([], async (req, sessionData) => {
+export const POST = withAuth(async (req, sessionData) => {
   try {
-    if (!sessionData) {
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-    }
-
     const userId = sessionData.user.id;
     const body = await req.json();
     const parsed = createCourseSchema.safeParse(body);

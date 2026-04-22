@@ -19,6 +19,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import type * as React from 'react';
+import { useCourses } from '@/app/[locale]/(dashboard)/courses/use-courses';
 import { Button } from '@/components/ui/button';
 import {
   Sidebar,
@@ -34,11 +35,10 @@ import {
 } from '@/components/ui/sidebar';
 import { useSession } from '@/lib/auth-client';
 import { NavbarAvatar } from './navbar-avatar';
-import { useCourses } from '@/app/[locale]/(dashboard)/courses/use-courses';
 import {
   getCourseNavItems,
-  sidebarIconClassName,
   type SidebarItem,
+  sidebarIconClassName,
 } from './sidebar-config';
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -171,11 +171,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </span>
           </Button>
         ) : currentCourse ? (
-          <div className="flex flex-col gap-1 w-full px-2 group-data-[collapsible=icon]:hidden">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-1">
+          <div className="flex w-full flex-col gap-1 px-2 group-data-[collapsible=icon]:hidden">
+            <span className="mb-1 font-semibold text-muted-foreground text-xs uppercase tracking-widest">
               Course
             </span>
-            <h2 className="font-bold text-foreground text-[1rem] leading-tight line-clamp-2">
+            <h2 className="line-clamp-2 font-bold text-[1rem] text-foreground leading-tight">
               {currentCourse.title}
             </h2>
           </div>
@@ -229,14 +229,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
 
       <SidebarFooter className="border-border/40 border-t p-4 group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:pb-3">
-        <div className="flex w-full items-center justify-between md:justify-end">
+        <div className="flex w-full items-center justify-between md:justify-end md:group-data-[collapsible=icon]:justify-center">
           {sessionData ? (
             <div className="block md:hidden">
               <NavbarAvatar
-                name={sessionData?.user?.name}
-                email={sessionData?.user?.email}
-                image={sessionData?.user?.image}
-                role={(sessionData?.user as any)?.role}
+                name={sessionData.user.name}
+                email={sessionData.user.email}
+                image={sessionData.user.image}
+                role={(sessionData.user as any).role}
               />
             </div>
           ) : (

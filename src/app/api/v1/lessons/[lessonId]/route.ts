@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { withAuth } from '@/lib/api/middlewares';
 import { LessonService } from '@/services/LessonService';
-import { z } from 'zod';
 
 const patchLessonSchema = z.object({
   title: z.string().optional(),
@@ -9,12 +9,8 @@ const patchLessonSchema = z.object({
   content: z.record(z.string(), z.unknown()).optional(),
 });
 
-export const PATCH = withAuth([], async (req, sessionData, { params }) => {
+export const PATCH = withAuth(async (req, sessionData, { params }) => {
   try {
-    if (!sessionData) {
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-    }
-
     const userId = sessionData.user.id;
     const { lessonId } = await params;
 
@@ -43,12 +39,8 @@ export const PATCH = withAuth([], async (req, sessionData, { params }) => {
   }
 });
 
-export const GET = withAuth([], async (_req, sessionData, { params }) => {
+export const GET = withAuth(async (_req, sessionData, { params }) => {
   try {
-    if (!sessionData) {
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-    }
-
     const userId = sessionData.user.id;
     const { lessonId } = await params;
 
