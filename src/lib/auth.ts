@@ -2,7 +2,6 @@ import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { customSession, emailOTP } from 'better-auth/plugins';
 import { emailService } from './email-service';
-import { getPlatformPermissions } from './permissions/platform-permissions';
 import { prisma } from './prisma';
 
 const RESET_PASSWORD_TOKEN_EXPIRATION = 15 * 60; // 15 minutes in seconds
@@ -61,19 +60,17 @@ export const auth = betterAuth({
     customSession(async ({ user, session }) => {
       const roleId = (user as any).roleId as string | undefined;
       if (!roleId)
-        return { user: { ...user, role: null, permissions: [] }, session };
+        return { user: { ...user, roleId: null, role: null }, session };
 
       const roleRow = await prisma.platformRole.findUnique({
         where: { id: roleId },
       });
 
-      const { permissions } = await getPlatformPermissions(roleId);
-
       return {
         user: {
           ...user,
+          roleId,
           role: roleRow?.name || null,
-          permissions,
         },
         session,
       };

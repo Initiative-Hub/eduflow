@@ -2,6 +2,7 @@ import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import type { z } from 'zod';
 import { auth } from '@/lib/auth';
+import { getPlatformPermissions } from '@/lib/permissions/platform-permission';
 
 export function withAuth(
   handler: (
@@ -100,16 +101,29 @@ export function withPermissions(
         );
       }
 
-      if (
-        allowedPermissions.length > 0 &&
-        !allowedPermissions.some((permission) =>
-          sessionData.user.permissions.includes(permission)
-        )
-      ) {
-        return NextResponse.json(
-          { message: 'Forbidden. Insufficient permissions.' },
-          { status: 403 }
-        );
+      if (allowedPermissions.length > 0) {
+        const roleId = sessionData.user.roleId;
+        if (!roleId) {
+          return NextResponse.json(
+            {
+              message:
+                'Forbidden. The current user does not have a role assigned',
+            },
+            { status: 403 }
+          );
+        }
+        const { permissions } = await getPlatformPermissions(roleId);
+
+        if (
+          !allowedPermissions.some((permission) =>
+            permissions.includes(permission)
+          )
+        ) {
+          return NextResponse.json(
+            { message: 'Forbidden. Insufficient permissions.' },
+            { status: 403 }
+          );
+        }
       }
 
       return await handler(req, sessionData, ...args);

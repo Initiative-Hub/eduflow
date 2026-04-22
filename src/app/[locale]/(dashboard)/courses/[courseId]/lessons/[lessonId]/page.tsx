@@ -3,7 +3,7 @@
 import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
-import { parseLessonContent } from '@/lib/lesson-content';
+import { parseLessonContent } from '@/utils/lesson-content';
 import { useModules } from '../../use-modules';
 import { LessonContentView } from './_components/lesson-content-view';
 import { LessonEditor } from './_components/lesson-editor';

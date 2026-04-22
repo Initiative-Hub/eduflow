@@ -9,6 +9,7 @@ export async function getPlatformPermissions(roleId: string) {
     select: {
       permission: true,
     },
+    distinct: ['permission'],
   });
 
   const containPermission = (permission: string) =>
