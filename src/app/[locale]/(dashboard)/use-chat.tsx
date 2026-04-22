@@ -48,7 +48,7 @@ export const useChatController = ({
             api: `/api/chat/${initialChatId}`,
             body: {
               provider: 'openrouter',
-              model: 'gemini-2.5-flash',
+              model: 'gemini-2.5-pro',
             },
           })
         : undefined,
