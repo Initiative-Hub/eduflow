@@ -7,5 +7,12 @@ export const getMessageText = (message: UIMessage): string => {
     .join('');
 };
 
+export const getMessageReasoning = (message: UIMessage): string => {
+  return message.parts
+    .filter((part) => part.type === 'reasoning')
+    .map((part) => part.text)
+    .join('');
+};
+
 export const getMessagePreview = (message: string, maxLength = 30) =>
   message.trim().slice(0, maxLength).trimEnd();
