@@ -56,8 +56,8 @@
     "@base-ui/react": "^1.4.1",
     "@hookform/resolvers": "^5.2.2",
     "@openrouter/ai-sdk-provider": "^2.8.0",
-    "@prisma/adapter-pg": "^7.7.0",
-    "@prisma/client": "^7.7.0",
+    "@prisma/adapter-pg": "^7.8.0",
+    "@prisma/client": "^7.8.0",
     "@radix-ui/react-use-controllable-state": "^1.2.2",
     "@react-email/components": "1.0.12",
     "@rive-app/react-webgl2": "^4.28.1",
@@ -76,7 +76,7 @@
     "ansi-to-react": "^6.2.6",
     "axios": "^1.15.2",
     "bcryptjs": "^3.0.3",
-    "better-auth": "^1.6.6",
+    "better-auth": "^1.6.7",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
@@ -135,12 +135,12 @@
     "@types/swagger-ui-react": "^5.18.0",
     "@vitejs/plugin-react": "^6.0.1",
     "jsdom": "^29.0.2",
-    "prisma": "^7.7.0",
+    "prisma": "^7.8.0",
     "react-email": "6.0.0",
     "tailwindcss": "^4.2.4",
     "typescript": "^6.0.3",
-    "vercel": "^51.8.0",
+    "vercel": "^52.0.0",
     "vitest": "^4.1.5"
   },
-  "packageManager": "bun@1.3.12"
+  "packageManager": "bun@1.3.13"
 }
