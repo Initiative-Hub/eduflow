@@ -4,13 +4,17 @@ import type { z } from 'zod';
 import { auth, type Session } from '@/lib/auth';
 import { getPlatformPermissions } from '@/lib/permissions/platform-permission';
 
-export function withAuth(
-  handler: (
-    req: Request,
-    sessionData: Session,
-    ...args: any[]
-  ) => Promise<NextResponse> | NextResponse
-) {
+export type AuthHandler = (
+  req: Request,
+  sessionData: Session,
+  ...args: any[]
+) => Promise<NextResponse> | NextResponse;
+
+function isSession(obj: any): obj is Session {
+  return obj && typeof obj === 'object' && 'user' in obj && 'session' in obj;
+}
+
+export function withAuth(handler: AuthHandler) {
   return async (req: Request, ...args: any[]) => {
     try {
       const sessionData = await auth.api.getSession({
@@ -35,19 +39,16 @@ export function withAuth(
   };
 }
 
-export function withRoles(
-  allowedRoles: string[],
-  handler: (
-    req: Request,
-    sessionData: Session,
-    ...args: any[]
-  ) => Promise<NextResponse> | NextResponse
-) {
-  return async (req: Request, ...args: any[]) => {
+export function withRoles(allowedRoles: string[], handler: AuthHandler) {
+  return async (req: Request, sessionOrContext: any, ...rest: any[]) => {
     try {
-      const sessionData = await auth.api.getSession({
-        headers: await headers(),
-      });
+      let sessionData: Session | null = null;
+      let finalArgs: any[] = [];
+
+      if (isSession(sessionOrContext)) {
+        sessionData = sessionOrContext;
+        finalArgs = rest;
+      }
 
       if (!sessionData) {
         return NextResponse.json(
@@ -69,7 +70,7 @@ export function withRoles(
         );
       }
 
-      return await handler(req, sessionData, ...args);
+      return await handler(req, sessionData, ...finalArgs);
     } catch (error) {
       console.error('Auth Middleware Error:', error);
       return NextResponse.json(
@@ -82,17 +83,17 @@ export function withRoles(
 
 export function withPermissions(
   allowedPermissions: string[],
-  handler: (
-    req: Request,
-    sessionData: Session,
-    ...args: any[]
-  ) => Promise<NextResponse> | NextResponse
+  handler: AuthHandler
 ) {
-  return async (req: Request, ...args: any[]) => {
+  return async (req: Request, sessionOrContext: any, ...rest: any[]) => {
     try {
-      const sessionData = await auth.api.getSession({
-        headers: await headers(),
-      });
+      let sessionData: Session | null = null;
+      let finalArgs: any[] = [];
+
+      if (isSession(sessionOrContext)) {
+        sessionData = sessionOrContext;
+        finalArgs = rest;
+      }
 
       if (!sessionData) {
         return NextResponse.json(
@@ -126,7 +127,7 @@ export function withPermissions(
         }
       }
 
-      return await handler(req, sessionData, ...args);
+      return await handler(req, sessionData, ...finalArgs);
     } catch (error) {
       console.error('Auth Middleware Error:', error);
       return NextResponse.json(
