@@ -1,4 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { notFound } from 'next/navigation';
+import { useCallback } from 'react';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/api/api-client';
 
@@ -14,12 +16,28 @@ export interface Course {
   };
 }
 
-export function useCourses() {
+export function useCourses(courseId?: string) {
   const queryClient = useQueryClient();
   const query = useQuery({
     queryKey: ['courses'],
     queryFn: () => apiClient.get<Course[]>('/v1/courses'),
   });
+
+  const courseQuery = useQuery({
+    queryKey: ['course', courseId],
+    queryFn: () => apiClient.get<Course>(`/v1/courses/${courseId}`),
+    enabled: !!courseId,
+    retry: false,
+  });
+
+  if (courseQuery.isError) {
+    const status =
+      (courseQuery.error as any)?.status ||
+      (courseQuery.error as any)?.response?.status;
+    if (status === 403 || status === 404) {
+      notFound();
+    }
+  }
 
   const createCourseMutation = useMutation({
     mutationFn: (data: { title: string; description?: string }) =>
@@ -49,18 +67,34 @@ export function useCourses() {
     },
   });
 
+  const handleCreateCourse = useCallback(
+    (
+      data: { title: string; description?: string },
+      options?: { onSuccess?: () => void }
+    ) => createCourseMutation.mutate(data, options),
+    [createCourseMutation]
+  );
+
+  const handleTogglePublish = useCallback(
+    (id: string, isPublished: boolean) =>
+      togglePublishMutation.mutate({ courseId: id, isPublished }),
+    [togglePublishMutation]
+  );
+
   return {
+    // All courses
     courses: query.data || [],
     isLoading: query.isLoading,
     isError: query.isError,
 
-    isCreating: createCourseMutation.isPending,
-    handleCreateCourse: (
-      data: { title: string; description?: string },
-      options?: { onSuccess?: () => void }
-    ) => createCourseMutation.mutate(data, options),
+    // Single course
+    course: courseQuery.data,
+    isCourseLoading: courseQuery.isLoading,
+    courseError: courseQuery.error,
 
-    handleTogglePublish: (id: string, isPublished: boolean) =>
-      togglePublishMutation.mutate({ courseId: id, isPublished }),
+    // Mutations
+    isCreating: createCourseMutation.isPending,
+    handleCreateCourse,
+    handleTogglePublish,
   };
 }

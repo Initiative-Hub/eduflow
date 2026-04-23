@@ -48,6 +48,11 @@ export function withRoles(allowedRoles: string[], handler: AuthHandler) {
       if (isSession(sessionOrContext)) {
         sessionData = sessionOrContext;
         finalArgs = rest;
+      } else {
+        sessionData = await auth.api.getSession({
+          headers: await headers(),
+        });
+        finalArgs = [sessionOrContext, ...rest];
       }
 
       if (!sessionData) {
@@ -93,6 +98,11 @@ export function withPermissions(
       if (isSession(sessionOrContext)) {
         sessionData = sessionOrContext;
         finalArgs = rest;
+      } else {
+        sessionData = await auth.api.getSession({
+          headers: await headers(),
+        });
+        finalArgs = [sessionOrContext, ...rest];
       }
 
       if (!sessionData) {
