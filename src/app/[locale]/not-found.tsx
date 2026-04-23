@@ -1,5 +1,5 @@
-import { getTranslations } from 'next-intl/server';
 import Image from 'next/image';
+import { getTranslations } from 'next-intl/server';
 import { Button } from '@/components/ui/button';
 import { Link } from '@/i18n/navigation';
 
@@ -17,19 +17,19 @@ export default async function GlobalNotFoundPage() {
           priority
         />
         {/* Digital speech bubble overlay inspired by user image */}
-        <div className="absolute top-10 right-0 rotate-12 rounded-lg bg-primary px-3 py-1 font-mono text-primary-foreground text-sm shadow-xl animate-pulse md:px-4 md:py-2 md:text-base">
+        <div className="absolute top-10 right-0 rotate-12 animate-pulse rounded-lg bg-primary px-3 py-1 font-mono text-primary-foreground text-sm shadow-xl md:px-4 md:py-2 md:text-base">
           {t('robotSays')}
         </div>
       </div>
 
       <div className="space-y-3">
-        <h1 className="font-bold text-5xl tracking-tighter md:text-7xl text-foreground">
+        <h1 className="font-bold text-5xl text-foreground tracking-tighter md:text-7xl">
           404
         </h1>
-        <h2 className="font-semibold text-2xl md:text-3xl text-muted-foreground/80">
+        <h2 className="font-semibold text-2xl text-muted-foreground/80 md:text-3xl">
           {t('title')}
         </h2>
-        <p className="mx-auto max-w-md leading-relaxed text-muted-foreground">
+        <p className="mx-auto max-w-md text-muted-foreground leading-relaxed">
           {t('description')}
         </p>
       </div>
