@@ -21,7 +21,7 @@ export default async function GlobalNotFoundPage() {
           {t('robotSays')}
         </div>
       </div>
-      
+
       <div className="space-y-3">
         <h1 className="font-bold text-5xl tracking-tighter md:text-7xl text-foreground">
           404
@@ -33,12 +33,14 @@ export default async function GlobalNotFoundPage() {
           {t('description')}
         </p>
       </div>
-      
+
       <div className="mt-12">
-        <Button asChild size="lg" className="h-12 rounded-full px-10 shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95">
-          <Link href="/">
-            {t('goBack')}
-          </Link>
+        <Button
+          asChild
+          size="lg"
+          className="h-12 rounded-full px-10 shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95"
+        >
+          <Link href="/">{t('goBack')}</Link>
         </Button>
       </div>
     </div>
