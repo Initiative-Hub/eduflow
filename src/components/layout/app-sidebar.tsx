@@ -13,6 +13,7 @@ import {
   School,
   Settings,
   Sparkles,
+  Tags,
   User,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -55,6 +56,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       url: '/',
       icon: <MessageSquare className={sidebarIconClassName} />,
       exact: true,
+    },
+    {
+      name: t('yourInventory'),
+      url: '/inventory',
+      icon: <Tags className={sidebarIconClassName} />,
     },
     {
       name: t('socraticTutor'),
