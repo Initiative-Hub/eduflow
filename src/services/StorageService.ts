@@ -1,18 +1,26 @@
-import { Prisma, type FileInventory } from '@/generated/prisma';
+import type { FileInventory, Prisma } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
 import {
   buildInventoryObjectKey,
+  createInventoryReadSignedUrl,
   deleteInventoryObject,
   downloadInventoryObject,
-  createInventoryReadSignedUrl,
   FILE_INVENTORY_BUCKET_NAME,
   uploadInventoryObject,
 } from '@/lib/storage/file-storage';
 
+/**
+ * Normalizes a file or folder name by trimming, collapsing whitespace,
+ * and capping the length to a safe storage-friendly value.
+ */
 function normalizeName(name: string) {
   return name.trim().replace(/\s+/g, ' ').slice(0, 180);
 }
 
+/**
+ * Ensures the provided parent exists, belongs to the user, is a folder,
+ * and is not soft-deleted.
+ */
 async function ensureParentFolder(
   userId: string,
   parentId?: string | null
@@ -37,6 +45,9 @@ async function ensureParentFolder(
   return parent;
 }
 
+/**
+ * Checks whether a candidate node is inside the subtree of an ancestor node.
+ */
 async function isDescendantOf(options: {
   userId: string;
   ancestorId: string;
@@ -71,6 +82,10 @@ async function isDescendantOf(options: {
   return false;
 }
 
+/**
+ * Collects all descendant ids (including the root id) for recursive
+ * folder operations such as soft deletion.
+ */
 async function collectDescendantIds(userId: string, rootId: string) {
   const ids: string[] = [rootId];
   const queue: string[] = [rootId];
@@ -101,6 +116,10 @@ async function collectDescendantIds(userId: string, rootId: string) {
   return ids;
 }
 
+/**
+ * Collects recursive entries (folders and files) from a root node,
+ * including object keys needed for storage cleanup.
+ */
 async function collectDescendantEntries(userId: string, rootId: string) {
   const entries: Array<Pick<FileInventory, 'id' | 'isFolder' | 'objectKey'>> =
     [];
@@ -155,6 +174,9 @@ async function collectDescendantEntries(userId: string, rootId: string) {
 }
 
 export class StorageService {
+  /**
+   * Lists items in a directory with optional name search and pagination.
+   */
   static async listDirectory(options: {
     userId: string;
     parentId?: string | null;
@@ -194,6 +216,10 @@ export class StorageService {
     };
   }
 
+  /**
+   * Creates a new folder under the target parent while enforcing
+   * case-insensitive name uniqueness within the same directory.
+   */
   static async createFolder(options: {
     userId: string;
     parentId?: string | null;
@@ -236,6 +262,9 @@ export class StorageService {
     });
   }
 
+  /**
+   * Uploads file content directly and creates a READY inventory record.
+   */
   static async uploadFileDirect(options: {
     userId: string;
     parentId?: string | null;
@@ -284,6 +313,10 @@ export class StorageService {
     return file;
   }
 
+  /**
+   * Creates a pending inventory record and target metadata before binary
+   * content is uploaded separately.
+   */
   static async createUploadTarget(options: {
     userId: string;
     parentId?: string | null;
@@ -324,6 +357,10 @@ export class StorageService {
     return file;
   }
 
+  /**
+   * Uploads binary content for an existing pending file record and marks
+   * the entry as READY.
+   */
   static async uploadPreparedFile(options: {
     userId: string;
     fileId: string;
@@ -364,6 +401,9 @@ export class StorageService {
     });
   }
 
+  /**
+   * Generates a temporary signed read URL for a single file.
+   */
   static async createShareUrl(options: {
     userId: string;
     fileId: string;
@@ -392,6 +432,9 @@ export class StorageService {
     });
   }
 
+  /**
+   * Generates temporary signed read URLs for multiple files in one call.
+   */
   static async createShareUrlsBatch(options: {
     userId: string;
     fileIds: string[];
@@ -435,6 +478,10 @@ export class StorageService {
     return signed;
   }
 
+  /**
+   * Downloads file content and returns payload data suitable for HTTP
+   * response streaming.
+   */
   static async getDownloadPayload(options: { userId: string; fileId: string }) {
     const file = await prisma.fileInventory.findFirst({
       where: {
@@ -465,6 +512,10 @@ export class StorageService {
     };
   }
 
+  /**
+   * Renames or moves an inventory entry while preventing duplicate names
+   * and invalid folder cycles.
+   */
   static async updateEntry(options: {
     userId: string;
     fileId: string;
@@ -538,6 +589,10 @@ export class StorageService {
     });
   }
 
+  /**
+   * Soft-deletes an entry. For folders, all descendants are soft-deleted
+   * recursively.
+   */
   static async softDeleteEntry(options: { userId: string; fileId: string }) {
     const current = await prisma.fileInventory.findFirst({
       where: {
@@ -579,6 +634,10 @@ export class StorageService {
     };
   }
 
+  /**
+   * Soft-deletes multiple entries and attempts object storage cleanup for
+   * non-folder descendants.
+   */
   static async deleteEntries(options: { userId: string; fileIds: string[] }) {
     const uniqueIds = Array.from(new Set(options.fileIds));
     if (uniqueIds.length === 0) {
@@ -613,9 +672,7 @@ export class StorageService {
       if (!entry.isFolder && entry.objectKey) {
         try {
           await deleteInventoryObject({ objectKey: entry.objectKey });
-        } catch {
-          continue;
-        }
+        } catch {}
       }
     }
 
@@ -639,6 +696,9 @@ export class StorageService {
     };
   }
 
+  /**
+   * Returns aggregate inventory metrics for dashboard-style usage stats.
+   */
   static async getAnalytics(options: { userId: string }) {
     const [fileCount, folderCount, sizeAggregate] = await Promise.all([
       prisma.fileInventory.count({
