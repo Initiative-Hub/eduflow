@@ -58,16 +58,18 @@ export const auth = betterAuth({
 
   plugins: [
     customSession(async ({ user, session }) => {
-      const roleId = (user as any).roleId as string | undefined;
-      if (!roleId) return { user: { ...user, role: null }, session };
+      const roleId = (user as any).roleId as string | null;
 
-      const roleRow = await prisma.platformRole.findUnique({
-        where: { id: roleId },
-      });
+      const roleRow = roleId
+        ? await prisma.platformRole.findUnique({
+            where: { id: roleId },
+          })
+        : null;
 
       return {
         user: {
           ...user,
+          roleId,
           role: roleRow?.name || null,
         },
         session,
@@ -84,3 +86,5 @@ export const auth = betterAuth({
     }),
   ],
 });
+
+export type Session = typeof auth.$Infer.Session;

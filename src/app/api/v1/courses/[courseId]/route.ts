@@ -1,18 +1,14 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { withAuth } from '@/lib/api/middlewares';
 import { CourseService } from '@/services/CourseService';
-import { z } from 'zod';
 
 const patchCourseSchema = z.object({
   isPublished: z.boolean(),
 });
 
-export const PATCH = withAuth([], async (req, sessionData, { params }) => {
+export const PATCH = withAuth(async (req, sessionData, { params }) => {
   try {
-    if (!sessionData) {
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-    }
-
     const userId = sessionData.user.id;
     const { courseId } = await params;
 

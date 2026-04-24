@@ -88,7 +88,7 @@ export function AppNavbar() {
               name={sessionData.user.name}
               email={sessionData.user.email}
               image={sessionData.user.image}
-              role={(sessionData.user as any)?.role}
+              role={sessionData.user.role ?? undefined}
             />
           </div>
         ) : (

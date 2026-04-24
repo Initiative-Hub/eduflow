@@ -35,7 +35,6 @@ const updateRoleSchema = z.object({
 });
 
 export const PUT = withAuth(
-  [],
   withValidation(updateRoleSchema, async (_req, parsedBody, { user }) => {
     try {
       const updatedUser = await UserService.updateRole(

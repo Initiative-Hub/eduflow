@@ -29,10 +29,10 @@
  *         description: Forbidden
  */
 import { NextResponse } from 'next/server';
-import { withAuth } from '@/lib/api/middlewares';
+import { withAuth, withRoles } from '@/lib/api/middlewares';
 import { UserService } from '@/services/UserService';
 
-export const GET = withAuth([], async (_req, session) => {
+export const GET = withAuth(async (_req, session) => {
   try {
     const userId = session?.user?.id as string;
 
@@ -50,7 +50,7 @@ export const GET = withAuth([], async (_req, session) => {
   }
 });
 
-export const POST = withAuth(['ADMIN'], async (_req) => {
+export const POST = withRoles(['ADMIN'], async (_req) => {
   try {
     return NextResponse.json({
       message: 'Create user stub',
@@ -63,7 +63,8 @@ export const POST = withAuth(['ADMIN'], async (_req) => {
     );
   }
 });
-export const PATCH = withAuth([], async (req, session) => {
+
+export const PATCH = withAuth(async (req, session) => {
   try {
     const userId = session?.user?.id as string;
     const body = await req.json();

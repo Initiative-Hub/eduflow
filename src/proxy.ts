@@ -1,18 +1,14 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import createMiddleware from 'next-intl/middleware';
 import { routing } from '@/i18n/routing';
-import { auth } from '@/lib/auth';
+import { auth, type Session } from '@/lib/auth';
 import { isPathMatched } from '@/utils/path-helper';
 import { sanitizeUrl } from '@/utils/url-helper';
 import { AUTH_PATHS, PUBLIC_PATHS } from './constants/common';
 
 const intlMiddleware = createMiddleware(routing);
 
-function hasActiveSession(
-  sessionData: Awaited<ReturnType<typeof auth.api.getSession>> | null
-): boolean {
-  if (!sessionData?.user?.id || !sessionData?.session?.id) return false;
-
+function hasActiveSession(sessionData: Session): boolean {
   const expiresAt = sessionData.session.expiresAt;
 
   const expiresAtTimestamp = new Date(expiresAt).getTime();

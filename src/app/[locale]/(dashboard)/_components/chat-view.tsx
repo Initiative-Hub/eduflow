@@ -14,21 +14,16 @@ import {
   MessageContent,
   MessageResponse,
 } from '@/components/ai-elements/message';
+import {
+  Reasoning,
+  ReasoningContent,
+  ReasoningTrigger,
+} from '@/components/ai-elements/reasoning';
+import { getMessageReasoning, getMessageText } from '@/utils/chat-message';
 
 interface ChatViewProps {
   messages: UIMessage[];
   isStreaming: boolean;
-}
-
-/**
- * Extracts the plain-text content from a UIMessage's parts array.
- * AI SDK v6 uses `parts` (each with a `type` and `text`) instead of a `content` string.
- */
-function getMessageText(message: UIMessage): string {
-  return message.parts
-    .filter((part) => part.type === 'text')
-    .map((part) => part.text)
-    .join('');
 }
 
 export function ChatView({ messages, isStreaming }: ChatViewProps) {
@@ -45,12 +40,15 @@ export function ChatView({ messages, isStreaming }: ChatViewProps) {
         <ConversationContent className="custom-scrollbar gap-6 py-4 pr-4">
           {messages.map((message) => {
             const text = getMessageText(message);
-            if (!text) return null;
+            const reasoning = getMessageReasoning(message);
+            if (!text && !reasoning) return null;
 
             const isAnimatingAssistantMessage =
               isStreaming &&
               message.id === messages[messages.length - 1]?.id &&
               message.role === 'assistant';
+            const isReasoningStreaming =
+              isAnimatingAssistantMessage && Boolean(reasoning);
 
             return (
               <Message
@@ -80,16 +78,29 @@ export function ChatView({ messages, isStreaming }: ChatViewProps) {
                     }`}
                   >
                     {message.role === 'assistant' ? (
-                      <MessageResponse
-                        caret="block"
-                        className="text-[15px] leading-relaxed"
-                        controls={false}
-                        isAnimating={isAnimatingAssistantMessage}
-                        mode="streaming"
-                        skipHtml
-                      >
-                        {text}
-                      </MessageResponse>
+                      <>
+                        {reasoning ? (
+                          <Reasoning
+                            className="mb-3 w-full"
+                            isStreaming={isReasoningStreaming}
+                          >
+                            <ReasoningTrigger />
+                            <ReasoningContent>{reasoning}</ReasoningContent>
+                          </Reasoning>
+                        ) : null}
+                        {text ? (
+                          <MessageResponse
+                            caret="block"
+                            className="text-[15px] leading-relaxed"
+                            controls={false}
+                            isAnimating={isAnimatingAssistantMessage}
+                            mode="streaming"
+                            skipHtml
+                          >
+                            {text}
+                          </MessageResponse>
+                        ) : null}
+                      </>
                     ) : (
                       <p className="whitespace-pre-wrap text-[15px] leading-relaxed">
                         {text}
