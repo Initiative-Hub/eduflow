@@ -364,6 +364,7 @@
   "ProfilePage": {
     "actions": {
       "discard": "Discard changes",
+      "edit": "Edit Profile",
       "save": "Save settings",
       "saving": "Saving...",
       "setPassword": "Set password"

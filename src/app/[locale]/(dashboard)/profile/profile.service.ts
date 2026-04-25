@@ -5,6 +5,7 @@ export interface UserBasicInfo {
   id: string;
   email: string;
   name: string;
+  bio: string | null;
   role: string | null;
   image: string | null;
   emailVerified: boolean;

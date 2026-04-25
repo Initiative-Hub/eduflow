@@ -71,6 +71,7 @@ export const PATCH = withAuth(async (req, session) => {
 
     const updatedUser = await UserService.updateBasicInfo(userId, {
       name: body.name,
+      bio: body.bio,
     });
 
     return NextResponse.json(updatedUser);

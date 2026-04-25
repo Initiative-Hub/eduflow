@@ -8,6 +8,7 @@ import {
   DialogPortal,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { cn } from '@/lib/utils';
 import type { DialogTemplateProps } from './dialog.types';
 
 export function DialogTemplate({
@@ -27,7 +28,10 @@ export function DialogTemplate({
       <DialogPortal>
         <DialogOverlay className={overlayClassName} />
         <DialogContent
-          className={`fixed top-[50%] left-[50%] z-50 translate-x-[-50%] translate-y-[-50%] overflow-hidden bg-white ${className}`}
+          className={cn(
+            'fixed top-[50%] left-[50%] z-50 translate-x-[-50%] translate-y-[-50%] overflow-hidden bg-white',
+            className
+          )}
         >
           {!hideHeader && title && (
             <DialogHeader className="border-b pb-4">

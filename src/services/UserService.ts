@@ -38,6 +38,7 @@ export class UserService {
       id: user.id,
       email: user.email,
       name: user.name,
+      bio: user?.bio ?? null,
       role: user.role?.name ?? null,
       image: avatarUrl,
       emailVerified: user.emailVerified,
@@ -100,11 +101,15 @@ export class UserService {
     });
   }
 
-  static async updateBasicInfo(userId: string, data: { name?: string }) {
+  static async updateBasicInfo(
+    userId: string,
+    data: { name?: string; bio?: string }
+  ) {
     return await prisma.user.update({
       where: { id: userId },
       data: {
         name: data.name,
+        bio: data.bio,
       },
     });
   }
