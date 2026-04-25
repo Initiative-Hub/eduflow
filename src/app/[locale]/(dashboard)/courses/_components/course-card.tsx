@@ -1,4 +1,7 @@
-import { Switch } from '@/components/ui/switch';
+import { BookOpen, Settings, Users } from 'lucide-react';
+import Link from 'next/link';
+import { useTranslations } from 'next-intl';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -7,10 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { BookOpen, Users, Settings } from 'lucide-react';
-import Link from 'next/link';
-import { useTranslations } from 'next-intl';
+import { Switch } from '@/components/ui/switch';
 
 interface CourseCardProps {
   id: string;
@@ -34,14 +34,14 @@ export function CourseCard({
   const t = useTranslations('Courses.Card');
 
   return (
-    <Card className="flex flex-col h-full hover:shadow-md transition-shadow">
+    <Card className="flex h-full flex-col transition-shadow hover:shadow-md">
       <CardHeader>
-        <div className="flex justify-between items-start">
+        <div className="flex items-start justify-between">
           <div>
-            <CardTitle className="text-xl font-bold truncate pr-4">
+            <CardTitle className="truncate pr-4 font-bold text-xl">
               {title}
             </CardTitle>
-            <CardDescription className="line-clamp-2 mt-2 min-h-10">
+            <CardDescription className="mt-2 line-clamp-2 min-h-10">
               {description || t('noDescription')}
             </CardDescription>
           </div>
@@ -52,21 +52,21 @@ export function CourseCard({
           />
         </div>
       </CardHeader>
-      <CardContent className="flex gap-4 text-sm text-foreground/60 mt-auto">
+      <CardContent className="mt-auto flex gap-4 text-foreground/60 text-sm">
         <div className="flex items-center gap-1">
-          <BookOpen className="w-4 h-4" />
+          <BookOpen className="h-4 w-4" />
           <span>{t('modules', { count: modulesCount })}</span>
         </div>
         <div className="flex items-center gap-1">
-          <Users className="w-4 h-4" />
+          <Users className="h-4 w-4" />
           <span>{t('members', { count: enrollmentsCount })}</span>
         </div>
       </CardContent>
-      <CardFooter className="pt-4 border-t">
-        <div className="w-full flex gap-2">
+      <CardFooter className="border-t pt-4">
+        <div className="flex w-full gap-2">
           <Button variant="outline" className="w-full" asChild>
             <Link href={`/courses/${id}`}>
-              <Settings className="w-4 h-4 mr-2" />
+              <Settings className="mr-2 h-4 w-4" />
               {t('manage')}
             </Link>
           </Button>

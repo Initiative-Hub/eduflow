@@ -361,6 +361,12 @@
       "vietnamese": "Tiếng Việt"
     }
   },
+  "NotFound": {
+    "description": "It seems this page has vanished. Even our most advanced AI couldn't find it.",
+    "goBack": "Go Back Home",
+    "robotSays": "OOPS... 404",
+    "title": "Lost in the Digital Void"
+  },
   "ProfilePage": {
     "actions": {
       "discard": "Discard changes",
