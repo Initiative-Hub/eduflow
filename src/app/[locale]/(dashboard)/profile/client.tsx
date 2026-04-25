@@ -62,7 +62,7 @@ export default function ProfileClient() {
     form.reset({
       name: basicInfo.name,
       email: basicInfo.email,
-      bio: '',
+      bio: basicInfo.bio ?? '',
     });
   }, [basicInfo, form]);
 
