@@ -364,10 +364,10 @@
   "ProfilePage": {
     "actions": {
       "discard": "Huỷ thay đổi",
+      "edit": "Chỉnh sửa",
       "save": "Lưu cài đặt không gian làm việc",
       "saving": "Đang lưu...",
-      "setPassword": "Thiết lập mật khẩu",
-      "edit": "Chỉnh sửa"
+      "setPassword": "Thiết lập mật khẩu"
     },
     "avatar": {
       "description": "Chọn ảnh đại diện mới.",
