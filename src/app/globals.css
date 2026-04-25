@@ -53,6 +53,19 @@
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
 
+  --animation-float: float 3s ease-in-out infinite;
+  --animation-loader-slide: loader-slide 2s infinite ease-in-out;
+
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-20px);
+    }
+  }
+
   @keyframes loader-slide {
     0% {
       transform: translateX(-100%);
@@ -61,7 +74,6 @@
       transform: translateX(100%);
     }
   }
-  --animation-loader-slide: loader-slide 2s infinite ease-in-out;
 }
 
 :root {

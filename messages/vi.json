@@ -361,6 +361,12 @@
       "vietnamese": "Tiếng Việt"
     }
   },
+  "NotFound": {
+    "description": "Có vẻ như trang này đã biến mất. Ngay cả AI tiên tiến nhất của chúng tôi cũng không thể tìm thấy nó.",
+    "goBack": "Quay lại Trang chủ",
+    "robotSays": "RẤT TIẾC... 404",
+    "title": "Lạc vào Hư vô Kỹ thuật số"
+  },
   "ProfilePage": {
     "actions": {
       "discard": "Huỷ thay đổi",

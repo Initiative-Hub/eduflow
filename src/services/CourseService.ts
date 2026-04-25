@@ -1,5 +1,5 @@
+import { CoursePermissionKey, CourseRoleName } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
-import { CourseRoleName, CoursePermissionKey } from '@/generated/prisma';
 
 export class CourseService {
   static async createCourse(data: {
@@ -54,6 +54,28 @@ export class CourseService {
     });
   }
 
+  static async getCourseById(courseId: string, userId: string) {
+    const course = await prisma.course.findUnique({
+      where: { id: courseId },
+    });
+
+    const member = await prisma.enrollment.findFirst({
+      where: {
+        courseId,
+        studentId: userId,
+      },
+    });
+
+    if (!course) {
+      throw new Error('Course not found');
+    }
+
+    if (!member && course.teacherId !== userId) {
+      throw new Error('Unauthorized');
+    }
+
+    return course;
+  }
   static async togglePublish(
     courseId: string,
     isPublished: boolean,

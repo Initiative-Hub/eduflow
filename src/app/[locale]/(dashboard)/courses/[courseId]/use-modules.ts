@@ -83,6 +83,7 @@ export function useModules(courseId: string) {
     modules: query.data || [],
     isLoading: query.isLoading,
     isError: query.isError,
+    error: query.error,
 
     isCreatingModule: createModuleMutation.isPending,
     handleCreateModule: createModuleMutation.mutate,
