@@ -55,7 +55,7 @@
 
   --animation-float: float 3s ease-in-out infinite;
   --animation-loader-slide: loader-slide 2s infinite ease-in-out;
-  
+
   @keyframes float {
     0%,
     100% {
@@ -73,7 +73,7 @@
     100% {
       transform: translateX(100%);
     }
-  }  
+  }
 }
 
 :root {
