@@ -62,11 +62,11 @@ export function AvatarTemplate({
         onOpenChange={handleDialogChange}
         title={t('avatar.title')}
         description={t('avatar.description')}
-        className="w-full max-w-md rounded-xl"
+        className="rounded-xl md:max-w-xl"
       >
         <div className="grid gap-4">
           <div className="flex justify-center">
-            <Avatar className="h-32 w-32 overflow-visible text-3xl">
+            <Avatar className="h-44 w-44 overflow-visible text-3xl">
               <AvatarImage
                 src={draftAvatarUrl || undefined}
                 alt="avatar-preview"
