@@ -4,12 +4,14 @@ import { BookOpen, Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useDialog } from '@/components/custom/dialog/use-dialog';
 import { Button } from '@/components/ui/button';
+import { useSession } from '@/lib/auth-client';
 import { useCourses } from '../use-courses';
 import { CourseCard } from './course-card';
 import { CreateCourseDialog } from './create-course-dialog';
 
 export function CoursesPageClient() {
   const t = useTranslations('Courses');
+  const { data: sessionData } = useSession();
   const {
     courses,
     isLoading,
@@ -19,6 +21,9 @@ export function CoursesPageClient() {
   } = useCourses();
   const dialog = useDialog();
 
+  const canCreateCourses =
+    sessionData?.user.role === 'ADMIN' || sessionData?.user.role === 'TEACHER';
+
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
@@ -26,19 +31,23 @@ export function CoursesPageClient() {
           <h1 className="font-bold text-3xl tracking-tight">{t('title')}</h1>
           <p className="mt-1 text-muted-foreground">{t('description')}</p>
         </div>
-        <Button onClick={() => dialog.open()}>
-          <Plus className="mr-2 h-4 w-4" /> {t('newCourse')}
-        </Button>
+        {canCreateCourses ? (
+          <Button onClick={() => dialog.open()}>
+            <Plus className="mr-2 h-4 w-4" /> {t('newCourse')}
+          </Button>
+        ) : null}
       </div>
 
-      <CreateCourseDialog
-        isOpen={dialog.isOpen}
-        onOpenChange={dialog.setIsOpen}
-        onSubmit={(data) =>
-          handleCreateCourse(data, { onSuccess: () => dialog.close() })
-        }
-        isLoading={isCreating}
-      />
+      {canCreateCourses ? (
+        <CreateCourseDialog
+          isOpen={dialog.isOpen}
+          onOpenChange={dialog.setIsOpen}
+          onSubmit={(data) =>
+            handleCreateCourse(data, { onSuccess: () => dialog.close() })
+          }
+          isLoading={isCreating}
+        />
+      ) : null}
 
       {isLoading ? (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -58,9 +67,11 @@ export function CoursesPageClient() {
           <p className="mb-6 max-w-100 text-muted-foreground">
             {t('noCoursesDescription')}
           </p>
-          <Button onClick={() => dialog.open()}>
-            {t('createFirstCourse')}
-          </Button>
+          {canCreateCourses ? (
+            <Button onClick={() => dialog.open()}>
+              {t('createFirstCourse')}
+            </Button>
+          ) : null}
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
