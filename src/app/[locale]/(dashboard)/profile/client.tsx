@@ -40,6 +40,8 @@ export default function ProfileClient() {
     handleSubmit,
     handleAvatarChange,
     handleSetPassword,
+    isEditing,
+    setIsEditing,
   } = useProfile();
 
   const form = useForm<ProfileFormData>({
@@ -62,20 +64,18 @@ export default function ProfileClient() {
     form.reset({
       name: basicInfo.name,
       email: basicInfo.email,
-      bio: '',
+      bio: basicInfo.bio ?? '',
     });
   }, [basicInfo, form]);
-
-  const isDirty = form.formState.isDirty;
-  const isActionDisabled = !isDirty || isSaving || isAvatarSaving;
 
   const handleDiscard = () => {
     if (!basicInfo) return;
     form.reset({
       name: basicInfo.name,
       email: basicInfo.email,
-      bio: '',
+      bio: basicInfo.bio ?? '',
     });
+    setIsEditing(false);
   };
 
   const handlePasswordSubmit = (data: SetPasswordFormData) => {
@@ -109,13 +109,21 @@ export default function ProfileClient() {
 
       <FormProvider {...form}>
         <form
-          onSubmit={form.handleSubmit((data) => handleSubmit(data))}
+          onSubmit={form.handleSubmit((data) => {
+            if (!form.formState.isDirty) {
+              setIsEditing(false); // no changes in form
+              return;
+            }
+            handleSubmit(data);
+          })}
           className="flex flex-col gap-8"
         >
           <PersonalInfoCard
             name={basicInfo.name}
             image={basicInfo.image}
             onAvatarChange={handleAvatarChange}
+            isEditing={isEditing}
+            onEditToggle={() => setIsEditing(true)}
           />
 
           {/* Account details */}
@@ -134,26 +142,27 @@ export default function ProfileClient() {
             isResetting={isSettingPassword}
           />
 
-          {/* Action bar */}
-          <div className="flex flex-col-reverse justify-end gap-3 sm:flex-row sm:items-center">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={handleDiscard}
-              disabled={isActionDisabled}
-              className="w-full cursor-pointer font-semibold text-muted-foreground hover:bg-muted hover:text-foreground sm:w-auto"
-            >
-              {t('actions.discard')}
-            </Button>
-            <Button
-              type="submit"
-              disabled={isActionDisabled}
-              className="w-full cursor-pointer bg-primary px-6 font-semibold text-primary-foreground hover:bg-primary/90 sm:w-auto"
-            >
-              {isSaving ? <Loader2 className="size-4 animate-spin" /> : null}
-              {isSaving ? t('actions.saving') : t('actions.save')}
-            </Button>
-          </div>
+          {isEditing && (
+            <div className="flex flex-col-reverse justify-end gap-3 sm:flex-row sm:items-center">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={handleDiscard}
+                disabled={isSaving}
+                className="w-full cursor-pointer font-semibold text-muted-foreground hover:bg-muted hover:text-foreground sm:w-auto"
+              >
+                {t('actions.discard')}
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSaving}
+                className="w-full cursor-pointer bg-primary px-6 font-semibold text-primary-foreground hover:bg-primary/90 sm:w-auto"
+              >
+                {isSaving ? <Loader2 className="size-4 animate-spin" /> : null}
+                {isSaving ? t('actions.saving') : t('actions.save')}
+              </Button>
+            </div>
+          )}
         </form>
       </FormProvider>
 
