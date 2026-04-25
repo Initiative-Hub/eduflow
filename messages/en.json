@@ -366,7 +366,8 @@
       "discard": "Discard changes",
       "save": "Save settings",
       "saving": "Saving...",
-      "setPassword": "Set password"
+      "setPassword": "Set password",
+      "edit": "Edit Profile"
     },
     "avatar": {
       "description": "Choose a new avatar image.",

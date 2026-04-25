@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import type { AvatarChangePayload } from '@/components/custom/avatar';
 import type { ProfileFormData } from './profile.config';
@@ -13,6 +14,7 @@ const USER_SECURITY_INFO_QUERY_KEY = ['user-security-info'] as const;
 export function useProfile() {
   const t = useTranslations('ProfilePage');
   const queryClient = useQueryClient();
+  const [isEditing, setIsEditing] = useState(false);
 
   const basicInfoQuery = useQuery({
     queryKey: USER_BASIC_INFO_QUERY_KEY,
@@ -33,6 +35,7 @@ export function useProfile() {
       toast.success(t('toast.saved'), {
         description: t('toast.savedDesc'),
       });
+      setIsEditing(false);
     },
   });
 
@@ -76,5 +79,7 @@ export function useProfile() {
     handleSubmit: updateMutation.mutate,
     handleAvatarChange: avatarMutation.mutateAsync,
     handleSetPassword: setPasswordMutation.mutate,
+    isEditing,
+    setIsEditing,
   };
 }

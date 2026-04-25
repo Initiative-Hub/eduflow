@@ -1,10 +1,11 @@
 'use client';
 
-import { User } from 'lucide-react';
+import { Pencil, User } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useFormContext } from 'react-hook-form';
 import type { AvatarChangePayload } from '@/components/custom/avatar';
 import { AvatarTemplate } from '@/components/custom/avatar';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Field,
@@ -20,12 +21,16 @@ interface PersonalInfoCardProps {
   name: string;
   image: string | null;
   onAvatarChange: (payload: AvatarChangePayload) => Promise<void>;
+  isEditing: boolean;
+  onEditToggle: () => void;
 }
 
 export function PersonalInfoCard({
   name,
   image,
   onAvatarChange,
+  isEditing,
+  onEditToggle,
 }: PersonalInfoCardProps) {
   const t = useTranslations('ProfilePage');
   const form = useFormContext<ProfileFormData>();
@@ -33,10 +38,23 @@ export function PersonalInfoCard({
   return (
     <Card className="shadow-sm">
       <CardHeader className="pb-4">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <User className="size-4 text-primary" />
-          {t('sections.personalInfo')}
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <User className="size-4 text-primary" />
+            {t('sections.personalInfo')}
+          </CardTitle>
+          {!isEditing && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onEditToggle}
+              className="cursor-pointer"
+            >
+              <Pencil className="mr-1.5 size-3.5" />
+              {t('actions.edit')}
+            </Button>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         <div className="flex flex-col gap-8 sm:flex-row sm:items-start">
@@ -63,6 +81,7 @@ export function PersonalInfoCard({
                   {...form.register('name')}
                   className="h-10"
                   aria-invalid={!!form.formState.errors.name}
+                  disabled={!isEditing}
                 />
                 <FieldError errors={[form.formState.errors.name]} />
               </Field>
@@ -96,6 +115,7 @@ export function PersonalInfoCard({
                 placeholder={t('form.bio.placeholder')}
                 {...form.register('bio')}
                 rows={4}
+                disabled={!isEditing}
                 className="resize-none"
               />
               <FieldError errors={[form.formState.errors.bio]} />

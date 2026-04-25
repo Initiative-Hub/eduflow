@@ -366,7 +366,8 @@
       "discard": "Huỷ thay đổi",
       "save": "Lưu cài đặt không gian làm việc",
       "saving": "Đang lưu...",
-      "setPassword": "Thiết lập mật khẩu"
+      "setPassword": "Thiết lập mật khẩu",
+      "edit": "Chỉnh sửa"
     },
     "avatar": {
       "description": "Chọn ảnh đại diện mới.",
