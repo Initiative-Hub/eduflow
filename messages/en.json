@@ -337,6 +337,58 @@
     "studyAssistant": "Study Assistant",
     "writingAssistant": "Writing Assistant"
   },
+  "InventoryPage": {
+    "actions": {
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "download": "Download",
+      "move": "Move to folder",
+      "preview": "Preview",
+      "rename": "Rename",
+      "save": "Save",
+      "share": "Share"
+    },
+    "empty": {
+      "action": "Upload your first file",
+      "description": "Upload files to see them here.",
+      "title": "No files uploaded"
+    },
+    "list": {
+      "columns": {
+        "actions": "Actions",
+        "location": "Location",
+        "name": "Name",
+        "owner": "Owner",
+        "reason": "Suggested reason"
+      },
+      "location": {
+        "myDrive": "My Drive"
+      },
+      "owner": {
+        "you": "You",
+        "youShort": "You"
+      },
+      "reason": {
+        "created": "Created {date}"
+      }
+    },
+    "renameDialog": {
+      "description": "Choose a new name for this file.",
+      "label": "File name",
+      "title": "Rename file"
+    },
+    "storage": {
+      "label": "Storage used",
+      "limitReached": "Storage limit reached. Delete files to upload more.",
+      "usage": "{used} of {total}"
+    },
+    "title": "Inventory",
+    "uploadFile": "Upload File",
+    "view": {
+      "grid": "Grid",
+      "list": "List"
+    }
+  },
   "NavbarAvatar": {
     "actions": {
       "login": "Login",

@@ -11,19 +11,93 @@ import {
   Trash2,
 } from 'lucide-react';
 import Image from 'next/image';
+import { useLocale, useTranslations } from 'next-intl';
 import type React from 'react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+  FieldTitle,
+} from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import { Progress } from '@/components/ui/progress';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { cn } from '@/lib/utils';
 import type { StorageFile } from './storage-context';
+
+const formatFileSize = (bytes: number) => {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return Math.round((bytes / k ** i) * 100) / 100 + ' ' + sizes[i];
+};
+
+const formatDate = (date: Date, locale: string) => {
+  return new Date(date).toLocaleDateString(locale, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+};
+
+const downloadFile = (file: StorageFile) => {
+  if (!file.data) return;
+  const blob = new Blob([file.data], { type: file.type });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = file.name;
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+  URL.revokeObjectURL(url);
+};
+
+const getFileExtension = (fileName: string) => {
+  const extension = fileName.split('.').pop();
+  if (!extension) return 'FILE';
+  return extension.toUpperCase().slice(0, 4);
+};
 
 interface FileCardProps {
   file: StorageFile;
+  locale: string;
   onDelete: (fileId: string) => void;
   onRename: (fileId: string) => void;
   onMove: (fileId: string) => void;
@@ -33,42 +107,18 @@ interface FileCardProps {
 
 export const FileCard: React.FC<FileCardProps> = ({
   file,
+  locale,
   onDelete,
   onRename,
   onMove,
   onShare,
   onPreview,
 }) => {
+  const t = useTranslations('InventoryPage');
   const isImage = file.type.startsWith('image/');
 
   const handleDownload = () => {
-    if (file.data) {
-      const blob = new Blob([file.data], { type: file.type });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = file.name;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }
-  };
-
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round((bytes / k ** i) * 100) / 100 + ' ' + sizes[i];
-  };
-
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
+    downloadFile(file);
   };
 
   return (
@@ -102,7 +152,7 @@ export const FileCard: React.FC<FileCardProps> = ({
         </div>
       )}
 
-      <div className="space-y-2">
+      <div className="flex flex-col gap-2">
         <div className="flex items-start justify-between gap-2">
           <h3 className="flex-1 truncate font-medium text-foreground text-sm">
             {file.name}
@@ -119,21 +169,21 @@ export const FileCard: React.FC<FileCardProps> = ({
                 className="cursor-pointer gap-2"
               >
                 <Edit2 size={14} />
-                Rename
+                {t('actions.rename')}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => onMove(file.id)}
                 className="cursor-pointer gap-2"
               >
                 <Move size={14} />
-                Move to folder
+                {t('actions.move')}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => onShare(file.id)}
                 className="cursor-pointer gap-2"
               >
                 <Share2 size={14} />
-                Share
+                {t('actions.share')}
               </DropdownMenuItem>
               {isImage && (
                 <DropdownMenuItem
@@ -141,7 +191,7 @@ export const FileCard: React.FC<FileCardProps> = ({
                   className="cursor-pointer gap-2"
                 >
                   <Eye size={14} />
-                  Preview
+                  {t('actions.preview')}
                 </DropdownMenuItem>
               )}
               <DropdownMenuItem
@@ -149,14 +199,14 @@ export const FileCard: React.FC<FileCardProps> = ({
                 className="cursor-pointer gap-2"
               >
                 <Download size={14} />
-                Download
+                {t('actions.download')}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => onDelete(file.id)}
                 className="cursor-pointer gap-2 text-destructive focus:text-destructive"
               >
                 <Trash2 size={14} />
-                Delete
+                {t('actions.delete')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -166,7 +216,7 @@ export const FileCard: React.FC<FileCardProps> = ({
           {formatFileSize(file.size)}
         </p>
         <p className="text-muted-foreground text-xs">
-          {formatDate(file.createdAt)}
+          {formatDate(file.createdAt, locale)}
         </p>
       </div>
     </div>
@@ -174,6 +224,8 @@ export const FileCard: React.FC<FileCardProps> = ({
 };
 
 export const InventoryClient: React.FC = () => {
+  const t = useTranslations('InventoryPage');
+  const locale = useLocale();
   const [files, setFiles] = useState<StorageFile[]>([
     {
       id: '1',
@@ -206,53 +258,316 @@ export const InventoryClient: React.FC = () => {
     setFiles((prev) => prev.filter((f) => f.id !== id));
   };
 
+  const handleMove = (_id: string) => {};
+
+  const handleShare = (_id: string) => {};
+
+  const handlePreview = (_file: StorageFile) => {};
+
+  const [renameDialog, setRenameDialog] = useState<{
+    open: boolean;
+    fileId: string | null;
+    value: string;
+  }>({
+    open: false,
+    fileId: null,
+    value: '',
+  });
+
   const handleRename = (id: string) => {
-    const newName = prompt('Enter new name:');
-    if (newName) {
-      setFiles((prev) =>
-        prev.map((f) => (f.id === id ? { ...f, name: newName } : f))
-      );
-    }
+    const file = files.find((item) => item.id === id);
+    setRenameDialog({
+      open: true,
+      fileId: id,
+      value: file?.name ?? '',
+    });
   };
 
+  const handleRenameSubmit = () => {
+    if (!renameDialog.fileId) return;
+    const nextName = renameDialog.value.trim();
+    if (!nextName) return;
+    setFiles((prev) =>
+      prev.map((file) =>
+        file.id === renameDialog.fileId ? { ...file, name: nextName } : file
+      )
+    );
+    setRenameDialog({ open: false, fileId: null, value: '' });
+  };
+
+  const [viewType, setViewType] = useState<'grid' | 'list'>('grid');
+  const storageLimitBytes = 5 * 1024 * 1024 * 1024;
+  const totalStorageBytes = useMemo(
+    () => files.reduce((total, file) => total + file.size, 0),
+    [files]
+  );
+  const storagePercentage =
+    storageLimitBytes === 0
+      ? 0
+      : Math.min(100, (totalStorageBytes / storageLimitBytes) * 100);
+  const isStorageLimitReached = totalStorageBytes >= storageLimitBytes;
+  const storageUsageLabel = t('storage.usage', {
+    used: formatFileSize(totalStorageBytes),
+    total: formatFileSize(storageLimitBytes),
+  });
+
   return (
-    <div className="flex-1 space-y-4 p-8 pt-6">
-      <div className="flex items-center justify-between">
-        <h2 className="font-bold text-3xl tracking-tight">Inventory</h2>
-        <div className="flex items-center space-x-2">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Upload File
+    <div className="flex flex-1 flex-col gap-4 p-8 pt-6">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-col gap-2">
+          <h2 className="font-bold text-3xl tracking-tight">{t('title')}</h2>
+          <Field className="max-w-md">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <FieldTitle>{t('storage.label')}</FieldTitle>
+              <span
+                className={cn(
+                  'text-muted-foreground text-sm',
+                  isStorageLimitReached && 'text-destructive'
+                )}
+              >
+                {storageUsageLabel}
+              </span>
+            </div>
+            <Progress value={storagePercentage} />
+            {isStorageLimitReached && (
+              <FieldDescription className="text-destructive">
+                {t('storage.limitReached')}
+              </FieldDescription>
+            )}
+          </Field>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Tabs
+            value={viewType}
+            onValueChange={(value) =>
+              setViewType(value === 'list' ? 'list' : 'grid')
+            }
+          >
+            <TabsList>
+              <TabsTrigger value="grid">{t('view.grid')}</TabsTrigger>
+              <TabsTrigger value="list">{t('view.list')}</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <Button disabled={isStorageLimitReached}>
+            <Plus data-icon="inline-start" />
+            {t('uploadFile')}
           </Button>
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {files.map((file) => (
-          <FileCard
-            key={file.id}
-            file={file}
-            onDelete={handleDelete}
-            onRename={handleRename}
-            onMove={() => {}}
-            onShare={() => {}}
-            onPreview={() => {}}
-          />
-        ))}
+      <div
+        className={cn(
+          viewType === 'grid'
+            ? 'grid gap-4 md:grid-cols-2 lg:grid-cols-4'
+            : 'flex flex-col gap-4'
+        )}
+      >
+        {viewType === 'grid' &&
+          files.map((file) => (
+            <FileCard
+              key={file.id}
+              file={file}
+              locale={locale}
+              onDelete={handleDelete}
+              onRename={handleRename}
+              onMove={handleMove}
+              onShare={handleShare}
+              onPreview={handlePreview}
+            />
+          ))}
+        {viewType === 'list' && files.length > 0 && (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t('list.columns.name')}</TableHead>
+                <TableHead>{t('list.columns.reason')}</TableHead>
+                <TableHead>{t('list.columns.owner')}</TableHead>
+                <TableHead>{t('list.columns.location')}</TableHead>
+                <TableHead className="text-right">
+                  <span className="sr-only">{t('list.columns.actions')}</span>
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {files.map((file) => {
+                const isImage = file.type.startsWith('image/');
+                const fileDate = formatDate(file.createdAt, locale);
+
+                return (
+                  <TableRow key={file.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        {isImage && file.data ? (
+                          <div className="flex size-9 items-center justify-center overflow-hidden rounded-md bg-muted">
+                            <Image
+                              src={file.data}
+                              alt={file.name}
+                              width={36}
+                              height={36}
+                              unoptimized
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="flex size-9 items-center justify-center rounded-md bg-muted font-semibold text-[10px] text-muted-foreground">
+                            {getFileExtension(file.name)}
+                          </div>
+                        )}
+                        <div className="flex flex-col">
+                          <span className="font-medium text-foreground">
+                            {file.name}
+                          </span>
+                          <span className="text-muted-foreground text-xs">
+                            {formatFileSize(file.size)}
+                          </span>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {t('list.reason.created', { date: fileDate })}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <div className="flex size-6 items-center justify-center rounded-full bg-muted font-semibold text-[10px] text-muted-foreground">
+                          {t('list.owner.youShort')}
+                        </div>
+                        <span>{t('list.owner.you')}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {t('list.location.myDrive')}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                          >
+                            <MoreVertical size={16} />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-40">
+                          <DropdownMenuItem
+                            onClick={() => handleRename(file.id)}
+                            className="cursor-pointer gap-2"
+                          >
+                            <Edit2 size={14} />
+                            {t('actions.rename')}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleMove(file.id)}
+                            className="cursor-pointer gap-2"
+                          >
+                            <Move size={14} />
+                            {t('actions.move')}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleShare(file.id)}
+                            className="cursor-pointer gap-2"
+                          >
+                            <Share2 size={14} />
+                            {t('actions.share')}
+                          </DropdownMenuItem>
+                          {isImage && (
+                            <DropdownMenuItem
+                              onClick={() => handlePreview(file)}
+                              className="cursor-pointer gap-2"
+                            >
+                              <Eye size={14} />
+                              {t('actions.preview')}
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuItem
+                            onClick={() => downloadFile(file)}
+                            className="cursor-pointer gap-2"
+                          >
+                            <Download size={14} />
+                            {t('actions.download')}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleDelete(file.id)}
+                            className="cursor-pointer gap-2 text-destructive focus:text-destructive"
+                          >
+                            <Trash2 size={14} />
+                            {t('actions.delete')}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        )}
       </div>
 
       {files.length === 0 && (
-        <div className="flex h-[400px] flex-col items-center justify-center rounded-md border border-dashed text-center">
-          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-muted">
-            <FileIcon className="h-10 w-10 text-muted-foreground" />
-          </div>
-          <h3 className="mt-4 font-semibold text-lg">No files uploaded</h3>
-          <p className="mt-2 mb-4 text-muted-foreground text-sm">
-            Upload files to see them here.
-          </p>
-          <Button variant="outline">Upload your first file</Button>
-        </div>
+        <Empty className="min-h-100">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <FileIcon />
+            </EmptyMedia>
+            <EmptyTitle>{t('empty.title')}</EmptyTitle>
+            <EmptyDescription>{t('empty.description')}</EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button variant="outline" disabled={isStorageLimitReached}>
+              {t('empty.action')}
+            </Button>
+          </EmptyContent>
+        </Empty>
       )}
+
+      <Dialog
+        open={renameDialog.open}
+        onOpenChange={(open) =>
+          setRenameDialog((prev) =>
+            open ? { ...prev, open } : { open: false, fileId: null, value: '' }
+          )
+        }
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('renameDialog.title')}</DialogTitle>
+            <DialogDescription>
+              {t('renameDialog.description')}
+            </DialogDescription>
+          </DialogHeader>
+          <FieldGroup>
+            <Field>
+              <FieldLabel htmlFor="rename-file-name">
+                {t('renameDialog.label')}
+              </FieldLabel>
+              <FieldContent>
+                <Input
+                  id="rename-file-name"
+                  value={renameDialog.value}
+                  onChange={(event) =>
+                    setRenameDialog((prev) => ({
+                      ...prev,
+                      value: event.target.value,
+                    }))
+                  }
+                />
+              </FieldContent>
+            </Field>
+          </FieldGroup>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">{t('actions.cancel')}</Button>
+            </DialogClose>
+            <Button
+              onClick={handleRenameSubmit}
+              disabled={!renameDialog.value.trim()}
+            >
+              {t('actions.save')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
