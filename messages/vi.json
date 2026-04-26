@@ -315,28 +315,6 @@
   "HomePage": {
     "title": "Xin chào thế giới!"
   },
-  "LanguageSwitcher": {
-    "label": "Ngôn ngữ",
-    "system": "Hệ thống"
-  },
-  "Layout": {
-    "aiChat": "Trò chuyện AI",
-    "aiTools": "Công cụ AI",
-    "courses": "Khóa học",
-    "englishAssistant": "Trợ lý Tiếng Anh",
-    "newSession": "Phiên mới",
-    "settingsAcademicContext": "Bối cảnh học tập",
-    "settingsAiPreferences": "Tùy chọn AI",
-    "settingsHeading": "Cài đặt EduFlow",
-    "settingsIntegrations": "Tích hợp",
-    "settingsProfile": "Hồ sơ",
-    "settingsSubheading": "Quản lý không gian học thuật của bạn",
-    "settingsSystemSettings": "Cài đặt hệ thống",
-    "yourInventory": "Kho học tập của bạn",
-    "socraticTutor": "Gia sư Socratic",
-    "studyAssistant": "Trợ lý Học tập",
-    "writingAssistant": "Trợ lý Viết"
-  },
   "InventoryPage": {
     "actions": {
       "cancel": "Hủy",
@@ -388,6 +366,28 @@
       "grid": "Lưới",
       "list": "Danh sách"
     }
+  },
+  "LanguageSwitcher": {
+    "label": "Ngôn ngữ",
+    "system": "Hệ thống"
+  },
+  "Layout": {
+    "aiChat": "Trò chuyện AI",
+    "aiTools": "Công cụ AI",
+    "courses": "Khóa học",
+    "englishAssistant": "Trợ lý Tiếng Anh",
+    "newSession": "Phiên mới",
+    "settingsAcademicContext": "Bối cảnh học tập",
+    "settingsAiPreferences": "Tùy chọn AI",
+    "settingsHeading": "Cài đặt EduFlow",
+    "settingsIntegrations": "Tích hợp",
+    "settingsProfile": "Hồ sơ",
+    "settingsSubheading": "Quản lý không gian học thuật của bạn",
+    "settingsSystemSettings": "Cài đặt hệ thống",
+    "socraticTutor": "Gia sư Socratic",
+    "studyAssistant": "Trợ lý Học tập",
+    "writingAssistant": "Trợ lý Viết",
+    "yourInventory": "Kho học tập của bạn"
   },
   "NavbarAvatar": {
     "actions": {
