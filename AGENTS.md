@@ -81,6 +81,7 @@ for any tasks.).
 
 - **Translations**: Keep user-facing copy in `messages/en.json` and `messages/vi.json`.
 - **Next-intl Components**: When extracting text-heavy components, pass plain strings or call next-intl helpers inside the component instead of threading translator functions through props.
+- **SSR Page Entries**: Keep `src/app/**/page.tsx` as Server Components by NEVER adding 'use client' on top of them. Move only interactive logic into focused local client islands.
 - **Shared Shells**: Reuse `DialogTemplate` and `FormTemplate` for modal and form shells instead of rebuilding the same structure ad hoc.
 - **Server Layouts**: For async server layouts that only pass through children, return a fragment instead of raw children.
 - **Icons and Styling**: Use `lucide-react` for new icons and keep styling in the existing Tailwind utility style used throughout the app.
