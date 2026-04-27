@@ -23,6 +23,7 @@ export default function LessonDetailsPage() {
     isLoading: isModulesLoading,
     getAdjacentLessons,
   } = useModules(courseId);
+
   const { lesson, isLoading: isLessonLoading } = useLesson(lessonId);
   const { isUpdatingLesson, handleUpdateLesson } = useUpdateLesson(courseId);
 

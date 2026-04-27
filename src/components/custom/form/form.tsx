@@ -37,6 +37,7 @@ export function FormTemplate<TData extends FieldValues>({
   defaultValues,
   fields,
   onSubmit,
+  isLoading = false,
   submitLabel = 'Submit',
   className = '',
   children,
@@ -97,6 +98,7 @@ export function FormTemplate<TData extends FieldValues>({
         {children}
 
         <Button
+          disabled={isLoading}
           type="submit"
           className="w-full cursor-pointer rounded-4xl py-6 font-bold text-xl transition-all duration-200 hover:shadow-lg"
         >

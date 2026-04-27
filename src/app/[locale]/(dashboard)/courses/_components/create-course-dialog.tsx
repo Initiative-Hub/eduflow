@@ -1,12 +1,12 @@
+import { useTranslations } from 'next-intl';
 import { DialogTemplate } from '@/components/custom/dialog/dialog';
 import { FormTemplate } from '@/components/custom/form';
 import {
+  type CreateCourseFormData,
   createCourseDefaultValues,
   createCourseFields,
   createCourseSchema,
-  type CreateCourseFormData,
 } from './create-course.config';
-import { useTranslations } from 'next-intl';
 
 interface CreateCourseDialogProps {
   isOpen: boolean;
