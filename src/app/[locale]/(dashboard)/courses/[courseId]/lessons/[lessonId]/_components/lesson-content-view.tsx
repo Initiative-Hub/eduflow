@@ -1,16 +1,14 @@
-import { useTranslations } from 'next-intl';
-
 interface LessonContentViewProps {
   title: string;
   contentText: string;
+  emptyContentLabel: string;
 }
 
 export function LessonContentView({
   title,
   contentText,
+  emptyContentLabel,
 }: LessonContentViewProps) {
-  const t = useTranslations('Courses.LessonView');
-
   return (
     <div className="flex-1 space-y-8">
       <h1 className="font-bold text-3xl tracking-tight">{title}</h1>
@@ -18,7 +16,7 @@ export function LessonContentView({
         {contentText ? (
           <div className="whitespace-pre-wrap">{contentText}</div>
         ) : (
-          <p className="text-muted-foreground italic">{t('empty')}</p>
+          <p className="text-muted-foreground italic">{emptyContentLabel}</p>
         )}
       </div>
     </div>

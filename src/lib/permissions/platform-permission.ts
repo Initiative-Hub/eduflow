@@ -1,27 +1,31 @@
 import { prisma } from '@/lib/prisma';
 
-export async function getPlatformPermissions(roleId: string) {
-  const permissions = await prisma.platformPermission.findMany({
-    where: {
-      platformRoleId: roleId,
-      enabled: true,
-    },
+export async function getPlatformPermissions(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
     select: {
-      permission: true,
+      role: {
+        select: {
+          permissions: {
+            where: { enabled: true },
+            select: { permission: true },
+          },
+        },
+      },
     },
-    distinct: ['permission'],
   });
 
+  const permissionsList =
+    user?.role?.permissions.map((p) => p.permission as string) || [];
+
   const containPermission = (permission: string) =>
-    permissions.some((p) => p.permission === permission);
+    permissionsList.some((p) => p === permission);
 
   const withoutPermission = (permission: string) =>
-    !permissions.some((p) => p.permission === permission);
+    !permissionsList.some((p) => p === permission);
 
   return {
-    permissions: permissions.map(
-      (permission) => permission.permission as string
-    ),
+    permissions: permissionsList,
     containPermission,
     withoutPermission,
   };

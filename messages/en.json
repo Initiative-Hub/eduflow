@@ -308,7 +308,7 @@
     },
     "newCourse": "New Course",
     "noCourses": "No courses yet",
-    "noCoursesDescription": "You haven't created any courses. Click the button below to create your first one.",
+    "noCoursesDescription": "No courses available",
     "SettingsPage": "Course Settings",
     "title": "Courses"
   },
