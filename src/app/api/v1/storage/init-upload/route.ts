@@ -23,7 +23,7 @@ export const POST = withAuth(async (req, session) => {
       );
     }
 
-    const target = await StorageService.createUploadTarget({
+    const upload = await StorageService.initializeUpload({
       userId: session.user.id,
       parentId: parsed.data.parentId ?? null,
       path: parsed.data.path,
@@ -34,12 +34,12 @@ export const POST = withAuth(async (req, session) => {
 
     return NextResponse.json({
       data: {
-        fileId: target.id,
-        path: target.objectKey,
-        bucket: target.bucket,
-        status: target.status,
-        uploadUrl: target.uploadUrl,
-        uploadHeaders: target.uploadHeaders,
+        fileId: upload.id,
+        path: upload.objectKey,
+        bucket: upload.bucket,
+        status: upload.status,
+        uploadUrl: upload.uploadUrl,
+        uploadHeaders: upload.uploadHeaders,
       },
     });
   } catch (error: any) {

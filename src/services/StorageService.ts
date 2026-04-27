@@ -264,10 +264,10 @@ export class StorageService {
   }
 
   /**
-   * Creates a pending inventory record and target metadata before binary
+   * Creates a pending inventory record and metadata before binary
    * content is uploaded separately.
    */
-  static async createUploadTarget(options: {
+  static async initializeUpload(options: {
     userId: string;
     parentId?: string | null;
     path?: string;
@@ -323,7 +323,7 @@ export class StorageService {
    * Verifies uploaded object existence for a pending file and marks
    * the entry as READY.
    */
-  static async uploadPreparedFile(options: {
+  static async confirmUpload(options: {
     userId: string;
     fileId: string;
     checksumSha256?: string | null;

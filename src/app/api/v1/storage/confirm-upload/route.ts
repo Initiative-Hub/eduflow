@@ -21,7 +21,7 @@ export const POST = withAuth(async (req, session) => {
       );
     }
 
-    const uploaded = await StorageService.uploadPreparedFile({
+    const uploaded = await StorageService.confirmUpload({
       userId: session.user.id,
       fileId: parsed.data.fileId,
       checksumSha256: parsed.data.checksumSha256,
