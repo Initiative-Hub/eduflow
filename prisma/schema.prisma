@@ -173,46 +173,20 @@ model Post {
   @@map("posts")
 }
 
-enum FileInventoryStatus {
-  UPLOADING
-  READY
-  FAILED
-  DELETED
-}
-
 model FileInventory {
-  id     String @id @default(uuid())
-  userId String @map("user_id")
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  parentId String?         @map("parent_id")
-  parent   FileInventory?  @relation("FolderHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
-  children FileInventory[] @relation("FolderHierarchy")
-
-  name     String
-  isFolder Boolean             @default(false) @map("is_folder")
-  metadata Json?               @default("{}")
-  status   FileInventoryStatus @default(READY)
-
-  fileSize  BigInt? @map("file_size")
-  mimeType  String? @map("mime_type")
-  extension String? @map("extension")
-
-  bucket         String?
-  objectKey      String? @map("object_key")
-  checksumSha256 String? @map("checksum_sha256")
-  vectorDbId     String? @map("vector_db_id")
-
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  uploadedAt DateTime  @default(now())
-  deletedAt  DateTime?
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fileName     String
+  fileSize     Int
+  mimeType     String
+  cloudStorage String?
+  vectorDbId   String?  @map("vector_db_id")
+  uploadedAt   DateTime @default(now()) @map("uploaded_at")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   @@index([userId])
-  @@index([parentId])
-  @@index([userId, status, uploadedAt(sort: Desc)])
-  @@index([userId, deletedAt])
-  @@index([userId, objectKey])
   @@map("file_inventory")
 }
 
