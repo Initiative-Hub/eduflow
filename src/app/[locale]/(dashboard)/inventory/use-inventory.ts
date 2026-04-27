@@ -1,7 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import { ApiError } from 'next/dist/server/api-utils';
 import { useLoadingStore } from '@/stores/useLoadingStore';
-import { sanitizeUrl } from '@/utils/url-helper';
 import { inventoryService } from './inventory.service';
 
 export function useInventory() {
@@ -11,8 +9,9 @@ export function useInventory() {
     mutationFn: async (file: File) => {
       setLoading(true);
       const response = await inventoryService.upload(file);
+      return response;
     },
-    onSuccess: (data) => {
+    onSuccess: (_data) => {
       setLoading(false);
     },
     onError: () => {

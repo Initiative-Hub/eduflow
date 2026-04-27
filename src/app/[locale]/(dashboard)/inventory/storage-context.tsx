@@ -46,9 +46,7 @@ interface StorageContextType {
 
 const StorageContext = createContext<StorageContextType | undefined>(undefined);
 
-export const StorageProvider: React.FC<{ children: ReactNode }> = ({
-  children,
-}) => {
+export const StorageProvider = ({ children }: { children: ReactNode }) => {
   const [files, setFiles] = useState<StorageFile[]>([]);
   const [folders, setFolders] = useState<Map<string, StorageFolder>>(() => {
     const rootFolder: StorageFolder = {
@@ -107,7 +105,7 @@ export const StorageProvider: React.FC<{ children: ReactNode }> = ({
     setFolders((prev) => {
       const newMap = new Map(prev);
       const folder = newMap.get(folderId);
-      if (folder && folder.parentId) {
+      if (folder?.parentId) {
         const parent = newMap.get(folder.parentId);
         if (parent) {
           newMap.set(folder.parentId, {

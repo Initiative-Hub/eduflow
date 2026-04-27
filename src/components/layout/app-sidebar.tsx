@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  Archive,
   BookOpen,
   Cloud,
   GraduationCap,
@@ -13,7 +14,6 @@ import {
   School,
   Settings,
   Sparkles,
-  Tags,
   User,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -60,7 +60,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     {
       name: t('yourInventory'),
       url: '/inventory',
-      icon: <Tags className={sidebarIconClassName} />,
+      icon: <Archive className={sidebarIconClassName} />,
     },
     {
       name: t('socraticTutor'),

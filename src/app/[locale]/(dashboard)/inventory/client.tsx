@@ -1,4 +1,5 @@
 'use client';
+
 import {
   Download,
   Edit2,
@@ -12,7 +13,6 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import { useLocale, useTranslations } from 'next-intl';
-import type React from 'react';
 import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -41,10 +41,8 @@ import {
 import {
   Field,
   FieldContent,
-  FieldDescription,
   FieldGroup,
   FieldLabel,
-  FieldTitle,
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
@@ -58,6 +56,7 @@ import {
 } from '@/components/ui/table';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
+import { FileCard } from './file-card';
 import type { StorageFile } from './storage-context';
 
 const formatFileSize = (bytes: number) => {
@@ -65,7 +64,7 @@ const formatFileSize = (bytes: number) => {
   const k = 1024;
   const sizes = ['Bytes', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return Math.round((bytes / k ** i) * 100) / 100 + ' ' + sizes[i];
+  return `${Math.round((bytes / k ** i) * 100) / 100} ${sizes[i]}`;
 };
 
 const formatDate = (date: Date, locale: string) => {
@@ -95,164 +94,38 @@ const getFileExtension = (fileName: string) => {
   return extension.toUpperCase().slice(0, 4);
 };
 
-interface FileCardProps {
-  file: StorageFile;
-  locale: string;
-  onDelete: (fileId: string) => void;
-  onRename: (fileId: string) => void;
-  onMove: (fileId: string) => void;
-  onShare: (fileId: string) => void;
-  onPreview: (file: StorageFile) => void;
-}
+const inventoryFiles: StorageFile[] = [
+  {
+    id: '1',
+    name: 'Lecture_Notes.pdf',
+    type: 'application/pdf',
+    size: 2450000,
+    folderId: 'root',
+    createdAt: new Date(),
+  },
+  {
+    id: '2',
+    name: 'Project_Structure.png',
+    type: 'image/png',
+    size: 1200000,
+    folderId: 'root',
+    createdAt: new Date(),
+    data: 'https://images.unsplash.com/photo-1614741118887-7a4ee193a5fa?w=400&auto=format&fit=crop&q=60',
+  },
+  {
+    id: '3',
+    name: 'Research_Paper.docx',
+    type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    size: 850000,
+    folderId: 'root',
+    createdAt: new Date(),
+  },
+];
 
-export const FileCard: React.FC<FileCardProps> = ({
-  file,
-  locale,
-  onDelete,
-  onRename,
-  onMove,
-  onShare,
-  onPreview,
-}) => {
-  const t = useTranslations('InventoryPage');
-  const isImage = file.type.startsWith('image/');
-
-  const handleDownload = () => {
-    downloadFile(file);
-  };
-
-  return (
-    <div className="rounded-lg border border-border bg-card p-4 transition-shadow hover:shadow-md">
-      {isImage && file.data && (
-        <div
-          className="mb-3 h-40 w-full cursor-pointer overflow-hidden rounded-md bg-muted"
-          onClick={() => onPreview(file)}
-        >
-          <Image
-            src={file.data}
-            alt={file.name}
-            width={500}
-            height={500}
-            unoptimized
-            className="h-full w-full object-cover transition-transform hover:scale-105"
-          />
-        </div>
-      )}
-
-      {!isImage && (
-        <div className="mb-3 flex h-40 w-full items-center justify-center rounded-md bg-secondary">
-          <div className="text-center">
-            <div className="font-bold text-3xl text-primary">
-              {file.name.split('.').pop()?.toUpperCase().slice(0, 2)}
-            </div>
-            <p className="mt-1 text-muted-foreground text-xs">
-              {file.type.split('/').pop()?.toUpperCase()}
-            </p>
-          </div>
-        </div>
-      )}
-
-      <div className="flex flex-col gap-2">
-        <div className="flex items-start justify-between gap-2">
-          <h3 className="flex-1 truncate font-medium text-foreground text-sm">
-            {file.name}
-          </h3>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                <MoreVertical size={16} />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-40">
-              <DropdownMenuItem
-                onClick={() => onRename(file.id)}
-                className="cursor-pointer gap-2"
-              >
-                <Edit2 size={14} />
-                {t('actions.rename')}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => onMove(file.id)}
-                className="cursor-pointer gap-2"
-              >
-                <Move size={14} />
-                {t('actions.move')}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => onShare(file.id)}
-                className="cursor-pointer gap-2"
-              >
-                <Share2 size={14} />
-                {t('actions.share')}
-              </DropdownMenuItem>
-              {isImage && (
-                <DropdownMenuItem
-                  onClick={() => onPreview(file)}
-                  className="cursor-pointer gap-2"
-                >
-                  <Eye size={14} />
-                  {t('actions.preview')}
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuItem
-                onClick={handleDownload}
-                className="cursor-pointer gap-2"
-              >
-                <Download size={14} />
-                {t('actions.download')}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => onDelete(file.id)}
-                className="cursor-pointer gap-2 text-destructive focus:text-destructive"
-              >
-                <Trash2 size={14} />
-                {t('actions.delete')}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-
-        <p className="text-muted-foreground text-xs">
-          {formatFileSize(file.size)}
-        </p>
-        <p className="text-muted-foreground text-xs">
-          {formatDate(file.createdAt, locale)}
-        </p>
-      </div>
-    </div>
-  );
-};
-
-export const InventoryClient: React.FC = () => {
+export function InventoryClient() {
   const t = useTranslations('InventoryPage');
   const locale = useLocale();
-  const [files, setFiles] = useState<StorageFile[]>([
-    {
-      id: '1',
-      name: 'Lecture_Notes.pdf',
-      type: 'application/pdf',
-      size: 2450000,
-      folderId: 'root',
-      createdAt: new Date(),
-    },
-    {
-      id: '2',
-      name: 'Project_Structure.png',
-      type: 'image/png',
-      size: 1200000,
-      folderId: 'root',
-      createdAt: new Date(),
-      data: 'https://images.unsplash.com/photo-1614741118887-7a4ee193a5fa?w=400&auto=format&fit=crop&q=60',
-    },
-    {
-      id: '3',
-      name: 'Research_Paper.docx',
-      type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      size: 850000,
-      folderId: 'root',
-      createdAt: new Date(),
-    },
-  ]);
+  const [files, setFiles] = useState<StorageFile[]>(inventoryFiles);
 
   const handleDelete = (id: string) => {
     setFiles((prev) => prev.filter((f) => f.id !== id));
@@ -312,13 +185,13 @@ export const InventoryClient: React.FC = () => {
   });
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-8 pt-6">
+    <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-col gap-2">
           <h2 className="font-bold text-3xl tracking-tight">{t('title')}</h2>
-          <Field className="max-w-md">
+          <div className="max-w-md space-y-2">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <FieldTitle>{t('storage.label')}</FieldTitle>
+              <div>{t('storage.label')}</div>
               <span
                 className={cn(
                   'text-muted-foreground text-sm',
@@ -330,11 +203,11 @@ export const InventoryClient: React.FC = () => {
             </div>
             <Progress value={storagePercentage} />
             {isStorageLimitReached && (
-              <FieldDescription className="text-destructive">
+              <div className="text-destructive text-sm">
                 {t('storage.limitReached')}
-              </FieldDescription>
+              </div>
             )}
-          </Field>
+          </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Tabs
@@ -570,4 +443,4 @@ export const InventoryClient: React.FC = () => {
       </Dialog>
     </div>
   );
-};
+}
