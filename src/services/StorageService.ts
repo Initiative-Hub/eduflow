@@ -2,11 +2,12 @@ import type { FileInventory, Prisma } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
 import {
   buildInventoryObjectKey,
+  checkInventoryObjectExists,
   createInventoryReadSignedUrl,
+  createInventoryWriteSignedUrl,
   deleteInventoryObject,
   downloadInventoryObject,
   FILE_INVENTORY_BUCKET_NAME,
-  uploadInventoryObject,
 } from '@/lib/storage/file-storage';
 
 /**
@@ -263,57 +264,6 @@ export class StorageService {
   }
 
   /**
-   * Uploads file content directly and creates a READY inventory record.
-   */
-  static async uploadFileDirect(options: {
-    userId: string;
-    parentId?: string | null;
-    path?: string;
-    fileName: string;
-    contentType: string;
-    fileSize: number;
-    body: Uint8Array;
-  }) {
-    await ensureParentFolder(options.userId, options.parentId ?? null);
-
-    const normalizedName = normalizeName(options.fileName);
-    if (!normalizedName) {
-      throw new Error('File name is required');
-    }
-
-    const objectKey = buildInventoryObjectKey(options.userId, normalizedName, {
-      relativePath: options.path,
-    });
-    const extension = normalizedName.includes('.')
-      ? (normalizedName.split('.').pop()?.toLowerCase() ?? null)
-      : null;
-
-    await uploadInventoryObject({
-      objectKey,
-      contentType: options.contentType,
-      body: options.body,
-    });
-
-    const file = await prisma.fileInventory.create({
-      data: {
-        userId: options.userId,
-        parentId: options.parentId ?? null,
-        name: normalizedName,
-        isFolder: false,
-        status: 'READY',
-        fileSize: BigInt(options.fileSize),
-        mimeType: options.contentType,
-        extension,
-        bucket: FILE_INVENTORY_BUCKET_NAME,
-        objectKey,
-        uploadedAt: new Date(),
-      },
-    });
-
-    return file;
-  }
-
-  /**
    * Creates a pending inventory record and target metadata before binary
    * content is uploaded separately.
    */
@@ -354,18 +304,29 @@ export class StorageService {
       },
     });
 
-    return file;
+    const signed = await createInventoryWriteSignedUrl({
+      objectKey,
+      contentType: options.contentType,
+    });
+
+    return {
+      id: file.id,
+      status: file.status,
+      objectKey,
+      bucket: FILE_INVENTORY_BUCKET_NAME,
+      uploadUrl: signed.uploadUrl,
+      uploadHeaders: signed.headers,
+    };
   }
 
   /**
-   * Uploads binary content for an existing pending file record and marks
+   * Verifies uploaded object existence for a pending file and marks
    * the entry as READY.
    */
   static async uploadPreparedFile(options: {
     userId: string;
     fileId: string;
-    contentType: string;
-    body: Uint8Array;
+    checksumSha256?: string | null;
   }) {
     const existing = await prisma.fileInventory.findFirst({
       where: {
@@ -383,11 +344,13 @@ export class StorageService {
       throw new Error('File object key is missing');
     }
 
-    await uploadInventoryObject({
+    const exists = await checkInventoryObjectExists({
       objectKey: existing.objectKey,
-      contentType: options.contentType,
-      body: options.body,
     });
+
+    if (!exists) {
+      throw new Error('Uploaded object not found');
+    }
 
     return prisma.fileInventory.update({
       where: {
@@ -395,7 +358,7 @@ export class StorageService {
       },
       data: {
         status: 'READY',
-        mimeType: options.contentType,
+        checksumSha256: options.checksumSha256 ?? null,
         uploadedAt: new Date(),
       },
     });

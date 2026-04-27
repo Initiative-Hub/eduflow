@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import {
   DeleteObjectCommand,
   GetObjectCommand,
+  HeadObjectCommand,
   PutObjectCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
@@ -9,10 +10,7 @@ import { createS3Client } from './s3-client';
 
 const DEFAULT_READ_EXPIRES_SECONDS = 30 * 60;
 
-export const FILE_INVENTORY_BUCKET_NAME =
-  process.env.AWS_STORAGE_BUCKET ||
-  process.env.AWS_S3_BUCKET ||
-  'eduflow-files';
+export const FILE_INVENTORY_BUCKET_NAME = 'eduflow-inventory';
 
 function sanitizeSegment(value: string) {
   return value
@@ -45,10 +43,26 @@ export function buildInventoryObjectKey(
   const safeName = sanitizeSegment(fileName) || 'file';
   const safePath = normalizeRelativePath(options?.relativePath);
   const basePrefix = safePath
-    ? `users/${userId}/inventory/${safePath}`
-    : `users/${userId}/inventory`;
+    ? `users/${userId}/${safePath}`
+    : `users/${userId}`;
 
   return `${basePrefix}/${randomUUID()}-${safeName}`;
+}
+
+export async function checkInventoryObjectExists(options: {
+  objectKey: string;
+}) {
+  try {
+    const command = new HeadObjectCommand({
+      Bucket: FILE_INVENTORY_BUCKET_NAME,
+      Key: options.objectKey,
+    });
+
+    await createS3Client().send(command);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export async function uploadInventoryObject(options: {
@@ -64,20 +78,6 @@ export async function uploadInventoryObject(options: {
   });
 
   await createS3Client().send(command);
-}
-
-export async function createInventoryReadSignedUrl(options: {
-  objectKey: string;
-  expiresInSeconds?: number;
-}) {
-  const command = new GetObjectCommand({
-    Bucket: FILE_INVENTORY_BUCKET_NAME,
-    Key: options.objectKey,
-  });
-
-  return getSignedUrl(createS3Client(), command, {
-    expiresIn: options.expiresInSeconds ?? DEFAULT_READ_EXPIRES_SECONDS,
-  });
 }
 
 export async function downloadInventoryObject(options: { objectKey: string }) {
@@ -104,4 +104,41 @@ export async function deleteInventoryObject(options: { objectKey: string }) {
   });
 
   await createS3Client().send(command);
+}
+
+export async function createInventoryReadSignedUrl(options: {
+  objectKey: string;
+  expiresInSeconds?: number;
+}) {
+  const command = new GetObjectCommand({
+    Bucket: FILE_INVENTORY_BUCKET_NAME,
+    Key: options.objectKey,
+  });
+
+  return getSignedUrl(createS3Client(), command, {
+    expiresIn: options.expiresInSeconds ?? DEFAULT_READ_EXPIRES_SECONDS,
+  });
+}
+
+export async function createInventoryWriteSignedUrl(options: {
+  objectKey: string;
+  contentType: string;
+  expiresInSeconds?: number;
+}) {
+  const command = new PutObjectCommand({
+    Bucket: FILE_INVENTORY_BUCKET_NAME,
+    Key: options.objectKey,
+    ContentType: options.contentType,
+  });
+
+  const uploadUrl = await getSignedUrl(createS3Client(), command, {
+    expiresIn: options.expiresInSeconds ?? DEFAULT_READ_EXPIRES_SECONDS,
+  });
+
+  return {
+    uploadUrl,
+    headers: {
+      'content-type': options.contentType,
+    },
+  };
 }

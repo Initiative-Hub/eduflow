@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { withAuth } from '@/lib/api/middlewares';
 import { StorageService } from '@/services/StorageService';
 
-const uploadUrlSchema = z.object({
+const initUploadSchema = z.object({
   parentId: z.string().uuid().nullable().optional(),
   path: z.string().trim().max(200).optional(),
   fileName: z.string().trim().min(1).max(255),
@@ -14,7 +14,7 @@ const uploadUrlSchema = z.object({
 export const POST = withAuth(async (req, session) => {
   try {
     const body = await req.json();
-    const parsed = uploadUrlSchema.safeParse(body);
+    const parsed = initUploadSchema.safeParse(body);
 
     if (!parsed.success) {
       return NextResponse.json(
@@ -37,6 +37,9 @@ export const POST = withAuth(async (req, session) => {
         fileId: target.id,
         path: target.objectKey,
         bucket: target.bucket,
+        status: target.status,
+        uploadUrl: target.uploadUrl,
+        uploadHeaders: target.uploadHeaders,
       },
     });
   } catch (error: any) {

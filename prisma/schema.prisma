@@ -189,19 +189,19 @@ model FileInventory {
   parent   FileInventory?  @relation("FolderHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
   children FileInventory[] @relation("FolderHierarchy")
 
-  name     String?
-  isFolder Boolean @default(false) @map("is_folder")
+  name     String
+  isFolder Boolean             @default(false) @map("is_folder")
+  metadata Json?               @default("{}")
+  status   FileInventoryStatus @default(READY)
 
   fileSize  BigInt? @map("file_size")
   mimeType  String? @map("mime_type")
   extension String? @map("extension")
 
   bucket         String?
-  objectKey      String?             @map("object_key")
-  checksumSha256 String?             @map("checksum_sha256")
-  vectorDbId     String?             @map("vector_db_id")
-  status         FileInventoryStatus @default(READY)
-  metadata       Json?               @default("{}")
+  objectKey      String? @map("object_key")
+  checksumSha256 String? @map("checksum_sha256")
+  vectorDbId     String? @map("vector_db_id")
 
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
