@@ -315,6 +315,58 @@
   "HomePage": {
     "title": "Xin chào thế giới!"
   },
+  "InventoryPage": {
+    "actions": {
+      "cancel": "Hủy",
+      "delete": "Xóa",
+      "download": "Tải xuống",
+      "move": "Chuyển vào thư mục",
+      "preview": "Xem trước",
+      "rename": "Đổi tên",
+      "save": "Lưu",
+      "share": "Chia sẻ"
+    },
+    "empty": {
+      "action": "Tải lên tệp đầu tiên",
+      "description": "Tải tệp lên để xem tại đây.",
+      "title": "Chưa có tệp nào"
+    },
+    "list": {
+      "columns": {
+        "actions": "Thao tác",
+        "location": "Vị trí",
+        "name": "Tên",
+        "owner": "Chủ sở hữu",
+        "reason": "Lý do đề xuất"
+      },
+      "location": {
+        "myDrive": "Drive của tôi"
+      },
+      "owner": {
+        "you": "Bạn",
+        "youShort": "Bạn"
+      },
+      "reason": {
+        "created": "Đã tạo {date}"
+      }
+    },
+    "renameDialog": {
+      "description": "Chọn tên mới cho tệp này.",
+      "label": "Tên tệp",
+      "title": "Đổi tên tệp"
+    },
+    "storage": {
+      "label": "Dung lượng đã dùng",
+      "limitReached": "Đã đạt giới hạn dung lượng. Hãy xóa tệp để tải thêm.",
+      "usage": "{used} / {total}"
+    },
+    "title": "Kho học tập",
+    "uploadFile": "Tải tệp lên",
+    "view": {
+      "grid": "Lưới",
+      "list": "Danh sách"
+    }
+  },
   "LanguageSwitcher": {
     "label": "Ngôn ngữ",
     "system": "Hệ thống"
@@ -334,7 +386,8 @@
     "settingsSystemSettings": "Cài đặt hệ thống",
     "socraticTutor": "Gia sư Socratic",
     "studyAssistant": "Trợ lý Học tập",
-    "writingAssistant": "Trợ lý Viết"
+    "writingAssistant": "Trợ lý Viết",
+    "yourInventory": "Kho học tập của bạn"
   },
   "NavbarAvatar": {
     "actions": {
