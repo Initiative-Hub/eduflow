@@ -1,7 +1,6 @@
 'use client';
 
 import {
-  Archive,
   BookOpen,
   Cloud,
   GraduationCap,
@@ -57,11 +56,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       url: '/',
       icon: <MessageSquare className={sidebarIconClassName} />,
       exact: true,
-    },
-    {
-      name: t('yourInventory'),
-      url: '/inventory',
-      icon: <Archive className={sidebarIconClassName} />,
     },
     {
       name: t('socraticTutor'),
