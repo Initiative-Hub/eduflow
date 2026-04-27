@@ -1,4 +1,4 @@
-import type { StorageFile, StorageFolder } from './storage-context';
+import type { StorageFile, StorageFolder } from '@/stores/useStorageStore';
 
-export type IFile = StorageFile;
-export type IFolder = StorageFolder;
+export type InventoryFile = StorageFile;
+export type InventoryFolder = StorageFolder;

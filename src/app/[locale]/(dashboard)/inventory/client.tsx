@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import { useLocale, useTranslations } from 'next-intl';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -56,8 +56,9 @@ import {
 } from '@/components/ui/table';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
+import type { StorageFile, StorageFolder } from '@/stores/useStorageStore';
 import { FileCard } from './file-card';
-import type { StorageFile } from './storage-context';
+import { useInventory } from './use-inventory';
 
 const formatFileSize = (bytes: number) => {
   if (bytes === 0) return '0 Bytes';
@@ -94,7 +95,17 @@ const getFileExtension = (fileName: string) => {
   return extension.toUpperCase().slice(0, 4);
 };
 
-const inventoryFiles: StorageFile[] = [
+const initialFolders: Record<string, StorageFolder> = {
+  root: {
+    id: 'root',
+    name: 'Storage',
+    parentId: null,
+    children: [],
+    createdAt: new Date(),
+  },
+};
+
+const initialFiles: StorageFile[] = [
   {
     id: '1',
     name: 'Lecture_Notes.pdf',
@@ -125,50 +136,20 @@ const inventoryFiles: StorageFile[] = [
 export function InventoryClient() {
   const t = useTranslations('InventoryPage');
   const locale = useLocale();
-  const [files, setFiles] = useState<StorageFile[]>(inventoryFiles);
+  const {
+    files,
+    viewType,
+    renameDialog,
+    setViewType,
+    setRenameDialog,
+    handleDelete,
+    handleRenameClick,
+    handleRenameSubmit,
+    handleMove,
+    handleShare,
+    handlePreview,
+  } = useInventory(initialFiles, initialFolders);
 
-  const handleDelete = (id: string) => {
-    setFiles((prev) => prev.filter((f) => f.id !== id));
-  };
-
-  const handleMove = (_id: string) => {};
-
-  const handleShare = (_id: string) => {};
-
-  const handlePreview = (_file: StorageFile) => {};
-
-  const [renameDialog, setRenameDialog] = useState<{
-    open: boolean;
-    fileId: string | null;
-    value: string;
-  }>({
-    open: false,
-    fileId: null,
-    value: '',
-  });
-
-  const handleRename = (id: string) => {
-    const file = files.find((item) => item.id === id);
-    setRenameDialog({
-      open: true,
-      fileId: id,
-      value: file?.name ?? '',
-    });
-  };
-
-  const handleRenameSubmit = () => {
-    if (!renameDialog.fileId) return;
-    const nextName = renameDialog.value.trim();
-    if (!nextName) return;
-    setFiles((prev) =>
-      prev.map((file) =>
-        file.id === renameDialog.fileId ? { ...file, name: nextName } : file
-      )
-    );
-    setRenameDialog({ open: false, fileId: null, value: '' });
-  };
-
-  const [viewType, setViewType] = useState<'grid' | 'list'>('grid');
   const storageLimitBytes = 5 * 1024 * 1024 * 1024;
   const totalStorageBytes = useMemo(
     () => files.reduce((total, file) => total + file.size, 0),
@@ -242,7 +223,7 @@ export function InventoryClient() {
               file={file}
               locale={locale}
               onDelete={handleDelete}
-              onRename={handleRename}
+              onRename={handleRenameClick}
               onMove={handleMove}
               onShare={handleShare}
               onPreview={handlePreview}
@@ -323,7 +304,7 @@ export function InventoryClient() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-40">
                           <DropdownMenuItem
-                            onClick={() => handleRename(file.id)}
+                            onClick={() => handleRenameClick(file.id)}
                             className="cursor-pointer gap-2"
                           >
                             <Edit2 size={14} />

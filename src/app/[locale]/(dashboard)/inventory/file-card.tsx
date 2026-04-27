@@ -18,7 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import type { StorageFile } from './storage-context';
+import type { StorageFile } from '@/stores/useStorageStore';
 
 const formatFileSize = (bytes: number) => {
   if (bytes === 0) return '0 Bytes';
