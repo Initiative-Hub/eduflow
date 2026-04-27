@@ -8,8 +8,10 @@ import { Accordion } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { AddLessonDialog } from '../_components/add-lesson-dialog';
+import { AddModuleDialog } from '../_components/add-module-dialog';
 import { ModuleAccordionItem } from '../_components/module-accordion-item';
 import type { CreateLessonFormData } from '../create-lesson.config';
+import type { CreateModuleFormData } from '../create-module.config';
 import { useModules } from '../use-modules';
 
 export default function CourseModulesPage() {
@@ -26,16 +28,15 @@ export default function CourseModulesPage() {
     handleCreateLesson,
   } = useModules(courseId);
 
-  const [newModuleTitle, setNewModuleTitle] = useState('');
+  const [isAddModuleOpen, setIsAddModuleOpen] = useState(false);
   const [activeModuleIdForLesson, setActiveModuleIdForLesson] = useState<
     string | null
   >(null);
 
-  const onCreateModule = () => {
-    if (!newModuleTitle.trim()) return;
+  const onCreateModule = (data: CreateModuleFormData) => {
     handleCreateModule(
-      { title: newModuleTitle.trim() },
-      { onSuccess: () => setNewModuleTitle('') }
+      { title: data.title },
+      { onSuccess: () => setIsAddModuleOpen(false) }
     );
   };
 
@@ -58,13 +59,7 @@ export default function CourseModulesPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Input
-            placeholder="New Module Title..."
-            value={newModuleTitle}
-            onChange={(e) => setNewModuleTitle(e.target.value)}
-            className="w-64 border-foreground/30 dark:border-border"
-          />
-          <Button onClick={onCreateModule} disabled={isCreatingModule}>
+          <Button onClick={() => setIsAddModuleOpen(true)}>
             <Plus className="mr-1 h-4 w-4" />
             {t('addModule')}
           </Button>
@@ -92,6 +87,13 @@ export default function CourseModulesPage() {
           ))}
         </Accordion>
       )}
+
+      <AddModuleDialog
+        isOpen={isAddModuleOpen}
+        onOpenChange={setIsAddModuleOpen}
+        onSubmit={onCreateModule}
+        isLoading={isCreatingModule}
+      />
 
       <AddLessonDialog
         isOpen={!!activeModuleIdForLesson}

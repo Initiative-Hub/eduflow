@@ -232,6 +232,16 @@
       "submit": "Thêm bài học",
       "title": "Thêm bài học"
     },
+    "AddModuleDialog": {
+      "description": "Cung cấp tiêu đề cho mô-đun mới.",
+      "fields": {
+        "title": "Tiêu đề mô-đun",
+        "titlePlaceholder": "VD: Bắt đầu",
+        "titleRequired": "Tiêu đề mô-đun là bắt buộc"
+      },
+      "submit": "Thêm mô-đun",
+      "title": "Thêm mô-đun"
+    },
     "AnalyticsPage": "Phân tích",
     "AssessmentsPage": "Bài kiểm tra",
     "Card": {
