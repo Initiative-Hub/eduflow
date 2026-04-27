@@ -115,7 +115,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const match = pathname.match(/\/courses\/([^/]+)/);
   const courseId = match ? match[1] : null;
 
-  const { courses } = useCourses();
+  const { courses } = useCourses(undefined, { enabled: !!sessionData });
   const currentCourse = courseId
     ? courses.find((c) => c.id === courseId)
     : null;
