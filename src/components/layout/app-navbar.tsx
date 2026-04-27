@@ -4,6 +4,7 @@ import { Bell, GraduationCap, Menu } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { useEffect } from 'react';
 import { NavbarAvatar } from '@/components/layout/navbar-avatar';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -15,7 +16,12 @@ export function AppNavbar() {
   const t = useTranslations();
   const pathname = usePathname();
   const { toggleSidebar } = useSidebar();
-  const { data: sessionData } = useSession();
+  const { data: sessionData, refetch } = useSession();
+
+  useEffect(() => {
+    // Refetch session data on mount to ensure we have the latest auth state
+    refetch();
+  }, [refetch]);
 
   return (
     <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between overflow-hidden border-border/40 border-b bg-background/95 px-3 shadow-sm backdrop-blur supports-backdrop-filter:bg-background/60 md:px-8">
