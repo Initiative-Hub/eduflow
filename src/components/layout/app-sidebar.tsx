@@ -20,6 +20,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import type * as React from 'react';
+import { useEffect } from 'react';
 import { useCourses } from '@/app/[locale]/(dashboard)/courses/use-courses';
 import { Button } from '@/components/ui/button';
 import {
@@ -47,7 +48,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const tNavbarAvatar = useTranslations('NavbarAvatar');
   const pathname = usePathname();
 
-  const { data: sessionData } = useSession();
+  const { data: sessionData, refetch } = useSession();
   const { state, toggleSidebar } = useSidebar();
 
   const assistants: SidebarItem[] = [
@@ -138,6 +139,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   } else if (courseId) {
     menuItems = courseItems;
   }
+
+  useEffect(() => {
+    // Refetch session data on mount to ensure we have the latest auth state
+    refetch();
+  }, [refetch]);
 
   return (
     <Sidebar
