@@ -36,6 +36,12 @@ const formatDate = (date: Date, locale: string) => {
   });
 };
 
+const getFileExtension = (fileName: string) => {
+  const extension = fileName.split('.').pop();
+  if (!extension) return 'FILE';
+  return extension.toUpperCase().slice(0, 4);
+};
+
 const downloadFile = (file: StorageFile) => {
   if (!file.data) return;
   const blob = new Blob([file.data], { type: file.type });
@@ -77,34 +83,25 @@ export function FileCard({
 
   return (
     <div className="rounded-lg border border-border bg-card p-4 transition-shadow hover:shadow-md">
-      {isImage && file.data && (
-        <div
-          className="mb-3 h-40 w-full cursor-pointer overflow-hidden rounded-md bg-muted"
-          onClick={() => onPreview(file)}
-        >
+      <div
+        className="mb-3 flex h-40 w-full cursor-pointer items-center justify-center overflow-hidden rounded-md bg-muted"
+        onClick={() => onPreview(file)}
+      >
+        {isImage && file.data ? (
           <Image
             src={file.data}
             alt={file.name}
-            width={500}
-            height={500}
+            width={400}
+            height={400}
             unoptimized
             className="h-full w-full object-cover transition-transform hover:scale-105"
           />
-        </div>
-      )}
-
-      {!isImage && (
-        <div className="mb-3 flex h-40 w-full items-center justify-center rounded-md bg-secondary">
-          <div className="text-center">
-            <div className="font-bold text-3xl text-primary">
-              {file.name.split('.').pop()?.toUpperCase().slice(0, 2)}
-            </div>
-            <p className="mt-1 text-muted-foreground text-xs">
-              {file.type.split('/').pop()?.toUpperCase()}
-            </p>
+        ) : (
+          <div className="font-semibold text-2xl text-muted-foreground">
+            {getFileExtension(file.name)}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       <div className="flex flex-col gap-2">
         <div className="flex items-start justify-between gap-2">
