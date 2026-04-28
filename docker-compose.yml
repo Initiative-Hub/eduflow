@@ -62,6 +62,8 @@ services:
       done;
       mc mb --ignore-existing local/eduflow-avatars;
       mc anonymous set none local/eduflow-avatars;
+      mc mb --ignore-existing local/eduflow-inventory;
+      mc anonymous set none local/eduflow-inventory;
       "
   minio-reset:
     image: minio/mc:latest
@@ -77,6 +79,9 @@ services:
       mc rm --force --recursive local/eduflow-avatars;
       mc mb --ignore-existing local/eduflow-avatars;
       mc anonymous set none local/eduflow-avatars;
+      mc rm --force --recursive local/eduflow-inventory;
+      mc mb --ignore-existing local/eduflow-inventory;
+      mc anonymous set none local/eduflow-inventory;
       "
   redis: 
     image: redis:alpine

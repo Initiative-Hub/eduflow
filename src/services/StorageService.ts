@@ -18,6 +18,19 @@ function normalizeName(name: string) {
   return name.trim().replace(/\s+/g, ' ').slice(0, 180);
 }
 
+type SerializedFileInventory = Omit<FileInventory, 'fileSize'> & {
+  fileSize: number | null;
+};
+
+function serializeFileInventory(
+  record: FileInventory
+): SerializedFileInventory {
+  return {
+    ...record,
+    fileSize: record.fileSize === null ? null : Number(record.fileSize),
+  };
+}
+
 /**
  * Ensures the provided parent exists, belongs to the user, is a folder,
  * and is not soft-deleted.
@@ -212,7 +225,7 @@ export class StorageService {
     ]);
 
     return {
-      items,
+      items: items.map(serializeFileInventory),
       total,
     };
   }
@@ -252,7 +265,7 @@ export class StorageService {
       throw new Error('An item with this name already exists');
     }
 
-    return prisma.fileInventory.create({
+    const folder = await prisma.fileInventory.create({
       data: {
         userId: options.userId,
         parentId: options.parentId ?? null,
@@ -261,6 +274,8 @@ export class StorageService {
         status: 'READY',
       },
     });
+
+    return serializeFileInventory(folder);
   }
 
   /**
@@ -349,10 +364,13 @@ export class StorageService {
     });
 
     if (!exists) {
-      throw new Error('Uploaded object not found');
+      await prisma.fileInventory.delete({
+        where: { id: existing.id },
+      });
+      throw new Error('Uploaded object not found. Database entry rolled back.');
     }
 
-    return prisma.fileInventory.update({
+    const uploaded = await prisma.fileInventory.update({
       where: {
         id: existing.id,
       },
@@ -362,6 +380,8 @@ export class StorageService {
         uploadedAt: new Date(),
       },
     });
+
+    return serializeFileInventory(uploaded);
   }
 
   /**
@@ -541,7 +561,7 @@ export class StorageService {
       throw new Error('An item with this name already exists');
     }
 
-    return prisma.fileInventory.update({
+    const updated = await prisma.fileInventory.update({
       where: {
         id: current.id,
       },
@@ -550,6 +570,8 @@ export class StorageService {
         parentId: nextParentId ?? null,
       },
     });
+
+    return serializeFileInventory(updated);
   }
 
   /**
