@@ -5,10 +5,11 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { Accordion } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { AddLessonDialog } from '../_components/add-lesson-dialog';
+import { AddModuleDialog } from '../_components/add-module-dialog';
 import { ModuleAccordionItem } from '../_components/module-accordion-item';
 import type { CreateLessonFormData } from '../create-lesson.config';
+import type { CreateModuleFormData } from '../create-module.config';
 import { useModules } from '../use-modules';
 
 interface CourseModulesClientProps {
@@ -16,7 +17,7 @@ interface CourseModulesClientProps {
 }
 
 export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
-  const t = useTranslations('Courses');
+  const t = useTranslations('Courses.CourseModules');
 
   const {
     modules,
@@ -27,16 +28,15 @@ export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
     handleCreateLesson,
   } = useModules(courseId);
 
-  const [newModuleTitle, setNewModuleTitle] = useState('');
+  const [isAddModuleOpen, setIsAddModuleOpen] = useState(false);
   const [activeModuleIdForLesson, setActiveModuleIdForLesson] = useState<
     string | null
   >(null);
 
-  const onCreateModule = () => {
-    if (!newModuleTitle.trim()) return;
+  const onCreateModule = (data: CreateModuleFormData) => {
     handleCreateModule(
-      { title: newModuleTitle.trim() },
-      { onSuccess: () => setNewModuleTitle('') }
+      { title: data.title },
+      { onSuccess: () => setIsAddModuleOpen(false) }
     );
   };
 
@@ -53,23 +53,15 @@ export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
     <div className="space-y-8">
       <div className="flex items-end justify-between border-b pb-4">
         <div>
-          <h1 className="font-bold text-2xl text-foreground">
-            {t('CourseModules.title')}
-          </h1>
+          <h1 className="font-bold text-2xl text-foreground">{t('title')}</h1>
           <p className="mt-1 text-muted-foreground text-sm">
-            {t('CourseModules.description')}
+            {t('description')}
           </p>
         </div>
         <div className="flex gap-2">
-          <Input
-            placeholder={t('LessonOutline.Dialog.fields.titlePlaceholder')}
-            value={newModuleTitle}
-            onChange={(e) => setNewModuleTitle(e.target.value)}
-            className="w-64 border-foreground/30 dark:border-border"
-          />
-          <Button onClick={onCreateModule} disabled={isCreatingModule}>
+          <Button onClick={() => setIsAddModuleOpen(true)}>
             <Plus className="mr-1 h-4 w-4" />
-            {t('CourseModules.addModule')}
+            {t('addModule')}
           </Button>
         </div>
       </div>
@@ -81,7 +73,7 @@ export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
         </div>
       ) : modules.length === 0 ? (
         <div className="rounded-xl border border-dashed bg-card/50 p-12 text-center text-muted-foreground">
-          {t('CourseModules.noModules')}
+          {t('noModules')}
         </div>
       ) : (
         <Accordion type="multiple" className="space-y-4">
@@ -95,6 +87,13 @@ export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
           ))}
         </Accordion>
       )}
+
+      <AddModuleDialog
+        isOpen={isAddModuleOpen}
+        onOpenChange={setIsAddModuleOpen}
+        onSubmit={onCreateModule}
+        isLoading={isCreatingModule}
+      />
 
       <AddLessonDialog
         isOpen={!!activeModuleIdForLesson}
