@@ -1,0 +1,207 @@
+import { Badge } from '@/components/ui/badge';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
+import { FileCard } from '../file-card';
+import type { InventoryEntry } from '../types';
+import type { InventoryTranslations } from './inventory.types';
+import { InventoryEmptyState } from './inventory-empty-state';
+import { InventoryLoadingSkeleton } from './inventory-loading-skeleton';
+import { InventoryTableView } from './inventory-table-view';
+
+type InventoryBrowserProps = {
+  currentPage: number;
+  currentPathLabel: string;
+  endItem: number;
+  entries: InventoryEntry[];
+  isLoading: boolean;
+  isSearching: boolean;
+  isStorageLimitReached: boolean;
+  locale: string;
+  onClearSearch: () => void;
+  onCreateFolder: () => void;
+  onDeleteEntry: (entry: InventoryEntry) => void;
+  onDownload: (entry: InventoryEntry) => void;
+  onMove: (entry: InventoryEntry) => void;
+  onNavigateIntoFolder: (entry: InventoryEntry) => void;
+  onOpen: (entry: InventoryEntry) => void;
+  onPageChange: (nextIndex: number) => void;
+  onPreview: (entry: InventoryEntry) => void;
+  onRename: (entry: InventoryEntry) => void;
+  onSelectAll: (checked: boolean) => void;
+  onSelectEntry: (entryId: string, checked: boolean) => void;
+  onShare: (entry: InventoryEntry) => void;
+  onUploadOpen: () => void;
+  pageIndex: number;
+  selectedIds: string[];
+  selectionCount: number;
+  startItem: number;
+  t: InventoryTranslations;
+  totalItems: number;
+  totalPages: number;
+  viewType: 'grid' | 'list';
+};
+
+export function InventoryBrowser({
+  currentPage,
+  currentPathLabel,
+  endItem,
+  entries,
+  isLoading,
+  isSearching,
+  isStorageLimitReached,
+  locale,
+  onClearSearch,
+  onCreateFolder,
+  onDeleteEntry,
+  onDownload,
+  onMove,
+  onNavigateIntoFolder,
+  onOpen,
+  onPageChange,
+  onPreview,
+  onRename,
+  onSelectAll,
+  onSelectEntry,
+  onShare,
+  onUploadOpen,
+  pageIndex,
+  selectedIds,
+  selectionCount,
+  startItem,
+  t,
+  totalItems,
+  totalPages,
+  viewType,
+}: InventoryBrowserProps) {
+  return (
+    <Card className="border-border/70 bg-card/90 shadow-sm">
+      <CardHeader className="flex flex-col gap-2 border-border/60 border-b px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-1">
+          <CardTitle className="font-heading text-xl">
+            {t('browser.title')}
+          </CardTitle>
+          <CardDescription>
+            {t('browser.description', { count: totalItems })}
+          </CardDescription>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="outline">{currentPathLabel}</Badge>
+          <Badge variant="secondary">
+            {t('browser.pageInfo', {
+              page: currentPage,
+              total: totalPages,
+              start: startItem,
+              end: endItem,
+            })}
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="p-6">
+        {isLoading ? (
+          <InventoryLoadingSkeleton />
+        ) : totalItems === 0 ? (
+          <InventoryEmptyState
+            isSearching={isSearching}
+            isStorageLimitReached={isStorageLimitReached}
+            onClearSearch={onClearSearch}
+            onCreateFolder={onCreateFolder}
+            onUploadOpen={onUploadOpen}
+            t={t}
+          />
+        ) : viewType === 'grid' ? (
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {entries.map((entry) => (
+              <FileCard
+                key={entry.id}
+                entry={entry}
+                locale={locale}
+                onOpen={onOpen}
+                onRename={onRename}
+                onMove={onMove}
+                onShare={onShare}
+                onPreview={onPreview}
+                onDownload={onDownload}
+                onDelete={onDeleteEntry}
+              />
+            ))}
+          </div>
+        ) : (
+          <InventoryTableView
+            entries={entries}
+            locale={locale}
+            onDeleteEntry={onDeleteEntry}
+            onDownload={onDownload}
+            onMove={onMove}
+            onNavigateIntoFolder={onNavigateIntoFolder}
+            onOpen={onOpen}
+            onPreview={onPreview}
+            onRename={onRename}
+            onSelectAll={onSelectAll}
+            onSelectEntry={onSelectEntry}
+            onShare={onShare}
+            selectedIds={selectedIds}
+            selectionCount={selectionCount}
+            t={t}
+          />
+        )}
+
+        {totalPages > 1 && (
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+            <div className="text-muted-foreground text-sm">
+              {t('browser.range', {
+                start: startItem,
+                end: endItem,
+                total: totalItems,
+              })}
+            </div>
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    href="#"
+                    text={t('pagination.previous')}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      if (pageIndex > 0) onPageChange(pageIndex - 1);
+                    }}
+                  />
+                </PaginationItem>
+                <PaginationItem>
+                  <Badge variant="outline" className="h-8 px-3">
+                    {t('pagination.page', {
+                      page: currentPage,
+                      total: totalPages,
+                    })}
+                  </Badge>
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationNext
+                    href="#"
+                    text={t('pagination.next')}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      if (pageIndex < totalPages - 1)
+                        onPageChange(pageIndex + 1);
+                    }}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
