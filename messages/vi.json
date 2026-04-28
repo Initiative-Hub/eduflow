@@ -277,6 +277,8 @@
       "cancel": "Hủy",
       "content": "Nội dung bài học",
       "save": "Lưu",
+      "saveError": "Không thể cập nhật bài học",
+      "saveSuccess": "Đã lưu bài học thành công!",
       "saving": "Đang lưu...",
       "title": "Tiêu đề bài học",
       "writeReview": "Soạn/Xem lại"
