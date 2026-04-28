@@ -21,7 +21,7 @@ export function useLogin() {
     onSuccess: () => {
       const nextUrl = searchParams.get('nextUrl');
       const sanitizedUrl = sanitizeUrl(nextUrl) || '/';
-      window.location.assign(sanitizedUrl);
+      router.replace(sanitizedUrl);
     },
     onError: () => {
       setLoading(false);
