@@ -8,11 +8,7 @@ export type AuthHandler = (
   req: Request,
   sessionData: Session,
   ...args: any[]
-) => Promise<NextResponse> | NextResponse;
-
-function isSession(obj: any): obj is Session {
-  return obj && typeof obj === 'object' && 'user' in obj && 'session' in obj;
-}
+) => Promise<NextResponse>;
 
 export function withAuth(handler: AuthHandler) {
   return async (req: Request, ...args: any[]) => {
@@ -40,22 +36,19 @@ export function withAuth(handler: AuthHandler) {
 }
 
 export function withRoles(allowedRoles: string[], handler: AuthHandler) {
-  return async (req: Request, sessionOrContext: any, ...rest: any[]) => {
+  return async (req: Request, sessionData?: Session, ...args: any[]) => {
     try {
-      let sessionData: Session | null = null;
-      let finalArgs: any[] = [];
+      let finalSessionData: Session | null = null;
 
-      if (isSession(sessionOrContext)) {
-        sessionData = sessionOrContext;
-        finalArgs = rest;
+      if (sessionData) {
+        finalSessionData = sessionData;
       } else {
-        sessionData = await auth.api.getSession({
+        finalSessionData = await auth.api.getSession({
           headers: await headers(),
         });
-        finalArgs = [sessionOrContext, ...rest];
       }
 
-      if (!sessionData) {
+      if (!finalSessionData) {
         return NextResponse.json(
           { message: 'Unauthorized. Please log in.' },
           { status: 401 }
@@ -64,7 +57,7 @@ export function withRoles(allowedRoles: string[], handler: AuthHandler) {
 
       if (
         allowedRoles.length > 0 &&
-        !allowedRoles.includes(sessionData.user.role || '')
+        !allowedRoles.includes(finalSessionData.user.role || '')
       ) {
         return NextResponse.json(
           {
@@ -75,7 +68,7 @@ export function withRoles(allowedRoles: string[], handler: AuthHandler) {
         );
       }
 
-      return await handler(req, sessionData, ...finalArgs);
+      return await handler(req, finalSessionData, ...args);
     } catch (error) {
       console.error('Auth Middleware Error:', error);
       return NextResponse.json(
@@ -90,22 +83,19 @@ export function withPermissions(
   allowedPermissions: string[],
   handler: AuthHandler
 ) {
-  return async (req: Request, sessionOrContext: any, ...rest: any[]) => {
+  return async (req: Request, sessionData?: Session, ...args: any[]) => {
     try {
-      let sessionData: Session | null = null;
-      let finalArgs: any[] = [];
+      let finalSessionData: Session | null = null;
 
-      if (isSession(sessionOrContext)) {
-        sessionData = sessionOrContext;
-        finalArgs = rest;
+      if (sessionData) {
+        finalSessionData = sessionData;
       } else {
-        sessionData = await auth.api.getSession({
+        finalSessionData = await auth.api.getSession({
           headers: await headers(),
         });
-        finalArgs = [sessionOrContext, ...rest];
       }
 
-      if (!sessionData) {
+      if (!finalSessionData) {
         return NextResponse.json(
           { message: 'Unauthorized. Please log in.' },
           { status: 401 }
@@ -113,17 +103,9 @@ export function withPermissions(
       }
 
       if (allowedPermissions.length > 0) {
-        const roleId = sessionData.user.roleId;
-        if (!roleId) {
-          return NextResponse.json(
-            {
-              message:
-                'Forbidden. The current user does not have a role assigned',
-            },
-            { status: 403 }
-          );
-        }
-        const { permissions } = await getPlatformPermissions(roleId);
+        const { permissions } = await getPlatformPermissions(
+          finalSessionData.user.id
+        );
 
         if (
           !allowedPermissions.some((permission) =>
@@ -137,7 +119,7 @@ export function withPermissions(
         }
       }
 
-      return await handler(req, sessionData, ...finalArgs);
+      return await handler(req, finalSessionData, ...args);
     } catch (error) {
       console.error('Auth Middleware Error:', error);
       return NextResponse.json(

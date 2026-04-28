@@ -1,26 +1,34 @@
 import { prisma } from '@/lib/prisma';
 
-export async function getCoursePermissions(roleId: string) {
-  const permissions = await prisma.coursePermission.findMany({
+export async function getCoursePermissions(userId: string, courseId: string) {
+  const enrollment = await prisma.enrollment.findFirst({
     where: {
-      courseRoleId: roleId,
-      enabled: true,
+      studentId: userId,
+      courseId: courseId,
     },
     select: {
-      permission: true,
+      role: {
+        select: {
+          permissions: {
+            where: { enabled: true },
+            select: { permission: true },
+          },
+        },
+      },
     },
   });
 
+  const permissionsList =
+    enrollment?.role.permissions.map((p) => p.permission as string) || [];
+
   const containPermission = (permission: string) =>
-    permissions.some((p) => p.permission === permission);
+    permissionsList.some((p) => p === permission);
 
   const withoutPermission = (permission: string) =>
-    !permissions.some((p) => p.permission === permission);
+    !permissionsList.some((p) => p === permission);
 
   return {
-    permissions: permissions.map(
-      (permission) => permission.permission as string
-    ),
+    permissions: permissionsList,
     containPermission,
     withoutPermission,
   };
