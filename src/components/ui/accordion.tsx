@@ -74,7 +74,7 @@ function AccordionContent({
     >
       <div
         className={cn(
-          'pt-0 pb-2.5 [&_a]:hover:text-foreground [&_p:not(:last-child)]:mb-4',
+          'h-(--radix-accordion-content-height) pt-0 pb-2.5 [&_a]:hover:text-foreground [&_p:not(:last-child)]:mb-4',
           className
         )}
       >
