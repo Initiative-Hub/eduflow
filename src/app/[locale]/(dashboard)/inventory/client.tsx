@@ -1107,7 +1107,7 @@ export function InventoryClient() {
           }
         }}
       >
-        <DialogContent className="max-w-5xl overflow-hidden">
+        <DialogContent className="w-full max-w-[95vw] overflow-hidden lg:max-w-7xl">
           <DialogHeader>
             <DialogTitle>
               {previewDialog?.entry.name ?? t('previewDialog.title')}
