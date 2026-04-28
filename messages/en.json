@@ -318,50 +318,149 @@
   "InventoryPage": {
     "actions": {
       "cancel": "Cancel",
+      "clearSelection": "Clear selection",
       "delete": "Delete",
+      "deleteSelected": "Delete selected",
       "download": "Download",
+      "newFolder": "New folder",
+      "open": "Open",
       "move": "Move to folder",
+      "shareSelected": "Share selected",
       "preview": "Preview",
       "rename": "Rename",
       "save": "Save",
-      "share": "Share"
+      "share": "Share",
+      "upload": "Upload file"
+    },
+    "browser": {
+      "description": "The current folder contains {count} items.",
+      "pageInfo": "Page {page} of {total}",
+      "range": "Showing {start}-{end} of {total}",
+      "title": "Folder contents"
+    },
+    "breadcrumbs": {
+      "root": "Storage"
+    },
+    "createFolderDialog": {
+      "description": "Create a new folder inside the current location.",
+      "label": "Folder name",
+      "placeholder": "Course notes, drafts, images...",
+      "submit": "Create folder",
+      "title": "Create folder"
+    },
+    "deleteDialog": {
+      "description": "Delete {count} items? This cannot be undone.",
+      "more": "and {count} more",
+      "title": "Delete items"
     },
     "empty": {
-      "action": "Upload your first file",
-      "description": "Upload files to see them here.",
-      "title": "No files uploaded"
+      "action": "Upload a file",
+      "createFolder": "Create a folder",
+      "description": "Upload files or create folders to start organizing your storage.",
+      "title": "This folder is empty"
+    },
+    "emptySearch": {
+      "clear": "Clear search",
+      "description": "No files or folders match your search in this folder.",
+      "title": "No results found"
+    },
+    "errors": {
+      "description": "We could not load the storage view right now.",
+      "retry": "Retry",
+      "title": "Storage unavailable"
+    },
+    "fileCard": {
+      "folder": "Folder",
+      "processing": "Processing",
+      "ready": "Ready",
+      "size": "Size",
+      "type": "Type"
+    },
+    "hero": {
+      "badge": "Live storage workspace",
+      "description": "Browse folders, upload files, rename entries, and share signed links directly against the storage API."
     },
     "list": {
       "columns": {
         "actions": "Actions",
-        "location": "Location",
         "name": "Name",
-        "owner": "Owner",
-        "reason": "Suggested reason"
-      },
-      "location": {
-        "myDrive": "My Drive"
-      },
-      "owner": {
-        "you": "You",
-        "youShort": "You"
-      },
-      "reason": {
-        "created": "Created {date}"
+        "size": "Size",
+        "status": "Status",
+        "type": "Type",
+        "updated": "Updated"
       }
     },
+    "moveDialog": {
+      "description": "Choose a destination for this item.",
+      "label": "Destination folder",
+      "placeholder": "Select a destination",
+      "submit": "Move item",
+      "title": "Move item"
+    },
+    "pagination": {
+      "next": "Next",
+      "page": "Page {page} of {total}",
+      "previous": "Previous"
+    },
+    "previewDialog": {
+      "description": "Previewing {type}",
+      "placeholder": "Preview",
+      "title": "File preview",
+      "unsupported": "This file type cannot be previewed inline."
+    },
     "renameDialog": {
-      "description": "Choose a new name for this file.",
-      "label": "File name",
-      "title": "Rename file"
+      "description": "Choose a new name for this item.",
+      "label": "Item name",
+      "title": "Rename item"
+    },
+    "selection": {
+      "count": "Selected {count} items",
+      "label": "Selected items",
+      "toggleAll": "Select all items on this page",
+      "toggleItem": "Select {name}"
+    },
+    "status": {
+      "folder": "Folder",
+      "processing": "Processing",
+      "ready": "Ready"
+    },
+    "stats": {
+      "currentFolder": "Current folder",
+      "files": "Files",
+      "folders": "Folders",
+      "storage": "Storage used"
     },
     "storage": {
       "label": "Storage used",
       "limitReached": "Storage limit reached. Delete files to upload more.",
       "usage": "{used} of {total}"
     },
+    "toolbar": {
+      "refresh": "Refresh",
+      "refreshing": "Refreshing...",
+      "searchPlaceholder": "Search files and folders"
+    },
+    "toast": {
+      "deleted": "Deleted {count} items.",
+      "folderCreated": "Folder created.",
+      "genericError": "Something went wrong. Try again.",
+      "moved": "Item moved.",
+      "previewUnavailable": "This file cannot be previewed right now.",
+      "renamed": "Item renamed.",
+      "shareBatchDescription": "Copied {count} share links to your clipboard.",
+      "shareCopied": "Share link copied.",
+      "shareFilesOnly": "Select at least one file to share.",
+      "shareFoldersUnsupported": "Folders cannot be shared with signed links.",
+      "uploaded": "Upload complete."
+    },
+    "uploadDialog": {
+      "description": "Drop a file into the current folder or click to browse.",
+      "dropzoneDescription": "One file at a time, up to the current storage limit.",
+      "dropzoneHint": "One file per upload",
+      "dropzoneTitle": "Drop a file here",
+      "title": "Upload file"
+    },
     "title": "Inventory",
-    "uploadFile": "Upload File",
     "view": {
       "grid": "Grid",
       "list": "List"

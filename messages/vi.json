@@ -318,50 +318,149 @@
   "InventoryPage": {
     "actions": {
       "cancel": "Hủy",
+      "clearSelection": "Bỏ chọn",
       "delete": "Xóa",
+      "deleteSelected": "Xóa mục đã chọn",
       "download": "Tải xuống",
+      "newFolder": "Thư mục mới",
+      "open": "Mở",
       "move": "Chuyển vào thư mục",
+      "shareSelected": "Chia sẻ mục đã chọn",
       "preview": "Xem trước",
       "rename": "Đổi tên",
       "save": "Lưu",
-      "share": "Chia sẻ"
+      "share": "Chia sẻ",
+      "upload": "Tải tệp lên"
+    },
+    "browser": {
+      "description": "Thư mục hiện tại có {count} mục.",
+      "pageInfo": "Trang {page}/{total}",
+      "range": "Đang hiển thị {start}-{end}/{total}",
+      "title": "Nội dung thư mục"
+    },
+    "breadcrumbs": {
+      "root": "Kho lưu trữ"
+    },
+    "createFolderDialog": {
+      "description": "Tạo một thư mục mới trong vị trí hiện tại.",
+      "label": "Tên thư mục",
+      "placeholder": "Ghi chú môn học, bản nháp, hình ảnh...",
+      "submit": "Tạo thư mục",
+      "title": "Tạo thư mục"
+    },
+    "deleteDialog": {
+      "description": "Xóa {count} mục? Hành động này không thể hoàn tác.",
+      "more": "và {count} mục khác",
+      "title": "Xóa mục"
     },
     "empty": {
-      "action": "Tải lên tệp đầu tiên",
-      "description": "Tải tệp lên để xem tại đây.",
-      "title": "Chưa có tệp nào"
+      "action": "Tải tệp lên",
+      "createFolder": "Tạo thư mục",
+      "description": "Tải tệp lên hoặc tạo thư mục để bắt đầu sắp xếp lưu trữ của bạn.",
+      "title": "Thư mục này đang trống"
+    },
+    "emptySearch": {
+      "clear": "Xóa tìm kiếm",
+      "description": "Không có tệp hoặc thư mục nào khớp với tìm kiếm của bạn trong thư mục này.",
+      "title": "Không tìm thấy kết quả"
+    },
+    "errors": {
+      "description": "Hiện tại không thể tải chế độ xem lưu trữ.",
+      "retry": "Thử lại",
+      "title": "Lưu trữ không khả dụng"
+    },
+    "fileCard": {
+      "folder": "Thư mục",
+      "processing": "Đang xử lý",
+      "ready": "Sẵn sàng",
+      "size": "Dung lượng",
+      "type": "Loại"
+    },
+    "hero": {
+      "badge": "Không gian lưu trữ trực tiếp",
+      "description": "Duyệt thư mục, tải tệp lên, đổi tên mục và chia sẻ liên kết ký sẵn trực tiếp qua API lưu trữ."
     },
     "list": {
       "columns": {
         "actions": "Thao tác",
-        "location": "Vị trí",
         "name": "Tên",
-        "owner": "Chủ sở hữu",
-        "reason": "Lý do đề xuất"
-      },
-      "location": {
-        "myDrive": "Drive của tôi"
-      },
-      "owner": {
-        "you": "Bạn",
-        "youShort": "Bạn"
-      },
-      "reason": {
-        "created": "Đã tạo {date}"
+        "size": "Dung lượng",
+        "status": "Trạng thái",
+        "type": "Loại",
+        "updated": "Đã cập nhật"
       }
     },
+    "moveDialog": {
+      "description": "Chọn vị trí đích cho mục này.",
+      "label": "Thư mục đích",
+      "placeholder": "Chọn một vị trí",
+      "submit": "Di chuyển",
+      "title": "Di chuyển mục"
+    },
+    "pagination": {
+      "next": "Sau",
+      "page": "Trang {page}/{total}",
+      "previous": "Trước"
+    },
+    "previewDialog": {
+      "description": "Đang xem trước {type}",
+      "placeholder": "Xem trước",
+      "title": "Xem trước tệp",
+      "unsupported": "Loại tệp này chưa thể xem trước trực tiếp."
+    },
     "renameDialog": {
-      "description": "Chọn tên mới cho tệp này.",
-      "label": "Tên tệp",
-      "title": "Đổi tên tệp"
+      "description": "Chọn tên mới cho mục này.",
+      "label": "Tên mục",
+      "title": "Đổi tên mục"
+    },
+    "selection": {
+      "count": "Đã chọn {count} mục",
+      "label": "Các mục đã chọn",
+      "toggleAll": "Chọn tất cả mục trên trang này",
+      "toggleItem": "Chọn {name}"
+    },
+    "status": {
+      "folder": "Thư mục",
+      "processing": "Đang xử lý",
+      "ready": "Sẵn sàng"
+    },
+    "stats": {
+      "currentFolder": "Thư mục hiện tại",
+      "files": "Tệp",
+      "folders": "Thư mục",
+      "storage": "Dung lượng đã dùng"
     },
     "storage": {
       "label": "Dung lượng đã dùng",
       "limitReached": "Đã đạt giới hạn dung lượng. Hãy xóa tệp để tải thêm.",
       "usage": "{used} / {total}"
     },
-    "title": "Kho học tập",
-    "uploadFile": "Tải tệp lên",
+    "toolbar": {
+      "refresh": "Tải lại",
+      "refreshing": "Đang tải lại...",
+      "searchPlaceholder": "Tìm tệp và thư mục"
+    },
+    "toast": {
+      "deleted": "Đã xóa {count} mục.",
+      "folderCreated": "Đã tạo thư mục.",
+      "genericError": "Đã xảy ra lỗi. Vui lòng thử lại.",
+      "moved": "Đã di chuyển mục.",
+      "previewUnavailable": "Hiện tại không thể xem trước tệp này.",
+      "renamed": "Đã đổi tên mục.",
+      "shareBatchDescription": "Đã sao chép {count} liên kết chia sẻ vào clipboard.",
+      "shareCopied": "Đã sao chép liên kết chia sẻ.",
+      "shareFilesOnly": "Hãy chọn ít nhất một tệp để chia sẻ.",
+      "shareFoldersUnsupported": "Không thể chia sẻ thư mục bằng liên kết ký sẵn.",
+      "uploaded": "Tải lên hoàn tất."
+    },
+    "uploadDialog": {
+      "description": "Thả một tệp vào thư mục hiện tại hoặc nhấp để chọn.",
+      "dropzoneDescription": "Mỗi lần chỉ một tệp, tối đa theo giới hạn lưu trữ hiện tại.",
+      "dropzoneHint": "Mỗi lần tải một tệp",
+      "dropzoneTitle": "Thả tệp vào đây",
+      "title": "Tải tệp lên"
+    },
+    "title": "Kho lưu trữ",
     "view": {
       "grid": "Lưới",
       "list": "Danh sách"

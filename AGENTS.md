@@ -99,6 +99,7 @@ for any tasks.).
 - **Type Check**: After TypeScript or JavaScript edits, finish with `bun type-check`.
 - **Formatting**: Use `bun format:fix` before verification if the change is formatting-sensitive.
 - **Shell Paths**: Quote file paths that include `(`, `)`, `[`, or `]` when running shell or git commands.
+- **API Client Paths**: The shared browser API client already targets the `/api` base URL, so request paths should start at `v1/...` instead of `api/v1/...`.
 
 ### 6.5 Type Safety & Platform Details
 
@@ -106,6 +107,7 @@ for any tasks.).
 - **Typed JSON**: Use Zod transforms to keep JSON request payloads typed before handing them to Prisma create/update calls.
 - **Inferred Types**: Prefer inferred Prisma and Zod types over handwritten duplicates; when a shape repeats, extract it into a local type alias or helper instead of retyping the structure.
 - **ICU Messages**: Use ICU-style placeholders in `next-intl` messages (`{name}`, `{count}`) when adding plurals or selects.
+- **Generated Prisma Sync**: If `src/generated/prisma` and `prisma/schema.prisma` drift, rerun `bun db:generate` before assuming a storage or Prisma-backed service is broken.
 
 ## 7. Continuous Improvement (Session Retrospective)
 
