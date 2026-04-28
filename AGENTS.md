@@ -109,6 +109,11 @@ for any tasks.).
 - **ICU Messages**: Use ICU-style placeholders in `next-intl` messages (`{name}`, `{count}`) when adding plurals or selects.
 - **Generated Prisma Sync**: If `src/generated/prisma` and `prisma/schema.prisma` drift, rerun `bun db:generate` before assuming a storage or Prisma-backed service is broken.
 
+### 6.6 Storage & Uploads
+
+- **Upload Confirmation Fallback**: When an uploaded file does not exist on the remote bucket during `confirmUpload`, explicitly delete the pending database entry to roll back the state.
+- **Bucket Initialization**: When adding new buckets to the storage config, ensure they are also added to `docker-compose.yml` initialization scripts (`minio-init` and `minio-reset`).
+
 ## 7. Continuous Improvement (Session Retrospective)
 
 At the **END** of every session, you MUST:

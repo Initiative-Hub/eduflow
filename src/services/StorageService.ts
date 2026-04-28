@@ -364,7 +364,10 @@ export class StorageService {
     });
 
     if (!exists) {
-      throw new Error('Uploaded object not found');
+      await prisma.fileInventory.delete({
+        where: { id: existing.id },
+      });
+      throw new Error('Uploaded object not found. Database entry rolled back.');
     }
 
     const uploaded = await prisma.fileInventory.update({

@@ -31,7 +31,8 @@ export const POST = withAuth(async (req, session) => {
   } catch (error: any) {
     if (
       error?.message === 'File not found' ||
-      error?.message === 'Uploaded object not found'
+      error?.message === 'Uploaded object not found' ||
+      error?.message === 'Uploaded object not found. Database entry rolled back.'
     ) {
       return NextResponse.json({ message: error.message }, { status: 404 });
     }
