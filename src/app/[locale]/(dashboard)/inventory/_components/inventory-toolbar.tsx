@@ -1,14 +1,6 @@
-import {
-  FolderPlus,
-  LayoutGrid,
-  LayoutList,
-  RefreshCw,
-  Search,
-  Upload,
-} from 'lucide-react';
+import { FolderPlus, RefreshCw, Search, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import type { InventoryTranslations } from './inventory.types';
 
@@ -20,9 +12,7 @@ type InventoryToolbarProps = {
   onUploadOpen: () => void;
   onCreateFolder: () => void;
   search: string;
-  setViewType: (value: 'grid' | 'list') => void;
   t: InventoryTranslations;
-  viewType: 'grid' | 'list';
 };
 
 export function InventoryToolbar({
@@ -33,62 +23,40 @@ export function InventoryToolbar({
   onSearchChange,
   onUploadOpen,
   search,
-  setViewType,
   t,
-  viewType,
 }: InventoryToolbarProps) {
   return (
     <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-      <div className="flex flex-1 flex-col gap-3 xl:flex-row xl:items-center">
-        <div className="relative flex-1">
-          <Search className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={search}
-            onChange={(event) => onSearchChange(event.target.value)}
-            placeholder={t('toolbar.searchPlaceholder')}
-            className="pl-9"
-          />
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" size="sm" onClick={onRefresh}>
-            <RefreshCw
-              data-icon="inline-start"
-              className={cn(isFetching && 'animate-spin')}
-            />
-            {isFetching ? t('toolbar.refreshing') : t('toolbar.refresh')}
-          </Button>
-          <Button variant="outline" size="sm" onClick={onCreateFolder}>
-            <FolderPlus data-icon="inline-start" />
-            {t('actions.newFolder')}
-          </Button>
-          <Button
-            size="sm"
-            onClick={onUploadOpen}
-            disabled={isStorageLimitReached}
-          >
-            <Upload data-icon="inline-start" />
-            {t('actions.upload')}
-          </Button>
-        </div>
+      <div className="relative flex-1">
+        <Search className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={search}
+          onChange={(event) => onSearchChange(event.target.value)}
+          placeholder={t('toolbar.searchPlaceholder')}
+          className="pl-9"
+        />
       </div>
-
-      <Tabs
-        value={viewType}
-        onValueChange={(value) =>
-          setViewType(value === 'list' ? 'list' : 'grid')
-        }
-      >
-        <TabsList>
-          <TabsTrigger value="grid">
-            <LayoutGrid data-icon="inline-start" />
-            {t('view.grid')}
-          </TabsTrigger>
-          <TabsTrigger value="list">
-            <LayoutList data-icon="inline-start" />
-            {t('view.list')}
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button variant="outline" size="sm" onClick={onRefresh}>
+          <RefreshCw
+            data-icon="inline-start"
+            className={cn(isFetching && 'animate-spin')}
+          />
+          {isFetching ? t('toolbar.refreshing') : t('toolbar.refresh')}
+        </Button>
+        <Button variant="outline" size="sm" onClick={onCreateFolder}>
+          <FolderPlus data-icon="inline-start" />
+          {t('actions.newFolder')}
+        </Button>
+        <Button
+          size="sm"
+          onClick={onUploadOpen}
+          disabled={isStorageLimitReached}
+        >
+          <Upload data-icon="inline-start" />
+          {t('actions.upload')}
+        </Button>
+      </div>
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { LayoutGrid, LayoutList } from 'lucide-react';
 import { Fragment } from 'react';
 import {
   Breadcrumb,
@@ -7,16 +8,24 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { InventoryBreadcrumb } from '../types';
+import type { InventoryTranslations } from './inventory.types';
 
 type InventoryPathBarProps = {
   breadcrumbItems: InventoryBreadcrumb[];
   onGoToBreadcrumb: (index: number) => void;
+  setViewType: (value: 'grid' | 'list') => void;
+  t: InventoryTranslations;
+  viewType: 'grid' | 'list';
 };
 
 export function InventoryPathBar({
   breadcrumbItems,
   onGoToBreadcrumb,
+  setViewType,
+  t,
+  viewType,
 }: InventoryPathBarProps) {
   return (
     <div className="px-4 py-2.5">
@@ -54,6 +63,23 @@ export function InventoryPathBar({
             </BreadcrumbList>
           </Breadcrumb>
         </div>
+        <Tabs
+          value={viewType}
+          onValueChange={(value) =>
+            setViewType(value === 'list' ? 'list' : 'grid')
+          }
+        >
+          <TabsList>
+            <TabsTrigger value="grid">
+              <LayoutGrid data-icon="inline-start" />
+              {t('view.grid')}
+            </TabsTrigger>
+            <TabsTrigger value="list">
+              <LayoutList data-icon="inline-start" />
+              {t('view.list')}
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
     </div>
   );

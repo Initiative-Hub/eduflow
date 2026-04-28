@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import { InventoryBrowser } from './_components/inventory-browser';
 import { InventoryDialogs } from './_components/inventory-dialogs';
 import { InventoryHeader } from './_components/inventory-header';
-import { InventoryPathBar } from './_components/inventory-path-bar';
+import { InventoryPathBar } from './_components/inventory-pathbar';
 import { InventoryToolbar } from './_components/inventory-toolbar';
 import { SelectionBar } from './_components/selection-bar';
 import { inventoryService } from './inventory.service';
@@ -51,7 +51,6 @@ export function InventoryClient() {
     closePreview,
     createFolderDialog,
     createFolderPending,
-    currentPathLabel,
     deleteDialog,
     deletePending,
     entries,
@@ -179,14 +178,15 @@ export function InventoryClient() {
         onSearchChange={handleSearchChange}
         onUploadOpen={() => setUploadOpen(true)}
         search={search}
-        setViewType={setViewType}
         t={t}
-        viewType={viewType}
       />
 
       <InventoryPathBar
         breadcrumbItems={breadcrumbItems}
         onGoToBreadcrumb={handleGoToBreadcrumb}
+        setViewType={setViewType}
+        t={t}
+        viewType={viewType}
       />
 
       <SelectionBar
@@ -201,7 +201,6 @@ export function InventoryClient() {
 
       <InventoryBrowser
         currentPage={currentPage}
-        currentPathLabel={currentPathLabel}
         endItem={endItem}
         entries={entries}
         isLoading={isLoading}

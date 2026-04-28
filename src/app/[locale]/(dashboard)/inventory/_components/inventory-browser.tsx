@@ -22,7 +22,6 @@ import { InventoryTableView } from './inventory-table-view';
 
 type InventoryBrowserProps = {
   currentPage: number;
-  currentPathLabel: string;
   endItem: number;
   entries: InventoryEntry[];
   isLoading: boolean;
@@ -55,7 +54,6 @@ type InventoryBrowserProps = {
 
 export function InventoryBrowser({
   currentPage,
-  currentPathLabel,
   endItem,
   entries,
   isLoading,
@@ -97,7 +95,6 @@ export function InventoryBrowser({
           </CardDescription>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="outline">{currentPathLabel}</Badge>
           <Badge variant="secondary">
             {t('browser.pageInfo', {
               page: currentPage,
