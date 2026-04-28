@@ -16,11 +16,15 @@ export interface Course {
   };
 }
 
-export function useCourses(courseId?: string) {
+export function useCourses(
+  courseId?: string,
+  options: { enabled?: boolean } = { enabled: true }
+) {
   const queryClient = useQueryClient();
   const query = useQuery({
     queryKey: ['courses'],
     queryFn: () => apiClient.get<Course[]>('/v1/courses'),
+    enabled: options.enabled,
   });
 
   const courseQuery = useQuery({

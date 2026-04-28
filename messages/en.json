@@ -232,6 +232,16 @@
       "submit": "Add Lesson",
       "title": "Add Lesson"
     },
+    "AddModuleDialog": {
+      "description": "Provide a title for the new module.",
+      "fields": {
+        "title": "Module Title",
+        "titlePlaceholder": "E.g., Getting Started",
+        "titleRequired": "Module Title is required"
+      },
+      "submit": "Add Module",
+      "title": "Add Module"
+    },
     "AnalyticsPage": "Analytics",
     "AssessmentsPage": "Assessments",
     "Card": {
