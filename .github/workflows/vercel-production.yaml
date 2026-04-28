@@ -1,4 +1,4 @@
-name: Vercel GitFlow Production Deployment
+name: Vercel EduFlow Production Deployment
 
 on:
   push:

@@ -1,4 +1,4 @@
-name: Vercel GitFlow Preview Deployment
+name: Vercel EduFlow Preview Deployment
 
 on:
   push:
