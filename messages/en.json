@@ -277,8 +277,6 @@
       "cancel": "Cancel",
       "content": "Lesson Content",
       "save": "Save",
-      "saveError": "Failed to update lesson",
-      "saveSuccess": "Lesson saved successfully!",
       "saving": "Saving...",
       "title": "Lesson Title",
       "writeReview": "Write/Review"
