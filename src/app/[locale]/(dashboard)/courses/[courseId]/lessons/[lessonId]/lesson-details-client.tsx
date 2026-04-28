@@ -1,9 +1,11 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { parseLessonContent } from '@/utils/lesson-content';
+import {
+  lessonContentToTiptapDocument,
+  type TiptapDocument,
+} from '@/utils/lesson-content';
 import { useModules } from '../../use-modules';
-import { LessonContentView } from './_components/lesson-content-view';
 import { LessonEditor } from './_components/lesson-editor';
 import { LessonHeader } from './_components/lesson-header';
 import { LessonPagination } from './_components/lesson-pagination';
@@ -38,9 +40,11 @@ export function LessonDetailsClient({
   const [isEditing, setIsEditing] = useState(false);
   const [showOutline, setShowOutline] = useState(false);
   const [editTitle, setEditTitle] = useState('');
-  const [editContent, setEditContent] = useState('');
+  const [editContent, setEditContent] = useState<TiptapDocument>(() =>
+    lessonContentToTiptapDocument(null)
+  );
 
-  const contentText = parseLessonContent(lesson?.content ?? null);
+  const lessonContent = lessonContentToTiptapDocument(lesson?.content ?? null);
 
   const { prev, next } = useMemo(
     () => getAdjacentLessons(lessonId),
@@ -52,9 +56,9 @@ export function LessonDetailsClient({
     [modules, lessonId]
   );
 
-  const handleSave = () => {
+  const handleSave = (content: TiptapDocument) => {
     handleUpdateLesson(
-      { lessonId, title: editTitle, content: { text: editContent } },
+      { lessonId, title: editTitle, content },
       { onSuccess: () => setIsEditing(false) }
     );
   };
@@ -62,7 +66,7 @@ export function LessonDetailsClient({
   const isLoading = isModulesLoading || isLessonLoading;
 
   return (
-    <>
+    <div className="space-y-8">
       <LessonHeader
         courseId={courseId}
         lessonId={lessonId}
@@ -72,7 +76,7 @@ export function LessonDetailsClient({
         setIsEditing={setIsEditing}
         setEditTitle={setEditTitle}
         setEditContent={setEditContent}
-        originalContent={contentText}
+        originalContent={lessonContent}
         showOutline={showOutline}
         setShowOutline={setShowOutline}
       />
@@ -89,19 +93,23 @@ export function LessonDetailsClient({
           </p>
         ) : isEditing ? (
           <LessonEditor
-            editTitle={editTitle}
-            setEditTitle={setEditTitle}
-            editContent={editContent}
-            setEditContent={setEditContent}
+            key={`edit-${lesson.id}`}
+            title={editTitle}
+            content={editContent}
+            emptyContentLabel={emptyContentLabel}
             isUpdatingLesson={isUpdatingLesson}
+            onTitleChange={setEditTitle}
+            onContentChange={setEditContent}
             onCancel={() => setIsEditing(false)}
             onSave={handleSave}
           />
         ) : (
-          <LessonContentView
+          <LessonEditor
+            key={`view-${lesson.id}`}
             title={lesson.title}
-            contentText={contentText}
+            content={lessonContent}
             emptyContentLabel={emptyContentLabel}
+            readOnly
           />
         )}
       </div>
@@ -109,6 +117,6 @@ export function LessonDetailsClient({
       {!isLoading && lesson && (
         <LessonPagination courseId={courseId} prev={prev} next={next} />
       )}
-    </>
+    </div>
   );
 }

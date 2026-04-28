@@ -1,0 +1,45 @@
+.lesson-editor-shell {
+  min-height: 25rem;
+}
+
+.lesson-editor-shell .tiptap-toolbar {
+  position: sticky;
+  top: 3.5rem;
+  z-index: 20;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--background);
+}
+
+.lesson-editor-content {
+  width: 100%;
+}
+
+.lesson-editor-content .tiptap.ProseMirror.lesson-tiptap-editor {
+  min-height: 25rem;
+  padding: 1rem 0;
+  color: var(--foreground);
+  outline: none;
+}
+
+.lesson-editor-content .tiptap.ProseMirror.lesson-tiptap-editor[contenteditable='true'] {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--background);
+}
+
+.lesson-editor-content .tiptap.ProseMirror.lesson-tiptap-editor p.is-editor-empty:first-child::before {
+  color: var(--muted-foreground);
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+@media (max-width: 640px) {
+  .lesson-editor-shell .tiptap-toolbar {
+    top: auto;
+  }
+}

@@ -10,6 +10,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import type { TiptapDocument } from '@/utils/lesson-content';
 import { LessonOutline } from './lesson-outline';
 
 interface LessonHeaderProps {
@@ -20,8 +21,8 @@ interface LessonHeaderProps {
   isEditing: boolean;
   setIsEditing: (val: boolean) => void;
   setEditTitle: (val: string) => void;
-  setEditContent: (val: string) => void;
-  originalContent: string;
+  setEditContent: (val: TiptapDocument) => void;
+  originalContent: TiptapDocument;
   showOutline: boolean;
   setShowOutline: (val: boolean) => void;
 }
@@ -43,7 +44,7 @@ export function LessonHeader({
   const t = useTranslations('Courses.LessonHeader');
 
   return (
-    <div className="sticky top-0 z-30 -mx-6 -mt-6 flex items-center justify-between border-foreground/20 border-b bg-transparent px-6 py-3 md:-mx-10 md:-mt-10 md:px-10 lg:-mx-12 lg:-mt-12 lg:px-12 dark:border-border">
+    <div className="sticky top-0 z-40 -mx-6 -mt-6 flex items-center justify-between border-foreground/20 border-b bg-background/95 px-6 py-3 backdrop-blur-sm md:-mx-10 md:-mt-10 md:px-10 lg:-mx-12 lg:-mt-12 lg:px-12">
       <div className="mr-4 flex items-center gap-2 text-muted-foreground text-sm">
         <Popover open={showOutline} onOpenChange={setShowOutline}>
           <PopoverTrigger asChild>
