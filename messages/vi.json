@@ -322,24 +322,24 @@
       "delete": "Xóa",
       "deleteSelected": "Xóa mục đã chọn",
       "download": "Tải xuống",
+      "move": "Chuyển vào thư mục",
       "newFolder": "Thư mục mới",
       "open": "Mở",
-      "move": "Chuyển vào thư mục",
-      "shareSelected": "Chia sẻ mục đã chọn",
       "preview": "Xem trước",
       "rename": "Đổi tên",
       "save": "Lưu",
       "share": "Chia sẻ",
+      "shareSelected": "Chia sẻ mục đã chọn",
       "upload": "Tải tệp lên"
+    },
+    "breadcrumbs": {
+      "root": "Kho lưu trữ"
     },
     "browser": {
       "description": "Thư mục hiện tại có {count} mục.",
       "pageInfo": "Trang {page}/{total}",
       "range": "Đang hiển thị {start}-{end}/{total}",
       "title": "Nội dung thư mục"
-    },
-    "breadcrumbs": {
-      "root": "Kho lưu trữ"
     },
     "createFolderDialog": {
       "description": "Tạo một thư mục mới trong vị trí hiện tại.",
@@ -419,27 +419,23 @@
       "toggleAll": "Chọn tất cả mục trên trang này",
       "toggleItem": "Chọn {name}"
     },
-    "status": {
-      "folder": "Thư mục",
-      "processing": "Đang xử lý",
-      "ready": "Sẵn sàng"
-    },
     "stats": {
       "currentFolder": "Thư mục hiện tại",
       "files": "Tệp",
       "folders": "Thư mục",
       "storage": "Dung lượng đã dùng"
     },
+    "status": {
+      "folder": "Thư mục",
+      "processing": "Đang xử lý",
+      "ready": "Sẵn sàng"
+    },
     "storage": {
       "label": "Dung lượng đã dùng",
       "limitReached": "Đã đạt giới hạn dung lượng. Hãy xóa tệp để tải thêm.",
       "usage": "{used} / {total}"
     },
-    "toolbar": {
-      "refresh": "Tải lại",
-      "refreshing": "Đang tải lại...",
-      "searchPlaceholder": "Tìm tệp và thư mục"
-    },
+    "title": "Kho lưu trữ",
     "toast": {
       "deleted": "Đã xóa {count} mục.",
       "folderCreated": "Đã tạo thư mục.",
@@ -453,6 +449,11 @@
       "shareFoldersUnsupported": "Không thể chia sẻ thư mục bằng liên kết ký sẵn.",
       "uploaded": "Tải lên hoàn tất."
     },
+    "toolbar": {
+      "refresh": "Tải lại",
+      "refreshing": "Đang tải lại...",
+      "searchPlaceholder": "Tìm tệp và thư mục"
+    },
     "uploadDialog": {
       "description": "Thả một tệp vào thư mục hiện tại hoặc nhấp để chọn.",
       "dropzoneDescription": "Mỗi lần chỉ một tệp, tối đa theo giới hạn lưu trữ hiện tại.",
@@ -460,7 +461,6 @@
       "dropzoneTitle": "Thả tệp vào đây",
       "title": "Tải tệp lên"
     },
-    "title": "Kho lưu trữ",
     "view": {
       "grid": "Lưới",
       "list": "Danh sách"
