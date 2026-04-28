@@ -322,24 +322,24 @@
       "delete": "Delete",
       "deleteSelected": "Delete selected",
       "download": "Download",
+      "move": "Move to folder",
       "newFolder": "New folder",
       "open": "Open",
-      "move": "Move to folder",
-      "shareSelected": "Share selected",
       "preview": "Preview",
       "rename": "Rename",
       "save": "Save",
       "share": "Share",
+      "shareSelected": "Share selected",
       "upload": "Upload file"
+    },
+    "breadcrumbs": {
+      "root": "Storage"
     },
     "browser": {
       "description": "The current folder contains {count} items.",
       "pageInfo": "Page {page} of {total}",
       "range": "Showing {start}-{end} of {total}",
       "title": "Folder contents"
-    },
-    "breadcrumbs": {
-      "root": "Storage"
     },
     "createFolderDialog": {
       "description": "Create a new folder inside the current location.",
@@ -419,27 +419,23 @@
       "toggleAll": "Select all items on this page",
       "toggleItem": "Select {name}"
     },
-    "status": {
-      "folder": "Folder",
-      "processing": "Processing",
-      "ready": "Ready"
-    },
     "stats": {
       "currentFolder": "Current folder",
       "files": "Files",
       "folders": "Folders",
       "storage": "Storage used"
     },
+    "status": {
+      "folder": "Folder",
+      "processing": "Processing",
+      "ready": "Ready"
+    },
     "storage": {
       "label": "Storage used",
       "limitReached": "Storage limit reached. Delete files to upload more.",
       "usage": "{used} of {total}"
     },
-    "toolbar": {
-      "refresh": "Refresh",
-      "refreshing": "Refreshing...",
-      "searchPlaceholder": "Search files and folders"
-    },
+    "title": "Inventory",
     "toast": {
       "deleted": "Deleted {count} items.",
       "folderCreated": "Folder created.",
@@ -453,6 +449,11 @@
       "shareFoldersUnsupported": "Folders cannot be shared with signed links.",
       "uploaded": "Upload complete."
     },
+    "toolbar": {
+      "refresh": "Refresh",
+      "refreshing": "Refreshing...",
+      "searchPlaceholder": "Search files and folders"
+    },
     "uploadDialog": {
       "description": "Drop a file into the current folder or click to browse.",
       "dropzoneDescription": "One file at a time, up to the current storage limit.",
@@ -460,7 +461,6 @@
       "dropzoneTitle": "Drop a file here",
       "title": "Upload file"
     },
-    "title": "Inventory",
     "view": {
       "grid": "Grid",
       "list": "List"
