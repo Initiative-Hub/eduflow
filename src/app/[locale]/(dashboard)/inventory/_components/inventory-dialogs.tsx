@@ -9,7 +9,7 @@ import {
   Upload,
 } from 'lucide-react';
 import Image from 'next/image';
-import type { Dispatch, SetStateAction } from 'react';
+import { type Dispatch, type SetStateAction, useState } from 'react';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -139,6 +139,8 @@ export function InventoryDialogs({
   uploadOpen,
   uploadPending,
 }: InventoryDialogsProps) {
+  const [previewRenderFailed, setPreviewRenderFailed] = useState(false);
+
   return (
     <>
       <Dialog open={uploadOpen} onOpenChange={(open) => setUploadOpen(open)}>
@@ -439,19 +441,32 @@ export function InventoryDialogs({
           </DialogHeader>
           {previewDialog && (
             <div className="overflow-hidden rounded-2xl border border-border/60 bg-muted/20 p-3">
-              {previewDialog.mimeType?.startsWith('image/') ? (
+              {!previewDialog.url || previewRenderFailed ? (
+                <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3 rounded-xl border border-border/60 border-dashed bg-background/60 p-6 text-center">
+                  <div className="space-y-1">
+                    <div className="font-medium">
+                      {previewDialog.entry.name}
+                    </div>
+                    <div className="text-muted-foreground text-sm">
+                      {t('previewDialog.unsupported')}
+                    </div>
+                  </div>
+                </div>
+              ) : previewDialog.mimeType?.startsWith('image/') ? (
                 <Image
                   src={previewDialog.url}
                   alt={previewDialog.entry.name}
                   width={1600}
                   height={1200}
                   unoptimized
+                  onError={() => setPreviewRenderFailed(true)}
                   className="max-h-[70vh] w-full rounded-xl object-contain"
                 />
               ) : previewDialog.mimeType === 'application/pdf' ? (
                 <iframe
                   src={previewDialog.url}
                   title={previewDialog.entry.name}
+                  onError={() => setPreviewRenderFailed(true)}
                   className="h-[70vh] w-full rounded-xl border border-border/60 bg-background"
                 />
               ) : (
@@ -469,7 +484,7 @@ export function InventoryDialogs({
                   </div>
                   <Button asChild>
                     <a
-                      href={inventoryService.getDownloadUrl(
+                      href={inventoryService.getDownloadPayload(
                         previewDialog.entry.id
                       )}
                     >
@@ -490,7 +505,9 @@ export function InventoryDialogs({
             {previewDialog && (
               <Button asChild>
                 <a
-                  href={inventoryService.getDownloadUrl(previewDialog.entry.id)}
+                  href={inventoryService.getDownloadPayload(
+                    previewDialog.entry.id
+                  )}
                 >
                   <Download data-icon="inline-start" />
                   {t('actions.download')}

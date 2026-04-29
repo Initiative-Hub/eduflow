@@ -5,7 +5,7 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
-import { useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { useDeferredValue, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import type { ApiError } from '@/lib/api/types';
 import { useLoadingStore } from '@/stores/useLoadingStore';
@@ -178,14 +178,6 @@ export function useInventory({
         array.findIndex((candidate) => candidate.id === option.id) === index
     );
   }, [currentPathLabel, folderTrail, folders, t]);
-
-  useEffect(() => {
-    return () => {
-      if (previewDialog?.url) {
-        URL.revokeObjectURL(previewDialog.url);
-      }
-    };
-  }, [previewDialog?.url]);
 
   const createFolderMutation = useMutation({
     mutationFn: async (name: string) => {
@@ -418,24 +410,11 @@ export function useInventory({
     }
 
     try {
-      const response = await fetch(inventoryService.getDownloadUrl(entry.id));
-      if (!response.ok) {
-        throw new Error(t('toast.previewUnavailable'));
-      }
-
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-
-      setPreviewDialog((current) => {
-        if (current?.url) {
-          URL.revokeObjectURL(current.url);
-        }
-
-        return {
-          entry,
-          url,
-          mimeType: blob.type || entry.mimeType,
-        };
+      const response = await inventoryService.shareEntry(entry.id);
+      setPreviewDialog({
+        entry,
+        url: response.data.signedUrl,
+        mimeType: entry.mimeType,
       });
     } catch (error) {
       toast.error(getErrorMessage(error, t('toast.previewUnavailable')));
@@ -443,13 +422,7 @@ export function useInventory({
   };
 
   const closePreview = () => {
-    setPreviewDialog((current) => {
-      if (current?.url) {
-        URL.revokeObjectURL(current.url);
-      }
-
-      return null;
-    });
+    setPreviewDialog(null);
   };
 
   const handleShareEntry = async (entry: InventoryEntry) => {

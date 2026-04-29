@@ -1,5 +1,6 @@
 'use client';
 
+import { useQuery } from '@tanstack/react-query';
 import {
   Download,
   Edit2,
@@ -11,7 +12,9 @@ import {
   Share2,
   Trash2,
 } from 'lucide-react';
+import Image from 'next/image';
 import { useTranslations } from 'next-intl';
+import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -28,6 +31,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { inventoryService } from './inventory.service';
 import {
   formatDate,
   formatFileSize,
@@ -61,14 +65,28 @@ export function InventoryCard({
 }: FileCardProps) {
   const t = useTranslations('InventoryPage');
   const previewable = isPreviewableEntry(entry);
+  const [previewImageFailed, setPreviewImageFailed] = useState(false);
+  const isImagePreview =
+    !entry.isFolder && Boolean(entry.mimeType?.startsWith('image/'));
+
+  const previewUrlQuery = useQuery({
+    queryKey: ['inventory', 'preview-url', entry.id],
+    queryFn: async () => {
+      const response = await inventoryService.shareEntry(entry.id);
+      return response.data.signedUrl;
+    },
+    enabled: isImagePreview,
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+  });
 
   return (
-    <Card className="group/card border-border/70 bg-card/90 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg">
-      <CardHeader className="gap-3 border-border/60 border-b pb-4">
+    <Card className="group/card h-fit border-border/70 bg-card/90 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg">
+      <CardHeader className="gap-3">
         <div className="flex items-start justify-between gap-3">
           <button
             type="button"
-            className="flex min-w-0 flex-1 items-start gap-3 text-left"
+            className="flex min-w-0 flex-1 gap-3 text-left"
             onClick={() => onOpen(entry)}
           >
             <div
@@ -88,24 +106,15 @@ export function InventoryCard({
                 <FileIcon data-icon="inline-start" className="size-5" />
               )}
             </div>
-            <div className="min-w-0 space-y-1">
+            <div className="flex flex-col gap-1">
               <CardTitle className="truncate text-sm leading-5">
                 {entry.name}
               </CardTitle>
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge variant={entry.isFolder ? 'secondary' : 'outline'}>
-                  {entry.isFolder
-                    ? t('fileCard.folder')
-                    : getEntryTypeLabel(entry)}
-                </Badge>
-                {!entry.isFolder && (
-                  <Badge variant="outline">
-                    {entry.status === 'READY'
-                      ? t('fileCard.ready')
-                      : t('fileCard.processing')}
-                  </Badge>
-                )}
-              </div>
+              {entry.fileSize && (
+                <span className="text-muted-foreground text-xs">
+                  {formatFileSize(entry.fileSize)}
+                </span>
+              )}
             </div>
           </button>
 
@@ -169,39 +178,38 @@ export function InventoryCard({
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-3 pt-4">
-        <div className="grid grid-cols-2 gap-3 text-sm">
-          <div className="rounded-xl border border-border/60 bg-muted/40 px-3 py-2">
-            <div className="text-muted-foreground text-xs">
-              {t('fileCard.type')}
+      {!entry.isFolder && (
+        <CardContent className="p-0">
+          {isImagePreview && previewUrlQuery.data && !previewImageFailed ? (
+            <Image
+              src={previewUrlQuery.data}
+              alt={entry.name}
+              width={640}
+              height={360}
+              unoptimized
+              onError={() => setPreviewImageFailed(true)}
+              className="h-36 object-cover"
+            />
+          ) : (
+            <div className="flex h-36 w-full items-center justify-center border border-border/60 bg-muted text-muted-foreground">
+              <FileIcon className="size-6" />
             </div>
-            <div className="font-medium">{getEntryTypeLabel(entry)}</div>
-          </div>
-          <div className="rounded-xl border border-border/60 bg-muted/40 px-3 py-2">
-            <div className="text-muted-foreground text-xs">
-              {t('fileCard.size')}
-            </div>
-            <div className="font-medium">{formatFileSize(entry.fileSize)}</div>
-          </div>
-        </div>
-      </CardContent>
+          )}
+        </CardContent>
+      )}
 
       <CardFooter className="flex items-center justify-between gap-2 bg-muted/30">
-        <div className="text-muted-foreground text-xs">
-          {formatDate(entry.createdAt, locale)}
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant={entry.isFolder ? 'secondary' : 'outline'}>
+            {entry.isFolder ? t('fileCard.folder') : getEntryTypeLabel(entry)}
+          </Badge>
+          {!entry.isFolder && entry.status === 'UPLOADING' && (
+            <Badge variant="outline">{t('fileCard.processing')}</Badge>
+          )}
         </div>
-        <Button
-          variant={entry.isFolder ? 'secondary' : 'outline'}
-          size="sm"
-          className="ml-auto"
-          onClick={() => onOpen(entry)}
-        >
-          {entry.isFolder
-            ? t('actions.open')
-            : previewable
-              ? t('actions.preview')
-              : t('actions.download')}
-        </Button>
+        <span className="text-muted-foreground text-xs">
+          {formatDate(entry.createdAt, locale)}
+        </span>
       </CardFooter>
     </Card>
   );

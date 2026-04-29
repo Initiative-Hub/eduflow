@@ -143,10 +143,5 @@ export async function createInventoryWriteSignedUrl(options: {
     expiresIn: options.expiresInSeconds ?? DEFAULT_READ_EXPIRES_SECONDS,
   });
 
-  return {
-    uploadUrl,
-    headers: {
-      'content-type': options.contentType,
-    },
-  };
+  return uploadUrl;
 }

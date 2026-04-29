@@ -35,7 +35,7 @@ function resolveErrorMessage(error: unknown, fallback: string) {
 
 function downloadEntry(entry: InventoryEntry) {
   const anchor = document.createElement('a');
-  anchor.href = inventoryService.getDownloadUrl(entry.id);
+  anchor.href = inventoryService.getDownloadPayload(entry.id);
   anchor.download = entry.name;
   anchor.rel = 'noreferrer';
   document.body.appendChild(anchor);

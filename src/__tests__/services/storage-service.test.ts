@@ -140,10 +140,7 @@ describe('StorageService', () => {
     it('returns upload session payload', async () => {
       mockBuildInventoryObjectKey.mockReturnValue('inventories/u1/readme.pdf');
       fileInventory.create.mockResolvedValue({ id: 'f1', status: 'UPLOADING' });
-      mockCreateInventoryWriteSignedUrl.mockResolvedValue({
-        uploadUrl: 'https://upload',
-        headers: { 'content-type': 'application/pdf' },
-      });
+      mockCreateInventoryWriteSignedUrl.mockResolvedValue('https://upload');
 
       const result = await StorageService.initializeUpload({
         userId: 'u1',
@@ -159,7 +156,7 @@ describe('StorageService', () => {
         objectKey: 'inventories/u1/readme.pdf',
         bucket: 'eduflow-inventory',
         uploadUrl: 'https://upload',
-        uploadHeaders: { 'content-type': 'application/pdf' },
+        uploadHeaders: { 'Content-Type': 'application/pdf' },
       });
     });
 

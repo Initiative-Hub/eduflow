@@ -148,5 +148,5 @@ export const inventoryService = {
     );
   },
 
-  getDownloadUrl: (fileId: string) => `/api/v1/storage/download/${fileId}`,
+  getDownloadPayload: (fileId: string) => `/api/v1/storage/download/${fileId}`,
 };

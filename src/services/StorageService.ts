@@ -324,7 +324,7 @@ export class StorageService {
       },
     });
 
-    const signed = await createInventoryWriteSignedUrl({
+    const uploadUrl = await createInventoryWriteSignedUrl({
       objectKey,
       contentType: options.contentType,
     });
@@ -334,8 +334,10 @@ export class StorageService {
       status: file.status,
       objectKey,
       bucket: FILE_INVENTORY_BUCKET_NAME,
-      uploadUrl: signed.uploadUrl,
-      uploadHeaders: signed.headers,
+      uploadUrl,
+      uploadHeaders: {
+        'Content-Type': options.contentType,
+      },
     };
   }
 
