@@ -38,6 +38,17 @@ export const POST = withAuth(async (req, session) => {
       return NextResponse.json({ message: error.message }, { status: 404 });
     }
 
+    if (error?.message === 'Uploaded object exceeds inventory upload limit.') {
+      return NextResponse.json({ message: error.message }, { status: 413 });
+    }
+
+    if (
+      error?.message ===
+      'Uploaded object size mismatch. Database entry rolled back.'
+    ) {
+      return NextResponse.json({ message: error.message }, { status: 400 });
+    }
+
     return NextResponse.json(
       { message: error?.message || 'Internal Server Error' },
       { status: 500 }

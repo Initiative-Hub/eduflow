@@ -448,6 +448,7 @@
     "title": "Kho lưu trữ",
     "toast": {
       "deleted": "Đã xóa {count} mục.",
+      "fileTooLarge": "Tệp vượt quá kích thước tải lên tối đa {size}.",
       "folderCreated": "Đã tạo thư mục.",
       "genericError": "Đã xảy ra lỗi. Vui lòng thử lại.",
       "moved": "Đã di chuyển mục.",
@@ -466,7 +467,7 @@
     },
     "uploadDialog": {
       "description": "Thả một tệp vào thư mục hiện tại hoặc nhấp để chọn.",
-      "dropzoneDescription": "Mỗi lần chỉ một tệp, tối đa theo giới hạn lưu trữ hiện tại.",
+      "dropzoneDescription": "Mỗi lần chỉ một tệp, theo giới hạn tải lên của từng tệp.",
       "dropzoneHint": "Mỗi lần tải một tệp",
       "dropzoneTitle": "Thả tệp vào đây",
       "title": "Tải tệp lên"

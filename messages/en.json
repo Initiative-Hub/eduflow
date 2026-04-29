@@ -448,6 +448,7 @@
     "title": "Inventory",
     "toast": {
       "deleted": "Deleted {count} items.",
+      "fileTooLarge": "File exceeds the maximum upload size of {size}.",
       "folderCreated": "Folder created.",
       "genericError": "Something went wrong. Try again.",
       "moved": "Item moved.",
@@ -466,7 +467,7 @@
     },
     "uploadDialog": {
       "description": "Drop a file into the current folder or click to browse.",
-      "dropzoneDescription": "One file at a time, up to the current storage limit.",
+      "dropzoneDescription": "One file at a time, up to the per-file upload limit.",
       "dropzoneHint": "One file per upload",
       "dropzoneTitle": "Drop a file here",
       "title": "Upload file"

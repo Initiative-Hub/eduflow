@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import type { Dispatch, SetStateAction } from 'react';
+import { toast } from 'sonner';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -48,7 +49,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { inventoryService } from '../inventory.service';
-import { getEntryTypeLabel } from '../inventory.utils';
+import { formatFileSize, getEntryTypeLabel } from '../inventory.utils';
 import type {
   InventoryEntry,
   InventoryMoveOption,
@@ -107,7 +108,7 @@ type InventoryDialogsProps = {
   uploadOpen: boolean;
   uploadPending: boolean;
   onUploadFiles: (files: File[]) => void;
-  storageLimitBytes: number;
+  maxFileSizeBytes: number;
 };
 
 export function InventoryDialogs({
@@ -125,6 +126,7 @@ export function InventoryDialogs({
   moveOptions,
   movePending,
   onUploadFiles,
+  maxFileSizeBytes,
   previewDialog,
   renameDialog,
   renamePending,
@@ -133,7 +135,6 @@ export function InventoryDialogs({
   setMoveDialog,
   setRenameDialog,
   setUploadOpen,
-  storageLimitBytes,
   t,
   uploadOpen,
   uploadPending,
@@ -150,9 +151,17 @@ export function InventoryDialogs({
           </DialogHeader>
           <Dropzone
             maxFiles={1}
-            maxSize={storageLimitBytes}
+            maxSize={maxFileSizeBytes}
             disabled={uploadPending || isStorageLimitReached}
             onDrop={(acceptedFiles) => onUploadFiles(acceptedFiles)}
+            onError={(error) => {
+              const message = error.message.includes('File is larger than')
+                ? t('toast.fileTooLarge', {
+                    size: formatFileSize(maxFileSizeBytes),
+                  })
+                : error.message;
+              toast.error(message);
+            }}
           >
             <div className="flex flex-col items-center gap-3 py-2 text-center">
               <div className="flex size-12 items-center justify-center rounded-2xl bg-muted text-muted-foreground">

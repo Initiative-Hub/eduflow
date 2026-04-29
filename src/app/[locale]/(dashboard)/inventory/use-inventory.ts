@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import type { ApiError } from '@/lib/api/types';
 import { useLoadingStore } from '@/stores/useLoadingStore';
 import { inventoryService } from './inventory.service';
-import { isPreviewableEntry } from './inventory.utils';
+import { formatFileSize, isPreviewableEntry } from './inventory.utils';
 import {
   type InventoryBreadcrumb,
   type InventoryEntry,
@@ -47,7 +47,11 @@ async function copyToClipboard(value: string) {
   await navigator.clipboard.writeText(value);
 }
 
-export function useInventory() {
+export function useInventory({
+  maxFileSizeBytes,
+}: {
+  maxFileSizeBytes: number;
+}) {
   const t = useTranslations('InventoryPage');
   const queryClient = useQueryClient();
   const setLoading = useLoadingStore((state) => state.setLoading);
@@ -395,6 +399,15 @@ export function useInventory() {
     const file = filesToUpload[0];
     if (!file) return;
 
+    if (file.size > maxFileSizeBytes) {
+      toast.error(
+        t('toast.fileTooLarge', {
+          size: formatFileSize(maxFileSizeBytes),
+        })
+      );
+      return;
+    }
+
     uploadMutation.mutate(file);
   };
 
@@ -520,6 +533,7 @@ export function useInventory() {
     isLoading: listQuery.isLoading || analyticsQuery.isLoading,
     listPagination: listQuery.data?.pagination,
     loadError: listQuery.error ?? analyticsQuery.error,
+    maxFileSizeBytes,
     moveDialog,
     moveOptions,
     movePending: moveMutation.isPending,

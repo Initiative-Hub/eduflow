@@ -16,6 +16,7 @@ import { formatFileSize } from './inventory.utils';
 import {
   type InventoryEntry,
   STORAGE_LIMIT_BYTES,
+  STORAGE_MAX_FILE_SIZE_BYTES,
   STORAGE_PAGE_SIZE,
 } from './types';
 import { useInventory } from './use-inventory';
@@ -74,6 +75,7 @@ export function InventoryClient() {
     handleUploadFiles,
     isFetching,
     isLoading,
+    maxFileSizeBytes,
     listPagination,
     loadError,
     moveDialog,
@@ -96,7 +98,9 @@ export function InventoryClient() {
     uploadOpen,
     uploadPending,
     viewType,
-  } = useInventory();
+  } = useInventory({
+    maxFileSizeBytes: STORAGE_MAX_FILE_SIZE_BYTES,
+  });
 
   const storageUsed = analytics?.totalSizeBytes ?? 0;
   const storagePercentage =
@@ -254,7 +258,7 @@ export function InventoryClient() {
         setMoveDialog={setMoveDialog}
         setRenameDialog={setRenameDialog}
         setUploadOpen={setUploadOpen}
-        storageLimitBytes={STORAGE_LIMIT_BYTES}
+        maxFileSizeBytes={maxFileSizeBytes}
         t={t}
         uploadOpen={uploadOpen}
         uploadPending={uploadPending}

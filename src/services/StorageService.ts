@@ -2,12 +2,13 @@ import type { FileInventory, Prisma } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
 import {
   buildInventoryObjectKey,
-  checkInventoryObjectExists,
   createInventoryReadSignedUrl,
   createInventoryWriteSignedUrl,
   deleteInventoryObject,
   downloadInventoryObject,
   FILE_INVENTORY_BUCKET_NAME,
+  getInventoryObjectMetadata,
+  STORAGE_MAX_FILE_SIZE_BYTES,
 } from '@/lib/storage/file-storage';
 
 /**
@@ -297,6 +298,10 @@ export class StorageService {
       throw new Error('File name is required');
     }
 
+    if (options.fileSize > STORAGE_MAX_FILE_SIZE_BYTES) {
+      throw new Error('File size exceeds storage upload limit');
+    }
+
     const objectKey = buildInventoryObjectKey(options.userId, normalizedName, {
       relativePath: options.path,
     });
@@ -359,15 +364,37 @@ export class StorageService {
       throw new Error('File object key is missing');
     }
 
-    const exists = await checkInventoryObjectExists({
+    const metadata = await getInventoryObjectMetadata({
       objectKey: existing.objectKey,
     });
 
-    if (!exists) {
+    if (!metadata.exists) {
       await prisma.fileInventory.delete({
         where: { id: existing.id },
       });
       throw new Error('Uploaded object not found. Database entry rolled back.');
+    }
+
+    if (
+      metadata.contentLength === null ||
+      metadata.contentLength > STORAGE_MAX_FILE_SIZE_BYTES
+    ) {
+      await prisma.fileInventory.delete({
+        where: { id: existing.id },
+      });
+      throw new Error('Uploaded object exceeds storage upload limit.');
+    }
+
+    if (existing.fileSize !== null) {
+      const expectedSize = Number(existing.fileSize);
+      if (metadata.contentLength !== expectedSize) {
+        await prisma.fileInventory.delete({
+          where: { id: existing.id },
+        });
+        throw new Error(
+          'Uploaded object size mismatch. Database entry rolled back.'
+        );
+      }
     }
 
     const uploaded = await prisma.fileInventory.update({
