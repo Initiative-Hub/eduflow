@@ -48,7 +48,7 @@ interface FileCardProps {
   onDelete: (entry: InventoryEntry) => void;
 }
 
-export function FileCard({
+export function InventoryCard({
   entry,
   locale,
   onOpen,

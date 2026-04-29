@@ -13,7 +13,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import { FileCard } from '../file-card';
+import { InventoryCard } from '../inventory-card';
 import type { InventoryEntry } from '../types';
 import type { InventoryTranslations } from './inventory.types';
 import { InventoryEmptyState } from './inventory-empty-state';
@@ -120,7 +120,7 @@ export function InventoryBrowser({
         ) : viewType === 'grid' ? (
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {entries.map((entry) => (
-              <FileCard
+              <InventoryCard
                 key={entry.id}
                 entry={entry}
                 locale={locale}
