@@ -28,13 +28,6 @@ export const getFileExtension = (fileName: string) => {
   return extension.toUpperCase().slice(0, 4);
 };
 
-export const isPreviewableEntry = (entry: InventoryEntry) => {
-  if (entry.isFolder) return false;
-  return (
-    entry.mimeType?.startsWith('image/') || entry.mimeType === 'application/pdf'
-  );
-};
-
 export const getEntryTypeLabel = (entry: InventoryEntry) => {
   if (entry.isFolder) return 'Folder';
   if (!entry.extension) return 'File';

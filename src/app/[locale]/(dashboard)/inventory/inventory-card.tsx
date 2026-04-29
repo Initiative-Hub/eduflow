@@ -30,13 +30,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { inventoryService } from './inventory.service';
 import {
   formatDate,
   formatFileSize,
   getEntryTypeLabel,
-  isPreviewableEntry,
 } from './inventory.utils';
 import type { InventoryEntry } from './types';
 
@@ -50,6 +50,8 @@ interface FileCardProps {
   onPreview: (entry: InventoryEntry) => void;
   onDownload: (entry: InventoryEntry) => void;
   onDelete: (entry: InventoryEntry) => void;
+  onNavigateIntoFolder: (entry: InventoryEntry) => void;
+  uploadProgress?: number;
 }
 
 export function InventoryCard({
@@ -62,9 +64,10 @@ export function InventoryCard({
   onPreview,
   onDownload,
   onDelete,
+  onNavigateIntoFolder,
+  uploadProgress,
 }: FileCardProps) {
   const t = useTranslations('InventoryPage');
-  const previewable = isPreviewableEntry(entry);
   const [previewImageFailed, setPreviewImageFailed] = useState(false);
   const isImagePreview =
     !entry.isFolder && Boolean(entry.mimeType?.startsWith('image/'));
@@ -83,10 +86,10 @@ export function InventoryCard({
   return (
     <Card className="group/card h-fit border-border/70 bg-card/90 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg">
       <CardHeader className="gap-3">
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start justify-between gap-3 overflow-hidden">
           <button
             type="button"
-            className="flex min-w-0 flex-1 gap-3 text-left"
+            className="flex flex-1 gap-3 overflow-hidden text-left"
             onClick={() => onOpen(entry)}
           >
             <div
@@ -106,8 +109,12 @@ export function InventoryCard({
                 <FileIcon data-icon="inline-start" className="size-5" />
               )}
             </div>
-            <div className="flex flex-col gap-1">
-              <CardTitle className="truncate text-sm leading-5">
+            <div
+              className="flex flex-1 flex-col gap-1 overflow-hidden"
+              aria-describedby={entry.name}
+              title={entry.name}
+            >
+              <CardTitle className="max-w-full truncate text-sm leading-5">
                 {entry.name}
               </CardTitle>
               {entry.fileSize && (
@@ -139,9 +146,17 @@ export function InventoryCard({
                 <Move />
                 {t('actions.move')}
               </DropdownMenuItem>
-              {!entry.isFolder && (
-                <>
-                  {previewable && (
+              {entry.isFolder ? (
+                <DropdownMenuItem
+                  onClick={() => onNavigateIntoFolder(entry)}
+                  className="cursor-pointer gap-2"
+                >
+                  <FolderOpen />
+                  {t('actions.open')}
+                </DropdownMenuItem>
+              ) : (
+                entry.status === 'READY' && (
+                  <>
                     <DropdownMenuItem
                       onClick={() => onPreview(entry)}
                       className="cursor-pointer gap-2"
@@ -149,22 +164,23 @@ export function InventoryCard({
                       <Eye />
                       {t('actions.preview')}
                     </DropdownMenuItem>
-                  )}
-                  <DropdownMenuItem
-                    onClick={() => onShare(entry)}
-                    className="cursor-pointer gap-2"
-                  >
-                    <Share2 />
-                    {t('actions.share')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => onDownload(entry)}
-                    className="cursor-pointer gap-2"
-                  >
-                    <Download />
-                    {t('actions.download')}
-                  </DropdownMenuItem>
-                </>
+
+                    <DropdownMenuItem
+                      onClick={() => onShare(entry)}
+                      className="cursor-pointer gap-2"
+                    >
+                      <Share2 />
+                      {t('actions.share')}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => onDownload(entry)}
+                      className="cursor-pointer gap-2"
+                    >
+                      <Download />
+                      {t('actions.download')}
+                    </DropdownMenuItem>
+                  </>
+                )
               )}
               <DropdownMenuItem
                 onClick={() => onDelete(entry)}
@@ -204,7 +220,20 @@ export function InventoryCard({
             {entry.isFolder ? t('fileCard.folder') : getEntryTypeLabel(entry)}
           </Badge>
           {!entry.isFolder && entry.status === 'UPLOADING' && (
-            <Badge variant="outline">{t('fileCard.processing')}</Badge>
+            <div className="min-w-36 space-y-1">
+              {typeof uploadProgress === 'number' ? (
+                <>
+                  <Progress value={uploadProgress} className="h-1.5" />
+                  <div className="text-[11px] text-muted-foreground">
+                    {t('fileCard.uploadProgress', {
+                      progress: uploadProgress,
+                    })}
+                  </div>
+                </>
+              ) : (
+                <div className="h-1.5 w-full animate-pulse rounded-full bg-muted" />
+              )}
+            </div>
           )}
         </div>
         <span className="text-muted-foreground text-xs">

@@ -155,7 +155,10 @@ export function InventoryDialogs({
             maxFiles={1}
             maxSize={maxFileSizeBytes}
             disabled={uploadPending || isStorageLimitReached}
-            onDrop={(acceptedFiles) => onUploadFiles(acceptedFiles)}
+            onDrop={(acceptedFiles) => {
+              setUploadOpen(false);
+              onUploadFiles(acceptedFiles);
+            }}
             onError={(error) => {
               const message = error.message.includes('File is larger than')
                 ? t('toast.fileTooLarge', {

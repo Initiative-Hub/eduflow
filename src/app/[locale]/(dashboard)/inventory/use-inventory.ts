@@ -8,9 +8,8 @@ import { useTranslations } from 'next-intl';
 import { useDeferredValue, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import type { ApiError } from '@/lib/api/types';
-import { useLoadingStore } from '@/stores/useLoadingStore';
 import { inventoryService } from './inventory.service';
-import { formatFileSize, isPreviewableEntry } from './inventory.utils';
+import { formatFileSize } from './inventory.utils';
 import {
   type InventoryBreadcrumb,
   type InventoryEntry,
@@ -54,7 +53,6 @@ export function useInventory({
 }) {
   const t = useTranslations('InventoryPage');
   const queryClient = useQueryClient();
-  const setLoading = useLoadingStore((state) => state.setLoading);
 
   const [viewType, setViewType] = useState<'grid' | 'list'>('grid');
   const [search, setSearchState] = useState('');
@@ -94,6 +92,9 @@ export function useInventory({
     entries: [],
   });
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [uploadProgressById, setUploadProgressById] = useState<
+    Record<string, number>
+  >({});
   const [previewDialog, setPreviewDialog] =
     useState<InventoryPreviewState | null>(null);
 
@@ -203,16 +204,56 @@ export function useInventory({
 
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
-      setLoading(true);
+      let uploadFileId: string | null = null;
+
       try {
         const response = await inventoryService.upload({
           parentId: currentFolderId,
           file,
+          onUploadStart: (fileId) => {
+            uploadFileId = fileId;
+            queryClient.invalidateQueries({ queryKey: INVENTORY_QUERY_KEY });
+            setUploadProgressById((current) => ({
+              ...current,
+              [fileId]: 0,
+            }));
+          },
+          onUploadProgress: (fileId, progress) => {
+            setUploadProgressById((current) => ({
+              ...current,
+              [fileId]: progress,
+            }));
+          },
+          onUploadComplete: (fileId) => {
+            queryClient.invalidateQueries({ queryKey: INVENTORY_QUERY_KEY });
+            setUploadProgressById((current) => ({
+              ...current,
+              [fileId]: 100,
+            }));
+          },
         });
 
+        if (uploadFileId) {
+          const completedUploadFileId = uploadFileId;
+          setUploadProgressById((current) => {
+            const next = { ...current };
+            delete next[completedUploadFileId];
+            return next;
+          });
+        }
+
         return response.data;
-      } finally {
-        setLoading(false);
+      } catch (error) {
+        if (uploadFileId) {
+          const failedUploadFileId = uploadFileId;
+          setUploadProgressById((current) => {
+            const next = { ...current };
+            delete next[failedUploadFileId];
+            return next;
+          });
+        }
+
+        throw error;
       }
     },
     onSuccess: async (entry) => {
@@ -258,7 +299,7 @@ export function useInventory({
       return response.data;
     },
     onSuccess: async (entry) => {
-      await queryClient.invalidateQueries({ queryKey: INVENTORY_QUERY_KEY });
+      handleRefresh();
       setMoveDialog({ open: false, entry: null, parentId: null });
       setSelectedIds([]);
       toast.success(t('toast.moved'), {
@@ -380,6 +421,10 @@ export function useInventory({
     deleteMutation.mutate(deleteDialog.entries.map((entry) => entry.id));
   };
 
+  const getUploadProgress = (entryId: string) => {
+    return uploadProgressById[entryId];
+  };
+
   const handleCreateFolderSubmit = () => {
     const nextName = createFolderDialog.value.trim();
     if (!nextName) return;
@@ -404,13 +449,9 @@ export function useInventory({
   };
 
   const handlePreviewEntry = async (entry: InventoryEntry) => {
-    if (!isPreviewableEntry(entry)) {
-      toast.error(t('toast.previewUnavailable'));
-      return;
-    }
-
     try {
       const response = await inventoryService.shareEntry(entry.id);
+
       setPreviewDialog({
         entry,
         url: response.data.signedUrl,
@@ -484,6 +525,7 @@ export function useInventory({
     entries,
     files,
     folders,
+    getUploadProgress,
     handleCreateFolderSubmit,
     handleDeleteConfirm,
     handleGoToBreadcrumb,

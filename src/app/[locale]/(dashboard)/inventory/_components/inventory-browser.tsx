@@ -28,6 +28,7 @@ type InventoryBrowserProps = {
   isSearching: boolean;
   isStorageLimitReached: boolean;
   locale: string;
+  getUploadProgress: (entryId: string) => number | undefined;
   onClearSearch: () => void;
   onCreateFolder: () => void;
   onDeleteEntry: (entry: InventoryEntry) => void;
@@ -60,6 +61,7 @@ export function InventoryBrowser({
   isSearching,
   isStorageLimitReached,
   locale,
+  getUploadProgress,
   onClearSearch,
   onCreateFolder,
   onDeleteEntry,
@@ -131,13 +133,19 @@ export function InventoryBrowser({
                 onPreview={onPreview}
                 onDownload={onDownload}
                 onDelete={onDeleteEntry}
+                onNavigateIntoFolder={onNavigateIntoFolder}
+                uploadProgress={getUploadProgress(entry.id)}
               />
             ))}
           </div>
         ) : (
           <InventoryTableView
+            t={t}
             entries={entries}
             locale={locale}
+            selectedIds={selectedIds}
+            selectionCount={selectionCount}
+            getUploadProgress={getUploadProgress}
             onDeleteEntry={onDeleteEntry}
             onDownload={onDownload}
             onMove={onMove}
@@ -148,9 +156,6 @@ export function InventoryBrowser({
             onSelectAll={onSelectAll}
             onSelectEntry={onSelectEntry}
             onShare={onShare}
-            selectedIds={selectedIds}
-            selectionCount={selectionCount}
-            t={t}
           />
         )}
 

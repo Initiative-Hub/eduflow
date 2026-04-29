@@ -384,7 +384,8 @@
       "processing": "Đang xử lý",
       "ready": "Sẵn sàng",
       "size": "Dung lượng",
-      "type": "Loại"
+      "type": "Loại",
+      "uploadProgress": "Đang tải lên {progress}%"
     },
     "hero": {
       "badge": "Không gian lưu trữ trực tiếp",
@@ -398,7 +399,8 @@
         "status": "Trạng thái",
         "type": "Loại",
         "updated": "Đã cập nhật"
-      }
+      },
+      "uploadProgress": "Đang tải lên {progress}%"
     },
     "moveDialog": {
       "description": "Chọn vị trí đích cho mục này.",

@@ -384,7 +384,8 @@
       "processing": "Processing",
       "ready": "Ready",
       "size": "Size",
-      "type": "Type"
+      "type": "Type",
+      "uploadProgress": "Uploading {progress}%"
     },
     "hero": {
       "badge": "Live storage workspace",
@@ -398,7 +399,8 @@
         "status": "Status",
         "type": "Type",
         "updated": "Updated"
-      }
+      },
+      "uploadProgress": "Uploading {progress}%"
     },
     "moveDialog": {
       "description": "Choose a destination for this item.",

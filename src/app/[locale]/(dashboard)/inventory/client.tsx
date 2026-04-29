@@ -55,6 +55,7 @@ export function InventoryClient() {
     deleteDialog,
     deletePending,
     entries,
+    getUploadProgress,
     handleCreateFolderSubmit,
     handleDeleteConfirm,
     handleGoToBreadcrumb,
@@ -225,6 +226,7 @@ export function InventoryClient() {
         onSelectEntry={handleSelectEntry}
         onShare={handleShareEntry}
         onUploadOpen={() => setUploadOpen(true)}
+        getUploadProgress={getUploadProgress}
         pageIndex={pageIndex}
         selectedIds={selectedIds}
         selectionCount={selectionCount}

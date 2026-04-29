@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { apiClient } from '@/lib/api';
 import type {
   InventoryAnalytics,
@@ -24,6 +25,9 @@ interface CreateFolderInput {
 interface UploadInput {
   parentId?: string | null;
   file: File;
+  onUploadStart?: (fileId: string) => void;
+  onUploadProgress?: (fileId: string, progress: number) => void;
+  onUploadComplete?: (fileId: string) => void;
 }
 
 interface UpdateEntryInput {
@@ -94,11 +98,21 @@ export const inventoryService = {
       size: input.file.size,
     });
 
-    await fetch(response.data.uploadUrl, {
-      method: 'PUT',
+    input.onUploadStart?.(response.data.fileId);
+
+    await axios.put(response.data.uploadUrl, input.file, {
       headers: response.data.uploadHeaders,
-      body: input.file,
+      onUploadProgress: (event) => {
+        if (!event.total) return;
+        const progress = Math.min(
+          100,
+          Math.max(0, Math.round((event.loaded / event.total) * 100))
+        );
+        input.onUploadProgress?.(response.data.fileId, progress);
+      },
     });
+
+    input.onUploadComplete?.(response.data.fileId);
 
     return apiClient.post<InventoryResponse<InventoryEntry>>(
       'v1/storage/confirm-upload',
