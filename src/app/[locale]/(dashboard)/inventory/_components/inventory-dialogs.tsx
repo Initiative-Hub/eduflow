@@ -176,7 +176,9 @@ export function InventoryDialogs({
                   {t('uploadDialog.dropzoneTitle')}
                 </div>
                 <div className="text-muted-foreground text-sm">
-                  {t('uploadDialog.dropzoneDescription')}
+                  {t('uploadDialog.dropzoneDescription', {
+                    size: formatFileSize(maxFileSizeBytes),
+                  })}
                 </div>
               </div>
               <Badge variant="outline">{t('uploadDialog.dropzoneHint')}</Badge>

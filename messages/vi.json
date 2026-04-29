@@ -467,7 +467,7 @@
     },
     "uploadDialog": {
       "description": "Thả một tệp vào thư mục hiện tại hoặc nhấp để chọn.",
-      "dropzoneDescription": "Mỗi lần chỉ một tệp, theo giới hạn tải lên của từng tệp.",
+      "dropzoneDescription": "Mỗi lần chỉ một tệp, giới hạn kích thước {size}.",
       "dropzoneHint": "Mỗi lần tải một tệp",
       "dropzoneTitle": "Thả tệp vào đây",
       "title": "Tải tệp lên"
