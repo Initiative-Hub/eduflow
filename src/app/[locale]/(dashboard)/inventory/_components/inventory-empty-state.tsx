@@ -8,7 +8,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty';
-import type { InventoryTranslations } from './inventory.types';
+import type { InventoryTranslations } from '../inventory.types';
 
 type InventoryEmptyStateProps = {
   isSearching: boolean;

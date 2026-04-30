@@ -4,6 +4,10 @@ export const STORAGE_MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024;
 
 export type InventoryEntryStatus = 'READY' | 'UPLOADING' | 'DELETED' | string;
 
+export type InventoryTranslations = ReturnType<
+  typeof import('next-intl').useTranslations
+>;
+
 export interface InventoryEntry {
   id: string;
   userId: string;

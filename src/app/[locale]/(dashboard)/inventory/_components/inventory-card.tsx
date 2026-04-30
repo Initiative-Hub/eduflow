@@ -32,13 +32,13 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
-import { inventoryService } from './inventory.service';
+import { inventoryService } from '../inventory.service';
+import type { InventoryEntry } from '../inventory.types';
 import {
   formatDate,
   formatFileSize,
   getEntryTypeLabel,
-} from './inventory.utils';
-import type { InventoryEntry } from './types';
+} from '../inventory.utils';
 
 interface FileCardProps {
   entry: InventoryEntry;

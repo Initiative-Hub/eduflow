@@ -12,13 +12,13 @@ import { InventoryPathBar } from './_components/inventory-pathbar';
 import { InventoryToolbar } from './_components/inventory-toolbar';
 import { SelectionBar } from './_components/selection-bar';
 import { inventoryService } from './inventory.service';
-import { formatFileSize } from './inventory.utils';
 import {
   type InventoryEntry,
   STORAGE_LIMIT_BYTES,
   STORAGE_MAX_FILE_SIZE_BYTES,
   STORAGE_PAGE_SIZE,
-} from './types';
+} from './inventory.types';
+import { formatFileSize } from './inventory.utils';
 import { useInventory } from './use-inventory';
 
 function resolveErrorMessage(error: unknown, fallback: string) {
@@ -131,14 +131,7 @@ export function InventoryClient() {
       handleNavigateIntoFolder(entry);
       return;
     }
-    if (
-      entry.mimeType?.startsWith('image/') ||
-      entry.mimeType === 'application/pdf'
-    ) {
-      handlePreviewEntry(entry);
-      return;
-    }
-    downloadEntry(entry);
+    handlePreviewEntry(entry);
   };
 
   return (

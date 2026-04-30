@@ -1,9 +1,11 @@
 import { HardDrive } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
+import type {
+  InventoryAnalytics,
+  InventoryTranslations,
+} from '../inventory.types';
 import { formatFileSize } from '../inventory.utils';
-import type { InventoryAnalytics } from '../types';
-import type { InventoryTranslations } from './inventory.types';
 
 type InventoryHeaderProps = {
   analytics?: InventoryAnalytics;

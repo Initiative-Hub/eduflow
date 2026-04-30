@@ -9,14 +9,14 @@ import { useDeferredValue, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import type { ApiError } from '@/lib/api/types';
 import { inventoryService } from './inventory.service';
-import { formatFileSize } from './inventory.utils';
 import {
   type InventoryBreadcrumb,
   type InventoryEntry,
   type InventoryMoveOption,
   type InventoryPreviewState,
   STORAGE_PAGE_SIZE,
-} from './types';
+} from './inventory.types';
+import { formatFileSize } from './inventory.utils';
 
 const INVENTORY_QUERY_KEY = ['inventory'] as const;
 const INVENTORY_LIST_QUERY_KEY = [...INVENTORY_QUERY_KEY, 'list'] as const;
@@ -566,9 +566,9 @@ export function useInventory({
     setRenameDialog,
     setUploadOpen,
     setViewType: handleViewTypeChange,
-    viewType,
     toggleSelection: handleSelectEntry,
     uploadOpen,
     uploadPending: uploadMutation.isPending,
+    viewType,
   };
 }

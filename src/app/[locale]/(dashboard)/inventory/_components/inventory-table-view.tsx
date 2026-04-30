@@ -27,16 +27,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import type { InventoryEntry, InventoryTranslations } from '../inventory.types';
 import {
   formatDate,
   formatFileSize,
   getEntryTypeLabel,
 } from '../inventory.utils';
-import type { InventoryEntry } from '../types';
-import type {
-  InventoryActionHandlers,
-  InventoryTranslations,
-} from './inventory.types';
 
 function getStatusVariant(entry: InventoryEntry) {
   if (entry.isFolder) return 'secondary' as const;
@@ -51,15 +47,23 @@ function getStatusLabel(entry: InventoryEntry, t: InventoryTranslations) {
   return entry.status;
 }
 
-type InventoryTableViewProps = InventoryActionHandlers & {
+type InventoryTableViewProps = {
+  t: InventoryTranslations;
   entries: InventoryEntry[];
-  getUploadProgress: (entryId: string) => number | undefined;
   locale: string;
-  onSelectAll: (checked: boolean) => void;
-  onSelectEntry: (entryId: string, checked: boolean) => void;
   selectedIds: string[];
   selectionCount: number;
-  t: InventoryTranslations;
+  getUploadProgress: (entryId: string) => number | undefined;
+  onDeleteEntry: (entry: InventoryEntry) => void;
+  onDownload: (entry: InventoryEntry) => void;
+  onMove: (entry: InventoryEntry) => void;
+  onNavigateIntoFolder: (entry: InventoryEntry) => void;
+  onOpen: (entry: InventoryEntry) => void;
+  onPreview: (entry: InventoryEntry) => void;
+  onRename: (entry: InventoryEntry) => void;
+  onSelectAll: (checked: boolean) => void;
+  onSelectEntry: (entryId: string, checked: boolean) => void;
+  onShare: (entry: InventoryEntry) => void;
 };
 
 export function InventoryTableView({

@@ -49,13 +49,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { inventoryService } from '../inventory.service';
-import { formatFileSize, getEntryTypeLabel } from '../inventory.utils';
 import type {
   InventoryEntry,
   InventoryMoveOption,
   InventoryPreviewState,
-} from '../types';
-import type { InventoryTranslations } from './inventory.types';
+  InventoryTranslations,
+} from '../inventory.types';
+import { formatFileSize, getEntryTypeLabel } from '../inventory.utils';
 
 const ROOT_OPTION_VALUE = '__root__';
 

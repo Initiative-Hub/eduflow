@@ -1,4 +1,4 @@
-import type { InventoryEntry } from './types';
+import type { InventoryEntry } from './inventory.types';
 
 export const formatFileSize = (bytes: number | null) => {
   if (bytes === null) return '—';

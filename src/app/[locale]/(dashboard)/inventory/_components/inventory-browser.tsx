@@ -13,9 +13,8 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import { InventoryCard } from '../inventory-card';
-import type { InventoryEntry } from '../types';
-import type { InventoryTranslations } from './inventory.types';
+import type { InventoryEntry, InventoryTranslations } from '../inventory.types';
+import { InventoryCard } from './inventory-card';
 import { InventoryEmptyState } from './inventory-empty-state';
 import { InventoryLoadingSkeleton } from './inventory-loading-skeleton';
 import { InventoryTableView } from './inventory-table-view';

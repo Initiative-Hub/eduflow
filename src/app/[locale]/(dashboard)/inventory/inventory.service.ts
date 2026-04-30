@@ -8,7 +8,7 @@ import type {
   InventoryResponse,
   InventoryShareResult,
   InventoryUploadSession,
-} from './types';
+} from './inventory.types';
 
 interface ListParams {
   parentId?: string | null;
