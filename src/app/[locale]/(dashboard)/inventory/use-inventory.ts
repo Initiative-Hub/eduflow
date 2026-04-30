@@ -225,7 +225,6 @@ export function useInventory({
             }));
           },
           onUploadComplete: (fileId) => {
-            queryClient.invalidateQueries({ queryKey: INVENTORY_QUERY_KEY });
             setUploadProgressById((current) => ({
               ...current,
               [fileId]: 100,
@@ -299,7 +298,7 @@ export function useInventory({
       return response.data;
     },
     onSuccess: async (entry) => {
-      handleRefresh();
+      await queryClient.invalidateQueries({ queryKey: INVENTORY_QUERY_KEY });
       setMoveDialog({ open: false, entry: null, parentId: null });
       setSelectedIds([]);
       toast.success(t('toast.moved'), {

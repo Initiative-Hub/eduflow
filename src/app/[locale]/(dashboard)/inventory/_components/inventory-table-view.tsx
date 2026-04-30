@@ -110,7 +110,6 @@ export function InventoryTableView({
         </TableHeader>
         <TableBody>
           {entries.map((entry) => {
-            const isFolder = entry.isFolder;
             const uploadProgress = getUploadProgress(entry.id);
             return (
               <TableRow key={entry.id}>
@@ -130,12 +129,12 @@ export function InventoryTableView({
                     className="flex items-center gap-3 text-left"
                   >
                     <div className="flex size-9 items-center justify-center rounded-md bg-muted text-muted-foreground">
-                      {isFolder ? <FolderOpen /> : <FileIcon />}
+                      {entry.isFolder ? <FolderOpen /> : <FileIcon />}
                     </div>
                     <div className="min-w-0">
                       <div className="truncate font-medium">{entry.name}</div>
                       <div className="text-muted-foreground text-xs">
-                        {isFolder
+                        {entry.isFolder
                           ? t('fileCard.folder')
                           : formatFileSize(entry.fileSize)}
                       </div>
@@ -146,7 +145,7 @@ export function InventoryTableView({
                   <Badge variant="outline">{getEntryTypeLabel(entry)}</Badge>
                 </TableCell>
                 <TableCell>
-                  {isFolder ? '—' : formatFileSize(entry.fileSize)}
+                  {entry.isFolder ? '—' : formatFileSize(entry.fileSize)}
                 </TableCell>
                 <TableCell>{formatDate(entry.updatedAt, locale)}</TableCell>
                 <TableCell>
@@ -154,20 +153,21 @@ export function InventoryTableView({
                     <Badge variant={getStatusVariant(entry)}>
                       {getStatusLabel(entry, t)}
                     </Badge>
-                    {!isFolder &&
-                      entry.status === 'UPLOADING' &&
-                      (typeof uploadProgress === 'number' ? (
-                        <>
-                          <Progress value={uploadProgress} className="h-1.5" />
+                    {!entry.isFolder && entry.status === 'UPLOADING' && (
+                      <div className="min-w-36 space-y-1">
+                        <Progress
+                          value={uploadProgress}
+                          className="h-2 animate-pulse"
+                        />
+                        {uploadProgress && (
                           <div className="text-[11px] text-muted-foreground">
-                            {t('list.uploadProgress', {
+                            {t('fileCard.uploadProgress', {
                               progress: uploadProgress,
                             })}
                           </div>
-                        </>
-                      ) : (
-                        <div className="h-1.5 w-full animate-pulse rounded-full bg-muted" />
-                      ))}
+                        )}
+                      </div>
+                    )}
                   </div>
                 </TableCell>
                 <TableCell className="text-right">
@@ -192,7 +192,7 @@ export function InventoryTableView({
                         <Move />
                         {t('actions.move')}
                       </DropdownMenuItem>
-                      {isFolder ? (
+                      {entry.isFolder ? (
                         <DropdownMenuItem
                           onClick={() => onNavigateIntoFolder(entry)}
                           className="cursor-pointer gap-2"

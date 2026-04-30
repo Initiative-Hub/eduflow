@@ -221,17 +221,13 @@ export function InventoryCard({
           </Badge>
           {!entry.isFolder && entry.status === 'UPLOADING' && (
             <div className="min-w-36 space-y-1">
-              {typeof uploadProgress === 'number' ? (
-                <>
-                  <Progress value={uploadProgress} className="h-1.5" />
-                  <div className="text-[11px] text-muted-foreground">
-                    {t('fileCard.uploadProgress', {
-                      progress: uploadProgress,
-                    })}
-                  </div>
-                </>
-              ) : (
-                <div className="h-1.5 w-full animate-pulse rounded-full bg-muted" />
+              <Progress value={uploadProgress} className="h-2 animate-pulse" />
+              {uploadProgress && (
+                <div className="text-[11px] text-muted-foreground">
+                  {t('fileCard.uploadProgress', {
+                    progress: uploadProgress,
+                  })}
+                </div>
               )}
             </div>
           )}
