@@ -1,3 +1,6 @@
+'use client';
+
+import { useQuery } from '@tanstack/react-query';
 import {
   Download,
   Edit2,
@@ -9,6 +12,8 @@ import {
   Share2,
   Trash2,
 } from 'lucide-react';
+import Image from 'next/image';
+import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -27,12 +32,46 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { inventoryService } from '../inventory.service';
 import type { InventoryEntry, InventoryTranslations } from '../inventory.types';
 import {
   formatDate,
   formatFileSize,
   getEntryTypeLabel,
 } from '../inventory.utils';
+
+function InventoryEntryPreview({ entry }: { entry: InventoryEntry }) {
+  const [previewImageFailed, setPreviewImageFailed] = useState(false);
+  const isImagePreview =
+    !entry.isFolder && Boolean(entry.mimeType?.startsWith('image/'));
+
+  const previewUrlQuery = useQuery({
+    queryKey: ['inventory', 'preview-url', entry.id],
+    queryFn: async () => {
+      const response = await inventoryService.shareEntry(entry.id);
+      return response.data.signedUrl;
+    },
+    enabled: isImagePreview,
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+  });
+
+  if (isImagePreview && previewUrlQuery.data && !previewImageFailed) {
+    return (
+      <Image
+        src={previewUrlQuery.data}
+        alt={entry.name}
+        width={36}
+        height={36}
+        unoptimized
+        onError={() => setPreviewImageFailed(true)}
+        className="size-9 rounded-md object-cover"
+      />
+    );
+  }
+
+  return entry.isFolder ? <FolderOpen /> : <FileIcon />;
+}
 
 function getStatusVariant(entry: InventoryEntry) {
   if (entry.isFolder) return 'secondary' as const;
@@ -133,7 +172,7 @@ export function InventoryTableView({
                     className="flex items-center gap-3 text-left"
                   >
                     <div className="flex size-9 items-center justify-center rounded-md bg-muted text-muted-foreground">
-                      {entry.isFolder ? <FolderOpen /> : <FileIcon />}
+                      <InventoryEntryPreview entry={entry} />
                     </div>
                     <div className="min-w-0">
                       <div className="truncate font-medium">{entry.name}</div>
