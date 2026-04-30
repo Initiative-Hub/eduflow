@@ -9,8 +9,10 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import type { InventoryBreadcrumb } from '../types';
-import type { InventoryTranslations } from './inventory.types';
+import type {
+  InventoryBreadcrumb,
+  InventoryTranslations,
+} from '../inventory.types';
 
 type InventoryPathBarProps = {
   breadcrumbItems: InventoryBreadcrumb[];

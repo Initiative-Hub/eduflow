@@ -1,4 +1,4 @@
-import type { InventoryEntry } from './types';
+import type { InventoryEntry } from './inventory.types';
 
 export const formatFileSize = (bytes: number | null) => {
   if (bytes === null) return '—';
@@ -26,13 +26,6 @@ export const getFileExtension = (fileName: string) => {
   const extension = fileName.split('.').pop();
   if (!extension) return 'FILE';
   return extension.toUpperCase().slice(0, 4);
-};
-
-export const isPreviewableEntry = (entry: InventoryEntry) => {
-  if (entry.isFolder) return false;
-  return (
-    entry.mimeType?.startsWith('image/') || entry.mimeType === 'application/pdf'
-  );
 };
 
 export const getEntryTypeLabel = (entry: InventoryEntry) => {
