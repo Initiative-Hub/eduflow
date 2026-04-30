@@ -1,3 +1,6 @@
+'use client';
+
+import { useQuery } from '@tanstack/react-query';
 import {
   Download,
   Edit2,
@@ -9,6 +12,8 @@ import {
   Share2,
   Trash2,
 } from 'lucide-react';
+import Image from 'next/image';
+import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -18,6 +23,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Progress } from '@/components/ui/progress';
 import {
   Table,
   TableBody,
@@ -26,21 +32,50 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { inventoryService } from '../inventory.service';
+import type { InventoryEntry, InventoryTranslations } from '../inventory.types';
 import {
   formatDate,
   formatFileSize,
   getEntryTypeLabel,
-  isPreviewableEntry,
 } from '../inventory.utils';
-import type { InventoryEntry } from '../types';
-import type {
-  InventoryActionHandlers,
-  InventoryTranslations,
-} from './inventory.types';
+
+function InventoryEntryPreview({ entry }: { entry: InventoryEntry }) {
+  const [previewImageFailed, setPreviewImageFailed] = useState(false);
+  const isImagePreview =
+    !entry.isFolder && Boolean(entry.mimeType?.startsWith('image/'));
+
+  const previewUrlQuery = useQuery({
+    queryKey: ['inventory', 'preview-url', entry.id],
+    queryFn: async () => {
+      const response = await inventoryService.shareEntry(entry.id);
+      return response.data.signedUrl;
+    },
+    enabled: isImagePreview,
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+  });
+
+  if (isImagePreview && previewUrlQuery.data && !previewImageFailed) {
+    return (
+      <Image
+        src={previewUrlQuery.data}
+        alt={entry.name}
+        width={36}
+        height={36}
+        unoptimized
+        onError={() => setPreviewImageFailed(true)}
+        className="size-9 rounded-md object-cover"
+      />
+    );
+  }
+
+  return entry.isFolder ? <FolderOpen /> : <FileIcon />;
+}
 
 function getStatusVariant(entry: InventoryEntry) {
   if (entry.isFolder) return 'secondary' as const;
-  if (entry.status === 'READY') return 'secondary' as const;
+  if (entry.status === 'READY') return 'default' as const;
   return 'outline' as const;
 }
 
@@ -51,19 +86,32 @@ function getStatusLabel(entry: InventoryEntry, t: InventoryTranslations) {
   return entry.status;
 }
 
-type InventoryTableViewProps = InventoryActionHandlers & {
+type InventoryTableViewProps = {
+  t: InventoryTranslations;
   entries: InventoryEntry[];
   locale: string;
-  onSelectAll: (checked: boolean) => void;
-  onSelectEntry: (entryId: string, checked: boolean) => void;
   selectedIds: string[];
   selectionCount: number;
-  t: InventoryTranslations;
+  getUploadProgress: (entryId: string) => number | undefined;
+  onDeleteEntry: (entry: InventoryEntry) => void;
+  onDownload: (entry: InventoryEntry) => void;
+  onMove: (entry: InventoryEntry) => void;
+  onNavigateIntoFolder: (entry: InventoryEntry) => void;
+  onOpen: (entry: InventoryEntry) => void;
+  onPreview: (entry: InventoryEntry) => void;
+  onRename: (entry: InventoryEntry) => void;
+  onSelectAll: (checked: boolean) => void;
+  onSelectEntry: (entryId: string, checked: boolean) => void;
+  onShare: (entry: InventoryEntry) => void;
 };
 
 export function InventoryTableView({
+  t,
   entries,
   locale,
+  selectedIds,
+  selectionCount,
+  getUploadProgress,
   onDeleteEntry,
   onDownload,
   onMove,
@@ -74,9 +122,6 @@ export function InventoryTableView({
   onSelectAll,
   onSelectEntry,
   onShare,
-  selectedIds,
-  selectionCount,
-  t,
 }: InventoryTableViewProps) {
   return (
     <div className="overflow-hidden rounded-2xl border border-border/60">
@@ -108,8 +153,7 @@ export function InventoryTableView({
         </TableHeader>
         <TableBody>
           {entries.map((entry) => {
-            const isFolder = entry.isFolder;
-            const previewable = isPreviewableEntry(entry);
+            const uploadProgress = getUploadProgress(entry.id);
             return (
               <TableRow key={entry.id}>
                 <TableCell>
@@ -128,12 +172,12 @@ export function InventoryTableView({
                     className="flex items-center gap-3 text-left"
                   >
                     <div className="flex size-9 items-center justify-center rounded-md bg-muted text-muted-foreground">
-                      {isFolder ? <FolderOpen /> : <FileIcon />}
+                      <InventoryEntryPreview entry={entry} />
                     </div>
                     <div className="min-w-0">
                       <div className="truncate font-medium">{entry.name}</div>
                       <div className="text-muted-foreground text-xs">
-                        {isFolder
+                        {entry.isFolder
                           ? t('fileCard.folder')
                           : formatFileSize(entry.fileSize)}
                       </div>
@@ -144,13 +188,30 @@ export function InventoryTableView({
                   <Badge variant="outline">{getEntryTypeLabel(entry)}</Badge>
                 </TableCell>
                 <TableCell>
-                  {isFolder ? '—' : formatFileSize(entry.fileSize)}
+                  {entry.isFolder ? '—' : formatFileSize(entry.fileSize)}
                 </TableCell>
                 <TableCell>{formatDate(entry.updatedAt, locale)}</TableCell>
                 <TableCell>
-                  <Badge variant={getStatusVariant(entry)}>
-                    {getStatusLabel(entry, t)}
-                  </Badge>
+                  <div className="min-w-32 space-y-1">
+                    <Badge variant={getStatusVariant(entry)}>
+                      {getStatusLabel(entry, t)}
+                    </Badge>
+                    {!entry.isFolder && entry.status === 'UPLOADING' && (
+                      <div className="min-w-36 space-y-1">
+                        <Progress
+                          value={uploadProgress}
+                          className="h-2 animate-pulse"
+                        />
+                        {uploadProgress && (
+                          <div className="text-[11px] text-muted-foreground">
+                            {t('fileCard.uploadProgress', {
+                              progress: uploadProgress,
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
@@ -174,7 +235,7 @@ export function InventoryTableView({
                         <Move />
                         {t('actions.move')}
                       </DropdownMenuItem>
-                      {isFolder ? (
+                      {entry.isFolder ? (
                         <DropdownMenuItem
                           onClick={() => onNavigateIntoFolder(entry)}
                           className="cursor-pointer gap-2"
@@ -183,8 +244,8 @@ export function InventoryTableView({
                           {t('actions.open')}
                         </DropdownMenuItem>
                       ) : (
-                        <>
-                          {previewable && (
+                        entry.status === 'READY' && (
+                          <>
                             <DropdownMenuItem
                               onClick={() => onPreview(entry)}
                               className="cursor-pointer gap-2"
@@ -192,22 +253,23 @@ export function InventoryTableView({
                               <Eye />
                               {t('actions.preview')}
                             </DropdownMenuItem>
-                          )}
-                          <DropdownMenuItem
-                            onClick={() => onShare(entry)}
-                            className="cursor-pointer gap-2"
-                          >
-                            <Share2 />
-                            {t('actions.share')}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => onDownload(entry)}
-                            className="cursor-pointer gap-2"
-                          >
-                            <Download />
-                            {t('actions.download')}
-                          </DropdownMenuItem>
-                        </>
+
+                            <DropdownMenuItem
+                              onClick={() => onShare(entry)}
+                              className="cursor-pointer gap-2"
+                            >
+                              <Share2 />
+                              {t('actions.share')}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => onDownload(entry)}
+                              className="cursor-pointer gap-2"
+                            >
+                              <Download />
+                              {t('actions.download')}
+                            </DropdownMenuItem>
+                          </>
+                        )
                       )}
                       <DropdownMenuItem
                         onClick={() => onDeleteEntry(entry)}

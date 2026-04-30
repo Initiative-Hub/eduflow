@@ -9,6 +9,7 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { createS3Client } from './s3-client';
 
 const DEFAULT_READ_EXPIRES_SECONDS = 30 * 60;
+export const STORAGE_MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024;
 
 export const FILE_INVENTORY_BUCKET_NAME = 'eduflow-inventory';
 
@@ -22,9 +23,7 @@ function sanitizeSegment(value: string) {
 }
 
 function normalizeRelativePath(value?: string) {
-  if (!value) {
-    return '';
-  }
+  if (!value) return '';
 
   return value
     .split('/')
@@ -49,7 +48,7 @@ export function buildInventoryObjectKey(
   return `${basePrefix}/${randomUUID()}-${safeName}`;
 }
 
-export async function checkInventoryObjectExists(options: {
+export async function getInventoryObjectMetadata(options: {
   objectKey: string;
 }) {
   try {
@@ -58,10 +57,19 @@ export async function checkInventoryObjectExists(options: {
       Key: options.objectKey,
     });
 
-    await createS3Client().send(command);
-    return true;
+    const response = await createS3Client().send(command);
+    return {
+      exists: true,
+      contentLength:
+        typeof response.ContentLength === 'number'
+          ? response.ContentLength
+          : null,
+    };
   } catch {
-    return false;
+    return {
+      exists: false,
+      contentLength: null,
+    };
   }
 }
 
@@ -135,10 +143,5 @@ export async function createInventoryWriteSignedUrl(options: {
     expiresIn: options.expiresInSeconds ?? DEFAULT_READ_EXPIRES_SECONDS,
   });
 
-  return {
-    uploadUrl,
-    headers: {
-      'content-type': options.contentType,
-    },
-  };
+  return uploadUrl;
 }
