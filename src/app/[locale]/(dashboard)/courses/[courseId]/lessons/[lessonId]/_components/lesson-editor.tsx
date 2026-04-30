@@ -10,9 +10,9 @@ import { Typography } from '@tiptap/extension-typography';
 import { Selection } from '@tiptap/extensions';
 import { EditorContent, EditorContext, useEditor } from '@tiptap/react';
 import { StarterKit } from '@tiptap/starter-kit';
-import { Save } from 'lucide-react';
+import { Edit3, Save } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { HorizontalRule } from '@/components/tiptap-node/horizontal-rule-node/horizontal-rule-node-extension';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,31 +33,33 @@ import './lesson-editor.scss';
 interface LessonEditorProps {
   title: string;
   content: TiptapDocument;
-  readOnly?: boolean;
+  canEdit?: boolean;
   emptyContentLabel: string;
   isUpdatingLesson?: boolean;
-  onTitleChange?: (value: string) => void;
-  onContentChange?: (value: TiptapDocument) => void;
-  onCancel?: () => void;
-  onSave?: (content: TiptapDocument) => void;
+  onSave?: (
+    data: { title: string; content: TiptapDocument },
+    options: { onSuccess: () => void }
+  ) => void;
 }
 
 export function LessonEditor({
   title,
   content,
-  readOnly = false,
+  canEdit = false,
   emptyContentLabel,
   isUpdatingLesson = false,
-  onTitleChange,
-  onContentChange,
-  onCancel,
   onSave,
 }: LessonEditorProps) {
-  const t = useTranslations('Courses.LessonEditor');
+  const tEditor = useTranslations('Courses.LessonEditor');
+  const tHeader = useTranslations('Courses.LessonHeader');
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState(title);
+  const [editContent, setEditContent] = useState(content);
 
   const editor = useEditor({
     immediatelyRender: false,
-    editable: !readOnly,
+    editable: false,
     editorProps: {
       attributes: {
         'aria-label': 'Lesson content editor',
@@ -71,8 +73,8 @@ export function LessonEditor({
       StarterKit.configure({
         horizontalRule: false,
         link: {
-          openOnClick: readOnly,
-          enableClickSelection: !readOnly,
+          openOnClick: true,
+          enableClickSelection: true,
         },
       }),
       HorizontalRule,
@@ -87,78 +89,129 @@ export function LessonEditor({
       Selection,
     ],
     content,
-    onUpdate: ({ editor: currentEditor }) => {
-      onContentChange?.(currentEditor.getJSON() as TiptapDocument);
+    onUpdate: ({ editor }) => {
+      setEditContent(editor.getJSON() as TiptapDocument);
     },
   });
 
   useEffect(() => {
     if (!editor) return;
-    editor.setEditable(!readOnly);
-  }, [editor, readOnly]);
+    editor.setEditable(isEditing);
+  }, [editor, isEditing]);
 
   useEffect(() => {
     if (!editor) return;
 
-    if (JSON.stringify(editor.getJSON()) !== JSON.stringify(content)) {
+    if (
+      !isEditing &&
+      JSON.stringify(editor.getJSON()) !== JSON.stringify(content)
+    ) {
       editor.commands.setContent(content, { emitUpdate: false });
     }
-  }, [content, editor]);
+  }, [content, editor, isEditing]);
 
-  const isEmptyReadOnlyContent = readOnly && isTiptapDocumentEmpty(content);
+  useEffect(() => {
+    if (isEditing) return;
+    setEditTitle(title);
+    setEditContent(content);
+  }, [content, isEditing, title]);
+
+  const handleStartEditing = () => {
+    setEditTitle(title);
+    setEditContent(content);
+    editor?.commands.setContent(content, { emitUpdate: false });
+    setIsEditing(true);
+  };
+
+  const handleCancelEditing = () => {
+    setEditTitle(title);
+    setEditContent(content);
+    editor?.commands.setContent(content, { emitUpdate: false });
+    setIsEditing(false);
+  };
+
+  const handleSave = () => {
+    onSave?.(
+      {
+        title: editTitle,
+        content:
+          (editor?.getJSON() as TiptapDocument | undefined) ?? editContent,
+      },
+      { onSuccess: () => setIsEditing(false) }
+    );
+  };
+
+  const isEmptyContent = isTiptapDocumentEmpty(content);
 
   return (
-    <div className="flex min-h-100 flex-col gap-6">
-      {readOnly ? (
-        <h1 className="font-bold text-3xl tracking-tight">{title}</h1>
-      ) : (
-        <div className="space-y-2">
-          <label className="font-medium text-sm" htmlFor="lesson-title">
-            {t('title')}
-          </label>
-          <Input
-            id="lesson-title"
-            value={title}
-            onChange={(event) => onTitleChange?.(event.target.value)}
-            className="font-semibold text-lg"
-          />
-        </div>
-      )}
-
-      <div className="lesson-editor-shell">
-        <EditorContext.Provider value={{ editor }}>
-          {!readOnly && <LessonEditorToolbar editor={editor} />}
-
-          {isEmptyReadOnlyContent ? (
-            <p className="min-h-100 text-muted-foreground italic">
-              {emptyContentLabel}
-            </p>
-          ) : (
-            <EditorContent
-              editor={editor}
-              role="presentation"
-              className="lesson-editor-content"
+    <EditorContext.Provider value={{ editor }}>
+      <div className="sticky top-14 z-30 -mx-6 flex min-h-16 items-center justify-between gap-4 border-foreground/20 border-b bg-background/95 px-6 py-3 backdrop-blur-sm md:-mx-10 md:px-10 lg:-mx-12 lg:px-12">
+        <div className="min-w-0 flex-1">
+          {isEditing ? (
+            <Input
+              id="lesson-title"
+              aria-label={tEditor('title')}
+              value={editTitle}
+              onChange={(event) => setEditTitle(event.target.value)}
+              className="h-10 max-w-2xl font-semibold text-lg"
+              disabled={isUpdatingLesson}
             />
+          ) : (
+            <h1 className="truncate font-bold text-xl tracking-tight md:text-2xl">
+              {title}
+            </h1>
           )}
-        </EditorContext.Provider>
+        </div>
+
+        {isEditing ? (
+          <div className="flex shrink-0 items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCancelEditing}
+              disabled={isUpdatingLesson}
+            >
+              {tEditor('cancel')}
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleSave}
+              disabled={isUpdatingLesson || !editor}
+            >
+              <Save className="mr-2 h-4 w-4" />
+              {isUpdatingLesson ? tEditor('saving') : tEditor('save')}
+            </Button>
+          </div>
+        ) : canEdit ? (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleStartEditing}
+            disabled={!editor}
+          >
+            <Edit3 className="mr-2 h-4 w-4" />
+            {tHeader('edit')}
+          </Button>
+        ) : null}
       </div>
 
-      {!readOnly && (
-        <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={onCancel}>
-            {t('cancel')}
-          </Button>
-          <Button
-            onClick={() =>
-              editor && onSave?.(editor.getJSON() as TiptapDocument)
-            }
-            disabled={isUpdatingLesson || !editor}
-          >
-            <Save className="mr-2 h-4 w-4" />
-            {isUpdatingLesson ? t('saving') : t('save')}
-          </Button>
+      {isEditing && (
+        <div className="lesson-toolbar-bar sticky top-30 z-20 -mx-6 border-foreground/20 border-b bg-background/95 px-6 py-2 backdrop-blur-sm md:-mx-10 md:px-10 lg:-mx-12 lg:px-12">
+          <LessonEditorToolbar />
         </div>
       )}
-    </div>
+
+      {!isEditing && isEmptyContent ? (
+        <div className="flex min-h-100 items-center justify-center">
+          <p className="text-muted-foreground italic">{emptyContentLabel}</p>
+        </div>
+      ) : (
+        <EditorContent
+          editor={editor}
+          role="presentation"
+          className="lesson-editor-content"
+        />
+      )}
+    </EditorContext.Provider>
   );
 }

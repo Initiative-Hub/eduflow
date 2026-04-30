@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import type { Editor } from '@tiptap/react';
+import { useEffect, useState } from 'react';
 import { ArrowLeftIcon } from '@/components/tiptap-icons/arrow-left-icon';
 import { HighlighterIcon } from '@/components/tiptap-icons/highlighter-icon';
 import { LinkIcon } from '@/components/tiptap-icons/link-icon';
@@ -29,13 +28,7 @@ import {
   ToolbarGroup,
   ToolbarSeparator,
 } from '@/components/tiptap-ui-primitive/toolbar';
-import { useCursorVisibility } from '@/hooks/use-cursor-visibility';
 import { useIsBreakpoint } from '@/hooks/use-is-breakpoint';
-import { useWindowSize } from '@/hooks/use-window-size';
-
-interface LessonEditorToolbarProps {
-  editor: Editor | null;
-}
 
 function MainToolbarContent({
   onHighlighterClick,
@@ -123,17 +116,11 @@ function MobileToolbarContent({
   );
 }
 
-export function LessonEditorToolbar({ editor }: LessonEditorToolbarProps) {
+export function LessonEditorToolbar() {
   const isMobile = useIsBreakpoint();
-  const { height } = useWindowSize();
-  const toolbarRef = useRef<HTMLDivElement>(null);
   const [mobileView, setMobileView] = useState<'main' | 'highlighter' | 'link'>(
     'main'
   );
-  const rect = useCursorVisibility({
-    editor,
-    overlayHeight: toolbarRef.current?.getBoundingClientRect().height ?? 0,
-  });
 
   useEffect(() => {
     if (!isMobile && mobileView !== 'main') {
@@ -142,12 +129,7 @@ export function LessonEditorToolbar({ editor }: LessonEditorToolbarProps) {
   }, [isMobile, mobileView]);
 
   return (
-    <Toolbar
-      ref={toolbarRef}
-      style={
-        isMobile ? { bottom: `calc(100% - ${height - rect.y}px)` } : undefined
-      }
-    >
+    <Toolbar>
       {mobileView === 'main' ? (
         <MainToolbarContent
           onHighlighterClick={() => setMobileView('highlighter')}

@@ -37,12 +37,7 @@ export function LessonDetailsClient({
   const { lesson, isLoading: isLessonLoading } = useLesson(lessonId);
   const { isUpdatingLesson, handleUpdateLesson } = useUpdateLesson(courseId);
 
-  const [isEditing, setIsEditing] = useState(false);
   const [showOutline, setShowOutline] = useState(false);
-  const [editTitle, setEditTitle] = useState('');
-  const [editContent, setEditContent] = useState<TiptapDocument>(() =>
-    lessonContentToTiptapDocument(null)
-  );
 
   const lessonContent = lessonContentToTiptapDocument(lesson?.content ?? null);
 
@@ -56,67 +51,54 @@ export function LessonDetailsClient({
     [modules, lessonId]
   );
 
-  const handleSave = (content: TiptapDocument) => {
+  const handleSave = (
+    data: { title: string; content: TiptapDocument },
+    options: { onSuccess: () => void }
+  ) => {
     handleUpdateLesson(
-      { lessonId, title: editTitle, content },
-      { onSuccess: () => setIsEditing(false) }
+      { lessonId, title: data.title, content: data.content },
+      { onSuccess: options.onSuccess }
     );
   };
 
   const isLoading = isModulesLoading || isLessonLoading;
 
   return (
-    <div className="space-y-8">
+    <>
       <LessonHeader
         courseId={courseId}
         lessonId={lessonId}
         currentModuleTitle={currentModule?.title || moduleFallbackTitle}
         currentLessonTitle={lesson?.title || lessonFallbackTitle}
-        isEditing={isEditing}
-        setIsEditing={setIsEditing}
-        setEditTitle={setEditTitle}
-        setEditContent={setEditContent}
-        originalContent={lessonContent}
         showOutline={showOutline}
         setShowOutline={setShowOutline}
       />
 
-      <div className="flex w-full flex-col">
+      <div className="flex flex-col">
         {isLoading ? (
-          <div className="w-full animate-pulse space-y-4">
-            <div className="h-10 w-2/3 rounded-md bg-muted" />
-            <div className="h-64 w-full rounded-md bg-muted" />
-          </div>
+          <div className="mt-4 min-h-100 animate-pulse rounded-md bg-muted" />
         ) : !lesson ? (
-          <p className="w-full py-10 text-center text-muted-foreground">
+          <p className="py-10 text-center text-muted-foreground">
             {notFoundLabel}
           </p>
-        ) : isEditing ? (
-          <LessonEditor
-            key={`edit-${lesson.id}`}
-            title={editTitle}
-            content={editContent}
-            emptyContentLabel={emptyContentLabel}
-            isUpdatingLesson={isUpdatingLesson}
-            onTitleChange={setEditTitle}
-            onContentChange={setEditContent}
-            onCancel={() => setIsEditing(false)}
-            onSave={handleSave}
-          />
         ) : (
           <LessonEditor
-            key={`view-${lesson.id}`}
+            key={lesson.id}
             title={lesson.title}
             content={lessonContent}
+            canEdit={lesson.canEdit}
             emptyContentLabel={emptyContentLabel}
-            readOnly
+            isUpdatingLesson={isUpdatingLesson}
+            onSave={handleSave}
           />
         )}
       </div>
 
       {!isLoading && lesson && (
-        <LessonPagination courseId={courseId} prev={prev} next={next} />
+        <div className="mt-8">
+          <LessonPagination courseId={courseId} prev={prev} next={next} />
+        </div>
       )}
-    </div>
+    </>
   );
 }

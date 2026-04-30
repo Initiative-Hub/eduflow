@@ -7,6 +7,7 @@ export interface Lesson {
   title: string;
   orderIndex: number;
   content: Record<string, unknown> | null;
+  canEdit?: boolean;
 }
 
 export interface Module {
