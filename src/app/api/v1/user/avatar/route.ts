@@ -16,6 +16,36 @@ const uploadAvatarMetaSchema = z.object({
   size: z.number().int().positive().max(AVATAR_MAX_FILE_SIZE_BYTES),
 });
 
+/**
+ * @swagger
+ * /api/v1/user/avatar:
+ *   post:
+ *     tags:
+ *       - User
+ *     summary: Upload current user avatar
+ *     security:
+ *       - SessionCookie: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [file]
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Avatar uploaded
+ *       400:
+ *         description: Invalid request payload
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Failed to upload avatar
+ */
 export const POST = withAuth(async (req, session) => {
   try {
     const formData = await req.formData();
@@ -79,6 +109,24 @@ export const POST = withAuth(async (req, session) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/v1/user/avatar:
+ *   delete:
+ *     tags:
+ *       - User
+ *     summary: Remove current user avatar
+ *     security:
+ *       - SessionCookie: []
+ *     responses:
+ *       200:
+ *         description: Avatar removed
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Failed to remove avatar
+ *
+ */
 export const DELETE = withAuth(async (_req, session) => {
   const userId = session.user.id;
 

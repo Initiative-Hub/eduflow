@@ -9,6 +9,43 @@ const confirmUploadSchema = z.object({
   etag: z.string().trim().max(255).optional(),
 });
 
+/**
+ * @swagger
+ * /api/v1/storage/confirm-upload:
+ *   post:
+ *     tags:
+ *       - Storage
+ *     summary: Confirm a completed file upload
+ *     security:
+ *       - SessionCookie: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [fileId]
+ *             properties:
+ *               fileId:
+ *                 type: string
+ *                 format: uuid
+ *               checksumSha256:
+ *                 type: string
+ *               etag:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Uploaded file confirmed
+ *       400:
+ *         description: Invalid request payload
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: File or uploaded object not found
+ *       500:
+ *         description: Internal server error
+ *
+ */
 export const POST = withAuth(async (req, session) => {
   try {
     const body = await req.json();

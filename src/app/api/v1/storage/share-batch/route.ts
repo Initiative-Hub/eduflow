@@ -13,6 +13,45 @@ const shareBatchSchema = z.object({
     .optional(),
 });
 
+/**
+ * @swagger
+ * /api/v1/storage/share-batch:
+ *   post:
+ *     tags:
+ *       - Storage
+ *     summary: Create share URLs for multiple files
+ *     security:
+ *       - SessionCookie: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [fileIds]
+ *             properties:
+ *               fileIds:
+ *                 type: array
+ *                 minItems: 1
+ *                 maxItems: 100
+ *                 items:
+ *                   type: string
+ *                   format: uuid
+ *               expiresIn:
+ *                 type: integer
+ *                 minimum: 60
+ *                 maximum: 604800
+ *     responses:
+ *       200:
+ *         description: Share URLs created
+ *       400:
+ *         description: Invalid request payload
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Internal server error
+ *
+ */
 export const POST = withAuth(async (req, session) => {
   try {
     const body = await req.json();

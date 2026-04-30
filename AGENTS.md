@@ -92,6 +92,7 @@ for any tasks.).
 - **Zod First**: Validate API route params and request bodies with Zod before handing them to Prisma or auth logic.
 - **Clear Responses**: Return clear `400`/`401`/`403` responses from route handlers instead of letting invalid payloads fall through to generic errors.
 - **Visible Request Failures**: Surface client-side request failures through visible errors or toasts; the shared API client already centralizes error messaging for browser requests.
+- **Swagger Placement**: Keep each route handler's Swagger JSDoc block immediately above the exported `GET`/`POST`/`PUT`/`PATCH`/`DELETE` handler it documents; split multi-method route docs into one block per handler.
 
 ### 6.4 Tooling & CI
 

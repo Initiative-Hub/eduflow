@@ -1,3 +1,12 @@
+import { z } from 'zod';
+import { auth } from '@/lib/auth';
+import { validateResetPasswordToken } from '@/lib/token-validation';
+
+const resetPasswordSchema = z.object({
+  password: z.string().min(8),
+  token: z.string(),
+});
+
 /**
  * @swagger
  * /api/auth/reset-password:
@@ -21,16 +30,8 @@
  *         description: Password reset
  *       400:
  *         description: Invalid payload
+ *
  */
-import { z } from 'zod';
-import { auth } from '@/lib/auth';
-import { validateResetPasswordToken } from '@/lib/token-validation';
-
-const resetPasswordSchema = z.object({
-  password: z.string().min(8),
-  token: z.string(),
-});
-
 export async function POST(request: Request) {
   const body = await request.json();
   const parsedBody = resetPasswordSchema.safeParse(body);

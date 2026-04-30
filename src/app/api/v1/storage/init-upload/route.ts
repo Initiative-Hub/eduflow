@@ -11,6 +11,48 @@ const initUploadSchema = z.object({
   size: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
 });
 
+/**
+ * @swagger
+ * /api/v1/storage/init-upload:
+ *   post:
+ *     tags:
+ *       - Storage
+ *     summary: Initialize a file upload
+ *     security:
+ *       - SessionCookie: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [fileName, contentType, size]
+ *             properties:
+ *               parentId:
+ *                 type: string
+ *                 format: uuid
+ *                 nullable: true
+ *               path:
+ *                 type: string
+ *               fileName:
+ *                 type: string
+ *               contentType:
+ *                 type: string
+ *               size:
+ *                 type: integer
+ *     responses:
+ *       200:
+ *         description: Upload URL and pending file metadata
+ *       400:
+ *         description: Invalid request payload
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Parent folder not found
+ *       500:
+ *         description: Internal server error
+ *
+ */
 export const POST = withAuth(async (req, session) => {
   try {
     const body = await req.json();

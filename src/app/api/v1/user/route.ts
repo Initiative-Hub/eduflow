@@ -1,3 +1,7 @@
+import { NextResponse } from 'next/server';
+import { withAuth, withRoles } from '@/lib/api/middlewares';
+import { UserService } from '@/services/UserService';
+
 /**
  * @swagger
  * /api/v1/user:
@@ -14,24 +18,7 @@
  *         description: Unauthorized
  *       404:
  *         description: User not found
- *   post:
- *     tags:
- *       - User
- *     summary: Create a user (admin only)
- *     security:
- *       - SessionCookie: []
- *     responses:
- *       200:
- *         description: Stub response
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden
  */
-import { NextResponse } from 'next/server';
-import { withAuth, withRoles } from '@/lib/api/middlewares';
-import { UserService } from '@/services/UserService';
-
 export const GET = withAuth(async (_req, session) => {
   try {
     const userId = session?.user?.id as string;
@@ -50,6 +37,23 @@ export const GET = withAuth(async (_req, session) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/v1/user:
+ *   post:
+ *     tags:
+ *       - User
+ *     summary: Create a user (admin only)
+ *     security:
+ *       - SessionCookie: []
+ *     responses:
+ *       200:
+ *         description: Stub response
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ */
 export const POST = withRoles(['ADMIN'], async (_req) => {
   try {
     return NextResponse.json({
@@ -64,6 +68,35 @@ export const POST = withRoles(['ADMIN'], async (_req) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/v1/user:
+ *   patch:
+ *     tags:
+ *       - User
+ *     summary: Update current user profile
+ *     security:
+ *       - SessionCookie: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               bio:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Updated user profile
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Internal server error
+ *
+ */
 export const PATCH = withAuth(async (req, session) => {
   try {
     const userId = session?.user?.id as string;

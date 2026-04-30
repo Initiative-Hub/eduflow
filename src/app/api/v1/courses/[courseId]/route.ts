@@ -7,6 +7,33 @@ const patchCourseSchema = z.object({
   isPublished: z.boolean(),
 });
 
+/**
+ * @swagger
+ * /api/v1/courses/{courseId}:
+ *   get:
+ *     tags:
+ *       - Courses
+ *     summary: Get a course by id
+ *     security:
+ *       - SessionCookie: []
+ *     parameters:
+ *       - in: path
+ *         name: courseId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Course details
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Course not found
+ *       500:
+ *         description: Internal server error
+ */
 export const GET = withAuth(async (_req, sessionData, { params }) => {
   try {
     const { courseId } = await params;
@@ -30,6 +57,44 @@ export const GET = withAuth(async (_req, sessionData, { params }) => {
     );
   }
 });
+/**
+ * @swagger
+ * /api/v1/courses/{courseId}:
+ *   patch:
+ *     tags:
+ *       - Courses
+ *     summary: Update course publish status
+ *     security:
+ *       - SessionCookie: []
+ *     parameters:
+ *       - in: path
+ *         name: courseId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [isPublished]
+ *             properties:
+ *               isPublished:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: Course updated
+ *       400:
+ *         description: Invalid data
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       500:
+ *         description: Internal server error
+ *
+ */
 export const PATCH = withAuth(
   withRoles(['TEACHER'], async (req, sessionData, { params }) => {
     try {

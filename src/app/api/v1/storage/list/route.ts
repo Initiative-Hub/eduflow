@@ -10,6 +10,51 @@ const listQuerySchema = z.object({
   offset: z.coerce.number().int().min(0).default(0),
 });
 
+/**
+ * @swagger
+ * /api/v1/storage/list:
+ *   get:
+ *     tags:
+ *       - Storage
+ *     summary: List files and folders
+ *     security:
+ *       - SessionCookie: []
+ *     parameters:
+ *       - in: query
+ *         name: parentId
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           default: 50
+ *       - in: query
+ *         name: offset
+ *         schema:
+ *           type: integer
+ *           minimum: 0
+ *           default: 0
+ *     responses:
+ *       200:
+ *         description: Directory items and pagination metadata
+ *       400:
+ *         description: Invalid query params
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Parent folder not found
+ *       500:
+ *         description: Internal server error
+ *
+ */
 export const GET = withAuth(async (req, session) => {
   try {
     const { searchParams } = new URL(req.url);

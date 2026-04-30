@@ -7,6 +7,32 @@ const createChatSchema = z.object({
   firstMessage: z.string().min(1),
 });
 
+/**
+ * @swagger
+ * /api/chat/create:
+ *   post:
+ *     tags:
+ *       - Chat
+ *     summary: Create a guest chat session
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [firstMessage]
+ *             properties:
+ *               firstMessage:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Chat created
+ *       400:
+ *         description: Invalid request payload
+ *       500:
+ *         description: Internal server error
+ *
+ */
 export async function POST(req: Request) {
   try {
     const body = await req.json();

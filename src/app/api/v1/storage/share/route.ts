@@ -13,6 +13,42 @@ const shareQuerySchema = z.object({
     .optional(),
 });
 
+/**
+ * @swagger
+ * /api/v1/storage/share:
+ *   get:
+ *     tags:
+ *       - Storage
+ *     summary: Create a share URL for a file
+ *     security:
+ *       - SessionCookie: []
+ *     parameters:
+ *       - in: query
+ *         name: fileId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: expiresIn
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 60
+ *           maximum: 604800
+ *     responses:
+ *       200:
+ *         description: Share URL created
+ *       400:
+ *         description: Invalid query params
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: File not found
+ *       500:
+ *         description: Internal server error
+ *
+ */
 export const GET = withAuth(async (req, session) => {
   try {
     const { searchParams } = new URL(req.url);

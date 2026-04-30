@@ -7,6 +7,41 @@ const deleteSchema = z.object({
   fileIds: z.array(z.string().uuid()).min(1).max(100),
 });
 
+/**
+ * @swagger
+ * /api/v1/storage/delete:
+ *   delete:
+ *     tags:
+ *       - Storage
+ *     summary: Delete files or folders
+ *     security:
+ *       - SessionCookie: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [fileIds]
+ *             properties:
+ *               fileIds:
+ *                 type: array
+ *                 minItems: 1
+ *                 maxItems: 100
+ *                 items:
+ *                   type: string
+ *                   format: uuid
+ *     responses:
+ *       200:
+ *         description: Delete result
+ *       400:
+ *         description: Invalid request payload
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Internal server error
+ *
+ */
 export const DELETE = withAuth(async (req, session) => {
   try {
     const body = await req.json();
