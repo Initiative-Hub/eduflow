@@ -23,6 +23,8 @@ type InventoryBrowserProps = {
   currentPage: number;
   endItem: number;
   entries: InventoryEntry[];
+  files: InventoryEntry[];
+  folders: InventoryEntry[];
   isLoading: boolean;
   isSearching: boolean;
   isStorageLimitReached: boolean;
@@ -56,6 +58,8 @@ export function InventoryBrowser({
   currentPage,
   endItem,
   entries,
+  files,
+  folders,
   isLoading,
   isSearching,
   isStorageLimitReached,
@@ -119,23 +123,41 @@ export function InventoryBrowser({
             t={t}
           />
         ) : viewType === 'grid' ? (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {entries.map((entry) => (
-              <InventoryCard
-                key={entry.id}
-                entry={entry}
-                locale={locale}
-                onOpen={onOpen}
-                onRename={onRename}
-                onMove={onMove}
-                onShare={onShare}
-                onPreview={onPreview}
-                onDownload={onDownload}
-                onDelete={onDeleteEntry}
-                onNavigateIntoFolder={onNavigateIntoFolder}
-                uploadProgress={getUploadProgress(entry.id)}
-              />
-            ))}
+          <div className="flex flex-col gap-6">
+            {folders.length > 0 && (
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {folders.map((entry) => (
+                  <InventoryCard
+                    key={entry.id}
+                    entry={entry}
+                    locale={locale}
+                    onOpen={onOpen}
+                    onRename={onRename}
+                    onMove={onMove}
+                    onDelete={onDeleteEntry}
+                    onNavigateIntoFolder={onNavigateIntoFolder}
+                  />
+                ))}
+              </div>
+            )}
+            {files.length > 0 && (
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {files.map((entry) => (
+                  <InventoryCard
+                    key={entry.id}
+                    entry={entry}
+                    locale={locale}
+                    onRename={onRename}
+                    onMove={onMove}
+                    onShare={onShare}
+                    onPreview={onPreview}
+                    onDownload={onDownload}
+                    onDelete={onDeleteEntry}
+                    uploadProgress={getUploadProgress(entry.id)}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         ) : (
           <InventoryTableView

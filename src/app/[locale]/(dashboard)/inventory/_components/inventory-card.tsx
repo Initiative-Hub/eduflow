@@ -43,14 +43,14 @@ import {
 interface FileCardProps {
   entry: InventoryEntry;
   locale: string;
-  onOpen: (entry: InventoryEntry) => void;
+  onOpen?: (entry: InventoryEntry) => void;
   onRename: (entry: InventoryEntry) => void;
   onMove: (entry: InventoryEntry) => void;
-  onShare: (entry: InventoryEntry) => void;
-  onPreview: (entry: InventoryEntry) => void;
-  onDownload: (entry: InventoryEntry) => void;
+  onShare?: (entry: InventoryEntry) => void;
+  onPreview?: (entry: InventoryEntry) => void;
+  onDownload?: (entry: InventoryEntry) => void;
   onDelete: (entry: InventoryEntry) => void;
-  onNavigateIntoFolder: (entry: InventoryEntry) => void;
+  onNavigateIntoFolder?: (entry: InventoryEntry) => void;
   uploadProgress?: number;
 }
 
@@ -90,7 +90,7 @@ export function InventoryCard({
           <button
             type="button"
             className="flex flex-1 gap-3 overflow-hidden text-left"
-            onClick={() => onOpen(entry)}
+            onClick={() => onOpen?.(entry)}
           >
             <div
               className={cn(
@@ -148,7 +148,7 @@ export function InventoryCard({
               </DropdownMenuItem>
               {entry.isFolder ? (
                 <DropdownMenuItem
-                  onClick={() => onNavigateIntoFolder(entry)}
+                  onClick={() => onNavigateIntoFolder?.(entry)}
                   className="cursor-pointer gap-2"
                 >
                   <FolderOpen />
@@ -158,7 +158,7 @@ export function InventoryCard({
                 entry.status === 'READY' && (
                   <>
                     <DropdownMenuItem
-                      onClick={() => onPreview(entry)}
+                      onClick={() => onPreview?.(entry)}
                       className="cursor-pointer gap-2"
                     >
                       <Eye />
@@ -166,14 +166,14 @@ export function InventoryCard({
                     </DropdownMenuItem>
 
                     <DropdownMenuItem
-                      onClick={() => onShare(entry)}
+                      onClick={() => onShare?.(entry)}
                       className="cursor-pointer gap-2"
                     >
                       <Share2 />
                       {t('actions.share')}
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => onDownload(entry)}
+                      onClick={() => onDownload?.(entry)}
                       className="cursor-pointer gap-2"
                     >
                       <Download />

@@ -142,6 +142,10 @@ export function useInventory({
     () => selectedEntries.filter((entry) => !entry.isFolder),
     [selectedEntries]
   );
+  const selectedFolders = useMemo(
+    () => selectedEntries.filter((entry) => entry.isFolder),
+    [selectedEntries]
+  );
   const breadcrumbItems = useMemo(
     () => [{ id: 'root', name: t('breadcrumbs.root') }, ...folderTrail],
     [folderTrail, t]
@@ -461,6 +465,15 @@ export function useInventory({
     }
   };
 
+  const handleOpenEntry = (entry: InventoryEntry) => {
+    if (entry.isFolder) {
+      handleNavigateIntoFolder(entry);
+      return;
+    }
+
+    handlePreviewEntry(entry);
+  };
+
   const closePreview = () => {
     setPreviewDialog(null);
   };
@@ -531,6 +544,7 @@ export function useInventory({
     handleUploadFiles,
     handleMoveSubmit,
     handleNavigateIntoFolder,
+    handleOpenEntry,
     handleOpenMoveDialog,
     handleOpenRenameDialog,
     handlePageChange,
@@ -558,6 +572,7 @@ export function useInventory({
     search,
     selectedEntries,
     selectedFiles,
+    selectedFolders,
     selectedIds,
     setCreateFolderDialog,
     setDeleteDialog,

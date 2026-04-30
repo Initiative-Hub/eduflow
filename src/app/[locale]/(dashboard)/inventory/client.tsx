@@ -55,12 +55,15 @@ export function InventoryClient() {
     deleteDialog,
     deletePending,
     entries,
+    files,
+    folders,
     getUploadProgress,
     handleCreateFolderSubmit,
     handleDeleteConfirm,
     handleGoToBreadcrumb,
     handleMoveSubmit,
     handleNavigateIntoFolder,
+    handleOpenEntry,
     handleOpenMoveDialog,
     handleOpenRenameDialog,
     handlePageChange,
@@ -125,14 +128,6 @@ export function InventoryClient() {
   const loadErrorMessage = loadError
     ? resolveErrorMessage(loadError, t('errors.description'))
     : null;
-
-  const handleOpenEntry = (entry: InventoryEntry) => {
-    if (entry.isFolder) {
-      handleNavigateIntoFolder(entry);
-      return;
-    }
-    handlePreviewEntry(entry);
-  };
 
   return (
     <div className="relative flex flex-col gap-6 overflow-hidden">
@@ -201,6 +196,8 @@ export function InventoryClient() {
         currentPage={currentPage}
         endItem={endItem}
         entries={entries}
+        files={files}
+        folders={folders}
         isLoading={isLoading}
         isSearching={isSearching}
         isStorageLimitReached={isStorageLimitReached}
