@@ -1,3 +1,12 @@
+import { NextResponse } from 'next/server';
+import { z } from 'zod';
+import { withAuth, withValidation } from '@/lib/api/middlewares';
+import { UserService } from '@/services/UserService';
+
+const updateRoleSchema = z.object({
+  role: z.enum(['STUDENT', 'TEACHER']),
+});
+
 /**
  * @swagger
  * /api/v1/user/role:
@@ -24,16 +33,8 @@
  *         description: Invalid payload
  *       401:
  *         description: Unauthorized
+ *
  */
-import { NextResponse } from 'next/server';
-import { z } from 'zod';
-import { withAuth, withValidation } from '@/lib/api/middlewares';
-import { UserService } from '@/services/UserService';
-
-const updateRoleSchema = z.object({
-  role: z.enum(['STUDENT', 'TEACHER']),
-});
-
 export const PUT = withAuth(
   withValidation(updateRoleSchema, async (_req, parsedBody, { user }) => {
     try {

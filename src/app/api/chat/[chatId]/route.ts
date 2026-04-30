@@ -10,73 +10,6 @@ import type {
 import { CacheService } from '@/services/CacheService';
 import type { ChatCacheData } from '@/utils/chat-session';
 
-/**
- * @swagger
- * /api/chat/{chatId}:
- *   get:
- *     tags:
- *       - Chat
- *     summary: Get chat metadata and messages for an existing chat
- *     parameters:
- *       - in: path
- *         name: chatId
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Chat data
- *       401:
- *         description: Missing guest session
- *       403:
- *         description: Access denied
- *       404:
- *         description: Chat not found
- *   post:
- *     tags:
- *       - Chat
- *     summary: Send a message to an existing chat and receive a streamed response
- *     parameters:
- *       - in: path
- *         name: chatId
- *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               messages:
- *                 type: array
- *                 items:
- *                   type: object
- *               provider:
- *                 type: string
- *                 enum: [ai-gateway, google, openrouter]
- *                 default: ai-gateway
- *               model:
- *                 type: string
- *               apiKey:
- *                 type: string
- *               providerOptions:
- *                 type: object
- *     responses:
- *       200:
- *         description: Streamed AI response
- *       400:
- *         description: Invalid request payload
- *       401:
- *         description: Missing guest session
- *       403:
- *         description: Access denied
- *       404:
- *         description: Chat not found
- *       429:
- *         description: Guest limit reached
- */
 export const maxDuration = 30;
 
 const chatRequestSchema = z.object({
@@ -122,6 +55,29 @@ const getOwnedChat = async (chatId: string, guestId: string) => {
   return { status: 200 as const, chatData };
 };
 
+/**
+ * @swagger
+ * /api/chat/{chatId}:
+ *   get:
+ *     tags:
+ *       - Chat
+ *     summary: Get chat metadata and messages for an existing chat
+ *     parameters:
+ *       - in: path
+ *         name: chatId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Chat data
+ *       401:
+ *         description: Missing guest session
+ *       403:
+ *         description: Access denied
+ *       404:
+ *         description: Chat not found
+ */
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ chatId: string }> }
@@ -159,6 +115,55 @@ export async function GET(
   }
 }
 
+/**
+ * @swagger
+ * /api/chat/{chatId}:
+ *   post:
+ *     tags:
+ *       - Chat
+ *     summary: Send a message to an existing chat and receive a streamed response
+ *     parameters:
+ *       - in: path
+ *         name: chatId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               messages:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *               provider:
+ *                 type: string
+ *                 enum: [ai-gateway, google, openrouter]
+ *                 default: ai-gateway
+ *               model:
+ *                 type: string
+ *               apiKey:
+ *                 type: string
+ *               providerOptions:
+ *                 type: object
+ *     responses:
+ *       200:
+ *         description: Streamed AI response
+ *       400:
+ *         description: Invalid request payload
+ *       401:
+ *         description: Missing guest session
+ *       403:
+ *         description: Access denied
+ *       404:
+ *         description: Chat not found
+ *       429:
+ *         description: Guest limit reached
+ *
+ */
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ chatId: string }> }

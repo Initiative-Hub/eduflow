@@ -16,6 +16,50 @@ const updateSchema = z
     message: 'At least one field is required',
   });
 
+/**
+ * @swagger
+ * /api/v1/storage/{fileId}:
+ *   patch:
+ *     tags:
+ *       - Storage
+ *     summary: Rename or move a storage entry
+ *     security:
+ *       - SessionCookie: []
+ *     parameters:
+ *       - in: path
+ *         name: fileId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               parentId:
+ *                 type: string
+ *                 format: uuid
+ *                 nullable: true
+ *     responses:
+ *       200:
+ *         description: Storage entry updated
+ *       400:
+ *         description: Invalid file id or request payload
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: File or parent folder not found
+ *       409:
+ *         description: Conflicting move or name
+ *       500:
+ *         description: Internal server error
+ *
+ */
 export const PATCH = withAuth(async (req, session, context) => {
   try {
     const params = routeParamsSchema.safeParse(await context.params);

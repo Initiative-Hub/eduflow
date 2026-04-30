@@ -8,6 +8,44 @@ const createFolderSchema = z.object({
   name: z.string().trim().min(1).max(180),
 });
 
+/**
+ * @swagger
+ * /api/v1/storage/folders:
+ *   post:
+ *     tags:
+ *       - Storage
+ *     summary: Create a folder
+ *     security:
+ *       - SessionCookie: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name]
+ *             properties:
+ *               parentId:
+ *                 type: string
+ *                 format: uuid
+ *                 nullable: true
+ *               name:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Folder created
+ *       400:
+ *         description: Invalid request payload
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Parent folder not found
+ *       409:
+ *         description: Item with this name already exists
+ *       500:
+ *         description: Internal server error
+ *
+ */
 export const POST = withAuth(async (req, session) => {
   try {
     const body = await req.json();

@@ -10,6 +10,11 @@ export type AuthHandler = (
   ...args: any[]
 ) => Promise<NextResponse>;
 
+const isSessionData = (value: unknown): value is Session =>
+  Boolean(
+    value && typeof value === 'object' && 'user' in value && 'session' in value
+  );
+
 export function withAuth(handler: AuthHandler) {
   return async (req: Request, ...args: any[]) => {
     try {
@@ -36,8 +41,13 @@ export function withAuth(handler: AuthHandler) {
 }
 
 export function withRoles(allowedRoles: string[], handler: AuthHandler) {
-  return async (req: Request, sessionData?: Session, ...args: any[]) => {
+  return async (req: Request, ...args: any[]) => {
     try {
+      const [maybeSessionData, ...remainingArgs] = args;
+      const sessionData = isSessionData(maybeSessionData)
+        ? maybeSessionData
+        : undefined;
+      const handlerArgs = sessionData ? remainingArgs : args;
       let finalSessionData: Session | null = null;
 
       if (sessionData) {
@@ -68,7 +78,7 @@ export function withRoles(allowedRoles: string[], handler: AuthHandler) {
         );
       }
 
-      return await handler(req, finalSessionData, ...args);
+      return await handler(req, finalSessionData, ...handlerArgs);
     } catch (error) {
       console.error('Auth Middleware Error:', error);
       return NextResponse.json(
@@ -83,8 +93,13 @@ export function withPermissions(
   allowedPermissions: string[],
   handler: AuthHandler
 ) {
-  return async (req: Request, sessionData?: Session, ...args: any[]) => {
+  return async (req: Request, ...args: any[]) => {
     try {
+      const [maybeSessionData, ...remainingArgs] = args;
+      const sessionData = isSessionData(maybeSessionData)
+        ? maybeSessionData
+        : undefined;
+      const handlerArgs = sessionData ? remainingArgs : args;
       let finalSessionData: Session | null = null;
 
       if (sessionData) {
@@ -119,7 +134,7 @@ export function withPermissions(
         }
       }
 
-      return await handler(req, finalSessionData, ...args);
+      return await handler(req, finalSessionData, ...handlerArgs);
     } catch (error) {
       console.error('Auth Middleware Error:', error);
       return NextResponse.json(

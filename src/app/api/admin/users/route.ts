@@ -1,3 +1,8 @@
+import bcrypt from 'bcryptjs';
+import { NextResponse } from 'next/server';
+import { withRoles } from '@/lib/api/middlewares';
+import { prisma } from '@/lib/prisma';
+
 /**
  * @swagger
  * /api/admin/users:
@@ -14,36 +19,29 @@
  *         description: Unauthorized
  *       403:
  *         description: Forbidden
- *   put:
- *     tags:
- *       - Admin
- *     summary: Update a user (admin only)
- *     security:
- *       - SessionCookie: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               id:
- *                 type: string
- *               name:
- *                 type: string
- *               email:
- *                 type: string
- *               role:
- *                 type: string
- *     responses:
- *       200:
- *         description: Updated user
- *       400:
- *         description: Missing id
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden
+ */
+export const GET = withRoles(['ADMIN'], async (_req, _sessionData) => {
+  try {
+    const users = await prisma.user.findMany({
+      include: { role: true },
+    });
+
+    const out = users.map((u) => ({
+      id: u.id,
+      email: u.email,
+      name: u.name,
+      role: u.role?.name,
+    }));
+    return NextResponse.json(out);
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ message: 'Server error' }, { status: 500 });
+  }
+});
+
+/**
+ * @swagger
+ * /api/admin/users:
  *   post:
  *     tags:
  *       - Admin
@@ -74,32 +72,8 @@
  *         description: Unauthorized
  *       403:
  *         description: Forbidden
+ *
  */
-
-import bcrypt from 'bcryptjs';
-import { NextResponse } from 'next/server';
-import { withRoles } from '@/lib/api/middlewares';
-import { prisma } from '@/lib/prisma';
-
-export const GET = withRoles(['ADMIN'], async (_req, _sessionData) => {
-  try {
-    const users = await prisma.user.findMany({
-      include: { role: true },
-    });
-
-    const out = users.map((u) => ({
-      id: u.id,
-      email: u.email,
-      name: u.name,
-      role: u.role?.name,
-    }));
-    return NextResponse.json(out);
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json({ message: 'Server error' }, { status: 500 });
-  }
-});
-
 export const POST = withRoles(['ADMIN'], async (req, _sessionData) => {
   try {
     const { email, name, password, role } = await req.json();
@@ -133,6 +107,40 @@ export const POST = withRoles(['ADMIN'], async (req, _sessionData) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/admin/users:
+ *   put:
+ *     tags:
+ *       - Admin
+ *     summary: Update a user (admin only)
+ *     security:
+ *       - SessionCookie: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               id:
+ *                 type: string
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               role:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Updated user
+ *       400:
+ *         description: Missing id
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ */
 export const PUT = withRoles(['ADMIN'], async (req, _sessionData) => {
   try {
     const { id, name, email, role } = await req.json();
