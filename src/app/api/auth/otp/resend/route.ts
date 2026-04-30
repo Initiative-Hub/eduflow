@@ -1,3 +1,11 @@
+import { headers } from 'next/headers';
+import { z } from 'zod';
+import { auth } from '@/lib/auth';
+
+const resendOtpSchema = z.object({
+  email: z.email(),
+});
+
 /**
  * @swagger
  * /api/auth/otp/resend:
@@ -19,15 +27,8 @@
  *         description: OTP resent
  *       400:
  *         description: Invalid payload
+ *
  */
-import { headers } from 'next/headers';
-import { z } from 'zod';
-import { auth } from '@/lib/auth';
-
-const resendOtpSchema = z.object({
-  email: z.email(),
-});
-
 export async function POST(request: Request) {
   const body = await request.json();
   const parsedBody = resendOtpSchema.safeParse(body);

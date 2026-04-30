@@ -20,7 +20,7 @@ export default async function ApiDocsPage() {
         </h1>
         <p className="text-muted-foreground text-sm">{t('cookieHint')}</p>
       </div>
-      <div className="rounded-lg border bg-card p-4 shadow-sm">
+      <div className="rounded-lg border bg-card shadow-sm">
         <SwaggerDocs specUrl="/api/docs" />
       </div>
     </div>

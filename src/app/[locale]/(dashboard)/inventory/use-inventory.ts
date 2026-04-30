@@ -5,19 +5,18 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
-import { useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { useDeferredValue, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import type { ApiError } from '@/lib/api/types';
-import { useLoadingStore } from '@/stores/useLoadingStore';
 import { inventoryService } from './inventory.service';
-import { isPreviewableEntry } from './inventory.utils';
 import {
   type InventoryBreadcrumb,
   type InventoryEntry,
   type InventoryMoveOption,
   type InventoryPreviewState,
   STORAGE_PAGE_SIZE,
-} from './types';
+} from './inventory.types';
+import { formatFileSize } from './inventory.utils';
 
 const INVENTORY_QUERY_KEY = ['inventory'] as const;
 const INVENTORY_LIST_QUERY_KEY = [...INVENTORY_QUERY_KEY, 'list'] as const;
@@ -47,10 +46,13 @@ async function copyToClipboard(value: string) {
   await navigator.clipboard.writeText(value);
 }
 
-export function useInventory() {
+export function useInventory({
+  maxFileSizeBytes,
+}: {
+  maxFileSizeBytes: number;
+}) {
   const t = useTranslations('InventoryPage');
   const queryClient = useQueryClient();
-  const setLoading = useLoadingStore((state) => state.setLoading);
 
   const [viewType, setViewType] = useState<'grid' | 'list'>('grid');
   const [search, setSearchState] = useState('');
@@ -90,6 +92,9 @@ export function useInventory() {
     entries: [],
   });
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [uploadProgressById, setUploadProgressById] = useState<
+    Record<string, number>
+  >({});
   const [previewDialog, setPreviewDialog] =
     useState<InventoryPreviewState | null>(null);
 
@@ -137,6 +142,10 @@ export function useInventory() {
     () => selectedEntries.filter((entry) => !entry.isFolder),
     [selectedEntries]
   );
+  const selectedFolders = useMemo(
+    () => selectedEntries.filter((entry) => entry.isFolder),
+    [selectedEntries]
+  );
   const breadcrumbItems = useMemo(
     () => [{ id: 'root', name: t('breadcrumbs.root') }, ...folderTrail],
     [folderTrail, t]
@@ -175,14 +184,6 @@ export function useInventory() {
     );
   }, [currentPathLabel, folderTrail, folders, t]);
 
-  useEffect(() => {
-    return () => {
-      if (previewDialog?.url) {
-        URL.revokeObjectURL(previewDialog.url);
-      }
-    };
-  }, [previewDialog?.url]);
-
   const createFolderMutation = useMutation({
     mutationFn: async (name: string) => {
       const response = await inventoryService.createFolder({
@@ -207,16 +208,55 @@ export function useInventory() {
 
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
-      setLoading(true);
+      let uploadFileId: string | null = null;
+
       try {
         const response = await inventoryService.upload({
           parentId: currentFolderId,
           file,
+          onUploadStart: (fileId) => {
+            uploadFileId = fileId;
+            queryClient.invalidateQueries({ queryKey: INVENTORY_QUERY_KEY });
+            setUploadProgressById((current) => ({
+              ...current,
+              [fileId]: 0,
+            }));
+          },
+          onUploadProgress: (fileId, progress) => {
+            setUploadProgressById((current) => ({
+              ...current,
+              [fileId]: progress,
+            }));
+          },
+          onUploadComplete: (fileId) => {
+            setUploadProgressById((current) => ({
+              ...current,
+              [fileId]: 100,
+            }));
+          },
         });
 
+        if (uploadFileId) {
+          const completedUploadFileId = uploadFileId;
+          setUploadProgressById((current) => {
+            const next = { ...current };
+            delete next[completedUploadFileId];
+            return next;
+          });
+        }
+
         return response.data;
-      } finally {
-        setLoading(false);
+      } catch (error) {
+        if (uploadFileId) {
+          const failedUploadFileId = uploadFileId;
+          setUploadProgressById((current) => {
+            const next = { ...current };
+            delete next[failedUploadFileId];
+            return next;
+          });
+        }
+
+        throw error;
       }
     },
     onSuccess: async (entry) => {
@@ -384,6 +424,10 @@ export function useInventory() {
     deleteMutation.mutate(deleteDialog.entries.map((entry) => entry.id));
   };
 
+  const getUploadProgress = (entryId: string) => {
+    return uploadProgressById[entryId];
+  };
+
   const handleCreateFolderSubmit = () => {
     const nextName = createFolderDialog.value.trim();
     if (!nextName) return;
@@ -395,48 +439,43 @@ export function useInventory() {
     const file = filesToUpload[0];
     if (!file) return;
 
+    if (file.size > maxFileSizeBytes) {
+      toast.error(
+        t('toast.fileTooLarge', {
+          size: formatFileSize(maxFileSizeBytes),
+        })
+      );
+      return;
+    }
+
     uploadMutation.mutate(file);
   };
 
   const handlePreviewEntry = async (entry: InventoryEntry) => {
-    if (!isPreviewableEntry(entry)) {
-      toast.error(t('toast.previewUnavailable'));
-      return;
-    }
-
     try {
-      const response = await fetch(inventoryService.getDownloadUrl(entry.id));
-      if (!response.ok) {
-        throw new Error(t('toast.previewUnavailable'));
-      }
+      const response = await inventoryService.shareEntry(entry.id);
 
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-
-      setPreviewDialog((current) => {
-        if (current?.url) {
-          URL.revokeObjectURL(current.url);
-        }
-
-        return {
-          entry,
-          url,
-          mimeType: blob.type || entry.mimeType,
-        };
+      setPreviewDialog({
+        entry,
+        url: response.data.signedUrl,
+        mimeType: entry.mimeType,
       });
     } catch (error) {
       toast.error(getErrorMessage(error, t('toast.previewUnavailable')));
     }
   };
 
-  const closePreview = () => {
-    setPreviewDialog((current) => {
-      if (current?.url) {
-        URL.revokeObjectURL(current.url);
-      }
+  const handleOpenEntry = (entry: InventoryEntry) => {
+    if (entry.isFolder) {
+      handleNavigateIntoFolder(entry);
+      return;
+    }
 
-      return null;
-    });
+    handlePreviewEntry(entry);
+  };
+
+  const closePreview = () => {
+    setPreviewDialog(null);
   };
 
   const handleShareEntry = async (entry: InventoryEntry) => {
@@ -498,12 +537,14 @@ export function useInventory() {
     entries,
     files,
     folders,
+    getUploadProgress,
     handleCreateFolderSubmit,
     handleDeleteConfirm,
     handleGoToBreadcrumb,
     handleUploadFiles,
     handleMoveSubmit,
     handleNavigateIntoFolder,
+    handleOpenEntry,
     handleOpenMoveDialog,
     handleOpenRenameDialog,
     handlePageChange,
@@ -520,6 +561,7 @@ export function useInventory() {
     isLoading: listQuery.isLoading || analyticsQuery.isLoading,
     listPagination: listQuery.data?.pagination,
     loadError: listQuery.error ?? analyticsQuery.error,
+    maxFileSizeBytes,
     moveDialog,
     moveOptions,
     movePending: moveMutation.isPending,
@@ -530,6 +572,7 @@ export function useInventory() {
     search,
     selectedEntries,
     selectedFiles,
+    selectedFolders,
     selectedIds,
     setCreateFolderDialog,
     setDeleteDialog,
@@ -538,9 +581,9 @@ export function useInventory() {
     setRenameDialog,
     setUploadOpen,
     setViewType: handleViewTypeChange,
-    viewType,
     toggleSelection: handleSelectEntry,
     uploadOpen,
     uploadPending: uploadMutation.isPending,
+    viewType,
   };
 }

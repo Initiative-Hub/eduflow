@@ -7,6 +7,40 @@ const routeParamsSchema = z.object({
   fileId: z.string().uuid(),
 });
 
+/**
+ * @swagger
+ * /api/v1/storage/download/{fileId}:
+ *   get:
+ *     tags:
+ *       - Storage
+ *     summary: Download a stored file
+ *     security:
+ *       - SessionCookie: []
+ *     parameters:
+ *       - in: path
+ *         name: fileId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: File content
+ *         content:
+ *           application/octet-stream:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       400:
+ *         description: Invalid file id
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: File not found
+ *       500:
+ *         description: Internal server error
+ *
+ */
 export const GET = withAuth(async (_req, session, context) => {
   try {
     const params = routeParamsSchema.safeParse(await context.params);

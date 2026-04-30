@@ -12,12 +12,13 @@ import { InventoryPathBar } from './_components/inventory-pathbar';
 import { InventoryToolbar } from './_components/inventory-toolbar';
 import { SelectionBar } from './_components/selection-bar';
 import { inventoryService } from './inventory.service';
-import { formatFileSize } from './inventory.utils';
 import {
   type InventoryEntry,
   STORAGE_LIMIT_BYTES,
+  STORAGE_MAX_FILE_SIZE_BYTES,
   STORAGE_PAGE_SIZE,
-} from './types';
+} from './inventory.types';
+import { formatFileSize } from './inventory.utils';
 import { useInventory } from './use-inventory';
 
 function resolveErrorMessage(error: unknown, fallback: string) {
@@ -34,7 +35,7 @@ function resolveErrorMessage(error: unknown, fallback: string) {
 
 function downloadEntry(entry: InventoryEntry) {
   const anchor = document.createElement('a');
-  anchor.href = inventoryService.getDownloadUrl(entry.id);
+  anchor.href = inventoryService.getDownloadPayload(entry.id);
   anchor.download = entry.name;
   anchor.rel = 'noreferrer';
   document.body.appendChild(anchor);
@@ -54,11 +55,15 @@ export function InventoryClient() {
     deleteDialog,
     deletePending,
     entries,
+    files,
+    folders,
+    getUploadProgress,
     handleCreateFolderSubmit,
     handleDeleteConfirm,
     handleGoToBreadcrumb,
     handleMoveSubmit,
     handleNavigateIntoFolder,
+    handleOpenEntry,
     handleOpenMoveDialog,
     handleOpenRenameDialog,
     handlePageChange,
@@ -74,6 +79,7 @@ export function InventoryClient() {
     handleUploadFiles,
     isFetching,
     isLoading,
+    maxFileSizeBytes,
     listPagination,
     loadError,
     moveDialog,
@@ -96,7 +102,9 @@ export function InventoryClient() {
     uploadOpen,
     uploadPending,
     viewType,
-  } = useInventory();
+  } = useInventory({
+    maxFileSizeBytes: STORAGE_MAX_FILE_SIZE_BYTES,
+  });
 
   const storageUsed = analytics?.totalSizeBytes ?? 0;
   const storagePercentage =
@@ -120,21 +128,6 @@ export function InventoryClient() {
   const loadErrorMessage = loadError
     ? resolveErrorMessage(loadError, t('errors.description'))
     : null;
-
-  const handleOpenEntry = (entry: InventoryEntry) => {
-    if (entry.isFolder) {
-      handleNavigateIntoFolder(entry);
-      return;
-    }
-    if (
-      entry.mimeType?.startsWith('image/') ||
-      entry.mimeType === 'application/pdf'
-    ) {
-      handlePreviewEntry(entry);
-      return;
-    }
-    downloadEntry(entry);
-  };
 
   return (
     <div className="relative flex flex-col gap-6 overflow-hidden">
@@ -203,6 +196,8 @@ export function InventoryClient() {
         currentPage={currentPage}
         endItem={endItem}
         entries={entries}
+        files={files}
+        folders={folders}
         isLoading={isLoading}
         isSearching={isSearching}
         isStorageLimitReached={isStorageLimitReached}
@@ -221,6 +216,7 @@ export function InventoryClient() {
         onSelectEntry={handleSelectEntry}
         onShare={handleShareEntry}
         onUploadOpen={() => setUploadOpen(true)}
+        getUploadProgress={getUploadProgress}
         pageIndex={pageIndex}
         selectedIds={selectedIds}
         selectionCount={selectionCount}
@@ -254,7 +250,7 @@ export function InventoryClient() {
         setMoveDialog={setMoveDialog}
         setRenameDialog={setRenameDialog}
         setUploadOpen={setUploadOpen}
-        storageLimitBytes={STORAGE_LIMIT_BYTES}
+        maxFileSizeBytes={maxFileSizeBytes}
         t={t}
         uploadOpen={uploadOpen}
         uploadPending={uploadPending}

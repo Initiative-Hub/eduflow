@@ -1,4 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { prisma } from '@/lib/prisma';
+import {
+  buildInventoryObjectKey,
+  createInventoryReadSignedUrl,
+  createInventoryWriteSignedUrl,
+  deleteInventoryObject,
+  downloadInventoryObject,
+  getInventoryObjectMetadata,
+} from '@/lib/storage/file-storage';
+import { StorageService } from '@/services/StorageService';
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
@@ -16,25 +26,15 @@ vi.mock('@/lib/prisma', () => ({
 }));
 
 vi.mock('@/lib/storage/file-storage', () => ({
+  STORAGE_MAX_FILE_SIZE_BYTES: 50 * 1024 * 1024,
+  FILE_INVENTORY_BUCKET_NAME: 'eduflow-inventory',
   buildInventoryObjectKey: vi.fn(),
-  checkInventoryObjectExists: vi.fn(),
+  getInventoryObjectMetadata: vi.fn(),
+  downloadInventoryObject: vi.fn(),
+  deleteInventoryObject: vi.fn(),
   createInventoryReadSignedUrl: vi.fn(),
   createInventoryWriteSignedUrl: vi.fn(),
-  deleteInventoryObject: vi.fn(),
-  downloadInventoryObject: vi.fn(),
-  FILE_INVENTORY_BUCKET_NAME: 'eduflow-inventory',
 }));
-
-import { prisma } from '@/lib/prisma';
-import {
-  buildInventoryObjectKey,
-  checkInventoryObjectExists,
-  createInventoryReadSignedUrl,
-  createInventoryWriteSignedUrl,
-  deleteInventoryObject,
-  downloadInventoryObject,
-} from '@/lib/storage/file-storage';
-import { StorageService } from '@/services/StorageService';
 
 const fileInventory = prisma.fileInventory as unknown as Record<
   string,
@@ -43,7 +43,7 @@ const fileInventory = prisma.fileInventory as unknown as Record<
 const mockBuildInventoryObjectKey = buildInventoryObjectKey as ReturnType<
   typeof vi.fn
 >;
-const mockCheckInventoryObjectExists = checkInventoryObjectExists as ReturnType<
+const mockGetInventoryObjectMetadata = getInventoryObjectMetadata as ReturnType<
   typeof vi.fn
 >;
 const mockCreateInventoryReadSignedUrl =
@@ -140,10 +140,7 @@ describe('StorageService', () => {
     it('returns upload session payload', async () => {
       mockBuildInventoryObjectKey.mockReturnValue('inventories/u1/readme.pdf');
       fileInventory.create.mockResolvedValue({ id: 'f1', status: 'UPLOADING' });
-      mockCreateInventoryWriteSignedUrl.mockResolvedValue({
-        uploadUrl: 'https://upload',
-        headers: { 'content-type': 'application/pdf' },
-      });
+      mockCreateInventoryWriteSignedUrl.mockResolvedValue('https://upload');
 
       const result = await StorageService.initializeUpload({
         userId: 'u1',
@@ -159,7 +156,7 @@ describe('StorageService', () => {
         objectKey: 'inventories/u1/readme.pdf',
         bucket: 'eduflow-inventory',
         uploadUrl: 'https://upload',
-        uploadHeaders: { 'content-type': 'application/pdf' },
+        uploadHeaders: { 'Content-Type': 'application/pdf' },
       });
     });
 
@@ -174,6 +171,18 @@ describe('StorageService', () => {
         })
       ).rejects.toThrow('File name is required');
     });
+
+    it('throws when file is larger than storage upload limit', async () => {
+      await expect(
+        StorageService.initializeUpload({
+          userId: 'u1',
+          parentId: null,
+          fileName: 'large.zip',
+          contentType: 'application/zip',
+          fileSize: 60 * 1024 * 1024,
+        })
+      ).rejects.toThrow('File size exceeds storage upload limit');
+    });
   });
 
   describe('confirmUpload', () => {
@@ -182,8 +191,12 @@ describe('StorageService', () => {
         id: 'f1',
         isFolder: false,
         objectKey: 'obj1',
+        fileSize: BigInt(10),
       });
-      mockCheckInventoryObjectExists.mockResolvedValue(true);
+      mockGetInventoryObjectMetadata.mockResolvedValue({
+        exists: true,
+        contentLength: 10,
+      });
       fileInventory.update.mockResolvedValue({
         id: 'f1',
         fileSize: BigInt(10),
@@ -205,13 +218,35 @@ describe('StorageService', () => {
         isFolder: false,
         objectKey: 'obj1',
       });
-      mockCheckInventoryObjectExists.mockResolvedValue(false);
+      mockGetInventoryObjectMetadata.mockResolvedValue({
+        exists: false,
+        contentLength: null,
+      });
 
       await expect(
         StorageService.confirmUpload({ userId: 'u1', fileId: 'f1' })
       ).rejects.toThrow(
         'Uploaded object not found. Database entry rolled back.'
       );
+      expect(fileInventory.delete).toHaveBeenCalledWith({
+        where: { id: 'f1' },
+      });
+    });
+
+    it('rolls back when uploaded object exceeds max upload size', async () => {
+      fileInventory.findFirst.mockResolvedValue({
+        id: 'f1',
+        isFolder: false,
+        objectKey: 'obj1',
+      });
+      mockGetInventoryObjectMetadata.mockResolvedValue({
+        exists: true,
+        contentLength: 60 * 1024 * 1024,
+      });
+
+      await expect(
+        StorageService.confirmUpload({ userId: 'u1', fileId: 'f1' })
+      ).rejects.toThrow('Uploaded object exceeds storage upload limit.');
       expect(fileInventory.delete).toHaveBeenCalledWith({
         where: { id: 'f1' },
       });

@@ -13,9 +13,8 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import { FileCard } from '../file-card';
-import type { InventoryEntry } from '../types';
-import type { InventoryTranslations } from './inventory.types';
+import type { InventoryEntry, InventoryTranslations } from '../inventory.types';
+import { InventoryCard } from './inventory-card';
 import { InventoryEmptyState } from './inventory-empty-state';
 import { InventoryLoadingSkeleton } from './inventory-loading-skeleton';
 import { InventoryTableView } from './inventory-table-view';
@@ -24,10 +23,13 @@ type InventoryBrowserProps = {
   currentPage: number;
   endItem: number;
   entries: InventoryEntry[];
+  files: InventoryEntry[];
+  folders: InventoryEntry[];
   isLoading: boolean;
   isSearching: boolean;
   isStorageLimitReached: boolean;
   locale: string;
+  getUploadProgress: (entryId: string) => number | undefined;
   onClearSearch: () => void;
   onCreateFolder: () => void;
   onDeleteEntry: (entry: InventoryEntry) => void;
@@ -56,10 +58,13 @@ export function InventoryBrowser({
   currentPage,
   endItem,
   entries,
+  files,
+  folders,
   isLoading,
   isSearching,
   isStorageLimitReached,
   locale,
+  getUploadProgress,
   onClearSearch,
   onCreateFolder,
   onDeleteEntry,
@@ -84,7 +89,7 @@ export function InventoryBrowser({
   viewType,
 }: InventoryBrowserProps) {
   return (
-    <Card className="border-border/70 bg-card/90 shadow-sm">
+    <Card className="border-border/70 bg-card/90 p-0 shadow-sm">
       <CardHeader className="flex flex-col gap-2 border-border/60 border-b px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1">
           <CardTitle className="font-heading text-xl">
@@ -118,26 +123,50 @@ export function InventoryBrowser({
             t={t}
           />
         ) : viewType === 'grid' ? (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {entries.map((entry) => (
-              <FileCard
-                key={entry.id}
-                entry={entry}
-                locale={locale}
-                onOpen={onOpen}
-                onRename={onRename}
-                onMove={onMove}
-                onShare={onShare}
-                onPreview={onPreview}
-                onDownload={onDownload}
-                onDelete={onDeleteEntry}
-              />
-            ))}
+          <div className="flex flex-col gap-6">
+            {folders.length > 0 && (
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {folders.map((entry) => (
+                  <InventoryCard
+                    key={entry.id}
+                    entry={entry}
+                    locale={locale}
+                    onOpen={onOpen}
+                    onRename={onRename}
+                    onMove={onMove}
+                    onDelete={onDeleteEntry}
+                    onNavigateIntoFolder={onNavigateIntoFolder}
+                  />
+                ))}
+              </div>
+            )}
+            {files.length > 0 && (
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {files.map((entry) => (
+                  <InventoryCard
+                    key={entry.id}
+                    entry={entry}
+                    locale={locale}
+                    onRename={onRename}
+                    onMove={onMove}
+                    onShare={onShare}
+                    onPreview={onPreview}
+                    onDownload={onDownload}
+                    onDelete={onDeleteEntry}
+                    uploadProgress={getUploadProgress(entry.id)}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         ) : (
           <InventoryTableView
+            t={t}
             entries={entries}
             locale={locale}
+            selectedIds={selectedIds}
+            selectionCount={selectionCount}
+            getUploadProgress={getUploadProgress}
             onDeleteEntry={onDeleteEntry}
             onDownload={onDownload}
             onMove={onMove}
@@ -148,9 +177,6 @@ export function InventoryBrowser({
             onSelectAll={onSelectAll}
             onSelectEntry={onSelectEntry}
             onShare={onShare}
-            selectedIds={selectedIds}
-            selectionCount={selectionCount}
-            t={t}
           />
         )}
 

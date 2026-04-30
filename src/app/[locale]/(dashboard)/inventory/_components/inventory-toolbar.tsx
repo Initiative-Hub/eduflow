@@ -2,7 +2,7 @@ import { FolderPlus, RefreshCw, Search, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import type { InventoryTranslations } from './inventory.types';
+import type { InventoryTranslations } from '../inventory.types';
 
 type InventoryToolbarProps = {
   isFetching: boolean;

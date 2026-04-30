@@ -1,3 +1,11 @@
+import { headers } from 'next/headers';
+import { z } from 'zod';
+import { auth } from '@/lib/auth';
+
+const forgotPasswordSchema = z.object({
+  email: z.email(),
+});
+
 /**
  * @swagger
  * /api/auth/forgot-password:
@@ -19,15 +27,8 @@
  *         description: Reset email sent
  *       400:
  *         description: Invalid payload
+ *
  */
-import { headers } from 'next/headers';
-import { z } from 'zod';
-import { auth } from '@/lib/auth';
-
-const forgotPasswordSchema = z.object({
-  email: z.email(),
-});
-
 export async function POST(request: Request) {
   const body = await request.json();
   const parsedBody = forgotPasswordSchema.safeParse(body);

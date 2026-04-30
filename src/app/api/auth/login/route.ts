@@ -1,3 +1,14 @@
+import { headers } from 'next/headers';
+import { z } from 'zod';
+import { auth } from '@/lib/auth';
+
+const loginSchema = z.object({
+  email: z.email(),
+  password: z.string().min(1),
+  callbackURL: z.string().optional(),
+  rememberMe: z.boolean().optional(),
+});
+
 /**
  * @swagger
  * /api/auth/login:
@@ -25,18 +36,8 @@
  *         description: Signed in
  *       400:
  *         description: Invalid payload
+ *
  */
-import { headers } from 'next/headers';
-import { z } from 'zod';
-import { auth } from '@/lib/auth';
-
-const loginSchema = z.object({
-  email: z.email(),
-  password: z.string().min(1),
-  callbackURL: z.string().optional(),
-  rememberMe: z.boolean().optional(),
-});
-
 export async function POST(request: Request) {
   const body = await request.json();
   const parsedBody = loginSchema.safeParse(body);
