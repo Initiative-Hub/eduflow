@@ -1,3 +1,20 @@
+import { headers } from 'next/headers';
+import { NextResponse } from 'next/server';
+import { z } from 'zod';
+import { auth } from '@/lib/auth';
+
+const providerSchema = z.enum(['google']);
+const socialSignInSchema = z.object({
+  callbackURL: z.string().optional(),
+  errorCallbackURL: z.string().optional(),
+});
+
+type RouteContext = {
+  params: Promise<{
+    provider: string;
+  }>;
+};
+
 /**
  * @swagger
  * /api/auth/social/{provider}:
@@ -28,24 +45,8 @@
  *         description: Social sign-in response
  *       400:
  *         description: Invalid payload
+ *
  */
-import { headers } from 'next/headers';
-import { NextResponse } from 'next/server';
-import { z } from 'zod';
-import { auth } from '@/lib/auth';
-
-const providerSchema = z.enum(['google']);
-const socialSignInSchema = z.object({
-  callbackURL: z.string().optional(),
-  errorCallbackURL: z.string().optional(),
-});
-
-type RouteContext = {
-  params: Promise<{
-    provider: string;
-  }>;
-};
-
 export async function POST(request: Request, context: RouteContext) {
   const [{ provider }, body] = await Promise.all([
     context.params,

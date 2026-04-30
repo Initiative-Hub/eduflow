@@ -384,7 +384,8 @@
       "processing": "Processing",
       "ready": "Ready",
       "size": "Size",
-      "type": "Type"
+      "type": "Type",
+      "uploadProgress": "Uploading {progress}%"
     },
     "hero": {
       "badge": "Live storage workspace",
@@ -398,7 +399,8 @@
         "status": "Status",
         "type": "Type",
         "updated": "Updated"
-      }
+      },
+      "uploadProgress": "Uploading {progress}%"
     },
     "moveDialog": {
       "description": "Choose a destination for this item.",
@@ -448,6 +450,7 @@
     "title": "Inventory",
     "toast": {
       "deleted": "Deleted {count} items.",
+      "fileTooLarge": "File exceeds the maximum upload size of {size}.",
       "folderCreated": "Folder created.",
       "genericError": "Something went wrong. Try again.",
       "moved": "Item moved.",
@@ -466,7 +469,7 @@
     },
     "uploadDialog": {
       "description": "Drop a file into the current folder or click to browse.",
-      "dropzoneDescription": "One file at a time, up to the current storage limit.",
+      "dropzoneDescription": "One file at a time, up to {size}.",
       "dropzoneHint": "One file per upload",
       "dropzoneTitle": "Drop a file here",
       "title": "Upload file"

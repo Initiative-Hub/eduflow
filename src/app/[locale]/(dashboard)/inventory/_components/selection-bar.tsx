@@ -1,7 +1,7 @@
 import { Share2, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import type { InventoryTranslations } from './inventory.types';
+import type { InventoryTranslations } from '../inventory.types';
 
 type SelectionBarProps = {
   hasSelectedFiles: boolean;

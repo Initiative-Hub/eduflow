@@ -1,7 +1,12 @@
 export const STORAGE_PAGE_SIZE = 24;
 export const STORAGE_LIMIT_BYTES = 5 * 1024 * 1024 * 1024;
+export const STORAGE_MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024;
 
 export type InventoryEntryStatus = 'READY' | 'UPLOADING' | 'DELETED' | string;
+
+export type InventoryTranslations = ReturnType<
+  typeof import('next-intl').useTranslations
+>;
 
 export interface InventoryEntry {
   id: string;

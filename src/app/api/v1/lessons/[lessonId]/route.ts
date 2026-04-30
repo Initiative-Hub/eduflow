@@ -9,6 +9,45 @@ const patchLessonSchema = z.object({
   content: z.record(z.string(), z.unknown()).optional(),
 });
 
+/**
+ * @swagger
+ * /api/v1/lessons/{lessonId}:
+ *   patch:
+ *     tags:
+ *       - Lessons
+ *     summary: Update a lesson
+ *     security:
+ *       - SessionCookie: []
+ *     parameters:
+ *       - in: path
+ *         name: lessonId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               content:
+ *                 type: object
+ *     responses:
+ *       200:
+ *         description: Lesson updated
+ *       400:
+ *         description: Invalid data
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       500:
+ *         description: Internal server error
+ *
+ */
 export const PATCH = withAuth(async (req, sessionData, { params }) => {
   try {
     const userId = sessionData.user.id;
@@ -39,6 +78,33 @@ export const PATCH = withAuth(async (req, sessionData, { params }) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/v1/lessons/{lessonId}:
+ *   get:
+ *     tags:
+ *       - Lessons
+ *     summary: Get a lesson by id
+ *     security:
+ *       - SessionCookie: []
+ *     parameters:
+ *       - in: path
+ *         name: lessonId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Lesson details
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Lesson not found
+ *       500:
+ *         description: Internal server error
+ */
 export const GET = withAuth(async (_req, sessionData, { params }) => {
   try {
     const userId = sessionData.user.id;
