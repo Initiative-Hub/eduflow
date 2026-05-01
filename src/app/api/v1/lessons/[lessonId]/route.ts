@@ -5,8 +5,13 @@ import { LessonService } from '@/services/LessonService';
 
 const patchLessonSchema = z.object({
   title: z.string().optional(),
-  // Use a typed record instead of z.any() for better schema safety
-  content: z.record(z.string(), z.unknown()).optional(),
+  content: z
+    .object({
+      type: z.literal('doc'),
+      content: z.array(z.unknown()).optional(),
+    })
+    .passthrough()
+    .optional(),
 });
 
 /**

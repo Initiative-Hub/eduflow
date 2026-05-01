@@ -1,0 +1,31 @@
+.lesson-toolbar-bar .tiptap-toolbar[data-variant='fixed'] {
+  position: static;
+  top: auto;
+  z-index: auto;
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.lesson-editor-content .tiptap.ProseMirror.lesson-tiptap-editor {
+  min-height: 25rem;
+  padding: 1rem 0;
+  color: var(--foreground);
+  outline: none;
+}
+
+.lesson-editor-content .tiptap.ProseMirror.lesson-tiptap-editor[contenteditable='true'] {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--background);
+}
+
+.lesson-editor-content .tiptap.ProseMirror.lesson-tiptap-editor p.is-editor-empty:first-child::before {
+  color: var(--muted-foreground);
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}

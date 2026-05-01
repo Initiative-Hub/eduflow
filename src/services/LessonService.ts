@@ -20,16 +20,14 @@ export class LessonService {
   }
 
   static async getLessonById(lessonId: string, userId: string) {
-    const { lesson, hasViewPermission } = await checkLessonPermission(
-      lessonId,
-      userId
-    );
+    const { lesson, hasEditPermission, hasViewPermission } =
+      await checkLessonPermission(lessonId, userId);
 
     if (!hasViewPermission) {
       throw new Error('Unauthorized: Missing view permission');
     }
 
-    return lesson;
+    return { ...lesson, canEdit: hasEditPermission };
   }
 
   static async updateLesson(

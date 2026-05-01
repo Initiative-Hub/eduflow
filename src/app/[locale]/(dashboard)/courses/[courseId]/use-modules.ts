@@ -1,12 +1,13 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api/api-client';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { apiClient } from '@/lib/api/api-client';
 
 export interface Lesson {
   id: string;
   title: string;
   orderIndex: number;
   content: Record<string, unknown> | null;
+  canEdit?: boolean;
 }
 
 export interface Module {

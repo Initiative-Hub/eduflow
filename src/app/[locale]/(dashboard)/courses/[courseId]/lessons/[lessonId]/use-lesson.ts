@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/api/api-client';
+import type { TiptapDocument } from '@/utils/lesson-content';
 import type { Lesson } from '../../use-modules';
 
 /**
@@ -29,12 +31,13 @@ export function useLesson(lessonId: string) {
  */
 export function useUpdateLesson(courseId: string) {
   const queryClient = useQueryClient();
+  const t = useTranslations('Courses.LessonEditor');
 
   const mutation = useMutation({
     mutationFn: (data: {
       lessonId: string;
       title?: string;
-      content?: Record<string, unknown>;
+      content?: TiptapDocument;
     }) =>
       apiClient.patch<Lesson>(`/v1/lessons/${data.lessonId}`, {
         title: data.title,
@@ -45,10 +48,10 @@ export function useUpdateLesson(courseId: string) {
       queryClient.invalidateQueries({
         queryKey: ['lesson', variables.lessonId],
       });
-      toast.success('Lesson saved successfully!');
+      toast.success(t('saveSuccess'));
     },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message || 'Failed to update lesson');
+    onError: (err: { message?: string }) => {
+      toast.error(err.message || t('saveError'));
     },
   });
 

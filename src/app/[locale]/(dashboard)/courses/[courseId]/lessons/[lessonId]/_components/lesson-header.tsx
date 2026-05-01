@@ -1,9 +1,8 @@
 'use client';
 
-import { ChevronRight, Edit3, Menu } from 'lucide-react';
+import { ChevronRight, Menu } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -17,11 +16,6 @@ interface LessonHeaderProps {
   lessonId: string;
   currentModuleTitle: string;
   currentLessonTitle: string;
-  isEditing: boolean;
-  setIsEditing: (val: boolean) => void;
-  setEditTitle: (val: string) => void;
-  setEditContent: (val: string) => void;
-  originalContent: string;
   showOutline: boolean;
   setShowOutline: (val: boolean) => void;
 }
@@ -31,19 +25,13 @@ export function LessonHeader({
   lessonId,
   currentModuleTitle,
   currentLessonTitle,
-  isEditing,
-  setIsEditing,
-  setEditTitle,
-  setEditContent,
-  originalContent,
   showOutline,
   setShowOutline,
 }: LessonHeaderProps) {
   const router = useRouter();
-  const t = useTranslations('Courses.LessonHeader');
 
   return (
-    <div className="sticky top-0 z-30 -mx-6 -mt-6 flex items-center justify-between border-foreground/20 border-b bg-transparent px-6 py-3 md:-mx-10 md:-mt-10 md:px-10 lg:-mx-12 lg:-mt-12 lg:px-12 dark:border-border">
+    <div className="sticky top-0 z-40 -mx-6 -mt-6 flex items-center justify-between border-foreground/20 border-b bg-background/95 px-6 py-3 backdrop-blur-sm md:-mx-10 md:-mt-10 md:px-10 lg:-mx-12 lg:-mt-12 lg:px-12">
       <div className="mr-4 flex items-center gap-2 text-muted-foreground text-sm">
         <Popover open={showOutline} onOpenChange={setShowOutline}>
           <PopoverTrigger asChild>
@@ -80,23 +68,6 @@ export function LessonHeader({
         <span className="max-w-37.5 truncate font-medium text-foreground md:max-w-xs">
           {currentLessonTitle}
         </span>
-      </div>
-
-      <div className="flex items-center gap-2">
-        {!isEditing && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setEditTitle(currentLessonTitle);
-              setEditContent(originalContent);
-              setIsEditing(true);
-            }}
-          >
-            <Edit3 className="mr-2 h-4 w-4" />
-            {t('edit')}
-          </Button>
-        )}
       </div>
     </div>
   );

@@ -16,15 +16,13 @@ export default async function LessonDetailsPage({
   ]);
 
   return (
-    <div className="space-y-8 pb-10">
-      <LessonDetailsClient
-        courseId={courseId}
-        lessonId={lessonId}
-        moduleFallbackTitle={tH('modules')}
-        lessonFallbackTitle={tH('lesson')}
-        notFoundLabel={tP('notFound')}
-        emptyContentLabel={tV('empty')}
-      />
-    </div>
+    <LessonDetailsClient
+      courseId={courseId}
+      lessonId={lessonId}
+      moduleFallbackTitle={tH('modules')}
+      lessonFallbackTitle={tH('lesson')}
+      notFoundLabel={tP('notFound')}
+      emptyContentLabel={tV('empty')}
+    />
   );
 }
