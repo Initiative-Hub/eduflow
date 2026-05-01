@@ -641,6 +641,6 @@
       "description": "Your role has been updated. Redirecting you to your workspace...",
       "title": "Welcome aboard!"
     },
-    "title": "Welcome to the {brand} Ecosystem"
+    "title": "Welcome to the <brand>EduFlow</brand> Ecosystem"
   }
 }
