@@ -18,7 +18,7 @@ export async function checkLessonPermission(lessonId: string, userId: string) {
           course: {
             include: {
               enrollments: {
-                where: { studentId: userId },
+                where: { memberId: userId },
                 include: { role: true },
               },
             },
@@ -33,7 +33,7 @@ export async function checkLessonPermission(lessonId: string, userId: string) {
   }
 
   const course = lesson.module.course;
-  const isTeacher = course.teacherId === userId;
+  const isTeacher = course.ownerId === userId;
   let hasEditPermission = false;
   let hasViewPermission = false;
 

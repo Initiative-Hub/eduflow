@@ -89,7 +89,7 @@ export const POST = withAuth(
       }
 
       const course = await CourseService.createCourse({
-        teacherId: userId,
+        ownerId: userId,
         title: parsed.data.title,
         description: parsed.data.description,
       });

@@ -1,9 +1,9 @@
-import { CoursePermissionKey, CourseRoleName } from '@/generated/prisma';
+import { CourseRoleName } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
 
 export class CourseService {
   static async createCourse(data: {
-    teacherId: string;
+    ownerId: string;
     title: string;
     description?: string;
   }) {
@@ -12,7 +12,7 @@ export class CourseService {
       // Create the course
       const course = await tx.course.create({
         data: {
-          teacherId: data.teacherId,
+          ownerId: data.ownerId,
           title: data.title,
           description: data.description,
         },
@@ -32,7 +32,7 @@ export class CourseService {
       // Add enrollment for the creator as OWNER
       await tx.enrollment.create({
         data: {
-          studentId: data.teacherId,
+          memberId: data.ownerId,
           courseId: course.id,
           roleId: ownerRole.id,
         },
@@ -42,9 +42,9 @@ export class CourseService {
     });
   }
 
-  static async getCoursesByTeacher(teacherId: string) {
+  static async getCoursesByTeacher(ownerId: string) {
     return await prisma.course.findMany({
-      where: { teacherId },
+      where: { ownerId },
       orderBy: { createdAt: 'desc' },
       include: {
         _count: {
@@ -62,7 +62,7 @@ export class CourseService {
     const member = await prisma.enrollment.findFirst({
       where: {
         courseId,
-        studentId: userId,
+        memberId: userId,
       },
     });
 
@@ -70,7 +70,7 @@ export class CourseService {
       throw new Error('Course not found');
     }
 
-    if (!member && course.teacherId !== userId) {
+    if (!member && course.ownerId !== userId) {
       throw new Error('Unauthorized');
     }
 
@@ -79,7 +79,7 @@ export class CourseService {
   static async togglePublish(
     courseId: string,
     isPublished: boolean,
-    teacherId: string
+    ownerId: string
   ) {
     const course = await prisma.course.findUnique({
       where: { id: courseId },
@@ -89,7 +89,7 @@ export class CourseService {
       throw new Error('Course not found');
     }
 
-    if (course.teacherId !== teacherId) {
+    if (course.ownerId !== ownerId) {
       throw new Error('Unauthorized');
     }
 

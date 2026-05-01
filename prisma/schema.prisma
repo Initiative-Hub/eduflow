@@ -27,13 +27,13 @@ model User {
   bio           String?
 
   // relations
-  role          PlatformRole?   @relation(fields: [roleId], references: [id])
-  sessions      Session[]
-  accounts      Account[]
-  posts         Post[]
-  files         FileInventory[]
-  coursesTaught Course[]        @relation("TeacherCourses")
-  enrollments   Enrollment[]
+  role         PlatformRole?   @relation(fields: [roleId], references: [id])
+  sessions     Session[]
+  accounts     Account[]
+  posts        Post[]
+  files        FileInventory[]
+  coursesOwned Course[]        @relation("OwnerCourses")
+  enrollments  Enrollment[]
 
   @@map("user")
 }
@@ -219,8 +219,8 @@ model FileInventory {
 // ---- Course / Enrollment / Module / Lesson models based on ERD ----
 model Course {
   id          String             @id @default(uuid())
-  teacherId   String
-  teacher     User               @relation("TeacherCourses", fields: [teacherId], references: [id])
+  ownerId     String
+  owner       User               @relation("OwnerCourses", fields: [ownerId], references: [id])
   title       String
   description String?
   isPublished Boolean            @default(false)
@@ -235,15 +235,15 @@ model Course {
 
 model Enrollment {
   id         String     @id @default(uuid())
-  studentId  String
-  student    User       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  memberId   String
+  member     User       @relation(fields: [memberId], references: [id], onDelete: Cascade)
   roleId     String
   role       CourseRole @relation(fields: [roleId], references: [id], onDelete: Restrict)
   courseId   String
   course     Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
   enrolledAt DateTime   @default(now()) @map("enrolled_at")
 
-  @@index([studentId])
+  @@index([memberId])
   @@index([roleId])
   @@index([courseId, roleId])
   @@index([courseId])
