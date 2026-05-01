@@ -23,7 +23,7 @@ import { CourseService } from '@/services/CourseService';
 export const GET = withAuth(async (_req, sessionData) => {
   try {
     const userId = sessionData.user.id;
-    const courses = await CourseService.getCoursesByTeacher(userId);
+    const courses = await CourseService.getCoursesByOwner(userId);
 
     return NextResponse.json(courses);
   } catch (error: any) {
@@ -89,7 +89,7 @@ export const POST = withAuth(
       }
 
       const course = await CourseService.createCourse({
-        teacherId: userId,
+        ownerId: userId,
         title: parsed.data.title,
         description: parsed.data.description,
       });
