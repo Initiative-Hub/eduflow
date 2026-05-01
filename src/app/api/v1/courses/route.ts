@@ -23,7 +23,7 @@ import { CourseService } from '@/services/CourseService';
 export const GET = withAuth(async (_req, sessionData) => {
   try {
     const userId = sessionData.user.id;
-    const courses = await CourseService.getCoursesByTeacher(userId);
+    const courses = await CourseService.getCoursesByOwner(userId);
 
     return NextResponse.json(courses);
   } catch (error: any) {

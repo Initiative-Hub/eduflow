@@ -42,7 +42,7 @@ export class CourseService {
     });
   }
 
-  static async getCoursesByTeacher(ownerId: string) {
+  static async getCoursesByOwner(ownerId: string) {
     return await prisma.course.findMany({
       where: { ownerId },
       orderBy: { createdAt: 'desc' },
@@ -76,6 +76,7 @@ export class CourseService {
 
     return course;
   }
+
   static async togglePublish(
     courseId: string,
     isPublished: boolean,

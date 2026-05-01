@@ -33,11 +33,11 @@ export async function checkLessonPermission(lessonId: string, userId: string) {
   }
 
   const course = lesson.module.course;
-  const isTeacher = course.ownerId === userId;
+  const isOwner = course.ownerId === userId;
   let hasEditPermission = false;
   let hasViewPermission = false;
 
-  if (!isTeacher && course.enrollments.length > 0) {
+  if (!isOwner && course.enrollments.length > 0) {
     const userRoleId = course.enrollments[0].roleId;
 
     const editPermissionCheck = await prisma.coursePermission.findFirst({
@@ -59,7 +59,7 @@ export async function checkLessonPermission(lessonId: string, userId: string) {
 
     // Any enrolled user has view permission in this project's simplified scope
     hasViewPermission = true;
-  } else if (isTeacher) {
+  } else if (isOwner) {
     hasEditPermission = true;
     hasViewPermission = true;
   }
