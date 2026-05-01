@@ -170,8 +170,10 @@ export default function ProfileClient() {
       <DialogTemplate
         isOpen={isSetPasswordDialogOpen}
         onOpenChange={setIsSetPasswordDialogOpen}
+        title={t('setPasswordDialog.title')}
+        description={t('setPasswordDialog.description')}
         hideHeader
-        className="max-w-md overflow-hidden rounded-2xl border-none bg-white p-0 shadow-2xl"
+        className="max-w-md overflow-hidden rounded-2xl p-0 shadow-2xl"
       >
         <div className="border-primary/10 border-b bg-primary/5 p-8 text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">

@@ -18,15 +18,15 @@ export default async function AccountInfoPage() {
   return (
     <div>
       <h1 className="mb-6 font-bold text-3xl">{t('title')}</h1>
-      <div className="rounded-lg bg-white p-6 shadow">
+      <div className="rounded-lg border border-border bg-card p-6 text-card-foreground shadow">
         <div className="space-y-4">
           <div>
             <h3 className="font-semibold">{t('usernameLabel')}</h3>
-            <p className="text-gray-700">{session.user.name}</p>
+            <p className="text-muted-foreground">{session.user.name}</p>
           </div>
           <div>
             <h3 className="font-semibold">{t('emailLabel')}</h3>
-            <p className="text-gray-700">{session.user.email}</p>
+            <p className="text-muted-foreground">{session.user.email}</p>
           </div>
         </div>
       </div>

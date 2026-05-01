@@ -77,7 +77,7 @@ export function FormTemplate<TData extends FieldValues>({
                         )}
                       </FieldLabel>
                       {field.description && (
-                        <FieldDescription className="text-muted-foreground text-xs dark:text-gray-400">
+                        <FieldDescription className="text-muted-foreground text-xs">
                           {field.description}
                         </FieldDescription>
                       )}

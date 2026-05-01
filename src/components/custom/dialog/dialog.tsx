@@ -4,8 +4,6 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogOverlay,
-  DialogPortal,
   DialogTitle,
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
@@ -21,36 +19,31 @@ export function DialogTemplate({
   footer,
   className = '',
   hideHeader = false,
-  overlayClassName = 'fixed inset-0 z-50 bg-black/30',
+  overlayClassName,
 }: DialogTemplateProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogPortal>
-        <DialogOverlay className={overlayClassName} />
-        <DialogContent
-          className={cn(
-            'fixed top-[50%] left-[50%] z-50 translate-x-[-50%] translate-y-[-50%] overflow-hidden bg-white',
-            className
-          )}
-        >
-          {!hideHeader && title && (
-            <DialogHeader className="border-b pb-4">
-              <DialogTitle className="font-bold text-xl">{title}</DialogTitle>
-              {description && (
-                <DialogDescription className="mt-1">
-                  {description}
-                </DialogDescription>
-              )}
-            </DialogHeader>
-          )}
+      <DialogContent
+        className={cn('overflow-hidden', className)}
+        overlayClassName={overlayClassName}
+      >
+        <DialogHeader className={cn(hideHeader ? 'sr-only' : 'border-b pb-4')}>
+          <DialogTitle className={cn(!hideHeader && 'font-bold text-xl')}>
+            {title}
+          </DialogTitle>
+          {description ? (
+            <DialogDescription className={cn(!hideHeader && 'mt-1')}>
+              {description}
+            </DialogDescription>
+          ) : null}
+        </DialogHeader>
 
-          <div className={hideHeader ? '' : 'py-2'}>{children}</div>
+        <div className={hideHeader ? '' : 'py-2'}>{children}</div>
 
-          {showFooter && footer && (
-            <DialogFooter className="mt-4 border-t pt-4">{footer}</DialogFooter>
-          )}
-        </DialogContent>
-      </DialogPortal>
+        {showFooter && footer ? (
+          <DialogFooter className="mt-4 border-t pt-4">{footer}</DialogFooter>
+        ) : null}
+      </DialogContent>
     </Dialog>
   );
 }
