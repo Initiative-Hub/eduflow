@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { auth } from '@/lib/auth';
 
 const loginSchema = z.object({
-  email: z.email(),
+  email: z.email().transform((value) => value.trim().toLowerCase()),
   password: z.string().min(1),
   callbackURL: z.string().optional(),
   rememberMe: z.boolean().optional(),
