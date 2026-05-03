@@ -1,6 +1,5 @@
 'use client';
 
-import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowUp, Library, Paperclip, Settings2, Square } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
@@ -46,9 +45,8 @@ export function ChatInput({
     : t('placeholder');
 
   return (
-    <motion.div
-      layout
-      className={`relative w-full space-y-4 pt-8 pb-4 ${isChatting ? 'mt-auto' : ''}`}
+    <div
+      className={`relative w-full space-y-4 pt-8 pb-4 transition-all duration-200 ${isChatting ? 'mt-auto' : ''}`}
     >
       <div className="group relative mx-auto max-w-3xl">
         <div className="absolute inset-x-0 -top-px -bottom-px rounded-[2rem] bg-linear-to-r from-transparent via-primary/50 to-transparent opacity-0 transition-opacity duration-500 group-focus-within:opacity-100" />
@@ -85,39 +83,32 @@ export function ChatInput({
         </PromptInput>
       </div>
 
-      <AnimatePresence>
-        {!isChatting && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="flex items-center justify-center gap-6 px-4"
-          >
-            <div className="flex cursor-default items-center gap-1.5 text-muted-foreground/50 transition-colors hover:text-muted-foreground/80">
-              <Button
-                variant="ghost"
-                className="flex h-auto items-center gap-1.5 p-0 hover:bg-transparent"
-              >
-                <Settings2 className="size-3.5" />
-                <span className="font-medium text-[11px]">
-                  {t('footer.responseDisclaimer')}
-                </span>
-              </Button>
-            </div>
-            <div className="flex cursor-default items-center gap-1.5 text-muted-foreground/50 transition-colors hover:text-muted-foreground/80">
-              <Button
-                variant="ghost"
-                className="flex h-auto items-center gap-1.5 p-0 hover:bg-transparent"
-              >
-                <Library className="size-3.5" />
-                <span className="font-medium text-[11px]">
-                  {t('footer.academicDraft')}
-                </span>
-              </Button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {!isChatting && (
+        <div className="flex items-center justify-center gap-6 px-4">
+          <div className="flex cursor-default items-center gap-1.5 text-muted-foreground/50 transition-colors hover:text-muted-foreground/80">
+            <Button
+              variant="ghost"
+              className="flex h-auto items-center gap-1.5 p-0 hover:bg-transparent"
+            >
+              <Settings2 className="size-3.5" />
+              <span className="font-medium text-[11px]">
+                {t('footer.responseDisclaimer')}
+              </span>
+            </Button>
+          </div>
+          <div className="flex cursor-default items-center gap-1.5 text-muted-foreground/50 transition-colors hover:text-muted-foreground/80">
+            <Button
+              variant="ghost"
+              className="flex h-auto items-center gap-1.5 p-0 hover:bg-transparent"
+            >
+              <Library className="size-3.5" />
+              <span className="font-medium text-[11px]">
+                {t('footer.academicDraft')}
+              </span>
+            </Button>
+          </div>
+        </div>
+      )}
 
       {isLimitReached && (
         <p className="text-center font-medium text-muted-foreground text-sm">
@@ -127,6 +118,6 @@ export function ChatInput({
           })}
         </p>
       )}
-    </motion.div>
+    </div>
   );
 }

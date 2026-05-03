@@ -8,7 +8,7 @@ import { hasLocale } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
 import type { ReactNode } from 'react';
 import { Toaster } from 'sonner';
-import { GlobalLoader } from '@/components/GlobalLoader';
+import { GlobalLoader } from '@/components/global-loader';
 import { routing } from '@/i18n/routing';
 import Providers from '@/providers/providers';
 

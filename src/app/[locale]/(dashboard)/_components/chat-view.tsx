@@ -1,7 +1,6 @@
 'use client';
 
 import type { UIMessage } from 'ai';
-import { motion } from 'framer-motion';
 import { Bot, Loader2, User } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import {
@@ -30,12 +29,7 @@ export function ChatView({ messages, isStreaming }: ChatViewProps) {
   const t = useTranslations('AIChat');
 
   return (
-    <motion.div
-      key="chat"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="flex h-[calc(100vh-280px)] w-full flex-col"
-    >
+    <div className="flex h-[calc(100vh-280px)] w-full flex-col">
       <Conversation className="flex-1">
         <ConversationContent className="custom-scrollbar gap-6 py-4 pr-4">
           {messages.map((message) => {
@@ -56,9 +50,7 @@ export function ChatView({ messages, isStreaming }: ChatViewProps) {
                 key={message.id}
                 className="max-w-full"
               >
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
+                <div
                   className={`flex items-start gap-4 ${message.role === 'assistant' ? '' : 'flex-row-reverse'}`}
                 >
                   <div
@@ -107,17 +99,13 @@ export function ChatView({ messages, isStreaming }: ChatViewProps) {
                       </p>
                     )}
                   </MessageContent>
-                </motion.div>
+                </div>
               </Message>
             );
           })}
 
           {isStreaming && messages.at(-1)?.role !== 'assistant' && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex items-start gap-4"
-            >
+            <div className="flex items-start gap-4">
               <div className="flex size-10 shrink-0 animate-pulse items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
                 <Bot className="size-5" />
               </div>
@@ -127,11 +115,11 @@ export function ChatView({ messages, isStreaming }: ChatViewProps) {
                   {t('thinking')}
                 </span>
               </div>
-            </motion.div>
+            </div>
           )}
         </ConversationContent>
         <ConversationScrollButton className="bottom-2 shadow-sm" />
       </Conversation>
-    </motion.div>
+    </div>
   );
 }

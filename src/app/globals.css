@@ -56,8 +56,8 @@
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
 
-  --animation-float: float 3s ease-in-out infinite;
-  --animation-loader-slide: loader-slide 2s infinite ease-in-out;
+  --animate-float: float 3s ease-in-out infinite;
+  --animate-loader-slide: loader-slide 2s ease-in-out infinite;
 
   @keyframes float {
     0%,

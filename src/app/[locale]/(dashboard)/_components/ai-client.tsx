@@ -1,7 +1,6 @@
 'use client';
 
 import type { UIMessage } from 'ai';
-import { AnimatePresence, motion } from 'framer-motion';
 import {
   BadgeInfo,
   BookOpen,
@@ -13,15 +12,24 @@ import {
   Sparkles,
   Zap,
 } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { useChatController } from '../use-chat';
-import { ChatInput } from './chat-input';
-import { ChatView } from './chat-view';
-import { LandingView } from './landing-view';
 
+const LandingView = dynamic(() =>
+  import('./landing-view').then((mod) => mod.LandingView)
+);
+
+const ChatView = dynamic(() =>
+  import('./chat-view').then((mod) => mod.ChatView)
+);
+
+const ChatInput = dynamic(() =>
+  import('./chat-input').then((mod) => mod.ChatInput)
+);
 interface AIClientProps {
   userName?: string;
   chatId?: string;
@@ -115,61 +123,52 @@ export function AIClient({ userName, chatId, initialMessages }: AIClientProps) {
       </div>
 
       {/* Top Badges - Only show when not chatting */}
-      <AnimatePresence>
-        {!isChatting && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="absolute top-0 right-10 z-20 hidden flex-col items-end gap-2 md:flex"
+      {!isChatting && (
+        <div className="absolute top-0 right-10 z-20 hidden flex-col items-end gap-2 md:flex">
+          <Badge
+            variant="outline"
+            className="gap-2 rounded-full border-primary/20 bg-primary/5 px-3 py-1.5 text-primary ring-1 ring-primary/10 backdrop-blur-md"
           >
-            <Badge
-              variant="outline"
-              className="gap-2 rounded-full border-primary/20 bg-primary/5 px-3 py-1.5 text-primary ring-1 ring-primary/10 backdrop-blur-md"
-            >
-              <span className="font-bold font-mono text-[10px] opacity-70">
-                CC_
-              </span>
-              <BadgeInfo className="size-3.5" />
-              <span className="font-medium text-[11px] tracking-tight">
-                {t('criticalThinking')}
-              </span>
-            </Badge>
-            <Badge
-              variant="outline"
-              className="gap-2 rounded-full border-border/50 bg-slate-100/50 px-3 py-1.5 text-muted-foreground backdrop-blur-md dark:bg-slate-900/50"
-            >
-              <ShieldCheck className="size-3.5" />
-              <span className="font-medium text-[11px] tracking-tight">
-                {t('philosophicalLogic')}
-              </span>
-            </Badge>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <span className="font-bold font-mono text-[10px] opacity-70">
+              CC_
+            </span>
+            <BadgeInfo className="size-3.5" />
+            <span className="font-medium text-[11px] tracking-tight">
+              {t('criticalThinking')}
+            </span>
+          </Badge>
+          <Badge
+            variant="outline"
+            className="gap-2 rounded-full border-border/50 bg-slate-100/50 px-3 py-1.5 text-muted-foreground backdrop-blur-md dark:bg-slate-900/50"
+          >
+            <ShieldCheck className="size-3.5" />
+            <span className="font-medium text-[11px] tracking-tight">
+              {t('philosophicalLogic')}
+            </span>
+          </Badge>
+        </div>
+      )}
 
       {/* Main Content Area */}
       <div className="relative z-10 flex w-full flex-1 flex-col justify-center overflow-hidden">
-        <AnimatePresence mode="wait">
-          {!isChatting ? (
-            <LandingView
-              userName={userName ?? 'User'}
-              view={view}
-              setView={setView}
-              suggestions={suggestions}
-              extendedPrompts={extendedPrompts}
-              onSelectPrompt={(text) => {
-                if (isLimitReached) {
-                  notifyLimitReached();
-                  return;
-                }
-                void startChat(text);
-              }}
-            />
-          ) : (
-            <ChatView messages={displayMessages} isStreaming={isStreaming} />
-          )}
-        </AnimatePresence>
+        {!isChatting ? (
+          <LandingView
+            userName={userName ?? 'Guest'}
+            view={view}
+            setView={setView}
+            suggestions={suggestions}
+            extendedPrompts={extendedPrompts}
+            onSelectPrompt={(text) => {
+              if (isLimitReached) {
+                notifyLimitReached();
+                return;
+              }
+              void startChat(text);
+            }}
+          />
+        ) : (
+          <ChatView messages={displayMessages} isStreaming={isStreaming} />
+        )}
       </div>
 
       <ChatInput
