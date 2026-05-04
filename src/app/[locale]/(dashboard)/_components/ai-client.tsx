@@ -117,7 +117,6 @@ export function AIClient({ userName, chatId, initialMessages }: AIClientProps) {
 
   return (
     <div className="relative flex h-full flex-1 flex-col items-center overflow-x-hidden px-4 py-8 md:px-0">
-      {/* Background Ambient Glow */}
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden">
         <div className="h-125 w-125 rounded-full bg-primary/5 blur-[120px]" />
       </div>
