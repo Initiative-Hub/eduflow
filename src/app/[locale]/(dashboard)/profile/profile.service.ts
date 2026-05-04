@@ -34,4 +34,6 @@ export const profileService = {
     apiClient.delete<{ success: boolean }>('/v1/user/avatar'),
   setPassword: async (password: string) =>
     apiClient.post('/v1/user/password', { password }),
+  changePassword: async (currentPassword: string, newPassword: string) =>
+    apiClient.put('/v1/user/password', { currentPassword, newPassword }),
 };

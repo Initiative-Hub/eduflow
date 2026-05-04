@@ -65,3 +65,49 @@ export const setPasswordFields: FormFieldConfig[] = [
     colSpan: 2,
   },
 ];
+
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, 'validation.currentPasswordRequired'),
+    newPassword: z.string().min(8, 'validation.passwordTooShort'),
+    confirmNewPassword: z.string().min(1, 'validation.confirmPasswordRequired'),
+  })
+  .refine((data) => data.newPassword === data.confirmNewPassword, {
+    message: 'validation.passwordsMustMatch',
+    path: ['confirmNewPassword'],
+  });
+
+export type ChangePasswordFormData = z.infer<typeof changePasswordSchema>;
+
+export const changePasswordDefaultValues: ChangePasswordFormData = {
+  currentPassword: '',
+  newPassword: '',
+  confirmNewPassword: '',
+};
+
+export const changePasswordFields: FormFieldConfig[] = [
+  {
+    name: 'currentPassword',
+    label: 'changePasswordDialog.currentLabel',
+    type: 'password',
+    placeholder: 'changePasswordDialog.currentPlaceholder',
+    required: true,
+    colSpan: 2,
+  },
+  {
+    name: 'newPassword',
+    label: 'changePasswordDialog.newLabel',
+    type: 'password',
+    placeholder: 'changePasswordDialog.newPlaceholder',
+    required: true,
+    colSpan: 2,
+  },
+  {
+    name: 'confirmNewPassword',
+    label: 'changePasswordDialog.confirmLabel',
+    type: 'password',
+    placeholder: 'changePasswordDialog.confirmPlaceholder',
+    required: true,
+    colSpan: 2,
+  },
+];

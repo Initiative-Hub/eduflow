@@ -536,6 +536,7 @@
   },
   "ProfilePage": {
     "actions": {
+      "changePassword": "Change password",
       "discard": "Discard changes",
       "edit": "Edit Profile",
       "save": "Save settings",
@@ -601,10 +602,23 @@
       "submit": "Set Password",
       "title": "Set Password"
     },
+    "changePasswordDialog": {
+      "confirmLabel": "Confirm New Password",
+      "confirmPlaceholder": "Repeat new password",
+      "currentLabel": "Current Password",
+      "currentPlaceholder": "Enter your current password",
+      "description": "Enter your current password and choose a new one.",
+      "newLabel": "New Password",
+      "newPlaceholder": "Enter new password",
+      "submit": "Change Password",
+      "title": "Change Password"
+    },
     "subtitle": "Manage your personal information",
     "title": "Profile",
     "toast": {
       "discarded": "Changes discarded",
+      "passwordChanged": "Password changed",
+      "passwordChangedDesc": "Your password has been updated successfully.",
       "passwordSet": "Password set",
       "passwordSetDesc": "You can now use this password to sign in.",
       "saved": "Profile updated",
@@ -612,6 +626,7 @@
     },
     "validation": {
       "confirmPasswordRequired": "Please confirm your password.",
+      "currentPasswordRequired": "Current password is required.",
       "nameRequired": "Full name is required.",
       "nameTooShort": "Name must be at least 2 characters.",
       "passwordsMustMatch": "Passwords do not match.",

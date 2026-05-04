@@ -536,6 +536,7 @@
   },
   "ProfilePage": {
     "actions": {
+      "changePassword": "Đổi mật khẩu",
       "discard": "Huỷ thay đổi",
       "edit": "Chỉnh sửa",
       "save": "Lưu cài đặt không gian làm việc",
@@ -601,10 +602,23 @@
       "submit": "Thiết lập mật khẩu",
       "title": "Thiết lập mật khẩu"
     },
+    "changePasswordDialog": {
+      "confirmLabel": "Xác nhận mật khẩu mới",
+      "confirmPlaceholder": "Nhập lại mật khẩu mới",
+      "currentLabel": "Mật khẩu hiện tại",
+      "currentPlaceholder": "Nhập mật khẩu hiện tại của bạn",
+      "description": "Nhập mật khẩu hiện tại và chọn mật khẩu mới.",
+      "newLabel": "Mật khẩu mới",
+      "newPlaceholder": "Nhập mật khẩu mới",
+      "submit": "Đổi mật khẩu",
+      "title": "Đổi mật khẩu"
+    },
     "subtitle": "Quản lý thông tin cá nhân của bạn",
     "title": "Hồ sơ",
     "toast": {
       "discarded": "Đã huỷ thay đổi",
+      "passwordChanged": "Đã đổi mật khẩu",
+      "passwordChangedDesc": "Mật khẩu của bạn đã được cập nhật thành công.",
       "passwordSet": "Đã thiết lập mật khẩu",
       "passwordSetDesc": "Bây giờ bạn có thể dùng mật khẩu này để đăng nhập.",
       "saved": "Đã cập nhật hồ sơ",
@@ -612,6 +626,7 @@
     },
     "validation": {
       "confirmPasswordRequired": "Vui lòng xác nhận mật khẩu.",
+      "currentPasswordRequired": "Mật khẩu hiện tại là bắt buộc.",
       "nameRequired": "Họ và tên là bắt buộc.",
       "nameTooShort": "Tên phải có ít nhất 2 ký tự.",
       "passwordsMustMatch": "Mật khẩu không khớp.",

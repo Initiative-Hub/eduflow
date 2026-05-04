@@ -15,7 +15,9 @@ interface SecurityInfoCardProps {
   hasPassword: boolean;
   userAgent: string | null;
   onSetPassword?: () => void;
+  onChangePassword?: () => void;
   isResetting?: boolean;
+  isChanging?: boolean;
 }
 
 export function SecurityInfoCard({
@@ -23,7 +25,9 @@ export function SecurityInfoCard({
   hasPassword,
   userAgent,
   onSetPassword,
+  onChangePassword,
   isResetting,
+  isChanging,
 }: SecurityInfoCardProps) {
   const t = useTranslations('ProfilePage');
 
@@ -58,10 +62,11 @@ export function SecurityInfoCard({
 
           {/* Password status */}
           <div className="rounded-xl bg-muted/50 px-4 py-3">
-            <dt className="mb-1.5 font-semibold text-muted-foreground text-xs uppercase tracking-wider">
-              {t('fields.passwordStatus')}
-            </dt>
-            <dd className="space-y-2">
+            <div className="mb-1.5 flex items-center gap-3">
+              <dt className="font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+                {t('fields.passwordStatus')}
+              </dt>
+
               <div className="flex items-center gap-1.5">
                 {hasPassword ? (
                   <>
@@ -79,7 +84,10 @@ export function SecurityInfoCard({
                   </>
                 )}
               </div>
-              {!hasPassword && (
+            </div>
+
+            <dd>
+              {!hasPassword ? (
                 <Button
                   type="button"
                   size="sm"
@@ -87,10 +95,24 @@ export function SecurityInfoCard({
                   disabled={isResetting}
                   className="h-8 cursor-pointer bg-primary font-semibold hover:bg-primary/90"
                 >
-                  {isResetting ? (
+                  {isResetting && (
                     <Loader2 className="mr-2 size-3 animate-spin" />
-                  ) : null}
+                  )}
                   {t('actions.setPassword')}
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={onChangePassword}
+                  disabled={isChanging}
+                  className="h-8 cursor-pointer font-semibold"
+                >
+                  {isChanging && (
+                    <Loader2 className="mr-2 size-3 animate-spin" />
+                  )}
+                  {t('actions.changePassword')}
                 </Button>
               )}
             </dd>
