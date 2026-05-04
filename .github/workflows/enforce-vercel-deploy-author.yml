@@ -21,6 +21,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 2
+          persist-credentials: false
 
       - name: Check latest commit author
         id: check-author
@@ -39,33 +40,24 @@ jobs:
             echo "Author matches. All good!"
           fi
 
-      - name: Create empty commit and PR
+      - name: Create Pull Request
         if: steps.check-author.outputs.mismatch == 'true'
-        env:
-          # Use PAT to create the PR on behalf of the user
-          GH_TOKEN: ${{ secrets.VERCEL_AUTHOR_PAT || secrets.GITHUB_TOKEN }}
+        id: create-pr
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.VERCEL_AUTHOR_PAT || secrets.GITHUB_TOKEN }}
+          commit-message: "chore: ensure Vercel deployment author"
+          author: "${{ env.EXPECTED_NAME }} <${{ env.EXPECTED_EMAIL }}>"
+          committer: "${{ env.EXPECTED_NAME }} <${{ env.EXPECTED_EMAIL }}>"
+          branch: "chore/trigger-vercel-deploy"
+          delete-branch: true
+          title: "chore: trigger Vercel deployment"
+          body: "Automated PR to ensure correctly authored commit for Vercel."
+          base: main
+      
+      - name: Fail Workflow After Creating PR
+        if: steps.check-author.outputs.mismatch == 'true'
         run: |
-          # 1. Configure git with the target author's identity
-          git config --global user.email "$EXPECTED_EMAIL"
-          git config --global user.name "$EXPECTED_NAME"
-          
-          # 2. Check out a new branch
-          BRANCH_NAME="chore/trigger-vercel-deploy-${{ github.sha }}"
-          git checkout -b "$BRANCH_NAME"
-          
-          # 3. Create the empty commit
-          git commit --allow-empty -m "chore: ensure Vercel deployment author"
-          
-          # 4. Push the new branch to origin
-          git push origin "$BRANCH_NAME"
-          
-          # 5. Create a pull request using GitHub CLI
-          gh pr create \
-            --title "chore: trigger Vercel deployment" \
-            --body "Automated PR to ensure the latest commit on \`main\` has the correct author (${EXPECTED_EMAIL}) so Vercel can deploy it. Please merge." \
-            --base main \
-            --head "$BRANCH_NAME"
-            
-          echo "Pull Request created successfully."
-          echo "::error::Failing the workflow because the latest commit author must be $EXPECTED_EMAIL"
+          echo "Author mismatch detected. A PR has been created to fix identity."
+          echo "PR URL: ${{ steps.create-pr.outputs.pull-request-url }}"
           exit 1
