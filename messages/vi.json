@@ -555,6 +555,17 @@
       "title": "Ảnh đại diện",
       "upload": "Tải ảnh đại diện"
     },
+    "changePasswordDialog": {
+      "confirmLabel": "Xác nhận mật khẩu mới",
+      "confirmPlaceholder": "Nhập lại mật khẩu mới",
+      "currentLabel": "Mật khẩu hiện tại",
+      "currentPlaceholder": "Nhập mật khẩu hiện tại của bạn",
+      "description": "Nhập mật khẩu hiện tại và chọn mật khẩu mới.",
+      "newLabel": "Mật khẩu mới",
+      "newPlaceholder": "Nhập mật khẩu mới",
+      "submit": "Đổi mật khẩu",
+      "title": "Đổi mật khẩu"
+    },
     "fields": {
       "browser": "Trình duyệt hiện tại",
       "browserUnknown": "Không xác định",
@@ -601,17 +612,6 @@
       "placeholder": "Nhập mật khẩu mới",
       "submit": "Thiết lập mật khẩu",
       "title": "Thiết lập mật khẩu"
-    },
-    "changePasswordDialog": {
-      "confirmLabel": "Xác nhận mật khẩu mới",
-      "confirmPlaceholder": "Nhập lại mật khẩu mới",
-      "currentLabel": "Mật khẩu hiện tại",
-      "currentPlaceholder": "Nhập mật khẩu hiện tại của bạn",
-      "description": "Nhập mật khẩu hiện tại và chọn mật khẩu mới.",
-      "newLabel": "Mật khẩu mới",
-      "newPlaceholder": "Nhập mật khẩu mới",
-      "submit": "Đổi mật khẩu",
-      "title": "Đổi mật khẩu"
     },
     "subtitle": "Quản lý thông tin cá nhân của bạn",
     "title": "Hồ sơ",

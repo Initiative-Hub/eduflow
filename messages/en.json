@@ -555,6 +555,17 @@
       "title": "Avatar",
       "upload": "Upload avatar"
     },
+    "changePasswordDialog": {
+      "confirmLabel": "Confirm New Password",
+      "confirmPlaceholder": "Repeat new password",
+      "currentLabel": "Current Password",
+      "currentPlaceholder": "Enter your current password",
+      "description": "Enter your current password and choose a new one.",
+      "newLabel": "New Password",
+      "newPlaceholder": "Enter new password",
+      "submit": "Change Password",
+      "title": "Change Password"
+    },
     "fields": {
       "browser": "Current Browser",
       "browserUnknown": "Unknown",
@@ -601,17 +612,6 @@
       "placeholder": "Enter new password",
       "submit": "Set Password",
       "title": "Set Password"
-    },
-    "changePasswordDialog": {
-      "confirmLabel": "Confirm New Password",
-      "confirmPlaceholder": "Repeat new password",
-      "currentLabel": "Current Password",
-      "currentPlaceholder": "Enter your current password",
-      "description": "Enter your current password and choose a new one.",
-      "newLabel": "New Password",
-      "newPlaceholder": "Enter new password",
-      "submit": "Change Password",
-      "title": "Change Password"
     },
     "subtitle": "Manage your personal information",
     "title": "Profile",
