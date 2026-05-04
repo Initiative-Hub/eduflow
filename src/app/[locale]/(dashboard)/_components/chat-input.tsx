@@ -63,7 +63,7 @@ export function ChatInput({
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             placeholder={inputPlaceholder}
-            className="h-12 max-h-12 min-h-12 px-1 text-lg leading-normal placeholder:text-muted-foreground/50"
+            className="min-h-12 px-1 py-3 text-lg leading-normal placeholder:text-muted-foreground/50"
             disabled={isLimitReached}
           />
 
