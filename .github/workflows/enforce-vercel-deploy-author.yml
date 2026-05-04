@@ -21,9 +21,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 2
-          # We use a PAT here so the checked out git config allows pushing new branches
-          # and so the resulting commit looks like it came from the actual user.
-          token: ${{ secrets.VERCEL_AUTHOR_PAT || secrets.GITHUB_TOKEN }}
 
       - name: Check latest commit author
         id: check-author
