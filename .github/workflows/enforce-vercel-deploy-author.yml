@@ -40,25 +40,60 @@ jobs:
             echo "Author matches. All good!"
           fi
 
-      - name: Create and Auto-Merge PR
+      - name: Create empty commit and PR
         if: steps.check-author.outputs.mismatch == 'true'
         env:
-          GH_TOKEN: ${{ secrets.VERCEL_AUTHOR_PAT }}
+          GH_TOKEN: ${{ secrets.VERCEL_AUTHOR_PAT || secrets.GITHUB_TOKEN }}
         run: |
+          # 1. Configure git with the target author's identity
           git config --global user.email "$EXPECTED_EMAIL"
           git config --global user.name "$EXPECTED_NAME"
           
-          BRANCH_NAME="chore/enforce-author"
-          git checkout -b "$BRANCH_NAME"
-          git commit --allow-empty -m "chore: ensure Vercel deployment author"
-          git push origin "$BRANCH_NAME"
+          BRANCH_NAME="chore/trigger-vercel-deploy"
           
-          PR_URL=$(gh pr create \
-            --title "chore: enforce Vercel deployment author" \
-            --body "Automated PR to ensure correct author for Vercel deployment." \
-            --base main \
-            --head "$BRANCH_NAME")
+          # 2. Check if the PR already exists
+          EXISTING_PR=$(gh pr list --head "$BRANCH_NAME" --base main --json number --jq '.[0].number')
           
-          echo "PR created: $PR_URL"
-          gh pr merge "$PR_URL" --rebase --admin --delete-branch
-          echo "✅ PR merged successfully with Rebase mode."
+          if [ -z "$EXISTING_PR" ]; then
+            # 3. Create a new branch and empty commit if not exists
+            git checkout -b "$BRANCH_NAME"
+            git commit --allow-empty -m "chore: ensure Vercel deployment author"
+            
+            # 4. Push the branch (force push to ensure it matches current main + empty commit)
+            git push origin "$BRANCH_NAME" --force
+            
+            # 5. Create the pull request
+            gh pr create \
+              --title "chore: trigger Vercel deployment" \
+              --body "Automated PR to ensure the latest commit on \`main\` has the correct author (${EXPECTED_EMAIL}) so Vercel can deploy it. Make sure to merge this PR with rebase mode." \
+              --base main \
+              --head "$BRANCH_NAME"
+            
+            echo "Pull Request created successfully."
+          else
+            echo "A Pull Request for $BRANCH_NAME already exists (PR #$EXISTING_PR). Skipping creation."
+          fi
+            
+          echo "::error::Failing the workflow because the latest commit author must be $EXPECTED_EMAIL"
+          exit 1
+
+      - name: Cleanup outdated PR and branch
+        if: steps.check-author.outputs.mismatch == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.VERCEL_AUTHOR_PAT || secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH_NAME="chore/trigger-vercel-deploy"
+          
+          # 1. Find and close any open PR for this branch
+          EXISTING_PR=$(gh pr list --head "$BRANCH_NAME" --base main --json number --jq '.[0].number')
+          
+          if [ -n "$EXISTING_PR" ]; then
+            echo "Closing outdated PR #$EXISTING_PR because author now matches."
+            gh pr close "$EXISTING_PR" --comment "✅ Closing this PR as the latest commit on main now has the correct author."
+          fi
+          
+          # 2. Delete the remote branch if it exists
+          if git ls-remote --exit-code --heads origin "$BRANCH_NAME"; then
+            echo "Deleting remote branch $BRANCH_NAME"
+            git push origin --delete "$BRANCH_NAME"
+          fi
