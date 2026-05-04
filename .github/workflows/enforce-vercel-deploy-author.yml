@@ -1,0 +1,71 @@
+name: Enforce Vercel Deploy Author
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  enforce-author:
+    name: Enforce Vercel Deploy Author
+    timeout-minutes: 20
+    runs-on: self-hosted
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      EXPECTED_EMAIL: ${{ secrets.VERCEL_AUTHOR_EMAIL || 'your-vercel-owner-email@example.com' }}
+      EXPECTED_NAME: ${{ secrets.VERCEL_AUTHOR_NAME || 'Vercel Owner Name' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check latest commit author
+        id: check-author
+        run: |
+          echo "Expected author email: $EXPECTED_EMAIL"
+          
+          # Get the email of the author of the latest commit
+          LATEST_AUTHOR_EMAIL=$(git log -1 --pretty=format:'%ae')
+          echo "Latest commit author email: $LATEST_AUTHOR_EMAIL"
+          
+          if [ "$LATEST_AUTHOR_EMAIL" != "$EXPECTED_EMAIL" ]; then
+            echo "Author mismatch detected."
+            echo "mismatch=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "mismatch=false" >> "$GITHUB_OUTPUT"
+            echo "Author matches. All good!"
+          fi
+
+      - name: Create empty commit and PR
+        if: steps.check-author.outputs.mismatch == 'true'
+        env:
+          # Use PAT to create the PR on behalf of the user
+          GH_TOKEN: ${{ secrets.VERCEL_AUTHOR_PAT || secrets.GITHUB_TOKEN }}
+        run: |
+          # 1. Configure git with the target author's identity
+          git config --global user.email "$EXPECTED_EMAIL"
+          git config --global user.name "$EXPECTED_NAME"
+          
+          # 2. Check out a new branch
+          BRANCH_NAME="chore/trigger-vercel-deploy-${{ github.sha }}"
+          git checkout -b "$BRANCH_NAME"
+          
+          # 3. Create the empty commit
+          git commit --allow-empty -m "chore: ensure Vercel deployment author"
+          
+          # 4. Push the new branch to origin
+          git push origin "$BRANCH_NAME"
+          
+          # 5. Create a pull request using GitHub CLI
+          gh pr create \
+            --title "chore: trigger Vercel deployment" \
+            --body "Automated PR to ensure the latest commit on \`main\` has the correct author (${EXPECTED_EMAIL}) so Vercel can deploy it. Please merge." \
+            --base main \
+            --head "$BRANCH_NAME"
+            
+          echo "Pull Request created successfully."
+          echo "::error::Failing the workflow because the latest commit author must be $EXPECTED_EMAIL"
+          exit 1
