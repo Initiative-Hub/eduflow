@@ -55,9 +55,11 @@ jobs:
           EXISTING_PR=$(gh pr list --head "$BRANCH_NAME" --base main --json number --jq '.[0].number')
           
           if [ -z "$EXISTING_PR" ]; then
-            # 3. Create a new branch and empty commit if not exists
+            # 3. Create a new branch with timestamp if not exists
             git checkout -b "$BRANCH_NAME"
-            git commit --allow-empty -m "chore: ensure Vercel deployment author"
+            date +%s > .vercel-trigger
+            git add .vercel-trigger
+            git commit -m "chore: ensure Vercel deployment author"
             
             # 4. Push the branch (force push to ensure it matches current main + empty commit)
             git push origin "$BRANCH_NAME" --force
