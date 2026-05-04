@@ -23,6 +23,7 @@ export function useRegister() {
       });
     },
     onSuccess: (_, variables) => {
+      setLoading(false);
       if (DEV_MODE) {
         window.open(LOCAL_MAILPIT_URL, '_blank');
       }

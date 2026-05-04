@@ -205,7 +205,7 @@
       }
     },
     "resend": {
-      "action": "Resend OTP",
+      "action": "Not received the code?",
       "cooldown": "Resend in {seconds}s",
       "label": "Didn't receive the code?",
       "loading": "Resending..."

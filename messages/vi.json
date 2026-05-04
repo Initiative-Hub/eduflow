@@ -205,7 +205,7 @@
       }
     },
     "resend": {
-      "action": "Gửi lại OTP",
+      "action": "Bạn chưa nhận được mã?",
       "cooldown": "Gửi lại sau {seconds}s",
       "label": "Bạn chưa nhận được mã?",
       "loading": "Đang gửi lại..."
