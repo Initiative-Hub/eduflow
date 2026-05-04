@@ -6,6 +6,7 @@ import { useState } from 'react';
 import {
   PromptInput,
   PromptInputButton,
+  PromptInputFooter,
   type PromptInputMessage,
   PromptInputSubmit,
   PromptInputTextarea,
@@ -55,31 +56,33 @@ export function ChatInput({
           className="relative *:data-[slot=input-group]:rounded-[2rem] *:data-[slot=input-group]:border-border *:data-[slot=input-group]:bg-white *:data-[slot=input-group]:p-2 *:data-[slot=input-group]:shadow-xl *:data-[slot=input-group]:transition-all *:data-[slot=input-group]:group-focus-within:border-primary/30 *:data-[slot=input-group]:group-focus-within:shadow-2xl dark:*:data-[slot=input-group]:bg-zinc-950"
           onSubmit={onPromptSubmit}
         >
-          <PromptInputButton className="ml-1 size-11 rounded-full text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary">
-            <Paperclip className="size-5" />
-          </PromptInputButton>
-
           <PromptInputTextarea
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             placeholder={inputPlaceholder}
-            className="min-h-12 px-1 py-3 text-lg leading-normal placeholder:text-muted-foreground/50"
+            className="min-h-12 px-2 py-3 text-lg leading-normal placeholder:text-muted-foreground/50"
             disabled={isLimitReached}
           />
 
-          <PromptInputSubmit
-            className="size-11 rounded-full transition-all hover:scale-105"
-            disabled={isLimitReached || (!isStreaming && !inputValue.trim())}
-            onStop={onStop}
-            status={isStreaming ? 'streaming' : 'ready'}
-            variant={isStreaming ? 'destructive' : 'default'}
-          >
-            {isStreaming ? (
-              <Square className="size-4" />
-            ) : (
-              <ArrowUp className="size-5" />
-            )}
-          </PromptInputSubmit>
+          <PromptInputFooter className="flex items-center justify-between px-1 pb-1">
+            <PromptInputButton className="size-9 rounded-full text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary">
+              <Paperclip className="size-5" />
+            </PromptInputButton>
+
+            <PromptInputSubmit
+              className="size-9 rounded-full transition-all hover:scale-105"
+              disabled={isLimitReached || (!isStreaming && !inputValue.trim())}
+              onStop={onStop}
+              status={isStreaming ? 'streaming' : 'ready'}
+              variant={isStreaming ? 'destructive' : 'default'}
+            >
+              {isStreaming ? (
+                <Square className="size-4" />
+              ) : (
+                <ArrowUp className="size-5" />
+              )}
+            </PromptInputSubmit>
+          </PromptInputFooter>
         </PromptInput>
       </div>
 
