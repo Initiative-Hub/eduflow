@@ -158,4 +158,29 @@ export class UserService {
       email: user.email,
     });
   }
+
+  static async changePassword(
+    currentPassword: string,
+    newPassword: string,
+    user: { name: string; email: string },
+    headersList: Headers
+  ) {
+    if (!newPassword || newPassword.length < 8) {
+      throw new Error('New password must be at least 8 characters long.');
+    }
+
+    await auth.api.changePassword({
+      body: {
+        currentPassword,
+        newPassword,
+        revokeOtherSessions: false,
+      },
+      headers: headersList,
+    });
+
+    await emailService.sendPasswordChangedNotification({
+      name: user.name,
+      email: user.email,
+    });
+  }
 }

@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import type { AvatarChangePayload } from '@/components/custom/avatar';
-import type { ProfileFormData } from './profile.config';
+import type { ChangePasswordFormData, ProfileFormData } from './profile.config';
 import { profileService } from './profile.service';
 
 const USER_BASIC_INFO_QUERY_KEY = ['user-basic-info'] as const;
@@ -67,6 +67,31 @@ export function useProfile() {
         description: t('toast.passwordSetDesc'),
       });
     },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to set password');
+    },
+  });
+
+  const changePasswordMutation = useMutation<
+    void,
+    Error,
+    ChangePasswordFormData
+  >({
+    mutationFn: async (data: ChangePasswordFormData) => {
+      await profileService.changePassword(
+        data.currentPassword,
+        data.newPassword
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: USER_SECURITY_INFO_QUERY_KEY });
+      toast.success(t('toast.passwordChanged'), {
+        description: t('toast.passwordChangedDesc'),
+      });
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to change password');
+    },
   });
 
   return {
@@ -76,9 +101,11 @@ export function useProfile() {
     isSaving: updateMutation.isPending,
     isAvatarSaving: avatarMutation.isPending,
     isSettingPassword: setPasswordMutation.isPending,
+    isChangingPassword: changePasswordMutation.isPending,
     handleSubmit: updateMutation.mutate,
     handleAvatarChange: avatarMutation.mutateAsync,
     handleSetPassword: setPasswordMutation.mutate,
+    handleChangePassword: changePasswordMutation.mutate,
     isEditing,
     setIsEditing,
   };

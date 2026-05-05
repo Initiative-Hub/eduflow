@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { auth } from '@/lib/auth';
 
 const forgotPasswordSchema = z.object({
-  email: z.email(),
+  email: z.email().transform((value) => value.trim().toLowerCase()),
 });
 
 /**

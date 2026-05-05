@@ -6,11 +6,8 @@ export interface DialogTemplateProps {
   title?: string;
   description?: string;
   children: ReactNode;
-  showFooter?: boolean;
   footer?: ReactNode;
   className?: string;
-  hideHeader?: boolean;
-  overlayClassName?: string;
 }
 
 export interface UseDialogReturn<T = unknown> {

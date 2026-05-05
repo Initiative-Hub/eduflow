@@ -4,8 +4,6 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogOverlay,
-  DialogPortal,
   DialogTitle,
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
@@ -17,40 +15,31 @@ export function DialogTemplate({
   title,
   description,
   children,
-  showFooter = false,
   footer,
   className = '',
-  hideHeader = false,
-  overlayClassName = 'fixed inset-0 z-50 bg-black/30',
 }: DialogTemplateProps) {
+  const showHeader = !!title || !!description;
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogPortal>
-        <DialogOverlay className={overlayClassName} />
-        <DialogContent
-          className={cn(
-            'fixed top-[50%] left-[50%] z-50 translate-x-[-50%] translate-y-[-50%] overflow-hidden bg-white',
-            className
+      <DialogContent className={cn('overflow-hidden', className)}>
+        <DialogHeader className={cn(showHeader ? 'border-b pb-4' : 'sr-only')}>
+          <DialogTitle className={cn(title ? 'font-bold text-xl' : 'sr-only')}>
+            {title}
+          </DialogTitle>
+          {description && (
+            <DialogDescription className={cn(title && 'mt-1')}>
+              {description}
+            </DialogDescription>
           )}
-        >
-          {!hideHeader && title && (
-            <DialogHeader className="border-b pb-4">
-              <DialogTitle className="font-bold text-xl">{title}</DialogTitle>
-              {description && (
-                <DialogDescription className="mt-1">
-                  {description}
-                </DialogDescription>
-              )}
-            </DialogHeader>
-          )}
+        </DialogHeader>
 
-          <div className={hideHeader ? '' : 'py-2'}>{children}</div>
+        <div className={showHeader ? 'py-2' : ''}>{children}</div>
 
-          {showFooter && footer && (
-            <DialogFooter className="mt-4 border-t pt-4">{footer}</DialogFooter>
-          )}
-        </DialogContent>
-      </DialogPortal>
+        {footer && (
+          <DialogFooter className="mt-4 border-t pt-4">{footer}</DialogFooter>
+        )}
+      </DialogContent>
     </Dialog>
   );
 }

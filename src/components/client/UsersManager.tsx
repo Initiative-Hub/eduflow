@@ -148,23 +148,23 @@ export default function UsersManager() {
   const getRoleBadgeColor = (role?: string): string => {
     switch (role) {
       case 'ADMIN':
-        return 'bg-gray-200 text-gray-800';
+        return 'bg-muted text-foreground';
       case 'TEACHER':
-        return 'bg-purple-200 text-purple-800';
+        return 'bg-primary/10 text-primary';
       case 'STUDENT':
-        return 'bg-blue-200 text-blue-800';
+        return 'bg-accent text-accent-foreground';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-muted text-foreground';
     }
   };
 
   if (!mounted) return <p>Loading...</p>;
 
   return (
-    <div className="rounded-lg bg-white shadow">
-      <div className="border-gray-300 border-b p-6">
+    <div className="rounded-lg border border-border bg-card text-card-foreground shadow">
+      <div className="border-b border-border p-6">
         <h1 className="mb-1 font-bold text-2xl">User Management</h1>
-        <p className="text-gray-500 text-sm">
+        <p className="text-muted-foreground text-sm">
           View and manage all registered platform users
         </p>
       </div>
@@ -172,27 +172,22 @@ export default function UsersManager() {
       <div className="space-y-4 p-6">
         <div className="flex items-center justify-between gap-4">
           <div className="flex flex-1 items-center gap-2">
-            <input
+            <Input
               type="text"
               placeholder="Search users by name, email, or ID..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="flex-1 rounded-md border border-gray-300 px-4 py-2"
+              className="flex-1"
             />
           </div>
-          <Button
-            onClick={() => setShowAddModal(true)}
-            className="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-          >
-            + Add New User
-          </Button>
+          <Button onClick={() => setShowAddModal(true)}>+ Add New User</Button>
         </div>
         <div className="flex items-center gap-2">
           <select
             value={roleFilter}
             aria-label="Items per page"
             onChange={(e) => setRoleFilter(e.target.value)}
-            className="rounded-md border border-gray-300 px-3 py-2"
+            className="rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
           >
             <option value="ALL">All Roles</option>
             <option value="ADMIN">Admin</option>
@@ -204,7 +199,7 @@ export default function UsersManager() {
             value={statusFilter}
             aria-label="Status filter"
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="rounded-md border border-gray-300 px-3 py-2"
+            className="rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
           >
             <option value="ALL">All Status</option>
             <option value="ACTIVE">Active</option>
@@ -216,34 +211,34 @@ export default function UsersManager() {
       <div className="overflow-x-auto p-5">
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <p className="text-gray-600">Loading users...</p>
+            <p className="text-muted-foreground">Loading users...</p>
           </div>
         ) : (
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-muted/40">
               <tr>
-                <th className="px-6 py-3 text-left font-medium text-gray-700 text-xs uppercase tracking-wider">
+                <th className="px-6 py-3 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider">
                   USER
                 </th>
-                <th className="px-6 py-3 text-left font-medium text-gray-700 text-xs uppercase tracking-wider">
+                <th className="px-6 py-3 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider">
                   ROLE
                 </th>
-                <th className="px-6 py-3 text-left font-medium text-gray-700 text-xs uppercase tracking-wider">
+                <th className="px-6 py-3 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider">
                   STATUS
                 </th>
-                <th className="px-6 py-3 text-left font-medium text-gray-700 text-xs uppercase tracking-wider">
+                <th className="px-6 py-3 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider">
                   JOIN DATE
                 </th>
-                <th className="px-6 py-3 text-left font-medium text-gray-700 text-xs uppercase tracking-wider">
+                <th className="px-6 py-3 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider">
                   ACTIONS
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-border">
               {paginatedUsers.map((u) => (
-                <tr key={u.id} className="hover:bg-gray-50">
+                <tr key={u.id} className="hover:bg-muted/40">
                   <td className="flex items-center gap-3 px-6 py-4">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-500 font-semibold text-sm text-white">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary font-semibold text-primary-foreground text-sm">
                       {getInitials(u.name, u.email)}
                     </div>
                     <div>
@@ -253,14 +248,16 @@ export default function UsersManager() {
                           onChange={(e) =>
                             setEditForm({ ...editForm, name: e.target.value })
                           }
-                          className="rounded border px-2 py-1 text-sm"
+                          className="h-8"
                         />
                       ) : (
-                        <div className="font-medium text-gray-900">
+                        <div className="font-medium text-foreground">
                           {u.name || '—'}
                         </div>
                       )}
-                      <div className="text-gray-500 text-sm">{u.email}</div>
+                      <div className="text-muted-foreground text-sm">
+                        {u.email}
+                      </div>
                     </div>
                   </td>
                   <td className="px-6 py-4">
@@ -271,7 +268,7 @@ export default function UsersManager() {
                         onChange={(e) =>
                           setEditForm({ ...editForm, role: e.target.value })
                         }
-                        className="rounded border px-2 py-1 text-sm"
+                        className="h-8 rounded border border-input bg-background px-2 py-1 text-sm text-foreground"
                       >
                         <option value="USER">User</option>
                         <option value="ADMIN">Admin</option>
@@ -289,22 +286,27 @@ export default function UsersManager() {
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
                       <span className="h-2 w-2 rounded-full bg-green-500"></span>
-                      <span className="text-gray-600 text-sm">Active</span>
+                      <span className="text-muted-foreground text-sm">
+                        Active
+                      </span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-gray-600 text-sm">—</td>
+                  <td className="px-6 py-4 text-muted-foreground text-sm">—</td>
                   <td className="px-6 py-4">
                     {editingId === u.id ? (
                       <>
                         <Button
                           onClick={saveEdit}
-                          className="mr-2 text-green-600 hover:text-green-800"
+                          variant="default"
+                          size="sm"
+                          className="mr-2"
                         >
                           Save
                         </Button>
                         <Button
                           onClick={() => setEditingId(null)}
-                          className="text-gray-600 hover:text-gray-800"
+                          variant="outline"
+                          size="sm"
                         >
                           Cancel
                         </Button>
@@ -313,11 +315,17 @@ export default function UsersManager() {
                       <>
                         <Button
                           onClick={() => startEdit(u)}
-                          className="mr-3 text-blue-600 hover:text-blue-800"
+                          variant="ghost"
+                          size="icon-sm"
+                          className="mr-2"
                         >
                           ✏️
                         </Button>
-                        <Button className="text-red-600 hover:text-red-800">
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          className="text-destructive"
+                        >
                           🗑️
                         </Button>
                       </>
@@ -332,7 +340,7 @@ export default function UsersManager() {
 
       <div className="flex items-center justify-between border-t px-6 py-4">
         <div className="flex items-center gap-4">
-          <p className="text-gray-600 text-sm">
+          <p className="text-muted-foreground text-sm">
             Showing{' '}
             {Math.min((currentPage - 1) * itemsPerPage + 1, filtered.length)} to{' '}
             {Math.min(currentPage * itemsPerPage, filtered.length)} of{' '}
@@ -342,7 +350,7 @@ export default function UsersManager() {
             value={itemsPerPage.toString()}
             onChange={(e) => handleItemsPerPageChange(e.target.value)}
             aria-label="Items per page"
-            className="rounded-md border border-gray-300 px-3 py-2"
+            className="rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
           >
             <option value="4">4 per page</option>
             <option value="10">10 per page</option>
@@ -356,7 +364,8 @@ export default function UsersManager() {
             <Button
               key={page}
               onClick={() => setCurrentPage(page)}
-              className={`rounded px-3 py-1 ${currentPage === page ? 'bg-blue-600 text-white' : 'border border-gray-300 text-gray-600'}`}
+              variant={currentPage === page ? 'default' : 'outline'}
+              size="sm"
             >
               {page}
             </Button>
@@ -366,72 +375,65 @@ export default function UsersManager() {
 
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-96 rounded-lg bg-white p-6 shadow-lg">
+          <div className="w-96 rounded-lg border border-border bg-popover p-6 text-popover-foreground shadow-lg">
             <h2 className="mb-4 font-bold text-xl">Add New User</h2>
 
             {addError && (
-              <div className="mb-4 rounded bg-red-100 p-3 text-red-700">
+              <div className="mb-4 rounded bg-destructive/10 p-3 text-destructive">
                 {addError}
               </div>
             )}
 
             <div className="space-y-4">
               <div>
-                <label className="mb-1 block font-medium text-gray-700 text-sm">
-                  Email
-                </label>
-                <input
+                <label className="mb-1 block font-medium text-sm">Email</label>
+                <Input
                   type="email"
                   value={newUserForm.email}
                   onChange={(e) =>
                     setNewUserForm({ ...newUserForm, email: e.target.value })
                   }
                   placeholder="user@example.com"
-                  className="w-full rounded-md border border-gray-300 px-3 py-2"
                 />
               </div>
 
               <div>
-                <label className="mb-1 block font-medium text-gray-700 text-sm">
+                <label className="mb-1 block font-medium text-sm">
                   Password
                 </label>
-                <input
+                <Input
                   type="password"
                   value={newUserForm.password}
                   onChange={(e) =>
                     setNewUserForm({ ...newUserForm, password: e.target.value })
                   }
                   placeholder="Enter password"
-                  className="w-full rounded-md border border-gray-300 px-3 py-2"
                 />
               </div>
 
               <div>
-                <label className="mb-1 block font-medium text-gray-700 text-sm">
+                <label className="mb-1 block font-medium text-sm">
                   Name (Optional)
                 </label>
-                <input
+                <Input
                   type="text"
                   value={newUserForm.name}
                   onChange={(e) =>
                     setNewUserForm({ ...newUserForm, name: e.target.value })
                   }
                   placeholder="Full name"
-                  className="w-full rounded-md border border-gray-300 px-3 py-2"
                 />
               </div>
 
               <div>
-                <label className="mb-1 block font-medium text-gray-700 text-sm">
-                  Role
-                </label>
+                <label className="mb-1 block font-medium text-sm">Role</label>
                 <select
                   value={newUserForm.role}
                   aria-label="Select user role"
                   onChange={(e) =>
                     setNewUserForm({ ...newUserForm, role: e.target.value })
                   }
-                  className="w-full rounded-md border border-gray-300 px-3 py-2"
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
                 >
                   <option value="USER">User</option>
                   <option value="ADMIN">Admin</option>
@@ -453,14 +455,15 @@ export default function UsersManager() {
                   });
                   setAddError('');
                 }}
-                className="flex-1 rounded-md border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50"
+                variant="outline"
+                className="flex-1"
                 disabled={addingUser}
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleAddUser}
-                className="flex-1 rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
+                className="flex-1"
                 disabled={addingUser}
               >
                 {addingUser ? 'Creating...' : 'Create User'}

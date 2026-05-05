@@ -536,6 +536,7 @@
   },
   "ProfilePage": {
     "actions": {
+      "changePassword": "Change password",
       "discard": "Discard changes",
       "edit": "Edit Profile",
       "save": "Save settings",
@@ -553,6 +554,17 @@
       "saveError": "Failed to save avatar changes.",
       "title": "Avatar",
       "upload": "Upload avatar"
+    },
+    "changePasswordDialog": {
+      "confirmLabel": "Confirm New Password",
+      "confirmPlaceholder": "Repeat new password",
+      "currentLabel": "Current Password",
+      "currentPlaceholder": "Enter your current password",
+      "description": "Enter your current password and choose a new one.",
+      "newLabel": "New Password",
+      "newPlaceholder": "Enter new password",
+      "submit": "Change Password",
+      "title": "Change Password"
     },
     "fields": {
       "browser": "Current Browser",
@@ -605,6 +617,8 @@
     "title": "Profile",
     "toast": {
       "discarded": "Changes discarded",
+      "passwordChanged": "Password changed",
+      "passwordChangedDesc": "Your password has been updated successfully.",
       "passwordSet": "Password set",
       "passwordSetDesc": "You can now use this password to sign in.",
       "saved": "Profile updated",
@@ -612,8 +626,11 @@
     },
     "validation": {
       "confirmPasswordRequired": "Please confirm your password.",
+      "currentPasswordRequired": "Current password is required.",
       "nameRequired": "Full name is required.",
       "nameTooShort": "Name must be at least 2 characters.",
+      "passwordInvalid": "Password must contain at least 1 number, 1 special character ($#@!), and 1 uppercase letter.",
+      "passwordSameAsCurrent": "New password must be different from the current password.",
       "passwordsMustMatch": "Passwords do not match.",
       "passwordTooShort": "Password must be at least 8 characters."
     }
@@ -641,6 +658,6 @@
       "description": "Your role has been updated. Redirecting you to your workspace...",
       "title": "Welcome aboard!"
     },
-    "title": "Welcome to the {brand} Ecosystem"
+    "title": "Welcome to the <brand>EduFlow</brand> Ecosystem"
   }
 }
