@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useEffect } from 'react';
+import { GuestControls } from '@/components/layout/navbar-avatar/guest-controls';
 import { NavbarAvatar } from '@/components/layout/navbar-avatar';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -98,17 +99,21 @@ export function AppNavbar() {
             />
           </div>
         ) : (
-          <div className="hidden items-center gap-2 font-heading md:flex">
-            <Button asChild>
-              <Link href="/login">{t('NavbarAvatar.actions.login')}</Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link href="/register">{t('NavbarAvatar.actions.register')}</Link>
-            </Button>
+          <div className="flex items-center gap-1">
+            <GuestControls />
+            <div className="hidden items-center gap-2 font-heading md:flex">
+              <Button asChild>
+                <Link href="/login">{t('NavbarAvatar.actions.login')}</Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link href="/register">
+                  {t('NavbarAvatar.actions.register')}
+                </Link>
+              </Button>
+            </div>
           </div>
         )}
 
-        {/* Custom Hamburger Trigger for Mobile */}
         <div className="ml-1 flex items-center md:hidden">
           <Button
             data-sidebar="trigger"
