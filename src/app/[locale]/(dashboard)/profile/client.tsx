@@ -14,20 +14,33 @@ import { PersonalInfoCard } from './personal-info-card';
 import {
   changePasswordDefaultValues,
   changePasswordFields,
-  changePasswordSchema,
+  createChangePasswordSchema,
+  createSetPasswordSchema,
   type ChangePasswordFormData,
   type ProfileFormData,
   profileSchema,
   type SetPasswordFormData,
   setPasswordDefaultValues,
   setPasswordFields,
-  setPasswordSchema,
 } from './profile.config';
 import { SecurityInfoCard } from './security-info-card';
 import { useProfile } from './use-profile';
 
 export default function ProfileClient() {
   const t = useTranslations('ProfilePage');
+
+  const pwMsgs = {
+    tooShort: t('validation.passwordTooShort'),
+    invalid: t('validation.passwordInvalid'),
+    confirmRequired: t('validation.confirmPasswordRequired'),
+    mustMatch: t('validation.passwordsMustMatch'),
+  };
+  const setPasswordSchema = createSetPasswordSchema(pwMsgs);
+  const changePasswordSchema = createChangePasswordSchema({
+    ...pwMsgs,
+    sameAsCurrent: t('validation.passwordSameAsCurrent'),
+  });
+
   const translatedPasswordFields = useTranslatedFields(
     setPasswordFields,
     'ProfilePage'

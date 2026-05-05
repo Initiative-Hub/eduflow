@@ -1,7 +1,23 @@
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { withAuth } from '@/lib/api/middlewares';
+import { passwordField } from '@/lib/validations/common.schema';
 import { UserService } from '@/services/UserService';
+
+const setPasswordPayloadSchema = z.object({
+  password: passwordField,
+});
+
+const changePasswordPayloadSchema = z
+  .object({
+    currentPassword: passwordField,
+    newPassword: passwordField,
+  })
+  .refine((data) => data.newPassword !== data.currentPassword, {
+    message: 'New password must be different from the current password',
+    path: ['newPassword'],
+  });
 
 /**
  * @swagger
@@ -35,7 +51,15 @@ import { UserService } from '@/services/UserService';
  */
 export const POST = withAuth(async (req, session) => {
   try {
-    const { password } = await req.json();
+    const body = await req.json();
+    const parsed = setPasswordPayloadSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { message: parsed.error.issues[0]?.message ?? 'Invalid request payload' },
+        { status: 400 }
+      );
+    }
+    const { password } = parsed.data;
 
     await UserService.setPassword(
       password,
@@ -96,7 +120,15 @@ export const POST = withAuth(async (req, session) => {
  */
 export const PUT = withAuth(async (req, session) => {
   try {
-    const { currentPassword, newPassword } = await req.json();
+    const body = await req.json();
+    const parsed = changePasswordPayloadSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { message: parsed.error.issues[0]?.message ?? 'Invalid request payload' },
+        { status: 400 }
+      );
+    }
+    const { currentPassword, newPassword } = parsed.data;
 
     await UserService.changePassword(
       currentPassword,

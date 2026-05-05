@@ -1,11 +1,12 @@
 import { z } from 'zod';
 import type { FormFieldConfig } from '@/components/custom/form';
+import { passwordRegex } from '@/lib/validations/common.schema';
 
 export const profileSchema = z.object({
   name: z
     .string()
-    .min(1, 'validation.nameRequired')
-    .min(2, 'validation.nameTooShort'),
+    .min(1, 'Full name is required.')
+    .min(2, 'Name must be at least 2 characters.'),
   email: z.string(),
   bio: z.string().optional(),
 });
@@ -30,21 +31,27 @@ export const profileFields: FormFieldConfig[] = [
   },
 ];
 
-export const setPasswordSchema = z
-  .object({
-    password: z.string().min(8, 'validation.passwordTooShort'),
-    confirmPassword: z.string().min(1, 'validation.confirmPasswordRequired'),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: 'validation.passwordsMustMatch',
-    path: ['confirmPassword'],
-  });
 
-export type SetPasswordFormData = z.infer<typeof setPasswordSchema>;
+export type SetPasswordFormData = {
+  password: string;
+  confirmPassword: string;
+};
+
+export type ChangePasswordFormData = {
+  currentPassword: string;
+  newPassword: string;
+  confirmNewPassword: string;
+};
 
 export const setPasswordDefaultValues: SetPasswordFormData = {
   password: '',
   confirmPassword: '',
+};
+
+export const changePasswordDefaultValues: ChangePasswordFormData = {
+  currentPassword: '',
+  newPassword: '',
+  confirmNewPassword: '',
 };
 
 export const setPasswordFields: FormFieldConfig[] = [
@@ -65,25 +72,6 @@ export const setPasswordFields: FormFieldConfig[] = [
     colSpan: 2,
   },
 ];
-
-export const changePasswordSchema = z
-  .object({
-    currentPassword: z.string().min(1, 'validation.currentPasswordRequired'),
-    newPassword: z.string().min(8, 'validation.passwordTooShort'),
-    confirmNewPassword: z.string().min(1, 'validation.confirmPasswordRequired'),
-  })
-  .refine((data) => data.newPassword === data.confirmNewPassword, {
-    message: 'validation.passwordsMustMatch',
-    path: ['confirmNewPassword'],
-  });
-
-export type ChangePasswordFormData = z.infer<typeof changePasswordSchema>;
-
-export const changePasswordDefaultValues: ChangePasswordFormData = {
-  currentPassword: '',
-  newPassword: '',
-  confirmNewPassword: '',
-};
 
 export const changePasswordFields: FormFieldConfig[] = [
   {
@@ -111,3 +99,54 @@ export const changePasswordFields: FormFieldConfig[] = [
     colSpan: 2,
   },
 ];
+
+export interface PasswordMessages {
+  tooShort: string;
+  invalid: string;
+  confirmRequired: string;
+  mustMatch: string;
+}
+
+export interface ChangePasswordMessages extends PasswordMessages {
+  sameAsCurrent: string;
+}
+
+export function createSetPasswordSchema(msgs: PasswordMessages) {
+  const pw = z
+    .string()
+    .min(8, msgs.tooShort)
+    .regex(passwordRegex, msgs.invalid);
+
+  return z
+    .object({
+      password: pw,
+      confirmPassword: z.string().min(1, msgs.confirmRequired),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      message: msgs.mustMatch,
+      path: ['confirmPassword'],
+    });
+}
+
+export function createChangePasswordSchema(msgs: ChangePasswordMessages) {
+  const pw = z
+    .string()
+    .min(8, msgs.tooShort)
+    .regex(passwordRegex, msgs.invalid);
+
+  return z
+    .object({
+      currentPassword: z.string().min(1, msgs.confirmRequired),
+
+      newPassword: pw,
+      confirmNewPassword: z.string().min(1, msgs.confirmRequired),
+    })
+    .refine((data) => data.newPassword === data.confirmNewPassword, {
+      message: msgs.mustMatch,
+      path: ['confirmNewPassword'],
+    })
+    .refine((data) => data.newPassword !== data.currentPassword, {
+      message: msgs.sameAsCurrent,
+      path: ['newPassword'],
+    });
+}

@@ -629,6 +629,8 @@
       "currentPasswordRequired": "Current password is required.",
       "nameRequired": "Full name is required.",
       "nameTooShort": "Name must be at least 2 characters.",
+      "passwordInvalid": "Password must contain at least 1 number, 1 special character ($#@!), and 1 uppercase letter.",
+      "passwordSameAsCurrent": "New password must be different from the current password.",
       "passwordsMustMatch": "Passwords do not match.",
       "passwordTooShort": "Password must be at least 8 characters."
     }
