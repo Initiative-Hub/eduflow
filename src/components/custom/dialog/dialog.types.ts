@@ -7,8 +7,6 @@ export interface DialogTemplateProps {
   description?: string;
   children: ReactNode;
   footer?: ReactNode;
-  hideHeader?: boolean;
-  showFooter?: boolean;
   className?: string;
 }
 

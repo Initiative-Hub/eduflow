@@ -12,11 +12,11 @@ import { useTranslatedFields } from '@/hooks/use-translated-fields';
 import { AccountDetailsCard } from './account-details-card';
 import { PersonalInfoCard } from './personal-info-card';
 import {
+  type ChangePasswordFormData,
   changePasswordDefaultValues,
   changePasswordFields,
   createChangePasswordSchema,
   createSetPasswordSchema,
-  type ChangePasswordFormData,
   type ProfileFormData,
   profileSchema,
   type SetPasswordFormData,
@@ -58,7 +58,6 @@ export default function ProfileClient() {
     securityInfo,
     isLoading,
     isSaving,
-    isAvatarSaving,
     isSettingPassword,
     isChangingPassword,
     handleSubmit,
@@ -211,9 +210,6 @@ export default function ProfileClient() {
       <DialogTemplate
         isOpen={isSetPasswordDialogOpen}
         onOpenChange={setIsSetPasswordDialogOpen}
-        title={t('setPasswordDialog.title')}
-        description={t('setPasswordDialog.description')}
-        hideHeader
         className="max-w-md overflow-hidden rounded-2xl p-0 shadow-2xl"
       >
         <div className="border-primary/10 border-b bg-primary/5 p-8 text-center">
@@ -243,9 +239,6 @@ export default function ProfileClient() {
       <DialogTemplate
         isOpen={isChangePasswordDialogOpen}
         onOpenChange={setIsChangePasswordDialogOpen}
-        title={t('changePasswordDialog.title')}
-        description={t('changePasswordDialog.description')}
-        hideHeader
         className="max-w-md overflow-hidden rounded-2xl p-0 shadow-2xl"
       >
         <div className="border-primary/10 border-b bg-primary/5 p-8 text-center">
