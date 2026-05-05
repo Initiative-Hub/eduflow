@@ -55,7 +55,9 @@ export const POST = withAuth(async (req, session) => {
     const parsed = setPasswordPayloadSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
-        { message: parsed.error.issues[0]?.message ?? 'Invalid request payload' },
+        {
+          message: parsed.error.issues[0]?.message ?? 'Invalid request payload',
+        },
         { status: 400 }
       );
     }
@@ -124,7 +126,9 @@ export const PUT = withAuth(async (req, session) => {
     const parsed = changePasswordPayloadSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
-        { message: parsed.error.issues[0]?.message ?? 'Invalid request payload' },
+        {
+          message: parsed.error.issues[0]?.message ?? 'Invalid request payload',
+        },
         { status: 400 }
       );
     }
