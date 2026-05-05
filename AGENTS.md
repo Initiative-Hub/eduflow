@@ -109,6 +109,7 @@ for any tasks.).
 - **Inferred Types**: Prefer inferred Prisma and Zod types over handwritten duplicates; when a shape repeats, extract it into a local type alias or helper instead of retyping the structure.
 - **ICU Messages**: Use ICU-style placeholders in `next-intl` messages (`{name}`, `{count}`) when adding plurals or selects.
 - **Generated Prisma Sync**: If `src/generated/prisma` and `prisma/schema.prisma` drift, rerun `bun db:generate` before assuming a storage or Prisma-backed service is broken.
+- **Prisma Unknown Arguments**: If Prisma reports an unknown field on a model, verify the checked-in schema and regenerated client first; do not rename application code until the generated types and schema agree.
 
 ### 6.6 Storage & Uploads
 
