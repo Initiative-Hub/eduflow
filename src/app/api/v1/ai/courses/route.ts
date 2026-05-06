@@ -14,6 +14,7 @@ const courseGenerationInputSchema = z
     fileId: z.string().uuid().optional(),
     file: z.any().optional(),
     apiKey: z.string().min(1).optional(),
+    courseId: z.string().uuid(),
   })
   .refine((data) => (data.fileId ? !data.file : !!data.file), {
     message: 'Provide exactly one: either fileId or a file',
@@ -75,6 +76,9 @@ export const GET = withAuth(
  *                 format: binary
  *               apiKey:
  *                 type: string
+ *               courseId:
+ *                 type: string
+ *                 format: uuid
  *     responses:
  *       200:
  *         description: AI course generation
@@ -100,17 +104,20 @@ export const POST = withAuth(
         const fileId = formData.get('fileId') as string | null;
         const file = formData.get('file') as File | null;
         const apiKey = formData.get('apiKey') as string | null;
+        const courseId = formData.get('courseId') as string | null;
 
         input = {
           fileId: fileId || undefined,
           file: file || undefined,
           apiKey: apiKey || undefined,
+          courseId: courseId || undefined,
         };
       } else {
         const body = await request.json();
         input = {
           fileId: body.fileId,
           apiKey: body.apiKey,
+          courseId: body.courseId,
         };
       }
 
@@ -133,13 +140,10 @@ export const POST = withAuth(
           );
         }
       }
-      // Instante AI service
-      //   const aiService = new ChatProviderFactory('openrouter');
-
-      const aiService = ChatProviderFactory.create('openrouter');
-      // Generate the course structure from the provided content
-      const result = await aiService.streamCourse({
+      const { CourseService } = await import('@/services/CourseService');
+      const result = await CourseService.generateModulesFromAI({
         userId,
+        courseId: parsed.data.courseId,
         fileId: parsed.data.fileId,
         file: parsed.data.file,
         apiKey: parsed.data.apiKey,

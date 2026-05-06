@@ -1,5 +1,7 @@
 import { CourseRoleName } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
+import type { AICourseGeneration } from '@/lib/validations/course.schema';
+import { ChatProviderFactory } from '@/services/ai/ChatProviderFactory';
 
 export class CourseService {
   static async createCourse(data: {
@@ -97,6 +99,98 @@ export class CourseService {
     return await prisma.course.update({
       where: { id: courseId },
       data: { isPublished },
+    });
+  }
+
+  static async generateModulesFromAI(data: {
+    userId: string;
+    courseId: string;
+    fileId?: string;
+    file?: File;
+    apiKey?: string;
+  }) {
+    const aiService = ChatProviderFactory.create('openrouter');
+    const result = await aiService.streamCourse({
+      userId: data.userId,
+      fileId: data.fileId,
+      file: data.file,
+      apiKey: data.apiKey,
+    });
+
+    result.object
+      .then(async (generatedData) => {
+        try {
+          await CourseService.saveGeneratedCourseData(
+            data.courseId,
+            generatedData as AICourseGeneration
+          );
+        } catch (error) {
+          console.error('Failed to save generated course to database:', error);
+        }
+      })
+      .catch(console.error);
+
+    return result;
+  }
+
+  static async saveGeneratedCourseData(
+    courseId: string,
+    data: AICourseGeneration
+  ) {
+    if (!data.modules || !Array.isArray(data.modules)) return;
+
+    // We can also optionally update the course title and description, but maybe the user just wants modules added
+    // If we want to replace or just append? We'll append modules at the end.
+
+    // Get the current max order index for the modules of this course
+    const lastModule = await prisma.module.findFirst({
+      where: { courseId },
+      orderBy: { orderIndex: 'desc' },
+      select: { orderIndex: true },
+    });
+
+    let currentModuleOrder = lastModule ? lastModule.orderIndex + 1 : 0;
+
+    await prisma.$transaction(async (tx) => {
+      for (const mod of data.modules) {
+        // Create the module
+        const createdModule = await tx.module.create({
+          data: {
+            courseId,
+            title: mod.title || 'Untitled Module',
+            orderIndex: currentModuleOrder++,
+          },
+        });
+
+        if (mod.lessons && Array.isArray(mod.lessons)) {
+          let currentLessonOrder = 0;
+          const lessonData = mod.lessons.map((lesson) => ({
+            moduleId: createdModule.id,
+            title: lesson.lessonTitle || 'Untitled Lesson',
+            content: {
+              type: 'doc',
+              content: [
+                {
+                  type: 'paragraph',
+                  content: [
+                    {
+                      type: 'text',
+                      text: lesson.topicsToCover || '',
+                    },
+                  ],
+                },
+              ],
+            },
+            orderIndex: currentLessonOrder++,
+          }));
+
+          if (lessonData.length > 0) {
+            await tx.lesson.createMany({
+              data: lessonData,
+            });
+          }
+        }
+      }
     });
   }
 }

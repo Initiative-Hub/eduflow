@@ -81,7 +81,7 @@ export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
               file: selection.file!,
             });
             fileId = res.data.id;
-            submit({ fileId });
+            submit({ fileId, courseId });
             return res.data;
           },
           {
@@ -91,7 +91,7 @@ export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
           }
         );
       } else if (fileId) {
-        submit({ fileId });
+        submit({ fileId, courseId });
         toast.success('Starting AI generation...');
       }
     } catch (error) {
