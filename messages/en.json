@@ -270,7 +270,8 @@
         "courseDescription": "Files specific to this course.",
         "uploadDescription": "Upload new reference materials for the AI.",
         "comingSoonTitle": "AI Features Coming Soon",
-        "comingSoonDescription": "We are working on bringing powerful AI capabilities to help you generate course content, quizzes, and more."
+        "comingSoonDescription": "We are working on bringing powerful AI capabilities to help you generate course content, quizzes, and more.",
+        "useSelected": "Use Selected PDF"
       }
     },
     "CreateDialog": {

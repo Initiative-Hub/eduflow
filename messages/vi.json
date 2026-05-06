@@ -270,7 +270,8 @@
         "courseDescription": "Các tệp riêng biệt cho khóa học này.",
         "uploadDescription": "Tải lên tài liệu tham khảo mới cho AI.",
         "comingSoonTitle": "Tính năng AI sắp ra mắt",
-        "comingSoonDescription": "Chúng tôi đang nỗ lực mang đến các khả năng AI mạnh mẽ để giúp bạn tạo nội dung khóa học, bài kiểm tra và hơn thế nữa."
+        "comingSoonDescription": "Chúng tôi đang nỗ lực mang đến các khả năng AI mạnh mẽ để giúp bạn tạo nội dung khóa học, bài kiểm tra và hơn thế nữa.",
+        "useSelected": "Sử dụng PDF đã chọn"
       }
     },
     "CreateDialog": {
