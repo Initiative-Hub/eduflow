@@ -253,25 +253,23 @@
     },
     "ChatPage": "Course AI Chat",
     "CourseModules": {
-      "addModule": "Add Module",
       "aiAssistant": "AI Assistant",
+      "addModule": "Add Module",
       "description": "Organize your curriculum into modules and lessons.",
       "noModules": "No modules yet. Create your first module to begin.",
       "title": "Course Modules",
       "AiDialog": {
-        "title": "AI Assistant",
-        "description": "Leverage AI to enhance your course creation process.",
+        "title": "AI Learning Assistant",
+        "description": "Generate a logical course structure from your educational documents.",
+        "useSelected": "Use Selected PDF",
         "tabs": {
           "personal": "Personal Files",
           "course": "Course Files",
-          "upload": "Upload New"
+          "upload": "Upload PDF"
         },
-        "personalDescription": "Access your personal research and documents.",
-        "courseDescription": "Files specific to this course.",
-        "uploadDescription": "Upload new reference materials for the AI.",
-        "comingSoonTitle": "AI Features Coming Soon",
-        "comingSoonDescription": "We are working on bringing powerful AI capabilities to help you generate course content, quizzes, and more.",
-        "useSelected": "Use Selected PDF"
+        "personalDescription": "Select a PDF from your personal library to use as context.",
+        "courseDescription": "Access shared files within this course workspace.",
+        "comingSoonTitle": "Advanced Generation"
       }
     },
     "CreateDialog": {

@@ -25,9 +25,14 @@ import { useInventory } from '../../../../inventory/use-inventory';
 interface AiClientDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
+  onSelect: (selection: { fileId?: string; file?: File }) => void;
 }
 
-export function AiClientDialog({ isOpen, onOpenChange }: AiClientDialogProps) {
+export function AiClientDialog({
+  isOpen,
+  onOpenChange,
+  onSelect,
+}: AiClientDialogProps) {
   const t = useTranslations('Courses.CourseModules.AiDialog');
   const invT = useTranslations('InventoryPage');
   const [activeTab, setActiveTab] = useState('personal');
@@ -143,7 +148,17 @@ export function AiClientDialog({ isOpen, onOpenChange }: AiClientDialogProps) {
             <div className="text-[10px] text-muted-foreground italic">
               {t('comingSoonTitle')}
             </div>
-            <Button disabled={!canSubmit} size="sm">
+            <Button
+              disabled={!canSubmit}
+              size="sm"
+              onClick={() => {
+                if (activeTab === 'personal' && selectedPersonalId) {
+                  onSelect({ fileId: selectedPersonalId });
+                } else if (activeTab === 'upload' && uploadedFile) {
+                  onSelect({ file: uploadedFile });
+                }
+              }}
+            >
               <Check className="mr-2 h-4 w-4" />
               {t('useSelected')}
             </Button>
