@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withAuth, withRoles } from '@/lib/api/middlewares';
 import { aiCourseGenerationSchema } from '@/lib/validations/course.schema';
-import { AIGatewayService } from '@/services/ai/AIGatewayService';
+import { ChatProviderFactory } from '@/services/ai/ChatProviderFactory';
+import { DEFAULT_PROVIDER } from '@/services/ai/chat-provider.constants';
 
 /**
  * Zod schema for course generation input.
@@ -12,6 +13,7 @@ const courseGenerationInputSchema = z
   .object({
     fileId: z.string().uuid().optional(),
     file: z.any().optional(),
+    apiKey: z.string().min(1).optional(),
   })
   .refine((data) => (data.fileId ? !data.file : !!data.file), {
     message: 'Provide exactly one: either fileId or a file',
@@ -71,6 +73,8 @@ export const GET = withAuth(
  *               file:
  *                 type: string
  *                 format: binary
+ *               apiKey:
+ *                 type: string
  *     responses:
  *       200:
  *         description: AI course generation
@@ -95,15 +99,18 @@ export const POST = withAuth(
         const formData = await request.formData();
         const fileId = formData.get('fileId') as string | null;
         const file = formData.get('file') as File | null;
+        const apiKey = formData.get('apiKey') as string | null;
 
         input = {
           fileId: fileId || undefined,
           file: file || undefined,
+          apiKey: apiKey || undefined,
         };
       } else {
         const body = await request.json();
         input = {
           fileId: body.fileId,
+          apiKey: body.apiKey,
         };
       }
 
@@ -126,15 +133,16 @@ export const POST = withAuth(
           );
         }
       }
+      // Instante AI service
+      //   const aiService = new ChatProviderFactory('openrouter');
 
-      // Instantiate the AI service
-      const aiService = new AIGatewayService();
-      
+      const aiService = ChatProviderFactory.create('openrouter');
       // Generate the course structure from the provided content
       const result = await aiService.streamCourse({
         userId,
         fileId: parsed.data.fileId,
         file: parsed.data.file,
+        apiKey: parsed.data.apiKey,
       });
 
       // Return the result as a data stream

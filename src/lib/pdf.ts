@@ -2,8 +2,17 @@
  * Utility to convert PDF buffer to Markdown using an external MarkItDown service.
  */
 export async function pdfToMarkdown(pdfBuffer: Buffer): Promise<string> {
-  const endpoint =
+  let endpoint =
     process.env.MARKITDOWN_ENDPOINT_URL || 'http://localhost:8000/markitdown';
+
+  // If the endpoint is just a base URL (e.g., from .env), ensure it hits the conversion path
+  if (
+    endpoint.endsWith(':8000') ||
+    endpoint.endsWith(':8000/') ||
+    endpoint.endsWith('localhost:8000')
+  ) {
+    endpoint = endpoint.replace(/\/$/, '') + '/markitdown';
+  }
 
   try {
     const formData = new FormData();
