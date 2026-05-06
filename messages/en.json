@@ -635,6 +635,47 @@
       "passwordTooShort": "Password must be at least 8 characters."
     }
   },
+  "Quiz": {
+    "checkAnswer": "Check Answer",
+    "correctAnswer": "Correct",
+    "explanation": "Explanation",
+    "flashcardBack": "Answer",
+    "flashcardFront": "Question",
+    "flashcardMode": "Flashcard mode — no scoring",
+    "flipCard": "Flip Card",
+    "gradeFair": "Fair",
+    "gradeExcellent": "Excellent",
+    "gradeGood": "Good",
+    "gradeNeedsWork": "Needs Work",
+    "matchingInstruction": "Select an item on the left, then click its match on the right.",
+    "moveDown": "Move down",
+    "moveUp": "Move up",
+    "next": "Next",
+    "orderingInstruction": "Use the arrows to arrange items in the correct order.",
+    "pointsEarned": "Points earned",
+    "previous": "Previous",
+    "questionBreakdown": "Question Breakdown",
+    "questionCount": "{count, plural, =1 {1 Question} other {# Questions}}",
+    "quizComplete": "Quiz Complete",
+    "quizMode": "Quiz mode — answers are scored",
+    "quizTitle": "Quiz",
+    "retryQuiz": "Try Again",
+    "scoreDetail": "{correct} of {total} correct",
+    "startQuiz": "Start Quiz",
+    "submitQuiz": "Submit",
+    "true": "True",
+    "false": "False",
+    "type": {
+      "drag-and-drop": "Drag & Drop",
+      "fill-in-the-blank": "Fill in the Blank",
+      "flashcard": "Flashcard",
+      "matching": "Matching",
+      "multiple-choice": "Multiple Choice",
+      "ordering": "Ordering",
+      "timed-challenge": "Timed Challenge",
+      "true-false": "True / False"
+    }
+  },
   "RoleSelection": {
     "actions": {
       "select": "Select"

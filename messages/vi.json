@@ -635,6 +635,47 @@
       "passwordTooShort": "Mật khẩu phải có ít nhất 8 ký tự."
     }
   },
+  "Quiz": {
+    "checkAnswer": "Kiểm tra đáp án",
+    "correctAnswer": "Đúng",
+    "explanation": "Giải thích",
+    "flashcardBack": "Đáp án",
+    "flashcardFront": "Câu hỏi",
+    "flashcardMode": "Chế độ thẻ ghi nhớ — không chấm điểm",
+    "flipCard": "Lật thẻ",
+    "gradeFair": "Trung bình",
+    "gradeExcellent": "Xuất sắc",
+    "gradeGood": "Tốt",
+    "gradeNeedsWork": "Cần cải thiện",
+    "matchingInstruction": "Chọn một mục bên trái, sau đó nhấp vào mục tương ứng bên phải.",
+    "moveDown": "Di chuyển xuống",
+    "moveUp": "Di chuyển lên",
+    "next": "Tiếp theo",
+    "orderingInstruction": "Sử dụng các mũi tên để sắp xếp các mục theo đúng thứ tự.",
+    "pointsEarned": "Điểm đạt được",
+    "previous": "Trước",
+    "questionBreakdown": "Chi tiết từng câu",
+    "questionCount": "{count, plural, =1 {1 Câu hỏi} other {# Câu hỏi}}",
+    "quizComplete": "Hoàn thành bài kiểm tra",
+    "quizMode": "Chế độ kiểm tra — đáp án được chấm điểm",
+    "quizTitle": "Bài kiểm tra",
+    "retryQuiz": "Làm lại",
+    "scoreDetail": "{correct} / {total} câu đúng",
+    "startQuiz": "Bắt đầu",
+    "submitQuiz": "Nộp bài",
+    "true": "Đúng",
+    "false": "Sai",
+    "type": {
+      "drag-and-drop": "Kéo và thả",
+      "fill-in-the-blank": "Điền vào chỗ trống",
+      "flashcard": "Thẻ ghi nhớ",
+      "matching": "Nối cặp",
+      "multiple-choice": "Trắc nghiệm",
+      "ordering": "Sắp xếp thứ tự",
+      "timed-challenge": "Thử thách thời gian",
+      "true-false": "Đúng / Sai"
+    }
+  },
   "RoleSelection": {
     "actions": {
       "select": "Lựa chọn"
