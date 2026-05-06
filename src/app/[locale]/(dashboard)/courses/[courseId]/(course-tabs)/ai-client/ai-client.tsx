@@ -35,7 +35,11 @@ export function AiClientDialog({ isOpen, onOpenChange }: AiClientDialogProps) {
   const [pathHistory, setPathHistory] = useState<
     { id: string | null; name: string }[]
   >([]);
-  const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
+  const [selectedPersonalId, setSelectedPersonalId] = useState<string | null>(
+    null
+  );
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const { analytics } = useInventory({ maxFileSizeBytes: 100 * 1024 * 1024 });
 
@@ -62,8 +66,24 @@ export function AiClientDialog({ isOpen, onOpenChange }: AiClientDialogProps) {
       ]);
       setCurrentParentId(entry.id);
     } else if (entry.mimeType === 'application/pdf') {
-      setSelectedFileId((prev) => (prev === entry.id ? null : entry.id));
+      setSelectedPersonalId((prev) => (prev === entry.id ? null : entry.id));
     }
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.type !== 'application/pdf') {
+      return;
+    }
+
+    setIsProcessing(true);
+    // Simulate a brief "processing" delay for better UX
+    setTimeout(() => {
+      setUploadedFile(file);
+      setIsProcessing(false);
+    }, 800);
   };
 
   const handleBack = () => {
@@ -80,6 +100,9 @@ export function AiClientDialog({ isOpen, onOpenChange }: AiClientDialogProps) {
     if (pathHistory.length === 0) return t('tabs.personal');
     return pathHistory[pathHistory.length - 1].name;
   }, [pathHistory, t]);
+
+  const canSubmit =
+    activeTab === 'personal' ? !!selectedPersonalId : !!uploadedFile;
 
   return (
     <DialogTemplate
@@ -120,7 +143,7 @@ export function AiClientDialog({ isOpen, onOpenChange }: AiClientDialogProps) {
             <div className="text-[10px] text-muted-foreground italic">
               {t('comingSoonTitle')}
             </div>
-            <Button disabled={!selectedFileId} size="sm">
+            <Button disabled={!canSubmit} size="sm">
               <Check className="mr-2 h-4 w-4" />
               {t('useSelected')}
             </Button>
@@ -160,7 +183,7 @@ export function AiClientDialog({ isOpen, onOpenChange }: AiClientDialogProps) {
                   {currentPathName}
                 </span>
               </div>
-              {selectedFileId && (
+              {selectedPersonalId && (
                 <span className="flex items-center gap-1 font-medium text-primary text-xs">
                   <Check className="h-3 w-3" />1 PDF selected
                 </span>
@@ -177,7 +200,7 @@ export function AiClientDialog({ isOpen, onOpenChange }: AiClientDialogProps) {
                 <div className="grid grid-cols-2 gap-4 p-4 lg:grid-cols-3">
                   {personalFiles.data.map((file) => {
                     const isPdf = file.mimeType === 'application/pdf';
-                    const isSelected = selectedFileId === file.id;
+                    const isSelected = selectedPersonalId === file.id;
                     const canClick = file.isFolder || isPdf;
 
                     return (
@@ -269,23 +292,75 @@ export function AiClientDialog({ isOpen, onOpenChange }: AiClientDialogProps) {
             </div>
           </TabsContent>
 
-          <TabsContent value="upload" className="mt-0 outline-none">
-            <div className="flex flex-col items-center justify-center space-y-4 py-24 text-center">
-              <div className="rounded-full bg-background p-6 shadow-sm ring-1 ring-border/50">
-                <Upload className="h-10 w-10 text-primary/60" />
-              </div>
-              <div className="space-y-1">
-                <h3 className="font-semibold text-xl">{t('tabs.upload')}</h3>
-                <p className="mx-auto max-w-[320px] text-muted-foreground text-sm">
-                  {t('uploadDescription')}
-                </p>
-              </div>
-              <div className="flex items-center gap-2 pt-6">
-                <Sparkles className="h-4 w-4 animate-pulse text-primary" />
-                <span className="font-bold text-primary text-xs uppercase tracking-widest">
-                  {t('comingSoonTitle')}
-                </span>
-              </div>
+          <TabsContent
+            value="upload"
+            className="mt-0 flex h-full flex-col outline-none"
+          >
+            <div className="flex flex-1 flex-col items-center justify-center p-8 text-center">
+              {uploadedFile ? (
+                <div className="fade-in zoom-in-95 flex w-full max-w-md animate-in flex-col items-center space-y-6 rounded-2xl border-2 border-primary bg-background p-8 shadow-lg transition-all">
+                  <div className="relative">
+                    <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 text-primary">
+                      <FileText className="h-10 w-10" />
+                    </div>
+                    <div className="absolute -right-1 -bottom-1 rounded-full bg-primary p-1.5 text-white ring-4 ring-background">
+                      <Check className="h-4 w-4" />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="font-bold text-xl">{uploadedFile.name}</h3>
+                    <p className="text-muted-foreground text-sm">
+                      {formatFileSize(uploadedFile.size)} • Ready for AI
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setUploadedFile(null)}
+                    className="gap-2"
+                  >
+                    <Upload className="h-4 w-4" />
+                    Upload Different File
+                  </Button>
+                </div>
+              ) : isProcessing ? (
+                <div className="flex flex-col items-center space-y-4">
+                  <div className="relative">
+                    <Loader2 className="h-16 w-16 animate-spin text-primary opacity-20" />
+                    <Upload className="absolute top-1/2 left-1/2 h-8 w-8 -translate-x-1/2 -translate-y-1/2 animate-pulse text-primary" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="font-semibold text-lg">Processing PDF...</p>
+                    <p className="text-muted-foreground text-sm">
+                      Preparing your document for the AI Assistant
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <label className="group relative flex w-full max-w-xl cursor-pointer flex-col items-center justify-center space-y-6 rounded-2xl border-2 border-muted-foreground/25 border-dashed bg-background/50 py-16 transition-all hover:border-primary/50 hover:bg-primary/5">
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept="application/pdf"
+                    onChange={handleFileUpload}
+                  />
+                  <div className="flex h-20 w-20 items-center justify-center rounded-full bg-muted transition-colors group-hover:bg-primary/10 group-hover:text-primary">
+                    <Upload className="h-10 w-10" />
+                  </div>
+                  <div className="space-y-2 px-6">
+                    <h3 className="font-bold text-xl">
+                      Upload Reference Document
+                    </h3>
+                    <p className="mx-auto max-w-[320px] text-muted-foreground text-sm">
+                      Select a PDF file from your device to use as a context for
+                      AI content generation.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 rounded-full bg-muted/50 px-4 py-1.5 font-bold text-[10px] text-muted-foreground uppercase tracking-widest transition-colors group-hover:bg-primary/20 group-hover:text-primary">
+                    Click to browse files
+                  </div>
+                </label>
+              )}
             </div>
           </TabsContent>
         </div>
