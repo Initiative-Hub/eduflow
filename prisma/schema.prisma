@@ -34,6 +34,8 @@ model User {
   files        FileInventory[]
   coursesOwned Course[]        @relation("OwnerCourses")
   enrollments  Enrollment[]
+  aiChats      AiChat[]
+  aiMessages   AiChatMessage[]
 
   @@map("user")
 }
@@ -180,6 +182,19 @@ enum FileInventoryStatus {
   DELETED
 }
 
+enum AiChatRole {
+  USER
+  ASSISTANT
+  SYSTEM
+  TOOL
+}
+
+enum AiChatStatus {
+  ACTIVE
+  ARCHIVED
+  DELETED
+}
+
 model FileInventory {
   id     String @id @default(uuid())
   userId String @map("user_id")
@@ -214,6 +229,47 @@ model FileInventory {
   @@index([userId, deletedAt])
   @@index([userId, objectKey])
   @@map("file_inventory")
+}
+
+model AiChat {
+  id        String       @id @default(uuid())
+  userId    String?      @map("user_id")
+  guestId   String?      @map("guest_id")
+  title     String       @default("")
+  status    AiChatStatus @default(ACTIVE)
+  provider  String?
+  model     String?
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+  deletedAt DateTime?    @map("deleted_at")
+
+  user     User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages AiChatMessage[]
+
+  @@index([userId, updatedAt(sort: Desc)])
+  @@index([guestId, updatedAt(sort: Desc)])
+  @@index([status, updatedAt(sort: Desc)])
+  @@map("ai_chats")
+}
+
+model AiChatMessage {
+  id        String     @id @default(uuid())
+  chatId    String     @map("chat_id")
+  userId    String?    @map("user_id")
+  role      AiChatRole
+  parts     Json?      @default("[]")
+  provider  String?
+  model     String?
+  metadata  Json?      @default("{}")
+  createdAt DateTime   @default(now()) @map("created_at")
+
+  chat AiChat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  user User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([chatId, createdAt])
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([role])
+  @@map("ai_chat_messages")
 }
 
 // ---- Course / Enrollment / Module / Lesson models based on ERD ----
