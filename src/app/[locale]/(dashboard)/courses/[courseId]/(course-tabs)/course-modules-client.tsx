@@ -1,6 +1,7 @@
 'use client';
 
 import { experimental_useObject as useObject } from '@ai-sdk/react';
+import { useQueryClient } from '@tanstack/react-query';
 import { BookOpen, FileText, Loader2, Plus, Sparkles } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
@@ -38,6 +39,8 @@ export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
   const [activeModuleIdForLesson, setActiveModuleIdForLesson] = useState<
     string | null
   >(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const queryClient = useQueryClient();
 
   const {
     object: streamingCourse,
@@ -46,6 +49,14 @@ export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
   } = useObject({
     api: '/api/v1/ai/courses',
     schema: aiCourseGenerationSchema,
+    onFinish: async () => {
+      setIsSaving(true);
+      // Give the server time to run the database save transactions
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await queryClient.invalidateQueries({ queryKey: ['modules', courseId] });
+      setIsSaving(false);
+      toast.success('Course modules generated and saved successfully!');
+    },
     onError: (error) => {
       toast.error('Failed to generate course structure');
       console.error(error);
@@ -125,26 +136,32 @@ export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
         </div>
       </div>
 
-      {isStreaming && streamingCourse && (
+      {(isStreaming || isSaving) && streamingCourse && (
         <div className="fade-in slide-in-from-top-4 animate-in space-y-6 rounded-xl border-2 border-primary/20 border-dashed bg-primary/5 p-6 duration-500">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-                <Sparkles className="h-5 w-5 animate-pulse" />
+                {isSaving ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Sparkles className="h-5 w-5 animate-pulse" />
+                )}
               </div>
               <div>
                 <h3 className="font-bold text-lg leading-none">
                   {streamingCourse.courseTitle || 'Generating Course...'}
                 </h3>
                 <p className="mt-1 text-muted-foreground text-sm">
-                  AI is crafting your curriculum from the provided document
+                  {isSaving
+                    ? 'Saving your new modules and lessons...'
+                    : 'AI is crafting your curriculum from the provided document'}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2 rounded-full bg-background px-3 py-1 shadow-sm ring-1 ring-border">
               <Loader2 className="h-3 w-3 animate-spin text-primary" />
               <span className="font-medium text-[10px] uppercase tracking-wider">
-                Processing Content
+                {isSaving ? 'Saving' : 'Processing Content'}
               </span>
             </div>
           </div>
@@ -196,7 +213,7 @@ export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
           <div className="h-16 w-full rounded-md bg-muted" />
           <div className="h-16 w-full rounded-md bg-muted" />
         </div>
-      ) : modules.length === 0 && !isStreaming ? (
+      ) : modules.length === 0 && !isStreaming && !isSaving ? (
         <div className="rounded-xl border border-dashed bg-card/50 p-12 text-center text-muted-foreground">
           {t('noModules')}
         </div>
