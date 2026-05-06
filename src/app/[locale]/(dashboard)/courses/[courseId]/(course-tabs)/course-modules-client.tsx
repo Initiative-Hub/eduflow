@@ -2,7 +2,7 @@
 
 import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { useQueryClient } from '@tanstack/react-query';
-import { BookOpen, FileText, Loader2, Plus, Sparkles } from 'lucide-react';
+import { FileText, Loader2, Plus, Sparkles } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
