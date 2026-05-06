@@ -1,6 +1,7 @@
 import type { UIMessage } from 'ai';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { z } from 'zod';
+import { auth } from '@/lib/auth';
 import { ChatProviderFactory } from '@/services/ai/ChatProviderFactory';
 import { DEFAULT_PROVIDER } from '@/services/ai/chat-provider.constants';
 import type {
@@ -8,7 +9,7 @@ import type {
   StreamChatInput,
 } from '@/services/ai/chat-provider.types';
 import { CacheService } from '@/services/CacheService';
-import type { ChatCacheData } from '@/utils/chat-session';
+import { ChatPersistenceService } from '@/services/ChatPersistenceService';
 
 export const maxDuration = 30;
 
@@ -19,41 +20,6 @@ const chatRequestSchema = z.object({
   apiKey: z.string().min(1).optional(),
   providerOptions: z.custom<StreamChatInput['providerOptions']>().optional(),
 });
-
-const getOwnedChat = async (chatId: string, guestId: string) => {
-  const rawChatData = await CacheService.getCache<
-    Partial<ChatCacheData> & Pick<ChatCacheData, 'guestId' | 'title'>
-  >(chatId);
-
-  if (!rawChatData) {
-    return {
-      status: 404 as const,
-      response: new Response(JSON.stringify({ error: 'Chat not found' }), {
-        status: 404,
-        headers: { 'Content-Type': 'application/json' },
-      }),
-    };
-  }
-
-  if (rawChatData.guestId !== guestId) {
-    return {
-      status: 403 as const,
-      response: new Response(JSON.stringify({ error: 'Access denied' }), {
-        status: 403,
-        headers: { 'Content-Type': 'application/json' },
-      }),
-    };
-  }
-
-  const chatData: ChatCacheData = {
-    guestId: rawChatData.guestId,
-    title: rawChatData.title,
-    messageCount: rawChatData.messageCount ?? 0,
-    messages: rawChatData.messages ?? [],
-  };
-
-  return { status: 200 as const, chatData };
-};
 
 /**
  * @swagger
@@ -85,23 +51,34 @@ export async function GET(
   try {
     const { chatId } = await params;
 
-    const cookieStore = await cookies();
+    const [cookieStore, session] = await Promise.all([
+      cookies(),
+      auth.api.getSession({ headers: await headers() }),
+    ]);
     const guestSession = cookieStore.get('guest_session');
     const guestId = guestSession?.value;
 
-    if (!guestId) {
+    if (!session?.user?.id && !guestId) {
       return new Response(JSON.stringify({ error: 'Missing guest session' }), {
         status: 401,
         headers: { 'Content-Type': 'application/json' },
       });
     }
 
-    const chatLookup = await getOwnedChat(chatId, guestId);
-    if (chatLookup.status !== 200) {
-      return chatLookup.response;
+    const chatData = await ChatPersistenceService.getChat({
+      chatId,
+      userId: session?.user?.id,
+      guestId,
+    });
+
+    if (!chatData) {
+      return new Response(JSON.stringify({ error: 'Chat not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
-    return new Response(JSON.stringify(chatLookup.chatData), {
+    return new Response(JSON.stringify(chatData), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });
@@ -182,18 +159,24 @@ export async function POST(
       );
     }
 
-    const cookieStore = await cookies();
+    const [cookieStore, session] = await Promise.all([
+      cookies(),
+      auth.api.getSession({ headers: await headers() }),
+    ]);
     const guestSession = cookieStore.get('guest_session');
     const guestId = guestSession?.value;
+    const userId = session?.user?.id;
 
-    if (!guestId) {
+    if (!userId && !guestId) {
       return new Response(JSON.stringify({ error: 'Missing guest session' }), {
         status: 401,
         headers: { 'Content-Type': 'application/json' },
       });
     }
 
-    const limitStatus = await CacheService.checkGuestLimit(guestId);
+    const limitStatus = userId
+      ? { allowed: true, remaining: Number.POSITIVE_INFINITY }
+      : await CacheService.checkGuestLimit(guestId as string);
     if (!limitStatus.allowed) {
       return new Response(
         JSON.stringify({
@@ -204,9 +187,16 @@ export async function POST(
       );
     }
 
-    const chatLookup = await getOwnedChat(chatId, guestId);
-    if (chatLookup.status !== 200) {
-      return chatLookup.response;
+    const chatData = await ChatPersistenceService.getChat({
+      chatId,
+      userId,
+      guestId,
+    });
+    if (!chatData) {
+      return new Response(JSON.stringify({ error: 'Chat not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
     const provider = ChatProviderFactory.create(
@@ -220,15 +210,14 @@ export async function POST(
     const response = result.toUIMessageStreamResponse({
       originalMessages: parsedBody.data.messages,
       onFinish: async ({ messages }) => {
-        await CacheService.setCache(
+        await ChatPersistenceService.saveMessages({
           chatId,
-          {
-            ...chatLookup.chatData,
-            messages,
-            messageCount: messages.length,
-          },
-          { ttlSeconds: 86400 }
-        );
+          userId,
+          guestId,
+          messages,
+          provider: parsedBody.data.provider ?? DEFAULT_PROVIDER,
+          model: parsedBody.data.model,
+        });
       },
     });
 

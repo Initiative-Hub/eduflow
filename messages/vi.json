@@ -50,6 +50,21 @@
       },
       "title": "Thư viện gợi ý học thuật"
     },
+    "sidebar": {
+      "close": "Thu gọn lịch sử trò chuyện",
+      "description": "Tìm kiếm và mở lại các phiên trước.",
+      "emptyDescription": "Bắt đầu cuộc trò chuyện mới và nó sẽ xuất hiện ở đây.",
+      "emptySearch": "Không có cuộc trò chuyện nào khớp với tìm kiếm.",
+      "emptyTitle": "Chưa có cuộc trò chuyện",
+      "loadingMore": "Đang tải thêm cuộc trò chuyện...",
+      "messageCount": "{count, plural, one {# tin nhắn} other {# tin nhắn}}",
+      "newChat": "Cuộc trò chuyện mới",
+      "open": "Mở lịch sử trò chuyện",
+      "searchLabel": "Tìm kiếm cuộc trò chuyện",
+      "searchPlaceholder": "Tìm kiếm cuộc trò chuyện...",
+      "title": "Lịch sử trò chuyện",
+      "untitled": "Cuộc trò chuyện chưa đặt tên"
+    },
     "subtitle": "Chọn một điểm bắt đầu hoặc hỏi bất kỳ điều gì để bắt đầu cuộc tìm hiểu.",
     "suggestions": {
       "brainstorm": "Giúp tôi lên ý tưởng cho luận văn về nghệ thuật Phục hưng",

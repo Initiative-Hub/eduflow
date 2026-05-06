@@ -50,6 +50,21 @@
       },
       "title": "Scholarly Prompt Library"
     },
+    "sidebar": {
+      "close": "Collapse chat history",
+      "description": "Search and reopen prior sessions.",
+      "emptyDescription": "Start a new chat and it will appear here.",
+      "emptySearch": "No chats match your search.",
+      "emptyTitle": "No chats yet",
+      "loadingMore": "Loading more chats...",
+      "messageCount": "{count, plural, one {# message} other {# messages}}",
+      "newChat": "New chat",
+      "open": "Open chat history",
+      "searchLabel": "Search chats",
+      "searchPlaceholder": "Search chats...",
+      "title": "Chat history",
+      "untitled": "Untitled chat"
+    },
     "subtitle": "Pick a starting point or ask anything to begin your inquiry.",
     "suggestions": {
       "brainstorm": "Help me brainstorm a thesis on Renaissance art",

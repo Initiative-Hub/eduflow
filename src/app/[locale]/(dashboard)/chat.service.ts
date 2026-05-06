@@ -2,10 +2,26 @@ import type { UIMessage } from 'ai';
 import { apiClient } from '@/lib/api';
 
 export interface ChatDetailsResponse {
-  guestId: string;
+  guestId?: string;
   title: string;
   messageCount: number;
   messages: UIMessage[];
+}
+
+export interface ChatListItemResponse {
+  id: string;
+  title: string;
+  messageCount: number;
+  updatedAt: string;
+}
+
+export interface ChatListResponse {
+  data: ChatListItemResponse[];
+  pagination: {
+    total: number;
+    limit: number;
+    offset: number;
+  };
 }
 
 export const chatService = {
@@ -16,5 +32,18 @@ export const chatService = {
   },
   getChat: async (chatId: string) => {
     return apiClient.get<ChatDetailsResponse>(`/chat/${chatId}`);
+  },
+  listChats: async ({
+    search,
+    limit,
+    offset,
+  }: {
+    search?: string;
+    limit: number;
+    offset: number;
+  }) => {
+    return apiClient.get<ChatListResponse>('/chat/list', {
+      params: { search: search || undefined, limit, offset },
+    });
   },
 };

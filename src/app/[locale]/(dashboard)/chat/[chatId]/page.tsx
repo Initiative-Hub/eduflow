@@ -1,8 +1,7 @@
 import { cookies, headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { auth } from '@/lib/auth';
-import { CacheService } from '@/services/CacheService';
-import type { ChatCacheData } from '@/utils/chat-session';
+import { ChatPersistenceService } from '@/services/ChatPersistenceService';
 import { AIClient } from '../../_components/ai-client';
 
 interface ChatPageProps {
@@ -17,21 +16,24 @@ export default async function ChatPage({ params }: ChatPageProps) {
   ]);
 
   const guestId = cookieStore.get('guest_session')?.value;
-  if (!guestId) {
+  if (!session?.user?.id && !guestId) {
     notFound();
   }
 
-  const chatData = await CacheService.getCache<
-    Partial<ChatCacheData> & Pick<ChatCacheData, 'guestId' | 'title'>
-  >(chatId);
+  const chatData = await ChatPersistenceService.getChat({
+    chatId,
+    userId: session?.user?.id,
+    guestId,
+  });
 
-  if (!chatData || chatData.guestId !== guestId) {
+  if (!chatData) {
     notFound();
   }
 
   return (
     <AIClient
       userName={session?.user?.name}
+      isAuthenticated={Boolean(session?.user?.id)}
       chatId={chatId}
       initialMessages={chatData.messages ?? []}
     />

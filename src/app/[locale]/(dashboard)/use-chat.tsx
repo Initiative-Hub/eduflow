@@ -1,7 +1,7 @@
 'use client';
 
 import { useChat } from '@ai-sdk/react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { DefaultChatTransport, type UIMessage } from 'ai';
 import { useEffect, useMemo, useRef } from 'react';
 import { toast } from 'sonner';
@@ -18,14 +18,17 @@ const MAX_USER_MESSAGES = 5;
 interface UseChatControllerOptions {
   chatId?: string;
   initialMessages?: UIMessage[];
+  isAuthenticated: boolean;
 }
 
 export const useChatController = ({
   chatId: initialChatId,
   initialMessages = [],
+  isAuthenticated,
 }: UseChatControllerOptions) => {
   const router = useRouter();
   const pathname = usePathname();
+  const queryClient = useQueryClient();
   const lastPendingSendRef = useRef<string | null>(null);
   const {
     pendingMessage,
@@ -73,10 +76,9 @@ export const useChatController = ({
       : [];
   const displayMessages = messages.length > 0 ? messages : optimisticForChat;
   const userMessageCount = getUserMessageCount(displayMessages);
-  const isLimitReached = hasReachedUserMessageLimit(
-    displayMessages,
-    MAX_USER_MESSAGES
-  );
+  const isLimitReached = isAuthenticated
+    ? false
+    : hasReachedUserMessageLimit(displayMessages, MAX_USER_MESSAGES);
   const isStreaming = status === 'streaming' || status === 'submitted';
 
   useEffect(() => {
@@ -130,6 +132,7 @@ export const useChatController = ({
     if (!initialChatId) {
       try {
         const newChatId = await createChatMutation.mutateAsync(text);
+        await queryClient.invalidateQueries({ queryKey: ['chat-list'] });
         setOptimisticChatId(newChatId);
         setOptimisticMessages([createUserMessage(text)]);
         setPendingMessage(text);
