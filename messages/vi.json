@@ -254,9 +254,24 @@
     "ChatPage": "Trò chuyện AI",
     "CourseModules": {
       "addModule": "Thêm mô-đun",
+      "aiAssistant": "Trợ lý AI",
       "description": "Tổ chức chương trình giảng dạy của bạn thành các mô-đun và bài học.",
       "noModules": "Chưa có mô-đun nào. Tạo mô-đun đầu tiên của bạn để bắt đầu.",
-      "title": "Mô-đun"
+      "title": "Mô-đun",
+      "AiDialog": {
+        "title": "Trợ lý AI",
+        "description": "Tận dụng AI để nâng cao quy trình tạo khóa học của bạn.",
+        "tabs": {
+          "personal": "Tệp cá nhân",
+          "course": "Tệp khóa học",
+          "upload": "Tải lên mới"
+        },
+        "personalDescription": "Truy cập tài liệu và nghiên cứu cá nhân của bạn.",
+        "courseDescription": "Các tệp riêng biệt cho khóa học này.",
+        "uploadDescription": "Tải lên tài liệu tham khảo mới cho AI.",
+        "comingSoonTitle": "Tính năng AI sắp ra mắt",
+        "comingSoonDescription": "Chúng tôi đang nỗ lực mang đến các khả năng AI mạnh mẽ để giúp bạn tạo nội dung khóa học, bài kiểm tra và hơn thế nữa."
+      }
     },
     "CreateDialog": {
       "description": "Nhập các thông tin cơ bản cho khóa học mới của bạn để bắt đầu.",

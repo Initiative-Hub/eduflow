@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus } from 'lucide-react';
+import { Plus, Sparkles } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { Accordion } from '@/components/ui/accordion';
@@ -11,6 +11,7 @@ import { ModuleAccordionItem } from '../_components/module-accordion-item';
 import type { CreateLessonFormData } from '../create-lesson.config';
 import type { CreateModuleFormData } from '../create-module.config';
 import { useModules } from '../use-modules';
+import { AiClientDialog } from './ai-client/ai-client';
 
 interface CourseModulesClientProps {
   courseId: string;
@@ -29,6 +30,7 @@ export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
   } = useModules(courseId);
 
   const [isAddModuleOpen, setIsAddModuleOpen] = useState(false);
+  const [isAiOpen, setIsAiOpen] = useState(false);
   const [activeModuleIdForLesson, setActiveModuleIdForLesson] = useState<
     string | null
   >(null);
@@ -59,6 +61,14 @@ export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button
+            variant="outline"
+            className="gap-2 border-primary/20 bg-primary/5 hover:bg-primary/10 hover:text-primary"
+            onClick={() => setIsAiOpen(true)}
+          >
+            <Sparkles className="h-4 w-4" />
+            {t('aiAssistant')}
+          </Button>
           <Button onClick={() => setIsAddModuleOpen(true)}>
             <Plus className="mr-1 h-4 w-4" />
             {t('addModule')}
@@ -101,6 +111,8 @@ export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
         onSubmit={onCreateLesson}
         isLoading={isCreatingLesson}
       />
+
+      <AiClientDialog isOpen={isAiOpen} onOpenChange={setIsAiOpen} />
     </div>
   );
 }
