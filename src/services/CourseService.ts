@@ -169,17 +169,12 @@ export class CourseService {
             title: lesson.lessonTitle || 'Untitled Lesson',
             content: {
               type: 'doc',
-              content: [
-                {
-                  type: 'paragraph',
-                  content: [
-                    {
-                      type: 'text',
-                      text: lesson.topicsToCover || '',
-                    },
-                  ],
-                },
-              ],
+              content: (lesson.content || '').split('\\n').map((line) => ({
+                type: 'paragraph',
+                content: line.trim()
+                  ? [{ type: 'text', text: line.trim() }]
+                  : [],
+              })),
             },
             orderIndex: currentLessonOrder++,
           }));

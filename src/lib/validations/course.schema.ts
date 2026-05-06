@@ -98,10 +98,10 @@ export const aiCourseGenerationSchema = z.object({
       lessons: z.array(
         z.object({
           lessonTitle: z.string().describe('The title of the lesson'),
-          topicsToCover: z
+          content: z
             .string()
             .describe(
-              'Key topics and concepts to be covered in this lesson, separated by commas or as a brief list'
+              'Detailed, comprehensive lesson content explaining the core concepts thoroughly. This should be extensive study material, not just a brief list.'
             ),
         })
       ),
