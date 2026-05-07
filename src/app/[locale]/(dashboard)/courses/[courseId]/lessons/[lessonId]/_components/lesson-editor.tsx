@@ -136,8 +136,7 @@ export function LessonEditor({
     onSave?.(
       {
         title: editTitle,
-        content:
-          (editor?.getHTML() as string | undefined) ?? editContent,
+        content: (editor?.getHTML() as string | undefined) ?? editContent,
       },
       { onSuccess: () => setIsEditing(false) }
     );

@@ -200,7 +200,8 @@ export function AiClientDialog({
               </div>
               {selectedPersonalId && (
                 <span className="flex items-center gap-1 font-medium text-primary text-xs">
-                  <Check className="h-3 w-3" />{t('selectedPdf', { count: 1 })}
+                  <Check className="h-3 w-3" />
+                  {t('selectedPdf', { count: 1 })}
                 </span>
               )}
             </div>
@@ -345,7 +346,9 @@ export function AiClientDialog({
                     <Upload className="absolute top-1/2 left-1/2 h-8 w-8 -translate-x-1/2 -translate-y-1/2 animate-pulse text-primary" />
                   </div>
                   <div className="space-y-1">
-                    <p className="font-semibold text-lg">{t('processingPdf')}</p>
+                    <p className="font-semibold text-lg">
+                      {t('processingPdf')}
+                    </p>
                     <p className="text-muted-foreground text-sm">
                       {t('preparingDocument')}
                     </p>

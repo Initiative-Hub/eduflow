@@ -18,8 +18,14 @@ export function isTiptapDocument(content: unknown): content is TiptapDocument {
   return isRecord(content) && content.type === 'doc';
 }
 
-export function isHtmlContent(content: unknown): content is { type: 'html', content: string } {
-  return isRecord(content) && content.type === 'html' && typeof content.content === 'string';
+export function isHtmlContent(
+  content: unknown
+): content is { type: 'html'; content: string } {
+  return (
+    isRecord(content) &&
+    content.type === 'html' &&
+    typeof content.content === 'string'
+  );
 }
 
 export function lessonContentToTiptapDocument(
@@ -53,7 +59,9 @@ function hasTextContent(node: JSONContent): boolean {
   return node.content?.some(hasTextContent) ?? false;
 }
 
-export function isTiptapDocumentEmpty(document: TiptapDocument | string): boolean {
+export function isTiptapDocumentEmpty(
+  document: TiptapDocument | string
+): boolean {
   if (typeof document === 'string') {
     return document.trim().replace(/<[^>]*>?/gm, '') === '';
   }
