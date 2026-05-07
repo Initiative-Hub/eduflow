@@ -32,12 +32,12 @@ import './lesson-editor.scss';
 
 interface LessonEditorProps {
   title: string;
-  content: TiptapDocument;
+  content: TiptapDocument | string;
   canEdit?: boolean;
   emptyContentLabel: string;
   isUpdatingLesson?: boolean;
   onSave?: (
-    data: { title: string; content: TiptapDocument },
+    data: { title: string; content: TiptapDocument | string },
     options: { onSuccess: () => void }
   ) => void;
 }
@@ -90,7 +90,7 @@ export function LessonEditor({
     ],
     content,
     onUpdate: ({ editor }) => {
-      setEditContent(editor.getJSON() as TiptapDocument);
+      setEditContent(editor.getHTML());
     },
   });
 
@@ -104,7 +104,9 @@ export function LessonEditor({
 
     if (
       !isEditing &&
-      JSON.stringify(editor.getJSON()) !== JSON.stringify(content)
+      ((typeof content === 'string' && editor.getHTML() !== content) ||
+        (typeof content !== 'string' &&
+          JSON.stringify(editor.getJSON()) !== JSON.stringify(content)))
     ) {
       editor.commands.setContent(content, { emitUpdate: false });
     }
@@ -135,7 +137,7 @@ export function LessonEditor({
       {
         title: editTitle,
         content:
-          (editor?.getJSON() as TiptapDocument | undefined) ?? editContent,
+          (editor?.getHTML() as string | undefined) ?? editContent,
       },
       { onSuccess: () => setIsEditing(false) }
     );

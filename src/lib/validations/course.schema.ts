@@ -101,7 +101,7 @@ export const aiCourseGenerationSchema = z.object({
           content: z
             .string()
             .describe(
-              'Detailed, comprehensive lesson content explaining the core concepts thoroughly. This should be extensive study material, not just a brief list.'
+              'Detailed, comprehensive lesson content formatted as an HTML string. Use <h1>, <h2>, <p>, <ul>, <li>, <strong>, etc. This should be extensive study material, not just a brief list.'
             ),
         })
       ),

@@ -93,7 +93,9 @@ Your goal is to transform raw document text into a high-quality, structured lear
 
 ### FORMATTING:
 - Output must be strictly valid JSON.
-- Based on the contents of the slides make the content of the lessons to be more details and specific. 
+- The "content" field for each lesson MUST be an HTML string formatted for a rich text editor.
+- Use HTML tags like <h1>, <h2>, <h3>, <p>, <ul>, <ol>, <li>, <strong>, <em>, <blockquote>, <pre><code> to structure the lesson content beautifully.
+- Based on the contents of the slides make the content of the lessons to be more detailed and specific. 
 - Do not include conversational filler (e.g., "Here is your course...").
 - Ensure the difficulty level is consistent throughout the course.
 `;

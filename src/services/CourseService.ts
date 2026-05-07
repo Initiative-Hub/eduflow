@@ -167,15 +167,7 @@ export class CourseService {
           const lessonData = mod.lessons.map((lesson) => ({
             moduleId: createdModule.id,
             title: lesson.lessonTitle || 'Untitled Lesson',
-            content: {
-              type: 'doc',
-              content: (lesson.content || '').split('\\n').map((line) => ({
-                type: 'paragraph',
-                content: line.trim()
-                  ? [{ type: 'text', text: line.trim() }]
-                  : [],
-              })),
-            },
+            content: lesson.content || '',
             orderIndex: currentLessonOrder++,
           }));
 
