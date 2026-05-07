@@ -1,15 +1,10 @@
 'use client';
 
-import { experimental_useObject as useObject } from '@ai-sdk/react';
-import { useQueryClient } from '@tanstack/react-query';
 import { FileText, Loader2, Plus, Sparkles } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useRef, useState } from 'react';
-import { toast } from 'sonner';
+import { useState } from 'react';
 import { Accordion } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
-import { aiCourseGenerationSchema } from '@/lib/validations/course.schema';
-import { inventoryService } from '../../../inventory/inventory.service';
 import { AddLessonDialog } from '../_components/add-lesson-dialog';
 import { AddModuleDialog } from '../_components/add-module-dialog';
 import { ModuleAccordionItem } from '../_components/module-accordion-item';
@@ -32,6 +27,10 @@ export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
     handleCreateModule,
     isCreatingLesson,
     handleCreateLesson,
+    streamingCourse,
+    isStreaming,
+    isSaving,
+    generateCourseModules,
   } = useModules(courseId);
 
   const [isAddModuleOpen, setIsAddModuleOpen] = useState(false);
@@ -39,50 +38,6 @@ export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
   const [activeModuleIdForLesson, setActiveModuleIdForLesson] = useState<
     string | null
   >(null);
-  const [isSaving, setIsSaving] = useState(false);
-  const queryClient = useQueryClient();
-  const fileRef = useRef<File | null>(null);
-
-  const {
-    object: streamingCourse,
-    submit,
-    isLoading: isStreaming,
-  } = useObject({
-    api: '/api/v1/ai/courses',
-    schema: aiCourseGenerationSchema,
-    onFinish: async () => {
-      setIsSaving(true);
-      // Give the server time to run the database save transactions
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      await queryClient.invalidateQueries({ queryKey: ['modules', courseId] });
-      setIsSaving(false);
-      toast.success(t('AiGeneration.success'));
-    },
-    onError: (error) => {
-      toast.error(t('AiGeneration.failed'));
-      console.error(error);
-    },
-    fetch: async (url, init) => {
-      if (fileRef.current && init?.body) {
-        const parsedBody = JSON.parse(init.body as string);
-        const formData = new FormData();
-        formData.append('courseId', parsedBody.courseId);
-        if (parsedBody.apiKey) formData.append('apiKey', parsedBody.apiKey);
-        formData.append('file', fileRef.current);
-
-        const headers = new Headers(init.headers);
-        // Remove Content-Type so browser sets it to multipart/form-data with correct boundary
-        headers.delete('Content-Type');
-
-        const newInit = { ...init, headers, body: formData };
-        // Clear the ref so we don't accidentally send it again on retries/future requests
-        fileRef.current = null;
-
-        return fetch(url, newInit);
-      }
-      return fetch(url, init);
-    },
-  });
 
   const onCreateModule = (data: CreateModuleFormData) => {
     handleCreateModule(
@@ -102,20 +57,7 @@ export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
 
   const onAiSelect = async (selection: { fileId?: string; file?: File }) => {
     setIsAiOpen(false);
-
-    try {
-      if (selection.file) {
-        fileRef.current = selection.file;
-        submit({ courseId });
-        toast.success(t('AiGeneration.documentReceived'));
-      } else if (selection.fileId) {
-        submit({ fileId: selection.fileId, courseId });
-        toast.success(t('AiGeneration.startingGeneration'));
-      }
-    } catch (error) {
-      console.error('AI selection error:', error);
-      toast.error(t('AiGeneration.error'));
-    }
+    await generateCourseModules(selection);
   };
 
   return (
@@ -156,17 +98,22 @@ export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
               </div>
               <div>
                 <h3 className="font-bold text-lg leading-none">
-                  {streamingCourse.courseTitle || t('AiGeneration.generatingCourse')}
+                  {streamingCourse.courseTitle ||
+                    t('AiGeneration.generatingCourse')}
                 </h3>
                 <p className="mt-1 text-muted-foreground text-sm">
-                  {isSaving ? t('AiGeneration.savingModules') : t('AiGeneration.craftingCurriculum')}
+                  {isSaving
+                    ? t('AiGeneration.savingModules')
+                    : t('AiGeneration.craftingCurriculum')}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2 rounded-full bg-background px-3 py-1 shadow-sm ring-1 ring-border">
               <Loader2 className="h-3 w-3 animate-spin text-primary" />
               <span className="font-medium text-[10px] uppercase tracking-wider">
-                {isSaving ? t('AiGeneration.saving') : t('AiGeneration.processingContent')}
+                {isSaving
+                  ? t('AiGeneration.saving')
+                  : t('AiGeneration.processingContent')}
               </span>
             </div>
           </div>
@@ -179,7 +126,8 @@ export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
               >
                 <div className="border-b bg-muted/30 px-4 py-3">
                   <h4 className="font-bold text-sm">
-                    {mIdx + 1}. {module?.title || t('AiGeneration.identifyingModule')}
+                    {mIdx + 1}.{' '}
+                    {module?.title || t('AiGeneration.identifyingModule')}
                   </h4>
                 </div>
                 <div className="divide-y">
@@ -192,7 +140,8 @@ export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
                         <FileText className="h-3.5 w-3.5" />
                       </div>
                       <span className="font-medium text-xs">
-                        {lesson?.lessonTitle || t('AiGeneration.draftingLesson')}
+                        {lesson?.lessonTitle ||
+                          t('AiGeneration.draftingLesson')}
                       </span>
                     </div>
                   ))}
