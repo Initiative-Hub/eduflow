@@ -22,7 +22,7 @@ export function Flashcard({ question, className }: FlashcardProps) {
         type="button"
         onClick={() => setIsFlipped(!isFlipped)}
         className={cn(
-          'relative flex min-h-[160px] w-full items-center justify-center rounded-xl border-2 border-dashed p-6 text-center transition-all',
+          'relative flex min-h-40 w-full items-center justify-center rounded-xl border-2 border-dashed p-6 text-center transition-all',
           isFlipped
             ? 'border-primary/40 bg-primary/5'
             : 'border-border hover:border-primary/30 hover:bg-muted/30'

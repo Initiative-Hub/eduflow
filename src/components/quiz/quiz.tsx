@@ -167,7 +167,7 @@ export function Quiz({ quiz, onComplete, className }: QuizProps) {
         <QuizProgress current={currentIndex + 1} total={totalQuestions} />
       </QuizCardHeader>
 
-      <QuizCardContent className="min-h-[200px]">
+      <QuizCardContent className="min-h-50">
         {currentQuestion && (
           <QuestionRenderer
             question={currentQuestion}
