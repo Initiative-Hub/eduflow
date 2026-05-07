@@ -5,9 +5,9 @@ const streamCourseMock = vi.fn().mockResolvedValue({
   toTextStreamResponse: vi.fn().mockReturnValue(new Response()),
 });
 
-vi.mock('@/services/ai/AIGatewayService', () => ({
-  AIGatewayService: class {
-    streamCourse = streamCourseMock;
+vi.mock('@/services/CourseService', () => ({
+  CourseService: {
+    generateModulesFromAI: streamCourseMock,
   },
 }));
 
@@ -32,7 +32,8 @@ describe('POST /api/v1/ai/courses', () => {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
-        fileId: '00000000-0000-0000-0000-000000000000',
+        fileId: '123e4567-e89b-12d3-a456-426614174000',
+        courseId: '123e4567-e89b-12d3-a456-426614174001',
         apiKey: 'test-key',
       }),
     });
@@ -42,7 +43,7 @@ describe('POST /api/v1/ai/courses', () => {
     expect(streamCourseMock).toHaveBeenCalledWith(
       expect.objectContaining({
         userId: 'user-1',
-        fileId: '00000000-0000-0000-0000-000000000000',
+        fileId: '123e4567-e89b-12d3-a456-426614174000',
         apiKey: 'test-key',
       })
     );
