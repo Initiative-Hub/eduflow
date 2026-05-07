@@ -200,7 +200,7 @@ export function AiClientDialog({
               </div>
               {selectedPersonalId && (
                 <span className="flex items-center gap-1 font-medium text-primary text-xs">
-                  <Check className="h-3 w-3" />1 PDF selected
+                  <Check className="h-3 w-3" />{t('selectedPdf', { count: 1 })}
                 </span>
               )}
             </div>
@@ -209,7 +209,7 @@ export function AiClientDialog({
               {isLoadingPersonal ? (
                 <div className="flex h-[380px] flex-col items-center justify-center gap-2 text-muted-foreground">
                   <Loader2 className="h-8 w-8 animate-spin" />
-                  <p className="text-sm">Loading your files...</p>
+                  <p className="text-sm">{t('loadingFiles')}</p>
                 </div>
               ) : personalFiles?.data.length ? (
                 <div className="grid grid-cols-2 gap-4 p-4 lg:grid-cols-3">
@@ -250,7 +250,7 @@ export function AiClientDialog({
                           </p>
                           <p className="text-[10px] text-muted-foreground">
                             {file.isFolder
-                              ? 'Folder'
+                              ? t('folder')
                               : formatFileSize(file.fileSize ?? 0)}
                           </p>
                         </div>
@@ -325,7 +325,7 @@ export function AiClientDialog({
                   <div className="space-y-2">
                     <h3 className="font-bold text-xl">{uploadedFile.name}</h3>
                     <p className="text-muted-foreground text-sm">
-                      {formatFileSize(uploadedFile.size)} • Ready for AI
+                      {formatFileSize(uploadedFile.size)} • {t('readyForAi')}
                     </p>
                   </div>
                   <Button
@@ -335,7 +335,7 @@ export function AiClientDialog({
                     className="gap-2"
                   >
                     <Upload className="h-4 w-4" />
-                    Upload Different File
+                    {t('uploadDifferent')}
                   </Button>
                 </div>
               ) : isProcessing ? (
@@ -345,9 +345,9 @@ export function AiClientDialog({
                     <Upload className="absolute top-1/2 left-1/2 h-8 w-8 -translate-x-1/2 -translate-y-1/2 animate-pulse text-primary" />
                   </div>
                   <div className="space-y-1">
-                    <p className="font-semibold text-lg">Processing PDF...</p>
+                    <p className="font-semibold text-lg">{t('processingPdf')}</p>
                     <p className="text-muted-foreground text-sm">
-                      Preparing your document for the AI Assistant
+                      {t('preparingDocument')}
                     </p>
                   </div>
                 </div>
@@ -364,15 +364,14 @@ export function AiClientDialog({
                   </div>
                   <div className="space-y-2 px-6">
                     <h3 className="font-bold text-xl">
-                      Upload Reference Document
+                      {t('uploadReference')}
                     </h3>
                     <p className="mx-auto max-w-[320px] text-muted-foreground text-sm">
-                      Select a PDF file from your device to use as a context for
-                      AI content generation.
+                      {t('uploadDescription')}
                     </p>
                   </div>
                   <div className="flex items-center gap-2 rounded-full bg-muted/50 px-4 py-1.5 font-bold text-[10px] text-muted-foreground uppercase tracking-widest transition-colors group-hover:bg-primary/20 group-hover:text-primary">
-                    Click to browse files
+                    {t('clickToBrowse')}
                   </div>
                 </label>
               )}

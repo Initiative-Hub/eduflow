@@ -269,7 +269,32 @@
         },
         "personalDescription": "Chọn một tệp PDF từ thư viện cá nhân của bạn để làm ngữ cảnh.",
         "courseDescription": "Truy cập các tệp được chia sẻ trong không gian khóa học này.",
-        "comingSoonTitle": "Thế hệ nâng cao"
+        "comingSoonTitle": "Thế hệ nâng cao",
+        "selectedPdf": "{count, plural, =1 {1 PDF được chọn} other {# PDF được chọn}}",
+        "loadingFiles": "Đang tải các tệp của bạn...",
+        "folder": "Thư mục",
+        "readyForAi": "Sẵn sàng cho AI",
+        "uploadDifferent": "Tải lên tệp khác",
+        "processingPdf": "Đang xử lý PDF...",
+        "preparingDocument": "Đang chuẩn bị tài liệu của bạn cho Trợ lý AI",
+        "uploadReference": "Tải lên tài liệu tham khảo",
+        "uploadDescription": "Chọn một tệp PDF từ thiết bị của bạn để làm ngữ cảnh cho việc tạo nội dung AI.",
+        "clickToBrowse": "Nhấp để duyệt tệp"
+      },
+      "AiGeneration": {
+        "documentReceived": "Đã nhận tài liệu, đang bắt đầu tạo AI...",
+        "startingGeneration": "Đang bắt đầu tạo AI...",
+        "error": "Đã xảy ra lỗi. Vui lòng thử lại.",
+        "failed": "Không thể tạo cấu trúc khóa học",
+        "success": "Các mô-đun khóa học đã được tạo và lưu thành công!",
+        "generatingCourse": "Đang tạo khóa học...",
+        "savingModules": "Đang lưu các mô-đun và bài học mới của bạn...",
+        "craftingCurriculum": "AI đang xây dựng chương trình giảng dạy của bạn từ tài liệu đã cung cấp",
+        "saving": "Đang lưu",
+        "processingContent": "Đang xử lý nội dung",
+        "identifyingModule": "Đang xác định mô-đun...",
+        "draftingLesson": "Đang soạn thảo bài học...",
+        "creatingLessons": "Đang tạo các bài học..."
       }
     },
     "CreateDialog": {

@@ -4,7 +4,7 @@ import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { useQueryClient } from '@tanstack/react-query';
 import { FileText, Loader2, Plus, Sparkles } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useState, useRef } from 'react';
+import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Accordion } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
@@ -56,10 +56,10 @@ export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
       await new Promise((resolve) => setTimeout(resolve, 2000));
       await queryClient.invalidateQueries({ queryKey: ['modules', courseId] });
       setIsSaving(false);
-      toast.success('Course modules generated and saved successfully!');
+      toast.success(t('AiGeneration.success'));
     },
     onError: (error) => {
-      toast.error('Failed to generate course structure');
+      toast.error(t('AiGeneration.failed'));
       console.error(error);
     },
     fetch: async (url, init) => {
@@ -77,7 +77,7 @@ export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
         const newInit = { ...init, headers, body: formData };
         // Clear the ref so we don't accidentally send it again on retries/future requests
         fileRef.current = null;
-        
+
         return fetch(url, newInit);
       }
       return fetch(url, init);
@@ -107,14 +107,14 @@ export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
       if (selection.file) {
         fileRef.current = selection.file;
         submit({ courseId });
-        toast.success('Document received, starting AI generation...');
+        toast.success(t('AiGeneration.documentReceived'));
       } else if (selection.fileId) {
         submit({ fileId: selection.fileId, courseId });
-        toast.success('Starting AI generation...');
+        toast.success(t('AiGeneration.startingGeneration'));
       }
     } catch (error) {
       console.error('AI selection error:', error);
-      toast.error('Something went wrong. Please try again.');
+      toast.error(t('AiGeneration.error'));
     }
   };
 
@@ -156,19 +156,17 @@ export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
               </div>
               <div>
                 <h3 className="font-bold text-lg leading-none">
-                  {streamingCourse.courseTitle || 'Generating Course...'}
+                  {streamingCourse.courseTitle || t('AiGeneration.generatingCourse')}
                 </h3>
                 <p className="mt-1 text-muted-foreground text-sm">
-                  {isSaving
-                    ? 'Saving your new modules and lessons...'
-                    : 'AI is crafting your curriculum from the provided document'}
+                  {isSaving ? t('AiGeneration.savingModules') : t('AiGeneration.craftingCurriculum')}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2 rounded-full bg-background px-3 py-1 shadow-sm ring-1 ring-border">
               <Loader2 className="h-3 w-3 animate-spin text-primary" />
               <span className="font-medium text-[10px] uppercase tracking-wider">
-                {isSaving ? 'Saving' : 'Processing Content'}
+                {isSaving ? t('AiGeneration.saving') : t('AiGeneration.processingContent')}
               </span>
             </div>
           </div>
@@ -181,7 +179,7 @@ export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
               >
                 <div className="border-b bg-muted/30 px-4 py-3">
                   <h4 className="font-bold text-sm">
-                    {mIdx + 1}. {module?.title || 'Identifying Module...'}
+                    {mIdx + 1}. {module?.title || t('AiGeneration.identifyingModule')}
                   </h4>
                 </div>
                 <div className="divide-y">
@@ -194,7 +192,7 @@ export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
                         <FileText className="h-3.5 w-3.5" />
                       </div>
                       <span className="font-medium text-xs">
-                        {lesson?.lessonTitle || 'Drafting Lesson...'}
+                        {lesson?.lessonTitle || t('AiGeneration.draftingLesson')}
                       </span>
                     </div>
                   ))}
@@ -204,7 +202,7 @@ export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
                       </div>
                       <span className="text-xs italic">
-                        Creating lessons...
+                        {t('AiGeneration.creatingLessons')}
                       </span>
                     </div>
                   )}

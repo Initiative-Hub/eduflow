@@ -269,7 +269,32 @@
         },
         "personalDescription": "Select a PDF from your personal library to use as context.",
         "courseDescription": "Access shared files within this course workspace.",
-        "comingSoonTitle": "Advanced Generation"
+        "comingSoonTitle": "Advanced Generation",
+        "selectedPdf": "{count, plural, =1 {1 PDF selected} other {# PDFs selected}}",
+        "loadingFiles": "Loading your files...",
+        "folder": "Folder",
+        "readyForAi": "Ready for AI",
+        "uploadDifferent": "Upload Different File",
+        "processingPdf": "Processing PDF...",
+        "preparingDocument": "Preparing your document for the AI Assistant",
+        "uploadReference": "Upload Reference Document",
+        "uploadDescription": "Select a PDF file from your device to use as a context for AI content generation.",
+        "clickToBrowse": "Click to browse files"
+      },
+      "AiGeneration": {
+        "documentReceived": "Document received, starting AI generation...",
+        "startingGeneration": "Starting AI generation...",
+        "error": "Something went wrong. Please try again.",
+        "failed": "Failed to generate course structure",
+        "success": "Course modules generated and saved successfully!",
+        "generatingCourse": "Generating Course...",
+        "savingModules": "Saving your new modules and lessons...",
+        "craftingCurriculum": "AI is crafting your curriculum from the provided document",
+        "saving": "Saving",
+        "processingContent": "Processing Content",
+        "identifyingModule": "Identifying Module...",
+        "draftingLesson": "Drafting Lesson...",
+        "creatingLessons": "Creating lessons..."
       }
     },
     "CreateDialog": {
