@@ -4,7 +4,7 @@ import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { useQueryClient } from '@tanstack/react-query';
 import { FileText, Loader2, Plus, Sparkles } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { toast } from 'sonner';
 import { Accordion } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
@@ -41,6 +41,7 @@ export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
   >(null);
   const [isSaving, setIsSaving] = useState(false);
   const queryClient = useQueryClient();
+  const fileRef = useRef<File | null>(null);
 
   const {
     object: streamingCourse,
@@ -60,6 +61,26 @@ export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
     onError: (error) => {
       toast.error('Failed to generate course structure');
       console.error(error);
+    },
+    fetch: async (url, init) => {
+      if (fileRef.current && init?.body) {
+        const parsedBody = JSON.parse(init.body as string);
+        const formData = new FormData();
+        formData.append('courseId', parsedBody.courseId);
+        if (parsedBody.apiKey) formData.append('apiKey', parsedBody.apiKey);
+        formData.append('file', fileRef.current);
+
+        const headers = new Headers(init.headers);
+        // Remove Content-Type so browser sets it to multipart/form-data with correct boundary
+        headers.delete('Content-Type');
+
+        const newInit = { ...init, headers, body: formData };
+        // Clear the ref so we don't accidentally send it again on retries/future requests
+        fileRef.current = null;
+        
+        return fetch(url, newInit);
+      }
+      return fetch(url, init);
     },
   });
 
@@ -82,27 +103,13 @@ export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
   const onAiSelect = async (selection: { fileId?: string; file?: File }) => {
     setIsAiOpen(false);
 
-    let fileId = selection.fileId;
-
     try {
       if (selection.file) {
-        toast.promise(
-          async () => {
-            const res = await inventoryService.upload({
-              file: selection.file!,
-            });
-            fileId = res.data.id;
-            submit({ fileId, courseId });
-            return res.data;
-          },
-          {
-            loading: 'Uploading reference document...',
-            success: 'Document uploaded, starting AI generation...',
-            error: 'Failed to upload document',
-          }
-        );
-      } else if (fileId) {
-        submit({ fileId, courseId });
+        fileRef.current = selection.file;
+        submit({ courseId });
+        toast.success('Document received, starting AI generation...');
+      } else if (selection.fileId) {
+        submit({ fileId: selection.fileId, courseId });
         toast.success('Starting AI generation...');
       }
     } catch (error) {

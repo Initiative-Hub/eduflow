@@ -1,9 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withAuth, withRoles } from '@/lib/api/middlewares';
-import { aiCourseGenerationSchema } from '@/lib/validations/course.schema';
-import { ChatProviderFactory } from '@/services/ai/ChatProviderFactory';
-import { DEFAULT_PROVIDER } from '@/services/ai/chat-provider.constants';
 
 /**
  * Zod schema for course generation input.
@@ -46,7 +43,7 @@ export const GET = withAuth(
       return NextResponse.json({});
     } catch (error) {
       return NextResponse.json(
-        { error: 'Internal Server Error' },
+        { error: 'Internal Server Error', message: (error as Error).message },
         { status: 500 }
       );
     }
