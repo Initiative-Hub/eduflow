@@ -191,6 +191,7 @@ export class ChatPersistenceService {
         await tx.aiChatMessage.deleteMany({ where: { chatId } });
         await tx.aiChatMessage.createMany({
           data: messages.map((message, index) => ({
+            id: message.id,
             chatId,
             userId,
             role: toStoredRole(message.role),

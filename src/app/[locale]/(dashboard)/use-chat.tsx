@@ -61,6 +61,7 @@ export const useChatController = ({
   const { messages, status, sendMessage, stop } = useChat({
     id: initialChatId,
     messages: initialMessages,
+    generateId: () => `${crypto.randomUUID()}`,
     transport,
     onError(error) {
       console.error('Chat error:', error);
