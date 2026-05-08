@@ -44,6 +44,7 @@ describe('POST /api/v1/ai/courses', () => {
       expect.objectContaining({
         userId: 'user-1',
         fileId: '123e4567-e89b-12d3-a456-426614174000',
+        courseId: '123e4567-e89b-12d3-a456-426614174001',
         apiKey: 'test-key',
       })
     );
