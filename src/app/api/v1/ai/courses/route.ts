@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withAuth, withRoles } from '@/lib/api/middlewares';
+import { CourseService } from '@/services/CourseService';
 
 /**
  * Zod schema for course generation input.
@@ -137,7 +138,7 @@ export const POST = withAuth(
           );
         }
       }
-      const { CourseService } = await import('@/services/CourseService');
+
       const result = await CourseService.generateModulesFromAI({
         userId,
         courseId: parsed.data.courseId,
