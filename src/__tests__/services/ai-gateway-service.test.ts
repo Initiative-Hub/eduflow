@@ -4,10 +4,14 @@ import { pdfToMarkdown } from '@/lib/pdf';
 import { AIGatewayService } from '@/services/ai/AIGatewayService';
 import { StorageService } from '@/services/StorageService';
 
-vi.mock('ai', () => ({
-  gateway: vi.fn((model: string) => model),
-  streamObject: vi.fn(),
-}));
+vi.mock('ai', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('ai')>();
+  return {
+    ...actual,
+    gateway: vi.fn((model: string) => model),
+    streamObject: vi.fn(),
+  };
+});
 
 vi.mock('@/lib/pdf', () => ({
   pdfToMarkdown: vi.fn(),
