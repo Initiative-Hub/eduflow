@@ -1,4 +1,5 @@
 import type {
+  DragAndDropQuestion,
   FillInTheBlankQuestion,
   MatchingQuestion,
   MultipleChoiceQuestion,
@@ -68,8 +69,10 @@ function isAnswerCorrect(
       return isOrderingCorrect(question, answer);
     case 'flashcard':
       return true; // Flashcards are not scored
+    case 'essay':
+      return true; // Essays are scored by AI, not by the automatic scorer
     case 'drag-and-drop':
-      return false; // Not yet implemented
+      return isDragAndDropCorrect(question, answer);
     case 'timed-challenge':
       return isAnswerCorrect(question.innerQuestion, answer);
     default:
@@ -129,5 +132,15 @@ function isOrderingCorrect(
     return false;
   return question.correctOrder.every(
     (id, index) => answer.orderedItemIds[index] === id
+  );
+}
+
+function isDragAndDropCorrect(
+  question: DragAndDropQuestion,
+  answer: StudentAnswer
+): boolean {
+  if (answer.type !== 'drag-and-drop') return false;
+  return question.zones.every(
+    (zone) => answer.placements[zone.id] === question.correctMapping[zone.id]
   );
 }

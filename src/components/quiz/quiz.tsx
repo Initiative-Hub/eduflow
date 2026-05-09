@@ -20,6 +20,8 @@ import type {
   StudentAnswers,
 } from '@/lib/quiz-template/types';
 import {
+  DragAndDrop,
+  Essay,
   FillInTheBlank,
   Flashcard,
   Matching,
@@ -321,16 +323,82 @@ function QuestionRenderer({
     case 'flashcard':
       return <Flashcard question={question} />;
 
+    case 'essay':
+      return (
+        <Essay
+          question={question}
+          text={answer?.type === 'essay' ? answer.text : ''}
+          onTextChange={(text) =>
+            onAnswer({
+              type: 'essay',
+              text,
+              attachments:
+                answer?.type === 'essay' ? answer.attachments : undefined,
+              teacherRubricText:
+                answer?.type === 'essay' ? answer.teacherRubricText : undefined,
+              teacherRubricAttachments:
+                answer?.type === 'essay'
+                  ? answer.teacherRubricAttachments
+                  : undefined,
+            })
+          }
+          onAttachmentsChange={(attachments: string[]) =>
+            onAnswer({
+              type: 'essay',
+              text: answer?.type === 'essay' ? answer.text : '',
+              attachments,
+              teacherRubricText:
+                answer?.type === 'essay' ? answer.teacherRubricText : undefined,
+              teacherRubricAttachments:
+                answer?.type === 'essay'
+                  ? answer.teacherRubricAttachments
+                  : undefined,
+            })
+          }
+          onTeacherRubricTextChange={(teacherRubricText: string) =>
+            onAnswer({
+              type: 'essay',
+              text: answer?.type === 'essay' ? answer.text : '',
+              attachments:
+                answer?.type === 'essay' ? answer.attachments : undefined,
+              teacherRubricText,
+              teacherRubricAttachments:
+                answer?.type === 'essay'
+                  ? answer.teacherRubricAttachments
+                  : undefined,
+            })
+          }
+          onTeacherRubricAttachmentsChange={(
+            teacherRubricAttachments: string[]
+          ) =>
+            onAnswer({
+              type: 'essay',
+              text: answer?.type === 'essay' ? answer.text : '',
+              attachments:
+                answer?.type === 'essay' ? answer.attachments : undefined,
+              teacherRubricText:
+                answer?.type === 'essay' ? answer.teacherRubricText : undefined,
+              teacherRubricAttachments,
+            })
+          }
+          teacherRubricText={
+            answer?.type === 'essay' ? (answer.teacherRubricText ?? '') : ''
+          }
+          showResult={showResult}
+          showTeacherRubricInput={question.allowTeacherRubric}
+        />
+      );
+
     case 'drag-and-drop':
       return (
-        <div className="space-y-3">
-          <p className="font-medium text-base text-foreground">
-            {question.prompt}
-          </p>
-          <p className="text-muted-foreground text-sm italic">
-            Drag-and-drop interaction coming soon.
-          </p>
-        </div>
+        <DragAndDrop
+          question={question}
+          placements={answer?.type === 'drag-and-drop' ? answer.placements : {}}
+          onPlace={(placements) =>
+            onAnswer({ type: 'drag-and-drop', placements })
+          }
+          showResult={showResult}
+        />
       );
 
     case 'timed-challenge':

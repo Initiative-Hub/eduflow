@@ -125,6 +125,103 @@ const mockMatching: QuizContent = {
   ],
 };
 
+const mockDragAndDrop: QuizContent = {
+  title: 'Plant Biology – Fill in the Blanks',
+  description:
+    'Drag the correct terms into the blanks to complete each sentence about plant biology.',
+  type: 'drag-and-drop',
+  questions: [
+    {
+      type: 'drag-and-drop',
+      prompt: 'Complete the sentence about photosynthesis:',
+      sentenceTemplate:
+        'During photosynthesis, plants absorb {{gas}} from the atmosphere and {{liquid}} from the soil to produce {{product}} and release {{byproduct}}.',
+      zones: [
+        { id: 'gas', label: 'gas' },
+        { id: 'liquid', label: 'liquid' },
+        { id: 'product', label: 'product' },
+        { id: 'byproduct', label: 'byproduct' },
+      ],
+      items: [
+        { id: 'co2', text: 'Carbon dioxide' },
+        { id: 'water', text: 'Water' },
+        { id: 'glucose', text: 'Glucose' },
+        { id: 'oxygen', text: 'Oxygen' },
+        { id: 'nitrogen', text: 'Nitrogen' },
+        { id: 'methane', text: 'Methane' },
+      ],
+      correctMapping: {
+        gas: 'co2',
+        liquid: 'water',
+        product: 'glucose',
+        byproduct: 'oxygen',
+      },
+      explanation:
+        'Photosynthesis uses CO₂ and water as inputs, producing glucose for energy and releasing oxygen as a byproduct.',
+    },
+    {
+      type: 'drag-and-drop',
+      prompt: 'Complete the sentence about plant cell structure:',
+      sentenceTemplate:
+        'The {{wall}} provides structural support, while the {{vacuole}} stores water and nutrients. Energy is produced in the {{mitochondria}} and photosynthesis occurs in the {{chloroplast}}.',
+      zones: [
+        { id: 'wall', label: 'structure' },
+        { id: 'vacuole', label: 'storage' },
+        { id: 'mitochondria', label: 'energy' },
+        { id: 'chloroplast', label: 'photosynthesis' },
+      ],
+      items: [
+        { id: 'cell-wall', text: 'Cell wall' },
+        { id: 'central-vacuole', text: 'Central vacuole' },
+        { id: 'mitochondria', text: 'Mitochondria' },
+        { id: 'chloroplast', text: 'Chloroplast' },
+        { id: 'nucleus', text: 'Nucleus' },
+      ],
+      correctMapping: {
+        wall: 'cell-wall',
+        vacuole: 'central-vacuole',
+        mitochondria: 'mitochondria',
+        chloroplast: 'chloroplast',
+      },
+      explanation:
+        'Plant cells have a rigid cell wall for support, a large central vacuole for storage, mitochondria for cellular respiration, and chloroplasts for photosynthesis.',
+    },
+  ],
+};
+
+const mockEssay: QuizContent = {
+  title: 'Ecosystem Analysis',
+  description:
+    'Answer the following questions about ecosystems. You may attach supporting files.',
+  type: 'essay',
+  questions: [
+    {
+      type: 'essay',
+      prompt:
+        'Explain how energy flows through a food chain, starting from producers to top-level consumers. Include at least one specific example of a food chain.',
+      minWords: 50,
+      maxWords: 300,
+      allowAttachments: true,
+      deliveryOption: 'immediate',
+      allowTeacherRubric: true,
+      explanation:
+        'Energy flows from the sun to producers (plants), then to primary consumers (herbivores), secondary consumers (carnivores), and tertiary consumers (top predators). At each level, about 90% of energy is lost as heat.',
+    },
+    {
+      type: 'essay',
+      prompt:
+        'Describe the steps of the scientific method and explain why each step is important. Use an example of a real-world experiment to illustrate your answer.',
+      minWords: 80,
+      maxWords: 400,
+      allowAttachments: true,
+      deliveryOption: 'teacher-review',
+      allowTeacherRubric: true,
+      explanation:
+        'The scientific method includes: observation, question, hypothesis, experiment, analysis, and conclusion. Each step builds on the previous one to ensure rigorous, reproducible results.',
+    },
+  ],
+};
+
 export function QuizDemo() {
   const handleComplete = (result: ScoreResult) => {
     toast.success(`Quiz completed! Score: ${Math.round(result.percentage)}%`);
@@ -159,6 +256,27 @@ export function QuizDemo() {
       <section className="space-y-2">
         <h2 className="font-semibold text-foreground text-lg">Matching Quiz</h2>
         <Quiz quiz={mockMatching} onComplete={handleComplete} />
+      </section>
+
+      {/* Drag and Drop */}
+      <section className="space-y-2">
+        <h2 className="font-semibold text-foreground text-lg">
+          Drag & Drop (Fill in the Blank)
+        </h2>
+        <Quiz quiz={mockDragAndDrop} onComplete={handleComplete} />
+      </section>
+
+      {/* Essay / Text-Based */}
+      <section className="space-y-2">
+        <h2 className="font-semibold text-foreground text-lg">
+          Essay / Text-Based Quiz
+        </h2>
+        <p className="text-muted-foreground text-sm">
+          Students write their answers and can attach files. Teachers can
+          provide custom rubrics (text or file). AI evaluates responses with two
+          delivery options: immediate feedback or teacher-reviewed.
+        </p>
+        <Quiz quiz={mockEssay} onComplete={handleComplete} />
       </section>
     </div>
   );
