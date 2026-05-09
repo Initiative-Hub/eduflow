@@ -1,10 +1,4 @@
-export type WritingTool =
-  | 'caption'
-  | 'paraphrase'
-  | 'email'
-  | 'outline'
-  | 'grammar'
-  | 'rewrite';
+import type { WritingTool } from '@/lib/validations/writing.schema';
 
 export function getWritingSystemPrompt(tool: WritingTool): string {
   const basePersona = `

@@ -1,5 +1,6 @@
 import type { UIMessage } from 'ai';
 import { z } from 'zod';
+import { writingToolSchema } from '@/lib/validations/writing.schema';
 import { ChatProviderFactory } from '@/services/ai/ChatProviderFactory';
 import { DEFAULT_PROVIDER } from '@/services/ai/chat-provider.constants';
 import type {
@@ -11,14 +12,7 @@ export const maxDuration = 30;
 
 const writingRequestSchema = z.object({
   messages: z.array(z.custom<UIMessage>()).min(1),
-  tool: z.enum([
-    'caption',
-    'paraphrase',
-    'email',
-    'outline',
-    'grammar',
-    'rewrite',
-  ]),
+  tool: writingToolSchema,
   provider: z.custom<ChatProvider>().optional(),
   model: z.string().min(1).optional(),
   apiKey: z.string().min(1).optional(),
