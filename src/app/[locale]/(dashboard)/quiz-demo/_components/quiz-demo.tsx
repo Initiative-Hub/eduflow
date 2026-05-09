@@ -70,29 +70,6 @@ const mockQuiz: QuizContent = {
   ],
 };
 
-const mockFlashcards: QuizContent = {
-  title: 'Biology Key Terms',
-  description: 'Review important biology vocabulary with flashcards.',
-  type: 'flashcard',
-  questions: [
-    {
-      type: 'flashcard',
-      front: 'What is mitosis?',
-      back: 'A type of cell division that results in two daughter cells each having the same number and kind of chromosomes as the parent nucleus.',
-    },
-    {
-      type: 'flashcard',
-      front: 'What is ATP?',
-      back: 'Adenosine triphosphate — the primary energy carrier molecule in cells, used to power cellular processes.',
-    },
-    {
-      type: 'flashcard',
-      front: 'What is the difference between prokaryotic and eukaryotic cells?',
-      back: 'Prokaryotic cells lack a membrane-bound nucleus and organelles, while eukaryotic cells have both.',
-    },
-  ],
-};
-
 const mockMatching: QuizContent = {
   title: 'Cell Organelles',
   description: 'Match each organelle to its function.',
@@ -242,14 +219,6 @@ export function QuizDemo() {
           Mixed Quiz (Multiple Choice, True/False, Fill-in-the-Blank, Ordering)
         </h2>
         <Quiz quiz={mockQuiz} onComplete={handleComplete} />
-      </section>
-
-      {/* Flashcards */}
-      <section className="space-y-2">
-        <h2 className="font-semibold text-foreground text-lg">
-          Flashcard Mode
-        </h2>
-        <Quiz quiz={mockFlashcards} />
       </section>
 
       {/* Matching */}

@@ -67,8 +67,6 @@ function isAnswerCorrect(
       return isMatchingCorrect(question, answer);
     case 'ordering':
       return isOrderingCorrect(question, answer);
-    case 'flashcard':
-      return true; // Flashcards are not scored
     case 'essay':
       return true; // Essays are scored by AI, not by the automatic scorer
     case 'drag-and-drop':

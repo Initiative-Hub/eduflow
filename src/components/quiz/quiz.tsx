@@ -1,14 +1,8 @@
 'use client';
 
-import {
-  ArrowLeft,
-  ArrowRight,
-  BookOpen,
-  CheckCircle2,
-  Send,
-} from 'lucide-react';
+import { ArrowLeft, ArrowRight, BookOpen, Send } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { calculateScore } from '@/lib/quiz-template/scoring';
@@ -23,7 +17,6 @@ import {
   DragAndDrop,
   Essay,
   FillInTheBlank,
-  Flashcard,
   Matching,
   MultipleChoice,
   Ordering,
@@ -50,7 +43,7 @@ export function Quiz({ quiz, onComplete, className }: QuizProps) {
   const [state, setState] = useState<QuizState>('idle');
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<StudentAnswers>(new Map());
-  const [showQuestionResult, setShowQuestionResult] = useState(false);
+  const [showResults, setShowResults] = useState(false);
   const [result, setResult] = useState<ScoreResult | null>(null);
 
   const currentQuestion = quiz.questions[currentIndex];
@@ -58,16 +51,11 @@ export function Quiz({ quiz, onComplete, className }: QuizProps) {
   const isLastQuestion = currentIndex === totalQuestions - 1;
   const currentAnswer = answers.get(currentIndex);
 
-  const hasFlashcardsOnly = useMemo(
-    () => quiz.questions.every((q) => q.type === 'flashcard'),
-    [quiz.questions]
-  );
-
   const handleStart = () => {
     setState('in-progress');
     setCurrentIndex(0);
     setAnswers(new Map());
-    setShowQuestionResult(false);
+    setShowResults(false);
     setResult(null);
   };
 
@@ -83,21 +71,14 @@ export function Quiz({ quiz, onComplete, className }: QuizProps) {
   );
 
   const handleNext = () => {
-    setShowQuestionResult(false);
     if (isLastQuestion) {
-      handleSubmit();
-    } else {
-      setCurrentIndex((prev) => prev + 1);
+      return;
     }
+    setCurrentIndex((prev) => prev + 1);
   };
 
   const handlePrevious = () => {
-    setShowQuestionResult(false);
     setCurrentIndex((prev) => Math.max(0, prev - 1));
-  };
-
-  const handleCheckAnswer = () => {
-    setShowQuestionResult(true);
   };
 
   const handleSubmit = () => {
@@ -109,6 +90,7 @@ export function Quiz({ quiz, onComplete, className }: QuizProps) {
     };
     const scoreResult = calculateScore(answers, schema);
     setResult(scoreResult);
+    setShowResults(true);
     setState('completed');
     onComplete?.(scoreResult);
   };
@@ -143,9 +125,7 @@ export function Quiz({ quiz, onComplete, className }: QuizProps) {
         </QuizCardContent>
 
         <QuizCardFooter>
-          <span className="text-muted-foreground text-xs">
-            {hasFlashcardsOnly ? t('flashcardMode') : t('quizMode')}
-          </span>
+          <span className="text-muted-foreground text-xs">{t('quizMode')}</span>
           <Button type="button" size="sm" onClick={handleStart}>
             {t('startQuiz')}
             <ArrowRight className="size-3.5" />
@@ -158,7 +138,14 @@ export function Quiz({ quiz, onComplete, className }: QuizProps) {
   // ─── Completed State ─────────────────────────────────────────────────────────
 
   if (state === 'completed' && result) {
-    return <QuizResult result={result} quiz={quiz} onRetry={handleRetry} />;
+    return (
+      <QuizResult
+        result={result}
+        quiz={quiz}
+        answers={answers}
+        onRetry={handleRetry}
+      />
+    );
   }
 
   // ─── In-Progress State ───────────────────────────────────────────────────────
@@ -175,7 +162,7 @@ export function Quiz({ quiz, onComplete, className }: QuizProps) {
             question={currentQuestion}
             answer={currentAnswer}
             onAnswer={handleAnswer}
-            showResult={showQuestionResult}
+            showResult={showResults}
           />
         )}
       </QuizCardContent>
@@ -193,19 +180,7 @@ export function Quiz({ quiz, onComplete, className }: QuizProps) {
         </Button>
 
         <div className="flex gap-2">
-          {!hasFlashcardsOnly && currentAnswer && !showQuestionResult && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleCheckAnswer}
-            >
-              <CheckCircle2 className="size-3.5" />
-              {t('checkAnswer')}
-            </Button>
-          )}
-
-          {isLastQuestion && !hasFlashcardsOnly ? (
+          {isLastQuestion ? (
             <Button
               type="button"
               size="sm"
@@ -319,9 +294,6 @@ function QuestionRenderer({
           showResult={showResult}
         />
       );
-
-    case 'flashcard':
-      return <Flashcard question={question} />;
 
     case 'essay':
       return (

@@ -64,12 +64,6 @@ export interface OrderingQuestion {
   explanation?: string;
 }
 
-export interface FlashcardQuestion {
-  type: 'flashcard';
-  front: string;
-  back: string;
-}
-
 export interface DragAndDropZone {
   id: string;
   label: string;
@@ -151,7 +145,6 @@ export type QuestionBlock =
   | FillInTheBlankQuestion
   | MatchingQuestion
   | OrderingQuestion
-  | FlashcardQuestion
   | DragAndDropQuestion
   | EssayQuestion
   | TimedChallengeQuestion;

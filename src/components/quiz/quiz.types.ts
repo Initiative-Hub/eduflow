@@ -3,6 +3,7 @@ import type {
   QuizContent,
   ScoreResult,
   StudentAnswer,
+  StudentAnswers,
 } from '@/lib/quiz-template';
 
 // ─── Quiz Component Props ────────────────────────────────────────────────────
@@ -26,6 +27,7 @@ export interface QuizQuestionProps {
 export interface QuizResultProps {
   result: ScoreResult;
   quiz: QuizContent;
+  answers: StudentAnswers;
   onRetry?: () => void;
   onClose?: () => void;
 }
