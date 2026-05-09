@@ -8,7 +8,7 @@ export type AuthHandler = (
   req: Request,
   sessionData: Session,
   ...args: any[]
-) => Promise<NextResponse>;
+) => Promise<Response>;
 
 const isSessionData = (value: unknown): value is Session =>
   Boolean(
@@ -151,7 +151,7 @@ export function withValidation<T extends z.ZodRawShape>(
     req: Request,
     parsedBody: z.infer<typeof schema>,
     ...args: any[]
-  ) => Promise<NextResponse> | NextResponse
+  ) => Promise<Response> | Response
 ) {
   return async (req: Request, ...args: any[]) => {
     try {

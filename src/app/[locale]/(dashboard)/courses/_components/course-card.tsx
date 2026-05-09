@@ -13,7 +13,7 @@ import { Switch } from '@/components/ui/switch';
 interface CourseCardProps {
   id: string;
   title: string;
-  description: string | null;
+  description: string | null | undefined;
   isPublished: boolean;
   modulesCount: number;
   enrollmentsCount: number;

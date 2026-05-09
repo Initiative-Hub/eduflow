@@ -37,7 +37,7 @@ export function useUpdateLesson(courseId: string) {
     mutationFn: (data: {
       lessonId: string;
       title?: string;
-      content?: TiptapDocument;
+      content?: TiptapDocument | string;
     }) =>
       apiClient.patch<Lesson>(`/v1/lessons/${data.lessonId}`, {
         title: data.title,
