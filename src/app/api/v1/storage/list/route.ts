@@ -4,6 +4,7 @@ import { withAuth } from '@/lib/api/middlewares';
 import { StorageService } from '@/services/StorageService';
 
 const listQuerySchema = z.object({
+  courseId: z.string().uuid().optional(),
   parentId: z.string().uuid().optional(),
   search: z.string().trim().min(1).max(120).optional(),
   limit: z.coerce.number().int().min(1).max(100).default(50),
@@ -59,6 +60,7 @@ export const GET = withAuth(async (req, session) => {
   try {
     const { searchParams } = new URL(req.url);
     const parsed = listQuerySchema.safeParse({
+      courseId: searchParams.get('courseId') ?? undefined,
       parentId: searchParams.get('parentId') ?? undefined,
       search: searchParams.get('search') ?? undefined,
       limit: searchParams.get('limit') ?? undefined,
@@ -74,6 +76,7 @@ export const GET = withAuth(async (req, session) => {
 
     const result = await StorageService.listDirectory({
       userId: session.user.id,
+      courseId: parsed.data.courseId,
       parentId: parsed.data.parentId,
       search: parsed.data.search,
       limit: parsed.data.limit,

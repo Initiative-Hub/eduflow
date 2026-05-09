@@ -520,6 +520,160 @@
       "list": "List"
     }
   },
+  "CourseFilesPage": {
+    "actions": {
+      "cancel": "Cancel",
+      "clearSelection": "Clear selection",
+      "delete": "Delete",
+      "deleteSelected": "Delete selected",
+      "download": "Download",
+      "move": "Move to folder",
+      "newFolder": "New folder",
+      "open": "Open",
+      "preview": "Preview",
+      "rename": "Rename",
+      "save": "Save",
+      "share": "Share",
+      "shareSelected": "Share selected",
+      "upload": "Upload file"
+    },
+    "breadcrumbs": {
+      "root": "Course Files"
+    },
+    "browser": {
+      "title": "Materials",
+      "description": "This course has {count} resources.",
+      "pageInfo": "Page {page} of {total}",
+      "range": "Showing {start}-{end} of {total}"
+    },
+    "createFolderDialog": {
+      "description": "Create a new folder inside the current location.",
+      "label": "Folder name",
+      "placeholder": "Course notes, drafts, images...",
+      "submit": "Create folder",
+      "title": "Create folder"
+    },
+    "deleteDialog": {
+      "description": "Delete {count} items? This cannot be undone.",
+      "more": "and {count} more",
+      "title": "Delete items"
+    },
+    "empty": {
+      "action": "Upload a file",
+      "createFolder": "Create a folder",
+      "description": "Upload files or create folders to start organizing your storage.",
+      "title": "This folder is empty"
+    },
+    "emptySearch": {
+      "clear": "Clear search",
+      "description": "No files or folders match your search in this folder.",
+      "title": "No results found"
+    },
+    "errors": {
+      "title": "Resources unavailable",
+      "description": "We could not load the course materials right now.",
+      "retry": "Retry"
+    },
+    "fileCard": {
+      "folder": "Folder",
+      "processing": "Processing",
+      "ready": "Ready",
+      "size": "Size",
+      "type": "Type",
+      "uploadProgress": "Uploading {progress}%"
+    },
+    "hero": {
+      "badge": "Course Resources",
+      "description": "Access and manage files specifically for this course workspace. Upload lecture notes, assignments, and study materials."
+    },
+    "list": {
+      "columns": {
+        "actions": "Actions",
+        "name": "Name",
+        "size": "Size",
+        "status": "Status",
+        "type": "Type",
+        "updated": "Updated"
+      },
+      "uploadProgress": "Uploading {progress}%"
+    },
+    "moveDialog": {
+      "description": "Choose a destination for this item.",
+      "label": "Destination folder",
+      "placeholder": "Select a destination",
+      "submit": "Move item",
+      "title": "Move item"
+    },
+    "pagination": {
+      "next": "Next",
+      "page": "Page {page} of {total}",
+      "previous": "Previous"
+    },
+    "previewDialog": {
+      "description": "Previewing {type}",
+      "placeholder": "Preview",
+      "title": "File preview",
+      "unsupported": "This file type cannot be previewed inline."
+    },
+    "renameDialog": {
+      "description": "Choose a new name for this item.",
+      "label": "Item name",
+      "title": "Rename item"
+    },
+    "selection": {
+      "count": "Selected {count} items",
+      "label": "Selected items",
+      "toggleAll": "Select all items on this page",
+      "toggleItem": "Select {name}"
+    },
+    "stats": {
+      "currentFolder": "Current folder",
+      "files": "Files",
+      "folders": "Folders",
+      "storage": "Storage used"
+    },
+    "status": {
+      "folder": "Folder",
+      "processing": "Processing",
+      "ready": "Ready"
+    },
+    "storage": {
+      "label": "Storage used",
+      "limitReached": "Storage limit reached. Delete files to upload more.",
+      "usage": "{used} of {total}"
+    },
+    "title": "Course Materials",
+    "toast": {
+      "deleted": "Deleted {count} items.",
+      "fileTooLarge": "File exceeds the maximum upload size of {size}.",
+      "folderCreated": "Folder created.",
+      "genericError": "Something went wrong. Try again.",
+      "moved": "Item moved.",
+      "previewUnavailable": "This file cannot be previewed right now.",
+      "renamed": "Item renamed.",
+      "shareBatchDescription": "Copied {count} share links to your clipboard.",
+      "shareCopied": "Share link copied.",
+      "shareFilesOnly": "Select at least one file to share.",
+      "shareFoldersUnsupported": "Folders cannot be shared with signed links.",
+      "uploaded": "Upload complete."
+    },
+    "toolbar": {
+      "refresh": "Refresh",
+      "refreshing": "Refreshing...",
+      "searchPlaceholder": "Search files and folders"
+    },
+    "uploadDialog": {
+      "description": "Drop a file into the current folder or click to browse.",
+      "dropzoneDescription": "One file at a time, up to {size}.",
+      "dropzoneHint": "One file per upload",
+      "dropzoneTitle": "Drop a file here",
+      "title": "Upload file"
+    },
+    "view": {
+      "grid": "Grid",
+      "list": "List"
+    }
+  },
   "LanguageSwitcher": {
     "label": "Language",
     "system": "System"
