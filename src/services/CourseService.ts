@@ -245,7 +245,11 @@ export class CourseService {
     });
   }
 
-  static async createShareUrl(courseId: string, userId: string, fileId: string) {
+  static async createShareUrl(
+    courseId: string,
+    userId: string,
+    fileId: string
+  ) {
     if (!(await CourseService.isMember(courseId, userId))) {
       throw new Error('Unauthorized');
     }

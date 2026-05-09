@@ -33,7 +33,10 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { courseFilesService } from '../course-files.service';
-import type { InventoryEntry, InventoryTranslations } from '@/app/[locale]/(dashboard)/inventory/inventory.types';
+import type {
+  InventoryEntry,
+  InventoryTranslations,
+} from '@/app/[locale]/(dashboard)/inventory/inventory.types';
 import {
   formatDate,
   formatFileSize,
@@ -180,7 +183,10 @@ export function InventoryTableView({
                     className="flex items-center gap-3 text-left"
                   >
                     <div className="flex size-9 items-center justify-center rounded-md bg-muted text-muted-foreground">
-                      <InventoryEntryPreview entry={entry} courseId={courseId} />
+                      <InventoryEntryPreview
+                        entry={entry}
+                        courseId={courseId}
+                      />
                     </div>
                     <div className="min-w-0">
                       <div className="truncate font-medium">{entry.name}</div>

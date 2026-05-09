@@ -322,7 +322,10 @@ export function useFiles({
 
   const deleteMutation = useMutation({
     mutationFn: async (fileIds: string[]) => {
-      const response = await courseFilesService.deleteEntries(courseId, fileIds);
+      const response = await courseFilesService.deleteEntries(
+        courseId,
+        fileIds
+      );
       return response.data;
     },
     onSuccess: async (result) => {

@@ -55,7 +55,10 @@ import type {
   InventoryPreviewState,
   InventoryTranslations,
 } from '@/app/[locale]/(dashboard)/inventory/inventory.types';
-import { formatFileSize, getEntryTypeLabel } from '@/app/[locale]/(dashboard)/inventory/inventory.utils';
+import {
+  formatFileSize,
+  getEntryTypeLabel,
+} from '@/app/[locale]/(dashboard)/inventory/inventory.utils';
 
 const ROOT_OPTION_VALUE = '__root__';
 

@@ -10,7 +10,10 @@ export const GET = withAuth(async (req, session, { params }) => {
     const fileId = searchParams.get('fileId');
 
     if (!fileId) {
-      return NextResponse.json({ message: 'fileId is required' }, { status: 400 });
+      return NextResponse.json(
+        { message: 'fileId is required' },
+        { status: 400 }
+      );
     }
 
     const result = await CourseService.createShareUrl(
