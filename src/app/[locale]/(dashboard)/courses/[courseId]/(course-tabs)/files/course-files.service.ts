@@ -58,17 +58,12 @@ const buildSearchParams = (
 
 export const courseFilesService = {
   list: async (params: ListParams): Promise<InventoryListResponse> => {
-    const searchParams = buildSearchParams({
-      courseId: params.courseId,
-      parentId: params.parentId,
-      search: params.search,
-      limit: params.limit,
-      offset: params.offset,
-    });
+    const { courseId, ...rest } = params;
+    const searchParams = buildSearchParams(rest);
 
     const queryString = searchParams.toString();
     return apiClient.get<InventoryListResponse>(
-      `v1/storage/list${queryString ? `?${queryString}` : ''}`
+      `v1/courses/${courseId}/storage/list${queryString ? `?${queryString}` : ''}`
     );
   },
 
@@ -76,7 +71,7 @@ export const courseFilesService = {
     courseId: string
   ): Promise<InventoryResponse<InventoryAnalytics>> => {
     return apiClient.get<InventoryResponse<InventoryAnalytics>>(
-      `v1/storage/analytics?courseId=${courseId}`
+      `v1/courses/${courseId}/storage/analytics`
     );
   },
 
@@ -84,9 +79,8 @@ export const courseFilesService = {
     input: CreateFolderInput
   ): Promise<InventoryResponse<InventoryEntry>> => {
     return apiClient.post<InventoryResponse<InventoryEntry>>(
-      'v1/storage/folders',
+      `v1/courses/${input.courseId}/storage/folders`,
       {
-        courseId: input.courseId,
         parentId: input.parentId ?? null,
         name: input.name,
       }
@@ -98,12 +92,11 @@ export const courseFilesService = {
   ): Promise<InventoryResponse<InventoryEntry>> => {
     const response = await apiClient.post<
       InventoryResponse<InventoryUploadSession>
-    >('v1/storage/init-upload', {
-      courseId: input.courseId,
+    >(`v1/courses/${input.courseId}/storage/init-upload`, {
       parentId: input.parentId ?? null,
       fileName: input.file.name,
       contentType: input.file.type || 'application/octet-stream',
-      size: input.file.size,
+      fileSize: input.file.size,
     });
 
     input.onUploadStart?.(response.data.fileId);
@@ -123,7 +116,7 @@ export const courseFilesService = {
     input.onUploadComplete?.(response.data.fileId);
 
     return apiClient.post<InventoryResponse<InventoryEntry>>(
-      'v1/storage/confirm-upload',
+      `v1/courses/${input.courseId}/storage/confirm-upload`,
       {
         fileId: response.data.fileId,
       }
@@ -131,20 +124,22 @@ export const courseFilesService = {
   },
 
   updateEntry: async (
+    courseId: string,
     fileId: string,
     input: UpdateEntryInput
   ): Promise<InventoryResponse<InventoryEntry>> => {
     return apiClient.patch<InventoryResponse<InventoryEntry>>(
-      `v1/storage/${fileId}`,
+      `v1/courses/${courseId}/storage/${fileId}`,
       input
     );
   },
 
   deleteEntries: async (
+    courseId: string,
     fileIds: string[]
   ): Promise<InventoryResponse<{ deletedCount: number }>> => {
     return apiClient.delete<InventoryResponse<{ deletedCount: number }>>(
-      'v1/storage/delete',
+      `v1/courses/${courseId}/storage/delete`,
       {
         data: {
           fileIds,
@@ -154,18 +149,20 @@ export const courseFilesService = {
   },
 
   shareEntry: async (
+    courseId: string,
     fileId: string
   ): Promise<InventoryResponse<InventoryShareResult>> => {
     return apiClient.get<InventoryResponse<InventoryShareResult>>(
-      `v1/storage/share?fileId=${fileId}`
+      `v1/courses/${courseId}/storage/share?fileId=${fileId}`
     );
   },
 
   shareEntries: async (
+    courseId: string,
     input: ShareBatchInput
   ): Promise<InventoryResponse<InventoryBatchShareResult[]>> => {
     return apiClient.post<InventoryResponse<InventoryBatchShareResult[]>>(
-      'v1/storage/share-batch',
+      `v1/courses/${courseId}/storage/share-batch`,
       input
     );
   },

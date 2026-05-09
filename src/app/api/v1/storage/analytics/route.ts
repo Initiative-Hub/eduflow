@@ -22,12 +22,8 @@ import { StorageService } from '@/services/StorageService';
  */
 export const GET = withAuth(async (req, session) => {
   try {
-    const { searchParams } = new URL(req.url);
-    const courseId = searchParams.get('courseId');
-
     const analytics = await StorageService.getAnalytics({
       userId: session.user.id,
-      courseId: courseId || undefined,
     });
 
     return NextResponse.json({ data: analytics });

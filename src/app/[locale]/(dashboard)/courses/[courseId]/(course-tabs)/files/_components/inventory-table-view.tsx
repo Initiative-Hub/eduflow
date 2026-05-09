@@ -40,7 +40,13 @@ import {
   getEntryTypeLabel,
 } from '@/app/[locale]/(dashboard)/inventory/inventory.utils';
 
-function InventoryEntryPreview({ entry }: { entry: InventoryEntry }) {
+function InventoryEntryPreview({
+  entry,
+  courseId,
+}: {
+  entry: InventoryEntry;
+  courseId: string;
+}) {
   const [previewImageFailed, setPreviewImageFailed] = useState(false);
   const isImagePreview =
     !entry.isFolder && Boolean(entry.mimeType?.startsWith('image/'));
@@ -48,7 +54,7 @@ function InventoryEntryPreview({ entry }: { entry: InventoryEntry }) {
   const previewUrlQuery = useQuery({
     queryKey: ['inventory', 'preview-url', entry.id],
     queryFn: async () => {
-      const response = await courseFilesService.shareEntry(entry.id);
+      const response = await courseFilesService.shareEntry(courseId, entry.id);
       return response.data.signedUrl;
     },
     enabled: isImagePreview,
@@ -88,6 +94,7 @@ function getStatusLabel(entry: InventoryEntry, t: InventoryTranslations) {
 
 type InventoryTableViewProps = {
   t: InventoryTranslations;
+  courseId: string;
   entries: InventoryEntry[];
   locale: string;
   selectedIds: string[];
@@ -107,6 +114,7 @@ type InventoryTableViewProps = {
 
 export function InventoryTableView({
   t,
+  courseId,
   entries,
   locale,
   selectedIds,
@@ -172,7 +180,7 @@ export function InventoryTableView({
                     className="flex items-center gap-3 text-left"
                   >
                     <div className="flex size-9 items-center justify-center rounded-md bg-muted text-muted-foreground">
-                      <InventoryEntryPreview entry={entry} />
+                      <InventoryEntryPreview entry={entry} courseId={courseId} />
                     </div>
                     <div className="min-w-0">
                       <div className="truncate font-medium">{entry.name}</div>

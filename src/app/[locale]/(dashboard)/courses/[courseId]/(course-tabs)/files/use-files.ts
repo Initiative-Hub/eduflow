@@ -276,7 +276,9 @@ export function useFiles({
 
   const renameMutation = useMutation({
     mutationFn: async ({ fileId, name }: { fileId: string; name: string }) => {
-      const response = await courseFilesService.updateEntry(fileId, { name });
+      const response = await courseFilesService.updateEntry(courseId, fileId, {
+        name,
+      });
       return response.data;
     },
     onSuccess: async (entry) => {
@@ -300,7 +302,9 @@ export function useFiles({
       fileId: string;
       parentId: string | null;
     }) => {
-      const response = await courseFilesService.updateEntry(fileId, { parentId });
+      const response = await courseFilesService.updateEntry(courseId, fileId, {
+        parentId,
+      });
       return response.data;
     },
     onSuccess: async (entry) => {
@@ -318,7 +322,7 @@ export function useFiles({
 
   const deleteMutation = useMutation({
     mutationFn: async (fileIds: string[]) => {
-      const response = await courseFilesService.deleteEntries(fileIds);
+      const response = await courseFilesService.deleteEntries(courseId, fileIds);
       return response.data;
     },
     onSuccess: async (result) => {
@@ -455,7 +459,7 @@ export function useFiles({
 
   const handlePreviewEntry = async (entry: InventoryEntry) => {
     try {
-      const response = await courseFilesService.shareEntry(entry.id);
+      const response = await courseFilesService.shareEntry(courseId, entry.id);
 
       setPreviewDialog({
         entry,
@@ -487,7 +491,7 @@ export function useFiles({
     }
 
     try {
-      const response = await courseFilesService.shareEntry(entry.id);
+      const response = await courseFilesService.shareEntry(courseId, entry.id);
       await copyToClipboard(response.data.signedUrl);
       toast.success(t('toast.shareCopied'), {
         description: entry.name,
@@ -504,7 +508,7 @@ export function useFiles({
     }
 
     try {
-      const response = await courseFilesService.shareEntries({
+      const response = await courseFilesService.shareEntries(courseId, {
         fileIds: selectedFiles.map((entry) => entry.id),
       });
 

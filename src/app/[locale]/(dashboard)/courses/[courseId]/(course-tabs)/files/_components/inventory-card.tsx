@@ -42,6 +42,7 @@ import {
 
 interface FileCardProps {
   entry: InventoryEntry;
+  courseId: string;
   locale: string;
   onOpen?: (entry: InventoryEntry) => void;
   onRename: (entry: InventoryEntry) => void;
@@ -56,6 +57,7 @@ interface FileCardProps {
 
 export function InventoryCard({
   entry,
+  courseId,
   locale,
   onOpen,
   onRename,
@@ -75,7 +77,7 @@ export function InventoryCard({
   const previewUrlQuery = useQuery({
     queryKey: ['inventory', 'preview-url', entry.id],
     queryFn: async () => {
-      const response = await courseFilesService.shareEntry(entry.id);
+      const response = await courseFilesService.shareEntry(courseId, entry.id);
       return response.data.signedUrl;
     },
     enabled: isImagePreview,

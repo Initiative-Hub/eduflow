@@ -2,6 +2,7 @@ import { CourseRoleName } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
 import type { AICourseGeneration } from '@/lib/validations/course.schema';
 import { ChatProviderFactory } from '@/services/ai/ChatProviderFactory';
+import { StorageService } from '@/services/StorageService';
 
 export class CourseService {
   static async createCourse(data: {
@@ -77,6 +78,217 @@ export class CourseService {
     }
 
     return course;
+  }
+
+  static async isMember(courseId: string, userId: string) {
+    const course = await prisma.course.findUnique({
+      where: { id: courseId },
+      select: { ownerId: true },
+    });
+
+    if (!course) return false;
+    if (course.ownerId === userId) return true;
+
+    const enrollment = await prisma.enrollment.findFirst({
+      where: { courseId, memberId: userId },
+    });
+
+    return !!enrollment;
+  }
+
+  static async listFiles(options: {
+    courseId: string;
+    userId: string;
+    parentId?: string | null;
+    search?: string;
+    limit: number;
+    offset: number;
+  }) {
+    if (!(await CourseService.isMember(options.courseId, options.userId))) {
+      throw new Error('Unauthorized');
+    }
+
+    return await StorageService.listDirectory({
+      userId: options.userId,
+      courseId: options.courseId,
+      parentId: options.parentId,
+      search: options.search,
+      limit: options.limit,
+      offset: options.offset,
+    });
+  }
+
+  static async getAnalytics(courseId: string, userId: string) {
+    if (!(await CourseService.isMember(courseId, userId))) {
+      throw new Error('Unauthorized');
+    }
+
+    return await StorageService.getAnalytics({
+      userId,
+      courseId,
+    });
+  }
+
+  static async createFolder(options: {
+    courseId: string;
+    userId: string;
+    parentId?: string | null;
+    name: string;
+  }) {
+    if (!(await CourseService.isMember(options.courseId, options.userId))) {
+      throw new Error('Unauthorized');
+    }
+
+    return await StorageService.createFolder({
+      userId: options.userId,
+      courseId: options.courseId,
+      parentId: options.parentId,
+      name: options.name,
+    });
+  }
+
+  static async initializeUpload(options: {
+    courseId: string;
+    userId: string;
+    parentId?: string | null;
+    fileName: string;
+    contentType: string;
+    fileSize: number;
+    path?: string;
+  }) {
+    if (!(await CourseService.isMember(options.courseId, options.userId))) {
+      throw new Error('Unauthorized');
+    }
+
+    return await StorageService.initializeUpload({
+      userId: options.userId,
+      courseId: options.courseId,
+      parentId: options.parentId,
+      fileName: options.fileName,
+      contentType: options.contentType,
+      fileSize: options.fileSize,
+      path: options.path,
+    });
+  }
+
+  static async confirmUpload(courseId: string, userId: string, fileId: string) {
+    if (!(await CourseService.isMember(courseId, userId))) {
+      throw new Error('Unauthorized');
+    }
+
+    // We still need to check if the file belongs to the course
+    const file = await prisma.fileInventory.findUnique({
+      where: { id: fileId },
+      select: { courseId: true },
+    });
+
+    if (!file || file.courseId !== courseId) {
+      throw new Error('File not found in this course');
+    }
+
+    return await StorageService.confirmUpload({
+      userId,
+      fileId,
+    });
+  }
+
+  static async deleteFiles(
+    courseId: string,
+    userId: string,
+    fileIds: string[]
+  ) {
+    if (!(await CourseService.isMember(courseId, userId))) {
+      throw new Error('Unauthorized');
+    }
+
+    // Verify all files belong to the course
+    const files = await prisma.fileInventory.findMany({
+      where: { id: { in: fileIds } },
+      select: { courseId: true },
+    });
+
+    if (files.some((f) => f.courseId !== courseId)) {
+      throw new Error('Some files do not belong to this course');
+    }
+
+    return await StorageService.deleteEntries({
+      userId,
+      fileIds,
+    });
+  }
+
+  static async updateEntry(options: {
+    courseId: string;
+    userId: string;
+    fileId: string;
+    name?: string;
+    parentId?: string | null;
+  }) {
+    if (!(await CourseService.isMember(options.courseId, options.userId))) {
+      throw new Error('Unauthorized');
+    }
+
+    const file = await prisma.fileInventory.findUnique({
+      where: { id: options.fileId },
+      select: { courseId: true },
+    });
+
+    if (!file || file.courseId !== options.courseId) {
+      throw new Error('File not found in this course');
+    }
+
+    return await StorageService.updateEntry({
+      userId: options.userId,
+      fileId: options.fileId,
+      name: options.name,
+      parentId: options.parentId,
+    });
+  }
+
+  static async createShareUrl(courseId: string, userId: string, fileId: string) {
+    if (!(await CourseService.isMember(courseId, userId))) {
+      throw new Error('Unauthorized');
+    }
+
+    const file = await prisma.fileInventory.findUnique({
+      where: { id: fileId },
+      select: { courseId: true },
+    });
+
+    if (!file || file.courseId !== courseId) {
+      throw new Error('File not found in this course');
+    }
+
+    return await StorageService.createShareUrl({
+      userId,
+      fileId,
+    });
+  }
+
+  static async createShareUrlsBatch(
+    courseId: string,
+    userId: string,
+    fileIds: string[],
+    expiresInSeconds?: number
+  ) {
+    if (!(await CourseService.isMember(courseId, userId))) {
+      throw new Error('Unauthorized');
+    }
+
+    const files = await prisma.fileInventory.findMany({
+      where: { id: { in: fileIds } },
+      select: { courseId: true },
+    });
+
+    if (files.some((f) => f.courseId !== courseId)) {
+      throw new Error('Some files do not belong to this course');
+    }
+
+    return await StorageService.createShareUrlsBatch({
+      userId,
+      fileIds,
+      expiresInSeconds,
+    });
   }
 
   static async togglePublish(

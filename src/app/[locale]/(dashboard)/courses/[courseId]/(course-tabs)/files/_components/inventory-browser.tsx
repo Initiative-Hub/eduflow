@@ -20,6 +20,7 @@ import { InventoryLoadingSkeleton } from './inventory-loading-skeleton';
 import { InventoryTableView } from './inventory-table-view';
 
 type InventoryBrowserProps = {
+  courseId: string;
   currentPage: number;
   endItem: number;
   entries: InventoryEntry[];
@@ -55,6 +56,7 @@ type InventoryBrowserProps = {
 };
 
 export function InventoryBrowser({
+  courseId,
   currentPage,
   endItem,
   entries,
@@ -130,6 +132,7 @@ export function InventoryBrowser({
                   <InventoryCard
                     key={entry.id}
                     entry={entry}
+                    courseId={courseId}
                     locale={locale}
                     onOpen={onOpen}
                     onRename={onRename}
@@ -146,6 +149,7 @@ export function InventoryBrowser({
                   <InventoryCard
                     key={entry.id}
                     entry={entry}
+                    courseId={courseId}
                     locale={locale}
                     onRename={onRename}
                     onMove={onMove}
@@ -162,6 +166,7 @@ export function InventoryBrowser({
         ) : (
           <InventoryTableView
             t={t}
+            courseId={courseId}
             entries={entries}
             locale={locale}
             selectedIds={selectedIds}

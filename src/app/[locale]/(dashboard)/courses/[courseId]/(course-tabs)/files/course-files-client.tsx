@@ -198,6 +198,7 @@ export default function CourseFilesClient() {
       />
 
       <InventoryBrowser
+        courseId={courseId}
         currentPage={currentPage}
         endItem={endItem}
         entries={entries}
