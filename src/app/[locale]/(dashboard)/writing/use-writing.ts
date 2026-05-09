@@ -53,12 +53,13 @@ const useWriting = ({
         ? new DefaultChatTransport({
             api: `/api/writing/${sessionId}`,
             body: {
+              tool,
               provider: 'openrouter',
               model: 'gemini-2.5-pro',
             },
           })
         : undefined,
-    [sessionId]
+    [sessionId, tool]
   );
 
   const { messages, status, sendMessage, stop } = useChat({
