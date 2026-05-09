@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import type { WritingTool } from '@/lib/validations/writing.schema';
 import { ChatInput } from '../../_components/chat-input';
 import useWriting from '../use-writing';
+import { WritingSelector } from './writing-selector';
 
 const WritingClient = () => {
   const [selectedTool, setSelectedTool] = useState<WritingTool>('grammar');
@@ -44,7 +45,9 @@ const WritingClient = () => {
   };
 
   return (
-    <div className="">
+    <div className="mx-auto flex h-full w-full max-w-4xl flex-col p-4">
+      <WritingSelector selected={selectedTool} onSelect={setSelectedTool} />
+
       <ChatInput
         handleSubmit={handleSubmit}
         isStreaming={isStreaming}
