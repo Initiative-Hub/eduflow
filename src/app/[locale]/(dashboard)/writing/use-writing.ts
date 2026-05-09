@@ -6,7 +6,10 @@ import { toast } from 'sonner';
 import { useRouter } from '@/i18n/navigation';
 import type { WritingTool } from '@/lib/validations/writing.schema';
 import { useChatSessionStore } from '@/stores/useChatSessionStore';
+import { hasReachedUserMessageLimit } from '@/utils/chat-limit';
 import { writingService } from './writing.service';
+
+const MAX_USER_MESSAGES = 5;
 
 interface UseWritingOptions {
   tool: WritingTool;
@@ -27,6 +30,8 @@ const useWriting = ({
     setOptimisticMessages,
     setPendingMessage,
     setPendingChatId,
+    optimisticChatId,
+    optimisticMessages,
   } = useChatSessionStore();
 
   const createSessionMutation = useMutation({
@@ -68,9 +73,20 @@ const useWriting = ({
     },
   });
 
+  const optimisticForChat =
+    optimisticChatId && optimisticChatId === sessionId
+      ? optimisticMessages
+      : [];
+  const displayMessages = messages.length > 0 ? messages : optimisticForChat;
+
+  const isLimitReached = hasReachedUserMessageLimit(
+    displayMessages,
+    MAX_USER_MESSAGES
+  );
+
   const isStreaming = status === 'streaming' || status === 'submitted';
 
-  const startWriting = async (text: string) => {
+  const startChat = async (text: string) => {
     if (!sessionId) {
       try {
         const newChatId = await createSessionMutation.mutateAsync(text);
@@ -94,11 +110,14 @@ const useWriting = ({
   };
 
   return {
-    messages,
+    messages: displayMessages,
+    startChat,
     isStreaming,
-    startWriting,
     stop,
-    hasOutput: messages.length > 0,
+    hasOutput: displayMessages.length > 0,
+    isLimitReached,
+    maxMessages: MAX_USER_MESSAGES,
+    userMessageCount: displayMessages.filter(m => m.role === 'user').length,
   };
 };
 export default useWriting;
