@@ -2,7 +2,6 @@
 
 import { CheckCircle2, XCircle } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { Badge } from '@/components/ui/badge';
 import type { TrueFalseQuestion } from '@/lib/quiz-template';
 import { cn } from '@/lib/utils';
 
@@ -72,11 +71,6 @@ export function TrueFalse({
                 <XCircle className="size-5 text-red-600" />
               )}
               <span>{option.label}</span>
-              {showResult && isCorrect && (
-                <Badge variant="default" className="ml-2">
-                  {t('correctAnswer')}
-                </Badge>
-              )}
             </button>
           );
         })}

@@ -2,7 +2,6 @@
 
 import { CheckCircle2, Circle, XCircle } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { Badge } from '@/components/ui/badge';
 import type { MultipleChoiceQuestion } from '@/lib/quiz-template';
 import { cn } from '@/lib/utils';
 
@@ -72,11 +71,6 @@ export function MultipleChoice({
                 )}
               </span>
               <span className="flex-1">{option.text}</span>
-              {showResult && isCorrect && (
-                <Badge variant="default" className="shrink-0">
-                  {t('correctAnswer')}
-                </Badge>
-              )}
             </button>
           );
         })}

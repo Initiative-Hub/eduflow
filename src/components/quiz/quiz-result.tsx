@@ -55,6 +55,18 @@ export function QuizResult({
   const correctCount = result.questionResults.filter((r) => r.isCorrect).length;
   const totalCount = result.questionResults.length;
 
+  // Calculate stroke for the circular progress
+  const radius = 54;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset =
+    circumference - (result.percentage / 100) * circumference;
+
+  const getCircleColor = (percentage: number) => {
+    if (percentage >= 70) return 'stroke-green-500';
+    if (percentage >= 50) return 'stroke-yellow-500';
+    return 'stroke-red-500';
+  };
+
   return (
     <div className="space-y-4">
       <QuizCard>
@@ -67,58 +79,51 @@ export function QuizResult({
         </QuizCardHeader>
 
         <QuizCardContent className="space-y-5">
-          {/* Score display */}
-          <div className="flex flex-col items-center gap-2 py-4">
-            <div className="flex items-baseline gap-1">
-              <span className="font-bold text-4xl text-foreground">
-                {Math.round(result.percentage)}
-              </span>
-              <span className="font-medium text-lg text-muted-foreground">
-                %
-              </span>
-            </div>
-            <p className={cn('font-semibold text-sm', grade.color)}>
-              {grade.label}
-            </p>
-            <p className="text-muted-foreground text-sm">
-              {t('scoreDetail', { correct: correctCount, total: totalCount })}
-            </p>
-          </div>
-
-          {/* Question breakdown icons */}
-          <div className="space-y-2">
-            <p className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
-              {t('questionBreakdown')}
-            </p>
-            <div className="grid grid-cols-5 gap-1.5 sm:grid-cols-10">
-              {result.questionResults.map((qr) => (
-                <div
-                  key={qr.questionIndex}
+          {/* Score display — circle + stats side by side */}
+          <div className="flex items-center justify-center gap-8 py-4">
+            {/* Percentage circle */}
+            <div className="relative flex size-32 items-center justify-center">
+              <svg className="-rotate-90" viewBox="0 0 120 120">
+                <title>{`${Math.round(result.percentage)}%`}</title>
+                <circle
+                  cx="60"
+                  cy="60"
+                  r={radius}
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="10"
+                  className="text-muted/30"
+                />
+                <circle
+                  cx="60"
+                  cy="60"
+                  r={radius}
+                  fill="none"
+                  strokeWidth="10"
+                  strokeLinecap="round"
+                  strokeDasharray={circumference}
+                  strokeDashoffset={strokeDashoffset}
                   className={cn(
-                    'flex size-8 items-center justify-center rounded-md font-medium text-xs',
-                    qr.isCorrect
-                      ? 'bg-green-100 text-green-700 dark:bg-green-950/30 dark:text-green-400'
-                      : 'bg-red-100 text-red-700 dark:bg-red-950/30 dark:text-red-400'
+                    'transition-all duration-700',
+                    getCircleColor(result.percentage)
                   )}
-                >
-                  {qr.isCorrect ? (
-                    <CheckCircle2 className="size-4" />
-                  ) : (
-                    <XCircle className="size-4" />
-                  )}
-                </div>
-              ))}
+                />
+              </svg>
+              <span className="absolute font-bold text-2xl text-foreground">
+                {Math.round(result.percentage)}%
+              </span>
             </div>
-          </div>
 
-          {/* Points */}
-          <div className="flex items-center justify-between rounded-lg bg-muted/50 px-4 py-3">
-            <span className="text-muted-foreground text-sm">
-              {t('pointsEarned')}
-            </span>
-            <span className="font-semibold text-sm">
-              {result.earnedPoints} / {result.totalPoints}
-            </span>
+            {/* Points and correct count */}
+            <div className="flex flex-col gap-1">
+              <p className={cn('font-semibold text-sm', grade.color)}>
+                {grade.label}
+              </p>
+              <p className="text-muted-foreground text-sm">
+                {t('scoreDetail', { correct: correctCount, total: totalCount })}
+                : {result.earnedPoints}/{result.totalPoints}
+              </p>
+            </div>
           </div>
         </QuizCardContent>
 

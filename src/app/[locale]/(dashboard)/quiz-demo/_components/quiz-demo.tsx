@@ -44,15 +44,19 @@ const mockQuiz: QuizContent = {
     {
       type: 'fill-in-the-blank',
       promptTemplate:
-        'The overall equation for photosynthesis is: {{reactant1}} + {{reactant2}} → Glucose + Oxygen',
+        'Plants use {{pigment}} to capture sunlight. This process takes place inside organelles called {{organelle}}.',
       blanks: [
         {
-          id: 'reactant1',
-          acceptableAnswers: ['Carbon dioxide', 'CO2', 'CO₂'],
+          id: 'pigment',
+          acceptableAnswers: ['chlorophyll'],
         },
-        { id: 'reactant2', acceptableAnswers: ['Water', 'H2O', 'H₂O'] },
+        {
+          id: 'organelle',
+          acceptableAnswers: ['chloroplasts', 'chloroplast'],
+        },
       ],
-      explanation: 'The simplified equation is: 6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂',
+      explanation:
+        'Chlorophyll is the pigment that captures light energy, and it is located within chloroplasts in plant cells.',
     },
     {
       type: 'ordering',

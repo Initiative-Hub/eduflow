@@ -65,6 +65,13 @@ export function Matching({
       (cp) => cp.leftId === pair.leftId && cp.rightId === pair.rightId
     );
 
+  const getCorrectRightForLeft = (leftId: string) => {
+    const correctPair = question.correctPairs.find(
+      (cp) => cp.leftId === leftId
+    );
+    return correctPair ? getRightText(correctPair.rightId) : null;
+  };
+
   const getLeftText = (leftId: string) =>
     question.leftItems.find((item) => item.id === leftId)?.text ?? leftId;
 
@@ -87,70 +94,88 @@ export function Matching({
           {pairs.map((pair) => {
             const correct = showResult ? isPairCorrect(pair) : undefined;
             const isSelectedForRematch = selectedLeft === pair.leftId;
+            const correctAnswer = getCorrectRightForLeft(pair.leftId);
 
             return (
-              <div
-                key={`${pair.leftId}-${pair.rightId}`}
-                className="grid grid-cols-2 gap-4"
-              >
-                {/* Left matched item */}
-                <button
-                  type="button"
-                  disabled={disabled || showResult}
-                  onClick={() => handleLeftClick(pair.leftId)}
-                  className={cn(
-                    'flex w-full items-center gap-2 rounded-lg border px-3 py-2.5 text-left text-sm transition-all',
-                    !showResult &&
-                      !isSelectedForRematch &&
-                      'border-primary/50 bg-primary/5 hover:bg-primary/10',
-                    isSelectedForRematch &&
-                      'border-primary bg-primary/10 ring-1 ring-primary/20',
-                    correct === true &&
-                      'border-green-500 bg-green-50 dark:bg-green-950/20',
-                    correct === false &&
-                      'border-red-500 bg-red-50 dark:bg-red-950/20',
-                    (disabled || showResult) && 'cursor-default'
-                  )}
-                >
-                  {showResult && correct === true && (
-                    <CheckCircle2 className="size-4 shrink-0 text-green-600" />
-                  )}
-                  {showResult && correct === false && (
-                    <XCircle className="size-4 shrink-0 text-red-600" />
-                  )}
-                  <span className="flex-1">{getLeftText(pair.leftId)}</span>
-                </button>
+              <div key={`${pair.leftId}-${pair.rightId}`} className="space-y-1">
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Left matched item */}
+                  <button
+                    type="button"
+                    disabled={disabled || showResult}
+                    onClick={() => handleLeftClick(pair.leftId)}
+                    className={cn(
+                      'flex w-full items-center gap-2 rounded-lg border px-3 py-2.5 text-left text-sm transition-all',
+                      !showResult &&
+                        !isSelectedForRematch &&
+                        'border-primary/50 bg-primary/5 hover:bg-primary/10',
+                      isSelectedForRematch &&
+                        'border-primary bg-primary/10 ring-1 ring-primary/20',
+                      correct === true &&
+                        'border-green-500 bg-green-50 dark:bg-green-950/20',
+                      correct === false &&
+                        'border-red-500 bg-red-50 dark:bg-red-950/20',
+                      (disabled || showResult) && 'cursor-default'
+                    )}
+                  >
+                    {showResult && correct === true && (
+                      <CheckCircle2 className="size-4 shrink-0 text-green-600" />
+                    )}
+                    {showResult && correct === false && (
+                      <XCircle className="size-4 shrink-0 text-red-600" />
+                    )}
+                    <span className="flex-1">{getLeftText(pair.leftId)}</span>
+                  </button>
 
-                {/* Right matched item */}
-                <button
-                  type="button"
-                  disabled={disabled || showResult || !selectedLeft}
-                  onClick={() => handleRightClick(pair.rightId)}
-                  className={cn(
-                    'flex w-full items-center gap-2 rounded-lg border px-3 py-2.5 text-left text-sm transition-all',
-                    !showResult &&
-                      'border-primary/50 bg-primary/5 hover:bg-primary/10',
-                    correct === true &&
-                      'border-green-500 bg-green-50 dark:bg-green-950/20',
-                    correct === false &&
-                      'border-red-500 bg-red-50 dark:bg-red-950/20',
-                    (disabled || showResult) && 'cursor-default',
-                    !selectedLeft && !showResult && 'opacity-60'
-                  )}
-                >
-                  <span className="flex-1">{getRightText(pair.rightId)}</span>
-                  {showResult && correct === true && (
-                    <CheckCircle2 className="size-4 shrink-0 text-green-600" />
-                  )}
-                  {showResult && correct === false && (
-                    <XCircle className="size-4 shrink-0 text-red-600" />
-                  )}
-                </button>
+                  {/* Right matched item */}
+                  <button
+                    type="button"
+                    disabled={disabled || showResult || !selectedLeft}
+                    onClick={() => handleRightClick(pair.rightId)}
+                    className={cn(
+                      'flex w-full items-center gap-2 rounded-lg border px-3 py-2.5 text-left text-sm transition-all',
+                      !showResult &&
+                        'border-primary/50 bg-primary/5 hover:bg-primary/10',
+                      correct === true &&
+                        'border-green-500 bg-green-50 dark:bg-green-950/20',
+                      correct === false &&
+                        'border-red-500 bg-red-50 dark:bg-red-950/20',
+                      (disabled || showResult) && 'cursor-default',
+                      !selectedLeft && !showResult && 'opacity-60'
+                    )}
+                  >
+                    <span className="flex-1">{getRightText(pair.rightId)}</span>
+                    {showResult && correct === true && (
+                      <CheckCircle2 className="size-4 shrink-0 text-green-600" />
+                    )}
+                    {showResult && correct === false && (
+                      <XCircle className="size-4 shrink-0 text-red-600" />
+                    )}
+                  </button>
+                </div>
+
+                {/* Show correct answer when wrong */}
+                {showResult && correct === false && correctAnswer && (
+                  <div className="ml-1 flex items-center gap-1.5 pl-2 text-xs text-green-700 dark:text-green-400">
+                    <CheckCircle2 className="size-3.5" />
+                    <span>
+                      {getLeftText(pair.leftId)} → {correctAnswer}
+                    </span>
+                  </div>
+                )}
               </div>
             );
           })}
         </div>
       )}
+
+      {/* Purple separator between matched and unmatched */}
+      {pairs.length > 0 &&
+        (unmatchedLeftItems.length > 0 || unmatchedRightItems.length > 0) && (
+          <div className="flex items-center gap-2">
+            <div className="h-px flex-1 bg-purple-300 dark:bg-purple-700" />
+          </div>
+        )}
 
       {/* Unmatched items grid */}
       {(unmatchedLeftItems.length > 0 || unmatchedRightItems.length > 0) && (
