@@ -31,7 +31,9 @@ export class GoogleService implements ChatProviderService {
           ...(input.providerOptions?.google ?? {}),
         },
       },
-      system: SYSTEM_PROMPT,
+      system: input.system
+        ? `${SYSTEM_PROMPT}\n\n=== ADDITIONAL CONTEXT ===\n${input.system}`
+        : SYSTEM_PROMPT,
       messages: await convertToModelMessages(input.messages),
     });
   }
