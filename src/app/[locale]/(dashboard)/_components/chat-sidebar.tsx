@@ -1,20 +1,53 @@
 'use client';
 
-import { useInfiniteQuery } from '@tanstack/react-query';
 import {
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query';
+import {
+  Ellipsis,
+  Loader2,
   MessageCircle,
   MessageSquare,
   PanelLeftClose,
+  Pencil,
   Plus,
   Search,
+  Trash2,
   X,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
-import { Link } from '@/i18n/navigation';
+import { Link, useRouter } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 import { chatService } from '../chat.service';
 
@@ -27,15 +60,21 @@ interface ChatSidebarProps {
 
 export function ChatSidebar({ currentChatId }: ChatSidebarProps) {
   const t = useTranslations('AIChat.sidebar');
-  const [portalRoot, setPortalRoot] = useState<HTMLElement | null>(null);
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [editingChat, setEditingChat] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
+  const [deleteChat, setDeleteChat] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
+  const [editTitle, setEditTitle] = useState('');
   const sentinelRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    setPortalRoot(document.body);
-  }, []);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
@@ -94,7 +133,53 @@ export function ChatSidebar({ currentChatId }: ChatSidebarProps) {
     [chatListQuery.data]
   );
 
-  const content = (
+  const updateChatMutation = useMutation({
+    mutationFn: ({ chatId, title }: { chatId: string; title: string }) =>
+      chatService.updateChat(chatId, { title }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['chat-list'] });
+      setEditingChat(null);
+      setEditTitle('');
+    },
+    onError: () => {
+      toast.error(t('editError'));
+    },
+  });
+
+  const deleteChatMutation = useMutation({
+    mutationFn: (chatId: string) =>
+      chatService.updateChat(chatId, { deleted_at: new Date().toISOString() }),
+    onSuccess: async (_data, chatId) => {
+      await queryClient.invalidateQueries({ queryKey: ['chat-list'] });
+      toast.success(t('deleteSuccess'));
+      setDeleteChat(null);
+
+      if (currentChatId === chatId) {
+        router.push('/');
+      }
+    },
+    onError: () => {
+      toast.error(t('deleteError'));
+    },
+  });
+
+  const openEditDialog = (chat: { id: string; title: string }) => {
+    const title = chat.title || t('untitled');
+    setEditingChat({ id: chat.id, title });
+    setEditTitle(title);
+  };
+
+  const handleEditSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!editingChat) return;
+
+    const title = editTitle.trim();
+    if (!title) return;
+
+    updateChatMutation.mutate({ chatId: editingChat.id, title });
+  };
+
+  return (
     <>
       <Button
         aria-label={isOpen ? t('close') : t('open')}
@@ -111,7 +196,7 @@ export function ChatSidebar({ currentChatId }: ChatSidebarProps) {
       </Button>
 
       {isOpen ? (
-        <aside className="fixed top-20 right-3 bottom-36 z-70 flex w-[calc(100vw-1.5rem)] max-w-88 flex-col overflow-hidden rounded-3xl border border-border/70 bg-background/95 shadow-2xl backdrop-blur-xl md:right-8 md:bottom-24 md:max-w-96">
+        <aside className="fixed top-20 right-3 bottom-36 z-50 flex w-[calc(100vw-1.5rem)] max-w-88 flex-col overflow-hidden rounded-3xl border border-border/70 bg-background/95 shadow-2xl backdrop-blur-xl md:right-8 md:bottom-24 md:max-w-96">
           <div className="flex items-center justify-between border-border/70 border-b px-4 py-3">
             <div>
               <p className="font-semibold text-sm">{t('title')}</p>
@@ -173,18 +258,19 @@ export function ChatSidebar({ currentChatId }: ChatSidebarProps) {
 
             <div className="space-y-1.5">
               {chats.map((chat) => (
-                <Button
-                  asChild
+                <div
                   className={cn(
-                    'h-auto w-full justify-start rounded-2xl px-3 py-3 text-left',
+                    'group flex items-center rounded-2xl pr-1',
                     currentChatId === chat.id
                       ? 'bg-primary/10 text-primary hover:bg-primary/15'
                       : 'hover:bg-muted/70'
                   )}
                   key={chat.id}
-                  variant="ghost"
                 >
-                  <Link href={`/chat/${chat.id}`}>
+                  <Link
+                    className="flex min-w-0 flex-1 items-start gap-2 px-3 py-3 text-left"
+                    href={`/chat/${chat.id}`}
+                  >
                     <MessageSquare className="mt-0.5 size-4 shrink-0" />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate font-medium text-sm">
@@ -195,7 +281,42 @@ export function ChatSidebar({ currentChatId }: ChatSidebarProps) {
                       </span>
                     </span>
                   </Link>
-                </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        aria-label={t('actionsLabel', {
+                          title: chat.title || t('untitled'),
+                        })}
+                        className="shrink-0 opacity-80 group-hover:opacity-100"
+                        size="icon-sm"
+                        type="button"
+                        variant="ghost"
+                      >
+                        <Ellipsis />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="z-70 w-40">
+                      <DropdownMenuGroup>
+                        <DropdownMenuItem onSelect={() => openEditDialog(chat)}>
+                          <Pencil />
+                          {t('editTitle')}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onSelect={() =>
+                            setDeleteChat({
+                              id: chat.id,
+                              title: chat.title || t('untitled'),
+                            })
+                          }
+                        >
+                          <Trash2 />
+                          {t('delete')}
+                        </DropdownMenuItem>
+                      </DropdownMenuGroup>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               ))}
             </div>
 
@@ -208,8 +329,89 @@ export function ChatSidebar({ currentChatId }: ChatSidebarProps) {
           </div>
         </aside>
       ) : null}
+
+      <Dialog
+        open={Boolean(editingChat)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditingChat(null);
+            setEditTitle('');
+          }
+        }}
+      >
+        <DialogContent>
+          <form className="flex flex-col gap-4" onSubmit={handleEditSubmit}>
+            <DialogHeader>
+              <DialogTitle>{t('editDialogTitle')}</DialogTitle>
+              <DialogDescription>
+                {t('editDialogDescription')}
+              </DialogDescription>
+            </DialogHeader>
+            <Input
+              value={editTitle}
+              aria-label={t('editTitleLabel')}
+              maxLength={120}
+              placeholder={t('editTitlePlaceholder')}
+              onChange={(event) => setEditTitle(event.target.value)}
+            />
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setEditingChat(null)}
+              >
+                {t('cancel')}
+              </Button>
+              <Button
+                disabled={!editTitle.trim() || updateChatMutation.isPending}
+                type="submit"
+              >
+                {updateChatMutation.isPending ? (
+                  <Loader2 data-icon="inline-start" className="animate-spin" />
+                ) : (
+                  <Pencil data-icon="inline-start" />
+                )}
+                {t('saveTitle')}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog
+        open={Boolean(deleteChat)}
+        onOpenChange={(open) => {
+          if (!open) setDeleteChat(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('deleteDialogTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('deleteDialogDescription', {
+                title: deleteChat?.title ?? t('untitled'),
+              })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleteChatMutation.isPending}
+              variant="destructive"
+              onClick={() => {
+                if (deleteChat) deleteChatMutation.mutate(deleteChat.id);
+              }}
+            >
+              {deleteChatMutation.isPending ? (
+                <Loader2 data-icon="inline-start" className="animate-spin" />
+              ) : (
+                <Trash2 data-icon="inline-start" />
+              )}
+              {t('delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
-
-  return portalRoot ? createPortal(content, portalRoot) : null;
 }

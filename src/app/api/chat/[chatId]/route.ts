@@ -21,6 +21,15 @@ const chatRequestSchema = z.object({
   providerOptions: z.custom<StreamChatInput['providerOptions']>().optional(),
 });
 
+const chatUpdateSchema = z
+  .object({
+    title: z.string().trim().min(1).max(120).optional(),
+    deleted_at: z.string().datetime().optional(),
+  })
+  .refine((data) => data.title !== undefined || data.deleted_at !== undefined, {
+    message: 'Provide title or deleted_at',
+  });
+
 /**
  * @swagger
  * /api/chat/{chatId}:
@@ -79,6 +88,104 @@ export async function GET(
     }
 
     return new Response(JSON.stringify(chatData), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  } catch (error: unknown) {
+    const message =
+      error instanceof Error ? error.message : 'Unknown error occurred';
+    return new Response(JSON.stringify({ error: message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+}
+
+/**
+ * @swagger
+ * /api/chat/{chatId}:
+ *   patch:
+ *     tags:
+ *       - Chat
+ *     summary: Update chat title or soft delete a chat
+ *     parameters:
+ *       - in: path
+ *         name: chatId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               deleted_at:
+ *                 type: string
+ *                 format: date-time
+ *     responses:
+ *       200:
+ *         description: Updated chat metadata
+ *       400:
+ *         description: Invalid request payload
+ *       401:
+ *         description: Missing guest session
+ *       404:
+ *         description: Chat not found
+ */
+export async function PATCH(
+  req: Request,
+  { params }: { params: Promise<{ chatId: string }> }
+) {
+  try {
+    const [{ chatId }, body] = await Promise.all([params, req.json()]);
+
+    const parsedBody = chatUpdateSchema.safeParse(body);
+    if (!parsedBody.success) {
+      return new Response(
+        JSON.stringify({
+          error: 'Invalid request payload',
+          details: parsedBody.error.flatten(),
+        }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const [cookieStore, session] = await Promise.all([
+      cookies(),
+      auth.api.getSession({ headers: await headers() }),
+    ]);
+    const guestId = cookieStore.get('guest_session')?.value;
+    const userId = session?.user?.id;
+
+    if (!userId && !guestId) {
+      return new Response(JSON.stringify({ error: 'Missing guest session' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const updatedChat = await ChatPersistenceService.updateChat({
+      chatId,
+      userId,
+      guestId,
+      title: parsedBody.data.title,
+      deletedAt: parsedBody.data.deleted_at
+        ? new Date(parsedBody.data.deleted_at)
+        : undefined,
+    });
+
+    if (!updatedChat) {
+      return new Response(JSON.stringify({ error: 'Chat not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    return new Response(JSON.stringify(updatedChat), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });

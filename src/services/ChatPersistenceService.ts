@@ -32,8 +32,15 @@ interface SaveMessagesInput extends ChatOwner {
   model?: string;
 }
 
+interface UpdateChatInput extends ChatOwner {
+  chatId: string;
+  title?: string;
+  deletedAt?: Date;
+}
+
 type CachedChat = ChatCacheData & {
   updatedAt?: string;
+  deletedAt?: string | null;
 };
 
 const getGuestChatIndexKey = (guestId: string) => `guest_chats:${guestId}`;
@@ -56,6 +63,14 @@ async function updateGuestChatIndex(guestId: string, item: ChatListItem) {
     item,
     ...existing.filter((chat) => chat.id !== item.id),
   ].toSorted((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+
+  await CacheService.setCache(key, nextItems, { ttlSeconds: CHAT_TTL_SECONDS });
+}
+
+async function removeGuestChatFromIndex(guestId: string, chatId: string) {
+  const key = getGuestChatIndexKey(guestId);
+  const existing = (await CacheService.getCache<ChatListItem[]>(key)) ?? [];
+  const nextItems = existing.filter((chat) => chat.id !== chatId);
 
   await CacheService.setCache(key, nextItems, { ttlSeconds: CHAT_TTL_SECONDS });
 }
@@ -153,7 +168,9 @@ export class ChatPersistenceService {
     if (!guestId) return null;
 
     const chatData = await CacheService.getCache<CachedChat>(chatId);
-    if (!chatData || chatData.guestId !== guestId) return null;
+    if (!chatData || chatData.guestId !== guestId || chatData.deletedAt) {
+      return null;
+    }
 
     return {
       guestId: chatData.guestId,
@@ -307,6 +324,88 @@ export class ChatPersistenceService {
     return {
       data: paginated,
       pagination: { total: filtered.length, limit, offset },
+    };
+  }
+
+  static async updateChat({
+    chatId,
+    userId,
+    guestId,
+    title,
+    deletedAt,
+  }: UpdateChatInput) {
+    if (userId) {
+      const chat = await prisma.aiChat.findFirst({
+        where: {
+          id: chatId,
+          userId,
+          status: AiChatStatus.ACTIVE,
+          deletedAt: null,
+        },
+        select: { id: true },
+      });
+
+      if (!chat) return null;
+
+      const updatedChat = await prisma.aiChat.update({
+        where: { id: chatId },
+        data: {
+          ...(title !== undefined ? { title } : {}),
+          ...(deletedAt !== undefined ? { deletedAt } : {}),
+        },
+        select: {
+          id: true,
+          title: true,
+          updatedAt: true,
+          deletedAt: true,
+        },
+      });
+
+      return {
+        id: updatedChat.id,
+        title: updatedChat.title,
+        updatedAt: updatedChat.updatedAt.toISOString(),
+        deletedAt: updatedChat.deletedAt?.toISOString() ?? null,
+      };
+    }
+
+    if (!guestId) return null;
+
+    const chatData = await CacheService.getCache<CachedChat>(chatId);
+    if (!chatData || chatData.guestId !== guestId || chatData.deletedAt) {
+      return null;
+    }
+
+    const updatedAt = new Date().toISOString();
+    const nextData: CachedChat = {
+      ...chatData,
+      ...(title !== undefined ? { title } : {}),
+      ...(deletedAt !== undefined
+        ? { deletedAt: deletedAt.toISOString() }
+        : {}),
+      updatedAt,
+    };
+
+    await CacheService.setCache(chatId, nextData, {
+      ttlSeconds: CHAT_TTL_SECONDS,
+    });
+
+    if (deletedAt) {
+      await removeGuestChatFromIndex(guestId, chatId);
+    } else {
+      await updateGuestChatIndex(guestId, {
+        id: chatId,
+        title: nextData.title,
+        messageCount: nextData.messageCount ?? 0,
+        updatedAt,
+      });
+    }
+
+    return {
+      id: chatId,
+      title: nextData.title,
+      updatedAt,
+      deletedAt: nextData.deletedAt ?? null,
     };
   }
 }

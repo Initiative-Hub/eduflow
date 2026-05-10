@@ -24,6 +24,13 @@ export interface ChatListResponse {
   };
 }
 
+export interface ChatUpdateResponse {
+  id: string;
+  title: string;
+  updatedAt: string;
+  deletedAt: string | null;
+}
+
 export const chatService = {
   createChat: async (firstMessage: string) => {
     return apiClient.post<{ chatId: string }>('/chat/create', {
@@ -32,6 +39,12 @@ export const chatService = {
   },
   getChat: async (chatId: string) => {
     return apiClient.get<ChatDetailsResponse>(`/chat/${chatId}`);
+  },
+  updateChat: async (
+    chatId: string,
+    data: { title?: string; deleted_at?: string }
+  ) => {
+    return apiClient.patch<ChatUpdateResponse>(`/chat/${chatId}`, data);
   },
   listChats: async ({
     search,

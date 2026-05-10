@@ -241,4 +241,163 @@ describe('ChatPersistenceService', () => {
       pagination: { total: 1, limit: 10, offset: 0 },
     });
   });
+
+  it('updates logged-in chat titles in the database', async () => {
+    const updatedAt = new Date('2026-01-03T00:00:00.000Z');
+    prismaMock.aiChat.findFirst.mockResolvedValueOnce({ id: 'chat-db-1' });
+    prismaMock.aiChat.update.mockResolvedValueOnce({
+      id: 'chat-db-1',
+      title: 'Renamed chat',
+      updatedAt,
+      deletedAt: null,
+    });
+
+    const result = await ChatPersistenceService.updateChat({
+      chatId: 'chat-db-1',
+      userId: 'user-1',
+      title: 'Renamed chat',
+    });
+
+    expect(prismaMock.aiChat.findFirst).toHaveBeenCalledWith({
+      where: {
+        id: 'chat-db-1',
+        userId: 'user-1',
+        status: 'ACTIVE',
+        deletedAt: null,
+      },
+      select: { id: true },
+    });
+    expect(prismaMock.aiChat.update).toHaveBeenCalledWith({
+      where: { id: 'chat-db-1' },
+      data: { title: 'Renamed chat' },
+      select: {
+        id: true,
+        title: true,
+        updatedAt: true,
+        deletedAt: true,
+      },
+    });
+    expect(result).toEqual({
+      id: 'chat-db-1',
+      title: 'Renamed chat',
+      updatedAt: updatedAt.toISOString(),
+      deletedAt: null,
+    });
+  });
+
+  it('soft deletes logged-in chats in the database', async () => {
+    const deletedAt = new Date('2026-01-04T00:00:00.000Z');
+    prismaMock.aiChat.findFirst.mockResolvedValueOnce({ id: 'chat-db-1' });
+    prismaMock.aiChat.update.mockResolvedValueOnce({
+      id: 'chat-db-1',
+      title: 'Explain gravity',
+      updatedAt: deletedAt,
+      deletedAt,
+    });
+
+    const result = await ChatPersistenceService.updateChat({
+      chatId: 'chat-db-1',
+      userId: 'user-1',
+      deletedAt,
+    });
+
+    expect(prismaMock.aiChat.update).toHaveBeenCalledWith({
+      where: { id: 'chat-db-1' },
+      data: { deletedAt },
+      select: {
+        id: true,
+        title: true,
+        updatedAt: true,
+        deletedAt: true,
+      },
+    });
+    expect(result).toEqual({
+      id: 'chat-db-1',
+      title: 'Explain gravity',
+      updatedAt: deletedAt.toISOString(),
+      deletedAt: deletedAt.toISOString(),
+    });
+  });
+
+  it('updates guest chat titles in Redis and the guest chat index', async () => {
+    cacheMock.getCache
+      .mockResolvedValueOnce({
+        guestId: 'guest-1',
+        title: 'Explain gravity',
+        messageCount: 2,
+        messages: [userMessage, assistantMessage],
+        updatedAt: '2026-01-02T00:00:00.000Z',
+      })
+      .mockResolvedValueOnce([
+        {
+          id: 'chat-1',
+          title: 'Explain gravity',
+          messageCount: 2,
+          updatedAt: '2026-01-02T00:00:00.000Z',
+        },
+      ]);
+
+    const result = await ChatPersistenceService.updateChat({
+      chatId: 'chat-1',
+      guestId: 'guest-1',
+      title: 'Renamed chat',
+    });
+
+    expect(cacheMock.setCache).toHaveBeenCalledWith(
+      'chat-1',
+      expect.objectContaining({ title: 'Renamed chat' }),
+      { ttlSeconds: 86400 }
+    );
+    expect(cacheMock.setCache).toHaveBeenCalledWith(
+      'guest_chats:guest-1',
+      [
+        expect.objectContaining({
+          id: 'chat-1',
+          title: 'Renamed chat',
+          messageCount: 2,
+        }),
+      ],
+      { ttlSeconds: 86400 }
+    );
+    expect(result).not.toBeNull();
+    expect(result?.title).toBe('Renamed chat');
+    expect(result?.deletedAt).toBeNull();
+  });
+
+  it('soft deletes guest chats from Redis and removes them from the index', async () => {
+    const deletedAt = new Date('2026-01-04T00:00:00.000Z');
+    cacheMock.getCache
+      .mockResolvedValueOnce({
+        guestId: 'guest-1',
+        title: 'Explain gravity',
+        messageCount: 2,
+        messages: [userMessage, assistantMessage],
+        updatedAt: '2026-01-02T00:00:00.000Z',
+      })
+      .mockResolvedValueOnce([
+        {
+          id: 'chat-1',
+          title: 'Explain gravity',
+          messageCount: 2,
+          updatedAt: '2026-01-02T00:00:00.000Z',
+        },
+      ]);
+
+    const result = await ChatPersistenceService.updateChat({
+      chatId: 'chat-1',
+      guestId: 'guest-1',
+      deletedAt,
+    });
+
+    expect(cacheMock.setCache).toHaveBeenCalledWith(
+      'chat-1',
+      expect.objectContaining({ deletedAt: deletedAt.toISOString() }),
+      { ttlSeconds: 86400 }
+    );
+    expect(cacheMock.setCache).toHaveBeenCalledWith('guest_chats:guest-1', [], {
+      ttlSeconds: 86400,
+    });
+    expect(result).not.toBeNull();
+    expect(result?.deletedAt).toBe(deletedAt.toISOString());
+  });
 });
