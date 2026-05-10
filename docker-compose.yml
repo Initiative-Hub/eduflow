@@ -108,6 +108,17 @@ services:
     networks:
       - prisma-network
 
+  pdf-service:
+    build:
+      context: ./external-services/pdf
+      dockerfile: Dockerfile
+    container_name: eduflow_pdf_service
+    restart: always
+    ports:
+      - "8000:8000"
+    networks:
+      - prisma-network
+
 networks: 
   prisma-network: 
 volumes: 

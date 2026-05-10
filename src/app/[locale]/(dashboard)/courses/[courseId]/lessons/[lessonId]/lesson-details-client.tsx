@@ -52,7 +52,7 @@ export function LessonDetailsClient({
   );
 
   const handleSave = (
-    data: { title: string; content: TiptapDocument },
+    data: { title: string; content: TiptapDocument | string },
     options: { onSuccess: () => void }
   ) => {
     handleUpdateLesson(

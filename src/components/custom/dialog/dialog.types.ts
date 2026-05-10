@@ -3,8 +3,8 @@ import type { ReactNode } from 'react';
 export interface DialogTemplateProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  title?: string;
-  description?: string;
+  title?: ReactNode;
+  description?: ReactNode;
   children: ReactNode;
   footer?: ReactNode;
   className?: string;

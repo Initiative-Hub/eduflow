@@ -11,6 +11,7 @@ Foundational mandates here take absolute precedence. **NEVER** invent ad-hoc beh
 - **Long-Running / Build Commands**: NEVER run `bun dev`, `bun run build`, `bun build`, or equivalent build/compile/bundling operations unless the user **explicitly requests** it.
 - **Auto-Fixing & Verification**: assistants may run `bun type-check` and `bun format:fix` when the user explicitly requests it or when a workspace playbook requires it for files you changed.
 - **Sensitive Data**: NEVER commit secrets, API keys, tokens, or credentials. Reference environment variables by name only.
+- **Secret Remediation**: If a secret is found in code, remove it immediately and ask the user to rotate it; never reprint the value.
 - **Manual Dependency Edits**: NEVER manually edit `package.json` to add or update dependencies. Always use the CLI.
 - **UI Antipatterns**: NEVER use native browser dialogs (alert, confirm) or emojis in UI code. Use `lucide-react` for new icons and the shared dialog components instead of native dialogs.
 - **Hardcoded Color Classes**: NEVER introduce hard-coded color utility classes in feature components when a semantic token or shared styling primitive is available.
@@ -93,6 +94,7 @@ for any tasks.).
 - **Clear Responses**: Return clear `400`/`401`/`403` responses from route handlers instead of letting invalid payloads fall through to generic errors.
 - **Visible Request Failures**: Surface client-side request failures through visible errors or toasts; the shared API client already centralizes error messaging for browser requests.
 - **Swagger Placement**: Keep each route handler's Swagger JSDoc block immediately above the exported `GET`/`POST`/`PUT`/`PATCH`/`DELETE` handler it documents; split multi-method route docs into one block per handler.
+- **API Key Overrides**: When a service method accepts an `apiKey` override, prefer it over environment variables and cover the override with a focused unit test.
 
 ### 6.4 Tooling & CI
 
