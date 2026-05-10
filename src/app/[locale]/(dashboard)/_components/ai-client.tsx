@@ -17,6 +17,7 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
+import { type ChatModel, DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
 import { useChatController } from '../use-chat';
 import { ChatSidebar } from './chat-sidebar';
 
@@ -48,6 +49,8 @@ export function AIClient({
 }: AIClientProps) {
   const t = useTranslations('AIChat');
   const [view, setView] = useState<ViewState>('home');
+  const [selectedModel, setSelectedModel] =
+    useState<ChatModel>(DEFAULT_CHAT_MODEL);
   const {
     displayMessages,
     isStreaming,
@@ -57,7 +60,12 @@ export function AIClient({
     startChat,
     stop,
     maxMessages,
-  } = useChatController({ chatId, initialMessages, isAuthenticated });
+  } = useChatController({
+    chatId,
+    initialMessages,
+    isAuthenticated,
+    selectedModel,
+  });
 
   const notifyLimitReached = () => {
     toast.error(t('limitReachedToast', { count: maxMessages }));
@@ -124,7 +132,7 @@ export function AIClient({
 
   return (
     <>
-      <div className="relative flex flex-col items-center gap-8 px-4 py-8">
+      <div className="relative flex flex-col items-center gap-8 px-8">
         {/* Top Badges - Only show when not chatting */}
         {!isChatting && (
           <div className="absolute top-0 right-10 z-20 hidden flex-col items-end gap-2 md:flex">
@@ -180,6 +188,8 @@ export function AIClient({
           limitCount={maxMessages}
           userMessageCount={userMessageCount}
           onStop={stop}
+          selectedModel={selectedModel}
+          onModelChange={setSelectedModel}
         />
       </div>
       <ChatSidebar currentChatId={chatId} />

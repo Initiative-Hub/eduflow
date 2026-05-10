@@ -28,6 +28,10 @@
     "limitReachedHelper": "Limit reached: {used}/{count} messages. Start a new session to continue.",
     "limitReachedPlaceholder": "Message limit reached ({count}). Start a new session.",
     "limitReachedToast": "You've reached the {count}-message limit. Start a new session to continue.",
+    "modelSelector": {
+      "label": "Select AI model",
+      "placeholder": "Choose model"
+    },
     "philosophicalLogic": "Philosophical Logic Enforced",
     "placeholder": "Ask a scholarly question...",
     "promptLibrary": {

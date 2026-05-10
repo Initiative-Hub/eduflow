@@ -3,6 +3,7 @@ import { cookies, headers } from 'next/headers';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { ChatProviderFactory } from '@/services/ai/ChatProviderFactory';
+import { CHAT_MODEL_IDS } from '@/services/ai/chat-models';
 import { DEFAULT_PROVIDER } from '@/services/ai/chat-provider.constants';
 import type {
   ChatProvider,
@@ -16,7 +17,7 @@ export const maxDuration = 30;
 const chatRequestSchema = z.object({
   messages: z.array(z.custom<UIMessage>()).min(1),
   provider: z.custom<ChatProvider>().optional(),
-  model: z.string().min(1).optional(),
+  model: z.enum(CHAT_MODEL_IDS).optional(),
   apiKey: z.string().min(1).optional(),
   providerOptions: z.custom<StreamChatInput['providerOptions']>().optional(),
 });

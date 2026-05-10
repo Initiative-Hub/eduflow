@@ -12,6 +12,14 @@ import {
   PromptInputTextarea,
 } from '@/components/ai-elements/prompt-input';
 import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { CHAT_MODEL_OPTIONS, type ChatModel } from '@/services/ai/chat-models';
 
 interface ChatInputProps {
   handleSubmit: (e?: React.FormEvent, customValue?: string) => void;
@@ -21,6 +29,8 @@ interface ChatInputProps {
   limitCount: number;
   userMessageCount: number;
   onStop: () => void;
+  selectedModel: ChatModel;
+  onModelChange: (model: ChatModel) => void;
 }
 
 export function ChatInput({
@@ -31,6 +41,8 @@ export function ChatInput({
   limitCount,
   userMessageCount,
   onStop,
+  selectedModel,
+  onModelChange,
 }: ChatInputProps) {
   const t = useTranslations('AIChat');
   const [inputValue, setInputValue] = useState('');
@@ -64,10 +76,31 @@ export function ChatInput({
             disabled={isLimitReached}
           />
 
-          <PromptInputFooter className="flex items-center justify-between px-1 pb-1">
-            <PromptInputButton className="size-9 rounded-full text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary">
-              <Paperclip className="size-5" />
-            </PromptInputButton>
+          <PromptInputFooter className="flex items-center justify-between gap-2 px-1 pb-1">
+            <div className="flex items-center gap-2">
+              <PromptInputButton className="size-9 rounded-full text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary">
+                <Paperclip className="size-5" />
+              </PromptInputButton>
+              <Select
+                disabled={isStreaming}
+                onValueChange={(value) => onModelChange(value as ChatModel)}
+                value={selectedModel}
+              >
+                <SelectTrigger
+                  aria-label={t('modelSelector.label')}
+                  className="max-w-44 rounded-full border-none px-3 text-muted-foreground text-sm hover:bg-muted/70"
+                >
+                  <SelectValue placeholder={t('modelSelector.placeholder')} />
+                </SelectTrigger>
+                <SelectContent align="start" className="min-w-48">
+                  {CHAT_MODEL_OPTIONS.map((model) => (
+                    <SelectItem key={model.id} value={model.id}>
+                      {model.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
             <PromptInputSubmit
               className="size-9 rounded-full transition-all hover:scale-105"

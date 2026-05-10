@@ -28,6 +28,10 @@
     "limitReachedHelper": "Đã chạm giới hạn: {used}/{count} tin nhắn. Hãy bắt đầu phiên mới để tiếp tục.",
     "limitReachedPlaceholder": "Đã đạt giới hạn ({count}). Bắt đầu phiên mới.",
     "limitReachedToast": "Bạn đã đạt giới hạn {count} tin nhắn. Hãy bắt đầu phiên mới để tiếp tục.",
+    "modelSelector": {
+      "label": "Chọn mô hình AI",
+      "placeholder": "Chọn mô hình"
+    },
     "philosophicalLogic": "Cưỡng chế logic triết học",
     "placeholder": "Đặt câu hỏi học thuật...",
     "promptLibrary": {

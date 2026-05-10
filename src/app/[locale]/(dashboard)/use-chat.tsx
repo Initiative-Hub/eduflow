@@ -6,6 +6,7 @@ import { DefaultChatTransport, type UIMessage } from 'ai';
 import { useEffect, useMemo, useRef } from 'react';
 import { toast } from 'sonner';
 import { usePathname, useRouter } from '@/i18n/navigation';
+import type { ChatModel } from '@/services/ai/chat-models';
 import { useChatSessionStore } from '@/stores/useChatSessionStore';
 import {
   getUserMessageCount,
@@ -19,12 +20,14 @@ interface UseChatControllerOptions {
   chatId?: string;
   initialMessages?: UIMessage[];
   isAuthenticated: boolean;
+  selectedModel: ChatModel;
 }
 
 export const useChatController = ({
   chatId: initialChatId,
   initialMessages = [],
   isAuthenticated,
+  selectedModel,
 }: UseChatControllerOptions) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -33,16 +36,20 @@ export const useChatController = ({
   const {
     pendingMessage,
     pendingChatId,
+    pendingModel,
     optimisticChatId,
     optimisticMessages,
     setPendingMessage,
     clearPendingMessage,
     setPendingChatId,
     clearPendingChatId,
+    setPendingModel,
+    clearPendingModel,
     setOptimisticChatId,
     setOptimisticMessages,
     clearOptimisticMessages,
   } = useChatSessionStore();
+  const requestModel = pendingModel ?? selectedModel;
 
   const transport = useMemo(
     () =>
@@ -51,11 +58,11 @@ export const useChatController = ({
             api: `/api/chat/${initialChatId}`,
             body: {
               provider: 'openrouter',
-              model: 'gemini-2.5-pro',
+              model: requestModel,
             },
           })
         : undefined,
-    [initialChatId]
+    [initialChatId, requestModel]
   );
 
   const { messages, status, sendMessage, stop } = useChat({
@@ -93,10 +100,12 @@ export const useChatController = ({
     lastPendingSendRef.current = pendingKey;
     clearPendingMessage();
     clearPendingChatId();
+    clearPendingModel();
 
     void sendMessage({ text: pendingMessage });
   }, [
     clearPendingChatId,
+    clearPendingModel,
     clearPendingMessage,
     pendingMessage,
     pendingChatId,
@@ -138,6 +147,7 @@ export const useChatController = ({
         setOptimisticMessages([createUserMessage(text)]);
         setPendingMessage(text);
         setPendingChatId(newChatId);
+        setPendingModel(selectedModel);
         router.push(`/chat/${newChatId}`);
       } catch (error) {
         const message =
