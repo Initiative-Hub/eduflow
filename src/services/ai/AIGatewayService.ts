@@ -48,7 +48,9 @@ export class AIGatewayService implements ChatProviderService {
     return streamText({
       experimental_transform: smoothStream(),
       model: gateway(model),
-      system: SYSTEM_PROMPT,
+      system: input.system
+        ? `${SYSTEM_PROMPT}\n\n=== ADDITIONAL CONTEXT ===\n${input.system}`
+        : SYSTEM_PROMPT,
       messages: await convertToModelMessages(input.messages),
       providerOptions: input.providerOptions,
       headers: {
