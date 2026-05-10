@@ -16,7 +16,6 @@ interface WritingClientProps {
   initialMessages?: UIMessage[];
 }
 
-//TODO: Understand this
 const ChatView = dynamic(() =>
   import('../../_components/chat-view').then((mod) => mod.ChatView)
 );
@@ -44,8 +43,7 @@ const WritingClient = ({ sessionId, initialMessages }: WritingClientProps) => {
     toast.error(t('limitReachedToast', { count: maxMessages }));
   };
 
-  //TODO: FIX IT LATER
-  const handleSubmit = (e?: React.FormEvent, customValue?: string) => {
+  const handleSubmit = (e?: React.SyntheticEvent, customValue?: string) => {
     e?.preventDefault();
 
     const text = customValue || '';
