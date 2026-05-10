@@ -1,12 +1,15 @@
 'use client';
 
 import {
+  BadgeInfo,
   BrainCircuit,
   CheckCircle2,
   ChevronLeft,
   LayoutGrid,
+  ShieldCheck,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 
@@ -44,64 +47,91 @@ export function LandingView({
   return (
     <div className="flex w-full flex-col items-center">
       {view === 'home' ? (
-        <div className="flex w-full flex-col items-center">
-          {/* Hero Icon Section */}
-          <div className="relative mb-8">
-            <div className="flex size-24 items-center justify-center rounded-[2.5rem] bg-white shadow-[0_20px_50px_rgba(0,0,0,0.1)] ring-1 ring-black/5 dark:bg-zinc-950 dark:shadow-[0_20px_50px_rgba(0,0,0,0.3)] dark:ring-white/10">
-              <BrainCircuit
-                className="size-12 text-primary"
-                strokeWidth={1.5}
-              />
-            </div>
-            <div className="absolute -right-1 -bottom-1 flex size-7 items-center justify-center rounded-full bg-primary text-white shadow-lg ring-4 ring-white dark:ring-zinc-950">
-              <CheckCircle2 className="size-4" />
+        <div className="space-y-2">
+          <div className="hidden md:flex md:justify-end">
+            <div className="flex flex-col gap-2">
+              <Badge
+                variant="outline"
+                className="gap-2 rounded-full border-primary/20 bg-primary/5 px-3 py-1.5 text-primary ring-1 ring-primary/10 backdrop-blur-md"
+              >
+                <span className="font-bold font-mono text-[10px] opacity-70">
+                  CC_
+                </span>
+                <BadgeInfo className="size-3.5" />
+                <span className="font-medium text-[11px] tracking-tight">
+                  {t('criticalThinking')}
+                </span>
+              </Badge>
+              <Badge
+                variant="outline"
+                className="gap-2 rounded-full border-border px-3 py-1.5 text-muted-foreground backdrop-blur-md"
+              >
+                <ShieldCheck className="size-3.5" />
+                <span className="font-medium text-[11px] tracking-tight">
+                  {t('philosophicalLogic')}
+                </span>
+              </Badge>
             </div>
           </div>
+          <div className="flex w-full flex-col items-center">
+            {/* Hero Icon Section */}
+            <div className="relative mb-8">
+              <div className="flex size-24 items-center justify-center rounded-[2.5rem] bg-white shadow-[0_20px_50px_rgba(0,0,0,0.1)] ring-1 ring-black/5 dark:bg-zinc-950 dark:shadow-[0_20px_50px_rgba(0,0,0,0.3)] dark:ring-white/10">
+                <BrainCircuit
+                  className="size-12 text-primary"
+                  strokeWidth={1.5}
+                />
+              </div>
+              <div className="absolute -right-1 -bottom-1 flex size-7 items-center justify-center rounded-full bg-primary text-white shadow-lg ring-4 ring-white dark:ring-zinc-950">
+                <CheckCircle2 className="size-4" />
+              </div>
+            </div>
 
-          {/* Header */}
-          <div className="mb-12 max-w-2xl space-y-4 px-4 text-center">
-            <h1 className="font-extrabold font-heading text-4xl text-foreground/90 leading-tight tracking-tight md:text-5xl">
-              {t('title', { name: userName })}
-            </h1>
-            <p className="font-medium text-lg text-muted-foreground opacity-80 md:text-xl">
-              {t('subtitle')}
-            </p>
-          </div>
+            {/* Header */}
+            <div className="mb-12 max-w-2xl space-y-4 px-4 text-center">
+              <h1 className="font-extrabold font-heading text-4xl text-foreground/90 leading-tight tracking-tight md:text-5xl">
+                {t('title', { name: userName })}
+              </h1>
+              <p className="font-medium text-lg text-muted-foreground opacity-80 md:text-xl">
+                {t('subtitle')}
+              </p>
+            </div>
 
-          {/* Suggestions Grid */}
-          <div className="flex w-full max-w-5xl flex-col items-center gap-8 px-4">
-            <div className="grid w-full grid-cols-1 gap-6 md:grid-cols-3">
-              {suggestions.map((item, index) => (
-                <div
-                  className="transition-transform duration-200 hover:-translate-y-1"
-                  key={index}
-                  onClick={() => onSelectPrompt(item.text)}
-                >
-                  <Card className="flex h-full cursor-pointer flex-col justify-between border-white/40 bg-white/40 p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] backdrop-blur-xl transition-all duration-300 hover:border-primary/20 hover:shadow-[0_20px_50px_rgba(139,92,246,0.1)] dark:border-zinc-800/40 dark:bg-zinc-950/40">
-                    <div className="space-y-4">
-                      <div className="flex size-10 items-center justify-center rounded-xl border border-border/50 bg-white/80 shadow-sm dark:bg-zinc-900/80">
-                        {item.icon}
+            {/* Suggestions Grid */}
+            <div className="flex w-full max-w-5xl flex-col items-center gap-8 px-4">
+              <div className="grid w-full grid-cols-1 gap-6 md:grid-cols-3">
+                {suggestions.map((item, index) => (
+                  <div
+                    className="transition-transform duration-200 hover:-translate-y-1"
+                    key={index}
+                    onClick={() => onSelectPrompt(item.text)}
+                  >
+                    <Card className="flex h-full cursor-pointer flex-col justify-between border-white/40 bg-white/40 p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] backdrop-blur-xl transition-all duration-300 hover:border-primary/20 hover:shadow-[0_20px_50px_rgba(139,92,246,0.1)] dark:border-zinc-800/40 dark:bg-zinc-950/40">
+                      <div className="space-y-4">
+                        <div className="flex size-10 items-center justify-center rounded-xl border border-border/50 bg-white/80 shadow-sm dark:bg-zinc-900/80">
+                          {item.icon}
+                        </div>
+                        <h3 className="font-bold font-heading text-lg leading-snug">
+                          {item.text}
+                        </h3>
                       </div>
-                      <h3 className="font-bold font-heading text-lg leading-snug">
-                        {item.text}
-                      </h3>
-                    </div>
-                    <p className="mt-8 font-bold text-[11px] text-muted-foreground/50 uppercase tracking-[0.2em]">
-                      {item.category}
-                    </p>
-                  </Card>
-                </div>
-              ))}
-            </div>
+                      <p className="mt-8 font-bold text-[11px] text-muted-foreground/50 uppercase tracking-[0.2em]">
+                        {item.category}
+                      </p>
+                    </Card>
+                  </div>
+                ))}
+              </div>
 
-            <Button
-              variant="outline"
-              onClick={() => setView('library')}
-              className="gap-2 rounded-full border-primary/20 bg-white/40 px-6 py-5 font-medium text-primary shadow-sm transition-all hover:border-primary/50 hover:bg-primary/5 dark:bg-zinc-950/40"
-            >
-              <LayoutGrid className="size-4" />
-              <span>{t('exploreMore')}</span>
-            </Button>
+              <Button
+                variant="outline"
+                onClick={() => setView('library')}
+                className="gap-2 rounded-full border-primary/20 bg-white/40 px-6 py-5 font-medium text-primary shadow-sm transition-all hover:border-primary/50 hover:bg-primary/5 dark:bg-zinc-950/40"
+              >
+                <LayoutGrid className="size-4" />
+                <span>{t('exploreMore')}</span>
+              </Button>
+            </div>
           </div>
         </div>
       ) : (

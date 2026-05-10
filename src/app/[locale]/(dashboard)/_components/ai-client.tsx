@@ -2,13 +2,11 @@
 
 import type { UIMessage } from 'ai';
 import {
-  BadgeInfo,
   BookOpen,
   Calculator,
   History,
   Library,
   Palette,
-  ShieldCheck,
   Sparkles,
   Zap,
 } from 'lucide-react';
@@ -16,7 +14,6 @@ import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { Badge } from '@/components/ui/badge';
 import { type ChatModel, DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
 import { useChatController } from '../use-chat';
 import { ChatSidebar } from './chat-sidebar';
@@ -133,33 +130,6 @@ export function AIClient({
   return (
     <>
       <div className="relative flex flex-col items-center gap-8 px-8">
-        {/* Top Badges - Only show when not chatting */}
-        {!isChatting && (
-          <div className="absolute top-0 right-10 z-20 hidden flex-col items-end gap-2 md:flex">
-            <Badge
-              variant="outline"
-              className="gap-2 rounded-full border-primary/20 bg-primary/5 px-3 py-1.5 text-primary ring-1 ring-primary/10 backdrop-blur-md"
-            >
-              <span className="font-bold font-mono text-[10px] opacity-70">
-                CC_
-              </span>
-              <BadgeInfo className="size-3.5" />
-              <span className="font-medium text-[11px] tracking-tight">
-                {t('criticalThinking')}
-              </span>
-            </Badge>
-            <Badge
-              variant="outline"
-              className="gap-2 rounded-full border-border/50 bg-slate-100/50 px-3 py-1.5 text-muted-foreground backdrop-blur-md dark:bg-slate-900/50"
-            >
-              <ShieldCheck className="size-3.5" />
-              <span className="font-medium text-[11px] tracking-tight">
-                {t('philosophicalLogic')}
-              </span>
-            </Badge>
-          </div>
-        )}
-
         {/* Main Content Area */}
         {!isChatting ? (
           <LandingView
