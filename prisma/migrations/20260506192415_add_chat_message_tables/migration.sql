@@ -8,7 +8,6 @@ CREATE TYPE "AiChatStatus" AS ENUM ('ACTIVE', 'ARCHIVED', 'DELETED');
 CREATE TABLE "ai_chats" (
     "id" TEXT NOT NULL,
     "user_id" TEXT,
-    "guest_id" TEXT,
     "title" TEXT NOT NULL DEFAULT '',
     "status" "AiChatStatus" NOT NULL DEFAULT 'ACTIVE',
     "provider" TEXT,
@@ -37,9 +36,6 @@ CREATE TABLE "ai_chat_messages" (
 
 -- CreateIndex
 CREATE INDEX "ai_chats_user_id_updated_at_idx" ON "ai_chats"("user_id", "updated_at" DESC);
-
--- CreateIndex
-CREATE INDEX "ai_chats_guest_id_updated_at_idx" ON "ai_chats"("guest_id", "updated_at" DESC);
 
 -- CreateIndex
 CREATE INDEX "ai_chats_status_updated_at_idx" ON "ai_chats"("status", "updated_at" DESC);
