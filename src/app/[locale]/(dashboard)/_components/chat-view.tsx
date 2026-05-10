@@ -29,7 +29,7 @@ export function ChatView({ messages, isStreaming }: ChatViewProps) {
   const t = useTranslations('AIChat');
 
   return (
-    <div className="flex h-[calc(100vh-20rem)] flex-col">
+    <div className="flex h-[calc(100vh-20rem)] w-full flex-col">
       <Conversation>
         <ConversationContent className="custom-scrollbar gap-6 py-4 pr-4">
           {messages.map((message) => {
