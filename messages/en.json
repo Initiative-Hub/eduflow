@@ -55,6 +55,14 @@
       },
       "title": "Scholarly Prompt Library"
     },
+    "recentChats": {
+      "description": "Return to your latest study threads.",
+      "empty": "No recent chats yet. Start a question above and it will appear here.",
+      "error": "Unable to load recent chats right now.",
+      "openChat": "Open chat {title}",
+      "title": "Recent chats",
+      "updated": "Updated {date}"
+    },
     "sidebar": {
       "actionsLabel": "Actions for {title}",
       "cancel": "Cancel",

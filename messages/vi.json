@@ -55,6 +55,14 @@
       },
       "title": "Thư viện gợi ý học thuật"
     },
+    "recentChats": {
+      "description": "Quay lại các mạch học tập gần đây của bạn.",
+      "empty": "Chưa có cuộc trò chuyện gần đây. Hãy bắt đầu câu hỏi ở trên và nó sẽ xuất hiện tại đây.",
+      "error": "Hiện không thể tải các cuộc trò chuyện gần đây.",
+      "openChat": "Mở cuộc trò chuyện {title}",
+      "title": "Trò chuyện gần đây",
+      "updated": "Cập nhật {date}"
+    },
     "sidebar": {
       "actionsLabel": "Hành động cho {title}",
       "cancel": "Hủy",

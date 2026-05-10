@@ -12,6 +12,7 @@ import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { LandingRecentChats } from './landing-recent-chats';
 
 interface LandingSuggestionItem {
   text: string;
@@ -131,6 +132,8 @@ export function LandingView({
                 <LayoutGrid className="size-4" />
                 <span>{t('exploreMore')}</span>
               </Button>
+
+              <LandingRecentChats />
             </div>
           </div>
         </div>
