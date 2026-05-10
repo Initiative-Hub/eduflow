@@ -123,13 +123,8 @@ export function AIClient({
   ];
 
   return (
-    <div className="h-full min-h-0 w-full">
-      <ChatSidebar currentChatId={chatId} />
-      <div className="relative flex min-w-0 flex-1 flex-col items-center overflow-x-hidden px-4 py-8 md:px-0">
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden">
-          <div className="h-125 w-125 rounded-full bg-primary/5 blur-[120px]" />
-        </div>
-
+    <>
+      <div className="relative flex flex-col items-center gap-8 px-4 py-8">
         {/* Top Badges - Only show when not chatting */}
         {!isChatting && (
           <div className="absolute top-0 right-10 z-20 hidden flex-col items-end gap-2 md:flex">
@@ -158,26 +153,24 @@ export function AIClient({
         )}
 
         {/* Main Content Area */}
-        <div className="relative z-10 flex w-full flex-1 flex-col justify-center overflow-hidden">
-          {!isChatting ? (
-            <LandingView
-              userName={userName ?? 'Guest'}
-              view={view}
-              setView={setView}
-              suggestions={suggestions}
-              extendedPrompts={extendedPrompts}
-              onSelectPrompt={(text) => {
-                if (isLimitReached) {
-                  notifyLimitReached();
-                  return;
-                }
-                void startChat(text);
-              }}
-            />
-          ) : (
-            <ChatView messages={displayMessages} isStreaming={isStreaming} />
-          )}
-        </div>
+        {!isChatting ? (
+          <LandingView
+            userName={userName ?? 'Guest'}
+            view={view}
+            setView={setView}
+            suggestions={suggestions}
+            extendedPrompts={extendedPrompts}
+            onSelectPrompt={(text) => {
+              if (isLimitReached) {
+                notifyLimitReached();
+                return;
+              }
+              void startChat(text);
+            }}
+          />
+        ) : (
+          <ChatView messages={displayMessages} isStreaming={isStreaming} />
+        )}
 
         <ChatInput
           handleSubmit={handleSubmit}
@@ -189,6 +182,7 @@ export function AIClient({
           onStop={stop}
         />
       </div>
-    </div>
+      <ChatSidebar currentChatId={chatId} />
+    </>
   );
 }

@@ -47,7 +47,7 @@ export function ChatInput({
 
   return (
     <div
-      className={`relative w-full space-y-4 pt-8 pb-4 transition-all duration-200 ${isChatting ? 'mt-auto' : ''}`}
+      className={`relative w-full space-y-4 transition-all duration-200 ${isChatting ? 'mt-auto' : ''}`}
     >
       <div className="group relative mx-auto max-w-3xl">
         <div className="absolute inset-x-0 -top-px -bottom-px rounded-[2rem] bg-linear-to-r from-transparent via-primary/50 to-transparent opacity-0 transition-opacity duration-500 group-focus-within:opacity-100" />
