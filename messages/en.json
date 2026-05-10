@@ -29,6 +29,7 @@
     "limitReachedPlaceholder": "Message limit reached ({count}). Start a new session.",
     "limitReachedToast": "You've reached the {count}-message limit. Start a new session to continue.",
     "modelSelector": {
+      "empty": "No models found.",
       "label": "Select AI model",
       "placeholder": "Choose model"
     },

@@ -4,6 +4,17 @@ import { ArrowUp, Library, Paperclip, Settings2, Square } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import {
+  ModelSelector,
+  ModelSelectorContent,
+  ModelSelectorEmpty,
+  ModelSelectorGroup,
+  ModelSelectorItem,
+  ModelSelectorList,
+  ModelSelectorLogo,
+  ModelSelectorName,
+  ModelSelectorTrigger,
+} from '@/components/ai-elements/model-selector';
+import {
   PromptInput,
   PromptInputButton,
   PromptInputFooter,
@@ -12,13 +23,6 @@ import {
   PromptInputTextarea,
 } from '@/components/ai-elements/prompt-input';
 import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { CHAT_MODEL_OPTIONS, type ChatModel } from '@/services/ai/chat-models';
 
 interface ChatInputProps {
@@ -46,6 +50,10 @@ export function ChatInput({
 }: ChatInputProps) {
   const t = useTranslations('AIChat');
   const [inputValue, setInputValue] = useState('');
+  const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false);
+  const selectedModelLabel =
+    CHAT_MODEL_OPTIONS.find((model) => model.id === selectedModel)?.label ??
+    selectedModel;
 
   const onPromptSubmit = (message: PromptInputMessage) => {
     if (isStreaming || isLimitReached || !message.text.trim()) return;
@@ -81,25 +89,46 @@ export function ChatInput({
               <PromptInputButton className="size-9 rounded-full text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary">
                 <Paperclip className="size-5" />
               </PromptInputButton>
-              <Select
-                disabled={isStreaming}
-                onValueChange={(value) => onModelChange(value as ChatModel)}
-                value={selectedModel}
+              <ModelSelector
+                onOpenChange={setIsModelSelectorOpen}
+                open={isModelSelectorOpen && !isStreaming}
               >
-                <SelectTrigger
-                  aria-label={t('modelSelector.label')}
-                  className="max-w-44 rounded-full border-none px-3 text-muted-foreground text-sm hover:bg-muted/70"
-                >
-                  <SelectValue placeholder={t('modelSelector.placeholder')} />
-                </SelectTrigger>
-                <SelectContent align="start" className="min-w-48">
-                  {CHAT_MODEL_OPTIONS.map((model) => (
-                    <SelectItem key={model.id} value={model.id}>
-                      {model.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <ModelSelectorTrigger asChild>
+                  <Button
+                    aria-label={t('modelSelector.label')}
+                    className="h-8 max-w-44 gap-2 rounded-full border-none px-3 text-muted-foreground text-sm hover:bg-muted/70"
+                    disabled={isStreaming}
+                    type="button"
+                    variant="outline"
+                  >
+                    <ModelSelectorLogo provider="google" />
+                    <span className="truncate">{selectedModelLabel}</span>
+                  </Button>
+                </ModelSelectorTrigger>
+                <ModelSelectorContent>
+                  <ModelSelectorList>
+                    <ModelSelectorEmpty>
+                      {t('modelSelector.empty')}
+                    </ModelSelectorEmpty>
+                    <ModelSelectorGroup heading="Choose Model">
+                      {CHAT_MODEL_OPTIONS.map((model) => (
+                        <ModelSelectorItem
+                          data-checked={model.id === selectedModel}
+                          key={model.id}
+                          onSelect={() => {
+                            onModelChange(model.id);
+                            setIsModelSelectorOpen(false);
+                          }}
+                          value={model.label}
+                        >
+                          <ModelSelectorLogo provider="google" />
+                          <ModelSelectorName>{model.label}</ModelSelectorName>
+                        </ModelSelectorItem>
+                      ))}
+                    </ModelSelectorGroup>
+                  </ModelSelectorList>
+                </ModelSelectorContent>
+              </ModelSelector>
             </div>
 
             <PromptInputSubmit

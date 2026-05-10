@@ -29,6 +29,7 @@
     "limitReachedPlaceholder": "Đã đạt giới hạn ({count}). Bắt đầu phiên mới.",
     "limitReachedToast": "Bạn đã đạt giới hạn {count} tin nhắn. Hãy bắt đầu phiên mới để tiếp tục.",
     "modelSelector": {
+      "empty": "Không tìm thấy mô hình nào.",
       "label": "Chọn mô hình AI",
       "placeholder": "Chọn mô hình"
     },
