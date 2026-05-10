@@ -1,12 +1,15 @@
 import { useChat } from '@ai-sdk/react';
 import { useMutation } from '@tanstack/react-query';
 import { DefaultChatTransport, type UIMessage } from 'ai';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { toast } from 'sonner';
-import { useRouter } from '@/i18n/navigation';
+import { usePathname, useRouter } from '@/i18n/navigation';
 import type { WritingTool } from '@/lib/validations/writing.schema';
 import { useChatSessionStore } from '@/stores/useChatSessionStore';
-import { hasReachedUserMessageLimit } from '@/utils/chat-limit';
+import {
+  getUserMessageCount,
+  hasReachedUserMessageLimit,
+} from '@/utils/chat-limit';
 import { writingService } from './writing.service';
 
 const MAX_USER_MESSAGES = 5;
@@ -23,15 +26,21 @@ const useWriting = ({
   initialMessages = [],
 }: UseWritingOptions) => {
   const router = useRouter();
+  const pathname = usePathname();
+  const lastPendingSendRef = useRef<string | null>(null);
 
-  //TODO: not understand this
   const {
+    pendingMessage,
+    pendingChatId,
     setOptimisticChatId,
     setOptimisticMessages,
     setPendingMessage,
     setPendingChatId,
     optimisticChatId,
     optimisticMessages,
+    clearPendingMessage,
+    clearPendingChatId,
+    clearOptimisticMessages,
   } = useChatSessionStore();
 
   const createSessionMutation = useMutation({
@@ -80,6 +89,40 @@ const useWriting = ({
       : [];
   const displayMessages = messages.length > 0 ? messages : optimisticForChat;
 
+  useEffect(() => {
+    if (!pendingMessage || !pendingChatId || !sessionId) return;
+    if (pendingChatId !== sessionId) return;
+    if (!pathname?.includes(`/writing/${pendingChatId}`)) return;
+
+    const pendingKey = `${pendingChatId}:${pendingMessage}`;
+    if (lastPendingSendRef.current === pendingKey) return;
+
+    lastPendingSendRef.current = pendingKey;
+    clearPendingMessage();
+    clearPendingChatId();
+
+    void sendMessage({ text: pendingMessage });
+  }, [
+    pendingMessage,
+    pendingChatId,
+    sessionId,
+    pathname,
+    sendMessage,
+    clearPendingMessage,
+    clearPendingChatId,
+  ]);
+
+  useEffect(() => {
+    if (messages.length === 0 || optimisticMessages.length === 0) return;
+    clearOptimisticMessages();
+    setOptimisticChatId(null);
+  }, [
+    messages.length,
+    optimisticMessages.length,
+    clearOptimisticMessages,
+    setOptimisticChatId,
+  ]);
+
   const isLimitReached = hasReachedUserMessageLimit(
     displayMessages,
     MAX_USER_MESSAGES
@@ -118,7 +161,7 @@ const useWriting = ({
     hasOutput: displayMessages.length > 0,
     isLimitReached,
     maxMessages: MAX_USER_MESSAGES,
-    userMessageCount: displayMessages.filter(m => m.role === 'user').length,
+    userMessageCount: displayMessages.filter((m) => m.role === 'user').length,
   };
 };
 export default useWriting;

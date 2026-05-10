@@ -1,5 +1,7 @@
 'use client';
 
+import type { UIMessage } from 'ai';
+import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import type React from 'react';
 import { useState } from 'react';
@@ -9,11 +11,22 @@ import { ChatInput } from '../../_components/chat-input';
 import useWriting from '../use-writing';
 import { WritingSelector } from './writing-selector';
 
-const WritingClient = () => {
+interface WritingClientProps {
+  sessionId?: string;
+  initialMessages?: UIMessage[];
+}
+
+//TODO: Understand this
+const ChatView = dynamic(() =>
+  import('../../_components/chat-view').then((mod) => mod.ChatView)
+);
+
+const WritingClient = ({ sessionId, initialMessages }: WritingClientProps) => {
   const [selectedTool, setSelectedTool] = useState<WritingTool>('grammar');
   const t = useTranslations('AIChat');
 
   const {
+    messages,
     isStreaming,
     startChat,
     stop,
@@ -23,6 +36,8 @@ const WritingClient = () => {
     userMessageCount,
   } = useWriting({
     tool: selectedTool,
+    sessionId,
+    initialMessages,
   });
 
   const notifyLimitReached = () => {
@@ -46,7 +61,15 @@ const WritingClient = () => {
 
   return (
     <div className="mx-auto flex h-full w-full max-w-4xl flex-col p-4">
-      <WritingSelector selected={selectedTool} onSelect={setSelectedTool} />
+      {!hasOutput && (
+        <WritingSelector selected={selectedTool} onSelect={setSelectedTool} />
+      )}
+
+      <div className="flex-1 overflow-y-auto">
+        {hasOutput && (
+          <ChatView messages={messages} isStreaming={isStreaming} />
+        )}
+      </div>
 
       <ChatInput
         handleSubmit={handleSubmit}
