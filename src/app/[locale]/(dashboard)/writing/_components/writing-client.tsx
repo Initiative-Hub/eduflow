@@ -9,7 +9,6 @@ import { toast } from 'sonner';
 import type { WritingTool } from '@/lib/validations/writing.schema';
 import { ChatInput } from '../../_components/chat-input';
 import useWriting from '../use-writing';
-import { WritingLandingView } from './writing-landing-view';
 import { WritingSelector } from './writing-selector';
 
 interface WritingClientProps {
@@ -66,18 +65,9 @@ const WritingClient = ({ sessionId, initialMessages }: WritingClientProps) => {
 
       <div className="relative z-10 mx-auto flex w-full max-w-5xl flex-1 flex-col justify-center overflow-hidden">
         {!hasOutput ? (
-          <WritingLandingView
-            selected={selectedTool}
-            onSelect={setSelectedTool}
-          />
+          <WritingSelector selected={selectedTool} onSelect={setSelectedTool} />
         ) : (
           <div className="mx-auto flex h-full w-full max-w-4xl flex-col">
-            <div className="mb-4">
-              <WritingSelector
-                selected={selectedTool}
-                onSelect={setSelectedTool}
-              />
-            </div>
             <div className="flex-1 overflow-y-auto">
               <ChatView messages={messages} isStreaming={isStreaming} />
             </div>
