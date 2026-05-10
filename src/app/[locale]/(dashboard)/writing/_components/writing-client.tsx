@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import type { WritingTool } from '@/lib/validations/writing.schema';
 import { ChatInput } from '../../_components/chat-input';
 import useWriting from '../use-writing';
+import { WritingLandingView } from './writing-landing-view';
 import { WritingSelector } from './writing-selector';
 
 interface WritingClientProps {
@@ -21,7 +22,7 @@ const ChatView = dynamic(() =>
 );
 
 const WritingClient = ({ sessionId, initialMessages }: WritingClientProps) => {
-  const [selectedTool, setSelectedTool] = useState<WritingTool>('grammar');
+  const [selectedTool, setSelectedTool] = useState<WritingTool>('caption');
   const t = useTranslations('AIChat');
 
   const {
@@ -58,26 +59,43 @@ const WritingClient = ({ sessionId, initialMessages }: WritingClientProps) => {
   };
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-4xl flex-col p-4">
-      {!hasOutput && (
-        <WritingSelector selected={selectedTool} onSelect={setSelectedTool} />
-      )}
+    <div className="relative flex h-full flex-1 flex-col items-center overflow-x-hidden px-4 py-8 md:px-0">
+      <div className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden">
+        <div className="h-125 w-125 rounded-full bg-primary/5 blur-[120px]" />
+      </div>
 
-      <div className="flex-1 overflow-y-auto">
-        {hasOutput && (
-          <ChatView messages={messages} isStreaming={isStreaming} />
+      <div className="relative z-10 mx-auto flex w-full max-w-5xl flex-1 flex-col justify-center overflow-hidden">
+        {!hasOutput ? (
+          <WritingLandingView
+            selected={selectedTool}
+            onSelect={setSelectedTool}
+          />
+        ) : (
+          <div className="mx-auto flex h-full w-full max-w-4xl flex-col">
+            <div className="mb-4">
+              <WritingSelector
+                selected={selectedTool}
+                onSelect={setSelectedTool}
+              />
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              <ChatView messages={messages} isStreaming={isStreaming} />
+            </div>
+          </div>
         )}
       </div>
 
-      <ChatInput
-        handleSubmit={handleSubmit}
-        isStreaming={isStreaming}
-        isChatting={hasOutput}
-        isLimitReached={isLimitReached}
-        limitCount={maxMessages}
-        userMessageCount={userMessageCount}
-        onStop={stop}
-      />
+      <div className="mx-auto w-full max-w-4xl">
+        <ChatInput
+          handleSubmit={handleSubmit}
+          isStreaming={isStreaming}
+          isChatting={hasOutput}
+          isLimitReached={isLimitReached}
+          limitCount={maxMessages}
+          userMessageCount={userMessageCount}
+          onStop={stop}
+        />
+      </div>
     </div>
   );
 };
