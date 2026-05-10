@@ -8,4 +8,5 @@ export type StreamChatInput = {
   model?: string;
   apiKey?: string;
   providerOptions?: ProviderOptions;
+  system?: string;
 };
