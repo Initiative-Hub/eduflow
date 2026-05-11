@@ -220,6 +220,8 @@ export interface QuestionResult {
   isCorrect: boolean;
   earnedPoints: number;
   maxPoints: number;
+  /** Whether this question requires manual/AI grading (e.g., essays) */
+  pendingReview?: boolean;
 }
 
 export interface ScoreResult {
@@ -227,6 +229,8 @@ export interface ScoreResult {
   earnedPoints: number;
   percentage: number;
   questionResults: QuestionResult[];
+  /** Whether any questions are pending manual/AI review */
+  hasPendingReview?: boolean;
 }
 
 export interface QuizSchema {

@@ -21,18 +21,32 @@ export function calculateScore(
 ): ScoreResult {
   const pointsPerQuestion = schema.scoring.pointsPerQuestion;
   const questionResults: QuestionResult[] = [];
+  let hasPendingReview = false;
 
   for (let i = 0; i < schema.questions.length; i++) {
     const question = schema.questions[i];
     const answer = answers.get(i);
-    const isCorrect = answer ? isAnswerCorrect(question, answer) : false;
+    const isEssay = question.type === 'essay';
 
-    questionResults.push({
-      questionIndex: i,
-      isCorrect,
-      earnedPoints: isCorrect ? pointsPerQuestion : 0,
-      maxPoints: pointsPerQuestion,
-    });
+    if (isEssay) {
+      // Essays require AI/teacher review — do not auto-score
+      hasPendingReview = true;
+      questionResults.push({
+        questionIndex: i,
+        isCorrect: false,
+        earnedPoints: 0,
+        maxPoints: pointsPerQuestion,
+        pendingReview: true,
+      });
+    } else {
+      const isCorrect = answer ? isAnswerCorrect(question, answer) : false;
+      questionResults.push({
+        questionIndex: i,
+        isCorrect,
+        earnedPoints: isCorrect ? pointsPerQuestion : 0,
+        maxPoints: pointsPerQuestion,
+      });
+    }
   }
 
   const totalPoints = schema.questions.length * pointsPerQuestion;
@@ -47,6 +61,7 @@ export function calculateScore(
     earnedPoints,
     percentage,
     questionResults,
+    ...(hasPendingReview && { hasPendingReview: true }),
   };
 }
 
@@ -68,7 +83,7 @@ function isAnswerCorrect(
     case 'ordering':
       return isOrderingCorrect(question, answer);
     case 'essay':
-      return true; // Essays are scored by AI, not by the automatic scorer
+      return false; // Essays are never auto-scored; handled separately as pendingReview
     case 'drag-and-drop':
       return isDragAndDropCorrect(question, answer);
     case 'timed-challenge':
