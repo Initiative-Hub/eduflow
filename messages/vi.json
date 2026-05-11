@@ -620,9 +620,38 @@
       "changePassword": "Đổi mật khẩu",
       "discard": "Huỷ thay đổi",
       "edit": "Chỉnh sửa",
-      "save": "Lưu cài đặt không gian làm việc",
+      "save": "Lưu thông tin",
       "saving": "Đang lưu...",
       "setPassword": "Thiết lập mật khẩu"
+    },
+    "aiPreferences": {
+      "insightFeedback": {
+        "description": "Đánh giá hiệu suất học tập AI hai tuần một lần",
+        "label": "Phản hồi Thông minh"
+      },
+      "interactionStyle": {
+        "friendly": "Thân thiện",
+        "label": "Phong cách Tương tác AI",
+        "professional": "Chuyên nghiệp",
+        "technical": "Kỹ thuật"
+      },
+      "primaryLanguage": {
+        "description": "Ngôn ngữ giao diện và đầu ra AI",
+        "english": "English",
+        "label": "Ngôn ngữ Chính",
+        "vietnamese": "Tiếng Việt"
+      },
+      "quizScoreAlerts": {
+        "description": "Thông báo tức thì về kết quả điểm số",
+        "label": "Cảnh báo Điểm Bài kiểm tra"
+      },
+      "responseTone": {
+        "balanced": "Cân bằng",
+        "direct": "Trực tiếp",
+        "encouraging": "Khích lệ",
+        "label": "Giọng điệu Phản hồi"
+      },
+      "title": "Tùy chọn AI & Hệ thống"
     },
     "avatar": {
       "description": "Chọn ảnh đại diện mới.",
@@ -740,5 +769,35 @@
       "title": "Chào mừng bạn!"
     },
     "title": "Chào mừng bạn đến với Hệ sinh thái <brand>EduFlow</brand>"
+  },
+  "WritingPage": {
+    "subtitle": "Trau dồi giọng văn học thuật của bạn với các công cụ chính xác được thiết kế cho sự rõ ràng và tác động.",
+    "title": "Hôm nay tôi có thể giúp bạn <italic>viết</italic> gì?",
+    "tools": {
+      "caption": {
+        "description": "Tạo nội dung mạng xã hội và tiêu đề dự án hấp dẫn.",
+        "title": "Trợ lý Tiêu đề"
+      },
+      "email": {
+        "description": "Soạn thảo email chuyên nghiệp và thư từ học thuật.",
+        "title": "Trợ lý Email"
+      },
+      "grammar": {
+        "description": "Hoàn thiện bài viết với phân tích cú pháp và dấu câu nâng cao.",
+        "title": "Kiểm tra Ngữ pháp"
+      },
+      "outline": {
+        "description": "Cấu trúc các ý tưởng phức tạp thành luồng logic học thuật.",
+        "title": "Dàn ý Bài luận"
+      },
+      "paraphrase": {
+        "description": "Tinh chỉnh cấu trúc câu mà vẫn giữ nguyên ý nghĩa gốc.",
+        "title": "Diễn đạt lại"
+      },
+      "rewrite": {
+        "description": "Chuyển đổi giọng điệu và phong cách đoạn văn của bạn ngay lập tức.",
+        "title": "Trợ lý Viết lại"
+      }
+    }
   }
 }
