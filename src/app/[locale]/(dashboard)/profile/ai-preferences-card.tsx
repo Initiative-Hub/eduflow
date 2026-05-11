@@ -1,10 +1,10 @@
 'use client';
 
 import { useMutation } from '@tanstack/react-query';
-import { Baby, Briefcase, Cpu } from 'lucide-react';
+import { Baby, type Bot, Briefcase, Cpu } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
@@ -14,7 +14,7 @@ import { apiClient } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import type {
   AIPreferencesData,
-  InteractionStyleOption,
+  InteractionStyle,
   ResponseTone,
 } from './profile.config';
 
@@ -26,7 +26,11 @@ interface AIPreferencesCardProps {
   isSaving?: boolean;
 }
 
-const INTERACTION_STYLES: InteractionStyleOption[] = [
+const INTERACTION_STYLES: {
+  value: InteractionStyle;
+  icon: typeof Bot;
+  labelKey: string;
+}[] = [
   { value: 'friendly', icon: Baby, labelKey: 'friendly' },
   { value: 'professional', icon: Briefcase, labelKey: 'professional' },
   { value: 'technical', icon: Cpu, labelKey: 'technical' },
@@ -47,23 +51,6 @@ export function AIPreferencesCard({
     ...preferences,
     primaryLanguage: currentLocale as 'en' | 'vi',
   });
-
-  useEffect(() => {
-    const syncedPrefs = {
-      ...preferences,
-      primaryLanguage: currentLocale as 'en' | 'vi',
-    };
-
-    setLocalPrefs((prev) =>
-      prev.interactionStyle === syncedPrefs.interactionStyle &&
-      prev.responseTone === syncedPrefs.responseTone &&
-      prev.primaryLanguage === syncedPrefs.primaryLanguage &&
-      prev.quizScoreAlerts === syncedPrefs.quizScoreAlerts &&
-      prev.insightFeedback === syncedPrefs.insightFeedback
-        ? prev
-        : syncedPrefs
-    );
-  }, [preferences, currentLocale]);
 
   const { mutate: updateLocale, isPending: isUpdatingLocale } = useMutation({
     mutationFn: async (newLocale: Locale) => {
