@@ -1,6 +1,6 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-## Getting Started
+## Getting Started 
 ### 1. Prerequisites 
 
 Node.js: (LTS version recommended, e.g., v25) 
@@ -11,7 +11,7 @@ PostgreSQL: The database (installed directly or via Docker).
 
 Package Manager: Bun.
 
-### 2. Get Source Code & Install Dependencies
+### 2. Get Source Code & Install Dependencies 
 ```bash
 # 1. Clone the repository
 git clone <your-git-repo-link>
