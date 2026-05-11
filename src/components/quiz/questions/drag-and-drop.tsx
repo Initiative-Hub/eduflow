@@ -5,11 +5,11 @@ import { useTranslations } from 'next-intl';
 import { Fragment, useCallback, useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import type { DragAndDropQuestion } from '@/lib/quiz-template';
+import type { DisplayDragAndDropQuestion } from '@/lib/quiz-template/display-types';
 import { cn } from '@/lib/utils';
 
 interface DragAndDropProps {
-  question: DragAndDropQuestion;
+  question: DisplayDragAndDropQuestion;
   placements: Record<string, string>;
   onPlace: (placements: Record<string, string>) => void;
   showResult?: boolean;
@@ -45,7 +45,9 @@ export function DragAndDrop({
   );
 
   const isZoneCorrect = (zoneId: string): boolean =>
-    placements[zoneId] === question.correctMapping[zoneId];
+    question.correctMapping
+      ? placements[zoneId] === question.correctMapping[zoneId]
+      : false;
 
   // Parse the sentence template into segments
   const segments = useMemo(
@@ -202,6 +204,7 @@ export function DragAndDrop({
 
       {/* Show correct answers when result is shown and there are mistakes */}
       {showResult &&
+        question.correctMapping &&
         Object.keys(question.correctMapping).some(
           (zoneId) => !isZoneCorrect(zoneId)
         ) && (
@@ -210,7 +213,7 @@ export function DragAndDrop({
               .filter((zone) => !isZoneCorrect(zone.id))
               .map((zone) => (
                 <Badge key={zone.id} variant="secondary" className="text-xs">
-                  {zone.label}: {getItemText(question.correctMapping[zone.id])}
+                  {zone.label}: {getItemText(question.correctMapping![zone.id])}
                 </Badge>
               ))}
           </div>

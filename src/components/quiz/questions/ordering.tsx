@@ -1,14 +1,14 @@
 'use client';
 
-import { CheckCircle2, GripVertical, XCircle } from 'lucide-react';
+import { GripVertical } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useCallback, useRef, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
-import type { OrderingQuestion } from '@/lib/quiz-template';
+import type { DisplayOrderingQuestion } from '@/lib/quiz-template/display-types';
 import { cn } from '@/lib/utils';
 
 interface OrderingProps {
-  question: OrderingQuestion;
+  question: DisplayOrderingQuestion;
   orderedItemIds: string[];
   onReorder: (orderedIds: string[]) => void;
   showResult?: boolean;
@@ -30,7 +30,7 @@ export function Ordering({
   const dragNodeRef = useRef<number | null>(null);
 
   const isItemInCorrectPosition = (itemId: string, index: number) =>
-    question.correctOrder[index] === itemId;
+    question.correctOrder?.[index] === itemId;
 
   const getItemText = (itemId: string) =>
     question.items.find((item) => item.id === itemId)?.text ?? itemId;
@@ -178,11 +178,17 @@ export function Ordering({
 
                 <span className="flex-1">{getItemText(itemId)}</span>
 
-                {showResult && correct === true && (
-                  <CheckCircle2 className="size-4 shrink-0 text-green-600" />
-                )}
-                {showResult && correct === false && (
-                  <XCircle className="size-4 shrink-0 text-red-600" />
+                {showResult && correct !== undefined && (
+                  <span
+                    className={cn(
+                      'flex h-5 w-5 shrink-0 items-center justify-center rounded-full font-bold font-mono text-xs',
+                      correct
+                        ? 'bg-green-100 text-green-700 dark:bg-green-950/30 dark:text-green-400'
+                        : 'bg-red-100 text-red-700 dark:bg-red-950/30 dark:text-red-400'
+                    )}
+                  >
+                    {(question.correctOrder?.indexOf(itemId) ?? -1) + 1}
+                  </span>
                 )}
               </div>
 
@@ -190,7 +196,7 @@ export function Ordering({
               {index === orderedItemIds.length - 1 &&
                 dropIndicatorIndex === orderedItemIds.length &&
                 draggedIndex !== index && (
-                  <div className="absolute -bottom-px right-0 left-0 z-10 flex items-center">
+                  <div className="absolute right-0 -bottom-px left-0 z-10 flex items-center">
                     <div className="size-2 rounded-full bg-purple-500" />
                     <div className="h-0.5 flex-1 bg-purple-500" />
                     <div className="size-2 rounded-full bg-purple-500" />

@@ -18,10 +18,10 @@ import {
   DropzoneEmptyState,
 } from '@/components/ui/dropzone';
 import { Textarea } from '@/components/ui/textarea';
-import type { EssayQuestion } from '@/lib/quiz-template';
+import type { DisplayEssayQuestion } from '@/lib/quiz-template/display-types';
 
 interface EssayProps {
-  question: EssayQuestion;
+  question: DisplayEssayQuestion;
   text: string;
   onTextChange: (text: string) => void;
   /** Callback when student attachments change */

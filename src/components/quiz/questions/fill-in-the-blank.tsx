@@ -5,11 +5,11 @@ import { useTranslations } from 'next-intl';
 import { Fragment } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import type { FillInTheBlankQuestion } from '@/lib/quiz-template';
+import type { DisplayFillInTheBlankQuestion } from '@/lib/quiz-template/display-types';
 import { cn } from '@/lib/utils';
 
 interface FillInTheBlankProps {
-  question: FillInTheBlankQuestion;
+  question: DisplayFillInTheBlankQuestion;
   filledBlanks: Record<string, string>;
   onFill: (blankId: string, value: string) => void;
   showResult?: boolean;
@@ -31,7 +31,7 @@ export function FillInTheBlank({
   const isBlankCorrect = (blankId: string): boolean => {
     const blank = question.blanks.find((b) => b.id === blankId);
     const studentValue = filledBlanks[blankId];
-    if (!blank || !studentValue) return false;
+    if (!blank || !studentValue || !blank.acceptableAnswers) return false;
     return blank.acceptableAnswers.some(
       (answer) =>
         answer.toLowerCase().trim() === studentValue.toLowerCase().trim()
@@ -78,7 +78,7 @@ export function FillInTheBlank({
               {showResult && correct === false && (
                 <Fragment>
                   <XCircle className="size-4 text-red-600" />
-                  {blank && (
+                  {blank?.acceptableAnswers?.[0] && (
                     <Badge variant="secondary" className="text-xs">
                       {blank.acceptableAnswers[0]}
                     </Badge>

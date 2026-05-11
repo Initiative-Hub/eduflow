@@ -12,4 +12,6 @@ export {
   QuizCardHeader,
 } from './quiz-card';
 export { QuizProgress } from './quiz-progress';
+export { QuestionRenderer } from './quiz-question-renderer';
 export { QuizResult } from './quiz-result';
+export { ReviewQuestionRenderer } from './review-question-renderer';

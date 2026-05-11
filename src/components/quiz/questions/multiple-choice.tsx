@@ -2,11 +2,11 @@
 
 import { CheckCircle2, Circle, XCircle } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import type { MultipleChoiceQuestion } from '@/lib/quiz-template';
+import type { DisplayMultipleChoiceQuestion } from '@/lib/quiz-template/display-types';
 import { cn } from '@/lib/utils';
 
 interface MultipleChoiceProps {
-  question: MultipleChoiceQuestion;
+  question: DisplayMultipleChoiceQuestion;
   selectedOptionId?: string;
   onSelect: (optionId: string) => void;
   showResult?: boolean;

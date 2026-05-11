@@ -1,27 +1,28 @@
 'use client';
 
-import { ArrowLeft, ArrowRight, BookOpen, Send } from 'lucide-react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  BookOpen,
+  CheckCircle2,
+  Loader2,
+  Send,
+  XCircle,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useCallback, useState } from 'react';
+import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { calculateScore } from '@/lib/quiz-template/scoring';
+import type { ClientQuizContent } from '@/lib/quiz-template/client-types';
 import type {
-  MatchingPair,
+  QuestionBlock,
   QuizContent,
   ScoreResult,
   StudentAnswer,
   StudentAnswers,
 } from '@/lib/quiz-template/types';
-import {
-  DragAndDrop,
-  Essay,
-  FillInTheBlank,
-  Matching,
-  MultipleChoice,
-  Ordering,
-  TrueFalse,
-} from './questions';
+import { cn } from '@/lib/utils';
 import type { QuizState } from './quiz.types';
 import {
   QuizCard,
@@ -30,69 +31,184 @@ import {
   QuizCardHeader,
 } from './quiz-card';
 import { QuizProgress } from './quiz-progress';
+import { QuestionRenderer } from './quiz-question-renderer';
 import { QuizResult } from './quiz-result';
 
 interface QuizProps {
-  quiz: QuizContent;
+  /**
+   * Quiz content for display. Accepts either:
+   * - ClientQuizContent (stripped of answers, for secure student-facing use)
+   * - QuizContent (full data, for demo/preview purposes only)
+   */
+  quiz: ClientQuizContent | QuizContent;
+  /**
+   * Full quiz content with answer data for server-side scoring.
+   * When provided, scoring is done via the server API.
+   * When omitted (demo mode), scoring falls back to client-side.
+   */
+  quizWithAnswers?: QuizContent;
+  /**
+   * Delivery mode for the quiz. When 'instant-feedback', the answer
+   * is revealed after each question before moving to the next.
+   */
+  deliveryMode?: 'instant-feedback' | 'post-quiz-review';
   onComplete?: (result: ScoreResult) => void;
   className?: string;
 }
 
-export function Quiz({ quiz, onComplete, className }: QuizProps) {
+export function Quiz({
+  quiz,
+  quizWithAnswers,
+  deliveryMode = 'instant-feedback',
+  onComplete,
+  className,
+}: QuizProps) {
   const t = useTranslations('Quiz');
   const [state, setState] = useState<QuizState>('idle');
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<StudentAnswers>(new Map());
-  const [showResults, setShowResults] = useState(false);
   const [result, setResult] = useState<ScoreResult | null>(null);
+  const [reviewQuestions, setReviewQuestions] = useState<
+    QuestionBlock[] | null
+  >(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Instant-feedback state: whether the current question's answer is revealed
+  const [answerRevealed, setAnswerRevealed] = useState(false);
+  // Track per-question instant result (correct/incorrect)
+  const [instantResults, setInstantResults] = useState<
+    Map<number, boolean | null>
+  >(new Map());
 
   const currentQuestion = quiz.questions[currentIndex];
   const totalQuestions = quiz.questions.length;
   const isLastQuestion = currentIndex === totalQuestions - 1;
   const currentAnswer = answers.get(currentIndex);
+  const isInstantMode = deliveryMode === 'instant-feedback';
 
   const handleStart = () => {
     setState('in-progress');
     setCurrentIndex(0);
     setAnswers(new Map());
-    setShowResults(false);
     setResult(null);
+    setReviewQuestions(null);
+    setAnswerRevealed(false);
+    setInstantResults(new Map());
   };
 
   const handleAnswer = useCallback(
     (answer: StudentAnswer) => {
+      if (answerRevealed) return; // Don't allow changes after reveal
       setAnswers((prev) => {
         const next = new Map(prev);
         next.set(currentIndex, answer);
         return next;
       });
     },
-    [currentIndex]
+    [currentIndex, answerRevealed]
   );
 
-  const handleNext = () => {
-    if (isLastQuestion) {
-      return;
+  /** In instant-feedback mode, check the answer and reveal the result */
+  const handleCheckAnswer = async () => {
+    if (!currentAnswer) return;
+    setAnswerRevealed(true);
+
+    // Submit just this question to get the result
+    try {
+      const questionsForScoring =
+        quizWithAnswers?.questions ?? (quiz as QuizContent).questions;
+      const singleQuestion = questionsForScoring[currentIndex];
+
+      if (!singleQuestion) return;
+
+      const answersRecord: Record<string, StudentAnswer> = {
+        '0': currentAnswer,
+      };
+
+      const response = await fetch('/api/v1/quizzes/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        cache: 'no-store',
+        body: JSON.stringify({
+          quizType: quiz.type,
+          questions: [singleQuestion],
+          answers: answersRecord,
+          pointsPerQuestion: 10,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const isCorrect = data.questionResults?.[0]?.isCorrect ?? null;
+        setInstantResults((prev) => {
+          const next = new Map(prev);
+          next.set(currentIndex, isCorrect);
+          return next;
+        });
+      }
+    } catch {
+      // If scoring fails, still allow progression
     }
+  };
+
+  const handleNext = () => {
+    if (isLastQuestion) return;
     setCurrentIndex((prev) => prev + 1);
+    setAnswerRevealed(false);
   };
 
   const handlePrevious = () => {
     setCurrentIndex((prev) => Math.max(0, prev - 1));
+    // In instant mode, if going back to a revealed question, keep it revealed
+    setAnswerRevealed(instantResults.has(currentIndex - 1));
   };
 
-  const handleSubmit = () => {
-    const schema = {
-      type: quiz.type,
-      constraints: { minQuestions: 1, maxQuestions: 100 },
-      scoring: { pointsPerQuestion: 10 },
-      questions: quiz.questions,
-    };
-    const scoreResult = calculateScore(answers, schema);
-    setResult(scoreResult);
-    setShowResults(true);
-    setState('completed');
-    onComplete?.(scoreResult);
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+
+    try {
+      // Convert Map to a plain object for JSON serialization
+      const answersRecord: Record<string, StudentAnswer> = {};
+      for (const [index, answer] of answers.entries()) {
+        answersRecord[index.toString()] = answer;
+      }
+
+      // Determine the source of truth for questions (server data or quiz prop)
+      const questionsForScoring =
+        quizWithAnswers?.questions ?? (quiz as QuizContent).questions;
+
+      const response = await fetch('/api/v1/quizzes/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        cache: 'no-store',
+        body: JSON.stringify({
+          quizType: quiz.type,
+          questions: questionsForScoring,
+          answers: answersRecord,
+          pointsPerQuestion: 10,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || 'Failed to submit quiz');
+      }
+
+      const responseData = await response.json();
+      const { reviewQuestions: returnedQuestions, ...scoreResult } =
+        responseData as ScoreResult & { reviewQuestions?: QuestionBlock[] };
+
+      setResult(scoreResult);
+      if (returnedQuestions) {
+        setReviewQuestions(returnedQuestions);
+      }
+      setState('completed');
+      onComplete?.(scoreResult);
+    } catch (error: any) {
+      toast.error(error.message || t('submitError'));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleRetry = () => {
@@ -138,10 +254,16 @@ export function Quiz({ quiz, onComplete, className }: QuizProps) {
   // ─── Completed State ─────────────────────────────────────────────────────────
 
   if (state === 'completed' && result) {
+    // Use reviewQuestions (with answer data) for the result view so
+    // correct/incorrect indicators can be displayed
+    const quizForReview = reviewQuestions
+      ? { ...quiz, questions: reviewQuestions }
+      : quiz;
+
     return (
       <QuizResult
         result={result}
-        quiz={quiz}
+        quiz={quizForReview as QuizContent}
         answers={answers}
         onRetry={handleRetry}
       />
@@ -149,6 +271,8 @@ export function Quiz({ quiz, onComplete, className }: QuizProps) {
   }
 
   // ─── In-Progress State ───────────────────────────────────────────────────────
+
+  const currentInstantResult = instantResults.get(currentIndex);
 
   return (
     <QuizCard className={className}>
@@ -158,12 +282,41 @@ export function Quiz({ quiz, onComplete, className }: QuizProps) {
 
       <QuizCardContent className="min-h-50">
         {currentQuestion && (
-          <QuestionRenderer
-            question={currentQuestion}
-            answer={currentAnswer}
-            onAnswer={handleAnswer}
-            showResult={showResults}
-          />
+          <>
+            <QuestionRenderer
+              question={currentQuestion}
+              answer={currentAnswer}
+              onAnswer={handleAnswer}
+              showResult={answerRevealed}
+              disabled={answerRevealed}
+            />
+
+            {/* Instant feedback indicator */}
+            {isInstantMode &&
+              answerRevealed &&
+              currentInstantResult !== undefined && (
+                <div
+                  className={cn(
+                    'mt-4 flex items-center gap-2 rounded-lg border p-3 text-sm',
+                    currentInstantResult
+                      ? 'border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950/20 dark:text-green-300'
+                      : 'border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950/20 dark:text-red-300'
+                  )}
+                >
+                  {currentInstantResult ? (
+                    <>
+                      <CheckCircle2 className="size-4 shrink-0" />
+                      <span>{t('correctAnswer')}</span>
+                    </>
+                  ) : (
+                    <>
+                      <XCircle className="size-4 shrink-0" />
+                      <span>{t('incorrectAnswer')}</span>
+                    </>
+                  )}
+                </div>
+              )}
+          </>
         )}
       </QuizCardContent>
 
@@ -173,217 +326,50 @@ export function Quiz({ quiz, onComplete, className }: QuizProps) {
           variant="ghost"
           size="sm"
           onClick={handlePrevious}
-          disabled={currentIndex === 0}
+          disabled={currentIndex === 0 || isSubmitting}
         >
           <ArrowLeft className="size-3.5" />
           {t('previous')}
         </Button>
 
         <div className="flex gap-2">
-          {isLastQuestion ? (
+          {/* In instant mode: show "Check Answer" button before revealing */}
+          {isInstantMode && !answerRevealed && (
             <Button
               type="button"
               size="sm"
-              onClick={handleSubmit}
-              disabled={answers.size < totalQuestions}
+              variant="secondary"
+              onClick={handleCheckAnswer}
+              disabled={!currentAnswer}
             >
-              <Send className="size-3.5" />
-              {t('submitQuiz')}
-            </Button>
-          ) : (
-            <Button type="button" size="sm" onClick={handleNext}>
-              {t('next')}
-              <ArrowRight className="size-3.5" />
+              {t('checkAnswer')}
             </Button>
           )}
+
+          {/* After answer is revealed (instant) or always (post-quiz): show Next/Submit */}
+          {(!isInstantMode || answerRevealed) &&
+            (isLastQuestion ? (
+              <Button
+                type="button"
+                size="sm"
+                onClick={handleSubmit}
+                disabled={answers.size < totalQuestions || isSubmitting}
+              >
+                {isSubmitting ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <Send className="size-3.5" />
+                )}
+                {isSubmitting ? t('submitting') : t('submitQuiz')}
+              </Button>
+            ) : (
+              <Button type="button" size="sm" onClick={handleNext}>
+                {t('next')}
+                <ArrowRight className="size-3.5" />
+              </Button>
+            ))}
         </div>
       </QuizCardFooter>
     </QuizCard>
   );
-}
-
-// ─── Question Renderer ─────────────────────────────────────────────────────────
-
-interface QuestionRendererProps {
-  question: QuizContent['questions'][number];
-  answer?: StudentAnswer;
-  onAnswer: (answer: StudentAnswer) => void;
-  showResult: boolean;
-}
-
-function QuestionRenderer({
-  question,
-  answer,
-  onAnswer,
-  showResult,
-}: QuestionRendererProps) {
-  switch (question.type) {
-    case 'multiple-choice':
-      return (
-        <MultipleChoice
-          question={question}
-          selectedOptionId={
-            answer?.type === 'multiple-choice'
-              ? answer.selectedOptionId
-              : undefined
-          }
-          onSelect={(optionId) =>
-            onAnswer({ type: 'multiple-choice', selectedOptionId: optionId })
-          }
-          showResult={showResult}
-        />
-      );
-
-    case 'true-false':
-      return (
-        <TrueFalse
-          question={question}
-          selectedAnswer={
-            answer?.type === 'true-false' ? answer.selectedAnswer : undefined
-          }
-          onSelect={(value) =>
-            onAnswer({ type: 'true-false', selectedAnswer: value })
-          }
-          showResult={showResult}
-        />
-      );
-
-    case 'fill-in-the-blank':
-      return (
-        <FillInTheBlank
-          question={question}
-          filledBlanks={
-            answer?.type === 'fill-in-the-blank' ? answer.filledBlanks : {}
-          }
-          onFill={(blankId, value) => {
-            const current =
-              answer?.type === 'fill-in-the-blank' ? answer.filledBlanks : {};
-            onAnswer({
-              type: 'fill-in-the-blank',
-              filledBlanks: { ...current, [blankId]: value },
-            });
-          }}
-          showResult={showResult}
-        />
-      );
-
-    case 'matching':
-      return (
-        <Matching
-          question={question}
-          pairs={answer?.type === 'matching' ? answer.pairs : []}
-          onMatch={(pairs: MatchingPair[]) =>
-            onAnswer({ type: 'matching', pairs })
-          }
-          showResult={showResult}
-        />
-      );
-
-    case 'ordering':
-      return (
-        <Ordering
-          question={question}
-          orderedItemIds={
-            answer?.type === 'ordering'
-              ? answer.orderedItemIds
-              : question.items.map((item) => item.id)
-          }
-          onReorder={(orderedItemIds) =>
-            onAnswer({ type: 'ordering', orderedItemIds })
-          }
-          showResult={showResult}
-        />
-      );
-
-    case 'essay':
-      return (
-        <Essay
-          question={question}
-          text={answer?.type === 'essay' ? answer.text : ''}
-          onTextChange={(text) =>
-            onAnswer({
-              type: 'essay',
-              text,
-              attachments:
-                answer?.type === 'essay' ? answer.attachments : undefined,
-              teacherRubricText:
-                answer?.type === 'essay' ? answer.teacherRubricText : undefined,
-              teacherRubricAttachments:
-                answer?.type === 'essay'
-                  ? answer.teacherRubricAttachments
-                  : undefined,
-            })
-          }
-          onAttachmentsChange={(attachments: string[]) =>
-            onAnswer({
-              type: 'essay',
-              text: answer?.type === 'essay' ? answer.text : '',
-              attachments,
-              teacherRubricText:
-                answer?.type === 'essay' ? answer.teacherRubricText : undefined,
-              teacherRubricAttachments:
-                answer?.type === 'essay'
-                  ? answer.teacherRubricAttachments
-                  : undefined,
-            })
-          }
-          onTeacherRubricTextChange={(teacherRubricText: string) =>
-            onAnswer({
-              type: 'essay',
-              text: answer?.type === 'essay' ? answer.text : '',
-              attachments:
-                answer?.type === 'essay' ? answer.attachments : undefined,
-              teacherRubricText,
-              teacherRubricAttachments:
-                answer?.type === 'essay'
-                  ? answer.teacherRubricAttachments
-                  : undefined,
-            })
-          }
-          onTeacherRubricAttachmentsChange={(
-            teacherRubricAttachments: string[]
-          ) =>
-            onAnswer({
-              type: 'essay',
-              text: answer?.type === 'essay' ? answer.text : '',
-              attachments:
-                answer?.type === 'essay' ? answer.attachments : undefined,
-              teacherRubricText:
-                answer?.type === 'essay' ? answer.teacherRubricText : undefined,
-              teacherRubricAttachments,
-            })
-          }
-          teacherRubricText={
-            answer?.type === 'essay' ? (answer.teacherRubricText ?? '') : ''
-          }
-          showResult={showResult}
-          showTeacherRubricInput={question.allowTeacherRubric}
-        />
-      );
-
-    case 'drag-and-drop':
-      return (
-        <DragAndDrop
-          question={question}
-          placements={answer?.type === 'drag-and-drop' ? answer.placements : {}}
-          onPlace={(placements) =>
-            onAnswer({ type: 'drag-and-drop', placements })
-          }
-          showResult={showResult}
-        />
-      );
-
-    case 'timed-challenge':
-      return (
-        <QuestionRenderer
-          question={question.innerQuestion}
-          answer={answer}
-          onAnswer={onAnswer}
-          showResult={showResult}
-        />
-      );
-
-    default:
-      return null;
-  }
 }

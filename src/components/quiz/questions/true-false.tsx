@@ -2,11 +2,11 @@
 
 import { CheckCircle2, XCircle } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import type { TrueFalseQuestion } from '@/lib/quiz-template';
+import type { DisplayTrueFalseQuestion } from '@/lib/quiz-template/display-types';
 import { cn } from '@/lib/utils';
 
 interface TrueFalseProps {
-  question: TrueFalseQuestion;
+  question: DisplayTrueFalseQuestion;
   selectedAnswer?: boolean;
   onSelect: (answer: boolean) => void;
   showResult?: boolean;

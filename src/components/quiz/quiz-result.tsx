@@ -1,6 +1,6 @@
 'use client';
 
-import { CheckCircle2, RotateCcw, Trophy, XCircle } from 'lucide-react';
+import { CheckCircle2, Clock, RotateCcw, Trophy, XCircle } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,20 +11,12 @@ import type {
 } from '@/lib/quiz-template';
 import { cn } from '@/lib/utils';
 import {
-  DragAndDrop,
-  Essay,
-  FillInTheBlank,
-  Matching,
-  MultipleChoice,
-  Ordering,
-  TrueFalse,
-} from './questions';
-import {
   QuizCard,
   QuizCardContent,
   QuizCardFooter,
   QuizCardHeader,
 } from './quiz-card';
+import { ReviewQuestionRenderer } from './review-question-renderer';
 
 interface QuizResultProps {
   result: ScoreResult;
@@ -121,8 +113,15 @@ export function QuizResult({
               </p>
               <p className="text-muted-foreground text-sm">
                 {t('scoreDetail', { correct: correctCount, total: totalCount })}
-                : {result.earnedPoints}/{result.totalPoints}
+                {': '}
+                {result.earnedPoints}/{result.totalPoints} {t('points')}
               </p>
+              {result.hasPendingReview && (
+                <p className="flex items-center gap-1 text-xs text-yellow-600 dark:text-yellow-400">
+                  <Clock className="size-3" />
+                  {t('pendingReview')}
+                </p>
+              )}
             </div>
           </div>
         </QuizCardContent>
@@ -154,12 +153,16 @@ export function QuizResult({
                 <div
                   className={cn(
                     'flex size-6 items-center justify-center rounded-full',
-                    qr?.isCorrect
-                      ? 'bg-green-100 dark:bg-green-950/30'
-                      : 'bg-red-100 dark:bg-red-950/30'
+                    qr?.pendingReview
+                      ? 'bg-yellow-100 dark:bg-yellow-950/30'
+                      : qr?.isCorrect
+                        ? 'bg-green-100 dark:bg-green-950/30'
+                        : 'bg-red-100 dark:bg-red-950/30'
                   )}
                 >
-                  {qr?.isCorrect ? (
+                  {qr?.pendingReview ? (
+                    <Clock className="size-4 text-yellow-600" />
+                  ) : qr?.isCorrect ? (
                     <CheckCircle2 className="size-4 text-green-600" />
                   ) : (
                     <XCircle className="size-4 text-red-600" />
@@ -175,117 +178,4 @@ export function QuizResult({
       </div>
     </div>
   );
-}
-
-// ─── Review Question Renderer (read-only, shows results) ─────────────────────
-
-interface ReviewQuestionRendererProps {
-  question: QuizContent['questions'][number];
-  answer?: import('@/lib/quiz-template/types').StudentAnswer;
-}
-
-function ReviewQuestionRenderer({
-  question,
-  answer,
-}: ReviewQuestionRendererProps) {
-  const noop = () => {};
-
-  switch (question.type) {
-    case 'multiple-choice':
-      return (
-        <MultipleChoice
-          question={question}
-          selectedOptionId={
-            answer?.type === 'multiple-choice'
-              ? answer.selectedOptionId
-              : undefined
-          }
-          onSelect={noop}
-          showResult={true}
-        />
-      );
-
-    case 'true-false':
-      return (
-        <TrueFalse
-          question={question}
-          selectedAnswer={
-            answer?.type === 'true-false' ? answer.selectedAnswer : undefined
-          }
-          onSelect={noop}
-          showResult={true}
-        />
-      );
-
-    case 'fill-in-the-blank':
-      return (
-        <FillInTheBlank
-          question={question}
-          filledBlanks={
-            answer?.type === 'fill-in-the-blank' ? answer.filledBlanks : {}
-          }
-          onFill={noop}
-          showResult={true}
-        />
-      );
-
-    case 'matching':
-      return (
-        <Matching
-          question={question}
-          pairs={answer?.type === 'matching' ? answer.pairs : []}
-          onMatch={noop}
-          showResult={true}
-          disabled={true}
-        />
-      );
-
-    case 'ordering':
-      return (
-        <Ordering
-          question={question}
-          orderedItemIds={
-            answer?.type === 'ordering'
-              ? answer.orderedItemIds
-              : question.items.map((item) => item.id)
-          }
-          onReorder={noop}
-          showResult={true}
-          disabled={true}
-        />
-      );
-
-    case 'essay':
-      return (
-        <Essay
-          question={question}
-          text={answer?.type === 'essay' ? answer.text : ''}
-          onTextChange={noop}
-          showResult={true}
-          disabled={true}
-        />
-      );
-
-    case 'drag-and-drop':
-      return (
-        <DragAndDrop
-          question={question}
-          placements={answer?.type === 'drag-and-drop' ? answer.placements : {}}
-          onPlace={noop}
-          showResult={true}
-          disabled={true}
-        />
-      );
-
-    case 'timed-challenge':
-      return (
-        <ReviewQuestionRenderer
-          question={question.innerQuestion}
-          answer={answer}
-        />
-      );
-
-    default:
-      return null;
-  }
 }
