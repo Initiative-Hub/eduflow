@@ -53,10 +53,20 @@ export function AIPreferencesCard({
   });
 
   useEffect(() => {
-    setLocalPrefs({
+    const syncedPrefs = {
       ...preferences,
       primaryLanguage: currentLocale as 'en' | 'vi',
-    });
+    };
+
+    setLocalPrefs((prev) =>
+      prev.interactionStyle === syncedPrefs.interactionStyle &&
+      prev.responseTone === syncedPrefs.responseTone &&
+      prev.primaryLanguage === syncedPrefs.primaryLanguage &&
+      prev.quizScoreAlerts === syncedPrefs.quizScoreAlerts &&
+      prev.insightFeedback === syncedPrefs.insightFeedback
+        ? prev
+        : syncedPrefs
+    );
   }, [preferences, currentLocale]);
 
   const { mutate: updateLocale, isPending: isUpdatingLocale } = useMutation({

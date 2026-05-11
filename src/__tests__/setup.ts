@@ -2,3 +2,13 @@
 // It imports the jest-dom library which adds custom matchers to vitest's
 // expect function, e.g.: expect(element).toBeInTheDocument()
 import '@testing-library/jest-dom';
+
+if (!globalThis.ResizeObserver) {
+  class ResizeObserverMock {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+
+  globalThis.ResizeObserver = ResizeObserverMock as typeof ResizeObserver;
+}

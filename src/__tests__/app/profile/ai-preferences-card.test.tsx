@@ -17,14 +17,6 @@ vi.mock('next/navigation', () => ({
   }),
 }));
 
-class ResizeObserverMock {
-  observe() {}
-  unobserve() {}
-  disconnect() {}
-}
-
-vi.stubGlobal('ResizeObserver', ResizeObserverMock);
-
 function renderCard(preferences: AIPreferencesData, onChange = vi.fn()) {
   const queryClient = new QueryClient();
   return {
