@@ -331,20 +331,17 @@ export class CourseService {
       fileId: data.fileId,
       file: data.file,
       apiKey: data.apiKey,
-    });
-
-    result.object
-      .then(async (generatedData) => {
-        try {
-          await CourseService.saveGeneratedCourseData(
-            data.courseId,
-            generatedData as AICourseGeneration
-          );
-        } catch (error) {
-          console.error('Failed to save generated course to database:', error);
+      onFinish: async ({ object }) => {
+        if (!object) {
+          throw new Error('AI course generation did not return a valid object');
         }
-      })
-      .catch(console.error);
+
+        await CourseService.saveGeneratedCourseData(
+          data.courseId,
+          object as AICourseGeneration
+        );
+      },
+    });
 
     return result;
   }
@@ -354,9 +351,6 @@ export class CourseService {
     data: AICourseGeneration
   ) {
     if (!data.modules || !Array.isArray(data.modules)) return;
-
-    // We can also optionally update the course title and description, but maybe the user just wants modules added
-    // If we want to replace or just append? We'll append modules at the end.
 
     // Get the current max order index for the modules of this course
     const lastModule = await prisma.module.findFirst({

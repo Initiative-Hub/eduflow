@@ -11,7 +11,10 @@ import {
   DEFAULT_MODELS,
   SYSTEM_PROMPT,
 } from '@/services/ai/chat-provider.constants';
-import type { StreamChatInput } from '@/services/ai/chat-provider.types';
+import type {
+  StreamChatInput,
+  StreamCourseInput,
+} from '@/services/ai/chat-provider.types';
 import { StorageService } from '../StorageService';
 import type { ChatProviderService } from './ChatProviderService';
 
@@ -48,7 +51,9 @@ export class AIGatewayService implements ChatProviderService {
     return streamText({
       experimental_transform: smoothStream(),
       model: gateway(model),
-      system: SYSTEM_PROMPT,
+      system: input.system
+        ? `${SYSTEM_PROMPT}\n\n=== ADDITIONAL CONTEXT ===\n${input.system}`
+        : SYSTEM_PROMPT,
       messages: await convertToModelMessages(input.messages),
       providerOptions: input.providerOptions,
       headers: {
@@ -57,14 +62,7 @@ export class AIGatewayService implements ChatProviderService {
     });
   }
 
-  async streamCourse(options: {
-    userId: string;
-    fileId?: string;
-    file?: File;
-    model?: string;
-    apiKey?: string;
-    providerOptions?: any;
-  }) {
+  async streamCourse(options: StreamCourseInput) {
     let pdfBuffer: Buffer;
 
     if (options.fileId) {
@@ -97,6 +95,7 @@ export class AIGatewayService implements ChatProviderService {
       headers: {
         Authorization: `Bearer ${apiKey}`,
       },
+      onFinish: options.onFinish,
     });
   }
 }
