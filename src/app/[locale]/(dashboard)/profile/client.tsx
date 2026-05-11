@@ -1,57 +1,42 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { KeyRound, Loader2, Shield } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { DialogTemplate } from '@/components/custom/dialog';
-import { FormTemplate } from '@/components/custom/form';
 import { Button } from '@/components/ui/button';
-import { useTranslatedFields } from '@/hooks/use-translated-fields';
 import { AccountDetailsCard } from './account-details-card';
+import {
+  AIPreferencesCard,
+  type AIPreferencesData,
+} from './ai-preferences-card';
+import { ChangePasswordDialog } from './change-password-dialog';
 import { PersonalInfoCard } from './personal-info-card';
 import {
-  type ChangePasswordFormData,
-  changePasswordDefaultValues,
-  changePasswordFields,
-  createChangePasswordSchema,
-  createSetPasswordSchema,
+  DEFAULT_AI_PREFERENCES,
   type ProfileFormData,
   profileSchema,
-  type SetPasswordFormData,
-  setPasswordDefaultValues,
-  setPasswordFields,
 } from './profile.config';
 import { SecurityInfoCard } from './security-info-card';
+import { SetPasswordDialog } from './set-password-dialog';
 import { useProfile } from './use-profile';
 
 export default function ProfileClient() {
   const t = useTranslations('ProfilePage');
-
-  const pwMsgs = {
-    tooShort: t('validation.passwordTooShort'),
-    invalid: t('validation.passwordInvalid'),
-    confirmRequired: t('validation.confirmPasswordRequired'),
-    mustMatch: t('validation.passwordsMustMatch'),
-  };
-  const setPasswordSchema = createSetPasswordSchema(pwMsgs);
-  const changePasswordSchema = createChangePasswordSchema({
-    ...pwMsgs,
-    sameAsCurrent: t('validation.passwordSameAsCurrent'),
-  });
-
-  const translatedPasswordFields = useTranslatedFields(
-    setPasswordFields,
-    'ProfilePage'
-  );
-  const translatedChangePasswordFields = useTranslatedFields(
-    changePasswordFields,
-    'ProfilePage'
-  );
   const [isSetPasswordDialogOpen, setIsSetPasswordDialogOpen] = useState(false);
   const [isChangePasswordDialogOpen, setIsChangePasswordDialogOpen] =
     useState(false);
+
+  // Default AI preferences - will be replaced with actual data from service later
+  const [aiPreferences, setAiPreferences] = useState<AIPreferencesData>(
+    DEFAULT_AI_PREFERENCES
+  );
+
+  const handleAiPreferencesChange = (newPreferences: AIPreferencesData) => {
+    setAiPreferences(newPreferences);
+    // TODO: Call service to save preferences
+  };
 
   const {
     basicInfo,
@@ -77,25 +62,19 @@ export default function ProfileClient() {
     },
   });
 
-  const passwordForm = useForm<SetPasswordFormData>({
-    resolver: zodResolver(setPasswordSchema),
-    defaultValues: setPasswordDefaultValues,
-  });
+  const {
+    reset: resetForm,
+    formState: { isDirty },
+  } = form;
 
-  const changePasswordForm = useForm<ChangePasswordFormData>({
-    resolver: zodResolver(changePasswordSchema),
-    defaultValues: changePasswordDefaultValues,
-  });
-
-  // Update form when basicInfo is loaded
   useEffect(() => {
     if (!basicInfo) return;
-    form.reset({
+    resetForm({
       name: basicInfo.name,
       email: basicInfo.email,
       bio: basicInfo.bio ?? '',
     });
-  }, [basicInfo, form]);
+  }, [basicInfo, resetForm]);
 
   const handleDiscard = () => {
     if (!basicInfo) return;
@@ -105,24 +84,6 @@ export default function ProfileClient() {
       bio: basicInfo.bio ?? '',
     });
     setIsEditing(false);
-  };
-
-  const handlePasswordSubmit = (data: SetPasswordFormData) => {
-    handleSetPassword(data.password, {
-      onSuccess: () => {
-        setIsSetPasswordDialogOpen(false);
-        passwordForm.reset();
-      },
-    });
-  };
-
-  const handleChangePasswordSubmit = (data: ChangePasswordFormData) => {
-    handleChangePassword(data, {
-      onSuccess: () => {
-        setIsChangePasswordDialogOpen(false);
-        changePasswordForm.reset();
-      },
-    });
   };
 
   if (isLoading) {
@@ -137,7 +98,6 @@ export default function ProfileClient() {
 
   return (
     <>
-      {/* Page header */}
       <div className="fade-in animate-in duration-300">
         <h1 className="font-bold text-2xl text-foreground tracking-tight">
           {t('title')}
@@ -148,8 +108,8 @@ export default function ProfileClient() {
       <FormProvider {...form}>
         <form
           onSubmit={form.handleSubmit((data) => {
-            if (!form.formState.isDirty) {
-              setIsEditing(false); // no changes in form
+            if (!isDirty) {
+              setIsEditing(false);
               return;
             }
             handleSubmit(data);
@@ -164,14 +124,12 @@ export default function ProfileClient() {
             onEditToggle={() => setIsEditing(true)}
           />
 
-          {/* Account details */}
           <AccountDetailsCard
             role={basicInfo.role}
             createdAt={new Date(basicInfo.createdAt).toISOString()}
             emailVerified={basicInfo.emailVerified}
           />
 
-          {/* Security info */}
           <SecurityInfoCard
             provider={securityInfo.provider}
             hasPassword={securityInfo.hasPassword}
@@ -180,6 +138,12 @@ export default function ProfileClient() {
             onChangePassword={() => setIsChangePasswordDialogOpen(true)}
             isResetting={isSettingPassword}
             isChanging={isChangingPassword}
+          />
+
+          <AIPreferencesCard
+            preferences={aiPreferences}
+            onChange={handleAiPreferencesChange}
+            isSaving={false}
           />
 
           {isEditing && (
@@ -206,63 +170,17 @@ export default function ProfileClient() {
         </form>
       </FormProvider>
 
-      {/* Set Password Dialog */}
-      <DialogTemplate
+      <SetPasswordDialog
         isOpen={isSetPasswordDialogOpen}
         onOpenChange={setIsSetPasswordDialogOpen}
-        className="max-w-md overflow-hidden rounded-2xl p-0 shadow-2xl"
-      >
-        <div className="border-primary/10 border-b bg-primary/5 p-8 text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-            <Shield className="size-8" />
-          </div>
-          <h2 className="font-bold text-foreground text-xl">
-            {t('setPasswordDialog.title')}
-          </h2>
-          <p className="mt-2 px-4 text-muted-foreground text-sm">
-            {t('setPasswordDialog.description')}
-          </p>
-        </div>
+        onSubmit={handleSetPassword}
+      />
 
-        <FormTemplate
-          schema={setPasswordSchema}
-          defaultValues={setPasswordDefaultValues}
-          fields={translatedPasswordFields}
-          onSubmit={handlePasswordSubmit}
-          submitLabel={t('setPasswordDialog.submit')}
-          form={passwordForm}
-          className="gap-5 p-8"
-        />
-      </DialogTemplate>
-
-      {/* Change Password Dialog */}
-      <DialogTemplate
+      <ChangePasswordDialog
         isOpen={isChangePasswordDialogOpen}
         onOpenChange={setIsChangePasswordDialogOpen}
-        className="max-w-md overflow-hidden rounded-2xl p-0 shadow-2xl"
-      >
-        <div className="border-primary/10 border-b bg-primary/5 p-8 text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-            <KeyRound className="size-8" />
-          </div>
-          <h2 className="font-bold text-foreground text-xl">
-            {t('changePasswordDialog.title')}
-          </h2>
-          <p className="mt-2 px-4 text-muted-foreground text-sm">
-            {t('changePasswordDialog.description')}
-          </p>
-        </div>
-
-        <FormTemplate
-          schema={changePasswordSchema}
-          defaultValues={changePasswordDefaultValues}
-          fields={translatedChangePasswordFields}
-          onSubmit={handleChangePasswordSubmit}
-          submitLabel={t('changePasswordDialog.submit')}
-          form={changePasswordForm}
-          className="gap-5 p-8"
-        />
-      </DialogTemplate>
+        onSubmit={handleChangePassword}
+      />
     </>
   );
 }
