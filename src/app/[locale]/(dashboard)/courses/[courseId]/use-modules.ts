@@ -47,8 +47,6 @@ export function useModules(courseId: string) {
     schema: aiCourseGenerationSchema,
     onFinish: async () => {
       setIsSaving(true);
-      // Give the server time to run the database save transactions
-      await new Promise((resolve) => setTimeout(resolve, 2000));
       await queryClient.invalidateQueries({ queryKey: ['modules', courseId] });
       setIsSaving(false);
       toast.success(t('AiGeneration.success'));

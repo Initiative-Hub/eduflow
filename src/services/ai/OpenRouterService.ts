@@ -12,7 +12,10 @@ import {
   DEFAULT_MODELS,
   SYSTEM_PROMPT,
 } from '@/services/ai/chat-provider.constants';
-import type { StreamChatInput } from '@/services/ai/chat-provider.types';
+import type {
+  StreamChatInput,
+  StreamCourseInput,
+} from '@/services/ai/chat-provider.types';
 import { StorageService } from '../StorageService';
 import type { ChatProviderService } from './ChatProviderService';
 
@@ -40,14 +43,7 @@ export class OpenRouterService implements ChatProviderService {
     });
   }
 
-  async streamCourse(options: {
-    userId: string;
-    fileId?: string;
-    file?: File;
-    model?: string;
-    apiKey?: string;
-    providerOptions?: any;
-  }) {
+  async streamCourse(options: StreamCourseInput) {
     let pdfBuffer: Buffer;
 
     if (options.fileId) {
@@ -78,6 +74,7 @@ export class OpenRouterService implements ChatProviderService {
       schema: aiCourseGenerationSchema,
       system: COURSE_GENERATION_PROMPT,
       prompt: `Content to analyze and transform into a course:\n\n${markdownContent}`,
+      onFinish: options.onFinish,
     });
   }
 }
