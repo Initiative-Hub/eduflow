@@ -1,13 +1,13 @@
-import type { ReactElement } from 'react';
 import {
   BookOpen,
-  FileText,
+  ClipboardList,
   Files,
   LineChart,
   MessageSquare,
   Settings,
   Users,
 } from 'lucide-react';
+import type { ReactElement } from 'react';
 
 export type SidebarItem = {
   name: string;
@@ -16,18 +16,10 @@ export type SidebarItem = {
   exact?: boolean;
 };
 
-/**
- * Shared icon className applied to every sidebar icon.
- * Centralised here so AppSidebar and any future sidebar variant stay in sync.
- */
+
 export const sidebarIconClassName =
   'size-5 fill-primary/60 text-primary/80 transition-colors group-hover/menu-button:fill-primary group-hover/menu-button:text-primary group-data-[active=true]/menu-button:fill-primary group-data-[active=true]/menu-button:text-primary';
 
-/**
- * Returns the course-level navigation items for the given courseId.
- * Previously duplicated verbatim in `AppSidebar` and the now-deleted
- * `CourseMenuSidebar` component.
- */
 export function getCourseNavItems(
   courseId: string,
   iconCls: string
@@ -45,9 +37,9 @@ export function getCourseNavItems(
       icon: <MessageSquare className={iconCls} />,
     },
     {
-      name: 'Assessments',
-      url: `/courses/${courseId}/assessments`,
-      icon: <FileText className={iconCls} />,
+      name: 'Question Bank',
+      url: `/courses/${courseId}/question-bank`,
+      icon: <ClipboardList className={iconCls} />,
     },
     {
       name: 'Files',

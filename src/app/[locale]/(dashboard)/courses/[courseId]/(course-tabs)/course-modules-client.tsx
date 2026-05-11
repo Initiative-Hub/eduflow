@@ -1,6 +1,7 @@
 'use client';
 
 import { Plus } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { Accordion } from '@/components/ui/accordion';
@@ -11,6 +12,7 @@ import { ModuleAccordionItem } from '../_components/module-accordion-item';
 import type { CreateLessonFormData } from '../create-lesson.config';
 import type { CreateModuleFormData } from '../create-module.config';
 import { useModules } from '../use-modules';
+import { useQuestionBank } from '../use-question-bank';
 
 interface CourseModulesClientProps {
   courseId: string;
@@ -18,6 +20,7 @@ interface CourseModulesClientProps {
 
 export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
   const t = useTranslations('Courses.CourseModules');
+  const router = useRouter();
 
   const {
     modules,
@@ -27,6 +30,8 @@ export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
     isCreatingLesson,
     handleCreateLesson,
   } = useModules(courseId);
+
+  const { quizzes } = useQuestionBank({ courseId });
 
   const [isAddModuleOpen, setIsAddModuleOpen] = useState(false);
   const [activeModuleIdForLesson, setActiveModuleIdForLesson] = useState<
@@ -47,6 +52,10 @@ export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
         { onSuccess: () => setActiveModuleIdForLesson(null) }
       );
     }
+  };
+
+  const handleCreateQuiz = (lessonId: string) => {
+    router.push(`/courses/${courseId}/create-quiz?lessonId=${lessonId}`);
   };
 
   return (
@@ -83,6 +92,8 @@ export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
               moduleItem={moduleItem}
               courseId={courseId}
               onAddLesson={setActiveModuleIdForLesson}
+              onCreateQuiz={handleCreateQuiz}
+              quizzes={quizzes}
             />
           ))}
         </Accordion>
