@@ -4,7 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import { Baby, type Bot, Briefcase, Cpu } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
@@ -51,6 +51,13 @@ export function AIPreferencesCard({
     ...preferences,
     primaryLanguage: currentLocale as 'en' | 'vi',
   });
+
+  useEffect(() => {
+    setLocalPrefs({
+      ...preferences,
+      primaryLanguage: currentLocale as 'en' | 'vi',
+    });
+  }, [preferences, currentLocale]);
 
   const { mutate: updateLocale, isPending: isUpdatingLocale } = useMutation({
     mutationFn: async (newLocale: Locale) => {
