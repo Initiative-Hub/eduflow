@@ -27,7 +27,22 @@ vi.stubGlobal('ResizeObserver', ResizeObserverMock);
 
 function renderCard(preferences: AIPreferencesData, onChange = vi.fn()) {
   const queryClient = new QueryClient();
-  return render(
+  return {
+    queryClient,
+    ...render(
+      <QueryClientProvider client={queryClient}>
+        <AIPreferencesCard preferences={preferences} onChange={onChange} />
+      </QueryClientProvider>
+    ),
+  };
+}
+
+function renderWithClient(
+  queryClient: QueryClient,
+  preferences: AIPreferencesData,
+  onChange = vi.fn()
+) {
+  return (
     <QueryClientProvider client={queryClient}>
       <AIPreferencesCard preferences={preferences} onChange={onChange} />
     </QueryClientProvider>
@@ -51,21 +66,13 @@ describe('AIPreferencesCard', () => {
       insightFeedback: true,
     };
 
-    const { rerender } = renderCard(initialPreferences);
+    const { queryClient, rerender } = renderCard(initialPreferences);
 
     expect(
       screen.getByRole('button', { name: 'interactionStyle.friendly' })
     ).toHaveClass('border-primary');
 
-    const queryClient = new QueryClient();
-    rerender(
-      <QueryClientProvider client={queryClient}>
-        <AIPreferencesCard
-          preferences={updatedPreferences}
-          onChange={vi.fn()}
-        />
-      </QueryClientProvider>
-    );
+    rerender(renderWithClient(queryClient, updatedPreferences));
 
     expect(
       screen.getByRole('button', { name: 'interactionStyle.technical' })
