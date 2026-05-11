@@ -1,7 +1,7 @@
 'use client';
 
 import { useMutation } from '@tanstack/react-query';
-import { Baby, type Bot, Briefcase, Cpu } from 'lucide-react';
+import { Baby, Briefcase, Cpu } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
@@ -14,7 +14,7 @@ import { apiClient } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import type {
   AIPreferencesData,
-  InteractionStyle,
+  InteractionStyleOption,
   ResponseTone,
 } from './profile.config';
 
@@ -26,11 +26,7 @@ interface AIPreferencesCardProps {
   isSaving?: boolean;
 }
 
-const INTERACTION_STYLES: {
-  value: InteractionStyle;
-  icon: typeof Bot;
-  labelKey: string;
-}[] = [
+const INTERACTION_STYLES: InteractionStyleOption[] = [
   { value: 'friendly', icon: Baby, labelKey: 'friendly' },
   { value: 'professional', icon: Briefcase, labelKey: 'professional' },
   { value: 'technical', icon: Cpu, labelKey: 'technical' },
