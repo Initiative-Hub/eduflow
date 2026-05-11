@@ -205,19 +205,39 @@ export class ChatPersistenceService {
       if (!chat) return null;
 
       await prisma.$transaction(async (tx) => {
-        await tx.aiChatMessage.deleteMany({ where: { chatId } });
-        await tx.aiChatMessage.createMany({
-          data: messages.map((message, index) => ({
-            id: message.id,
-            chatId,
-            userId,
-            role: toStoredRole(message.role),
-            parts: message.parts as unknown as Prisma.InputJsonValue,
-            provider,
-            model,
-            createdAt: new Date(updatedAt.getTime() + index),
-          })),
-        });
+        const messageIds = messages.map((message) => message.id);
+        const existingMessages =
+          messageIds.length > 0
+            ? await tx.aiChatMessage.findMany({
+                where: {
+                  chatId,
+                  id: { in: messageIds },
+                },
+                select: { id: true },
+              })
+            : [];
+        const existingMessageIds = new Set(
+          existingMessages.map((message) => message.id)
+        );
+        const newMessages = messages.filter(
+          (message) => !existingMessageIds.has(message.id)
+        );
+
+        if (newMessages.length > 0) {
+          await tx.aiChatMessage.createMany({
+            data: newMessages.map((message, index) => ({
+              id: message.id,
+              chatId,
+              userId,
+              role: toStoredRole(message.role),
+              parts: message.parts as unknown as Prisma.InputJsonValue,
+              provider,
+              model,
+              createdAt: new Date(updatedAt.getTime() + index),
+            })),
+          });
+        }
+
         await tx.aiChat.update({
           where: { id: chatId },
           data: {
@@ -234,7 +254,9 @@ export class ChatPersistenceService {
     if (!guestId) return null;
 
     const chatData = await CacheService.getCache<CachedChat>(chatId);
-    if (!chatData || chatData.guestId !== guestId) return null;
+    if (!chatData || chatData.guestId !== guestId || chatData.deletedAt) {
+      return null;
+    }
 
     const nextData: CachedChat = {
       ...chatData,

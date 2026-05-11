@@ -14,6 +14,7 @@ vi.mock('@/lib/prisma', () => ({
       update: vi.fn(),
     },
     aiChatMessage: {
+      findMany: vi.fn(),
       deleteMany: vi.fn(),
       createMany: vi.fn(),
     },
@@ -37,6 +38,7 @@ const prismaMock = prisma as unknown as {
     update: ReturnType<typeof vi.fn>;
   };
   aiChatMessage: {
+    findMany: ReturnType<typeof vi.fn>;
     deleteMany: ReturnType<typeof vi.fn>;
     createMany: ReturnType<typeof vi.fn>;
   };
@@ -115,12 +117,13 @@ describe('ChatPersistenceService', () => {
     expect(prismaMock.aiChat.create).not.toHaveBeenCalled();
   });
 
-  it('persists logged-in messages to the database without checking guest rate limits', async () => {
+  it('appends only new logged-in messages without deleting existing messages', async () => {
     prismaMock.aiChat.findFirst.mockResolvedValueOnce({
       id: 'chat-db-1',
       userId: 'user-1',
       title: 'Explain gravity',
     });
+    prismaMock.aiChatMessage.findMany.mockResolvedValueOnce([{ id: 'msg-1' }]);
 
     await ChatPersistenceService.saveMessages({
       chatId: 'chat-db-1',
@@ -130,19 +133,16 @@ describe('ChatPersistenceService', () => {
       model: 'gemini-2.5-pro',
     });
 
-    expect(prismaMock.aiChatMessage.deleteMany).toHaveBeenCalledWith({
-      where: { chatId: 'chat-db-1' },
+    expect(prismaMock.aiChatMessage.findMany).toHaveBeenCalledWith({
+      where: {
+        chatId: 'chat-db-1',
+        id: { in: ['msg-1', 'msg-2'] },
+      },
+      select: { id: true },
     });
+    expect(prismaMock.aiChatMessage.deleteMany).not.toHaveBeenCalled();
     expect(prismaMock.aiChatMessage.createMany).toHaveBeenCalledWith({
       data: [
-        expect.objectContaining({
-          chatId: 'chat-db-1',
-          userId: 'user-1',
-          role: 'USER',
-          parts: userMessage.parts,
-          provider: 'openrouter',
-          model: 'gemini-2.5-pro',
-        }),
         expect.objectContaining({
           chatId: 'chat-db-1',
           userId: 'user-1',
@@ -153,6 +153,28 @@ describe('ChatPersistenceService', () => {
         }),
       ],
     });
+    expect(cacheMock.setCache).not.toHaveBeenCalled();
+  });
+
+  it('does not persist guest messages or re-index deleted cached chats', async () => {
+    cacheMock.getCache.mockResolvedValueOnce({
+      guestId: 'guest-1',
+      title: 'Explain gravity',
+      messageCount: 2,
+      messages: [userMessage],
+      updatedAt: '2026-01-02T00:00:00.000Z',
+      deletedAt: '2026-01-03T00:00:00.000Z',
+    });
+
+    const result = await ChatPersistenceService.saveMessages({
+      chatId: 'chat-1',
+      guestId: 'guest-1',
+      messages: [userMessage, assistantMessage],
+      provider: 'openrouter',
+      model: 'gemini-2.5-pro',
+    });
+
+    expect(result).toBeNull();
     expect(cacheMock.setCache).not.toHaveBeenCalled();
   });
 
