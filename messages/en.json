@@ -582,6 +582,35 @@
       "saving": "Saving...",
       "setPassword": "Set password"
     },
+    "aiPreferences": {
+      "insightFeedback": {
+        "description": "Bi-weekly AI academic performance review",
+        "label": "Insight Feedback"
+      },
+      "interactionStyle": {
+        "friendly": "Friendly",
+        "label": "AI Interaction Style",
+        "professional": "Professional",
+        "technical": "Technical"
+      },
+      "primaryLanguage": {
+        "description": "Interface and AI output language",
+        "english": "English",
+        "label": "Primary Language",
+        "vietnamese": "Tiếng Việt"
+      },
+      "quizScoreAlerts": {
+        "description": "Instant notification on grade results",
+        "label": "Quiz Score Alerts"
+      },
+      "responseTone": {
+        "balanced": "Balanced",
+        "direct": "Direct",
+        "encouraging": "Encouraging",
+        "label": "Response Tone"
+      },
+      "title": "AI & System Preferences"
+    },
     "avatar": {
       "description": "Choose a new avatar image.",
       "edit": "Edit",

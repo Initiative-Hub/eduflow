@@ -7,9 +7,17 @@ import { useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { AccountDetailsCard } from './account-details-card';
+import {
+  AIPreferencesCard,
+  type AIPreferencesData,
+} from './ai-preferences-card';
 import { ChangePasswordDialog } from './change-password-dialog';
 import { PersonalInfoCard } from './personal-info-card';
-import { type ProfileFormData, profileSchema } from './profile.config';
+import {
+  DEFAULT_AI_PREFERENCES,
+  type ProfileFormData,
+  profileSchema,
+} from './profile.config';
 import { SecurityInfoCard } from './security-info-card';
 import { SetPasswordDialog } from './set-password-dialog';
 import { useProfile } from './use-profile';
@@ -19,6 +27,16 @@ export default function ProfileClient() {
   const [isSetPasswordDialogOpen, setIsSetPasswordDialogOpen] = useState(false);
   const [isChangePasswordDialogOpen, setIsChangePasswordDialogOpen] =
     useState(false);
+
+  // Default AI preferences - will be replaced with actual data from service later
+  const [aiPreferences, setAiPreferences] = useState<AIPreferencesData>(
+    DEFAULT_AI_PREFERENCES
+  );
+
+  const handleAiPreferencesChange = (newPreferences: AIPreferencesData) => {
+    setAiPreferences(newPreferences);
+    // TODO: Call service to save preferences
+  };
 
   const {
     basicInfo,
@@ -120,6 +138,12 @@ export default function ProfileClient() {
             onChangePassword={() => setIsChangePasswordDialogOpen(true)}
             isResetting={isSettingPassword}
             isChanging={isChangingPassword}
+          />
+
+          <AIPreferencesCard
+            preferences={aiPreferences}
+            onChange={handleAiPreferencesChange}
+            isSaving={false}
           />
 
           {isEditing && (
