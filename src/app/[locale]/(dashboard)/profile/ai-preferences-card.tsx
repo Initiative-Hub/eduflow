@@ -105,15 +105,15 @@ export function AIPreferencesCard({
                   disabled={isDisabled}
                   onClick={() => handleChange('interactionStyle', value)}
                   className={cn(
-                    'flex w-20 cursor-pointer flex-col items-center gap-1.5 rounded-xl border-2 px-2 py-3 transition-all',
+                    'flex w-24 cursor-pointer flex-col items-center gap-2 rounded-xl border-2 px-3 py-4 transition-all',
                     localPrefs.interactionStyle === value
                       ? 'border-primary bg-primary/5 text-primary'
                       : 'border-border bg-background text-muted-foreground hover:border-primary/50 hover:bg-muted/50'
                   )}
                   aria-label={t(`interactionStyle.${labelKey}`)}
                 >
-                  <Icon className="size-5" />
-                  <span className="font-medium text-[10px] leading-tight">
+                  <Icon className="size-6" />
+                  <span className="font-medium text-xs leading-tight">
                     {t(`interactionStyle.${labelKey}`)}
                   </span>
                 </button>
