@@ -11,7 +11,7 @@ PostgreSQL: The database (installed directly or via Docker).
 
 Package Manager: Bun.
 
-### 2. Get Source Code & Install Dependencies
+### 2. Get Source Code & Install Dependencies 
 ```bash
 # 1. Clone the repository
 git clone <your-git-repo-link>
