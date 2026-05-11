@@ -12,10 +12,10 @@ import { Switch } from '@/components/ui/switch';
 import type { Locale } from '@/i18n/routing';
 import { apiClient } from '@/lib/api';
 import { cn } from '@/lib/utils';
-import type {
-  AIPreferencesData,
-  InteractionStyle,
-  ResponseTone,
+import {
+  type AIPreferencesData,
+  type InteractionStyle,
+  RESPONSE_TONE_STEPS,
 } from './profile.config';
 
 export type { AIPreferencesData } from './profile.config';
@@ -35,8 +35,6 @@ const INTERACTION_STYLES: {
   { value: 'professional', icon: Briefcase, labelKey: 'professional' },
   { value: 'technical', icon: Cpu, labelKey: 'technical' },
 ];
-
-const TONE_STEPS: ResponseTone[] = ['encouraging', 'balanced', 'direct'];
 
 export function AIPreferencesCard({
   preferences,
@@ -77,7 +75,7 @@ export function AIPreferencesCard({
     updateLocale(newLanguage);
   };
 
-  const toneIndex = TONE_STEPS.indexOf(localPrefs.responseTone);
+  const toneIndex = RESPONSE_TONE_STEPS.indexOf(localPrefs.responseTone);
   const toneSliderValue = toneIndex === -1 ? 1 : toneIndex;
   const isDisabled = isSaving || isUpdatingLocale;
 
@@ -140,7 +138,7 @@ export function AIPreferencesCard({
                 step={1}
                 disabled={isDisabled}
                 onValueChange={([val]) =>
-                  handleChange('responseTone', TONE_STEPS[val])
+                  handleChange('responseTone', RESPONSE_TONE_STEPS[val])
                 }
                 className="w-full"
               />
