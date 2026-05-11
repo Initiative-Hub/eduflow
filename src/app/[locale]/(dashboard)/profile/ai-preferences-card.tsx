@@ -111,6 +111,7 @@ export function AIPreferencesCard({
                       : 'border-border bg-background text-muted-foreground hover:border-primary/50 hover:bg-muted/50'
                   )}
                   aria-label={t(`interactionStyle.${labelKey}`)}
+                  aria-pressed={localPrefs.interactionStyle === value}
                 >
                   <Icon className="size-6" />
                   <span className="font-medium text-xs leading-tight">
