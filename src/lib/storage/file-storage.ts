@@ -49,9 +49,7 @@ export function buildInventoryObjectKey(
       ? `courses/${options.courseId}/${safePath}`
       : `courses/${options.courseId}`;
   } else {
-    basePrefix = safePath
-      ? `users/${userId}/${safePath}`
-      : `users/${userId}`;
+    basePrefix = safePath ? `users/${userId}/${safePath}` : `users/${userId}`;
   }
 
   return `${basePrefix}/${randomUUID()}-${safeName}`;
