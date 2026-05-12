@@ -10,7 +10,7 @@ import {
   Section,
   Tailwind,
   Text,
-} from '@react-email/components';
+} from 'react-email';
 import { APP_URL } from '@/lib/api/endpoints';
 
 interface EduFlowVerifyEmailProps {

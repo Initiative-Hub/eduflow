@@ -1,6 +1,6 @@
-import { render } from '@react-email/components';
 import nodemailer from 'nodemailer';
 import { createElement } from 'react';
+import { render } from 'react-email';
 import { DEV_MODE } from '@/constants/common';
 import { EduFlowPasswordChangedEmail } from '@/templates/emails/eduflow-password-changed';
 import { EduFlowResetPasswordEmail } from '@/templates/emails/eduflow-reset-password';
