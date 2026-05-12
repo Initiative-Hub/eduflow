@@ -1,7 +1,13 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
-import { apiClient } from '@/lib/api/api-client';
+'use client';
 
+import { experimental_useObject as useObject } from '@ai-sdk/react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
+import { useRef, useState } from 'react';
+import { toast } from 'sonner';
+
+import { apiClient } from '@/lib/api/api-client';
+import { aiCourseGenerationSchema } from '@/lib/validations/course.schema';
 export interface Lesson {
   id: string;
   title: string;
@@ -27,6 +33,68 @@ export interface Module {
  */
 export function useModules(courseId: string) {
   const queryClient = useQueryClient();
+  const t = useTranslations('Courses.CourseModules');
+
+  const [isSaving, setIsSaving] = useState(false);
+  const fileRef = useRef<File | null>(null);
+
+  const {
+    object: streamingCourse,
+    submit,
+    isLoading: isStreaming,
+  } = useObject({
+    api: '/api/v1/ai/courses',
+    schema: aiCourseGenerationSchema,
+    onFinish: async () => {
+      setIsSaving(true);
+      await queryClient.invalidateQueries({ queryKey: ['modules', courseId] });
+      setIsSaving(false);
+      toast.success(t('AiGeneration.success'));
+    },
+    onError: (error) => {
+      toast.error(t('AiGeneration.failed'));
+      console.error(error);
+    },
+    fetch: async (url, init) => {
+      if (fileRef.current && init?.body) {
+        const parsedBody = JSON.parse(init.body as string);
+        const formData = new FormData();
+        formData.append('courseId', parsedBody.courseId);
+        if (parsedBody.apiKey) formData.append('apiKey', parsedBody.apiKey);
+        formData.append('file', fileRef.current);
+
+        const headers = new Headers(init.headers);
+        // Remove Content-Type so browser sets it to multipart/form-data with correct boundary
+        headers.delete('Content-Type');
+
+        const newInit = { ...init, headers, body: formData };
+        // Clear the ref so we don't accidentally send it again on retries/future requests
+        fileRef.current = null;
+
+        return fetch(url, newInit);
+      }
+      return fetch(url, init);
+    },
+  });
+
+  const generateCourseModules = async (selection: {
+    fileId?: string;
+    file?: File;
+  }) => {
+    try {
+      if (selection.file) {
+        fileRef.current = selection.file;
+        submit({ courseId });
+        toast.success(t('AiGeneration.documentReceived'));
+      } else if (selection.fileId) {
+        submit({ fileId: selection.fileId, courseId });
+        toast.success(t('AiGeneration.startingGeneration'));
+      }
+    } catch (error) {
+      console.error('AI selection error:', error);
+      toast.error(t('AiGeneration.error'));
+    }
+  };
 
   const query = useQuery({
     queryKey: ['modules', courseId],
@@ -91,6 +159,11 @@ export function useModules(courseId: string) {
 
     isCreatingLesson: createLessonMutation.isPending,
     handleCreateLesson: createLessonMutation.mutate,
+
+    streamingCourse,
+    isStreaming,
+    isSaving,
+    generateCourseModules,
 
     getAdjacentLessons,
   };

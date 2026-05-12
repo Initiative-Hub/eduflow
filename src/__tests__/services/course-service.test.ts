@@ -1,42 +1,80 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { prisma } from '@/lib/prisma';
-import { CourseService } from '@/services/CourseService';
 
-vi.mock('@/lib/prisma', () => ({
-  prisma: {
-    course: {
-      findMany: vi.fn(),
-    },
+import { CourseService } from '@/services/CourseService';
+import { ChatProviderFactory } from '@/services/ai/ChatProviderFactory';
+
+vi.mock('@/services/ai/ChatProviderFactory', () => ({
+  ChatProviderFactory: {
+    create: vi.fn(),
   },
 }));
 
-describe('CourseService', () => {
-  const prismaMock = prisma as unknown as {
-    course: {
-      findMany: ReturnType<typeof vi.fn>;
-    };
-  };
-
+describe('CourseService.generateModulesFromAI', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('queries courses by ownerId when listing owned courses', async () => {
-    prismaMock.course.findMany.mockResolvedValue([]);
+  it('passes an onFinish callback to the AI provider so persistence runs before the stream closes', async () => {
+    const saveSpy = vi
+      .spyOn(CourseService, 'saveGeneratedCourseData')
+      .mockResolvedValue(undefined);
 
-    await CourseService.getCoursesByOwner('teacher-1');
+    const streamCourse = vi.fn().mockResolvedValue({
+      object: Promise.resolve({ modules: [] }),
+      toTextStreamResponse: vi.fn(),
+    });
 
-    expect(prisma.course.findMany).toHaveBeenCalledWith({
-      where: { ownerId: 'teacher-1' },
-      orderBy: { createdAt: 'desc' },
-      include: {
-        _count: {
-          select: {
-            modules: true,
-            enrollments: true,
+    vi.mocked(ChatProviderFactory.create).mockReturnValue({
+      streamCourse,
+    } as never);
+
+    await CourseService.generateModulesFromAI({
+      userId: 'user-1',
+      courseId: 'course-1',
+    });
+
+    const options = vi.mocked(streamCourse).mock.calls[0]?.[0];
+
+    expect(options).toEqual(
+      expect.objectContaining({
+        userId: 'user-1',
+        onFinish: expect.any(Function),
+      })
+    );
+
+    await options.onFinish?.({
+      object: {
+        modules: [
+          {
+            title: 'Introduction',
+            lessons: [
+              {
+                lessonTitle: 'Lesson 1',
+                content: 'Welcome to the course',
+              },
+            ],
           },
-        },
+        ],
       },
+      error: undefined,
+      response: {} as never,
+      usage: {} as never,
+      providerMetadata: undefined,
+      warnings: undefined,
+    });
+
+    expect(saveSpy).toHaveBeenCalledWith('course-1', {
+      modules: [
+        {
+          title: 'Introduction',
+          lessons: [
+            {
+              lessonTitle: 'Lesson 1',
+              content: 'Welcome to the course',
+            },
+          ],
+        },
+      ],
     });
   });
 });

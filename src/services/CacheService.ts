@@ -1,16 +1,30 @@
 import { Ratelimit } from '@upstash/ratelimit';
 import { getUpstashRestRedisClient } from '@/lib/upstash/redis/client';
 
-const redis = getUpstashRestRedisClient();
-const guestRatelimit = new Ratelimit({
-  redis,
-  limiter: Ratelimit.slidingWindow(10, '24 h'),
-  analytics: false,
-});
+let _redis: ReturnType<typeof getUpstashRestRedisClient> | null = null;
+let _guestRatelimit: Ratelimit | null = null;
+
+function getRedis() {
+  if (!_redis) {
+    _redis = getUpstashRestRedisClient();
+  }
+  return _redis;
+}
+
+function getRatelimit() {
+  if (!_guestRatelimit) {
+    _guestRatelimit = new Ratelimit({
+      redis: getRedis(),
+      limiter: Ratelimit.slidingWindow(10, '24 h'),
+      analytics: false,
+    });
+  }
+  return _guestRatelimit;
+}
 
 export class CacheService {
   static async getCache<T>(key: string): Promise<T | null> {
-    const cachedValue = await redis.get<T>(key);
+    const cachedValue = await getRedis().get<T>(key);
 
     if (!cachedValue) {
       return null;
@@ -25,25 +39,25 @@ export class CacheService {
     options?: { ttlSeconds?: number; reset?: boolean }
   ) {
     if (options?.reset) {
-      await redis.del(key);
+      await getRedis().del(key);
     }
 
     const payload = JSON.stringify(value);
 
     if (options?.ttlSeconds) {
-      await redis.set(key, payload, { ex: options.ttlSeconds });
+      await getRedis().set(key, payload, { ex: options.ttlSeconds });
       return;
     }
 
-    await redis.set(key, payload);
+    await getRedis().set(key, payload);
   }
 
   static async deleteCache(key: string) {
-    return redis.del(key);
+    return getRedis().del(key);
   }
 
   static async refreshCache<T>(key: string, value: T, ttlSeconds?: number) {
-    await redis.del(key);
+    await getRedis().del(key);
     await CacheService.setCache(key, value, { ttlSeconds });
   }
 
@@ -54,7 +68,7 @@ export class CacheService {
   static async checkGuestLimit(guestSessionId: string) {
     try {
       const cacheKey = `guest_usage:${guestSessionId}`;
-      const result = await guestRatelimit.limit(cacheKey);
+      const result = await getRatelimit().limit(cacheKey);
 
       if (!result.success) {
         return {

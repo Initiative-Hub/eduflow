@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withAuth, withRoles } from '@/lib/api/middlewares';
+import { createCourseSchema } from '@/lib/validations/course.schema';
 import { CourseService } from '@/services/CourseService';
 
 /**
@@ -32,11 +33,6 @@ export const GET = withAuth(async (_req, sessionData) => {
       { status: 500 }
     );
   }
-});
-
-const createCourseSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
-  description: z.string().optional(),
 });
 
 /**
@@ -91,7 +87,7 @@ export const POST = withAuth(
       const course = await CourseService.createCourse({
         ownerId: userId,
         title: parsed.data.title,
-        description: parsed.data.description,
+        description: parsed.data.description ?? undefined,
       });
 
       return NextResponse.json(course, { status: 201 });

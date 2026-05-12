@@ -80,21 +80,21 @@ export function useAvatarMenu({ name, email, role }: useAvatarMenuProps) {
     {
       type: 'item',
       label: t('menu.profile'),
-      icon: <User className="size-5 fill-primary text-primary" />,
+      icon: <User className="size-5 text-primary" />,
       onClick: () => router.push('/profile'),
       className: 'font-bold py-3 px-2',
     },
     {
       type: 'item',
       label: t('menu.settings'),
-      icon: <Settings className="size-5 fill-primary text-primary" />,
+      icon: <Settings className="size-5 text-primary" />,
       onClick: () => router.push('/settings'),
       className: 'font-bold py-3 px-2',
     },
     {
       type: 'item',
       label: t('menu.darkMode'),
-      icon: <Moon className="size-5 fill-primary text-primary" />,
+      icon: <Moon className="size-5 text-primary" />,
       rightNode: (
         <Switch
           checked={theme === 'dark'}
