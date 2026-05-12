@@ -323,6 +323,7 @@ export class StorageService {
     }
 
     const objectKey = buildInventoryObjectKey(options.userId, normalizedName, {
+      courseId: options.courseId ?? undefined,
       relativePath: options.path,
     });
     const extension = normalizedName.includes('.')
