@@ -414,7 +414,7 @@ export function QuestionBankClient({ courseId }: QuestionBankClientProps) {
         open={!!previewQuestion}
         onOpenChange={(open) => !open && setPreviewQuestion(null)}
       >
-        <DialogContent className="flex max-h-[92vh] max-w-6xl flex-col overflow-hidden p-0">
+        <DialogContent className="flex max-h-[92vh] flex-col overflow-hidden p-0 sm:max-w-3xl">
           <DialogHeader className="border-b px-8 py-5">
             <DialogTitle className="font-bold text-xl">
               {t('questionPreview')}
