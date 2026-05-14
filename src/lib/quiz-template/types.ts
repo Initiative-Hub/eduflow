@@ -149,6 +149,158 @@ export type QuestionBlock =
   | EssayQuestion
   | TimedChallengeQuestion;
 
+// ─── Answer Field Map ────────────────────────────────────────────────────────
+
+/**
+ * Maps each question type discriminator to its answer-bearing field names.
+ * Used by utility types to derive client-safe and display-safe variants.
+ */
+export type AnswerFieldMap = {
+  'multiple-choice': 'isCorrect';
+  'true-false': 'correctAnswer';
+  'fill-in-the-blank': 'acceptableAnswers';
+  matching: 'correctPairs';
+  ordering: 'correctOrder';
+  'drag-and-drop': 'correctMapping';
+  essay: never;
+  'timed-challenge': never;
+};
+
+// ─── Utility Types ───────────────────────────────────────────────────────────
+
+/**
+ * Identity type — ensures answer fields are required (base types already have them required).
+ * Useful for explicitly marking that a type includes answer data for server-side use.
+ */
+export type WithAnswers<T extends QuestionBlock> = T;
+
+/**
+ * Strips answer fields from a question type for client-facing use.
+ * Handles nested answer fields (e.g., isCorrect inside options, acceptableAnswers inside blanks).
+ *
+ * Note: TimedChallengeQuestion is handled separately in the ClientQuestionBlock union
+ * to avoid circular type references.
+ */
+export type ClientSafe<T extends QuestionBlock> =
+  T extends MultipleChoiceQuestion
+    ? Omit<T, 'options' | 'explanation'> & {
+        options: Omit<MultipleChoiceOption, 'isCorrect'>[];
+      }
+    : T extends FillInTheBlankQuestion
+      ? Omit<T, 'blanks' | 'explanation'> & {
+          blanks: Omit<FillInTheBlankBlank, 'acceptableAnswers'>[];
+        }
+      : T extends TrueFalseQuestion
+        ? Omit<T, 'correctAnswer' | 'explanation'>
+        : T extends MatchingQuestion
+          ? Omit<T, 'correctPairs' | 'explanation'>
+          : T extends OrderingQuestion
+            ? Omit<T, 'correctOrder' | 'explanation'>
+            : T extends DragAndDropQuestion
+              ? Omit<T, 'correctMapping' | 'explanation'>
+              : T extends EssayQuestion
+                ? Omit<T, 'explanation'>
+                : T extends TimedChallengeQuestion
+                  ? Omit<T, 'innerQuestion' | 'explanation'> & {
+                      innerQuestion: ClientQuestionBlock;
+                    }
+                  : T;
+
+/**
+ * Makes answer fields optional for review/display mode.
+ * During quiz-taking, answer data is absent; during review, it's present.
+ *
+ * Note: TimedChallengeQuestion is handled separately in the DisplayQuestionBlock union
+ * to avoid circular type references.
+ */
+export type DisplaySafe<T extends QuestionBlock> =
+  T extends MultipleChoiceQuestion
+    ? Omit<T, 'options'> & {
+        options: (Omit<MultipleChoiceOption, 'isCorrect'> & {
+          isCorrect?: boolean;
+        })[];
+      }
+    : T extends FillInTheBlankQuestion
+      ? Omit<T, 'blanks'> & {
+          blanks: (Omit<FillInTheBlankBlank, 'acceptableAnswers'> & {
+            acceptableAnswers?: string[];
+          })[];
+        }
+      : T extends TrueFalseQuestion
+        ? Omit<T, 'correctAnswer'> & { correctAnswer?: boolean }
+        : T extends MatchingQuestion
+          ? Omit<T, 'correctPairs'> & { correctPairs?: MatchingPair[] }
+          : T extends OrderingQuestion
+            ? Omit<T, 'correctOrder'> & { correctOrder?: string[] }
+            : T extends DragAndDropQuestion
+              ? Omit<T, 'correctMapping'> & {
+                  correctMapping?: Record<string, string>;
+                }
+              : T extends EssayQuestion
+                ? T
+                : T extends TimedChallengeQuestion
+                  ? Omit<T, 'innerQuestion'> & {
+                      innerQuestion: DisplayQuestionBlock;
+                    }
+                  : T;
+
+// ─── Client-safe Timed Challenge (breaks circular reference) ─────────────────
+
+interface ClientTimedChallenge {
+  type: 'timed-challenge';
+  prompt: string;
+  innerQuestion: ClientQuestionBlock;
+  timeLimitSeconds: number;
+}
+
+interface DisplayTimedChallenge {
+  type: 'timed-challenge';
+  prompt: string;
+  innerQuestion: DisplayQuestionBlock;
+  timeLimitSeconds: number;
+  explanation?: string;
+}
+
+// ─── Derived Union Types ─────────────────────────────────────────────────────
+
+/**
+ * Client-safe question block — all answer fields stripped.
+ * Use this for student-facing quiz content where answers must not be visible.
+ */
+export type ClientQuestionBlock =
+  | ClientSafe<MultipleChoiceQuestion>
+  | ClientSafe<TrueFalseQuestion>
+  | ClientSafe<FillInTheBlankQuestion>
+  | ClientSafe<MatchingQuestion>
+  | ClientSafe<OrderingQuestion>
+  | ClientSafe<DragAndDropQuestion>
+  | ClientSafe<EssayQuestion>
+  | ClientTimedChallenge;
+
+/**
+ * Display-safe question block — answer fields are optional.
+ * Use this for question components that render in both quiz-taking and review modes.
+ */
+export type DisplayQuestionBlock =
+  | DisplaySafe<MultipleChoiceQuestion>
+  | DisplaySafe<TrueFalseQuestion>
+  | DisplaySafe<FillInTheBlankQuestion>
+  | DisplaySafe<MatchingQuestion>
+  | DisplaySafe<OrderingQuestion>
+  | DisplaySafe<DragAndDropQuestion>
+  | DisplaySafe<EssayQuestion>
+  | DisplayTimedChallenge;
+
+/**
+ * Client-safe quiz content — questions have answer fields stripped.
+ */
+export interface ClientQuizContent {
+  title: string;
+  description: string;
+  type: string;
+  questions: ClientQuestionBlock[];
+}
+
 // ─── Quiz Content ────────────────────────────────────────────────────────────
 
 export interface QuizContent {
