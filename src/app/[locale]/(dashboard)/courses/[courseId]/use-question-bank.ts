@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { apiClient } from '@/lib/api/api-client';
 import type {
   QuestionBankEntry,
   QuestionSubType,
@@ -8,11 +9,7 @@ import type {
   QuizConfiguration,
   QuizDefinition,
 } from '@/lib/quiz-template';
-import {
-  generateQuestionsFromLesson,
-  MOCK_QUESTIONS,
-  MOCK_QUIZZES,
-} from '@/lib/quiz-template';
+import { generateQuestionsFromLesson } from '@/lib/quiz-template';
 
 // ─── Question Bank Hook ──────────────────────────────────────────────────────
 
@@ -23,42 +20,42 @@ interface UseQuestionBankOptions {
 export function useQuestionBank({ courseId }: UseQuestionBankOptions) {
   const queryClient = useQueryClient();
 
-  // Fetch all questions for the course (using mock data for now)
+  // Fetch all questions for the course via real API
   const questionsQuery = useQuery({
     queryKey: ['question-bank', courseId],
     queryFn: async (): Promise<QuestionBankEntry[]> => {
-      // TODO: Replace with real API call
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      return MOCK_QUESTIONS.filter((q) => q.courseId === courseId);
+      return apiClient.get<QuestionBankEntry[]>(
+        `v1/courses/${courseId}/questions`
+      );
     },
     enabled: !!courseId,
   });
 
-  // Fetch quizzes for the course
+  // Fetch quizzes for the course via real API
   const quizzesQuery = useQuery({
     queryKey: ['quizzes', courseId],
     queryFn: async (): Promise<QuizDefinition[]> => {
-      // TODO: Replace with real API call
-      await new Promise((resolve) => setTimeout(resolve, 200));
-      return MOCK_QUIZZES.filter((q) => q.courseId === courseId);
+      return apiClient.get<QuizDefinition[]>(`v1/courses/${courseId}/quizzes`);
     },
     enabled: !!courseId,
   });
 
-  // Add question to bank
+  // Add question to bank via real API
   const addQuestionMutation = useMutation({
     mutationFn: async (
       question: Omit<QuestionBankEntry, 'id' | 'createdAt' | 'updatedAt'>
     ) => {
-      // TODO: Replace with real API call
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      const newQuestion: QuestionBankEntry = {
-        ...question,
-        id: `q-${Date.now()}`,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      return newQuestion;
+      return apiClient.post<QuestionBankEntry>(
+        `v1/courses/${courseId}/questions`,
+        {
+          lessonId: question.lessonId,
+          category: question.category,
+          subType: question.subType,
+          prompt: question.prompt,
+          answerData: question.answerData,
+          explanation: question.explanation,
+        }
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['question-bank', courseId] });
@@ -69,11 +66,10 @@ export function useQuestionBank({ courseId }: UseQuestionBankOptions) {
     },
   });
 
-  // Delete question from bank
+  // Delete question from bank via real API
   const deleteQuestionMutation = useMutation({
     mutationFn: async (questionId: string) => {
-      // TODO: Replace with real API call
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      await apiClient.delete(`v1/questions/${questionId}`);
       return questionId;
     },
     onSuccess: () => {
@@ -85,14 +81,10 @@ export function useQuestionBank({ courseId }: UseQuestionBankOptions) {
     },
   });
 
-  // Create quiz
+  // Create quiz via real API
   const createQuizMutation = useMutation({
     mutationFn: async (config: QuizConfiguration & { lessonId: string }) => {
-      // TODO: Replace with real API call
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      const newQuiz: QuizDefinition = {
-        id: `quiz-${Date.now()}`,
-        courseId,
+      return apiClient.post<QuizDefinition>(`v1/courses/${courseId}/quizzes`, {
         lessonId: config.lessonId,
         title: config.title,
         description: config.description,
@@ -102,10 +94,7 @@ export function useQuestionBank({ courseId }: UseQuestionBankOptions) {
         selectionMethod: config.selectionMethod,
         questionCount: config.questionCount,
         questions: [],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      return newQuiz;
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quizzes', courseId] });
@@ -117,7 +106,7 @@ export function useQuestionBank({ courseId }: UseQuestionBankOptions) {
     },
   });
 
-  // AI question generation
+  // AI question generation (still uses the placeholder function)
   const generateQuestionsMutation = useMutation({
     mutationFn: async (params: {
       lessonId: string;
@@ -140,6 +129,8 @@ export function useQuestionBank({ courseId }: UseQuestionBankOptions) {
 
     quizzes: quizzesQuery.data ?? [],
     isLoadingQuizzes: quizzesQuery.isLoading,
+    isQuizzesError: quizzesQuery.isError,
+    refetchQuizzes: quizzesQuery.refetch,
 
     addQuestion: addQuestionMutation.mutate,
     isAddingQuestion: addQuestionMutation.isPending,
@@ -152,6 +143,7 @@ export function useQuestionBank({ courseId }: UseQuestionBankOptions) {
 
     generateQuestions: generateQuestionsMutation.mutateAsync,
     isGeneratingQuestions: generateQuestionsMutation.isPending,
+    generateQuestionsError: generateQuestionsMutation.error,
     generatedQuestions: generateQuestionsMutation.data ?? [],
   };
 }
