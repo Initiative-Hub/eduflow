@@ -34,6 +34,7 @@ model User {
   files        FileInventory[]
   coursesOwned Course[]        @relation("OwnerCourses")
   enrollments  Enrollment[]
+  quizAttempts QuizAttempt[]
 
   @@map("user")
 }
@@ -258,6 +259,7 @@ model Module {
   course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
   title      String
   orderIndex Int      @default(0) @map("order_index")
+  itemLayout Json?    @map("item_layout")
   lessons    Lesson[]
 
   @@map("module")
@@ -339,10 +341,12 @@ model Quiz {
   deliveryMode    DeliveryMode    @map("delivery_mode")
   selectionMethod SelectionMethod @map("selection_method")
   questionCount   Int             @map("question_count")
+  questions       Json?           @default("[]")
   createdAt       DateTime        @default(now()) @map("created_at")
   updatedAt       DateTime        @updatedAt @map("updated_at")
 
   quizQuestions QuizQuestion[]
+  attempts      QuizAttempt[]
 
   @@index([courseId])
   @@index([lessonId])
@@ -360,4 +364,24 @@ model QuizQuestion {
   @@unique([quizId, questionId])
   @@index([quizId])
   @@map("quiz_question")
+}
+
+model QuizAttempt {
+  id               String   @id @default(uuid())
+  quizId           String   @map("quiz_id")
+  quiz             Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  userId           String   @map("user_id")
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  answers          Json
+  score            Float
+  maxScore         Float    @map("max_score")
+  percentage       Float
+  results          Json
+  hasPendingReview Boolean  @default(false) @map("has_pending_review")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  @@index([quizId, userId])
+  @@index([userId])
+  @@map("quiz_attempt")
 }
