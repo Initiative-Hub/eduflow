@@ -1,29 +1,108 @@
-import { BookOpen, ClipboardList, Plus } from 'lucide-react';
+'use client';
+
+import {
+  closestCenter,
+  DndContext,
+  type DragEndEvent,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import {
+  BookOpen,
+  ClipboardList,
+  GripVertical,
+  Indent,
+  Outdent,
+  Plus,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+import { useCallback, useMemo, useState } from 'react';
+import { DropdownTemplate } from '@/components/custom/dropdown/dropdown';
 import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import type { QuizDefinition } from '@/lib/quiz-template';
-import {
-  DELIVERY_MODE_LABELS,
-  QUESTION_SUB_TYPE_LABELS,
-} from '@/lib/quiz-template';
+import { QUESTION_SUB_TYPE_LABELS } from '@/lib/quiz-template';
+import { cn } from '@/lib/utils';
 import type { Module } from '../use-modules';
+import { useModuleOrderMutations } from './use-module-order-mutations';
+
+// Unified item type for flat list rendering
+export type AccordionListItem =
+  | { kind: 'lesson'; id: string; title: string; indent: number }
+  | {
+      kind: 'quiz';
+      id: string;
+      title: string;
+      subType: string;
+      questionCount: number;
+      indent: number;
+    };
 
 interface ModuleAccordionItemProps {
   moduleItem: Module;
   courseId: string;
   /** Called with the module ID when the user clicks "Add lesson" */
   onAddLesson: (moduleId: string) => void;
-  /** Called with the lesson ID when the user clicks "Create Quiz" on a lesson */
-  onCreateQuiz: (lessonId: string) => void;
+  /** Called with the module ID when the user clicks "Create Quiz" from the dropdown */
+  onCreateQuiz: (moduleId: string) => void;
   /** Quizzes associated with lessons in this module */
   quizzes?: QuizDefinition[];
+}
+
+/**
+ * Builds a flat item list from lessons and quizzes, applying saved order and indent levels.
+ */
+function buildItemList(
+  lessons: Module['lessons'],
+  moduleQuizzes: QuizDefinition[],
+  savedOrder: Map<string, number> | null,
+  savedIndents: Map<string, number>
+): AccordionListItem[] {
+  const list: AccordionListItem[] = [];
+
+  for (const lesson of lessons) {
+    list.push({
+      kind: 'lesson',
+      id: lesson.id,
+      title: lesson.title,
+      indent: savedIndents.get(lesson.id) ?? 0,
+    });
+  }
+
+  for (const quiz of moduleQuizzes) {
+    list.push({
+      kind: 'quiz',
+      id: quiz.id,
+      title: quiz.title,
+      subType: quiz.subType,
+      questionCount: quiz.questionCount,
+      indent: savedIndents.get(quiz.id) ?? 0,
+    });
+  }
+
+  // Apply saved order if available
+  if (savedOrder && savedOrder.size > 0) {
+    list.sort((a, b) => {
+      const orderA = savedOrder.get(a.id) ?? Number.MAX_SAFE_INTEGER;
+      const orderB = savedOrder.get(b.id) ?? Number.MAX_SAFE_INTEGER;
+      return orderA - orderB;
+    });
+  }
+
+  return list;
 }
 
 export function ModuleAccordionItem({
@@ -34,20 +113,124 @@ export function ModuleAccordionItem({
   quizzes = [],
 }: ModuleAccordionItemProps) {
   const tAccordion = useTranslations('Courses.ModuleAccordion');
-  const tDialog = useTranslations('Courses.AddLessonDialog');
-  const tQuiz = useTranslations('Courses.CreateQuiz');
 
   // Get quizzes for lessons in this module
   const lessonIds = new Set(moduleItem.lessons.map((l) => l.id));
-  const moduleQuizzes = quizzes.filter((q) => lessonIds.has(q.lessonId));
+  const moduleQuizzes = useMemo(
+    () => quizzes.filter((q) => lessonIds.has(q.lessonId)),
+    [quizzes, lessonIds]
+  );
 
-  // Map quizzes by lessonId for display
-  const quizzesByLesson = new Map<string, QuizDefinition[]>();
-  for (const quiz of moduleQuizzes) {
-    const existing = quizzesByLesson.get(quiz.lessonId) ?? [];
-    existing.push(quiz);
-    quizzesByLesson.set(quiz.lessonId, existing);
-  }
+  // Local state for order and indent overrides (optimistic updates)
+  // Initialize from the module's persisted itemLayout
+  const [localOrder, setLocalOrder] = useState<Map<string, number> | null>(
+    () => {
+      if (!moduleItem.itemLayout) return null;
+      const map = new Map<string, number>();
+      for (const entry of moduleItem.itemLayout) {
+        map.set(entry.id, entry.orderIndex);
+      }
+      return map;
+    }
+  );
+  const [localIndents, setLocalIndents] = useState<Map<string, number>>(() => {
+    const map = new Map<string, number>();
+    if (moduleItem.itemLayout) {
+      for (const entry of moduleItem.itemLayout) {
+        map.set(entry.id, entry.indent);
+      }
+    }
+    return map;
+  });
+
+  // Derive items from props using useMemo — no manual sync needed
+  const items = useMemo(
+    () =>
+      buildItemList(
+        moduleItem.lessons,
+        moduleQuizzes,
+        localOrder,
+        localIndents
+      ),
+    [moduleItem.lessons, moduleQuizzes, localOrder, localIndents]
+  );
+
+  // TanStack mutations for persisting reorder/indent
+  const { reorderMutation, indentMutation } = useModuleOrderMutations(
+    moduleItem.id,
+    courseId
+  );
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  );
+
+  const itemIds = useMemo(() => items.map((i) => i.id), [items]);
+
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+
+      const oldIndex = items.findIndex((i) => i.id === active.id);
+      const newIndex = items.findIndex((i) => i.id === over.id);
+      if (oldIndex === -1 || newIndex === -1) return;
+
+      const reordered = arrayMove(items, oldIndex, newIndex);
+
+      // Optimistic update: save new order locally
+      const newOrderMap = new Map<string, number>();
+      reordered.forEach((item, index) => {
+        newOrderMap.set(item.id, index);
+      });
+      setLocalOrder(newOrderMap);
+
+      // Persist via API
+      reorderMutation.mutate({
+        items: reordered.map((item, index) => ({
+          id: item.id,
+          orderIndex: index,
+        })),
+      });
+    },
+    [items, reorderMutation]
+  );
+
+  const handleIndent = useCallback(
+    (id: string) => {
+      const currentItem = items.find((i) => i.id === id);
+      if (!currentItem || currentItem.indent >= 2) return;
+
+      const newIndent = currentItem.indent + 1;
+      setLocalIndents((prev) => {
+        const next = new Map(prev);
+        next.set(id, newIndent);
+        return next;
+      });
+
+      // Persist via API
+      indentMutation.mutate({ itemId: id, indent: newIndent });
+    },
+    [items, indentMutation]
+  );
+
+  const handleOutdent = useCallback(
+    (id: string) => {
+      const currentItem = items.find((i) => i.id === id);
+      if (!currentItem || currentItem.indent <= 0) return;
+
+      const newIndent = currentItem.indent - 1;
+      setLocalIndents((prev) => {
+        const next = new Map(prev);
+        next.set(id, newIndent);
+        return next;
+      });
+
+      // Persist via API
+      indentMutation.mutate({ itemId: id, indent: newIndent });
+    },
+    [items, indentMutation]
+  );
 
   return (
     <AccordionItem
@@ -63,103 +246,215 @@ export function ModuleAccordionItem({
 
         {/* Absolutely positioned so it doesn't nest inside the trigger */}
         <div className="absolute top-3.25 right-12 z-10 flex gap-1.5">
-          <Button
-            size="sm"
-            variant="default"
-            className="h-8 shadow-sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              onAddLesson(moduleItem.id);
-            }}
-          >
-            <Plus className="mr-1 h-4 w-4" />
-            {tDialog('submit')}
-          </Button>
+          <DropdownTemplate
+            trigger={
+              <button
+                type="button"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-100 text-violet-600 transition-colors hover:bg-violet-200 dark:bg-violet-900/30 dark:text-violet-400 dark:hover:bg-violet-900/50"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                }}
+              >
+                <Plus className="h-4 w-4" strokeWidth={2.5} />
+              </button>
+            }
+            items={[
+              {
+                label: tAccordion('addLesson'),
+                icon: <BookOpen className="h-4 w-4" />,
+                onClick: () => onAddLesson(moduleItem.id),
+              },
+              {
+                label: tAccordion('addQuiz'),
+                icon: <ClipboardList className="h-4 w-4" />,
+                onClick: () => onCreateQuiz(moduleItem.id),
+              },
+            ]}
+          />
         </div>
 
         <AccordionContent className="m-0 border-none bg-card p-0 text-sm">
           <div className="divide-y">
-            {moduleItem.lessons.length === 0 && moduleQuizzes.length === 0 ? (
+            {items.length === 0 ? (
               <div className="p-4 text-center text-muted-foreground italic">
                 {tAccordion('noLessons')}
               </div>
             ) : (
-              moduleItem.lessons.map((lesson) => (
-                <div key={lesson.id}>
-                  <div className="group flex items-center justify-between p-4 transition-colors duration-300 hover:bg-muted/50">
-                    <Link
-                      href={`/courses/${courseId}/lessons/${lesson.id}`}
-                      className="flex flex-1 items-center gap-3"
-                    >
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors duration-300 group-hover:bg-primary group-hover:text-primary-foreground">
-                        <BookOpen className="h-4 w-4" strokeWidth={2} />
-                      </div>
-                      <span className="font-medium">{lesson.title}</span>
-                    </Link>
-                    {/* Create Quiz button next to each lesson */}
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 gap-1 text-xs opacity-0 transition-opacity group-hover:opacity-100"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        onCreateQuiz(lesson.id);
-                      }}
-                    >
-                      <ClipboardList className="h-3.5 w-3.5" />
-                      {tQuiz('createQuizButton')}
-                    </Button>
-                  </div>
-                  {/* Quizzes for this lesson */}
-                  {quizzesByLesson.get(lesson.id)?.map((quiz) => (
-                    <Link
-                      key={quiz.id}
-                      href={`/courses/${courseId}/quiz/${quiz.id}`}
-                      className="group flex items-center justify-between border-t border-dashed bg-muted/20 py-3 pr-4 pl-16 transition-colors duration-300 hover:bg-muted/40"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-violet-100 text-violet-600 transition-colors duration-300 group-hover:bg-violet-600 group-hover:text-white dark:bg-violet-900/30 dark:text-violet-400 dark:group-hover:bg-violet-600">
-                          <ClipboardList
-                            className="h-3.5 w-3.5"
-                            strokeWidth={2}
-                          />
-                        </div>
-                        <div>
-                          <span className="font-medium text-sm">
-                            {quiz.title}
-                          </span>
-                          <div className="mt-0.5 flex items-center gap-1.5">
-                            <Badge
-                              variant="secondary"
-                              className="px-1.5 py-0 text-[10px]"
-                            >
-                              {QUESTION_SUB_TYPE_LABELS[quiz.subType]}
-                            </Badge>
-                            <Badge
-                              variant="outline"
-                              className="px-1.5 py-0 text-[10px]"
-                            >
-                              {DELIVERY_MODE_LABELS[quiz.deliveryMode]}
-                            </Badge>
-                            <span className="text-[10px] text-muted-foreground">
-                              {quiz.questionCount}{' '}
-                              {quiz.questionCount === 1
-                                ? 'question'
-                                : 'questions'}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </Link>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={itemIds}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {items.map((item) => (
+                    <SortableAccordionRow
+                      key={item.id}
+                      item={item}
+                      courseId={courseId}
+                      onIndent={handleIndent}
+                      onOutdent={handleOutdent}
+                    />
                   ))}
-                </div>
-              ))
+                </SortableContext>
+              </DndContext>
             )}
           </div>
         </AccordionContent>
       </div>
     </AccordionItem>
+  );
+}
+
+// ─── Sortable Row ────────────────────────────────────────────────────────────
+
+interface SortableAccordionRowProps {
+  item: AccordionListItem;
+  courseId: string;
+  onIndent: (id: string) => void;
+  onOutdent: (id: string) => void;
+}
+
+function SortableAccordionRow({
+  item,
+  courseId,
+  onIndent,
+  onOutdent,
+}: SortableAccordionRowProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  const indentPadding = item.indent * 24;
+
+  if (item.kind === 'lesson') {
+    return (
+      <div
+        ref={setNodeRef}
+        style={style}
+        className={cn(
+          'group flex items-center justify-between p-4 transition-colors duration-300 hover:bg-muted/50',
+          isDragging && 'z-50 bg-card opacity-90 shadow-md'
+        )}
+      >
+        <Link
+          href={`/courses/${courseId}/lessons/${item.id}`}
+          className="flex flex-1 items-center gap-3"
+          style={{ paddingLeft: `${indentPadding}px` }}
+        >
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors duration-300 group-hover:bg-primary group-hover:text-primary-foreground">
+            <BookOpen className="h-4 w-4" strokeWidth={2} />
+          </div>
+          <span className="font-medium">{item.title}</span>
+        </Link>
+        <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+          <button
+            type="button"
+            className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30"
+            onClick={() => onOutdent(item.id)}
+            disabled={item.indent === 0}
+            title="Outdent"
+          >
+            <Outdent className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30"
+            onClick={() => onIndent(item.id)}
+            disabled={item.indent >= 2}
+            title="Indent"
+          >
+            <Indent className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            className="cursor-grab touch-none rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+            {...attributes}
+            {...listeners}
+          >
+            <GripVertical className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Quiz row
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        'group flex items-center justify-between p-4 transition-colors duration-300 hover:bg-muted/50',
+        isDragging && 'z-50 bg-card opacity-90 shadow-md'
+      )}
+    >
+      <Link
+        href={`/courses/${courseId}/quiz/${item.id}`}
+        className="flex flex-1 items-center gap-3"
+        style={{ paddingLeft: `${indentPadding}px` }}
+      >
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-100 text-violet-600 transition-colors duration-300 group-hover:bg-violet-600 group-hover:text-white dark:bg-violet-900/30 dark:text-violet-400 dark:group-hover:bg-violet-600">
+          <ClipboardList className="h-4 w-4" strokeWidth={2} />
+        </div>
+        <div>
+          <span className="font-medium text-sm">{item.title}</span>
+          <div className="mt-0.5 flex items-center gap-1.5">
+            <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">
+              {
+                QUESTION_SUB_TYPE_LABELS[
+                  item.subType as keyof typeof QUESTION_SUB_TYPE_LABELS
+                ]
+              }
+            </Badge>
+            <span className="text-[10px] text-muted-foreground">
+              {item.questionCount}{' '}
+              {item.questionCount === 1 ? 'question' : 'questions'}
+            </span>
+          </div>
+        </div>
+      </Link>
+      <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+        <button
+          type="button"
+          className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30"
+          onClick={() => onOutdent(item.id)}
+          disabled={item.indent === 0}
+          title="Outdent"
+        >
+          <Outdent className="h-3.5 w-3.5" />
+        </button>
+        <button
+          type="button"
+          className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30"
+          onClick={() => onIndent(item.id)}
+          disabled={item.indent >= 2}
+          title="Indent"
+        >
+          <Indent className="h-3.5 w-3.5" />
+        </button>
+        <button
+          type="button"
+          className="cursor-grab touch-none rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    </div>
   );
 }

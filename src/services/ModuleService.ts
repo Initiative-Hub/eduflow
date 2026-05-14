@@ -23,7 +23,12 @@ export class ModuleService {
     return await prisma.module.findMany({
       where: { courseId },
       orderBy: { orderIndex: 'asc' },
-      include: {
+      select: {
+        id: true,
+        courseId: true,
+        title: true,
+        orderIndex: true,
+        itemLayout: true,
         lessons: {
           orderBy: { orderIndex: 'asc' },
           select: {

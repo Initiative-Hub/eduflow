@@ -21,6 +21,7 @@ export interface Module {
   courseId: string;
   title: string;
   orderIndex: number;
+  itemLayout: { id: string; orderIndex: number; indent: number }[] | null;
   lessons: Lesson[];
 }
 
