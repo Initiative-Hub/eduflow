@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useCourseNavigation } from '@/hooks/use-course-navigation';
 import {
   lessonContentToTiptapDocument,
   type TiptapDocument,
@@ -40,48 +41,13 @@ export function LessonDetailsClient({
   const lessonContent = lessonContentToTiptapDocument(lesson?.content ?? null);
 
   // Build navigation including quizzes: lesson 1 → quiz 1 → lesson 2
-  const { prev, next } = useMemo(() => {
-    if (!modules.length) return { prev: null, next: null };
-
-    type NavItem = {
-      type: 'lesson' | 'quiz';
-      id: string;
-      title: string;
-      href: string;
-    };
-
-    const allItems: NavItem[] = [];
-    for (const mod of modules) {
-      for (const lesson of mod.lessons) {
-        allItems.push({
-          type: 'lesson',
-          id: lesson.id,
-          title: lesson.title,
-          href: `/courses/${courseId}/lessons/${lesson.id}`,
-        });
-        // Add quizzes for this lesson right after the lesson
-        const lessonQuizzes = quizzes.filter((q) => q.lessonId === lesson.id);
-        for (const lq of lessonQuizzes) {
-          allItems.push({
-            type: 'quiz',
-            id: lq.id,
-            title: lq.title,
-            href: `/courses/${courseId}/quiz/${lq.id}`,
-          });
-        }
-      }
-    }
-
-    const currentIdx = allItems.findIndex(
-      (item) => item.type === 'lesson' && item.id === lessonId
-    );
-    if (currentIdx === -1) return { prev: null, next: null };
-
-    return {
-      prev: currentIdx > 0 ? allItems[currentIdx - 1] : null,
-      next: currentIdx < allItems.length - 1 ? allItems[currentIdx + 1] : null,
-    };
-  }, [modules, quizzes, lessonId, courseId]);
+  const { prev, next } = useCourseNavigation(
+    courseId,
+    lessonId,
+    'lesson',
+    modules,
+    quizzes
+  );
 
   const currentModule = useMemo(
     () => modules.find((m) => m.lessons.some((l) => l.id === lessonId)),
