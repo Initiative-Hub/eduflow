@@ -5,11 +5,14 @@ import { useTranslations } from 'next-intl';
 import { Fragment } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import type { DisplayFillInTheBlankQuestion } from '@/lib/quiz-template/display-types';
+import type {
+  DisplaySafe,
+  FillInTheBlankQuestion,
+} from '@/lib/quiz-template/types';
 import { cn } from '@/lib/utils';
 
 interface FillInTheBlankProps {
-  question: DisplayFillInTheBlankQuestion;
+  question: DisplaySafe<FillInTheBlankQuestion>;
   filledBlanks: Record<string, string>;
   onFill: (blankId: string, value: string) => void;
   showResult?: boolean;

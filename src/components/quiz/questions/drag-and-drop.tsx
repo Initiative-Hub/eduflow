@@ -5,11 +5,14 @@ import { useTranslations } from 'next-intl';
 import { Fragment, useCallback, useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import type { DisplayDragAndDropQuestion } from '@/lib/quiz-template/display-types';
+import type {
+  DisplaySafe,
+  DragAndDropQuestion,
+} from '@/lib/quiz-template/types';
 import { cn } from '@/lib/utils';
 
 interface DragAndDropProps {
-  question: DisplayDragAndDropQuestion;
+  question: DisplaySafe<DragAndDropQuestion>;
   placements: Record<string, string>;
   onPlace: (placements: Record<string, string>) => void;
   showResult?: boolean;

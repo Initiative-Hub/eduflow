@@ -18,23 +18,23 @@ import {
   DropzoneEmptyState,
 } from '@/components/ui/dropzone';
 import { Textarea } from '@/components/ui/textarea';
-import type { DisplayEssayQuestion } from '@/lib/quiz-template/display-types';
+import type { DisplaySafe, EssayQuestion } from '@/lib/quiz-template/types';
 
 interface EssayProps {
-  question: DisplayEssayQuestion;
+  question: DisplaySafe<EssayQuestion>;
   text: string;
   onTextChange: (text: string) => void;
   /** Callback when student attachments change */
   onAttachmentsChange?: (fileNames: string[]) => void;
-  /** Callback when teacher rubric text changes */
+  /** Callback when teacher sample answer & rubric text changes */
   onTeacherRubricTextChange?: (text: string) => void;
-  /** Callback when teacher rubric attachments change */
+  /** Callback when teacher sample answer & rubric attachments change */
   onTeacherRubricAttachmentsChange?: (fileNames: string[]) => void;
-  /** Current teacher rubric text */
+  /** Current teacher sample answer & rubric text */
   teacherRubricText?: string;
   showResult?: boolean;
   disabled?: boolean;
-  /** Whether to show the teacher rubric input panel */
+  /** Whether to show the teacher sample answer & rubric input panel */
   showTeacherRubricInput?: boolean;
 }
 
