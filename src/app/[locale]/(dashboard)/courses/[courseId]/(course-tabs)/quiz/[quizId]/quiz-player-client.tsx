@@ -1,12 +1,20 @@
 'use client';
 
-import { ChevronLeft, ChevronRight, Menu } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import {
+  AlertTriangle,
+  ChevronLeft,
+  ChevronRight,
+  Menu,
+  RotateCcw,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Quiz } from '@/components/quiz';
+import { QuizResult } from '@/components/quiz/quiz-result';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,16 +22,43 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { useCourseNavigation } from '@/hooks/use-course-navigation';
+import { apiClient } from '@/lib/api/api-client';
 import {
   DELIVERY_MODE_LABELS,
   QUESTION_SUB_TYPE_LABELS,
   QUIZ_CATEGORIES,
   type QuizContent,
   type ScoreResult,
+  type StudentAnswer,
+  type StudentAnswers,
+  SUB_TYPE_TO_QUESTION_TYPE,
 } from '@/lib/quiz-template';
 import { LessonOutline } from '../../../lessons/[lessonId]/_components/lesson-outline';
 import { useModules } from '../../../use-modules';
 import { useQuestionBank } from '../../../use-question-bank';
+
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+interface QuizAttemptResponse {
+  id: string;
+  quizId: string;
+  userId: string;
+  answers: Record<string, StudentAnswer>;
+  score: number;
+  maxScore: number;
+  percentage: number;
+  results: Array<{
+    questionIndex: number;
+    isCorrect: boolean;
+    earnedPoints: number;
+    maxPoints: number;
+    pendingReview?: boolean;
+  }>;
+  hasPendingReview: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
 
 interface QuizPlayerClientProps {
   courseId: string;
@@ -33,9 +68,11 @@ interface QuizPlayerClientProps {
 export function QuizPlayerClient({ courseId, quizId }: QuizPlayerClientProps) {
   const t = useTranslations('Courses.QuizPlayer');
   const router = useRouter();
-  const { quizzes, isLoadingQuizzes } = useQuestionBank({ courseId });
+  const { quizzes, isLoadingQuizzes, isQuizzesError, refetchQuizzes } =
+    useQuestionBank({ courseId });
   const { modules, isLoading: isModulesLoading } = useModules(courseId);
   const [showOutline, setShowOutline] = useState(false);
+  const [isRetaking, setIsRetaking] = useState(false);
 
   const quiz = useMemo(
     () => quizzes.find((q) => q.id === quizId),
@@ -47,10 +84,49 @@ export function QuizPlayerClient({ courseId, quizId }: QuizPlayerClientProps) {
     return {
       title: quiz.title,
       description: quiz.description ?? '',
-      type: quiz.subType,
+      type: SUB_TYPE_TO_QUESTION_TYPE[quiz.subType] ?? quiz.subType,
       questions: quiz.questions,
     };
   }, [quiz]);
+
+  // Fetch previous attempts for this quiz
+  const attemptsQuery = useQuery({
+    queryKey: ['quiz-attempts', quizId],
+    queryFn: async (): Promise<QuizAttemptResponse[]> => {
+      return apiClient.get<QuizAttemptResponse[]>(
+        `v1/quizzes/${quizId}/attempts`
+      );
+    },
+    enabled: !!quizId,
+  });
+
+  const mostRecentAttempt = attemptsQuery.data?.[0] ?? null;
+
+  // Convert the most recent attempt into ScoreResult + StudentAnswers for display
+  const previousResult: ScoreResult | null = useMemo(() => {
+    if (!mostRecentAttempt) return null;
+    return {
+      totalPoints: mostRecentAttempt.maxScore,
+      earnedPoints: mostRecentAttempt.score,
+      percentage: mostRecentAttempt.percentage,
+      questionResults: mostRecentAttempt.results,
+      hasPendingReview: mostRecentAttempt.hasPendingReview,
+    };
+  }, [mostRecentAttempt]);
+
+  const previousAnswers: StudentAnswers = useMemo(() => {
+    if (!mostRecentAttempt) return new Map();
+    const map: StudentAnswers = new Map();
+    for (const [indexStr, answer] of Object.entries(
+      mostRecentAttempt.answers
+    )) {
+      const index = Number.parseInt(indexStr, 10);
+      if (!Number.isNaN(index)) {
+        map.set(index, answer);
+      }
+    }
+    return map;
+  }, [mostRecentAttempt]);
 
   // Find the module title for breadcrumb
   const currentModule = useMemo(() => {
@@ -59,59 +135,52 @@ export function QuizPlayerClient({ courseId, quizId }: QuizPlayerClientProps) {
   }, [modules, quiz]);
 
   // Build navigation: prev/next considering lessons and quizzes in sequence
-  const { prev, next } = useMemo(() => {
-    if (!quiz || !modules.length) return { prev: null, next: null };
-
-    // Build a flat list of all items (lessons and quizzes) in order
-    type NavItem = {
-      type: 'lesson' | 'quiz';
-      id: string;
-      title: string;
-      href: string;
-    };
-
-    const allItems: NavItem[] = [];
-    for (const mod of modules) {
-      for (const lesson of mod.lessons) {
-        allItems.push({
-          type: 'lesson',
-          id: lesson.id,
-          title: lesson.title,
-          href: `/courses/${courseId}/lessons/${lesson.id}`,
-        });
-        // Add quizzes for this lesson right after the lesson
-        const lessonQuizzes = quizzes.filter((q) => q.lessonId === lesson.id);
-        for (const lq of lessonQuizzes) {
-          allItems.push({
-            type: 'quiz',
-            id: lq.id,
-            title: lq.title,
-            href: `/courses/${courseId}/quiz/${lq.id}`,
-          });
-        }
-      }
-    }
-
-    const currentIdx = allItems.findIndex(
-      (item) => item.type === 'quiz' && item.id === quizId
-    );
-    if (currentIdx === -1) return { prev: null, next: null };
-
-    return {
-      prev: currentIdx > 0 ? allItems[currentIdx - 1] : null,
-      next: currentIdx < allItems.length - 1 ? allItems[currentIdx + 1] : null,
-    };
-  }, [quiz, modules, quizzes, quizId, courseId]);
+  const { prev, next } = useCourseNavigation(
+    courseId,
+    quizId,
+    'quiz',
+    modules,
+    quizzes
+  );
 
   const handleComplete = (result: ScoreResult) => {
     toast.success(t('completed', { score: Math.round(result.percentage) }));
+    // Refetch attempts so the latest shows up
+    attemptsQuery.refetch();
+    setIsRetaking(false);
   };
+
+  const handleRetake = useCallback(() => {
+    setIsRetaking(true);
+  }, []);
 
   if (isLoadingQuizzes || isModulesLoading) {
     return (
       <div className="space-y-6">
         <div className="h-10 w-48 animate-pulse rounded bg-muted" />
         <div className="h-64 animate-pulse rounded-lg bg-muted" />
+      </div>
+    );
+  }
+
+  if (isQuizzesError) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-dashed bg-card/50 p-12 text-center">
+          <AlertTriangle className="h-10 w-10 text-destructive" />
+          <div className="space-y-1">
+            <h3 className="font-semibold text-foreground text-lg">
+              {t('loadError')}
+            </h3>
+            <p className="text-muted-foreground text-sm">
+              {t('loadErrorDescription')}
+            </p>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => refetchQuizzes()}>
+            <RotateCcw className="mr-2 h-3.5 w-3.5" />
+            {t('retry')}
+          </Button>
+        </div>
       </div>
     );
   }
@@ -134,9 +203,13 @@ export function QuizPlayerClient({ courseId, quizId }: QuizPlayerClientProps) {
     );
   }
 
+  // Determine whether to show previous result or the quiz player
+  const showPreviousResult =
+    previousResult && !isRetaking && !attemptsQuery.isLoading;
+
   return (
     <>
-      {/* Header bar — same layout as lesson page */}
+      {/* Header bar */}
       <div className="sticky top-0 z-40 -mx-6 -mt-6 flex items-center justify-between border-foreground/20 border-b bg-background/95 px-6 py-3 backdrop-blur-sm md:-mx-10 md:-mt-10 md:px-10 lg:-mx-12 lg:-mt-12 lg:px-12">
         <div className="mr-4 flex items-center gap-2 text-muted-foreground text-sm">
           <Popover open={showOutline} onOpenChange={setShowOutline}>
@@ -193,16 +266,26 @@ export function QuizPlayerClient({ courseId, quizId }: QuizPlayerClientProps) {
         </Badge>
       </div>
 
-      {/* Quiz Player */}
+      {/* Quiz Player or Previous Result */}
       <div className="mx-auto mt-6 max-w-2xl">
-        <Quiz
-          quiz={quizContent}
-          deliveryMode={quiz.deliveryMode}
-          onComplete={handleComplete}
-        />
+        {showPreviousResult ? (
+          <QuizResult
+            result={previousResult}
+            quiz={quizContent}
+            answers={previousAnswers}
+            onRetry={handleRetake}
+          />
+        ) : (
+          <Quiz
+            quiz={quizContent}
+            quizId={quizId}
+            deliveryMode={quiz.deliveryMode}
+            onComplete={handleComplete}
+          />
+        )}
       </div>
 
-      {/* Pagination — same layout as lesson page */}
+      {/* Pagination */}
       <div className="flex w-full flex-col">
         <div className="mt-12 flex items-center justify-between border-t pt-6 font-medium">
           {prev ? (
