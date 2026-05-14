@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { errorResponse } from '@/lib/api/error-response';
+import { type AuthHandler, withAuth } from '@/lib/api/middlewares';
+import { prisma } from '@/lib/prisma';
 import { calculateScore } from '@/lib/quiz-template/scoring';
 import type {
   QuestionBlock,
@@ -64,16 +67,8 @@ const studentAnswerSchema = z.discriminatedUnion('type', [
 ]);
 
 const submitQuizSchema = z.object({
-  /** The quiz questions with full answer data (server-side source of truth) */
-  quizId: z.string().optional(),
-  /** Quiz type identifier */
-  quizType: z.string(),
-  /** The full question blocks (with answers) — sourced from server/DB */
-  questions: z.array(z.any()),
-  /** Student answers keyed by question index */
+  quizId: z.string().min(1, 'quizId is required'),
   answers: z.record(z.string(), studentAnswerSchema),
-  /** Points per question */
-  pointsPerQuestion: z.number().positive().default(10),
 });
 
 // ─── Route Handler ───────────────────────────────────────────────────────────
@@ -87,50 +82,103 @@ const submitQuizSchema = z.object({
  *     summary: Submit quiz answers for server-side scoring
  *     description: |
  *       Receives student answers and scores them against the authoritative
- *       question data on the server. This prevents client-side score manipulation.
+ *       question data stored in the database. Questions are fetched server-side
+ *       by quizId to prevent client-side score manipulation.
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
- *             required: [quizType, questions, answers]
+ *             required: [quizId, answers]
  *             properties:
  *               quizId:
  *                 type: string
- *                 description: Optional quiz ID for database-backed quizzes
- *               quizType:
- *                 type: string
- *               questions:
- *                 type: array
- *                 description: Full question blocks with answer data
+ *                 description: The quiz ID to submit answers for
  *               answers:
  *                 type: object
  *                 description: Student answers keyed by question index
- *               pointsPerQuestion:
- *                 type: number
- *                 default: 10
  *     responses:
  *       200:
  *         description: Score result
  *       400:
- *         description: Invalid request payload
+ *         description: Invalid request payload or payload rejected
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - no course access
+ *       404:
+ *         description: Quiz not found
  *       500:
  *         description: Internal server error
  */
-export async function POST(req: Request) {
+const handler: AuthHandler = async (req, sessionData) => {
   try {
     const body = await req.json();
-    const parsed = submitQuizSchema.safeParse(body);
 
-    if (!parsed.success) {
-      return NextResponse.json(
-        { message: 'Invalid submission data', errors: parsed.error.format() },
-        { status: 400 }
+    // Reject payloads that include question blocks (security measure)
+    if ('questions' in body && body.questions != null) {
+      return errorResponse(
+        'PAYLOAD_REJECTED',
+        'Request must not include question blocks. Questions are fetched server-side.',
+        400
       );
     }
 
-    const { quizType, questions, answers, pointsPerQuestion } = parsed.data;
+    // Validate request body
+    const parsed = submitQuizSchema.safeParse(body);
+    if (!parsed.success) {
+      return errorResponse(
+        'VALIDATION_ERROR',
+        'Invalid submission data',
+        400,
+        parsed.error.format()
+      );
+    }
+
+    const { quizId, answers } = parsed.data;
+    const userId = sessionData.user.id;
+
+    // Fetch quiz from database
+    const quiz = await prisma.quiz.findUnique({
+      where: { id: quizId },
+      select: {
+        id: true,
+        courseId: true,
+        questions: true,
+        subType: true,
+        questionCount: true,
+      },
+    });
+
+    if (!quiz) {
+      return errorResponse('QUIZ_NOT_FOUND', 'Quiz not found', 404);
+    }
+
+    // Verify user has access to the quiz's course
+    const enrollment = await prisma.enrollment.findFirst({
+      where: {
+        memberId: userId,
+        courseId: quiz.courseId,
+      },
+    });
+
+    // Also allow course owner
+    const course = await prisma.course.findUnique({
+      where: { id: quiz.courseId },
+      select: { ownerId: true },
+    });
+
+    if (!enrollment && course?.ownerId !== userId) {
+      return errorResponse(
+        'FORBIDDEN',
+        'You do not have access to this course',
+        403
+      );
+    }
+
+    // Get questions from the quiz's stored JSON
+    const questions = (quiz.questions as unknown as QuestionBlock[]) ?? [];
 
     // Convert the answers record (string keys) to a Map (number keys)
     const studentAnswers: StudentAnswers = new Map();
@@ -143,26 +191,39 @@ export async function POST(req: Request) {
 
     // Build the quiz schema for scoring
     const schema: QuizSchema = {
-      type: quizType,
+      type: quiz.subType,
       constraints: { minQuestions: 1, maxQuestions: 100 },
-      scoring: { pointsPerQuestion },
-      questions: questions as QuestionBlock[],
+      scoring: { pointsPerQuestion: 10 },
+      questions,
     };
 
     // Score on the server using the authoritative question data
     const scoreResult = calculateScore(studentAnswers, schema);
 
+    // Persist the quiz attempt
+    await prisma.quizAttempt.create({
+      data: {
+        quizId,
+        userId,
+        answers: JSON.parse(JSON.stringify(answers)),
+        score: scoreResult.earnedPoints,
+        maxScore: scoreResult.totalPoints,
+        percentage: scoreResult.percentage,
+        results: JSON.parse(JSON.stringify(scoreResult.questionResults)),
+        hasPendingReview: scoreResult.hasPendingReview ?? false,
+      },
+    });
+
     // Return score result along with the full questions (including answers)
     // so the client can render the result review with correct/incorrect indicators
     return NextResponse.json({
       ...scoreResult,
-      reviewQuestions: questions as QuestionBlock[],
+      reviewQuestions: questions,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Quiz submission error:', error);
-    return NextResponse.json(
-      { message: 'Internal Server Error' },
-      { status: 500 }
-    );
+    return errorResponse('INTERNAL_ERROR', 'Internal Server Error', 500);
   }
-}
+};
+
+export const POST = withAuth(handler);
