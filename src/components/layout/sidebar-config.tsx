@@ -16,7 +16,6 @@ export type SidebarItem = {
   exact?: boolean;
 };
 
-
 export const sidebarIconClassName =
   'size-5 fill-primary/60 text-primary/80 transition-colors group-hover/menu-button:fill-primary group-hover/menu-button:text-primary group-data-[active=true]/menu-button:fill-primary group-data-[active=true]/menu-button:text-primary';
 

@@ -232,10 +232,10 @@ export function QuizDemo() {
       <section className="space-y-6">
         <div className="flex items-center gap-3">
           <h2 className="font-semibold text-foreground text-lg">
-            {QUIZ_CATEGORIES['selection-based'].label}
+            {QUIZ_CATEGORIES['SELECTION_BASED'].label}
           </h2>
           <Badge variant="secondary" className="text-xs">
-            {QUIZ_CATEGORIES['selection-based'].description}
+            {QUIZ_CATEGORIES['SELECTION_BASED'].description}
           </Badge>
         </div>
 
@@ -266,10 +266,10 @@ export function QuizDemo() {
       <section className="space-y-6">
         <div className="flex items-center gap-3">
           <h2 className="font-semibold text-foreground text-lg">
-            {QUIZ_CATEGORIES['open-ended'].label}
+            {QUIZ_CATEGORIES['OPEN_ENDED'].label}
           </h2>
           <Badge variant="secondary" className="text-xs">
-            {QUIZ_CATEGORIES['open-ended'].description}
+            {QUIZ_CATEGORIES['OPEN_ENDED'].description}
           </Badge>
         </div>
 
