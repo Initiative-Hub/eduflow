@@ -13,6 +13,7 @@ const courseGenerationInputSchema = z
     file: z.any().optional(),
     apiKey: z.string().min(1).optional(),
     courseId: z.string().uuid(),
+    context: z.string().max(2000).optional(),
   })
   .refine((data) => (data.fileId ? !data.file : !!data.file), {
     message: 'Provide exactly one: either fileId or a file',
@@ -109,6 +110,7 @@ export const POST = withAuth(
           file: file || undefined,
           apiKey: apiKey || undefined,
           courseId: courseId || undefined,
+          context: (formData.get('context') as string | null) || undefined,
         };
       } else {
         const body = await request.json();
@@ -116,6 +118,7 @@ export const POST = withAuth(
           fileId: body.fileId,
           apiKey: body.apiKey,
           courseId: body.courseId,
+          context: body.context,
         };
       }
 
@@ -145,6 +148,7 @@ export const POST = withAuth(
         fileId: parsed.data.fileId,
         file: parsed.data.file,
         apiKey: parsed.data.apiKey,
+        context: parsed.data.context,
       });
 
       // Return the result as a data stream

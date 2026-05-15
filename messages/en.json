@@ -412,6 +412,15 @@
       "AiDialog": {
         "clickToBrowse": "Click to browse files",
         "comingSoonTitle": "Advanced Generation",
+        "contextTab": {
+          "back": "Back to Document",
+          "description": "Provide additional instructions to guide the AI — e.g. target audience, focus areas, or specific topics to emphasize.",
+          "generate": "Generate Course",
+          "label": "Additional Instructions",
+          "placeholder": "e.g. Focus on beginner-friendly explanations. Emphasize practical examples. Target audience: university students.",
+          "selectedFile": "Selected document",
+          "title": "Add Context (Optional)"
+        },
         "courseDescription": "Access shared files within this course workspace.",
         "description": "Generate a logical course structure from your educational documents.",
         "folder": "Folder",
@@ -422,6 +431,7 @@
         "readyForAi": "Ready for AI",
         "selectedPdf": "{count, plural, =1 {1 PDF selected} other {# PDFs selected}}",
         "tabs": {
+          "context": "Add Context",
           "course": "Course Files",
           "personal": "Personal Files",
           "upload": "Upload PDF"

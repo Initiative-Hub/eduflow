@@ -412,6 +412,15 @@
       "AiDialog": {
         "clickToBrowse": "Nhấp để duyệt tệp",
         "comingSoonTitle": "Thế hệ nâng cao",
+        "contextTab": {
+          "back": "Quay lại tài liệu",
+          "description": "Cung cấp hướng dẫn bổ sung để định hướng AI — ví dụ: đối tượng mục tiêu, lĩnh vực trọng tâm, hoặc các chủ đề cần nhấn mạnh.",
+          "generate": "Tạo khóa học",
+          "label": "Hướng dẫn bổ sung",
+          "placeholder": "Ví dụ: Tập trung vào giải thích thân thiện với người mới bắt đầu. Nhấn mạnh các ví dụ thực tế. Đối tượng: sinh viên đại học.",
+          "selectedFile": "Tài liệu đã chọn",
+          "title": "Thêm ngữ cảnh (Tùy chọn)"
+        },
         "courseDescription": "Truy cập các tệp được chia sẻ trong không gian khóa học này.",
         "description": "Tạo cấu trúc khóa học logic từ các tài liệu học tập của bạn.",
         "folder": "Thư mục",
@@ -422,6 +431,7 @@
         "readyForAi": "Sẵn sàng cho AI",
         "selectedPdf": "{count, plural, =1 {1 PDF được chọn} other {# PDF được chọn}}",
         "tabs": {
+          "context": "Thêm ngữ cảnh",
           "course": "Tài liệu khóa học",
           "personal": "Tài liệu cá nhân",
           "upload": "Tải PDF lên"

@@ -80,7 +80,7 @@ export class GoogleService implements ChatProviderService {
       model: provider(model),
       schema: aiCourseGenerationSchema,
       system: COURSE_GENERATION_PROMPT,
-      prompt: `Content to analyze and transform into a course:\n\n${markdownContent}`,
+      prompt: `Content to analyze and transform into a course:\n\n${markdownContent}${options.context ? `\n\n=== ADDITIONAL CONTEXT FROM INSTRUCTOR ===\n${options.context}` : ''}`,
       onFinish: options.onFinish,
     });
   }

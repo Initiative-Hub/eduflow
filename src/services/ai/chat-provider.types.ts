@@ -19,6 +19,7 @@ export type StreamCourseInput = {
   file?: File;
   model?: string;
   apiKey?: string;
+  context?: string;
   providerOptions?: any;
   onFinish?: StreamObjectOnFinishCallback<AICourseGeneration>;
 };
