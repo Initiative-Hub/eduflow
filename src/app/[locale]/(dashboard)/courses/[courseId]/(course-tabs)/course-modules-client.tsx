@@ -7,10 +7,12 @@ import { Accordion } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { AddLessonDialog } from '../_components/add-lesson-dialog';
 import { AddModuleDialog } from '../_components/add-module-dialog';
+import { CreateQuizDialog } from '../_components/create-quiz-dialog';
 import { ModuleAccordionItem } from '../_components/module-accordion-item';
 import type { CreateLessonFormData } from '../create-lesson.config';
 import type { CreateModuleFormData } from '../create-module.config';
 import { useModules } from '../use-modules';
+import { useQuestionBank } from '../use-question-bank';
 import { AiClientDialog } from './ai-client/ai-client';
 
 interface CourseModulesClientProps {
@@ -33,11 +35,16 @@ export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
     generateCourseModules,
   } = useModules(courseId);
 
+  const { quizzes } = useQuestionBank({ courseId });
+
   const [isAddModuleOpen, setIsAddModuleOpen] = useState(false);
   const [isAiOpen, setIsAiOpen] = useState(false);
   const [activeModuleIdForLesson, setActiveModuleIdForLesson] = useState<
     string | null
   >(null);
+  const [createQuizModuleId, setCreateQuizModuleId] = useState<string | null>(
+    null
+  );
 
   const onCreateModule = (data: CreateModuleFormData) => {
     handleCreateModule(
@@ -53,6 +60,10 @@ export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
         { onSuccess: () => setActiveModuleIdForLesson(null) }
       );
     }
+  };
+
+  const handleCreateQuiz = (moduleId: string) => {
+    setCreateQuizModuleId(moduleId);
   };
 
   const onAiSelect = async (selection: { fileId?: string; file?: File }) => {
@@ -179,6 +190,8 @@ export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
               moduleItem={moduleItem}
               courseId={courseId}
               onAddLesson={setActiveModuleIdForLesson}
+              onCreateQuiz={handleCreateQuiz}
+              quizzes={quizzes}
             />
           ))}
         </Accordion>
@@ -202,6 +215,16 @@ export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
         isOpen={isAiOpen}
         onOpenChange={setIsAiOpen}
         onSelect={onAiSelect}
+      />
+
+      <CreateQuizDialog
+        isOpen={!!createQuizModuleId}
+        onOpenChange={(open) => !open && setCreateQuizModuleId(null)}
+        courseId={courseId}
+        preselectedModuleId={createQuizModuleId ?? undefined}
+        moduleName={
+          modules.find((m) => m.id === createQuizModuleId)?.title ?? ''
+        }
       />
     </div>
   );

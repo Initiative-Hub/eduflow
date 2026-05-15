@@ -1,14 +1,16 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useCourseNavigation } from '@/hooks/use-course-navigation';
 import {
   lessonContentToTiptapDocument,
   type TiptapDocument,
 } from '@/utils/lesson-content';
 import { useModules } from '../../use-modules';
+import { useQuestionBank } from '../../use-question-bank';
 import { LessonEditor } from './_components/lesson-editor';
 import { LessonHeader } from './_components/lesson-header';
-import { LessonPagination } from './_components/lesson-pagination';
+import { LessonNavigation } from './_components/lesson-navigation';
 import { useLesson, useUpdateLesson } from './use-lesson';
 
 interface LessonDetailsClientProps {
@@ -28,12 +30,9 @@ export function LessonDetailsClient({
   notFoundLabel,
   emptyContentLabel,
 }: LessonDetailsClientProps) {
-  const {
-    modules,
-    isLoading: isModulesLoading,
-    getAdjacentLessons,
-  } = useModules(courseId);
+  const { modules, isLoading: isModulesLoading } = useModules(courseId);
 
+  const { quizzes } = useQuestionBank({ courseId });
   const { lesson, isLoading: isLessonLoading } = useLesson(lessonId);
   const { isUpdatingLesson, handleUpdateLesson } = useUpdateLesson(courseId);
 
@@ -41,9 +40,13 @@ export function LessonDetailsClient({
 
   const lessonContent = lessonContentToTiptapDocument(lesson?.content ?? null);
 
-  const { prev, next } = useMemo(
-    () => getAdjacentLessons(lessonId),
-    [getAdjacentLessons, lessonId]
+  // Build navigation including quizzes: lesson 1 → quiz 1 → lesson 2
+  const { prev, next } = useCourseNavigation(
+    courseId,
+    lessonId,
+    'lesson',
+    modules,
+    quizzes
   );
 
   const currentModule = useMemo(
@@ -96,7 +99,7 @@ export function LessonDetailsClient({
 
       {!isLoading && lesson && (
         <div className="mt-8">
-          <LessonPagination courseId={courseId} prev={prev} next={next} />
+          <LessonNavigation courseId={courseId} prev={prev} next={next} />
         </div>
       )}
     </>
