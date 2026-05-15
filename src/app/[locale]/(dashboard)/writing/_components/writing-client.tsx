@@ -1,18 +1,24 @@
 'use client';
 
 import type { UIMessage } from 'ai';
+import { PenLine } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import type React from 'react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import type { WritingTool } from '@/lib/validations/writing.schema';
+import { type ChatModel, DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
 import { ChatInput } from '../../_components/chat-input';
+import { ChatSidebar } from '../../_components/chat-sidebar';
 import useWriting from '../use-writing';
+import { writingService } from '../writing.service';
+import { LandingRecentWritingSessions } from './landing-recent-writing-sessions';
 import { WritingSelector } from './writing-selector';
 
 interface WritingClientProps {
   sessionId?: string;
+  initialTool?: WritingTool;
   initialMessages?: UIMessage[];
 }
 
@@ -20,8 +26,14 @@ const ChatView = dynamic(() =>
   import('../../_components/chat-view').then((mod) => mod.ChatView)
 );
 
-const WritingClient = ({ sessionId, initialMessages }: WritingClientProps) => {
-  const [selectedTool, setSelectedTool] = useState<WritingTool>('caption');
+export default function WritingClient({
+  sessionId,
+  initialTool = 'caption',
+  initialMessages,
+}: WritingClientProps) {
+  const [selectedTool, setSelectedTool] = useState<WritingTool>(initialTool);
+  const [selectedModel, setSelectedModel] =
+    useState<ChatModel>(DEFAULT_CHAT_MODEL);
   const t = useTranslations('AIChat');
 
   const {
@@ -37,6 +49,7 @@ const WritingClient = ({ sessionId, initialMessages }: WritingClientProps) => {
     tool: selectedTool,
     sessionId,
     initialMessages,
+    selectedModel,
   });
 
   const notifyLimitReached = () => {
@@ -54,39 +67,61 @@ const WritingClient = ({ sessionId, initialMessages }: WritingClientProps) => {
       return;
     }
 
-    void startChat(text.trim());
+    startChat(text.trim());
   };
 
   return (
-    <div className="relative flex h-full flex-1 flex-col items-center overflow-x-hidden px-4 py-8 md:px-0">
-      <div className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden">
-        <div className="h-125 w-125 rounded-full bg-primary/5 blur-[120px]" />
-      </div>
+    <>
+      <div className="relative flex flex-col items-center gap-8 px-8">
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden">
+          <div className="h-125 w-125 rounded-full bg-primary/5 blur-[120px]" />
+        </div>
 
-      <div className="relative z-10 mx-auto flex w-full max-w-5xl flex-1 flex-col justify-center overflow-hidden">
-        {!hasOutput ? (
-          <WritingSelector selected={selectedTool} onSelect={setSelectedTool} />
-        ) : (
-          <div className="mx-auto flex h-full w-full max-w-4xl flex-col">
-            <div className="flex-1 overflow-y-auto">
-              <ChatView messages={messages} isStreaming={isStreaming} />
+        <div className="relative mx-auto flex w-full max-w-5xl flex-1 flex-col justify-center">
+          {!hasOutput ? (
+            <>
+              <WritingSelector
+                selected={selectedTool}
+                onSelect={setSelectedTool}
+              />
+              <LandingRecentWritingSessions />
+            </>
+          ) : (
+            <div className="mx-auto flex h-full w-full max-w-4xl flex-col">
+              <div className="flex-1 overflow-y-auto">
+                <ChatView messages={messages} isStreaming={isStreaming} />
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
 
-      <div className="mx-auto w-full max-w-4xl">
-        <ChatInput
-          handleSubmit={handleSubmit}
-          isStreaming={isStreaming}
-          isChatting={hasOutput}
-          isLimitReached={isLimitReached}
-          limitCount={maxMessages}
-          userMessageCount={userMessageCount}
-          onStop={stop}
-        />
+        <div className="mx-auto w-full max-w-4xl">
+          <ChatInput
+            handleSubmit={handleSubmit}
+            isStreaming={isStreaming}
+            isChatting={hasOutput}
+            isLimitReached={isLimitReached}
+            limitCount={maxMessages}
+            userMessageCount={userMessageCount}
+            onStop={stop}
+            selectedModel={selectedModel}
+            onModelChange={setSelectedModel}
+          />
+        </div>
       </div>
-    </div>
+      <ChatSidebar
+        currentChatId={sessionId}
+        emptyIcon={PenLine}
+        itemIcon={PenLine}
+        newSessionHref="/writing"
+        queryKey="writing-session-list"
+        sessionHrefPrefix="/writing"
+        service={{
+          listChats: writingService.listSessions,
+          updateChat: writingService.updateSession,
+        }}
+        translationNamespace="WritingPage.sidebar"
+      />
+    </>
   );
-};
-export default WritingClient;
+}

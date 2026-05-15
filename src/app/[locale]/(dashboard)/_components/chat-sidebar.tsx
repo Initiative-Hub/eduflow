@@ -8,6 +8,7 @@ import {
 import {
   Ellipsis,
   Loader2,
+  type LucideIcon,
   MessageCircle,
   MessageSquare,
   PanelLeftClose,
@@ -49,17 +50,47 @@ import {
 import { Input } from '@/components/ui/input';
 import { Link, useRouter } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
-import { chatService } from '../chat.service';
+import {
+  type ChatListResponse,
+  type ChatUpdateResponse,
+  chatService,
+} from '../(ai-chat)/chat.service';
 
 const CHAT_LIST_PAGE_SIZE = 20;
 const SEARCH_DEBOUNCE_MS = 300;
 
 interface ChatSidebarProps {
   currentChatId?: string;
+  emptyIcon?: LucideIcon;
+  itemIcon?: LucideIcon;
+  newSessionHref?: string;
+  queryKey?: string;
+  sessionHrefPrefix?: string;
+  service?: {
+    listChats: (input: {
+      search?: string;
+      limit: number;
+      offset: number;
+    }) => Promise<ChatListResponse>;
+    updateChat: (
+      chatId: string,
+      data: { title?: string; deleted_at?: string }
+    ) => Promise<ChatUpdateResponse>;
+  };
+  translationNamespace?: string;
 }
 
-export function ChatSidebar({ currentChatId }: ChatSidebarProps) {
-  const t = useTranslations('AIChat.sidebar');
+export function ChatSidebar({
+  currentChatId,
+  emptyIcon: EmptyIcon = MessageSquare,
+  itemIcon: ItemIcon = MessageSquare,
+  newSessionHref = '/',
+  queryKey = 'chat-list',
+  sessionHrefPrefix = '/chat',
+  service = chatService,
+  translationNamespace = 'AIChat.sidebar',
+}: ChatSidebarProps) {
+  const t = useTranslations(translationNamespace);
   const router = useRouter();
   const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
@@ -85,10 +116,10 @@ export function ChatSidebar({ currentChatId }: ChatSidebarProps) {
   }, [search]);
 
   const chatListQuery = useInfiniteQuery({
-    queryKey: ['chat-list', debouncedSearch],
+    queryKey: [queryKey, debouncedSearch],
     initialPageParam: 0,
     queryFn: ({ pageParam }) =>
-      chatService.listChats({
+      service.listChats({
         search: debouncedSearch,
         limit: CHAT_LIST_PAGE_SIZE,
         offset: pageParam,
@@ -135,9 +166,9 @@ export function ChatSidebar({ currentChatId }: ChatSidebarProps) {
 
   const updateChatMutation = useMutation({
     mutationFn: ({ chatId, title }: { chatId: string; title: string }) =>
-      chatService.updateChat(chatId, { title }),
+      service.updateChat(chatId, { title }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['chat-list'] });
+      await queryClient.invalidateQueries({ queryKey: [queryKey] });
       setEditingChat(null);
       setEditTitle('');
     },
@@ -148,14 +179,14 @@ export function ChatSidebar({ currentChatId }: ChatSidebarProps) {
 
   const deleteChatMutation = useMutation({
     mutationFn: (chatId: string) =>
-      chatService.updateChat(chatId, { deleted_at: new Date().toISOString() }),
+      service.updateChat(chatId, { deleted_at: new Date().toISOString() }),
     onSuccess: async (_data, chatId) => {
-      await queryClient.invalidateQueries({ queryKey: ['chat-list'] });
+      await queryClient.invalidateQueries({ queryKey: [queryKey] });
       toast.success(t('deleteSuccess'));
       setDeleteChat(null);
 
       if (currentChatId === chatId) {
-        router.push('/');
+        router.push(newSessionHref);
       }
     },
     onError: () => {
@@ -227,7 +258,7 @@ export function ChatSidebar({ currentChatId }: ChatSidebarProps) {
               />
             </div>
             <Button asChild className="h-10 w-full rounded-full">
-              <Link href="/">
+              <Link href={newSessionHref}>
                 <Plus className="size-4" />
                 {t('newChat')}
               </Link>
@@ -248,7 +279,7 @@ export function ChatSidebar({ currentChatId }: ChatSidebarProps) {
 
             {!chatListQuery.isLoading && chats.length === 0 ? (
               <div className="flex h-48 flex-col items-center justify-center rounded-2xl border border-dashed text-center">
-                <MessageSquare className="mb-3 size-7 text-muted-foreground" />
+                <EmptyIcon className="mb-3 size-7 text-muted-foreground" />
                 <p className="font-medium text-sm">{t('emptyTitle')}</p>
                 <p className="mt-1 max-w-44 text-muted-foreground text-xs">
                   {debouncedSearch ? t('emptySearch') : t('emptyDescription')}
@@ -269,9 +300,9 @@ export function ChatSidebar({ currentChatId }: ChatSidebarProps) {
                 >
                   <Link
                     className="flex min-w-0 flex-1 items-start gap-2 px-3 py-3 text-left"
-                    href={`/chat/${chat.id}`}
+                    href={`${sessionHrefPrefix}/${chat.id}`}
                   >
-                    <MessageSquare className="mt-0.5 size-4 shrink-0" />
+                    <ItemIcon className="mt-0.5 size-4 shrink-0" />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate font-medium text-sm">
                         {chat.title || t('untitled')}

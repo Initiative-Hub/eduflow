@@ -1,11 +1,17 @@
 import type { UIMessage } from 'ai';
-import { AiChatRole, AiChatStatus, type Prisma } from '@/generated/prisma';
+import {
+  AiChatRole,
+  AiChatStatus,
+  AiChatType,
+  type Prisma,
+} from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
 import { CacheService } from '@/services/CacheService';
 import { getMessagePreview } from '@/utils/chat-message';
 import { buildNewChatData, type ChatCacheData } from '@/utils/chat-session';
 
 const CHAT_TTL_SECONDS = 60 * 60 * 24;
+const DEFAULT_CHAT_TYPE = AiChatType.CHAT_ASSISTANT;
 
 export interface ChatListItem {
   id: string;
@@ -14,9 +20,12 @@ export interface ChatListItem {
   updatedAt: string;
 }
 
+export type ChatMetadata = Prisma.JsonValue;
+
 interface ChatOwner {
   userId?: string;
   guestId?: string;
+  chatType?: AiChatType;
 }
 
 interface ListChatsInput extends ChatOwner {
@@ -39,11 +48,14 @@ interface UpdateChatInput extends ChatOwner {
 }
 
 type CachedChat = ChatCacheData & {
+  type?: AiChatType;
+  metadata?: Prisma.JsonValue;
   updatedAt?: string;
   deletedAt?: string | null;
 };
 
-const getGuestChatIndexKey = (guestId: string) => `guest_chats:${guestId}`;
+const getGuestChatIndexKey = (guestId: string, chatType: AiChatType) =>
+  `guest_chats:${guestId}:${chatType}`;
 
 const normalizeSearch = (search?: string) => search?.trim().toLowerCase() ?? '';
 
@@ -56,8 +68,12 @@ const toStoredRole = (role: UIMessage['role']) =>
 const toUiRole = (role: string): UIMessage['role'] =>
   role.toLowerCase() as UIMessage['role'];
 
-async function updateGuestChatIndex(guestId: string, item: ChatListItem) {
-  const key = getGuestChatIndexKey(guestId);
+async function updateGuestChatIndex(
+  guestId: string,
+  chatType: AiChatType,
+  item: ChatListItem
+) {
+  const key = getGuestChatIndexKey(guestId, chatType);
   const existing = (await CacheService.getCache<ChatListItem[]>(key)) ?? [];
   const nextItems = [
     item,
@@ -67,8 +83,12 @@ async function updateGuestChatIndex(guestId: string, item: ChatListItem) {
   await CacheService.setCache(key, nextItems, { ttlSeconds: CHAT_TTL_SECONDS });
 }
 
-async function removeGuestChatFromIndex(guestId: string, chatId: string) {
-  const key = getGuestChatIndexKey(guestId);
+async function removeGuestChatFromIndex(
+  guestId: string,
+  chatType: AiChatType,
+  chatId: string
+) {
+  const key = getGuestChatIndexKey(guestId, chatType);
   const existing = (await CacheService.getCache<ChatListItem[]>(key)) ?? [];
   const nextItems = existing.filter((chat) => chat.id !== chatId);
 
@@ -80,8 +100,11 @@ export class ChatPersistenceService {
     firstMessage,
     userId,
     guestId,
+    chatType = DEFAULT_CHAT_TYPE,
+    metadata,
   }: ChatOwner & {
     firstMessage: string;
+    metadata?: Prisma.InputJsonValue;
   }) {
     const title = getTitle(firstMessage);
 
@@ -90,6 +113,8 @@ export class ChatPersistenceService {
         data: {
           userId,
           title,
+          type: chatType,
+          ...(metadata !== undefined ? { metadata } : {}),
         },
         select: { id: true },
       });
@@ -105,13 +130,17 @@ export class ChatPersistenceService {
     const updatedAt = new Date().toISOString();
     const chatData: CachedChat = {
       ...buildNewChatData({ guestId, firstMessage }),
+      type: chatType,
+      ...(metadata !== undefined
+        ? { metadata: metadata as Prisma.JsonValue }
+        : {}),
       updatedAt,
     };
 
     await CacheService.setCache(chatId, chatData, {
       ttlSeconds: CHAT_TTL_SECONDS,
     });
-    await updateGuestChatIndex(guestId, {
+    await updateGuestChatIndex(guestId, chatType, {
       id: chatId,
       title,
       messageCount: 0,
@@ -125,18 +154,21 @@ export class ChatPersistenceService {
     chatId,
     userId,
     guestId,
+    chatType = DEFAULT_CHAT_TYPE,
   }: ChatOwner & { chatId: string }) {
     if (userId) {
       const chat = await prisma.aiChat.findFirst({
         where: {
           id: chatId,
           userId,
+          type: chatType,
           status: AiChatStatus.ACTIVE,
           deletedAt: null,
         },
         select: {
           id: true,
           title: true,
+          metadata: true,
           updatedAt: true,
           messages: {
             orderBy: { createdAt: 'asc' },
@@ -159,6 +191,7 @@ export class ChatPersistenceService {
 
       return {
         title: chat.title,
+        metadata: chat.metadata,
         messageCount: messages.length,
         messages,
         updatedAt: chat.updatedAt.toISOString(),
@@ -168,13 +201,19 @@ export class ChatPersistenceService {
     if (!guestId) return null;
 
     const chatData = await CacheService.getCache<CachedChat>(chatId);
-    if (!chatData || chatData.guestId !== guestId || chatData.deletedAt) {
+    if (
+      !chatData ||
+      chatData.guestId !== guestId ||
+      chatData.deletedAt ||
+      (chatData.type ?? DEFAULT_CHAT_TYPE) !== chatType
+    ) {
       return null;
     }
 
     return {
       guestId: chatData.guestId,
       title: chatData.title,
+      metadata: chatData.metadata,
       messageCount: chatData.messageCount ?? 0,
       messages: chatData.messages ?? [],
       updatedAt: chatData.updatedAt,
@@ -188,6 +227,7 @@ export class ChatPersistenceService {
     messages,
     provider,
     model,
+    chatType = DEFAULT_CHAT_TYPE,
   }: SaveMessagesInput) {
     const updatedAt = new Date();
 
@@ -196,6 +236,7 @@ export class ChatPersistenceService {
         where: {
           id: chatId,
           userId,
+          type: chatType,
           status: AiChatStatus.ACTIVE,
           deletedAt: null,
         },
@@ -211,6 +252,7 @@ export class ChatPersistenceService {
             ? await tx.aiChatMessage.findMany({
                 where: {
                   chatId,
+                  chat: { type: chatType },
                   id: { in: messageIds },
                 },
                 select: { id: true },
@@ -254,7 +296,12 @@ export class ChatPersistenceService {
     if (!guestId) return null;
 
     const chatData = await CacheService.getCache<CachedChat>(chatId);
-    if (!chatData || chatData.guestId !== guestId || chatData.deletedAt) {
+    if (
+      !chatData ||
+      chatData.guestId !== guestId ||
+      chatData.deletedAt ||
+      (chatData.type ?? DEFAULT_CHAT_TYPE) !== chatType
+    ) {
       return null;
     }
 
@@ -268,7 +315,7 @@ export class ChatPersistenceService {
     await CacheService.setCache(chatId, nextData, {
       ttlSeconds: CHAT_TTL_SECONDS,
     });
-    await updateGuestChatIndex(guestId, {
+    await updateGuestChatIndex(guestId, chatType, {
       id: chatId,
       title: chatData.title,
       messageCount: messages.length,
@@ -284,12 +331,14 @@ export class ChatPersistenceService {
     search,
     limit,
     offset,
+    chatType = DEFAULT_CHAT_TYPE,
   }: ListChatsInput) {
     const query = normalizeSearch(search);
 
     if (userId) {
       const where: Prisma.AiChatWhereInput = {
         userId,
+        type: chatType,
         status: AiChatStatus.ACTIVE,
         deletedAt: null,
         ...(query
@@ -336,7 +385,7 @@ export class ChatPersistenceService {
 
     const chats =
       (await CacheService.getCache<ChatListItem[]>(
-        getGuestChatIndexKey(guestId)
+        getGuestChatIndexKey(guestId, chatType)
       )) ?? [];
     const filtered = query
       ? chats.filter((chat) => chat.title.toLowerCase().includes(query))
@@ -355,12 +404,14 @@ export class ChatPersistenceService {
     guestId,
     title,
     deletedAt,
+    chatType = DEFAULT_CHAT_TYPE,
   }: UpdateChatInput) {
     if (userId) {
       const chat = await prisma.aiChat.findFirst({
         where: {
           id: chatId,
           userId,
+          type: chatType,
           status: AiChatStatus.ACTIVE,
           deletedAt: null,
         },
@@ -394,7 +445,12 @@ export class ChatPersistenceService {
     if (!guestId) return null;
 
     const chatData = await CacheService.getCache<CachedChat>(chatId);
-    if (!chatData || chatData.guestId !== guestId || chatData.deletedAt) {
+    if (
+      !chatData ||
+      chatData.guestId !== guestId ||
+      chatData.deletedAt ||
+      (chatData.type ?? DEFAULT_CHAT_TYPE) !== chatType
+    ) {
       return null;
     }
 
@@ -413,9 +469,9 @@ export class ChatPersistenceService {
     });
 
     if (deletedAt) {
-      await removeGuestChatFromIndex(guestId, chatId);
+      await removeGuestChatFromIndex(guestId, chatType, chatId);
     } else {
-      await updateGuestChatIndex(guestId, {
+      await updateGuestChatIndex(guestId, chatType, {
         id: chatId,
         title: nextData.title,
         messageCount: nextData.messageCount ?? 0,

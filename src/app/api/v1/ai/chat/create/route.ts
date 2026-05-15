@@ -1,6 +1,5 @@
-import { cookies, headers } from 'next/headers';
 import { z } from 'zod';
-import { auth } from '@/lib/auth';
+import { getChatOwner } from '@/lib/api/guest-session';
 import { ChatPersistenceService } from '@/services/ChatPersistenceService';
 
 const createChatSchema = z.object({
@@ -48,31 +47,10 @@ export async function POST(req: Request) {
       );
     }
 
-    const [cookieStore, session] = await Promise.all([
-      cookies(),
-      auth.api.getSession({ headers: await headers() }),
-    ]);
-    const guestSession = cookieStore.get('guest_session');
-    const previousGuestId = guestSession?.value;
-
-    let guestId: string | undefined;
-
-    if (session?.user?.id) {
-      guestId = undefined;
-    } else if (previousGuestId) {
-      guestId = previousGuestId;
-    } else {
-      guestId = `guest_${crypto.randomUUID()}`;
-      cookieStore.set('guest_session', guestId, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 60 * 60 * 24,
-        path: '/',
-      });
-    }
+    const { userId, guestId } = await getChatOwner({ createGuest: true });
 
     const { chatId } = await ChatPersistenceService.createChat({
-      userId: session?.user?.id,
+      userId,
       guestId,
       firstMessage: parsedBody.data.firstMessage,
     });

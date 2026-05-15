@@ -1,10 +1,11 @@
 import { useChat } from '@ai-sdk/react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { DefaultChatTransport, type UIMessage } from 'ai';
 import { useEffect, useMemo, useRef } from 'react';
 import { toast } from 'sonner';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import type { WritingTool } from '@/lib/validations/writing.schema';
+import type { ChatModel } from '@/services/ai/chat-models';
 import { useChatSessionStore } from '@/stores/useChatSessionStore';
 import {
   getUserMessageCount,
@@ -18,30 +19,37 @@ interface UseWritingOptions {
   tool: WritingTool;
   sessionId?: string;
   initialMessages?: UIMessage[];
+  selectedModel: ChatModel;
 }
 
 const useWriting = ({
   tool,
   sessionId,
   initialMessages = [],
+  selectedModel,
 }: UseWritingOptions) => {
   const router = useRouter();
   const pathname = usePathname();
+  const queryClient = useQueryClient();
   const lastPendingSendRef = useRef<string | null>(null);
 
   const {
     pendingMessage,
     pendingChatId,
+    pendingModel,
     setOptimisticChatId,
     setOptimisticMessages,
     setPendingMessage,
     setPendingChatId,
+    setPendingModel,
     optimisticChatId,
     optimisticMessages,
     clearPendingMessage,
     clearPendingChatId,
+    clearPendingModel,
     clearOptimisticMessages,
   } = useChatSessionStore();
+  const requestModel = pendingModel ?? selectedModel;
 
   const createSessionMutation = useMutation({
     mutationFn: async (text: string) => {
@@ -64,11 +72,11 @@ const useWriting = ({
             body: {
               tool,
               provider: 'openrouter',
-              model: 'gemini-2.5-pro',
+              model: requestModel,
             },
           })
         : undefined,
-    [sessionId, tool]
+    [sessionId, requestModel, tool]
   );
 
   const { messages, status, sendMessage, stop } = useChat({
@@ -100,6 +108,7 @@ const useWriting = ({
     lastPendingSendRef.current = pendingKey;
     clearPendingMessage();
     clearPendingChatId();
+    clearPendingModel();
 
     void sendMessage({ text: pendingMessage });
   }, [
@@ -110,6 +119,7 @@ const useWriting = ({
     sendMessage,
     clearPendingMessage,
     clearPendingChatId,
+    clearPendingModel,
   ]);
 
   useEffect(() => {
@@ -134,10 +144,14 @@ const useWriting = ({
     if (!sessionId) {
       try {
         const newChatId = await createSessionMutation.mutateAsync(text);
+        await queryClient.invalidateQueries({
+          queryKey: ['writing-session-list'],
+        });
         setOptimisticChatId(newChatId);
         setOptimisticMessages([createUserMessage(text)]);
         setPendingMessage(text);
         setPendingChatId(newChatId);
+        setPendingModel(selectedModel);
 
         router.push(`/writing/${newChatId}`);
       } catch (error) {

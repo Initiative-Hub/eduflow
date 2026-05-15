@@ -1,7 +1,6 @@
 import type { UIMessage } from 'ai';
-import { cookies, headers } from 'next/headers';
 import { z } from 'zod';
-import { auth } from '@/lib/auth';
+import { getChatOwner } from '@/lib/api/guest-session';
 import { ChatProviderFactory } from '@/services/ai/ChatProviderFactory';
 import { CHAT_MODEL_IDS } from '@/services/ai/chat-models';
 import { DEFAULT_PROVIDER } from '@/services/ai/chat-provider.constants';
@@ -61,14 +60,9 @@ export async function GET(
   try {
     const { chatId } = await params;
 
-    const [cookieStore, session] = await Promise.all([
-      cookies(),
-      auth.api.getSession({ headers: await headers() }),
-    ]);
-    const guestSession = cookieStore.get('guest_session');
-    const guestId = guestSession?.value;
+    const { userId, guestId } = await getChatOwner();
 
-    if (!session?.user?.id && !guestId) {
+    if (!userId && !guestId) {
       return new Response(JSON.stringify({ error: 'Missing guest session' }), {
         status: 401,
         headers: { 'Content-Type': 'application/json' },
@@ -77,7 +71,7 @@ export async function GET(
 
     const chatData = await ChatPersistenceService.getChat({
       chatId,
-      userId: session?.user?.id,
+      userId,
       guestId,
     });
 
@@ -155,12 +149,7 @@ export async function PATCH(
       );
     }
 
-    const [cookieStore, session] = await Promise.all([
-      cookies(),
-      auth.api.getSession({ headers: await headers() }),
-    ]);
-    const guestId = cookieStore.get('guest_session')?.value;
-    const userId = session?.user?.id;
+    const { userId, guestId } = await getChatOwner();
 
     if (!userId && !guestId) {
       return new Response(JSON.stringify({ error: 'Missing guest session' }), {
@@ -267,13 +256,7 @@ export async function POST(
       );
     }
 
-    const [cookieStore, session] = await Promise.all([
-      cookies(),
-      auth.api.getSession({ headers: await headers() }),
-    ]);
-    const guestSession = cookieStore.get('guest_session');
-    const guestId = guestSession?.value;
-    const userId = session?.user?.id;
+    const { userId, guestId } = await getChatOwner();
 
     if (!userId && !guestId) {
       return new Response(JSON.stringify({ error: 'Missing guest session' }), {

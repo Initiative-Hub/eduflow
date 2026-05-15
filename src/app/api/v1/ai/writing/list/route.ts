@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { AiChatType } from '@/generated/prisma';
 import { getChatOwner } from '@/lib/api/guest-session';
 import { ChatPersistenceService } from '@/services/ChatPersistenceService';
 
-const listChatsQuerySchema = z.object({
+const listWritingSessionsQuerySchema = z.object({
   search: z.string().trim().max(120).optional(),
   limit: z.coerce.number().int().min(1).max(50).default(20),
   offset: z.coerce.number().int().min(0).default(0),
@@ -11,39 +12,21 @@ const listChatsQuerySchema = z.object({
 
 /**
  * @swagger
- * /api/v1/ai/chat/list:
+ * /api/v1/ai/writing/list:
  *   get:
  *     tags:
- *       - Chat
- *     summary: List chats for the current user or guest session
- *     parameters:
- *       - in: query
- *         name: search
- *         schema:
- *           type: string
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           minimum: 1
- *           maximum: 50
- *           default: 20
- *       - in: query
- *         name: offset
- *         schema:
- *           type: integer
- *           minimum: 0
- *           default: 0
+ *       - Writing
+ *     summary: List writing assistant sessions for the current user or guest session
  *     responses:
  *       200:
- *         description: Chat list and pagination metadata
+ *         description: Writing session list and pagination metadata
  *       400:
  *         description: Invalid query params
  */
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    const parsed = listChatsQuerySchema.safeParse({
+    const parsed = listWritingSessionsQuerySchema.safeParse({
       search: searchParams.get('search') ?? undefined,
       limit: searchParams.get('limit') ?? undefined,
       offset: searchParams.get('offset') ?? undefined,
@@ -64,6 +47,7 @@ export async function GET(req: Request) {
       search: parsed.data.search,
       limit: parsed.data.limit,
       offset: parsed.data.offset,
+      chatType: AiChatType.WRITING_ASSISTANT,
     });
 
     return NextResponse.json(result);

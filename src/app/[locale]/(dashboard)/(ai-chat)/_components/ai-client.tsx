@@ -15,19 +15,19 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { type ChatModel, DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
+import { ChatSidebar } from '../../_components/chat-sidebar';
 import { useChatController } from '../use-chat';
-import { ChatSidebar } from './chat-sidebar';
 
 const LandingView = dynamic(() =>
   import('./landing-view').then((mod) => mod.LandingView)
 );
 
 const ChatView = dynamic(() =>
-  import('./chat-view').then((mod) => mod.ChatView)
+  import('../../_components/chat-view').then((mod) => mod.ChatView)
 );
 
 const ChatInput = dynamic(() =>
-  import('./chat-input').then((mod) => mod.ChatInput)
+  import('../../_components/chat-input').then((mod) => mod.ChatInput)
 );
 interface AIClientProps {
   userName?: string;
@@ -79,7 +79,7 @@ export function AIClient({
       return;
     }
 
-    void startChat(text.trim());
+    startChat(text.trim());
   };
 
   const suggestions = [

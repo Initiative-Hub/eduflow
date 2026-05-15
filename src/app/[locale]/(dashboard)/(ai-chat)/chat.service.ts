@@ -4,6 +4,7 @@ import { apiClient } from '@/lib/api';
 export interface ChatDetailsResponse {
   guestId?: string;
   title: string;
+  metadata?: unknown;
   messageCount: number;
   messages: UIMessage[];
 }

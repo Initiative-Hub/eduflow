@@ -1,8 +1,8 @@
-import { cookies } from 'next/headers';
 import { z } from 'zod';
+import { AiChatType } from '@/generated/prisma';
+import { getChatOwner } from '@/lib/api/guest-session';
 import { writingToolSchema } from '@/lib/validations/writing.schema';
-import { CacheService } from '@/services/CacheService';
-import { buildNewChatData } from '@/utils/chat-session';
+import { ChatPersistenceService } from '@/services/ChatPersistenceService';
 
 const createWritingSessionSchema = z.object({
   firstMessage: z.string().min(1),
@@ -15,7 +15,7 @@ const createWritingSessionSchema = z.object({
  *   post:
  *     tags:
  *       - Writing
- *     summary: Create a guest writing session
+ *     summary: Create a writing assistant session
  *     requestBody:
  *       required: true
  *       content:
@@ -52,34 +52,17 @@ export async function POST(req: Request) {
       );
     }
 
-    const cookieStore = await cookies();
-    const guestSession = cookieStore.get('guest_session');
-    const previousGuestId = guestSession?.value;
+    const { userId, guestId } = await getChatOwner({ createGuest: true });
 
-    let guestId: string;
-
-    if (previousGuestId) {
-      guestId = previousGuestId;
-    } else {
-      guestId = `guest_${crypto.randomUUID()}`;
-      cookieStore.set('guest_session', guestId, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 60 * 60 * 24,
-        path: '/',
-      });
-    }
-
-    const sessionId = `writing_${crypto.randomUUID()}`;
-
-    const writingData = buildNewChatData({
+    const { chatId } = await ChatPersistenceService.createChat({
+      userId,
       guestId,
       firstMessage: parsedBody.data.firstMessage,
+      chatType: AiChatType.WRITING_ASSISTANT,
+      metadata: { writingTool: parsedBody.data.tool },
     });
 
-    await CacheService.setCache(sessionId, writingData, { ttlSeconds: 86400 });
-
-    return new Response(JSON.stringify({ sessionId }), {
+    return new Response(JSON.stringify({ sessionId: chatId }), {
       status: 201,
       headers: { 'Content-Type': 'application/json' },
     });

@@ -79,10 +79,31 @@ describe('ChatPersistenceService', () => {
       data: {
         userId: 'user-1',
         title: 'Explain gravity',
+        type: 'CHAT_ASSISTANT',
       },
       select: { id: true },
     });
     expect(cacheMock.setCache).not.toHaveBeenCalled();
+  });
+
+  it('creates typed logged-in chats in the database', async () => {
+    prismaMock.aiChat.create.mockResolvedValueOnce({ id: 'writing-db-1' });
+
+    const result = await ChatPersistenceService.createChat({
+      firstMessage: 'Improve this email',
+      userId: 'user-1',
+      chatType: 'WRITING_ASSISTANT',
+    } as Parameters<typeof ChatPersistenceService.createChat>[0]);
+
+    expect(result.chatId).toBe('writing-db-1');
+    expect(prismaMock.aiChat.create).toHaveBeenCalledWith({
+      data: {
+        userId: 'user-1',
+        title: 'Improve this email',
+        type: 'WRITING_ASSISTANT',
+      },
+      select: { id: true },
+    });
   });
 
   it('creates guest chats in Redis and updates the guest chat index', async () => {
@@ -99,13 +120,14 @@ describe('ChatPersistenceService', () => {
       expect.objectContaining({
         guestId: 'guest-1',
         title: 'Explain gravity',
+        type: 'CHAT_ASSISTANT',
         messageCount: 0,
         messages: [],
       }),
       { ttlSeconds: 86400 }
     );
     expect(cacheMock.setCache).toHaveBeenCalledWith(
-      'guest_chats:guest-1',
+      'guest_chats:guest-1:CHAT_ASSISTANT',
       [
         expect.objectContaining({
           id: result.chatId,
@@ -115,6 +137,35 @@ describe('ChatPersistenceService', () => {
       { ttlSeconds: 86400 }
     );
     expect(prismaMock.aiChat.create).not.toHaveBeenCalled();
+  });
+
+  it('uses type-specific guest chat indexes', async () => {
+    cacheMock.getCache.mockResolvedValueOnce([]);
+
+    const result = await ChatPersistenceService.createChat({
+      firstMessage: 'Improve this email',
+      guestId: 'guest-1',
+      chatType: 'WRITING_ASSISTANT',
+    } as Parameters<typeof ChatPersistenceService.createChat>[0]);
+
+    expect(cacheMock.setCache).toHaveBeenCalledWith(
+      result.chatId,
+      expect.objectContaining({
+        title: 'Improve this email',
+        type: 'WRITING_ASSISTANT',
+      }),
+      { ttlSeconds: 86400 }
+    );
+    expect(cacheMock.setCache).toHaveBeenCalledWith(
+      'guest_chats:guest-1:WRITING_ASSISTANT',
+      [
+        expect.objectContaining({
+          id: result.chatId,
+          title: 'Improve this email',
+        }),
+      ],
+      { ttlSeconds: 86400 }
+    );
   });
 
   it('appends only new logged-in messages without deleting existing messages', async () => {
@@ -136,6 +187,7 @@ describe('ChatPersistenceService', () => {
     expect(prismaMock.aiChatMessage.findMany).toHaveBeenCalledWith({
       where: {
         chatId: 'chat-db-1',
+        chat: { type: 'CHAT_ASSISTANT' },
         id: { in: ['msg-1', 'msg-2'] },
       },
       select: { id: true },
@@ -154,6 +206,27 @@ describe('ChatPersistenceService', () => {
       ],
     });
     expect(cacheMock.setCache).not.toHaveBeenCalled();
+  });
+
+  it('filters typed logged-in chat access by chat type', async () => {
+    prismaMock.aiChat.findFirst.mockResolvedValueOnce(null);
+
+    const result = await ChatPersistenceService.getChat({
+      chatId: 'chat-db-1',
+      userId: 'user-1',
+      chatType: 'WRITING_ASSISTANT',
+    } as Parameters<typeof ChatPersistenceService.getChat>[0]);
+
+    expect(result).toBeNull();
+    expect(prismaMock.aiChat.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          id: 'chat-db-1',
+          userId: 'user-1',
+          type: 'WRITING_ASSISTANT',
+        }),
+      })
+    );
   });
 
   it('does not persist guest messages or re-index deleted cached chats', async () => {
@@ -202,6 +275,7 @@ describe('ChatPersistenceService', () => {
         userId: 'user-1',
         status: 'ACTIVE',
         deletedAt: null,
+        type: 'CHAT_ASSISTANT',
         title: { contains: 'gravity', mode: 'insensitive' },
       },
       orderBy: { updatedAt: 'desc' },
@@ -250,7 +324,9 @@ describe('ChatPersistenceService', () => {
       offset: 0,
     });
 
-    expect(cacheMock.getCache).toHaveBeenCalledWith('guest_chats:guest-1');
+    expect(cacheMock.getCache).toHaveBeenCalledWith(
+      'guest_chats:guest-1:CHAT_ASSISTANT'
+    );
     expect(result).toEqual({
       data: [
         {
@@ -262,6 +338,36 @@ describe('ChatPersistenceService', () => {
       ],
       pagination: { total: 1, limit: 10, offset: 0 },
     });
+  });
+
+  it('lists typed guest chats from a type-specific Redis index', async () => {
+    cacheMock.getCache.mockResolvedValueOnce([
+      {
+        id: 'writing-1',
+        title: 'Improve this email',
+        messageCount: 2,
+        updatedAt: '2026-01-02T00:00:00.000Z',
+      },
+    ]);
+
+    const result = await ChatPersistenceService.listChats({
+      guestId: 'guest-1',
+      chatType: 'WRITING_ASSISTANT',
+      limit: 10,
+      offset: 0,
+    } as Parameters<typeof ChatPersistenceService.listChats>[0]);
+
+    expect(cacheMock.getCache).toHaveBeenCalledWith(
+      'guest_chats:guest-1:WRITING_ASSISTANT'
+    );
+    expect(result.data).toEqual([
+      {
+        id: 'writing-1',
+        title: 'Improve this email',
+        messageCount: 2,
+        updatedAt: '2026-01-02T00:00:00.000Z',
+      },
+    ]);
   });
 
   it('updates logged-in chat titles in the database', async () => {
@@ -286,6 +392,7 @@ describe('ChatPersistenceService', () => {
         userId: 'user-1',
         status: 'ACTIVE',
         deletedAt: null,
+        type: 'CHAT_ASSISTANT',
       },
       select: { id: true },
     });
@@ -371,7 +478,7 @@ describe('ChatPersistenceService', () => {
       { ttlSeconds: 86400 }
     );
     expect(cacheMock.setCache).toHaveBeenCalledWith(
-      'guest_chats:guest-1',
+      'guest_chats:guest-1:CHAT_ASSISTANT',
       [
         expect.objectContaining({
           id: 'chat-1',
@@ -416,9 +523,13 @@ describe('ChatPersistenceService', () => {
       expect.objectContaining({ deletedAt: deletedAt.toISOString() }),
       { ttlSeconds: 86400 }
     );
-    expect(cacheMock.setCache).toHaveBeenCalledWith('guest_chats:guest-1', [], {
-      ttlSeconds: 86400,
-    });
+    expect(cacheMock.setCache).toHaveBeenCalledWith(
+      'guest_chats:guest-1:CHAT_ASSISTANT',
+      [],
+      {
+        ttlSeconds: 86400,
+      }
+    );
     expect(result).not.toBeNull();
     expect(result?.deletedAt).toBe(deletedAt.toISOString());
   });

@@ -2,7 +2,7 @@ import { cookies, headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { ChatPersistenceService } from '@/services/ChatPersistenceService';
-import { AIClient } from '../../_components/ai-client';
+import { AIClient } from '../../(ai-chat)/_components/ai-client';
 
 interface ChatPageProps {
   params: Promise<{ chatId: string }>;

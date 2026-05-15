@@ -1,6 +1,7 @@
 import type { UIMessage } from 'ai';
-import { cookies } from 'next/headers';
 import { z } from 'zod';
+import { AiChatType } from '@/generated/prisma';
+import { getChatOwner } from '@/lib/api/guest-session';
 import { writingToolSchema } from '@/lib/validations/writing.schema';
 import { ChatProviderFactory } from '@/services/ai/ChatProviderFactory';
 import { DEFAULT_PROVIDER } from '@/services/ai/chat-provider.constants';
@@ -9,7 +10,7 @@ import type {
   StreamChatInput,
 } from '@/services/ai/chat-provider.types';
 import { CacheService } from '@/services/CacheService';
-import type { ChatCacheData } from '@/utils/chat-session';
+import { ChatPersistenceService } from '@/services/ChatPersistenceService';
 import { getWritingSystemPrompt } from './writing.constants';
 
 export const maxDuration = 30;
@@ -22,6 +23,91 @@ const writingRequestSchema = z.object({
   apiKey: z.string().min(1).optional(),
   providerOptions: z.custom<StreamChatInput['providerOptions']>().optional(),
 });
+
+const writingUpdateSchema = z
+  .object({
+    title: z.string().trim().min(1).max(120).optional(),
+    deleted_at: z.string().datetime().optional(),
+  })
+  .refine((data) => data.title !== undefined || data.deleted_at !== undefined, {
+    message: 'Provide title or deleted_at',
+  });
+
+/**
+ * @swagger
+ * /api/v1/ai/writing/{chatId}:
+ *   patch:
+ *     tags:
+ *       - Writing
+ *     summary: Update writing session title or soft delete a writing session
+ *     responses:
+ *       200:
+ *         description: Updated writing session metadata
+ *       400:
+ *         description: Invalid request payload
+ *       401:
+ *         description: Missing guest session
+ *       404:
+ *         description: Session not found
+ */
+export async function PATCH(
+  req: Request,
+  { params }: { params: Promise<{ chatId: string }> }
+) {
+  try {
+    const [{ chatId }, body] = await Promise.all([params, req.json()]);
+
+    const parsedBody = writingUpdateSchema.safeParse(body);
+    if (!parsedBody.success) {
+      return new Response(
+        JSON.stringify({
+          error: 'Invalid request payload',
+          details: parsedBody.error.flatten(),
+        }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { userId, guestId } = await getChatOwner();
+
+    if (!userId && !guestId) {
+      return new Response(JSON.stringify({ error: 'Missing guest session' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const updatedChat = await ChatPersistenceService.updateChat({
+      chatId,
+      userId,
+      guestId,
+      title: parsedBody.data.title,
+      deletedAt: parsedBody.data.deleted_at
+        ? new Date(parsedBody.data.deleted_at)
+        : undefined,
+      chatType: AiChatType.WRITING_ASSISTANT,
+    });
+
+    if (!updatedChat) {
+      return new Response(
+        JSON.stringify({ error: 'Session not found or access denied' }),
+        { status: 404, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    return new Response(JSON.stringify(updatedChat), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  } catch (error: unknown) {
+    const message =
+      error instanceof Error ? error.message : 'Unknown error occurred';
+    return new Response(JSON.stringify({ error: message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+}
 
 /**
  * @swagger
@@ -70,18 +156,36 @@ export async function POST(
       );
     }
 
-    const cookieStore = await cookies();
-    const guestId = cookieStore.get('guest_session')?.value;
+    const { userId, guestId } = await getChatOwner();
 
-    if (!guestId) {
+    if (!userId && !guestId) {
       return new Response(JSON.stringify({ error: 'Missing guest session' }), {
         status: 401,
+        headers: { 'Content-Type': 'application/json' },
       });
     }
 
-    const writingData = await CacheService.getCache<ChatCacheData>(chatId);
+    const limitStatus = userId
+      ? { allowed: true, remaining: Number.POSITIVE_INFINITY }
+      : await CacheService.checkGuestLimit(guestId as string);
+    if (!limitStatus.allowed) {
+      return new Response(
+        JSON.stringify({
+          error: limitStatus.message,
+          remaining: limitStatus.remaining,
+        }),
+        { status: 429, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
 
-    if (!writingData || writingData.guestId !== guestId) {
+    const writingData = await ChatPersistenceService.getChat({
+      chatId,
+      userId,
+      guestId,
+      chatType: AiChatType.WRITING_ASSISTANT,
+    });
+
+    if (!writingData) {
       return new Response(
         JSON.stringify({ error: 'Session not found or access denied' }),
         {
@@ -104,18 +208,17 @@ export async function POST(
 
     const response = result.toUIMessageStreamResponse({
       originalMessages: parsedBody.data.messages,
+      generateMessageId: () => `${crypto.randomUUID()}`,
       onFinish: async ({ messages }) => {
-        await CacheService.setCache(
+        await ChatPersistenceService.saveMessages({
           chatId,
-          {
-            ...writingData,
-            messages,
-            messageCount: messages.length,
-          },
-          {
-            ttlSeconds: 86400,
-          }
-        );
+          userId,
+          guestId,
+          messages,
+          provider: parsedBody.data.provider ?? DEFAULT_PROVIDER,
+          model: parsedBody.data.model,
+          chatType: AiChatType.WRITING_ASSISTANT,
+        });
       },
     });
 
