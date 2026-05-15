@@ -33,18 +33,18 @@ export interface ChatUpdateResponse {
 
 export const chatService = {
   createChat: async (firstMessage: string) => {
-    return apiClient.post<{ chatId: string }>('/chat/create', {
+    return apiClient.post<{ chatId: string }>('/v1/ai/chat/create', {
       firstMessage,
     });
   },
   getChat: async (chatId: string) => {
-    return apiClient.get<ChatDetailsResponse>(`/chat/${chatId}`);
+    return apiClient.get<ChatDetailsResponse>(`/v1/ai/chat/${chatId}`);
   },
   updateChat: async (
     chatId: string,
     data: { title?: string; deleted_at?: string }
   ) => {
-    return apiClient.patch<ChatUpdateResponse>(`/chat/${chatId}`, data);
+    return apiClient.patch<ChatUpdateResponse>(`/v1/ai/chat/${chatId}`, data);
   },
   listChats: async ({
     search,
@@ -55,7 +55,7 @@ export const chatService = {
     limit: number;
     offset: number;
   }) => {
-    return apiClient.get<ChatListResponse>('/chat/list', {
+    return apiClient.get<ChatListResponse>('/v1/ai/chat/list', {
       params: { search: search || undefined, limit, offset },
     });
   },

@@ -60,7 +60,7 @@ const useWriting = ({
     () =>
       sessionId
         ? new DefaultChatTransport({
-            api: `/api/writing/${sessionId}`,
+            api: `/api/v1/ai/writing/${sessionId}`,
             body: {
               tool,
               provider: 'openrouter',

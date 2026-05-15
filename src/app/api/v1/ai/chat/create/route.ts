@@ -9,7 +9,7 @@ const createChatSchema = z.object({
 
 /**
  * @swagger
- * /api/chat/create:
+ * /api/v1/ai/chat/create:
  *   post:
  *     tags:
  *       - Chat

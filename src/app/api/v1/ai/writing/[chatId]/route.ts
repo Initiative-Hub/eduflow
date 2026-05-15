@@ -11,6 +11,7 @@ import type {
 import { CacheService } from '@/services/CacheService';
 import type { ChatCacheData } from '@/utils/chat-session';
 import { getWritingSystemPrompt } from './writing.constants';
+
 export const maxDuration = 30;
 
 const writingRequestSchema = z.object({
@@ -22,6 +23,35 @@ const writingRequestSchema = z.object({
   providerOptions: z.custom<StreamChatInput['providerOptions']>().optional(),
 });
 
+/**
+ * @swagger
+ * /api/v1/ai/writing/{chatId}:
+ *   post:
+ *     tags:
+ *       - Writing
+ *     summary: Send a writing prompt and receive a streamed response
+ *     parameters:
+ *       - in: path
+ *         name: chatId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Streamed writing response
+ *       400:
+ *         description: Invalid request payload
+ *       401:
+ *         description: Missing guest session
+ *       404:
+ *         description: Session not found
+ */
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ chatId: string }> }

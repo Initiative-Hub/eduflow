@@ -55,7 +55,7 @@ export const useChatController = ({
     () =>
       initialChatId
         ? new DefaultChatTransport({
-            api: `/api/chat/${initialChatId}`,
+            api: `/api/v1/ai/chat/${initialChatId}`,
             body: {
               provider: 'openrouter',
               model: requestModel,

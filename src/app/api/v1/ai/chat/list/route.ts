@@ -12,7 +12,7 @@ const listChatsQuerySchema = z.object({
 
 /**
  * @swagger
- * /api/chat/list:
+ * /api/v1/ai/chat/list:
  *   get:
  *     tags:
  *       - Chat

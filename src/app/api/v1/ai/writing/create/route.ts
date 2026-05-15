@@ -11,7 +11,7 @@ const createWritingSessionSchema = z.object({
 
 /**
  * @swagger
- * /api/writing/create:
+ * /api/v1/ai/writing/create:
  *   post:
  *     tags:
  *       - Writing
@@ -77,7 +77,6 @@ export async function POST(req: Request) {
       firstMessage: parsedBody.data.firstMessage,
     });
 
-    // Save it to Upstash Redis
     await CacheService.setCache(sessionId, writingData, { ttlSeconds: 86400 });
 
     return new Response(JSON.stringify({ sessionId }), {

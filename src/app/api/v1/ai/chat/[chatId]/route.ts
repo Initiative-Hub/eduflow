@@ -33,7 +33,7 @@ const chatUpdateSchema = z
 
 /**
  * @swagger
- * /api/chat/{chatId}:
+ * /api/v1/ai/chat/{chatId}:
  *   get:
  *     tags:
  *       - Chat
@@ -104,7 +104,7 @@ export async function GET(
 
 /**
  * @swagger
- * /api/chat/{chatId}:
+ * /api/v1/ai/chat/{chatId}:
  *   patch:
  *     tags:
  *       - Chat
@@ -202,7 +202,7 @@ export async function PATCH(
 
 /**
  * @swagger
- * /api/chat/{chatId}:
+ * /api/v1/ai/chat/{chatId}:
  *   post:
  *     tags:
  *       - Chat
