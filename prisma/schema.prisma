@@ -200,6 +200,9 @@ model FileInventory {
   userId String @map("user_id")
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  courseId String? @map("course_id")
+  course   Course? @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
   parentId String?         @map("parent_id")
   parent   FileInventory?  @relation("FolderHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
   children FileInventory[] @relation("FolderHierarchy")
@@ -224,9 +227,12 @@ model FileInventory {
   deletedAt  DateTime?
 
   @@index([userId])
+  @@index([courseId])
   @@index([parentId])
   @@index([userId, status, uploadedAt(sort: Desc)])
+  @@index([courseId, status, uploadedAt(sort: Desc)])
   @@index([userId, deletedAt])
+  @@index([courseId, deletedAt])
   @@index([userId, objectKey])
   @@map("file_inventory")
 }
@@ -281,6 +287,7 @@ model Course {
   modules     Module[]
   enrollments Enrollment[]
   permissions CoursePermission[]
+  files       FileInventory[]
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
 

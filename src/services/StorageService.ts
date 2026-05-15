@@ -38,7 +38,8 @@ function serializeFileInventory(
  */
 async function ensureParentFolder(
   userId: string,
-  parentId?: string | null
+  parentId?: string | null,
+  courseId?: string | null
 ): Promise<FileInventory | null> {
   if (!parentId) {
     return null;
@@ -48,6 +49,7 @@ async function ensureParentFolder(
     where: {
       id: parentId,
       userId,
+      courseId: courseId ?? null,
       isFolder: true,
       deletedAt: null,
     },
@@ -194,15 +196,21 @@ export class StorageService {
    */
   static async listDirectory(options: {
     userId: string;
+    courseId?: string | null;
     parentId?: string | null;
     search?: string;
     limit: number;
     offset: number;
   }) {
-    await ensureParentFolder(options.userId, options.parentId ?? null);
+    await ensureParentFolder(
+      options.userId,
+      options.parentId ?? null,
+      options.courseId
+    );
 
     const where: Prisma.FileInventoryWhereInput = {
       userId: options.userId,
+      courseId: options.courseId ?? null,
       parentId: options.parentId ?? null,
       deletedAt: null,
       ...(options.search
@@ -237,10 +245,15 @@ export class StorageService {
    */
   static async createFolder(options: {
     userId: string;
+    courseId?: string | null;
     parentId?: string | null;
     name: string;
   }) {
-    await ensureParentFolder(options.userId, options.parentId ?? null);
+    await ensureParentFolder(
+      options.userId,
+      options.parentId ?? null,
+      options.courseId
+    );
 
     const normalizedName = normalizeName(options.name);
     if (!normalizedName) {
@@ -250,6 +263,7 @@ export class StorageService {
     const duplicate = await prisma.fileInventory.findFirst({
       where: {
         userId: options.userId,
+        courseId: options.courseId ?? null,
         parentId: options.parentId ?? null,
         deletedAt: null,
         name: {
@@ -269,6 +283,7 @@ export class StorageService {
     const folder = await prisma.fileInventory.create({
       data: {
         userId: options.userId,
+        courseId: options.courseId ?? null,
         parentId: options.parentId ?? null,
         name: normalizedName,
         isFolder: true,
@@ -285,13 +300,18 @@ export class StorageService {
    */
   static async initializeUpload(options: {
     userId: string;
+    courseId?: string | null;
     parentId?: string | null;
     path?: string;
     fileName: string;
     contentType: string;
     fileSize: number;
   }) {
-    await ensureParentFolder(options.userId, options.parentId ?? null);
+    await ensureParentFolder(
+      options.userId,
+      options.parentId ?? null,
+      options.courseId
+    );
 
     const normalizedName = normalizeName(options.fileName);
     if (!normalizedName) {
@@ -303,6 +323,7 @@ export class StorageService {
     }
 
     const objectKey = buildInventoryObjectKey(options.userId, normalizedName, {
+      courseId: options.courseId ?? undefined,
       relativePath: options.path,
     });
     const extension = normalizedName.includes('.')
@@ -312,6 +333,7 @@ export class StorageService {
     const file = await prisma.fileInventory.create({
       data: {
         userId: options.userId,
+        courseId: options.courseId ?? null,
         parentId: options.parentId ?? null,
         name: normalizedName,
         isFolder: false,
@@ -713,30 +735,32 @@ export class StorageService {
   /**
    * Returns aggregate inventory metrics for dashboard-style usage stats.
    */
-  static async getAnalytics(options: { userId: string }) {
+  static async getAnalytics(options: {
+    userId: string;
+    courseId?: string | null;
+  }) {
+    const where: Prisma.FileInventoryWhereInput = {
+      userId: options.userId,
+      courseId: options.courseId ?? null,
+      isFolder: false,
+      deletedAt: null,
+      status: 'READY',
+    };
+
     const [fileCount, folderCount, sizeAggregate] = await Promise.all([
       prisma.fileInventory.count({
-        where: {
-          userId: options.userId,
-          isFolder: false,
-          deletedAt: null,
-          status: 'READY',
-        },
+        where,
       }),
       prisma.fileInventory.count({
         where: {
           userId: options.userId,
+          courseId: options.courseId ?? null,
           isFolder: true,
           deletedAt: null,
         },
       }),
       prisma.fileInventory.aggregate({
-        where: {
-          userId: options.userId,
-          isFolder: false,
-          deletedAt: null,
-          status: 'READY',
-        },
+        where,
         _sum: {
           fileSize: true,
         },
