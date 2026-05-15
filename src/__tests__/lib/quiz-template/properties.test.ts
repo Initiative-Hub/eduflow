@@ -801,8 +801,13 @@ describe('Property 6: Quiz form validation correctness for any form state', () =
   });
 
   it('returns no errors when all required fields are valid', () => {
+    // Title must be non-empty after trimming to pass validation
+    const arbNonBlankTitle = fc
+      .string({ minLength: 1, maxLength: 50 })
+      .filter((s) => s.trim().length > 0);
+
     const validFormState: fc.Arbitrary<QuizFormState> = fc.record({
-      title: arbNonEmptyString,
+      title: arbNonBlankTitle,
       description: fc.string(),
       category: fc.constantFrom('SELECTION_BASED', 'OPEN_ENDED'),
       subType: fc.constantFrom('MULTIPLE_CHOICE', 'TRUE_FALSE', 'ESSAY'),
