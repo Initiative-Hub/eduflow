@@ -1,0 +1,237 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useCallback, useMemo, useState } from 'react';
+import { toast } from 'sonner';
+import { apiClient } from '@/lib/api/api-client';
+import type {
+  QuestionBankEntry,
+  QuestionSubType,
+  QuizCategory,
+  QuizConfiguration,
+  QuizDefinition,
+} from '@/lib/quiz-template';
+import { generateQuestionsFromLesson } from '@/lib/quiz-template';
+
+// ─── Question Bank Hook ──────────────────────────────────────────────────────
+
+interface UseQuestionBankOptions {
+  courseId: string;
+}
+
+export function useQuestionBank({ courseId }: UseQuestionBankOptions) {
+  const queryClient = useQueryClient();
+
+  // Fetch all questions for the course via real API
+  const questionsQuery = useQuery({
+    queryKey: ['question-bank', courseId],
+    queryFn: async (): Promise<QuestionBankEntry[]> => {
+      return apiClient.get<QuestionBankEntry[]>(
+        `v1/courses/${courseId}/questions`
+      );
+    },
+    enabled: !!courseId,
+  });
+
+  // Fetch quizzes for the course via real API
+  const quizzesQuery = useQuery({
+    queryKey: ['quizzes', courseId],
+    queryFn: async (): Promise<QuizDefinition[]> => {
+      return apiClient.get<QuizDefinition[]>(`v1/courses/${courseId}/quizzes`);
+    },
+    enabled: !!courseId,
+  });
+
+  // Add question to bank via real API
+  const addQuestionMutation = useMutation({
+    mutationFn: async (
+      question: Omit<QuestionBankEntry, 'id' | 'createdAt' | 'updatedAt'>
+    ) => {
+      return apiClient.post<QuestionBankEntry>(
+        `v1/courses/${courseId}/questions`,
+        {
+          lessonId: question.lessonId,
+          category: question.category,
+          subType: question.subType,
+          prompt: question.prompt,
+          answerData: question.answerData,
+          explanation: question.explanation,
+        }
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['question-bank', courseId] });
+      toast.success('Question added to bank');
+    },
+    onError: () => {
+      toast.error('Failed to add question');
+    },
+  });
+
+  // Delete question from bank via real API
+  const deleteQuestionMutation = useMutation({
+    mutationFn: async (questionId: string) => {
+      await apiClient.delete(`v1/questions/${questionId}`);
+      return questionId;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['question-bank', courseId] });
+      toast.success('Question deleted');
+    },
+    onError: () => {
+      toast.error('Failed to delete question');
+    },
+  });
+
+  // Create quiz via real API
+  const createQuizMutation = useMutation({
+    mutationFn: async (config: QuizConfiguration & { lessonId: string }) => {
+      return apiClient.post<QuizDefinition>(`v1/courses/${courseId}/quizzes`, {
+        lessonId: config.lessonId,
+        title: config.title,
+        description: config.description,
+        category: config.category,
+        subType: config.subType,
+        deliveryMode: config.deliveryMode,
+        selectionMethod: config.selectionMethod,
+        questionCount: config.questionCount,
+        questions: [],
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['quizzes', courseId] });
+      queryClient.invalidateQueries({ queryKey: ['modules', courseId] });
+      toast.success('Quiz created successfully');
+    },
+    onError: () => {
+      toast.error('Failed to create quiz');
+    },
+  });
+
+  // AI question generation (still uses the placeholder function)
+  const generateQuestionsMutation = useMutation({
+    mutationFn: async (params: {
+      lessonId: string;
+      category: QuizCategory;
+      subType: QuestionSubType;
+      count: number;
+    }) => {
+      return generateQuestionsFromLesson(
+        params.lessonId,
+        params.category,
+        params.subType,
+        params.count
+      );
+    },
+  });
+
+  return {
+    questions: questionsQuery.data ?? [],
+    isLoadingQuestions: questionsQuery.isLoading,
+
+    quizzes: quizzesQuery.data ?? [],
+    isLoadingQuizzes: quizzesQuery.isLoading,
+    isQuizzesError: quizzesQuery.isError,
+    refetchQuizzes: quizzesQuery.refetch,
+
+    addQuestion: addQuestionMutation.mutate,
+    isAddingQuestion: addQuestionMutation.isPending,
+
+    deleteQuestion: deleteQuestionMutation.mutate,
+    isDeletingQuestion: deleteQuestionMutation.isPending,
+
+    createQuiz: createQuizMutation.mutate,
+    isCreatingQuiz: createQuizMutation.isPending,
+
+    generateQuestions: generateQuestionsMutation.mutateAsync,
+    isGeneratingQuestions: generateQuestionsMutation.isPending,
+    generateQuestionsError: generateQuestionsMutation.error,
+    generatedQuestions: generateQuestionsMutation.data ?? [],
+  };
+}
+
+// ─── Filter Hook ─────────────────────────────────────────────────────────────
+
+export function useQuestionBankFilters(questions: QuestionBankEntry[]) {
+  const [categoryFilters, setCategoryFilters] = useState<Set<QuizCategory>>(
+    new Set()
+  );
+  const [subTypeFilters, setSubTypeFilters] = useState<Set<QuestionSubType>>(
+    new Set()
+  );
+  const [lessonFilters, setLessonFilters] = useState<Set<string>>(new Set());
+  const [includeNoLesson, setIncludeNoLesson] = useState(false);
+
+  const toggleCategory = useCallback((cat: QuizCategory) => {
+    setCategoryFilters((prev) => {
+      const next = new Set(prev);
+      if (next.has(cat)) next.delete(cat);
+      else next.add(cat);
+      return next;
+    });
+  }, []);
+
+  const toggleSubType = useCallback((st: QuestionSubType) => {
+    setSubTypeFilters((prev) => {
+      const next = new Set(prev);
+      if (next.has(st)) next.delete(st);
+      else next.add(st);
+      return next;
+    });
+  }, []);
+
+  const toggleLesson = useCallback((lessonId: string) => {
+    setLessonFilters((prev) => {
+      const next = new Set(prev);
+      if (next.has(lessonId)) next.delete(lessonId);
+      else next.add(lessonId);
+      return next;
+    });
+  }, []);
+
+  const filteredQuestions = useMemo(() => {
+    return questions.filter((q) => {
+      if (categoryFilters.size > 0 && !categoryFilters.has(q.category))
+        return false;
+      if (subTypeFilters.size > 0 && !subTypeFilters.has(q.subType))
+        return false;
+      if (lessonFilters.size > 0 || includeNoLesson) {
+        const matchesLesson = q.lessonId && lessonFilters.has(q.lessonId);
+        const matchesNoLesson = includeNoLesson && q.lessonId === null;
+        if (!matchesLesson && !matchesNoLesson) return false;
+      }
+      return true;
+    });
+  }, [
+    questions,
+    categoryFilters,
+    subTypeFilters,
+    lessonFilters,
+    includeNoLesson,
+  ]);
+
+  const hasActiveFilters =
+    categoryFilters.size > 0 ||
+    subTypeFilters.size > 0 ||
+    lessonFilters.size > 0 ||
+    includeNoLesson;
+
+  const resetFilters = useCallback(() => {
+    setCategoryFilters(new Set());
+    setSubTypeFilters(new Set());
+    setLessonFilters(new Set());
+    setIncludeNoLesson(false);
+  }, []);
+
+  return {
+    filteredQuestions,
+    categoryFilters,
+    toggleCategory,
+    subTypeFilters,
+    toggleSubType,
+    lessonFilters,
+    toggleLesson,
+    includeNoLesson,
+    setIncludeNoLesson,
+    hasActiveFilters,
+    resetFilters,
+  };
+}
