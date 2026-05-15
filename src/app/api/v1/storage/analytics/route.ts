@@ -20,7 +20,7 @@ import { StorageService } from '@/services/StorageService';
  *         description: Internal server error
  *
  */
-export const GET = withAuth(async (_req, session) => {
+export const GET = withAuth(async (req, session) => {
   try {
     const analytics = await StorageService.getAnalytics({
       userId: session.user.id,

@@ -221,6 +221,160 @@
     "comingSoon": "Sẽ sớm có.",
     "logout": "Đăng xuất"
   },
+  "CourseFilesPage": {
+    "actions": {
+      "cancel": "Hủy",
+      "clearSelection": "Bỏ chọn",
+      "delete": "Xóa",
+      "deleteSelected": "Xóa mục đã chọn",
+      "download": "Tải xuống",
+      "move": "Chuyển vào thư mục",
+      "newFolder": "Thư mục mới",
+      "open": "Mở",
+      "preview": "Xem trước",
+      "rename": "Đổi tên",
+      "save": "Lưu",
+      "share": "Chia sẻ",
+      "shareSelected": "Chia sẻ mục đã chọn",
+      "upload": "Tải tệp lên"
+    },
+    "breadcrumbs": {
+      "root": "Tài liệu khóa học"
+    },
+    "browser": {
+      "description": "Khóa học này có {count} tài nguyên.",
+      "pageInfo": "Trang {page}/{total}",
+      "range": "Đang hiển thị {start}-{end}/{total}",
+      "title": "Tài liệu"
+    },
+    "createFolderDialog": {
+      "description": "Tạo một thư mục mới trong vị trí hiện tại.",
+      "label": "Tên thư mục",
+      "placeholder": "Ghi chú môn học, bản nháp, hình ảnh...",
+      "submit": "Tạo thư mục",
+      "title": "Tạo thư mục"
+    },
+    "deleteDialog": {
+      "description": "Xóa {count} mục? Hành động này không thể hoàn tác.",
+      "more": "và {count} mục khác",
+      "title": "Xóa mục"
+    },
+    "empty": {
+      "action": "Tải tệp lên",
+      "createFolder": "Tạo thư mục",
+      "description": "Tải tệp lên hoặc tạo thư mục để bắt đầu sắp xếp lưu trữ của bạn.",
+      "title": "Thư mục này đang trống"
+    },
+    "emptySearch": {
+      "clear": "Xóa tìm kiếm",
+      "description": "Không có tệp hoặc thư mục nào khớp với tìm kiếm của bạn trong thư mục này.",
+      "title": "Không tìm thấy kết quả"
+    },
+    "errors": {
+      "description": "Hiện tại chúng tôi không thể tải tài liệu khóa học.",
+      "retry": "Thử lại",
+      "title": "Tài nguyên không khả dụng"
+    },
+    "fileCard": {
+      "folder": "Thư mục",
+      "processing": "Đang xử lý",
+      "ready": "Sẵn sàng",
+      "size": "Dung lượng",
+      "type": "Loại",
+      "uploadProgress": "Đang tải lên {progress}%"
+    },
+    "hero": {
+      "badge": "Tài nguyên khóa học",
+      "description": "Truy cập và quản lý các tệp dành riêng cho không gian khóa học này. Tải lên ghi chú bài giảng, bài tập và tài liệu học tập."
+    },
+    "list": {
+      "columns": {
+        "actions": "Thao tác",
+        "name": "Tên",
+        "size": "Dung lượng",
+        "status": "Trạng thái",
+        "type": "Loại",
+        "updated": "Đã cập nhật"
+      },
+      "uploadProgress": "Đang tải lên {progress}%"
+    },
+    "moveDialog": {
+      "description": "Chọn vị trí đích cho mục này.",
+      "label": "Thư mục đích",
+      "placeholder": "Chọn một vị trí",
+      "submit": "Di chuyển",
+      "title": "Di chuyển mục"
+    },
+    "pagination": {
+      "next": "Sau",
+      "page": "Trang {page}/{total}",
+      "previous": "Trước"
+    },
+    "previewDialog": {
+      "description": "Đang xem trước {type}",
+      "placeholder": "Xem trước",
+      "title": "Xem trước tệp",
+      "unsupported": "Loại tệp này chưa thể xem trước trực tiếp."
+    },
+    "renameDialog": {
+      "description": "Chọn tên mới cho mục này.",
+      "label": "Tên mục",
+      "title": "Đổi tên mục"
+    },
+    "selection": {
+      "count": "Đã chọn {count} mục",
+      "label": "Các mục đã chọn",
+      "toggleAll": "Chọn tất cả mục trên trang này",
+      "toggleItem": "Chọn {name}"
+    },
+    "stats": {
+      "currentFolder": "Thư mục hiện tại",
+      "files": "Tệp",
+      "folders": "Thư mục",
+      "storage": "Dung lượng đã dùng"
+    },
+    "status": {
+      "folder": "Thư mục",
+      "processing": "Đang xử lý",
+      "ready": "Sẵn sàng"
+    },
+    "storage": {
+      "label": "Dung lượng đã dùng",
+      "limitReached": "Đã đạt giới hạn dung lượng. Hãy xóa tệp để tải thêm.",
+      "usage": "{used} / {total}"
+    },
+    "title": "Tài liệu khóa học",
+    "toast": {
+      "deleted": "Đã xóa {count} mục.",
+      "fileTooLarge": "Tệp vượt quá kích thước tải lên tối đa {size}.",
+      "folderCreated": "Đã tạo thư mục.",
+      "genericError": "Đã xảy ra lỗi. Vui lòng thử lại.",
+      "moved": "Đã di chuyển mục.",
+      "previewUnavailable": "Hiện tại không thể xem trước tệp này.",
+      "renamed": "Đã đổi tên mục.",
+      "shareBatchDescription": "Đã sao chép {count} liên kết chia sẻ vào clipboard.",
+      "shareCopied": "Đã sao chép liên kết chia sẻ.",
+      "shareFilesOnly": "Hãy chọn ít nhất một tệp để chia sẻ.",
+      "shareFoldersUnsupported": "Không thể chia sẻ thư mục bằng liên kết ký sẵn.",
+      "uploaded": "Tải lên hoàn tất."
+    },
+    "toolbar": {
+      "refresh": "Tải lại",
+      "refreshing": "Đang tải lại...",
+      "searchPlaceholder": "Tìm tệp và thư mục"
+    },
+    "uploadDialog": {
+      "description": "Thả một tệp vào thư mục hiện tại hoặc nhấp để chọn.",
+      "dropzoneDescription": "Mỗi lần chỉ một tệp, giới hạn kích thước {size}.",
+      "dropzoneHint": "Mỗi lần tải một tệp",
+      "dropzoneTitle": "Thả tệp vào đây",
+      "title": "Tải tệp lên"
+    },
+    "view": {
+      "grid": "Lưới",
+      "list": "Danh sách"
+    }
+  },
   "Courses": {
     "AddLessonDialog": {
       "description": "Cung cấp tiêu đề cho bài học mới trong mô-đun này.",

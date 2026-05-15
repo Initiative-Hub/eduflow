@@ -1,5 +1,4 @@
-import { ComingSoon } from '@/components/layout/coming-soon';
-
+import CourseFilesClient from './course-files-client';
 export default function FilesPage() {
-  return <ComingSoon title="Files" backLabel="Return to Course" />;
+  return <CourseFilesClient />;
 }
