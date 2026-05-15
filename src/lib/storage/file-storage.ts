@@ -36,14 +36,21 @@ export function buildInventoryObjectKey(
   userId: string,
   fileName: string,
   options?: {
+    courseId?: string;
     relativePath?: string;
   }
 ) {
   const safeName = sanitizeSegment(fileName) || 'file';
   const safePath = normalizeRelativePath(options?.relativePath);
-  const basePrefix = safePath
-    ? `users/${userId}/${safePath}`
-    : `users/${userId}`;
+
+  let basePrefix: string;
+  if (options?.courseId) {
+    basePrefix = safePath
+      ? `courses/${options.courseId}/${safePath}`
+      : `courses/${options.courseId}`;
+  } else {
+    basePrefix = safePath ? `users/${userId}/${safePath}` : `users/${userId}`;
+  }
 
   return `${basePrefix}/${randomUUID()}-${safeName}`;
 }

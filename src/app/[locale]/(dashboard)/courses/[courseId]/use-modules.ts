@@ -62,6 +62,7 @@ export function useModules(courseId: string) {
         const formData = new FormData();
         formData.append('courseId', parsedBody.courseId);
         if (parsedBody.apiKey) formData.append('apiKey', parsedBody.apiKey);
+        if (parsedBody.context) formData.append('context', parsedBody.context);
         formData.append('file', fileRef.current);
 
         const headers = new Headers(init.headers);
@@ -81,14 +82,19 @@ export function useModules(courseId: string) {
   const generateCourseModules = async (selection: {
     fileId?: string;
     file?: File;
+    context?: string;
   }) => {
     try {
       if (selection.file) {
         fileRef.current = selection.file;
-        submit({ courseId });
+        submit({ courseId, context: selection.context });
         toast.success(t('AiGeneration.documentReceived'));
       } else if (selection.fileId) {
-        submit({ fileId: selection.fileId, courseId });
+        submit({
+          fileId: selection.fileId,
+          courseId,
+          context: selection.context,
+        });
         toast.success(t('AiGeneration.startingGeneration'));
       }
     } catch (error) {
