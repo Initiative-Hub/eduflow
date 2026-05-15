@@ -91,7 +91,7 @@ export class AIGatewayService implements ChatProviderService {
       model: gateway(model),
       schema: aiCourseGenerationSchema,
       system: COURSE_GENERATION_PROMPT,
-      prompt: `Content to analyze and transform into a course:\n\n${markdownContent}`,
+      prompt: `Content to analyze and transform into a course:\n\n${markdownContent}${options.context ? `\n\n=== ADDITIONAL CONTEXT FROM INSTRUCTOR ===\n${options.context}` : ''}`,
       headers: {
         Authorization: `Bearer ${apiKey}`,
       },

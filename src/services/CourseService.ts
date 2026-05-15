@@ -108,6 +108,7 @@ export class CourseService {
     fileId?: string;
     file?: File;
     apiKey?: string;
+    context?: string;
   }) {
     const aiService = ChatProviderFactory.create('openrouter');
     const result = await aiService.streamCourse({
@@ -115,6 +116,7 @@ export class CourseService {
       fileId: data.fileId,
       file: data.file,
       apiKey: data.apiKey,
+      context: data.context,
       onFinish: async ({ object }) => {
         if (!object) {
           throw new Error('AI course generation did not return a valid object');
