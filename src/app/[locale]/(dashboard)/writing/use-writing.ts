@@ -7,24 +7,21 @@ import { usePathname, useRouter } from '@/i18n/navigation';
 import type { WritingTool } from '@/lib/validations/writing.schema';
 import type { ChatModel } from '@/services/ai/chat-models';
 import { useChatSessionStore } from '@/stores/useChatSessionStore';
-import {
-  getUserMessageCount,
-  hasReachedUserMessageLimit,
-} from '@/utils/chat-limit';
+import { hasReachedUserMessageLimit } from '@/utils/chat-limit';
 import { writingService } from './writing.service';
 
 const MAX_USER_MESSAGES = 5;
 
 interface UseWritingOptions {
   tool: WritingTool;
-  sessionId?: string;
+  chatId?: string;
   initialMessages?: UIMessage[];
   selectedModel: ChatModel;
 }
 
 const useWriting = ({
   tool,
-  sessionId,
+  chatId,
   initialMessages = [],
   selectedModel,
 }: UseWritingOptions) => {
@@ -53,8 +50,8 @@ const useWriting = ({
 
   const createSessionMutation = useMutation({
     mutationFn: async (text: string) => {
-      const data = await writingService.createSession(text, tool);
-      return data.sessionId;
+      const data = await writingService.createChat(text, tool);
+      return data.chatId;
     },
   });
 
@@ -66,9 +63,9 @@ const useWriting = ({
 
   const transport = useMemo(
     () =>
-      sessionId
+      chatId
         ? new DefaultChatTransport({
-            api: `/api/v1/ai/writing/${sessionId}`,
+            api: `/api/v1/ai/writing/${chatId}`,
             body: {
               tool,
               provider: 'openrouter',
@@ -76,11 +73,11 @@ const useWriting = ({
             },
           })
         : undefined,
-    [sessionId, requestModel, tool]
+    [chatId, requestModel, tool]
   );
 
   const { messages, status, sendMessage, stop } = useChat({
-    id: sessionId,
+    id: chatId,
     messages: initialMessages,
     transport,
     onError(error) {
@@ -92,14 +89,12 @@ const useWriting = ({
   });
 
   const optimisticForChat =
-    optimisticChatId && optimisticChatId === sessionId
-      ? optimisticMessages
-      : [];
+    optimisticChatId && optimisticChatId === chatId ? optimisticMessages : [];
   const displayMessages = messages.length > 0 ? messages : optimisticForChat;
 
   useEffect(() => {
-    if (!pendingMessage || !pendingChatId || !sessionId) return;
-    if (pendingChatId !== sessionId) return;
+    if (!pendingMessage || !pendingChatId || !chatId) return;
+    if (pendingChatId !== chatId) return;
     if (!pathname?.includes(`/writing/${pendingChatId}`)) return;
 
     const pendingKey = `${pendingChatId}:${pendingMessage}`;
@@ -114,7 +109,7 @@ const useWriting = ({
   }, [
     pendingMessage,
     pendingChatId,
-    sessionId,
+    chatId,
     pathname,
     sendMessage,
     clearPendingMessage,
@@ -141,11 +136,11 @@ const useWriting = ({
   const isStreaming = status === 'streaming' || status === 'submitted';
 
   const startChat = async (text: string) => {
-    if (!sessionId) {
+    if (!chatId) {
       try {
         const newChatId = await createSessionMutation.mutateAsync(text);
         await queryClient.invalidateQueries({
-          queryKey: ['writing-session-list'],
+          queryKey: ['writing-chat-list'],
         });
         setOptimisticChatId(newChatId);
         setOptimisticMessages([createUserMessage(text)]);

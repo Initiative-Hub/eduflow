@@ -13,11 +13,11 @@ import { ChatInput } from '../../_components/chat-input';
 import { ChatSidebar } from '../../_components/chat-sidebar';
 import useWriting from '../use-writing';
 import { writingService } from '../writing.service';
-import { LandingRecentWritingSessions } from './landing-recent-writing-sessions';
+import { LandingRecentWritingChats } from './landing-recent-writing-chats';
 import { WritingSelector } from './writing-selector';
 
 interface WritingClientProps {
-  sessionId?: string;
+  chatId?: string;
   initialTool?: WritingTool;
   initialMessages?: UIMessage[];
 }
@@ -27,7 +27,7 @@ const ChatView = dynamic(() =>
 );
 
 export default function WritingClient({
-  sessionId,
+  chatId,
   initialTool = 'caption',
   initialMessages,
 }: WritingClientProps) {
@@ -47,7 +47,7 @@ export default function WritingClient({
     userMessageCount,
   } = useWriting({
     tool: selectedTool,
-    sessionId,
+    chatId,
     initialMessages,
     selectedModel,
   });
@@ -84,7 +84,7 @@ export default function WritingClient({
                 selected={selectedTool}
                 onSelect={setSelectedTool}
               />
-              <LandingRecentWritingSessions />
+              <LandingRecentWritingChats />
             </>
           ) : (
             <div className="mx-auto flex h-full w-full max-w-4xl flex-col">
@@ -110,15 +110,15 @@ export default function WritingClient({
         </div>
       </div>
       <ChatSidebar
-        currentChatId={sessionId}
+        currentChatId={chatId}
         emptyIcon={PenLine}
         itemIcon={PenLine}
         newSessionHref="/writing"
-        queryKey="writing-session-list"
+        queryKey="writing-chat-list"
         sessionHrefPrefix="/writing"
         service={{
-          listChats: writingService.listSessions,
-          updateChat: writingService.updateSession,
+          listChats: writingService.listChats,
+          updateChat: writingService.updateChat,
         }}
         translationNamespace="WritingPage.sidebar"
       />

@@ -10,7 +10,7 @@ import { ChatPersistenceService } from '@/services/ChatPersistenceService';
 import WritingClient from '../_components/writing-client';
 
 interface WritingSessionPageProps {
-  params: Promise<{ sessionId: string }>;
+  params: Promise<{ chatId: string }>;
 }
 
 function getInitialWritingTool(metadata: unknown): WritingTool {
@@ -22,8 +22,10 @@ function getInitialWritingTool(metadata: unknown): WritingTool {
   return parsed.success ? parsed.data : 'caption';
 }
 
-const WritingSessionPage = async ({ params }: WritingSessionPageProps) => {
-  const [session, { sessionId }, cookieStore] = await Promise.all([
+export default async function WritingSessionPage({
+  params,
+}: WritingSessionPageProps) {
+  const [session, { chatId }, cookieStore] = await Promise.all([
     auth.api.getSession({ headers: await headers() }),
     params,
     cookies(),
@@ -35,7 +37,7 @@ const WritingSessionPage = async ({ params }: WritingSessionPageProps) => {
   }
 
   const writingData = await ChatPersistenceService.getChat({
-    chatId: sessionId,
+    chatId,
     userId: session?.user?.id,
     guestId,
     chatType: AiChatType.WRITING_ASSISTANT,
@@ -47,10 +49,9 @@ const WritingSessionPage = async ({ params }: WritingSessionPageProps) => {
 
   return (
     <WritingClient
-      sessionId={sessionId}
+      chatId={chatId}
       initialTool={getInitialWritingTool(writingData.metadata)}
       initialMessages={writingData.messages ?? []}
     />
   );
-};
-export default WritingSessionPage;
+}

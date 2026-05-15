@@ -5,22 +5,22 @@ import type {
 } from '../(ai-chat)/chat.service';
 
 export const writingService = {
-  createSession: async (firstMessage: string, tool: string) => {
-    return apiClient.post<{ sessionId: string }>('/v1/ai/writing/create', {
+  createChat: async (firstMessage: string, tool: string) => {
+    return apiClient.post<{ chatId: string }>('/v1/ai/writing/create', {
       firstMessage,
       tool,
     });
   },
-  updateSession: async (
-    sessionId: string,
+  updateChat: async (
+    chatId: string,
     data: { title?: string; deleted_at?: string }
   ) => {
     return apiClient.patch<ChatUpdateResponse>(
-      `/v1/ai/writing/${sessionId}`,
+      `/v1/ai/writing/${chatId}`,
       data
     );
   },
-  listSessions: async ({
+  listChats: async ({
     search,
     limit,
     offset,

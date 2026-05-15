@@ -62,7 +62,7 @@ export async function POST(req: Request) {
       metadata: { writingTool: parsedBody.data.tool },
     });
 
-    return new Response(JSON.stringify({ sessionId: chatId }), {
+    return new Response(JSON.stringify({ chatId }), {
       status: 201,
       headers: { 'Content-Type': 'application/json' },
     });
