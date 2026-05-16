@@ -426,6 +426,12 @@
         "folder": "Folder",
         "loadingFiles": "Loading your files...",
         "personalDescription": "Select a PDF from your personal library to use as context.",
+        "pipeline": {
+          "extract": "Extract PDF",
+          "generate": "AI Generation",
+          "save": "Save Course",
+          "search": "Web Search"
+        },
         "preparingDocument": "Preparing your document for the AI Assistant",
         "processingPdf": "Processing PDF...",
         "readyForAi": "Ready for AI",
@@ -440,20 +446,14 @@
         "uploadDescription": "Select a PDF file from your device to use as a context for AI content generation.",
         "uploadDifferent": "Upload Different File",
         "uploadReference": "Upload Reference Document",
-        "useSelected": "Use Selected PDF",
-        "pipeline": {
-          "extract": "Extract PDF",
-          "search": "Web Search",
-          "generate": "AI Generation",
-          "save": "Save Course"
-        }
+        "useSelected": "Use Selected PDF"
       },
       "AiGeneration": {
         "craftingCurriculum": "AI is crafting your curriculum from the provided document",
         "creatingLessons": "Creating lessons...",
+        "dismiss": "Dismiss",
         "documentReceived": "Document received, starting AI generation...",
         "draftingLesson": "Drafting Lesson...",
-        "dismiss": "Dismiss",
         "error": "Something went wrong. Please try again.",
         "failed": "Failed to generate course structure",
         "generatingCourse": "Generating Course...",

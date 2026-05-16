@@ -426,6 +426,12 @@
         "folder": "Thư mục",
         "loadingFiles": "Đang tải các tệp của bạn...",
         "personalDescription": "Chọn một tệp PDF từ thư viện cá nhân của bạn để làm ngữ cảnh.",
+        "pipeline": {
+          "extract": "Trích xuất PDF",
+          "generate": "Tạo AI",
+          "save": "Lưu khóa học",
+          "search": "Tìm kiếm Web"
+        },
         "preparingDocument": "Đang chuẩn bị tài liệu của bạn cho Trợ lý AI",
         "processingPdf": "Đang xử lý PDF...",
         "readyForAi": "Sẵn sàng cho AI",
@@ -440,20 +446,14 @@
         "uploadDescription": "Chọn một tệp PDF từ thiết bị của bạn để làm ngữ cảnh cho việc tạo nội dung AI.",
         "uploadDifferent": "Tải lên tệp khác",
         "uploadReference": "Tải lên tài liệu tham khảo",
-        "useSelected": "Sử dụng PDF đã chọn",
-        "pipeline": {
-          "extract": "Trích xuất PDF",
-          "search": "Tìm kiếm Web",
-          "generate": "Tạo AI",
-          "save": "Lưu khóa học"
-        }
+        "useSelected": "Sử dụng PDF đã chọn"
       },
       "AiGeneration": {
         "craftingCurriculum": "AI đang xây dựng chương trình giảng dạy của bạn từ tài liệu đã cung cấp",
         "creatingLessons": "Đang tạo các bài học...",
+        "dismiss": "Đóng",
         "documentReceived": "Đã nhận tài liệu, đang bắt đầu tạo AI...",
         "draftingLesson": "Đang soạn thảo bài học...",
-        "dismiss": "Đóng",
         "error": "Đã xảy ra lỗi. Vui lòng thử lại.",
         "failed": "Không thể tạo cấu trúc khóa học",
         "generatingCourse": "Đang tạo khóa học...",
