@@ -1,5 +1,5 @@
-import { prisma } from '@/lib/prisma';
 import { checkLessonPermission } from '@/lib/permissions/lesson-permission';
+import { prisma } from '@/lib/prisma';
 
 export class LessonService {
   static async createLesson(data: { moduleId: string; title: string }) {
