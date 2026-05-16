@@ -1061,6 +1061,31 @@
     },
     "title": "Chào mừng bạn đến với Hệ sinh thái <brand>EduFlow</brand>"
   },
+  "StudyReader": {
+    "aiAnalyticsActive": "AI Phân tích đang hoạt động",
+    "characters": "ký tự",
+    "columnAudio": "Âm thanh",
+    "columnDefinition": "Định nghĩa (Anh-Việt)",
+    "columnIPA": "Phiên âm",
+    "columnWord": "Từ",
+    "copyTooltip": "Sao chép bản dịch",
+    "description": "Được tạo bởi AI để giúp bạn hiểu bài đọc này.",
+    "emptyState": "Chưa có từ vựng nào được tạo.",
+    "english": "Tiếng Anh",
+    "exportPdf": "Xuất PDF",
+    "highlightHint": "Bôi đen bất kỳ từ tiếng Anh nào để tra nghĩa và nghe phát âm.",
+    "inputPlaceholder": "Dán hoặc nhập văn bản tiếng Anh tại đây...",
+    "listenTooltip": "Nghe bản dịch",
+    "pageSubtitle": "Tinh chỉnh sắc thái ngôn ngữ với dịch thuật AI và trích xuất từ vựng theo ngữ cảnh.",
+    "saveToLibrary": "Lưu vào Thư viện",
+    "shareTooltip": "Chia sẻ",
+    "sourceContent": "Nội dung gốc",
+    "title": "Từ vựng trọng tâm tự động",
+    "translateAndAnalyze": "Dịch & Phân tích",
+    "translationPlaceholder": "Bản dịch sẽ xuất hiện ở đây sau khi phân tích...",
+    "vietnamese": "Tiếng Việt",
+    "words": "từ"
+  },
   "WritingPage": {
     "subtitle": "Trau dồi giọng văn học thuật của bạn với các công cụ chính xác được thiết kế cho sự rõ ràng và tác động.",
     "title": "Hôm nay tôi có thể giúp bạn <italic>viết</italic> gì?",
@@ -1090,30 +1115,5 @@
         "title": "Trợ lý Viết lại"
       }
     }
-  },
-  "StudyReader": {
-    "title": "Từ vựng trọng tâm tự động",
-    "description": "Được tạo bởi AI để giúp bạn hiểu bài đọc này.",
-    "columnWord": "Từ",
-    "columnIPA": "Phiên âm",
-    "columnDefinition": "Định nghĩa (Anh-Việt)",
-    "columnAudio": "Âm thanh",
-    "emptyState": "Chưa có từ vựng nào được tạo.",
-    "pageSubtitle": "Tinh chỉnh sắc thái ngôn ngữ với dịch thuật AI và trích xuất từ vựng theo ngữ cảnh.",
-    "aiAnalyticsActive": "AI Phân tích đang hoạt động",
-    "sourceContent": "Nội dung gốc",
-    "english": "Tiếng Anh",
-    "vietnamese": "Tiếng Việt",
-    "translateAndAnalyze": "Dịch & Phân tích",
-    "exportPdf": "Xuất PDF",
-    "saveToLibrary": "Lưu vào Thư viện",
-    "inputPlaceholder": "Dán hoặc nhập văn bản tiếng Anh tại đây...",
-    "characters": "ký tự",
-    "words": "từ",
-    "copyTooltip": "Sao chép bản dịch",
-    "shareTooltip": "Chia sẻ",
-    "listenTooltip": "Nghe bản dịch",
-    "translationPlaceholder": "Bản dịch sẽ xuất hiện ở đây sau khi phân tích...",
-    "highlightHint": "Bôi đen bất kỳ từ tiếng Anh nào để tra nghĩa và nghe phát âm."
   }
 }
