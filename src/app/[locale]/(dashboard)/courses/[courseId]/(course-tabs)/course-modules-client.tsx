@@ -1,6 +1,6 @@
 'use client';
 
-import { FileText, Loader2, Plus, Sparkles } from 'lucide-react';
+import { Plus, Sparkles } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { Accordion } from '@/components/ui/accordion';
@@ -66,8 +66,11 @@ export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
     setCreateQuizModuleId(moduleId);
   };
 
-  const onAiSelect = async (selection: { fileId?: string; file?: File }) => {
-    setIsAiOpen(false);
+  const onAiSelect = async (selection: {
+    fileId?: string;
+    file?: File;
+    context?: string;
+  }) => {
     await generateCourseModules(selection);
   };
 
@@ -95,83 +98,6 @@ export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
           </Button>
         </div>
       </div>
-
-      {(isStreaming || isSaving) && streamingCourse && (
-        <div className="fade-in slide-in-from-top-4 animate-in space-y-6 rounded-xl border-2 border-primary/20 border-dashed bg-primary/5 p-6 duration-500">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-                {isSaving ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  <Sparkles className="h-5 w-5 animate-pulse" />
-                )}
-              </div>
-              <div>
-                <h3 className="font-bold text-lg leading-none">
-                  {streamingCourse.courseTitle ||
-                    t('AiGeneration.generatingCourse')}
-                </h3>
-                <p className="mt-1 text-muted-foreground text-sm">
-                  {isSaving
-                    ? t('AiGeneration.savingModules')
-                    : t('AiGeneration.craftingCurriculum')}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 rounded-full bg-background px-3 py-1 shadow-sm ring-1 ring-border">
-              <Loader2 className="h-3 w-3 animate-spin text-primary" />
-              <span className="font-medium text-[10px] uppercase tracking-wider">
-                {isSaving
-                  ? t('AiGeneration.saving')
-                  : t('AiGeneration.processingContent')}
-              </span>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            {streamingCourse.modules?.map((module, mIdx) => (
-              <div
-                key={mIdx}
-                className="overflow-hidden rounded-lg border bg-background shadow-sm"
-              >
-                <div className="border-b bg-muted/30 px-4 py-3">
-                  <h4 className="font-bold text-sm">
-                    {mIdx + 1}.{' '}
-                    {module?.title || t('AiGeneration.identifyingModule')}
-                  </h4>
-                </div>
-                <div className="divide-y">
-                  {module?.lessons?.map((lesson, lIdx) => (
-                    <div
-                      key={lIdx}
-                      className="flex items-center gap-3 p-3 transition-colors hover:bg-muted/30"
-                    >
-                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-muted-foreground">
-                        <FileText className="h-3.5 w-3.5" />
-                      </div>
-                      <span className="font-medium text-xs">
-                        {lesson?.lessonTitle ||
-                          t('AiGeneration.draftingLesson')}
-                      </span>
-                    </div>
-                  ))}
-                  {!module?.lessons?.length && (
-                    <div className="flex items-center gap-3 p-3 opacity-50">
-                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-muted-foreground">
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      </div>
-                      <span className="text-xs italic">
-                        {t('AiGeneration.creatingLessons')}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {isLoading ? (
         <div className="animate-pulse space-y-4">
@@ -215,6 +141,9 @@ export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
         isOpen={isAiOpen}
         onOpenChange={setIsAiOpen}
         onSelect={onAiSelect}
+        isStreaming={isStreaming}
+        isSaving={isSaving}
+        streamingCourse={streamingCourse}
       />
 
       <CreateQuizDialog

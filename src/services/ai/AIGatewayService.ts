@@ -15,6 +15,7 @@ import type {
   StreamChatInput,
   StreamCourseInput,
 } from '@/services/ai/chat-provider.types';
+import { WebSearchService } from '@/services/WebSearchService';
 import { StorageService } from '../StorageService';
 import type { ChatProviderService } from './ChatProviderService';
 
@@ -80,10 +81,22 @@ export class AIGatewayService implements ChatProviderService {
 
     const markdownContent = await pdfToMarkdown(pdfBuffer);
 
+    // Build a search query from the first ~200 chars of the document + optional context
+    const searchQuery = options.context
+      ? `${options.context} ${markdownContent.slice(0, 150)}`
+      : markdownContent.slice(0, 200);
+    const webContext = await WebSearchService.search(
+      searchQuery.trim(),
+      5,
+      true
+    );
+
     const apiKey = options.apiKey ?? process.env.AI_GATEWAY_API_KEY;
     if (!apiKey) {
       throw new Error(`Missing API key for provider "${PROVIDER_NAME}"`);
     }
+
+   
 
     const model = options.model ?? DEFAULT_MODELS['ai-gateway'];
 
@@ -91,7 +104,7 @@ export class AIGatewayService implements ChatProviderService {
       model: gateway(model),
       schema: aiCourseGenerationSchema,
       system: COURSE_GENERATION_PROMPT,
-      prompt: `Content to analyze and transform into a course:\n\n${markdownContent}${options.context ? `\n\n=== ADDITIONAL CONTEXT FROM INSTRUCTOR ===\n${options.context}` : ''}`,
+      prompt: `Content to analyze and transform into a course:\n\n${markdownContent}${options.context ? `\n\n=== ADDITIONAL CONTEXT FROM INSTRUCTOR ===\n${options.context}` : ''}\n\n=== SUPPLEMENTARY WEB CONTEXT ===\nUse the following web search results to enrich lesson content with current, real-world examples and up-to-date information:\n\n${webContext}`,
       headers: {
         Authorization: `Bearer ${apiKey}`,
       },

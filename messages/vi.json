@@ -440,7 +440,13 @@
         "uploadDescription": "Chọn một tệp PDF từ thiết bị của bạn để làm ngữ cảnh cho việc tạo nội dung AI.",
         "uploadDifferent": "Tải lên tệp khác",
         "uploadReference": "Tải lên tài liệu tham khảo",
-        "useSelected": "Sử dụng PDF đã chọn"
+        "useSelected": "Sử dụng PDF đã chọn",
+        "pipeline": {
+          "extract": "Trích xuất PDF",
+          "search": "Tìm kiếm Web",
+          "generate": "Tạo AI",
+          "save": "Lưu khóa học"
+        }
       },
       "AiGeneration": {
         "craftingCurriculum": "AI đang xây dựng chương trình giảng dạy của bạn từ tài liệu đã cung cấp",

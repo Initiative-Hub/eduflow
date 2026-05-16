@@ -7,6 +7,7 @@ import {
   Check,
   ChevronLeft,
   FileText,
+  Globe,
   Loader2,
   MessageSquare,
   Sparkles,
@@ -15,7 +16,7 @@ import {
 } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { DialogTemplate } from '@/components/custom/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -36,16 +37,26 @@ interface AiClientDialogProps {
     file?: File;
     context?: string;
   }) => void;
+  isStreaming?: boolean;
+  isSaving?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  streamingCourse?: any;
 }
 
-type DialogPhase = 'select' | 'context';
+type DialogPhase = 'select' | 'context' | 'generating';
+
+type PipelineStep = 'extract' | 'search' | 'generate' | 'save';
 
 export function AiClientDialog({
   isOpen,
   onOpenChange,
   onSelect,
+  isStreaming = false,
+  isSaving = false,
+  streamingCourse,
 }: AiClientDialogProps) {
   const t = useTranslations('Courses.CourseModules.AiDialog');
+  const genT = useTranslations('Courses.CourseModules.AiGeneration');
   const invT = useTranslations('InventoryPage');
   const { courseId } = useParams() as { courseId: string };
 
@@ -75,11 +86,43 @@ export function AiClientDialog({
   const [isProcessing, setIsProcessing] = useState(false);
   const [context, setContext] = useState('');
 
-  const { analytics } = useInventory({ maxFileSizeBytes: 100 * 1024 * 1024 });
+  // Pipeline step tracking
+  const [activeStep, setActiveStep] = useState<PipelineStep>('extract');
+  // Track whether the local timer sequence has reached 'generate' so the
+  // parent-driven sync doesn't skip steps 1 & 2.
+  const timerReachedGenerateRef = useRef(false);
 
+  const { analytics } = useInventory({ maxFileSizeBytes: 100 * 1024 * 1024 });
   const totalUsed = analytics?.totalSizeBytes ?? 0;
   const totalLimit = 2 * 1024 * 1024 * 1024;
   const usagePercentage = Math.min((totalUsed / totalLimit) * 100, 100);
+
+  // Sync pipeline step with streaming state from parent — only after timers
+  // have naturally advanced to 'generate', so we never skip extract/search.
+  useEffect(() => {
+    if (phase !== 'generating') return;
+    if (!timerReachedGenerateRef.current) return;
+    if (isSaving) {
+      setActiveStep('save');
+    } else if (isStreaming) {
+      setActiveStep('generate');
+    }
+  }, [isStreaming, isSaving, phase]);
+
+  // Close dialog when generation is fully done
+  useEffect(() => {
+    if (
+      phase === 'generating' &&
+      !isStreaming &&
+      !isSaving &&
+      streamingCourse?.modules?.length
+    ) {
+      const timer = setTimeout(() => {
+        onOpenChange(false);
+      }, 800);
+      return () => clearTimeout(timer);
+    }
+  }, [phase, isStreaming, isSaving, streamingCourse, onOpenChange]);
 
   const { data: personalFiles, isLoading: isLoadingPersonal } = useQuery({
     queryKey: ['ai-assistant', 'personal-files', currentParentId],
@@ -115,8 +158,8 @@ export function AiClientDialog({
       const isSelected = selectedPersonalId === entry.id;
       setSelectedPersonalId(isSelected ? null : entry.id);
       setSelectedPersonalName(isSelected ? null : entry.name);
-      setSelectedCourseId(null); // Clear other tab selection
-      setUploadedFile(null); // Clear uploaded file
+      setSelectedCourseId(null);
+      setUploadedFile(null);
     }
   };
 
@@ -131,20 +174,17 @@ export function AiClientDialog({
       const isSelected = selectedCourseId === entry.id;
       setSelectedCourseId(isSelected ? null : entry.id);
       setSelectedPersonalName(isSelected ? null : entry.name);
-      setSelectedPersonalId(null); // Clear other tab selection
-      setUploadedFile(null); // Clear uploaded file
+      setSelectedPersonalId(null);
+      setUploadedFile(null);
     }
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.type !== 'application/pdf') return;
-
+    if (!file || file.type !== 'application/pdf') return;
     setIsProcessing(true);
     setSelectedPersonalId(null);
     setSelectedCourseId(null);
-    // Simulate a brief "processing" delay for better UX
     setTimeout(() => {
       setUploadedFile(file);
       setIsProcessing(false);
@@ -171,16 +211,16 @@ export function AiClientDialog({
     }
   };
 
-  const handleProceedToContext = () => {
-    setPhase('context');
-  };
-
+  const handleProceedToContext = () => setPhase('context');
   const handleBackToSelect = () => {
     setPhase('select');
     setContext('');
   };
 
   const handleGenerate = () => {
+    setPhase('generating');
+    setActiveStep('extract');
+    timerReachedGenerateRef.current = false;
     if (activeTab === 'personal' && selectedPersonalId) {
       onSelect({
         fileId: selectedPersonalId,
@@ -197,9 +237,11 @@ export function AiClientDialog({
   };
 
   const handleOpenChange = (open: boolean) => {
+    if (!open && phase === 'generating' && (isStreaming || isSaving)) return; // block close during generation
     if (!open) {
       setPhase('select');
       setContext('');
+      setActiveStep('extract');
     }
     onOpenChange(open);
   };
@@ -214,12 +256,6 @@ export function AiClientDialog({
     return coursePathHistory[coursePathHistory.length - 1].name;
   }, [coursePathHistory, t]);
 
-  const canSubmit =
-    activeTab === 'personal'
-      ? !!selectedPersonalId
-      : activeTab === 'course'
-        ? !!selectedCourseId
-        : !!uploadedFile;
   const canProceed =
     activeTab === 'personal'
       ? !!selectedPersonalId
@@ -232,9 +268,72 @@ export function AiClientDialog({
       ? selectedPersonalName
       : (uploadedFile?.name ?? null);
 
-  // Derive dialog header based on current phase
+  // ── Pipeline step helpers ──────────────────────────────────────────────────
+  const PIPELINE_STEPS: {
+    key: PipelineStep;
+    labelKey: string;
+    icon: React.ReactNode;
+  }[] = [
+    {
+      key: 'extract',
+      labelKey: 'pipeline.extract',
+      icon: <FileText className="h-5 w-5" />,
+    },
+    {
+      key: 'search',
+      labelKey: 'pipeline.search',
+      icon: <Globe className="h-5 w-5" />,
+    },
+    {
+      key: 'generate',
+      labelKey: 'pipeline.generate',
+      icon: <Sparkles className="h-5 w-5" />,
+    },
+    {
+      key: 'save',
+      labelKey: 'pipeline.save',
+      icon: <BookOpen className="h-5 w-5" />,
+    },
+  ];
+
+  const stepOrder: PipelineStep[] = ['extract', 'search', 'generate', 'save'];
+
+  const getStepStatus = (step: PipelineStep): 'done' | 'active' | 'pending' => {
+    const activeIdx = stepOrder.indexOf(activeStep);
+    const stepIdx = stepOrder.indexOf(step);
+    if (stepIdx < activeIdx) return 'done';
+    if (stepIdx === activeIdx) return 'active';
+    return 'pending';
+  };
+
+  // Advance extract → search after a short delay when generating starts
+  useEffect(() => {
+    if (phase !== 'generating') return;
+    if (activeStep !== 'extract') return;
+    const timer = setTimeout(() => setActiveStep('search'), 1200);
+    return () => clearTimeout(timer);
+  }, [phase, activeStep]);
+
+  // Advance search → generate after another delay (web search takes ~2-3s).
+  // Mark the ref so the parent-driven sync is now allowed to take over.
+  useEffect(() => {
+    if (phase !== 'generating') return;
+    if (activeStep !== 'search') return;
+    const timer = setTimeout(() => {
+      timerReachedGenerateRef.current = true;
+      setActiveStep('generate');
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [phase, activeStep]);
+
+  // ── Dialog header ──────────────────────────────────────────────────────────
   const dialogTitle =
-    phase === 'context' ? (
+    phase === 'generating' ? (
+      <div className="flex items-center gap-2">
+        <Sparkles className="h-5 w-5 text-primary" />
+        <span>{genT('generatingCourse')}</span>
+      </div>
+    ) : phase === 'context' ? (
       <div className="flex items-center gap-2">
         <MessageSquare className="h-5 w-5 text-primary" />
         <span>{t('contextTab.title')}</span>
@@ -247,9 +346,13 @@ export function AiClientDialog({
     );
 
   const dialogDescription =
-    phase === 'context' ? t('contextTab.description') : t('description');
+    phase === 'generating'
+      ? genT('craftingCurriculum')
+      : phase === 'context'
+        ? t('contextTab.description')
+        : t('description');
 
-  // Footer for select phase
+  // ── Footers ────────────────────────────────────────────────────────────────
   const selectFooter = (
     <div className="flex w-full items-center justify-between px-1">
       <div className="flex items-center gap-4">
@@ -289,7 +392,6 @@ export function AiClientDialog({
     </div>
   );
 
-  // Footer for context phase
   const contextFooter = (
     <div className="flex w-full items-center justify-between px-1">
       <Button
@@ -312,13 +414,140 @@ export function AiClientDialog({
     <DialogTemplate
       isOpen={isOpen}
       onOpenChange={handleOpenChange}
-      className={phase === 'context' ? 'sm:max-w-2xl' : 'sm:max-w-5xl'}
+      className={
+        phase === 'generating'
+          ? 'sm:max-w-lg'
+          : phase === 'context'
+            ? 'sm:max-w-2xl'
+            : 'sm:max-w-5xl'
+      }
       title={dialogTitle}
       description={dialogDescription}
-      footer={phase === 'context' ? contextFooter : selectFooter}
+      footer={
+        phase === 'generating'
+          ? undefined
+          : phase === 'context'
+            ? contextFooter
+            : selectFooter
+      }
     >
-      {/* ── Context phase ─────────────────────────────────────────────── */}
-      {phase === 'context' ? (
+      {/* ── Generating phase: pipeline graph ──────────────────────────────── */}
+      {phase === 'generating' ? (
+        <div className="mt-6 space-y-6 pb-2">
+          {/* Step pipeline */}
+          <div className="flex items-center justify-between gap-2">
+            {PIPELINE_STEPS.map((step, idx) => {
+              const status = getStepStatus(step.key);
+              return (
+                <div
+                  key={step.key}
+                  className="flex flex-1 flex-col items-center gap-2"
+                >
+                  <div className="relative flex w-full items-center">
+                    {/* Connector line before */}
+                    {idx > 0 && (
+                      <div
+                        className={cn(
+                          'absolute right-1/2 h-0.5 w-full transition-colors duration-700',
+                          getStepStatus(PIPELINE_STEPS[idx - 1].key) === 'done'
+                            ? 'bg-primary'
+                            : 'bg-muted'
+                        )}
+                      />
+                    )}
+                    {/* Step circle */}
+                    <div
+                      className={cn(
+                        'relative z-10 mx-auto flex h-12 w-12 items-center justify-center rounded-full border-2 transition-all duration-500',
+                        status === 'done' &&
+                          'border-primary bg-primary text-primary-foreground',
+                        status === 'active' &&
+                          'border-primary bg-primary text-primary-foreground',
+                        status === 'pending' &&
+                          'border-muted bg-muted text-muted-foreground'
+                      )}
+                    >
+                      {status === 'done' ? (
+                        <Check className="h-5 w-5" />
+                      ) : status === 'active' ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        step.icon
+                      )}
+                    </div>
+                  </div>
+                  <span
+                    className={cn(
+                      'text-center font-medium text-[11px] transition-colors duration-300',
+                      status === 'active' && 'text-primary',
+                      status === 'done' && 'text-primary/70',
+                      status === 'pending' && 'text-muted-foreground'
+                    )}
+                  >
+                    {t(`pipeline.${step.key}`)}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Live preview of streaming modules */}
+          {streamingCourse?.modules && streamingCourse.modules.length > 0 && (
+            <div className="max-h-64 space-y-2 overflow-y-auto rounded-xl border bg-muted/20 p-3">
+              {(
+                streamingCourse.modules as Array<
+                  | {
+                      title?: string;
+                      lessons?: Array<{ lessonTitle?: string }>;
+                    }
+                  | undefined
+                >
+              ).map((mod, mIdx) => (
+                <div
+                  key={mIdx}
+                  className="rounded-lg border bg-background px-3 py-2 shadow-sm"
+                >
+                  <p className="font-semibold text-sm">
+                    {mIdx + 1}. {mod?.title || genT('identifyingModule')}
+                  </p>
+                  {mod?.lessons && mod.lessons.length > 0 && (
+                    <ul className="mt-1 space-y-0.5 pl-4">
+                      {(
+                        mod.lessons as Array<
+                          { lessonTitle?: string } | undefined
+                        >
+                      ).map((lesson, lIdx) => (
+                        <li
+                          key={lIdx}
+                          className="flex items-center gap-1.5 text-muted-foreground text-xs"
+                        >
+                          <FileText className="h-3 w-3 shrink-0" />
+                          {lesson?.lessonTitle || genT('draftingLesson')}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Status label */}
+          <div className="flex items-center justify-center gap-2 text-muted-foreground text-sm">
+            <Loader2 className="h-4 w-4 animate-spin text-primary" />
+            <span>
+              {isSaving
+                ? genT('savingModules')
+                : activeStep === 'extract'
+                  ? genT('documentReceived')
+                  : activeStep === 'search'
+                    ? genT('processingContent')
+                    : genT('craftingCurriculum')}
+            </span>
+          </div>
+        </div>
+      ) : phase === 'context' ? (
+        /* ── Context phase ──────────────────────────────────────────────── */
         <div className="mt-4 space-y-5">
           {selectedDocumentName && (
             <div className="flex items-center gap-3 rounded-lg border bg-muted/40 px-4 py-3">
@@ -397,7 +626,6 @@ export function AiClientDialog({
                   </span>
                 )}
               </div>
-
               <div className="flex-1 overflow-y-auto">
                 {isLoadingPersonal ? (
                   <div className="flex h-[380px] flex-col items-center justify-center gap-2 text-muted-foreground">
@@ -410,7 +638,6 @@ export function AiClientDialog({
                       const isPdf = file.mimeType === 'application/pdf';
                       const isSelected = selectedPersonalId === file.id;
                       const canClick = file.isFolder || isPdf;
-
                       return (
                         <div
                           key={file.id}
@@ -507,7 +734,6 @@ export function AiClientDialog({
                   </span>
                 )}
               </div>
-
               <div className="flex-1 overflow-y-auto">
                 {isLoadingCourse ? (
                   <div className="flex h-[380px] flex-col items-center justify-center gap-2 text-muted-foreground">
@@ -520,7 +746,6 @@ export function AiClientDialog({
                       const isPdf = file.mimeType === 'application/pdf';
                       const isSelected = selectedCourseId === file.id;
                       const canClick = file.isFolder || isPdf;
-
                       return (
                         <div
                           key={file.id}

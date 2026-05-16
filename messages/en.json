@@ -440,7 +440,13 @@
         "uploadDescription": "Select a PDF file from your device to use as a context for AI content generation.",
         "uploadDifferent": "Upload Different File",
         "uploadReference": "Upload Reference Document",
-        "useSelected": "Use Selected PDF"
+        "useSelected": "Use Selected PDF",
+        "pipeline": {
+          "extract": "Extract PDF",
+          "search": "Web Search",
+          "generate": "AI Generation",
+          "save": "Save Course"
+        }
       },
       "AiGeneration": {
         "craftingCurriculum": "AI is crafting your curriculum from the provided document",

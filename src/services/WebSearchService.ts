@@ -51,7 +51,7 @@ export const WebSearchService = {
     } catch (error) {
       console.error('Failed to execute web search:', error);
       // Fallback gracefully to an empty string context
-      return "No web results could be retrieved due to an error.";
+      return 'No web results could be retrieved due to an error.';
     }
   },
 
