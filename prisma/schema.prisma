@@ -392,3 +392,18 @@ model QuizAttempt {
   @@index([userId])
   @@map("quiz_attempt")
 }
+
+// ─── Dictionary Cache ────────────────────────────────────────────────────────
+
+model DictionaryCache {
+  id        String   @id @default(uuid())
+  word      String   @unique
+  phonetic  String?
+  audioUrl  String?  @map("audio_url")
+  meanings  Json
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([word])
+  @@map("dictionary_cache")
+}
