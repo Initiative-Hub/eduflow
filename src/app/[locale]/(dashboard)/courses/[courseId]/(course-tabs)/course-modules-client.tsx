@@ -30,8 +30,10 @@ export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
     isCreatingLesson,
     handleCreateLesson,
     streamingCourse,
-    isStreaming,
-    isSaving,
+    generationStep,
+    generationError,
+    isRunning,
+    resetGeneration,
     generateCourseModules,
   } = useModules(courseId);
 
@@ -74,6 +76,15 @@ export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
     await generateCourseModules(selection);
   };
 
+  const onAiRetry = (selection: {
+    fileId?: string;
+    file?: File;
+    context?: string;
+  }) => {
+    resetGeneration();
+    generateCourseModules(selection);
+  };
+
   return (
     <div className="space-y-8">
       <div className="flex items-end justify-between border-b pb-4">
@@ -104,7 +115,7 @@ export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
           <div className="h-16 w-full rounded-md bg-muted" />
           <div className="h-16 w-full rounded-md bg-muted" />
         </div>
-      ) : modules.length === 0 && !isStreaming && !isSaving ? (
+      ) : modules.length === 0 && !isRunning ? (
         <div className="rounded-xl border border-dashed bg-card/50 p-12 text-center text-muted-foreground">
           {t('noModules')}
         </div>
@@ -141,8 +152,10 @@ export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
         isOpen={isAiOpen}
         onOpenChange={setIsAiOpen}
         onSelect={onAiSelect}
-        isStreaming={isStreaming}
-        isSaving={isSaving}
+        onRetry={onAiRetry}
+        generationStep={generationStep}
+        generationError={generationError}
+        isRunning={isRunning}
         streamingCourse={streamingCourse}
       />
 

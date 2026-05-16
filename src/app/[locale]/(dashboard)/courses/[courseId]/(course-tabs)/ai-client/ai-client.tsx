@@ -10,13 +10,15 @@ import {
   Globe,
   Loader2,
   MessageSquare,
+  RefreshCw,
   Sparkles,
   Upload,
   User,
+  XCircle,
 } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { DialogTemplate } from '@/components/custom/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -27,6 +29,10 @@ import { inventoryService } from '../../../../inventory/inventory.service';
 import type { InventoryEntry } from '../../../../inventory/inventory.types';
 import { formatFileSize } from '../../../../inventory/inventory.utils';
 import { useInventory } from '../../../../inventory/use-inventory';
+import type {
+  GenerationStep,
+  StreamingCourse,
+} from '../../use-generate-course';
 import { courseFilesService } from '../files/course-files.service';
 
 interface AiClientDialogProps {
@@ -37,22 +43,30 @@ interface AiClientDialogProps {
     file?: File;
     context?: string;
   }) => void;
-  isStreaming?: boolean;
-  isSaving?: boolean;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  streamingCourse?: any;
+  onRetry?: (selection: {
+    fileId?: string;
+    file?: File;
+    context?: string;
+  }) => void;
+  generationStep?: GenerationStep;
+  generationError?: string | null;
+  isRunning?: boolean;
+  streamingCourse?: StreamingCourse | null;
 }
 
 type DialogPhase = 'select' | 'context' | 'generating';
-
 type PipelineStep = 'extract' | 'search' | 'generate' | 'save';
+
+const STEP_ORDER: PipelineStep[] = ['extract', 'search', 'generate', 'save'];
 
 export function AiClientDialog({
   isOpen,
   onOpenChange,
   onSelect,
-  isStreaming = false,
-  isSaving = false,
+  onRetry,
+  generationStep = 'idle',
+  generationError = null,
+  isRunning = false,
   streamingCourse,
 }: AiClientDialogProps) {
   const t = useTranslations('Courses.CourseModules.AiDialog');
@@ -63,7 +77,6 @@ export function AiClientDialog({
   const [phase, setPhase] = useState<DialogPhase>('select');
   const [activeTab, setActiveTab] = useState('personal');
 
-  // Personal files state
   const [currentParentId, setCurrentParentId] = useState<string | null>(null);
   const [pathHistory, setPathHistory] = useState<
     { id: string | null; name: string }[]
@@ -72,7 +85,6 @@ export function AiClientDialog({
     null
   );
 
-  // Course files state
   const [courseParentId, setCourseParentId] = useState<string | null>(null);
   const [coursePathHistory, setCoursePathHistory] = useState<
     { id: string | null; name: string }[]
@@ -85,44 +97,37 @@ export function AiClientDialog({
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [context, setContext] = useState('');
-
-  // Pipeline step tracking
-  const [activeStep, setActiveStep] = useState<PipelineStep>('extract');
-  // Track whether the local timer sequence has reached 'generate' so the
-  // parent-driven sync doesn't skip steps 1 & 2.
-  const timerReachedGenerateRef = useRef(false);
+  // Store last selection so retry can re-use it without going back to select phase
+  const [lastSelection, setLastSelection] = useState<{
+    fileId?: string;
+    file?: File;
+    context?: string;
+  } | null>(null);
 
   const { analytics } = useInventory({ maxFileSizeBytes: 100 * 1024 * 1024 });
   const totalUsed = analytics?.totalSizeBytes ?? 0;
   const totalLimit = 2 * 1024 * 1024 * 1024;
   const usagePercentage = Math.min((totalUsed / totalLimit) * 100, 100);
 
-  // Sync pipeline step with streaming state from parent — only after timers
-  // have naturally advanced to 'generate', so we never skip extract/search.
-  useEffect(() => {
-    if (phase !== 'generating') return;
-    if (!timerReachedGenerateRef.current) return;
-    if (isSaving) {
-      setActiveStep('save');
-    } else if (isStreaming) {
-      setActiveStep('generate');
-    }
-  }, [isStreaming, isSaving, phase]);
+  // Map the real server step to the pipeline display step
+  const activeStep: PipelineStep | null =
+    generationStep === 'extract'
+      ? 'extract'
+      : generationStep === 'search'
+        ? 'search'
+        : generationStep === 'generate'
+          ? 'generate'
+          : generationStep === 'save'
+            ? 'save'
+            : null;
 
-  // Close dialog when generation is fully done
+  // Close dialog shortly after the stream finishes
   useEffect(() => {
-    if (
-      phase === 'generating' &&
-      !isStreaming &&
-      !isSaving &&
-      streamingCourse?.modules?.length
-    ) {
-      const timer = setTimeout(() => {
-        onOpenChange(false);
-      }, 800);
+    if (phase === 'generating' && generationStep === 'done') {
+      const timer = setTimeout(() => onOpenChange(false), 900);
       return () => clearTimeout(timer);
     }
-  }, [phase, isStreaming, isSaving, streamingCourse, onOpenChange]);
+  }, [phase, generationStep, onOpenChange]);
 
   const { data: personalFiles, isLoading: isLoadingPersonal } = useQuery({
     queryKey: ['ai-assistant', 'personal-files', currentParentId],
@@ -192,23 +197,19 @@ export function AiClientDialog({
   };
 
   const handleBack = () => {
-    const lastPath = pathHistory[pathHistory.length - 1];
-    if (lastPath) {
-      setCurrentParentId(lastPath.id);
-      setPathHistory((prev) => prev.slice(0, -1));
-    } else if (currentParentId !== null) {
-      setCurrentParentId(null);
-    }
+    const last = pathHistory[pathHistory.length - 1];
+    if (last) {
+      setCurrentParentId(last.id);
+      setPathHistory((p) => p.slice(0, -1));
+    } else if (currentParentId !== null) setCurrentParentId(null);
   };
 
   const handleCourseBack = () => {
-    const lastPath = coursePathHistory[coursePathHistory.length - 1];
-    if (lastPath) {
-      setCourseParentId(lastPath.id);
-      setCoursePathHistory((prev) => prev.slice(0, -1));
-    } else if (courseParentId !== null) {
-      setCourseParentId(null);
-    }
+    const last = coursePathHistory[coursePathHistory.length - 1];
+    if (last) {
+      setCourseParentId(last.id);
+      setCoursePathHistory((p) => p.slice(0, -1));
+    } else if (courseParentId !== null) setCourseParentId(null);
   };
 
   const handleProceedToContext = () => setPhase('context');
@@ -218,30 +219,27 @@ export function AiClientDialog({
   };
 
   const handleGenerate = () => {
+    const selection =
+      activeTab === 'personal' && selectedPersonalId
+        ? { fileId: selectedPersonalId, context: context.trim() || undefined }
+        : activeTab === 'course' && selectedCourseId
+          ? { fileId: selectedCourseId, context: context.trim() || undefined }
+          : uploadedFile
+            ? { file: uploadedFile, context: context.trim() || undefined }
+            : null;
+    if (!selection) return;
+    setLastSelection(selection);
     setPhase('generating');
-    setActiveStep('extract');
-    timerReachedGenerateRef.current = false;
-    if (activeTab === 'personal' && selectedPersonalId) {
-      onSelect({
-        fileId: selectedPersonalId,
-        context: context.trim() || undefined,
-      });
-    } else if (activeTab === 'course' && selectedCourseId) {
-      onSelect({
-        fileId: selectedCourseId,
-        context: context.trim() || undefined,
-      });
-    } else if (activeTab === 'upload' && uploadedFile) {
-      onSelect({ file: uploadedFile, context: context.trim() || undefined });
-    }
+    onSelect(selection);
   };
 
   const handleOpenChange = (open: boolean) => {
-    if (!open && phase === 'generating' && (isStreaming || isSaving)) return; // block close during generation
+    // Block close while running, but allow it on error so user can dismiss
+    if (!open && isRunning && generationStep !== 'error') return;
     if (!open) {
       setPhase('select');
       setContext('');
-      setActiveStep('extract');
+      setLastSelection(null);
     }
     onOpenChange(open);
   };
@@ -268,65 +266,40 @@ export function AiClientDialog({
       ? selectedPersonalName
       : (uploadedFile?.name ?? null);
 
-  // ── Pipeline step helpers ──────────────────────────────────────────────────
-  const PIPELINE_STEPS: {
-    key: PipelineStep;
-    labelKey: string;
-    icon: React.ReactNode;
-  }[] = [
-    {
-      key: 'extract',
-      labelKey: 'pipeline.extract',
-      icon: <FileText className="h-5 w-5" />,
-    },
-    {
-      key: 'search',
-      labelKey: 'pipeline.search',
-      icon: <Globe className="h-5 w-5" />,
-    },
-    {
-      key: 'generate',
-      labelKey: 'pipeline.generate',
-      icon: <Sparkles className="h-5 w-5" />,
-    },
-    {
-      key: 'save',
-      labelKey: 'pipeline.save',
-      icon: <BookOpen className="h-5 w-5" />,
-    },
+  // ── Pipeline helpers ───────────────────────────────────────────────────────
+  const PIPELINE_STEPS: { key: PipelineStep; icon: React.ReactNode }[] = [
+    { key: 'extract', icon: <FileText className="h-5 w-5" /> },
+    { key: 'search', icon: <Globe className="h-5 w-5" /> },
+    { key: 'generate', icon: <Sparkles className="h-5 w-5" /> },
+    { key: 'save', icon: <BookOpen className="h-5 w-5" /> },
   ];
 
-  const stepOrder: PipelineStep[] = ['extract', 'search', 'generate', 'save'];
-
-  const getStepStatus = (step: PipelineStep): 'done' | 'active' | 'pending' => {
-    const activeIdx = stepOrder.indexOf(activeStep);
-    const stepIdx = stepOrder.indexOf(step);
+  const getStepStatus = (
+    step: PipelineStep
+  ): 'done' | 'active' | 'error' | 'pending' => {
+    if (!activeStep) return 'pending';
+    const activeIdx = STEP_ORDER.indexOf(activeStep);
+    const stepIdx = STEP_ORDER.indexOf(step);
+    if (generationStep === 'error') {
+      if (stepIdx < activeIdx) return 'done';
+      if (stepIdx === activeIdx) return 'error';
+      return 'pending';
+    }
     if (stepIdx < activeIdx) return 'done';
     if (stepIdx === activeIdx) return 'active';
     return 'pending';
   };
 
-  // Advance extract → search after a short delay when generating starts
-  useEffect(() => {
-    if (phase !== 'generating') return;
-    if (activeStep !== 'extract') return;
-    const timer = setTimeout(() => setActiveStep('search'), 1200);
-    return () => clearTimeout(timer);
-  }, [phase, activeStep]);
+  const statusLabel =
+    generationStep === 'extract'
+      ? genT('documentReceived')
+      : generationStep === 'search'
+        ? genT('processingContent')
+        : generationStep === 'save'
+          ? genT('savingModules')
+          : genT('craftingCurriculum');
 
-  // Advance search → generate after another delay (web search takes ~2-3s).
-  // Mark the ref so the parent-driven sync is now allowed to take over.
-  useEffect(() => {
-    if (phase !== 'generating') return;
-    if (activeStep !== 'search') return;
-    const timer = setTimeout(() => {
-      timerReachedGenerateRef.current = true;
-      setActiveStep('generate');
-    }, 3000);
-    return () => clearTimeout(timer);
-  }, [phase, activeStep]);
-
-  // ── Dialog header ──────────────────────────────────────────────────────────
+  // ── Dialog header / footer ─────────────────────────────────────────────────
   const dialogTitle =
     phase === 'generating' ? (
       <div className="flex items-center gap-2">
@@ -352,28 +325,25 @@ export function AiClientDialog({
         ? t('contextTab.description')
         : t('description');
 
-  // ── Footers ────────────────────────────────────────────────────────────────
   const selectFooter = (
     <div className="flex w-full items-center justify-between px-1">
-      <div className="flex items-center gap-4">
-        <div className="flex flex-col gap-1">
-          <span className="font-medium text-[10px] text-muted-foreground uppercase tracking-wider">
-            {invT('storage.label')}
-          </span>
-          <div className="flex items-center gap-2">
-            <div className="h-1.5 w-32 overflow-hidden rounded-full bg-muted">
-              <div
-                className="h-full bg-primary transition-all duration-500"
-                style={{ width: `${usagePercentage}%` }}
-              />
-            </div>
-            <span className="font-medium text-xs">
-              {invT('storage.usage', {
-                used: formatFileSize(totalUsed),
-                total: formatFileSize(totalLimit),
-              })}
-            </span>
+      <div className="flex flex-col gap-1">
+        <span className="font-medium text-[10px] text-muted-foreground uppercase tracking-wider">
+          {invT('storage.label')}
+        </span>
+        <div className="flex items-center gap-2">
+          <div className="h-1.5 w-32 overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full bg-primary transition-all duration-500"
+              style={{ width: `${usagePercentage}%` }}
+            />
           </div>
+          <span className="font-medium text-xs">
+            {invT('storage.usage', {
+              used: formatFileSize(totalUsed),
+              total: formatFileSize(totalLimit),
+            })}
+          </span>
         </div>
       </div>
       <div className="flex items-center gap-3">
@@ -431,11 +401,11 @@ export function AiClientDialog({
             : selectFooter
       }
     >
-      {/* ── Generating phase: pipeline graph ──────────────────────────────── */}
+      {/* ── Generating phase ──────────────────────────────────────────────── */}
       {phase === 'generating' ? (
         <div className="mt-6 space-y-6 pb-2">
-          {/* Step pipeline */}
-          <div className="flex items-center justify-between gap-2">
+          {/* Pipeline steps */}
+          <div className="flex items-start justify-between gap-2">
             {PIPELINE_STEPS.map((step, idx) => {
               const status = getStepStatus(step.key);
               return (
@@ -444,7 +414,6 @@ export function AiClientDialog({
                   className="flex flex-1 flex-col items-center gap-2"
                 >
                   <div className="relative flex w-full items-center">
-                    {/* Connector line before */}
                     {idx > 0 && (
                       <div
                         className={cn(
@@ -455,7 +424,6 @@ export function AiClientDialog({
                         )}
                       />
                     )}
-                    {/* Step circle */}
                     <div
                       className={cn(
                         'relative z-10 mx-auto flex h-12 w-12 items-center justify-center rounded-full border-2 transition-all duration-500',
@@ -463,6 +431,8 @@ export function AiClientDialog({
                           'border-primary bg-primary text-primary-foreground',
                         status === 'active' &&
                           'border-primary bg-primary text-primary-foreground',
+                        status === 'error' &&
+                          'border-destructive bg-destructive text-destructive-foreground',
                         status === 'pending' &&
                           'border-muted bg-muted text-muted-foreground'
                       )}
@@ -471,6 +441,8 @@ export function AiClientDialog({
                         <Check className="h-5 w-5" />
                       ) : status === 'active' ? (
                         <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : status === 'error' ? (
+                        <XCircle className="h-5 w-5" />
                       ) : (
                         step.icon
                       )}
@@ -481,6 +453,7 @@ export function AiClientDialog({
                       'text-center font-medium text-[11px] transition-colors duration-300',
                       status === 'active' && 'text-primary',
                       status === 'done' && 'text-primary/70',
+                      status === 'error' && 'text-destructive',
                       status === 'pending' && 'text-muted-foreground'
                     )}
                   >
@@ -491,17 +464,14 @@ export function AiClientDialog({
             })}
           </div>
 
-          {/* Live preview of streaming modules */}
+          {/* Live module preview */}
           {streamingCourse?.modules && streamingCourse.modules.length > 0 && (
             <div className="max-h-64 space-y-2 overflow-y-auto rounded-xl border bg-muted/20 p-3">
               {(
-                streamingCourse.modules as Array<
-                  | {
-                      title?: string;
-                      lessons?: Array<{ lessonTitle?: string }>;
-                    }
-                  | undefined
-                >
+                streamingCourse.modules as Array<{
+                  title?: string;
+                  lessons?: Array<{ lessonTitle?: string }>;
+                }>
               ).map((mod, mIdx) => (
                 <div
                   key={mIdx}
@@ -512,19 +482,17 @@ export function AiClientDialog({
                   </p>
                   {mod?.lessons && mod.lessons.length > 0 && (
                     <ul className="mt-1 space-y-0.5 pl-4">
-                      {(
-                        mod.lessons as Array<
-                          { lessonTitle?: string } | undefined
-                        >
-                      ).map((lesson, lIdx) => (
-                        <li
-                          key={lIdx}
-                          className="flex items-center gap-1.5 text-muted-foreground text-xs"
-                        >
-                          <FileText className="h-3 w-3 shrink-0" />
-                          {lesson?.lessonTitle || genT('draftingLesson')}
-                        </li>
-                      ))}
+                      {(mod.lessons as Array<{ lessonTitle?: string }>).map(
+                        (lesson, lIdx) => (
+                          <li
+                            key={lIdx}
+                            className="flex items-center gap-1.5 text-muted-foreground text-xs"
+                          >
+                            <FileText className="h-3 w-3 shrink-0" />
+                            {lesson?.lessonTitle || genT('draftingLesson')}
+                          </li>
+                        )
+                      )}
                     </ul>
                   )}
                 </div>
@@ -532,19 +500,48 @@ export function AiClientDialog({
             </div>
           )}
 
-          {/* Status label */}
-          <div className="flex items-center justify-center gap-2 text-muted-foreground text-sm">
-            <Loader2 className="h-4 w-4 animate-spin text-primary" />
-            <span>
-              {isSaving
-                ? genT('savingModules')
-                : activeStep === 'extract'
-                  ? genT('documentReceived')
-                  : activeStep === 'search'
-                    ? genT('processingContent')
-                    : genT('craftingCurriculum')}
-            </span>
-          </div>
+          {/* Status label / error */}
+          {generationStep === 'error' ? (
+            <div className="space-y-3">
+              <div className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+                <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-destructive text-sm">
+                    {genT('error')}
+                  </p>
+                  {generationError && (
+                    <p className="mt-0.5 break-all font-mono text-[11px] text-muted-foreground">
+                      {generationError}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center justify-end gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleOpenChange(false)}
+                >
+                  {genT('dismiss')}
+                </Button>
+                {onRetry && lastSelection && (
+                  <Button
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => onRetry(lastSelection)}
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                    {genT('retry')}
+                  </Button>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center gap-2 text-muted-foreground text-sm">
+              <Loader2 className="h-4 w-4 animate-spin text-primary" />
+              <span>{statusLabel}</span>
+            </div>
+          )}
         </div>
       ) : phase === 'context' ? (
         /* ── Context phase ──────────────────────────────────────────────── */
@@ -567,7 +564,6 @@ export function AiClientDialog({
               </div>
             </div>
           )}
-
           <div className="space-y-2">
             <Label htmlFor="ai-context" className="font-medium text-sm">
               {t('contextTab.label')}
@@ -604,6 +600,7 @@ export function AiClientDialog({
           </TabsList>
 
           <div className="mt-6 min-h-[450px] overflow-hidden rounded-xl border border-dashed bg-muted/30">
+            {/* Personal tab */}
             <TabsContent
               value="personal"
               className="mt-0 flex h-[450px] flex-col outline-none"
@@ -707,6 +704,7 @@ export function AiClientDialog({
               </div>
             </TabsContent>
 
+            {/* Course tab */}
             <TabsContent
               value="course"
               className="mt-0 flex h-[450px] flex-col outline-none"
@@ -811,13 +809,14 @@ export function AiClientDialog({
               </div>
             </TabsContent>
 
+            {/* Upload tab */}
             <TabsContent
               value="upload"
               className="mt-0 flex h-full flex-col outline-none"
             >
               <div className="flex flex-1 flex-col items-center justify-center p-8 text-center">
                 {uploadedFile ? (
-                  <div className="fade-in zoom-in-95 flex w-full max-w-md animate-in flex-col items-center space-y-6 rounded-2xl border-2 border-primary bg-background p-8 shadow-lg transition-all">
+                  <div className="fade-in zoom-in-95 flex w-full max-w-md animate-in flex-col items-center space-y-6 rounded-2xl border-2 border-primary bg-background p-8 shadow-lg">
                     <div className="relative">
                       <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 text-primary">
                         <FileText className="h-10 w-10" />
