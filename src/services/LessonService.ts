@@ -33,7 +33,7 @@ export class LessonService {
   static async updateLesson(
     lessonId: string,
     userId: string,
-    data: { title?: string; content?: Record<string, unknown> | null }
+    data: { title?: string; content?: Record<string, unknown> | string | null }
   ) {
     const { hasEditPermission } = await checkLessonPermission(lessonId, userId);
 

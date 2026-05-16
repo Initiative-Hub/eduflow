@@ -6,11 +6,14 @@ import { LessonService } from '@/services/LessonService';
 const patchLessonSchema = z.object({
   title: z.string().optional(),
   content: z
-    .object({
-      type: z.literal('doc'),
-      content: z.array(z.unknown()).optional(),
-    })
-    .passthrough()
+    .union([
+      z.string(),
+      z
+        .object({
+          content: z.array(z.unknown()).optional(),
+        })
+        .passthrough(),
+    ])
     .optional(),
 });
 

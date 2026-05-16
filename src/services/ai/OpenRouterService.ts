@@ -80,7 +80,7 @@ export class OpenRouterService implements ChatProviderService {
       : markdownContent.slice(0, 200);
     const webContext = await WebSearchService.search(
       searchQuery.trim(),
-      5,
+      3,
       true
     );
 

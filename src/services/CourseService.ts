@@ -2,8 +2,8 @@ import { CourseRoleName } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
 import type { AICourseGeneration } from '@/lib/validations/course.schema';
 import { ChatProviderFactory } from '@/services/ai/ChatProviderFactory';
+import { OpenRouterService } from '@/services/ai/OpenRouterService';
 import { StorageService } from '@/services/StorageService';
-
 export class CourseService {
   static async createCourse(data: {
     ownerId: string;
@@ -364,9 +364,6 @@ export class CourseService {
 
     (async () => {
       try {
-        const { OpenRouterService } = await import(
-          '@/services/ai/OpenRouterService'
-        );
         const aiService = new OpenRouterService();
 
         // Runs extract → search → generate deltas → done, persists via onFinish
