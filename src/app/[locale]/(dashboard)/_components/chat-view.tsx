@@ -4,6 +4,12 @@ import type { UIMessage } from 'ai';
 import { Bot, Loader2, User } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import {
+  Attachment,
+  AttachmentInfo,
+  AttachmentPreview,
+  Attachments,
+} from '@/components/ai-elements/attachments';
+import {
   Conversation,
   ConversationContent,
   ConversationScrollButton,
@@ -35,7 +41,12 @@ export function ChatView({ messages, isStreaming }: ChatViewProps) {
           {messages.map((message) => {
             const text = getMessageText(message);
             const reasoning = getMessageReasoning(message);
-            if (!text && !reasoning) return null;
+            const attachments = message.parts.flatMap((part, index) =>
+              part.type === 'file'
+                ? [{ ...part, id: `${message.id}-file-${index}` }]
+                : []
+            );
+            if (!text && !reasoning && attachments.length === 0) return null;
 
             const isAnimatingAssistantMessage =
               isStreaming &&
@@ -71,6 +82,16 @@ export function ChatView({ messages, isStreaming }: ChatViewProps) {
                   >
                     {message.role === 'assistant' ? (
                       <>
+                        {attachments.length > 0 ? (
+                          <Attachments className="mb-3" variant="inline">
+                            {attachments.map((attachment) => (
+                              <Attachment data={attachment} key={attachment.id}>
+                                <AttachmentPreview />
+                                <AttachmentInfo />
+                              </Attachment>
+                            ))}
+                          </Attachments>
+                        ) : null}
                         {reasoning ? (
                           <Reasoning
                             className="mb-3 w-full"
@@ -94,9 +115,26 @@ export function ChatView({ messages, isStreaming }: ChatViewProps) {
                         ) : null}
                       </>
                     ) : (
-                      <p className="whitespace-pre-wrap text-[15px] leading-relaxed">
-                        {text}
-                      </p>
+                      <>
+                        {attachments.length > 0 ? (
+                          <Attachments
+                            className={text ? 'mb-2' : undefined}
+                            variant="inline"
+                          >
+                            {attachments.map((attachment) => (
+                              <Attachment data={attachment} key={attachment.id}>
+                                <AttachmentPreview />
+                                <AttachmentInfo />
+                              </Attachment>
+                            ))}
+                          </Attachments>
+                        ) : null}
+                        {text ? (
+                          <p className="whitespace-pre-wrap text-[15px] leading-relaxed">
+                            {text}
+                          </p>
+                        ) : null}
+                      </>
                     )}
                   </MessageContent>
                 </div>

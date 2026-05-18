@@ -301,6 +301,102 @@ describe('StorageService', () => {
     });
   });
 
+  describe('createChatAttachmentUrls', () => {
+    it('signs only ready files from the user inventory', async () => {
+      fileInventory.findMany.mockResolvedValue([
+        {
+          bucket: 'eduflow-inventory',
+          id: 'f1',
+          mimeType: 'application/pdf',
+          name: 'Notes.pdf',
+          objectKey: 'users/u1/f1.pdf',
+        },
+      ]);
+      mockCreateInventoryReadSignedUrl.mockResolvedValue('signed-url');
+
+      const result = await StorageService.createChatAttachmentUrls({
+        userId: 'u1',
+        fileIds: ['f1', 'f1'],
+      });
+
+      expect(fileInventory.findMany).toHaveBeenCalledWith({
+        where: {
+          courseId: null,
+          deletedAt: null,
+          id: { in: ['f1'] },
+          isFolder: false,
+          status: 'READY',
+          userId: 'u1',
+        },
+        select: {
+          bucket: true,
+          id: true,
+          mimeType: true,
+          name: true,
+          objectKey: true,
+        },
+      });
+      expect(result).toEqual([
+        {
+          bucket: 'eduflow-inventory',
+          fileId: 'f1',
+          mimeType: 'application/pdf',
+          name: 'Notes.pdf',
+          objectKey: 'users/u1/f1.pdf',
+          signedUrl: 'signed-url',
+        },
+      ]);
+    });
+  });
+
+  describe('getChatAttachmentPayloads', () => {
+    it('downloads only ready files from the user inventory', async () => {
+      fileInventory.findMany.mockResolvedValue([
+        {
+          id: 'f1',
+          mimeType: 'application/pdf',
+          name: 'Notes.pdf',
+          objectKey: 'users/u1/f1.pdf',
+        },
+      ]);
+      mockDownloadInventoryObject.mockResolvedValue({
+        bytes: new Uint8Array([1, 2, 3]),
+        contentType: 'application/pdf',
+      });
+
+      const result = await StorageService.getChatAttachmentPayloads({
+        userId: 'u1',
+        fileIds: ['f1', 'f1'],
+      });
+
+      expect(fileInventory.findMany).toHaveBeenCalledWith({
+        where: {
+          courseId: null,
+          deletedAt: null,
+          id: { in: ['f1'] },
+          isFolder: false,
+          status: 'READY',
+          userId: 'u1',
+        },
+        select: {
+          id: true,
+          mimeType: true,
+          name: true,
+          objectKey: true,
+        },
+      });
+      expect(result).toEqual([
+        {
+          bytes: new Uint8Array([1, 2, 3]),
+          fileId: 'f1',
+          mimeType: 'application/pdf',
+          name: 'Notes.pdf',
+          objectKey: 'users/u1/f1.pdf',
+        },
+      ]);
+    });
+  });
+
   describe('getDownloadPayload', () => {
     it('downloads and returns payload data', async () => {
       fileInventory.findFirst.mockResolvedValue({

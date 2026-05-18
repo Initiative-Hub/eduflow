@@ -513,6 +513,110 @@ export class StorageService {
   }
 
   /**
+   * Generates temporary signed read URLs for chat attachments while keeping
+   * attachments scoped to the user's personal inventory.
+   */
+  static async createChatAttachmentUrls(options: {
+    userId: string;
+    fileIds: string[];
+    expiresInSeconds?: number;
+  }) {
+    const uniqueIds = Array.from(new Set(options.fileIds));
+    if (uniqueIds.length === 0) {
+      return [];
+    }
+
+    const files = await prisma.fileInventory.findMany({
+      where: {
+        id: {
+          in: uniqueIds,
+        },
+        userId: options.userId,
+        courseId: null,
+        isFolder: false,
+        status: 'READY',
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        objectKey: true,
+        name: true,
+        bucket: true,
+        mimeType: true,
+      },
+    });
+
+    const signed = await Promise.all(
+      files
+        .filter((file) => Boolean(file.objectKey))
+        .map(async (file) => ({
+          fileId: file.id,
+          name: file.name,
+          mimeType: file.mimeType,
+          bucket: file.bucket ?? FILE_INVENTORY_BUCKET_NAME,
+          objectKey: file.objectKey as string,
+          signedUrl: await createInventoryReadSignedUrl({
+            objectKey: file.objectKey as string,
+            expiresInSeconds: options.expiresInSeconds,
+          }),
+        }))
+    );
+
+    return signed;
+  }
+
+  /**
+   * Downloads chat attachment bytes from the user's personal inventory for
+   * model calls that cannot access local signed URLs.
+   */
+  static async getChatAttachmentPayloads(options: {
+    userId: string;
+    fileIds: string[];
+  }) {
+    const uniqueIds = Array.from(new Set(options.fileIds));
+    if (uniqueIds.length === 0) {
+      return [];
+    }
+
+    const files = await prisma.fileInventory.findMany({
+      where: {
+        id: {
+          in: uniqueIds,
+        },
+        userId: options.userId,
+        courseId: null,
+        isFolder: false,
+        status: 'READY',
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        objectKey: true,
+        name: true,
+        mimeType: true,
+      },
+    });
+
+    return Promise.all(
+      files
+        .filter((file) => Boolean(file.objectKey))
+        .map(async (file) => {
+          const downloaded = await downloadInventoryObject({
+            objectKey: file.objectKey as string,
+          });
+
+          return {
+            bytes: downloaded.bytes,
+            fileId: file.id,
+            mimeType: file.mimeType ?? downloaded.contentType,
+            name: file.name,
+            objectKey: file.objectKey as string,
+          };
+        })
+    );
+  }
+
+  /**
    * Downloads file content and returns payload data suitable for HTTP
    * response streaming.
    */
