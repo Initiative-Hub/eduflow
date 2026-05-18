@@ -2,13 +2,11 @@
 
 import type { UIMessage } from 'ai';
 import {
-  BadgeInfo,
   BookOpen,
   Calculator,
   History,
   Library,
   Palette,
-  ShieldCheck,
   Sparkles,
   Zap,
 } from 'lucide-react';
@@ -16,7 +14,8 @@ import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { Badge } from '@/components/ui/badge';
+import { type ChatModel, DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
+import { ChatSidebar } from '../../_components/chat-sidebar';
 import { useChatController } from '../use-chat';
 
 const LandingView = dynamic(() =>
@@ -24,23 +23,31 @@ const LandingView = dynamic(() =>
 );
 
 const ChatView = dynamic(() =>
-  import('./chat-view').then((mod) => mod.ChatView)
+  import('../../_components/chat-view').then((mod) => mod.ChatView)
 );
 
 const ChatInput = dynamic(() =>
-  import('./chat-input').then((mod) => mod.ChatInput)
+  import('../../_components/chat-input').then((mod) => mod.ChatInput)
 );
 interface AIClientProps {
   userName?: string;
   chatId?: string;
   initialMessages?: UIMessage[];
+  isAuthenticated: boolean;
 }
 
 export type ViewState = 'home' | 'library';
 
-export function AIClient({ userName, chatId, initialMessages }: AIClientProps) {
+export function AIClient({
+  userName,
+  chatId,
+  initialMessages,
+  isAuthenticated,
+}: AIClientProps) {
   const t = useTranslations('AIChat');
   const [view, setView] = useState<ViewState>('home');
+  const [selectedModel, setSelectedModel] =
+    useState<ChatModel>(DEFAULT_CHAT_MODEL);
   const {
     displayMessages,
     isStreaming,
@@ -50,7 +57,12 @@ export function AIClient({ userName, chatId, initialMessages }: AIClientProps) {
     startChat,
     stop,
     maxMessages,
-  } = useChatController({ chatId, initialMessages });
+  } = useChatController({
+    chatId,
+    initialMessages,
+    isAuthenticated,
+    selectedModel,
+  });
 
   const notifyLimitReached = () => {
     toast.error(t('limitReachedToast', { count: maxMessages }));
@@ -67,7 +79,7 @@ export function AIClient({ userName, chatId, initialMessages }: AIClientProps) {
       return;
     }
 
-    void startChat(text.trim());
+    startChat(text.trim());
   };
 
   const suggestions = [
@@ -116,40 +128,9 @@ export function AIClient({ userName, chatId, initialMessages }: AIClientProps) {
   ];
 
   return (
-    <div className="relative flex h-full flex-1 flex-col items-center overflow-x-hidden px-4 py-8 md:px-0">
-      <div className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden">
-        <div className="h-125 w-125 rounded-full bg-primary/5 blur-[120px]" />
-      </div>
-
-      {/* Top Badges - Only show when not chatting */}
-      {!isChatting && (
-        <div className="absolute top-0 right-10 z-20 hidden flex-col items-end gap-2 md:flex">
-          <Badge
-            variant="outline"
-            className="gap-2 rounded-full border-primary/20 bg-primary/5 px-3 py-1.5 text-primary ring-1 ring-primary/10 backdrop-blur-md"
-          >
-            <span className="font-bold font-mono text-[10px] opacity-70">
-              CC_
-            </span>
-            <BadgeInfo className="size-3.5" />
-            <span className="font-medium text-[11px] tracking-tight">
-              {t('criticalThinking')}
-            </span>
-          </Badge>
-          <Badge
-            variant="outline"
-            className="gap-2 rounded-full border-border/50 bg-slate-100/50 px-3 py-1.5 text-muted-foreground backdrop-blur-md dark:bg-slate-900/50"
-          >
-            <ShieldCheck className="size-3.5" />
-            <span className="font-medium text-[11px] tracking-tight">
-              {t('philosophicalLogic')}
-            </span>
-          </Badge>
-        </div>
-      )}
-
-      {/* Main Content Area */}
-      <div className="relative z-10 flex w-full flex-1 flex-col justify-center overflow-hidden">
+    <>
+      <div className="relative flex flex-col items-center gap-8 px-8">
+        {/* Main Content Area */}
         {!isChatting ? (
           <LandingView
             userName={userName ?? 'Guest'}
@@ -168,17 +149,20 @@ export function AIClient({ userName, chatId, initialMessages }: AIClientProps) {
         ) : (
           <ChatView messages={displayMessages} isStreaming={isStreaming} />
         )}
-      </div>
 
-      <ChatInput
-        handleSubmit={handleSubmit}
-        isStreaming={isStreaming}
-        isChatting={isChatting}
-        isLimitReached={isLimitReached}
-        limitCount={maxMessages}
-        userMessageCount={userMessageCount}
-        onStop={stop}
-      />
-    </div>
+        <ChatInput
+          handleSubmit={handleSubmit}
+          isStreaming={isStreaming}
+          isChatting={isChatting}
+          isLimitReached={isLimitReached}
+          limitCount={maxMessages}
+          userMessageCount={userMessageCount}
+          onStop={stop}
+          selectedModel={selectedModel}
+          onModelChange={setSelectedModel}
+        />
+      </div>
+      <ChatSidebar currentChatId={chatId} />
+    </>
   );
 }

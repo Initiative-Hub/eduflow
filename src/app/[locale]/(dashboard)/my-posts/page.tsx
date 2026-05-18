@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import HomePage from '../page';
+import HomePage from '../(ai-chat)/page';
 
 export const metadata: Metadata = {
   title: 'My Posts',
