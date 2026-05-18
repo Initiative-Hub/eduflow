@@ -1,11 +1,12 @@
 'use client';
 
 import { useChat } from '@ai-sdk/react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { DefaultChatTransport, type UIMessage } from 'ai';
 import { useEffect, useMemo, useRef } from 'react';
 import { toast } from 'sonner';
 import { usePathname, useRouter } from '@/i18n/navigation';
+import type { ChatModel } from '@/services/ai/chat-models';
 import { useChatSessionStore } from '@/stores/useChatSessionStore';
 import {
   getUserMessageCount,
@@ -18,46 +19,56 @@ const MAX_USER_MESSAGES = 5;
 interface UseChatControllerOptions {
   chatId?: string;
   initialMessages?: UIMessage[];
+  isAuthenticated: boolean;
+  selectedModel: ChatModel;
 }
 
 export const useChatController = ({
   chatId: initialChatId,
   initialMessages = [],
+  isAuthenticated,
+  selectedModel,
 }: UseChatControllerOptions) => {
   const router = useRouter();
   const pathname = usePathname();
+  const queryClient = useQueryClient();
   const lastPendingSendRef = useRef<string | null>(null);
   const {
     pendingMessage,
     pendingChatId,
+    pendingModel,
     optimisticChatId,
     optimisticMessages,
     setPendingMessage,
     clearPendingMessage,
     setPendingChatId,
     clearPendingChatId,
+    setPendingModel,
+    clearPendingModel,
     setOptimisticChatId,
     setOptimisticMessages,
     clearOptimisticMessages,
   } = useChatSessionStore();
+  const requestModel = pendingModel ?? selectedModel;
 
   const transport = useMemo(
     () =>
       initialChatId
         ? new DefaultChatTransport({
-            api: `/api/chat/${initialChatId}`,
+            api: `/api/v1/ai/chat/${initialChatId}`,
             body: {
               provider: 'openrouter',
-              model: 'gemini-2.5-pro',
+              model: requestModel,
             },
           })
         : undefined,
-    [initialChatId]
+    [initialChatId, requestModel]
   );
 
   const { messages, status, sendMessage, stop } = useChat({
     id: initialChatId,
     messages: initialMessages,
+    generateId: () => `${crypto.randomUUID()}`,
     transport,
     onError(error) {
       console.error('Chat error:', error);
@@ -73,10 +84,9 @@ export const useChatController = ({
       : [];
   const displayMessages = messages.length > 0 ? messages : optimisticForChat;
   const userMessageCount = getUserMessageCount(displayMessages);
-  const isLimitReached = hasReachedUserMessageLimit(
-    displayMessages,
-    MAX_USER_MESSAGES
-  );
+  const isLimitReached = isAuthenticated
+    ? false
+    : hasReachedUserMessageLimit(displayMessages, MAX_USER_MESSAGES);
   const isStreaming = status === 'streaming' || status === 'submitted';
 
   useEffect(() => {
@@ -90,10 +100,12 @@ export const useChatController = ({
     lastPendingSendRef.current = pendingKey;
     clearPendingMessage();
     clearPendingChatId();
+    clearPendingModel();
 
     void sendMessage({ text: pendingMessage });
   }, [
     clearPendingChatId,
+    clearPendingModel,
     clearPendingMessage,
     pendingMessage,
     pendingChatId,
@@ -130,10 +142,12 @@ export const useChatController = ({
     if (!initialChatId) {
       try {
         const newChatId = await createChatMutation.mutateAsync(text);
+        await queryClient.invalidateQueries({ queryKey: ['chat-list'] });
         setOptimisticChatId(newChatId);
         setOptimisticMessages([createUserMessage(text)]);
         setPendingMessage(text);
         setPendingChatId(newChatId);
+        setPendingModel(selectedModel);
         router.push(`/chat/${newChatId}`);
       } catch (error) {
         const message =

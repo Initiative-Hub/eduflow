@@ -65,9 +65,9 @@ export class CacheService {
    * Checks the rate limit for a guest session.
    * Max 10 prompts per 24 hours.
    */
-  static async checkGuestLimit(guestSessionId: string) {
+  static async checkGuestLimit(guestId: string) {
     try {
-      const cacheKey = `guest_usage:${guestSessionId}`;
+      const cacheKey = `guest_usage:${guestId}`;
       const result = await getRatelimit().limit(cacheKey);
 
       if (!result.success) {

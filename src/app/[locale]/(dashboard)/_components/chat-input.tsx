@@ -4,6 +4,17 @@ import { ArrowUp, Library, Paperclip, Settings2, Square } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import {
+  ModelSelector,
+  ModelSelectorContent,
+  ModelSelectorEmpty,
+  ModelSelectorGroup,
+  ModelSelectorItem,
+  ModelSelectorList,
+  ModelSelectorLogo,
+  ModelSelectorName,
+  ModelSelectorTrigger,
+} from '@/components/ai-elements/model-selector';
+import {
   PromptInput,
   PromptInputButton,
   PromptInputFooter,
@@ -12,6 +23,7 @@ import {
   PromptInputTextarea,
 } from '@/components/ai-elements/prompt-input';
 import { Button } from '@/components/ui/button';
+import { CHAT_MODEL_OPTIONS, type ChatModel } from '@/services/ai/chat-models';
 
 interface ChatInputProps {
   handleSubmit: (e?: React.FormEvent, customValue?: string) => void;
@@ -21,6 +33,8 @@ interface ChatInputProps {
   limitCount: number;
   userMessageCount: number;
   onStop: () => void;
+  selectedModel?: ChatModel;
+  onModelChange?: (model: ChatModel) => void;
 }
 
 export function ChatInput({
@@ -31,9 +45,14 @@ export function ChatInput({
   limitCount,
   userMessageCount,
   onStop,
+  selectedModel,
+  onModelChange,
 }: ChatInputProps) {
   const t = useTranslations('AIChat');
   const [inputValue, setInputValue] = useState('');
+  const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false);
+  const selectedModelLabel =
+    CHAT_MODEL_OPTIONS.find((model) => model.id === selectedModel)?.label ?? '';
 
   const onPromptSubmit = (message: PromptInputMessage) => {
     if (isStreaming || isLimitReached || !message.text.trim()) return;
@@ -47,7 +66,7 @@ export function ChatInput({
 
   return (
     <div
-      className={`relative w-full space-y-4 pt-8 pb-4 transition-all duration-200 ${isChatting ? 'mt-auto' : ''}`}
+      className={`relative w-full space-y-4 transition-all duration-200 ${isChatting ? 'mt-auto' : ''}`}
     >
       <div className="group relative mx-auto max-w-3xl">
         <div className="absolute inset-x-0 -top-px -bottom-px rounded-[2rem] bg-linear-to-r from-transparent via-primary/50 to-transparent opacity-0 transition-opacity duration-500 group-focus-within:opacity-100" />
@@ -64,10 +83,54 @@ export function ChatInput({
             disabled={isLimitReached}
           />
 
-          <PromptInputFooter className="flex items-center justify-between px-1 pb-1">
-            <PromptInputButton className="size-9 rounded-full text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary">
-              <Paperclip className="size-5" />
-            </PromptInputButton>
+          <PromptInputFooter className="flex items-center justify-between gap-2 px-1 pb-1">
+            <div className="flex items-center gap-2">
+              <PromptInputButton className="size-9 rounded-full text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary">
+                <Paperclip className="size-5" />
+              </PromptInputButton>
+              {selectedModel && onModelChange ? (
+                <ModelSelector
+                  onOpenChange={setIsModelSelectorOpen}
+                  open={isModelSelectorOpen && !isStreaming}
+                >
+                  <ModelSelectorTrigger asChild>
+                    <Button
+                      aria-label={t('modelSelector.label')}
+                      className="h-8 max-w-44 gap-2 rounded-full border-none px-3 text-muted-foreground text-sm hover:bg-muted/70"
+                      disabled={isStreaming}
+                      type="button"
+                      variant="outline"
+                    >
+                      <ModelSelectorLogo provider="google" />
+                      <span className="truncate">{selectedModelLabel}</span>
+                    </Button>
+                  </ModelSelectorTrigger>
+                  <ModelSelectorContent>
+                    <ModelSelectorList>
+                      <ModelSelectorEmpty>
+                        {t('modelSelector.empty')}
+                      </ModelSelectorEmpty>
+                      <ModelSelectorGroup heading="Choose Model">
+                        {CHAT_MODEL_OPTIONS.map((model) => (
+                          <ModelSelectorItem
+                            data-checked={model.id === selectedModel}
+                            key={model.id}
+                            onSelect={() => {
+                              onModelChange(model.id);
+                              setIsModelSelectorOpen(false);
+                            }}
+                            value={model.label}
+                          >
+                            <ModelSelectorLogo provider="google" />
+                            <ModelSelectorName>{model.label}</ModelSelectorName>
+                          </ModelSelectorItem>
+                        ))}
+                      </ModelSelectorGroup>
+                    </ModelSelectorList>
+                  </ModelSelectorContent>
+                </ModelSelector>
+              ) : null}
+            </div>
 
             <PromptInputSubmit
               className="size-9 rounded-full transition-all hover:scale-105"

@@ -28,6 +28,11 @@
     "limitReachedHelper": "Đã chạm giới hạn: {used}/{count} tin nhắn. Hãy bắt đầu phiên mới để tiếp tục.",
     "limitReachedPlaceholder": "Đã đạt giới hạn ({count}). Bắt đầu phiên mới.",
     "limitReachedToast": "Bạn đã đạt giới hạn {count} tin nhắn. Hãy bắt đầu phiên mới để tiếp tục.",
+    "modelSelector": {
+      "empty": "Không tìm thấy mô hình nào.",
+      "label": "Chọn mô hình AI",
+      "placeholder": "Chọn mô hình"
+    },
     "philosophicalLogic": "Cưỡng chế logic triết học",
     "placeholder": "Đặt câu hỏi học thuật...",
     "promptLibrary": {
@@ -49,6 +54,43 @@
         "title": "Đạo đức của trí tuệ nhân tạo"
       },
       "title": "Thư viện gợi ý học thuật"
+    },
+    "recentChats": {
+      "description": "Quay lại các mạch học tập gần đây của bạn.",
+      "empty": "Chưa có cuộc trò chuyện gần đây. Hãy bắt đầu câu hỏi ở trên và nó sẽ xuất hiện tại đây.",
+      "error": "Hiện không thể tải các cuộc trò chuyện gần đây.",
+      "openChat": "Mở cuộc trò chuyện {title}",
+      "title": "Trò chuyện gần đây",
+      "updated": "Cập nhật {date}"
+    },
+    "sidebar": {
+      "actionsLabel": "Hành động cho {title}",
+      "cancel": "Hủy",
+      "close": "Thu gọn lịch sử trò chuyện",
+      "delete": "Xóa",
+      "deleteDialogDescription": "Xóa \"{title}\" khỏi lịch sử trò chuyện của bạn? Không thể hoàn tác hành động này.",
+      "deleteDialogTitle": "Xóa cuộc trò chuyện",
+      "deleteError": "Không thể xóa cuộc trò chuyện.",
+      "deleteSuccess": "Đã xóa cuộc trò chuyện.",
+      "description": "Tìm kiếm và mở lại các phiên trước.",
+      "editDialogDescription": "Chọn một tiêu đề ngắn gọn cho cuộc trò chuyện này.",
+      "editDialogTitle": "Chỉnh sửa tiêu đề trò chuyện",
+      "editError": "Không thể cập nhật tiêu đề trò chuyện.",
+      "editTitle": "Sửa tiêu đề",
+      "editTitleLabel": "Tiêu đề trò chuyện",
+      "editTitlePlaceholder": "Nhập tiêu đề trò chuyện",
+      "emptyDescription": "Bắt đầu cuộc trò chuyện mới và nó sẽ xuất hiện ở đây.",
+      "emptySearch": "Không có cuộc trò chuyện nào khớp với tìm kiếm.",
+      "emptyTitle": "Chưa có cuộc trò chuyện",
+      "loadingMore": "Đang tải thêm cuộc trò chuyện...",
+      "messageCount": "{count, plural, one {# tin nhắn} other {# tin nhắn}}",
+      "newChat": "Cuộc trò chuyện mới",
+      "open": "Mở lịch sử trò chuyện",
+      "saveTitle": "Lưu tiêu đề",
+      "searchLabel": "Tìm kiếm cuộc trò chuyện",
+      "searchPlaceholder": "Tìm kiếm cuộc trò chuyện...",
+      "title": "Lịch sử trò chuyện",
+      "untitled": "Cuộc trò chuyện chưa đặt tên"
     },
     "subtitle": "Chọn một điểm bắt đầu hoặc hỏi bất kỳ điều gì để bắt đầu cuộc tìm hiểu.",
     "suggestions": {
@@ -1062,6 +1104,43 @@
     "title": "Chào mừng bạn đến với Hệ sinh thái <brand>EduFlow</brand>"
   },
   "WritingPage": {
+    "recentSessions": {
+      "description": "Quay lại các bản nháp, phần viết lại và phiên chỉnh sửa gần đây.",
+      "empty": "Chưa có phiên viết gần đây. Hãy bắt đầu với một công cụ viết và phiên đó sẽ xuất hiện tại đây.",
+      "error": "Hiện không thể tải các phiên viết gần đây.",
+      "openChat": "Mở phiên viết {title}",
+      "title": "Phiên viết gần đây",
+      "updated": "Cập nhật {date}"
+    },
+    "sidebar": {
+      "actionsLabel": "Hành động cho {title}",
+      "cancel": "Hủy",
+      "close": "Thu gọn lịch sử viết",
+      "delete": "Xóa",
+      "deleteDialogDescription": "Xóa \"{title}\" khỏi lịch sử viết của bạn? Không thể hoàn tác hành động này.",
+      "deleteDialogTitle": "Xóa phiên viết",
+      "deleteError": "Không thể xóa phiên viết.",
+      "deleteSuccess": "Đã xóa phiên viết.",
+      "description": "Tìm kiếm và mở lại các phiên viết trước.",
+      "editDialogDescription": "Chọn một tiêu đề ngắn gọn cho phiên viết này.",
+      "editDialogTitle": "Chỉnh sửa tiêu đề phiên viết",
+      "editError": "Không thể cập nhật tiêu đề phiên viết.",
+      "editTitle": "Sửa tiêu đề",
+      "editTitleLabel": "Tiêu đề phiên viết",
+      "editTitlePlaceholder": "Nhập tiêu đề phiên viết",
+      "emptyDescription": "Bắt đầu phiên viết mới và nó sẽ xuất hiện ở đây.",
+      "emptySearch": "Không có phiên viết nào khớp với tìm kiếm.",
+      "emptyTitle": "Chưa có phiên viết",
+      "loadingMore": "Đang tải thêm phiên viết...",
+      "messageCount": "{count, plural, one {# tin nhắn} other {# tin nhắn}}",
+      "newChat": "Phiên viết mới",
+      "open": "Mở lịch sử viết",
+      "saveTitle": "Lưu tiêu đề",
+      "searchLabel": "Tìm kiếm phiên viết",
+      "searchPlaceholder": "Tìm kiếm phiên viết...",
+      "title": "Lịch sử viết",
+      "untitled": "Phiên viết chưa đặt tên"
+    },
     "subtitle": "Trau dồi giọng văn học thuật của bạn với các công cụ chính xác được thiết kế cho sự rõ ràng và tác động.",
     "title": "Hôm nay tôi có thể giúp bạn <italic>viết</italic> gì?",
     "tools": {

@@ -214,12 +214,6 @@ export function AiClientDialog({
     return coursePathHistory[coursePathHistory.length - 1].name;
   }, [coursePathHistory, t]);
 
-  const canSubmit =
-    activeTab === 'personal'
-      ? !!selectedPersonalId
-      : activeTab === 'course'
-        ? !!selectedCourseId
-        : !!uploadedFile;
   const canProceed =
     activeTab === 'personal'
       ? !!selectedPersonalId
