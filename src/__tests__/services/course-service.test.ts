@@ -1,12 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-
-import { CourseService } from '@/services/CourseService';
 import { ChatProviderFactory } from '@/services/ai/ChatProviderFactory';
+import { CourseService } from '@/services/CourseService';
 
 vi.mock('@/services/ai/ChatProviderFactory', () => ({
   ChatProviderFactory: {
     create: vi.fn(),
   },
+}));
+
+vi.mock('@tavily/core', () => ({
+  tavily: vi.fn(() => ({
+    search: vi.fn(),
+  })),
 }));
 
 describe('CourseService.generateModulesFromAI', () => {
