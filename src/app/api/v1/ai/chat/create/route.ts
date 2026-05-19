@@ -1,7 +1,6 @@
-import { cookies } from 'next/headers';
 import { z } from 'zod';
-import { CacheService } from '@/services/CacheService';
-import { buildNewChatData } from '@/utils/chat-session';
+import { getChatOwner } from '@/lib/api/guest-session';
+import { ChatPersistenceService } from '@/services/ChatPersistenceService';
 
 const createChatSchema = z.object({
   firstMessage: z.string().min(1),
@@ -9,11 +8,11 @@ const createChatSchema = z.object({
 
 /**
  * @swagger
- * /api/chat/create:
+ * /api/v1/ai/chat/create:
  *   post:
  *     tags:
  *       - Chat
- *     summary: Create a guest chat session
+ *     summary: Create a chat session
  *     requestBody:
  *       required: true
  *       content:
@@ -48,31 +47,13 @@ export async function POST(req: Request) {
       );
     }
 
-    const cookieStore = await cookies();
-    const guestSession = cookieStore.get('guest_session');
-    const previousGuestId = guestSession?.value;
+    const { userId, guestId } = await getChatOwner({ createGuest: true });
 
-    let guestId: string;
-
-    if (previousGuestId) {
-      guestId = previousGuestId;
-    } else {
-      guestId = `guest_${crypto.randomUUID()}`;
-      cookieStore.set('guest_session', guestId, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 60 * 60 * 24,
-        path: '/',
-      });
-    }
-
-    const chatId = `chat_${crypto.randomUUID()}`;
-    const chatData = buildNewChatData({
+    const { chatId } = await ChatPersistenceService.createChat({
+      userId,
       guestId,
       firstMessage: parsedBody.data.firstMessage,
     });
-
-    await CacheService.setCache(chatId, chatData, { ttlSeconds: 86400 });
 
     return new Response(JSON.stringify({ chatId }), {
       status: 201,

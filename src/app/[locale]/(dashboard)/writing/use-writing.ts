@@ -1,52 +1,57 @@
 import { useChat } from '@ai-sdk/react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { DefaultChatTransport, type UIMessage } from 'ai';
 import { useEffect, useMemo, useRef } from 'react';
 import { toast } from 'sonner';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import type { WritingTool } from '@/lib/validations/writing.schema';
+import type { ChatModel } from '@/services/ai/chat-models';
 import { useChatSessionStore } from '@/stores/useChatSessionStore';
-import {
-  getUserMessageCount,
-  hasReachedUserMessageLimit,
-} from '@/utils/chat-limit';
+import { hasReachedUserMessageLimit } from '@/utils/chat-limit';
 import { writingService } from './writing.service';
 
 const MAX_USER_MESSAGES = 5;
 
 interface UseWritingOptions {
   tool: WritingTool;
-  sessionId?: string;
+  chatId?: string;
   initialMessages?: UIMessage[];
+  selectedModel: ChatModel;
 }
 
 const useWriting = ({
   tool,
-  sessionId,
+  chatId,
   initialMessages = [],
+  selectedModel,
 }: UseWritingOptions) => {
   const router = useRouter();
   const pathname = usePathname();
+  const queryClient = useQueryClient();
   const lastPendingSendRef = useRef<string | null>(null);
 
   const {
     pendingMessage,
     pendingChatId,
+    pendingModel,
     setOptimisticChatId,
     setOptimisticMessages,
     setPendingMessage,
     setPendingChatId,
+    setPendingModel,
     optimisticChatId,
     optimisticMessages,
     clearPendingMessage,
     clearPendingChatId,
+    clearPendingModel,
     clearOptimisticMessages,
   } = useChatSessionStore();
+  const requestModel = pendingModel ?? selectedModel;
 
   const createSessionMutation = useMutation({
     mutationFn: async (text: string) => {
-      const data = await writingService.createSession(text, tool);
-      return data.sessionId;
+      const data = await writingService.createChat(text, tool);
+      return data.chatId;
     },
   });
 
@@ -58,21 +63,21 @@ const useWriting = ({
 
   const transport = useMemo(
     () =>
-      sessionId
+      chatId
         ? new DefaultChatTransport({
-            api: `/api/writing/${sessionId}`,
+            api: `/api/v1/ai/writing/${chatId}`,
             body: {
               tool,
               provider: 'openrouter',
-              model: 'gemini-2.5-pro',
+              model: requestModel,
             },
           })
         : undefined,
-    [sessionId, tool]
+    [chatId, requestModel, tool]
   );
 
   const { messages, status, sendMessage, stop } = useChat({
-    id: sessionId,
+    id: chatId,
     messages: initialMessages,
     transport,
     onError(error) {
@@ -84,14 +89,12 @@ const useWriting = ({
   });
 
   const optimisticForChat =
-    optimisticChatId && optimisticChatId === sessionId
-      ? optimisticMessages
-      : [];
+    optimisticChatId && optimisticChatId === chatId ? optimisticMessages : [];
   const displayMessages = messages.length > 0 ? messages : optimisticForChat;
 
   useEffect(() => {
-    if (!pendingMessage || !pendingChatId || !sessionId) return;
-    if (pendingChatId !== sessionId) return;
+    if (!pendingMessage || !pendingChatId || !chatId) return;
+    if (pendingChatId !== chatId) return;
     if (!pathname?.includes(`/writing/${pendingChatId}`)) return;
 
     const pendingKey = `${pendingChatId}:${pendingMessage}`;
@@ -100,16 +103,18 @@ const useWriting = ({
     lastPendingSendRef.current = pendingKey;
     clearPendingMessage();
     clearPendingChatId();
+    clearPendingModel();
 
     void sendMessage({ text: pendingMessage });
   }, [
     pendingMessage,
     pendingChatId,
-    sessionId,
+    chatId,
     pathname,
     sendMessage,
     clearPendingMessage,
     clearPendingChatId,
+    clearPendingModel,
   ]);
 
   useEffect(() => {
@@ -131,13 +136,17 @@ const useWriting = ({
   const isStreaming = status === 'streaming' || status === 'submitted';
 
   const startChat = async (text: string) => {
-    if (!sessionId) {
+    if (!chatId) {
       try {
         const newChatId = await createSessionMutation.mutateAsync(text);
+        await queryClient.invalidateQueries({
+          queryKey: ['writing-chat-list'],
+        });
         setOptimisticChatId(newChatId);
         setOptimisticMessages([createUserMessage(text)]);
         setPendingMessage(text);
         setPendingChatId(newChatId);
+        setPendingModel(selectedModel);
 
         router.push(`/writing/${newChatId}`);
       } catch (error) {

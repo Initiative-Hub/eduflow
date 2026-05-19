@@ -1,63 +1,38 @@
 import type { UIMessage } from 'ai';
-import { cookies } from 'next/headers';
 import { z } from 'zod';
+import { getChatOwner } from '@/lib/api/guest-session';
 import { ChatProviderFactory } from '@/services/ai/ChatProviderFactory';
+import { CHAT_MODEL_IDS } from '@/services/ai/chat-models';
 import { DEFAULT_PROVIDER } from '@/services/ai/chat-provider.constants';
 import type {
   ChatProvider,
   StreamChatInput,
 } from '@/services/ai/chat-provider.types';
 import { CacheService } from '@/services/CacheService';
-import type { ChatCacheData } from '@/utils/chat-session';
+import { ChatPersistenceService } from '@/services/ChatPersistenceService';
 
 export const maxDuration = 30;
 
 const chatRequestSchema = z.object({
   messages: z.array(z.custom<UIMessage>()).min(1),
   provider: z.custom<ChatProvider>().optional(),
-  model: z.string().min(1).optional(),
+  model: z.enum(CHAT_MODEL_IDS).optional(),
   apiKey: z.string().min(1).optional(),
   providerOptions: z.custom<StreamChatInput['providerOptions']>().optional(),
 });
 
-const getOwnedChat = async (chatId: string, guestId: string) => {
-  const rawChatData = await CacheService.getCache<
-    Partial<ChatCacheData> & Pick<ChatCacheData, 'guestId' | 'title'>
-  >(chatId);
-
-  if (!rawChatData) {
-    return {
-      status: 404 as const,
-      response: new Response(JSON.stringify({ error: 'Chat not found' }), {
-        status: 404,
-        headers: { 'Content-Type': 'application/json' },
-      }),
-    };
-  }
-
-  if (rawChatData.guestId !== guestId) {
-    return {
-      status: 403 as const,
-      response: new Response(JSON.stringify({ error: 'Access denied' }), {
-        status: 403,
-        headers: { 'Content-Type': 'application/json' },
-      }),
-    };
-  }
-
-  const chatData: ChatCacheData = {
-    guestId: rawChatData.guestId,
-    title: rawChatData.title,
-    messageCount: rawChatData.messageCount ?? 0,
-    messages: rawChatData.messages ?? [],
-  };
-
-  return { status: 200 as const, chatData };
-};
+const chatUpdateSchema = z
+  .object({
+    title: z.string().trim().min(1).max(120).optional(),
+    deleted_at: z.string().datetime().optional(),
+  })
+  .refine((data) => data.title !== undefined || data.deleted_at !== undefined, {
+    message: 'Provide title or deleted_at',
+  });
 
 /**
  * @swagger
- * /api/chat/{chatId}:
+ * /api/v1/ai/chat/{chatId}:
  *   get:
  *     tags:
  *       - Chat
@@ -85,23 +60,29 @@ export async function GET(
   try {
     const { chatId } = await params;
 
-    const cookieStore = await cookies();
-    const guestSession = cookieStore.get('guest_session');
-    const guestId = guestSession?.value;
+    const { userId, guestId } = await getChatOwner();
 
-    if (!guestId) {
+    if (!userId && !guestId) {
       return new Response(JSON.stringify({ error: 'Missing guest session' }), {
         status: 401,
         headers: { 'Content-Type': 'application/json' },
       });
     }
 
-    const chatLookup = await getOwnedChat(chatId, guestId);
-    if (chatLookup.status !== 200) {
-      return chatLookup.response;
+    const chatData = await ChatPersistenceService.getChat({
+      chatId,
+      userId,
+      guestId,
+    });
+
+    if (!chatData) {
+      return new Response(JSON.stringify({ error: 'Chat not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
-    return new Response(JSON.stringify(chatLookup.chatData), {
+    return new Response(JSON.stringify(chatData), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });
@@ -117,7 +98,100 @@ export async function GET(
 
 /**
  * @swagger
- * /api/chat/{chatId}:
+ * /api/v1/ai/chat/{chatId}:
+ *   patch:
+ *     tags:
+ *       - Chat
+ *     summary: Update chat title or soft delete a chat
+ *     parameters:
+ *       - in: path
+ *         name: chatId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               deleted_at:
+ *                 type: string
+ *                 format: date-time
+ *     responses:
+ *       200:
+ *         description: Updated chat metadata
+ *       400:
+ *         description: Invalid request payload
+ *       401:
+ *         description: Missing guest session
+ *       404:
+ *         description: Chat not found
+ */
+export async function PATCH(
+  req: Request,
+  { params }: { params: Promise<{ chatId: string }> }
+) {
+  try {
+    const [{ chatId }, body] = await Promise.all([params, req.json()]);
+
+    const parsedBody = chatUpdateSchema.safeParse(body);
+    if (!parsedBody.success) {
+      return new Response(
+        JSON.stringify({
+          error: 'Invalid request payload',
+          details: parsedBody.error.flatten(),
+        }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { userId, guestId } = await getChatOwner();
+
+    if (!userId && !guestId) {
+      return new Response(JSON.stringify({ error: 'Missing guest session' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const updatedChat = await ChatPersistenceService.updateChat({
+      chatId,
+      userId,
+      guestId,
+      title: parsedBody.data.title,
+      deletedAt: parsedBody.data.deleted_at
+        ? new Date(parsedBody.data.deleted_at)
+        : undefined,
+    });
+
+    if (!updatedChat) {
+      return new Response(JSON.stringify({ error: 'Chat not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    return new Response(JSON.stringify(updatedChat), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  } catch (error: unknown) {
+    const message =
+      error instanceof Error ? error.message : 'Unknown error occurred';
+    return new Response(JSON.stringify({ error: message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+}
+
+/**
+ * @swagger
+ * /api/v1/ai/chat/{chatId}:
  *   post:
  *     tags:
  *       - Chat
@@ -182,18 +256,18 @@ export async function POST(
       );
     }
 
-    const cookieStore = await cookies();
-    const guestSession = cookieStore.get('guest_session');
-    const guestId = guestSession?.value;
+    const { userId, guestId } = await getChatOwner();
 
-    if (!guestId) {
+    if (!userId && !guestId) {
       return new Response(JSON.stringify({ error: 'Missing guest session' }), {
         status: 401,
         headers: { 'Content-Type': 'application/json' },
       });
     }
 
-    const limitStatus = await CacheService.checkGuestLimit(guestId);
+    const limitStatus = userId
+      ? { allowed: true, remaining: Number.POSITIVE_INFINITY }
+      : await CacheService.checkGuestLimit(guestId as string);
     if (!limitStatus.allowed) {
       return new Response(
         JSON.stringify({
@@ -204,9 +278,16 @@ export async function POST(
       );
     }
 
-    const chatLookup = await getOwnedChat(chatId, guestId);
-    if (chatLookup.status !== 200) {
-      return chatLookup.response;
+    const chatData = await ChatPersistenceService.getChat({
+      chatId,
+      userId,
+      guestId,
+    });
+    if (!chatData) {
+      return new Response(JSON.stringify({ error: 'Chat not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
     const provider = ChatProviderFactory.create(
@@ -219,16 +300,16 @@ export async function POST(
 
     const response = result.toUIMessageStreamResponse({
       originalMessages: parsedBody.data.messages,
+      generateMessageId: () => `${crypto.randomUUID()}`,
       onFinish: async ({ messages }) => {
-        await CacheService.setCache(
+        await ChatPersistenceService.saveMessages({
           chatId,
-          {
-            ...chatLookup.chatData,
-            messages,
-            messageCount: messages.length,
-          },
-          { ttlSeconds: 86400 }
-        );
+          userId,
+          guestId,
+          messages,
+          provider: parsedBody.data.provider ?? DEFAULT_PROVIDER,
+          model: parsedBody.data.model,
+        });
       },
     });
 
