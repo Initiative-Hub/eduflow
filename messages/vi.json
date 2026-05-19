@@ -620,6 +620,17 @@
     "SettingsPage": "Cài đặt khóa học",
     "title": "Các khóa học"
   },
+  "DictionarySettings": {
+    "active": "Đang dùng",
+    "description": "Chọn từ điển sử dụng khi bạn bôi đen một từ.",
+    "freeDictionary": "Free Dictionary API",
+    "freeDictionaryDescription": "Từ điển mã nguồn mở với phiên âm và âm thanh. Không giới hạn số lượng yêu cầu hàng ngày.",
+    "mwCollegiate": "Merriam-Webster Collegiate",
+    "mwCollegiateDescription": "Từ điển uy tín nhất nước Mỹ với hơn 250.000 định nghĩa và phát âm có âm thanh.",
+    "mwLearners": "Merriam-Webster Learner's",
+    "mwLearnersDescription": "Thiết kế cho học viên ESL/EFL nâng cao với phiên âm IPA và hơn 160.000 ví dụ sử dụng.",
+    "title": "Từ điển bật lên"
+  },
   "HomePage": {
     "title": "Xin chào thế giới!"
   },
@@ -1060,6 +1071,17 @@
       "title": "Chào mừng bạn!"
     },
     "title": "Chào mừng bạn đến với Hệ sinh thái <brand>EduFlow</brand>"
+  },
+  "SelectionDictionary": {
+    "antonyms": "Từ trái nghĩa",
+    "etymology": "Nguồn gốc từ",
+    "fetchError": "Không thể tra cứu định nghĩa",
+    "firstUsed": "Sử dụng lần đầu",
+    "lookingUp": "Đang tra cứu...",
+    "rateLimitDescription": "Bạn đã hết lượt tra từ điển này trong ngày. Hãy chuyển sang nguồn khác trong Cài đặt.",
+    "rateLimitTitle": "Đã hết lượt tra hàng ngày",
+    "synonyms": "Từ đồng nghĩa",
+    "wordNotFound": "Không tìm thấy từ"
   },
   "StudyReader": {
     "aiAnalyticsActive": "AI Phân tích đang hoạt động",

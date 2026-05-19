@@ -620,6 +620,17 @@
     "SettingsPage": "Course Settings",
     "title": "Courses"
   },
+  "DictionarySettings": {
+    "active": "Active",
+    "description": "Choose which dictionary to use when you highlight a word.",
+    "freeDictionary": "Free Dictionary API",
+    "freeDictionaryDescription": "Open-source dictionary with phonetics and audio. No daily request limits.",
+    "mwCollegiate": "Merriam-Webster Collegiate",
+    "mwCollegiateDescription": "America's most trusted dictionary with 250,000+ definitions and audio pronunciations.",
+    "mwLearners": "Merriam-Webster Learner's",
+    "mwLearnersDescription": "Designed for advanced ESL/EFL students with IPA pronunciation and 160,000+ usage examples.",
+    "title": "Pop-up Dictionary"
+  },
   "HomePage": {
     "title": "Hello world!"
   },
@@ -1060,6 +1071,17 @@
       "title": "Welcome aboard!"
     },
     "title": "Welcome to the <brand>EduFlow</brand> Ecosystem"
+  },
+  "SelectionDictionary": {
+    "antonyms": "Antonyms",
+    "etymology": "Etymology",
+    "fetchError": "Failed to fetch definition",
+    "firstUsed": "First used",
+    "lookingUp": "Looking up...",
+    "rateLimitDescription": "You've hit the daily request limit for this dictionary. Try switching to another provider in Settings.",
+    "rateLimitTitle": "Daily limit reached",
+    "synonyms": "Synonyms",
+    "wordNotFound": "Word not found"
   },
   "StudyReader": {
     "aiAnalyticsActive": "AI Analytics Active",

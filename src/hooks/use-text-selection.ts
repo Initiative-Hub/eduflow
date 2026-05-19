@@ -22,7 +22,11 @@ interface UseTextSelectionReturn {
 }
 
 /** Minimum space (px) needed above the word to show the popup there */
-const POPUP_HEIGHT_ESTIMATE = 200;
+const POPUP_HEIGHT_ESTIMATE = 300;
+/** Minimum space (px) needed below the word to show the popup there */
+const POPUP_BOTTOM_MARGIN = 100;
+/** Minimum top offset (px) to avoid being covered by the navbar */
+const NAVBAR_HEIGHT = 64;
 
 export function useTextSelection(
   options: UseTextSelectionOptions = {}
@@ -35,6 +39,8 @@ export function useTextSelection(
   const clearSelection = useCallback(() => {
     setSelectedWord('');
     setCoords(null);
+    // Remove the browser's text highlight when explicitly closing
+    window.getSelection()?.removeAllRanges();
   }, []);
 
   useEffect(() => {
@@ -43,33 +49,60 @@ export function useTextSelection(
         const selection = window.getSelection();
 
         if (!selection || selection.isCollapsed || !selection.rangeCount) {
-          clearSelection();
+          // Only clear our state, don't remove browser ranges (caret)
+          setSelectedWord('');
+          setCoords(null);
           return;
         }
 
         const text = selection.toString().trim();
 
         if (!text || text.includes(' ')) {
-          clearSelection();
+          setSelectedWord('');
+          setCoords(null);
           return;
         }
 
         const cleaned = text.replace(/[^a-zA-Z'-]/g, '');
 
         if (!cleaned || cleaned.length < 2) {
-          clearSelection();
+          setSelectedWord('');
+          setCoords(null);
           return;
         }
 
         const range = selection.getRangeAt(0);
         const rect = range.getBoundingClientRect();
 
-        // Decide placement: if not enough space above, show below
-        const spaceAbove = rect.top;
-        const showBelow = spaceAbove < POPUP_HEIGHT_ESTIMATE;
+        // Decide placement based on available space
+        const spaceAbove = rect.top - NAVBAR_HEIGHT;
+        const spaceBelow = window.innerHeight - rect.bottom;
 
-        const x = rect.left + rect.width / 2;
-        const y = showBelow ? rect.bottom + 8 : rect.top - 8;
+        // Prefer above, but if not enough space above (accounting for navbar), show below
+        let showBelow: boolean;
+        if (spaceAbove >= POPUP_HEIGHT_ESTIMATE) {
+          showBelow = false;
+        } else if (spaceBelow >= POPUP_BOTTOM_MARGIN) {
+          showBelow = true;
+        } else {
+          // Neither has great space — pick whichever has more
+          showBelow = spaceBelow > spaceAbove;
+        }
+
+        // Clamp horizontal position to keep popup within viewport
+        // Account for potential sidebar (popup is 320px wide, centered)
+        const popupHalfWidth = 160;
+        const leftPadding = 16; // Extra padding from viewport edges
+        const x = Math.max(
+          popupHalfWidth + leftPadding,
+          Math.min(
+            rect.left + rect.width / 2,
+            window.innerWidth - popupHalfWidth - leftPadding
+          )
+        );
+        // Clamp vertical position to stay below the navbar
+        const rawY = showBelow ? rect.bottom + 8 : rect.top - 8;
+        const y = showBelow ? rawY : Math.max(rawY, NAVBAR_HEIGHT + 8);
 
         setSelectedWord(cleaned.toLowerCase());
         setCoords({ x, y });
@@ -94,7 +127,10 @@ export function useTextSelection(
           e.clientY <= rect.bottom;
 
         if (!isInsideSelection) {
-          clearSelection();
+          setSelectedWord('');
+          setCoords(null);
+          // Only remove browser selection when dismissing the popup
+          selection.removeAllRanges();
         }
       }
     }

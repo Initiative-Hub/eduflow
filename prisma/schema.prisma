@@ -397,13 +397,15 @@ model QuizAttempt {
 
 model DictionaryCache {
   id        String   @id @default(uuid())
-  word      String   @unique
+  word      String
+  source    String   @default("free-dictionary")
   phonetic  String?
   audioUrl  String?  @map("audio_url")
   meanings  Json
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  @@index([word])
+  @@unique([word, source])
+  @@index([word, source])
   @@map("dictionary_cache")
 }
