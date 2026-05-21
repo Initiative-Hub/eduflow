@@ -5,8 +5,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useEffect } from 'react';
-import { GuestControls } from '@/components/layout/navbar-avatar/guest-controls';
 import { NavbarAvatar } from '@/components/layout/navbar-avatar';
+import { GuestControls } from '@/components/layout/navbar-avatar/guest-controls';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useSidebar } from '@/components/ui/sidebar';
@@ -76,18 +76,6 @@ export function AppNavbar() {
         </nav>
       </div>
       <div className="flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative shrink-0 rounded-full text-muted-foreground hover:bg-muted/40 hover:text-foreground"
-          aria-label="Notifications"
-        >
-          <Bell className="size-5" />
-          <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-destructive ring-1 ring-background" />
-        </Button>
-
-        <Separator orientation="vertical" className="hidden md:block" />
-
         {/* Account Actions / Profile (Desktop Only) */}
         {sessionData ? (
           <div className="hidden md:block">
