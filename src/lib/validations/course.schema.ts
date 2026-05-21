@@ -1,4 +1,5 @@
-import { z } from 'zod';
+import * as zod from 'zod';
+const z = (zod as any).z ?? (zod as any).default ?? zod;
 
 /**
  * Zod schema for the Course model
