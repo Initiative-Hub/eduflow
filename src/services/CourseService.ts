@@ -425,12 +425,14 @@ export class CourseService {
 
         if (mod.lessons && Array.isArray(mod.lessons)) {
           let currentLessonOrder = 0;
-          const lessonData = mod.lessons.map((lesson) => ({
-            moduleId: createdModule.id,
-            title: lesson.lessonTitle || 'Untitled Lesson',
-            content: lesson.content || '',
-            orderIndex: currentLessonOrder++,
-          }));
+          const lessonData = mod.lessons.map(
+            (lesson: { lessonTitle?: string; content?: string }) => ({
+              moduleId: createdModule.id,
+              title: lesson.lessonTitle || 'Untitled Lesson',
+              content: lesson.content || '',
+              orderIndex: currentLessonOrder++,
+            })
+          );
 
           if (lessonData.length > 0) {
             await tx.lesson.createMany({
