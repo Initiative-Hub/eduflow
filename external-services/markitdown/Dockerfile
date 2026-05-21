@@ -1,24 +1,12 @@
-FROM python:3.12-slim
-
-# Install system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    libmagic1 \
-    && rm -rf /var/lib/apt/lists/*
+FROM astral/uv:python3.12-bookworm-slim
 
 WORKDIR /app
 
-# Copy the service code and local packages
-COPY . /app
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-dev --no-install-project
 
-# Install dependencies and local markitdown
-RUN pip --no-cache-dir install -r requirements.txt
-RUN pip --no-cache-dir install \
-    /app/packages/markitdown[all] \
-    /app/packages/markitdown-sample-plugin
+COPY . .
 
-# Expose the port FastAPI runs on
 EXPOSE 8000
 
-# Run the FastAPI server
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uv", "run", "fastapi", "run", "--host", "0.0.0.0", "--port", "8000"]
