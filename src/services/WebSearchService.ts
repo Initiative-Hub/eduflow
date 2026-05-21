@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { searchWebClient } from '@/utils/search-web-client';
+import { searchWebClient } from '@/lib/search-web-client';
 
 export interface SearchResult {
   url: string;
