@@ -37,7 +37,7 @@ export function GuestControls() {
     <Button
       variant="ghost"
       size="icon"
-      className="shrink-0 rounded-full text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+      className="shrink-0 cursor-pointer rounded-full text-muted-foreground hover:bg-muted/40 hover:text-foreground"
       aria-label="Guest settings"
       id="guest-controls-trigger"
     >

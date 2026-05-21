@@ -32,7 +32,7 @@ export function CoursesPageClient() {
           <p className="mt-1 text-muted-foreground">{t('description')}</p>
         </div>
         {canCreateCourses ? (
-          <Button onClick={() => dialog.open()}>
+          <Button onClick={() => dialog.open()} className="cursor-pointer">
             <Plus className="mr-2 h-4 w-4" /> {t('newCourse')}
           </Button>
         ) : null}
@@ -68,7 +68,7 @@ export function CoursesPageClient() {
             {t('noCoursesDescription')}
           </p>
           {canCreateCourses ? (
-            <Button onClick={() => dialog.open()}>
+            <Button onClick={() => dialog.open()} className="cursor-pointer">
               {t('createFirstCourse')}
             </Button>
           ) : null}

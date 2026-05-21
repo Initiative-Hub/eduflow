@@ -7,15 +7,18 @@ import {
   Check,
   ChevronLeft,
   FileText,
+  Globe,
   Loader2,
   MessageSquare,
+  RefreshCw,
   Sparkles,
   Upload,
   User,
+  XCircle,
 } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { DialogTemplate } from '@/components/custom/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -26,6 +29,10 @@ import { inventoryService } from '../../../../inventory/inventory.service';
 import type { InventoryEntry } from '../../../../inventory/inventory.types';
 import { formatFileSize } from '../../../../inventory/inventory.utils';
 import { useInventory } from '../../../../inventory/use-inventory';
+import type {
+  GenerationStep,
+  StreamingCourse,
+} from '../../use-generate-course';
 import { courseFilesService } from '../files/course-files.service';
 
 interface AiClientDialogProps {
@@ -36,23 +43,40 @@ interface AiClientDialogProps {
     file?: File;
     context?: string;
   }) => void;
+  onRetry?: (selection: {
+    fileId?: string;
+    file?: File;
+    context?: string;
+  }) => void;
+  generationStep?: GenerationStep;
+  generationError?: string | null;
+  isRunning?: boolean;
+  streamingCourse?: StreamingCourse | null;
 }
 
-type DialogPhase = 'select' | 'context';
+type DialogPhase = 'select' | 'context' | 'generating';
+type PipelineStep = 'extract' | 'search' | 'generate' | 'save';
+
+const STEP_ORDER: PipelineStep[] = ['extract', 'search', 'generate', 'save'];
 
 export function AiClientDialog({
   isOpen,
   onOpenChange,
   onSelect,
+  onRetry,
+  generationStep = 'idle',
+  generationError = null,
+  isRunning = false,
+  streamingCourse,
 }: AiClientDialogProps) {
   const t = useTranslations('Courses.CourseModules.AiDialog');
+  const genT = useTranslations('Courses.CourseModules.AiGeneration');
   const invT = useTranslations('InventoryPage');
   const { courseId } = useParams() as { courseId: string };
 
   const [phase, setPhase] = useState<DialogPhase>('select');
   const [activeTab, setActiveTab] = useState('personal');
 
-  // Personal files state
   const [currentParentId, setCurrentParentId] = useState<string | null>(null);
   const [pathHistory, setPathHistory] = useState<
     { id: string | null; name: string }[]
@@ -61,7 +85,6 @@ export function AiClientDialog({
     null
   );
 
-  // Course files state
   const [courseParentId, setCourseParentId] = useState<string | null>(null);
   const [coursePathHistory, setCoursePathHistory] = useState<
     { id: string | null; name: string }[]
@@ -74,12 +97,37 @@ export function AiClientDialog({
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [context, setContext] = useState('');
+  // Store last selection so retry can re-use it without going back to select phase
+  const [lastSelection, setLastSelection] = useState<{
+    fileId?: string;
+    file?: File;
+    context?: string;
+  } | null>(null);
 
   const { analytics } = useInventory({ maxFileSizeBytes: 100 * 1024 * 1024 });
-
   const totalUsed = analytics?.totalSizeBytes ?? 0;
   const totalLimit = 2 * 1024 * 1024 * 1024;
   const usagePercentage = Math.min((totalUsed / totalLimit) * 100, 100);
+
+  // Map the real server step to the pipeline display step
+  const activeStep: PipelineStep | null =
+    generationStep === 'extract'
+      ? 'extract'
+      : generationStep === 'search'
+        ? 'search'
+        : generationStep === 'generate'
+          ? 'generate'
+          : generationStep === 'save'
+            ? 'save'
+            : null;
+
+  // Close dialog shortly after the stream finishes
+  useEffect(() => {
+    if (phase === 'generating' && generationStep === 'done') {
+      const timer = setTimeout(() => onOpenChange(false), 900);
+      return () => clearTimeout(timer);
+    }
+  }, [phase, generationStep, onOpenChange]);
 
   const { data: personalFiles, isLoading: isLoadingPersonal } = useQuery({
     queryKey: ['ai-assistant', 'personal-files', currentParentId],
@@ -115,8 +163,8 @@ export function AiClientDialog({
       const isSelected = selectedPersonalId === entry.id;
       setSelectedPersonalId(isSelected ? null : entry.id);
       setSelectedPersonalName(isSelected ? null : entry.name);
-      setSelectedCourseId(null); // Clear other tab selection
-      setUploadedFile(null); // Clear uploaded file
+      setSelectedCourseId(null);
+      setUploadedFile(null);
     }
   };
 
@@ -131,20 +179,17 @@ export function AiClientDialog({
       const isSelected = selectedCourseId === entry.id;
       setSelectedCourseId(isSelected ? null : entry.id);
       setSelectedPersonalName(isSelected ? null : entry.name);
-      setSelectedPersonalId(null); // Clear other tab selection
-      setUploadedFile(null); // Clear uploaded file
+      setSelectedPersonalId(null);
+      setUploadedFile(null);
     }
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.type !== 'application/pdf') return;
-
+    if (!file || file.type !== 'application/pdf') return;
     setIsProcessing(true);
     setSelectedPersonalId(null);
     setSelectedCourseId(null);
-    // Simulate a brief "processing" delay for better UX
     setTimeout(() => {
       setUploadedFile(file);
       setIsProcessing(false);
@@ -152,54 +197,49 @@ export function AiClientDialog({
   };
 
   const handleBack = () => {
-    const lastPath = pathHistory[pathHistory.length - 1];
-    if (lastPath) {
-      setCurrentParentId(lastPath.id);
-      setPathHistory((prev) => prev.slice(0, -1));
-    } else if (currentParentId !== null) {
-      setCurrentParentId(null);
-    }
+    const last = pathHistory[pathHistory.length - 1];
+    if (last) {
+      setCurrentParentId(last.id);
+      setPathHistory((p) => p.slice(0, -1));
+    } else if (currentParentId !== null) setCurrentParentId(null);
   };
 
   const handleCourseBack = () => {
-    const lastPath = coursePathHistory[coursePathHistory.length - 1];
-    if (lastPath) {
-      setCourseParentId(lastPath.id);
-      setCoursePathHistory((prev) => prev.slice(0, -1));
-    } else if (courseParentId !== null) {
-      setCourseParentId(null);
-    }
+    const last = coursePathHistory[coursePathHistory.length - 1];
+    if (last) {
+      setCourseParentId(last.id);
+      setCoursePathHistory((p) => p.slice(0, -1));
+    } else if (courseParentId !== null) setCourseParentId(null);
   };
 
-  const handleProceedToContext = () => {
-    setPhase('context');
-  };
-
+  const handleProceedToContext = () => setPhase('context');
   const handleBackToSelect = () => {
     setPhase('select');
     setContext('');
   };
 
   const handleGenerate = () => {
-    if (activeTab === 'personal' && selectedPersonalId) {
-      onSelect({
-        fileId: selectedPersonalId,
-        context: context.trim() || undefined,
-      });
-    } else if (activeTab === 'course' && selectedCourseId) {
-      onSelect({
-        fileId: selectedCourseId,
-        context: context.trim() || undefined,
-      });
-    } else if (activeTab === 'upload' && uploadedFile) {
-      onSelect({ file: uploadedFile, context: context.trim() || undefined });
-    }
+    const selection =
+      activeTab === 'personal' && selectedPersonalId
+        ? { fileId: selectedPersonalId, context: context.trim() || undefined }
+        : activeTab === 'course' && selectedCourseId
+          ? { fileId: selectedCourseId, context: context.trim() || undefined }
+          : uploadedFile
+            ? { file: uploadedFile, context: context.trim() || undefined }
+            : null;
+    if (!selection) return;
+    setLastSelection(selection);
+    setPhase('generating');
+    onSelect(selection);
   };
 
   const handleOpenChange = (open: boolean) => {
+    // Block close while running, but allow it on error so user can dismiss
+    if (!open && isRunning && generationStep !== 'error') return;
     if (!open) {
       setPhase('select');
       setContext('');
+      setLastSelection(null);
     }
     onOpenChange(open);
   };
@@ -226,9 +266,47 @@ export function AiClientDialog({
       ? selectedPersonalName
       : (uploadedFile?.name ?? null);
 
-  // Derive dialog header based on current phase
+  // ── Pipeline helpers ───────────────────────────────────────────────────────
+  const PIPELINE_STEPS: { key: PipelineStep; icon: React.ReactNode }[] = [
+    { key: 'extract', icon: <FileText className="h-5 w-5" /> },
+    { key: 'search', icon: <Globe className="h-5 w-5" /> },
+    { key: 'generate', icon: <Sparkles className="h-5 w-5" /> },
+    { key: 'save', icon: <BookOpen className="h-5 w-5" /> },
+  ];
+
+  const getStepStatus = (
+    step: PipelineStep
+  ): 'done' | 'active' | 'error' | 'pending' => {
+    if (!activeStep) return 'pending';
+    const activeIdx = STEP_ORDER.indexOf(activeStep);
+    const stepIdx = STEP_ORDER.indexOf(step);
+    if (generationStep === 'error') {
+      if (stepIdx < activeIdx) return 'done';
+      if (stepIdx === activeIdx) return 'error';
+      return 'pending';
+    }
+    if (stepIdx < activeIdx) return 'done';
+    if (stepIdx === activeIdx) return 'active';
+    return 'pending';
+  };
+
+  const statusLabel =
+    generationStep === 'extract'
+      ? genT('documentReceived')
+      : generationStep === 'search'
+        ? genT('processingContent')
+        : generationStep === 'save'
+          ? genT('savingModules')
+          : genT('craftingCurriculum');
+
+  // ── Dialog header / footer ─────────────────────────────────────────────────
   const dialogTitle =
-    phase === 'context' ? (
+    phase === 'generating' ? (
+      <div className="flex items-center gap-2">
+        <Sparkles className="h-5 w-5 text-primary" />
+        <span>{genT('generatingCourse')}</span>
+      </div>
+    ) : phase === 'context' ? (
       <div className="flex items-center gap-2">
         <MessageSquare className="h-5 w-5 text-primary" />
         <span>{t('contextTab.title')}</span>
@@ -241,30 +319,31 @@ export function AiClientDialog({
     );
 
   const dialogDescription =
-    phase === 'context' ? t('contextTab.description') : t('description');
+    phase === 'generating'
+      ? genT('craftingCurriculum')
+      : phase === 'context'
+        ? t('contextTab.description')
+        : t('description');
 
-  // Footer for select phase
   const selectFooter = (
     <div className="flex w-full items-center justify-between px-1">
-      <div className="flex items-center gap-4">
-        <div className="flex flex-col gap-1">
-          <span className="font-medium text-[10px] text-muted-foreground uppercase tracking-wider">
-            {invT('storage.label')}
-          </span>
-          <div className="flex items-center gap-2">
-            <div className="h-1.5 w-32 overflow-hidden rounded-full bg-muted">
-              <div
-                className="h-full bg-primary transition-all duration-500"
-                style={{ width: `${usagePercentage}%` }}
-              />
-            </div>
-            <span className="font-medium text-xs">
-              {invT('storage.usage', {
-                used: formatFileSize(totalUsed),
-                total: formatFileSize(totalLimit),
-              })}
-            </span>
+      <div className="flex flex-col gap-1">
+        <span className="font-medium text-[10px] text-muted-foreground uppercase tracking-wider">
+          {invT('storage.label')}
+        </span>
+        <div className="flex items-center gap-2">
+          <div className="h-1.5 w-32 overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full bg-primary transition-all duration-500"
+              style={{ width: `${usagePercentage}%` }}
+            />
           </div>
+          <span className="font-medium text-xs">
+            {invT('storage.usage', {
+              used: formatFileSize(totalUsed),
+              total: formatFileSize(totalLimit),
+            })}
+          </span>
         </div>
       </div>
       <div className="flex items-center gap-3">
@@ -283,7 +362,6 @@ export function AiClientDialog({
     </div>
   );
 
-  // Footer for context phase
   const contextFooter = (
     <div className="flex w-full items-center justify-between px-1">
       <Button
@@ -306,13 +384,167 @@ export function AiClientDialog({
     <DialogTemplate
       isOpen={isOpen}
       onOpenChange={handleOpenChange}
-      className={phase === 'context' ? 'sm:max-w-2xl' : 'sm:max-w-5xl'}
+      className={
+        phase === 'generating'
+          ? 'sm:max-w-lg'
+          : phase === 'context'
+            ? 'sm:max-w-2xl'
+            : 'sm:max-w-5xl'
+      }
       title={dialogTitle}
       description={dialogDescription}
-      footer={phase === 'context' ? contextFooter : selectFooter}
+      footer={
+        phase === 'generating'
+          ? undefined
+          : phase === 'context'
+            ? contextFooter
+            : selectFooter
+      }
     >
-      {/* ── Context phase ─────────────────────────────────────────────── */}
-      {phase === 'context' ? (
+      {/* ── Generating phase ──────────────────────────────────────────────── */}
+      {phase === 'generating' ? (
+        <div className="mt-6 space-y-6 pb-2">
+          {/* Pipeline steps */}
+          <div className="flex items-start justify-between gap-2">
+            {PIPELINE_STEPS.map((step, idx) => {
+              const status = getStepStatus(step.key);
+              return (
+                <div
+                  key={step.key}
+                  className="flex flex-1 flex-col items-center gap-2"
+                >
+                  <div className="relative flex w-full items-center">
+                    {idx > 0 && (
+                      <div
+                        className={cn(
+                          'absolute right-1/2 h-0.5 w-full transition-colors duration-700',
+                          getStepStatus(PIPELINE_STEPS[idx - 1].key) === 'done'
+                            ? 'bg-primary'
+                            : 'bg-muted'
+                        )}
+                      />
+                    )}
+                    <div
+                      className={cn(
+                        'relative z-10 mx-auto flex h-12 w-12 items-center justify-center rounded-full border-2 transition-all duration-500',
+                        status === 'done' &&
+                          'border-primary bg-primary text-primary-foreground',
+                        status === 'active' &&
+                          'border-primary bg-primary text-primary-foreground',
+                        status === 'error' &&
+                          'border-destructive bg-destructive text-destructive-foreground',
+                        status === 'pending' &&
+                          'border-muted bg-muted text-muted-foreground'
+                      )}
+                    >
+                      {status === 'done' ? (
+                        <Check className="h-5 w-5" />
+                      ) : status === 'active' ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : status === 'error' ? (
+                        <XCircle className="h-5 w-5" />
+                      ) : (
+                        step.icon
+                      )}
+                    </div>
+                  </div>
+                  <span
+                    className={cn(
+                      'text-center font-medium text-[11px] transition-colors duration-300',
+                      status === 'active' && 'text-primary',
+                      status === 'done' && 'text-primary/70',
+                      status === 'error' && 'text-destructive',
+                      status === 'pending' && 'text-muted-foreground'
+                    )}
+                  >
+                    {t(`pipeline.${step.key}`)}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Live module preview */}
+          {streamingCourse?.modules && streamingCourse.modules.length > 0 && (
+            <div className="max-h-64 space-y-2 overflow-y-auto rounded-xl border bg-muted/20 p-3">
+              {(
+                streamingCourse.modules as Array<{
+                  title?: string;
+                  lessons?: Array<{ lessonTitle?: string }>;
+                }>
+              ).map((mod, mIdx) => (
+                <div
+                  key={mIdx}
+                  className="rounded-lg border bg-background px-3 py-2 shadow-sm"
+                >
+                  <p className="font-semibold text-sm">
+                    {mIdx + 1}. {mod?.title || genT('identifyingModule')}
+                  </p>
+                  {mod?.lessons && mod.lessons.length > 0 && (
+                    <ul className="mt-1 space-y-0.5 pl-4">
+                      {(mod.lessons as Array<{ lessonTitle?: string }>).map(
+                        (lesson, lIdx) => (
+                          <li
+                            key={lIdx}
+                            className="flex items-center gap-1.5 text-muted-foreground text-xs"
+                          >
+                            <FileText className="h-3 w-3 shrink-0" />
+                            {lesson?.lessonTitle || genT('draftingLesson')}
+                          </li>
+                        )
+                      )}
+                    </ul>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Status label / error */}
+          {generationStep === 'error' ? (
+            <div className="space-y-3">
+              <div className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+                <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-destructive text-sm">
+                    {genT('error')}
+                  </p>
+                  {generationError && (
+                    <p className="mt-0.5 break-all font-mono text-[11px] text-muted-foreground">
+                      {generationError}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center justify-end gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleOpenChange(false)}
+                >
+                  {genT('dismiss')}
+                </Button>
+                {onRetry && lastSelection && (
+                  <Button
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => onRetry(lastSelection)}
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                    {genT('retry')}
+                  </Button>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center gap-2 text-muted-foreground text-sm">
+              <Loader2 className="h-4 w-4 animate-spin text-primary" />
+              <span>{statusLabel}</span>
+            </div>
+          )}
+        </div>
+      ) : phase === 'context' ? (
+        /* ── Context phase ──────────────────────────────────────────────── */
         <div className="mt-4 space-y-5">
           {selectedDocumentName && (
             <div className="flex items-center gap-3 rounded-lg border bg-muted/40 px-4 py-3">
@@ -332,7 +564,6 @@ export function AiClientDialog({
               </div>
             </div>
           )}
-
           <div className="space-y-2">
             <Label htmlFor="ai-context" className="font-medium text-sm">
               {t('contextTab.label')}
@@ -369,6 +600,7 @@ export function AiClientDialog({
           </TabsList>
 
           <div className="mt-6 min-h-[450px] overflow-hidden rounded-xl border border-dashed bg-muted/30">
+            {/* Personal tab */}
             <TabsContent
               value="personal"
               className="mt-0 flex h-[450px] flex-col outline-none"
@@ -391,7 +623,6 @@ export function AiClientDialog({
                   </span>
                 )}
               </div>
-
               <div className="flex-1 overflow-y-auto">
                 {isLoadingPersonal ? (
                   <div className="flex h-[380px] flex-col items-center justify-center gap-2 text-muted-foreground">
@@ -404,7 +635,6 @@ export function AiClientDialog({
                       const isPdf = file.mimeType === 'application/pdf';
                       const isSelected = selectedPersonalId === file.id;
                       const canClick = file.isFolder || isPdf;
-
                       return (
                         <div
                           key={file.id}
@@ -474,6 +704,7 @@ export function AiClientDialog({
               </div>
             </TabsContent>
 
+            {/* Course tab */}
             <TabsContent
               value="course"
               className="mt-0 flex h-[450px] flex-col outline-none"
@@ -501,7 +732,6 @@ export function AiClientDialog({
                   </span>
                 )}
               </div>
-
               <div className="flex-1 overflow-y-auto">
                 {isLoadingCourse ? (
                   <div className="flex h-[380px] flex-col items-center justify-center gap-2 text-muted-foreground">
@@ -514,7 +744,6 @@ export function AiClientDialog({
                       const isPdf = file.mimeType === 'application/pdf';
                       const isSelected = selectedCourseId === file.id;
                       const canClick = file.isFolder || isPdf;
-
                       return (
                         <div
                           key={file.id}
@@ -580,13 +809,14 @@ export function AiClientDialog({
               </div>
             </TabsContent>
 
+            {/* Upload tab */}
             <TabsContent
               value="upload"
               className="mt-0 flex h-full flex-col outline-none"
             >
               <div className="flex flex-1 flex-col items-center justify-center p-8 text-center">
                 {uploadedFile ? (
-                  <div className="fade-in zoom-in-95 flex w-full max-w-md animate-in flex-col items-center space-y-6 rounded-2xl border-2 border-primary bg-background p-8 shadow-lg transition-all">
+                  <div className="fade-in zoom-in-95 flex w-full max-w-md animate-in flex-col items-center space-y-6 rounded-2xl border-2 border-primary bg-background p-8 shadow-lg">
                     <div className="relative">
                       <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 text-primary">
                         <FileText className="h-10 w-10" />

@@ -2,8 +2,8 @@ import { CourseRoleName } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
 import type { AICourseGeneration } from '@/lib/validations/course.schema';
 import { ChatProviderFactory } from '@/services/ai/ChatProviderFactory';
+import { OpenRouterService } from '@/services/ai/OpenRouterService';
 import { StorageService } from '@/services/StorageService';
-
 export class CourseService {
   static async createCourse(data: {
     ownerId: string;
@@ -326,7 +326,7 @@ export class CourseService {
     apiKey?: string;
     context?: string;
   }) {
-    const aiService = ChatProviderFactory.create('openrouter');
+    const aiService = ChatProviderFactory.create('ai-gateway');
     const result = await aiService.streamCourse({
       userId: data.userId,
       fileId: data.fileId,
@@ -337,15 +337,64 @@ export class CourseService {
         if (!object) {
           throw new Error('AI course generation did not return a valid object');
         }
-
         await CourseService.saveGeneratedCourseData(
           data.courseId,
           object as AICourseGeneration
         );
       },
     });
-
     return result;
+  }
+
+  /**
+   * Returns a ReadableStream<string> that emits NDJSON lines for each pipeline phase:
+   *   {"type":"extract"} → {"type":"search"} → {"type":"generate","delta":"..."} × N
+   *   → {"type":"save"} → {"type":"done"}
+   */
+  static generateModulesStream(data: {
+    userId: string;
+    courseId: string;
+    fileId?: string;
+    file?: File;
+    apiKey?: string;
+    context?: string;
+  }): ReadableStream<string> {
+    const { readable, writable } = new TransformStream<string, string>();
+    const writer = writable.getWriter();
+
+    (async () => {
+      try {
+        const aiService = new OpenRouterService();
+
+        // Runs extract → search → generate deltas → done, persists via onFinish
+        await aiService.streamCourseToWriter(
+          {
+            userId: data.userId,
+            fileId: data.fileId,
+            file: data.file,
+            apiKey: data.apiKey,
+            context: data.context,
+            onFinish: async ({ object }) => {
+              if (!object) return;
+              // Emit save event before persisting
+              await writer.write(JSON.stringify({ type: 'save' }) + '\n');
+              await CourseService.saveGeneratedCourseData(
+                data.courseId,
+                object as AICourseGeneration
+              );
+            },
+          },
+          writer
+        );
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        await writer.write(JSON.stringify({ type: 'error', message }) + '\n');
+      } finally {
+        await writer.close();
+      }
+    })();
+
+    return readable;
   }
 
   static async saveGeneratedCourseData(
@@ -376,12 +425,14 @@ export class CourseService {
 
         if (mod.lessons && Array.isArray(mod.lessons)) {
           let currentLessonOrder = 0;
-          const lessonData = mod.lessons.map((lesson) => ({
-            moduleId: createdModule.id,
-            title: lesson.lessonTitle || 'Untitled Lesson',
-            content: lesson.content || '',
-            orderIndex: currentLessonOrder++,
-          }));
+          const lessonData = mod.lessons.map(
+            (lesson: { lessonTitle?: string; content?: string }) => ({
+              moduleId: createdModule.id,
+              title: lesson.lessonTitle || 'Untitled Lesson',
+              content: lesson.content || '',
+              orderIndex: currentLessonOrder++,
+            })
+          );
 
           if (lessonData.length > 0) {
             await tx.lesson.createMany({

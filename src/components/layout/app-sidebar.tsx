@@ -267,7 +267,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             variant="ghost"
             size="icon"
             onClick={toggleSidebar}
-            className="rounded-full text-muted-foreground hover:text-foreground"
+            className="cursor-pointer rounded-full text-muted-foreground hover:text-foreground"
           >
             {state === 'expanded' ? (
               <PanelLeftClose className="size-5" />
