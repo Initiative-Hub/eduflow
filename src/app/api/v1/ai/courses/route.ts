@@ -142,7 +142,7 @@ export const POST = withAuth(
         }
       }
 
-      const result = await CourseService.generateModulesFromAI({
+      const result = CourseService.generateModulesStream({
         userId,
         courseId: parsed.data.courseId,
         fileId: parsed.data.fileId,
@@ -151,8 +151,15 @@ export const POST = withAuth(
         context: parsed.data.context,
       });
 
-      // Return the result as a data stream
-      return result.toTextStreamResponse();
+      // Return the NDJSON stream
+      return new Response(result as unknown as ReadableStream<Uint8Array>, {
+        headers: {
+          'Content-Type': 'application/x-ndjson',
+          'Transfer-Encoding': 'chunked',
+          'Cache-Control': 'no-cache',
+          'X-Accel-Buffering': 'no',
+        },
+      });
     } catch (error) {
       console.error('AI Course Generation Error:', error);
       return NextResponse.json(

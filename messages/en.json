@@ -28,6 +28,11 @@
     "limitReachedHelper": "Limit reached: {used}/{count} messages. Start a new session to continue.",
     "limitReachedPlaceholder": "Message limit reached ({count}). Start a new session.",
     "limitReachedToast": "You've reached the {count}-message limit. Start a new session to continue.",
+    "modelSelector": {
+      "empty": "No models found.",
+      "label": "Select AI model",
+      "placeholder": "Choose model"
+    },
     "philosophicalLogic": "Philosophical Logic Enforced",
     "placeholder": "Ask a scholarly question...",
     "promptLibrary": {
@@ -49,6 +54,43 @@
         "title": "Ethics of artificial intelligence"
       },
       "title": "Scholarly Prompt Library"
+    },
+    "recentChats": {
+      "description": "Return to your latest study threads.",
+      "empty": "No recent chats yet. Start a question above and it will appear here.",
+      "error": "Unable to load recent chats right now.",
+      "openChat": "Open chat {title}",
+      "title": "Recent chats",
+      "updated": "Updated {date}"
+    },
+    "sidebar": {
+      "actionsLabel": "Actions for {title}",
+      "cancel": "Cancel",
+      "close": "Collapse chat history",
+      "delete": "Delete",
+      "deleteDialogDescription": "Delete \"{title}\" from your chat history? This action cannot be undone.",
+      "deleteDialogTitle": "Delete chat",
+      "deleteError": "Unable to delete chat.",
+      "deleteSuccess": "Chat deleted.",
+      "description": "Search and reopen prior sessions.",
+      "editDialogDescription": "Choose a concise title for this chat.",
+      "editDialogTitle": "Edit chat title",
+      "editError": "Unable to update chat title.",
+      "editTitle": "Edit Title",
+      "editTitleLabel": "Chat title",
+      "editTitlePlaceholder": "Enter chat title",
+      "emptyDescription": "Start a new chat and it will appear here.",
+      "emptySearch": "No chats match your search.",
+      "emptyTitle": "No chats yet",
+      "loadingMore": "Loading more chats...",
+      "messageCount": "{count, plural, one {# message} other {# messages}}",
+      "newChat": "New chat",
+      "open": "Open chat history",
+      "saveTitle": "Save title",
+      "searchLabel": "Search chats",
+      "searchPlaceholder": "Search chats...",
+      "title": "Chat history",
+      "untitled": "Untitled chat"
     },
     "subtitle": "Pick a starting point or ask anything to begin your inquiry.",
     "suggestions": {
@@ -426,6 +468,12 @@
         "folder": "Folder",
         "loadingFiles": "Loading your files...",
         "personalDescription": "Select a PDF from your personal library to use as context.",
+        "pipeline": {
+          "extract": "Extract PDF",
+          "generate": "AI Generation",
+          "save": "Save Course",
+          "search": "Web Search"
+        },
         "preparingDocument": "Preparing your document for the AI Assistant",
         "processingPdf": "Processing PDF...",
         "readyForAi": "Ready for AI",
@@ -445,6 +493,7 @@
       "AiGeneration": {
         "craftingCurriculum": "AI is crafting your curriculum from the provided document",
         "creatingLessons": "Creating lessons...",
+        "dismiss": "Dismiss",
         "documentReceived": "Document received, starting AI generation...",
         "draftingLesson": "Drafting Lesson...",
         "error": "Something went wrong. Please try again.",
@@ -452,6 +501,7 @@
         "generatingCourse": "Generating Course...",
         "identifyingModule": "Identifying Module...",
         "processingContent": "Processing Content",
+        "retry": "Try Again",
         "saving": "Saving",
         "savingModules": "Saving your new modules and lessons...",
         "startingGeneration": "Starting AI generation...",
@@ -1109,6 +1159,43 @@
     "words": "words"
   },
   "WritingPage": {
+    "recentSessions": {
+      "description": "Return to drafts, rewrites, and polished writing sessions.",
+      "empty": "No recent writing sessions yet. Start with a writing tool and it will appear here.",
+      "error": "Unable to load recent writing sessions right now.",
+      "openChat": "Open writing session {title}",
+      "title": "Recent writing sessions",
+      "updated": "Updated {date}"
+    },
+    "sidebar": {
+      "actionsLabel": "Actions for {title}",
+      "cancel": "Cancel",
+      "close": "Collapse writing history",
+      "delete": "Delete",
+      "deleteDialogDescription": "Delete \"{title}\" from your writing history? This action cannot be undone.",
+      "deleteDialogTitle": "Delete writing session",
+      "deleteError": "Unable to delete writing session.",
+      "deleteSuccess": "Writing session deleted.",
+      "description": "Search and reopen prior writing sessions.",
+      "editDialogDescription": "Choose a concise title for this writing session.",
+      "editDialogTitle": "Edit writing title",
+      "editError": "Unable to update writing session title.",
+      "editTitle": "Edit Title",
+      "editTitleLabel": "Writing session title",
+      "editTitlePlaceholder": "Enter writing session title",
+      "emptyDescription": "Start a new writing session and it will appear here.",
+      "emptySearch": "No writing sessions match your search.",
+      "emptyTitle": "No writing sessions yet",
+      "loadingMore": "Loading more writing sessions...",
+      "messageCount": "{count, plural, one {# message} other {# messages}}",
+      "newChat": "New writing session",
+      "open": "Open writing history",
+      "saveTitle": "Save title",
+      "searchLabel": "Search writing sessions",
+      "searchPlaceholder": "Search writing sessions...",
+      "title": "Writing history",
+      "untitled": "Untitled writing session"
+    },
     "subtitle": "Refine your academic voice with precision tools designed for scholarly clarity and impact.",
     "title": "How can I help you <italic>write</italic> today?",
     "tools": {
