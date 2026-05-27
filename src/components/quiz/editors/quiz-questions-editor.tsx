@@ -5,6 +5,7 @@ import {
   ArrowDown,
   ArrowUp,
   Edit,
+  Loader2,
   Plus,
   Save,
   Trash2,
@@ -21,11 +22,13 @@ import { QuestionEditorDialog } from './question-editor-dialog';
 interface QuizQuestionsEditorProps {
   initialQuestions: QuestionBlock[];
   onSave?: (questions: QuestionBlock[]) => void;
+  isSaving?: boolean;
 }
 
 export function QuizQuestionsEditor({
   initialQuestions,
   onSave,
+  isSaving = false,
 }: QuizQuestionsEditorProps) {
   const t = useTranslations('Courses.QuizPlayer');
   const [questions, setQuestions] = useState<QuestionBlock[]>(initialQuestions);
@@ -94,17 +97,11 @@ export function QuizQuestionsEditor({
     }
   };
 
-  // Handle mock save
+  // Handle saving questions via parent callback
   const handleSaveAll = () => {
-    console.log('--- TEACHER EDIT MOCK SAVE ---');
-    console.log('Quiz Questions Data Payload:');
-    console.log(JSON.stringify(questions, null, 2));
-    console.log('------------------------------');
-
     if (onSave) {
       onSave(questions);
     }
-    toast.success(t('saveSuccess'));
   };
 
   // Format type badges nicely
@@ -194,10 +191,15 @@ export function QuizQuestionsEditor({
           <Button
             type="button"
             onClick={handleSaveAll}
+            disabled={isSaving}
             className="cursor-pointer gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
           >
-            <Save className="h-4 w-4" />
-            {t('saveChanges')}
+            {isSaving ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Save className="h-4 w-4" />
+            )}
+            {isSaving ? 'Saving...' : t('saveChanges')}
           </Button>
         </div>
       </div>

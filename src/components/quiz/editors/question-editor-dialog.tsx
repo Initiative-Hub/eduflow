@@ -304,7 +304,7 @@ export function QuestionEditorDialog({
     } else {
       return;
     }
-
+    // console.log(savedQuestion);
     onSave(savedQuestion);
     onOpenChange(false);
   };

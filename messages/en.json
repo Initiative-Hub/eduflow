@@ -674,7 +674,7 @@
       "deleteQuestion": "Delete Question",
       "confirmDelete": "Are you sure you want to delete this question? This cannot be undone.",
       "saveChanges": "Save Changes",
-      "saveSuccess": "Quiz questions simulated saved successfully!",
+      "saveSuccess": "Quiz questions saved successfully!",
       "noQuestionsYet": "No questions in this quiz yet.",
       "prompt": "Prompt",
       "explanation": "Explanation (Optional)",

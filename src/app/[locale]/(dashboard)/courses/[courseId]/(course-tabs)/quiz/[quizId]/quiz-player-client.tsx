@@ -39,6 +39,7 @@ import type { QuestionBlock } from '@/lib/quiz-template/types';
 import { LessonOutline } from '../../../lessons/[lessonId]/_components/lesson-outline';
 import { useModules } from '../../../use-modules';
 import { useQuestionBank } from '../../../use-question-bank';
+import { useQuiz } from '../use-quiz';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -82,17 +83,7 @@ export function QuizPlayerClient({ courseId, quizId }: QuizPlayerClientProps) {
   const isTeacher =
     sessionData?.user.role === 'TEACHER' || sessionData?.user.role === 'ADMIN';
 
-  const handleSaveQuestions = (updatedQuestions: QuestionBlock[]) => {
-    queryClient.setQueryData(
-      ['quizzes', courseId],
-      (oldQuizzes: any[] | undefined) => {
-        if (!oldQuizzes) return oldQuizzes;
-        return oldQuizzes.map((q) =>
-          q.id === quizId ? { ...q, questions: updatedQuestions } : q
-        );
-      }
-    );
-  };
+  const { saveQuestions, isSavingQuestions } = useQuiz({ courseId, quizId });
 
   const quiz = useMemo(
     () => quizzes.find((q) => q.id === quizId),
@@ -312,7 +303,8 @@ export function QuizPlayerClient({ courseId, quizId }: QuizPlayerClientProps) {
         {activeTab === 'edit' ? (
           <QuizQuestionsEditor
             initialQuestions={(quiz.questions ?? []) as QuestionBlock[]}
-            onSave={handleSaveQuestions}
+            onSave={saveQuestions}
+            isSaving={isSavingQuestions}
           />
         ) : showPreviousResult ? (
           <QuizResult

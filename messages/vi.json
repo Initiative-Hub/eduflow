@@ -674,7 +674,7 @@
       "deleteQuestion": "Xóa câu hỏi",
       "confirmDelete": "Bạn có chắc chắn muốn xóa câu hỏi này? Hành động này không thể hoàn tác.",
       "saveChanges": "Lưu thay đổi",
-      "saveSuccess": "Đã mô phỏng lưu câu hỏi thành công!",
+      "saveSuccess": "Đã lưu câu hỏi thành công!",
       "noQuestionsYet": "Chưa có câu hỏi nào trong bài trắc nghiệm này.",
       "prompt": "Câu hỏi",
       "explanation": "Giải thích (Không bắt buộc)",
