@@ -1,6 +1,6 @@
 import type { Prisma } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
-
+import { OpenRouterService } from './ai/OpenRouterService';
 export class QuizService {
   static async updateQuestions(
     quizId: string,

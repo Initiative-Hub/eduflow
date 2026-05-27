@@ -23,3 +23,12 @@ export type StreamCourseInput = {
   providerOptions?: any;
   onFinish?: StreamObjectOnFinishCallback<AICourseGeneration>;
 };
+
+export type AIQuizInput = {
+  quizType: string;
+  questionNumbers: string;
+  topic?: string;
+  content?: string;
+  apiKey?: string;
+  model?: string;
+};

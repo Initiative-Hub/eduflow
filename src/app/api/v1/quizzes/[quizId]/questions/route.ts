@@ -49,7 +49,7 @@ const saveQuestionsSchema = z.object({
  *         description: Internal server error
  */
 export const POST = withAuth(
-  withRoles(['TEACHER', 'ADMIN'], async (req, sessionData, { params }) => {
+  withRoles(['TEACHER', 'ADMIN'], async (req, _sessionData, { params }) => {
     try {
       const { quizId } = await params;
       const body = await req.json();
@@ -126,7 +126,7 @@ export const POST = withAuth(
  *         description: Internal server error
  */
 export const PUT = withAuth(
-  withRoles(['TEACHER', 'ADMIN'], async (req, sessionData, { params }) => {
+  withRoles(['TEACHER', 'ADMIN'], async (req, _sessionData, { params }) => {
     try {
       const { quizId } = await params;
       const body = await req.json();
