@@ -1,14 +1,13 @@
 'use client';
 
-import { Bell, GraduationCap, Menu } from 'lucide-react';
+import { GraduationCap, Menu } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { NavbarAvatar } from '@/components/layout/navbar-avatar';
 import { GuestControls } from '@/components/layout/navbar-avatar/guest-controls';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import { useSidebar } from '@/components/ui/sidebar';
 import { useSession } from '@/lib/auth-client';
 import { cn } from '@/lib/utils';
@@ -18,11 +17,16 @@ export function AppNavbar() {
   const pathname = usePathname();
   const { toggleSidebar } = useSidebar();
   const { data: sessionData, refetch } = useSession();
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     // Refetch session data on mount to ensure we have the latest auth state
     refetch();
   }, [refetch]);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   return (
     <div className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between overflow-hidden border-border/40 border-b bg-background/95 px-3 shadow-sm backdrop-blur supports-backdrop-filter:bg-background/60 md:px-8">
@@ -77,7 +81,7 @@ export function AppNavbar() {
       </div>
       <div className="flex items-center gap-2">
         {/* Account Actions / Profile (Desktop Only) */}
-        {sessionData ? (
+        {isMounted && sessionData ? (
           <div className="hidden md:block">
             <NavbarAvatar
               name={sessionData.user.name}

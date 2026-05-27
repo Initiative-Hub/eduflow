@@ -48,12 +48,17 @@ export function ChatView({ messages, isStreaming }: ChatViewProps) {
             );
             if (!text && !reasoning && attachments.length === 0) return null;
 
-            const isAnimatingAssistantMessage =
+            const isTextStreaming =
               isStreaming &&
               message.id === messages[messages.length - 1]?.id &&
-              message.role === 'assistant';
+              message.role === 'assistant' &&
+              Boolean(text);
+
             const isReasoningStreaming =
-              isAnimatingAssistantMessage && Boolean(reasoning);
+              isStreaming &&
+              message.id === messages[messages.length - 1]?.id &&
+              message.role === 'assistant' &&
+              Boolean(reasoning);
 
             return (
               <Message
@@ -74,15 +79,14 @@ export function ChatView({ messages, isStreaming }: ChatViewProps) {
                     )}
                   </div>
                   <MessageContent
-                    className={`max-w-[80%] rounded-2xl px-5 py-3 shadow-sm ${
-                      message.role === 'assistant'
-                        ? 'border border-border bg-white dark:bg-zinc-900'
-                        : 'group-[.is-user]:ml-0 group-[.is-user]:rounded-2xl group-[.is-user]:bg-primary group-[.is-user]:px-5 group-[.is-user]:py-3 group-[.is-user]:text-primary-foreground'
+                    className={`max-w-[80%] px-5 py-3 ${
+                      message.role === 'user' &&
+                      'group-[.is-user]:rounded-2xl group-[.is-user]:bg-primary group-[.is-user]:px-5 group-[.is-user]:py-3 group-[.is-user]:text-primary-foreground'
                     }`}
                   >
                     {message.role === 'assistant' ? (
                       <>
-                        {attachments.length > 0 ? (
+                        {attachments.length > 0 && (
                           <Attachments className="mb-3" variant="inline">
                             {attachments.map((attachment) => (
                               <Attachment data={attachment} key={attachment.id}>
@@ -91,28 +95,25 @@ export function ChatView({ messages, isStreaming }: ChatViewProps) {
                               </Attachment>
                             ))}
                           </Attachments>
-                        ) : null}
-                        {reasoning ? (
-                          <Reasoning
-                            className="mb-3 w-full"
-                            isStreaming={isReasoningStreaming}
-                          >
-                            <ReasoningTrigger />
-                            <ReasoningContent>{reasoning}</ReasoningContent>
-                          </Reasoning>
-                        ) : null}
-                        {text ? (
-                          <MessageResponse
-                            caret="block"
-                            className="text-[15px] leading-relaxed"
-                            controls={false}
-                            isAnimating={isAnimatingAssistantMessage}
-                            mode="streaming"
-                            skipHtml
-                          >
-                            {text}
-                          </MessageResponse>
-                        ) : null}
+                        )}
+                        <Reasoning
+                          className="mb-3 w-full"
+                          defaultOpen={false}
+                          isStreaming={isReasoningStreaming}
+                        >
+                          <ReasoningTrigger />
+                          <ReasoningContent>{reasoning}</ReasoningContent>
+                        </Reasoning>
+                        <MessageResponse
+                          caret="block"
+                          className="text-[15px] leading-relaxed"
+                          controls={false}
+                          isAnimating={isTextStreaming}
+                          mode="streaming"
+                          skipHtml
+                        >
+                          {text}
+                        </MessageResponse>
                       </>
                     ) : (
                       <>

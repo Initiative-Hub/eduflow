@@ -53,20 +53,15 @@ export const useChatController = ({
     setOptimisticMessages,
     clearOptimisticMessages,
   } = useChatSessionStore();
-  const requestModel = pendingModel ?? selectedModel;
 
   const transport = useMemo(
     () =>
       initialChatId
         ? new DefaultChatTransport({
             api: `/api/v1/ai/chat/${initialChatId}`,
-            body: {
-              provider: 'openrouter',
-              model: requestModel,
-            },
           })
         : undefined,
-    [initialChatId, requestModel]
+    [initialChatId]
   );
 
   const { messages, status, sendMessage, stop } = useChat({
@@ -102,16 +97,24 @@ export const useChatController = ({
     const pendingKey = `${pendingChatId}:${pendingMessage}:${pendingFileIds}`;
     if (lastPendingSendRef.current === pendingKey) return;
 
+    const inputModel = pendingModel ?? selectedModel;
+
     lastPendingSendRef.current = pendingKey;
     clearPendingMessage();
     clearPendingFiles();
     clearPendingChatId();
     clearPendingModel();
 
-    void sendMessage(
+    sendMessage(
       pendingFiles.length > 0
         ? { text: pendingMessage, files: pendingFiles }
-        : { text: pendingMessage }
+        : { text: pendingMessage },
+      {
+        body: {
+          provider: 'openrouter',
+          model: inputModel,
+        },
+      }
     );
   }, [
     clearPendingChatId,
@@ -121,8 +124,10 @@ export const useChatController = ({
     pendingMessage,
     pendingFiles,
     pendingChatId,
+    pendingModel,
     initialChatId,
     pathname,
+    selectedModel,
     sendMessage,
   ]);
 
@@ -173,7 +178,12 @@ export const useChatController = ({
       return;
     }
 
-    void sendMessage(files.length > 0 ? { text, files } : { text });
+    sendMessage(files.length > 0 ? { text, files } : { text }, {
+      body: {
+        provider: 'openrouter',
+        model: selectedModel,
+      },
+    });
   };
 
   return {
