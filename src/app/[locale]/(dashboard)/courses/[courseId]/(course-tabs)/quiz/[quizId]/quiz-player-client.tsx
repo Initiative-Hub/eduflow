@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   AlertTriangle,
   ChevronLeft,
@@ -13,7 +13,7 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { Quiz } from '@/components/quiz';
+import { Quiz, QuizQuestionsEditor } from '@/components/quiz';
 import { QuizResult } from '@/components/quiz/quiz-result';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/popover';
 import { useCourseNavigation } from '@/hooks/use-course-navigation';
 import { apiClient } from '@/lib/api/api-client';
+import { useSession } from '@/lib/auth-client';
 import {
   DELIVERY_MODE_LABELS,
   QUESTION_SUB_TYPE_LABELS,
@@ -34,6 +35,7 @@ import {
   type StudentAnswers,
   SUB_TYPE_TO_QUESTION_TYPE,
 } from '@/lib/quiz-template';
+import type { QuestionBlock } from '@/lib/quiz-template/types';
 import { LessonOutline } from '../../../lessons/[lessonId]/_components/lesson-outline';
 import { useModules } from '../../../use-modules';
 import { useQuestionBank } from '../../../use-question-bank';
@@ -73,6 +75,24 @@ export function QuizPlayerClient({ courseId, quizId }: QuizPlayerClientProps) {
   const { modules, isLoading: isModulesLoading } = useModules(courseId);
   const [showOutline, setShowOutline] = useState(false);
   const [isRetaking, setIsRetaking] = useState(false);
+  const [activeTab, setActiveTab] = useState<'take' | 'edit'>('take');
+
+  const { data: sessionData } = useSession();
+  const queryClient = useQueryClient();
+  const isTeacher =
+    sessionData?.user.role === 'TEACHER' || sessionData?.user.role === 'ADMIN';
+
+  const handleSaveQuestions = (updatedQuestions: QuestionBlock[]) => {
+    queryClient.setQueryData(
+      ['quizzes', courseId],
+      (oldQuizzes: any[] | undefined) => {
+        if (!oldQuizzes) return oldQuizzes;
+        return oldQuizzes.map((q) =>
+          q.id === quizId ? { ...q, questions: updatedQuestions } : q
+        );
+      }
+    );
+  };
 
   const quiz = useMemo(
     () => quizzes.find((q) => q.id === quizId),
@@ -247,6 +267,27 @@ export function QuizPlayerClient({ courseId, quizId }: QuizPlayerClientProps) {
             {quiz.title}
           </span>
         </div>
+
+        {isTeacher && (
+          <div className="flex items-center gap-1 rounded-lg border border-muted bg-muted/40 p-0.5">
+            <Button
+              variant={activeTab === 'take' ? 'secondary' : 'ghost'}
+              size="xs"
+              onClick={() => setActiveTab('take')}
+              className="h-7 cursor-pointer px-3 font-semibold text-xs"
+            >
+              {t('studentView')}
+            </Button>
+            <Button
+              variant={activeTab === 'edit' ? 'secondary' : 'ghost'}
+              size="xs"
+              onClick={() => setActiveTab('edit')}
+              className="h-7 cursor-pointer px-3 font-semibold text-xs"
+            >
+              {t('editQuestions')}
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Quiz metadata */}
@@ -268,7 +309,12 @@ export function QuizPlayerClient({ courseId, quizId }: QuizPlayerClientProps) {
 
       {/* Quiz Player or Previous Result */}
       <div className="mx-auto mt-6 max-w-2xl">
-        {showPreviousResult ? (
+        {activeTab === 'edit' ? (
+          <QuizQuestionsEditor
+            initialQuestions={(quiz.questions ?? []) as QuestionBlock[]}
+            onSave={handleSaveQuestions}
+          />
+        ) : showPreviousResult ? (
           <QuizResult
             result={previousResult}
             quiz={quizContent}
@@ -286,35 +332,37 @@ export function QuizPlayerClient({ courseId, quizId }: QuizPlayerClientProps) {
       </div>
 
       {/* Pagination */}
-      <div className="flex w-full flex-col">
-        <div className="mt-12 flex items-center justify-between border-t pt-6 font-medium">
-          {prev ? (
-            <Button variant="outline" asChild className="h-auto px-4 py-3">
-              <Link href={prev.href}>
-                <ChevronLeft className="mr-2 h-4 w-4" />
-                <span className="max-w-37.5 truncate md:max-w-50">
-                  {prev.title}
-                </span>
-              </Link>
-            </Button>
-          ) : (
-            <div />
-          )}
+      {activeTab !== 'edit' && (
+        <div className="flex w-full flex-col">
+          <div className="mt-12 flex items-center justify-between border-t pt-6 font-medium">
+            {prev ? (
+              <Button variant="outline" asChild className="h-auto px-4 py-3">
+                <Link href={prev.href}>
+                  <ChevronLeft className="mr-2 h-4 w-4" />
+                  <span className="max-w-37.5 truncate md:max-w-50">
+                    {prev.title}
+                  </span>
+                </Link>
+              </Button>
+            ) : (
+              <div />
+            )}
 
-          {next ? (
-            <Button variant="outline" asChild className="h-auto px-4 py-3">
-              <Link href={next.href}>
-                <span className="max-w-37.5 truncate md:max-w-50">
-                  {next.title}
-                </span>
-                <ChevronRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          ) : (
-            <div />
-          )}
+            {next ? (
+              <Button variant="outline" asChild className="h-auto px-4 py-3">
+                <Link href={next.href}>
+                  <span className="max-w-37.5 truncate md:max-w-50">
+                    {next.title}
+                  </span>
+                  <ChevronRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            ) : (
+              <div />
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </>
   );
 }
