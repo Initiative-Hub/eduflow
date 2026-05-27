@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { z } from 'zod';
 import { withAuth, withRoles } from '@/lib/api/middlewares';
 import { createCourseSchema } from '@/lib/validations/course.schema';
 import { CourseService } from '@/services/CourseService';

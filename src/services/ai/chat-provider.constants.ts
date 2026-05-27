@@ -1,9 +1,9 @@
 export const DEFAULT_PROVIDER = 'ai-gateway' as const;
 
 export const DEFAULT_MODELS = {
-  'ai-gateway': 'google/gemini-2.5-flash',
-  google: 'gemini-2.5-flash',
-  openrouter: 'openai/gpt-4o-mini',
+  'ai-gateway': 'google/gemini-3.1-flash-lite',
+  google: 'gemini-3.1-flash-lite',
+  openrouter: 'google/gemini-3.1-flash-lite',
 } as const;
 
 export const safetySettings = [
