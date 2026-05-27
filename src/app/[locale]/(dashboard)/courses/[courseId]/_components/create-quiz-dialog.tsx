@@ -68,7 +68,10 @@ export function CreateQuizDialog({
         questionCount: data.questionCount,
       },
       {
-        onSuccess: () => router.push(`/courses/${courseId}`),
+        onSuccess: () => {
+          onOpenChange(false);
+          router.push(`/courses/${courseId}`);
+        },
       }
     );
   };
