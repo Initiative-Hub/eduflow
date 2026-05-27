@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import type { Prisma } from '@/generated/prisma';
 import { withAuth, withRoles } from '@/lib/api/middlewares';
-import { prisma } from '@/lib/prisma';
+import { QuizService } from '@/services/QuizService';
 
 const saveQuestionsSchema = z.object({
   questions: z.array(z.record(z.string(), z.unknown())),
@@ -63,30 +62,19 @@ export const POST = withAuth(
         );
       }
 
-      // Check if quiz exists
-      const quiz = await prisma.quiz.findUnique({
-        where: { id: quizId },
-        select: { id: true },
-      });
+      const updatedQuiz = await QuizService.updateQuestions(
+        quizId,
+        parsed.data.questions
+      );
 
-      if (!quiz) {
+      return NextResponse.json(updatedQuiz);
+    } catch (error: any) {
+      if (error.message === 'Quiz not found') {
         return NextResponse.json(
           { message: 'Quiz not found' },
           { status: 404 }
         );
       }
-
-      // Update quiz questions and questionCount to match new array length
-      const updatedQuiz = await prisma.quiz.update({
-        where: { id: quizId },
-        data: {
-          questions: parsed.data.questions as unknown as Prisma.InputJsonValue,
-          questionCount: parsed.data.questions.length,
-        },
-      });
-
-      return NextResponse.json(updatedQuiz);
-    } catch (error: any) {
       console.error('Error saving quiz questions:', error);
       return NextResponse.json(
         { message: 'Internal Server Error' },
@@ -151,30 +139,19 @@ export const PUT = withAuth(
         );
       }
 
-      // Check if quiz exists
-      const quiz = await prisma.quiz.findUnique({
-        where: { id: quizId },
-        select: { id: true },
-      });
+      const updatedQuiz = await QuizService.updateQuestions(
+        quizId,
+        parsed.data.questions
+      );
 
-      if (!quiz) {
+      return NextResponse.json(updatedQuiz);
+    } catch (error: any) {
+      if (error.message === 'Quiz not found') {
         return NextResponse.json(
           { message: 'Quiz not found' },
           { status: 404 }
         );
       }
-
-      // Update quiz questions and questionCount to match new array length
-      const updatedQuiz = await prisma.quiz.update({
-        where: { id: quizId },
-        data: {
-          questions: parsed.data.questions as unknown as Prisma.InputJsonValue,
-          questionCount: parsed.data.questions.length,
-        },
-      });
-
-      return NextResponse.json(updatedQuiz);
-    } catch (error: any) {
       console.error('Error saving quiz questions:', error);
       return NextResponse.json(
         { message: 'Internal Server Error' },
