@@ -19,7 +19,7 @@ interface UseWritingOptions {
   selectedModel: ChatModel;
 }
 
-const useWriting = ({
+export const useWriting = ({
   tool,
   chatId,
   initialMessages = [],
@@ -46,7 +46,6 @@ const useWriting = ({
     clearPendingModel,
     clearOptimisticMessages,
   } = useChatSessionStore();
-  const requestModel = pendingModel ?? selectedModel;
 
   const createSessionMutation = useMutation({
     mutationFn: async (text: string) => {
@@ -66,14 +65,9 @@ const useWriting = ({
       chatId
         ? new DefaultChatTransport({
             api: `/api/v1/ai/writing/${chatId}`,
-            body: {
-              tool,
-              provider: 'openrouter',
-              model: requestModel,
-            },
           })
         : undefined,
-    [chatId, requestModel, tool]
+    [chatId]
   );
 
   const { messages, status, sendMessage, stop } = useChat({
@@ -100,17 +94,31 @@ const useWriting = ({
     const pendingKey = `${pendingChatId}:${pendingMessage}`;
     if (lastPendingSendRef.current === pendingKey) return;
 
+    const inputModel = pendingModel ?? selectedModel;
+
     lastPendingSendRef.current = pendingKey;
     clearPendingMessage();
     clearPendingChatId();
     clearPendingModel();
 
-    void sendMessage({ text: pendingMessage });
+    sendMessage(
+      { text: pendingMessage },
+      {
+        body: {
+          tool,
+          provider: 'openrouter',
+          model: inputModel,
+        },
+      }
+    );
   }, [
     pendingMessage,
     pendingChatId,
+    pendingModel,
     chatId,
     pathname,
+    selectedModel,
+    tool,
     sendMessage,
     clearPendingMessage,
     clearPendingChatId,
@@ -159,7 +167,16 @@ const useWriting = ({
       return;
     }
 
-    void sendMessage({ text });
+    sendMessage(
+      { text },
+      {
+        body: {
+          tool,
+          provider: 'openrouter',
+          model: selectedModel,
+        },
+      }
+    );
   };
 
   return {
@@ -173,4 +190,3 @@ const useWriting = ({
     userMessageCount: displayMessages.filter((m) => m.role === 'user').length,
   };
 };
-export default useWriting;

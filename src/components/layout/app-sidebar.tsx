@@ -20,7 +20,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import type * as React from 'react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useCourses } from '@/app/[locale]/(dashboard)/courses/use-courses';
 import { Button } from '@/components/ui/button';
 import {
@@ -50,6 +50,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const { data: sessionData, refetch } = useSession();
   const { state, toggleSidebar } = useSidebar();
+  const [isMounted, setIsMounted] = useState(false);
 
   const assistants: SidebarItem[] = [
     {
@@ -144,6 +145,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     // Refetch session data on mount to ensure we have the latest auth state
     refetch();
   }, [refetch]);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   return (
     <Sidebar
@@ -242,7 +247,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
       <SidebarFooter className="border-border/40 border-t p-4 group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:pb-3">
         <div className="flex w-full items-center justify-between md:justify-end md:group-data-[collapsible=icon]:justify-center">
-          {sessionData ? (
+          {isMounted && sessionData ? (
             <div className="block md:hidden">
               <NavbarAvatar
                 name={sessionData.user.name}

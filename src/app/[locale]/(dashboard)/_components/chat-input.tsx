@@ -96,13 +96,15 @@ export function ChatInput({
                   <ModelSelectorTrigger asChild>
                     <Button
                       aria-label={t('modelSelector.label')}
-                      className="h-8 max-w-44 gap-2 rounded-full border-none px-3 text-muted-foreground text-sm hover:bg-muted/70"
+                      className="h-8 gap-2 rounded-full border-none px-3 text-muted-foreground text-sm hover:bg-muted/70"
                       disabled={isStreaming}
                       type="button"
                       variant="outline"
                     >
                       <ModelSelectorLogo provider="google" />
-                      <span className="truncate">{selectedModelLabel}</span>
+                      <ModelSelectorName>
+                        {selectedModelLabel}
+                      </ModelSelectorName>
                     </Button>
                   </ModelSelectorTrigger>
                   <ModelSelectorContent>

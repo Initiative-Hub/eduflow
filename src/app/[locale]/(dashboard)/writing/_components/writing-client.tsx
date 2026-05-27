@@ -11,7 +11,7 @@ import type { WritingTool } from '@/lib/validations/writing.schema';
 import { type ChatModel, DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
 import { ChatInput } from '../../_components/chat-input';
 import { ChatSidebar } from '../../_components/chat-sidebar';
-import useWriting from '../use-writing';
+import { useWriting } from '../use-writing';
 import { writingService } from '../writing.service';
 import { LandingRecentWritingChats } from './landing-recent-writing-chats';
 import { WritingSelector } from './writing-selector';

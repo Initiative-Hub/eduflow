@@ -49,20 +49,15 @@ export const useChatController = ({
     setOptimisticMessages,
     clearOptimisticMessages,
   } = useChatSessionStore();
-  const requestModel = pendingModel ?? selectedModel;
 
   const transport = useMemo(
     () =>
       initialChatId
         ? new DefaultChatTransport({
             api: `/api/v1/ai/chat/${initialChatId}`,
-            body: {
-              provider: 'openrouter',
-              model: requestModel,
-            },
           })
         : undefined,
-    [initialChatId, requestModel]
+    [initialChatId]
   );
 
   const { messages, status, sendMessage, stop } = useChat({
@@ -97,20 +92,31 @@ export const useChatController = ({
     const pendingKey = `${pendingChatId}:${pendingMessage}`;
     if (lastPendingSendRef.current === pendingKey) return;
 
+    const inputModel = pendingModel ?? selectedModel;
+
     lastPendingSendRef.current = pendingKey;
     clearPendingMessage();
     clearPendingChatId();
     clearPendingModel();
-
-    void sendMessage({ text: pendingMessage });
+    sendMessage(
+      { text: pendingMessage },
+      {
+        body: {
+          provider: 'openrouter',
+          model: inputModel,
+        },
+      }
+    );
   }, [
     clearPendingChatId,
     clearPendingModel,
     clearPendingMessage,
     pendingMessage,
     pendingChatId,
+    pendingModel,
     initialChatId,
     pathname,
+    selectedModel,
     sendMessage,
   ]);
 
@@ -157,7 +163,15 @@ export const useChatController = ({
       return;
     }
 
-    void sendMessage({ text });
+    sendMessage(
+      { text },
+      {
+        body: {
+          provider: 'openrouter',
+          model: selectedModel,
+        },
+      }
+    );
   };
 
   return {
