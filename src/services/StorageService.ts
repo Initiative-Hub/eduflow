@@ -365,7 +365,6 @@ export class StorageService {
     courseId?: string | null;
     parentId?: string | null;
     folderPath?: string[];
-    path?: string;
     fileName: string;
     contentType: string;
     fileSize: number;
@@ -393,7 +392,6 @@ export class StorageService {
 
     const objectKey = buildInventoryObjectKey(options.userId, normalizedName, {
       courseId: options.courseId ?? undefined,
-      relativePath: options.path,
     });
     const extension = normalizedName.includes('.')
       ? (normalizedName.split('.').pop()?.toLowerCase() ?? null)

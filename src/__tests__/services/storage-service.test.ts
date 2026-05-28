@@ -158,6 +158,14 @@ describe('StorageService', () => {
         uploadUrl: 'https://upload',
         uploadHeaders: { 'Content-Type': 'application/pdf' },
       });
+      expect(mockBuildInventoryObjectKey).toHaveBeenCalledWith(
+        'u1',
+        'readme.pdf',
+        { courseId: undefined }
+      );
+      expect(mockBuildInventoryObjectKey.mock.calls[0]?.[2]).not.toHaveProperty(
+        'relativePath'
+      );
     });
 
     it('creates missing folder path before creating the pending file', async () => {
