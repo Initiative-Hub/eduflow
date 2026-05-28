@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto';
 import {
   DeleteObjectCommand,
   GetObjectCommand,
@@ -38,7 +37,7 @@ export function buildInventoryObjectKey(
     basePrefix = `users/${userId}`;
   }
 
-  return `${basePrefix}/${randomUUID()}-${safeName}`;
+  return `${basePrefix}/${crypto.randomUUID()}-${safeName}`;
 }
 
 export async function getInventoryObjectMetadata(options: {
