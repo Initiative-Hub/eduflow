@@ -16,7 +16,6 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { type ChatModel, DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
 import { ChatSidebar } from '../../_components/chat-sidebar';
-import { uploadChatAttachments } from '../chat-attachments.service';
 import { useChatController } from '../use-chat';
 
 const LandingView = dynamic(() =>
@@ -107,14 +106,10 @@ export function AIClient({
 
     try {
       setIsUploadingAttachments(files.length > 0);
-      const uploadedFiles = files.length
-        ? await uploadChatAttachments(files)
-        : [];
       const messageText =
-        text ||
-        t('attachments.defaultMessage', { count: uploadedFiles.length });
+        text || t('attachments.defaultMessage', { count: files.length });
 
-      await startChat(messageText, uploadedFiles);
+      await startChat(messageText, files);
     } catch (error) {
       toast.error(getErrorMessage(error));
       throw error;
@@ -184,7 +179,7 @@ export function AIClient({
                 notifyLimitReached();
                 return;
               }
-              void startChat(text);
+              startChat(text);
             }}
           />
         ) : (

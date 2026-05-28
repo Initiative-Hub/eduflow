@@ -4,12 +4,15 @@ import { inventoryService } from '../inventory/inventory.service';
 const DEFAULT_MEDIA_TYPE = 'application/octet-stream';
 
 export async function uploadChatAttachments(
-  files: File[]
+  files: File[],
+  chatId: string
 ): Promise<ChatFileUIPart[]> {
   if (files.length === 0) return [];
 
   const uploadResponses = await Promise.all(
-    files.map((file) => inventoryService.upload({ file }))
+    files.map((file) =>
+      inventoryService.upload({ file, folderPath: ['ai-chats', chatId] })
+    )
   );
   const entries = uploadResponses.map((response) => response.data);
   const signedResponses = await inventoryService.shareEntries({

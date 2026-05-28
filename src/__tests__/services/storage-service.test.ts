@@ -160,6 +160,61 @@ describe('StorageService', () => {
       });
     });
 
+    it('creates missing folder path before creating the pending file', async () => {
+      mockBuildInventoryObjectKey.mockReturnValue('inventories/u1/readme.pdf');
+      fileInventory.findFirst
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(null);
+      fileInventory.create
+        .mockResolvedValueOnce({
+          id: 'folder-ai',
+          fileSize: null,
+          name: 'ai-chats',
+        })
+        .mockResolvedValueOnce({
+          id: 'folder-chat',
+          fileSize: null,
+          name: 'chat-1',
+        })
+        .mockResolvedValueOnce({ id: 'f1', status: 'UPLOADING' });
+      mockCreateInventoryWriteSignedUrl.mockResolvedValue('https://upload');
+
+      await StorageService.initializeUpload({
+        userId: 'u1',
+        folderPath: ['ai-chats', 'chat-1'],
+        fileName: 'readme.pdf',
+        contentType: 'application/pdf',
+        fileSize: 42,
+      });
+
+      expect(fileInventory.create).toHaveBeenNthCalledWith(1, {
+        data: {
+          courseId: null,
+          isFolder: true,
+          name: 'ai-chats',
+          parentId: null,
+          status: 'READY',
+          userId: 'u1',
+        },
+      });
+      expect(fileInventory.create).toHaveBeenNthCalledWith(2, {
+        data: {
+          courseId: null,
+          isFolder: true,
+          name: 'chat-1',
+          parentId: 'folder-ai',
+          status: 'READY',
+          userId: 'u1',
+        },
+      });
+      expect(fileInventory.create).toHaveBeenNthCalledWith(3, {
+        data: expect.objectContaining({
+          isFolder: false,
+          parentId: 'folder-chat',
+        }),
+      });
+    });
+
     it('throws on empty file name', async () => {
       await expect(
         StorageService.initializeUpload({

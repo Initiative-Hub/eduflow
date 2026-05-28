@@ -14,6 +14,7 @@ import {
   hasReachedUserMessageLimit,
 } from '@/utils/chat-limit';
 import { chatService } from './chat.service';
+import { uploadChatAttachments } from './chat-attachments.service';
 
 const MAX_USER_MESSAGES = 5;
 
@@ -158,15 +159,16 @@ export const useChatController = ({
     parts: [...files, { type: 'text', text }],
   });
 
-  const startChat = async (text: string, files: ChatFileUIPart[] = []) => {
+  const startChat = async (text: string, files: File[] = []) => {
     if (!initialChatId) {
       try {
         const newChatId = await createChatMutation.mutateAsync(text);
+        const uploadedFiles = await uploadChatAttachments(files, newChatId);
         await queryClient.invalidateQueries({ queryKey: ['chat-list'] });
         setOptimisticChatId(newChatId);
-        setOptimisticMessages([createUserMessage(text, files)]);
+        setOptimisticMessages([createUserMessage(text, uploadedFiles)]);
         setPendingMessage(text);
-        setPendingFiles(files);
+        setPendingFiles(uploadedFiles);
         setPendingChatId(newChatId);
         setPendingModel(selectedModel);
         router.push(`/chat/${newChatId}`);
@@ -178,12 +180,17 @@ export const useChatController = ({
       return;
     }
 
-    sendMessage(files.length > 0 ? { text, files } : { text }, {
-      body: {
-        provider: 'openrouter',
-        model: selectedModel,
-      },
-    });
+    const uploadedFiles = await uploadChatAttachments(files, initialChatId);
+
+    sendMessage(
+      uploadedFiles.length > 0 ? { text, files: uploadedFiles } : { text },
+      {
+        body: {
+          provider: 'openrouter',
+          model: selectedModel,
+        },
+      }
+    );
   };
 
   return {

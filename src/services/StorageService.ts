@@ -63,6 +63,68 @@ async function ensureParentFolder(
 }
 
 /**
+ * Ensures a folder path exists by traversing and creating missing folders
+ * in sequence. This is used for uploads with nested paths to avoid multiple
+ * round-trips when intermediate folders do not exist.
+ */
+async function ensureFolderPath(options: {
+  userId: string;
+  courseId?: string | null;
+  folderPath?: string[];
+}) {
+  let parentId: string | null = null;
+
+  for (const name of options.folderPath ?? []) {
+    const normalizedName = normalizeName(name);
+    if (!normalizedName) {
+      throw new Error('Folder name is required');
+    }
+
+    const existing: Pick<FileInventory, 'id' | 'isFolder'> | null =
+      await prisma.fileInventory.findFirst({
+        where: {
+          userId: options.userId,
+          courseId: options.courseId ?? null,
+          parentId,
+          deletedAt: null,
+          name: {
+            equals: normalizedName,
+            mode: 'insensitive',
+          },
+        },
+        select: {
+          id: true,
+          isFolder: true,
+        },
+      });
+
+    if (existing) {
+      if (!existing.isFolder) {
+        throw new Error('An item with this name already exists');
+      }
+
+      parentId = existing.id;
+      continue;
+    }
+
+    const folder: FileInventory = await prisma.fileInventory.create({
+      data: {
+        userId: options.userId,
+        courseId: options.courseId ?? null,
+        parentId,
+        name: normalizedName,
+        isFolder: true,
+        status: 'READY',
+      },
+    });
+
+    parentId = folder.id;
+  }
+
+  return parentId;
+}
+
+/**
  * Checks whether a candidate node is inside the subtree of an ancestor node.
  */
 async function isDescendantOf(options: {
@@ -302,16 +364,23 @@ export class StorageService {
     userId: string;
     courseId?: string | null;
     parentId?: string | null;
+    folderPath?: string[];
     path?: string;
     fileName: string;
     contentType: string;
     fileSize: number;
   }) {
-    await ensureParentFolder(
-      options.userId,
-      options.parentId ?? null,
-      options.courseId
-    );
+    const usesFolderPath = Boolean(options.folderPath?.length);
+    const parentId = usesFolderPath
+      ? await ensureFolderPath({
+          userId: options.userId,
+          courseId: options.courseId,
+          folderPath: options.folderPath,
+        })
+      : (options.parentId ?? null);
+    if (!usesFolderPath) {
+      await ensureParentFolder(options.userId, parentId, options.courseId);
+    }
 
     const normalizedName = normalizeName(options.fileName);
     if (!normalizedName) {
@@ -334,7 +403,7 @@ export class StorageService {
       data: {
         userId: options.userId,
         courseId: options.courseId ?? null,
-        parentId: options.parentId ?? null,
+        parentId,
         name: normalizedName,
         isFolder: false,
         status: 'UPLOADING',
