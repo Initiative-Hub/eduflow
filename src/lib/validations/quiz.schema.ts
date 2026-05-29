@@ -34,9 +34,17 @@ export const createQuizSchema = (questionSchema: z.ZodTypeAny) =>
       .describe('The list of generated questions'),
   });
 
+/**
+ * Normalizes the AI-returned `type` field to the expected lowercase-hyphen format.
+ * The AI often returns SCREAMING_SNAKE_CASE (e.g. "MULTIPLE_CHOICE") instead of
+ * the schema's lowercase-hyphen literals (e.g. "multiple-choice").
+ */
+const normalizeType = (v: unknown) =>
+  typeof v === 'string' ? v.toLowerCase().replace(/_/g, '-') : v;
+
 // 1. Multiple Choice Question Schema
 export const multipleChoiceQuestionSchema = z.object({
-  type: z.literal('multiple-choice'),
+  type: z.preprocess(normalizeType, z.literal('multiple-choice')),
   prompt: z.string().describe('The question text or prompt'),
   options: z
     .array(
@@ -61,7 +69,7 @@ export const multipleChoiceQuestionSchema = z.object({
 
 // 2. True/False Question Schema
 export const trueFalseQuestionSchema = z.object({
-  type: z.literal('true-false'),
+  type: z.preprocess(normalizeType, z.literal('true-false')),
   prompt: z.string().describe('The question text or prompt'),
   correctAnswer: z.boolean().describe('The correct answer (true or false)'),
   explanation: z
@@ -72,7 +80,7 @@ export const trueFalseQuestionSchema = z.object({
 
 // 3. Fill in the Blank Question Schema
 export const fillInTheBlankQuestionSchema = z.object({
-  type: z.literal('fill-in-the-blank'),
+  type: z.preprocess(normalizeType, z.literal('fill-in-the-blank')),
   promptTemplate: z
     .string()
     .describe(
@@ -95,7 +103,7 @@ export const fillInTheBlankQuestionSchema = z.object({
 
 // 4. Matching Question Schema
 export const matchingQuestionSchema = z.object({
-  type: z.literal('matching'),
+  type: z.preprocess(normalizeType, z.literal('matching')),
   prompt: z.string().describe('Prompt introducing matching challenge'),
   leftItems: z.array(
     z.object({
@@ -122,7 +130,7 @@ export const matchingQuestionSchema = z.object({
 
 // 5. Ordering Question Schema
 export const orderingQuestionSchema = z.object({
-  type: z.literal('ordering'),
+  type: z.preprocess(normalizeType, z.literal('ordering')),
   prompt: z.string().describe('Prompt instructing what to order'),
   items: z
     .array(
@@ -143,7 +151,7 @@ export const orderingQuestionSchema = z.object({
 
 // 6. Drag and Drop Question Schema
 export const dragAndDropQuestionSchema = z.object({
-  type: z.literal('drag-and-drop'),
+  type: z.preprocess(normalizeType, z.literal('drag-and-drop')),
   prompt: z.string().describe('Prompt for drag and drop'),
   sentenceTemplate: z
     .string()
@@ -177,7 +185,7 @@ export const dragAndDropQuestionSchema = z.object({
 
 // 7. Essay Question Schema
 export const essayQuestionSchema = z.object({
-  type: z.literal('essay'),
+  type: z.preprocess(normalizeType, z.literal('essay')),
   prompt: z.string().describe('The essay prompt or question'),
   rubric: z
     .array(
@@ -217,14 +225,17 @@ export const essayQuestionSchema = z.object({
 
 // 8. Timed Challenge Question Schema
 export const timedChallengeQuestionSchema = z.object({
-  type: z.literal('timed-challenge'),
+  type: z.preprocess(normalizeType, z.literal('timed-challenge')),
   prompt: z
     .string()
     .describe('The prompt or introduction of the timed challenge'),
   timeLimitSeconds: z.number().int().describe('Time limit in seconds'),
   innerQuestion: z
     .object({
-      type: z.enum(['multiple-choice', 'true-false']),
+      type: z.preprocess(
+        normalizeType,
+        z.enum(['multiple-choice', 'true-false'])
+      ),
       prompt: z.string().describe('The question text or prompt'),
       options: z
         .array(
