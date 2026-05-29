@@ -4,7 +4,6 @@ import { Plus, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -23,12 +22,55 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import type { QuestionSubType } from '@/lib/quiz-template';
 import type { QuestionBlock } from '@/lib/quiz-template/types';
 import { cn } from '@/lib/utils';
 
 // Helper to generate unique IDs
 const generateId = () => Math.random().toString(36).substring(2, 9);
+
+type EditorQuestionType =
+  | 'multiple_choice'
+  | 'true_false'
+  | 'fill_in_the_blank'
+  | 'matching'
+  | 'ordering'
+  | 'drag_and_drop'
+  | 'essay'
+  | 'timed_challenge';
+
+function toEditorQuestionType(type: string): EditorQuestionType {
+  switch (type.replace(/-/g, '_')) {
+    case 'multiple_choice':
+      return 'multiple_choice';
+    case 'true_false':
+      return 'true_false';
+    case 'fill_in_the_blank':
+      return 'fill_in_the_blank';
+    case 'drag_and_drop':
+      return 'drag_and_drop';
+    case 'timed_challenge':
+      return 'timed_challenge';
+    default:
+      return 'multiple_choice';
+  }
+}
+
+function toStoredQuestionType(type: EditorQuestionType): string {
+  switch (type) {
+    case 'multiple_choice':
+      return 'multiple-choice';
+    case 'true_false':
+      return 'true-false';
+    case 'fill_in_the_blank':
+      return 'fill-in-the-blank';
+    case 'drag_and_drop':
+      return 'drag-and-drop';
+    case 'timed_challenge':
+      return 'timed-challenge';
+    default:
+      return type;
+  }
+}
 
 interface QuestionEditorDialogProps {
   isOpen: boolean;
@@ -46,10 +88,9 @@ export function QuestionEditorDialog({
   const t = useTranslations('Courses.QuizPlayer');
 
   // Question type & general fields
-  const [type, setType] = useState<QuestionBlock['type']>('multiple-choice');
+  const [type, setType] = useState<EditorQuestionType>('multiple_choice');
   const [prompt, setPrompt] = useState('');
   const [explanation, setExplanation] = useState('');
-  const [points, setPoints] = useState(1);
 
   // Type-specific states
   // Multiple Choice
@@ -104,9 +145,7 @@ export function QuestionEditorDialog({
   // Timed Challenge
   const [timeLimit, setTimeLimit] = useState(60);
   const [innerType, setInnerType] =
-    useState<Exclude<QuestionBlock['type'], 'timed-challenge'>>(
-      'multiple-choice'
-    );
+    useState<Exclude<EditorQuestionType, 'timed_challenge'>>('multiple_choice');
   // Simple inner MC state for nested demo
   const [innerMcOptions, setInnerMcOptions] = useState<
     Array<{ id: string; text: string; isCorrect: boolean }>
@@ -117,60 +156,66 @@ export function QuestionEditorDialog({
 
   // Load question data when editing
   useEffect(() => {
+    if (!isOpen) return;
+
     if (question) {
-      setType(question.type);
-      setPrompt('prompt' in question ? (question as any).prompt : '');
-      setExplanation(question.explanation ?? '');
-      // If we had points on question we would set it, default to 1
-      setPoints(1);
+      const currentQuestion = question as any;
+
+      setType(toEditorQuestionType(currentQuestion.type));
+      setPrompt('prompt' in currentQuestion ? currentQuestion.prompt : '');
+      setExplanation(currentQuestion.explanation ?? '');
 
       // Populate type-specific states
-      if (question.type === 'multiple-choice') {
-        setMcOptions(question.options.map((o) => ({ ...o })));
-      } else if (question.type === 'true-false') {
-        setTfCorrect(question.correctAnswer);
-      } else if (question.type === 'fill-in-the-blank') {
-        setBlankTemplate(question.promptTemplate);
+      if (currentQuestion.type === 'multiple-choice') {
+        setMcOptions(currentQuestion.options.map((o: any) => ({ ...o })));
+      } else if (currentQuestion.type === 'true-false') {
+        setTfCorrect(currentQuestion.correctAnswer);
+      } else if (currentQuestion.type === 'fill-in-the-blank') {
+        setBlankTemplate(currentQuestion.promptTemplate);
         setBlankAnswers(
-          question.blanks.map((b) => ({
+          currentQuestion.blanks.map((b: any) => ({
             id: b.id,
             answers: b.acceptableAnswers.join(', '),
           }))
         );
-      } else if (question.type === 'matching') {
-        setMatchLeft(question.leftItems.map((i) => ({ ...i })));
-        setMatchRight(question.rightItems.map((i) => ({ ...i })));
-        setMatchPairs(question.correctPairs.map((p) => ({ ...p })));
-      } else if (question.type === 'ordering') {
-        setOrderItems(question.items.map((i) => ({ ...i })));
-      } else if (question.type === 'drag-and-drop') {
-        setDndTemplate(question.sentenceTemplate);
-        setDndZones(question.zones.map((z) => ({ ...z })));
-        setDndItems(question.items.map((i) => ({ ...i })));
-        setDndMapping({ ...question.correctMapping });
-      } else if (question.type === 'essay') {
-        setEssayMinWords(question.minWords?.toString() ?? '');
-        setEssayMaxWords(question.maxWords?.toString() ?? '');
-        setEssayAllowAttachments(!!question.allowAttachments);
-        setEssayDelivery(question.deliveryOption ?? 'immediate');
-        setEssayAllowTeacherRubric(!!question.allowTeacherRubric);
-      } else if (question.type === 'timed-challenge') {
-        setTimeLimit(question.timeLimitSeconds);
-        if (question.innerQuestion) {
-          setInnerType(question.innerQuestion.type as any);
-          if (question.innerQuestion.type === 'multiple-choice') {
+      } else if (currentQuestion.type === 'matching') {
+        setMatchLeft(currentQuestion.leftItems.map((i: any) => ({ ...i })));
+        setMatchRight(currentQuestion.rightItems.map((i: any) => ({ ...i })));
+        setMatchPairs(currentQuestion.correctPairs.map((p: any) => ({ ...p })));
+      } else if (currentQuestion.type === 'ordering') {
+        setOrderItems(currentQuestion.items.map((i: any) => ({ ...i })));
+      } else if (currentQuestion.type === 'drag-and-drop') {
+        setDndTemplate(currentQuestion.sentenceTemplate);
+        setDndZones(currentQuestion.zones.map((z: any) => ({ ...z })));
+        setDndItems(currentQuestion.items.map((i: any) => ({ ...i })));
+        setDndMapping({ ...currentQuestion.correctMapping });
+      } else if (currentQuestion.type === 'essay') {
+        setEssayMinWords(currentQuestion.minWords?.toString() ?? '');
+        setEssayMaxWords(currentQuestion.maxWords?.toString() ?? '');
+        setEssayAllowAttachments(!!currentQuestion.allowAttachments);
+        setEssayDelivery(currentQuestion.deliveryOption ?? 'immediate');
+        setEssayAllowTeacherRubric(!!currentQuestion.allowTeacherRubric);
+      } else if (currentQuestion.type === 'timed-challenge') {
+        setTimeLimit(currentQuestion.timeLimitSeconds);
+        if (currentQuestion.innerQuestion) {
+          setInnerType(
+            toEditorQuestionType(currentQuestion.innerQuestion.type) as Exclude<
+              EditorQuestionType,
+              'timed_challenge'
+            >
+          );
+          if (currentQuestion.innerQuestion.type === 'multiple-choice') {
             setInnerMcOptions(
-              question.innerQuestion.options.map((o) => ({ ...o }))
+              currentQuestion.innerQuestion.options.map((o: any) => ({ ...o }))
             );
           }
         }
       }
     } else {
       // Reset to defaults for new question
-      setType('multiple-choice');
+      setType('multiple_choice');
       setPrompt('');
       setExplanation('');
-      setPoints(1);
       setMcOptions([
         { id: generateId(), text: '', isCorrect: true },
         { id: generateId(), text: '', isCorrect: false },
@@ -192,7 +237,7 @@ export function QuestionEditorDialog({
       setEssayDelivery('immediate');
       setEssayAllowTeacherRubric(false);
       setTimeLimit(60);
-      setInnerType('multiple-choice');
+      setInnerType('multiple_choice');
     }
   }, [question, isOpen]);
 
@@ -200,11 +245,11 @@ export function QuestionEditorDialog({
   const handleSave = () => {
     if (!prompt.trim()) return;
 
-    let savedQuestion: QuestionBlock;
+    let savedQuestion: any;
 
-    if (type === 'multiple-choice') {
+    if (type === 'multiple_choice') {
       savedQuestion = {
-        type: 'multiple-choice',
+        type: toStoredQuestionType(type),
         prompt: prompt.trim(),
         explanation: explanation.trim() || undefined,
         options: mcOptions.map((o) => ({
@@ -213,16 +258,16 @@ export function QuestionEditorDialog({
           isCorrect: o.isCorrect,
         })),
       };
-    } else if (type === 'true-false') {
+    } else if (type === 'true_false') {
       savedQuestion = {
-        type: 'true-false',
+        type: toStoredQuestionType(type),
         prompt: prompt.trim(),
         explanation: explanation.trim() || undefined,
         correctAnswer: tfCorrect,
       };
-    } else if (type === 'fill-in-the-blank') {
+    } else if (type === 'fill_in_the_blank') {
       savedQuestion = {
-        type: 'fill-in-the-blank',
+        type: toStoredQuestionType(type),
         promptTemplate: blankTemplate.trim(),
         explanation: explanation.trim() || undefined,
         blanks: blankAnswers.map((b) => ({
@@ -235,7 +280,7 @@ export function QuestionEditorDialog({
       } as any;
     } else if (type === 'matching') {
       savedQuestion = {
-        type: 'matching',
+        type: toStoredQuestionType(type),
         prompt: prompt.trim(),
         explanation: explanation.trim() || undefined,
         leftItems: matchLeft.map((i) => ({ id: i.id, text: i.text.trim() })),
@@ -244,15 +289,15 @@ export function QuestionEditorDialog({
       };
     } else if (type === 'ordering') {
       savedQuestion = {
-        type: 'ordering',
+        type: toStoredQuestionType(type),
         prompt: prompt.trim(),
         explanation: explanation.trim() || undefined,
         items: orderItems.map((i) => ({ id: i.id, text: i.text.trim() })),
         correctOrder: orderItems.map((i) => i.id),
       };
-    } else if (type === 'drag-and-drop') {
+    } else if (type === 'drag_and_drop') {
       savedQuestion = {
-        type: 'drag-and-drop',
+        type: toStoredQuestionType(type),
         prompt: prompt.trim(),
         explanation: explanation.trim() || undefined,
         sentenceTemplate: dndTemplate.trim(),
@@ -262,7 +307,7 @@ export function QuestionEditorDialog({
       };
     } else if (type === 'essay') {
       savedQuestion = {
-        type: 'essay',
+        type: toStoredQuestionType(type),
         prompt: prompt.trim(),
         explanation: explanation.trim() || undefined,
         minWords: essayMinWords
@@ -275,10 +320,10 @@ export function QuestionEditorDialog({
         deliveryOption: essayDelivery,
         allowTeacherRubric: essayAllowTeacherRubric,
       };
-    } else if (type === 'timed-challenge') {
+    } else if (type === 'timed_challenge') {
       // Build inner question
-      const innerQuestion: QuestionBlock =
-        innerType === 'multiple-choice'
+      const innerQuestion =
+        innerType === 'multiple_choice'
           ? {
               type: 'multiple-choice',
               prompt: prompt.trim(),
@@ -295,7 +340,7 @@ export function QuestionEditorDialog({
             };
 
       savedQuestion = {
-        type: 'timed-challenge',
+        type: toStoredQuestionType(type),
         prompt: prompt.trim(),
         explanation: explanation.trim() || undefined,
         timeLimitSeconds: timeLimit,
@@ -305,7 +350,7 @@ export function QuestionEditorDialog({
       return;
     }
     // console.log(savedQuestion);
-    onSave(savedQuestion);
+    onSave(savedQuestion as QuestionBlock);
     onOpenChange(false);
   };
 
@@ -324,23 +369,23 @@ export function QuestionEditorDialog({
             <Label>{t('questionType')}</Label>
             <Select
               value={type}
-              onValueChange={(val) => setType(val as QuestionBlock['type'])}
+              onValueChange={(val) => setType(val as EditorQuestionType)}
               disabled={!!question} // Disable type changes for existing questions to prevent schema errors
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder={t('questionType')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="multiple-choice">Multiple Choice</SelectItem>
-                <SelectItem value="true-false">True/False</SelectItem>
-                <SelectItem value="fill-in-the-blank">
+                <SelectItem value="multiple_choice">Multiple Choice</SelectItem>
+                <SelectItem value="true_false">True/False</SelectItem>
+                <SelectItem value="fill_in_the_blank">
                   Fill in the Blank
                 </SelectItem>
                 <SelectItem value="matching">Matching</SelectItem>
                 <SelectItem value="ordering">Ordering</SelectItem>
-                <SelectItem value="drag-and-drop">Drag & Drop</SelectItem>
+                <SelectItem value="drag_and_drop">Drag & Drop</SelectItem>
                 <SelectItem value="essay">Essay</SelectItem>
-                <SelectItem value="timed-challenge">Timed Challenge</SelectItem>
+                <SelectItem value="timed_challenge">Timed Challenge</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -360,7 +405,7 @@ export function QuestionEditorDialog({
           {/* Type-Specific Editors */}
 
           {/* 1. Multiple Choice */}
-          {type === 'multiple-choice' && (
+          {type === 'multiple_choice' && (
             <div className="space-y-3 border-t pt-4">
               <div className="flex items-center justify-between">
                 <Label className="font-semibold text-base">
@@ -443,7 +488,7 @@ export function QuestionEditorDialog({
           )}
 
           {/* 2. True / False */}
-          {type === 'true-false' && (
+          {type === 'true_false' && (
             <div className="space-y-3 border-t pt-4">
               <Label>{t('correctAnswer')}</Label>
               <div className="flex gap-4">
@@ -472,7 +517,7 @@ export function QuestionEditorDialog({
           )}
 
           {/* 3. Fill in the Blank */}
-          {type === 'fill-in-the-blank' && (
+          {type === 'fill_in_the_blank' && (
             <div className="space-y-4 border-t pt-4">
               <div className="space-y-2">
                 <Label htmlFor="blank-template">{t('sentenceTemplate')}</Label>
@@ -827,7 +872,7 @@ export function QuestionEditorDialog({
           )}
 
           {/* 6. Drag & Drop */}
-          {type === 'drag-and-drop' && (
+          {type === 'drag_and_drop' && (
             <div className="space-y-5 border-t pt-4">
               {/* Sentence Template */}
               <div className="space-y-2">
@@ -1038,7 +1083,7 @@ export function QuestionEditorDialog({
           )}
 
           {/* 8. Timed Challenge */}
-          {type === 'timed-challenge' && (
+          {type === 'timed_challenge' && (
             <div className="space-y-4 border-t pt-4">
               <div className="space-y-2">
                 <Label htmlFor="timed-limit">{t('timeLimit')}</Label>
@@ -1068,15 +1113,15 @@ export function QuestionEditorDialog({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="multiple-choice">
+                      <SelectItem value="multiple_choice">
                         Multiple Choice
                       </SelectItem>
-                      <SelectItem value="true-false">True/False</SelectItem>
+                      <SelectItem value="true_false">True/False</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
-                {innerType === 'multiple-choice' && (
+                {innerType === 'multiple_choice' && (
                   <div className="mt-4 space-y-3">
                     <div className="flex items-center justify-between">
                       <Label className="font-semibold text-sm">

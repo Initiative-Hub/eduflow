@@ -29,10 +29,10 @@ const quizSchemaByType: Record<string, ReturnType<typeof createQuizSchema>> = {
   'multiple-choice': createQuizSchema(multipleChoiceQuestionSchema),
   'true-false': createQuizSchema(trueFalseQuestionSchema),
   'fill-in-the-blank': createQuizSchema(fillInTheBlankQuestionSchema),
-  'matching': createQuizSchema(matchingQuestionSchema),
-  'ordering': createQuizSchema(orderingQuestionSchema),
+  matching: createQuizSchema(matchingQuestionSchema),
+  ordering: createQuizSchema(orderingQuestionSchema),
   'drag-and-drop': createQuizSchema(dragAndDropQuestionSchema),
-  'essay': createQuizSchema(essayQuestionSchema),
+  essay: createQuizSchema(essayQuestionSchema),
   'timed-challenge': createQuizSchema(timedChallengeQuestionSchema),
 };
 
@@ -42,8 +42,7 @@ const quizSchemaByType: Record<string, ReturnType<typeof createQuizSchema>> = {
  */
 export function getQuizSchemaByType(quizType?: string) {
   if (!quizType) return aiQuizSchema;
-  const normalizedType = quizType.toLowerCase().replace(/_/g, '-');
-  return quizSchemaByType[normalizedType] ?? aiQuizSchema;
+  return quizSchemaByType[quizType.toLowerCase()] ?? aiQuizSchema;
 }
 
 type Quiz = z.infer<typeof aiQuizSchema>;
@@ -68,13 +67,14 @@ function mapMultipleChoice(q: any) {
   });
   // if AI marked correct as index or number, handle it
   if (q.correctIndex !== undefined && mappedOptions[q.correctIndex]) {
-    mappedOptions.forEach((mo: any, i: number) => {
-      mo.isCorrect = i === q.correctIndex;
-    });
+    // biome-ignore lint/suspicious/useIterableCallbackReturn: <explanation>
+    mappedOptions.forEach(
+      (mo: any, i: number) => (mo.isCorrect = i === q.correctIndex)
+    );
   }
 
   return {
-    type: 'multiple-choice',
+    type: 'multiple_choice',
     prompt: q.prompt ?? q.question ?? '',
     options: mappedOptions,
     explanation: q.explanation,

@@ -127,7 +127,7 @@ export const MOCK_QUESTIONS: QuestionBankEntry[] = [
     subType: 'MULTIPLE_CHOICE',
     prompt: 'What is the powerhouse of the cell?',
     answerData: {
-      type: 'multiple-choice',
+      type: 'multiple_choice',
       prompt: 'What is the powerhouse of the cell?',
       options: [
         { id: 'a', text: 'Mitochondria', isCorrect: true },
@@ -149,7 +149,7 @@ export const MOCK_QUESTIONS: QuestionBankEntry[] = [
     subType: 'MULTIPLE_CHOICE',
     prompt: 'Which organelle is responsible for protein synthesis?',
     answerData: {
-      type: 'multiple-choice',
+      type: 'multiple_choice',
       prompt: 'Which organelle is responsible for protein synthesis?',
       options: [
         { id: 'a', text: 'Ribosome', isCorrect: true },
@@ -171,7 +171,7 @@ export const MOCK_QUESTIONS: QuestionBankEntry[] = [
     subType: 'MULTIPLE_CHOICE',
     prompt: 'What is the primary function of the Golgi apparatus?',
     answerData: {
-      type: 'multiple-choice',
+      type: 'multiple_choice',
       prompt: 'What is the primary function of the Golgi apparatus?',
       options: [
         { id: 'a', text: 'Modifying and packaging proteins', isCorrect: true },
@@ -194,7 +194,7 @@ export const MOCK_QUESTIONS: QuestionBankEntry[] = [
     prompt:
       'Osmosis is the movement of water molecules from a region of lower solute concentration to a region of higher solute concentration through a semipermeable membrane.',
     answerData: {
-      type: 'true-false',
+      type: 'true_false',
       prompt:
         'Osmosis is the movement of water molecules from a region of lower solute concentration to a region of higher solute concentration through a semipermeable membrane.',
       correctAnswer: true,
@@ -212,7 +212,7 @@ export const MOCK_QUESTIONS: QuestionBankEntry[] = [
     subType: 'TRUE_FALSE',
     prompt: 'Active transport requires no energy input from the cell.',
     answerData: {
-      type: 'true-false',
+      type: 'true_false',
       prompt: 'Active transport requires no energy input from the cell.',
       correctAnswer: false,
       explanation:
@@ -288,7 +288,7 @@ export const MOCK_QUESTIONS: QuestionBankEntry[] = [
     prompt:
       'DNA is composed of {{sugar}} sugar, a {{group}} group, and a nitrogenous {{base}}.',
     answerData: {
-      type: 'fill-in-the-blank',
+      type: 'fill_in_the_blank',
       promptTemplate:
         'DNA is composed of {{sugar}} sugar, a {{group}} group, and a nitrogenous {{base}}.',
       blanks: [
@@ -311,7 +311,7 @@ export const MOCK_QUESTIONS: QuestionBankEntry[] = [
     prompt:
       'The two strands of DNA are held together by {{bonds}} bonds between complementary {{bases}}.',
     answerData: {
-      type: 'fill-in-the-blank',
+      type: 'fill_in_the_blank',
       promptTemplate:
         'The two strands of DNA are held together by {{bonds}} bonds between complementary {{bases}}.',
       blanks: [
@@ -389,7 +389,7 @@ export const MOCK_QUESTIONS: QuestionBankEntry[] = [
     prompt:
       'Approximately what percentage of energy is transferred from one trophic level to the next?',
     answerData: {
-      type: 'multiple-choice',
+      type: 'multiple_choice',
       prompt:
         'Approximately what percentage of energy is transferred from one trophic level to the next?',
       options: [
@@ -461,7 +461,7 @@ export const MOCK_QUESTIONS: QuestionBankEntry[] = [
     prompt:
       'Which scientist is credited with discovering the structure of DNA?',
     answerData: {
-      type: 'multiple-choice',
+      type: 'multiple_choice',
       prompt:
         'Which scientist is credited with discovering the structure of DNA?',
       options: [

@@ -71,6 +71,10 @@ export const GET = withAuth(async (_req, _sessionData, { params }) => {
           return quiz;
         }
 
+        if (quiz.selectionMethod === 'MANUAL_CREATE') {
+          return quiz;
+        }
+
         // Fetch matching questions from the bank
         const bankQuestions = await prisma.question.findMany({
           where: {
@@ -212,14 +216,13 @@ export const POST = withAuth(async (req, _sessionData, { params }) => {
     // ─── Populate questions from the question bank ─────────────────────────────
     let resolvedQuestions: unknown[] = questions ?? [];
 
-    if (resolvedQuestions.length === 0) {
+    if (resolvedQuestions.length === 0 && selectionMethod !== 'MANUAL_CREATE') {
       // Build filter for question bank lookup
       const questionWhere: Record<string, unknown> = {
         courseId,
         category,
         subType,
       };
-
       if (selectionMethod === 'HAND_PICK' && selectedQuestionIds?.length) {
         // Hand-pick: fetch specific questions by ID
         questionWhere.id = { in: selectedQuestionIds };
@@ -238,7 +241,7 @@ export const POST = withAuth(async (req, _sessionData, { params }) => {
         const shuffled = [...bankQuestions].sort(() => Math.random() - 0.5);
         selectedQuestions = shuffled.slice(0, questionCount);
       } else {
-        // HAND_PICK or MANUAL_CREATE: take up to questionCount
+        // HAND_PICK: take up to questionCount
         selectedQuestions = bankQuestions.slice(0, questionCount);
       }
 
@@ -254,6 +257,8 @@ export const POST = withAuth(async (req, _sessionData, { params }) => {
       });
     }
 
+    const resolvedQuestionCount = resolvedQuestions.length;
+
     const quiz = await prisma.quiz.create({
       data: {
         courseId,
@@ -264,7 +269,7 @@ export const POST = withAuth(async (req, _sessionData, { params }) => {
         subType,
         deliveryMode,
         selectionMethod,
-        questionCount,
+        questionCount: resolvedQuestionCount,
         questions: resolvedQuestions as unknown as Prisma.InputJsonValue,
       },
     });

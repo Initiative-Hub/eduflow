@@ -19,7 +19,7 @@ const multipleChoiceExample: QuizContent = {
   type: 'multiple-choice',
   questions: [
     {
-      type: 'multiple-choice',
+      type: 'multiple_choice',
       prompt: 'What is the primary pigment responsible for photosynthesis?',
       options: [
         { id: 'a', text: 'Chlorophyll', isCorrect: true },
