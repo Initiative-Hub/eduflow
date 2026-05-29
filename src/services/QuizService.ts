@@ -125,8 +125,6 @@ export class QuizService {
       });
     }
 
-    const resolvedQuestionCount = resolvedQuestions.length;
-
     const quiz = await prisma.quiz.create({
       data: {
         courseId,
@@ -136,7 +134,7 @@ export class QuizService {
         subType: data.subType,
         deliveryMode: data.deliveryMode,
         selectionMethod: data.selectionMethod,
-        questionCount: resolvedQuestionCount,
+        questionCount: data.questionCount,
         questions: resolvedQuestions as unknown as Prisma.InputJsonValue,
         lessons: { connect: data.lessonIds.map((id) => ({ id })) },
       },
