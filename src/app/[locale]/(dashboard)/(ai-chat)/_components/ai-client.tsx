@@ -48,6 +48,7 @@ export function AIClient({
   const [view, setView] = useState<ViewState>('home');
   const [selectedModel, setSelectedModel] =
     useState<ChatModel>(DEFAULT_CHAT_MODEL);
+  const [isUploadingAttachments, setIsUploadingAttachments] = useState(false);
   const {
     displayMessages,
     isStreaming,
@@ -68,18 +69,53 @@ export function AIClient({
     toast.error(t('limitReachedToast', { count: maxMessages }));
   };
 
-  const handleSubmit = (e?: React.FormEvent, customValue?: string) => {
+  const getErrorMessage = (error: unknown) => {
+    if (error instanceof Error) return error.message;
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'message' in error &&
+      typeof error.message === 'string'
+    ) {
+      return error.message;
+    }
+
+    return t('attachments.uploadError');
+  };
+
+  const handleSubmit = async (
+    e?: React.FormEvent,
+    customValue?: string,
+    files: File[] = []
+  ) => {
     e?.preventDefault();
 
-    const text = customValue || '';
-    if (!text.trim()) return;
+    const text = customValue?.trim() || '';
+    if (!text && files.length === 0) return;
 
     if (isLimitReached) {
       notifyLimitReached();
       return;
     }
 
-    startChat(text.trim());
+    if (files.length > 0 && !isAuthenticated) {
+      const error = new Error(t('attachments.signInRequired'));
+      toast.error(error.message);
+      throw error;
+    }
+
+    try {
+      setIsUploadingAttachments(files.length > 0);
+      const messageText =
+        text || t('attachments.defaultMessage', { count: files.length });
+
+      await startChat(messageText, files);
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+      throw error;
+    } finally {
+      setIsUploadingAttachments(false);
+    }
   };
 
   const suggestions = [
@@ -143,7 +179,7 @@ export function AIClient({
                 notifyLimitReached();
                 return;
               }
-              void startChat(text);
+              startChat(text);
             }}
           />
         ) : (
@@ -152,7 +188,9 @@ export function AIClient({
 
         <ChatInput
           handleSubmit={handleSubmit}
+          isAuthenticated={isAuthenticated}
           isStreaming={isStreaming}
+          isUploading={isUploadingAttachments}
           isChatting={isChatting}
           isLimitReached={isLimitReached}
           limitCount={maxMessages}

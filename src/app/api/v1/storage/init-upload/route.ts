@@ -6,7 +6,7 @@ import { StorageService } from '@/services/StorageService';
 
 const initUploadSchema = z.object({
   parentId: z.string().uuid().nullable().optional(),
-  path: z.string().trim().max(200).optional(),
+  folderPath: z.array(z.string().trim().min(1).max(180)).max(10).optional(),
   fileName: z.string().trim().min(1).max(255),
   contentType: z.string().trim().min(1).max(255),
   size: z.number().int().positive().max(STORAGE_MAX_FILE_SIZE_BYTES),
@@ -33,7 +33,9 @@ const initUploadSchema = z.object({
  *                 type: string
  *                 format: uuid
  *                 nullable: true
- *               path:
+ *              folderPath:
+ *                type: array
+ *                items:
  *                 type: string
  *               fileName:
  *                 type: string
@@ -69,7 +71,7 @@ export const POST = withAuth(async (req, session) => {
     const upload = await StorageService.initializeUpload({
       userId: session.user.id,
       parentId: parsed.data.parentId ?? null,
-      path: parsed.data.path,
+      folderPath: parsed.data.folderPath,
       fileName: parsed.data.fileName,
       contentType: parsed.data.contentType,
       fileSize: parsed.data.size,

@@ -98,7 +98,9 @@ export default function WritingClient({
         <div className="mx-auto w-full max-w-4xl">
           <ChatInput
             handleSubmit={handleSubmit}
+            isAuthenticated={false}
             isStreaming={isStreaming}
+            isUploading={false}
             isChatting={hasOutput}
             isLimitReached={isLimitReached}
             limitCount={maxMessages}

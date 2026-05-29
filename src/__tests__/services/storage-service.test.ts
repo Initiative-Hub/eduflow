@@ -158,6 +158,69 @@ describe('StorageService', () => {
         uploadUrl: 'https://upload',
         uploadHeaders: { 'Content-Type': 'application/pdf' },
       });
+      expect(mockBuildInventoryObjectKey).toHaveBeenCalledWith(
+        'u1',
+        'readme.pdf',
+        { courseId: undefined }
+      );
+      expect(mockBuildInventoryObjectKey.mock.calls[0]?.[2]).not.toHaveProperty(
+        'relativePath'
+      );
+    });
+
+    it('creates missing folder path before creating the pending file', async () => {
+      mockBuildInventoryObjectKey.mockReturnValue('inventories/u1/readme.pdf');
+      fileInventory.findFirst
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(null);
+      fileInventory.create
+        .mockResolvedValueOnce({
+          id: 'folder-ai',
+          fileSize: null,
+          name: 'ai-chats',
+        })
+        .mockResolvedValueOnce({
+          id: 'folder-chat',
+          fileSize: null,
+          name: 'chat-1',
+        })
+        .mockResolvedValueOnce({ id: 'f1', status: 'UPLOADING' });
+      mockCreateInventoryWriteSignedUrl.mockResolvedValue('https://upload');
+
+      await StorageService.initializeUpload({
+        userId: 'u1',
+        folderPath: ['ai-chats', 'chat-1'],
+        fileName: 'readme.pdf',
+        contentType: 'application/pdf',
+        fileSize: 42,
+      });
+
+      expect(fileInventory.create).toHaveBeenNthCalledWith(1, {
+        data: {
+          courseId: null,
+          isFolder: true,
+          name: 'ai-chats',
+          parentId: null,
+          status: 'READY',
+          userId: 'u1',
+        },
+      });
+      expect(fileInventory.create).toHaveBeenNthCalledWith(2, {
+        data: {
+          courseId: null,
+          isFolder: true,
+          name: 'chat-1',
+          parentId: 'folder-ai',
+          status: 'READY',
+          userId: 'u1',
+        },
+      });
+      expect(fileInventory.create).toHaveBeenNthCalledWith(3, {
+        data: expect.objectContaining({
+          isFolder: false,
+          parentId: 'folder-chat',
+        }),
+      });
     });
 
     it('throws on empty file name', async () => {
@@ -297,6 +360,102 @@ describe('StorageService', () => {
       expect(result).toEqual([
         { fileId: 'a', name: 'A.pdf', signedUrl: 'https://signed-a' },
         { fileId: 'b', name: 'B.pdf', signedUrl: 'https://signed-b' },
+      ]);
+    });
+  });
+
+  describe('createChatAttachmentUrls', () => {
+    it('signs only ready files from the user inventory', async () => {
+      fileInventory.findMany.mockResolvedValue([
+        {
+          bucket: 'eduflow-inventory',
+          id: 'f1',
+          mimeType: 'application/pdf',
+          name: 'Notes.pdf',
+          objectKey: 'users/u1/f1.pdf',
+        },
+      ]);
+      mockCreateInventoryReadSignedUrl.mockResolvedValue('signed-url');
+
+      const result = await StorageService.createChatAttachmentUrls({
+        userId: 'u1',
+        fileIds: ['f1', 'f1'],
+      });
+
+      expect(fileInventory.findMany).toHaveBeenCalledWith({
+        where: {
+          courseId: null,
+          deletedAt: null,
+          id: { in: ['f1'] },
+          isFolder: false,
+          status: 'READY',
+          userId: 'u1',
+        },
+        select: {
+          bucket: true,
+          id: true,
+          mimeType: true,
+          name: true,
+          objectKey: true,
+        },
+      });
+      expect(result).toEqual([
+        {
+          bucket: 'eduflow-inventory',
+          fileId: 'f1',
+          mimeType: 'application/pdf',
+          name: 'Notes.pdf',
+          objectKey: 'users/u1/f1.pdf',
+          signedUrl: 'signed-url',
+        },
+      ]);
+    });
+  });
+
+  describe('getChatAttachmentPayloads', () => {
+    it('downloads only ready files from the user inventory', async () => {
+      fileInventory.findMany.mockResolvedValue([
+        {
+          id: 'f1',
+          mimeType: 'application/pdf',
+          name: 'Notes.pdf',
+          objectKey: 'users/u1/f1.pdf',
+        },
+      ]);
+      mockDownloadInventoryObject.mockResolvedValue({
+        bytes: new Uint8Array([1, 2, 3]),
+        contentType: 'application/pdf',
+      });
+
+      const result = await StorageService.getChatAttachmentPayloads({
+        userId: 'u1',
+        fileIds: ['f1', 'f1'],
+      });
+
+      expect(fileInventory.findMany).toHaveBeenCalledWith({
+        where: {
+          courseId: null,
+          deletedAt: null,
+          id: { in: ['f1'] },
+          isFolder: false,
+          status: 'READY',
+          userId: 'u1',
+        },
+        select: {
+          id: true,
+          mimeType: true,
+          name: true,
+          objectKey: true,
+        },
+      });
+      expect(result).toEqual([
+        {
+          bytes: new Uint8Array([1, 2, 3]),
+          fileId: 'f1',
+          mimeType: 'application/pdf',
+          name: 'Notes.pdf',
+          objectKey: 'users/u1/f1.pdf',
+        },
       ]);
     });
   });

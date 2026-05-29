@@ -21,34 +21,20 @@ function sanitizeSegment(value: string) {
     .slice(0, 180);
 }
 
-function normalizeRelativePath(value?: string) {
-  if (!value) return '';
-
-  return value
-    .split('/')
-    .map((segment) => sanitizeSegment(segment))
-    .filter(Boolean)
-    .join('/');
-}
-
 export function buildInventoryObjectKey(
   userId: string,
   fileName: string,
   options?: {
     courseId?: string;
-    relativePath?: string;
   }
 ) {
   const safeName = sanitizeSegment(fileName) || 'file';
-  const safePath = normalizeRelativePath(options?.relativePath);
 
   let basePrefix: string;
   if (options?.courseId) {
-    basePrefix = safePath
-      ? `courses/${options.courseId}/${safePath}`
-      : `courses/${options.courseId}`;
+    basePrefix = `courses/${options.courseId}`;
   } else {
-    basePrefix = safePath ? `users/${userId}/${safePath}` : `users/${userId}`;
+    basePrefix = `users/${userId}`;
   }
 
   return `${basePrefix}/${crypto.randomUUID()}-${safeName}`;
