@@ -44,8 +44,8 @@ function scoreMultipleChoice(
   const multipleChoiceAnswer = answer as StudentAnswer & {
     selectedOptionId: string;
   };
-  const correctOption = multipleChoiceQuestion.options.find((option) =>
-    option.isCorrect
+  const correctOption = multipleChoiceQuestion.options.find(
+    (option) => option.isCorrect
   );
   return correctOption?.id === multipleChoiceAnswer.selectedOptionId;
 }
@@ -74,7 +74,10 @@ function scoreFillInTheBlank(
   const questionType = normalizeQuestionType(question.type);
   const answerType = normalizeQuestionType(answer.type);
 
-  if (questionType !== 'fill_in_the_blank' || answerType !== 'fill_in_the_blank')
+  if (
+    questionType !== 'fill_in_the_blank' ||
+    answerType !== 'fill_in_the_blank'
+  )
     return false;
 
   const fillInTheBlankQuestion = question as FillInTheBlankQuestion;
