@@ -8,11 +8,13 @@ import { toast } from 'sonner';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import type { ChatModel } from '@/services/ai/chat-models';
 import { useChatSessionStore } from '@/stores/useChatSessionStore';
+import type { ChatFileUIPart } from '@/types/chat-attachments';
 import {
   getUserMessageCount,
   hasReachedUserMessageLimit,
 } from '@/utils/chat-limit';
 import { chatService } from './chat.service';
+import { uploadChatAttachments } from './chat-attachments.service';
 
 const MAX_USER_MESSAGES = 5;
 
@@ -35,12 +37,15 @@ export const useChatController = ({
   const lastPendingSendRef = useRef<string | null>(null);
   const {
     pendingMessage,
+    pendingFiles,
     pendingChatId,
     pendingModel,
     optimisticChatId,
     optimisticMessages,
     setPendingMessage,
     clearPendingMessage,
+    setPendingFiles,
+    clearPendingFiles,
     setPendingChatId,
     clearPendingChatId,
     setPendingModel,
@@ -89,17 +94,22 @@ export const useChatController = ({
     if (pendingChatId !== initialChatId) return;
     if (!pathname?.includes(`/chat/${pendingChatId}`)) return;
 
-    const pendingKey = `${pendingChatId}:${pendingMessage}`;
+    const pendingFileIds = pendingFiles.map((file) => file.fileId).join(',');
+    const pendingKey = `${pendingChatId}:${pendingMessage}:${pendingFileIds}`;
     if (lastPendingSendRef.current === pendingKey) return;
 
     const inputModel = pendingModel ?? selectedModel;
 
     lastPendingSendRef.current = pendingKey;
     clearPendingMessage();
+    clearPendingFiles();
     clearPendingChatId();
     clearPendingModel();
+
     sendMessage(
-      { text: pendingMessage },
+      pendingFiles.length > 0
+        ? { text: pendingMessage, files: pendingFiles }
+        : { text: pendingMessage },
       {
         body: {
           provider: 'openrouter',
@@ -109,9 +119,11 @@ export const useChatController = ({
     );
   }, [
     clearPendingChatId,
+    clearPendingFiles,
     clearPendingModel,
     clearPendingMessage,
     pendingMessage,
+    pendingFiles,
     pendingChatId,
     pendingModel,
     initialChatId,
@@ -138,20 +150,25 @@ export const useChatController = ({
     },
   });
 
-  const createUserMessage = (text: string): UIMessage => ({
+  const createUserMessage = (
+    text: string,
+    files: ChatFileUIPart[] = []
+  ): UIMessage => ({
     id: `msg_${crypto.randomUUID()}`,
     role: 'user',
-    parts: [{ type: 'text', text }],
+    parts: [...files, { type: 'text', text }],
   });
 
-  const startChat = async (text: string) => {
+  const startChat = async (text: string, files: File[] = []) => {
     if (!initialChatId) {
       try {
         const newChatId = await createChatMutation.mutateAsync(text);
+        const uploadedFiles = await uploadChatAttachments(files, newChatId);
         await queryClient.invalidateQueries({ queryKey: ['chat-list'] });
         setOptimisticChatId(newChatId);
-        setOptimisticMessages([createUserMessage(text)]);
+        setOptimisticMessages([createUserMessage(text, uploadedFiles)]);
         setPendingMessage(text);
+        setPendingFiles(uploadedFiles);
         setPendingChatId(newChatId);
         setPendingModel(selectedModel);
         router.push(`/chat/${newChatId}`);
@@ -163,8 +180,10 @@ export const useChatController = ({
       return;
     }
 
+    const uploadedFiles = await uploadChatAttachments(files, initialChatId);
+
     sendMessage(
-      { text },
+      uploadedFiles.length > 0 ? { text, files: uploadedFiles } : { text },
       {
         body: {
           provider: 'openrouter',

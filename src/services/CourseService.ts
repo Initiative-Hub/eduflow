@@ -171,7 +171,6 @@ export class CourseService {
     fileName: string;
     contentType: string;
     fileSize: number;
-    path?: string;
   }) {
     if (!(await CourseService.isMember(options.courseId, options.userId))) {
       throw new Error('Unauthorized');
@@ -184,7 +183,6 @@ export class CourseService {
       fileName: options.fileName,
       contentType: options.contentType,
       fileSize: options.fileSize,
-      path: options.path,
     });
   }
 

@@ -8,7 +8,6 @@ const initUploadSchema = z.object({
   fileName: z.string().trim().min(1).max(255),
   contentType: z.string().min(1),
   fileSize: z.number().int().positive(),
-  path: z.string().optional(),
 });
 
 export const POST = withAuth(async (req, session, { params }) => {
@@ -30,7 +29,6 @@ export const POST = withAuth(async (req, session, { params }) => {
       fileName: parsed.data.fileName,
       contentType: parsed.data.contentType,
       fileSize: parsed.data.fileSize,
-      path: parsed.data.path,
     });
 
     return NextResponse.json({

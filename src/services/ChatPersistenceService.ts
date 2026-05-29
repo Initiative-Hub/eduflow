@@ -7,6 +7,10 @@ import {
 } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
 import { CacheService } from '@/services/CacheService';
+import {
+  hydrateChatAttachmentUrls,
+  sanitizeChatAttachmentUrls,
+} from '@/utils/chat-attachments';
 import { getMessagePreview } from '@/utils/chat-message';
 import { buildNewChatData, type ChatCacheData } from '@/utils/chat-session';
 
@@ -188,12 +192,16 @@ export class ChatPersistenceService {
         role: toUiRole(message.role),
         parts: Array.isArray(message.parts) ? message.parts : [],
       })) as UIMessage[];
+      const hydratedMessages = await hydrateChatAttachmentUrls({
+        messages,
+        userId,
+      });
 
       return {
         title: chat.title,
         metadata: chat.metadata,
-        messageCount: messages.length,
-        messages,
+        messageCount: hydratedMessages.length,
+        messages: hydratedMessages,
         updatedAt: chat.updatedAt.toISOString(),
       };
     }
@@ -230,6 +238,7 @@ export class ChatPersistenceService {
     chatType = DEFAULT_CHAT_TYPE,
   }: SaveMessagesInput) {
     const updatedAt = new Date();
+    const sanitizedMessages = sanitizeChatAttachmentUrls(messages);
 
     if (userId) {
       const chat = await prisma.aiChat.findFirst({
@@ -246,7 +255,7 @@ export class ChatPersistenceService {
       if (!chat) return null;
 
       await prisma.$transaction(async (tx) => {
-        const messageIds = messages.map((message) => message.id);
+        const messageIds = sanitizedMessages.map((message) => message.id);
         const existingMessages =
           messageIds.length > 0
             ? await tx.aiChatMessage.findMany({
@@ -261,7 +270,7 @@ export class ChatPersistenceService {
         const existingMessageIds = new Set(
           existingMessages.map((message) => message.id)
         );
-        const newMessages = messages.filter(
+        const newMessages = sanitizedMessages.filter(
           (message) => !existingMessageIds.has(message.id)
         );
 
@@ -307,8 +316,8 @@ export class ChatPersistenceService {
 
     const nextData: CachedChat = {
       ...chatData,
-      messages,
-      messageCount: messages.length,
+      messages: sanitizedMessages,
+      messageCount: sanitizedMessages.length,
       updatedAt: updatedAt.toISOString(),
     };
 
@@ -318,7 +327,7 @@ export class ChatPersistenceService {
     await updateGuestChatIndex(guestId, chatType, {
       id: chatId,
       title: chatData.title,
-      messageCount: messages.length,
+      messageCount: sanitizedMessages.length,
       updatedAt: updatedAt.toISOString(),
     });
 

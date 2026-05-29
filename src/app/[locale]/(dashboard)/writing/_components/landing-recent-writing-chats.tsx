@@ -11,7 +11,7 @@ import { writingService } from '../writing.service';
 const RECENT_WRITING_SESSION_LIMIT = 5;
 
 export function LandingRecentWritingChats() {
-  const t = useTranslations('WritingPage.recentChats');
+  const t = useTranslations('WritingPage.recentSessions');
   const sidebarT = useTranslations('WritingPage.sidebar');
   const locale = useLocale();
   const { data, isLoading, isError } = useQuery({

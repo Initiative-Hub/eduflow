@@ -5,6 +5,15 @@
     "usernameLabel": "Username:"
   },
   "AIChat": {
+    "attachments": {
+      "add": "Attach files",
+      "defaultMessage": "Please use the attached {count, plural, one {file} other {files}}.",
+      "fileTooLarge": "{name} exceeds the maximum upload size.",
+      "remove": "Remove {name}",
+      "signInRequired": "Sign in to upload files to chat.",
+      "tooMany": "You can attach up to {count} files.",
+      "uploadError": "Unable to upload files."
+    },
     "categories": {
       "artHistory": "ART HISTORY",
       "history": "HISTORY",
@@ -30,6 +39,7 @@
     "limitReachedToast": "You've reached the {count}-message limit. Start a new session to continue.",
     "modelSelector": {
       "empty": "No models found.",
+      "heading": "Choose model",
       "label": "Select AI model",
       "placeholder": "Choose model"
     },
