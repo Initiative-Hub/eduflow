@@ -7,24 +7,8 @@ import { QuizService } from '@/services/QuizService';
 // ─── Validation Schema ────────────────────────────────────────────────────────
 
 const generateQuizInputSchema = z.object({
-  courseId: z.string().uuid('Invalid courseId'),
-  lessonId: z.string().uuid('Invalid lessonId'),
-  quizType: z.enum([
-    'multiple-choice',
-    'true-false',
-    'fill-in-the-blank',
-    'matching',
-    'ordering',
-    'drag-and-drop',
-    'essay',
-    'timed-challenge',
-  ]),
-  questionNumbers: z
-    .string()
-    .regex(/^\d+$/, 'Must be a numeric string')
-    .default('5'),
+  quizId: z.string().uuid('Invalid courseId'),
   topic: z.string().max(500).optional(),
-  content: z.string().max(20000).optional(),
   apiKey: z.string().min(1).optional(),
   model: z.string().min(1).optional(),
 });
@@ -37,7 +21,7 @@ const generateQuizInputSchema = z.object({
  *   post:
  *     tags:
  *       - AI Quiz
- *     summary: Generate a quiz with AI and save it to the database
+ *     summary: Generate a quiz with AI from lesson content and save it to the database
  *     security:
  *       - SessionCookie: []
  *     requestBody:
@@ -46,25 +30,14 @@ const generateQuizInputSchema = z.object({
  *         application/json:
  *           schema:
  *             type: object
- *             required: [courseId, lessonId, quizType]
+ *             required: [quizId]
  *             properties:
- *               courseId:
+ *               quizId:
  *                 type: string
  *                 format: uuid
- *               lessonId:
- *                 type: string
- *                 format: uuid
- *               quizType:
- *                 type: string
- *                 enum: [multiple-choice, true-false, fill-in-the-blank, matching, ordering, drag-and-drop, essay, timed-challenge]
- *               questionNumbers:
- *                 type: string
- *                 description: Number of questions to generate (numeric string, default "5")
  *               topic:
  *                 type: string
- *               content:
- *                 type: string
- *                 description: Optional source content for the AI to base the quiz on
+ *                 description: Optional topic override — defaults to the lesson title
  *               apiKey:
  *                 type: string
  *               model:
@@ -78,6 +51,8 @@ const generateQuizInputSchema = z.object({
  *         description: Unauthorized
  *       403:
  *         description: Forbidden
+ *       404:
+ *         description: Lesson not found
  *       500:
  *         description: Internal server error
  */
@@ -96,22 +71,10 @@ export const POST = withAuth(
         );
       }
 
-      const {
-        courseId,
-        lessonId,
-        quizType,
-        questionNumbers,
-        topic,
-        content,
-        apiKey,
-        model,
-      } = parsed.data;
+      const { quizId, topic, apiKey, model } = parsed.data;
 
-      const quiz = await QuizService.generateAndSave(courseId, lessonId, {
-        quizType,
-        questionNumbers,
+      const quiz = await QuizService.generateAndSave(quizId, {
         topic,
-        content,
         apiKey,
         model,
       });
@@ -119,6 +82,13 @@ export const POST = withAuth(
       return NextResponse.json(quiz, { status: 201 });
     } catch (error) {
       console.error('AI Quiz Generation Error:', error);
+      // Surface lesson-not-foundas a 404
+      if (
+        error instanceof Error &&
+        error.message.startsWith('Lesson not found')
+      ) {
+        return errorResponse('NOT_FOUND', error.message, 404);
+      }
       return errorResponse('INTERNAL_ERROR', 'Failed to generate quiz', 500);
     }
   })

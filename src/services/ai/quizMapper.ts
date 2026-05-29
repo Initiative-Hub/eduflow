@@ -42,7 +42,8 @@ const quizSchemaByType: Record<string, ReturnType<typeof createQuizSchema>> = {
  */
 export function getQuizSchemaByType(quizType?: string) {
   if (!quizType) return aiQuizSchema;
-  return quizSchemaByType[quizType.toLowerCase()] ?? aiQuizSchema;
+  const normalizedType = quizType.toLowerCase().replace(/_/g, '-');
+  return quizSchemaByType[normalizedType] ?? aiQuizSchema;
 }
 
 type Quiz = z.infer<typeof aiQuizSchema>;
@@ -67,10 +68,9 @@ function mapMultipleChoice(q: any) {
   });
   // if AI marked correct as index or number, handle it
   if (q.correctIndex !== undefined && mappedOptions[q.correctIndex]) {
-    // biome-ignore lint/suspicious/useIterableCallbackReturn: <explanation>
-    mappedOptions.forEach(
-      (mo: any, i: number) => (mo.isCorrect = i === q.correctIndex)
-    );
+    mappedOptions.forEach((mo: any, i: number) => {
+      mo.isCorrect = i === q.correctIndex;
+    });
   }
 
   return {

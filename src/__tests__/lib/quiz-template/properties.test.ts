@@ -309,6 +309,12 @@ describe('Property 2: Registry returns valid handler for all registered type str
       { numRuns: 100 }
     );
   });
+
+  it('getHandler resolves snake_case aliases to registered hyphenated types', () => {
+    const handler = getHandler('multiple_choice');
+
+    expect(handler.type).toBe('multiple-choice');
+  });
 });
 
 // ─── Property 3: Quiz navigation index stays in bounds ───────────────────────
