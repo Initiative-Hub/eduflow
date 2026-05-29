@@ -51,7 +51,7 @@ export interface QuestionBankEntry {
 export interface QuizDefinition {
   id: string;
   courseId: string;
-  lessonId: string;
+  lessonIds: string[];
   title: string;
   description?: string;
   category: QuizCategory;

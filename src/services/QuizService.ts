@@ -50,7 +50,7 @@ function lessonContentToText(content: unknown): string {
 
 // CreateQuizInput type used by service-level create helper
 export type CreateQuizInput = {
-  lessonId: string;
+  lessonIds: string[];
   title: string;
   description?: string | null;
   category: QuizCategory;
@@ -120,7 +120,6 @@ export class QuizService {
     const quiz = await prisma.quiz.create({
       data: {
         courseId,
-        lessonId: data.lessonId,
         title: data.title,
         description: data.description ?? null,
         category: data.category,
@@ -129,7 +128,9 @@ export class QuizService {
         selectionMethod: data.selectionMethod,
         questionCount: resolvedQuestionCount,
         questions: resolvedQuestions as unknown as Prisma.InputJsonValue,
+        lessons: { connect: data.lessonIds.map((id) => ({ id })) },
       },
+      include: { lessons: true },
     });
 
     return quiz;
@@ -179,20 +180,23 @@ export class QuizService {
     //   select: { id: true, title: true, content: true },
     // });
 
-    const fetchedQuiz = await prisma.quiz.findUnique({ where: { id: quizId } });
+    const fetchedQuiz = await prisma.quiz.findUnique({
+      where: { id: quizId },
+      include: {
+        lessons: { select: { id: true, title: true, content: true } },
+      },
+    });
     if (!fetchedQuiz) {
       throw new Error('Quiz not found');
     }
-
-    const lesson = await prisma.lesson.findUnique({
-      where: { id: fetchedQuiz.lessonId },
-      select: { id: true, title: true, content: true },
-    });
-    if (!lesson) {
-      throw new Error(`Lesson not found: ${fetchedQuiz.lessonId}`);
+    // Aggregate content from all linked lessons
+    const lessons = fetchedQuiz.lessons ?? [];
+    if (!lessons || lessons.length === 0) {
+      throw new Error('No lessons linked to quiz');
     }
 
-    const lessonText = lessonContentToText(lesson.content);
+    const lessonTexts = lessons.map((l) => lessonContentToText(l.content));
+    const lessonText = lessonTexts.join('\n\n');
 
     // 2. Generate the quiz from the lesson content
     const service = new OpenRouterService();
@@ -200,7 +204,7 @@ export class QuizService {
       ...aiInput,
       quizType: fetchedQuiz.subType,
       questionNumbers: String(fetchedQuiz.questionCount),
-      topic: aiInput.topic ?? lesson.title,
+      topic: aiInput.topic ?? lessons[0]?.title ?? undefined,
       content: lessonText || undefined,
     });
 

@@ -83,9 +83,9 @@ export function useQuestionBank({ courseId }: UseQuestionBankOptions) {
 
   // Create quiz via real API
   const createQuizMutation = useMutation({
-    mutationFn: async (config: QuizConfiguration & { lessonId: string }) => {
+    mutationFn: async (config: QuizConfiguration & { lessonIds: string[] }) => {
       return apiClient.post<QuizDefinition>(`v1/courses/${courseId}/quizzes`, {
-        lessonId: config.lessonId,
+        lessonIds: config.lessonIds,
         title: config.title,
         description: config.description,
         category: config.category,

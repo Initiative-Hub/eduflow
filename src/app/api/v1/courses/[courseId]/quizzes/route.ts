@@ -9,7 +9,9 @@ import { QuizService } from '@/services/QuizService';
 // ─── Validation Schemas ──────────────────────────────────────────────────────
 
 const createQuizSchema = z.object({
-  lessonId: z.string().min(1, 'Lesson ID is required'),
+  // Accept either a single `lessonId` (legacy) or `lessonIds` array
+  lessonId: z.string().optional(),
+  lessonIds: z.array(z.string()).optional(),
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
   category: z.enum(['SELECTION_BASED', 'OPEN_ENDED']),
@@ -61,19 +63,54 @@ export const GET = withAuth(async (_req, _sessionData, { params }) => {
 
     const quizzes = await prisma.quiz.findMany({
       where: { courseId },
+      include: {
+        lessons: {
+          select: { id: true },
+        },
+      },
       orderBy: { createdAt: 'desc' },
     });
+
+    // Backward-compatible fallback during migration:
+    // If a quiz has no lesson relation rows yet, try reading legacy `lesson_id`.
+    let legacyLessonIdByQuizId = new Map<string, string>();
+    try {
+      const legacyRows = await prisma.$queryRaw<
+        Array<{ id: string; lesson_id: string | null }>
+      >`
+        SELECT id, lesson_id
+        FROM quiz
+        WHERE course_id = ${courseId}
+      `;
+
+      legacyLessonIdByQuizId = new Map(
+        legacyRows
+          .filter((row) => typeof row.lesson_id === 'string' && row.lesson_id)
+          .map((row) => [row.id, row.lesson_id as string])
+      );
+    } catch {
+      // Ignore when legacy column/table shape is gone after full migration.
+      legacyLessonIdByQuizId = new Map<string, string>();
+    }
 
     // For quizzes with empty questions, populate from the question bank
     const populatedQuizzes = await Promise.all(
       quizzes.map(async (quiz) => {
         const questions = quiz.questions as unknown[];
+        const relationLessonIds = quiz.lessons.map((lesson) => lesson.id);
+        const lessonIds =
+          relationLessonIds.length > 0
+            ? relationLessonIds
+            : legacyLessonIdByQuizId.get(quiz.id)
+            ? [legacyLessonIdByQuizId.get(quiz.id) as string]
+            : [];
+
         if (questions && Array.isArray(questions) && questions.length > 0) {
-          return quiz;
+          return { ...quiz, lessonIds };
         }
 
         if (quiz.selectionMethod === 'MANUAL_CREATE') {
-          return quiz;
+          return { ...quiz, lessonIds };
         }
 
         // Fetch matching questions from the bank
@@ -86,7 +123,7 @@ export const GET = withAuth(async (_req, _sessionData, { params }) => {
           orderBy: { createdAt: 'desc' },
         });
 
-        if (bankQuestions.length === 0) return quiz;
+        if (bankQuestions.length === 0) return { ...quiz, lessonIds };
 
         // Select questions based on method
         let selectedQuestions = bankQuestions;
@@ -116,7 +153,7 @@ export const GET = withAuth(async (_req, _sessionData, { params }) => {
           });
         }
 
-        return { ...quiz, questions: resolvedQuestions };
+        return { ...quiz, lessonIds, questions: resolvedQuestions };
       })
     );
 
@@ -202,7 +239,6 @@ export const POST = withAuth(async (req, _sessionData, { params }) => {
     }
 
     const {
-      lessonId,
       title,
       description,
       category,
@@ -214,8 +250,20 @@ export const POST = withAuth(async (req, _sessionData, { params }) => {
       selectedQuestionIds,
     } = parsed.data;
 
+    const lessonIds =
+      parsed.data.lessonIds ??
+      (parsed.data.lessonId ? [parsed.data.lessonId] : []);
+
+    if (!lessonIds || lessonIds.length === 0) {
+      return errorResponse(
+        'VALIDATION_ERROR',
+        'At least one lessonId is required',
+        400
+      );
+    }
+
     const quiz = await QuizService.createForCourse(courseId, {
-      lessonId,
+      lessonIds,
       title,
       description,
       category,

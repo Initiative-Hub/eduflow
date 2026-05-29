@@ -51,14 +51,14 @@ export function CreateQuizDialog({
     : modules.flatMap((m) => m.lessons);
 
   const handleSubmit = (data: QuizFormSubmitData) => {
-    const primaryLessonId =
+    const lessonIds =
       data.contentSource === 'all-modules'
-        ? (availableLessons[0]?.id ?? '')
-        : data.selectedLessonIds[0];
+        ? availableLessons.map((l) => l.id)
+        : data.selectedLessonIds;
 
     createQuiz(
       {
-        lessonId: primaryLessonId,
+        lessonIds,
         title: data.title,
         description: data.description || undefined,
         category: data.category,

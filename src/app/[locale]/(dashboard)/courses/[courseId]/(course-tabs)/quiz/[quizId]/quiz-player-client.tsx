@@ -142,7 +142,14 @@ export function QuizPlayerClient({ courseId, quizId }: QuizPlayerClientProps) {
   // Find the module title for breadcrumb
   const currentModule = useMemo(() => {
     if (!quiz) return null;
-    return modules.find((m) => m.lessons.some((l) => l.id === quiz.lessonId));
+    const linkedLessonIds: string[] = (quiz as any).lessons
+      ? (quiz as any).lessons.map((l: any) => l.id)
+      : (quiz as any).lessonId
+        ? [(quiz as any).lessonId]
+        : [];
+    return modules.find((m) =>
+      m.lessons.some((l) => linkedLessonIds.includes(l.id))
+    );
   }, [modules, quiz]);
 
   // Build navigation: prev/next considering lessons and quizzes in sequence
