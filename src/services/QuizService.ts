@@ -158,12 +158,11 @@ export class QuizService {
   }
 
   /**
-   * Generates a quiz via AI using the lesson's own content, then saves it to the DB.
+   * Generates a quiz via AI using the quiz's linked lesson contents, then saves it to the DB.
    *
-   * @param courseId       - The course the quiz belongs to
-   * @param lessonId       - The lesson to attach the quiz to (its content is used for generation)
+   * @param quizId         - The quiz ID (used to load linked lessons)
    * @param aiInput        - Optional AI options (topic, apiKey, model).
-   *                         Do NOT pass `content` — it is fetched from the lesson automatically.
+   *                         Do NOT pass `content` — it is fetched from linked lessons automatically.
    * @returns The newly created Quiz record
    */
   static async generateAndSave(
@@ -195,8 +194,15 @@ export class QuizService {
       throw new Error('No lessons linked to quiz');
     }
 
-    const lessonTexts = lessons.map((l) => lessonContentToText(l.content));
-    const lessonText = lessonTexts.join('\n\n');
+    const lessonText = lessons
+      .map((lesson, index) => {
+        const body = lessonContentToText(lesson.content);
+        const title = lesson.title?.trim() || `Lesson ${index + 1}`;
+
+        // Prefix each section with lesson title so the model can keep context boundaries.
+        return body ? `Lesson: ${title}\n${body}` : `Lesson: ${title}`;
+      })
+      .join('\n\n---\n\n');
 
     // 2. Generate the quiz from the lesson content
     const service = new OpenRouterService();
