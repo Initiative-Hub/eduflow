@@ -4,6 +4,7 @@ import type { Prisma } from '@/generated/prisma';
 import { errorResponse } from '@/lib/api/error-response';
 import { withAuth } from '@/lib/api/middlewares';
 import { prisma } from '@/lib/prisma';
+import { QuizService } from '@/services/QuizService';
 
 // ─── Validation Schemas ──────────────────────────────────────────────────────
 
@@ -213,65 +214,17 @@ export const POST = withAuth(async (req, _sessionData, { params }) => {
       selectedQuestionIds,
     } = parsed.data;
 
-    // ─── Populate questions from the question bank ─────────────────────────────
-    let resolvedQuestions: unknown[] = questions ?? [];
-
-    if (resolvedQuestions.length === 0 && selectionMethod !== 'MANUAL_CREATE') {
-      // Build filter for question bank lookup
-      const questionWhere: Record<string, unknown> = {
-        courseId,
-        category,
-        subType,
-      };
-      if (selectionMethod === 'HAND_PICK' && selectedQuestionIds?.length) {
-        // Hand-pick: fetch specific questions by ID
-        questionWhere.id = { in: selectedQuestionIds };
-      }
-
-      const bankQuestions = await prisma.question.findMany({
-        where: questionWhere,
-        orderBy: { createdAt: 'desc' },
-      });
-
-      // Select questions based on method
-      let selectedQuestions = bankQuestions;
-
-      if (selectionMethod === 'RANDOM') {
-        // Shuffle and take questionCount
-        const shuffled = [...bankQuestions].sort(() => Math.random() - 0.5);
-        selectedQuestions = shuffled.slice(0, questionCount);
-      } else {
-        // HAND_PICK: take up to questionCount
-        selectedQuestions = bankQuestions.slice(0, questionCount);
-      }
-
-      // Convert question bank entries to QuestionBlock format
-      // answerData already contains the full QuestionBlock structure
-      resolvedQuestions = selectedQuestions.map((q) => {
-        const answerData = q.answerData as Record<string, unknown>;
-        // answerData is the complete QuestionBlock; ensure explanation is included
-        if (q.explanation && !answerData.explanation) {
-          return { ...answerData, explanation: q.explanation };
-        }
-        return answerData;
-      });
-    }
-
-    const resolvedQuestionCount = resolvedQuestions.length;
-
-    const quiz = await prisma.quiz.create({
-      data: {
-        courseId,
-        lessonId,
-        title,
-        description,
-        category,
-        subType,
-        deliveryMode,
-        selectionMethod,
-        questionCount: resolvedQuestionCount,
-        questions: resolvedQuestions as unknown as Prisma.InputJsonValue,
-      },
+    const quiz = await QuizService.createForCourse(courseId, {
+      lessonId,
+      title,
+      description,
+      category,
+      subType,
+      deliveryMode,
+      selectionMethod,
+      questionCount,
+      questions,
+      selectedQuestionIds,
     });
 
     return NextResponse.json(quiz, { status: 201 });

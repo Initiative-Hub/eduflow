@@ -48,9 +48,92 @@ function lessonContentToText(content: unknown): string {
   }
 }
 
+// CreateQuizInput type used by service-level create helper
+export type CreateQuizInput = {
+  lessonId: string;
+  title: string;
+  description?: string | null;
+  category: QuizCategory;
+  subType: QuestionSubType;
+  deliveryMode: DeliveryMode;
+  selectionMethod: SelectionMethod;
+  questionCount: number;
+  questions?: Record<string, unknown>[];
+  selectedQuestionIds?: string[];
+};
+
 // ─── QuizService ──────────────────────────────────────────────────────────────
 
 export class QuizService {
+  static async createForCourse(courseId: string, data: CreateQuizInput) {
+    // Verify course exists
+    const course = await prisma.course.findUnique({
+      where: { id: courseId },
+      select: { id: true },
+    });
+    if (!course) {
+      throw new Error('COURSE_NOT_FOUND');
+    }
+
+    let resolvedQuestions: unknown[] = data.questions ?? [];
+
+    if (
+      resolvedQuestions.length === 0 &&
+      data.selectionMethod !== 'MANUAL_CREATE'
+    ) {
+      const questionWhere: Record<string, unknown> = {
+        courseId,
+        category: data.category,
+        subType: data.subType,
+      };
+      if (
+        data.selectionMethod === 'HAND_PICK' &&
+        data.selectedQuestionIds?.length
+      ) {
+        questionWhere.id = { in: data.selectedQuestionIds };
+      }
+
+      const bankQuestions = await prisma.question.findMany({
+        where: questionWhere,
+        orderBy: { createdAt: 'desc' },
+      });
+
+      let selectedQuestions = bankQuestions;
+      if (data.selectionMethod === 'RANDOM') {
+        const shuffled = [...bankQuestions].sort(() => Math.random() - 0.5);
+        selectedQuestions = shuffled.slice(0, data.questionCount);
+      } else {
+        selectedQuestions = bankQuestions.slice(0, data.questionCount);
+      }
+
+      resolvedQuestions = selectedQuestions.map((q) => {
+        const answerData = q.answerData as Record<string, unknown>;
+        if (q.explanation && !answerData.explanation) {
+          return { ...answerData, explanation: q.explanation };
+        }
+        return answerData;
+      });
+    }
+
+    const resolvedQuestionCount = resolvedQuestions.length;
+
+    const quiz = await prisma.quiz.create({
+      data: {
+        courseId,
+        lessonId: data.lessonId,
+        title: data.title,
+        description: data.description ?? null,
+        category: data.category,
+        subType: data.subType,
+        deliveryMode: data.deliveryMode,
+        selectionMethod: data.selectionMethod,
+        questionCount: resolvedQuestionCount,
+        questions: resolvedQuestions as unknown as Prisma.InputJsonValue,
+      },
+    });
+
+    return quiz;
+  }
   static async updateQuestions(
     quizId: string,
     questions: Record<string, unknown>[]
