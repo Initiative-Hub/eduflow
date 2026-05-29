@@ -86,6 +86,12 @@ export const POST = withAuth(
       return NextResponse.json(quiz, { status: 201 });
     } catch (error) {
       console.error('AI Quiz Generation Error:', error);
+      if (
+        error instanceof Error &&
+        error.message === 'Quiz already has the maximum number of questions'
+      ) {
+        return errorResponse('VALIDATION_ERROR', error.message, 400);
+      }
       // Surface lesson-not-foundas a 404
       if (
         error instanceof Error &&

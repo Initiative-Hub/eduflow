@@ -201,6 +201,10 @@ export class QuizService {
     if (fetchedQuiz.course.ownerId !== userId) {
       throw new Error('Forbidden');
     }
+    const currentQuestions = (fetchedQuiz.questions as unknown[]) ?? [];
+    if (currentQuestions.length >= fetchedQuiz.questionCount) {
+      throw new Error('Quiz already has the maximum number of questions');
+    }
     // Aggregate content from all linked lessons
     const lessons = fetchedQuiz.lessons ?? [];
     if (!lessons || lessons.length === 0) {

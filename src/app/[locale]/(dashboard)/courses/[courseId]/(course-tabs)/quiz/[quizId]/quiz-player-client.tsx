@@ -273,14 +273,14 @@ export function QuizPlayerClient({ courseId, quizId }: QuizPlayerClientProps) {
 
         {isTeacher && (
           <div className="flex items-center gap-1 rounded-lg border border-muted bg-muted/40 p-0.5">
-            {/* <Button
+            <Button
               variant={activeTab === 'take' ? 'secondary' : 'ghost'}
               size="xs"
               onClick={() => setActiveTab('take')}
               className="h-7 cursor-pointer px-3 font-semibold text-xs"
             >
               {t('studentView')}
-            </Button> */}
+            </Button>
             <Button
               variant={activeTab === 'edit' ? 'secondary' : 'ghost'}
               size="xs"
@@ -319,6 +319,7 @@ export function QuizPlayerClient({ courseId, quizId }: QuizPlayerClientProps) {
             isSaving={isSavingQuestions}
             onGenerateAI={generateQuestions}
             isGeneratingAI={isGeneratingQuestions}
+            questionCount={quiz.questionCount}
           />
         ) : showPreviousResult ? (
           <QuizResult

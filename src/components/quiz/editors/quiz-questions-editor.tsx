@@ -26,6 +26,7 @@ interface QuizQuestionsEditorProps {
   isSaving?: boolean;
   onGenerateAI?: () => void;
   isGeneratingAI?: boolean;
+  questionCount?: number;
 }
 
 export function QuizQuestionsEditor({
@@ -34,6 +35,7 @@ export function QuizQuestionsEditor({
   isSaving = false,
   onGenerateAI,
   isGeneratingAI = false,
+  questionCount,
 }: QuizQuestionsEditorProps) {
   const t = useTranslations('Courses.QuizPlayer');
   const [questions, setQuestions] = useState<QuestionBlock[]>(initialQuestions);
@@ -193,7 +195,11 @@ export function QuizQuestionsEditor({
               type="button"
               variant="outline"
               onClick={onGenerateAI}
-              disabled={isGeneratingAI}
+              disabled={
+                isGeneratingAI ||
+                (questionCount !== undefined &&
+                  questions.length >= questionCount)
+              }
               className="cursor-pointer gap-1.5"
             >
               {isGeneratingAI ? (
@@ -211,7 +217,10 @@ export function QuizQuestionsEditor({
             type="button"
             variant="outline"
             onClick={handleAddClick}
-            disabled={isGeneratingAI}
+            disabled={
+              isGeneratingAI ||
+              (questionCount !== undefined && questions.length >= questionCount)
+            }
             className="cursor-pointer"
           >
             <Plus className="mr-1.5 h-4 w-4" />
