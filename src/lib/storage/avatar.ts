@@ -36,8 +36,6 @@ export function isAvatarObjectKey(value: string) {
   return value.startsWith('users/') && value.includes('/avatars/');
 }
 
-export const buildAvatarPrefix = (userId: string) => `users/${userId}/avatars/`;
-
 export const buildAvatarObjectKey = ({
   userId,
   fileName,
@@ -50,7 +48,7 @@ export const buildAvatarObjectKey = ({
   const extension =
     extensionFromFileName(fileName) ?? extensionFromMimeType(contentType);
 
-  return `${buildAvatarPrefix(userId)}${crypto.randomUUID()}.${extension}`;
+  return `users/${userId}/avatars/${crypto.randomUUID()}.${extension}`;
 };
 
 export const createAvatarReadSignedUrl = async ({
