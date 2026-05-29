@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import {
   AlertTriangle,
   ChevronLeft,
@@ -79,11 +79,16 @@ export function QuizPlayerClient({ courseId, quizId }: QuizPlayerClientProps) {
   const [activeTab, setActiveTab] = useState<'take' | 'edit'>('take');
 
   const { data: sessionData } = useSession();
-  const queryClient = useQueryClient();
+
   const isTeacher =
     sessionData?.user.role === 'TEACHER' || sessionData?.user.role === 'ADMIN';
 
-  const { saveQuestions, isSavingQuestions } = useQuiz({ courseId, quizId });
+  const {
+    saveQuestions,
+    isSavingQuestions,
+    generateQuestions,
+    isGeneratingQuestions,
+  } = useQuiz({ courseId, quizId });
 
   const quiz = useMemo(
     () => quizzes.find((q) => q.id === quizId),
@@ -268,14 +273,14 @@ export function QuizPlayerClient({ courseId, quizId }: QuizPlayerClientProps) {
 
         {isTeacher && (
           <div className="flex items-center gap-1 rounded-lg border border-muted bg-muted/40 p-0.5">
-            <Button
+            {/* <Button
               variant={activeTab === 'take' ? 'secondary' : 'ghost'}
               size="xs"
               onClick={() => setActiveTab('take')}
               className="h-7 cursor-pointer px-3 font-semibold text-xs"
             >
               {t('studentView')}
-            </Button>
+            </Button> */}
             <Button
               variant={activeTab === 'edit' ? 'secondary' : 'ghost'}
               size="xs"
@@ -312,6 +317,8 @@ export function QuizPlayerClient({ courseId, quizId }: QuizPlayerClientProps) {
             initialQuestions={(quiz.questions ?? []) as QuestionBlock[]}
             onSave={saveQuestions}
             isSaving={isSavingQuestions}
+            onGenerateAI={generateQuestions}
+            isGeneratingAI={isGeneratingQuestions}
           />
         ) : showPreviousResult ? (
           <QuizResult

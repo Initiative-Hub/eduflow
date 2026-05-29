@@ -669,6 +669,8 @@
       "editQuestions": "Edit Questions",
       "studentView": "Student View",
       "teacherView": "Teacher View",
+      "generateAIQuestions": "Generate AI Questions",
+      "generatingAIQuestions": "Generating AI Questions...",
       "addQuestion": "Add Question",
       "editQuestion": "Edit Question",
       "deleteQuestion": "Delete Question",

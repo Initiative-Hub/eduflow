@@ -552,7 +552,7 @@ export const MOCK_QUIZZES: QuizDefinition[] = [
   {
     id: 'quiz-seed-001',
     courseId: COURSE_ID,
-    lessonId: 'les-cell-001',
+    lessonIds: ['les-cell-001'],
     title: 'Cell Organelles Review',
     description: 'Test your knowledge of cell organelles and their functions.',
     category: 'SELECTION_BASED',
@@ -571,7 +571,7 @@ export const MOCK_QUIZZES: QuizDefinition[] = [
   {
     id: 'quiz-seed-002',
     courseId: COURSE_ID,
-    lessonId: 'les-cell-002',
+    lessonIds: ['les-cell-002'],
     title: 'Cell Transport Concepts',
     description: 'Review quiz on cell membrane transport mechanisms.',
     category: 'SELECTION_BASED',
@@ -586,7 +586,7 @@ export const MOCK_QUIZZES: QuizDefinition[] = [
   {
     id: 'quiz-seed-003',
     courseId: COURSE_ID,
-    lessonId: 'les-gen-001',
+    lessonIds: ['les-gen-001'],
     title: 'DNA Structure Fill-in-the-Blank',
     description: 'Complete sentences about DNA structure and composition.',
     category: 'OPEN_ENDED',
@@ -601,7 +601,7 @@ export const MOCK_QUIZZES: QuizDefinition[] = [
   {
     id: 'quiz-seed-004',
     courseId: COURSE_ID,
-    lessonId: 'les-eco-001',
+    lessonIds: ['les-eco-001'],
     title: 'Ecology Ordering Challenge',
     description: 'Arrange ecological concepts in the correct order.',
     category: 'SELECTION_BASED',

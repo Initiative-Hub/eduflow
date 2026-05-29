@@ -25,7 +25,7 @@ export function QuestionPreview({ question }: QuestionPreviewProps) {
   const noop = () => {};
 
   switch (data.type) {
-    case 'multiple-choice': {
+    case 'multiple_choice': {
       const correctId = data.options.find((o) => o.isCorrect)?.id;
       return (
         <MultipleChoice
@@ -37,7 +37,7 @@ export function QuestionPreview({ question }: QuestionPreviewProps) {
       );
     }
 
-    case 'true-false':
+    case 'true_false':
       return (
         <TrueFalse
           question={data}
@@ -47,7 +47,7 @@ export function QuestionPreview({ question }: QuestionPreviewProps) {
         />
       );
 
-    case 'fill-in-the-blank': {
+    case 'fill_in_the_blank': {
       const filledBlanks: Record<string, string> = {};
       for (const blank of data.blanks) {
         filledBlanks[blank.id] = blank.acceptableAnswers[0] ?? '';

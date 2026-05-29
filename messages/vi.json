@@ -669,6 +669,8 @@
       "editQuestions": "Chỉnh sửa câu hỏi",
       "studentView": "Giao diện học sinh",
       "teacherView": "Giao diện giáo viên",
+      "generateAIQuestions": "Tạo câu hỏi bằng AI",
+      "generatingAIQuestions": "Đang tạo câu hỏi bằng AI...",
       "addQuestion": "Thêm câu hỏi",
       "editQuestion": "Chỉnh sửa câu hỏi",
       "deleteQuestion": "Xóa câu hỏi",

@@ -39,7 +39,7 @@ const trueFalseExample: QuizContent = {
   type: 'true-false',
   questions: [
     {
-      type: 'true-false',
+      type: 'true_false',
       prompt: 'Photosynthesis occurs only in the leaves of a plant.',
       correctAnswer: false,
       explanation:
@@ -130,7 +130,7 @@ const fillInTheBlankExample: QuizContent = {
   type: 'fill-in-the-blank',
   questions: [
     {
-      type: 'fill-in-the-blank',
+      type: 'fill_in_the_blank',
       promptTemplate:
         'Plants use {{pigment}} to capture sunlight. This process takes place inside organelles called {{organelle}}.',
       blanks: [

@@ -183,10 +183,10 @@ export class OpenRouterService implements ChatProviderService {
       'multiple-choice': multipleChoiceQuestionSchema.omit({ type: true }),
       'true-false': trueFalseQuestionSchema.omit({ type: true }),
       'fill-in-the-blank': fillInTheBlankQuestionSchema.omit({ type: true }),
-      'matching': matchingQuestionSchema.omit({ type: true }),
-      'ordering': orderingQuestionSchema.omit({ type: true }),
+      matching: matchingQuestionSchema.omit({ type: true }),
+      ordering: orderingQuestionSchema.omit({ type: true }),
       'drag-and-drop': dragAndDropQuestionSchema.omit({ type: true }),
-      'essay': essayQuestionSchema.omit({ type: true }),
+      essay: essayQuestionSchema.omit({ type: true }),
       'timed-challenge': timedChallengeQuestionSchema.omit({ type: true }),
     };
 
@@ -217,9 +217,9 @@ Instructions:
     });
 
     // Inject the correct `type` field into every question (the AI schema omitted it)
-    const questionsWithType = (response.object.questions as Record<string, unknown>[]).map(
-      (q) => ({ type: normalizedType, ...q })
-    );
+    const questionsWithType = (
+      response.object.questions as Record<string, unknown>[]
+    ).map((q) => ({ type: normalizedType, ...q }));
 
     return { ...response.object, questions: questionsWithType };
   }

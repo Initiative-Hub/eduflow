@@ -7,4 +7,10 @@ export const quizService = {
       questions,
     });
   },
+
+  generateQuestions: async (quizId: string) => {
+    return apiClient.post<any>(`v1/ai/quiz`, {
+      quizId,
+    });
+  },
 };

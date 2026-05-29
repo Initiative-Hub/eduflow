@@ -8,10 +8,11 @@ import {
   Loader2,
   Plus,
   Save,
+  Sparkles,
   Trash2,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -23,12 +24,16 @@ interface QuizQuestionsEditorProps {
   initialQuestions: QuestionBlock[];
   onSave?: (questions: QuestionBlock[]) => void;
   isSaving?: boolean;
+  onGenerateAI?: () => void;
+  isGeneratingAI?: boolean;
 }
 
 export function QuizQuestionsEditor({
   initialQuestions,
   onSave,
   isSaving = false,
+  onGenerateAI,
+  isGeneratingAI = false,
 }: QuizQuestionsEditorProps) {
   const t = useTranslations('Courses.QuizPlayer');
   const [questions, setQuestions] = useState<QuestionBlock[]>(initialQuestions);
@@ -37,6 +42,11 @@ export function QuizQuestionsEditor({
     null
   );
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
+
+  // Sync state when initialQuestions changes (e.g. after AI generation)
+  useEffect(() => {
+    setQuestions(initialQuestions);
+  }, [initialQuestions]);
 
   // Open dialog to add new question
   const handleAddClick = () => {
@@ -107,19 +117,19 @@ export function QuizQuestionsEditor({
   // Format type badges nicely
   const getTypeBadge = (type: QuestionBlock['type']) => {
     switch (type) {
-      case 'multiple-choice':
+      case 'multiple_choice':
         return (
           <Badge className="border-none bg-blue-500 text-white hover:bg-blue-600">
             Multiple Choice
           </Badge>
         );
-      case 'true-false':
+      case 'true_false':
         return (
           <Badge className="border-none bg-emerald-500 text-white hover:bg-emerald-600">
             True/False
           </Badge>
         );
-      case 'fill-in-the-blank':
+      case 'fill_in_the_blank':
         return (
           <Badge className="border-none bg-amber-500 text-white hover:bg-amber-600">
             Fill in the Blank
@@ -178,10 +188,30 @@ export function QuizQuestionsEditor({
         </div>
 
         <div className="flex gap-2">
+          {onGenerateAI && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onGenerateAI}
+              disabled={isGeneratingAI}
+              className="cursor-pointer gap-1.5"
+            >
+              {isGeneratingAI ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Sparkles className="h-4 w-4" />
+              )}
+              {isGeneratingAI
+                ? t('generatingAIQuestions')
+                : t('generateAIQuestions')}
+            </Button>
+          )}
+
           <Button
             type="button"
             variant="outline"
             onClick={handleAddClick}
+            disabled={isGeneratingAI}
             className="cursor-pointer"
           >
             <Plus className="mr-1.5 h-4 w-4" />
@@ -191,7 +221,7 @@ export function QuizQuestionsEditor({
           <Button
             type="button"
             onClick={handleSaveAll}
-            disabled={isSaving}
+            disabled={isSaving || isGeneratingAI}
             className="cursor-pointer gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
           >
             {isSaving ? (
@@ -205,7 +235,16 @@ export function QuizQuestionsEditor({
       </div>
 
       {/* Questions list */}
-      <div className="space-y-4">
+      <div className="relative min-h-[200px] space-y-4">
+        {isGeneratingAI && (
+          <div className="absolute inset-0 z-50 flex flex-col items-center justify-center rounded-xl border border-dashed bg-background/70 p-10 text-center backdrop-blur-[1px]">
+            <Loader2 className="mb-2 h-8 w-8 animate-spin text-primary" />
+            <p className="font-medium text-muted-foreground text-sm">
+              {t('generatingAIQuestions')}
+            </p>
+          </div>
+        )}
+
         {questions.length === 0 ? (
           <Card className="border-dashed bg-muted/20">
             <CardContent className="flex flex-col items-center justify-center py-10 text-center text-muted-foreground">
@@ -247,7 +286,7 @@ export function QuizQuestionsEditor({
                     )}
                   </div>
                   <p className="line-clamp-2 font-semibold text-foreground text-sm md:text-base">
-                    {q.type === 'fill-in-the-blank'
+                    {q.type === 'fill_in_the_blank'
                       ? q.promptTemplate
                       : q.prompt}
                   </p>

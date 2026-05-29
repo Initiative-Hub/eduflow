@@ -17,7 +17,7 @@ export function useQuiz({ courseId, quizId }: UseQuizOptions) {
     mutationFn: async (updatedQuestions: QuestionBlock[]) => {
       return quizService.saveQuestions(quizId, updatedQuestions);
     },
-    onSuccess: (data, updatedQuestions) => {
+    onSuccess: (_data, updatedQuestions) => {
       queryClient.setQueryData(
         ['quizzes', courseId],
         (oldQuizzes: any[] | undefined) => {
@@ -40,8 +40,36 @@ export function useQuiz({ courseId, quizId }: UseQuizOptions) {
     },
   });
 
+  const generateQuestionsMutation = useMutation({
+    mutationFn: async () => {
+      return quizService.generateQuestions(quizId);
+    },
+    onSuccess: (updatedQuiz: any) => {
+      queryClient.setQueryData(
+        ['quizzes', courseId],
+        (oldQuizzes: any[] | undefined) => {
+          if (!oldQuizzes) return oldQuizzes;
+          return oldQuizzes.map((q) =>
+            q.id === quizId
+              ? {
+                  ...q,
+                  ...updatedQuiz,
+                }
+              : q
+          );
+        }
+      );
+      toast.success('AI questions generated successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error?.message ?? 'Failed to generate AI questions');
+    },
+  });
+
   return {
     saveQuestions: saveQuestionsMutation.mutate,
     isSavingQuestions: saveQuestionsMutation.isPending,
+    generateQuestions: generateQuestionsMutation.mutate,
+    isGeneratingQuestions: generateQuestionsMutation.isPending,
   };
 }
