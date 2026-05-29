@@ -57,7 +57,7 @@ const generateQuizInputSchema = z.object({
  *         description: Internal server error
  */
 export const POST = withAuth(
-  withRoles(['TEACHER', 'ADMIN'], async (req: Request) => {
+  withRoles(['TEACHER'], async (req: Request, sessionData) => {
     try {
       const body = await req.json();
 
@@ -73,11 +73,15 @@ export const POST = withAuth(
 
       const { quizId, topic, apiKey, model } = parsed.data;
 
-      const quiz = await QuizService.generateAndSave(quizId, {
-        topic,
-        apiKey,
-        model,
-      });
+      const quiz = await QuizService.generateAndSave(
+        quizId,
+        sessionData.user.id,
+        {
+          topic,
+          apiKey,
+          model,
+        }
+      );
 
       return NextResponse.json(quiz, { status: 201 });
     } catch (error) {
@@ -85,9 +89,12 @@ export const POST = withAuth(
       // Surface lesson-not-foundas a 404
       if (
         error instanceof Error &&
-        error.message.startsWith('Lesson not found')
+        (error.message.startsWith('Lesson not found') ||
+          error.message === 'Forbidden')
       ) {
-        return errorResponse('NOT_FOUND', error.message, 404);
+        return error.message === 'Forbidden'
+          ? errorResponse('FORBIDDEN', error.message, 403)
+          : errorResponse('NOT_FOUND', error.message, 404);
       }
       return errorResponse('INTERNAL_ERROR', 'Failed to generate quiz', 500);
     }

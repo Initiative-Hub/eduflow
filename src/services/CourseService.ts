@@ -5,6 +5,23 @@ import { ChatProviderFactory } from '@/services/ai/ChatProviderFactory';
 import { OpenRouterService } from '@/services/ai/OpenRouterService';
 import { StorageService } from '@/services/StorageService';
 export class CourseService {
+  static async assertCourseOwner(courseId: string, userId: string) {
+    const course = await prisma.course.findUnique({
+      where: { id: courseId },
+      select: { ownerId: true },
+    });
+
+    if (!course) {
+      throw new Error('Course not found');
+    }
+
+    if (course.ownerId !== userId) {
+      throw new Error('Forbidden');
+    }
+
+    return course;
+  }
+
   static async createCourse(data: {
     ownerId: string;
     title: string;

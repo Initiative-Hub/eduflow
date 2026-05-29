@@ -6,6 +6,7 @@ import type {
   SelectionMethod,
 } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
+import { CourseService } from '@/services/CourseService';
 import { OpenRouterService } from './ai/OpenRouterService';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -65,14 +66,23 @@ export type CreateQuizInput = {
 // ─── QuizService ──────────────────────────────────────────────────────────────
 
 export class QuizService {
-  static async createForCourse(courseId: string, data: CreateQuizInput) {
-    // Verify course exists
-    const course = await prisma.course.findUnique({
-      where: { id: courseId },
+  static async createForCourse(
+    courseId: string,
+    userId: string,
+    data: CreateQuizInput
+  ) {
+    await CourseService.assertCourseOwner(courseId, userId);
+
+    const linkedLessons = await prisma.lesson.findMany({
+      where: {
+        id: { in: data.lessonIds },
+        module: { courseId },
+      },
       select: { id: true },
     });
-    if (!course) {
-      throw new Error('COURSE_NOT_FOUND');
+
+    if (linkedLessons.length !== data.lessonIds.length) {
+      throw new Error('Some lessons do not belong to this course');
     }
 
     let resolvedQuestions: unknown[] = data.questions ?? [];
@@ -167,6 +177,7 @@ export class QuizService {
    */
   static async generateAndSave(
     quizId: string,
+    userId: string,
     aiInput: {
       topic?: string;
       apiKey?: string;
@@ -182,11 +193,15 @@ export class QuizService {
     const fetchedQuiz = await prisma.quiz.findUnique({
       where: { id: quizId },
       include: {
+        course: { select: { ownerId: true } },
         lessons: { select: { id: true, title: true, content: true } },
       },
     });
     if (!fetchedQuiz) {
       throw new Error('Quiz not found');
+    }
+    if (fetchedQuiz.course.ownerId !== userId) {
+      throw new Error('Forbidden');
     }
     // Aggregate content from all linked lessons
     const lessons = fetchedQuiz.lessons ?? [];

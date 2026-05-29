@@ -71,39 +71,11 @@ export const GET = withAuth(async (_req, _sessionData, { params }) => {
       orderBy: { createdAt: 'desc' },
     });
 
-    // Backward-compatible fallback during migration:
-    // If a quiz has no lesson relation rows yet, try reading legacy `lesson_id`.
-    let legacyLessonIdByQuizId = new Map<string, string>();
-    try {
-      const legacyRows = await prisma.$queryRaw<
-        Array<{ id: string; lesson_id: string | null }>
-      >`
-        SELECT id, lesson_id
-        FROM quiz
-        WHERE course_id = ${courseId}
-      `;
-
-      legacyLessonIdByQuizId = new Map(
-        legacyRows
-          .filter((row) => typeof row.lesson_id === 'string' && row.lesson_id)
-          .map((row) => [row.id, row.lesson_id as string])
-      );
-    } catch {
-      // Ignore when legacy column/table shape is gone after full migration.
-      legacyLessonIdByQuizId = new Map<string, string>();
-    }
-
     // For quizzes with empty questions, populate from the question bank
     const populatedQuizzes = await Promise.all(
       quizzes.map(async (quiz) => {
         const questions = quiz.questions as unknown[];
-        const relationLessonIds = quiz.lessons.map((lesson) => lesson.id);
-        const lessonIds =
-          relationLessonIds.length > 0
-            ? relationLessonIds
-            : legacyLessonIdByQuizId.get(quiz.id)
-            ? [legacyLessonIdByQuizId.get(quiz.id) as string]
-            : [];
+        const lessonIds = quiz.lessons.map((lesson) => lesson.id);
 
         if (questions && Array.isArray(questions) && questions.length > 0) {
           return { ...quiz, lessonIds };
@@ -262,22 +234,29 @@ export const POST = withAuth(async (req, _sessionData, { params }) => {
       );
     }
 
-    const quiz = await QuizService.createForCourse(courseId, {
-      lessonIds,
-      title,
-      description,
-      category,
-      subType,
-      deliveryMode,
-      selectionMethod,
-      questionCount,
-      questions,
-      selectedQuestionIds,
-    });
+    const quiz = await QuizService.createForCourse(
+      courseId,
+      _sessionData.user.id,
+      {
+        lessonIds,
+        title,
+        description,
+        category,
+        subType,
+        deliveryMode,
+        selectionMethod,
+        questionCount,
+        questions,
+        selectedQuestionIds,
+      }
+    );
 
     return NextResponse.json(quiz, { status: 201 });
   } catch (error: unknown) {
     console.error('Error creating quiz:', error);
+    if (error instanceof Error && error.message === 'Forbidden') {
+      return errorResponse('FORBIDDEN', 'Forbidden', 403);
+    }
     return errorResponse('INTERNAL_ERROR', 'Internal Server Error', 500);
   }
 });
