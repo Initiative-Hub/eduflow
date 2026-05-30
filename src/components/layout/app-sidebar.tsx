@@ -13,8 +13,10 @@ import {
   Plus,
   School,
   Settings,
+  ShieldCheck,
   Sparkles,
   User,
+  UserCog,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -119,6 +121,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     },
   ];
 
+  const adminItems: SidebarItem[] = [
+    {
+      name: t('adminUserManagement'),
+      url: '/admin/users',
+      icon: <UserCog className={sidebarIconClassName} />,
+      exact: true,
+    },
+    {
+      name: t('adminRoles'),
+      url: '/admin/roles',
+      icon: <ShieldCheck className={sidebarIconClassName} />,
+      exact: true,
+    },
+  ];
+
   const match = pathname.match(/\/courses\/([^/]+)/);
   const courseId = match ? match[1] : null;
 
@@ -133,9 +150,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const isSettingsContext =
     pathname === '/profile' || pathname.startsWith('/settings');
+  const isAdminContext = pathname.startsWith('/admin');
 
   let menuItems = assistants;
-  if (isSettingsContext) {
+  if (isAdminContext) {
+    menuItems = adminItems;
+  } else if (isSettingsContext) {
     menuItems = settingsItems;
   } else if (courseId) {
     menuItems = courseItems;
@@ -202,13 +222,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>
-            {isSettingsContext ? (
+            {isSettingsContext || isAdminContext ? (
               <div className="px-5 pt-2 pb-1 group-data-[collapsible=icon]:hidden">
                 <h2 className="font-bold text-foreground text-lg leading-tight">
-                  {t('settingsHeading')}
+                  {isAdminContext ? t('adminHeading') : t('settingsHeading')}
                 </h2>
                 <p className="mt-1 text-muted-foreground text-sm leading-tight">
-                  {t('settingsSubheading')}
+                  {isAdminContext
+                    ? t('adminSubheading')
+                    : t('settingsSubheading')}
                 </p>
               </div>
             ) : null}

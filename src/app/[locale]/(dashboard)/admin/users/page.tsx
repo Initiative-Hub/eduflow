@@ -5,6 +5,6 @@ export const metadata: Metadata = {
   title: 'User Management',
 };
 
-export default async function UsersPage() {
+export default async function AdminUsersPage() {
   return <UsersManager />;
 }

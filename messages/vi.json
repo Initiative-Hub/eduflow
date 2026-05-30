@@ -1,9 +1,4 @@
 {
-  "AccountPage": {
-    "emailLabel": "Email:",
-    "title": "Thông tin tài khoản",
-    "usernameLabel": "Tên người dùng:"
-  },
   "AIChat": {
     "attachments": {
       "add": "Đính kèm tệp",
@@ -842,6 +837,10 @@
     "system": "Hệ thống"
   },
   "Layout": {
+    "adminHeading": "Quản trị",
+    "adminRoles": "Vai trò",
+    "adminSubheading": "Quản lý cài đặt nền tảng và quản trị",
+    "adminUserManagement": "Quản lý người dùng",
     "aiChat": "Trò chuyện AI",
     "aiTools": "Công cụ AI",
     "courses": "Khóa học",

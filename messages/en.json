@@ -1,9 +1,4 @@
 {
-  "AccountPage": {
-    "emailLabel": "Email:",
-    "title": "Account Information",
-    "usernameLabel": "Username:"
-  },
   "AIChat": {
     "attachments": {
       "add": "Attach files",
@@ -842,6 +837,10 @@
     "system": "System"
   },
   "Layout": {
+    "adminHeading": "Admin",
+    "adminRoles": "Roles",
+    "adminSubheading": "Manage platform and administrative settings",
+    "adminUserManagement": "User Management",
     "aiChat": "AI Chat",
     "aiTools": "AI Tools",
     "courses": "Courses",

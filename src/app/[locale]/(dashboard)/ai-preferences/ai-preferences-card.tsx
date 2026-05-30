@@ -16,9 +16,9 @@ import {
   type AIPreferencesData,
   type InteractionStyle,
   RESPONSE_TONE_STEPS,
-} from './profile.config';
+} from '../profile/profile.config';
 
-export type { AIPreferencesData } from './profile.config';
+export type { AIPreferencesData } from '../profile/profile.config';
 
 interface AIPreferencesCardProps {
   preferences: AIPreferencesData;
