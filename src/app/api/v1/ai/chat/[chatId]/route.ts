@@ -10,6 +10,10 @@ import type {
 } from '@/services/ai/chat-provider.types';
 import { CacheService } from '@/services/CacheService';
 import { ChatPersistenceService } from '@/services/ChatPersistenceService';
+import {
+  hasChatFileParts,
+  hydrateChatAttachmentDataUrls,
+} from '@/utils/chat-attachments';
 
 export const maxDuration = 30;
 
@@ -283,6 +287,7 @@ export async function POST(
       userId,
       guestId,
     });
+
     if (!chatData) {
       return new Response(JSON.stringify({ error: 'Chat not found' }), {
         status: 404,
@@ -290,16 +295,42 @@ export async function POST(
       });
     }
 
+    const hasFileParts = hasChatFileParts(parsedBody.data.messages);
+    if (hasFileParts && !userId) {
+      return new Response(
+        JSON.stringify({ error: 'File attachments require sign-in' }),
+        { status: 403, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    let messagesForModel = parsedBody.data.messages;
+    if (hasFileParts && userId) {
+      try {
+        messagesForModel = await hydrateChatAttachmentDataUrls({
+          messages: parsedBody.data.messages,
+          userId,
+        });
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : 'File attachment not found';
+        return new Response(JSON.stringify({ error: message }), {
+          status: 404,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
     const provider = ChatProviderFactory.create(
       parsedBody.data.provider ?? DEFAULT_PROVIDER
     );
 
-    const result = await provider.streamChat(
-      parsedBody.data as StreamChatInput
-    );
+    const result = await provider.streamChat({
+      ...(parsedBody.data as StreamChatInput),
+      messages: messagesForModel,
+    });
 
     const response = result.toUIMessageStreamResponse({
-      originalMessages: parsedBody.data.messages,
+      originalMessages: messagesForModel,
       generateMessageId: () => `${crypto.randomUUID()}`,
       onFinish: async ({ messages }) => {
         await ChatPersistenceService.saveMessages({

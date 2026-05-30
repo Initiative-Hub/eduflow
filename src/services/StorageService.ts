@@ -63,6 +63,68 @@ async function ensureParentFolder(
 }
 
 /**
+ * Ensures a folder path exists by traversing and creating missing folders
+ * in sequence. This is used for uploads with nested paths to avoid multiple
+ * round-trips when intermediate folders do not exist.
+ */
+async function ensureFolderPath(options: {
+  userId: string;
+  courseId?: string | null;
+  folderPath?: string[];
+}) {
+  let parentId: string | null = null;
+
+  for (const name of options.folderPath ?? []) {
+    const normalizedName = normalizeName(name);
+    if (!normalizedName) {
+      throw new Error('Folder name is required');
+    }
+
+    const existing: Pick<FileInventory, 'id' | 'isFolder'> | null =
+      await prisma.fileInventory.findFirst({
+        where: {
+          userId: options.userId,
+          courseId: options.courseId ?? null,
+          parentId,
+          deletedAt: null,
+          name: {
+            equals: normalizedName,
+            mode: 'insensitive',
+          },
+        },
+        select: {
+          id: true,
+          isFolder: true,
+        },
+      });
+
+    if (existing) {
+      if (!existing.isFolder) {
+        throw new Error('An item with this name already exists');
+      }
+
+      parentId = existing.id;
+      continue;
+    }
+
+    const folder: FileInventory = await prisma.fileInventory.create({
+      data: {
+        userId: options.userId,
+        courseId: options.courseId ?? null,
+        parentId,
+        name: normalizedName,
+        isFolder: true,
+        status: 'READY',
+      },
+    });
+
+    parentId = folder.id;
+  }
+
+  return parentId;
+}
+
+/**
  * Checks whether a candidate node is inside the subtree of an ancestor node.
  */
 async function isDescendantOf(options: {
@@ -302,16 +364,22 @@ export class StorageService {
     userId: string;
     courseId?: string | null;
     parentId?: string | null;
-    path?: string;
+    folderPath?: string[];
     fileName: string;
     contentType: string;
     fileSize: number;
   }) {
-    await ensureParentFolder(
-      options.userId,
-      options.parentId ?? null,
-      options.courseId
-    );
+    const usesFolderPath = Boolean(options.folderPath?.length);
+    const parentId = usesFolderPath
+      ? await ensureFolderPath({
+          userId: options.userId,
+          courseId: options.courseId,
+          folderPath: options.folderPath,
+        })
+      : (options.parentId ?? null);
+    if (!usesFolderPath) {
+      await ensureParentFolder(options.userId, parentId, options.courseId);
+    }
 
     const normalizedName = normalizeName(options.fileName);
     if (!normalizedName) {
@@ -324,7 +392,6 @@ export class StorageService {
 
     const objectKey = buildInventoryObjectKey(options.userId, normalizedName, {
       courseId: options.courseId ?? undefined,
-      relativePath: options.path,
     });
     const extension = normalizedName.includes('.')
       ? (normalizedName.split('.').pop()?.toLowerCase() ?? null)
@@ -334,7 +401,7 @@ export class StorageService {
       data: {
         userId: options.userId,
         courseId: options.courseId ?? null,
-        parentId: options.parentId ?? null,
+        parentId,
         name: normalizedName,
         isFolder: false,
         status: 'UPLOADING',
@@ -510,6 +577,110 @@ export class StorageService {
     );
 
     return signed;
+  }
+
+  /**
+   * Generates temporary signed read URLs for chat attachments while keeping
+   * attachments scoped to the user's personal inventory.
+   */
+  static async createChatAttachmentUrls(options: {
+    userId: string;
+    fileIds: string[];
+    expiresInSeconds?: number;
+  }) {
+    const uniqueIds = Array.from(new Set(options.fileIds));
+    if (uniqueIds.length === 0) {
+      return [];
+    }
+
+    const files = await prisma.fileInventory.findMany({
+      where: {
+        id: {
+          in: uniqueIds,
+        },
+        userId: options.userId,
+        courseId: null,
+        isFolder: false,
+        status: 'READY',
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        objectKey: true,
+        name: true,
+        bucket: true,
+        mimeType: true,
+      },
+    });
+
+    const signed = await Promise.all(
+      files
+        .filter((file) => Boolean(file.objectKey))
+        .map(async (file) => ({
+          fileId: file.id,
+          name: file.name,
+          mimeType: file.mimeType,
+          bucket: file.bucket ?? FILE_INVENTORY_BUCKET_NAME,
+          objectKey: file.objectKey as string,
+          signedUrl: await createInventoryReadSignedUrl({
+            objectKey: file.objectKey as string,
+            expiresInSeconds: options.expiresInSeconds,
+          }),
+        }))
+    );
+
+    return signed;
+  }
+
+  /**
+   * Downloads chat attachment bytes from the user's personal inventory for
+   * model calls that cannot access local signed URLs.
+   */
+  static async getChatAttachmentPayloads(options: {
+    userId: string;
+    fileIds: string[];
+  }) {
+    const uniqueIds = Array.from(new Set(options.fileIds));
+    if (uniqueIds.length === 0) {
+      return [];
+    }
+
+    const files = await prisma.fileInventory.findMany({
+      where: {
+        id: {
+          in: uniqueIds,
+        },
+        userId: options.userId,
+        courseId: null,
+        isFolder: false,
+        status: 'READY',
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        objectKey: true,
+        name: true,
+        mimeType: true,
+      },
+    });
+
+    return Promise.all(
+      files
+        .filter((file) => Boolean(file.objectKey))
+        .map(async (file) => {
+          const downloaded = await downloadInventoryObject({
+            objectKey: file.objectKey as string,
+          });
+
+          return {
+            bytes: downloaded.bytes,
+            fileId: file.id,
+            mimeType: file.mimeType ?? downloaded.contentType,
+            name: file.name,
+            objectKey: file.objectKey as string,
+          };
+        })
+    );
   }
 
   /**

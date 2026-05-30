@@ -5,6 +5,15 @@
     "usernameLabel": "Tên người dùng:"
   },
   "AIChat": {
+    "attachments": {
+      "add": "Đính kèm tệp",
+      "defaultMessage": "Vui lòng sử dụng {count, plural, one {tệp đính kèm} other {các tệp đính kèm}}.",
+      "fileTooLarge": "{name} vượt quá dung lượng tải lên tối đa.",
+      "remove": "Gỡ {name}",
+      "signInRequired": "Hãy đăng nhập để tải tệp lên trò chuyện.",
+      "tooMany": "Bạn có thể đính kèm tối đa {count} tệp.",
+      "uploadError": "Không thể tải tệp lên."
+    },
     "categories": {
       "artHistory": "LỊCH SỬ NGHỆ THUẬT",
       "history": "LỊCH SỬ",
@@ -30,6 +39,7 @@
     "limitReachedToast": "Bạn đã đạt giới hạn {count} tin nhắn. Hãy bắt đầu phiên mới để tiếp tục.",
     "modelSelector": {
       "empty": "Không tìm thấy mô hình nào.",
+      "heading": "Chọn mô hình",
       "label": "Chọn mô hình AI",
       "placeholder": "Chọn mô hình"
     },

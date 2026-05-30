@@ -1,35 +1,44 @@
 'use client';
 
-import { ArrowUp, Library, Paperclip, Settings2, Square } from 'lucide-react';
-import { useTranslations } from 'next-intl';
-import { useState } from 'react';
 import {
-  ModelSelector,
-  ModelSelectorContent,
-  ModelSelectorEmpty,
-  ModelSelectorGroup,
-  ModelSelectorItem,
-  ModelSelectorList,
-  ModelSelectorLogo,
-  ModelSelectorName,
-  ModelSelectorTrigger,
-} from '@/components/ai-elements/model-selector';
+  ArrowUp,
+  Library,
+  Loader2,
+  Paperclip,
+  Settings2,
+  Square,
+} from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { type FormEvent, useState } from 'react';
+import { toast } from 'sonner';
 import {
   PromptInput,
   PromptInputButton,
   PromptInputFooter,
+  PromptInputHeader,
   type PromptInputMessage,
   PromptInputSubmit,
   PromptInputTextarea,
 } from '@/components/ai-elements/prompt-input';
 import { Button } from '@/components/ui/button';
-import { CHAT_MODEL_OPTIONS, type ChatModel } from '@/services/ai/chat-models';
+import type { ChatModel } from '@/services/ai/chat-models';
+import { ChatInputAttachments } from './chat-input-attachments';
+import { ChatModelSelectControl } from './chat-model-select-control';
+import { useChatInputFiles } from './use-chat-input-files';
+
+const MAX_CHAT_ATTACHMENTS = 10;
 
 interface ChatInputProps {
-  handleSubmit: (e?: React.FormEvent, customValue?: string) => void;
+  handleSubmit: (
+    e?: FormEvent,
+    customValue?: string,
+    files?: File[]
+  ) => Promise<void> | void;
   isStreaming: boolean;
+  isUploading: boolean;
   isChatting: boolean;
   isLimitReached: boolean;
+  isAuthenticated: boolean;
   limitCount: number;
   userMessageCount: number;
   onStop: () => void;
@@ -40,8 +49,10 @@ interface ChatInputProps {
 export function ChatInput({
   handleSubmit,
   isStreaming,
+  isUploading,
   isChatting,
   isLimitReached,
+  isAuthenticated,
   limitCount,
   userMessageCount,
   onStop,
@@ -50,14 +61,42 @@ export function ChatInput({
 }: ChatInputProps) {
   const t = useTranslations('AIChat');
   const [inputValue, setInputValue] = useState('');
-  const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false);
-  const selectedModelLabel =
-    CHAT_MODEL_OPTIONS.find((model) => model.id === selectedModel)?.label ?? '';
+  const {
+    clearSelectedFiles,
+    fileInputRef,
+    handleFileInputChange,
+    removeSelectedFile,
+    selectedFiles,
+  } = useChatInputFiles({
+    isAuthenticated,
+    maxFiles: MAX_CHAT_ATTACHMENTS,
+    onFileTooLarge: (fileName) =>
+      toast.error(t('attachments.fileTooLarge', { name: fileName })),
+    onTooMany: () =>
+      toast.error(t('attachments.tooMany', { count: MAX_CHAT_ATTACHMENTS })),
+  });
 
-  const onPromptSubmit = (message: PromptInputMessage) => {
-    if (isStreaming || isLimitReached || !message.text.trim()) return;
-    handleSubmit(undefined, message.text);
-    setInputValue('');
+  const onPromptSubmit = async (message: PromptInputMessage) => {
+    if (
+      isStreaming ||
+      isUploading ||
+      isLimitReached ||
+      (!message.text.trim() && selectedFiles.length === 0)
+    ) {
+      return;
+    }
+
+    try {
+      await handleSubmit(
+        undefined,
+        message.text,
+        selectedFiles.map((item) => item.file)
+      );
+      setInputValue('');
+      clearSelectedFiles();
+    } catch {
+      // Keep the draft and attachments so the user can retry.
+    }
   };
 
   const inputPlaceholder = isLimitReached
@@ -73,8 +112,20 @@ export function ChatInput({
 
         <PromptInput
           className="relative *:data-[slot=input-group]:rounded-[2rem] *:data-[slot=input-group]:border-border *:data-[slot=input-group]:bg-white *:data-[slot=input-group]:p-2 *:data-[slot=input-group]:shadow-xl *:data-[slot=input-group]:transition-all *:data-[slot=input-group]:group-focus-within:border-primary/30 *:data-[slot=input-group]:group-focus-within:shadow-2xl dark:*:data-[slot=input-group]:bg-zinc-950"
+          maxFiles={0}
           onSubmit={onPromptSubmit}
         >
+          {selectedFiles.length > 0 ? (
+            <PromptInputHeader className="px-2 pt-2">
+              <ChatInputAttachments
+                files={selectedFiles}
+                getRemoveLabel={(fileName) =>
+                  t('attachments.remove', { name: fileName })
+                }
+                onRemove={removeSelectedFile}
+              />
+            </PromptInputHeader>
+          ) : null}
           <PromptInputTextarea
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
@@ -85,63 +136,56 @@ export function ChatInput({
 
           <PromptInputFooter className="flex items-center justify-between gap-2 px-1 pb-1">
             <div className="flex items-center gap-2">
-              <PromptInputButton className="size-9 rounded-full text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary">
-                <Paperclip className="size-5" />
-              </PromptInputButton>
+              {isAuthenticated ? (
+                <>
+                  <input
+                    className="hidden"
+                    disabled={isStreaming || isUploading || isLimitReached}
+                    multiple
+                    onChange={handleFileInputChange}
+                    ref={fileInputRef}
+                    type="file"
+                  />
+                  <PromptInputButton
+                    aria-label={t('attachments.add')}
+                    className="size-9 rounded-full text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary"
+                    disabled={isStreaming || isUploading || isLimitReached}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Paperclip className="size-5" />
+                  </PromptInputButton>
+                </>
+              ) : null}
               {selectedModel && onModelChange ? (
-                <ModelSelector
-                  onOpenChange={setIsModelSelectorOpen}
-                  open={isModelSelectorOpen && !isStreaming}
-                >
-                  <ModelSelectorTrigger asChild>
-                    <Button
-                      aria-label={t('modelSelector.label')}
-                      className="h-8 gap-2 rounded-full border-none px-3 text-muted-foreground text-sm hover:bg-muted/70"
-                      disabled={isStreaming}
-                      type="button"
-                      variant="outline"
-                    >
-                      <ModelSelectorLogo provider="google" />
-                      <ModelSelectorName>
-                        {selectedModelLabel}
-                      </ModelSelectorName>
-                    </Button>
-                  </ModelSelectorTrigger>
-                  <ModelSelectorContent>
-                    <ModelSelectorList>
-                      <ModelSelectorEmpty>
-                        {t('modelSelector.empty')}
-                      </ModelSelectorEmpty>
-                      <ModelSelectorGroup heading="Choose Model">
-                        {CHAT_MODEL_OPTIONS.map((model) => (
-                          <ModelSelectorItem
-                            data-checked={model.id === selectedModel}
-                            key={model.id}
-                            onSelect={() => {
-                              onModelChange(model.id);
-                              setIsModelSelectorOpen(false);
-                            }}
-                            value={model.label}
-                          >
-                            <ModelSelectorLogo provider="google" />
-                            <ModelSelectorName>{model.label}</ModelSelectorName>
-                          </ModelSelectorItem>
-                        ))}
-                      </ModelSelectorGroup>
-                    </ModelSelectorList>
-                  </ModelSelectorContent>
-                </ModelSelector>
+                <ChatModelSelectControl
+                  disabled={isStreaming || isUploading}
+                  emptyLabel={t('modelSelector.empty')}
+                  heading={t('modelSelector.heading')}
+                  label={t('modelSelector.label')}
+                  onModelChange={onModelChange}
+                  selectedModel={selectedModel}
+                />
               ) : null}
             </div>
 
             <PromptInputSubmit
               className="size-9 rounded-full transition-all hover:scale-105"
-              disabled={isLimitReached || (!isStreaming && !inputValue.trim())}
+              disabled={
+                isLimitReached ||
+                isUploading ||
+                (!isStreaming &&
+                  !inputValue.trim() &&
+                  selectedFiles.length === 0)
+              }
               onStop={onStop}
-              status={isStreaming ? 'streaming' : 'ready'}
+              status={
+                isUploading ? 'submitted' : isStreaming ? 'streaming' : 'ready'
+              }
               variant={isStreaming ? 'destructive' : 'default'}
             >
-              {isStreaming ? (
+              {isUploading ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : isStreaming ? (
                 <Square className="size-4" />
               ) : (
                 <ArrowUp className="size-5" />
