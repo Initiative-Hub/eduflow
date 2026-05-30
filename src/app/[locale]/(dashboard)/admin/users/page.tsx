@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
-import UsersManager from '@/components/client/UsersManager';
+import AdminUsersClient from './client';
 
 export const metadata: Metadata = {
   title: 'User Management',
 };
 
 export default async function AdminUsersPage() {
-  return <UsersManager />;
+  return <AdminUsersClient />;
 }

@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
+import { useCallback, useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 type User = {
   id: string;
@@ -11,7 +11,7 @@ type User = {
   role?: string;
 };
 
-export default function UsersManager() {
+export default function AdminUsersClient() {
   const [mounted, setMounted] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,7 +36,7 @@ export default function UsersManager() {
   const [addingUser, setAddingUser] = useState(false);
   const [addError, setAddError] = useState('');
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch('/api/admin/users');
@@ -47,12 +47,12 @@ export default function UsersManager() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     setMounted(true);
     fetchUsers();
-  }, []);
+  }, [fetchUsers]);
 
   const filtered = users.filter((u) => {
     if (roleFilter !== 'ALL' && u.role !== roleFilter) return false;
@@ -162,7 +162,7 @@ export default function UsersManager() {
 
   return (
     <div className="rounded-lg border border-border bg-card text-card-foreground shadow">
-      <div className="border-b border-border p-6">
+      <div className="border-border border-b p-6">
         <h1 className="mb-1 font-bold text-2xl">User Management</h1>
         <p className="text-muted-foreground text-sm">
           View and manage all registered platform users
@@ -187,7 +187,7 @@ export default function UsersManager() {
             value={roleFilter}
             aria-label="Items per page"
             onChange={(e) => setRoleFilter(e.target.value)}
-            className="rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+            className="rounded-md border border-input bg-background px-3 py-2 text-foreground text-sm"
           >
             <option value="ALL">All Roles</option>
             <option value="ADMIN">Admin</option>
@@ -199,7 +199,7 @@ export default function UsersManager() {
             value={statusFilter}
             aria-label="Status filter"
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+            className="rounded-md border border-input bg-background px-3 py-2 text-foreground text-sm"
           >
             <option value="ALL">All Status</option>
             <option value="ACTIVE">Active</option>
@@ -268,7 +268,7 @@ export default function UsersManager() {
                         onChange={(e) =>
                           setEditForm({ ...editForm, role: e.target.value })
                         }
-                        className="h-8 rounded border border-input bg-background px-2 py-1 text-sm text-foreground"
+                        className="h-8 rounded border border-input bg-background px-2 py-1 text-foreground text-sm"
                       >
                         <option value="USER">User</option>
                         <option value="ADMIN">Admin</option>
@@ -350,7 +350,7 @@ export default function UsersManager() {
             value={itemsPerPage.toString()}
             onChange={(e) => handleItemsPerPageChange(e.target.value)}
             aria-label="Items per page"
-            className="rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+            className="rounded-md border border-input bg-background px-3 py-2 text-foreground text-sm"
           >
             <option value="4">4 per page</option>
             <option value="10">10 per page</option>
@@ -433,7 +433,7 @@ export default function UsersManager() {
                   onChange={(e) =>
                     setNewUserForm({ ...newUserForm, role: e.target.value })
                   }
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-foreground text-sm"
                 >
                   <option value="USER">User</option>
                   <option value="ADMIN">Admin</option>
