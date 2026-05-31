@@ -13,18 +13,26 @@ import type {
 
 // ─── Request Validation Schemas ──────────────────────────────────────────────
 
+const normalizeAnswerType = (value: unknown) => {
+  if (typeof value !== 'string') {
+    return value;
+  }
+
+  return value.toLowerCase().replace(/_/g, '-');
+};
+
 const multipleChoiceAnswerSchema = z.object({
-  type: z.literal('multiple_choice'),
+  type: z.preprocess(normalizeAnswerType, z.literal('multiple-choice')),
   selectedOptionId: z.string(),
 });
 
 const trueFalseAnswerSchema = z.object({
-  type: z.literal('true_false'),
+  type: z.preprocess(normalizeAnswerType, z.literal('true-false')),
   selectedAnswer: z.boolean(),
 });
 
 const fillInTheBlankAnswerSchema = z.object({
-  type: z.literal('fill_in_the_blank'),
+  type: z.preprocess(normalizeAnswerType, z.literal('fill-in-the-blank')),
   filledBlanks: z.record(z.string(), z.string()),
 });
 
@@ -34,29 +42,29 @@ const matchingPairSchema = z.object({
 });
 
 const matchingAnswerSchema = z.object({
-  type: z.literal('matching'),
+  type: z.preprocess(normalizeAnswerType, z.literal('matching')),
   pairs: z.array(matchingPairSchema),
 });
 
 const orderingAnswerSchema = z.object({
-  type: z.literal('ordering'),
+  type: z.preprocess(normalizeAnswerType, z.literal('ordering')),
   orderedItemIds: z.array(z.string()),
 });
 
 const dragAndDropAnswerSchema = z.object({
-  type: z.literal('drag_and_drop'),
+  type: z.preprocess(normalizeAnswerType, z.literal('drag-and-drop')),
   placements: z.record(z.string(), z.string()),
 });
 
 const essayAnswerSchema = z.object({
-  type: z.literal('essay'),
+  type: z.preprocess(normalizeAnswerType, z.literal('essay')),
   text: z.string(),
   attachments: z.array(z.string()).optional(),
   teacherRubricText: z.string().optional(),
   teacherRubricAttachments: z.array(z.string()).optional(),
 });
 
-const studentAnswerSchema = z.discriminatedUnion('type', [
+const studentAnswerSchema = z.union([
   multipleChoiceAnswerSchema,
   trueFalseAnswerSchema,
   fillInTheBlankAnswerSchema,
