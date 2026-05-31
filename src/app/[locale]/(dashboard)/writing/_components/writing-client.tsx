@@ -72,7 +72,7 @@ export default function WritingClient({
 
   return (
     <>
-      <div className="relative flex flex-col items-center gap-8 px-8">
+      <div className="relative flex min-h-0 flex-1 flex-col items-center gap-8 px-8">
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden">
           <div className="h-125 w-125 rounded-full bg-primary/5 blur-[120px]" />
         </div>
@@ -87,10 +87,8 @@ export default function WritingClient({
               <LandingRecentWritingChats />
             </>
           ) : (
-            <div className="mx-auto flex h-full w-full max-w-4xl flex-col">
-              <div className="flex-1 overflow-y-auto">
-                <ChatView messages={messages} isStreaming={isStreaming} />
-              </div>
+            <div className="mx-auto flex min-h-0 w-full max-w-4xl flex-1 flex-col">
+              <ChatView messages={messages} isStreaming={isStreaming} />
             </div>
           )}
         </div>
