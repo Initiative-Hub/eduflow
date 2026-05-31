@@ -114,10 +114,6 @@ export function ModuleAccordionItem({
 }: ModuleAccordionItemProps) {
   const tAccordion = useTranslations('Courses.ModuleAccordion');
 
-  console.log('ModuleAccordionItem - props:', {
-    moduleItem,
-    quizzes,
-  });
   const moduleQuizzes = useMemo(() => {
     const moduleLessonIds = new Set(moduleItem.lessons.map((l) => l.id));
 
