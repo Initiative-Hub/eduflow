@@ -13,6 +13,39 @@ interface TrueFalseProps {
   disabled?: boolean;
 }
 
+function resolveCorrectAnswer(
+  question: DisplaySafe<TrueFalseQuestion>
+): boolean | undefined {
+  if (typeof question.correctAnswer === 'boolean') {
+    return question.correctAnswer;
+  }
+
+  const legacyOptions = (
+    question as DisplaySafe<TrueFalseQuestion> & {
+      options?: Array<{ text?: string; isCorrect?: boolean }>;
+    }
+  ).options;
+
+  if (!Array.isArray(legacyOptions)) {
+    return undefined;
+  }
+
+  const correctOption = legacyOptions.find((option) => option.isCorrect);
+  if (!correctOption?.text) {
+    return undefined;
+  }
+
+  const normalized = correctOption.text.trim().toLowerCase();
+  if (normalized === 'true') {
+    return true;
+  }
+  if (normalized === 'false') {
+    return false;
+  }
+
+  return undefined;
+}
+
 export function TrueFalse({
   question,
   selectedAnswer,
@@ -21,6 +54,7 @@ export function TrueFalse({
   disabled = false,
 }: TrueFalseProps) {
   const t = useTranslations('Quiz');
+  const correctAnswer = resolveCorrectAnswer(question);
 
   const options = [
     { value: true, label: t('true') },
@@ -36,7 +70,7 @@ export function TrueFalse({
       <div className="grid grid-cols-2 gap-3">
         {options.map((option) => {
           const isSelected = selectedAnswer === option.value;
-          const isCorrect = question.correctAnswer === option.value;
+          const isCorrect = correctAnswer === option.value;
 
           let optionState: 'default' | 'selected' | 'correct' | 'incorrect' =
             'default';

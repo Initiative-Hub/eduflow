@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useTranslations } from 'next-intl';
 import { Loader2, Sparkles } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,

@@ -60,11 +60,38 @@ function scoreTrueFalse(
   if (questionType !== 'true_false' || answerType !== 'true_false')
     return false;
 
-  const trueFalseQuestion = question as TrueFalseQuestion;
+  const trueFalseQuestion = question as TrueFalseQuestion & {
+    options?: Array<{ text?: string; isCorrect?: boolean }>;
+  };
   const trueFalseAnswer = answer as StudentAnswer & {
     selectedAnswer: boolean;
   };
-  return trueFalseQuestion.correctAnswer === trueFalseAnswer.selectedAnswer;
+
+  // Backward compatibility: some stored true/false questions use
+  // options[] with isCorrect instead of correctAnswer.
+  let resolvedCorrectAnswer: boolean | undefined;
+  if (typeof trueFalseQuestion.correctAnswer === 'boolean') {
+    resolvedCorrectAnswer = trueFalseQuestion.correctAnswer;
+  } else if (Array.isArray(trueFalseQuestion.options)) {
+    const correctOption = trueFalseQuestion.options.find(
+      (option) => option.isCorrect
+    );
+
+    if (correctOption?.text) {
+      const normalized = correctOption.text.trim().toLowerCase();
+      if (normalized === 'true') {
+        resolvedCorrectAnswer = true;
+      } else if (normalized === 'false') {
+        resolvedCorrectAnswer = false;
+      }
+    }
+  }
+
+  if (typeof resolvedCorrectAnswer !== 'boolean') {
+    return false;
+  }
+
+  return resolvedCorrectAnswer === trueFalseAnswer.selectedAnswer;
 }
 
 function scoreFillInTheBlank(
