@@ -146,7 +146,7 @@ export function ChatInput({
                   />
                   <PromptInputButton
                     aria-label={t('attachments.add')}
-                    className="size-9 rounded-full text-muted transition-colors hover:bg-muted hover:text-foreground"
+                    className="size-9 cursor-pointer rounded-full text-foreground transition-colors hover:bg-muted-foreground/30"
                     disabled={isStreaming || isUploading || isLimitReached}
                     onClick={() => fileInputRef.current?.click()}
                   >
