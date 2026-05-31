@@ -50,19 +50,6 @@ export function LandingView({
             <div className="flex flex-col gap-2"></div>
           </div>
           <div className="flex w-full flex-col items-center">
-            {/* Hero Icon Section */}
-            <div className="relative mb-4">
-              <div className="flex size-18 items-center justify-center rounded-[2rem] bg-white shadow-[0_20px_50px_rgba(0,0,0,0.1)] ring-1 ring-black/5 dark:bg-zinc-950 dark:shadow-[0_20px_50px_rgba(0,0,0,0.3)] dark:ring-white/10">
-                <BrainCircuit
-                  className="size-9 text-primary"
-                  strokeWidth={1.5}
-                />
-              </div>
-              <div className="absolute -right-1 -bottom-1 flex size-6 items-center justify-center rounded-full bg-primary text-white shadow-lg ring-4 ring-white dark:ring-zinc-950">
-                <CheckCircle2 className="size-3.5" />
-              </div>
-            </div>
-
             {/* Header */}
             <div className="mb-6 max-w-2xl space-y-2 px-4 text-center">
               <h1 className="font-extrabold font-heading text-3xl text-foreground/90 leading-tight tracking-tight md:text-4xl">
@@ -73,7 +60,6 @@ export function LandingView({
               </p>
             </div>
 
-            {/* Suggestions Grid */}
             <div className="flex w-full max-w-5xl flex-col items-center gap-4 px-4">
               <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-3">
                 {suggestions.map((item, index) => (
