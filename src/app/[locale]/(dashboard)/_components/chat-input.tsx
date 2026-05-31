@@ -109,7 +109,7 @@ export function ChatInput({
     >
       <div className="group relative mx-auto max-w-3xl">
         <PromptInput
-          className="relative *:data-[slot=input-group]:rounded-4xl *:data-[slot=input-group]:border *:data-[slot=input-group]:border-border/60 *:data-[slot=input-group]:bg-background *:data-[slot=input-group]:p-2.5 *:data-[slot=input-group]:shadow-sm *:data-[slot=input-group]:transition-all *:data-[slot=input-group]:group-focus-within:border-primary/50 *:data-[slot=input-group]:group-focus-within:shadow-md *:data-[slot=input-group]:group-focus-within:ring-4 *:data-[slot=input-group]:group-focus-within:ring-primary/10"
+          className="relative rounded-4xl bg-background *:data-[slot=input-group]:rounded-4xl *:data-[slot=input-group]:border *:data-[slot=input-group]:border-border/60 *:data-[slot=input-group]:bg-background! *:data-[slot=input-group]:p-2.5 *:data-[slot=input-group]:shadow-sm *:data-[slot=input-group]:transition-all *:data-[slot=input-group]:group-focus-within:border-primary/50 *:data-[slot=input-group]:group-focus-within:shadow-md *:data-[slot=input-group]:group-focus-within:ring-4 *:data-[slot=input-group]:group-focus-within:ring-primary/10"
           maxFiles={0}
           onSubmit={onPromptSubmit}
         >
@@ -167,7 +167,7 @@ export function ChatInput({
             </div>
 
             <PromptInputSubmit
-              className="size-9 rounded-full transition-all hover:scale-105"
+              className="size-9 cursor-pointer rounded-full transition-all hover:scale-105"
               disabled={
                 isLimitReached ||
                 isUploading ||
