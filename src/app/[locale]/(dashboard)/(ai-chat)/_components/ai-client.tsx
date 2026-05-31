@@ -167,20 +167,22 @@ export function AIClient({
     <>
       <div className="relative flex min-h-0 flex-1 flex-col items-center gap-8 px-8">
         {!isChatting ? (
-          <LandingView
-            userName={userName ?? 'Guest'}
-            view={view}
-            setView={setView}
-            suggestions={suggestions}
-            extendedPrompts={extendedPrompts}
-            onSelectPrompt={(text) => {
-              if (isLimitReached) {
-                notifyLimitReached();
-                return;
-              }
-              startChat(text);
-            }}
-          />
+          <div className="min-h-0 flex-1 overflow-hidden">
+            <LandingView
+              userName={userName ?? 'Guest'}
+              view={view}
+              setView={setView}
+              suggestions={suggestions}
+              extendedPrompts={extendedPrompts}
+              onSelectPrompt={(text) => {
+                if (isLimitReached) {
+                  notifyLimitReached();
+                  return;
+                }
+                startChat(text);
+              }}
+            />
+          </div>
         ) : (
           <ChatView messages={displayMessages} isStreaming={isStreaming} />
         )}
