@@ -50,29 +50,7 @@ export function LandingView({
       {view === 'home' ? (
         <div className="space-y-2">
           <div className="hidden md:flex md:justify-end">
-            <div className="flex flex-col gap-2">
-              <Badge
-                variant="outline"
-                className="gap-2 rounded-full border-primary/20 bg-primary/5 px-3 py-1.5 text-primary ring-1 ring-primary/10 backdrop-blur-md"
-              >
-                <span className="font-bold font-mono text-[10px] opacity-70">
-                  CC_
-                </span>
-                <BadgeInfo className="size-3.5" />
-                <span className="font-medium text-[11px] tracking-tight">
-                  {t('criticalThinking')}
-                </span>
-              </Badge>
-              <Badge
-                variant="outline"
-                className="gap-2 rounded-full border-border px-3 py-1.5 text-muted-foreground backdrop-blur-md"
-              >
-                <ShieldCheck className="size-3.5" />
-                <span className="font-medium text-[11px] tracking-tight">
-                  {t('philosophicalLogic')}
-                </span>
-              </Badge>
-            </div>
+            <div className="flex flex-col gap-2"></div>
           </div>
           <div className="flex w-full flex-col items-center">
             {/* Hero Icon Section */}

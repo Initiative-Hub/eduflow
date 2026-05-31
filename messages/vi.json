@@ -23,7 +23,6 @@
       "description": "Cuộc trò chuyện này không tồn tại hoặc đã hết hạn.",
       "title": "Không tìm thấy cuộc trò chuyện"
     },
-    "criticalThinking": "Tư duy phản biện đang hoạt động",
     "exploreMore": "Khám phá thêm các gợi ý học thuật",
     "footer": {
       "academicDraft": "Dự thảo học thuật Lexend",
@@ -38,7 +37,6 @@
       "label": "Chọn mô hình AI",
       "placeholder": "Chọn mô hình"
     },
-    "philosophicalLogic": "Cưỡng chế logic triết học",
     "placeholder": "Đặt câu hỏi học thuật...",
     "promptLibrary": {
       "description": "Chọn một khung truy vấn chuyên biệt để hướng dẫn phiên làm việc của bạn.",
