@@ -180,6 +180,7 @@ export class QuizService {
       topic?: string;
       apiKey?: string;
       model?: string;
+      context?: string;
     }
   ) {
     // 1. Fetch the lesson and extract its plain-text content
@@ -226,6 +227,9 @@ export class QuizService {
     const generated = await service.createQuiz({
       ...aiInput,
       quizType: fetchedQuiz.subType,
+      context: aiInput.context
+        ? `${aiInput.context}\n\n${lessonText}`
+        : lessonText,
       questionNumbers: String(fetchedQuiz.questionCount),
       topic: aiInput.topic ?? lessons[0]?.title ?? undefined,
       content: lessonText || undefined,
@@ -235,7 +239,6 @@ export class QuizService {
     const quiz = await prisma.quiz.update({
       where: { id: quizId },
       data: {
-        title: generated.title,
         description: generated.description,
         category: generated.category as QuizCategory,
         subType: generated.subType as QuestionSubType,

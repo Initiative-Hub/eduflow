@@ -36,7 +36,7 @@ const multipleChoiceExample: QuizContent = {
 const trueFalseExample: QuizContent = {
   title: 'True/False Example',
   description: 'Students choose between two binary options.',
-  type: 'true-false',
+  type: 'true_false',
   questions: [
     {
       type: 'true_false',
@@ -127,7 +127,7 @@ const essayExample: QuizContent = {
 const fillInTheBlankExample: QuizContent = {
   title: 'Fill in the Blank Example',
   description: 'Students type short answers into blanks within a sentence.',
-  type: 'fill-in-the-blank',
+  type: 'fill_in_the_blank',
   questions: [
     {
       type: 'fill_in_the_blank',

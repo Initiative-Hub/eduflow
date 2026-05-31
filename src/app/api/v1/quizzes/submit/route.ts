@@ -14,17 +14,17 @@ import type {
 // ─── Request Validation Schemas ──────────────────────────────────────────────
 
 const multipleChoiceAnswerSchema = z.object({
-  type: z.literal('multiple-choice'),
+  type: z.literal('multiple_choice'),
   selectedOptionId: z.string(),
 });
 
 const trueFalseAnswerSchema = z.object({
-  type: z.literal('true-false'),
+  type: z.literal('true_false'),
   selectedAnswer: z.boolean(),
 });
 
 const fillInTheBlankAnswerSchema = z.object({
-  type: z.literal('fill-in-the-blank'),
+  type: z.literal('fill_in_the_blank'),
   filledBlanks: z.record(z.string(), z.string()),
 });
 
@@ -44,7 +44,7 @@ const orderingAnswerSchema = z.object({
 });
 
 const dragAndDropAnswerSchema = z.object({
-  type: z.literal('drag-and-drop'),
+  type: z.literal('drag_and_drop'),
   placements: z.record(z.string(), z.string()),
 });
 

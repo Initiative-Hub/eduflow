@@ -8,6 +8,7 @@ import { QuizService } from '@/services/QuizService';
 
 const generateQuizInputSchema = z.object({
   quizId: z.string().uuid('Invalid courseId'),
+  context: z.string().max(500).optional(),
   topic: z.string().max(500).optional(),
   apiKey: z.string().min(1).optional(),
   model: z.string().min(1).optional(),
@@ -71,7 +72,7 @@ export const POST = withAuth(
         );
       }
 
-      const { quizId, topic, apiKey, model } = parsed.data;
+      const { quizId, topic, apiKey, model, context } = parsed.data;
 
       const quiz = await QuizService.generateAndSave(
         quizId,
@@ -80,6 +81,7 @@ export const POST = withAuth(
           topic,
           apiKey,
           model,
+          context,
         }
       );
 

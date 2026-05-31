@@ -40,6 +40,7 @@ import { LessonOutline } from '../../../lessons/[lessonId]/_components/lesson-ou
 import { useModules } from '../../../use-modules';
 import { useQuestionBank } from '../../../use-question-bank';
 import { useQuiz } from '../use-quiz';
+import QuizAiDialog from './_components/quiz_ai_dialog';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -77,6 +78,7 @@ export function QuizPlayerClient({ courseId, quizId }: QuizPlayerClientProps) {
   const [showOutline, setShowOutline] = useState(false);
   const [isRetaking, setIsRetaking] = useState(false);
   const [activeTab, setActiveTab] = useState<'take' | 'edit'>('take');
+  const [isAiDialogOpen, setIsAiDialogOpen] = useState(false);
 
   const { data: sessionData } = useSession();
 
@@ -176,6 +178,21 @@ export function QuizPlayerClient({ courseId, quizId }: QuizPlayerClientProps) {
   const handleRetake = useCallback(() => {
     setIsRetaking(true);
   }, []);
+
+  const handleOpenAiDialog = useCallback(() => {
+    setIsAiDialogOpen(true);
+  }, []);
+
+  const handleGenerateWithContext = useCallback(
+    (context: string) => {
+      generateQuestions(context || undefined, {
+        onSuccess: () => {
+          setIsAiDialogOpen(false);
+        },
+      });
+    },
+    [generateQuestions]
+  );
 
   if (isLoadingQuizzes || isModulesLoading) {
     return (
@@ -317,7 +334,7 @@ export function QuizPlayerClient({ courseId, quizId }: QuizPlayerClientProps) {
             initialQuestions={(quiz.questions ?? []) as QuestionBlock[]}
             onSave={saveQuestions}
             isSaving={isSavingQuestions}
-            onGenerateAI={generateQuestions}
+            onGenerateAI={handleOpenAiDialog}
             isGeneratingAI={isGeneratingQuestions}
             questionCount={quiz.questionCount}
           />
@@ -370,6 +387,13 @@ export function QuizPlayerClient({ courseId, quizId }: QuizPlayerClientProps) {
           </div>
         </div>
       )}
+
+      <QuizAiDialog
+        open={isAiDialogOpen}
+        onOpenChange={setIsAiDialogOpen}
+        onSubmit={handleGenerateWithContext}
+        isGenerating={isGeneratingQuestions}
+      />
     </>
   );
 }

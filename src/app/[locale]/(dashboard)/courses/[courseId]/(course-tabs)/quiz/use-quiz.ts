@@ -41,8 +41,8 @@ export function useQuiz({ courseId, quizId }: UseQuizOptions) {
   });
 
   const generateQuestionsMutation = useMutation({
-    mutationFn: async () => {
-      return quizService.generateQuestions(quizId);
+    mutationFn: async (context?: string) => {
+      return quizService.generateQuestions(quizId, context);
     },
     onSuccess: (updatedQuiz: any) => {
       queryClient.setQueryData(

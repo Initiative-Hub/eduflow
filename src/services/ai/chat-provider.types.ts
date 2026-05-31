@@ -28,6 +28,7 @@ export type AIQuizInput = {
   quizType: string;
   questionNumbers: string;
   topic?: string;
+  context?: string;
   content?: string;
   apiKey?: string;
   model?: string;

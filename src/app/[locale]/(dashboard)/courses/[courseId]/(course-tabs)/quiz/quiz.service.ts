@@ -8,9 +8,10 @@ export const quizService = {
     });
   },
 
-  generateQuestions: async (quizId: string) => {
+  generateQuestions: async (quizId: string, context?: string) => {
     return apiClient.post<any>(`v1/ai/quiz`, {
       quizId,
+      context,
     });
   },
 };
