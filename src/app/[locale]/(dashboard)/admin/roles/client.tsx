@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, ShieldCheck } from 'lucide-react';
+import { BookOpen, GraduationCap, Search, ShieldCheck } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import {
   Accordion,
@@ -26,6 +26,12 @@ import {
   ROLE_TABS,
 } from './roles.config';
 import { useRoles } from './use-roles';
+
+const ROLE_TAB_ICONS = {
+  ADMIN: ShieldCheck,
+  TEACHER: GraduationCap,
+  STUDENT: BookOpen,
+};
 
 export function RolesClient() {
   const [activeRole, setActiveRole] = useState<PlatformRoleName>('ADMIN');
@@ -60,67 +66,68 @@ export function RolesClient() {
 
   return (
     <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-4 p-5 lg:flex-row lg:items-end lg:justify-between">
+        <div className="flex min-w-0 items-start gap-4">
+          <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <ShieldCheck className="size-6" />
+          </div>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="font-semibold text-2xl">Permission Management</h1>
+            </div>
+            <p className="mt-1 max-w-2xl text-muted-foreground text-sm">
+              Configure platform-level access for administrators, teachers, and
+              students by enabling or disabling specific permissions for each
+              role.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 sm:flex">
+          <div className="rounded-lg border bg-background px-4 py-3">
+            <div className="text-muted-foreground text-xs">Enabled</div>
+            <div className="font-semibold text-xl">
+              {permissionSummary.enabled}
+            </div>
+          </div>
+          <div className="rounded-lg border bg-background px-4 py-3">
+            <div className="text-muted-foreground text-xs">Available</div>
+            <div className="font-semibold text-xl">
+              {permissionSummary.total}
+            </div>
+          </div>
+        </div>
+      </div>
+
       <Tabs
         value={activeRole}
         onValueChange={(value) => setActiveRole(value as PlatformRoleName)}
         className="gap-5"
       >
-        <section className="rounded-lg border bg-card">
-          <div className="flex flex-col gap-5 p-5">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-              <div className="flex min-w-0 items-start gap-4">
-                <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <ShieldCheck className="size-6" />
-                </div>
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h1 className="font-semibold text-2xl">
-                      Permission Management
-                    </h1>
-                  </div>
-                  <p className="mt-1 max-w-2xl text-muted-foreground text-sm">
-                    Configure platform-level access for the default role set.
-                  </p>
-                </div>
-              </div>
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <TabsList className="w-full justify-start sm:w-fit">
+            {ROLE_TABS.map((role) => {
+              const RoleIcon = ROLE_TAB_ICONS[role.value];
 
-              <div className="grid grid-cols-2 gap-2 sm:flex">
-                <div className="rounded-lg border bg-background px-4 py-3">
-                  <div className="text-muted-foreground text-xs">Enabled</div>
-                  <div className="font-semibold text-xl">
-                    {permissionSummary.enabled}
-                  </div>
-                </div>
-                <div className="rounded-lg border bg-background px-4 py-3">
-                  <div className="text-muted-foreground text-xs">Available</div>
-                  <div className="font-semibold text-xl">
-                    {permissionSummary.total}
-                  </div>
-                </div>
-              </div>
-            </div>
+              return (
+                <TabsTrigger key={role.value} value={role.value}>
+                  <RoleIcon />
+                  {role.label}
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
 
-            <div className="flex flex-col gap-3 border-t pt-5 lg:flex-row lg:items-center lg:justify-between">
-              <TabsList className="w-full justify-start sm:w-fit">
-                {ROLE_TABS.map((role) => (
-                  <TabsTrigger key={role.value} value={role.value}>
-                    {role.label}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-
-              <div className="relative w-full lg:max-w-md">
-                <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
-                  placeholder="Search permissions by name or description..."
-                  className="pl-9"
-                />
-              </div>
-            </div>
+          <div className="relative w-full lg:max-w-md">
+            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Search permissions by name or description..."
+              className="pl-9"
+            />
           </div>
-        </section>
+        </div>
 
         {ROLE_TABS.map((role) => (
           <TabsContent key={role.value} value={role.value}>
