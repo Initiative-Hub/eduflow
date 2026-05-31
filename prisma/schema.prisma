@@ -102,19 +102,6 @@ enum CourseRoleName {
   STUDENT
 }
 
-enum PlatformPermissionKey {
-  MANAGE_USERS
-  ENABLE_DISABLE_COURSE
-  MANAGE_PLATFORM_SETTINGS
-}
-
-enum CoursePermissionKey {
-  MANAGE_MEMBERS
-  EDIT_CONTENT
-  VIEW_ANALYTICS
-  GRADE_ASSESSMENTS
-}
-
 model PlatformRole {
   id          String               @id @default(uuid())
   name        PlatformRoleName     @unique
@@ -137,7 +124,7 @@ model PlatformPermission {
   id             String                @id @default(uuid())
   platformRoleId String                @map("platform_role_id")
   platformRole   PlatformRole          @relation(fields: [platformRoleId], references: [id], onDelete: Cascade)
-  permission     PlatformPermissionKey
+  permission     String
   enabled        Boolean               @default(true)
   createdAt      DateTime              @default(now())
   updatedAt      DateTime              @updatedAt
@@ -153,7 +140,7 @@ model CoursePermission {
   course       Course              @relation(fields: [courseId], references: [id], onDelete: Cascade)
   courseRoleId String              @map("course_role_id")
   courseRole   CourseRole          @relation(fields: [courseRoleId], references: [id], onDelete: Cascade)
-  permission   CoursePermissionKey
+  permission   String
   enabled      Boolean             @default(true)
   createdAt    DateTime            @default(now())
   updatedAt    DateTime            @updatedAt

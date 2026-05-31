@@ -3,6 +3,11 @@ import { randomUUID } from 'node:crypto';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { hashPassword } from 'better-auth/crypto';
 import { PrismaClient } from '../src/generated/prisma';
+import {
+  PLATFORM_PERMISSION,
+  PLATFORM_PERMISSION_KEYS,
+  type PlatformPermissionKey,
+} from '../src/lib/permissions/permission-keys';
 
 const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL!,
@@ -48,6 +53,50 @@ async function main() {
   console.log(
     `Created roles: ${adminRole.name}, ${teacherRole.name}, ${studentRole.name}`
   );
+
+  const platformRoles = {
+    ADMIN: adminRole,
+    TEACHER: teacherRole,
+    STUDENT: studentRole,
+  };
+
+  const PLATFORM_ROLE_PERMISSION_DEFAULTS = {
+    ADMIN: PLATFORM_PERMISSION_KEYS,
+    TEACHER: [
+      PLATFORM_PERMISSION.COURSES_CREATE,
+      PLATFORM_PERMISSION.AI_USE_CHAT,
+      PLATFORM_PERMISSION.AI_USE_WRITING,
+      PLATFORM_PERMISSION.PERSONAL_FILES_MANAGE,
+    ],
+    STUDENT: [
+      PLATFORM_PERMISSION.AI_USE_CHAT,
+      PLATFORM_PERMISSION.AI_USE_WRITING,
+      PLATFORM_PERMISSION.PERSONAL_FILES_MANAGE,
+    ],
+  };
+
+  const platformPermissions = ['ADMIN', 'TEACHER', 'STUDENT'].flatMap(
+    (role) => {
+      const defaults = new Set<PlatformPermissionKey>(
+        PLATFORM_ROLE_PERMISSION_DEFAULTS[
+          role as keyof typeof PLATFORM_ROLE_PERMISSION_DEFAULTS
+        ]
+      );
+
+      return PLATFORM_PERMISSION_KEYS.map((permission) => ({
+        platformRoleId: platformRoles[role as keyof typeof platformRoles].id,
+        permission,
+        enabled: defaults.has(permission),
+      }));
+    }
+  );
+
+  await prisma.platformPermission.createMany({
+    data: platformPermissions,
+    skipDuplicates: true,
+  });
+
+  console.log(`Seeded ${platformPermissions.length} platform permissions`);
 
   // 2. Create users and assign roles
   const adminUserId = randomUUID();
