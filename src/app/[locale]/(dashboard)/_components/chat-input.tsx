@@ -104,12 +104,10 @@ export function ChatInput({
     : t('placeholder');
 
   return (
-    <div
-      className={`relative w-full space-y-4 transition-all duration-200 ${isChatting ? 'sticky bottom-0 z-20 mt-auto pb-4 backdrop-blur-md' : ''}`}
-    >
-      <div className="group relative mx-auto max-w-3xl">
+    <div className="space-y-4 transition-all duration-200">
+      <div className="group mx-auto max-w-3xl">
         <PromptInput
-          className="relative rounded-4xl bg-background *:data-[slot=input-group]:rounded-4xl *:data-[slot=input-group]:border *:data-[slot=input-group]:border-border/80 *:data-[slot=input-group]:bg-background! *:data-[slot=input-group]:p-2.5 *:data-[slot=input-group]:shadow-sm *:data-[slot=input-group]:transition-all *:data-[slot=input-group]:group-focus-within:border-primary/70 *:data-[slot=input-group]:group-focus-within:shadow-md *:data-[slot=input-group]:group-focus-within:ring-4 *:data-[slot=input-group]:group-focus-within:ring-primary/10"
+          className="*:data-[slot=input-group]:rounded-4xl *:data-[slot=input-group]:border *:data-[slot=input-group]:border-border/80 *:data-[slot=input-group]:bg-background! *:data-[slot=input-group]:p-2.5 *:data-[slot=input-group]:shadow-sm *:data-[slot=input-group]:transition-all *:data-[slot=input-group]:group-focus-within:border-primary/70 *:data-[slot=input-group]:group-focus-within:shadow-md *:data-[slot=input-group]:group-focus-within:ring-4 *:data-[slot=input-group]:group-focus-within:ring-primary/10"
           maxFiles={0}
           onSubmit={onPromptSubmit}
         >

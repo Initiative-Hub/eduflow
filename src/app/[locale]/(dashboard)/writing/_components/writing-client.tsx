@@ -11,6 +11,7 @@ import type { WritingTool } from '@/lib/validations/writing.schema';
 import { type ChatModel, DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
 import { ChatInput } from '../../_components/chat-input';
 import { ChatSidebar } from '../../_components/chat-sidebar';
+import { ChatWorkspaceShell } from '../../_components/chat-workspace-shell';
 import { useWriting } from '../use-writing';
 import { writingService } from '../writing.service';
 import { LandingRecentWritingChats } from './landing-recent-writing-chats';
@@ -70,45 +71,34 @@ export default function WritingClient({
     startChat(text.trim());
   };
 
+  const viewport = !hasOutput ? (
+    <div className="flex flex-col gap-4 px-4 py-6">
+      <WritingSelector selected={selectedTool} onSelect={setSelectedTool} />
+      <LandingRecentWritingChats />
+    </div>
+  ) : (
+    <ChatView messages={messages} isStreaming={isStreaming} />
+  );
+
+  const composer = (
+    <ChatInput
+      handleSubmit={handleSubmit}
+      isAuthenticated={false}
+      isStreaming={isStreaming}
+      isUploading={false}
+      isChatting={hasOutput}
+      isLimitReached={isLimitReached}
+      limitCount={maxMessages}
+      userMessageCount={userMessageCount}
+      onStop={stop}
+      selectedModel={selectedModel}
+      onModelChange={setSelectedModel}
+    />
+  );
+
   return (
     <>
-      <div className="relative flex min-h-0 flex-1 flex-col items-center gap-8 px-8">
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden">
-          <div className="h-125 w-125 rounded-full bg-primary/5 blur-[120px]" />
-        </div>
-
-        <div className="relative mx-auto flex w-full max-w-5xl flex-1 flex-col justify-center">
-          {!hasOutput ? (
-            <div className="min-h-0 flex-1 overflow-hidden">
-              <WritingSelector
-                selected={selectedTool}
-                onSelect={setSelectedTool}
-              />
-              <LandingRecentWritingChats />
-            </div>
-          ) : (
-            <div className="mx-auto flex min-h-0 w-full max-w-4xl flex-1 flex-col">
-              <ChatView messages={messages} isStreaming={isStreaming} />
-            </div>
-          )}
-        </div>
-
-        <div className="mx-auto w-full max-w-4xl">
-          <ChatInput
-            handleSubmit={handleSubmit}
-            isAuthenticated={false}
-            isStreaming={isStreaming}
-            isUploading={false}
-            isChatting={hasOutput}
-            isLimitReached={isLimitReached}
-            limitCount={maxMessages}
-            userMessageCount={userMessageCount}
-            onStop={stop}
-            selectedModel={selectedModel}
-            onModelChange={setSelectedModel}
-          />
-        </div>
-      </div>
+      <ChatWorkspaceShell composer={composer} viewport={viewport} />
       <ChatSidebar
         currentChatId={chatId}
         emptyIcon={PenLine}

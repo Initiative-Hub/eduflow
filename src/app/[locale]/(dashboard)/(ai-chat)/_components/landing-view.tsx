@@ -1,11 +1,6 @@
 'use client';
 
-import {
-  BrainCircuit,
-  CheckCircle2,
-  ChevronLeft,
-  LayoutGrid,
-} from 'lucide-react';
+import { ChevronLeft, LayoutGrid } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -46,12 +41,9 @@ export function LandingView({
     <div className="flex w-full flex-col items-center justify-center">
       {view === 'home' ? (
         <div className="space-y-2">
-          <div className="hidden md:flex md:justify-end">
-            <div className="flex flex-col gap-2"></div>
-          </div>
           <div className="flex w-full flex-col items-center">
             {/* Header */}
-            <div className="mb-6 max-w-2xl space-y-2 px-4 text-center">
+            <div className="mt-12 mb-6 max-w-2xl space-y-2 px-4 text-center">
               <h1 className="font-extrabold font-heading text-3xl text-foreground/90 leading-tight tracking-tight md:text-4xl">
                 {t('title', { name: userName })}
               </h1>
@@ -100,7 +92,7 @@ export function LandingView({
         </div>
       ) : (
         <div className="flex w-full max-w-5xl flex-col items-center">
-          <div className="mb-6 flex w-full items-center justify-between px-4">
+          <div className="mt-12 mb-6 flex w-full items-center justify-between px-4">
             <div className="space-y-1">
               <h2 className="font-bold font-heading text-3xl">
                 {t('promptLibrary.title')}

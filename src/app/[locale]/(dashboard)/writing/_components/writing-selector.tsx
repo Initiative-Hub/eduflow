@@ -41,8 +41,8 @@ export function WritingSelector({ selected, onSelect }: WritingSelectorProps) {
   const t = useTranslations('WritingPage');
 
   return (
-    <div className="mb-4 flex h-full flex-col items-center justify-center px-4">
-      <div className="mb-6 space-y-2 text-center">
+    <div className="flex h-full flex-col items-center">
+      <div className="mt-12 mb-6 space-y-2 text-center">
         <h1 className="font-extrabold text-3xl text-foreground tracking-tight sm:text-4xl">
           {t.rich('title', {
             italic: (chunks) => (
