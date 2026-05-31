@@ -9,7 +9,7 @@ export const rolesService = {
   getPermissions: async () => {
     return apiClient.get<RolePermissionsResponse>('/admin/roles/permissions');
   },
-  updatePermission: async (data: UpdateRolePermissionInput) => {
+  updatePermissions: async (data: UpdateRolePermissionInput) => {
     return apiClient.patch<RolePermissionUpdateResponse>(
       '/admin/roles/permissions',
       data

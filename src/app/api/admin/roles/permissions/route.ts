@@ -14,8 +14,14 @@ const platformPermissionSchema = z
 
 const updatePermissionSchema = z.object({
   role: z.enum(['ADMIN', 'TEACHER', 'STUDENT']),
-  permission: platformPermissionSchema,
-  enabled: z.boolean(),
+  permissions: z
+    .array(
+      z.object({
+        permission: platformPermissionSchema,
+        enabled: z.boolean(),
+      })
+    )
+    .min(1),
 });
 
 /**
@@ -77,15 +83,17 @@ export const PATCH = withRoles(['ADMIN'], async (req) => {
       );
     }
 
-    const permission =
-      await PlatformRolePermissionService.updatePlatformRolePermission(
+    const permissions =
+      await PlatformRolePermissionService.updatePlatformRolePermissions(
         parsed.data
       );
 
     return NextResponse.json({
       role: parsed.data.role,
-      permission: permission.permission,
-      enabled: permission.enabled,
+      permissions: permissions.map((permission) => ({
+        permission: permission.permission,
+        enabled: permission.enabled,
+      })),
     });
   } catch (error) {
     console.error('Update role permission error:', error);

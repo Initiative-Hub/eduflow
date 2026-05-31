@@ -1,7 +1,7 @@
 'use client';
 
 import { BookOpen, GraduationCap, Search, ShieldCheck } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Accordion,
   AccordionContent,
@@ -9,6 +9,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Empty,
   EmptyDescription,
@@ -24,6 +25,7 @@ import {
   type PlatformPermissionDefinition,
   type PlatformRoleName,
   ROLE_TABS,
+  type RolePermissionState,
 } from './roles.config';
 import { useRoles } from './use-roles';
 
@@ -36,31 +38,90 @@ const ROLE_TAB_ICONS = {
 export function RolesClient() {
   const [activeRole, setActiveRole] = useState<PlatformRoleName>('ADMIN');
   const [searchQuery, setSearchQuery] = useState('');
-  const { roles, isLoading, isError, isUpdating, updatePermission } =
-    useRoles();
+  const [draftRoleState, setDraftRoleState] = useState<RolePermissionState[]>(
+    []
+  );
+  const { roles, isLoading, isError, isUpdating, savePermissions } = useRoles();
 
   const activeRoleState = roles.find((role) => role.role === activeRole);
+  const activeDraftRoleState = draftRoleState.find(
+    (role) => role.role === activeRole
+  );
   const categories = useMemo(
-    () => getPlatformPermissionCategoriesForRole(activeRoleState, searchQuery),
-    [activeRoleState, searchQuery]
+    () =>
+      getPlatformPermissionCategoriesForRole(activeDraftRoleState, searchQuery),
+    [activeDraftRoleState, searchQuery]
   );
   const permissionSummary = useMemo(() => {
-    const permissions = activeRoleState?.permissions ?? [];
+    const permissions = activeDraftRoleState?.permissions ?? [];
 
     return {
       enabled: permissions.filter((permission) => permission.enabled).length,
       total: permissions.length,
     };
-  }, [activeRoleState]);
+  }, [activeDraftRoleState]);
+
+  const hasUnsavedChanges = useMemo(() => {
+    const savedPermissions = new Map(
+      activeRoleState?.permissions.map((permission) => [
+        permission.permission,
+        permission.enabled,
+      ])
+    );
+
+    return (
+      activeDraftRoleState?.permissions.some(
+        (permission) =>
+          permission.enabled !==
+          (savedPermissions.get(permission.permission) ?? false)
+      ) ?? false
+    );
+  }, [activeDraftRoleState, activeRoleState]);
+
+  useEffect(() => {
+    if (roles.length === 0) return;
+
+    setDraftRoleState(
+      roles.map((role) => ({
+        ...role,
+        permissions: role.permissions.map((permission) => ({ ...permission })),
+      }))
+    );
+  }, [roles]);
 
   const handlePermissionChange = (
     permission: PlatformPermissionDefinition,
     enabled: boolean
   ) => {
-    updatePermission({
+    setDraftRoleState((currentStates) =>
+      currentStates.map((roleState) => {
+        if (roleState.role !== activeRole) {
+          return roleState;
+        }
+
+        return {
+          ...roleState,
+          permissions: roleState.permissions.map((permissionState) =>
+            permissionState.permission === permission.key
+              ? { ...permissionState, enabled }
+              : permissionState
+          ),
+        };
+      })
+    );
+  };
+
+  const handleSaveRolePermissions = async () => {
+    if (!activeDraftRoleState) {
+      return;
+    }
+
+    await savePermissions({
       role: activeRole,
-      permission: permission.key,
-      enabled,
+      permissions: activeDraftRoleState.permissions.map((permission) => ({
+        permission: permission.permission,
+        enabled: permission.enabled,
+      })),
     });
   };
 
@@ -149,57 +210,69 @@ export function RolesClient() {
                 </EmptyHeader>
               </Empty>
             ) : (
-              <Accordion
-                type="multiple"
-                defaultValue={ACCORDION_DEFAULT_VALUES}
-                className="flex flex-col gap-4"
-              >
-                {categories.map((category) => {
-                  const CategoryIcon = category.icon;
+              <>
+                <Accordion
+                  type="multiple"
+                  defaultValue={ACCORDION_DEFAULT_VALUES}
+                  className="flex flex-col gap-4"
+                >
+                  {categories.map((category) => {
+                    const CategoryIcon = category.icon;
 
-                  return (
-                    <AccordionItem
-                      key={category.value}
-                      value={category.value}
-                      className="rounded-lg border bg-card px-4 py-4"
-                    >
-                      <AccordionTrigger className="gap-4 py-0">
-                        <div className="flex min-w-0 flex-1 items-start gap-3">
-                          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-                            <CategoryIcon className="size-5" />
+                    return (
+                      <AccordionItem
+                        key={category.value}
+                        value={category.value}
+                        className="rounded-lg border bg-card px-4 py-4"
+                      >
+                        <AccordionTrigger className="gap-4 py-0">
+                          <div className="flex min-w-0 flex-1 items-start gap-3">
+                            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                              <CategoryIcon className="size-5" />
+                            </div>
+                            <div className="min-w-0">
+                              <h2 className="font-semibold text-base">
+                                {category.title}
+                              </h2>
+                              <p className="text-muted-foreground text-sm">
+                                {category.description}
+                              </p>
+                            </div>
                           </div>
-                          <div className="min-w-0">
-                            <h2 className="font-semibold text-base">
-                              {category.title}
-                            </h2>
-                            <p className="text-muted-foreground text-sm">
-                              {category.description}
-                            </p>
-                          </div>
-                        </div>
-                        <Badge variant="secondary" className="mr-3">
-                          {category.enabledCount}/{category.totalCount}
-                        </Badge>
-                      </AccordionTrigger>
+                          <Badge variant="secondary" className="mr-3">
+                            {category.enabledCount}/{category.totalCount}
+                          </Badge>
+                        </AccordionTrigger>
 
-                      <AccordionContent className="pt-6 pb-0">
-                        <div className="flex flex-col gap-3">
-                          {category.permissions.map((permission) => (
-                            <PermissionRow
-                              key={permission.key}
-                              permission={permission}
-                              isUpdating={isUpdating}
-                              onCheckedChange={(enabled) =>
-                                handlePermissionChange(permission, enabled)
-                              }
-                            />
-                          ))}
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  );
-                })}
-              </Accordion>
+                        <AccordionContent className="pt-6 pb-0">
+                          <div className="flex flex-col gap-3">
+                            {category.permissions.map((permission) => (
+                              <PermissionRow
+                                key={permission.key}
+                                permission={permission}
+                                isUpdating={isUpdating}
+                                onCheckedChange={(enabled) =>
+                                  handlePermissionChange(permission, enabled)
+                                }
+                              />
+                            ))}
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    );
+                  })}
+                </Accordion>
+
+                <div className="flex justify-end border-t pt-4">
+                  <Button
+                    type="button"
+                    disabled={!hasUnsavedChanges || isUpdating}
+                    onClick={handleSaveRolePermissions}
+                  >
+                    Save changes
+                  </Button>
+                </div>
+              </>
             )}
           </TabsContent>
         ))}

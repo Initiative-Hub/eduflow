@@ -23,8 +23,10 @@ export type PlatformRolePermissionState = {
 
 export type UpdatePlatformRolePermissionInput = {
   role: string;
-  permission: PlatformPermissionKey;
-  enabled: boolean;
+  permissions: Array<{
+    permission: PlatformPermissionKey;
+    enabled: boolean;
+  }>;
 };
 
 export function buildPlatformRolePermissionStates(
@@ -75,10 +77,9 @@ export class PlatformRolePermissionService {
     return buildPlatformRolePermissionStates(roles);
   }
 
-  static async updatePlatformRolePermission({
+  static async updatePlatformRolePermissions({
     role,
-    permission,
-    enabled,
+    permissions,
   }: UpdatePlatformRolePermissionInput) {
     const platformRole = await prisma.platformRole.findUnique({
       where: { name: role as any },
@@ -89,19 +90,23 @@ export class PlatformRolePermissionService {
       throw new Error(`Platform role ${role} not found`);
     }
 
-    return prisma.platformPermission.upsert({
-      where: {
-        platformRoleId_permission: {
-          platformRoleId: platformRole.id,
-          permission,
-        },
-      },
-      update: { enabled },
-      create: {
-        platformRoleId: platformRole.id,
-        permission,
-        enabled,
-      },
-    });
+    return prisma.$transaction(
+      permissions.map(({ permission, enabled }) =>
+        prisma.platformPermission.upsert({
+          where: {
+            platformRoleId_permission: {
+              platformRoleId: platformRole.id,
+              permission,
+            },
+          },
+          update: { enabled },
+          create: {
+            platformRoleId: platformRole.id,
+            permission,
+            enabled,
+          },
+        })
+      )
+    );
   }
 }

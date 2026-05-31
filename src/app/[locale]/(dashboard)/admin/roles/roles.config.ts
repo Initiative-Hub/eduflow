@@ -1,6 +1,8 @@
 import { z } from 'zod';
-import type { PermissionDefinition } from '@/lib/permissions/permission-catalog';
-import { PLATFORM_PERMISSION_CATEGORIES } from '@/lib/permissions/permission-catalog';
+import {
+  type PermissionDefinition,
+  PLATFORM_PERMISSION_CATEGORIES,
+} from '@/lib/permissions/permission-catalog';
 import {
   isPlatformPermissionKey,
   type PlatformPermissionKey,
@@ -31,8 +33,14 @@ const platformPermissionSchema = z
 
 export const updateRolePermissionSchema = z.object({
   role: z.enum(['ADMIN', 'TEACHER', 'STUDENT']),
-  permission: platformPermissionSchema,
-  enabled: z.boolean(),
+  permissions: z
+    .array(
+      z.object({
+        permission: platformPermissionSchema,
+        enabled: z.boolean(),
+      })
+    )
+    .min(1),
 });
 
 export type UpdateRolePermissionInput = z.infer<
@@ -51,11 +59,7 @@ export type RolePermissionsResponse = {
   roles: RolePermissionState[];
 };
 
-export type RolePermissionUpdateResponse = {
-  role: PlatformRoleName;
-  permission: PlatformPermissionKey;
-  enabled: boolean;
-};
+export type RolePermissionUpdateResponse = RolePermissionState;
 
 export type PlatformPermissionDefinition = PermissionDefinition & {
   key: PlatformPermissionKey;
@@ -69,6 +73,7 @@ export type PlatformPermissionCategoryView = Omit<
   value: string;
   enabledCount: number;
   totalCount: number;
+  allPermissions: PlatformPermissionDefinition[];
   permissions: PlatformPermissionDefinition[];
 };
 
@@ -130,6 +135,7 @@ export function getPlatformPermissionCategoriesForRole(
         enabledCount: permissions.filter((permission) => permission.enabled)
           .length,
         totalCount: permissions.length,
+        allPermissions: permissions,
         permissions: visiblePermissions,
       },
     ];
