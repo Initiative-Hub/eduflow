@@ -140,9 +140,6 @@ export function ModuleAccordionItem({
     });
   }, [moduleItem.lessons, quizzes]);
 
-  console.log('ModuleAccordionItem - moduleQuizzes:', moduleQuizzes);
-  // Local state for order and indent overrides (optimistic updates)
-  // Initialize from the module's persisted itemLayout
   const [localOrder, setLocalOrder] = useState<Map<string, number> | null>(
     () => {
       if (!moduleItem.itemLayout) return null;
