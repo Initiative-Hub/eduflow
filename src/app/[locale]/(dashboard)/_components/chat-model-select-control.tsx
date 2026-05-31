@@ -41,7 +41,7 @@ export function ChatModelSelectControl({
       <ModelSelectorTrigger asChild>
         <Button
           aria-label={label}
-          className="h-8 gap-2 rounded-full border-none px-3 text-muted-foreground text-sm hover:bg-muted/70"
+          className="h-8 cursor-pointer gap-2 rounded-full border-none px-3 text-foreground text-sm hover:bg-muted-foreground/30"
           disabled={disabled}
           type="button"
           variant="outline"
