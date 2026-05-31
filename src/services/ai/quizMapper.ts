@@ -67,10 +67,10 @@ function mapMultipleChoice(q: any) {
   });
   // if AI marked correct as index or number, handle it
   if (q.correctIndex !== undefined && mappedOptions[q.correctIndex]) {
-    // biome-ignore lint/suspicious/useIterableCallbackReturn: <explanation>
-    mappedOptions.forEach(
-      (mo: any, i: number) => (mo.isCorrect = i === q.correctIndex)
-    );
+    // deliberate mutation via forEach to mark correct option
+    mappedOptions.forEach((mo: any, i: number) => {
+      mo.isCorrect = i === q.correctIndex;
+    });
   }
 
   return {
@@ -95,19 +95,150 @@ function mapTrueFalse(q: any) {
 }
 
 function mapFillBlank(q: any) {
-  const blanks = Array.isArray(q.blanks)
-    ? q.blanks.map((b: any) => ({
-        id: b.id ?? normalizeId(undefined, 'blank'),
-        acceptableAnswers: Array.isArray(b.acceptableAnswers)
-          ? b.acceptableAnswers
-          : [String(b.acceptableAnswers ?? '')],
-      }))
-    : [];
+  let promptTemplate = q.promptTemplate ?? q.prompt ?? q.question ?? '';
 
+  // If AI returned explicit blanks array, normalize ids and acceptableAnswers
+  if (Array.isArray(q.blanks) && q.blanks.length > 0) {
+    const blanks = q.blanks.map((b: any) => ({
+      id: b.id ?? normalizeId(undefined, 'blank'),
+      acceptableAnswers: Array.isArray(b.acceptableAnswers)
+        ? b.acceptableAnswers
+        : [String(b.acceptableAnswers ?? '')],
+    }));
+
+    return {
+      type: 'fill-in-the-blank',
+      promptTemplate,
+      blanks,
+      explanation: q.explanation,
+    };
+  }
+
+  // If AI returned options (multiple-choice style) for a fill-in-the-blank
+  // convert them into blanks with acceptableAnswers derived from option texts.
+  if (Array.isArray(q.options) && q.options.length > 0) {
+    const underscoreRegex = /_{2,}/g;
+    const found = String(promptTemplate).match(underscoreRegex);
+    const blanks: any[] = [];
+    let index = 1;
+
+    if (found && found.length > 0) {
+      promptTemplate = String(promptTemplate).replace(underscoreRegex, () => {
+        const id = `blank${index}`;
+        blanks.push({ id, acceptableAnswers: [] });
+        index += 1;
+        return `{{${id}}}`;
+      });
+    } else {
+      const id = `blank1`;
+      blanks.push({ id, acceptableAnswers: [] });
+      promptTemplate = `${promptTemplate} {{${id}}}`;
+    }
+
+    // Gather correct options (marked by isCorrect or correct)
+    const correctOptions = q.options.filter(
+      (o: any) => !!o.isCorrect || !!o.correct
+    );
+    if (correctOptions.length > 0) {
+      if (blanks.length === 1) {
+        blanks[0].acceptableAnswers = correctOptions.map((o: any) =>
+          String(o.text ?? o)
+        );
+      } else {
+        for (
+          let i = 0;
+          i < Math.min(blanks.length, correctOptions.length);
+          i++
+        ) {
+          blanks[i].acceptableAnswers = [
+            String(correctOptions[i].text ?? correctOptions[i]),
+          ];
+        }
+      }
+    } else {
+      // No explicit correct flags — fall back to option text mapping
+      if (blanks.length === 1) {
+        blanks[0].acceptableAnswers = q.options.map((o: any) =>
+          String(o.text ?? o)
+        );
+      } else {
+        for (let i = 0; i < blanks.length; i++) {
+          blanks[i].acceptableAnswers = [String(q.options[i]?.text ?? '')];
+        }
+      }
+    }
+
+    return {
+      type: 'fill-in-the-blank',
+      promptTemplate,
+      blanks,
+      explanation: q.explanation,
+    };
+  }
+
+  // Fallback: detect underscore-style blanks like "____" and convert them
+  const underscoreRegex = /_{2,}/g;
+  const found = String(promptTemplate).match(underscoreRegex);
+  if (found && found.length > 0) {
+    const blanks: any[] = [];
+    let index = 1;
+    promptTemplate = String(promptTemplate).replace(underscoreRegex, () => {
+      const id = `blank${index}`;
+      blanks.push({ id, acceptableAnswers: [] });
+      index += 1;
+      return `{{${id}}}`;
+    });
+
+    // If the AI provided a single answer or answers field, try to populate acceptableAnswers
+    if (q.answer) {
+      // If answer is a string and there is only one blank, use it
+      if (typeof q.answer === 'string' && blanks.length === 1) {
+        blanks[0].acceptableAnswers = [q.answer];
+      } else if (Array.isArray(q.answer)) {
+        // Map array entries to blanks if lengths match
+        for (let i = 0; i < Math.min(blanks.length, q.answer.length); i++) {
+          blanks[i].acceptableAnswers = [String(q.answer[i])];
+        }
+      }
+    }
+
+    return {
+      type: 'fill-in-the-blank',
+      promptTemplate,
+      blanks,
+      explanation: q.explanation,
+    };
+  }
+
+  // No explicit blanks and no underscores: produce a single-blank template if an answer exists
+  if (typeof q.answer === 'string' && promptTemplate.trim()) {
+    const id = 'blank1';
+    // try to replace the answer occurrence with the blank placeholder if present
+    const escapedAnswer = String(q.answer).replace(
+      /[.*+?^${}()|[\]\\]/g,
+      '\\$&'
+    );
+    const answerRegex = new RegExp(escapedAnswer, 'i');
+    if (answerRegex.test(promptTemplate)) {
+      promptTemplate = promptTemplate.replace(answerRegex, `{{${id}}}`);
+    } else {
+      // otherwise append placeholder
+      promptTemplate = `${promptTemplate} {{${id}}}`;
+    }
+
+    return {
+      type: 'fill-in-the-blank',
+      promptTemplate,
+      blanks: [{ id, acceptableAnswers: [String(q.answer)] }],
+      explanation: q.explanation,
+    };
+  }
+
+  // Default: no blanks found, return as-is with empty blanks array
   return {
     type: 'fill-in-the-blank',
-    promptTemplate: q.promptTemplate ?? q.prompt ?? q.question ?? '',
-    blanks,
+    promptTemplate,
+    blanks: [],
     explanation: q.explanation,
   };
 }

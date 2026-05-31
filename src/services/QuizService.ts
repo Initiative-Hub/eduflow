@@ -8,6 +8,7 @@ import type {
 import { prisma } from '@/lib/prisma';
 import { CourseService } from '@/services/CourseService';
 import { OpenRouterService } from './ai/OpenRouterService';
+import { safeMapAIQuizToSchema } from './ai/quizMapper';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -234,18 +235,29 @@ export class QuizService {
       topic: aiInput.topic ?? lessons[0]?.title ?? undefined,
       content: lessonText || undefined,
     });
+    // Normalize AI output into our internal schema (tolerant mapping)
+    const safe = safeMapAIQuizToSchema(generated, fetchedQuiz.subType);
+    const normalized = safe.success ? safe.data : null;
 
-    // 3. Persist to the database
+    const questionsToSave = normalized
+      ? (normalized.questions as unknown[])
+      : (generated.questions as unknown[]);
+
+    // 3. Persist to the database (use normalized questions when available)
     const quiz = await prisma.quiz.update({
       where: { id: quizId },
       data: {
-        description: generated.description,
-        category: generated.category as QuizCategory,
-        subType: generated.subType as QuestionSubType,
-        deliveryMode: generated.deliveryMode as DeliveryMode,
-        selectionMethod: generated.selectionMethod as SelectionMethod,
-        questionCount: generated.questions.length,
-        questions: generated.questions as unknown as Prisma.InputJsonValue,
+        description: (normalized?.description ?? generated.description) as
+          | string
+          | null,
+        category: (normalized?.category ?? generated.category) as QuizCategory,
+        subType: (normalized?.subType ?? generated.subType) as QuestionSubType,
+        deliveryMode: (normalized?.deliveryMode ??
+          generated.deliveryMode) as DeliveryMode,
+        selectionMethod: (normalized?.selectionMethod ??
+          generated.selectionMethod) as SelectionMethod,
+        questionCount: questionsToSave.length,
+        questions: questionsToSave as unknown as Prisma.InputJsonValue,
       },
     });
 
