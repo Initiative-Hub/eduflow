@@ -1,4 +1,6 @@
+import { BookOpen, GraduationCap, ShieldCheck } from 'lucide-react';
 import { z } from 'zod';
+import type { PlatformRoleName } from '@/generated/prisma';
 import {
   type PermissionDefinition,
   PLATFORM_PERMISSION_CATEGORIES,
@@ -9,12 +11,10 @@ import {
 } from '@/lib/permissions/permission-keys';
 
 export const ROLE_TABS = [
-  { value: 'ADMIN', label: 'Admin' },
-  { value: 'TEACHER', label: 'Teacher' },
-  { value: 'STUDENT', label: 'Student' },
+  { value: 'ADMIN', label: 'Admin', icons: ShieldCheck },
+  { value: 'TEACHER', label: 'Teacher', icons: GraduationCap },
+  { value: 'STUDENT', label: 'Student', icons: BookOpen },
 ] as const;
-
-export type PlatformRoleName = (typeof ROLE_TABS)[number]['value'];
 
 export const ROLE_PERMISSION_QUERY_KEY = [
   'admin',

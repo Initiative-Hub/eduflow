@@ -1,6 +1,6 @@
 'use client';
 
-import { BookOpen, GraduationCap, Search, ShieldCheck } from 'lucide-react';
+import { Search, ShieldCheck } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import {
   Accordion,
@@ -19,23 +19,18 @@ import {
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import type { PlatformRoleName } from '@/generated/prisma';
 import {
   ACCORDION_DEFAULT_VALUES,
   getPlatformPermissionCategoriesForRole,
   type PlatformPermissionDefinition,
-  type PlatformRoleName,
   ROLE_TABS,
   type RolePermissionState,
 } from './roles.config';
 import { useRoles } from './use-roles';
 
-const ROLE_TAB_ICONS = {
-  ADMIN: ShieldCheck,
-  TEACHER: GraduationCap,
-  STUDENT: BookOpen,
-};
-
 export function RolesClient() {
+  console.log(ACCORDION_DEFAULT_VALUES);
   const [activeRole, setActiveRole] = useState<PlatformRoleName>('ADMIN');
   const [searchQuery, setSearchQuery] = useState('');
   const [draftRoleState, setDraftRoleState] = useState<RolePermissionState[]>(
@@ -168,7 +163,7 @@ export function RolesClient() {
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <TabsList className="w-full justify-start sm:w-fit">
             {ROLE_TABS.map((role) => {
-              const RoleIcon = ROLE_TAB_ICONS[role.value];
+              const RoleIcon = role.icons;
 
               return (
                 <TabsTrigger key={role.value} value={role.value}>
