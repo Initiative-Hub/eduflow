@@ -16,6 +16,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { type ChatModel, DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
 import { ChatSidebar } from '../../_components/chat-sidebar';
+import { ChatWorkspaceShell } from '../../_components/chat-workspace-shell';
 import { useChatController } from '../use-chat';
 
 const LandingView = dynamic(() =>
@@ -163,42 +164,44 @@ export function AIClient({
     },
   ];
 
+  const viewport = !isChatting ? (
+    <LandingView
+      userName={userName ?? 'Guest'}
+      view={view}
+      setView={setView}
+      suggestions={suggestions}
+      extendedPrompts={extendedPrompts}
+      onSelectPrompt={(text) => {
+        if (isLimitReached) {
+          notifyLimitReached();
+          return;
+        }
+        startChat(text);
+      }}
+    />
+  ) : (
+    <ChatView messages={displayMessages} isStreaming={isStreaming} />
+  );
+
+  const composer = (
+    <ChatInput
+      handleSubmit={handleSubmit}
+      isAuthenticated={isAuthenticated}
+      isStreaming={isStreaming}
+      isUploading={isUploadingAttachments}
+      isChatting={isChatting}
+      isLimitReached={isLimitReached}
+      limitCount={maxMessages}
+      userMessageCount={userMessageCount}
+      onStop={stop}
+      selectedModel={selectedModel}
+      onModelChange={setSelectedModel}
+    />
+  );
+
   return (
     <>
-      <div className="relative flex min-h-0 flex-1 flex-col items-center gap-8 px-8">
-        {!isChatting ? (
-          <LandingView
-            userName={userName ?? 'Guest'}
-            view={view}
-            setView={setView}
-            suggestions={suggestions}
-            extendedPrompts={extendedPrompts}
-            onSelectPrompt={(text) => {
-              if (isLimitReached) {
-                notifyLimitReached();
-                return;
-              }
-              startChat(text);
-            }}
-          />
-        ) : (
-          <ChatView messages={displayMessages} isStreaming={isStreaming} />
-        )}
-
-        <ChatInput
-          handleSubmit={handleSubmit}
-          isAuthenticated={isAuthenticated}
-          isStreaming={isStreaming}
-          isUploading={isUploadingAttachments}
-          isChatting={isChatting}
-          isLimitReached={isLimitReached}
-          limitCount={maxMessages}
-          userMessageCount={userMessageCount}
-          onStop={stop}
-          selectedModel={selectedModel}
-          onModelChange={setSelectedModel}
-        />
-      </div>
+      <ChatWorkspaceShell composer={composer} viewport={viewport} />
       <ChatSidebar currentChatId={chatId} />
     </>
   );

@@ -6,7 +6,7 @@
     "clean": "rm bun.lock && bunx npkill --delete-all -y",
     "dev": "next dev --turbopack",
     "devx": "bun start:all && bun dev",
-    "devrs": "bun start:all && bun db:hardreset && bun s3:reset && bun dev",
+    "devrs": "bun start:all && bun db:hardreset && bun dev",
     "build": "bun db:generate && next build --turbopack",
     "start": "next start",
     "start:all": "docker compose up -d",
