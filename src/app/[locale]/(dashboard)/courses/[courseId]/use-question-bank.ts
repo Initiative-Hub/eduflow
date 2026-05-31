@@ -96,7 +96,18 @@ export function useQuestionBank({ courseId }: UseQuestionBankOptions) {
         questions: [],
       });
     },
-    onSuccess: () => {
+    onSuccess: (createdQuiz) => {
+      queryClient.setQueryData<QuizDefinition[]>(
+        ['quizzes', courseId],
+        (oldQuizzes = []) => {
+          if (oldQuizzes.some((quiz) => quiz.id === createdQuiz.id)) {
+            return oldQuizzes;
+          }
+
+          return [createdQuiz, ...oldQuizzes];
+        }
+      );
+
       queryClient.invalidateQueries({ queryKey: ['quizzes', courseId] });
       queryClient.invalidateQueries({ queryKey: ['modules', courseId] });
       toast.success('Quiz created successfully');

@@ -1,6 +1,5 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useRef } from 'react';
 import { QuizForm, type QuizFormSubmitData } from '@/components/quiz/quiz-form';
@@ -34,7 +33,6 @@ export function CreateQuizDialog({
   moduleName,
 }: CreateQuizDialogProps) {
   const t = useTranslations('Courses.CreateQuiz');
-  const router = useRouter();
   const { modules } = useModules(courseId);
   const {
     createQuiz,
@@ -70,7 +68,6 @@ export function CreateQuizDialog({
       {
         onSuccess: () => {
           onOpenChange(false);
-          router.push(`/courses/${courseId}`);
         },
       }
     );
