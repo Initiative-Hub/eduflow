@@ -79,13 +79,13 @@ export default function WritingClient({
 
         <div className="relative mx-auto flex w-full max-w-5xl flex-1 flex-col justify-center">
           {!hasOutput ? (
-            <>
+            <div className="min-h-0 flex-1 overflow-hidden">
               <WritingSelector
                 selected={selectedTool}
                 onSelect={setSelectedTool}
               />
               <LandingRecentWritingChats />
-            </>
+            </div>
           ) : (
             <div className="mx-auto flex min-h-0 w-full max-w-4xl flex-1 flex-col">
               <ChatView messages={messages} isStreaming={isStreaming} />
