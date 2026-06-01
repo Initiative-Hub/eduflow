@@ -24,10 +24,7 @@ export function CreateQuizClient({
   const t = useTranslations('Courses.CreateQuiz');
   const router = useRouter();
   const { modules } = useModules(courseId);
-  const {
-    createQuiz,
-    isCreatingQuiz,
-  } = useQuestionBank({ courseId });
+  const { createQuiz, isCreatingQuiz } = useQuestionBank({ courseId });
 
   // Get lessons from the preselected module or all modules
   const availableLessons = preselectedModuleId

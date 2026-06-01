@@ -33,10 +33,7 @@ export function CreateQuizDialog({
 }: CreateQuizDialogProps) {
   const t = useTranslations('Courses.CreateQuiz');
   const { modules } = useModules(courseId);
-  const {
-    createQuiz,
-    isCreatingQuiz,
-  } = useQuestionBank({ courseId });
+  const { createQuiz, isCreatingQuiz } = useQuestionBank({ courseId });
   const submitRef = useRef<(() => void) | null>(null);
 
   // Get lessons from the preselected module or all modules

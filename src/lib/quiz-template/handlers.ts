@@ -33,9 +33,7 @@ function scoreMultipleChoice(
   if (question.type !== 'multiple_choice' || answer.type !== 'multiple_choice')
     return false;
 
-  const correctOption = question.options.find(
-    (option) => option.isCorrect
-  );
+  const correctOption = question.options.find((option) => option.isCorrect);
   return correctOption?.id === answer.selectedOptionId;
 }
 
