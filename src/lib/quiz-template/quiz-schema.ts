@@ -4,7 +4,7 @@
  * and the full question bank workflow.
  *
  * NOTE: These types use SCREAMING_SNAKE_CASE to match Prisma enum values directly.
- * The question `type` discriminator inside QuestionBlock JSON is separate and uses kebab-case.
+ * The question `type` discriminator inside QuestionBlock JSON is separate and uses snake_case.
  */
 
 import type { QuestionBlock } from './types';
@@ -149,7 +149,7 @@ export const SELECTION_METHOD_LABELS: Record<SelectionMethod, string> = {
 // ─── SubType ↔ QuestionBlock type mapping ────────────────────────────────────
 
 /**
- * Maps Prisma SCREAMING_SNAKE_CASE subType values to the kebab-case
+ * Maps Prisma SCREAMING_SNAKE_CASE subType values to the snake_case
  * `type` discriminator used inside QuestionBlock JSON.
  */
 export const SUB_TYPE_TO_QUESTION_TYPE: Record<QuestionSubType, string> = {

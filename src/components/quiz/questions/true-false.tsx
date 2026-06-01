@@ -16,34 +16,9 @@ interface TrueFalseProps {
 function resolveCorrectAnswer(
   question: DisplaySafe<TrueFalseQuestion>
 ): boolean | undefined {
-  if (typeof question.correctAnswer === 'boolean') {
-    return question.correctAnswer;
-  }
-
-  const legacyOptions = (
-    question as DisplaySafe<TrueFalseQuestion> & {
-      options?: Array<{ text?: string; isCorrect?: boolean }>;
-    }
-  ).options;
-
-  if (!Array.isArray(legacyOptions)) {
-    return undefined;
-  }
-
-  const correctOption = legacyOptions.find((option) => option.isCorrect);
-  if (!correctOption?.text) {
-    return undefined;
-  }
-
-  const normalized = correctOption.text.trim().toLowerCase();
-  if (normalized === 'true') {
-    return true;
-  }
-  if (normalized === 'false') {
-    return false;
-  }
-
-  return undefined;
+  return typeof question.correctAnswer === 'boolean'
+    ? question.correctAnswer
+    : undefined;
 }
 
 export function TrueFalse({

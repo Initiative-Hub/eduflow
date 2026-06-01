@@ -79,7 +79,7 @@ export function QuestionPreview({ question }: QuestionPreviewProps) {
         />
       );
 
-    case 'drag-and-drop':
+    case 'drag_and_drop':
       return (
         <DragAndDrop
           question={data}

@@ -16,7 +16,7 @@ import {
 const multipleChoiceExample: QuizContent = {
   title: 'Multiple Choice Example',
   description: 'Students pick one correct answer from provided options.',
-  type: 'multiple-choice',
+  type: 'multiple_choice',
   questions: [
     {
       type: 'multiple_choice',
@@ -147,10 +147,10 @@ const dragAndDropExample: QuizContent = {
   title: 'Drag & Drop Fill Example',
   description:
     'Students drag items into sentence blanks (similar to fill-in-the-blank but with drag-and-drop interaction).',
-  type: 'drag-and-drop',
+  type: 'drag_and_drop',
   questions: [
     {
-      type: 'drag-and-drop',
+      type: 'drag_and_drop',
       prompt: 'Complete the sentence about photosynthesis:',
       sentenceTemplate:
         'During photosynthesis, plants absorb {{gas}} from the atmosphere and {{liquid}} from the soil to produce {{product}} and release {{byproduct}}.',
@@ -183,9 +183,9 @@ const dragAndDropExample: QuizContent = {
 // ─── Sub-Type Descriptions ───────────────────────────────────────────────────
 
 const SUB_TYPE_DESCRIPTIONS: Record<string, string> = {
-  'multiple-choice':
+  multiple_choice:
     'Best for testing factual recall and comprehension. Students select one correct answer from multiple options. Use when there is a single clear correct answer.',
-  'true-false':
+  true_false:
     'Best for testing understanding of statements and concepts. Students decide if a statement is true or false. Use for quick checks of common misconceptions.',
   matching:
     'Best for testing associations and relationships. Students match items from two columns. Use when testing vocabulary, definitions, or cause-effect relationships.',
@@ -193,9 +193,9 @@ const SUB_TYPE_DESCRIPTIONS: Record<string, string> = {
     'Best for testing sequential knowledge. Students arrange items in the correct order. Use for processes, timelines, or ranked lists.',
   essay:
     'Best for testing deep understanding and critical thinking. Students write extended responses. AI provides feedback based on rubric criteria.',
-  'fill-in-the-blank':
+  fill_in_the_blank:
     'Best for testing specific terminology and key concepts. Students type short answers into blanks. Use when exact recall of terms is important.',
-  'drag-and-drop':
+  drag_and_drop:
     'Best for interactive sentence completion. Students drag items into blanks. Use when you want a more engaging alternative to fill-in-the-blank.',
 };
 
@@ -209,16 +209,16 @@ export function QuizDemo() {
   };
 
   const selectionExamples = [
-    { key: 'multiple-choice', quiz: multipleChoiceExample },
-    { key: 'true-false', quiz: trueFalseExample },
+    { key: 'multiple_choice', quiz: multipleChoiceExample },
+    { key: 'true_false', quiz: trueFalseExample },
     { key: 'matching', quiz: matchingExample },
     { key: 'ordering', quiz: orderingExample },
   ];
 
   const openEndedExamples = [
     { key: 'essay', quiz: essayExample },
-    { key: 'fill-in-the-blank', quiz: fillInTheBlankExample },
-    { key: 'drag-and-drop', quiz: dragAndDropExample },
+    { key: 'fill_in_the_blank', quiz: fillInTheBlankExample },
+    { key: 'drag_and_drop', quiz: dragAndDropExample },
   ];
 
   return (

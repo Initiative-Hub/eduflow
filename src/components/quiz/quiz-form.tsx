@@ -80,7 +80,6 @@ export function QuizForm({
   availableLessons,
   onSubmit,
   isSubmitting,
-  isGeneratingQuestions = false,
   generateQuestionsError,
   onGenerateWithAI,
   compact = false,

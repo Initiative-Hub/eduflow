@@ -58,15 +58,15 @@ function toEditorQuestionType(type: string): EditorQuestionType {
 function toStoredQuestionType(type: EditorQuestionType): string {
   switch (type) {
     case 'multiple_choice':
-      return 'multiple-choice';
+      return 'multiple_choice';
     case 'true_false':
-      return 'true-false';
+      return 'true_false';
     case 'fill_in_the_blank':
-      return 'fill-in-the-blank';
+      return 'fill_in_the_blank';
     case 'drag_and_drop':
-      return 'drag-and-drop';
+      return 'drag_and_drop';
     case 'timed_challenge':
-      return 'timed-challenge';
+      return 'timed_challenge';
     default:
       return type;
   }
@@ -166,11 +166,11 @@ export function QuestionEditorDialog({
       setExplanation(currentQuestion.explanation ?? '');
 
       // Populate type-specific states
-      if (currentQuestion.type === 'multiple-choice') {
+      if (currentQuestion.type === 'multiple_choice') {
         setMcOptions(currentQuestion.options.map((o: any) => ({ ...o })));
-      } else if (currentQuestion.type === 'true-false') {
+      } else if (currentQuestion.type === 'true_false') {
         setTfCorrect(currentQuestion.correctAnswer);
-      } else if (currentQuestion.type === 'fill-in-the-blank') {
+      } else if (currentQuestion.type === 'fill_in_the_blank') {
         setBlankTemplate(currentQuestion.promptTemplate);
         setBlankAnswers(
           currentQuestion.blanks.map((b: any) => ({
@@ -184,7 +184,7 @@ export function QuestionEditorDialog({
         setMatchPairs(currentQuestion.correctPairs.map((p: any) => ({ ...p })));
       } else if (currentQuestion.type === 'ordering') {
         setOrderItems(currentQuestion.items.map((i: any) => ({ ...i })));
-      } else if (currentQuestion.type === 'drag-and-drop') {
+      } else if (currentQuestion.type === 'drag_and_drop') {
         setDndTemplate(currentQuestion.sentenceTemplate);
         setDndZones(currentQuestion.zones.map((z: any) => ({ ...z })));
         setDndItems(currentQuestion.items.map((i: any) => ({ ...i })));
@@ -195,7 +195,7 @@ export function QuestionEditorDialog({
         setEssayAllowAttachments(!!currentQuestion.allowAttachments);
         setEssayDelivery(currentQuestion.deliveryOption ?? 'immediate');
         setEssayAllowTeacherRubric(!!currentQuestion.allowTeacherRubric);
-      } else if (currentQuestion.type === 'timed-challenge') {
+      } else if (currentQuestion.type === 'timed_challenge') {
         setTimeLimit(currentQuestion.timeLimitSeconds);
         if (currentQuestion.innerQuestion) {
           setInnerType(
@@ -204,7 +204,7 @@ export function QuestionEditorDialog({
               'timed_challenge'
             >
           );
-          if (currentQuestion.innerQuestion.type === 'multiple-choice') {
+          if (currentQuestion.innerQuestion.type === 'multiple_choice') {
             setInnerMcOptions(
               currentQuestion.innerQuestion.options.map((o: any) => ({ ...o }))
             );
@@ -325,7 +325,7 @@ export function QuestionEditorDialog({
       const innerQuestion =
         innerType === 'multiple_choice'
           ? {
-              type: 'multiple-choice',
+              type: 'multiple_choice',
               prompt: prompt.trim(),
               options: innerMcOptions.map((o) => ({
                 id: o.id,
@@ -334,7 +334,7 @@ export function QuestionEditorDialog({
               })),
             }
           : {
-              type: 'true-false',
+              type: 'true_false',
               prompt: prompt.trim(),
               correctAnswer: tfCorrect,
             };
