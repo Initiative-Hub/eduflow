@@ -238,10 +238,9 @@ export async function POST(
       );
     }
 
-    const subject = getSocraticSubjectFromMetadata(
-      socraticData.metadata,
-      parsedBody.data.subject
-    );
+    const subject =
+      parsedBody.data.subject ??
+      getSocraticSubjectFromMetadata(socraticData.metadata);
     const providerName = parsedBody.data.provider ?? DEFAULT_PROVIDER;
     const provider = ChatProviderFactory.create(providerName);
     const messagesForModel = parsedBody.data.messages;

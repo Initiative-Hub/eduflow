@@ -15,4 +15,4 @@ export const socraticSubjectSchema = z.enum(SOCRATIC_SUBJECTS);
 
 export type SocraticSubject = z.infer<typeof socraticSubjectSchema>;
 
-export const DEFAULT_SOCRATIC_SUBJECT = 'math' satisfies SocraticSubject;
+export const DEFAULT_SOCRATIC_SUBJECT = 'other';

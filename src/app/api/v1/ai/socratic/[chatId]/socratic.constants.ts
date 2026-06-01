@@ -143,15 +143,15 @@ export function getSocraticSystemPrompt(subject: SocraticSubject): string {
 }
 
 export function getSocraticSubjectFromMetadata(
-  metadata: unknown,
-  fallback: SocraticSubject = DEFAULT_SOCRATIC_SUBJECT
+  metadata: unknown
 ): SocraticSubject {
-  if (!metadata || typeof metadata !== 'object') return fallback;
+  if (!metadata || typeof metadata !== 'object')
+    return DEFAULT_SOCRATIC_SUBJECT;
 
   const value = (metadata as { subject?: unknown }).subject;
   const parsed = socraticSubjectSchema.safeParse(value);
 
-  return parsed.success ? parsed.data : fallback;
+  return parsed.success ? parsed.data : DEFAULT_SOCRATIC_SUBJECT;
 }
 
 function extractJsonObject(text: string): unknown {
