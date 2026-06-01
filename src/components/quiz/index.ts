@@ -1,3 +1,4 @@
+export { QuizQuestionsEditor } from './editors';
 export { Quiz } from './quiz';
 export type { QuizResultProps, QuizState } from './quiz.types';
 export {

@@ -53,6 +53,10 @@ export interface QuestionTypeHandler {
 
 const registry = new Map<string, QuestionTypeHandler>();
 
+function normalizeQuestionType(type: string): string {
+  return type.toLowerCase().replace(/_/g, '-');
+}
+
 /**
  * Registers a question type handler in the registry.
  * TypeScript enforces that all required fields (type, score, stripAnswers)
@@ -67,7 +71,7 @@ export function registerQuestionType(handler: QuestionTypeHandler): void {
  * @throws Error if no handler is registered for the given type.
  */
 export function getHandler(type: string): QuestionTypeHandler {
-  const handler = registry.get(type);
+  const handler = registry.get(normalizeQuestionType(type));
   if (!handler) {
     throw new Error(
       `No handler registered for question type: "${type}". ` +

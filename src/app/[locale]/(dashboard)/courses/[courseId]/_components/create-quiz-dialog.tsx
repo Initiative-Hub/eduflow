@@ -1,6 +1,5 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useRef } from 'react';
 import { QuizForm, type QuizFormSubmitData } from '@/components/quiz/quiz-form';
@@ -34,7 +33,6 @@ export function CreateQuizDialog({
   moduleName,
 }: CreateQuizDialogProps) {
   const t = useTranslations('Courses.CreateQuiz');
-  const router = useRouter();
   const { modules } = useModules(courseId);
   const {
     createQuiz,
@@ -51,14 +49,14 @@ export function CreateQuizDialog({
     : modules.flatMap((m) => m.lessons);
 
   const handleSubmit = (data: QuizFormSubmitData) => {
-    const primaryLessonId =
+    const lessonIds =
       data.contentSource === 'all-modules'
-        ? (availableLessons[0]?.id ?? '')
-        : data.selectedLessonIds[0];
+        ? availableLessons.map((l) => l.id)
+        : data.selectedLessonIds;
 
     createQuiz(
       {
-        lessonId: primaryLessonId,
+        lessonIds,
         title: data.title,
         description: data.description || undefined,
         category: data.category,
@@ -68,7 +66,9 @@ export function CreateQuizDialog({
         questionCount: data.questionCount,
       },
       {
-        onSuccess: () => router.push(`/courses/${courseId}`),
+        onSuccess: () => {
+          onOpenChange(false);
+        },
       }
     );
   };
