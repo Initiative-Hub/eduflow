@@ -9,7 +9,7 @@ import {
   Square,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { type FormEvent, useState } from 'react';
+import { type FormEvent, type ReactNode, useState } from 'react';
 import { toast } from 'sonner';
 import {
   PromptInput,
@@ -44,6 +44,10 @@ interface ChatInputProps {
   onStop: () => void;
   selectedModel?: ChatModel;
   onModelChange?: (model: ChatModel) => void;
+  placeholder?: string;
+  limitReachedPlaceholder?: string;
+  limitReachedHelper?: string;
+  footer?: ReactNode;
 }
 
 export function ChatInput({
@@ -58,6 +62,10 @@ export function ChatInput({
   onStop,
   selectedModel,
   onModelChange,
+  placeholder,
+  limitReachedPlaceholder,
+  limitReachedHelper,
+  footer,
 }: ChatInputProps) {
   const t = useTranslations('AIChat');
   const [inputValue, setInputValue] = useState('');
@@ -100,8 +108,35 @@ export function ChatInput({
   };
 
   const inputPlaceholder = isLimitReached
-    ? t('limitReachedPlaceholder', { count: limitCount })
-    : t('placeholder');
+    ? (limitReachedPlaceholder ??
+      t('limitReachedPlaceholder', { count: limitCount }))
+    : (placeholder ?? t('placeholder'));
+  const defaultFooter = (
+    <div className="flex items-center justify-center gap-6 px-4">
+      <div className="flex cursor-default items-center gap-1.5 text-muted-foreground/50 transition-colors hover:text-muted-foreground/80">
+        <Button
+          variant="ghost"
+          className="flex h-auto items-center gap-1.5 p-0 hover:bg-transparent"
+        >
+          <Settings2 className="size-3.5" />
+          <span className="font-medium text-[11px]">
+            {t('footer.responseDisclaimer')}
+          </span>
+        </Button>
+      </div>
+      <div className="flex cursor-default items-center gap-1.5 text-muted-foreground/50 transition-colors hover:text-muted-foreground/80">
+        <Button
+          variant="ghost"
+          className="flex h-auto items-center gap-1.5 p-0 hover:bg-transparent"
+        >
+          <Library className="size-3.5" />
+          <span className="font-medium text-[11px]">
+            {t('footer.academicDraft')}
+          </span>
+        </Button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="space-y-4 transition-all duration-200">
@@ -191,39 +226,15 @@ export function ChatInput({
         </PromptInput>
       </div>
 
-      {!isChatting && (
-        <div className="flex items-center justify-center gap-6 px-4">
-          <div className="flex cursor-default items-center gap-1.5 text-muted-foreground/50 transition-colors hover:text-muted-foreground/80">
-            <Button
-              variant="ghost"
-              className="flex h-auto items-center gap-1.5 p-0 hover:bg-transparent"
-            >
-              <Settings2 className="size-3.5" />
-              <span className="font-medium text-[11px]">
-                {t('footer.responseDisclaimer')}
-              </span>
-            </Button>
-          </div>
-          <div className="flex cursor-default items-center gap-1.5 text-muted-foreground/50 transition-colors hover:text-muted-foreground/80">
-            <Button
-              variant="ghost"
-              className="flex h-auto items-center gap-1.5 p-0 hover:bg-transparent"
-            >
-              <Library className="size-3.5" />
-              <span className="font-medium text-[11px]">
-                {t('footer.academicDraft')}
-              </span>
-            </Button>
-          </div>
-        </div>
-      )}
+      {!isChatting && (footer ?? defaultFooter)}
 
       {isLimitReached && (
         <p className="text-center font-medium text-muted-foreground text-sm">
-          {t('limitReachedHelper', {
-            count: limitCount,
-            used: userMessageCount,
-          })}
+          {limitReachedHelper ??
+            t('limitReachedHelper', {
+              count: limitCount,
+              used: userMessageCount,
+            })}
         </p>
       )}
     </div>

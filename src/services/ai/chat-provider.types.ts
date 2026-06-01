@@ -4,13 +4,19 @@ import type { StreamObjectOnFinishCallback, UIMessage } from 'ai';
 import type { AICourseGeneration } from '@/lib/validations/course.schema';
 
 export type ChatProvider = 'ai-gateway' | 'google' | 'openrouter';
+export type StreamChatPromptMode = 'append' | 'replace';
+
 export type StreamChatInput = {
   messages: UIMessage[];
   provider?: ChatProvider;
   model?: string;
   apiKey?: string;
   providerOptions?: ProviderOptions;
-  system?: string;
+};
+
+export type StreamChatInternalOptions = {
+  prompt?: string;
+  mode?: StreamChatPromptMode;
 };
 
 export type StreamCourseInput = {

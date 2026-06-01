@@ -10,20 +10,24 @@ import { aiCourseGenerationSchema } from '@/lib/validations/course.schema';
 import {
   COURSE_GENERATION_PROMPT,
   DEFAULT_MODELS,
-  SYSTEM_PROMPT,
   safetySettings,
 } from '@/services/ai/chat-provider.constants';
 import type {
   StreamChatInput,
+  StreamChatInternalOptions,
   StreamCourseInput,
 } from '@/services/ai/chat-provider.types';
 import { StorageService } from '../StorageService';
 import type { ChatProviderService } from './ChatProviderService';
+import { resolveChatSystemPrompt } from './chat-system-prompt';
 
 const PROVIDER_NAME = 'google';
 
 export class GoogleService implements ChatProviderService {
-  async streamChat(input: StreamChatInput) {
+  async streamChat(
+    input: StreamChatInput,
+    options?: StreamChatInternalOptions
+  ) {
     const apiKey = input.apiKey ?? process.env.GOOGLE_GENERATIVE_AI_API_KEY;
 
     if (!apiKey) {
@@ -43,9 +47,7 @@ export class GoogleService implements ChatProviderService {
           ...(input.providerOptions?.google ?? {}),
         },
       },
-      system: input.system
-        ? `${SYSTEM_PROMPT}\n\n=== ADDITIONAL CONTEXT ===\n${input.system}`
-        : SYSTEM_PROMPT,
+      system: resolveChatSystemPrompt(options),
       messages: await convertToModelMessages(input.messages),
     });
   }

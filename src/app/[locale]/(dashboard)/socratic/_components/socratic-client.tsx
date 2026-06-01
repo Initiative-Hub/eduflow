@@ -1,0 +1,155 @@
+'use client';
+
+import { GraduationCap, LockKeyhole } from 'lucide-react';
+import dynamic from 'next/dynamic';
+import { useTranslations } from 'next-intl';
+import type React from 'react';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import type { SocraticUIMessage } from '@/app/api/v1/ai/socratic/[chatId]/socratic.constants';
+import { Button } from '@/components/ui/button';
+import {
+  DEFAULT_SOCRATIC_SUBJECT,
+  type SocraticSubject,
+} from '@/lib/validations/socratic.schema';
+import { type ChatModel, DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
+import { ChatInput } from '../../_components/chat-input';
+import { ChatSidebar } from '../../_components/chat-sidebar';
+import { ChatWorkspaceShell } from '../../_components/chat-workspace-shell';
+import { socraticService } from '../socratic.service';
+import { useSocratic } from '../use-socratic';
+import { LandingRecentSocraticChats } from './landing-recent-socratic-chats';
+import { SocraticSubjectSelector } from './socratic-subject-selector';
+
+interface SocraticClientProps {
+  chatId?: string;
+  initialSubject?: SocraticSubject;
+  initialMessages?: SocraticUIMessage[];
+  isAuthenticated: boolean;
+}
+
+const ChatView = dynamic(() =>
+  import('../../_components/chat-view').then((mod) => mod.ChatView)
+);
+
+export function SocraticClient({
+  chatId,
+  initialSubject = DEFAULT_SOCRATIC_SUBJECT,
+  initialMessages,
+  isAuthenticated,
+}: SocraticClientProps) {
+  const [selectedSubject, setSelectedSubject] =
+    useState<SocraticSubject>(initialSubject);
+  const [selectedModel, setSelectedModel] =
+    useState<ChatModel>(DEFAULT_CHAT_MODEL);
+  const t = useTranslations('SocraticPage');
+
+  const {
+    messages,
+    isStreaming,
+    startChat,
+    stop,
+    hasOutput,
+    isLimitReached,
+    maxMessages,
+    userMessageCount,
+  } = useSocratic({
+    subject: selectedSubject,
+    chatId,
+    initialMessages,
+    selectedModel,
+    isAuthenticated,
+  });
+
+  const notifyLimitReached = () => {
+    toast.error(t('limitReachedToast', { count: maxMessages }));
+  };
+
+  const submitText = async (text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+
+    if (isLimitReached) {
+      notifyLimitReached();
+      return;
+    }
+
+    await startChat(trimmed);
+  };
+
+  const handleSubmit = (e?: React.SyntheticEvent, customValue?: string) => {
+    e?.preventDefault();
+    void submitText(customValue || '');
+  };
+
+  const viewport = !hasOutput ? (
+    <div className="flex flex-col gap-4 px-4 py-6">
+      <SocraticSubjectSelector
+        selected={selectedSubject}
+        onSelect={setSelectedSubject}
+      />
+      <LandingRecentSocraticChats />
+    </div>
+  ) : (
+    <ChatView
+      messages={messages}
+      isStreaming={isStreaming}
+      onSuggestionSelect={(suggestion) => void submitText(suggestion)}
+      suggestionsDisabled={isStreaming || isLimitReached}
+    />
+  );
+
+  const composer = (
+    <ChatInput
+      handleSubmit={handleSubmit}
+      isAuthenticated={isAuthenticated}
+      isStreaming={isStreaming}
+      isUploading={false}
+      isChatting={hasOutput}
+      isLimitReached={isLimitReached}
+      limitCount={maxMessages}
+      userMessageCount={userMessageCount}
+      onStop={stop}
+      selectedModel={selectedModel}
+      onModelChange={setSelectedModel}
+      placeholder={t('input.placeholder')}
+      limitReachedPlaceholder={t('input.limitReachedPlaceholder', {
+        count: maxMessages,
+      })}
+      limitReachedHelper={t('limitReachedHelper', {
+        count: maxMessages,
+        used: userMessageCount,
+      })}
+      footer={
+        <div className="flex items-center justify-center px-4">
+          <Button
+            className="flex h-auto items-center gap-1.5 p-0 text-muted-foreground/60 hover:bg-transparent hover:text-muted-foreground"
+            variant="ghost"
+          >
+            <LockKeyhole className="size-3.5" />
+            <span className="font-medium text-[11px]">{t('input.footer')}</span>
+          </Button>
+        </div>
+      }
+    />
+  );
+
+  return (
+    <>
+      <ChatWorkspaceShell composer={composer} viewport={viewport} />
+      <ChatSidebar
+        currentChatId={chatId}
+        emptyIcon={GraduationCap}
+        itemIcon={GraduationCap}
+        newSessionHref="/socratic"
+        queryKey="socratic-chat-list"
+        sessionHrefPrefix="/socratic"
+        service={{
+          listChats: socraticService.listChats,
+          updateChat: socraticService.updateChat,
+        }}
+        translationNamespace="SocraticPage.sidebar"
+      />
+    </>
+  );
+}

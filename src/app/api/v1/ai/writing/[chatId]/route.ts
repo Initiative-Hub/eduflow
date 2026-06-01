@@ -201,10 +201,16 @@ export async function POST(
       parsedBody.data.provider ?? DEFAULT_PROVIDER
     );
 
-    const result = await provider.streamChat({
-      ...(parsedBody.data as StreamChatInput),
-      system: systemPrompt,
-    });
+    const result = await provider.streamChat(
+      {
+        messages: parsedBody.data.messages,
+        provider: parsedBody.data.provider,
+        model: parsedBody.data.model,
+        apiKey: parsedBody.data.apiKey,
+        providerOptions: parsedBody.data.providerOptions,
+      },
+      { prompt: systemPrompt }
+    );
 
     const response = result.toUIMessageStreamResponse({
       originalMessages: parsedBody.data.messages,

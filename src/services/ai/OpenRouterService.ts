@@ -10,21 +10,25 @@ import { aiCourseGenerationSchema } from '@/lib/validations/course.schema';
 import {
   COURSE_GENERATION_PROMPT,
   DEFAULT_MODELS,
-  SYSTEM_PROMPT,
 } from '@/services/ai/chat-provider.constants';
 import type {
   StreamChatInput,
+  StreamChatInternalOptions,
   StreamCourseInput,
 } from '@/services/ai/chat-provider.types';
 import { WebSearchService } from '@/services/WebSearchService';
 import { StorageService } from '../StorageService';
 import type { ChatProviderService } from './ChatProviderService';
+import { resolveChatSystemPrompt } from './chat-system-prompt';
 import type { CourseStreamEvent } from './course-stream.types';
 
 const PROVIDER_NAME = 'openrouter';
 
 export class OpenRouterService implements ChatProviderService {
-  async streamChat(input: StreamChatInput) {
+  async streamChat(
+    input: StreamChatInput,
+    options?: StreamChatInternalOptions
+  ) {
     const apiKey = input.apiKey ?? process.env.OPENROUTER_API_KEY;
     if (!apiKey)
       throw new Error(`Missing API key for provider "${PROVIDER_NAME}"`);
@@ -35,9 +39,7 @@ export class OpenRouterService implements ChatProviderService {
     return streamText({
       experimental_transform: smoothStream(),
       model: provider(model),
-      system: input.system
-        ? `${SYSTEM_PROMPT}\n\n=== ADDITIONAL CONTEXT ===\n${input.system}`
-        : SYSTEM_PROMPT,
+      system: resolveChatSystemPrompt(options),
       messages: await convertToModelMessages(input.messages),
       providerOptions: input.providerOptions,
     });

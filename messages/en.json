@@ -1118,6 +1118,88 @@
     },
     "title": "Welcome to the <brand>EduFlow</brand> Ecosystem"
   },
+  "SocraticPage": {
+    "input": {
+      "footer": "Socratic mode active • no direct answers provided",
+      "limitReachedPlaceholder": "Socratic limit reached ({count}). Start a new session.",
+      "placeholder": "Ask a question or describe where you're stuck..."
+    },
+    "limitReachedHelper": "Limit reached: {used}/{count} messages. Start a new Socratic session to continue.",
+    "limitReachedToast": "You've reached the {count}-message Socratic limit. Start a new session to continue.",
+    "recentSessions": {
+      "description": "Return to guided questions and prior reasoning threads.",
+      "empty": "No Socratic sessions yet. Choose a subject and ask where you're stuck.",
+      "error": "Unable to load recent Socratic sessions right now.",
+      "openChat": "Open Socratic session {title}",
+      "title": "Recent Socratic sessions",
+      "updated": "Updated {date}"
+    },
+    "sidebar": {
+      "actionsLabel": "Actions for {title}",
+      "cancel": "Cancel",
+      "close": "Collapse Socratic history",
+      "delete": "Delete",
+      "deleteDialogDescription": "Delete \"{title}\" from your Socratic history? This action cannot be undone.",
+      "deleteDialogTitle": "Delete Socratic session",
+      "deleteError": "Unable to delete Socratic session.",
+      "deleteSuccess": "Socratic session deleted.",
+      "description": "Search and reopen prior guided sessions.",
+      "editDialogDescription": "Choose a concise title for this Socratic session.",
+      "editDialogTitle": "Edit Socratic title",
+      "editError": "Unable to update Socratic session title.",
+      "editTitle": "Edit Title",
+      "editTitleLabel": "Socratic session title",
+      "editTitlePlaceholder": "Enter Socratic session title",
+      "emptyDescription": "Start a Socratic session and it will appear here.",
+      "emptySearch": "No Socratic sessions match your search.",
+      "emptyTitle": "No Socratic sessions yet",
+      "loadingMore": "Loading more Socratic sessions...",
+      "messageCount": "{count, plural, one {# message} other {# messages}}",
+      "newChat": "New Socratic session",
+      "open": "Open Socratic history",
+      "saveTitle": "Save title",
+      "searchLabel": "Search Socratic sessions",
+      "searchPlaceholder": "Search Socratic sessions...",
+      "title": "Socratic history",
+      "untitled": "Untitled Socratic session"
+    },
+    "subjects": {
+      "biology": {
+        "description": "Trace systems, evidence, and cause-effect relationships.",
+        "title": "Biology"
+      },
+      "chemistry": {
+        "description": "Reason through reactions, bonding, and particle-level changes.",
+        "title": "Chemistry"
+      },
+      "english": {
+        "description": "Explore grammar, reading, vocabulary, and revision choices.",
+        "title": "English"
+      },
+      "geography": {
+        "description": "Investigate maps, spatial patterns, regions, and environments.",
+        "title": "Geography"
+      },
+      "history": {
+        "description": "Analyze causes, evidence, timelines, and perspectives.",
+        "title": "History"
+      },
+      "math": {
+        "description": "Work through concepts, proofs, and problem-solving steps.",
+        "title": "Math"
+      },
+      "other": {
+        "description": "Use guided questions for any topic you want to understand.",
+        "title": "Other subject"
+      },
+      "physics": {
+        "description": "Connect formulas, units, diagrams, and physical intuition.",
+        "title": "Physics"
+      }
+    },
+    "subtitle": "Choose a subject, then work toward the answer through hints, questions, and guided discovery.",
+    "title": "Socratic Inquiry"
+  },
   "WritingPage": {
     "recentSessions": {
       "description": "Return to drafts, rewrites, and polished writing sessions.",

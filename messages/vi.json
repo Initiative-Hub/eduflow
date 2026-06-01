@@ -1118,6 +1118,88 @@
     },
     "title": "Chào mừng bạn đến với Hệ sinh thái <brand>EduFlow</brand>"
   },
+  "SocraticPage": {
+    "input": {
+      "footer": "Chế độ Socratic đang bật • không cung cấp đáp án trực tiếp",
+      "limitReachedPlaceholder": "Đã đạt giới hạn Socratic ({count}). Hãy bắt đầu phiên mới.",
+      "placeholder": "Đặt câu hỏi hoặc mô tả chỗ bạn đang mắc..."
+    },
+    "limitReachedHelper": "Đã chạm giới hạn: {used}/{count} tin nhắn. Hãy bắt đầu phiên Socratic mới để tiếp tục.",
+    "limitReachedToast": "Bạn đã đạt giới hạn {count} tin nhắn Socratic. Hãy bắt đầu phiên mới để tiếp tục.",
+    "recentSessions": {
+      "description": "Quay lại các câu hỏi gợi mở và mạch suy luận trước đây.",
+      "empty": "Chưa có phiên Socratic. Hãy chọn môn học và hỏi phần bạn đang mắc.",
+      "error": "Hiện không thể tải các phiên Socratic gần đây.",
+      "openChat": "Mở phiên Socratic {title}",
+      "title": "Phiên Socratic gần đây",
+      "updated": "Cập nhật {date}"
+    },
+    "sidebar": {
+      "actionsLabel": "Hành động cho {title}",
+      "cancel": "Hủy",
+      "close": "Thu gọn lịch sử Socratic",
+      "delete": "Xóa",
+      "deleteDialogDescription": "Xóa \"{title}\" khỏi lịch sử Socratic của bạn? Không thể hoàn tác hành động này.",
+      "deleteDialogTitle": "Xóa phiên Socratic",
+      "deleteError": "Không thể xóa phiên Socratic.",
+      "deleteSuccess": "Đã xóa phiên Socratic.",
+      "description": "Tìm kiếm và mở lại các phiên gợi mở trước đây.",
+      "editDialogDescription": "Chọn một tiêu đề ngắn gọn cho phiên Socratic này.",
+      "editDialogTitle": "Chỉnh sửa tiêu đề Socratic",
+      "editError": "Không thể cập nhật tiêu đề phiên Socratic.",
+      "editTitle": "Sửa tiêu đề",
+      "editTitleLabel": "Tiêu đề phiên Socratic",
+      "editTitlePlaceholder": "Nhập tiêu đề phiên Socratic",
+      "emptyDescription": "Bắt đầu một phiên Socratic và phiên đó sẽ xuất hiện tại đây.",
+      "emptySearch": "Không có phiên Socratic nào khớp với tìm kiếm.",
+      "emptyTitle": "Chưa có phiên Socratic",
+      "loadingMore": "Đang tải thêm phiên Socratic...",
+      "messageCount": "{count, plural, one {# tin nhắn} other {# tin nhắn}}",
+      "newChat": "Phiên Socratic mới",
+      "open": "Mở lịch sử Socratic",
+      "saveTitle": "Lưu tiêu đề",
+      "searchLabel": "Tìm kiếm phiên Socratic",
+      "searchPlaceholder": "Tìm kiếm phiên Socratic...",
+      "title": "Lịch sử Socratic",
+      "untitled": "Phiên Socratic chưa đặt tên"
+    },
+    "subjects": {
+      "biology": {
+        "description": "Lần theo hệ thống, bằng chứng và quan hệ nguyên nhân - kết quả.",
+        "title": "Sinh học"
+      },
+      "chemistry": {
+        "description": "Suy luận về phản ứng, liên kết và biến đổi ở cấp độ hạt.",
+        "title": "Hóa học"
+      },
+      "english": {
+        "description": "Khám phá ngữ pháp, đọc hiểu, từ vựng và cách chỉnh sửa.",
+        "title": "Tiếng Anh"
+      },
+      "geography": {
+        "description": "Tìm hiểu bản đồ, mô hình không gian, vùng miền và môi trường.",
+        "title": "Địa lý"
+      },
+      "history": {
+        "description": "Phân tích nguyên nhân, bằng chứng, dòng thời gian và góc nhìn.",
+        "title": "Lịch sử"
+      },
+      "math": {
+        "description": "Từng bước xử lý khái niệm, chứng minh và bài toán.",
+        "title": "Toán"
+      },
+      "other": {
+        "description": "Dùng câu hỏi gợi mở cho bất kỳ chủ đề nào bạn muốn hiểu.",
+        "title": "Môn học khác"
+      },
+      "physics": {
+        "description": "Kết nối công thức, đơn vị, sơ đồ và trực giác vật lý.",
+        "title": "Vật lý"
+      }
+    },
+    "subtitle": "Chọn môn học, rồi tiến tới câu trả lời qua gợi ý, câu hỏi và khám phá có định hướng.",
+    "title": "Truy vấn Socratic"
+  },
   "WritingPage": {
     "recentSessions": {
       "description": "Quay lại các bản nháp, phần viết lại và phiên chỉnh sửa gần đây.",
