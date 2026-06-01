@@ -29,7 +29,6 @@
       "responseDisclaimer": "AI response may vary"
     },
     "limitReachedHelper": "Limit reached: {used}/{count} messages. Start a new session to continue.",
-    "limitReachedPlaceholder": "Message limit reached ({count}). Start a new session.",
     "limitReachedToast": "You've reached the {count}-message limit. Start a new session to continue.",
     "modelSelector": {
       "empty": "No models found.",
@@ -1121,10 +1120,8 @@
   "SocraticPage": {
     "input": {
       "footer": "Socratic mode active • no direct answers provided",
-      "limitReachedPlaceholder": "Socratic limit reached ({count}). Start a new session.",
       "placeholder": "Ask a question or describe where you're stuck..."
     },
-    "limitReachedHelper": "Limit reached: {used}/{count} messages. Start a new Socratic session to continue.",
     "limitReachedToast": "You've reached the {count}-message Socratic limit. Start a new session to continue.",
     "recentSessions": {
       "description": "Return to guided questions and prior reasoning threads.",

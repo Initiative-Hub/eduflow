@@ -113,13 +113,6 @@ export function SocraticClient({
       selectedModel={selectedModel}
       onModelChange={setSelectedModel}
       placeholder={t('input.placeholder')}
-      limitReachedPlaceholder={t('input.limitReachedPlaceholder', {
-        count: maxMessages,
-      })}
-      limitReachedHelper={t('limitReachedHelper', {
-        count: maxMessages,
-        used: userMessageCount,
-      })}
       footer={
         <div className="flex items-center justify-center px-4">
           <Button

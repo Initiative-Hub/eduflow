@@ -29,7 +29,6 @@
       "responseDisclaimer": "Phản hồi của AI có thể thay đổi"
     },
     "limitReachedHelper": "Đã chạm giới hạn: {used}/{count} tin nhắn. Hãy bắt đầu phiên mới để tiếp tục.",
-    "limitReachedPlaceholder": "Đã đạt giới hạn ({count}). Bắt đầu phiên mới.",
     "limitReachedToast": "Bạn đã đạt giới hạn {count} tin nhắn. Hãy bắt đầu phiên mới để tiếp tục.",
     "modelSelector": {
       "empty": "Không tìm thấy mô hình nào.",
@@ -1121,10 +1120,8 @@
   "SocraticPage": {
     "input": {
       "footer": "Chế độ Socratic đang bật • không cung cấp đáp án trực tiếp",
-      "limitReachedPlaceholder": "Đã đạt giới hạn Socratic ({count}). Hãy bắt đầu phiên mới.",
       "placeholder": "Đặt câu hỏi hoặc mô tả chỗ bạn đang mắc..."
     },
-    "limitReachedHelper": "Đã chạm giới hạn: {used}/{count} tin nhắn. Hãy bắt đầu phiên Socratic mới để tiếp tục.",
     "limitReachedToast": "Bạn đã đạt giới hạn {count} tin nhắn Socratic. Hãy bắt đầu phiên mới để tiếp tục.",
     "recentSessions": {
       "description": "Quay lại các câu hỏi gợi mở và mạch suy luận trước đây.",

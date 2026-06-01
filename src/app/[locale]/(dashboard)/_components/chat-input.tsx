@@ -45,8 +45,6 @@ interface ChatInputProps {
   selectedModel?: ChatModel;
   onModelChange?: (model: ChatModel) => void;
   placeholder?: string;
-  limitReachedPlaceholder?: string;
-  limitReachedHelper?: string;
   footer?: ReactNode;
 }
 
@@ -63,8 +61,6 @@ export function ChatInput({
   selectedModel,
   onModelChange,
   placeholder,
-  limitReachedPlaceholder,
-  limitReachedHelper,
   footer,
 }: ChatInputProps) {
   const t = useTranslations('AIChat');
@@ -107,10 +103,7 @@ export function ChatInput({
     }
   };
 
-  const inputPlaceholder = isLimitReached
-    ? (limitReachedPlaceholder ??
-      t('limitReachedPlaceholder', { count: limitCount }))
-    : (placeholder ?? t('placeholder'));
+  const inputPlaceholder = placeholder ?? t('placeholder');
   const defaultFooter = (
     <div className="flex items-center justify-center gap-6 px-4">
       <div className="flex cursor-default items-center gap-1.5 text-muted-foreground/50 transition-colors hover:text-muted-foreground/80">
@@ -230,11 +223,10 @@ export function ChatInput({
 
       {isLimitReached && (
         <p className="text-center font-medium text-muted-foreground text-sm">
-          {limitReachedHelper ??
-            t('limitReachedHelper', {
-              count: limitCount,
-              used: userMessageCount,
-            })}
+          {t('limitReachedHelper', {
+            count: limitCount,
+            used: userMessageCount,
+          })}
         </p>
       )}
     </div>
