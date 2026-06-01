@@ -35,9 +35,9 @@ export function ChatView({ messages, isStreaming }: ChatViewProps) {
   const t = useTranslations('AIChat');
 
   return (
-    <div className="flex h-[calc(100vh-20rem)] w-full flex-col">
+    <div className="mx-auto max-w-4xl">
       <Conversation>
-        <ConversationContent className="custom-scrollbar gap-6 py-4 pr-4">
+        <ConversationContent className="gap-6 py-8">
           {messages.map((message) => {
             const text = getMessageText(message);
             const reasoning = getMessageReasoning(message);

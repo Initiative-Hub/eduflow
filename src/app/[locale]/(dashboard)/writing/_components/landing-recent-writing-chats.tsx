@@ -29,7 +29,7 @@ export function LandingRecentWritingChats() {
   });
 
   return (
-    <section className="w-full max-w-5xl px-4 pt-6">
+    <section className="w-full px-4 py-6">
       <div className="mb-3 flex items-center justify-between">
         <div>
           <h2 className="font-bold font-heading text-foreground/90 text-lg">

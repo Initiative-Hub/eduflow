@@ -1,9 +1,4 @@
 {
-  "AccountPage": {
-    "emailLabel": "Email:",
-    "title": "Account Information",
-    "usernameLabel": "Username:"
-  },
   "AIChat": {
     "attachments": {
       "add": "Attach files",
@@ -28,7 +23,6 @@
       "description": "This chat doesn't exist or has expired.",
       "title": "Chat not found"
     },
-    "criticalThinking": "Critical Thinking Active",
     "exploreMore": "Explore more scholarly prompts",
     "footer": {
       "academicDraft": "Lexend Academic Draft",
@@ -43,7 +37,6 @@
       "label": "Select AI model",
       "placeholder": "Choose model"
     },
-    "philosophicalLogic": "Philosophical Logic Enforced",
     "placeholder": "Ask a scholarly question...",
     "promptLibrary": {
       "description": "Select a specialized inquiry framework to guide your session.",
@@ -892,6 +885,10 @@
     "system": "System"
   },
   "Layout": {
+    "adminHeading": "Admin",
+    "adminRoles": "Roles",
+    "adminSubheading": "Manage platform and administrative settings",
+    "adminUserManagement": "User Management",
     "aiChat": "AI Chat",
     "aiTools": "AI Tools",
     "courses": "Courses",
