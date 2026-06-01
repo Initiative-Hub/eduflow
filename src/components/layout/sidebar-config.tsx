@@ -5,6 +5,7 @@ import {
   LineChart,
   MessageSquare,
   Settings,
+  ShieldCheck,
   Users,
 } from 'lucide-react';
 import type { ReactElement } from 'react';
@@ -49,6 +50,11 @@ export function getCourseNavItems(
       name: 'Members',
       url: `/courses/${courseId}/members`,
       icon: <Users className={iconCls} />,
+    },
+    {
+      name: 'Roles',
+      url: `/courses/${courseId}/roles`,
+      icon: <ShieldCheck className={iconCls} />,
     },
     {
       name: 'Analytics',

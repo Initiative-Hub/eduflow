@@ -1,3 +1,4 @@
+import type { PlatformRoleName } from '@/generated/prisma';
 import {
   isPlatformPermissionKey,
   PLATFORM_PERMISSION_KEYS,
@@ -5,16 +6,8 @@ import {
 } from '@/lib/permissions/permission-keys';
 import { prisma } from '@/lib/prisma';
 
-type PlatformRoleWithPermissions = {
-  name: string;
-  permissions: Array<{
-    permission: string;
-    enabled: boolean;
-  }>;
-};
-
 export type PlatformRolePermissionState = {
-  role: string;
+  role: PlatformRoleName;
   permissions: Array<{
     permission: PlatformPermissionKey;
     enabled: boolean;
@@ -22,7 +15,7 @@ export type PlatformRolePermissionState = {
 };
 
 export type UpdatePlatformRolePermissionInput = {
-  role: string;
+  role: PlatformRoleName;
   permissions: Array<{
     permission: PlatformPermissionKey;
     enabled: boolean;
@@ -30,7 +23,13 @@ export type UpdatePlatformRolePermissionInput = {
 };
 
 export function buildPlatformRolePermissionStates(
-  roles: PlatformRoleWithPermissions[]
+  roles: {
+    name: string;
+    permissions: Array<{
+      permission: string;
+      enabled: boolean;
+    }>;
+  }[]
 ): PlatformRolePermissionState[] {
   const rolePermissions = new Map(
     roles.map((role) => [
@@ -47,7 +46,7 @@ export function buildPlatformRolePermissionStates(
     const permissions = rolePermissions.get(role);
 
     return {
-      role,
+      role: role as PlatformRoleName,
       permissions: PLATFORM_PERMISSION_KEYS.map((permission) => ({
         permission,
         enabled: permissions?.get(permission) ?? false,

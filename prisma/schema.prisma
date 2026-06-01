@@ -97,7 +97,7 @@ enum PlatformRoleName {
 }
 
 enum CourseRoleName {
-  OWNER
+  COURSE_OWNER
   TEACHER
   STUDENT
 }

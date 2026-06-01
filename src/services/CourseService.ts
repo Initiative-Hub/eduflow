@@ -1,4 +1,9 @@
 import { CourseRoleName } from '@/generated/prisma';
+import {
+  COURSE_PERMISSION,
+  COURSE_PERMISSION_KEYS,
+  type CoursePermissionKey,
+} from '@/lib/permissions/permission-keys';
 import { prisma } from '@/lib/prisma';
 import type { AICourseGeneration } from '@/lib/validations/course.schema';
 import { ChatProviderFactory } from '@/services/ai/ChatProviderFactory';
@@ -10,7 +15,7 @@ export class CourseService {
     title: string;
     description?: string;
   }) {
-    // We create the course and also assign the creator as the OWNER in CourseRole
+    // We create the course and also assign the creator as the COURSE_OWNER in CourseRole
     return await prisma.$transaction(async (tx) => {
       // Create the course
       const course = await tx.course.create({
@@ -21,24 +26,92 @@ export class CourseService {
         },
       });
 
-      // Get or create the OWNER role
-      let ownerRole = await tx.courseRole.findUnique({
-        where: { name: CourseRoleName.OWNER },
+      // Get or create course roles
+      let courseOwnerRole = await tx.courseRole.findUnique({
+        where: { name: CourseRoleName.COURSE_OWNER },
+      });
+      let teacherRole = await tx.courseRole.findUnique({
+        where: { name: CourseRoleName.TEACHER },
+      });
+      let studentRole = await tx.courseRole.findUnique({
+        where: { name: CourseRoleName.STUDENT },
       });
 
-      if (!ownerRole) {
-        ownerRole = await tx.courseRole.create({
-          data: { name: CourseRoleName.OWNER },
+      if (!courseOwnerRole) {
+        courseOwnerRole = await tx.courseRole.create({
+          data: { name: CourseRoleName.COURSE_OWNER },
+        });
+      }
+      if (!teacherRole) {
+        teacherRole = await tx.courseRole.create({
+          data: { name: CourseRoleName.TEACHER },
+        });
+      }
+      if (!studentRole) {
+        studentRole = await tx.courseRole.create({
+          data: { name: CourseRoleName.STUDENT },
         });
       }
 
-      // Add enrollment for the creator as OWNER
+      // Add enrollment for the creator as COURSE_OWNER
       await tx.enrollment.create({
         data: {
           memberId: data.ownerId,
           courseId: course.id,
-          roleId: ownerRole.id,
+          roleId: courseOwnerRole.id,
         },
+      });
+
+      const courseRolePermissionDefaults: Record<
+        CourseRoleName,
+        CoursePermissionKey[]
+      > = {
+        COURSE_OWNER: COURSE_PERMISSION_KEYS,
+        TEACHER: [
+          COURSE_PERMISSION.COURSE_MEMBERS_VIEW,
+          COURSE_PERMISSION.COURSE_CONTENT_VIEW,
+          COURSE_PERMISSION.COURSE_CONTENT_CREATE,
+          COURSE_PERMISSION.COURSE_CONTENT_UPDATE,
+          COURSE_PERMISSION.ASSESSMENTS_VIEW,
+          COURSE_PERMISSION.ASSESSMENTS_CREATE,
+          COURSE_PERMISSION.ASSESSMENTS_UPDATE,
+          COURSE_PERMISSION.ASSESSMENTS_RESULTS_VIEW,
+          COURSE_PERMISSION.ASSESSMENTS_GRADE,
+          COURSE_PERMISSION.COURSE_FILES_VIEW,
+          COURSE_PERMISSION.COURSE_FILES_MANAGE,
+          COURSE_PERMISSION.AI_USE_COURSE_GENERATION,
+          COURSE_PERMISSION.COURSE_ANALYTICS_VIEW,
+        ],
+        STUDENT: [
+          COURSE_PERMISSION.COURSE_CONTENT_VIEW,
+          COURSE_PERMISSION.ASSESSMENTS_VIEW,
+          COURSE_PERMISSION.ASSESSMENTS_RESULTS_VIEW,
+          COURSE_PERMISSION.COURSE_FILES_VIEW,
+        ],
+      };
+
+      const roleMap = {
+        [CourseRoleName.COURSE_OWNER]: courseOwnerRole.id,
+        [CourseRoleName.TEACHER]: teacherRole.id,
+        [CourseRoleName.STUDENT]: studentRole.id,
+      };
+
+      await tx.coursePermission.createMany({
+        data: [
+          CourseRoleName.COURSE_OWNER,
+          CourseRoleName.TEACHER,
+          CourseRoleName.STUDENT,
+        ].flatMap((roleName) => {
+          const enabledSet = new Set(courseRolePermissionDefaults[roleName]);
+
+          return COURSE_PERMISSION_KEYS.map((permission) => ({
+            courseId: course.id,
+            courseRoleId: roleMap[roleName],
+            permission,
+            enabled: enabledSet.has(permission),
+          }));
+        }),
+        skipDuplicates: true,
       });
 
       return course;
