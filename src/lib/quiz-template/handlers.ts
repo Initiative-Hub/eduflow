@@ -33,14 +33,10 @@ function scoreMultipleChoice(
   if (question.type !== 'multiple_choice' || answer.type !== 'multiple_choice')
     return false;
 
-  const multipleChoiceQuestion = question as MultipleChoiceQuestion;
-  const multipleChoiceAnswer = answer as StudentAnswer & {
-    selectedOptionId: string;
-  };
-  const correctOption = multipleChoiceQuestion.options.find(
+  const correctOption = question.options.find(
     (option) => option.isCorrect
   );
-  return correctOption?.id === multipleChoiceAnswer.selectedOptionId;
+  return correctOption?.id === answer.selectedOptionId;
 }
 
 function scoreTrueFalse(
@@ -50,11 +46,7 @@ function scoreTrueFalse(
   if (question.type !== 'true_false' || answer.type !== 'true_false')
     return false;
 
-  const trueFalseQuestion = question as TrueFalseQuestion;
-  const trueFalseAnswer = answer as StudentAnswer & {
-    selectedAnswer: boolean;
-  };
-  return trueFalseQuestion.correctAnswer === trueFalseAnswer.selectedAnswer;
+  return question.correctAnswer === answer.selectedAnswer;
 }
 
 function scoreFillInTheBlank(
@@ -67,13 +59,8 @@ function scoreFillInTheBlank(
   )
     return false;
 
-  const fillInTheBlankQuestion = question as FillInTheBlankQuestion;
-  const fillInTheBlankAnswer = answer as StudentAnswer & {
-    filledBlanks: Record<string, string>;
-  };
-
-  return fillInTheBlankQuestion.blanks.every((blank) => {
-    const studentValue = fillInTheBlankAnswer.filledBlanks[blank.id];
+  return question.blanks.every((blank) => {
+    const studentValue = answer.filledBlanks[blank.id];
     if (!studentValue) return false;
     return blank.acceptableAnswers.some(
       (acceptable) =>

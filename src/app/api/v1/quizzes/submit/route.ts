@@ -7,7 +7,6 @@ import { calculateScore } from '@/lib/quiz-template/scoring';
 import type {
   QuestionBlock,
   QuizSchema,
-  StudentAnswer,
   StudentAnswers,
 } from '@/lib/quiz-template/types';
 
@@ -185,7 +184,7 @@ const handler: AuthHandler = async (req, sessionData) => {
     for (const [indexStr, answer] of Object.entries(answers)) {
       const index = Number.parseInt(indexStr, 10);
       if (!Number.isNaN(index)) {
-        studentAnswers.set(index, answer as StudentAnswer);
+        studentAnswers.set(index, answer);
       }
     }
 
