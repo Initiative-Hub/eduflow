@@ -83,9 +83,9 @@ export function useQuestionBank({ courseId }: UseQuestionBankOptions) {
 
   // Create quiz via real API
   const createQuizMutation = useMutation({
-    mutationFn: async (config: QuizConfiguration & { lessonId: string }) => {
+    mutationFn: async (config: QuizConfiguration & { lessonIds: string[] }) => {
       return apiClient.post<QuizDefinition>(`v1/courses/${courseId}/quizzes`, {
-        lessonId: config.lessonId,
+        lessonIds: config.lessonIds,
         title: config.title,
         description: config.description,
         category: config.category,
@@ -96,7 +96,18 @@ export function useQuestionBank({ courseId }: UseQuestionBankOptions) {
         questions: [],
       });
     },
-    onSuccess: () => {
+    onSuccess: (createdQuiz) => {
+      queryClient.setQueryData<QuizDefinition[]>(
+        ['quizzes', courseId],
+        (oldQuizzes = []) => {
+          if (oldQuizzes.some((quiz) => quiz.id === createdQuiz.id)) {
+            return oldQuizzes;
+          }
+
+          return [createdQuiz, ...oldQuizzes];
+        }
+      );
+
       queryClient.invalidateQueries({ queryKey: ['quizzes', courseId] });
       queryClient.invalidateQueries({ queryKey: ['modules', courseId] });
       toast.success('Quiz created successfully');

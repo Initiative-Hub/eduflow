@@ -4,11 +4,14 @@ import type { Prisma } from '@/generated/prisma';
 import { errorResponse } from '@/lib/api/error-response';
 import { withAuth } from '@/lib/api/middlewares';
 import { prisma } from '@/lib/prisma';
+import { QuizService } from '@/services/QuizService';
 
 // ─── Validation Schemas ──────────────────────────────────────────────────────
 
 const createQuizSchema = z.object({
-  lessonId: z.string().min(1, 'Lesson ID is required'),
+  // Accept either a single `lessonId` (legacy) or `lessonIds` array
+  lessonId: z.string().optional(),
+  lessonIds: z.array(z.string()).optional(),
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
   category: z.enum(['SELECTION_BASED', 'OPEN_ENDED']),
@@ -60,6 +63,11 @@ export const GET = withAuth(async (_req, _sessionData, { params }) => {
 
     const quizzes = await prisma.quiz.findMany({
       where: { courseId },
+      include: {
+        lessons: {
+          select: { id: true },
+        },
+      },
       orderBy: { createdAt: 'desc' },
     });
 
@@ -67,8 +75,14 @@ export const GET = withAuth(async (_req, _sessionData, { params }) => {
     const populatedQuizzes = await Promise.all(
       quizzes.map(async (quiz) => {
         const questions = quiz.questions as unknown[];
+        const lessonIds = quiz.lessons.map((lesson) => lesson.id);
+
         if (questions && Array.isArray(questions) && questions.length > 0) {
-          return quiz;
+          return { ...quiz, lessonIds };
+        }
+
+        if (quiz.selectionMethod === 'MANUAL_CREATE') {
+          return { ...quiz, lessonIds };
         }
 
         // Fetch matching questions from the bank
@@ -81,7 +95,7 @@ export const GET = withAuth(async (_req, _sessionData, { params }) => {
           orderBy: { createdAt: 'desc' },
         });
 
-        if (bankQuestions.length === 0) return quiz;
+        if (bankQuestions.length === 0) return { ...quiz, lessonIds };
 
         // Select questions based on method
         let selectedQuestions = bankQuestions;
@@ -111,7 +125,7 @@ export const GET = withAuth(async (_req, _sessionData, { params }) => {
           });
         }
 
-        return { ...quiz, questions: resolvedQuestions };
+        return { ...quiz, lessonIds, questions: resolvedQuestions };
       })
     );
 
@@ -197,7 +211,6 @@ export const POST = withAuth(async (req, _sessionData, { params }) => {
     }
 
     const {
-      lessonId,
       title,
       description,
       category,
@@ -209,55 +222,23 @@ export const POST = withAuth(async (req, _sessionData, { params }) => {
       selectedQuestionIds,
     } = parsed.data;
 
-    // ─── Populate questions from the question bank ─────────────────────────────
-    let resolvedQuestions: unknown[] = questions ?? [];
+    const lessonIds =
+      parsed.data.lessonIds ??
+      (parsed.data.lessonId ? [parsed.data.lessonId] : []);
 
-    if (resolvedQuestions.length === 0) {
-      // Build filter for question bank lookup
-      const questionWhere: Record<string, unknown> = {
-        courseId,
-        category,
-        subType,
-      };
-
-      if (selectionMethod === 'HAND_PICK' && selectedQuestionIds?.length) {
-        // Hand-pick: fetch specific questions by ID
-        questionWhere.id = { in: selectedQuestionIds };
-      }
-
-      const bankQuestions = await prisma.question.findMany({
-        where: questionWhere,
-        orderBy: { createdAt: 'desc' },
-      });
-
-      // Select questions based on method
-      let selectedQuestions = bankQuestions;
-
-      if (selectionMethod === 'RANDOM') {
-        // Shuffle and take questionCount
-        const shuffled = [...bankQuestions].sort(() => Math.random() - 0.5);
-        selectedQuestions = shuffled.slice(0, questionCount);
-      } else {
-        // HAND_PICK or MANUAL_CREATE: take up to questionCount
-        selectedQuestions = bankQuestions.slice(0, questionCount);
-      }
-
-      // Convert question bank entries to QuestionBlock format
-      // answerData already contains the full QuestionBlock structure
-      resolvedQuestions = selectedQuestions.map((q) => {
-        const answerData = q.answerData as Record<string, unknown>;
-        // answerData is the complete QuestionBlock; ensure explanation is included
-        if (q.explanation && !answerData.explanation) {
-          return { ...answerData, explanation: q.explanation };
-        }
-        return answerData;
-      });
+    if (!lessonIds || lessonIds.length === 0) {
+      return errorResponse(
+        'VALIDATION_ERROR',
+        'At least one lessonId is required',
+        400
+      );
     }
 
-    const quiz = await prisma.quiz.create({
-      data: {
-        courseId,
-        lessonId,
+    const quiz = await QuizService.createForCourse(
+      courseId,
+      _sessionData.user.id,
+      {
+        lessonIds,
         title,
         description,
         category,
@@ -265,13 +246,17 @@ export const POST = withAuth(async (req, _sessionData, { params }) => {
         deliveryMode,
         selectionMethod,
         questionCount,
-        questions: resolvedQuestions as unknown as Prisma.InputJsonValue,
-      },
-    });
+        questions,
+        selectedQuestionIds,
+      }
+    );
 
     return NextResponse.json(quiz, { status: 201 });
   } catch (error: unknown) {
     console.error('Error creating quiz:', error);
+    if (error instanceof Error && error.message === 'Forbidden') {
+      return errorResponse('FORBIDDEN', 'Forbidden', 403);
+    }
     return errorResponse('INTERNAL_ERROR', 'Internal Server Error', 500);
   }
 });

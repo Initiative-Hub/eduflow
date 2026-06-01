@@ -1,6 +1,7 @@
 import type { streamObject, streamText } from 'ai';
 
 import type {
+  AIQuizInput,
   StreamChatInput,
   StreamChatInternalOptions,
   StreamCourseInput,
@@ -15,4 +16,6 @@ export interface ChatProviderService {
   streamCourse: (
     options: StreamCourseInput
   ) => Promise<ReturnType<typeof streamObject>>;
+
+  createQuiz?: (options: AIQuizInput) => Promise<any>;
 }
