@@ -2,7 +2,6 @@ import type { UIMessage } from 'ai';
 import * as z from 'zod';
 import {
   DEFAULT_SOCRATIC_SUBJECT,
-  SOCRATIC_SUBJECTS,
   type SocraticSubject,
   socraticSubjectSchema,
 } from '@/lib/validations/socratic.schema';
@@ -13,8 +12,6 @@ import type {
 } from '@/services/ai/chat-provider.types';
 import { getMessageText } from '@/utils/chat-message';
 import { normalizeSocraticSuggestionItems } from '@/utils/socratic-suggestions';
-
-export { SOCRATIC_SUBJECTS };
 
 export type SocraticUIMessage = UIMessage<
   unknown,
