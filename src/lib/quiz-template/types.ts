@@ -7,14 +7,14 @@ export interface MultipleChoiceOption {
 }
 
 export interface MultipleChoiceQuestion {
-  type: 'multiple-choice';
+  type: 'multiple_choice';
   prompt: string;
   options: MultipleChoiceOption[];
   explanation?: string;
 }
 
 export interface TrueFalseQuestion {
-  type: 'true-false';
+  type: 'true_false';
   prompt: string;
   correctAnswer: boolean;
   explanation?: string;
@@ -26,7 +26,7 @@ export interface FillInTheBlankBlank {
 }
 
 export interface FillInTheBlankQuestion {
-  type: 'fill-in-the-blank';
+  type: 'fill_in_the_blank';
   promptTemplate: string;
   blanks: FillInTheBlankBlank[];
   explanation?: string;
