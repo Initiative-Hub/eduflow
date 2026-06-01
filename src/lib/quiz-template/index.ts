@@ -1,4 +1,3 @@
-export { generateQuestionsFromLesson } from './mock-data';
 export * from './quiz-schema';
 export type { QuestionRendererProps, QuestionTypeHandler } from './registry';
 export {

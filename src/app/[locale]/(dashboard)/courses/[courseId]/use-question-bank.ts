@@ -9,7 +9,6 @@ import type {
   QuizConfiguration,
   QuizDefinition,
 } from '@/lib/quiz-template';
-import { generateQuestionsFromLesson } from '@/lib/quiz-template';
 
 // ─── Question Bank Hook ──────────────────────────────────────────────────────
 
@@ -117,23 +116,6 @@ export function useQuestionBank({ courseId }: UseQuestionBankOptions) {
     },
   });
 
-  // AI question generation (still uses the placeholder function)
-  const generateQuestionsMutation = useMutation({
-    mutationFn: async (params: {
-      lessonId: string;
-      category: QuizCategory;
-      subType: QuestionSubType;
-      count: number;
-    }) => {
-      return generateQuestionsFromLesson(
-        params.lessonId,
-        params.category,
-        params.subType,
-        params.count
-      );
-    },
-  });
-
   return {
     questions: questionsQuery.data ?? [],
     isLoadingQuestions: questionsQuery.isLoading,
@@ -151,11 +133,6 @@ export function useQuestionBank({ courseId }: UseQuestionBankOptions) {
 
     createQuiz: createQuizMutation.mutate,
     isCreatingQuiz: createQuizMutation.isPending,
-
-    generateQuestions: generateQuestionsMutation.mutateAsync,
-    isGeneratingQuestions: generateQuestionsMutation.isPending,
-    generateQuestionsError: generateQuestionsMutation.error,
-    generatedQuestions: generateQuestionsMutation.data ?? [],
   };
 }
 

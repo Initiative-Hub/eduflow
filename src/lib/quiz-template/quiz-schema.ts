@@ -80,31 +80,6 @@ export interface QuizConfiguration {
   lessonFilter?: string | null;
 }
 
-// ─── Mock Data Structure ─────────────────────────────────────────────────────
-
-export interface MockLesson {
-  id: string;
-  title: string;
-  orderIndex: number;
-  content: Record<string, unknown> | null;
-}
-
-export interface MockModule {
-  id: string;
-  title: string;
-  orderIndex: number;
-  lessons: MockLesson[];
-}
-
-export interface MockCourse {
-  id: string;
-  title: string;
-  description: string;
-  modules: MockModule[];
-  questions: QuestionBankEntry[];
-  quizzes: QuizDefinition[];
-}
-
 // ─── Category Metadata ───────────────────────────────────────────────────────
 
 export const QUIZ_CATEGORIES: Record<

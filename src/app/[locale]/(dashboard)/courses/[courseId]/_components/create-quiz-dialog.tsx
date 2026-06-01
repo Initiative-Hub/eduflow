@@ -11,7 +11,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import type { QuestionSubType, QuizCategory } from '@/lib/quiz-template';
 import { useModules } from '../use-modules';
 import { useQuestionBank } from '../use-question-bank';
 
@@ -37,9 +36,6 @@ export function CreateQuizDialog({
   const {
     createQuiz,
     isCreatingQuiz,
-    generateQuestions,
-    isGeneratingQuestions,
-    generateQuestionsError,
   } = useQuestionBank({ courseId });
   const submitRef = useRef<(() => void) | null>(null);
 
@@ -73,25 +69,6 @@ export function CreateQuizDialog({
     );
   };
 
-  const handleGenerateWithAI = async (params: {
-    lessonIds: string[];
-    category: QuizCategory;
-    subType: QuestionSubType;
-    count: number;
-  }) => {
-    if (params.lessonIds.length === 0) return;
-    try {
-      await generateQuestions({
-        lessonId: params.lessonIds[0],
-        category: params.category,
-        subType: params.subType,
-        count: params.count,
-      });
-    } catch {
-      // handled by mutation
-    }
-  };
-
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="flex max-h-[92vh] flex-col overflow-hidden p-0 sm:max-w-3xl">
@@ -108,9 +85,6 @@ export function CreateQuizDialog({
             availableLessons={availableLessons}
             onSubmit={handleSubmit}
             isSubmitting={isCreatingQuiz}
-            isGeneratingQuestions={isGeneratingQuestions}
-            generateQuestionsError={generateQuestionsError}
-            onGenerateWithAI={handleGenerateWithAI}
             compact
             hideLessonSelector={!!lessonId}
             preselectedLessonId={lessonId}

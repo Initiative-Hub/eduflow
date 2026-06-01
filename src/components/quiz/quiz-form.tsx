@@ -1,6 +1,6 @@
 'use client';
 
-import { BookOpen, Check, Layers, Sparkles } from 'lucide-react';
+import { BookOpen, Check, Layers } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect } from 'react';
 import type { Module } from '@/app/[locale]/(dashboard)/courses/[courseId]/use-modules';
@@ -36,17 +36,6 @@ export interface QuizFormProps {
   onSubmit: (data: QuizFormSubmitData) => void;
   /** Whether the submit action is in progress */
   isSubmitting: boolean;
-  /** Whether AI generation is in progress */
-  isGeneratingQuestions?: boolean;
-  /** Error from AI question generation */
-  generateQuestionsError?: Error | null;
-  /** Called when user clicks "Generate with AI" */
-  onGenerateWithAI?: (params: {
-    lessonIds: string[];
-    category: QuizCategory;
-    subType: QuestionSubType;
-    count: number;
-  }) => void;
   /** Use compact spacing for dialog mode */
   compact?: boolean;
   /** Hide the lesson selector (when lesson is pre-selected) */
@@ -55,11 +44,8 @@ export interface QuizFormProps {
   preselectedLessonId?: string;
   /** Module name to display in the lesson selector header (dialog mode) */
   moduleName?: string;
-  /** Render custom footer — receives handleSubmit and handleGenerateWithAI */
-  renderFooter?: (
-    handleSubmit: () => void,
-    handleGenerateWithAI: () => void
-  ) => React.ReactNode;
+  /** Render custom footer */
+  renderFooter?: (handleSubmit: () => void) => React.ReactNode;
   /** Expose submit handler to parent via ref callback */
   onSubmitReady?: (submit: () => void) => void;
 }
@@ -80,8 +66,6 @@ export function QuizForm({
   availableLessons,
   onSubmit,
   isSubmitting,
-  generateQuestionsError,
-  onGenerateWithAI,
   compact = false,
   hideLessonSelector = false,
   preselectedLessonId,
@@ -123,24 +107,6 @@ export function QuizForm({
     });
   };
 
-  const handleGenerateWithAI = () => {
-    if (!formState.category || !formState.subType || !onGenerateWithAI) return;
-
-    const lessonIdsForGeneration =
-      formState.contentSource === 'all-modules'
-        ? availableLessons.map((l) => l.id)
-        : formState.selectedLessonIds;
-
-    if (lessonIdsForGeneration.length === 0) return;
-
-    onGenerateWithAI({
-      lessonIds: lessonIdsForGeneration,
-      category: formState.category as QuizCategory,
-      subType: formState.subType as QuestionSubType,
-      count: Number.parseInt(formState.questionCount, 10) || 5,
-    });
-  };
-
   // Expose submit handler to parent
   useEffect(() => {
     onSubmitReady?.(handleSubmit);
@@ -151,19 +117,6 @@ export function QuizForm({
 
   return (
     <div className={spacing}>
-      {/* AI Question Generation Card */}
-      {onGenerateWithAI && (
-        <div className="rounded-lg border border-dashed bg-muted/20 p-4">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
-            <h3 className="font-semibold text-base">{t('aiGenerate')}</h3>
-          </div>
-          <p className="mt-1 text-muted-foreground text-sm">
-            {t('aiGenerateDescription')}
-          </p>
-        </div>
-      )}
-
       {/* Content Source / Lesson Selection */}
       {!hideLessonSelector && (
         <LessonSelector
@@ -283,15 +236,10 @@ export function QuizForm({
         </div>
       </div>
 
-      {/* AI Generate Error */}
-      {generateQuestionsError && (
-        <p className="text-destructive text-xs">{t('aiGenerateError')}</p>
-      )}
-
       {/* Footer (submit/cancel buttons) — skip when parent handles submit externally */}
       {!onSubmitReady &&
         (renderFooter ? (
-          renderFooter(handleSubmit, handleGenerateWithAI)
+          renderFooter(handleSubmit)
         ) : (
           <div className="flex items-center justify-end gap-3 border-t pt-6">
             <Button onClick={handleSubmit} disabled={isSubmitting}>

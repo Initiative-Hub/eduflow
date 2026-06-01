@@ -1,12 +1,11 @@
 'use client';
 
-import { ArrowLeft, Sparkles } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { QuizForm, type QuizFormSubmitData } from '@/components/quiz/quiz-form';
 import { Button } from '@/components/ui/button';
-import type { QuestionSubType, QuizCategory } from '@/lib/quiz-template';
 import { useModules } from '../../use-modules';
 import { useQuestionBank } from '../../use-question-bank';
 
@@ -28,9 +27,6 @@ export function CreateQuizClient({
   const {
     createQuiz,
     isCreatingQuiz,
-    generateQuestions,
-    isGeneratingQuestions,
-    generateQuestionsError,
   } = useQuestionBank({ courseId });
 
   // Get lessons from the preselected module or all modules
@@ -61,25 +57,6 @@ export function CreateQuizClient({
     );
   };
 
-  const handleGenerateWithAI = async (params: {
-    lessonIds: string[];
-    category: QuizCategory;
-    subType: QuestionSubType;
-    count: number;
-  }) => {
-    if (params.lessonIds.length === 0) return;
-    try {
-      await generateQuestions({
-        lessonId: params.lessonIds[0],
-        category: params.category,
-        subType: params.subType,
-        count: params.count,
-      });
-    } catch {
-      // handled by mutation
-    }
-  };
-
   return (
     <div className="mx-auto max-w-2xl space-y-8">
       {/* Header */}
@@ -103,28 +80,10 @@ export function CreateQuizClient({
         availableLessons={availableLessons}
         onSubmit={handleSubmit}
         isSubmitting={isCreatingQuiz}
-        isGeneratingQuestions={isGeneratingQuestions}
-        generateQuestionsError={generateQuestionsError}
-        onGenerateWithAI={handleGenerateWithAI}
         hideLessonSelector={!!lessonId}
         preselectedLessonId={lessonId}
-        renderFooter={(submitForm, generateWithAI) => (
+        renderFooter={(submitForm) => (
           <div className="flex items-center justify-between border-t pt-6">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={generateWithAI}
-              disabled={isGeneratingQuestions}
-            >
-              {isGeneratingQuestions ? (
-                <Sparkles className="mr-1.5 h-3.5 w-3.5 animate-pulse" />
-              ) : (
-                <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-              )}
-              {isGeneratingQuestions
-                ? t('generatingQuestions')
-                : t('aiGenerate')}
-            </Button>
             <div className="flex items-center gap-3">
               <Link href={`/courses/${courseId}`}>
                 <Button variant="ghost">{t('cancel')}</Button>

@@ -1,11 +1,9 @@
 'use client';
 
-import { BookOpen, ExternalLink } from 'lucide-react';
-import Link from 'next/link';
+import { BookOpen } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -67,14 +65,6 @@ export function QuestionBankClient({ courseId }: QuestionBankClientProps) {
           <p className="mt-1 text-muted-foreground text-sm">
             {t('description')}
           </p>
-        </div>
-        <div className="flex gap-2">
-          <Link href="/quiz-demo" target="_blank">
-            <Button variant="outline" size="sm">
-              <ExternalLink className="mr-1 h-4 w-4" />
-              {t('previewTypes')}
-            </Button>
-          </Link>
         </div>
       </div>
 
