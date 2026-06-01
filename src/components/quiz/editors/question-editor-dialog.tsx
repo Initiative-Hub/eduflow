@@ -159,54 +159,52 @@ export function QuestionEditorDialog({
     if (!isOpen) return;
 
     if (question) {
-      const currentQuestion = question as any;
-
-      setType(toEditorQuestionType(currentQuestion.type));
-      setPrompt('prompt' in currentQuestion ? currentQuestion.prompt : '');
-      setExplanation(currentQuestion.explanation ?? '');
+      setType(toEditorQuestionType(question.type));
+      setPrompt('prompt' in question ? question.prompt : '');
+      setExplanation(question.explanation ?? '');
 
       // Populate type-specific states
-      if (currentQuestion.type === 'multiple_choice') {
-        setMcOptions(currentQuestion.options.map((o: any) => ({ ...o })));
-      } else if (currentQuestion.type === 'true_false') {
-        setTfCorrect(currentQuestion.correctAnswer);
-      } else if (currentQuestion.type === 'fill_in_the_blank') {
-        setBlankTemplate(currentQuestion.promptTemplate);
+      if (question.type === 'multiple_choice') {
+        setMcOptions(question.options.map((o: any) => ({ ...o })));
+      } else if (question.type === 'true_false') {
+        setTfCorrect(question.correctAnswer);
+      } else if (question.type === 'fill_in_the_blank') {
+        setBlankTemplate(question.promptTemplate);
         setBlankAnswers(
-          currentQuestion.blanks.map((b: any) => ({
+          question.blanks.map((b: any) => ({
             id: b.id,
             answers: b.acceptableAnswers.join(', '),
           }))
         );
-      } else if (currentQuestion.type === 'matching') {
-        setMatchLeft(currentQuestion.leftItems.map((i: any) => ({ ...i })));
-        setMatchRight(currentQuestion.rightItems.map((i: any) => ({ ...i })));
-        setMatchPairs(currentQuestion.correctPairs.map((p: any) => ({ ...p })));
-      } else if (currentQuestion.type === 'ordering') {
-        setOrderItems(currentQuestion.items.map((i: any) => ({ ...i })));
-      } else if (currentQuestion.type === 'drag_and_drop') {
-        setDndTemplate(currentQuestion.sentenceTemplate);
-        setDndZones(currentQuestion.zones.map((z: any) => ({ ...z })));
-        setDndItems(currentQuestion.items.map((i: any) => ({ ...i })));
-        setDndMapping({ ...currentQuestion.correctMapping });
-      } else if (currentQuestion.type === 'essay') {
-        setEssayMinWords(currentQuestion.minWords?.toString() ?? '');
-        setEssayMaxWords(currentQuestion.maxWords?.toString() ?? '');
-        setEssayAllowAttachments(!!currentQuestion.allowAttachments);
-        setEssayDelivery(currentQuestion.deliveryOption ?? 'immediate');
-        setEssayAllowTeacherRubric(!!currentQuestion.allowTeacherRubric);
-      } else if (currentQuestion.type === 'timed_challenge') {
-        setTimeLimit(currentQuestion.timeLimitSeconds);
-        if (currentQuestion.innerQuestion) {
+      } else if (question.type === 'matching') {
+        setMatchLeft(question.leftItems.map((i: any) => ({ ...i })));
+        setMatchRight(question.rightItems.map((i: any) => ({ ...i })));
+        setMatchPairs(question.correctPairs.map((p: any) => ({ ...p })));
+      } else if (question.type === 'ordering') {
+        setOrderItems(question.items.map((i: any) => ({ ...i })));
+      } else if (question.type === 'drag_and_drop') {
+        setDndTemplate(question.sentenceTemplate);
+        setDndZones(question.zones.map((z: any) => ({ ...z })));
+        setDndItems(question.items.map((i: any) => ({ ...i })));
+        setDndMapping({ ...question.correctMapping });
+      } else if (question.type === 'essay') {
+        setEssayMinWords(question.minWords?.toString() ?? '');
+        setEssayMaxWords(question.maxWords?.toString() ?? '');
+        setEssayAllowAttachments(!!question.allowAttachments);
+        setEssayDelivery(question.deliveryOption ?? 'immediate');
+        setEssayAllowTeacherRubric(!!question.allowTeacherRubric);
+      } else if (question.type === 'timed_challenge') {
+        setTimeLimit(question.timeLimitSeconds);
+        if (question.innerQuestion) {
           setInnerType(
-            toEditorQuestionType(currentQuestion.innerQuestion.type) as Exclude<
+            toEditorQuestionType(question.innerQuestion.type) as Exclude<
               EditorQuestionType,
               'timed_challenge'
             >
           );
-          if (currentQuestion.innerQuestion.type === 'multiple_choice') {
+          if (question.innerQuestion.type === 'multiple_choice') {
             setInnerMcOptions(
-              currentQuestion.innerQuestion.options.map((o: any) => ({ ...o }))
+              question.innerQuestion.options.map((o: any) => ({ ...o }))
             );
           }
         }

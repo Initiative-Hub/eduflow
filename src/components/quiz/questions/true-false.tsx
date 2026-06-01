@@ -16,9 +16,7 @@ interface TrueFalseProps {
 function resolveCorrectAnswer(
   question: DisplaySafe<TrueFalseQuestion>
 ): boolean | undefined {
-  return typeof question.correctAnswer === 'boolean'
-    ? question.correctAnswer
-    : undefined;
+  return question.correctAnswer ?? undefined;
 }
 
 export function TrueFalse({
