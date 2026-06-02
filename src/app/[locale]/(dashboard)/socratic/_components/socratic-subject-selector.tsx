@@ -50,7 +50,7 @@ export function SocraticSubjectSelector({
 
   return (
     <div className="flex flex-col items-center justify-center">
-      <div className="max-w-4xl space-y-2">
+      <div className="mb-2 max-w-4xl space-y-2">
         <div className="flex flex-col items-center">
           <div className="mt-12 mb-6 flex max-w-2xl flex-col gap-2 px-4 text-center">
             <h1 className="font-extrabold font-heading text-3xl text-foreground tracking-tight sm:text-4xl">
