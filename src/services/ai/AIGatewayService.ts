@@ -1,6 +1,6 @@
 import {
   convertToModelMessages,
-  gateway,
+  createGateway,
   smoothStream,
   streamObject,
   streamText,
@@ -8,50 +8,38 @@ import {
 import { pdfToMarkdown } from '@/lib/pdf';
 import { aiCourseGenerationSchema } from '@/lib/validations/course.schema';
 import {
+  COURSE_GENERATION_PROMPT,
   DEFAULT_MODELS,
-  SYSTEM_PROMPT,
 } from '@/services/ai/chat-provider.constants';
 import type {
   StreamChatInput,
+  StreamChatInternalOptions,
   StreamCourseInput,
 } from '@/services/ai/chat-provider.types';
 import { WebSearchService } from '@/services/WebSearchService';
 import { StorageService } from '../StorageService';
 import type { ChatProviderService } from './ChatProviderService';
+import { resolveChatSystemPrompt } from './chat-system-prompt';
 import type { CourseStreamEvent } from './course-stream.types';
 
 const PROVIDER_NAME = 'ai-gateway';
 
-export const COURSE_GENERATION_PROMPT = `
-You are an expert Academic Curriculum Designer and Subject Matter Expert. 
-Your goal is to transform raw document text into a high-quality, structured learning experience.
-
-### GUIDELINES:
-1. **Logical Progression:** Organize modules so that prerequisite knowledge is covered first.
-2. **Information Synthesis:** Do not simply summarize; identify the core "learning pillars" within the document.
-3. **Clarity:** Lesson titles should be action-oriented and clear.
-4. **Noise Reduction:** Ignore document artifacts like page numbers, headers, footers, and bibliographies.
-5. **Pedagogy:** Ensure each module has a clear learning objective that explains what the student will be able to DO after finishing it.
-
-### FORMATTING:
-- Output must be strictly valid JSON.
-- Do not include conversational filler (e.g., "Here is your course...").
-- Ensure the difficulty level is consistent throughout the course.
-`;
-
 export class AIGatewayService implements ChatProviderService {
-  async streamChat(input: StreamChatInput) {
+  async streamChat(
+    input: StreamChatInput,
+    options?: StreamChatInternalOptions
+  ) {
     const apiKey = input.apiKey ?? process.env.AI_GATEWAY_API_KEY;
     if (!apiKey)
       throw new Error(`Missing API key for provider "${PROVIDER_NAME}"`);
 
     const model = input.model ?? DEFAULT_MODELS['ai-gateway'];
+    const provider = createGateway({ apiKey });
+
     return streamText({
       experimental_transform: smoothStream(),
-      model: gateway(model),
-      system: input.system
-        ? `${SYSTEM_PROMPT}\n\n=== ADDITIONAL CONTEXT ===\n${input.system}`
-        : SYSTEM_PROMPT,
+      model: provider(model),
+      system: resolveChatSystemPrompt(options),
       messages: await convertToModelMessages(input.messages),
       providerOptions: input.providerOptions,
       headers: { Authorization: `Bearer ${apiKey}` },
@@ -68,7 +56,7 @@ export class AIGatewayService implements ChatProviderService {
     writer: WritableStreamDefaultWriter<string>
   ): Promise<void> {
     const emit = async (event: CourseStreamEvent) =>
-      writer.write(JSON.stringify(event) + '\n');
+      writer.write(`${JSON.stringify(event)}\n`);
 
     // Step 1 — extract PDF
     await emit({ type: 'extract' });
@@ -105,10 +93,11 @@ export class AIGatewayService implements ChatProviderService {
       throw new Error(`Missing API key for provider "${PROVIDER_NAME}"`);
 
     const model = options.model ?? DEFAULT_MODELS['ai-gateway'];
+    const provider = createGateway({ apiKey });
 
     // Step 3 — AI generation: stream raw text deltas
     const aiStream = streamObject({
-      model: gateway(model),
+      model: provider(model),
       schema: aiCourseGenerationSchema,
       system: COURSE_GENERATION_PROMPT,
       prompt: `Content to analyze and transform into a course:\n\n${markdownContent}${

@@ -29,7 +29,6 @@
       "responseDisclaimer": "AI response may vary"
     },
     "limitReachedHelper": "Limit reached: {used}/{count} messages. Start a new session to continue.",
-    "limitReachedPlaceholder": "Message limit reached ({count}). Start a new session.",
     "limitReachedToast": "You've reached the {count}-message limit. Start a new session to continue.",
     "modelSelector": {
       "empty": "No models found.",
@@ -1167,6 +1166,108 @@
       "title": "Welcome aboard!"
     },
     "title": "Welcome to the <brand>EduFlow</brand> Ecosystem"
+  },
+  "SocraticPage": {
+    "disciplines": {
+      "biochemistry": {
+        "description": "Examine the molecular mechanics of living organisms and cellular life.",
+        "title": "Bio-Chemistry"
+      },
+      "macroeconomics": {
+        "description": "Understand the complex forces driving global markets and policy.",
+        "title": "Macro-Economics"
+      },
+      "philosophicalEthics": {
+        "description": "Deconstruct moral frameworks from Utilitarianism to Virtue Ethics.",
+        "title": "Philosophical Ethics"
+      },
+      "quantumPhysics": {
+        "description": "Explore entanglement, wave functions, and the nature of reality.",
+        "title": "Quantum Physics"
+      }
+    },
+    "input": {
+      "footer": "Socratic mode active • no direct answers provided",
+      "placeholder": "Ask a question or describe where you're stuck..."
+    },
+    "limitReachedToast": "You've reached the {count}-message Socratic limit. Start a new session to continue.",
+    "recentSessions": {
+      "description": "Return to guided questions and prior reasoning threads.",
+      "empty": "No Socratic sessions yet. Choose a discipline and ask where you're stuck.",
+      "error": "Unable to load recent Socratic sessions right now.",
+      "openChat": "Open Socratic session {title}",
+      "title": "Recent Socratic sessions",
+      "updated": "Updated {date}"
+    },
+    "sidebar": {
+      "actionsLabel": "Actions for {title}",
+      "cancel": "Cancel",
+      "close": "Collapse Socratic history",
+      "delete": "Delete",
+      "deleteDialogDescription": "Delete \"{title}\" from your Socratic history? This action cannot be undone.",
+      "deleteDialogTitle": "Delete Socratic session",
+      "deleteError": "Unable to delete Socratic session.",
+      "deleteSuccess": "Socratic session deleted.",
+      "description": "Search and reopen prior guided sessions.",
+      "editDialogDescription": "Choose a concise title for this Socratic session.",
+      "editDialogTitle": "Edit Socratic title",
+      "editError": "Unable to update Socratic session title.",
+      "editTitle": "Edit Title",
+      "editTitleLabel": "Socratic session title",
+      "editTitlePlaceholder": "Enter Socratic session title",
+      "emptyDescription": "Start a Socratic session and it will appear here.",
+      "emptySearch": "No Socratic sessions match your search.",
+      "emptyTitle": "No Socratic sessions yet",
+      "loadingMore": "Loading more Socratic sessions...",
+      "messageCount": "{count, plural, one {# message} other {# messages}}",
+      "newChat": "New Socratic session",
+      "open": "Open Socratic history",
+      "saveTitle": "Save title",
+      "searchLabel": "Search Socratic sessions",
+      "searchPlaceholder": "Search Socratic sessions...",
+      "title": "Socratic history",
+      "untitled": "Untitled Socratic session"
+    },
+    "subtitle": "Select a discipline to begin a <mark>Socratic</mark> dialogue. I won't give you answers; I will ask the questions that help you find them.",
+    "title": "How can I <accent>guide</accent> your thinking today?"
+  },
+  "StudyPage": {
+    "description": "Browse the subject areas this assistant will support, from problem-solving to language and humanities.",
+    "subjects": {
+      "biology": {
+        "description": "Trace systems, evidence, and cause-effect relationships.",
+        "title": "Biology"
+      },
+      "chemistry": {
+        "description": "Reason through reactions, bonding, and particle-level changes.",
+        "title": "Chemistry"
+      },
+      "english": {
+        "description": "Explore grammar, reading, vocabulary, and revision choices.",
+        "title": "English"
+      },
+      "geography": {
+        "description": "Investigate maps, spatial patterns, regions, and environments.",
+        "title": "Geography"
+      },
+      "history": {
+        "description": "Analyze causes, evidence, timelines, and perspectives.",
+        "title": "History"
+      },
+      "math": {
+        "description": "Work through concepts, proofs, and problem-solving steps.",
+        "title": "Math"
+      },
+      "other": {
+        "description": "Use guided questions for any topic you want to understand.",
+        "title": "Other subject"
+      },
+      "physics": {
+        "description": "Connect formulas, units, diagrams, and physical intuition.",
+        "title": "Physics"
+      }
+    },
+    "title": "Explore familiar study subjects"
   },
   "WritingPage": {
     "recentSessions": {
