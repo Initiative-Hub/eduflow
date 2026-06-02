@@ -50,6 +50,14 @@ function lessonContentToText(content: unknown): string {
   }
 }
 
+function withLessonIds<T extends { lessons?: { id: string }[] }>(quiz: T) {
+  const { lessons = [], ...rest } = quiz;
+  return {
+    ...rest,
+    lessonIds: lessons.map((lesson) => lesson.id),
+  };
+}
+
 // CreateQuizInput type used by service-level create helper
 export type CreateQuizInput = {
   lessonIds: string[];
@@ -139,10 +147,10 @@ export class QuizService {
         questions: resolvedQuestions as unknown as Prisma.InputJsonValue,
         lessons: { connect: data.lessonIds.map((id) => ({ id })) },
       },
-      include: { lessons: true },
+      include: { lessons: { select: { id: true } } },
     });
 
-    return quiz;
+    return withLessonIds(quiz);
   }
   static async updateQuestions(
     quizId: string,
@@ -157,13 +165,16 @@ export class QuizService {
       throw new Error('Quiz not found');
     }
 
-    return await prisma.quiz.update({
+    const updatedQuiz = await prisma.quiz.update({
       where: { id: quizId },
       data: {
         questions: questions as unknown as Prisma.InputJsonValue,
         questionCount: questions.length,
       },
+      include: { lessons: { select: { id: true } } },
     });
+
+    return withLessonIds(updatedQuiz);
   }
 
   /**
@@ -184,12 +195,6 @@ export class QuizService {
       context?: string;
     }
   ) {
-    // 1. Fetch the lesson and extract its plain-text content
-    // const lesson = await prisma.lesson.findUnique({
-    //   where: { id: lessonId },
-    //   select: { id: true, title: true, content: true },
-    // });
-
     const fetchedQuiz = await prisma.quiz.findUnique({
       where: { id: quizId },
       include: {
@@ -208,8 +213,8 @@ export class QuizService {
       throw new Error('Quiz already has the maximum number of questions');
     }
     // Aggregate content from all linked lessons
-    const lessons = fetchedQuiz.lessons ?? [];
-    if (!lessons || lessons.length === 0) {
+    const lessons = fetchedQuiz.lessons;
+    if (lessons.length === 0) {
       throw new Error('No lessons linked to quiz');
     }
 
@@ -259,8 +264,9 @@ export class QuizService {
         questionCount: questionsToSave.length,
         questions: questionsToSave as unknown as Prisma.InputJsonValue,
       },
+      include: { lessons: { select: { id: true } } },
     });
 
-    return quiz;
+    return withLessonIds(quiz);
   }
 }

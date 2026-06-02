@@ -115,10 +115,6 @@ export function useModules(courseId: string) {
     };
   };
 
-  // Map new step names to the legacy boolean flags the UI expects
-  const isStreaming = step === 'generate';
-  const isSaving = step === 'save';
-
   return {
     modules: query.data || [],
     isLoading: query.isLoading,
@@ -138,9 +134,6 @@ export function useModules(courseId: string) {
     isRunning,
     resetGeneration: reset,
 
-    // Legacy compat
-    isStreaming,
-    isSaving,
     generateCourseModules,
 
     getAdjacentLessons,

@@ -4,7 +4,7 @@
  * Registers all 8 question types with their scoring and answer-stripping
  * functions. Import this module to ensure all handlers are registered.
  *
- * Note: The timed-challenge handler delegates to getHandler() for its inner
+ * Note: The timed_challenge handler delegates to getHandler() for its inner
  * question. This works because all handlers are registered synchronously
  * in this module before any scoring/stripping calls occur at runtime.
  */
@@ -24,96 +24,41 @@ import type {
   TrueFalseQuestion,
 } from './types';
 
-function normalizeQuestionType(type: string): string {
-  return type.toLowerCase().replace(/-/g, '_');
-}
-
 // ─── Scoring Functions ───────────────────────────────────────────────────────
 
 function scoreMultipleChoice(
   question: QuestionBlock,
   answer: StudentAnswer
 ): boolean {
-  const questionType = normalizeQuestionType(question.type);
-  const answerType = normalizeQuestionType(answer.type);
-
-  if (questionType !== 'multiple_choice' || answerType !== 'multiple_choice')
+  if (question.type !== 'multiple_choice' || answer.type !== 'multiple_choice')
     return false;
 
-  const multipleChoiceQuestion = question as MultipleChoiceQuestion;
-  const multipleChoiceAnswer = answer as StudentAnswer & {
-    selectedOptionId: string;
-  };
-  const correctOption = multipleChoiceQuestion.options.find(
-    (option) => option.isCorrect
-  );
-  return correctOption?.id === multipleChoiceAnswer.selectedOptionId;
+  const correctOption = question.options.find((option) => option.isCorrect);
+  return correctOption?.id === answer.selectedOptionId;
 }
 
 function scoreTrueFalse(
   question: QuestionBlock,
   answer: StudentAnswer
 ): boolean {
-  const questionType = normalizeQuestionType(question.type);
-  const answerType = normalizeQuestionType(answer.type);
-
-  if (questionType !== 'true_false' || answerType !== 'true_false')
+  if (question.type !== 'true_false' || answer.type !== 'true_false')
     return false;
 
-  const trueFalseQuestion = question as TrueFalseQuestion & {
-    options?: Array<{ text?: string; isCorrect?: boolean }>;
-  };
-  const trueFalseAnswer = answer as StudentAnswer & {
-    selectedAnswer: boolean;
-  };
-
-  // Backward compatibility: some stored true/false questions use
-  // options[] with isCorrect instead of correctAnswer.
-  let resolvedCorrectAnswer: boolean | undefined;
-  if (typeof trueFalseQuestion.correctAnswer === 'boolean') {
-    resolvedCorrectAnswer = trueFalseQuestion.correctAnswer;
-  } else if (Array.isArray(trueFalseQuestion.options)) {
-    const correctOption = trueFalseQuestion.options.find(
-      (option) => option.isCorrect
-    );
-
-    if (correctOption?.text) {
-      const normalized = correctOption.text.trim().toLowerCase();
-      if (normalized === 'true') {
-        resolvedCorrectAnswer = true;
-      } else if (normalized === 'false') {
-        resolvedCorrectAnswer = false;
-      }
-    }
-  }
-
-  if (typeof resolvedCorrectAnswer !== 'boolean') {
-    return false;
-  }
-
-  return resolvedCorrectAnswer === trueFalseAnswer.selectedAnswer;
+  return question.correctAnswer === answer.selectedAnswer;
 }
 
 function scoreFillInTheBlank(
   question: QuestionBlock,
   answer: StudentAnswer
 ): boolean {
-  const questionType = normalizeQuestionType(question.type);
-  const answerType = normalizeQuestionType(answer.type);
-
   if (
-    questionType !== 'fill_in_the_blank' ||
-    answerType !== 'fill_in_the_blank'
+    question.type !== 'fill_in_the_blank' ||
+    answer.type !== 'fill_in_the_blank'
   )
     return false;
 
-  const fillInTheBlankQuestion = question as FillInTheBlankQuestion;
-  const fillInTheBlankAnswer = answer as StudentAnswer & {
-    filledBlanks: Record<string, string>;
-  };
-
-  return fillInTheBlankQuestion.blanks.every((blank) => {
-    const studentValue = fillInTheBlankAnswer.filledBlanks[blank.id];
+  return question.blanks.every((blank) => {
+    const studentValue = answer.filledBlanks[blank.id];
     if (!studentValue) return false;
     return blank.acceptableAnswers.some(
       (acceptable) =>
@@ -149,7 +94,7 @@ function scoreDragAndDrop(
   question: QuestionBlock,
   answer: StudentAnswer
 ): boolean {
-  if (question.type !== 'drag-and-drop' || answer.type !== 'drag-and-drop')
+  if (question.type !== 'drag_and_drop' || answer.type !== 'drag_and_drop')
     return false;
   return question.zones.every(
     (zone) => answer.placements[zone.id] === question.correctMapping[zone.id]
@@ -165,7 +110,7 @@ function scoreTimedChallenge(
   question: QuestionBlock,
   answer: StudentAnswer
 ): boolean {
-  if (question.type !== 'timed-challenge') return false;
+  if (question.type !== 'timed_challenge') return false;
   const innerHandler = getHandler(question.innerQuestion.type);
   return innerHandler.score(question.innerQuestion, answer);
 }
@@ -220,7 +165,7 @@ function stripOrdering(question: QuestionBlock): ClientQuestionBlock {
 function stripDragAndDrop(question: QuestionBlock): ClientQuestionBlock {
   const q = question as DragAndDropQuestion;
   return {
-    type: 'drag-and-drop',
+    type: 'drag_and_drop',
     prompt: q.prompt,
     sentenceTemplate: q.sentenceTemplate,
     zones: q.zones.map(({ id, label }) => ({ id, label })),
@@ -258,7 +203,7 @@ function stripTimedChallenge(question: QuestionBlock): ClientQuestionBlock {
   // Delegate to the inner question's handler for stripping
   const innerHandler = getHandler(q.innerQuestion.type);
   return {
-    type: 'timed-challenge',
+    type: 'timed_challenge',
     prompt: q.prompt,
     innerQuestion: innerHandler.stripAnswers(q.innerQuestion),
     timeLimitSeconds: q.timeLimitSeconds,
@@ -268,19 +213,19 @@ function stripTimedChallenge(question: QuestionBlock): ClientQuestionBlock {
 // ─── Register All Handlers ───────────────────────────────────────────────────
 
 registerQuestionType({
-  type: 'multiple-choice',
+  type: 'multiple_choice',
   score: scoreMultipleChoice,
   stripAnswers: stripMultipleChoice,
 });
 
 registerQuestionType({
-  type: 'true-false',
+  type: 'true_false',
   score: scoreTrueFalse,
   stripAnswers: stripTrueFalse,
 });
 
 registerQuestionType({
-  type: 'fill-in-the-blank',
+  type: 'fill_in_the_blank',
   score: scoreFillInTheBlank,
   stripAnswers: stripFillInTheBlank,
 });
@@ -298,7 +243,7 @@ registerQuestionType({
 });
 
 registerQuestionType({
-  type: 'drag-and-drop',
+  type: 'drag_and_drop',
   score: scoreDragAndDrop,
   stripAnswers: stripDragAndDrop,
 });
@@ -310,7 +255,7 @@ registerQuestionType({
 });
 
 registerQuestionType({
-  type: 'timed-challenge',
+  type: 'timed_challenge',
   score: scoreTimedChallenge,
   stripAnswers: stripTimedChallenge,
 });

@@ -86,13 +86,11 @@ export function QuestionBankFilters({
                     className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 hover:bg-muted/50"
                   >
                     <Checkbox
-                      checked={subTypeFilters.has(st as QuestionSubType)}
-                      onCheckedChange={() =>
-                        toggleSubType(st as QuestionSubType)
-                      }
+                      checked={subTypeFilters.has(st)}
+                      onCheckedChange={() => toggleSubType(st)}
                     />
                     <span className="text-sm">
-                      {QUESTION_SUB_TYPE_LABELS[st as QuestionSubType]}
+                      {QUESTION_SUB_TYPE_LABELS[st]}
                     </span>
                   </label>
                 ))}
@@ -109,13 +107,11 @@ export function QuestionBankFilters({
                     className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 hover:bg-muted/50"
                   >
                     <Checkbox
-                      checked={subTypeFilters.has(st as QuestionSubType)}
-                      onCheckedChange={() =>
-                        toggleSubType(st as QuestionSubType)
-                      }
+                      checked={subTypeFilters.has(st)}
+                      onCheckedChange={() => toggleSubType(st)}
                     />
                     <span className="text-sm">
-                      {QUESTION_SUB_TYPE_LABELS[st as QuestionSubType]}
+                      {QUESTION_SUB_TYPE_LABELS[st]}
                     </span>
                   </label>
                 ))}
