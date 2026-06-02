@@ -1,9 +1,9 @@
 import type { UIMessage } from 'ai';
 import * as z from 'zod';
 import {
-  DEFAULT_SOCRATIC_SUBJECT,
-  type SocraticSubject,
-  socraticSubjectSchema,
+  DEFAULT_SOCRATIC_DISCIPLINE,
+  type SocraticDiscipline,
+  socraticDisciplineSchema,
 } from '@/lib/validations/socratic.schema';
 import type { ChatProviderService } from '@/services/ai/ChatProviderService';
 import type {
@@ -24,7 +24,7 @@ export type SocraticUIMessage = UIMessage<
 
 interface SuggestionGenerationInput {
   provider: ChatProviderService;
-  subject: SocraticSubject;
+  discipline: SocraticDiscipline;
   messages: SocraticUIMessage[];
   assistantText: string;
   providerName?: ChatProvider;
@@ -33,88 +33,54 @@ interface SuggestionGenerationInput {
   providerOptions?: StreamChatInput['providerOptions'];
 }
 
-const subjectGuidance: Record<SocraticSubject, string> = {
-  math: `
-Subject: math.
-Guide with definitions, variable setup, pattern recognition, and one algebraic or logical step at a time.
-When formulas are needed, use renderable KaTeX and ask the learner to predict the next transformation.`,
-  physics: `
-Subject: physics.
-Guide with units, diagrams, proportional reasoning, measurements, and the physical meaning behind each variable.
-Ask the learner to connect the equation to the situation before computing.`,
-  chemistry: `
-Subject: chemistry.
-Guide with particle-level reasoning, conservation, bonding patterns, reaction evidence, and units.
-Ask the learner what is changing, what is conserved, and which rule or model applies.`,
-  biology: `
-Subject: biology.
-Guide with structure-function links, systems thinking, cause-effect chains, and evidence from observations.
-Ask the learner to trace how one change affects the next level of organization.`,
-  history: `
-Subject: history.
-Guide with chronology, causation, sourcing, context, and competing perspectives.
-Ask the learner to identify evidence before forming a conclusion.`,
-  geography: `
-Subject: geography.
-Guide with maps, spatial patterns, scale, human-environment interaction, and regional comparison.
-Ask the learner what pattern they notice and what could explain it.`,
-  english: `
-Subject: english.
-Guide with context clues, grammar patterns, rhetorical choices, revision goals, and examples.
-Ask the learner to explain the effect of a word, sentence, or structure before revising.`,
-  other: `
-Subject: other.
-Guide by first clarifying the topic, the learner's goal, known facts, and where the confusion begins.
-Ask the learner to define the problem in their own words before suggesting a next step.`,
+const disciplineGuidance: Record<SocraticDiscipline, string> = {
+  quantumPhysics: `
+Discipline: quantum physics.
+Guide with states, observables, probability amplitudes, measurement effects, and conceptual models before equations.
+Ask the learner what the system is, what can be observed, and which principle or approximation governs the situation.`,
+  philosophicalEthics: `
+Discipline: philosophical ethics.
+Guide with moral frameworks, objections, principles, and edge cases before conclusions.
+Ask the learner which value conflict matters most, what each framework would prioritize, and what objection could challenge their claim.`,
+  biochemistry: `
+Discipline: biochemistry.
+Guide with molecular interactions, energetic constraints, structure-function relationships, and pathway logic.
+Ask the learner which molecule is changing, what drives the change, and how the local mechanism affects the larger biological system.`,
+  macroeconomics: `
+Discipline: macroeconomics.
+Guide with policy tradeoffs, incentives, and system-level effects using core indicators such as inflation, output, unemployment, and rates.
+Ask the learner which variable moves first, who responds to that change, and what second-order effect follows.`,
 };
 
-const fallbackSuggestions: Record<SocraticSubject, string[]> = {
-  math: [
-    'What should I define first?',
-    'Can you give me a smaller hint?',
-    'How do I check the next step?',
+const fallbackSuggestions: Record<SocraticDiscipline, string[]> = {
+  quantumPhysics: [
+    'Which principle should I start from?',
+    'What does the measurement change here?',
+    'Can you give me one smaller hint?',
   ],
-  physics: [
-    'Which quantity should I track?',
-    'Can we reason from the units?',
-    'What diagram would help here?',
+  philosophicalEthics: [
+    'Which moral framework fits this best?',
+    'What objection should I test first?',
+    'Can you ask me a narrower question?',
   ],
-  chemistry: [
-    'What is conserved in this reaction?',
-    'Which particles are changing?',
-    'Can you give me one hint?',
+  biochemistry: [
+    'Which molecule should I track first?',
+    'What step in the pathway matters most?',
+    'Can you give me one mechanistic hint?',
   ],
-  biology: [
-    'Which structure matters most?',
-    'What cause-effect chain should I trace?',
-    'How would I test that idea?',
-  ],
-  history: [
-    'Which evidence should I inspect first?',
-    'What happened before this event?',
-    'Whose perspective is missing?',
-  ],
-  geography: [
-    'What spatial pattern should I notice?',
-    'Which scale should I compare?',
-    'What factor might explain the region?',
-  ],
-  english: [
-    'What clue in the sentence matters?',
-    'How should I revise this phrase?',
-    'Can you ask me a simpler question?',
-  ],
-  other: [
-    'What should I clarify first?',
-    'Can you give me a smaller hint?',
-    'How do I test my thinking?',
+  macroeconomics: [
+    'Which indicator should I reason about first?',
+    'Who responds first in this economy?',
+    'Can you give me a smaller policy hint?',
   ],
 };
 
-export function getSocraticSystemPrompt(subject: SocraticSubject): string {
-  const resolvedSubject = socraticSubjectSchema
-    .catch(DEFAULT_SOCRATIC_SUBJECT)
-    .parse(subject);
+export function getSocraticSystemPrompt(
+  discipline: SocraticDiscipline
+): string {
+  const resolvedDiscipline = socraticDisciplineSchema
+    .catch(DEFAULT_SOCRATIC_DISCIPLINE)
+    .parse(discipline);
 
   return `
     ### IDENTITY
@@ -128,8 +94,8 @@ export function getSocraticSystemPrompt(subject: SocraticSubject): string {
     - If the learner asks for "just the answer", briefly explain that Socratic mode is active and offer a guided hint instead.
     - Be warm, concise, and academically precise.
 
-    ### SUBJECT ADAPTATION
-    ${subjectGuidance[resolvedSubject]}
+    ### DISCIPLINE ADAPTATION
+    ${disciplineGuidance[resolvedDiscipline]}
 
     ### RESPONSE SHAPE
     1. Acknowledge the learner's current idea or confusion.
@@ -142,16 +108,16 @@ export function getSocraticSystemPrompt(subject: SocraticSubject): string {
   `;
 }
 
-export function getSocraticSubjectFromMetadata(
+export function getSocraticDisciplineFromMetadata(
   metadata: unknown
-): SocraticSubject {
+): SocraticDiscipline {
   if (!metadata || typeof metadata !== 'object')
-    return DEFAULT_SOCRATIC_SUBJECT;
+    return DEFAULT_SOCRATIC_DISCIPLINE;
 
-  const value = (metadata as { subject?: unknown }).subject;
-  const parsed = socraticSubjectSchema.safeParse(value);
+  const value = (metadata as { discipline?: unknown }).discipline;
+  const parsed = socraticDisciplineSchema.safeParse(value);
 
-  return parsed.success ? parsed.data : DEFAULT_SOCRATIC_SUBJECT;
+  return parsed.success ? parsed.data : DEFAULT_SOCRATIC_DISCIPLINE;
 }
 
 function extractJsonObject(text: string): unknown {
@@ -175,17 +141,17 @@ const suggestionResponseSchema = z.object({
 
 function fillSuggestions(
   suggestions: string[],
-  subject: SocraticSubject
+  discipline: SocraticDiscipline
 ): string[] {
   return normalizeSocraticSuggestionItems([
     ...suggestions,
-    ...fallbackSuggestions[subject],
+    ...fallbackSuggestions[discipline],
   ]);
 }
 
 export async function generateSocraticSuggestions({
   provider,
-  subject,
+  discipline,
   messages,
   assistantText,
   providerName,
@@ -215,7 +181,7 @@ export async function generateSocraticSuggestions({
               {
                 type: 'text',
                 text: `
-                Subject: ${subject}
+                Discipline: ${discipline}
 
                 Latest learner message:
                 ${latestUserText}
@@ -244,11 +210,11 @@ export async function generateSocraticSuggestions({
     );
 
     if (!parsed.success) {
-      return fallbackSuggestions[subject];
+      return fallbackSuggestions[discipline];
     }
 
-    return fillSuggestions(parsed.data.suggestions, subject);
+    return fillSuggestions(parsed.data.suggestions, discipline);
   } catch {
-    return fallbackSuggestions[subject];
+    return fallbackSuggestions[discipline];
   }
 }

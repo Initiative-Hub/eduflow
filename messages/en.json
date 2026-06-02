@@ -1168,6 +1168,24 @@
     "title": "Welcome to the <brand>EduFlow</brand> Ecosystem"
   },
   "SocraticPage": {
+    "disciplines": {
+      "biochemistry": {
+        "description": "Examine the molecular mechanics of living organisms and cellular life.",
+        "title": "Bio-Chemistry"
+      },
+      "macroeconomics": {
+        "description": "Understand the complex forces driving global markets and policy.",
+        "title": "Macro-Economics"
+      },
+      "philosophicalEthics": {
+        "description": "Deconstruct moral frameworks from Utilitarianism to Virtue Ethics.",
+        "title": "Philosophical Ethics"
+      },
+      "quantumPhysics": {
+        "description": "Explore entanglement, wave functions, and the nature of reality.",
+        "title": "Quantum Physics"
+      }
+    },
     "input": {
       "footer": "Socratic mode active • no direct answers provided",
       "placeholder": "Ask a question or describe where you're stuck..."
@@ -1175,7 +1193,7 @@
     "limitReachedToast": "You've reached the {count}-message Socratic limit. Start a new session to continue.",
     "recentSessions": {
       "description": "Return to guided questions and prior reasoning threads.",
-      "empty": "No Socratic sessions yet. Choose a subject and ask where you're stuck.",
+      "empty": "No Socratic sessions yet. Choose a discipline and ask where you're stuck.",
       "error": "Unable to load recent Socratic sessions right now.",
       "openChat": "Open Socratic session {title}",
       "title": "Recent Socratic sessions",
@@ -1210,6 +1228,11 @@
       "title": "Socratic history",
       "untitled": "Untitled Socratic session"
     },
+    "subtitle": "Select a discipline to begin a <mark>Socratic</mark> dialogue. I won't give you answers; I will ask the questions that help you find them.",
+    "title": "How can I <accent>guide</accent> your thinking today?"
+  },
+  "StudyPage": {
+    "description": "Browse the subject areas this assistant will support, from problem-solving to language and humanities.",
     "subjects": {
       "biology": {
         "description": "Trace systems, evidence, and cause-effect relationships.",
@@ -1244,8 +1267,7 @@
         "title": "Physics"
       }
     },
-    "subtitle": "Choose a subject, then work toward the answer through hints, questions, and guided discovery.",
-    "title": "Socratic Inquiry"
+    "title": "Explore familiar study subjects"
   },
   "WritingPage": {
     "recentSessions": {

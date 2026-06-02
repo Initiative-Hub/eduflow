@@ -2,7 +2,7 @@ import { createUIMessageStream, createUIMessageStreamResponse } from 'ai';
 import * as z from 'zod';
 import { AiChatType } from '@/generated/prisma';
 import { getChatOwner } from '@/lib/api/guest-session';
-import { socraticSubjectSchema } from '@/lib/validations/socratic.schema';
+import { socraticDisciplineSchema } from '@/lib/validations/socratic.schema';
 import { ChatProviderFactory } from '@/services/ai/ChatProviderFactory';
 import { CHAT_MODEL_IDS } from '@/services/ai/chat-models';
 import { DEFAULT_PROVIDER } from '@/services/ai/chat-provider.constants';
@@ -14,7 +14,7 @@ import { CacheService } from '@/services/CacheService';
 import { ChatPersistenceService } from '@/services/ChatPersistenceService';
 import {
   generateSocraticSuggestions,
-  getSocraticSubjectFromMetadata,
+  getSocraticDisciplineFromMetadata,
   getSocraticSystemPrompt,
   type SocraticUIMessage,
 } from './socratic.constants';
@@ -23,7 +23,7 @@ export const maxDuration = 30;
 
 const socraticRequestSchema = z.object({
   messages: z.array(z.custom<SocraticUIMessage>()).min(1),
-  subject: socraticSubjectSchema.optional(),
+  discipline: socraticDisciplineSchema.optional(),
   provider: z.custom<ChatProvider>().optional(),
   model: z.enum(CHAT_MODEL_IDS).optional(),
   apiKey: z.string().min(1).optional(),
@@ -238,13 +238,13 @@ export async function POST(
       );
     }
 
-    const subject =
-      parsedBody.data.subject ??
-      getSocraticSubjectFromMetadata(socraticData.metadata);
+    const discipline =
+      parsedBody.data.discipline ??
+      getSocraticDisciplineFromMetadata(socraticData.metadata);
     const providerName = parsedBody.data.provider ?? DEFAULT_PROVIDER;
     const provider = ChatProviderFactory.create(providerName);
     const messagesForModel = parsedBody.data.messages;
-    const systemPrompt = getSocraticSystemPrompt(subject);
+    const systemPrompt = getSocraticSystemPrompt(discipline);
 
     const result = await provider.streamChat(
       {
@@ -275,7 +275,7 @@ export async function POST(
 
         const suggestions = await generateSocraticSuggestions({
           provider,
-          subject,
+          discipline,
           messages: messagesForModel,
           assistantText,
           providerName,

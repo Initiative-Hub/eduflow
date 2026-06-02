@@ -9,8 +9,8 @@ import { toast } from 'sonner';
 import type { SocraticUIMessage } from '@/app/api/v1/ai/socratic/[chatId]/socratic.constants';
 import { Button } from '@/components/ui/button';
 import {
-  DEFAULT_SOCRATIC_SUBJECT,
-  type SocraticSubject,
+  DEFAULT_SOCRATIC_DISCIPLINE,
+  type SocraticDiscipline,
 } from '@/lib/validations/socratic.schema';
 import { type ChatModel, DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
 import { ChatInput } from '../../_components/chat-input';
@@ -18,11 +18,11 @@ import { ChatSidebar } from '../../_components/chat-sidebar';
 import { ChatWorkspaceShell } from '../../_components/chat-workspace-shell';
 import { socraticService } from '../socratic.service';
 import { useSocratic } from '../use-socratic';
-import { SocraticSubjectSelector } from './socratic-subject-selector';
+import { SocraticDisciplineSelector } from './socratic-discipline-selector';
 
 interface SocraticClientProps {
   chatId?: string;
-  initialSubject?: SocraticSubject;
+  initialDiscipline?: SocraticDiscipline;
   initialMessages?: SocraticUIMessage[];
   isAuthenticated: boolean;
 }
@@ -33,12 +33,12 @@ const ChatView = dynamic(() =>
 
 export function SocraticClient({
   chatId,
-  initialSubject = DEFAULT_SOCRATIC_SUBJECT,
+  initialDiscipline = DEFAULT_SOCRATIC_DISCIPLINE,
   initialMessages,
   isAuthenticated,
 }: SocraticClientProps) {
-  const [selectedSubject, setSelectedSubject] =
-    useState<SocraticSubject>(initialSubject);
+  const [selectedDiscipline, setSelectedDiscipline] =
+    useState<SocraticDiscipline>(initialDiscipline);
   const [selectedModel, setSelectedModel] =
     useState<ChatModel>(DEFAULT_CHAT_MODEL);
   const t = useTranslations('SocraticPage');
@@ -53,7 +53,7 @@ export function SocraticClient({
     maxMessages,
     userMessageCount,
   } = useSocratic({
-    subject: selectedSubject,
+    discipline: selectedDiscipline,
     chatId,
     initialMessages,
     selectedModel,
@@ -82,9 +82,9 @@ export function SocraticClient({
   };
 
   const viewport = !hasOutput ? (
-    <SocraticSubjectSelector
-      selected={selectedSubject}
-      onSelect={setSelectedSubject}
+    <SocraticDisciplineSelector
+      selected={selectedDiscipline}
+      onSelect={setSelectedDiscipline}
     />
   ) : (
     <ChatView

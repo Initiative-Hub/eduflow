@@ -1,18 +1,14 @@
 import * as z from 'zod';
 
-export const SOCRATIC_SUBJECTS = [
-  'math',
-  'physics',
-  'chemistry',
-  'biology',
-  'history',
-  'geography',
-  'english',
-  'other',
+export const SOCRATIC_DISCIPLINES = [
+  'quantumPhysics',
+  'philosophicalEthics',
+  'biochemistry',
+  'macroeconomics',
 ] as const;
 
-export const socraticSubjectSchema = z.enum(SOCRATIC_SUBJECTS);
+export const socraticDisciplineSchema = z.enum(SOCRATIC_DISCIPLINES);
 
-export type SocraticSubject = z.infer<typeof socraticSubjectSchema>;
+export type SocraticDiscipline = z.infer<typeof socraticDisciplineSchema>;
 
-export const DEFAULT_SOCRATIC_SUBJECT = 'other';
+export const DEFAULT_SOCRATIC_DISCIPLINE = 'quantumPhysics';

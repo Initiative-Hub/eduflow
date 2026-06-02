@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/api';
-import type { SocraticSubject } from '@/lib/validations/socratic.schema';
+import type { SocraticDiscipline } from '@/lib/validations/socratic.schema';
 import type {
   ChatDetailsResponse,
   ChatListResponse,
@@ -7,10 +7,10 @@ import type {
 } from '../(ai-chat)/chat.service';
 
 export const socraticService = {
-  createChat: async (firstMessage: string, subject: SocraticSubject) => {
+  createChat: async (firstMessage: string, discipline: SocraticDiscipline) => {
     return apiClient.post<{ chatId: string }>('/v1/ai/socratic/create', {
       firstMessage,
-      subject,
+      discipline,
     });
   },
   getChat: async (chatId: string) => {

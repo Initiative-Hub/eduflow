@@ -1168,6 +1168,24 @@
     "title": "Chào mừng bạn đến với Hệ sinh thái <brand>EduFlow</brand>"
   },
   "SocraticPage": {
+    "disciplines": {
+      "biochemistry": {
+        "description": "Phân tích cơ chế phân tử của sinh vật sống và đời sống tế bào.",
+        "title": "Hóa-Sinh"
+      },
+      "macroeconomics": {
+        "description": "Hiểu những lực tác động phức tạp chi phối thị trường toàn cầu và chính sách.",
+        "title": "Kinh tế Vĩ mô"
+      },
+      "philosophicalEthics": {
+        "description": "Mổ xẻ các khuôn khổ đạo đức từ thuyết vị lợi đến đạo đức đức hạnh.",
+        "title": "Đạo đức Học Triết học"
+      },
+      "quantumPhysics": {
+        "description": "Khám phá vướng víu lượng tử, hàm sóng và bản chất của thực tại.",
+        "title": "Vật lý Lượng tử"
+      }
+    },
     "input": {
       "footer": "Chế độ Socratic đang bật • không cung cấp đáp án trực tiếp",
       "placeholder": "Đặt câu hỏi hoặc mô tả chỗ bạn đang mắc..."
@@ -1175,7 +1193,7 @@
     "limitReachedToast": "Bạn đã đạt giới hạn {count} tin nhắn Socratic. Hãy bắt đầu phiên mới để tiếp tục.",
     "recentSessions": {
       "description": "Quay lại các câu hỏi gợi mở và mạch suy luận trước đây.",
-      "empty": "Chưa có phiên Socratic. Hãy chọn môn học và hỏi phần bạn đang mắc.",
+      "empty": "Chưa có phiên Socratic. Hãy chọn một lĩnh vực và hỏi phần bạn đang mắc.",
       "error": "Hiện không thể tải các phiên Socratic gần đây.",
       "openChat": "Mở phiên Socratic {title}",
       "title": "Phiên Socratic gần đây",
@@ -1210,6 +1228,11 @@
       "title": "Lịch sử Socratic",
       "untitled": "Phiên Socratic chưa đặt tên"
     },
+    "subtitle": "Hãy chọn một lĩnh vực để bắt đầu đối thoại <mark>Socratic</mark>. Tôi sẽ không đưa đáp án; tôi sẽ đặt những câu hỏi giúp bạn tự tìm ra chúng.",
+    "title": "Hôm nay tôi có thể <accent>dẫn dắt</accent> tư duy của bạn như thế nào?"
+  },
+  "StudyPage": {
+    "description": "Khám phá các nhóm môn học mà trợ lý này sẽ hỗ trợ, từ giải bài đến ngôn ngữ và khoa học xã hội.",
     "subjects": {
       "biology": {
         "description": "Lần theo hệ thống, bằng chứng và quan hệ nguyên nhân - kết quả.",
@@ -1244,8 +1267,7 @@
         "title": "Vật lý"
       }
     },
-    "subtitle": "Chọn môn học, rồi tiến tới câu trả lời qua gợi ý, câu hỏi và khám phá có định hướng.",
-    "title": "Truy vấn Socratic"
+    "title": "Khám phá các môn học quen thuộc"
   },
   "WritingPage": {
     "recentSessions": {
