@@ -14,7 +14,6 @@ import { ChatSidebar } from '../../_components/chat-sidebar';
 import { ChatWorkspaceShell } from '../../_components/chat-workspace-shell';
 import { useWriting } from '../use-writing';
 import { writingService } from '../writing.service';
-import { LandingRecentWritingChats } from './landing-recent-writing-chats';
 import { WritingSelector } from './writing-selector';
 
 interface WritingClientProps {
@@ -72,10 +71,7 @@ export default function WritingClient({
   };
 
   const viewport = !hasOutput ? (
-    <div className="flex flex-col gap-4 px-4 py-6">
-      <WritingSelector selected={selectedTool} onSelect={setSelectedTool} />
-      <LandingRecentWritingChats />
-    </div>
+    <WritingSelector selected={selectedTool} onSelect={setSelectedTool} />
   ) : (
     <ChatView messages={messages} isStreaming={isStreaming} />
   );

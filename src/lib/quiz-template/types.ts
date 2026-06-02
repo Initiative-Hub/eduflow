@@ -75,7 +75,7 @@ export interface DragAndDropItem {
 }
 
 export interface DragAndDropQuestion {
-  type: 'drag-and-drop';
+  type: 'drag_and_drop';
   prompt: string;
   /** Template with {{zoneId}} placeholders where items should be dropped */
   sentenceTemplate: string;
@@ -89,7 +89,7 @@ export interface DragAndDropQuestion {
 }
 
 export interface TimedChallengeQuestion {
-  type: 'timed-challenge';
+  type: 'timed_challenge';
   prompt: string;
   innerQuestion: QuestionBlock;
   timeLimitSeconds: number;
@@ -156,14 +156,14 @@ export type QuestionBlock =
  * Used by utility types to derive client-safe and display-safe variants.
  */
 export type AnswerFieldMap = {
-  'multiple-choice': 'isCorrect';
-  'true-false': 'correctAnswer';
-  'fill-in-the-blank': 'acceptableAnswers';
+  multiple_choice: 'isCorrect';
+  true_false: 'correctAnswer';
+  fill_in_the_blank: 'acceptableAnswers';
   matching: 'correctPairs';
   ordering: 'correctOrder';
-  'drag-and-drop': 'correctMapping';
+  drag_and_drop: 'correctMapping';
   essay: never;
-  'timed-challenge': never;
+  timed_challenge: never;
 };
 
 // ─── Utility Types ───────────────────────────────────────────────────────────
@@ -247,14 +247,14 @@ export type DisplaySafe<T extends QuestionBlock> =
 // ─── Client-safe Timed Challenge (breaks circular reference) ─────────────────
 
 interface ClientTimedChallenge {
-  type: 'timed-challenge';
+  type: 'timed_challenge';
   prompt: string;
   innerQuestion: ClientQuestionBlock;
   timeLimitSeconds: number;
 }
 
 interface DisplayTimedChallenge {
-  type: 'timed-challenge';
+  type: 'timed_challenge';
   prompt: string;
   innerQuestion: DisplayQuestionBlock;
   timeLimitSeconds: number;
@@ -313,17 +313,17 @@ export interface QuizContent {
 // ─── Student Answers ─────────────────────────────────────────────────────────
 
 export interface MultipleChoiceAnswer {
-  type: 'multiple-choice';
+  type: 'multiple_choice';
   selectedOptionId: string;
 }
 
 export interface TrueFalseAnswer {
-  type: 'true-false';
+  type: 'true_false';
   selectedAnswer: boolean;
 }
 
 export interface FillInTheBlankAnswer {
-  type: 'fill-in-the-blank';
+  type: 'fill_in_the_blank';
   filledBlanks: Record<string, string>;
 }
 
@@ -338,7 +338,7 @@ export interface OrderingAnswer {
 }
 
 export interface DragAndDropAnswer {
-  type: 'drag-and-drop';
+  type: 'drag_and_drop';
   /** Mapping of zoneId → itemId placed by the student */
   placements: Record<string, string>;
 }

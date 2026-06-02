@@ -35,7 +35,6 @@ import {
   type StudentAnswers,
   SUB_TYPE_TO_QUESTION_TYPE,
 } from '@/lib/quiz-template';
-import type { QuestionBlock } from '@/lib/quiz-template/types';
 import { LessonOutline } from '../../../lessons/[lessonId]/_components/lesson-outline';
 import { useModules } from '../../../use-modules';
 import { useQuestionBank } from '../../../use-question-bank';
@@ -149,11 +148,7 @@ export function QuizPlayerClient({ courseId, quizId }: QuizPlayerClientProps) {
   // Find the module title for breadcrumb
   const currentModule = useMemo(() => {
     if (!quiz) return null;
-    const linkedLessonIds: string[] = (quiz as any).lessons
-      ? (quiz as any).lessons.map((l: any) => l.id)
-      : (quiz as any).lessonId
-        ? [(quiz as any).lessonId]
-        : [];
+    const linkedLessonIds = quiz.lessonIds;
     return modules.find((m) =>
       m.lessons.some((l) => linkedLessonIds.includes(l.id))
     );
@@ -331,7 +326,7 @@ export function QuizPlayerClient({ courseId, quizId }: QuizPlayerClientProps) {
       <div className="mx-auto mt-6 max-w-2xl">
         {activeTab === 'edit' ? (
           <QuizQuestionsEditor
-            initialQuestions={(quiz.questions ?? []) as QuestionBlock[]}
+            initialQuestions={quiz.questions ?? []}
             onSave={saveQuestions}
             isSaving={isSavingQuestions}
             onGenerateAI={handleOpenAiDialog}

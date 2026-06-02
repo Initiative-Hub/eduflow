@@ -6,7 +6,6 @@ import {
 } from '@/lib/permissions/permission-keys';
 import { prisma } from '@/lib/prisma';
 import type { AICourseGeneration } from '@/lib/validations/course.schema';
-import { ChatProviderFactory } from '@/services/ai/ChatProviderFactory';
 import { OpenRouterService } from '@/services/ai/OpenRouterService';
 import { StorageService } from '@/services/StorageService';
 export class CourseService {
@@ -404,34 +403,6 @@ export class CourseService {
       where: { id: courseId },
       data: { isPublished },
     });
-  }
-
-  static async generateModulesFromAI(data: {
-    userId: string;
-    courseId: string;
-    fileId?: string;
-    file?: File;
-    apiKey?: string;
-    context?: string;
-  }) {
-    const aiService = ChatProviderFactory.create('ai-gateway');
-    const result = await aiService.streamCourse({
-      userId: data.userId,
-      fileId: data.fileId,
-      file: data.file,
-      apiKey: data.apiKey,
-      context: data.context,
-      onFinish: async ({ object }) => {
-        if (!object) {
-          throw new Error('AI course generation did not return a valid object');
-        }
-        await CourseService.saveGeneratedCourseData(
-          data.courseId,
-          object as AICourseGeneration
-        );
-      },
-    });
-    return result;
   }
 
   /**
