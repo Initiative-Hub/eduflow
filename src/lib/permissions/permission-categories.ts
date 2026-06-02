@@ -45,7 +45,7 @@ export type PermissionCategory = {
   icon: LucideIcon;
   title: string;
   description: string;
-  permissions: readonly PermissionDefinition[];
+  permissions: PermissionDefinition[];
 };
 
 export const PLATFORM_PERMISSION_CATEGORIES: PermissionCategory[] = [

@@ -4,7 +4,7 @@ import type { PlatformRoleName } from '@/generated/prisma';
 import {
   type PermissionDefinition,
   PLATFORM_PERMISSION_CATEGORIES,
-} from '@/lib/permissions/permission-catalog';
+} from '@/lib/permissions/permission-categories';
 import {
   isPlatformPermissionKey,
   type PlatformPermissionKey,

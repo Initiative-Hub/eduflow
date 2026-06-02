@@ -4,7 +4,7 @@ import type { CourseRoleName } from '@/generated/prisma';
 import {
   COURSE_PERMISSION_CATEGORIES,
   type PermissionDefinition,
-} from '@/lib/permissions/permission-catalog';
+} from '@/lib/permissions/permission-categories';
 import {
   type CoursePermissionKey,
   isCoursePermissionKey,
