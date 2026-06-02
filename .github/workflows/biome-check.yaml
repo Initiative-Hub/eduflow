@@ -36,7 +36,6 @@ jobs:
           set -e
 
           echo "exit_code=$biome_exit_code" >> $GITHUB_OUTPUT
-          echo "$biome_output" > format_output.txt
 
           clean_output=$(echo "$biome_output" | sed 's/\x1b\[[0-9;]*m//g')
           files_checked=$(echo "$clean_output" | grep "Checked [0-9]* files" | sed 's/Checked \([0-9]*\) files.*/\1/' || echo "0")
@@ -60,7 +59,6 @@ jobs:
           set -e
 
           echo "exit_code=$biome_exit_code" >> $GITHUB_OUTPUT
-          echo "$biome_output" > lint_output.txt
 
           clean_output=$(echo "$biome_output" | sed 's/\x1b\[[0-9;]*m//g')
           files_checked=$(echo "$clean_output" | grep "Checked [0-9]* files" | sed 's/Checked \([0-9]*\) files.*/\1/' || echo "0")
