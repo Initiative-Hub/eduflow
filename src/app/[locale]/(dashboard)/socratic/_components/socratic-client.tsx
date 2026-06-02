@@ -18,7 +18,6 @@ import { ChatSidebar } from '../../_components/chat-sidebar';
 import { ChatWorkspaceShell } from '../../_components/chat-workspace-shell';
 import { socraticService } from '../socratic.service';
 import { useSocratic } from '../use-socratic';
-import { LandingRecentSocraticChats } from './landing-recent-socratic-chats';
 import { SocraticSubjectSelector } from './socratic-subject-selector';
 
 interface SocraticClientProps {
@@ -83,13 +82,10 @@ export function SocraticClient({
   };
 
   const viewport = !hasOutput ? (
-    <div className="flex flex-col gap-4 px-4 py-6">
-      <SocraticSubjectSelector
-        selected={selectedSubject}
-        onSelect={setSelectedSubject}
-      />
-      <LandingRecentSocraticChats />
-    </div>
+    <SocraticSubjectSelector
+      selected={selectedSubject}
+      onSelect={setSelectedSubject}
+    />
   ) : (
     <ChatView
       messages={messages}
