@@ -38,10 +38,10 @@ export function LandingView({
   const t = useTranslations('AIChat');
 
   return (
-    <div className="flex w-full flex-col items-center justify-center">
+    <div className="flex flex-col items-center justify-center">
       {view === 'home' ? (
-        <div className="space-y-2">
-          <div className="flex w-full flex-col items-center">
+        <div className="mb-2 max-w-4xl space-y-2">
+          <div className="flex flex-col items-center">
             {/* Header */}
             <div className="mt-12 mb-6 max-w-2xl space-y-2 px-4 text-center">
               <h1 className="font-extrabold font-heading text-3xl text-foreground/90 leading-tight tracking-tight md:text-4xl">
@@ -52,7 +52,7 @@ export function LandingView({
               </p>
             </div>
 
-            <div className="flex w-full max-w-5xl flex-col items-center gap-4 px-4">
+            <div className="flex flex-col items-center gap-4 px-4">
               <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-3">
                 {suggestions.map((item, index) => (
                   <div
@@ -85,13 +85,12 @@ export function LandingView({
                 <LayoutGrid className="size-4" />
                 <span>{t('exploreMore')}</span>
               </Button>
-
-              <LandingRecentChats />
             </div>
           </div>
+          <LandingRecentChats />
         </div>
       ) : (
-        <div className="flex w-full max-w-5xl flex-col items-center">
+        <div className="flex max-w-4xl flex-col items-center">
           <div className="mt-12 mb-6 flex w-full items-center justify-between px-4">
             <div className="space-y-1">
               <h2 className="font-bold font-heading text-3xl">
