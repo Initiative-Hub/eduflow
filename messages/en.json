@@ -650,7 +650,6 @@
       "noLesson": "No lesson",
       "noLessonFilter": "No lesson linked",
       "noQuestions": "No questions found. Add questions manually or generate them with AI.",
-      "previewTypes": "Preview Types",
       "questionCount": "{count, plural, =1 {1 question} other {# questions}}",
       "questionPreview": "Question Preview",
       "searchPlaceholder": "Search questions...",

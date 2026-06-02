@@ -650,7 +650,6 @@
       "noLesson": "Không có bài học",
       "noLessonFilter": "Không liên kết bài học",
       "noQuestions": "Không tìm thấy câu hỏi. Thêm câu hỏi thủ công hoặc tạo bằng AI.",
-      "previewTypes": "Xem trước các loại",
       "questionCount": "{count, plural, =1 {1 câu hỏi} other {# câu hỏi}}",
       "questionPreview": "Xem trước câu hỏi",
       "searchPlaceholder": "Tìm kiếm câu hỏi...",
