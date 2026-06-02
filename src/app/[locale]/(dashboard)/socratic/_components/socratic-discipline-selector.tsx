@@ -37,24 +37,22 @@ export function SocraticDisciplineSelector({
   return (
     <div className="flex flex-col items-center justify-center">
       <div className="mb-2 max-w-6xl space-y-2">
-        <div className="space-y-8 px-4 pt-10 pb-4">
-          <div className="px-6 py-8 sm:px-8 sm:py-10">
-            <div className="relative flex flex-col items-center text-center">
-              <h1 className="mt-5 font-black font-heading text-3xl text-foreground leading-tight tracking-tight sm:text-4xl lg:text-5xl">
-                {t.rich('title', {
-                  accent: (chunks) => (
-                    <span className="text-primary italic">{chunks}</span>
-                  ),
-                })}
-              </h1>
-              <p className="mt-4 max-w-3xl text-balance text-base text-muted-foreground leading-7 sm:text-lg">
-                {t.rich('subtitle', {
-                  mark: (chunks) => (
-                    <span className="font-bold text-primary">{chunks}</span>
-                  ),
-                })}
-              </p>
-            </div>
+        <div className="space-y-8 px-4 pt-10">
+          <div className="relative flex flex-col items-center text-center">
+            <h1 className="mt-5 font-black font-heading text-3xl text-foreground leading-tight tracking-tight sm:text-4xl lg:text-5xl">
+              {t.rich('title', {
+                accent: (chunks) => (
+                  <span className="text-primary italic">{chunks}</span>
+                ),
+              })}
+            </h1>
+            <p className="mt-4 max-w-3xl text-balance text-base text-muted-foreground leading-7 sm:text-lg">
+              {t.rich('subtitle', {
+                mark: (chunks) => (
+                  <span className="font-bold text-primary">{chunks}</span>
+                ),
+              })}
+            </p>
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
