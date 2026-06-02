@@ -51,7 +51,7 @@ export interface QuestionBankEntry {
 export interface QuizDefinition {
   id: string;
   courseId: string;
-  lessonId: string;
+  lessonIds: string[];
   title: string;
   description?: string;
   category: QuizCategory;
@@ -153,11 +153,11 @@ export const SELECTION_METHOD_LABELS: Record<SelectionMethod, string> = {
  * `type` discriminator used inside QuestionBlock JSON.
  */
 export const SUB_TYPE_TO_QUESTION_TYPE: Record<QuestionSubType, string> = {
-  MULTIPLE_CHOICE: 'multiple-choice',
-  TRUE_FALSE: 'true-false',
+  MULTIPLE_CHOICE: 'multiple_choice',
+  TRUE_FALSE: 'true_false',
   MATCHING: 'matching',
   ORDERING: 'ordering',
   ESSAY: 'essay',
-  FILL_IN_THE_BLANK: 'fill-in-the-blank',
-  DRAG_AND_DROP: 'drag-and-drop',
+  FILL_IN_THE_BLANK: 'fill_in_the_blank',
+  DRAG_AND_DROP: 'drag_and_drop',
 };

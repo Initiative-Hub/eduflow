@@ -114,15 +114,28 @@ export function ModuleAccordionItem({
 }: ModuleAccordionItemProps) {
   const tAccordion = useTranslations('Courses.ModuleAccordion');
 
-  // Get quizzes for lessons in this module
-  const lessonIds = new Set(moduleItem.lessons.map((l) => l.id));
-  const moduleQuizzes = useMemo(
-    () => quizzes.filter((q) => lessonIds.has(q.lessonId)),
-    [quizzes, lessonIds]
-  );
+  const moduleQuizzes = useMemo(() => {
+    const moduleLessonIds = new Set(moduleItem.lessons.map((l) => l.id));
 
-  // Local state for order and indent overrides (optimistic updates)
-  // Initialize from the module's persisted itemLayout
+    return quizzes.filter((quiz) => {
+      const q = quiz as QuizDefinition & {
+        lessonId?: string;
+        lessons?: Array<{ id: string }>;
+      };
+
+      const linkedLessonIds =
+        q.lessonIds && q.lessonIds.length > 0
+          ? q.lessonIds
+          : q.lessons && q.lessons.length > 0
+            ? q.lessons.map((lesson) => lesson.id)
+            : q.lessonId
+              ? [q.lessonId]
+              : [];
+
+      return linkedLessonIds.some((lessonId) => moduleLessonIds.has(lessonId));
+    });
+  }, [moduleItem.lessons, quizzes]);
+
   const [localOrder, setLocalOrder] = useState<Map<string, number> | null>(
     () => {
       if (!moduleItem.itemLayout) return null;

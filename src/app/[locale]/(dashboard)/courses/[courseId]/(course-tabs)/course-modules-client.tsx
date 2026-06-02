@@ -37,7 +37,7 @@ export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
     generateCourseModules,
   } = useModules(courseId);
 
-  const { quizzes } = useQuestionBank({ courseId });
+  const { quizzes, isCreatingQuiz } = useQuestionBank({ courseId });
 
   const [isAddModuleOpen, setIsAddModuleOpen] = useState(false);
   const [isAiOpen, setIsAiOpen] = useState(false);
@@ -65,6 +65,7 @@ export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
   };
 
   const handleCreateQuiz = (moduleId: string) => {
+    if (isCreatingQuiz) return;
     setCreateQuizModuleId(moduleId);
   };
 

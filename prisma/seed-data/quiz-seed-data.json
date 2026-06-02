@@ -165,7 +165,7 @@
       "prompt": "What is the powerhouse of the cell?",
       "explanation": "Mitochondria are known as the powerhouse of the cell because they generate most of the cell's supply of ATP through oxidative phosphorylation.",
       "answerData": {
-        "type": "multiple-choice",
+        "type": "multiple_choice",
         "prompt": "What is the powerhouse of the cell?",
         "options": [
           { "id": "a", "text": "Mitochondria", "isCorrect": true },
@@ -184,7 +184,7 @@
       "prompt": "Which organelle is responsible for protein synthesis?",
       "explanation": "Ribosomes are the cellular structures responsible for translating mRNA into proteins.",
       "answerData": {
-        "type": "multiple-choice",
+        "type": "multiple_choice",
         "prompt": "Which organelle is responsible for protein synthesis?",
         "options": [
           { "id": "a", "text": "Ribosome", "isCorrect": true },
@@ -203,7 +203,7 @@
       "prompt": "What is the primary function of the Golgi apparatus?",
       "explanation": "The Golgi apparatus modifies, packages, and ships proteins and lipids to their final destinations within or outside the cell.",
       "answerData": {
-        "type": "multiple-choice",
+        "type": "multiple_choice",
         "prompt": "What is the primary function of the Golgi apparatus?",
         "options": [
           {
@@ -226,7 +226,7 @@
       "prompt": "Osmosis is the movement of water molecules from a region of lower solute concentration to a region of higher solute concentration through a semipermeable membrane.",
       "explanation": "This is true. Osmosis specifically refers to the passive movement of water across a semipermeable membrane from an area of low solute concentration to high solute concentration.",
       "answerData": {
-        "type": "true-false",
+        "type": "true_false",
         "prompt": "Osmosis is the movement of water molecules from a region of lower solute concentration to a region of higher solute concentration through a semipermeable membrane.",
         "correctAnswer": true,
         "explanation": "This is true. Osmosis specifically refers to the passive movement of water across a semipermeable membrane from an area of low solute concentration to high solute concentration."
@@ -240,7 +240,7 @@
       "prompt": "Active transport requires no energy input from the cell.",
       "explanation": "This is false. Active transport requires ATP energy to move substances against their concentration gradient.",
       "answerData": {
-        "type": "true-false",
+        "type": "true_false",
         "prompt": "Active transport requires no energy input from the cell.",
         "correctAnswer": false,
         "explanation": "This is false. Active transport requires ATP energy to move substances against their concentration gradient."
@@ -305,7 +305,7 @@
       "prompt": "DNA is composed of {{sugar}} sugar, a {{group}} group, and a nitrogenous {{base}}.",
       "explanation": "Each nucleotide in DNA consists of a deoxyribose sugar, a phosphate group, and one of four nitrogenous bases (A, T, G, C).",
       "answerData": {
-        "type": "fill-in-the-blank",
+        "type": "fill_in_the_blank",
         "promptTemplate": "DNA is composed of {{sugar}} sugar, a {{group}} group, and a nitrogenous {{base}}.",
         "blanks": [
           { "id": "sugar", "acceptableAnswers": ["deoxyribose"] },
@@ -323,7 +323,7 @@
       "prompt": "The two strands of DNA are held together by {{bonds}} bonds between complementary {{bases}}.",
       "explanation": "Hydrogen bonds form between complementary base pairs (A-T and G-C) to hold the two DNA strands together.",
       "answerData": {
-        "type": "fill-in-the-blank",
+        "type": "fill_in_the_blank",
         "promptTemplate": "The two strands of DNA are held together by {{bonds}} bonds between complementary {{bases}}.",
         "blanks": [
           { "id": "bonds", "acceptableAnswers": ["hydrogen"] },
@@ -340,7 +340,7 @@
       "prompt": "Complete the sentence about Mendelian genetics:",
       "explanation": "In Mendelian genetics, dominant alleles mask recessive ones. An organism with two identical alleles is homozygous.",
       "answerData": {
-        "type": "drag-and-drop",
+        "type": "drag_and_drop",
         "prompt": "Complete the sentence about Mendelian genetics:",
         "sentenceTemplate": "A {{trait1}} allele masks the expression of a {{trait2}} allele. When both alleles are the same, the organism is {{zygosity}}.",
         "zones": [
@@ -387,7 +387,7 @@
       "prompt": "Approximately what percentage of energy is transferred from one trophic level to the next?",
       "explanation": "Only about 10% of energy is transferred between trophic levels. The remaining 90% is lost as heat through metabolic processes.",
       "answerData": {
-        "type": "multiple-choice",
+        "type": "multiple_choice",
         "prompt": "Approximately what percentage of energy is transferred from one trophic level to the next?",
         "options": [
           { "id": "a", "text": "10%", "isCorrect": true },
@@ -444,7 +444,7 @@
       "prompt": "Which scientist is credited with discovering the structure of DNA?",
       "explanation": "Watson and Crick are credited with discovering the double-helix structure of DNA in 1953, building on X-ray crystallography data from Rosalind Franklin.",
       "answerData": {
-        "type": "multiple-choice",
+        "type": "multiple_choice",
         "prompt": "Which scientist is credited with discovering the structure of DNA?",
         "options": [
           { "id": "a", "text": "Watson and Crick", "isCorrect": true },
@@ -494,7 +494,7 @@
       "prompt": "Complete the sentence about energy flow in ecosystems:",
       "explanation": "Producers convert sunlight into chemical energy. Consumers obtain energy by eating other organisms. Decomposers break down dead matter and recycle nutrients.",
       "answerData": {
-        "type": "drag-and-drop",
+        "type": "drag_and_drop",
         "prompt": "Complete the sentence about energy flow in ecosystems:",
         "sentenceTemplate": "{{producers}} convert sunlight into chemical energy. {{consumers}} obtain energy by eating other organisms. {{decomposers}} break down dead matter.",
         "zones": [

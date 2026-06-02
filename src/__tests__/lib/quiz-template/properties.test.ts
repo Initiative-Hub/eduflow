@@ -53,7 +53,7 @@ const arbMultipleChoice: fc.Arbitrary<MultipleChoiceQuestion> = fc
       }),
     explanation: fc.option(arbNonEmptyString, { nil: undefined }),
   })
-  .map((r) => ({ type: 'multiple-choice' as const, ...r }));
+  .map((r) => ({ type: 'multiple_choice' as const, ...r }));
 
 const arbTrueFalse: fc.Arbitrary<TrueFalseQuestion> = fc
   .record({
@@ -61,7 +61,7 @@ const arbTrueFalse: fc.Arbitrary<TrueFalseQuestion> = fc
     correctAnswer: fc.boolean(),
     explanation: fc.option(arbNonEmptyString, { nil: undefined }),
   })
-  .map((r) => ({ type: 'true-false' as const, ...r }));
+  .map((r) => ({ type: 'true_false' as const, ...r }));
 
 const arbFillInTheBlank: fc.Arbitrary<FillInTheBlankQuestion> = fc
   .record({
@@ -78,7 +78,7 @@ const arbFillInTheBlank: fc.Arbitrary<FillInTheBlankQuestion> = fc
     ),
     explanation: fc.option(arbNonEmptyString, { nil: undefined }),
   })
-  .map((r) => ({ type: 'fill-in-the-blank' as const, ...r }));
+  .map((r) => ({ type: 'fill_in_the_blank' as const, ...r }));
 
 const arbMatching: fc.Arbitrary<MatchingQuestion> = fc
   .integer({ min: 2, max: 5 })
@@ -308,6 +308,12 @@ describe('Property 2: Registry returns valid handler for all registered type str
       }),
       { numRuns: 100 }
     );
+  });
+
+  it('getHandler resolves snake_case aliases to registered hyphenated types', () => {
+    const handler = getHandler('multiple_choice');
+
+    expect(handler.type).toBe('multiple-choice');
   });
 });
 

@@ -41,16 +41,16 @@ export function WritingSelector({ selected, onSelect }: WritingSelectorProps) {
   const t = useTranslations('WritingPage');
 
   return (
-    <div className="mb-4 flex h-full flex-col items-center justify-center px-4">
-      <div className="mb-12 space-y-4 text-center">
-        <h1 className="font-extrabold text-4xl text-foreground tracking-tight sm:text-5xl">
+    <div className="flex h-full flex-col items-center">
+      <div className="mt-12 mb-6 space-y-2 text-center">
+        <h1 className="font-extrabold text-3xl text-foreground tracking-tight sm:text-4xl">
           {t.rich('title', {
             italic: (chunks) => (
               <span className="text-primary italic">{chunks}</span>
             ),
           })}
         </h1>
-        <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
+        <p className="mx-auto max-w-2xl text-base text-muted-foreground">
           {t('subtitle')}
         </p>
       </div>

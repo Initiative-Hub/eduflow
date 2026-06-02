@@ -104,14 +104,10 @@ export function ChatInput({
     : t('placeholder');
 
   return (
-    <div
-      className={`relative w-full space-y-4 transition-all duration-200 ${isChatting ? 'mt-auto' : ''}`}
-    >
-      <div className="group relative mx-auto max-w-3xl">
-        <div className="absolute inset-x-0 -top-px -bottom-px rounded-[2rem] bg-linear-to-r from-transparent via-primary/50 to-transparent opacity-0 transition-opacity duration-500 group-focus-within:opacity-100" />
-
+    <div className="space-y-4 transition-all duration-200">
+      <div className="group mx-auto max-w-3xl">
         <PromptInput
-          className="relative *:data-[slot=input-group]:rounded-[2rem] *:data-[slot=input-group]:border-border *:data-[slot=input-group]:bg-white *:data-[slot=input-group]:p-2 *:data-[slot=input-group]:shadow-xl *:data-[slot=input-group]:transition-all *:data-[slot=input-group]:group-focus-within:border-primary/30 *:data-[slot=input-group]:group-focus-within:shadow-2xl dark:*:data-[slot=input-group]:bg-zinc-950"
+          className="*:data-[slot=input-group]:rounded-4xl *:data-[slot=input-group]:border *:data-[slot=input-group]:border-border/80 *:data-[slot=input-group]:bg-background! *:data-[slot=input-group]:p-2.5 *:data-[slot=input-group]:shadow-sm *:data-[slot=input-group]:transition-all *:data-[slot=input-group]:group-focus-within:border-primary/70 *:data-[slot=input-group]:group-focus-within:shadow-md *:data-[slot=input-group]:group-focus-within:ring-4 *:data-[slot=input-group]:group-focus-within:ring-primary/10"
           maxFiles={0}
           onSubmit={onPromptSubmit}
         >
@@ -130,7 +126,7 @@ export function ChatInput({
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             placeholder={inputPlaceholder}
-            className="min-h-12 px-2 py-3 text-lg leading-normal placeholder:text-muted-foreground/50"
+            className="min-h-12 px-2 py-3 text-lg leading-normal placeholder:text-foreground"
             disabled={isLimitReached}
           />
 
@@ -148,7 +144,7 @@ export function ChatInput({
                   />
                   <PromptInputButton
                     aria-label={t('attachments.add')}
-                    className="size-9 rounded-full text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary"
+                    className="size-9 cursor-pointer rounded-full text-foreground transition-colors hover:bg-muted-foreground/30"
                     disabled={isStreaming || isUploading || isLimitReached}
                     onClick={() => fileInputRef.current?.click()}
                   >
@@ -169,7 +165,7 @@ export function ChatInput({
             </div>
 
             <PromptInputSubmit
-              className="size-9 rounded-full transition-all hover:scale-105"
+              className="size-9 cursor-pointer rounded-full transition-all hover:scale-105"
               disabled={
                 isLimitReached ||
                 isUploading ||

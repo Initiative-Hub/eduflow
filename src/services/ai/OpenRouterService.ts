@@ -1,18 +1,32 @@
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import {
   convertToModelMessages,
+  generateObject,
   smoothStream,
   streamObject,
   streamText,
 } from 'ai';
+import { z } from 'zod';
 import { pdfToMarkdown } from '@/lib/pdf';
 import { aiCourseGenerationSchema } from '@/lib/validations/course.schema';
+import {
+  createQuizSchema,
+  dragAndDropQuestionSchema,
+  essayQuestionSchema,
+  fillInTheBlankQuestionSchema,
+  matchingQuestionSchema,
+  multipleChoiceQuestionSchema,
+  orderingQuestionSchema,
+  timedChallengeQuestionSchema,
+  trueFalseQuestionSchema,
+} from '@/lib/validations/quiz.schema';
 import {
   COURSE_GENERATION_PROMPT,
   DEFAULT_MODELS,
   SYSTEM_PROMPT,
 } from '@/services/ai/chat-provider.constants';
 import type {
+  AIQuizInput,
   StreamChatInput,
   StreamCourseInput,
 } from '@/services/ai/chat-provider.types';
@@ -148,5 +162,65 @@ export class OpenRouterService implements ChatProviderService {
       prompt: `Content to analyze and transform into a course:\n\n${markdownContent}${options.context ? `\n\n=== ADDITIONAL CONTEXT FROM INSTRUCTOR ===\n${options.context}` : ''}\n\n=== SUPPLEMENTARY WEB CONTEXT ===\n${webContext}`,
       onFinish: options.onFinish,
     });
+  }
+
+  // Create quiz based on quiz type
+  async createQuiz(options: AIQuizInput) {
+    const apiKey = options.apiKey ?? process.env.OPENROUTER_API_KEY;
+    if (!apiKey)
+      throw new Error(`Missing API key for provider "${PROVIDER_NAME}"`);
+
+    const model = options.model ?? DEFAULT_MODELS.openrouter;
+    const provider = createOpenRouter({ apiKey });
+
+    const normalizedType = options.quizType.toLowerCase();
+
+    // Build AI-friendly question schemas with the `type` discriminator field REMOVED.
+    // The AI reliably omits or mis-capitalises the `type` field when it's a required literal,
+    // so we strip it from the schema sent to the model and inject the correct value ourselves
+    // after generation.
+    const aiQuestionSchemaMap: Record<string, z.ZodTypeAny> = {
+      'multiple-choice': multipleChoiceQuestionSchema.omit({ type: true }),
+      'true-false': trueFalseQuestionSchema.omit({ type: true }),
+      'fill-in-the-blank': fillInTheBlankQuestionSchema.omit({ type: true }),
+      matching: matchingQuestionSchema.omit({ type: true }),
+      ordering: orderingQuestionSchema.omit({ type: true }),
+      'drag-and-drop': dragAndDropQuestionSchema.omit({ type: true }),
+      essay: essayQuestionSchema.omit({ type: true }),
+      'timed-challenge': timedChallengeQuestionSchema.omit({ type: true }),
+    };
+
+    const aiQuestionSchema =
+      aiQuestionSchemaMap[normalizedType] ??
+      aiQuestionSchemaMap['multiple-choice'];
+
+    const aiSchema = createQuizSchema(aiQuestionSchema);
+
+    const count = parseInt(options.questionNumbers, 10) || 5;
+    const prompt = `Generate a complete, high-quality educational Quiz object containing exactly ${count} questions of type "${options.quizType}".
+${options.topic ? `The quiz topic or theme is: "${options.topic}".` : ''}
+${options.content ? `Generate the quiz based on the following content:\n\n${options.content}` : 'Generate interesting educational questions.'}
+
+Instructions:
+1. Provide a clear, engaging title and description for the quiz.
+2. Set category, subType, deliveryMode, and selectionMethod appropriately for the quizType.
+3. Generate exactly ${count} questions in the questions array.
+4. Ensure all option, blank, zone, and item IDs are unique (e.g. opt1, opt2, blank1, zone1, item1, left1, right1).
+5. Provide helpful explanations for each question.`;
+
+    const response = await generateObject({
+      model: provider(model),
+      schema: aiSchema,
+      prompt,
+      system:
+        'You are an educational AI assistant that designs quiz questions and tests. Generate high-quality quizzes and questions matching the requested schema.',
+    });
+
+    // Inject the correct `type` field into every question (the AI schema omitted it)
+    const questionsWithType = (
+      response.object.questions as Record<string, unknown>[]
+    ).map((q) => ({ type: normalizedType, ...q }));
+
+    return { ...response.object, questions: questionsWithType };
   }
 }

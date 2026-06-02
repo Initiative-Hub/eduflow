@@ -265,7 +265,7 @@ export function ChatSidebar({
             </Button>
           </div>
 
-          <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto p-3">
+          <div className="min-h-0 flex-1 overflow-y-auto p-3">
             {chatListQuery.isLoading ? (
               <div className="space-y-2">
                 {Array.from({ length: 5 }).map((_, index) => (

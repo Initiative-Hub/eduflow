@@ -19,7 +19,7 @@ const multipleChoiceExample: QuizContent = {
   type: 'multiple-choice',
   questions: [
     {
-      type: 'multiple-choice',
+      type: 'multiple_choice',
       prompt: 'What is the primary pigment responsible for photosynthesis?',
       options: [
         { id: 'a', text: 'Chlorophyll', isCorrect: true },
@@ -36,10 +36,10 @@ const multipleChoiceExample: QuizContent = {
 const trueFalseExample: QuizContent = {
   title: 'True/False Example',
   description: 'Students choose between two binary options.',
-  type: 'true-false',
+  type: 'true_false',
   questions: [
     {
-      type: 'true-false',
+      type: 'true_false',
       prompt: 'Photosynthesis occurs only in the leaves of a plant.',
       correctAnswer: false,
       explanation:
@@ -127,10 +127,10 @@ const essayExample: QuizContent = {
 const fillInTheBlankExample: QuizContent = {
   title: 'Fill in the Blank Example',
   description: 'Students type short answers into blanks within a sentence.',
-  type: 'fill-in-the-blank',
+  type: 'fill_in_the_blank',
   questions: [
     {
-      type: 'fill-in-the-blank',
+      type: 'fill_in_the_blank',
       promptTemplate:
         'Plants use {{pigment}} to capture sunlight. This process takes place inside organelles called {{organelle}}.',
       blanks: [
