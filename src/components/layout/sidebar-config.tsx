@@ -17,7 +17,7 @@ export type SidebarItem = {
 };
 
 export const sidebarIconClassName =
-  'size-5 fill-primary/60 text-primary/80 transition-colors group-hover/menu-button:fill-primary group-hover/menu-button:text-primary group-data-[active=true]/menu-button:fill-primary group-data-[active=true]/menu-button:text-primary';
+  'size-5 text-primary/80 transition-colors group-data-[active=true]/menu-button:text-primary group-hover/menu-button:text-primary ';
 
 export function getCourseNavItems(
   courseId: string,

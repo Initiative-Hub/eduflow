@@ -108,9 +108,7 @@ export function useAvatarMenu({ name, email, role }: useAvatarMenuProps) {
     {
       type: 'item',
       label: t('menu.helpCenter'),
-      icon: (
-        <CircleHelp className="size-5 fill-primary text-primary-foreground" />
-      ),
+      icon: <CircleHelp className="size-5 text-primary" />,
       onClick: () => router.push('/help'),
       className: 'font-bold py-3 px-2',
     },
