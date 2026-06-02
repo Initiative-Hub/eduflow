@@ -73,7 +73,6 @@ export type PlatformPermissionCategoryView = Omit<
   value: string;
   enabledCount: number;
   totalCount: number;
-  allPermissions: PlatformPermissionDefinition[];
   permissions: PlatformPermissionDefinition[];
 };
 
@@ -135,7 +134,6 @@ export function getPlatformPermissionCategoriesForRole(
         enabledCount: permissions.filter((permission) => permission.enabled)
           .length,
         totalCount: permissions.length,
-        allPermissions: permissions,
         permissions: visiblePermissions,
       },
     ];

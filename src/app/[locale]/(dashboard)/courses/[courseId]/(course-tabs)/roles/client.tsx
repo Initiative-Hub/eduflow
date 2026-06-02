@@ -19,13 +19,13 @@ import {
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CourseRoleName } from '@/generated/prisma';
+import type { CourseRoleName } from '@/generated/prisma';
 import {
   ACCORDION_DEFAULT_VALUES,
-  getCoursePermissionCategoriesForRole,
-  ROLE_TABS,
   type CoursePermissionDefinition,
   type CourseRolePermissionState,
+  getCoursePermissionCategoriesForRole,
+  ROLE_TABS,
 } from './roles.config';
 import { useRoles } from './use-roles';
 

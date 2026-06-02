@@ -23,39 +23,6 @@ export type UpdateCourseRolePermissionInput = {
   }>;
 };
 
-export function buildCourseRolePermissionStates(
-  roles: {
-    name: string;
-    permissions: Array<{
-      permission: string;
-      enabled: boolean;
-    }>;
-  }[]
-): CourseRolePermissionState[] {
-  const rolePermissions = new Map(
-    roles.map((role) => [
-      role.name,
-      new Map(
-        role.permissions
-          .filter(({ permission }) => isCoursePermissionKey(permission))
-          .map(({ permission, enabled }) => [permission, enabled])
-      ),
-    ])
-  );
-
-  return ['COURSE_OWNER', 'TEACHER', 'STUDENT'].map((role) => {
-    const permissions = rolePermissions.get(role);
-
-    return {
-      role: role as CourseRoleName,
-      permissions: COURSE_PERMISSION_KEYS.map((permission) => ({
-        permission,
-        enabled: permissions?.get(permission) ?? false,
-      })),
-    };
-  });
-}
-
 export class CourseRolePermissionService {
   static async getCourseRolePermissionStates(courseId: string) {
     const roles = await prisma.courseRole.findMany({
@@ -75,7 +42,28 @@ export class CourseRolePermissionService {
       },
     });
 
-    return buildCourseRolePermissionStates(roles);
+    const rolePermissions = new Map(
+      roles.map((role) => [
+        role.name,
+        new Map(
+          role.permissions
+            .filter(({ permission }) => isCoursePermissionKey(permission))
+            .map(({ permission, enabled }) => [permission, enabled])
+        ),
+      ])
+    );
+
+    return ['COURSE_OWNER', 'TEACHER', 'STUDENT'].map((role) => {
+      const permissions = rolePermissions.get(role as CourseRoleName);
+
+      return {
+        role: role as CourseRoleName,
+        permissions: COURSE_PERMISSION_KEYS.map((permission) => ({
+          permission,
+          enabled: permissions?.get(permission) ?? false,
+        })),
+      };
+    });
   }
 
   static async updateCourseRolePermissions({

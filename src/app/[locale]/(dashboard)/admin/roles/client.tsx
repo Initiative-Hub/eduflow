@@ -30,7 +30,6 @@ import {
 import { useRoles } from './use-roles';
 
 export function RolesClient() {
-  console.log(ACCORDION_DEFAULT_VALUES);
   const [activeRole, setActiveRole] = useState<PlatformRoleName>('ADMIN');
   const [searchQuery, setSearchQuery] = useState('');
   const [draftRoleState, setDraftRoleState] = useState<RolePermissionState[]>(

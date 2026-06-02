@@ -22,39 +22,6 @@ export type UpdatePlatformRolePermissionInput = {
   }>;
 };
 
-export function buildPlatformRolePermissionStates(
-  roles: {
-    name: string;
-    permissions: Array<{
-      permission: string;
-      enabled: boolean;
-    }>;
-  }[]
-): PlatformRolePermissionState[] {
-  const rolePermissions = new Map(
-    roles.map((role) => [
-      role.name,
-      new Map(
-        role.permissions
-          .filter(({ permission }) => isPlatformPermissionKey(permission))
-          .map(({ permission, enabled }) => [permission, enabled])
-      ),
-    ])
-  );
-
-  return ['ADMIN', 'TEACHER', 'STUDENT'].map((role) => {
-    const permissions = rolePermissions.get(role);
-
-    return {
-      role: role as PlatformRoleName,
-      permissions: PLATFORM_PERMISSION_KEYS.map((permission) => ({
-        permission,
-        enabled: permissions?.get(permission) ?? false,
-      })),
-    };
-  });
-}
-
 export class PlatformRolePermissionService {
   static async getPlatformRolePermissionStates() {
     const roles = await prisma.platformRole.findMany({
@@ -73,7 +40,28 @@ export class PlatformRolePermissionService {
       },
     });
 
-    return buildPlatformRolePermissionStates(roles);
+    const rolePermissions = new Map(
+      roles.map((role) => [
+        role.name,
+        new Map(
+          role.permissions
+            .filter(({ permission }) => isPlatformPermissionKey(permission))
+            .map(({ permission, enabled }) => [permission, enabled])
+        ),
+      ])
+    );
+
+    return ['ADMIN', 'TEACHER', 'STUDENT'].map((role) => {
+      const permissions = rolePermissions.get(role as PlatformRoleName);
+
+      return {
+        role: role as PlatformRoleName,
+        permissions: PLATFORM_PERMISSION_KEYS.map((permission) => ({
+          permission,
+          enabled: permissions?.get(permission) ?? false,
+        })),
+      };
+    });
   }
 
   static async updatePlatformRolePermissions({
