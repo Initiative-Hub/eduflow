@@ -325,8 +325,11 @@ export async function POST(
     );
 
     const result = await provider.streamChat({
-      ...(parsedBody.data as StreamChatInput),
       messages: messagesForModel,
+      provider: parsedBody.data.provider,
+      model: parsedBody.data.model,
+      apiKey: parsedBody.data.apiKey,
+      providerOptions: parsedBody.data.providerOptions,
     });
 
     const response = result.toUIMessageStreamResponse({

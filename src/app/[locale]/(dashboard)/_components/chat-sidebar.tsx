@@ -11,7 +11,6 @@ import {
   type LucideIcon,
   MessageCircle,
   MessageSquare,
-  PanelLeftClose,
   Pencil,
   Plus,
   Search,
@@ -229,21 +228,12 @@ export function ChatSidebar({
       {isOpen ? (
         <aside className="fixed top-20 right-3 bottom-36 z-50 flex w-[calc(100vw-1.5rem)] max-w-88 flex-col overflow-hidden rounded-3xl border border-border/70 bg-background/95 shadow-2xl backdrop-blur-xl md:right-8 md:bottom-24 md:max-w-96">
           <div className="flex items-center justify-between border-border/70 border-b px-4 py-3">
-            <div>
+            <div className="space-y-0.5">
               <p className="font-semibold text-sm">{t('title')}</p>
               <p className="text-muted-foreground text-xs">
                 {t('description')}
               </p>
             </div>
-            <Button
-              aria-label={t('close')}
-              size="icon-sm"
-              type="button"
-              variant="ghost"
-              onClick={() => setIsOpen(false)}
-            >
-              <PanelLeftClose className="size-4" />
-            </Button>
           </div>
 
           <div className="space-y-3 border-border/70 border-b p-4">

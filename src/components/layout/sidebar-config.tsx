@@ -5,6 +5,7 @@ import {
   LineChart,
   MessageSquare,
   Settings,
+  ShieldCheck,
   Users,
 } from 'lucide-react';
 import type { ReactElement } from 'react';
@@ -17,7 +18,7 @@ export type SidebarItem = {
 };
 
 export const sidebarIconClassName =
-  'size-5 fill-primary/60 text-primary/80 transition-colors group-hover/menu-button:fill-primary group-hover/menu-button:text-primary group-data-[active=true]/menu-button:fill-primary group-data-[active=true]/menu-button:text-primary';
+  'size-5 text-primary/80 transition-colors group-data-[active=true]/menu-button:text-primary group-hover/menu-button:text-primary ';
 
 export function getCourseNavItems(
   courseId: string,
@@ -49,6 +50,11 @@ export function getCourseNavItems(
       name: 'Members',
       url: `/courses/${courseId}/members`,
       icon: <Users className={iconCls} />,
+    },
+    {
+      name: 'Roles',
+      url: `/courses/${courseId}/roles`,
+      icon: <ShieldCheck className={iconCls} />,
     },
     {
       name: 'Analytics',

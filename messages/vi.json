@@ -29,7 +29,6 @@
       "responseDisclaimer": "Phản hồi của AI có thể thay đổi"
     },
     "limitReachedHelper": "Đã chạm giới hạn: {used}/{count} tin nhắn. Hãy bắt đầu phiên mới để tiếp tục.",
-    "limitReachedPlaceholder": "Đã đạt giới hạn ({count}). Bắt đầu phiên mới.",
     "limitReachedToast": "Bạn đã đạt giới hạn {count} tin nhắn. Hãy bắt đầu phiên mới để tiếp tục.",
     "modelSelector": {
       "empty": "Không tìm thấy mô hình nào.",
@@ -1189,6 +1188,108 @@
     "rateLimitTitle": "Đã hết lượt tra hàng ngày",
     "synonyms": "Từ đồng nghĩa",
     "wordNotFound": "Không tìm thấy từ"
+  },
+  "SocraticPage": {
+    "disciplines": {
+      "biochemistry": {
+        "description": "Phân tích cơ chế phân tử của sinh vật sống và đời sống tế bào.",
+        "title": "Hóa-Sinh"
+      },
+      "macroeconomics": {
+        "description": "Hiểu những lực tác động phức tạp chi phối thị trường toàn cầu và chính sách.",
+        "title": "Kinh tế Vĩ mô"
+      },
+      "philosophicalEthics": {
+        "description": "Mổ xẻ các khuôn khổ đạo đức từ thuyết vị lợi đến đạo đức đức hạnh.",
+        "title": "Đạo đức Học Triết học"
+      },
+      "quantumPhysics": {
+        "description": "Khám phá vướng víu lượng tử, hàm sóng và bản chất của thực tại.",
+        "title": "Vật lý Lượng tử"
+      }
+    },
+    "input": {
+      "footer": "Chế độ Socratic đang bật • không cung cấp đáp án trực tiếp",
+      "placeholder": "Đặt câu hỏi hoặc mô tả chỗ bạn đang mắc..."
+    },
+    "limitReachedToast": "Bạn đã đạt giới hạn {count} tin nhắn Socratic. Hãy bắt đầu phiên mới để tiếp tục.",
+    "recentSessions": {
+      "description": "Quay lại các câu hỏi gợi mở và mạch suy luận trước đây.",
+      "empty": "Chưa có phiên Socratic. Hãy chọn một lĩnh vực và hỏi phần bạn đang mắc.",
+      "error": "Hiện không thể tải các phiên Socratic gần đây.",
+      "openChat": "Mở phiên Socratic {title}",
+      "title": "Phiên Socratic gần đây",
+      "updated": "Cập nhật {date}"
+    },
+    "sidebar": {
+      "actionsLabel": "Hành động cho {title}",
+      "cancel": "Hủy",
+      "close": "Thu gọn lịch sử Socratic",
+      "delete": "Xóa",
+      "deleteDialogDescription": "Xóa \"{title}\" khỏi lịch sử Socratic của bạn? Không thể hoàn tác hành động này.",
+      "deleteDialogTitle": "Xóa phiên Socratic",
+      "deleteError": "Không thể xóa phiên Socratic.",
+      "deleteSuccess": "Đã xóa phiên Socratic.",
+      "description": "Tìm kiếm và mở lại các phiên gợi mở trước đây.",
+      "editDialogDescription": "Chọn một tiêu đề ngắn gọn cho phiên Socratic này.",
+      "editDialogTitle": "Chỉnh sửa tiêu đề Socratic",
+      "editError": "Không thể cập nhật tiêu đề phiên Socratic.",
+      "editTitle": "Sửa tiêu đề",
+      "editTitleLabel": "Tiêu đề phiên Socratic",
+      "editTitlePlaceholder": "Nhập tiêu đề phiên Socratic",
+      "emptyDescription": "Bắt đầu một phiên Socratic và phiên đó sẽ xuất hiện tại đây.",
+      "emptySearch": "Không có phiên Socratic nào khớp với tìm kiếm.",
+      "emptyTitle": "Chưa có phiên Socratic",
+      "loadingMore": "Đang tải thêm phiên Socratic...",
+      "messageCount": "{count, plural, one {# tin nhắn} other {# tin nhắn}}",
+      "newChat": "Phiên Socratic mới",
+      "open": "Mở lịch sử Socratic",
+      "saveTitle": "Lưu tiêu đề",
+      "searchLabel": "Tìm kiếm phiên Socratic",
+      "searchPlaceholder": "Tìm kiếm phiên Socratic...",
+      "title": "Lịch sử Socratic",
+      "untitled": "Phiên Socratic chưa đặt tên"
+    },
+    "subtitle": "Hãy chọn một lĩnh vực để bắt đầu đối thoại <mark>Socratic</mark>. Tôi sẽ không đưa đáp án; tôi sẽ đặt những câu hỏi giúp bạn tự tìm ra chúng.",
+    "title": "Hôm nay tôi có thể <accent>dẫn dắt</accent> tư duy của bạn như thế nào?"
+  },
+  "StudyPage": {
+    "description": "Khám phá các nhóm môn học mà trợ lý này sẽ hỗ trợ, từ giải bài đến ngôn ngữ và khoa học xã hội.",
+    "subjects": {
+      "biology": {
+        "description": "Lần theo hệ thống, bằng chứng và quan hệ nguyên nhân - kết quả.",
+        "title": "Sinh học"
+      },
+      "chemistry": {
+        "description": "Suy luận về phản ứng, liên kết và biến đổi ở cấp độ hạt.",
+        "title": "Hóa học"
+      },
+      "english": {
+        "description": "Khám phá ngữ pháp, đọc hiểu, từ vựng và cách chỉnh sửa.",
+        "title": "Tiếng Anh"
+      },
+      "geography": {
+        "description": "Tìm hiểu bản đồ, mô hình không gian, vùng miền và môi trường.",
+        "title": "Địa lý"
+      },
+      "history": {
+        "description": "Phân tích nguyên nhân, bằng chứng, dòng thời gian và góc nhìn.",
+        "title": "Lịch sử"
+      },
+      "math": {
+        "description": "Từng bước xử lý khái niệm, chứng minh và bài toán.",
+        "title": "Toán"
+      },
+      "other": {
+        "description": "Dùng câu hỏi gợi mở cho bất kỳ chủ đề nào bạn muốn hiểu.",
+        "title": "Môn học khác"
+      },
+      "physics": {
+        "description": "Kết nối công thức, đơn vị, sơ đồ và trực giác vật lý.",
+        "title": "Vật lý"
+      }
+    },
+    "title": "Khám phá các môn học quen thuộc"
   },
   "StudyReader": {
     "aiAnalyticsActive": "AI Phân tích đang hoạt động",

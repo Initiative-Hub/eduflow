@@ -24,14 +24,23 @@ import {
   ReasoningContent,
   ReasoningTrigger,
 } from '@/components/ai-elements/reasoning';
+import { Suggestion, Suggestions } from '@/components/ai-elements/suggestion';
 import { getMessageReasoning, getMessageText } from '@/utils/chat-message';
+import { getSocraticSuggestionItems } from '@/utils/socratic-suggestions';
 
 interface ChatViewProps {
   messages: UIMessage[];
   isStreaming: boolean;
+  onSuggestionSelect?: (suggestion: string) => void;
+  suggestionsDisabled?: boolean;
 }
 
-export function ChatView({ messages, isStreaming }: ChatViewProps) {
+export function ChatView({
+  messages,
+  isStreaming,
+  onSuggestionSelect,
+  suggestionsDisabled = false,
+}: ChatViewProps) {
   const t = useTranslations('AIChat');
 
   return (
@@ -41,6 +50,10 @@ export function ChatView({ messages, isStreaming }: ChatViewProps) {
           {messages.map((message) => {
             const text = getMessageText(message);
             const reasoning = getMessageReasoning(message);
+            const suggestions =
+              message.role === 'assistant'
+                ? getSocraticSuggestionItems(message)
+                : [];
             const attachments = message.parts.flatMap((part, index) =>
               part.type === 'file'
                 ? [{ ...part, id: `${message.id}-file-${index}` }]
@@ -66,78 +79,100 @@ export function ChatView({ messages, isStreaming }: ChatViewProps) {
                 key={message.id}
                 className="max-w-full"
               >
-                <div
-                  className={`flex items-start gap-4 ${message.role === 'assistant' ? '' : 'flex-row-reverse'}`}
-                >
+                <div className="flex flex-col gap-3">
                   <div
-                    className={`flex size-10 shrink-0 items-center justify-center rounded-xl border ${message.role === 'assistant' ? 'border-primary/20 bg-primary/10 text-primary' : 'border-zinc-200 bg-zinc-100 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400'}`}
+                    className={`flex items-start gap-4 ${message.role === 'assistant' ? '' : 'flex-row-reverse'}`}
                   >
-                    {message.role === 'assistant' ? (
-                      <Bot className="size-5" />
-                    ) : (
-                      <User className="size-5" />
-                    )}
-                  </div>
-                  <MessageContent
-                    className={`max-w-[80%] px-5 py-3 ${
-                      message.role === 'user' &&
-                      'group-[.is-user]:rounded-2xl group-[.is-user]:bg-primary group-[.is-user]:px-5 group-[.is-user]:py-3 group-[.is-user]:text-primary-foreground'
-                    }`}
-                  >
-                    {message.role === 'assistant' ? (
-                      <>
-                        {attachments.length > 0 && (
-                          <Attachments className="mb-3" variant="inline">
-                            {attachments.map((attachment) => (
-                              <Attachment data={attachment} key={attachment.id}>
-                                <AttachmentPreview />
-                                <AttachmentInfo />
-                              </Attachment>
-                            ))}
-                          </Attachments>
-                        )}
-                        <Reasoning
-                          className="mb-3 w-full"
-                          defaultOpen={false}
-                          isStreaming={isReasoningStreaming}
-                        >
-                          <ReasoningTrigger />
-                          <ReasoningContent>{reasoning}</ReasoningContent>
-                        </Reasoning>
-                        <MessageResponse
-                          caret="block"
-                          className="text-[15px] leading-relaxed"
-                          controls={false}
-                          isAnimating={isTextStreaming}
-                          mode="streaming"
-                          skipHtml
-                        >
-                          {text}
-                        </MessageResponse>
-                      </>
-                    ) : (
-                      <>
-                        {attachments.length > 0 ? (
-                          <Attachments
-                            className={text ? 'mb-2' : undefined}
-                            variant="inline"
+                    <div
+                      className={`flex size-10 shrink-0 items-center justify-center rounded-xl border ${message.role === 'assistant' ? 'border-primary/20 bg-primary/10 text-primary' : 'border-zinc-200 bg-zinc-100 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400'}`}
+                    >
+                      {message.role === 'assistant' ? (
+                        <Bot className="size-5" />
+                      ) : (
+                        <User className="size-5" />
+                      )}
+                    </div>
+                    <MessageContent
+                      className={`max-w-[80%] px-5 py-3 ${
+                        message.role === 'user' &&
+                        'group-[.is-user]:rounded-2xl group-[.is-user]:bg-primary group-[.is-user]:px-5 group-[.is-user]:py-3 group-[.is-user]:text-primary-foreground'
+                      }`}
+                    >
+                      {message.role === 'assistant' ? (
+                        <>
+                          {attachments.length > 0 && (
+                            <Attachments className="mb-3" variant="inline">
+                              {attachments.map((attachment) => (
+                                <Attachment
+                                  data={attachment}
+                                  key={attachment.id}
+                                >
+                                  <AttachmentPreview />
+                                  <AttachmentInfo />
+                                </Attachment>
+                              ))}
+                            </Attachments>
+                          )}
+                          <Reasoning
+                            className="mb-3 w-full"
+                            defaultOpen={false}
+                            isStreaming={isReasoningStreaming}
                           >
-                            {attachments.map((attachment) => (
-                              <Attachment data={attachment} key={attachment.id}>
-                                <AttachmentPreview />
-                                <AttachmentInfo />
-                              </Attachment>
-                            ))}
-                          </Attachments>
-                        ) : null}
-                        {text ? (
-                          <p className="whitespace-pre-wrap text-[15px] leading-relaxed">
+                            <ReasoningTrigger />
+                            <ReasoningContent>{reasoning}</ReasoningContent>
+                          </Reasoning>
+                          <MessageResponse
+                            caret="block"
+                            className="text-[15px] leading-relaxed"
+                            controls={false}
+                            isAnimating={isTextStreaming}
+                            mode="streaming"
+                            skipHtml
+                          >
                             {text}
-                          </p>
-                        ) : null}
-                      </>
-                    )}
-                  </MessageContent>
+                          </MessageResponse>
+                        </>
+                      ) : (
+                        <>
+                          {attachments.length > 0 ? (
+                            <Attachments
+                              className={text ? 'mb-2' : undefined}
+                              variant="inline"
+                            >
+                              {attachments.map((attachment) => (
+                                <Attachment
+                                  data={attachment}
+                                  key={attachment.id}
+                                >
+                                  <AttachmentPreview />
+                                  <AttachmentInfo />
+                                </Attachment>
+                              ))}
+                            </Attachments>
+                          ) : null}
+                          {text ? (
+                            <p className="whitespace-pre-wrap text-[15px] leading-relaxed">
+                              {text}
+                            </p>
+                          ) : null}
+                        </>
+                      )}
+                    </MessageContent>
+                  </div>
+                  {suggestions.length > 0 && onSuggestionSelect ? (
+                    <div className="ml-14 max-w-[calc(100%-3.5rem)]">
+                      <Suggestions className="py-1">
+                        {suggestions.map((suggestion) => (
+                          <Suggestion
+                            disabled={suggestionsDisabled}
+                            key={suggestion}
+                            onClick={onSuggestionSelect}
+                            suggestion={suggestion}
+                          />
+                        ))}
+                      </Suggestions>
+                    </div>
+                  ) : null}
                 </div>
               </Message>
             );
