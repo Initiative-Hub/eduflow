@@ -17,8 +17,8 @@ export function ReviewQuestionRenderer({
   question,
   answer,
 }: ReviewQuestionRendererProps) {
-  // Handle timed-challenge by rendering its inner question
-  if (question.type === 'timed-challenge') {
+  // Handle timed_challenge by rendering its inner question
+  if (question.type === 'timed_challenge') {
     return (
       <ReviewQuestionRenderer
         question={question.innerQuestion}

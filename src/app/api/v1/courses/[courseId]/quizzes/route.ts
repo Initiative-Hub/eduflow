@@ -9,9 +9,7 @@ import { QuizService } from '@/services/QuizService';
 // ─── Validation Schemas ──────────────────────────────────────────────────────
 
 const createQuizSchema = z.object({
-  // Accept either a single `lessonId` (legacy) or `lessonIds` array
-  lessonId: z.string().optional(),
-  lessonIds: z.array(z.string()).optional(),
+  lessonIds: z.array(z.string()).min(1, 'At least one lesson is required'),
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
   category: z.enum(['SELECTION_BASED', 'OPEN_ENDED']),
@@ -74,15 +72,16 @@ export const GET = withAuth(async (_req, _sessionData, { params }) => {
     // For quizzes with empty questions, populate from the question bank
     const populatedQuizzes = await Promise.all(
       quizzes.map(async (quiz) => {
+        const { lessons, ...quizData } = quiz;
         const questions = quiz.questions as unknown[];
-        const lessonIds = quiz.lessons.map((lesson) => lesson.id);
+        const lessonIds = lessons.map((lesson) => lesson.id);
 
         if (questions && Array.isArray(questions) && questions.length > 0) {
-          return { ...quiz, lessonIds };
+          return { ...quizData, lessonIds };
         }
 
         if (quiz.selectionMethod === 'MANUAL_CREATE') {
-          return { ...quiz, lessonIds };
+          return { ...quizData, lessonIds };
         }
 
         // Fetch matching questions from the bank
@@ -95,7 +94,7 @@ export const GET = withAuth(async (_req, _sessionData, { params }) => {
           orderBy: { createdAt: 'desc' },
         });
 
-        if (bankQuestions.length === 0) return { ...quiz, lessonIds };
+        if (bankQuestions.length === 0) return { ...quizData, lessonIds };
 
         // Select questions based on method
         let selectedQuestions = bankQuestions;
@@ -125,7 +124,7 @@ export const GET = withAuth(async (_req, _sessionData, { params }) => {
           });
         }
 
-        return { ...quiz, lessonIds, questions: resolvedQuestions };
+        return { ...quizData, lessonIds, questions: resolvedQuestions };
       })
     );
 
@@ -153,10 +152,12 @@ export const GET = withAuth(async (_req, _sessionData, { params }) => {
  *         application/json:
  *           schema:
  *             type: object
- *             required: [lessonId, title, category, subType, deliveryMode, selectionMethod, questionCount]
+ *             required: [lessonIds, title, category, subType, deliveryMode, selectionMethod, questionCount]
  *             properties:
- *               lessonId:
- *                 type: string
+ *               lessonIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
  *               title:
  *                 type: string
  *               description:
@@ -211,6 +212,7 @@ export const POST = withAuth(async (req, _sessionData, { params }) => {
     }
 
     const {
+      lessonIds,
       title,
       description,
       category,
@@ -221,18 +223,6 @@ export const POST = withAuth(async (req, _sessionData, { params }) => {
       questions,
       selectedQuestionIds,
     } = parsed.data;
-
-    const lessonIds =
-      parsed.data.lessonIds ??
-      (parsed.data.lessonId ? [parsed.data.lessonId] : []);
-
-    if (!lessonIds || lessonIds.length === 0) {
-      return errorResponse(
-        'VALIDATION_ERROR',
-        'At least one lessonId is required',
-        400
-      );
-    }
 
     const quiz = await QuizService.createForCourse(
       courseId,

@@ -144,7 +144,7 @@ const arbDragAndDrop: fc.Arbitrary<DragAndDropQuestion> = fc
           correctMapping[zone.id] = r.items[i % r.items.length].id;
         });
         return {
-          type: 'drag-and-drop' as const,
+          type: 'drag_and_drop' as const,
           ...r,
           correctMapping,
         };
@@ -168,7 +168,7 @@ const arbEssay: fc.Arbitrary<EssayQuestion> = fc
   })
   .map((r) => ({ type: 'essay' as const, ...r }));
 
-// For timed-challenge, use a non-timed inner question to avoid recursion
+// For timed_challenge, use a non-timed inner question to avoid recursion
 const arbInnerQuestion: fc.Arbitrary<
   Exclude<QuestionBlock, TimedChallengeQuestion>
 > = fc.oneof(
@@ -190,7 +190,7 @@ const arbTimedChallenge: fc.Arbitrary<TimedChallengeQuestion> =
         explanation: fc.option(arbNonEmptyString, { nil: undefined }),
       })
       .map((r) => ({
-        type: 'timed-challenge' as const,
+        type: 'timed_challenge' as const,
         innerQuestion: inner,
         ...r,
       }))
@@ -310,10 +310,10 @@ describe('Property 2: Registry returns valid handler for all registered type str
     );
   });
 
-  it('getHandler resolves snake_case aliases to registered hyphenated types', () => {
+  it('getHandler resolves canonical snake_case types', () => {
     const handler = getHandler('multiple_choice');
 
-    expect(handler.type).toBe('multiple-choice');
+    expect(handler.type).toBe('multiple_choice');
   });
 });
 
@@ -498,11 +498,11 @@ describe('Property 4: Quiz reducer produces valid state for any state + action p
 
   const arbAnswer: fc.Arbitrary<StudentAnswer> = fc.oneof(
     fc.record({
-      type: fc.constant('multiple-choice' as const),
+      type: fc.constant('multiple_choice' as const),
       selectedOptionId: fc.uuid(),
     }),
     fc.record({
-      type: fc.constant('true-false' as const),
+      type: fc.constant('true_false' as const),
       selectedAnswer: fc.boolean(),
     }),
     fc.record({ type: fc.constant('essay' as const), text: arbNonEmptyString })
@@ -632,7 +632,7 @@ describe('Property 5: Scoring engine produces bounded results for any questions 
           const answers: StudentAnswers = new Map();
           if (correctOption) {
             answers.set(0, {
-              type: 'multiple-choice',
+              type: 'multiple_choice',
               selectedOptionId: correctOption.id,
             });
           }

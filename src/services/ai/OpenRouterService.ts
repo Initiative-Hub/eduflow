@@ -6,7 +6,7 @@ import {
   streamObject,
   streamText,
 } from 'ai';
-import { z } from 'zod';
+import type { z } from 'zod';
 import { pdfToMarkdown } from '@/lib/pdf';
 import { aiCourseGenerationSchema } from '@/lib/validations/course.schema';
 import {
@@ -129,43 +129,6 @@ export class OpenRouterService implements ChatProviderService {
     await emit({ type: 'done' });
   }
 
-  // Legacy method kept for ChatProviderService interface compatibility
-  async streamCourse(options: StreamCourseInput) {
-    let pdfBuffer: Buffer;
-    if (options.fileId) {
-      const payload = await StorageService.getDownloadPayload({
-        userId: options.userId,
-        fileId: options.fileId,
-      });
-      pdfBuffer = Buffer.from(payload.bytes);
-    } else if (options.file) {
-      pdfBuffer = Buffer.from(await options.file.arrayBuffer());
-    } else {
-      throw new Error('Missing file or fileId');
-    }
-    const markdownContent = await pdfToMarkdown(pdfBuffer);
-    const searchQuery = options.context
-      ? `${options.context} ${markdownContent.slice(0, 150)}`
-      : markdownContent.slice(0, 200);
-    const webContext = await WebSearchService.search(
-      searchQuery.trim(),
-      5,
-      true
-    );
-    const apiKey = options.apiKey ?? process.env.OPENROUTER_API_KEY;
-    if (!apiKey)
-      throw new Error(`Missing API key for provider "${PROVIDER_NAME}"`);
-    const model = options.model ?? DEFAULT_MODELS.openrouter;
-    const provider = createOpenRouter({ apiKey });
-    return streamObject({
-      model: provider(model),
-      schema: aiCourseGenerationSchema,
-      system: COURSE_GENERATION_PROMPT,
-      prompt: `Content to analyze and transform into a course:\n\n${markdownContent}${options.context ? `\n\n=== ADDITIONAL CONTEXT FROM INSTRUCTOR ===\n${options.context}` : ''}\n\n=== SUPPLEMENTARY WEB CONTEXT ===\n${webContext}`,
-      onFinish: options.onFinish,
-    });
-  }
-
   // Create quiz based on quiz type
   async createQuiz(options: AIQuizInput) {
     const apiKey = options.apiKey ?? process.env.OPENROUTER_API_KEY;
@@ -182,19 +145,19 @@ export class OpenRouterService implements ChatProviderService {
     // so we strip it from the schema sent to the model and inject the correct value ourselves
     // after generation.
     const aiQuestionSchemaMap: Record<string, z.ZodTypeAny> = {
-      'multiple-choice': multipleChoiceQuestionSchema.omit({ type: true }),
-      'true-false': trueFalseQuestionSchema.omit({ type: true }),
-      'fill-in-the-blank': fillInTheBlankQuestionSchema.omit({ type: true }),
+      multiple_choice: multipleChoiceQuestionSchema.omit({ type: true }),
+      true_false: trueFalseQuestionSchema.omit({ type: true }),
+      fill_in_the_blank: fillInTheBlankQuestionSchema.omit({ type: true }),
       matching: matchingQuestionSchema.omit({ type: true }),
       ordering: orderingQuestionSchema.omit({ type: true }),
-      'drag-and-drop': dragAndDropQuestionSchema.omit({ type: true }),
+      drag_and_drop: dragAndDropQuestionSchema.omit({ type: true }),
       essay: essayQuestionSchema.omit({ type: true }),
-      'timed-challenge': timedChallengeQuestionSchema.omit({ type: true }),
+      timed_challenge: timedChallengeQuestionSchema.omit({ type: true }),
     };
 
     const aiQuestionSchema =
       aiQuestionSchemaMap[normalizedType] ??
-      aiQuestionSchemaMap['multiple-choice'];
+      aiQuestionSchemaMap.multiple_choice;
 
     const aiSchema = createQuizSchema(aiQuestionSchema);
 

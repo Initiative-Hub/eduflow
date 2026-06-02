@@ -117,44 +117,4 @@ export class AIGatewayService implements ChatProviderService {
     await aiStream.object;
     await emit({ type: 'done' });
   }
-
-  // Legacy method kept for ChatProviderService interface compatibility
-  async streamCourse(options: StreamCourseInput) {
-    let pdfBuffer: Buffer;
-    if (options.fileId) {
-      const payload = await StorageService.getDownloadPayload({
-        userId: options.userId,
-        fileId: options.fileId,
-      });
-      pdfBuffer = Buffer.from(payload.bytes);
-    } else if (options.file) {
-      pdfBuffer = Buffer.from(await options.file.arrayBuffer());
-    } else {
-      throw new Error('Missing file or fileId');
-    }
-    const markdownContent = await pdfToMarkdown(pdfBuffer);
-    const searchQuery = options.context
-      ? `${options.context} ${markdownContent.slice(0, 150)}`
-      : markdownContent.slice(0, 200);
-    const webContext = await WebSearchService.search(
-      searchQuery.trim(),
-      5,
-      true
-    );
-    const apiKey = options.apiKey ?? process.env.AI_GATEWAY_API_KEY;
-    if (!apiKey)
-      throw new Error(`Missing API key for provider "${PROVIDER_NAME}"`);
-
-    const model = options.model ?? DEFAULT_MODELS['ai-gateway'];
-    const provider = createGateway({ apiKey });
-
-    return streamObject({
-      model: provider(model),
-      schema: aiCourseGenerationSchema,
-      system: COURSE_GENERATION_PROMPT,
-      prompt: `Content to analyze and transform into a course:\n\n${markdownContent}${options.context ? `\n\n=== ADDITIONAL CONTEXT FROM INSTRUCTOR ===\n${options.context}` : ''}\n\n=== SUPPLEMENTARY WEB CONTEXT ===\n${webContext}`,
-      headers: { Authorization: `Bearer ${apiKey}` },
-      onFinish: options.onFinish,
-    });
-  }
 }

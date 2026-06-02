@@ -69,7 +69,7 @@ export function QuizQuestionsEditor({
     if (confirm(t('confirmDelete'))) {
       const updated = questions.filter((_, idx) => idx !== index);
       setQuestions(updated);
-      toast.success(t('deleteQuestion') + ' successful');
+      toast.success(`${t('deleteQuestion')} successful`);
     }
   };
 
@@ -149,7 +149,7 @@ export function QuizQuestionsEditor({
             Ordering
           </Badge>
         );
-      case 'drag-and-drop':
+      case 'drag_and_drop':
         return (
           <Badge className="border-none bg-teal-500 text-white hover:bg-teal-600">
             Drag & Drop
@@ -161,7 +161,7 @@ export function QuizQuestionsEditor({
             Essay
           </Badge>
         );
-      case 'timed-challenge':
+      case 'timed_challenge':
         return (
           <Badge className="border-none bg-rose-500 text-white hover:bg-rose-600">
             Timed Challenge
@@ -244,7 +244,7 @@ export function QuizQuestionsEditor({
       </div>
 
       {/* Questions list */}
-      <div className="relative min-h-[200px] space-y-4">
+      <div className="relative min-h-50 space-y-4">
         {isGeneratingAI && (
           <div className="absolute inset-0 z-50 flex flex-col items-center justify-center rounded-xl border border-dashed bg-background/70 p-10 text-center backdrop-blur-[1px]">
             <Loader2 className="mb-2 h-8 w-8 animate-spin text-primary" />
@@ -288,7 +288,7 @@ export function QuizQuestionsEditor({
                 <div className="min-w-0 flex-1 space-y-1.5">
                   <div className="flex flex-wrap items-center gap-2">
                     {getTypeBadge(q.type)}
-                    {q.type === 'timed-challenge' && (
+                    {q.type === 'timed_challenge' && (
                       <Badge variant="outline" className="text-xs">
                         {q.timeLimitSeconds}s Limit
                       </Badge>
