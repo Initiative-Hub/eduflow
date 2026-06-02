@@ -1,4 +1,5 @@
-import { checkLessonPermission } from '@/lib/permissions/lesson-permission';
+import { getCoursePermissions } from '@/lib/permissions/course-permission';
+import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
 import { prisma } from '@/lib/prisma';
 
 export class LessonService {
@@ -20,14 +21,34 @@ export class LessonService {
   }
 
   static async getLessonById(lessonId: string, userId: string) {
-    const { lesson, hasEditPermission, hasViewPermission } =
-      await checkLessonPermission(lessonId, userId);
+    const lesson = await prisma.lesson.findUnique({
+      where: { id: lessonId },
+      include: {
+        module: {
+          select: {
+            courseId: true,
+          },
+        },
+      },
+    });
 
-    if (!hasViewPermission) {
-      throw new Error('Unauthorized: Missing view permission');
+    if (!lesson) {
+      throw new Error('Lesson not found');
     }
 
-    return { ...lesson, canEdit: hasEditPermission };
+    const { containPermission } = await getCoursePermissions(
+      userId,
+      lesson.module.courseId
+    );
+
+    if (!containPermission(COURSE_PERMISSION.COURSE_CONTENT_VIEW)) {
+      throw new Error('Unauthorized: Missing COURSE_CONTENT_VIEW permission');
+    }
+
+    return {
+      ...lesson,
+      canEdit: containPermission(COURSE_PERMISSION.COURSE_CONTENT_UPDATE),
+    };
   }
 
   static async updateLesson(
@@ -35,10 +56,28 @@ export class LessonService {
     userId: string,
     data: { title?: string; content?: Record<string, unknown> | string | null }
   ) {
-    const { hasEditPermission } = await checkLessonPermission(lessonId, userId);
+    const lesson = await prisma.lesson.findUnique({
+      where: { id: lessonId },
+      include: {
+        module: {
+          select: {
+            courseId: true,
+          },
+        },
+      },
+    });
 
-    if (!hasEditPermission) {
-      throw new Error('Unauthorized: Missing EDIT_CONTENT permission');
+    if (!lesson) {
+      throw new Error('Lesson not found');
+    }
+
+    const { containPermission } = await getCoursePermissions(
+      userId,
+      lesson.module.courseId
+    );
+
+    if (!containPermission(COURSE_PERMISSION.COURSE_CONTENT_UPDATE)) {
+      throw new Error('Unauthorized: Missing COURSE_CONTENT_UPDATE permission');
     }
 
     return await prisma.lesson.update({
