@@ -77,12 +77,12 @@ export function SocraticDisciplineSelector({
                     }
                   }}
                 >
-                  <div className="flex h-full flex-col">
+                  <div className="flex h-full flex-col gap-4">
                     <div className="flex size-12 items-center justify-center rounded-2xl border border-primary/10 bg-primary/10 text-primary">
                       <Icon className="size-5" />
                     </div>
-                    <div className="mt-8 space-y-3">
-                      <h2 className="font-bold text-[1.35rem] text-foreground leading-tight tracking-tight">
+                    <div className="space-y-2">
+                      <h2 className="font-bold text-foreground text-xl leading-tight tracking-tight">
                         {t(`disciplines.${discipline}.title`)}
                       </h2>
                       <p className="text-muted-foreground text-sm leading-6">
