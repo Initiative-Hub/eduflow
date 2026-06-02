@@ -7,32 +7,23 @@ import { calculateScore } from '@/lib/quiz-template/scoring';
 import type {
   QuestionBlock,
   QuizSchema,
-  StudentAnswer,
   StudentAnswers,
 } from '@/lib/quiz-template/types';
 
 // ─── Request Validation Schemas ──────────────────────────────────────────────
 
-const normalizeAnswerType = (value: unknown) => {
-  if (typeof value !== 'string') {
-    return value;
-  }
-
-  return value.toLowerCase().replace(/_/g, '-');
-};
-
 const multipleChoiceAnswerSchema = z.object({
-  type: z.preprocess(normalizeAnswerType, z.literal('multiple-choice')),
+  type: z.literal('multiple_choice'),
   selectedOptionId: z.string(),
 });
 
 const trueFalseAnswerSchema = z.object({
-  type: z.preprocess(normalizeAnswerType, z.literal('true-false')),
+  type: z.literal('true_false'),
   selectedAnswer: z.boolean(),
 });
 
 const fillInTheBlankAnswerSchema = z.object({
-  type: z.preprocess(normalizeAnswerType, z.literal('fill-in-the-blank')),
+  type: z.literal('fill_in_the_blank'),
   filledBlanks: z.record(z.string(), z.string()),
 });
 
@@ -42,29 +33,29 @@ const matchingPairSchema = z.object({
 });
 
 const matchingAnswerSchema = z.object({
-  type: z.preprocess(normalizeAnswerType, z.literal('matching')),
+  type: z.literal('matching'),
   pairs: z.array(matchingPairSchema),
 });
 
 const orderingAnswerSchema = z.object({
-  type: z.preprocess(normalizeAnswerType, z.literal('ordering')),
+  type: z.literal('ordering'),
   orderedItemIds: z.array(z.string()),
 });
 
 const dragAndDropAnswerSchema = z.object({
-  type: z.preprocess(normalizeAnswerType, z.literal('drag-and-drop')),
+  type: z.literal('drag_and_drop'),
   placements: z.record(z.string(), z.string()),
 });
 
 const essayAnswerSchema = z.object({
-  type: z.preprocess(normalizeAnswerType, z.literal('essay')),
+  type: z.literal('essay'),
   text: z.string(),
   attachments: z.array(z.string()).optional(),
   teacherRubricText: z.string().optional(),
   teacherRubricAttachments: z.array(z.string()).optional(),
 });
 
-const studentAnswerSchema = z.union([
+const studentAnswerSchema = z.discriminatedUnion('type', [
   multipleChoiceAnswerSchema,
   trueFalseAnswerSchema,
   fillInTheBlankAnswerSchema,
@@ -193,7 +184,7 @@ const handler: AuthHandler = async (req, sessionData) => {
     for (const [indexStr, answer] of Object.entries(answers)) {
       const index = Number.parseInt(indexStr, 10);
       if (!Number.isNaN(index)) {
-        studentAnswers.set(index, answer as StudentAnswer);
+        studentAnswers.set(index, answer);
       }
     }
 

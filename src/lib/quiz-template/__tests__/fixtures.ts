@@ -332,7 +332,7 @@ export const MOCK_QUESTIONS: QuestionBankEntry[] = [
     subType: 'DRAG_AND_DROP',
     prompt: 'Complete the sentence about Mendelian genetics:',
     answerData: {
-      type: 'drag-and-drop',
+      type: 'drag_and_drop',
       prompt: 'Complete the sentence about Mendelian genetics:',
       sentenceTemplate:
         'A {{trait1}} allele masks the expression of a {{trait2}} allele. When both alleles are the same, the organism is {{zygosity}}.',
@@ -518,7 +518,7 @@ export const MOCK_QUESTIONS: QuestionBankEntry[] = [
     subType: 'DRAG_AND_DROP',
     prompt: 'Complete the sentence about energy flow in ecosystems:',
     answerData: {
-      type: 'drag-and-drop',
+      type: 'drag_and_drop',
       prompt: 'Complete the sentence about energy flow in ecosystems:',
       sentenceTemplate:
         '{{producers}} convert sunlight into chemical energy. {{consumers}} obtain energy by eating other organisms. {{decomposers}} break down dead matter.',
