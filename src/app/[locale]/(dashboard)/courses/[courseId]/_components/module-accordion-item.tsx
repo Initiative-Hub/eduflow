@@ -118,19 +118,7 @@ export function ModuleAccordionItem({
     const moduleLessonIds = new Set(moduleItem.lessons.map((l) => l.id));
 
     return quizzes.filter((quiz) => {
-      const q = quiz as QuizDefinition & {
-        lessonId?: string;
-        lessons?: Array<{ id: string }>;
-      };
-
-      const linkedLessonIds =
-        q.lessonIds && q.lessonIds.length > 0
-          ? q.lessonIds
-          : q.lessons && q.lessons.length > 0
-            ? q.lessons.map((lesson) => lesson.id)
-            : q.lessonId
-              ? [q.lessonId]
-              : [];
+      const linkedLessonIds = quiz.lessonIds;
 
       return linkedLessonIds.some((lessonId) => moduleLessonIds.has(lessonId));
     });

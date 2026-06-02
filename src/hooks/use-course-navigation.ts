@@ -19,9 +19,7 @@ interface ModuleWithLessons {
 interface QuizWithLesson {
   id: string;
   title: string;
-  // Backwards-compatible: either a single `lessonId` or multiple `lessonIds`
-  lessonId?: string;
-  lessonIds?: string[];
+  lessonIds: string[];
 }
 
 // ─── Hook ────────────────────────────────────────────────────────────────────
@@ -57,10 +55,7 @@ export function useCourseNavigation(
         });
         // Add quizzes for this lesson right after the lesson
         const lessonQuizzes = quizzes.filter((q) => {
-          if (q.lessonIds && q.lessonIds.length > 0)
-            return q.lessonIds.includes(lesson.id);
-          if (q.lessonId) return q.lessonId === lesson.id;
-          return false;
+          return q.lessonIds.includes(lesson.id);
         });
         for (const lq of lessonQuizzes) {
           allItems.push({
