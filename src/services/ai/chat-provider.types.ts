@@ -1,6 +1,5 @@
 import type { ProviderOptions } from '@ai-sdk/provider-utils';
-import type { StreamObjectOnFinishCallback, UIMessage } from 'ai';
-
+import type { UIMessage } from 'ai';
 import type { AICourseGeneration } from '@/lib/validations/course.schema';
 
 export type ChatProvider = 'ai-gateway' | 'google' | 'openrouter';
@@ -27,7 +26,9 @@ export type StreamCourseInput = {
   apiKey?: string;
   context?: string;
   providerOptions?: any;
-  onFinish?: StreamObjectOnFinishCallback<AICourseGeneration>;
+  onFinish?: (event: {
+    object: AICourseGeneration;
+  }) => PromiseLike<void> | void;
 };
 
 export type AIQuizInput = {

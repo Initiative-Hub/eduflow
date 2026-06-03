@@ -1270,7 +1270,7 @@
     "limitReachedToast": "Bạn đã đạt giới hạn {count} tin nhắn Socratic. Hãy bắt đầu phiên mới để tiếp tục.",
     "recentSessions": {
       "description": "Quay lại các câu hỏi gợi mở và mạch suy luận trước đây.",
-      "empty": "Chưa có phiên Socratic. Hãy chọn một lĩnh vực và hỏi phần bạn đang mắc.",
+      "empty": "Chưa có phiên Socratic. Hãy chọn một thẻ gợi ý hoặc hỏi phần bạn đang mắc.",
       "error": "Hiện không thể tải các phiên Socratic gần đây.",
       "openChat": "Mở phiên Socratic {title}",
       "title": "Phiên Socratic gần đây",
@@ -1305,7 +1305,7 @@
       "title": "Lịch sử Socratic",
       "untitled": "Phiên Socratic chưa đặt tên"
     },
-    "subtitle": "Hãy chọn một lĩnh vực để bắt đầu đối thoại <mark>Socratic</mark>. Tôi sẽ không đưa đáp án; tôi sẽ đặt những câu hỏi giúp bạn tự tìm ra chúng.",
+    "subtitle": "Hãy chọn một gợi ý bắt đầu hoặc hỏi trực tiếp để mở đối thoại <mark>Socratic</mark>. Tôi sẽ không đưa đáp án; tôi sẽ đặt những câu hỏi giúp bạn tự tìm ra chúng.",
     "title": "Hôm nay tôi có thể <accent>gợi mở</accent> tư duy của bạn như thế nào?"
   },
   "StudyPage": {

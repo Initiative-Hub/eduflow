@@ -7,7 +7,6 @@ import { useEffect, useMemo, useRef } from 'react';
 import { toast } from 'sonner';
 import type { SocraticUIMessage } from '@/app/api/v1/ai/socratic/[chatId]/socratic.constants';
 import { usePathname, useRouter } from '@/i18n/navigation';
-import type { SocraticDiscipline } from '@/lib/validations/socratic.schema';
 import type { ChatModel } from '@/services/ai/chat-models';
 import { useChatSessionStore } from '@/stores/useChatSessionStore';
 import { hasReachedUserMessageLimit } from '@/utils/chat-limit';
@@ -16,7 +15,6 @@ import { socraticService } from './socratic.service';
 const MAX_USER_MESSAGES = 5;
 
 interface UseSocraticOptions {
-  discipline: SocraticDiscipline;
   chatId?: string;
   initialMessages?: SocraticUIMessage[];
   selectedModel: ChatModel;
@@ -24,7 +22,6 @@ interface UseSocraticOptions {
 }
 
 export const useSocratic = ({
-  discipline,
   chatId,
   initialMessages = [],
   selectedModel,
@@ -76,7 +73,7 @@ export const useSocratic = ({
 
   const createSessionMutation = useMutation({
     mutationFn: async (text: string) => {
-      const data = await socraticService.createChat(text, discipline);
+      const data = await socraticService.createChat(text);
       return data.chatId;
     },
   });
@@ -112,7 +109,6 @@ export const useSocratic = ({
       { text: pendingMessage },
       {
         body: {
-          discipline,
           provider: 'openrouter',
           model: inputModel,
         },
@@ -125,7 +121,6 @@ export const useSocratic = ({
     chatId,
     pathname,
     selectedModel,
-    discipline,
     sendMessage,
     clearPendingMessage,
     clearPendingChatId,
@@ -182,7 +177,6 @@ export const useSocratic = ({
       { text },
       {
         body: {
-          discipline,
           provider: 'openrouter',
           model: selectedModel,
         },

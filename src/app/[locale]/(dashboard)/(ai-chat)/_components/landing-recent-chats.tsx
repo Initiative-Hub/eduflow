@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Link } from '@/i18n/navigation';
 import { chatService } from '../chat.service';
 
-const RECENT_CHAT_LIMIT = 5;
+const RECENT_CHAT_LIMIT = 3;
 
 export function LandingRecentChats() {
   const t = useTranslations('AIChat.recentChats');
