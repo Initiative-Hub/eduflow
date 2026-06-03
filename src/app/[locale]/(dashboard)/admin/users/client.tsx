@@ -1,477 +1,532 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { Edit2, MoreVertical, Plus, Search, UserRound } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
+import {
+  Field,
+  FieldContent,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-
-type User = {
-  id: string;
-  email: string;
-  name?: string;
-  role?: string;
-};
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { useUsers } from './use-users';
 
 export default function AdminUsersClient() {
-  const [mounted, setMounted] = useState(false);
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [query, setQuery] = useState('');
-  const [roleFilter, setRoleFilter] = useState('ALL');
-  const [statusFilter, setStatusFilter] = useState('ALL');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(20);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<{
-    name?: string;
-    email?: string;
-    role?: string;
-  }>({});
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [newUserForm, setNewUserForm] = useState<{
-    email: string;
-    password: string;
-    name: string;
-    role: string;
-  }>({ email: '', password: '', name: '', role: 'USER' });
-  const [addingUser, setAddingUser] = useState(false);
-  const [addError, setAddError] = useState('');
-
-  const fetchUsers = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch('/api/admin/users');
-      const data = await res.json();
-      setUsers(data);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    setMounted(true);
-    fetchUsers();
-  }, [fetchUsers]);
-
-  const filtered = users.filter((u) => {
-    if (roleFilter !== 'ALL' && u.role !== roleFilter) return false;
-    if (!query) return true;
-    const q = query.toLowerCase();
-    return (
-      (u.name || '').toLowerCase().includes(q) ||
-      u.email.toLowerCase().includes(q)
-    );
-  });
-
-  const totalPages = Math.ceil(filtered.length / itemsPerPage);
-  const paginatedUsers = filtered.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  const startEdit = (u: User) => {
-    setEditingId(u.id);
-    setEditForm({ name: u.name, email: u.email, role: u.role });
-  };
-
-  const saveEdit = async () => {
-    if (!editingId) return;
-    try {
-      const res = await fetch('/api/admin/users', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: editingId, ...editForm }),
-      });
-      if (res.ok) {
-        await fetchUsers();
-        setEditingId(null);
-      } else {
-        alert('Update failed');
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  const handleAddUser = async () => {
-    setAddError('');
-    if (!newUserForm.email || !newUserForm.password) {
-      setAddError('Email and password are required');
-      return;
-    }
-
-    setAddingUser(true);
-    try {
-      const res = await fetch('/api/admin/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: newUserForm.email,
-          password: newUserForm.password,
-          name: newUserForm.name || undefined,
-          role: newUserForm.role,
-        }),
-      });
-
-      const data = await res.json();
-      if (res.ok) {
-        await fetchUsers();
-        setShowAddModal(false);
-        setNewUserForm({ email: '', password: '', name: '', role: 'USER' });
-      } else {
-        setAddError(data.message || 'Failed to create user');
-      }
-    } catch (e) {
-      console.error(e);
-      setAddError('An error occurred while creating the user');
-    } finally {
-      setAddingUser(false);
-    }
-  };
-
-  const handleItemsPerPageChange = (value: string) => {
-    setItemsPerPage(parseInt(value, 10));
-    setCurrentPage(1);
-  };
-
-  const getInitials = (name?: string, email?: string): string => {
-    const displayName = name || email || '';
-    return displayName
-      .split(' ')
-      .map((s) => s[0])
-      .slice(0, 2)
-      .join('')
-      .toUpperCase();
-  };
-
-  const getRoleBadgeColor = (role?: string): string => {
-    switch (role) {
-      case 'ADMIN':
-        return 'bg-muted text-foreground';
-      case 'TEACHER':
-        return 'bg-primary/10 text-primary';
-      case 'STUDENT':
-        return 'bg-accent text-accent-foreground';
-      default:
-        return 'bg-muted text-foreground';
-    }
-  };
-
-  if (!mounted) return <p>Loading...</p>;
+  const {
+    t,
+    roleOptions,
+    pageSizeOptions,
+    query,
+    roleFilter,
+    itemsPerPage,
+    editingId,
+    editForm,
+    addDialogOpen,
+    newUserForm,
+    addError,
+    isLoading,
+    isError,
+    isCreating,
+    isUpdating,
+    filteredUsers,
+    paginatedUsers,
+    totalPages,
+    safeCurrentPage,
+    visibleStart,
+    visibleEnd,
+    getInitials,
+    getRoleBadge,
+    getStatusBadge,
+    getJoinDate,
+    openAddDialog,
+    handleAddDialogOpenChange,
+    handleQueryChange,
+    handleRoleFilterChange,
+    handleItemsPerPageChange,
+    handlePreviousPage,
+    handleNextPage,
+    updateNewUserForm,
+    updateEditForm,
+    startEdit,
+    cancelEdit,
+    saveEdit,
+    createUser,
+  } = useUsers();
 
   return (
-    <div className="rounded-lg border border-border bg-card text-card-foreground shadow">
-      <div className="border-border border-b p-6">
-        <h1 className="mb-1 font-bold text-2xl">User Management</h1>
-        <p className="text-muted-foreground text-sm">
-          View and manage all registered platform users
-        </p>
-      </div>
-
-      <div className="space-y-4 p-6">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex flex-1 items-center gap-2">
-            <Input
-              type="text"
-              placeholder="Search users by name, email, or ID..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="flex-1"
-            />
+    <>
+      <Card className="border-border/70 bg-card/90 p-0 shadow-sm">
+        <CardHeader className="flex flex-col gap-4 border-border/60 border-b px-6 py-5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="space-y-1">
+            <CardTitle className="font-heading text-xl">{t('title')}</CardTitle>
+            <CardDescription>{t('description')}</CardDescription>
           </div>
-          <Button onClick={() => setShowAddModal(true)}>+ Add New User</Button>
-        </div>
-        <div className="flex items-center gap-2">
-          <select
-            value={roleFilter}
-            aria-label="Items per page"
-            onChange={(e) => setRoleFilter(e.target.value)}
-            className="rounded-md border border-input bg-background px-3 py-2 text-foreground text-sm"
-          >
-            <option value="ALL">All Roles</option>
-            <option value="ADMIN">Admin</option>
-            <option value="TEACHER">Teacher</option>
-            <option value="STUDENT">Student</option>
-            <option value="USER">User</option>
-          </select>
-          <select
-            value={statusFilter}
-            aria-label="Status filter"
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="rounded-md border border-input bg-background px-3 py-2 text-foreground text-sm"
-          >
-            <option value="ALL">All Status</option>
-            <option value="ACTIVE">Active</option>
-            <option value="INACTIVE">Inactive</option>
-          </select>
-        </div>
-      </div>
+          <Button onClick={openAddDialog}>
+            <Plus data-icon="inline-start" />
+            {t('actions.addUser')}
+          </Button>
+        </CardHeader>
 
-      <div className="overflow-x-auto p-5">
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <p className="text-muted-foreground">Loading users...</p>
+        <CardContent className="flex flex-col gap-5 p-6">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="relative w-full lg:max-w-md">
+              <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="search"
+                value={query}
+                onChange={(event) => handleQueryChange(event.target.value)}
+                placeholder={t('searchPlaceholder')}
+                className="pl-9"
+              />
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Select value={roleFilter} onValueChange={handleRoleFilterChange}>
+                <SelectTrigger aria-label={t('filters.role')}>
+                  <SelectValue placeholder={t('filters.role')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="ALL">{t('roles.all')}</SelectItem>
+                    {roleOptions.map((role) => (
+                      <SelectItem key={role} value={role}>
+                        {t(`roles.${role.toLowerCase()}`)}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+              <Select
+                value={itemsPerPage.toString()}
+                onValueChange={handleItemsPerPageChange}
+              >
+                <SelectTrigger aria-label={t('pagination.itemsPerPage')}>
+                  <SelectValue placeholder={t('pagination.itemsPerPage')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {pageSizeOptions.map((value) => (
+                      <SelectItem key={value} value={value}>
+                        {t('pagination.perPage', { count: Number(value) })}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-        ) : (
-          <table className="w-full">
-            <thead className="bg-muted/40">
-              <tr>
-                <th className="px-6 py-3 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider">
-                  USER
-                </th>
-                <th className="px-6 py-3 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider">
-                  ROLE
-                </th>
-                <th className="px-6 py-3 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider">
-                  STATUS
-                </th>
-                <th className="px-6 py-3 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider">
-                  JOIN DATE
-                </th>
-                <th className="px-6 py-3 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider">
-                  ACTIONS
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {paginatedUsers.map((u) => (
-                <tr key={u.id} className="hover:bg-muted/40">
-                  <td className="flex items-center gap-3 px-6 py-4">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary font-semibold text-primary-foreground text-sm">
-                      {getInitials(u.name, u.email)}
-                    </div>
-                    <div>
-                      {editingId === u.id ? (
-                        <Input
-                          value={editForm.name || ''}
-                          onChange={(e) =>
-                            setEditForm({ ...editForm, name: e.target.value })
-                          }
-                          className="h-8"
-                        />
-                      ) : (
-                        <div className="font-medium text-foreground">
-                          {u.name || '—'}
-                        </div>
-                      )}
-                      <div className="text-muted-foreground text-sm">
-                        {u.email}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    {editingId === u.id ? (
-                      <select
-                        value={editForm.role || ''}
-                        aria-label="Items per page"
-                        onChange={(e) =>
-                          setEditForm({ ...editForm, role: e.target.value })
-                        }
-                        className="h-8 rounded border border-input bg-background px-2 py-1 text-foreground text-sm"
-                      >
-                        <option value="USER">User</option>
-                        <option value="ADMIN">Admin</option>
-                        <option value="TEACHER">Teacher</option>
-                        <option value="STUDENT">Student</option>
-                      </select>
-                    ) : (
-                      <span
-                        className={`rounded-full px-3 py-1 font-medium text-xs ${getRoleBadgeColor(u.role)}`}
-                      >
-                        {u.role}
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <span className="h-2 w-2 rounded-full bg-green-500"></span>
-                      <span className="text-muted-foreground text-sm">
-                        Active
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-muted-foreground text-sm">—</td>
-                  <td className="px-6 py-4">
-                    {editingId === u.id ? (
-                      <>
-                        <Button
-                          onClick={saveEdit}
-                          variant="default"
-                          size="sm"
-                          className="mr-2"
-                        >
-                          Save
-                        </Button>
-                        <Button
-                          onClick={() => setEditingId(null)}
-                          variant="outline"
-                          size="sm"
-                        >
-                          Cancel
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-                        <Button
-                          onClick={() => startEdit(u)}
-                          variant="ghost"
-                          size="icon-sm"
-                          className="mr-2"
-                        >
-                          ✏️
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          className="text-destructive"
-                        >
-                          🗑️
-                        </Button>
-                      </>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
 
-      <div className="flex items-center justify-between border-t px-6 py-4">
-        <div className="flex items-center gap-4">
+          {isError ? (
+            <Alert variant="destructive">
+              <AlertTitle>{t('errors.title')}</AlertTitle>
+              <AlertDescription>{t('errors.description')}</AlertDescription>
+            </Alert>
+          ) : isLoading ? (
+            <UsersTableSkeleton />
+          ) : filteredUsers.length === 0 ? (
+            <Empty className="border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <UserRound />
+                </EmptyMedia>
+                <EmptyTitle>{t('empty.title')}</EmptyTitle>
+                <EmptyDescription>{t('empty.description')}</EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : (
+            <div className="overflow-hidden rounded-lg border border-border/60">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/30">
+                    <TableHead>{t('table.user')}</TableHead>
+                    <TableHead>{t('table.role')}</TableHead>
+                    <TableHead>{t('table.status')}</TableHead>
+                    <TableHead>{t('table.joinDate')}</TableHead>
+                    <TableHead className="text-right">
+                      <span className="sr-only">{t('table.actions')}</span>
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {paginatedUsers.map((user) => {
+                    const isEditing = editingId === user.id;
+                    const badge = getRoleBadge(user.role);
+                    const statusBadge = getStatusBadge(user.emailVerified);
+
+                    return (
+                      <TableRow key={user.id}>
+                        <TableCell>
+                          <div className="flex min-w-0 items-center gap-3">
+                            <Avatar size="lg">
+                              <AvatarFallback>
+                                {getInitials(user.name, user.email)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="min-w-0 flex-1">
+                              {isEditing ? (
+                                <Input
+                                  value={editForm.name}
+                                  onChange={(event) =>
+                                    updateEditForm('name', event.target.value)
+                                  }
+                                  aria-label={t('form.name')}
+                                  className="h-8"
+                                />
+                              ) : (
+                                <div className="truncate font-medium">
+                                  {user.name || t('fallback.noName')}
+                                </div>
+                              )}
+                              <div className="truncate text-muted-foreground text-sm">
+                                {user.email}
+                              </div>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {isEditing ? (
+                            <Select
+                              value={editForm.role}
+                              onValueChange={(value) =>
+                                updateEditForm('role', value)
+                              }
+                            >
+                              <SelectTrigger
+                                size="sm"
+                                aria-label={t('form.role')}
+                              >
+                                <SelectValue placeholder={t('form.role')} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectGroup>
+                                  {roleOptions.map((role) => (
+                                    <SelectItem key={role} value={role}>
+                                      {t(`roles.${role.toLowerCase()}`)}
+                                    </SelectItem>
+                                  ))}
+                                </SelectGroup>
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <Badge variant={badge.variant}>{badge.label}</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={statusBadge.variant}>
+                            {statusBadge.label}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {getJoinDate(user.createdAt)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {isEditing ? (
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                size="sm"
+                                onClick={saveEdit}
+                                disabled={isUpdating}
+                              >
+                                {t('actions.save')}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={cancelEdit}
+                                disabled={isUpdating}
+                              >
+                                {t('actions.cancel')}
+                              </Button>
+                            </div>
+                          ) : (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon-sm">
+                                  <MoreVertical />
+                                  <span className="sr-only">
+                                    {t('table.actions')}
+                                  </span>
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-40">
+                                <DropdownMenuGroup>
+                                  <DropdownMenuItem
+                                    onClick={() => startEdit(user)}
+                                    className="cursor-pointer gap-2"
+                                  >
+                                    <Edit2 />
+                                    {t('actions.edit')}
+                                  </DropdownMenuItem>
+                                </DropdownMenuGroup>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+
+        <CardFooter className="flex flex-col gap-3 border-border/60 border-t px-6 py-4 lg:flex-row lg:items-center lg:justify-between">
           <p className="text-muted-foreground text-sm">
-            Showing{' '}
-            {Math.min((currentPage - 1) * itemsPerPage + 1, filtered.length)} to{' '}
-            {Math.min(currentPage * itemsPerPage, filtered.length)} of{' '}
-            {filtered.length} users
+            {t('pagination.range', {
+              start: visibleStart,
+              end: visibleEnd,
+              total: filteredUsers.length,
+            })}
           </p>
-          <select
-            value={itemsPerPage.toString()}
-            onChange={(e) => handleItemsPerPageChange(e.target.value)}
-            aria-label="Items per page"
-            className="rounded-md border border-input bg-background px-3 py-2 text-foreground text-sm"
-          >
-            <option value="4">4 per page</option>
-            <option value="10">10 per page</option>
-            <option value="20">20 per page</option>
-            <option value="50">50 per page</option>
-          </select>
-        </div>
+          {totalPages > 1 && (
+            <Pagination className="mx-0 w-fit">
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    href="#"
+                    text={t('pagination.previous')}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      handlePreviousPage();
+                    }}
+                  />
+                </PaginationItem>
+                <PaginationItem>
+                  <Badge variant="outline" className="h-8 px-3">
+                    {t('pagination.page', {
+                      page: safeCurrentPage,
+                      total: totalPages,
+                    })}
+                  </Badge>
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationNext
+                    href="#"
+                    text={t('pagination.next')}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      handleNextPage();
+                    }}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          )}
+        </CardFooter>
+      </Card>
 
-        <div className="flex gap-2">
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-            <Button
-              key={page}
-              onClick={() => setCurrentPage(page)}
-              variant={currentPage === page ? 'default' : 'outline'}
-              size="sm"
-            >
-              {page}
-            </Button>
-          ))}
-        </div>
-      </div>
+      <Dialog open={addDialogOpen} onOpenChange={handleAddDialogOpenChange}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t('addDialog.title')}</DialogTitle>
+            <DialogDescription>{t('addDialog.description')}</DialogDescription>
+          </DialogHeader>
 
-      {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-96 rounded-lg border border-border bg-popover p-6 text-popover-foreground shadow-lg">
-            <h2 className="mb-4 font-bold text-xl">Add New User</h2>
-
+          <FieldGroup>
             {addError && (
-              <div className="mb-4 rounded bg-destructive/10 p-3 text-destructive">
-                {addError}
-              </div>
+              <Field data-invalid>
+                <FieldError>{addError}</FieldError>
+              </Field>
             )}
-
-            <div className="space-y-4">
-              <div>
-                <label className="mb-1 block font-medium text-sm">Email</label>
+            <Field>
+              <FieldLabel htmlFor="admin-user-email">
+                {t('form.email')}
+              </FieldLabel>
+              <FieldContent>
                 <Input
+                  id="admin-user-email"
                   type="email"
                   value={newUserForm.email}
-                  onChange={(e) =>
-                    setNewUserForm({ ...newUserForm, email: e.target.value })
+                  onChange={(event) =>
+                    updateNewUserForm('email', event.target.value)
                   }
-                  placeholder="user@example.com"
+                  placeholder={t('form.emailPlaceholder')}
+                  aria-invalid={Boolean(addError && !newUserForm.email)}
                 />
-              </div>
-
-              <div>
-                <label className="mb-1 block font-medium text-sm">
-                  Password
-                </label>
+              </FieldContent>
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="admin-user-password">
+                {t('form.password')}
+              </FieldLabel>
+              <FieldContent>
                 <Input
+                  id="admin-user-password"
                   type="password"
                   value={newUserForm.password}
-                  onChange={(e) =>
-                    setNewUserForm({ ...newUserForm, password: e.target.value })
+                  onChange={(event) =>
+                    updateNewUserForm('password', event.target.value)
                   }
-                  placeholder="Enter password"
+                  placeholder={t('form.passwordPlaceholder')}
+                  aria-invalid={Boolean(addError && !newUserForm.password)}
                 />
-              </div>
-
-              <div>
-                <label className="mb-1 block font-medium text-sm">
-                  Name (Optional)
-                </label>
+              </FieldContent>
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="admin-user-name">
+                {t('form.nameOptional')}
+              </FieldLabel>
+              <FieldContent>
                 <Input
-                  type="text"
+                  id="admin-user-name"
                   value={newUserForm.name}
-                  onChange={(e) =>
-                    setNewUserForm({ ...newUserForm, name: e.target.value })
+                  onChange={(event) =>
+                    updateNewUserForm('name', event.target.value)
                   }
-                  placeholder="Full name"
+                  placeholder={t('form.namePlaceholder')}
                 />
-              </div>
-
-              <div>
-                <label className="mb-1 block font-medium text-sm">Role</label>
-                <select
+              </FieldContent>
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="admin-user-role">
+                {t('form.role')}
+              </FieldLabel>
+              <FieldContent>
+                <Select
                   value={newUserForm.role}
-                  aria-label="Select user role"
-                  onChange={(e) =>
-                    setNewUserForm({ ...newUserForm, role: e.target.value })
-                  }
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-foreground text-sm"
+                  onValueChange={(value) => updateNewUserForm('role', value)}
                 >
-                  <option value="USER">User</option>
-                  <option value="ADMIN">Admin</option>
-                  <option value="TEACHER">Teacher</option>
-                  <option value="STUDENT">Student</option>
-                </select>
-              </div>
-            </div>
+                  <SelectTrigger id="admin-user-role">
+                    <SelectValue placeholder={t('form.role')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      {roleOptions.map((role) => (
+                        <SelectItem key={role} value={role}>
+                          {t(`roles.${role.toLowerCase()}`)}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </FieldContent>
+            </Field>
+          </FieldGroup>
 
-            <div className="mt-6 flex gap-2">
-              <Button
-                onClick={() => {
-                  setShowAddModal(false);
-                  setNewUserForm({
-                    email: '',
-                    password: '',
-                    name: '',
-                    role: 'USER',
-                  });
-                  setAddError('');
-                }}
-                variant="outline"
-                className="flex-1"
-                disabled={addingUser}
-              >
-                Cancel
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline" disabled={isCreating}>
+                {t('actions.cancel')}
               </Button>
-              <Button
-                onClick={handleAddUser}
-                className="flex-1"
-                disabled={addingUser}
-              >
-                {addingUser ? 'Creating...' : 'Create User'}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+            </DialogClose>
+            <Button onClick={createUser} disabled={isCreating}>
+              {isCreating ? t('actions.creating') : t('actions.create')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+function UsersTableSkeleton() {
+  return (
+    <div className="overflow-hidden rounded-lg border border-border/60">
+      <Table>
+        <TableHeader>
+          <TableRow className="bg-muted/30">
+            <TableHead>
+              <Skeleton className="h-4 w-24" />
+            </TableHead>
+            <TableHead>
+              <Skeleton className="h-4 w-16" />
+            </TableHead>
+            <TableHead>
+              <Skeleton className="h-4 w-16" />
+            </TableHead>
+            <TableHead>
+              <Skeleton className="h-4 w-20" />
+            </TableHead>
+            <TableHead />
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {Array.from({ length: 5 }).map((_, index) => (
+            <TableRow key={index}>
+              <TableCell>
+                <div className="flex items-center gap-3">
+                  <Skeleton className="size-10 rounded-full" />
+                  <div className="flex flex-col gap-2">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-3 w-48" />
+                  </div>
+                </div>
+              </TableCell>
+              <TableCell>
+                <Skeleton className="h-6 w-20" />
+              </TableCell>
+              <TableCell>
+                <Skeleton className="h-6 w-16" />
+              </TableCell>
+              <TableCell>
+                <Skeleton className="h-4 w-10" />
+              </TableCell>
+              <TableCell className="text-right">
+                <Skeleton className="ml-auto size-8" />
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
 }

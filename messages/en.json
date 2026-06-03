@@ -108,6 +108,83 @@
     "description": "Explore and test the EduFlow API endpoints.",
     "title": "API Reference"
   },
+  "AdminUsersPage": {
+    "actions": {
+      "addUser": "Add user",
+      "cancel": "Cancel",
+      "create": "Create user",
+      "creating": "Creating...",
+      "edit": "Edit",
+      "save": "Save"
+    },
+    "addDialog": {
+      "description": "Create an account and assign its platform role.",
+      "title": "Add new user"
+    },
+    "description": "View and manage registered platform users.",
+    "empty": {
+      "description": "Try a different search or role filter.",
+      "title": "No users found"
+    },
+    "errors": {
+      "description": "We could not load users right now.",
+      "title": "Users unavailable"
+    },
+    "fallback": {
+      "noName": "No name",
+      "notAvailable": "N/A"
+    },
+    "filters": {
+      "role": "Role filter"
+    },
+    "form": {
+      "email": "Email",
+      "emailPlaceholder": "user@example.com",
+      "name": "Name",
+      "nameOptional": "Name (optional)",
+      "namePlaceholder": "Full name",
+      "password": "Password",
+      "passwordPlaceholder": "Enter password",
+      "role": "Role"
+    },
+    "pagination": {
+      "itemsPerPage": "Items per page",
+      "next": "Next",
+      "page": "Page {page} of {total}",
+      "perPage": "{count} per page",
+      "previous": "Previous",
+      "range": "Showing {start}-{end} of {total} users"
+    },
+    "roles": {
+      "admin": "Admin",
+      "all": "All roles",
+      "student": "Student",
+      "teacher": "Teacher",
+      "unknown": "Unknown"
+    },
+    "searchPlaceholder": "Search users by name, email, or ID...",
+    "status": {
+      "unverified": "Unverified",
+      "verified": "Verified"
+    },
+    "table": {
+      "actions": "Actions",
+      "joinDate": "Join date",
+      "role": "Role",
+      "status": "Status",
+      "user": "User"
+    },
+    "title": "User Management",
+    "toast": {
+      "createFailed": "Failed to create user.",
+      "created": "User created.",
+      "updateFailed": "Update failed.",
+      "updated": "User updated."
+    },
+    "validation": {
+      "emailPasswordRequired": "Email and password are required."
+    }
+  },
   "AuthFooter": {
     "brand": "EduFlow",
     "cookieSettings": "Cookie Settings",

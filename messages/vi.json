@@ -108,6 +108,83 @@
     "description": "Khám phá và thử các điểm cuối API của EduFlow.",
     "title": "Tài liệu API"
   },
+  "AdminUsersPage": {
+    "actions": {
+      "addUser": "Thêm người dùng",
+      "cancel": "Hủy",
+      "create": "Tạo người dùng",
+      "creating": "Đang tạo...",
+      "edit": "Chỉnh sửa",
+      "save": "Lưu"
+    },
+    "addDialog": {
+      "description": "Tạo tài khoản và gán vai trò nền tảng.",
+      "title": "Thêm người dùng mới"
+    },
+    "description": "Xem và quản lý người dùng đã đăng ký trên nền tảng.",
+    "empty": {
+      "description": "Hãy thử tìm kiếm hoặc bộ lọc vai trò khác.",
+      "title": "Không tìm thấy người dùng"
+    },
+    "errors": {
+      "description": "Hiện không thể tải danh sách người dùng.",
+      "title": "Người dùng không khả dụng"
+    },
+    "fallback": {
+      "noName": "Chưa có tên",
+      "notAvailable": "Không có"
+    },
+    "filters": {
+      "role": "Bộ lọc vai trò"
+    },
+    "form": {
+      "email": "Email",
+      "emailPlaceholder": "user@example.com",
+      "name": "Tên",
+      "nameOptional": "Tên (không bắt buộc)",
+      "namePlaceholder": "Họ và tên",
+      "password": "Mật khẩu",
+      "passwordPlaceholder": "Nhập mật khẩu",
+      "role": "Vai trò"
+    },
+    "pagination": {
+      "itemsPerPage": "Số mục mỗi trang",
+      "next": "Tiếp",
+      "page": "Trang {page}/{total}",
+      "perPage": "{count} mỗi trang",
+      "previous": "Trước",
+      "range": "Đang hiển thị {start}-{end} trong {total} người dùng"
+    },
+    "roles": {
+      "admin": "Quản trị viên",
+      "all": "Tất cả vai trò",
+      "student": "Sinh viên",
+      "teacher": "Giảng viên",
+      "unknown": "Không xác định"
+    },
+    "searchPlaceholder": "Tìm người dùng theo tên, email hoặc ID...",
+    "status": {
+      "unverified": "Chưa xác minh",
+      "verified": "Đã xác minh"
+    },
+    "table": {
+      "actions": "Thao tác",
+      "joinDate": "Ngày tham gia",
+      "role": "Vai trò",
+      "status": "Trạng thái",
+      "user": "Người dùng"
+    },
+    "title": "Quản lý người dùng",
+    "toast": {
+      "createFailed": "Không thể tạo người dùng.",
+      "created": "Đã tạo người dùng.",
+      "updateFailed": "Cập nhật thất bại.",
+      "updated": "Đã cập nhật người dùng."
+    },
+    "validation": {
+      "emailPasswordRequired": "Email và mật khẩu là bắt buộc."
+    }
+  },
   "AuthFooter": {
     "brand": "EduFlow",
     "cookieSettings": "Cài đặt Cookie",
@@ -1251,7 +1328,7 @@
       "untitled": "Phiên Socratic chưa đặt tên"
     },
     "subtitle": "Hãy chọn một lĩnh vực để bắt đầu đối thoại <mark>Socratic</mark>. Tôi sẽ không đưa đáp án; tôi sẽ đặt những câu hỏi giúp bạn tự tìm ra chúng.",
-    "title": "Hôm nay tôi có thể <accent>dẫn dắt</accent> tư duy của bạn như thế nào?"
+    "title": "Hôm nay tôi có thể <accent>gợi mở</accent> tư duy của bạn như thế nào?"
   },
   "StudyPage": {
     "description": "Khám phá các nhóm môn học mà trợ lý này sẽ hỗ trợ, từ giải bài đến ngôn ngữ và khoa học xã hội.",

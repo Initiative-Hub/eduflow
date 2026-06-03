@@ -2,10 +2,11 @@ import { headers } from 'next/headers';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { passwordField } from '@/lib/validations/common.schema';
 
 const registerSchema = z.object({
-  email: z.email(),
-  password: z.string().min(8),
+  email: z.email().max(255, 'Email must be less than 255 characters'),
+  password: passwordField,
   name: z.string().min(1),
   callbackURL: z.string().optional(),
   rememberMe: z.boolean().optional(),

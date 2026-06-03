@@ -29,8 +29,10 @@ export const GET = withRoles(['ADMIN'], async (_req, _sessionData) => {
     const out = users.map((u) => ({
       id: u.id,
       email: u.email,
+      emailVerified: u.emailVerified,
       name: u.name,
       role: u.role?.name,
+      createdAt: u.createdAt,
     }));
     return NextResponse.json(out);
   } catch (error) {

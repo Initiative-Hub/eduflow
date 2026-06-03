@@ -1,18 +1,12 @@
 import { z } from 'zod';
 import type { FormFieldConfig } from '@/components/custom/form';
-import { passwordRegex } from '@/lib/validations/common.schema';
+import { passwordField } from '@/lib/validations/common.schema';
 
 export const registerSchema = z
   .object({
     fullname: z.string().min(1, 'Full Name cannot be empty'),
     email: z.email('Please enter a valid email address.'),
-    password: z
-      .string()
-      .min(8, 'Password must be at least 8 characters')
-      .regex(
-        passwordRegex,
-        'Password must contain at least 1 number, 1 special character ($#@!), and 1 capitalized letter'
-      ),
+    password: passwordField,
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
