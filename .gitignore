@@ -45,6 +45,3 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
-.claude
-/.kiro
-__pycache__/
