@@ -5,20 +5,27 @@ import {
   Library,
   Loader2,
   Paperclip,
+  Plus,
   Settings2,
   Square,
+  X,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { type FormEvent, type ReactNode, useState } from 'react';
 import { toast } from 'sonner';
 import {
   PromptInput,
-  PromptInputButton,
+  PromptInputActionMenu,
+  PromptInputActionMenuContent,
+  PromptInputActionMenuItem,
+  PromptInputActionMenuTrigger,
+  PromptInputBody,
   PromptInputFooter,
   PromptInputHeader,
   type PromptInputMessage,
   PromptInputSubmit,
   PromptInputTextarea,
+  PromptInputTools,
 } from '@/components/ai-elements/prompt-input';
 import { Button } from '@/components/ui/button';
 import type { ChatModel } from '@/services/ai/chat-models';
@@ -45,6 +52,7 @@ interface ChatInputProps {
   selectedModel?: ChatModel;
   onModelChange?: (model: ChatModel) => void;
   placeholder?: string;
+  tools?: ReactNode;
   footer?: ReactNode;
 }
 
@@ -61,10 +69,12 @@ export function ChatInput({
   selectedModel,
   onModelChange,
   placeholder,
+  tools,
   footer,
 }: ChatInputProps) {
   const t = useTranslations('AIChat');
   const [inputValue, setInputValue] = useState('');
+  const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
   const {
     clearSelectedFiles,
     fileInputRef,
@@ -104,6 +114,7 @@ export function ChatInput({
   };
 
   const inputPlaceholder = placeholder ?? t('placeholder');
+  const hasCompactActions = isAuthenticated;
   const defaultFooter = (
     <div className="flex items-center justify-center gap-6 px-4">
       <div className="flex cursor-default items-center gap-1.5 text-muted-foreground/50 transition-colors hover:text-muted-foreground/80">
@@ -134,12 +145,22 @@ export function ChatInput({
   return (
     <div className="space-y-4 transition-all duration-200">
       <div className="group mx-auto max-w-3xl">
+        <input
+          aria-label={t('actionMenu.uploadFiles')}
+          className="hidden"
+          disabled={isStreaming || isUploading || isLimitReached}
+          multiple
+          onChange={handleFileInputChange}
+          ref={fileInputRef}
+          title={t('actionMenu.uploadFiles')}
+          type="file"
+        />
         <PromptInput
-          className="*:data-[slot=input-group]:rounded-4xl *:data-[slot=input-group]:border *:data-[slot=input-group]:border-border/80 *:data-[slot=input-group]:bg-background! *:data-[slot=input-group]:p-2.5 *:data-[slot=input-group]:shadow-sm *:data-[slot=input-group]:transition-all *:data-[slot=input-group]:group-focus-within:border-primary/70 *:data-[slot=input-group]:group-focus-within:shadow-md *:data-[slot=input-group]:group-focus-within:ring-4 *:data-[slot=input-group]:group-focus-within:ring-primary/10"
+          className="*:data-[slot=input-group]:rounded-4xl *:data-[slot=input-group]:border *:data-[slot=input-group]:border-border/80 *:data-[slot=input-group]:bg-background! *:data-[slot=input-group]:px-2.5 *:data-[slot=input-group]:py-2 *:data-[slot=input-group]:shadow-sm *:data-[slot=input-group]:transition-all *:data-[slot=input-group]:group-focus-within:border-primary/70 *:data-[slot=input-group]:group-focus-within:shadow-md *:data-[slot=input-group]:group-focus-within:ring-4 *:data-[slot=input-group]:group-focus-within:ring-primary/10"
           maxFiles={0}
           onSubmit={onPromptSubmit}
         >
-          {selectedFiles.length > 0 ? (
+          {selectedFiles.length > 0 && (
             <PromptInputHeader className="px-2 pt-2">
               <ChatInputAttachments
                 files={selectedFiles}
@@ -149,51 +170,79 @@ export function ChatInput({
                 onRemove={removeSelectedFile}
               />
             </PromptInputHeader>
-          ) : null}
-          <PromptInputTextarea
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            placeholder={inputPlaceholder}
-            className="min-h-12 px-2 py-3 text-lg leading-normal placeholder:text-foreground"
-            disabled={isLimitReached}
-          />
+          )}
 
-          <PromptInputFooter className="flex items-center justify-between gap-2 px-1 pb-1">
-            <div className="flex items-center gap-2">
-              {isAuthenticated ? (
-                <>
-                  <input
-                    className="hidden"
+          <PromptInputBody>
+            <PromptInputTextarea
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              placeholder={inputPlaceholder}
+              className="min-h-11 px-2 py-2.5 text-base leading-normal placeholder:text-foreground sm:text-lg"
+              disabled={isLimitReached}
+            />
+          </PromptInputBody>
+
+          <PromptInputFooter className="flex items-center justify-between gap-2 px-1 pb-0.5">
+            <div className="flex min-w-0 flex-1 items-center gap-1.5">
+              {hasCompactActions ? (
+                <PromptInputActionMenu
+                  onOpenChange={setIsActionMenuOpen}
+                  open={isActionMenuOpen}
+                >
+                  <PromptInputActionMenuTrigger
+                    aria-label={
+                      isActionMenuOpen
+                        ? t('actionMenu.close')
+                        : t('actionMenu.open')
+                    }
+                    className="size-9 rounded-full text-foreground transition-colors hover:bg-muted"
                     disabled={isStreaming || isUploading || isLimitReached}
-                    multiple
-                    onChange={handleFileInputChange}
-                    ref={fileInputRef}
-                    type="file"
-                  />
-                  <PromptInputButton
-                    aria-label={t('attachments.add')}
-                    className="size-9 cursor-pointer rounded-full text-foreground transition-colors hover:bg-muted-foreground/30"
-                    disabled={isStreaming || isUploading || isLimitReached}
-                    onClick={() => fileInputRef.current?.click()}
                   >
-                    <Paperclip className="size-5" />
-                  </PromptInputButton>
-                </>
+                    {isActionMenuOpen ? (
+                      <X className="size-4.5" />
+                    ) : (
+                      <Plus className="size-4.5" />
+                    )}
+                  </PromptInputActionMenuTrigger>
+                  <PromptInputActionMenuContent
+                    align="start"
+                    className="w-56 rounded-2xl p-1.5"
+                  >
+                    <PromptInputActionMenuItem
+                      disabled={isStreaming || isUploading || isLimitReached}
+                      onSelect={(event) => {
+                        event.preventDefault();
+                        setIsActionMenuOpen(false);
+                        fileInputRef.current?.click();
+                      }}
+                    >
+                      <Paperclip className="size-4" />
+                      <span>{t('actionMenu.uploadFiles')}</span>
+                    </PromptInputActionMenuItem>
+                  </PromptInputActionMenuContent>
+                </PromptInputActionMenu>
+              ) : null}
+              {tools ? (
+                <PromptInputTools className="min-w-0 gap-1.5">
+                  {tools}
+                </PromptInputTools>
               ) : null}
               {selectedModel && onModelChange ? (
-                <ChatModelSelectControl
-                  disabled={isStreaming || isUploading}
-                  emptyLabel={t('modelSelector.empty')}
-                  heading={t('modelSelector.heading')}
-                  label={t('modelSelector.label')}
-                  onModelChange={onModelChange}
-                  selectedModel={selectedModel}
-                />
+                <div className="ml-auto min-w-0">
+                  <ChatModelSelectControl
+                    disabled={isStreaming || isUploading}
+                    emptyLabel={t('modelSelector.empty')}
+                    heading={t('modelSelector.heading')}
+                    label={t('modelSelector.label')}
+                    onModelChange={onModelChange}
+                    selectedModel={selectedModel}
+                  />
+                </div>
               ) : null}
             </div>
 
             <PromptInputSubmit
-              className="size-9 cursor-pointer rounded-full transition-all hover:scale-105"
+              className="size-9 shrink-0 cursor-pointer rounded-full transition-all hover:scale-105"
               disabled={
                 isLimitReached ||
                 isUploading ||

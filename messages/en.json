@@ -77,6 +77,11 @@
     }
   },
   "AIChat": {
+    "actionMenu": {
+      "close": "Close actions",
+      "open": "Open actions",
+      "uploadFiles": "Upload files"
+    },
     "attachments": {
       "add": "Attach files",
       "defaultMessage": "Please use the attached {count, plural, one {file} other {files}}.",
@@ -1267,6 +1272,11 @@
       "footer": "Socratic mode active • no direct answers provided",
       "guidanceDepth": {
         "balanced": "Balanced",
+        "descriptions": {
+          "balanced": "Mix probing questions with moderate structure.",
+          "guidedSteps": "Offer more structure while keeping the learner involved.",
+          "hint": "Keep the learner moving with short nudges."
+        },
         "guidedSteps": "Guided steps",
         "hint": "Hints",
         "label": "Guidance depth"

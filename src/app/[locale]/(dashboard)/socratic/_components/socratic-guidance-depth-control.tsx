@@ -1,8 +1,15 @@
 'use client';
 
+import { ChevronDown } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   SOCRATIC_GUIDANCE_DEPTHS,
   type SocraticGuidanceDepth,
@@ -20,36 +27,46 @@ export function SocraticGuidanceDepthControl({
   onGuidanceDepthChange,
 }: SocraticGuidanceDepthControlProps) {
   const t = useTranslations('SocraticPage');
-  const sliderValue = guidanceDepthSteps.indexOf(guidanceDepth);
+  const selectedLabel = t(`input.guidanceDepth.${guidanceDepth}`);
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between gap-3">
-        <Label className="font-semibold text-[11px] text-muted-foreground uppercase tracking-wider">
-          {t('input.guidanceDepth.label')}
-        </Label>
-        <span className="font-medium text-foreground text-xs">
-          {t(`input.guidanceDepth.${guidanceDepth}`)}
-        </span>
-      </div>
-      <div className="space-y-2">
-        <Slider
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
           aria-label={t('input.guidanceDepth.label')}
-          className="w-full"
-          max={guidanceDepthSteps.length - 1}
-          min={0}
-          step={1}
-          value={[sliderValue]}
-          onValueChange={([nextValue]) =>
-            onGuidanceDepthChange(guidanceDepthSteps[nextValue])
+          className="h-9 max-w-36 gap-2 rounded-full border-none px-3 text-foreground text-sm hover:bg-muted sm:max-w-42"
+          type="button"
+          variant="outline"
+        >
+          <span className="truncate">{selectedLabel}</span>
+          <ChevronDown className="size-4 text-muted-foreground" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-64 rounded-2xl p-1.5">
+        <DropdownMenuRadioGroup
+          onValueChange={(value) =>
+            onGuidanceDepthChange(value as SocraticGuidanceDepth)
           }
-        />
-        <div className="flex justify-between text-[11px] text-muted-foreground">
+          value={guidanceDepth}
+        >
           {guidanceDepthSteps.map((value) => (
-            <span key={value}>{t(`input.guidanceDepth.${value}`)}</span>
+            <DropdownMenuRadioItem
+              className="items-start gap-3 rounded-xl px-3 py-2.5"
+              key={value}
+              value={value}
+            >
+              <div className="min-w-0 flex-1 space-y-0.5">
+                <div className="font-medium text-foreground text-sm">
+                  {t(`input.guidanceDepth.${value}`)}
+                </div>
+                <p className="whitespace-normal text-muted-foreground text-xs leading-5">
+                  {t(`input.guidanceDepth.descriptions.${value}`)}
+                </p>
+              </div>
+            </DropdownMenuRadioItem>
           ))}
-        </div>
-      </div>
-    </div>
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

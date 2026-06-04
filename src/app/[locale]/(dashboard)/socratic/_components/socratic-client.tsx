@@ -93,41 +93,37 @@ export function SocraticClient({
   );
 
   const composer = (
-    <div className="space-y-4">
-      <div className="mx-auto w-full max-w-xl rounded-2xl border border-border/60 bg-background/70 px-4 py-3">
+    <ChatInput
+      handleSubmit={handleSubmit}
+      isAuthenticated={isAuthenticated}
+      isStreaming={isStreaming}
+      isUploading={false}
+      isChatting={hasOutput}
+      isLimitReached={isLimitReached}
+      limitCount={maxMessages}
+      userMessageCount={userMessageCount}
+      onStop={stop}
+      selectedModel={selectedModel}
+      onModelChange={setSelectedModel}
+      placeholder={t('input.placeholder')}
+      footer={
+        <div className="flex items-center justify-center px-4">
+          <Button
+            className="flex h-auto items-center gap-1.5 p-0 text-muted-foreground/60 hover:bg-transparent hover:text-muted-foreground"
+            variant="ghost"
+          >
+            <LockKeyhole className="size-3.5" />
+            <span className="font-medium text-[11px]">{t('input.footer')}</span>
+          </Button>
+        </div>
+      }
+      tools={
         <SocraticGuidanceDepthControl
           guidanceDepth={guidanceDepth}
           onGuidanceDepthChange={setGuidanceDepth}
         />
-      </div>
-      <ChatInput
-        handleSubmit={handleSubmit}
-        isAuthenticated={isAuthenticated}
-        isStreaming={isStreaming}
-        isUploading={false}
-        isChatting={hasOutput}
-        isLimitReached={isLimitReached}
-        limitCount={maxMessages}
-        userMessageCount={userMessageCount}
-        onStop={stop}
-        selectedModel={selectedModel}
-        onModelChange={setSelectedModel}
-        placeholder={t('input.placeholder')}
-        footer={
-          <div className="flex items-center justify-center px-4">
-            <Button
-              className="flex h-auto items-center gap-1.5 p-0 text-muted-foreground/60 hover:bg-transparent hover:text-muted-foreground"
-              variant="ghost"
-            >
-              <LockKeyhole className="size-3.5" />
-              <span className="font-medium text-[11px]">
-                {t('input.footer')}
-              </span>
-            </Button>
-          </div>
-        }
-      />
-    </div>
+      }
+    />
   );
 
   return (

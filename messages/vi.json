@@ -77,6 +77,11 @@
     }
   },
   "AIChat": {
+    "actionMenu": {
+      "close": "Đóng tùy chọn",
+      "open": "Mở tùy chọn",
+      "uploadFiles": "Tải tệp lên"
+    },
     "attachments": {
       "add": "Đính kèm tệp",
       "defaultMessage": "Vui lòng sử dụng {count, plural, one {tệp đính kèm} other {các tệp đính kèm}}.",
@@ -1267,6 +1272,11 @@
       "footer": "Chế độ Socratic đang bật • không cung cấp đáp án trực tiếp",
       "guidanceDepth": {
         "balanced": "Cân bằng",
+        "descriptions": {
+          "balanced": "Kết hợp câu hỏi gợi mở với mức cấu trúc vừa phải.",
+          "guidedSteps": "Cung cấp nhiều định hướng hơn nhưng vẫn giữ người học tham gia.",
+          "hint": "Giữ nhịp suy nghĩ bằng những gợi ý ngắn."
+        },
         "guidedSteps": "Hướng dẫn từng bước",
         "hint": "Gợi ý",
         "label": "Mức độ hướng dẫn"
