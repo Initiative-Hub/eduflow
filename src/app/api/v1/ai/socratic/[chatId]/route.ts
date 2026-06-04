@@ -250,7 +250,7 @@ export async function POST(
         apiKey: parsedBody.data.apiKey,
         providerOptions: parsedBody.data.providerOptions,
       },
-      { prompt: systemPrompt, mode: 'replace' }
+      { prompt: systemPrompt }
     );
 
     const stream = createUIMessageStream<SocraticUIMessage>({
