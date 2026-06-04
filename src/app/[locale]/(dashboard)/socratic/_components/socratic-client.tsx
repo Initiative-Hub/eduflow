@@ -6,15 +6,20 @@ import { useTranslations } from 'next-intl';
 import type React from 'react';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import type { SocraticUIMessage } from '@/app/api/v1/ai/socratic/[chatId]/socratic.constants';
 import { Button } from '@/components/ui/button';
+import {
+  DEFAULT_SOCRATIC_GUIDANCE_DEPTH,
+  type SocraticGuidanceDepth,
+} from '@/lib/validations/socratic.schema';
 import { type ChatModel, DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
+import type { SocraticUIMessage } from '@/types/socratic-ui-message';
 import { ChatInput } from '../../_components/chat-input';
 import { ChatSidebar } from '../../_components/chat-sidebar';
 import { ChatWorkspaceShell } from '../../_components/chat-workspace-shell';
 import { socraticService } from '../socratic.service';
 import { useSocratic } from '../use-socratic';
 import { SocraticDisciplineSelector } from './socratic-discipline-selector';
+import { SocraticGuidanceDepthControl } from './socratic-guidance-depth-control';
 
 interface SocraticClientProps {
   chatId?: string;
@@ -31,9 +36,12 @@ export function SocraticClient({
   initialMessages,
   isAuthenticated,
 }: SocraticClientProps) {
+  const t = useTranslations('SocraticPage');
   const [selectedModel, setSelectedModel] =
     useState<ChatModel>(DEFAULT_CHAT_MODEL);
-  const t = useTranslations('SocraticPage');
+  const [guidanceDepth, setGuidanceDepth] = useState<SocraticGuidanceDepth>(
+    DEFAULT_SOCRATIC_GUIDANCE_DEPTH
+  );
 
   const {
     messages,
@@ -48,6 +56,7 @@ export function SocraticClient({
     chatId,
     initialMessages,
     selectedModel,
+    guidanceDepth,
     isAuthenticated,
   });
 
@@ -69,7 +78,7 @@ export function SocraticClient({
 
   const handleSubmit = (e?: React.SyntheticEvent, customValue?: string) => {
     e?.preventDefault();
-    void submitText(customValue || '');
+    submitText(customValue || '');
   };
 
   const viewport = !hasOutput ? (
@@ -84,31 +93,41 @@ export function SocraticClient({
   );
 
   const composer = (
-    <ChatInput
-      handleSubmit={handleSubmit}
-      isAuthenticated={isAuthenticated}
-      isStreaming={isStreaming}
-      isUploading={false}
-      isChatting={hasOutput}
-      isLimitReached={isLimitReached}
-      limitCount={maxMessages}
-      userMessageCount={userMessageCount}
-      onStop={stop}
-      selectedModel={selectedModel}
-      onModelChange={setSelectedModel}
-      placeholder={t('input.placeholder')}
-      footer={
-        <div className="flex items-center justify-center px-4">
-          <Button
-            className="flex h-auto items-center gap-1.5 p-0 text-muted-foreground/60 hover:bg-transparent hover:text-muted-foreground"
-            variant="ghost"
-          >
-            <LockKeyhole className="size-3.5" />
-            <span className="font-medium text-[11px]">{t('input.footer')}</span>
-          </Button>
-        </div>
-      }
-    />
+    <div className="space-y-4">
+      <div className="mx-auto w-full max-w-xl rounded-2xl border border-border/60 bg-background/70 px-4 py-3">
+        <SocraticGuidanceDepthControl
+          guidanceDepth={guidanceDepth}
+          onGuidanceDepthChange={setGuidanceDepth}
+        />
+      </div>
+      <ChatInput
+        handleSubmit={handleSubmit}
+        isAuthenticated={isAuthenticated}
+        isStreaming={isStreaming}
+        isUploading={false}
+        isChatting={hasOutput}
+        isLimitReached={isLimitReached}
+        limitCount={maxMessages}
+        userMessageCount={userMessageCount}
+        onStop={stop}
+        selectedModel={selectedModel}
+        onModelChange={setSelectedModel}
+        placeholder={t('input.placeholder')}
+        footer={
+          <div className="flex items-center justify-center px-4">
+            <Button
+              className="flex h-auto items-center gap-1.5 p-0 text-muted-foreground/60 hover:bg-transparent hover:text-muted-foreground"
+              variant="ghost"
+            >
+              <LockKeyhole className="size-3.5" />
+              <span className="font-medium text-[11px]">
+                {t('input.footer')}
+              </span>
+            </Button>
+          </div>
+        }
+      />
+    </div>
   );
 
   return (

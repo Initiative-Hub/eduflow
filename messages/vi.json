@@ -1265,6 +1265,12 @@
     },
     "input": {
       "footer": "Chế độ Socratic đang bật • không cung cấp đáp án trực tiếp",
+      "guidanceDepth": {
+        "balanced": "Cân bằng",
+        "guidedSteps": "Hướng dẫn từng bước",
+        "hint": "Gợi ý",
+        "label": "Mức độ hướng dẫn"
+      },
       "placeholder": "Đặt câu hỏi hoặc mô tả chỗ bạn đang mắc..."
     },
     "limitReachedToast": "Bạn đã đạt giới hạn {count} tin nhắn Socratic. Hãy bắt đầu phiên mới để tiếp tục.",

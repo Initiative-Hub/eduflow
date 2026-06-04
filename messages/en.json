@@ -1265,6 +1265,12 @@
     },
     "input": {
       "footer": "Socratic mode active • no direct answers provided",
+      "guidanceDepth": {
+        "balanced": "Balanced",
+        "guidedSteps": "Guided steps",
+        "hint": "Hints",
+        "label": "Guidance depth"
+      },
       "placeholder": "Ask a question or describe where you're stuck..."
     },
     "limitReachedToast": "You've reached the {count}-message Socratic limit. Start a new session to continue.",

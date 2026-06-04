@@ -1,6 +1,10 @@
 import type { UIMessage } from 'ai';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
+import {
+  DEFAULT_SOCRATIC_GUIDANCE_DEPTH,
+  type SocraticGuidanceDepth,
+} from '@/lib/validations/socratic.schema';
 import type { ChatModel } from '@/services/ai/chat-models';
 import type { ChatFileUIPart } from '@/types/chat-attachments';
 
@@ -9,6 +13,7 @@ interface ChatSessionState {
   pendingFiles: ChatFileUIPart[];
   pendingChatId: string | null;
   pendingModel: ChatModel | null;
+  pendingSocraticGuidanceDepth: SocraticGuidanceDepth;
   optimisticChatId: string | null;
   optimisticMessages: UIMessage[];
   setPendingMessage: (message: string) => void;
@@ -19,6 +24,8 @@ interface ChatSessionState {
   clearPendingChatId: () => void;
   setPendingModel: (model: ChatModel | null) => void;
   clearPendingModel: () => void;
+  setPendingSocraticGuidanceDepth: (depth: SocraticGuidanceDepth) => void;
+  clearPendingSocraticGuidanceDepth: () => void;
   setOptimisticChatId: (chatId: string | null) => void;
   setOptimisticMessages: (messages: UIMessage[]) => void;
   clearOptimisticMessages: () => void;
@@ -31,6 +38,7 @@ export const useChatSessionStore = create<ChatSessionState>()(
       pendingFiles: [],
       pendingChatId: null,
       pendingModel: null,
+      pendingSocraticGuidanceDepth: DEFAULT_SOCRATIC_GUIDANCE_DEPTH,
       optimisticChatId: null,
       optimisticMessages: [],
       setPendingMessage: (message) => set({ pendingMessage: message }),
@@ -41,6 +49,12 @@ export const useChatSessionStore = create<ChatSessionState>()(
       clearPendingChatId: () => set({ pendingChatId: null }),
       setPendingModel: (model) => set({ pendingModel: model }),
       clearPendingModel: () => set({ pendingModel: null }),
+      setPendingSocraticGuidanceDepth: (depth) =>
+        set({ pendingSocraticGuidanceDepth: depth }),
+      clearPendingSocraticGuidanceDepth: () =>
+        set({
+          pendingSocraticGuidanceDepth: DEFAULT_SOCRATIC_GUIDANCE_DEPTH,
+        }),
       setOptimisticChatId: (chatId) => set({ optimisticChatId: chatId }),
       setOptimisticMessages: (messages) =>
         set({ optimisticMessages: messages }),
@@ -55,6 +69,7 @@ export const useChatSessionStore = create<ChatSessionState>()(
         pendingFiles: state.pendingFiles,
         pendingChatId: state.pendingChatId,
         pendingModel: state.pendingModel,
+        pendingSocraticGuidanceDepth: state.pendingSocraticGuidanceDepth,
         optimisticChatId: state.optimisticChatId,
         optimisticMessages: state.optimisticMessages,
       }),
