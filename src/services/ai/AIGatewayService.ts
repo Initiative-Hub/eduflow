@@ -82,11 +82,15 @@ export class AIGatewayService implements ChatProviderService {
     const searchQuery = options.context
       ? `${options.context} ${markdownContent.slice(0, 150)}`
       : markdownContent.slice(0, 200);
-    const webContext = await WebSearchService.search(
-      searchQuery.trim(),
-      5,
-      true
-    );
+
+    const [webContext, youtubeContext] = await Promise.all([
+      WebSearchService.search(searchQuery.trim(), 5, true),
+      WebSearchService.search(
+        `${searchQuery.trim()} site:youtube.com`,
+        3,
+        true
+      ),
+    ]);
 
     const apiKey = options.apiKey ?? process.env.AI_GATEWAY_API_KEY;
     if (!apiKey)
@@ -104,7 +108,7 @@ export class AIGatewayService implements ChatProviderService {
         options.context
           ? `\n\n=== ADDITIONAL CONTEXT FROM INSTRUCTOR ===\n${options.context}`
           : ''
-      }\n\n=== SUPPLEMENTARY WEB CONTEXT ===\nUse the following web search results to enrich lesson content with current, real-world examples and up-to-date information:\n\n${webContext}`,
+      }\n\n=== SUPPLEMENTARY WEB CONTEXT ===\nUse the following web search results to enrich lesson content with current, real-world examples and up-to-date information:\n\n${webContext}\n\n=== SUPPLEMENTARY YOUTUBE VIDEOS ===\nFor each module or lesson, pick the most relevant YouTube video from the list below if it matches the topic, and embed it at the end of the lesson's HTML content as a raw URL inside a paragraph (e.g. "<p>https://www.youtube.com/watch?v=...</p>"). Only choose relevant videos from this list:\n\n${youtubeContext}`,
       headers: { Authorization: `Bearer ${apiKey}` },
       onFinish: options.onFinish,
     });

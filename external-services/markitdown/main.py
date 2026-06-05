@@ -1,3 +1,4 @@
+import httpx
 from io import BytesIO
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.concurrency import run_in_threadpool
@@ -59,7 +60,19 @@ async def get_transcript(request: TranscriptRequest):
         # 3. Compile segments into a single readable string
         full_text = " ".join([segment["text"] for segment in raw_transcript])
 
+        # 4. Fetch the title from YouTube oEmbed API
+        title = "Unknown Title"
+        try:
+            async with httpx.AsyncClient() as client:
+                oembed_url = f"https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v={video_id}&format=json"
+                response = await client.get(oembed_url, timeout=5.0)
+                if response.status_code == 200:
+                    title = response.json().get("title", "Unknown Title")
+        except Exception:
+            pass
+
         return {
+            "title": title,
             "video_id": video_id,
             "transcript_text": full_text,
             "raw_segments": raw_transcript,  # Optional: useful if you need timestamps later

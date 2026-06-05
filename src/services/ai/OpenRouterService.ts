@@ -94,29 +94,33 @@ export class OpenRouterService implements ChatProviderService {
     const searchQuery = options.context
       ? `${options.context} ${markdownContent.slice(0, 150)}`
       : markdownContent.slice(0, 200);
-    const webContext = await WebSearchService.search(
-      searchQuery.trim(),
-      3,
-      true
-    );
+
+    const [webContext, youtubeContext] = await Promise.all([
+      WebSearchService.search(searchQuery.trim(), 3, true),
+      WebSearchService.search(
+        `${searchQuery.trim()} site:youtube.com`,
+        3,
+        true
+      ),
+    ]);
 
     const apiKey = options.apiKey ?? process.env.OPENROUTER_API_KEY;
     if (!apiKey)
       throw new Error(`Missing API key for provider "${PROVIDER_NAME}"`);
 
-    const model = options.model ?? DEFAULT_MODELS.openrouter;
-    const provider = createOpenRouter({ apiKey });
+    // const model = options.model ?? DEFAULT_MODELS.openrouter;
+    // const provider = createOpenRouter({ apiKey });
 
     // Step 3 — AI generation: stream raw text deltas
     const aiStream = streamObject({
-      model: provider(model),
+      model: 'deepseek/deepseek-chat',
       schema: aiCourseGenerationSchema,
       system: COURSE_GENERATION_PROMPT,
       prompt: `Content to analyze and transform into a course:\n\n${markdownContent}${
         options.context
           ? `\n\n=== ADDITIONAL CONTEXT FROM INSTRUCTOR ===\n${options.context}`
           : ''
-      }\n\n=== SUPPLEMENTARY WEB CONTEXT ===\nUse the following web search results to enrich lesson content with current, real-world examples and up-to-date information:\n\n${webContext}`,
+      }\n\n=== SUPPLEMENTARY WEB CONTEXT ===\nUse the following web search results to enrich lesson content with current, real-world examples and up-to-date information:\n\n${webContext}\n\n=== SUPPLEMENTARY YOUTUBE VIDEOS ===\nFor each module or lesson, pick the most relevant YouTube video from the list below if it matches the topic, and embed it at the end of the lesson's HTML content as a raw URL inside a paragraph (e.g. "<p>https://www.youtube.com/watch?v=...</p>"). Only choose relevant videos from this list:\n\n${youtubeContext}`,
       onFinish: options.onFinish,
     });
 
