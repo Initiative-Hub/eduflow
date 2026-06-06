@@ -11,7 +11,7 @@ MARKITDOWN_DIR = Path(__file__).resolve().parents[1]
 if str(MARKITDOWN_DIR) not in sys.path:
     sys.path.insert(0, str(MARKITDOWN_DIR))
 
-import main # type: ignore  # noqa: E402
+import main  # type: ignore  # noqa: E402
 
 
 class _FakeConversionResult:
@@ -76,9 +76,11 @@ class MarkItDownServiceTests(unittest.TestCase):
         self.assertEqual(
             project["project"]["dependencies"],
             [
-                "fastapi[standard]",
-                "python-multipart",
-                "markitdown[pdf]",
+                "fastapi[standard]==0.136.3",
+                "python-multipart==0.0.30",
+                "markitdown[pdf]==0.1.6",
+                "modal==1.4.3",
+                "youtube-transcript-api>=1.2.4",
             ],
         )
 
