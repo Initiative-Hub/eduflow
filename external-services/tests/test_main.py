@@ -50,8 +50,9 @@ class MarkItDownServiceTests(unittest.TestCase):
 
     def test_converts_pdf_upload_with_stream_api(self) -> None:
         fake_markitdown = _FakeMarkItDown()
+        from app.controllers import pdf_controller
 
-        with patch.object(main, "md", fake_markitdown):
+        with patch.object(pdf_controller.pdf_service, "md", fake_markitdown):
             response = self.client.post(
                 "/markitdown",
                 files={"file": ("document.pdf", b"%PDF-1.4", "application/pdf")},
