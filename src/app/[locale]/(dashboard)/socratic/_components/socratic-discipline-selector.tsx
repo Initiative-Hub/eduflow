@@ -9,7 +9,6 @@ import {
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
 import {
   SOCRATIC_DISCIPLINES,
   type SocraticDiscipline,
@@ -17,8 +16,7 @@ import {
 import { LandingRecentSocraticChats } from './landing-recent-socratic-chats';
 
 interface SocraticDisciplineSelectorProps {
-  selected: SocraticDiscipline;
-  onSelect: (discipline: SocraticDiscipline) => void;
+  onSelectPrompt: (prompt: string) => void;
 }
 
 const disciplineIcons: Record<SocraticDiscipline, LucideIcon> = {
@@ -29,14 +27,19 @@ const disciplineIcons: Record<SocraticDiscipline, LucideIcon> = {
 };
 
 export function SocraticDisciplineSelector({
-  selected,
-  onSelect,
+  onSelectPrompt,
 }: SocraticDisciplineSelectorProps) {
   const t = useTranslations('SocraticPage');
 
+  const getDisciplinePrompt = (discipline: SocraticDiscipline) => {
+    const title = t(`disciplines.${discipline}.title`);
+    const description = t(`disciplines.${discipline}.description`);
+    return `${title}\n\n${description}`;
+  };
+
   return (
     <div className="flex flex-col items-center justify-center">
-      <div className="mb-2 max-w-6xl space-y-2">
+      <div className="mb-2 max-w-4xl space-y-2">
         <div className="space-y-8 px-4 pt-10">
           <div className="relative flex flex-col items-center text-center">
             <h1 className="mt-5 font-black font-heading text-3xl text-foreground leading-tight tracking-tight sm:text-4xl lg:text-5xl">
@@ -61,19 +64,18 @@ export function SocraticDisciplineSelector({
 
               return (
                 <Card
-                  className={cn(
-                    'group min-h-60 cursor-pointer overflow-hidden rounded-[1.6rem] border border-border/60 bg-card/95 p-5 text-left shadow-lg shadow-primary/5 transition-all duration-200 hover:-translate-y-1 hover:border-primary/25 hover:shadow-primary/10 hover:shadow-xl',
-                    selected === discipline &&
-                      'border-primary/40 bg-primary/5 shadow-primary/10 shadow-xl'
-                  )}
+                  aria-label={t(`disciplines.${discipline}.title`)}
+                  className="group min-h-60 cursor-pointer overflow-hidden rounded-[1.6rem] border border-border/60 bg-card/95 p-5 text-left shadow-lg shadow-primary/5 transition-all duration-200 hover:-translate-y-1 hover:border-primary/25 hover:shadow-primary/10 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                   key={discipline}
                   role="button"
                   tabIndex={0}
-                  onClick={() => onSelect(discipline)}
+                  onClick={() =>
+                    onSelectPrompt(getDisciplinePrompt(discipline))
+                  }
                   onKeyDown={(event) => {
                     if (event.key === 'Enter' || event.key === ' ') {
                       event.preventDefault();
-                      onSelect(discipline);
+                      onSelectPrompt(getDisciplinePrompt(discipline));
                     }
                   }}
                 >
@@ -82,7 +84,7 @@ export function SocraticDisciplineSelector({
                       <Icon className="size-5" />
                     </div>
                     <div className="space-y-2">
-                      <h2 className="font-bold text-foreground text-xl leading-tight tracking-tight">
+                      <h2 className="font-bold text-foreground text-lg leading-tight tracking-tight">
                         {t(`disciplines.${discipline}.title`)}
                       </h2>
                       <p className="text-muted-foreground text-sm leading-6">
