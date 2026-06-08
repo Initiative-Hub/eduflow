@@ -55,6 +55,7 @@ for any tasks.).
 1. Put localized routes under `src/app/[locale]/` and use route groups like `(auth)`, `(dashboard)` and `(marketing)` to separate flows.
 2. Update `messages/en.json` and `messages/vi.json` for every user-facing string.
 3. Reuse `src/components/custom/dialog` and `src/components/custom/form` for dialog and form shells; use `lucide-react` for new icons.
+4. Treat literal escaped route folders like `\(dashboard\)` as invalid duplicates; files for `/english` belong under the real `(dashboard)` route group.
 
 ### 4.3 Adding Dependencies
 
@@ -88,7 +89,11 @@ for any tasks.).
 - **Tabular Lists**: Use the shared `Table` components for list-style layouts instead of custom row divs to keep alignment consistent.
 - **Server Layouts**: For async server layouts that only pass through children, return a fragment instead of raw children.
 - **Icons and Styling**: Use `lucide-react` for new icons and keep styling in the existing Tailwind utility style used throughout the app.
+- **Textarea Typography Overrides**: Shared `Textarea` includes a responsive `md:text-sm`; when a feature requires a larger reading size, set both the base `text-*` and matching `md:text-*` class so desktop does not silently shrink.
 - **JSX Curly Braces**: Literally render double curly braces `{{` and `}}` in JSX text by quoting them, like `{'{{placeholder}}'}`, to prevent the JSX compiler from parsing them as JS object shorthand syntax.
+- **English Dictionary UX**: On `/english`, keep single-word dictionary interactions scoped to the left source selection and rendered English translation text; use anchored popovers instead of global text-selection popups.
+- **English Pronunciation Data**: For learner-facing key vocabulary IPA on `/english`, keep the AI-generated IPA value; use Merriam-Webster lookup for pronunciation audio enrichment only.
+- **English TTS Provider**: The `/api/v1/english/tts` default path uses AI SDK OpenAI `tts-1`; preflight `OPENAI_API_KEY` with a clear service error and keep Amazon Polly available only as an explicit fallback path.
 
 ### 6.3 Security & Validation
 

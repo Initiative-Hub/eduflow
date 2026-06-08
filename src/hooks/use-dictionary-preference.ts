@@ -4,7 +4,7 @@ import { useCallback, useSyncExternalStore } from 'react';
 import type { DictionaryProviderId } from '@/services/dictionary/types';
 
 const STORAGE_KEY = 'dictionary-provider-preference';
-const DEFAULT_PROVIDER: DictionaryProviderId = 'free-dictionary';
+const DEFAULT_PROVIDER: DictionaryProviderId = 'mw-collegiate';
 
 const VALID_PROVIDERS: DictionaryProviderId[] = [
   'free-dictionary',

@@ -8,6 +8,7 @@ import {
 
 interface MWLearnersEntry {
   hwi?: { prs?: { ipa?: string; sound?: { audio?: string } }[] };
+  altprs?: { ipa?: string; sound?: { audio?: string } }[];
   fl?: string;
   def?: { sseq: unknown[][] }[];
   et?: unknown[][];
@@ -54,7 +55,8 @@ export class MWLearnersProvider implements DictionaryProvider {
     const matchingEntries = (data as MWLearnersEntry[]).filter(
       (entry) =>
         typeof entry === 'object' &&
-        entry.meta?.id?.replace(/:\d+$/, '') === word
+        entry.meta?.id?.replace(/:\d+$/, '').toLowerCase() ===
+          word.toLowerCase()
     );
 
     // Fall back to all object entries if meta.id filtering yields nothing
@@ -67,18 +69,23 @@ export class MWLearnersProvider implements DictionaryProvider {
 
     const firstEntry = entries[0];
 
-    // Extract IPA phonetic from hwi.prs
-    const phonetic = firstEntry.hwi?.prs?.[0]?.ipa || null;
+    // Combine hwi.prs and altprs lists
+    const prsList = [
+      ...(firstEntry.hwi?.prs || []),
+      ...(firstEntry.altprs || []),
+    ];
 
-    // Extract audio URL
-    const audioFile = firstEntry.hwi?.prs?.[0]?.sound?.audio || null;
+    // Extract IPA phonetic from combined list — use only the first variant
+    const phonetics = prsList.map((p) => p.ipa).filter(Boolean) ?? [];
+    const phonetic = phonetics.length > 0 ? (phonetics[0] ?? null) : null;
+
+    // Extract audio URL by finding the first available audio file in prsList
+    const audioFile = prsList.find((p) => p.sound?.audio)?.sound?.audio ?? null;
     const audioUrl = audioFile ? this.buildAudioUrl(audioFile) : null;
 
-    // Extract meanings from ALL matching entries (up to 6 total for rich display)
-    const meanings: DictionaryMeaning[] = this.extractMeaningsFromEntries(
-      entries,
-      6
-    );
+    // Extract meanings from ALL matching entries
+    const meanings: DictionaryMeaning[] =
+      this.extractMeaningsFromEntries(entries);
 
     // Extract etymology
     const etymology = this.extractEtymology(firstEntry);
@@ -129,12 +136,12 @@ export class MWLearnersProvider implements DictionaryProvider {
    */
   private extractMeaningsFromEntries(
     entries: MWLearnersEntry[],
-    limit = 6
+    limit?: number
   ): DictionaryMeaning[] {
     const meanings: DictionaryMeaning[] = [];
 
     for (const entry of entries) {
-      if (meanings.length >= limit) break;
+      if (limit !== undefined && meanings.length >= limit) break;
 
       const partOfSpeech = entry.fl || 'unknown';
       const defs = entry.def;
@@ -142,30 +149,26 @@ export class MWLearnersProvider implements DictionaryProvider {
       if (!defs?.length) continue;
 
       for (const defBlock of defs) {
-        if (meanings.length >= limit) break;
+        if (limit !== undefined && meanings.length >= limit) break;
 
         for (const senseGroup of defBlock.sseq || []) {
-          if (meanings.length >= limit) break;
+          if (limit !== undefined && meanings.length >= limit) break;
 
           for (const sense of senseGroup) {
-            if (meanings.length >= limit) break;
-            if (!Array.isArray(sense) || sense[0] !== 'sense') continue;
-
-            const senseData = sense[1] as {
-              dt?: unknown[][];
-            };
-
-            const definition = this.extractFullDefinitionText(senseData.dt);
-            const example = this.extractExample(senseData.dt);
-
-            if (definition) {
-              meanings.push({
-                partOfSpeech,
-                definition,
-                example: example || undefined,
-              });
-            }
+            if (limit !== undefined && meanings.length >= limit) break;
+            this.processSense(sense, partOfSpeech, meanings, limit);
           }
+        }
+      }
+
+      // Fallback to shortdef if no definitions extracted for this entry
+      if (!meanings.length && entry.shortdef?.length) {
+        for (const def of entry.shortdef) {
+          if (limit !== undefined && meanings.length >= limit) break;
+          meanings.push({
+            partOfSpeech,
+            definition: this.cleanMarkup(def),
+          });
         }
       }
     }
@@ -174,22 +177,159 @@ export class MWLearnersProvider implements DictionaryProvider {
   }
 
   /**
-   * Extract the full definition text from a dt block.
-   * Concatenates all text segments to preserve the complete definition.
+   * Recursively process MW senses (supporting sense, sen, bs, pseq)
    */
-  private extractFullDefinitionText(dt?: unknown[][]): string | null {
+  private processSense(
+    sense: unknown,
+    partOfSpeech: string,
+    meanings: DictionaryMeaning[],
+    limit?: number
+  ): void {
+    if (limit !== undefined && meanings.length >= limit) return;
+    if (!Array.isArray(sense)) return;
+
+    const [type, data] = sense;
+
+    if (type === 'sense' || type === 'sen') {
+      const senseData = data as {
+        dt?: unknown[][];
+        sdsense?: {
+          sd?: string;
+          dt?: unknown[][];
+        };
+      };
+
+      if (senseData) {
+        let definition = this.extractDefinitionText(senseData.dt);
+
+        // Handle sdsense (divided sense)
+        if (senseData.sdsense?.dt) {
+          const sdDivider = senseData.sdsense.sd
+            ? `: ${senseData.sdsense.sd} `
+            : ': ';
+          const sdsenseDef = this.extractDefinitionText(senseData.sdsense.dt);
+          if (sdsenseDef) {
+            definition = definition
+              ? `${definition}${sdDivider}${sdsenseDef}`
+              : sdsenseDef;
+          }
+        }
+
+        const example = this.extractExampleFromSense(senseData);
+
+        if (definition) {
+          meanings.push({
+            partOfSpeech,
+            definition,
+            example: example || undefined,
+          });
+        }
+      }
+    } else if (type === 'bs') {
+      // Binding substitute
+      const nestedSense = data?.sense;
+      if (nestedSense) {
+        let definition = this.extractDefinitionText(nestedSense.dt);
+
+        // Handle nested sdsense
+        if (nestedSense.sdsense?.dt) {
+          const sdDivider = nestedSense.sdsense.sd
+            ? `: ${nestedSense.sdsense.sd} `
+            : ': ';
+          const sdsenseDef = this.extractDefinitionText(nestedSense.sdsense.dt);
+          if (sdsenseDef) {
+            definition = definition
+              ? `${definition}${sdDivider}${sdsenseDef}`
+              : sdsenseDef;
+          }
+        }
+
+        const example = this.extractExampleFromSense(nestedSense);
+
+        if (definition) {
+          meanings.push({
+            partOfSpeech,
+            definition,
+            example: example || undefined,
+          });
+        }
+      }
+    } else if (type === 'pseq') {
+      // Parenthesized sense sequence
+      if (Array.isArray(data)) {
+        for (const nested of data) {
+          this.processSense(nested, partOfSpeech, meanings, limit);
+        }
+      }
+    }
+  }
+
+  private extractExampleFromSense(senseData: {
+    dt?: unknown[][];
+    sdsense?: { dt?: unknown[][] };
+  }): string | null {
+    let example = this.extractExampleFromDt(senseData.dt);
+    if (example) return example;
+
+    if (senseData.sdsense?.dt) {
+      example = this.extractExampleFromDt(senseData.sdsense.dt);
+      if (example) return example;
+    }
+
+    return null;
+  }
+
+  private extractExampleFromDt(dt?: unknown[][]): string | null {
     if (!dt) return null;
 
-    const textParts: string[] = [];
-
     for (const item of dt) {
-      if (Array.isArray(item) && item[0] === 'text') {
-        textParts.push(this.cleanMarkup(item[1] as string));
+      if (!Array.isArray(item)) continue;
+
+      const type = item[0];
+      const data = item[1];
+
+      // Direct verbal illustration
+      if (type === 'vis' && Array.isArray(data)) {
+        const examples = data as { t: string }[];
+        if (examples?.[0]?.t) {
+          return this.cleanMarkup(examples[0].t);
+        }
+      }
+
+      // Usage note sequence (uns)
+      if (type === 'uns' && Array.isArray(data)) {
+        for (const unsItem of data) {
+          if (
+            Array.isArray(unsItem) &&
+            unsItem[0] === 'vis' &&
+            Array.isArray(unsItem[1])
+          ) {
+            const examples = unsItem[1] as { t: string }[];
+            if (examples?.[0]?.t) {
+              return this.cleanMarkup(examples[0].t);
+            }
+          }
+        }
+      }
+
+      // Sense note (snote)
+      if (type === 'snote' && Array.isArray(data)) {
+        for (const snoteItem of data) {
+          if (
+            Array.isArray(snoteItem) &&
+            snoteItem[0] === 'vis' &&
+            Array.isArray(snoteItem[1])
+          ) {
+            const examples = snoteItem[1] as { t: string }[];
+            if (examples?.[0]?.t) {
+              return this.cleanMarkup(examples[0].t);
+            }
+          }
+        }
       }
     }
 
-    const combined = textParts.join(' ').trim();
-    return combined || null;
+    return null;
   }
 
   private extractDefinitionText(dt?: unknown[][]): string | null {
@@ -198,20 +338,6 @@ export class MWLearnersProvider implements DictionaryProvider {
     for (const item of dt) {
       if (Array.isArray(item) && item[0] === 'text') {
         return this.cleanMarkup(item[1] as string);
-      }
-    }
-    return null;
-  }
-
-  private extractExample(dt?: unknown[][]): string | null {
-    if (!dt) return null;
-
-    for (const item of dt) {
-      if (Array.isArray(item) && item[0] === 'vis') {
-        const examples = item[1] as { t: string }[];
-        if (examples?.[0]?.t) {
-          return this.cleanMarkup(examples[0].t);
-        }
       }
     }
     return null;
