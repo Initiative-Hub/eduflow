@@ -9,6 +9,7 @@ dependencies = [
     "python-multipart==0.0.30",
     "markitdown[pdf]==0.1.6",
     "modal==1.4.3",
+    "youtube-transcript-api>=1.2.4",
 ]
 
 [dependency-groups]

@@ -94,11 +94,15 @@ export class OpenRouterService implements ChatProviderService {
     const searchQuery = options.context
       ? `${options.context} ${markdownContent.slice(0, 150)}`
       : markdownContent.slice(0, 200);
-    const webContext = await WebSearchService.search(
-      searchQuery.trim(),
-      3,
-      true
-    );
+
+    const [webContext, youtubeContext] = await Promise.all([
+      WebSearchService.search(searchQuery.trim(), 3, true),
+      WebSearchService.search(
+        `${searchQuery.trim()} site:youtube.com`,
+        3,
+        true
+      ),
+    ]);
 
     const apiKey = options.apiKey ?? process.env.OPENROUTER_API_KEY;
     if (!apiKey)
@@ -116,7 +120,12 @@ export class OpenRouterService implements ChatProviderService {
         options.context
           ? `\n\n=== ADDITIONAL CONTEXT FROM INSTRUCTOR ===\n${options.context}`
           : ''
-      }\n\n=== SUPPLEMENTARY WEB CONTEXT ===\nUse the following web search results to enrich lesson content with current, real-world examples and up-to-date information:\n\n${webContext}`,
+      }\n\n=== SUPPLEMENTARY WEB CONTEXT ===\nUse the following web search results to enrich lesson content with current, real-world examples and up-to-date information:\n\n${webContext}\n\n=== SUPPLEMENTARY YOUTUBE VIDEOS ===
+For each module or lesson, pick the most relevant YouTube video from the list below if it matches the topic, and embed it at the end of the lesson's HTML content using this exact HTML structure:
+<div data-youtube-video=""><iframe src="https://www.youtube.com/embed/VIDEO_ID" width="640" height="480" allowfullscreen="true"></iframe></div>
+Extract the 11-character video ID from the search results to form the "/embed/VIDEO_ID" URL. Do NOT output standard links or plain paragraphs for the YouTube video URL; use only the exact div and iframe structure above. Only choose relevant videos from this list:
+
+${youtubeContext}`,
       providerOptions: options.providerOptions,
     });
 
