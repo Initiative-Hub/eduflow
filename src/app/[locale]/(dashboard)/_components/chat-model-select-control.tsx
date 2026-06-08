@@ -1,5 +1,6 @@
 'use client';
 
+import { ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 import {
   ModelSelector,
@@ -41,13 +42,16 @@ export function ChatModelSelectControl({
       <ModelSelectorTrigger asChild>
         <Button
           aria-label={label}
-          className="h-8 cursor-pointer gap-2 rounded-full border-none px-3 text-foreground text-sm hover:bg-muted-foreground/30"
+          className="h-9 max-w-44 cursor-pointer gap-2 rounded-full border-none px-3 text-foreground text-sm hover:bg-muted sm:max-w-56"
           disabled={disabled}
           type="button"
           variant="outline"
         >
           <ModelSelectorLogo provider="google" />
-          <ModelSelectorName>{selectedModelLabel}</ModelSelectorName>
+          <ModelSelectorName className="min-w-0 text-sm">
+            {selectedModelLabel}
+          </ModelSelectorName>
+          <ChevronDown className="size-4 text-muted-foreground" />
         </Button>
       </ModelSelectorTrigger>
       <ModelSelectorContent>

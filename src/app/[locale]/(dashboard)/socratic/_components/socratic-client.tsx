@@ -6,23 +6,23 @@ import { useTranslations } from 'next-intl';
 import type React from 'react';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import type { SocraticUIMessage } from '@/app/api/v1/ai/socratic/[chatId]/socratic.constants';
 import { Button } from '@/components/ui/button';
 import {
-  DEFAULT_SOCRATIC_DISCIPLINE,
-  type SocraticDiscipline,
+  DEFAULT_SOCRATIC_GUIDANCE_DEPTH,
+  type SocraticGuidanceDepth,
 } from '@/lib/validations/socratic.schema';
 import { type ChatModel, DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
+import type { SocraticUIMessage } from '@/types/socratic-ui-message';
 import { ChatInput } from '../../_components/chat-input';
 import { ChatSidebar } from '../../_components/chat-sidebar';
 import { ChatWorkspaceShell } from '../../_components/chat-workspace-shell';
 import { socraticService } from '../socratic.service';
 import { useSocratic } from '../use-socratic';
 import { SocraticDisciplineSelector } from './socratic-discipline-selector';
+import { SocraticGuidanceDepthControl } from './socratic-guidance-depth-control';
 
 interface SocraticClientProps {
   chatId?: string;
-  initialDiscipline?: SocraticDiscipline;
   initialMessages?: SocraticUIMessage[];
   isAuthenticated: boolean;
 }
@@ -33,15 +33,15 @@ const ChatView = dynamic(() =>
 
 export function SocraticClient({
   chatId,
-  initialDiscipline = DEFAULT_SOCRATIC_DISCIPLINE,
   initialMessages,
   isAuthenticated,
 }: SocraticClientProps) {
-  const [selectedDiscipline, setSelectedDiscipline] =
-    useState<SocraticDiscipline>(initialDiscipline);
+  const t = useTranslations('SocraticPage');
   const [selectedModel, setSelectedModel] =
     useState<ChatModel>(DEFAULT_CHAT_MODEL);
-  const t = useTranslations('SocraticPage');
+  const [guidanceDepth, setGuidanceDepth] = useState<SocraticGuidanceDepth>(
+    DEFAULT_SOCRATIC_GUIDANCE_DEPTH
+  );
 
   const {
     messages,
@@ -53,10 +53,10 @@ export function SocraticClient({
     maxMessages,
     userMessageCount,
   } = useSocratic({
-    discipline: selectedDiscipline,
     chatId,
     initialMessages,
     selectedModel,
+    guidanceDepth,
     isAuthenticated,
   });
 
@@ -78,14 +78,11 @@ export function SocraticClient({
 
   const handleSubmit = (e?: React.SyntheticEvent, customValue?: string) => {
     e?.preventDefault();
-    void submitText(customValue || '');
+    submitText(customValue || '');
   };
 
   const viewport = !hasOutput ? (
-    <SocraticDisciplineSelector
-      selected={selectedDiscipline}
-      onSelect={setSelectedDiscipline}
-    />
+    <SocraticDisciplineSelector onSelectPrompt={submitText} />
   ) : (
     <ChatView
       messages={messages}
@@ -119,6 +116,12 @@ export function SocraticClient({
             <span className="font-medium text-[11px]">{t('input.footer')}</span>
           </Button>
         </div>
+      }
+      tools={
+        <SocraticGuidanceDepthControl
+          guidanceDepth={guidanceDepth}
+          onGuidanceDepthChange={setGuidanceDepth}
+        />
       }
     />
   );

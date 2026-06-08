@@ -7,7 +7,7 @@ image = (
     .add_local_python_source("main")
 )
 
-app = modal.App("eduflow-markitdown-service", image=image)
+app = modal.App("eduflow-external-services", image=image)
 
 
 @app.function(cpu=1, memory=2048, timeout=300)

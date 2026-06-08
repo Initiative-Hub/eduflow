@@ -11,8 +11,6 @@ import type {
 import type { ChatProviderService } from './ChatProviderService';
 import { resolveChatSystemPrompt } from './chat-system-prompt';
 
-const PROVIDER_NAME = 'google';
-
 export class GoogleService implements ChatProviderService {
   async streamChat(
     input: StreamChatInput,
@@ -21,7 +19,7 @@ export class GoogleService implements ChatProviderService {
     const apiKey = input.apiKey ?? process.env.GOOGLE_GENERATIVE_AI_API_KEY;
 
     if (!apiKey) {
-      throw new Error(`Missing API key for provider "${PROVIDER_NAME}"`);
+      throw new Error(`Missing API key for provider "google"`);
     }
 
     const model = input.model ?? DEFAULT_MODELS.google;

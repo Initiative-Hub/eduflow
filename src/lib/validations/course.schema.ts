@@ -1,6 +1,4 @@
-import * as zod from 'zod';
-
-const z = (zod as any).z ?? (zod as any).default ?? zod;
+import { z } from 'zod';
 
 /**
  * Zod schema for the Course model
@@ -75,13 +73,13 @@ export const createLessonSchema = lessonSchema.omit({
 });
 
 // Types inferred from schemas
-export type Course = zod.infer<typeof courseSchema>;
-export type CreateCourse = zod.infer<typeof createCourseSchema>;
-export type UpdateCourse = zod.infer<typeof updateCourseSchema>;
-export type Module = zod.infer<typeof moduleSchema>;
-export type CreateModule = zod.infer<typeof createModuleSchema>;
-export type Lesson = zod.infer<typeof lessonSchema>;
-export type CreateLesson = zod.infer<typeof createLessonSchema>;
+export type Course = z.infer<typeof courseSchema>;
+export type CreateCourse = z.infer<typeof createCourseSchema>;
+export type UpdateCourse = z.infer<typeof updateCourseSchema>;
+export type Module = z.infer<typeof moduleSchema>;
+export type CreateModule = z.infer<typeof createModuleSchema>;
+export type Lesson = z.infer<typeof lessonSchema>;
+export type CreateLesson = z.infer<typeof createLessonSchema>;
 
 /**
  * Zod schema for AI course generation (structured output)
@@ -111,4 +109,4 @@ export const aiCourseGenerationSchema = z.object({
   ),
 });
 
-export type AICourseGeneration = zod.infer<typeof aiCourseGenerationSchema>;
+export type AICourseGeneration = z.infer<typeof aiCourseGenerationSchema>;

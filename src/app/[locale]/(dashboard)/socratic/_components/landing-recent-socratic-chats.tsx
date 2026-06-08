@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Link } from '@/i18n/navigation';
 import { socraticService } from '../socratic.service';
 
-const RECENT_SOCRATIC_SESSION_LIMIT = 5;
+const RECENT_SOCRATIC_SESSION_LIMIT = 3;
 
 export function LandingRecentSocraticChats() {
   const t = useTranslations('SocraticPage.recentSessions');

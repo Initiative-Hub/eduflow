@@ -24,8 +24,6 @@ export interface ChatListItem {
   updatedAt: string;
 }
 
-export type ChatMetadata = Prisma.JsonValue;
-
 interface ChatOwner {
   userId?: string;
   guestId?: string;
@@ -60,17 +58,6 @@ type CachedChat = ChatCacheData & {
 
 const getGuestChatIndexKey = (guestId: string, chatType: AiChatType) =>
   `guest_chats:${guestId}:${chatType}`;
-
-const normalizeSearch = (search?: string) => search?.trim().toLowerCase() ?? '';
-
-const getTitle = (firstMessage: string) =>
-  getMessagePreview(firstMessage) || 'New Chat';
-
-const toStoredRole = (role: UIMessage['role']) =>
-  AiChatRole[role.toUpperCase() as keyof typeof AiChatRole];
-
-const toUiRole = (role: string): UIMessage['role'] =>
-  role.toLowerCase() as UIMessage['role'];
 
 async function updateGuestChatIndex(
   guestId: string,
@@ -110,7 +97,7 @@ export class ChatPersistenceService {
     firstMessage: string;
     metadata?: Prisma.InputJsonValue;
   }) {
-    const title = getTitle(firstMessage);
+    const title = getMessagePreview(firstMessage) || 'New Chat';
 
     if (userId) {
       const chat = await prisma.aiChat.create({
@@ -118,7 +105,7 @@ export class ChatPersistenceService {
           userId,
           title,
           type: chatType,
-          ...(metadata !== undefined ? { metadata } : {}),
+          ...(metadata ? { metadata } : {}),
         },
         select: { id: true },
       });
@@ -135,9 +122,7 @@ export class ChatPersistenceService {
     const chatData: CachedChat = {
       ...buildNewChatData({ guestId, firstMessage }),
       type: chatType,
-      ...(metadata !== undefined
-        ? { metadata: metadata as Prisma.JsonValue }
-        : {}),
+      ...(metadata ? { metadata: metadata as Prisma.JsonValue } : {}),
       updatedAt,
     };
 
@@ -189,7 +174,7 @@ export class ChatPersistenceService {
 
       const messages = chat.messages.map((message) => ({
         id: message.id,
-        role: toUiRole(message.role),
+        role: message.role.toLowerCase(),
         parts: Array.isArray(message.parts) ? message.parts : [],
       })) as UIMessage[];
       const hydratedMessages = await hydrateChatAttachmentUrls({
@@ -280,7 +265,9 @@ export class ChatPersistenceService {
               id: message.id,
               chatId,
               userId,
-              role: toStoredRole(message.role),
+              role: AiChatRole[
+                message.role.toUpperCase() as keyof typeof AiChatRole
+              ],
               parts: message.parts as unknown as Prisma.InputJsonValue,
               provider,
               model,
@@ -342,7 +329,7 @@ export class ChatPersistenceService {
     offset,
     chatType = DEFAULT_CHAT_TYPE,
   }: ListChatsInput) {
-    const query = normalizeSearch(search);
+    const query = search?.trim().toLowerCase() ?? '';
 
     if (userId) {
       const where: Prisma.AiChatWhereInput = {
@@ -350,9 +337,7 @@ export class ChatPersistenceService {
         type: chatType,
         status: AiChatStatus.ACTIVE,
         deletedAt: null,
-        ...(query
-          ? { title: { contains: query, mode: 'insensitive' as const } }
-          : {}),
+        ...(query ? { title: { contains: query, mode: 'insensitive' } } : {}),
       };
 
       const [total, chats] = await Promise.all([

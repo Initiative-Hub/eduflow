@@ -77,6 +77,11 @@
     }
   },
   "AIChat": {
+    "actionMenu": {
+      "close": "Đóng tùy chọn",
+      "open": "Mở tùy chọn",
+      "uploadFiles": "Tải tệp lên"
+    },
     "attachments": {
       "add": "Đính kèm tệp",
       "defaultMessage": "Vui lòng sử dụng {count, plural, one {tệp đính kèm} other {các tệp đính kèm}}.",
@@ -1208,15 +1213,15 @@
     "submitting": "Đang nộp...",
     "true": "Đúng",
     "type": {
-      "drag-and-drop": "Kéo và thả",
+      "drag_and_drop": "Kéo và thả",
       "essay": "Tự luận",
-      "fill-in-the-blank": "Điền vào chỗ trống",
+      "fill_in_the_blank": "Điền vào chỗ trống",
       "flashcard": "Thẻ ghi nhớ",
       "matching": "Nối cặp",
-      "multiple-choice": "Trắc nghiệm",
+      "multiple_choice": "Trắc nghiệm",
       "ordering": "Sắp xếp thứ tự",
-      "timed-challenge": "Thử thách thời gian",
-      "true-false": "Đúng / Sai"
+      "timed_challenge": "Thử thách thời gian",
+      "true_false": "Đúng / Sai"
     }
   },
   "RoleSelection": {
@@ -1265,12 +1270,23 @@
     },
     "input": {
       "footer": "Chế độ Socratic đang bật • không cung cấp đáp án trực tiếp",
+      "guidanceDepth": {
+        "balanced": "Cân bằng",
+        "descriptions": {
+          "balanced": "Kết hợp câu hỏi gợi mở với mức cấu trúc vừa phải.",
+          "guidedSteps": "Cung cấp nhiều định hướng hơn nhưng vẫn giữ người học tham gia.",
+          "hint": "Giữ nhịp suy nghĩ bằng những gợi ý ngắn."
+        },
+        "guidedSteps": "Hướng dẫn từng bước",
+        "hint": "Gợi ý",
+        "label": "Mức độ hướng dẫn"
+      },
       "placeholder": "Đặt câu hỏi hoặc mô tả chỗ bạn đang mắc..."
     },
     "limitReachedToast": "Bạn đã đạt giới hạn {count} tin nhắn Socratic. Hãy bắt đầu phiên mới để tiếp tục.",
     "recentSessions": {
       "description": "Quay lại các câu hỏi gợi mở và mạch suy luận trước đây.",
-      "empty": "Chưa có phiên Socratic. Hãy chọn một lĩnh vực và hỏi phần bạn đang mắc.",
+      "empty": "Chưa có phiên Socratic. Hãy chọn một thẻ gợi ý hoặc hỏi phần bạn đang mắc.",
       "error": "Hiện không thể tải các phiên Socratic gần đây.",
       "openChat": "Mở phiên Socratic {title}",
       "title": "Phiên Socratic gần đây",
@@ -1305,7 +1321,7 @@
       "title": "Lịch sử Socratic",
       "untitled": "Phiên Socratic chưa đặt tên"
     },
-    "subtitle": "Hãy chọn một lĩnh vực để bắt đầu đối thoại <mark>Socratic</mark>. Tôi sẽ không đưa đáp án; tôi sẽ đặt những câu hỏi giúp bạn tự tìm ra chúng.",
+    "subtitle": "Hãy chọn một gợi ý bắt đầu hoặc hỏi trực tiếp để mở đối thoại <mark>Socratic</mark>. Tôi sẽ không đưa đáp án; tôi sẽ đặt những câu hỏi giúp bạn tự tìm ra chúng.",
     "title": "Hôm nay tôi có thể <accent>gợi mở</accent> tư duy của bạn như thế nào?"
   },
   "StudyPage": {
