@@ -8,7 +8,7 @@ import type React from 'react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import type { WritingTool } from '@/lib/validations/writing.schema';
-import { type ChatModel, DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
+import { DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
 import { ChatInput } from '../../_components/chat-input';
 import { ChatSidebar } from '../../_components/chat-sidebar';
 import { ChatWorkspaceShell } from '../../_components/chat-workspace-shell';
@@ -31,25 +31,24 @@ export default function WritingClient({
   initialTool = 'caption',
   initialMessages,
 }: WritingClientProps) {
-  const [selectedTool, setSelectedTool] = useState<WritingTool>(initialTool);
-  const [selectedModel, setSelectedModel] =
-    useState<ChatModel>(DEFAULT_CHAT_MODEL);
   const t = useTranslations('AIChat');
+  const [selectedTool, setSelectedTool] = useState<WritingTool>(initialTool);
 
   const {
     messages,
-    isStreaming,
-    startChat,
-    stop,
-    hasOutput,
-    isLimitReached,
     maxMessages,
     userMessageCount,
+    hasOutput,
+    pendingModel,
+    isStreaming,
+    isLimitReached,
+    setPendingModel,
+    startChat,
+    stop,
   } = useWriting({
     tool: selectedTool,
     chatId,
     initialMessages,
-    selectedModel,
   });
 
   const notifyLimitReached = () => {
@@ -87,8 +86,8 @@ export default function WritingClient({
       limitCount={maxMessages}
       userMessageCount={userMessageCount}
       onStop={stop}
-      selectedModel={selectedModel}
-      onModelChange={setSelectedModel}
+      selectedModel={pendingModel ?? DEFAULT_CHAT_MODEL}
+      onModelChange={setPendingModel}
     />
   );
 

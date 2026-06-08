@@ -5,9 +5,12 @@ import { useEffect, useMemo, useRef } from 'react';
 import { toast } from 'sonner';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import type { WritingTool } from '@/lib/validations/writing.schema';
-import type { ChatModel } from '@/services/ai/chat-models';
+import { DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
 import { useChatSessionStore } from '@/stores/useChatSessionStore';
-import { hasReachedUserMessageLimit } from '@/utils/chat-limit';
+import {
+  getUserMessageCount,
+  hasReachedUserMessageLimit,
+} from '@/utils/chat-limit';
 import { writingService } from './writing.service';
 
 const MAX_USER_MESSAGES = 5;
@@ -16,14 +19,12 @@ interface UseWritingOptions {
   tool: WritingTool;
   chatId?: string;
   initialMessages?: UIMessage[];
-  selectedModel: ChatModel;
 }
 
 export const useWriting = ({
   tool,
   chatId,
   initialMessages = [],
-  selectedModel,
 }: UseWritingOptions) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -34,17 +35,12 @@ export const useWriting = ({
     pendingMessage,
     pendingChatId,
     pendingModel,
-    setOptimisticChatId,
-    setOptimisticMessages,
     setPendingMessage,
-    setPendingChatId,
-    setPendingModel,
-    optimisticChatId,
-    optimisticMessages,
     clearPendingMessage,
+    setPendingChatId,
     clearPendingChatId,
+    setPendingModel,
     clearPendingModel,
-    clearOptimisticMessages,
   } = useChatSessionStore();
 
   const createSessionMutation = useMutation({
@@ -55,7 +51,7 @@ export const useWriting = ({
   });
 
   const createUserMessage = (text: string): UIMessage => ({
-    id: `msg_${crypto.randomUUID()}`,
+    id: crypto.randomUUID(),
     role: 'user',
     parts: [{ type: 'text', text }],
   });
@@ -73,6 +69,7 @@ export const useWriting = ({
   const { messages, status, sendMessage, stop } = useChat({
     id: chatId,
     messages: initialMessages,
+    generateId: () => crypto.randomUUID(),
     transport,
     onError(error) {
       console.error('Chat error:', error);
@@ -82,58 +79,44 @@ export const useWriting = ({
     },
   });
 
-  const optimisticForChat =
-    optimisticChatId && optimisticChatId === chatId ? optimisticMessages : [];
-  const displayMessages = messages.length > 0 ? messages : optimisticForChat;
+  const pendingForChat =
+    pendingChatId && pendingChatId === chatId && pendingMessage
+      ? [pendingMessage]
+      : [];
+  const displayMessages = messages.length > 0 ? messages : pendingForChat;
+  const userMessageCount = getUserMessageCount(displayMessages);
 
   useEffect(() => {
     if (!pendingMessage || !pendingChatId || !chatId) return;
     if (pendingChatId !== chatId) return;
     if (!pathname?.includes(`/writing/${pendingChatId}`)) return;
 
-    const pendingKey = `${pendingChatId}:${pendingMessage}`;
+    const pendingKey = `${pendingChatId}:${JSON.stringify(pendingMessage)}`;
     if (lastPendingSendRef.current === pendingKey) return;
-
-    const inputModel = pendingModel ?? selectedModel;
 
     lastPendingSendRef.current = pendingKey;
     clearPendingMessage();
     clearPendingChatId();
     clearPendingModel();
 
-    sendMessage(
-      { text: pendingMessage },
-      {
-        body: {
-          tool,
-          provider: 'openrouter',
-          model: inputModel,
-        },
-      }
-    );
+    sendMessage(pendingMessage, {
+      body: {
+        tool,
+        provider: 'openrouter',
+        model: pendingModel ?? DEFAULT_CHAT_MODEL,
+      },
+    });
   }, [
     pendingMessage,
     pendingChatId,
     pendingModel,
     chatId,
     pathname,
-    selectedModel,
     tool,
     sendMessage,
     clearPendingMessage,
     clearPendingChatId,
     clearPendingModel,
-  ]);
-
-  useEffect(() => {
-    if (messages.length === 0 || optimisticMessages.length === 0) return;
-    clearOptimisticMessages();
-    setOptimisticChatId(null);
-  }, [
-    messages.length,
-    optimisticMessages.length,
-    clearOptimisticMessages,
-    setOptimisticChatId,
   ]);
 
   const isLimitReached = hasReachedUserMessageLimit(
@@ -150,11 +133,9 @@ export const useWriting = ({
         await queryClient.invalidateQueries({
           queryKey: ['writing-chat-list'],
         });
-        setOptimisticChatId(newChatId);
-        setOptimisticMessages([createUserMessage(text)]);
-        setPendingMessage(text);
+        setPendingMessage(createUserMessage(text));
         setPendingChatId(newChatId);
-        setPendingModel(selectedModel);
+        setPendingModel(pendingModel ?? DEFAULT_CHAT_MODEL);
 
         router.push(`/writing/${newChatId}`);
       } catch (error) {
@@ -173,7 +154,7 @@ export const useWriting = ({
         body: {
           tool,
           provider: 'openrouter',
-          model: selectedModel,
+          model: pendingModel ?? DEFAULT_CHAT_MODEL,
         },
       }
     );
@@ -181,12 +162,14 @@ export const useWriting = ({
 
   return {
     messages: displayMessages,
-    startChat,
-    isStreaming,
-    stop,
-    hasOutput: displayMessages.length > 0,
-    isLimitReached,
+    userMessageCount,
     maxMessages: MAX_USER_MESSAGES,
-    userMessageCount: displayMessages.filter((m) => m.role === 'user').length,
+    hasOutput: displayMessages.length > 0,
+    pendingModel,
+    isStreaming,
+    isLimitReached,
+    setPendingModel,
+    startChat,
+    stop,
   };
 };

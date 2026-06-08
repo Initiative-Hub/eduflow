@@ -6,7 +6,7 @@ import { DefaultChatTransport, type UIMessage } from 'ai';
 import { useEffect, useMemo, useRef } from 'react';
 import { toast } from 'sonner';
 import { usePathname, useRouter } from '@/i18n/navigation';
-import type { ChatModel } from '@/services/ai/chat-models';
+import { DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
 import { useChatSessionStore } from '@/stores/useChatSessionStore';
 import type { ChatFileUIPart } from '@/types/chat-attachments';
 import {
@@ -22,14 +22,12 @@ interface UseChatControllerOptions {
   chatId?: string;
   initialMessages?: UIMessage[];
   isAuthenticated: boolean;
-  selectedModel: ChatModel;
 }
 
 export const useChatController = ({
   chatId: initialChatId,
   initialMessages = [],
   isAuthenticated,
-  selectedModel,
 }: UseChatControllerOptions) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -37,22 +35,13 @@ export const useChatController = ({
   const lastPendingSendRef = useRef<string | null>(null);
   const {
     pendingMessage,
-    pendingFiles,
     pendingChatId,
     pendingModel,
-    optimisticChatId,
-    optimisticMessages,
     setPendingMessage,
     clearPendingMessage,
-    setPendingFiles,
-    clearPendingFiles,
     setPendingChatId,
     clearPendingChatId,
     setPendingModel,
-    clearPendingModel,
-    setOptimisticChatId,
-    setOptimisticMessages,
-    clearOptimisticMessages,
   } = useChatSessionStore();
 
   const transport = useMemo(
@@ -78,11 +67,11 @@ export const useChatController = ({
     },
   });
 
-  const optimisticForChat =
-    optimisticChatId && optimisticChatId === initialChatId
-      ? optimisticMessages
+  const pendingForChat =
+    pendingChatId && pendingChatId === initialChatId && pendingMessage
+      ? [pendingMessage]
       : [];
-  const displayMessages = messages.length > 0 ? messages : optimisticForChat;
+  const displayMessages = messages.length > 0 ? messages : pendingForChat;
   const userMessageCount = getUserMessageCount(displayMessages);
   const isLimitReached = isAuthenticated
     ? false
@@ -94,53 +83,28 @@ export const useChatController = ({
     if (pendingChatId !== initialChatId) return;
     if (!pathname?.includes(`/chat/${pendingChatId}`)) return;
 
-    const pendingFileIds = pendingFiles.map((file) => file.fileId).join(',');
-    const pendingKey = `${pendingChatId}:${pendingMessage}:${pendingFileIds}`;
+    const pendingKey = `${pendingChatId}:${JSON.stringify(pendingMessage)}`;
     if (lastPendingSendRef.current === pendingKey) return;
-
-    const inputModel = pendingModel ?? selectedModel;
 
     lastPendingSendRef.current = pendingKey;
     clearPendingMessage();
-    clearPendingFiles();
     clearPendingChatId();
-    clearPendingModel();
 
-    sendMessage(
-      pendingFiles.length > 0
-        ? { text: pendingMessage, files: pendingFiles }
-        : { text: pendingMessage },
-      {
-        body: {
-          provider: 'openrouter',
-          model: inputModel,
-        },
-      }
-    );
+    sendMessage(pendingMessage, {
+      body: {
+        provider: 'openrouter',
+        model: pendingModel ?? DEFAULT_CHAT_MODEL,
+      },
+    });
   }, [
     clearPendingChatId,
-    clearPendingFiles,
-    clearPendingModel,
     clearPendingMessage,
     pendingMessage,
-    pendingFiles,
     pendingChatId,
     pendingModel,
     initialChatId,
     pathname,
-    selectedModel,
     sendMessage,
-  ]);
-
-  useEffect(() => {
-    if (messages.length === 0 || optimisticMessages.length === 0) return;
-    clearOptimisticMessages();
-    setOptimisticChatId(null);
-  }, [
-    messages.length,
-    optimisticMessages.length,
-    clearOptimisticMessages,
-    setOptimisticChatId,
   ]);
 
   const createChatMutation = useMutation({
@@ -154,7 +118,7 @@ export const useChatController = ({
     text: string,
     files: ChatFileUIPart[] = []
   ): UIMessage => ({
-    id: `msg_${crypto.randomUUID()}`,
+    id: crypto.randomUUID(),
     role: 'user',
     parts: [...files, { type: 'text', text }],
   });
@@ -165,12 +129,9 @@ export const useChatController = ({
         const newChatId = await createChatMutation.mutateAsync(text);
         const uploadedFiles = await uploadChatAttachments(files, newChatId);
         await queryClient.invalidateQueries({ queryKey: ['chat-list'] });
-        setOptimisticChatId(newChatId);
-        setOptimisticMessages([createUserMessage(text, uploadedFiles)]);
-        setPendingMessage(text);
-        setPendingFiles(uploadedFiles);
+        setPendingMessage(createUserMessage(text, uploadedFiles));
         setPendingChatId(newChatId);
-        setPendingModel(selectedModel);
+        setPendingModel(pendingModel ?? DEFAULT_CHAT_MODEL);
         router.push(`/chat/${newChatId}`);
       } catch (error) {
         const message =
@@ -187,20 +148,22 @@ export const useChatController = ({
       {
         body: {
           provider: 'openrouter',
-          model: selectedModel,
+          model: pendingModel ?? DEFAULT_CHAT_MODEL,
         },
       }
     );
   };
 
   return {
-    displayMessages,
-    isStreaming,
-    isChatting: displayMessages.length > 0,
-    isLimitReached,
+    messages: displayMessages,
     userMessageCount,
+    maxMessages: MAX_USER_MESSAGES,
+    hasOutput: displayMessages.length > 0,
+    pendingModel,
+    isStreaming,
+    isLimitReached,
+    setPendingModel,
     startChat,
     stop,
-    maxMessages: MAX_USER_MESSAGES,
   };
 };
