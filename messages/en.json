@@ -1213,15 +1213,15 @@
     "submitting": "Submitting...",
     "true": "True",
     "type": {
-      "drag-and-drop": "Drag & Drop",
+      "drag_and_drop": "Drag & Drop",
       "essay": "Essay",
-      "fill-in-the-blank": "Fill in the Blank",
+      "fill_in_the_blank": "Fill in the Blank",
       "flashcard": "Flashcard",
       "matching": "Matching",
-      "multiple-choice": "Multiple Choice",
+      "multiple_choice": "Multiple Choice",
       "ordering": "Ordering",
-      "timed-challenge": "Timed Challenge",
-      "true-false": "True / False"
+      "timed_challenge": "Timed Challenge",
+      "true_false": "True / False"
     }
   },
   "RoleSelection": {

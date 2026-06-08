@@ -329,7 +329,7 @@ wheels = [
 ]
 
 [[package]]
-name = "eduflow-markitdown-service"
+name = "eduflow-external-services"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

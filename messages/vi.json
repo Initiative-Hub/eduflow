@@ -1213,15 +1213,15 @@
     "submitting": "Đang nộp...",
     "true": "Đúng",
     "type": {
-      "drag-and-drop": "Kéo và thả",
+      "drag_and_drop": "Kéo và thả",
       "essay": "Tự luận",
-      "fill-in-the-blank": "Điền vào chỗ trống",
+      "fill_in_the_blank": "Điền vào chỗ trống",
       "flashcard": "Thẻ ghi nhớ",
       "matching": "Nối cặp",
-      "multiple-choice": "Trắc nghiệm",
+      "multiple_choice": "Trắc nghiệm",
       "ordering": "Sắp xếp thứ tự",
-      "timed-challenge": "Thử thách thời gian",
-      "true-false": "Đúng / Sai"
+      "timed_challenge": "Thử thách thời gian",
+      "true_false": "Đúng / Sai"
     }
   },
   "RoleSelection": {
