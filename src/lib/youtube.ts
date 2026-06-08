@@ -1,5 +1,5 @@
 /**
- * Utility to fetch transcript from YouTube URL/ID using the external MarkItDown/Transcript service.
+ * Utility to fetch transcript from YouTube URL/ID using the Python external Transcript service.
  */
 export interface YouTubeTranscriptResponse {
   title: string;
@@ -17,7 +17,7 @@ export async function fetchYouTubeTranscript(
   languages: string[] = ['en']
 ): Promise<YouTubeTranscriptResponse> {
   const baseUrl = (
-    process.env.MARKITDOWN_ENDPOINT_URL || 'http://localhost:8000/'
+    process.env.EXTERNAL_SERVICE_URL || 'http://localhost:8000'
   ).replace(/\/$/, '');
   const endpoint = `${baseUrl}/transcript`;
 
