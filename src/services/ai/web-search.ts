@@ -6,10 +6,15 @@ import * as z from 'zod';
 const webSearchSourceSchema = z.object({
   title: z.string().describe('The title of the source returned by web search.'),
   url: z.string().describe('The canonical URL of the source.'),
-  content: z
+  summary: z
     .string()
     .describe(
       'A concise source summary or extracted content useful for course generation.'
+    ),
+  content: z
+    .string()
+    .describe(
+      'The full raw text content extracted from the source, which may include key excerpts or relevant information for course generation.'
     ),
 });
 
@@ -66,11 +71,11 @@ async function generateSearchContext({
           searchDepth: 'advanced',
           includeAnswer: true,
           includeRawContent: 'text',
-          maxResults: 3,
+          maxResults: 5,
           topic: 'general',
         }),
       },
-      stopWhen: stepCountIs(4),
+      stopWhen: stepCountIs(3),
       system:
         'You turn Tavily search results into structured source context for an educational course generator. Preserve source titles, URLs, and useful source content.',
       prompt:
@@ -78,6 +83,8 @@ async function generateSearchContext({
           ? `Search for current, reliable web context for this course topic. Return the most useful sources with title, url, and content fields.\n\nQuery: ${searchQuery}`
           : `Search for relevant YouTube videos for this course topic. Return only useful video sources with title, url, and content fields so a course generator can choose an embeddable lesson video.\n\nQuery: ${searchQuery}`,
     });
+
+    console.log(`Generated ${purpose} context:`, result.output);
 
     return result.output;
   } catch (error) {
