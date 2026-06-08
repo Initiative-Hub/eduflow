@@ -1308,44 +1308,6 @@
     "subtitle": "Hãy chọn một lĩnh vực để bắt đầu đối thoại <mark>Socratic</mark>. Tôi sẽ không đưa đáp án; tôi sẽ đặt những câu hỏi giúp bạn tự tìm ra chúng.",
     "title": "Hôm nay tôi có thể <accent>gợi mở</accent> tư duy của bạn như thế nào?"
   },
-  "StudyPage": {
-    "description": "Khám phá các nhóm môn học mà trợ lý này sẽ hỗ trợ, từ giải bài đến ngôn ngữ và khoa học xã hội.",
-    "subjects": {
-      "biology": {
-        "description": "Lần theo hệ thống, bằng chứng và quan hệ nguyên nhân - kết quả.",
-        "title": "Sinh học"
-      },
-      "chemistry": {
-        "description": "Suy luận về phản ứng, liên kết và biến đổi ở cấp độ hạt.",
-        "title": "Hóa học"
-      },
-      "english": {
-        "description": "Khám phá ngữ pháp, đọc hiểu, từ vựng và cách chỉnh sửa.",
-        "title": "Tiếng Anh"
-      },
-      "geography": {
-        "description": "Tìm hiểu bản đồ, mô hình không gian, vùng miền và môi trường.",
-        "title": "Địa lý"
-      },
-      "history": {
-        "description": "Phân tích nguyên nhân, bằng chứng, dòng thời gian và góc nhìn.",
-        "title": "Lịch sử"
-      },
-      "math": {
-        "description": "Từng bước xử lý khái niệm, chứng minh và bài toán.",
-        "title": "Toán"
-      },
-      "other": {
-        "description": "Dùng câu hỏi gợi mở cho bất kỳ chủ đề nào bạn muốn hiểu.",
-        "title": "Môn học khác"
-      },
-      "physics": {
-        "description": "Kết nối công thức, đơn vị, sơ đồ và trực giác vật lý.",
-        "title": "Vật lý"
-      }
-    },
-    "title": "Khám phá các môn học quen thuộc"
-  },
   "WritingPage": {
     "recentSessions": {
       "description": "Quay lại các bản nháp, phần viết lại và phiên chỉnh sửa gần đây.",
