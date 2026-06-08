@@ -415,8 +415,9 @@ export class CourseService {
     courseId: string;
     fileId?: string;
     file?: File;
-    apiKey?: string;
     context?: string;
+    apiKey?: string;
+    model?: string;
   }): ReadableStream<string> {
     const { readable, writable } = new TransformStream<string, string>();
     const writer = writable.getWriter();
@@ -431,15 +432,16 @@ export class CourseService {
             userId: data.userId,
             fileId: data.fileId,
             file: data.file,
-            apiKey: data.apiKey,
             context: data.context,
+            apiKey: data.apiKey,
+            model: data.model,
             onFinish: async ({ object }) => {
               if (!object) return;
               // Emit save event before persisting
-              await writer.write(JSON.stringify({ type: 'save' }) + '\n');
+              await writer.write(`${JSON.stringify({ type: 'save' })}\n`);
               await CourseService.saveGeneratedCourseData(
                 data.courseId,
-                object as AICourseGeneration
+                object
               );
             },
           },
@@ -447,7 +449,7 @@ export class CourseService {
         );
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Unknown error';
-        await writer.write(JSON.stringify({ type: 'error', message }) + '\n');
+        await writer.write(`${JSON.stringify({ type: 'error', message })}\n`);
       } finally {
         await writer.close();
       }

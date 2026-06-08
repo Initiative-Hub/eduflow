@@ -12,16 +12,13 @@ import type {
 import type { ChatProviderService } from './ChatProviderService';
 import { resolveChatSystemPrompt } from './chat-system-prompt';
 
-const PROVIDER_NAME = 'ai-gateway';
-
 export class AIGatewayService implements ChatProviderService {
   async streamChat(
     input: StreamChatInput,
     options?: StreamChatInternalOptions
   ) {
     const apiKey = input.apiKey ?? process.env.AI_GATEWAY_API_KEY;
-    if (!apiKey)
-      throw new Error(`Missing API key for provider "${PROVIDER_NAME}"`);
+    if (!apiKey) throw new Error(`Missing API key for provider "ai-gateway"`);
 
     const model = input.model ?? DEFAULT_MODELS['ai-gateway'];
     const provider = createGateway({ apiKey });

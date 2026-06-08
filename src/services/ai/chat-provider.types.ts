@@ -22,10 +22,10 @@ export type StreamCourseInput = {
   userId: string;
   fileId?: string;
   file?: File;
+  context?: string;
   model?: string;
   apiKey?: string;
-  context?: string;
-  providerOptions?: any;
+  providerOptions?: ProviderOptions;
   onFinish?: (event: {
     object: AICourseGeneration;
   }) => PromiseLike<void> | void;

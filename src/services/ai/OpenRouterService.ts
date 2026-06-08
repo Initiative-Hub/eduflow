@@ -31,12 +31,10 @@ import type {
   StreamCourseInput,
 } from '@/services/ai/chat-provider.types';
 import { WebSearchService } from '@/services/WebSearchService';
+import type { CourseStreamEvent } from '@/types/course-stream-event';
 import { StorageService } from '../StorageService';
 import type { ChatProviderService } from './ChatProviderService';
 import { resolveChatSystemPrompt } from './chat-system-prompt';
-import type { CourseStreamEvent } from './course-stream.types';
-
-const PROVIDER_NAME = 'openrouter';
 
 export class OpenRouterService implements ChatProviderService {
   async streamChat(
@@ -44,8 +42,7 @@ export class OpenRouterService implements ChatProviderService {
     options?: StreamChatInternalOptions
   ) {
     const apiKey = input.apiKey ?? process.env.OPENROUTER_API_KEY;
-    if (!apiKey)
-      throw new Error(`Missing API key for provider "${PROVIDER_NAME}"`);
+    if (!apiKey) throw new Error(`Missing API key for provider "openrouter"`);
 
     const model = input.model ?? DEFAULT_MODELS.openrouter;
     const provider = createOpenRouter({ apiKey });
@@ -105,14 +102,13 @@ export class OpenRouterService implements ChatProviderService {
     ]);
 
     const apiKey = options.apiKey ?? process.env.OPENROUTER_API_KEY;
-    if (!apiKey)
-      throw new Error(`Missing API key for provider "${PROVIDER_NAME}"`);
+    if (!apiKey) throw new Error(`Missing API key for provider "openrouter"`);
 
     const model = options.model ?? DEFAULT_MODELS.openrouter;
     const provider = createOpenRouter({ apiKey });
 
     // Step 3 — AI generation: stream raw text deltas
-    const aiStream = streamText({
+    const result = streamText({
       model: provider(model),
       output: Output.object({ schema: aiCourseGenerationSchema }),
       system: COURSE_GENERATION_PROMPT,
@@ -129,11 +125,11 @@ ${youtubeContext}`,
       providerOptions: options.providerOptions,
     });
 
-    for await (const chunk of aiStream.textStream) {
+    for await (const chunk of result.textStream) {
       await emit({ type: 'generate', delta: chunk });
     }
 
-    const generatedCourse = await aiStream.output;
+    const generatedCourse = await result.output;
     await options.onFinish?.({ object: generatedCourse });
     await emit({ type: 'done' });
   }
@@ -141,8 +137,7 @@ ${youtubeContext}`,
   // Create quiz based on quiz type
   async createQuiz(options: AIQuizInput) {
     const apiKey = options.apiKey ?? process.env.OPENROUTER_API_KEY;
-    if (!apiKey)
-      throw new Error(`Missing API key for provider "${PROVIDER_NAME}"`);
+    if (!apiKey) throw new Error(`Missing API key for provider "openrouter"`);
 
     const model = options.model ?? DEFAULT_MODELS.openrouter;
     const provider = createOpenRouter({ apiKey });
@@ -171,16 +166,18 @@ ${youtubeContext}`,
     const aiSchema = createQuizSchema(aiQuestionSchema);
 
     const count = parseInt(options.questionNumbers, 10) || 5;
-    const prompt = `Generate a complete, high-quality educational Quiz object containing exactly ${count} questions of type "${options.quizType}".
-${options.topic ? `The quiz topic or theme is: "${options.topic}".` : ''}
-${options.content ? `Generate the quiz based on the following content:\n\n${options.content}` : 'Generate interesting educational questions.'}
+    const prompt = `
+      Generate a complete, high-quality educational Quiz object containing exactly ${count} questions of type "${options.quizType}".
+      ${options.topic ? `The quiz topic or theme is: "${options.topic}".` : ''}
+      ${options.content ? `Generate the quiz based on the following content:\n\n${options.content}` : 'Generate interesting educational questions.'}
 
-Instructions:
-1. Provide a clear, engaging title and description for the quiz.
-2. Set category, subType, deliveryMode, and selectionMethod appropriately for the quizType.
-3. Generate exactly ${count} questions in the questions array.
-4. Ensure all option, blank, zone, and item IDs are unique (e.g. opt1, opt2, blank1, zone1, item1, left1, right1).
-5. Provide helpful explanations for each question.`;
+      Instructions:
+      1. Provide a clear, engaging title and description for the quiz.
+      2. Set category, subType, deliveryMode, and selectionMethod appropriately for the quizType.
+      3. Generate exactly ${count} questions in the questions array.
+      4. Ensure all option, blank, zone, and item IDs are unique (e.g. opt1, opt2, blank1, zone1, item1, left1, right1).
+      5. Provide helpful explanations for each question.
+    `;
 
     const response = await generateText({
       model: provider(model),
