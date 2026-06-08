@@ -1308,6 +1308,33 @@
     "subtitle": "Select a discipline to begin a <mark>Socratic</mark> dialogue. I won't give you answers; I will ask the questions that help you find them.",
     "title": "How can I <accent>guide</accent> your thinking today?"
   },
+  "StudyPage": {
+    "aiActive": "AI Processing Active",
+    "features": {
+      "keywordSummaries": {
+        "description": "Extract critical terminology and concepts with detailed contextual explanations.",
+        "title": "Keyword Summaries"
+      },
+      "practiceTests": {
+        "description": "Challenge yourself with AI-generated multiple choice, short answer, and flashcard sets.",
+        "title": "Create Practice Tests"
+      },
+      "reviewMaterials": {
+        "description": "Synthesize key concepts and definitions from your sources into digestible study guides.",
+        "title": "Generate Review Materials"
+      }
+    },
+    "recentSessions": {
+      "title": "Recent Sessions",
+      "viewAll": "View All"
+    },
+    "subtitle": "Transform your materials into academic insights.",
+    "title": "Study Assistant",
+    "upload": {
+      "description": "Drag and drop PDF, Word, or Images here.",
+      "title": "Upload Materials to Start"
+    }
+  },
   "WritingPage": {
     "recentSessions": {
       "description": "Return to drafts, rewrites, and polished writing sessions.",

@@ -1308,6 +1308,33 @@
     "subtitle": "Hãy chọn một lĩnh vực để bắt đầu đối thoại <mark>Socratic</mark>. Tôi sẽ không đưa đáp án; tôi sẽ đặt những câu hỏi giúp bạn tự tìm ra chúng.",
     "title": "Hôm nay tôi có thể <accent>gợi mở</accent> tư duy của bạn như thế nào?"
   },
+  "StudyPage": {
+    "aiActive": "AI Đang Hoạt Động",
+    "features": {
+      "keywordSummaries": {
+        "description": "Trích xuất thuật ngữ và khái niệm quan trọng với giải thích chi tiết theo ngữ cảnh.",
+        "title": "Tóm Tắt Từ Khóa"
+      },
+      "practiceTests": {
+        "description": "Thử thách bản thân với các câu hỏi trắc nghiệm, câu hỏi ngắn và thẻ ghi nhớ do AI tạo ra.",
+        "title": "Tạo Bài Kiểm Tra Thực Hành"
+      },
+      "reviewMaterials": {
+        "description": "Tổng hợp các khái niệm và định nghĩa chính từ nguồn tài liệu thành hướng dẫn học tập dễ hiểu.",
+        "title": "Tạo Tài Liệu Ôn Tập"
+      }
+    },
+    "recentSessions": {
+      "title": "Phiên Gần Đây",
+      "viewAll": "Xem Tất Cả"
+    },
+    "subtitle": "Biến tài liệu của bạn thành kiến thức học thuật sâu sắc.",
+    "title": "Trợ Lý Học Tập",
+    "upload": {
+      "description": "Kéo và thả PDF, Word hoặc Hình ảnh vào đây.",
+      "title": "Tải Lên Tài Liệu Để Bắt Đầu"
+    }
+  },
   "WritingPage": {
     "recentSessions": {
       "description": "Quay lại các bản nháp, phần viết lại và phiên chỉnh sửa gần đây.",
