@@ -1,9 +1,4 @@
-import {
-  BookMarked,
-  ClipboardList,
-  Sparkles,
-  Tag,
-} from 'lucide-react';
+import { BookMarked, ClipboardList, Tag } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import { Card } from '@/components/ui/card';
 import { StudyUploadZone } from './study-upload-zone';
@@ -35,16 +30,18 @@ export async function StudyClient() {
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-8">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="font-black font-heading text-2xl text-foreground tracking-tight">
-            {t('title')}
+      <div className="space-y-8 px-4 pt-6 text-center">
+        <div className="relative flex flex-col items-center text-center">
+          <h1 className="mt-5 font-black font-heading text-3xl text-foreground leading-tight tracking-tight sm:text-4xl lg:text-5xl">
+            {t.rich('title', {
+              accent: (chunks) => (
+                <span className="text-primary italic">{chunks}</span>
+              ),
+            })}
           </h1>
-          <p className="mt-1 text-muted-foreground text-sm">{t('subtitle')}</p>
-        </div>
-        <div className="flex shrink-0 items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 font-medium text-amber-600 text-xs dark:border-amber-800/40 dark:bg-amber-950/30 dark:text-amber-400">
-          <Sparkles className="size-3" />
-          {t('aiActive')}
+          <p className="mt-4 max-w-2xl text-balance text-base text-muted-foreground leading-7 sm:text-lg">
+            {t('subtitle')}
+          </p>
         </div>
       </div>
 
