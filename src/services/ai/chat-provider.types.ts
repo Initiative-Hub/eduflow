@@ -1,5 +1,5 @@
 import type { ProviderOptions } from '@ai-sdk/provider-utils';
-import type { StreamObjectOnFinishCallback, UIMessage } from 'ai';
+import type { UIMessage } from 'ai';
 
 import type { AICourseGeneration } from '@/lib/validations/course.schema';
 
@@ -23,11 +23,13 @@ export type StreamCourseInput = {
   userId: string;
   fileId?: string;
   file?: File;
+  context?: string;
   model?: string;
   apiKey?: string;
-  context?: string;
-  providerOptions?: any;
-  onFinish?: StreamObjectOnFinishCallback<AICourseGeneration>;
+  providerOptions?: ProviderOptions;
+  onFinish?: (event: {
+    object: AICourseGeneration;
+  }) => PromiseLike<void> | void;
 };
 
 export type AIQuizInput = {

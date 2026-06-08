@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useRef, useState } from 'react';
-import type { CourseStreamEvent } from '@/services/ai/course-stream.types';
+import type { CourseStreamEvent } from '@/types/course-stream-event';
 
 export type GenerationStep =
   | 'extract'
@@ -33,6 +33,7 @@ export interface UseGenerateCourseReturn {
     file?: File;
     context?: string;
     apiKey?: string;
+    model?: string;
   }) => Promise<void>;
   reset: () => void;
 }
@@ -105,6 +106,7 @@ export function useGenerateCourse(
       file?: File;
       context?: string;
       apiKey?: string;
+      model?: string;
     }) => {
       reset();
       setIsRunning(true);
@@ -120,6 +122,7 @@ export function useGenerateCourse(
           fd.append('file', params.file);
           if (params.context) fd.append('context', params.context);
           if (params.apiKey) fd.append('apiKey', params.apiKey);
+          if (params.model) fd.append('model', params.model);
           body = fd;
         } else {
           body = JSON.stringify({
@@ -127,6 +130,7 @@ export function useGenerateCourse(
             fileId: params.fileId,
             context: params.context,
             apiKey: params.apiKey,
+            model: params.model,
           });
           headers = { 'Content-Type': 'application/json' };
         }
