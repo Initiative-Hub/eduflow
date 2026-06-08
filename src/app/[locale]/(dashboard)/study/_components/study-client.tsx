@@ -1,13 +1,12 @@
 import {
   BookMarked,
   ClipboardList,
-  CloudUpload,
-  History,
   Sparkles,
   Tag,
 } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import { Card } from '@/components/ui/card';
+import { StudyUploadZone } from './study-upload-zone';
 
 const FEATURE_CARDS = [
   {
@@ -71,20 +70,7 @@ export async function StudyClient() {
         ))}
       </div>
 
-      {/* Upload drop-zone — static placeholder until backend is wired */}
-      <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-border/60 border-dashed bg-muted/30 px-8 py-14 text-center transition-colors hover:border-primary/30 hover:bg-primary/5">
-        <div className="flex size-14 items-center justify-center rounded-2xl border border-border/60 bg-background shadow-sm">
-          <CloudUpload className="size-6 text-muted-foreground" />
-        </div>
-        <div>
-          <p className="font-semibold text-foreground text-sm">
-            {t('upload.title')}
-          </p>
-          <p className="mt-0.5 text-muted-foreground text-xs">
-            {t('upload.description')}
-          </p>
-        </div>
-      </div>
+      <StudyUploadZone />
     </div>
   );
 }
