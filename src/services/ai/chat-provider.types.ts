@@ -1,6 +1,5 @@
 import type { ProviderOptions } from '@ai-sdk/provider-utils';
 import type { UIMessage } from 'ai';
-
 import type { AICourseGeneration } from '@/lib/validations/course.schema';
 
 export type ChatProvider = 'ai-gateway' | 'google' | 'openrouter';

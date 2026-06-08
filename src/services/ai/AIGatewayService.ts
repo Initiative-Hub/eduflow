@@ -29,7 +29,6 @@ export class AIGatewayService implements ChatProviderService {
       system: resolveChatSystemPrompt(options),
       messages: await convertToModelMessages(input.messages),
       providerOptions: input.providerOptions,
-      headers: { Authorization: `Bearer ${apiKey}` },
     });
   }
 }

@@ -77,6 +77,11 @@
     }
   },
   "AIChat": {
+    "actionMenu": {
+      "close": "Close actions",
+      "open": "Open actions",
+      "uploadFiles": "Upload files"
+    },
     "attachments": {
       "add": "Attach files",
       "defaultMessage": "Please use the attached {count, plural, one {file} other {files}}.",
@@ -1265,12 +1270,23 @@
     },
     "input": {
       "footer": "Socratic mode active • no direct answers provided",
+      "guidanceDepth": {
+        "balanced": "Balanced",
+        "descriptions": {
+          "balanced": "Mix probing questions with moderate structure.",
+          "guidedSteps": "Offer more structure while keeping the learner involved.",
+          "hint": "Keep the learner moving with short nudges."
+        },
+        "guidedSteps": "Guided steps",
+        "hint": "Hints",
+        "label": "Guidance depth"
+      },
       "placeholder": "Ask a question or describe where you're stuck..."
     },
     "limitReachedToast": "You've reached the {count}-message Socratic limit. Start a new session to continue.",
     "recentSessions": {
       "description": "Return to guided questions and prior reasoning threads.",
-      "empty": "No Socratic sessions yet. Choose a discipline and ask where you're stuck.",
+      "empty": "No Socratic sessions yet. Pick a prompt card or ask where you're stuck.",
       "error": "Unable to load recent Socratic sessions right now.",
       "openChat": "Open Socratic session {title}",
       "title": "Recent Socratic sessions",
@@ -1305,7 +1321,7 @@
       "title": "Socratic history",
       "untitled": "Untitled Socratic session"
     },
-    "subtitle": "Select a discipline to begin a <mark>Socratic</mark> dialogue. I won't give you answers; I will ask the questions that help you find them.",
+    "subtitle": "Pick a starting point or ask directly to begin a <mark>Socratic</mark> dialogue. I won't give you answers; I will ask the questions that help you find them.",
     "title": "How can I <accent>guide</accent> your thinking today?"
   },
   "StudyPage": {
