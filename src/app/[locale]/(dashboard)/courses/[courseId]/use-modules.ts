@@ -60,7 +60,7 @@ export function useModules(courseId: string) {
       fileId: selection.fileId,
       file: selection.file,
       context: selection.context,
-      model: 'deepseek/deepseek-chat',
+      model: 'gemini-3.1-pro-preview',
     });
   };
 

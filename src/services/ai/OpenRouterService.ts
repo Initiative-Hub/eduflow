@@ -30,7 +30,7 @@ import type {
   StreamChatInternalOptions,
   StreamCourseInput,
 } from '@/services/ai/chat-provider.types';
-import { WebSearchService } from '@/services/WebSearchService';
+import { generateSupplementarySearchContexts } from '@/services/ai/web-search';
 import type { CourseStreamEvent } from '@/types/course-stream-event';
 import { StorageService } from '../StorageService';
 import type { ChatProviderService } from './ChatProviderService';
@@ -92,36 +92,51 @@ export class OpenRouterService implements ChatProviderService {
       ? `${options.context} ${markdownContent.slice(0, 150)}`
       : markdownContent.slice(0, 200);
 
-    const [webContext, youtubeContext] = await Promise.all([
-      WebSearchService.search(searchQuery.trim(), 3, true),
-      WebSearchService.search(
-        `${searchQuery.trim()} site:youtube.com`,
-        3,
-        true
-      ),
-    ]);
-
     const apiKey = options.apiKey ?? process.env.OPENROUTER_API_KEY;
     if (!apiKey) throw new Error(`Missing API key for provider "openrouter"`);
 
     const model = options.model ?? DEFAULT_MODELS.openrouter;
     const provider = createOpenRouter({ apiKey });
 
+    const { webContext, youtubeContext } =
+      await generateSupplementarySearchContexts({
+        model: provider(model),
+        searchQuery,
+        providerOptions: options.providerOptions,
+      });
+    const webContextJSON = JSON.stringify(webContext, null, 2);
+    const youtubeContextJSON = JSON.stringify(youtubeContext, null, 2);
+
     // Step 3 — AI generation: stream raw text deltas
     const result = streamText({
       model: provider(model),
       output: Output.object({ schema: aiCourseGenerationSchema }),
       system: COURSE_GENERATION_PROMPT,
-      prompt: `Content to analyze and transform into a course:\n\n${markdownContent}${
-        options.context
-          ? `\n\n=== ADDITIONAL CONTEXT FROM INSTRUCTOR ===\n${options.context}`
-          : ''
-      }\n\n=== SUPPLEMENTARY WEB CONTEXT ===\nUse the following web search results to enrich lesson content with current, real-world examples and up-to-date information:\n\n${webContext}\n\n=== SUPPLEMENTARY YOUTUBE VIDEOS ===
-For each module or lesson, pick the most relevant YouTube video from the list below if it matches the topic, and embed it at the end of the lesson's HTML content using this exact HTML structure:
-<div data-youtube-video=""><iframe src="https://www.youtube.com/embed/VIDEO_ID" width="640" height="480" allowfullscreen="true"></iframe></div>
-Extract the 11-character video ID from the search results to form the "/embed/VIDEO_ID" URL. Do NOT output standard links or plain paragraphs for the YouTube video URL; use only the exact div and iframe structure above. Only choose relevant videos from this list:
+      prompt: `
+        Content to analyze and transform into a course:
+        
+        ${markdownContent}
+        
+        ${
+          options.context
+            ? `=== ADDITIONAL CONTEXT FROM INSTRUCTOR ===\n${options.context}`
+            : ''
+        }
+      
+        === SUPPLEMENTARY WEB CONTEXT ===
+        Use the following web search results to enrich lesson content with current, real-world examples and up-to-date information:
+        
+        ${webContextJSON}
+        
+        === SUPPLEMENTARY YOUTUBE VIDEOS ===
+        For each module or lesson, pick the most relevant YouTube video from the list below if it matches the topic, and embed it at the end of the lesson's HTML content using this exact HTML structure:
+        <div data-youtube-video="">
+          <iframe src="https://www.youtube.com/embed/VIDEO_ID" width="640" height="480" allowfullscreen="true"></iframe>
+        </div>
+        Extract the 11-character video ID from the search results to form the "/embed/VIDEO_ID" URL. Do NOT output standard links or plain paragraphs for the YouTube video URL; use only the exact div and iframe structure above. Only choose relevant videos from this list:
 
-${youtubeContext}`,
+        ${youtubeContextJSON}
+      `,
       providerOptions: options.providerOptions,
     });
 
