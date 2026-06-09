@@ -35,6 +35,7 @@ export function useModules(courseId: string) {
   const {
     step,
     streamingCourse,
+    searchSources,
     isRunning,
     error: generationError,
     generate,
@@ -132,6 +133,7 @@ export function useModules(courseId: string) {
     generationStep: step,
     generationError,
     streamingCourse,
+    searchSources,
     isRunning,
     resetGeneration: reset,
     generateCourseModules,

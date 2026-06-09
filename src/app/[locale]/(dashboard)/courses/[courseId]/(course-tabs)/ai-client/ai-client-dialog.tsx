@@ -24,6 +24,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
+import type { SearchSourcesState } from '@/lib/course-generation/stream-state';
 import { cn } from '@/lib/utils';
 import { inventoryService } from '../../../../inventory/inventory.service';
 import type { InventoryEntry } from '../../../../inventory/inventory.types';
@@ -34,6 +35,7 @@ import type {
   StreamingCourse,
 } from '../../use-generate-course';
 import { courseFilesService } from '../files/course-files.service';
+import { SearchSourcesPreview } from './search-sources-preview';
 
 interface AiClientDialogProps {
   isOpen: boolean;
@@ -52,6 +54,7 @@ interface AiClientDialogProps {
   generationError?: string | null;
   isRunning?: boolean;
   streamingCourse?: StreamingCourse | null;
+  searchSources?: SearchSourcesState;
 }
 
 type DialogPhase = 'select' | 'context' | 'generating';
@@ -68,6 +71,7 @@ export function AiClientDialog({
   generationError = null,
   isRunning = false,
   streamingCourse,
+  searchSources,
 }: AiClientDialogProps) {
   const t = useTranslations('Courses.CourseModules.AiDialog');
   const genT = useTranslations('Courses.CourseModules.AiGeneration');
@@ -186,7 +190,7 @@ export function AiClientDialog({
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || file.type !== 'application/pdf') return;
+    if (file?.type !== 'application/pdf') return;
     setIsProcessing(true);
     setSelectedPersonalId(null);
     setSelectedCourseId(null);
@@ -299,6 +303,24 @@ export function AiClientDialog({
           ? genT('savingModules')
           : genT('craftingCurriculum');
 
+  const searchSourcesState = searchSources ?? {
+    web: [],
+    youtube: [],
+    completed: { web: false, youtube: false },
+  };
+  const shouldShowSources = generationStep === 'search';
+  const showStatusLabel = generationStep !== 'search' || !shouldShowSources;
+  const sourcePreviewLabels = {
+    title: genT('sourcePreview.title'),
+    web: genT('sourcePreview.web'),
+    youtube: genT('sourcePreview.youtube'),
+    webDescription: genT('sourcePreview.webDescription'),
+    youtubeDescription: genT('sourcePreview.youtubeDescription'),
+    searching: genT('sourcePreview.searching'),
+    empty: genT('sourcePreview.empty'),
+    foundCount: (count: number) => genT('sourcePreview.foundCount', { count }),
+  };
+
   // ── Dialog header / footer ─────────────────────────────────────────────────
   const dialogTitle =
     phase === 'generating' ? (
@@ -386,7 +408,7 @@ export function AiClientDialog({
       onOpenChange={handleOpenChange}
       className={
         phase === 'generating'
-          ? 'sm:max-w-lg'
+          ? 'sm:max-w-3xl'
           : phase === 'context'
             ? 'sm:max-w-2xl'
             : 'sm:max-w-5xl'
@@ -464,6 +486,14 @@ export function AiClientDialog({
             })}
           </div>
 
+          {shouldShowSources && (
+            <SearchSourcesPreview
+              sources={searchSourcesState}
+              isSearching={generationStep === 'search'}
+              labels={sourcePreviewLabels}
+            />
+          )}
+
           {/* Live module preview */}
           {streamingCourse?.modules && streamingCourse.modules.length > 0 && (
             <div className="max-h-64 space-y-2 overflow-y-auto rounded-xl border bg-muted/20 p-3">
@@ -536,12 +566,12 @@ export function AiClientDialog({
                 )}
               </div>
             </div>
-          ) : (
+          ) : showStatusLabel ? (
             <div className="flex items-center justify-center gap-2 text-muted-foreground text-sm">
               <Loader2 className="h-4 w-4 animate-spin text-primary" />
               <span>{statusLabel}</span>
             </div>
-          )}
+          ) : null}
         </div>
       ) : phase === 'context' ? (
         /* ── Context phase ──────────────────────────────────────────────── */
@@ -573,7 +603,7 @@ export function AiClientDialog({
               value={context}
               onChange={(e) => setContext(e.target.value)}
               placeholder={t('contextTab.placeholder')}
-              className="min-h-[180px] resize-none text-sm"
+              className="min-h-45 resize-none text-sm"
               maxLength={2000}
             />
             <p className="text-right text-[10px] text-muted-foreground">
@@ -599,11 +629,11 @@ export function AiClientDialog({
             </TabsTrigger>
           </TabsList>
 
-          <div className="mt-6 min-h-[450px] overflow-hidden rounded-xl border border-dashed bg-muted/30">
+          <div className="mt-6 min-h-112.5 overflow-hidden rounded-xl border border-dashed bg-muted/30">
             {/* Personal tab */}
             <TabsContent
               value="personal"
-              className="mt-0 flex h-[450px] flex-col outline-none"
+              className="mt-0 flex h-112.5 flex-col outline-none"
             >
               <div className="flex items-center justify-between border-b bg-muted/20 px-4 py-2">
                 <div className="flex items-center gap-2">
@@ -625,7 +655,7 @@ export function AiClientDialog({
               </div>
               <div className="flex-1 overflow-y-auto">
                 {isLoadingPersonal ? (
-                  <div className="flex h-[380px] flex-col items-center justify-center gap-2 text-muted-foreground">
+                  <div className="flex h-95 flex-col items-center justify-center gap-2 text-muted-foreground">
                     <Loader2 className="h-8 w-8 animate-spin" />
                     <p className="text-sm">{t('loadingFiles')}</p>
                   </div>
@@ -707,7 +737,7 @@ export function AiClientDialog({
             {/* Course tab */}
             <TabsContent
               value="course"
-              className="mt-0 flex h-[450px] flex-col outline-none"
+              className="mt-0 flex h-112.5 flex-col outline-none"
             >
               <div className="flex items-center justify-between border-b bg-muted/20 px-4 py-2">
                 <div className="flex items-center gap-2">
@@ -734,7 +764,7 @@ export function AiClientDialog({
               </div>
               <div className="flex-1 overflow-y-auto">
                 {isLoadingCourse ? (
-                  <div className="flex h-[380px] flex-col items-center justify-center gap-2 text-muted-foreground">
+                  <div className="flex h-95 flex-col items-center justify-center gap-2 text-muted-foreground">
                     <Loader2 className="h-8 w-8 animate-spin" />
                     <p className="text-sm">{t('loadingFiles')}</p>
                   </div>

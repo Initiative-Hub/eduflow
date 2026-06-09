@@ -1,6 +1,11 @@
 'use client';
 
 import { useCallback, useRef, useState } from 'react';
+import {
+  applySearchSourceEvent,
+  createEmptySearchSources,
+  type SearchSourcesState,
+} from '@/lib/course-generation/stream-state';
 import type { CourseStreamEvent } from '@/types/course-stream-event';
 
 export type GenerationStep =
@@ -25,6 +30,7 @@ export interface StreamingCourse {
 export interface UseGenerateCourseReturn {
   step: GenerationStep;
   streamingCourse: StreamingCourse | null;
+  searchSources: SearchSourcesState;
   isRunning: boolean;
   error: string | null;
   generate: (params: {
@@ -49,6 +55,9 @@ export function useGenerateCourse(
   const [step, setStep] = useState<GenerationStep>('idle');
   const [streamingCourse, setStreamingCourse] =
     useState<StreamingCourse | null>(null);
+  const [searchSources, setSearchSources] = useState<SearchSourcesState>(() =>
+    createEmptySearchSources()
+  );
   const [isRunning, setIsRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -58,6 +67,7 @@ export function useGenerateCourse(
   const reset = useCallback(() => {
     setStep('idle');
     setStreamingCourse(null);
+    setSearchSources(createEmptySearchSources());
     setIsRunning(false);
     setError(null);
     deltaBufferRef.current = '';
@@ -177,6 +187,12 @@ export function useGenerateCourse(
               case 'search':
                 setStep('search');
                 break;
+              case 'source-found':
+              case 'search-complete':
+                setSearchSources((current) =>
+                  applySearchSourceEvent(current, event)
+                );
+                break;
               case 'generate':
                 setStep('generate');
                 deltaBufferRef.current += event.delta;
@@ -207,5 +223,13 @@ export function useGenerateCourse(
     [reset, tryParseDelta, onSuccess, onError]
   );
 
-  return { step, streamingCourse, isRunning, error, generate, reset };
+  return {
+    step,
+    streamingCourse,
+    searchSources,
+    isRunning,
+    error,
+    generate,
+    reset,
+  };
 }

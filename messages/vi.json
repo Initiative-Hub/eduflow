@@ -588,6 +588,16 @@
         "retry": "Thử lại",
         "saving": "Đang lưu",
         "savingModules": "Đang lưu các mô-đun và bài học mới của bạn...",
+        "sourcePreview": {
+          "empty": "Chưa tìm thấy nguồn nào",
+          "foundCount": "{count, plural, =0 {Chưa có nguồn} =1 {1 nguồn} other {# nguồn}}",
+          "searching": "Đang tìm nguồn...",
+          "title": "Nguồn đã tìm thấy",
+          "web": "Web",
+          "webDescription": "Tài liệu tham khảo mới nhất",
+          "youtube": "YouTube",
+          "youtubeDescription": "Video phù hợp"
+        },
         "startingGeneration": "Đang bắt đầu tạo AI...",
         "success": "Các mô-đun khóa học đã được tạo và lưu thành công!"
       },
