@@ -1,14 +1,4 @@
-import type { JSONContent } from '@tiptap/core';
-import { z } from 'zod';
-
-/**
- * Zod schema for Tiptap JSON content
- */
-const tiptapNodeSchema = z.custom<JSONContent>();
-const tiptapDocumentSchema = z.looseObject({
-  type: z.literal('doc'),
-  content: z.array(tiptapNodeSchema),
-});
+import * as z from 'zod';
 
 export const aiCourseGenerationSchema = z.object({
   courseTitle: z.string().describe('The overall title of the course'),
@@ -24,9 +14,11 @@ export const aiCourseGenerationSchema = z.object({
       lessons: z.array(
         z.object({
           lessonTitle: z.string().describe('The title of the lesson'),
-          content: tiptapDocumentSchema.describe(
-            'Detailed, comprehensive lesson content as Tiptap JSON. The root must be a doc node with content nodes such as heading, paragraph, bulletList, orderedList, listItem, blockquote, codeBlock, and youtube.'
-          ),
+          content: z
+            .string()
+            .describe(
+              'Detailed, comprehensive lesson content formatted as an HTML string. Use semantic rich text tags such as <h1>, <h2>, <p>, <ul>, <ol>, <li>, <strong>, <em>, <blockquote>, <pre>, and <code>.'
+            ),
         })
       ),
     })

@@ -91,10 +91,10 @@ export function AiClientGeneratingPanel({
     generationStep === 'extract'
       ? genT('documentReceived')
       : generationStep === 'search'
-        ? genT('processingContent')
-        : generationStep === 'save'
-          ? genT('savingModules')
-          : genT('craftingCurriculum');
+        ? genT('webSearching')
+        : generationStep === 'generate'
+          ? genT('craftingCurriculum')
+          : genT('savingModules');
 
   const searchSourcesState = searchSources ?? {
     web: [],
