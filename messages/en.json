@@ -584,7 +584,6 @@
         "failed": "Failed to generate course structure",
         "generatingCourse": "Generating Course...",
         "identifyingModule": "Identifying Module...",
-        "webSearching": "Searching the web for additional context and references...",
         "retry": "Try Again",
         "saving": "Saving",
         "savingModules": "Saving your new modules and lessons...",
@@ -599,7 +598,8 @@
           "youtubeDescription": "Video options"
         },
         "startingGeneration": "Starting AI generation...",
-        "success": "Course modules generated and saved successfully!"
+        "success": "Course modules generated and saved successfully!",
+        "webSearching": "Searching the web for additional context and references..."
       },
       "description": "Organize your curriculum into modules and lessons.",
       "noModules": "No modules yet. Create your first module to begin.",
