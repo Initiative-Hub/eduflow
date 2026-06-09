@@ -1,7 +1,7 @@
 import type { ProviderOptions } from '@ai-sdk/provider-utils';
 import { tavilySearch } from '@tavily/ai-sdk';
 import { type LanguageModel, Output, stepCountIs, streamText } from 'ai';
-import * as z from 'zod';
+import { z } from 'zod';
 import type {
   CourseSearchSourceKind,
   CourseSearchSourcePreview,
