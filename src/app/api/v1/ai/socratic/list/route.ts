@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import * as z from 'zod';
+import { z } from 'zod';
 import { AiChatType } from '@/generated/prisma';
 import { getChatOwner } from '@/lib/api/guest-session';
 import { ChatPersistenceService } from '@/services/ChatPersistenceService';

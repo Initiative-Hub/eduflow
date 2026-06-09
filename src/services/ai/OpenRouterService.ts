@@ -1,9 +1,9 @@
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import {
   convertToModelMessages,
-  generateObject,
+  generateText,
+  Output,
   smoothStream,
-  streamObject,
   streamText,
 } from 'ai';
 import type { z } from 'zod';
@@ -30,13 +30,11 @@ import type {
   StreamChatInternalOptions,
   StreamCourseInput,
 } from '@/services/ai/chat-provider.types';
-import { WebSearchService } from '@/services/WebSearchService';
+import { generateSupplementarySearchContexts } from '@/services/ai/web-search';
+import type { CourseStreamEvent } from '@/types/course-stream-event';
 import { StorageService } from '../StorageService';
 import type { ChatProviderService } from './ChatProviderService';
 import { resolveChatSystemPrompt } from './chat-system-prompt';
-import type { CourseStreamEvent } from './course-stream.types';
-
-const PROVIDER_NAME = 'openrouter';
 
 export class OpenRouterService implements ChatProviderService {
   async streamChat(
@@ -44,8 +42,7 @@ export class OpenRouterService implements ChatProviderService {
     options?: StreamChatInternalOptions
   ) {
     const apiKey = input.apiKey ?? process.env.OPENROUTER_API_KEY;
-    if (!apiKey)
-      throw new Error(`Missing API key for provider "${PROVIDER_NAME}"`);
+    if (!apiKey) throw new Error(`Missing API key for provider "openrouter"`);
 
     const model = input.model ?? DEFAULT_MODELS.openrouter;
     const provider = createOpenRouter({ apiKey });
@@ -68,7 +65,7 @@ export class OpenRouterService implements ChatProviderService {
     writer: WritableStreamDefaultWriter<string>
   ): Promise<void> {
     const emit = async (event: CourseStreamEvent) =>
-      writer.write(JSON.stringify(event) + '\n');
+      writer.write(`${JSON.stringify(event)}\n`);
 
     // Step 1 — extract PDF
     await emit({ type: 'extract' });
@@ -94,46 +91,68 @@ export class OpenRouterService implements ChatProviderService {
     const searchQuery = options.context
       ? `${options.context} ${markdownContent.slice(0, 150)}`
       : markdownContent.slice(0, 200);
-    const webContext = await WebSearchService.search(
-      searchQuery.trim(),
-      3,
-      true
-    );
 
     const apiKey = options.apiKey ?? process.env.OPENROUTER_API_KEY;
-    if (!apiKey)
-      throw new Error(`Missing API key for provider "${PROVIDER_NAME}"`);
+    if (!apiKey) throw new Error(`Missing API key for provider "openrouter"`);
 
     const model = options.model ?? DEFAULT_MODELS.openrouter;
     const provider = createOpenRouter({ apiKey });
 
+    const { webContext, youtubeContext } =
+      await generateSupplementarySearchContexts({
+        model: provider(model),
+        searchQuery,
+        providerOptions: options.providerOptions,
+      });
+    const webContextJSON = JSON.stringify(webContext, null, 2);
+    const youtubeContextJSON = JSON.stringify(youtubeContext, null, 2);
+
     // Step 3 — AI generation: stream raw text deltas
-    const aiStream = streamObject({
+    const result = streamText({
       model: provider(model),
-      schema: aiCourseGenerationSchema,
+      output: Output.object({ schema: aiCourseGenerationSchema }),
       system: COURSE_GENERATION_PROMPT,
-      prompt: `Content to analyze and transform into a course:\n\n${markdownContent}${
-        options.context
-          ? `\n\n=== ADDITIONAL CONTEXT FROM INSTRUCTOR ===\n${options.context}`
-          : ''
-      }\n\n=== SUPPLEMENTARY WEB CONTEXT ===\nUse the following web search results to enrich lesson content with current, real-world examples and up-to-date information:\n\n${webContext}`,
-      onFinish: options.onFinish,
+      prompt: `
+        Content to analyze and transform into a course:
+        
+        ${markdownContent}
+        
+        ${
+          options.context
+            ? `=== ADDITIONAL CONTEXT FROM INSTRUCTOR ===\n${options.context}`
+            : ''
+        }
+      
+        === SUPPLEMENTARY WEB CONTEXT ===
+        Use the following web search results to enrich lesson content with current, real-world examples and up-to-date information:
+        
+        ${webContextJSON}
+        
+        === SUPPLEMENTARY YOUTUBE VIDEOS ===
+        For each module or lesson, pick the most relevant YouTube video from the list below if it matches the topic, and embed it at the end of the lesson's HTML content using this exact HTML structure:
+        <div data-youtube-video="">
+          <iframe src="https://www.youtube.com/embed/VIDEO_ID" width="640" height="480" allowfullscreen="true"></iframe>
+        </div>
+        Extract the 11-character video ID from the search results to form the "/embed/VIDEO_ID" URL. Do NOT output standard links or plain paragraphs for the YouTube video URL; use only the exact div and iframe structure above. Only choose relevant videos from this list:
+
+        ${youtubeContextJSON}
+      `,
+      providerOptions: options.providerOptions,
     });
 
-    for await (const chunk of aiStream.textStream) {
+    for await (const chunk of result.textStream) {
       await emit({ type: 'generate', delta: chunk });
     }
 
-    // Await the full object so onFinish fires before we emit 'done'
-    await aiStream.object;
+    const generatedCourse = await result.output;
+    await options.onFinish?.({ object: generatedCourse });
     await emit({ type: 'done' });
   }
 
   // Create quiz based on quiz type
   async createQuiz(options: AIQuizInput) {
     const apiKey = options.apiKey ?? process.env.OPENROUTER_API_KEY;
-    if (!apiKey)
-      throw new Error(`Missing API key for provider "${PROVIDER_NAME}"`);
+    if (!apiKey) throw new Error(`Missing API key for provider "openrouter"`);
 
     const model = options.model ?? DEFAULT_MODELS.openrouter;
     const provider = createOpenRouter({ apiKey });
@@ -162,20 +181,22 @@ export class OpenRouterService implements ChatProviderService {
     const aiSchema = createQuizSchema(aiQuestionSchema);
 
     const count = parseInt(options.questionNumbers, 10) || 5;
-    const prompt = `Generate a complete, high-quality educational Quiz object containing exactly ${count} questions of type "${options.quizType}".
-${options.topic ? `The quiz topic or theme is: "${options.topic}".` : ''}
-${options.content ? `Generate the quiz based on the following content:\n\n${options.content}` : 'Generate interesting educational questions.'}
+    const prompt = `
+      Generate a complete, high-quality educational Quiz object containing exactly ${count} questions of type "${options.quizType}".
+      ${options.topic ? `The quiz topic or theme is: "${options.topic}".` : ''}
+      ${options.content ? `Generate the quiz based on the following content:\n\n${options.content}` : 'Generate interesting educational questions.'}
 
-Instructions:
-1. Provide a clear, engaging title and description for the quiz.
-2. Set category, subType, deliveryMode, and selectionMethod appropriately for the quizType.
-3. Generate exactly ${count} questions in the questions array.
-4. Ensure all option, blank, zone, and item IDs are unique (e.g. opt1, opt2, blank1, zone1, item1, left1, right1).
-5. Provide helpful explanations for each question.`;
+      Instructions:
+      1. Provide a clear, engaging title and description for the quiz.
+      2. Set category, subType, deliveryMode, and selectionMethod appropriately for the quizType.
+      3. Generate exactly ${count} questions in the questions array.
+      4. Ensure all option, blank, zone, and item IDs are unique (e.g. opt1, opt2, blank1, zone1, item1, left1, right1).
+      5. Provide helpful explanations for each question.
+    `;
 
-    const response = await generateObject({
+    const response = await generateText({
       model: provider(model),
-      schema: aiSchema,
+      output: Output.object({ schema: aiSchema }),
       prompt,
       system:
         'You are an educational AI assistant that designs quiz questions and tests. Generate high-quality quizzes and questions matching the requested schema.',
@@ -183,9 +204,9 @@ Instructions:
 
     // Inject the correct `type` field into every question (the AI schema omitted it)
     const questionsWithType = (
-      response.object.questions as Record<string, unknown>[]
+      response.output.questions as Record<string, unknown>[]
     ).map((q) => ({ type: normalizedType, ...q }));
 
-    return { ...response.object, questions: questionsWithType };
+    return { ...response.output, questions: questionsWithType };
   }
 }

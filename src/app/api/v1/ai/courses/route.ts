@@ -14,6 +14,7 @@ const courseGenerationInputSchema = z
     apiKey: z.string().min(1).optional(),
     courseId: z.string().uuid(),
     context: z.string().max(2000).optional(),
+    model: z.string().min(1).optional(),
   })
   .refine((data) => (data.fileId ? !data.file : !!data.file), {
     message: 'Provide exactly one: either fileId or a file',
@@ -100,25 +101,29 @@ export const POST = withAuth(
 
       if (contentType.includes('multipart/form-data')) {
         const formData = await request.formData();
+        const courseId = formData.get('courseId') as string | null;
         const fileId = formData.get('fileId') as string | null;
         const file = formData.get('file') as File | null;
+        const context = formData.get('context') as string | null;
         const apiKey = formData.get('apiKey') as string | null;
-        const courseId = formData.get('courseId') as string | null;
+        const model = formData.get('model') as string | null;
 
         input = {
+          courseId: courseId || undefined,
           fileId: fileId || undefined,
           file: file || undefined,
+          context: context || undefined,
           apiKey: apiKey || undefined,
-          courseId: courseId || undefined,
-          context: (formData.get('context') as string | null) || undefined,
+          model: model || undefined,
         };
       } else {
         const body = await request.json();
         input = {
           fileId: body.fileId,
-          apiKey: body.apiKey,
           courseId: body.courseId,
           context: body.context,
+          apiKey: body.apiKey,
+          model: body.model,
         };
       }
 
@@ -147,8 +152,9 @@ export const POST = withAuth(
         courseId: parsed.data.courseId,
         fileId: parsed.data.fileId,
         file: parsed.data.file,
-        apiKey: parsed.data.apiKey,
         context: parsed.data.context,
+        apiKey: parsed.data.apiKey,
+        model: parsed.data.model,
       });
 
       // Return the NDJSON stream

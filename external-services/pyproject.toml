@@ -1,0 +1,37 @@
+[project]
+name = "eduflow-external-services"
+version = "0.1.0"
+description = "External services for the EduFlow application."
+readme = "README.md"
+requires-python = "==3.12.0"
+dependencies = [
+    "fastapi[standard]==0.136.3",
+    "python-multipart==0.0.30",
+    "markitdown[pdf]==0.1.6",
+    "modal==1.4.3",
+    "youtube-transcript-api>=1.2.4",
+]
+
+[dependency-groups]
+dev = [
+    "mypy",
+    "poethepoet",
+    "pytest",
+    "pytest-asyncio",
+    "pytest-cov",
+    "ruff",
+    "types-pytz",
+    "types-requests",
+]
+
+[tool.poe.tasks]
+dev = "uv run fastapi dev --reload --host 0.0.0.0 --port 8000"
+test = "pytest"
+test-coverage = "pytest --cov"
+type-check = "mypy ."
+format = "ruff format --check ."
+format-fix = "ruff format ."
+lint = "ruff lint --check ."
+lint-fix = "ruff lint ."
+serve = "modal serve modal_deployment.py"
+deploy = "modal deploy modal_deployment.py"

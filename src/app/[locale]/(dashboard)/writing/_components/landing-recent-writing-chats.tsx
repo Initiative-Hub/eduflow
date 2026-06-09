@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Link } from '@/i18n/navigation';
 import { writingService } from '../writing.service';
 
-const RECENT_WRITING_SESSION_LIMIT = 5;
+const RECENT_WRITING_SESSION_LIMIT = 3;
 
 export function LandingRecentWritingChats() {
   const t = useTranslations('WritingPage.recentSessions');

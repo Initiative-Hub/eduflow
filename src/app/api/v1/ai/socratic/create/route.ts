@@ -1,12 +1,10 @@
-import * as z from 'zod';
+import { z } from 'zod';
 import { AiChatType } from '@/generated/prisma';
 import { getChatOwner } from '@/lib/api/guest-session';
-import { socraticDisciplineSchema } from '@/lib/validations/socratic.schema';
 import { ChatPersistenceService } from '@/services/ChatPersistenceService';
 
 const createSocraticSessionSchema = z.object({
   firstMessage: z.string().trim().min(1),
-  discipline: socraticDisciplineSchema,
 });
 
 /**
@@ -44,7 +42,6 @@ export async function POST(req: Request) {
       guestId,
       firstMessage: parsedBody.data.firstMessage,
       chatType: AiChatType.SOCRATIC_TUTOR,
-      metadata: { discipline: parsedBody.data.discipline },
     });
 
     return new Response(JSON.stringify({ chatId }), {
