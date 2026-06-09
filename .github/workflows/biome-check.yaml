@@ -311,7 +311,7 @@ jobs:
       - name: Fail Workflow After Formatting Issues
         if: steps.format-check.outputs.has_issues == 'true'
         run: |
-          echo "Biome formatting issues were found and a PR has been created."
+          echo "Biome formatting issues were found."
           if [ -n "${{ steps.create-pr.outputs.pull-request-url }}" ]; then
             echo "PR URL: ${{ steps.create-pr.outputs.pull-request-url }}"
           else
