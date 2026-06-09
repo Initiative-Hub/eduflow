@@ -1,5 +1,5 @@
 import { createUIMessageStream, createUIMessageStreamResponse } from 'ai';
-import * as z from 'zod';
+import { z } from 'zod';
 import { AiChatType } from '@/generated/prisma';
 import { getChatOwner } from '@/lib/api/guest-session';
 import { socraticGuidanceDepthSchema } from '@/lib/validations/socratic.schema';

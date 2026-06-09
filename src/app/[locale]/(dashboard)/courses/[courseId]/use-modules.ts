@@ -5,13 +5,14 @@ import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 
 import { apiClient } from '@/lib/api/api-client';
+import type { TiptapDocument } from '@/utils/lesson-content';
 import { useGenerateCourse } from './use-generate-course';
 
 export interface Lesson {
   id: string;
   title: string;
   orderIndex: number;
-  content: Record<string, unknown> | null;
+  content: TiptapDocument;
   canEdit?: boolean;
 }
 
