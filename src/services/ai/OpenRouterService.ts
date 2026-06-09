@@ -103,6 +103,12 @@ export class OpenRouterService implements ChatProviderService {
         model: provider(model),
         searchQuery,
         providerOptions: options.providerOptions,
+        onSource: async ({ sourceKind, source }) => {
+          await emit({ type: 'source-found', sourceKind, source });
+        },
+        onSearchComplete: async ({ sourceKind, count }) => {
+          await emit({ type: 'search-complete', sourceKind, count });
+        },
       });
     const webContextJSON = JSON.stringify(webContext, null, 2);
     const youtubeContextJSON = JSON.stringify(youtubeContext, null, 2);

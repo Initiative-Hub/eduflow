@@ -13,7 +13,7 @@ import type { CreateLessonFormData } from '../create-lesson.config';
 import type { CreateModuleFormData } from '../create-module.config';
 import { useModules } from '../use-modules';
 import { useQuestionBank } from '../use-question-bank';
-import { AiClientDialog } from './ai-client/ai-client';
+import { AiClientDialog } from './ai-client/ai-client-dialog';
 
 interface CourseModulesClientProps {
   courseId: string;
@@ -30,6 +30,7 @@ export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
     isCreatingLesson,
     handleCreateLesson,
     streamingCourse,
+    searchSources,
     generationStep,
     generationError,
     isRunning,
@@ -158,6 +159,7 @@ export function CourseModulesClient({ courseId }: CourseModulesClientProps) {
         generationError={generationError}
         isRunning={isRunning}
         streamingCourse={streamingCourse}
+        searchSources={searchSources}
       />
 
       <CreateQuizDialog

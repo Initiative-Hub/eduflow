@@ -588,6 +588,16 @@
         "retry": "Try Again",
         "saving": "Saving",
         "savingModules": "Saving your new modules and lessons...",
+        "sourcePreview": {
+          "empty": "No sources found yet",
+          "foundCount": "{count, plural, =0 {No sources} =1 {1 source} other {# sources}}",
+          "searching": "Searching for sources...",
+          "title": "Found sources",
+          "web": "Web",
+          "webDescription": "Current references",
+          "youtube": "YouTube",
+          "youtubeDescription": "Video options"
+        },
         "startingGeneration": "Starting AI generation...",
         "success": "Course modules generated and saved successfully!"
       },
