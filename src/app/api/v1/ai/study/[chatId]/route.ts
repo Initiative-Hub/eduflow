@@ -3,19 +3,24 @@ import { z } from 'zod';
 import { AiChatType } from '@/generated/prisma';
 import { getChatOwner } from '@/lib/api/guest-session';
 import { studyModeSchema } from '@/lib/validations/study.schema';
+import { ChatProviderFactory } from '@/services/ai/ChatProviderFactory';
+import { DEFAULT_PROVIDER } from '@/services/ai/chat-provider.constants';
 import type {
   ChatProvider,
   StreamChatInput,
 } from '@/services/ai/chat-provider.types';
+import { CacheService } from '@/services/CacheService';
 import { ChatPersistenceService } from '@/services/ChatPersistenceService';
+import { getStudySystemPrompt } from './study.constant';
 export const maxDuration = 30;
 
 const studyRequestSchema = z.object({
   messages: z.array(z.custom<UIMessage>()).min(1),
   mode: studyModeSchema.default('review'),
   provider: z.custom<ChatProvider>().optional(),
+  model: z.string().min(1).optional(),
   apiKey: z.string().min(1).optional(),
-  providerOptions: z.custom<StreamChatInput['providerOptions']>,
+  providerOptions: z.custom<StreamChatInput['providerOptions']>().optional(),
 });
 
 const studyUpdateSchema = z
@@ -149,6 +154,116 @@ export async function PATCH(
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });
+  } catch (error: unknown) {
+    const message =
+      error instanceof Error ? error.message : 'Unknown error occurred';
+    return new Response(JSON.stringify({ error: message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+}
+
+/**
+ * @swagger
+ * /api/v1/ai/study/{chatId}:
+ *   post:
+ *     tags:
+ *       - Study
+ *     summary: Send a study prompt and receive a streamed response
+ *     responses:
+ *       200:
+ *         description: Streamed study response
+ *       400:
+ *         description: Invalid request payload
+ *       429:
+ *         description: Guest limit reached
+ */
+export async function POST(
+  req: Request,
+  { params }: { params: Promise<{ chatId: string }> }
+) {
+  try {
+    const [{ chatId }, body] = await Promise.all([params, req.json()]);
+    const parsedBody = studyRequestSchema.safeParse(body);
+
+    if (!parsedBody.success) {
+      return new Response(
+        JSON.stringify({
+          error: 'Invalid request payload',
+          details: parsedBody.error.flatten(),
+        }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { userId, guestId } = await getChatOwner();
+    if (!userId && !guestId) {
+      return new Response(JSON.stringify({ error: 'Missing guest session' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const limitStatus = userId
+      ? { allowed: true, remaining: Number.POSITIVE_INFINITY, message: '' }
+      : await CacheService.checkGuestLimit(guestId as string);
+
+    if (!limitStatus.allowed) {
+      return new Response(
+        JSON.stringify({
+          error: limitStatus.message,
+          remaining: limitStatus.remaining,
+        }),
+        { status: 429, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const studyData = await ChatPersistenceService.getChat({
+      chatId,
+      userId,
+      guestId,
+      chatType: AiChatType.STUDY_ASSISTANT,
+    });
+
+    if (!studyData) {
+      return new Response(
+        JSON.stringify({ error: 'Session not found or access denied' }),
+        { status: 404, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const providerName = parsedBody.data.provider ?? DEFAULT_PROVIDER;
+    const provider = ChatProviderFactory.create(providerName);
+    const systemPrompt = getStudySystemPrompt(parsedBody.data.mode);
+
+    const result = await provider.streamChat(
+      {
+        messages: parsedBody.data.messages,
+        provider: parsedBody.data.provider,
+        model: parsedBody.data.model,
+        apiKey: parsedBody.data.apiKey,
+        providerOptions: parsedBody.data.providerOptions,
+      },
+      { prompt: systemPrompt }
+    );
+
+    const response = result.toUIMessageStreamResponse({
+      originalMessages: parsedBody.data.messages,
+      generateMessageId: () => `${crypto.randomUUID}`,
+      onFinish: async ({ messages }) => {
+        await ChatPersistenceService.saveMessages({
+          chatId,
+          userId,
+          guestId,
+          messages,
+          provider: providerName,
+          model: parsedBody.data.model,
+          chatType: AiChatType.STUDY_ASSISTANT,
+        });
+      },
+    });
+    return response;
   } catch (error: unknown) {
     const message =
       error instanceof Error ? error.message : 'Unknown error occurred';
