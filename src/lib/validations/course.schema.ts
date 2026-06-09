@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import * as z from 'zod';
 
 export const aiCourseGenerationSchema = z.object({
   courseTitle: z.string().describe('The overall title of the course'),

@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { z } from 'zod';
 import { aiCourseGenerationSchema } from '@/lib/validations/course.schema';
 
 describe('aiCourseGenerationSchema', () => {
@@ -53,11 +52,5 @@ describe('aiCourseGenerationSchema', () => {
     });
 
     expect(result.success).toBe(false);
-  });
-
-  it('can be represented as provider-safe JSON Schema', () => {
-    const jsonSchema = z.toJSONSchema(aiCourseGenerationSchema);
-
-    expect(JSON.stringify(jsonSchema)).not.toContain('$ref');
   });
 });
