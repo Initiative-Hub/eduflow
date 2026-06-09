@@ -93,8 +93,11 @@ export const COURSE_GENERATION_PROMPT = `
 
   ### FORMATTING:
   - Output must be strictly valid JSON.
-  - The "content" field for each lesson MUST be an HTML string formatted for a rich text editor.
-  - Use HTML tags like <h1>, <h2>, <h3>, <p>, <ul>, <ol>, <li>, <strong>, <em>, <blockquote>, <pre><code> to structure the lesson content beautifully.
+  - The "content" field for each lesson MUST be a Tiptap JSON document object, not an HTML string and not Markdown.
+  - Every lesson "content" value MUST use this root shape: {"type":"doc","content":[...nodes]}.
+  - Use Tiptap node names such as heading, paragraph, bulletList, orderedList, listItem, blockquote, codeBlock, horizontalRule, and youtube to structure the lesson content.
+  - Use text marks such as bold, italic, code, highlight, subscript, and superscript when emphasis improves learning.
+  - Do not emit raw HTML tags anywhere inside lesson content.
   - Based on the contents of the slides make the content of the lessons to be more detailed and specific. 
   - Do not include conversational filler (e.g., "Here is your course...").
   - Ensure the difficulty level is consistent throughout the course.

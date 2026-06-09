@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { withAuth, withRoles } from '@/lib/api/middlewares';
-import { createCourseSchema } from '@/lib/validations/course.schema';
 import { CourseService } from '@/services/CourseService';
+
+const createCourseSchema = z.object({
+  title: z.string().min(1, 'Title is required').max(255),
+  description: z.string().max(1000).optional(),
+});
 
 /**
  * @swagger
@@ -86,7 +91,7 @@ export const POST = withAuth(
       const course = await CourseService.createCourse({
         ownerId: userId,
         title: parsed.data.title,
-        description: parsed.data.description ?? undefined,
+        description: parsed.data.description,
       });
 
       return NextResponse.json(course, { status: 201 });

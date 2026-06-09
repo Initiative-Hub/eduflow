@@ -2,19 +2,13 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withAuth } from '@/lib/api/middlewares';
 import { LessonService } from '@/services/LessonService';
+import { isTiptapDocument, type TiptapDocument } from '@/utils/lesson-content';
+
+const tiptapDocumentSchema = z.custom<TiptapDocument>(isTiptapDocument);
 
 const patchLessonSchema = z.object({
   title: z.string().optional(),
-  content: z
-    .union([
-      z.string(),
-      z
-        .object({
-          content: z.array(z.unknown()).optional(),
-        })
-        .passthrough(),
-    ])
-    .optional(),
+  content: tiptapDocumentSchema.optional(),
 });
 
 /**

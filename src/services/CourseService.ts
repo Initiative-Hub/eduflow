@@ -8,6 +8,10 @@ import { prisma } from '@/lib/prisma';
 import type { AICourseGeneration } from '@/lib/validations/course.schema';
 import { OpenRouterService } from '@/services/ai/OpenRouterService';
 import { StorageService } from '@/services/StorageService';
+import {
+  EMPTY_TIPTAP_DOCUMENT,
+  type TiptapDocument,
+} from '@/utils/lesson-content';
 export class CourseService {
   static async assertCourseOwner(courseId: string, userId: string) {
     const course = await prisma.course.findUnique({
@@ -487,10 +491,10 @@ export class CourseService {
         if (mod.lessons && Array.isArray(mod.lessons)) {
           let currentLessonOrder = 0;
           const lessonData = mod.lessons.map(
-            (lesson: { lessonTitle?: string; content?: string }) => ({
+            (lesson: { lessonTitle?: string; content?: TiptapDocument }) => ({
               moduleId: createdModule.id,
               title: lesson.lessonTitle || 'Untitled Lesson',
-              content: lesson.content || '',
+              content: lesson.content || EMPTY_TIPTAP_DOCUMENT,
               orderIndex: currentLessonOrder++,
             })
           );

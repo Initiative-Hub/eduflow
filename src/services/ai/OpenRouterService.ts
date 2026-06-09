@@ -135,11 +135,9 @@ export class OpenRouterService implements ChatProviderService {
         ${webContextJSON}
         
         === SUPPLEMENTARY YOUTUBE VIDEOS ===
-        For each module or lesson, pick the most relevant YouTube video from the list below if it matches the topic, and embed it at the end of the lesson's HTML content using this exact HTML structure:
-        <div data-youtube-video="">
-          <iframe src="https://www.youtube.com/embed/VIDEO_ID" width="640" height="480" allowfullscreen="true"></iframe>
-        </div>
-        Extract the 11-character video ID from the search results to form the "/embed/VIDEO_ID" URL. Do NOT output standard links or plain paragraphs for the YouTube video URL; use only the exact div and iframe structure above. Only choose relevant videos from this list:
+        For each module or lesson, pick the most relevant YouTube video from the list below if it matches the topic, and embed it at the end of the lesson's Tiptap JSON content as a youtube node.
+        Extract the 11-character video ID from the search results and set the node attrs to {"src":"https://www.youtube.com/watch?v=VIDEO_ID","width":640,"height":480}.
+        Do NOT output standard links, iframes, divs, or plain paragraphs for the YouTube video URL. Only choose relevant videos from this list:
 
         ${youtubeContextJSON}
       `,
