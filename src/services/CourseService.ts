@@ -5,6 +5,7 @@ import {
   type CoursePermissionKey,
 } from '@/lib/permissions/permission-keys';
 import { prisma } from '@/lib/prisma';
+import { htmlToTiptapDocument } from '@/lib/tiptap-html';
 import type { AICourseGeneration } from '@/lib/validations/course.schema';
 import { OpenRouterService } from '@/services/ai/OpenRouterService';
 import { StorageService } from '@/services/StorageService';
@@ -449,6 +450,7 @@ export class CourseService {
         );
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Unknown error';
+        console.log('Error in course generation stream:', message);
         await writer.write(`${JSON.stringify({ type: 'error', message })}\n`);
       } finally {
         await writer.close();
@@ -486,14 +488,12 @@ export class CourseService {
 
         if (mod.lessons && Array.isArray(mod.lessons)) {
           let currentLessonOrder = 0;
-          const lessonData = mod.lessons.map(
-            (lesson: { lessonTitle?: string; content?: string }) => ({
-              moduleId: createdModule.id,
-              title: lesson.lessonTitle || 'Untitled Lesson',
-              content: lesson.content || '',
-              orderIndex: currentLessonOrder++,
-            })
-          );
+          const lessonData = mod.lessons.map((lesson) => ({
+            moduleId: createdModule.id,
+            title: lesson.lessonTitle || 'Untitled Lesson',
+            content: htmlToTiptapDocument(lesson.content || ''),
+            orderIndex: currentLessonOrder++,
+          }));
 
           if (lessonData.length > 0) {
             await tx.lesson.createMany({

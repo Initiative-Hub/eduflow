@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { useCourseNavigation } from '@/hooks/use-course-navigation';
 import {
-  lessonContentToTiptapDocument,
+  EMPTY_TIPTAP_DOCUMENT,
   type TiptapDocument,
 } from '@/utils/lesson-content';
 import { useModules } from '../../use-modules';
@@ -38,7 +38,7 @@ export function LessonDetailsClient({
 
   const [showOutline, setShowOutline] = useState(false);
 
-  const lessonContent = lessonContentToTiptapDocument(lesson?.content ?? null);
+  const lessonContent = lesson?.content ?? EMPTY_TIPTAP_DOCUMENT;
 
   // Build navigation including quizzes: lesson 1 → quiz 1 → lesson 2
   const { prev, next } = useCourseNavigation(
@@ -55,7 +55,7 @@ export function LessonDetailsClient({
   );
 
   const handleSave = (
-    data: { title: string; content: TiptapDocument | string },
+    data: { title: string; content: TiptapDocument },
     options: { onSuccess: () => void }
   ) => {
     handleUpdateLesson(

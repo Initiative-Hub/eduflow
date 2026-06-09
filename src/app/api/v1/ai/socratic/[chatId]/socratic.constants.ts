@@ -1,4 +1,4 @@
-import * as z from 'zod';
+import { z } from 'zod';
 import {
   DEFAULT_SOCRATIC_GUIDANCE_DEPTH,
   SOCRATIC_GUIDANCE_DEPTHS,
