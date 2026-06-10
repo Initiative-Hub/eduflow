@@ -45,7 +45,7 @@ export function StudyClient({
     stop,
     hasOutput,
     isLimitReached,
-    maxMessage,
+    maxMessages,
     userMessageCount,
   } = useStudy({
     mode,
@@ -56,7 +56,7 @@ export function StudyClient({
   });
 
   const notifyLimitReached = () => {
-    toast.error(t('limitReachedToast', { count: maxMessage }));
+    toast.error(t('limitReachedToast', { count: maxMessages }));
   };
 
   const submitText = async (text: string) => {
@@ -94,7 +94,7 @@ export function StudyClient({
       isUploading={false}
       isChatting={hasOutput}
       isLimitReached={isLimitReached}
-      limitCount={maxMessage}
+      limitCount={maxMessages}
       userMessageCount={userMessageCount}
       onStop={stop}
       selectedModel={selectedModel}

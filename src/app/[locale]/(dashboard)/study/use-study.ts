@@ -39,17 +39,12 @@ export const useStudy = ({
     pendingModel,
     pendingChatId,
     pendingMessage,
-    optimisticChatId,
-    optimisticMessages,
-    setOptimisticChatId,
-    setOptimisticMessages,
     setPendingChatId,
     setPendingModel,
     setPendingMessage,
     clearPendingMessage,
     clearPendingChatId,
     clearPendingModel,
-    clearOptimisticMessages,
   } = useChatSessionStore();
 
   const createSessionMutation = useMutation({
@@ -60,7 +55,7 @@ export const useStudy = ({
   });
 
   const createUserMessage = (text: string): UIMessage => ({
-    id: `msg_${crypto.randomUUID()}`,
+    id: crypto.randomUUID(),
     role: 'user',
     parts: [{ type: 'text', text }],
   });
@@ -78,6 +73,7 @@ export const useStudy = ({
   const { messages, status, sendMessage, stop } = useChat({
     id: chatId,
     messages: initialMessages,
+    generateId: () => crypto.randomUUID(),
     transport,
     onError(error) {
       console.error('Study assistant error:', error);
@@ -85,17 +81,19 @@ export const useStudy = ({
     },
   });
 
-  const optimisticForChat =
-    optimisticChatId && optimisticChatId === chatId ? optimisticMessages : [];
+  const pendingForChat =
+    pendingChatId && pendingChatId === chatId && pendingMessage
+      ? [pendingMessage]
+      : [];
 
-  const displayMessages = messages.length > 0 ? messages : optimisticForChat;
+  const displayMessages = messages.length > 0 ? messages : pendingForChat;
 
   useEffect(() => {
     if (!pendingMessage || !pendingChatId || !chatId) return;
     if (pendingChatId !== chatId) return;
     if (!pathname?.includes(`/study/${pendingChatId}`)) return;
 
-    const pendingKey = `${pendingChatId}:${pendingMessage}`;
+    const pendingKey = `${pendingChatId}:${JSON.stringify(pendingMessage)}`;
     if (lastPendingSendRef.current === pendingKey) return;
 
     const inputModel = pendingModel ?? selectedModel;
@@ -105,16 +103,13 @@ export const useStudy = ({
     clearPendingChatId();
     clearPendingModel();
 
-    sendMessage(
-      { text: pendingMessage },
-      {
-        body: {
-          mode,
-          provider: 'openrouter',
-          model: inputModel,
-        },
-      }
-    );
+    sendMessage(pendingMessage, {
+      body: {
+        mode,
+        provider: 'openrouter',
+        model: inputModel,
+      },
+    });
   }, [
     pendingMessage,
     pendingChatId,
@@ -127,18 +122,6 @@ export const useStudy = ({
     clearPendingMessage,
     clearPendingChatId,
     clearPendingModel,
-  ]);
-
-  useEffect(() => {
-    if (messages.length === 0 || optimisticMessages.length === 0) return;
-
-    clearOptimisticMessages();
-    setOptimisticChatId(null);
-  }, [
-    messages.length,
-    optimisticMessages.length,
-    clearOptimisticMessages,
-    setOptimisticChatId,
   ]);
 
   const isLimitReached = isAuthenticated
@@ -155,9 +138,7 @@ export const useStudy = ({
         await queryClient.invalidateQueries({
           queryKey: ['study-chat-list'],
         });
-        setOptimisticChatId(newChatId);
-        setOptimisticMessages([createUserMessage(text)]);
-        setPendingMessage(text);
+        setPendingMessage(createUserMessage(text));
         setPendingChatId(newChatId);
         setPendingModel(selectedModel);
 
@@ -191,7 +172,7 @@ export const useStudy = ({
     stop,
     hasOutput: displayMessages.length > 0,
     isLimitReached,
-    maxMessage: MAX_USER_MESSAGES,
+    maxMessages: MAX_USER_MESSAGES,
     userMessageCount: displayMessages.filter((m) => m.role === 'user').length,
   };
 };
