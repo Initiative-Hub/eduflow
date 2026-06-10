@@ -1327,27 +1327,64 @@
   "StudyPage": {
     "aiActive": "AI Processing Active",
     "features": {
-      "keywordSummaries": {
-        "description": "Extract critical terminology and concepts with detailed contextual explanations.",
-        "title": "Keyword Summaries"
+      "keywords": {
+        "description": "Extract critical terminology and concepts with detailed contextual explanations."
       },
-      "practiceTests": {
-        "description": "Challenge yourself with AI-generated multiple choice, short answer, and flashcard sets.",
-        "title": "Create Practice Tests"
+      "practiceTest": {
+        "description": "Challenge yourself with AI-generated multiple choice, short answer, and flashcard sets."
       },
-      "reviewMaterials": {
-        "description": "Synthesize key concepts and definitions from your sources into digestible study guides.",
-        "title": "Generate Review Materials"
+      "review": {
+        "description": "Synthesize key concepts and definitions from your sources into digestible study guides."
       }
+    },
+    "input": {
+      "examples": "Or try an example:",
+      "placeholder": "Describe a topic or paste your lesson content to get started..."
+    },
+    "limitReachedToast": "You've reached the {count}-message Study limit. Start a new session to continue.",
+    "modes": {
+      "keywords": "Keyword Summaries",
+      "practiceTest": "Practice Tests",
+      "review": "Review Materials"
     },
     "recentSessions": {
       "title": "Recent Sessions",
       "viewAll": "View All"
     },
+    "sidebar": {
+      "actionsLabel": "Actions for {title}",
+      "cancel": "Cancel",
+      "close": "Collapse study history",
+      "delete": "Delete",
+      "deleteDialogDescription": "Delete \"{title}\" from your study history? This action cannot be undone.",
+      "deleteDialogTitle": "Delete study session",
+      "deleteError": "Unable to delete study session.",
+      "deleteSuccess": "Study session deleted.",
+      "description": "Search and reopen prior study sessions.",
+      "editDialogDescription": "Choose a concise title for this study session.",
+      "editDialogTitle": "Edit study title",
+      "editError": "Unable to update study session title.",
+      "editTitle": "Edit Title",
+      "editTitleLabel": "Study session title",
+      "editTitlePlaceholder": "Enter study session title",
+      "emptyDescription": "Start a new study session and it will appear here.",
+      "emptySearch": "No study sessions match your search.",
+      "emptyTitle": "No study sessions yet",
+      "loadingMore": "Loading more study sessions...",
+      "messageCount": "{count, plural, one {# message} other {# messages}}",
+      "newChat": "New study session",
+      "open": "Open study history",
+      "saveTitle": "Save title",
+      "searchLabel": "Search study sessions",
+      "searchPlaceholder": "Search study sessions...",
+      "title": "Study history",
+      "untitled": "Untitled study session"
+    },
     "subtitle": "Transform your materials into powerful academic insights. Upload anything and let AI do the work.",
     "title": "What can I help you <accent>study</accent> today?",
     "upload": {
       "description": "Drag and drop PDF, Word, or Images here.",
+      "replace": "Drag and drop or click to replace",
       "title": "Upload Materials to Start"
     }
   },

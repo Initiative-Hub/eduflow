@@ -14,5 +14,5 @@ export default async function StudyAssistantPage() {
     redirect('/login');
   }
 
-  return <StudyClient />;
+  return <StudyClient isAuthenticated={!!session.user} />;
 }
