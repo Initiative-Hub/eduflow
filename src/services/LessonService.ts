@@ -1,6 +1,7 @@
 import { getCoursePermissions } from '@/lib/permissions/course-permission';
 import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
 import { prisma } from '@/lib/prisma';
+import type { TiptapDocument } from '@/utils/lesson-content';
 
 export class LessonService {
   static async createLesson(data: { moduleId: string; title: string }) {
@@ -54,7 +55,7 @@ export class LessonService {
   static async updateLesson(
     lessonId: string,
     userId: string,
-    data: { title?: string; content?: Record<string, unknown> | string | null }
+    data: { title?: string; content?: TiptapDocument }
   ) {
     const lesson = await prisma.lesson.findUnique({
       where: { id: lessonId },
@@ -83,9 +84,8 @@ export class LessonService {
     return await prisma.lesson.update({
       where: { id: lessonId },
       data: {
-        title: data.title !== undefined ? data.title : undefined,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        content: data.content !== undefined ? (data.content as any) : undefined,
+        title: data.title,
+        content: data.content,
       },
     });
   }

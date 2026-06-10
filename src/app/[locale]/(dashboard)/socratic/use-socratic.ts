@@ -5,9 +5,9 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { DefaultChatTransport } from 'ai';
 import { useEffect, useMemo, useRef } from 'react';
 import { toast } from 'sonner';
+import { DEFAULT_SOCRATIC_GUIDANCE_DEPTH } from '@/app/api/v1/ai/socratic/[chatId]/socratic.constants';
 import { usePathname, useRouter } from '@/i18n/navigation';
-import type { SocraticGuidanceDepth } from '@/lib/validations/socratic.schema';
-import type { ChatModel } from '@/services/ai/chat-models';
+import { DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
 import { useChatSessionStore } from '@/stores/useChatSessionStore';
 import type { SocraticUIMessage } from '@/types/socratic-ui-message';
 import { hasReachedUserMessageLimit } from '@/utils/chat-limit';
@@ -18,16 +18,12 @@ const MAX_USER_MESSAGES = 5;
 interface UseSocraticOptions {
   chatId?: string;
   initialMessages?: SocraticUIMessage[];
-  selectedModel: ChatModel;
-  guidanceDepth: SocraticGuidanceDepth;
   isAuthenticated: boolean;
 }
 
 export const useSocratic = ({
   chatId,
   initialMessages = [],
-  selectedModel,
-  guidanceDepth,
   isAuthenticated,
 }: UseSocraticOptions) => {
   const router = useRouter();
@@ -40,19 +36,12 @@ export const useSocratic = ({
     pendingChatId,
     pendingModel,
     pendingSocraticGuidanceDepth,
-    optimisticChatId,
-    optimisticMessages,
-    setOptimisticChatId,
-    setOptimisticMessages,
     setPendingMessage,
+    clearPendingMessage,
     setPendingChatId,
+    clearPendingChatId,
     setPendingModel,
     setPendingSocraticGuidanceDepth,
-    clearPendingMessage,
-    clearPendingChatId,
-    clearPendingModel,
-    clearPendingSocraticGuidanceDepth,
-    clearOptimisticMessages,
   } = useChatSessionStore();
 
   const transport = useMemo(
@@ -68,6 +57,7 @@ export const useSocratic = ({
   const { messages, status, sendMessage, stop } = useChat<SocraticUIMessage>({
     id: chatId,
     messages: initialMessages,
+    generateId: () => crypto.randomUUID(),
     transport,
     onError(error) {
       console.error('Socratic tutor error:', error);
@@ -85,44 +75,37 @@ export const useSocratic = ({
   });
 
   const createUserMessage = (text: string): SocraticUIMessage => ({
-    id: `msg_${crypto.randomUUID()}`,
+    id: crypto.randomUUID(),
     role: 'user',
     parts: [{ type: 'text', text }],
   });
 
-  const optimisticForChat =
-    optimisticChatId && optimisticChatId === chatId
-      ? (optimisticMessages as SocraticUIMessage[])
+  const pendingForChat =
+    pendingChatId && pendingChatId === chatId && pendingMessage
+      ? [pendingMessage]
       : [];
-  const displayMessages = messages.length > 0 ? messages : optimisticForChat;
+  const displayMessages = messages.length > 0 ? messages : pendingForChat;
 
   useEffect(() => {
     if (!pendingMessage || !pendingChatId || !chatId) return;
     if (pendingChatId !== chatId) return;
     if (!pathname?.includes(`/socratic/${pendingChatId}`)) return;
 
-    const pendingKey = `${pendingChatId}:${pendingMessage}`;
+    const pendingKey = `${pendingChatId}:${JSON.stringify(pendingMessage)}`;
     if (lastPendingSendRef.current === pendingKey) return;
-
-    const inputModel = pendingModel ?? selectedModel;
-    const inputGuidanceDepth = pendingSocraticGuidanceDepth ?? guidanceDepth;
 
     lastPendingSendRef.current = pendingKey;
     clearPendingMessage();
     clearPendingChatId();
-    clearPendingModel();
-    clearPendingSocraticGuidanceDepth();
 
-    sendMessage(
-      { text: pendingMessage },
-      {
-        body: {
-          guidanceDepth: inputGuidanceDepth,
-          provider: 'openrouter',
-          model: inputModel,
-        },
-      }
-    );
+    sendMessage(pendingMessage as SocraticUIMessage, {
+      body: {
+        guidanceDepth:
+          pendingSocraticGuidanceDepth ?? DEFAULT_SOCRATIC_GUIDANCE_DEPTH,
+        provider: 'openrouter',
+        model: pendingModel ?? DEFAULT_CHAT_MODEL,
+      },
+    });
   }, [
     pendingMessage,
     pendingChatId,
@@ -130,24 +113,9 @@ export const useSocratic = ({
     pendingSocraticGuidanceDepth,
     chatId,
     pathname,
-    selectedModel,
-    guidanceDepth,
     sendMessage,
     clearPendingMessage,
     clearPendingChatId,
-    clearPendingModel,
-    clearPendingSocraticGuidanceDepth,
-  ]);
-
-  useEffect(() => {
-    if (messages.length === 0 || optimisticMessages.length === 0) return;
-    clearOptimisticMessages();
-    setOptimisticChatId(null);
-  }, [
-    messages.length,
-    optimisticMessages.length,
-    clearOptimisticMessages,
-    setOptimisticChatId,
   ]);
 
   const userMessageCount = displayMessages.filter(
@@ -168,12 +136,12 @@ export const useSocratic = ({
             queryKey: ['recent-socratic-chats'],
           }),
         ]);
-        setOptimisticChatId(newChatId);
-        setOptimisticMessages([createUserMessage(text)]);
-        setPendingMessage(text);
+        setPendingMessage(createUserMessage(text));
         setPendingChatId(newChatId);
-        setPendingModel(selectedModel);
-        setPendingSocraticGuidanceDepth(guidanceDepth);
+        setPendingModel(pendingModel ?? DEFAULT_CHAT_MODEL);
+        setPendingSocraticGuidanceDepth(
+          pendingSocraticGuidanceDepth ?? DEFAULT_SOCRATIC_GUIDANCE_DEPTH
+        );
 
         router.push(`/socratic/${newChatId}`);
       } catch (error) {
@@ -190,9 +158,10 @@ export const useSocratic = ({
       { text },
       {
         body: {
-          guidanceDepth,
           provider: 'openrouter',
-          model: selectedModel,
+          model: pendingModel ?? DEFAULT_CHAT_MODEL,
+          guidanceDepth:
+            pendingSocraticGuidanceDepth ?? DEFAULT_SOCRATIC_GUIDANCE_DEPTH,
         },
       }
     );
@@ -200,12 +169,16 @@ export const useSocratic = ({
 
   return {
     messages: displayMessages,
-    startChat,
-    isStreaming,
-    stop,
-    hasOutput: displayMessages.length > 0,
-    isLimitReached,
-    maxMessages: MAX_USER_MESSAGES,
     userMessageCount,
+    maxMessages: MAX_USER_MESSAGES,
+    hasOutput: displayMessages.length > 0,
+    pendingModel,
+    pendingSocraticGuidanceDepth,
+    isStreaming,
+    isLimitReached,
+    setPendingModel,
+    setPendingSocraticGuidanceDepth,
+    startChat,
+    stop,
   };
 };

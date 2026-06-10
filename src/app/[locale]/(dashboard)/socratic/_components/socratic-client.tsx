@@ -4,14 +4,10 @@ import { GraduationCap, LockKeyhole } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import type React from 'react';
-import { useState } from 'react';
 import { toast } from 'sonner';
+import { DEFAULT_SOCRATIC_GUIDANCE_DEPTH } from '@/app/api/v1/ai/socratic/[chatId]/socratic.constants';
 import { Button } from '@/components/ui/button';
-import {
-  DEFAULT_SOCRATIC_GUIDANCE_DEPTH,
-  type SocraticGuidanceDepth,
-} from '@/lib/validations/socratic.schema';
-import { type ChatModel, DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
+import { DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
 import type { SocraticUIMessage } from '@/types/socratic-ui-message';
 import { ChatInput } from '../../_components/chat-input';
 import { ChatSidebar } from '../../_components/chat-sidebar';
@@ -37,26 +33,23 @@ export function SocraticClient({
   isAuthenticated,
 }: SocraticClientProps) {
   const t = useTranslations('SocraticPage');
-  const [selectedModel, setSelectedModel] =
-    useState<ChatModel>(DEFAULT_CHAT_MODEL);
-  const [guidanceDepth, setGuidanceDepth] = useState<SocraticGuidanceDepth>(
-    DEFAULT_SOCRATIC_GUIDANCE_DEPTH
-  );
 
   const {
     messages,
-    isStreaming,
-    startChat,
-    stop,
-    hasOutput,
-    isLimitReached,
     maxMessages,
     userMessageCount,
+    hasOutput,
+    pendingModel,
+    pendingSocraticGuidanceDepth,
+    isStreaming,
+    isLimitReached,
+    setPendingModel,
+    setPendingSocraticGuidanceDepth,
+    startChat,
+    stop,
   } = useSocratic({
     chatId,
     initialMessages,
-    selectedModel,
-    guidanceDepth,
     isAuthenticated,
   });
 
@@ -103,8 +96,8 @@ export function SocraticClient({
       limitCount={maxMessages}
       userMessageCount={userMessageCount}
       onStop={stop}
-      selectedModel={selectedModel}
-      onModelChange={setSelectedModel}
+      selectedModel={pendingModel ?? DEFAULT_CHAT_MODEL}
+      onModelChange={setPendingModel}
       placeholder={t('input.placeholder')}
       footer={
         <div className="flex items-center justify-center px-4">
@@ -119,8 +112,10 @@ export function SocraticClient({
       }
       tools={
         <SocraticGuidanceDepthControl
-          guidanceDepth={guidanceDepth}
-          onGuidanceDepthChange={setGuidanceDepth}
+          guidanceDepth={
+            pendingSocraticGuidanceDepth ?? DEFAULT_SOCRATIC_GUIDANCE_DEPTH
+          }
+          onGuidanceDepthChange={setPendingSocraticGuidanceDepth}
         />
       }
     />

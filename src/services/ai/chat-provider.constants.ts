@@ -93,8 +93,9 @@ export const COURSE_GENERATION_PROMPT = `
 
   ### FORMATTING:
   - Output must be strictly valid JSON.
-  - The "content" field for each lesson MUST be an HTML string formatted for a rich text editor.
-  - Use HTML tags like <h1>, <h2>, <h3>, <p>, <ul>, <ol>, <li>, <strong>, <em>, <blockquote>, <pre><code> to structure the lesson content beautifully.
+  - The "content" field for each lesson MUST be an HTML string formatted for a rich text editor, not Markdown and not Tiptap JSON.
+  - Use semantic HTML tags like <h1>, <h2>, <h3>, <p>, <ul>, <ol>, <li>, <strong>, <em>, <blockquote>, <pre>, and <code> to structure the lesson content clearly.
+  - Do not wrap the HTML string in code fences.
   - Based on the contents of the slides make the content of the lessons to be more detailed and specific. 
   - Do not include conversational filler (e.g., "Here is your course...").
   - Ensure the difficulty level is consistent throughout the course.
