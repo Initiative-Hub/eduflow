@@ -250,7 +250,7 @@ export async function POST(
 
     const response = result.toUIMessageStreamResponse({
       originalMessages: parsedBody.data.messages,
-      generateMessageId: () => `${crypto.randomUUID}`,
+      generateMessageId: () => `${crypto.randomUUID()}`,
       onFinish: async ({ messages }) => {
         await ChatPersistenceService.saveMessages({
           chatId,

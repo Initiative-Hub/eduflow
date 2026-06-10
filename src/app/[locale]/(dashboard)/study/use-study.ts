@@ -60,7 +60,7 @@ export const useStudy = ({
   });
 
   const createUserMessage = (text: string): UIMessage => ({
-    id: `msg_${crypto.randomUUID}`,
+    id: `msg_${crypto.randomUUID()}`,
     role: 'user',
     parts: [{ type: 'text', text }],
   });

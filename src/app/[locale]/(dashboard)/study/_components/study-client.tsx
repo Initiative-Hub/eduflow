@@ -1,7 +1,7 @@
 'use client';
 
 import type { UIMessage } from 'ai';
-import { BookMarked, ClipboardList, GraduationCap, Tag } from 'lucide-react';
+import { GraduationCap } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
@@ -76,16 +76,13 @@ export function StudyClient({
   };
 
   const viewport = !hasOutput ? (
-    <StudyModeSelector
-      mode={mode}
-      onModeChange={setMode}
-      onSelectPrompt={submitText}
-    />
+    <StudyModeSelector mode={mode} onModeChange={setMode} />
   ) : (
     <ChatView
       messages={messages}
-      isStreaming
+      isStreaming={isStreaming}
       onSuggestionSelect={(suggestion) => void submitText(suggestion)}
+      suggestionsDisabled={isStreaming || isLimitReached}
     />
   );
 

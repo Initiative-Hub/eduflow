@@ -1,12 +1,6 @@
 'use client';
 
-import {
-  BookMarked,
-  BookOpen,
-  ClipboardList,
-  CloudUpload,
-  Tag,
-} from 'lucide-react';
+import { BookMarked, ClipboardList, CloudUpload, Tag } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { Dropzone } from '@/components/ui/dropzone';
@@ -15,31 +9,11 @@ import type { StudyMode } from '@/lib/validations/study.schema';
 interface StudyModeSelectorProps {
   mode: StudyMode;
   onModeChange: (mode: StudyMode) => void;
-  onSelectPrompt: (text: string) => void;
 }
-
-const EXAMPLE_PROMPTS: Record<StudyMode, string[]> = {
-  review: [
-    'Summarise the key concepts of photosynthesis',
-    'Create a study guide for World War II causes',
-    "Explain the main ideas in Newton's laws of motion",
-  ],
-  practiceTest: [
-    'Generate a practice test on the French Revolution',
-    'Create quiz questions about Python data structures',
-    'Make flashcards for Spanish vocabulary – food and drink',
-  ],
-  keywords: [
-    'Extract key terms from: Machine Learning uses algorithms…',
-    'Define keywords in: The mitochondria is the powerhouse…',
-    'Find key concepts in microeconomics supply and demand',
-  ],
-};
 
 export function StudyModeSelector({
   mode,
   onModeChange,
-  onSelectPrompt,
 }: StudyModeSelectorProps) {
   const t = useTranslations('StudyPage');
   const [files, setFiles] = useState<File[]>();
@@ -114,25 +88,6 @@ export function StudyModeSelector({
             </button>
           )
         )}
-      </div>
-      {/* Example prompts */}
-      <div className="flex flex-col gap-2">
-        <p className="px-1 font-medium text-muted-foreground text-xs">
-          {t('input.examples')}
-        </p>
-        <div className="flex flex-col gap-2">
-          {EXAMPLE_PROMPTS[mode].map((prompt) => (
-            <button
-              key={prompt}
-              type="button"
-              onClick={() => onSelectPrompt(prompt)}
-              className="flex items-center gap-2 rounded-xl border border-border/60 bg-muted/40 px-4 py-2.5 text-left text-muted-foreground text-sm transition-colors hover:bg-muted hover:text-foreground"
-            >
-              <BookOpen className="size-3.5 shrink-0" />
-              {prompt}
-            </button>
-          ))}
-        </div>
       </div>
       {/* Upload zone */}
       <Dropzone
