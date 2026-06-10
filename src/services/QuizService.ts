@@ -31,12 +31,11 @@ function extractTextFromTiptap(node: Record<string, unknown>): string {
 }
 
 /**
- * Converts a lesson's stored `content` field (Tiptap JSON, plain string, or null)
- * into a plain-text string suitable for the AI prompt.
+ * Converts a lesson's stored Tiptap JSON `content` field into plain text
+ * suitable for the AI prompt.
  */
 function lessonContentToText(content: unknown): string {
   if (!content) return '';
-  if (typeof content === 'string') return content.trim();
 
   try {
     const doc = content as Record<string, unknown>;

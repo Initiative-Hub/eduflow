@@ -5,13 +5,14 @@ import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 
 import { apiClient } from '@/lib/api/api-client';
+import type { TiptapDocument } from '@/utils/lesson-content';
 import { useGenerateCourse } from './use-generate-course';
 
 export interface Lesson {
   id: string;
   title: string;
   orderIndex: number;
-  content: Record<string, unknown> | null;
+  content: TiptapDocument;
   canEdit?: boolean;
 }
 
@@ -35,6 +36,7 @@ export function useModules(courseId: string) {
   const {
     step,
     streamingCourse,
+    searchSources,
     isRunning,
     error: generationError,
     generate,
@@ -60,6 +62,7 @@ export function useModules(courseId: string) {
       fileId: selection.fileId,
       file: selection.file,
       context: selection.context,
+      model: 'gemini-3.1-pro-preview',
     });
   };
 
@@ -131,11 +134,10 @@ export function useModules(courseId: string) {
     generationStep: step,
     generationError,
     streamingCourse,
+    searchSources,
     isRunning,
     resetGeneration: reset,
-
     generateCourseModules,
-
     getAdjacentLessons,
   };
 }

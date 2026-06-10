@@ -1,12 +1,9 @@
 import { cookies, headers } from 'next/headers';
 import { notFound } from 'next/navigation';
-import {
-  getSocraticDisciplineFromMetadata,
-  type SocraticUIMessage,
-} from '@/app/api/v1/ai/socratic/[chatId]/socratic.constants';
 import { AiChatType } from '@/generated/prisma';
 import { auth } from '@/lib/auth';
 import { ChatPersistenceService } from '@/services/ChatPersistenceService';
+import type { SocraticUIMessage } from '@/types/socratic-ui-message';
 import { SocraticClient } from '../_components/socratic-client';
 
 interface SocraticSessionPageProps {
@@ -41,9 +38,6 @@ export default async function SocraticSessionPage({
   return (
     <SocraticClient
       chatId={chatId}
-      initialDiscipline={getSocraticDisciplineFromMetadata(
-        socraticData.metadata
-      )}
       initialMessages={socraticData.messages as SocraticUIMessage[]}
       isAuthenticated={Boolean(session?.user?.id)}
     />

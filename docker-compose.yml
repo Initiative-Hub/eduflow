@@ -118,7 +118,7 @@ services:
 
   markitdown:
     build:
-      context: ./external-services/markitdown
+      context: ./external-services
       dockerfile: Dockerfile
     container_name: eduflow_markitdown
     restart: unless-stopped

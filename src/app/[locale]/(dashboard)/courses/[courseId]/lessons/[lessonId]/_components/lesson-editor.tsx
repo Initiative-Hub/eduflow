@@ -7,6 +7,7 @@ import { Subscript } from '@tiptap/extension-subscript';
 import { Superscript } from '@tiptap/extension-superscript';
 import { TextAlign } from '@tiptap/extension-text-align';
 import { Typography } from '@tiptap/extension-typography';
+import { Youtube } from '@tiptap/extension-youtube';
 import { Selection } from '@tiptap/extensions';
 import { EditorContent, EditorContext, useEditor } from '@tiptap/react';
 import { StarterKit } from '@tiptap/starter-kit';
@@ -32,12 +33,12 @@ import './lesson-editor.scss';
 
 interface LessonEditorProps {
   title: string;
-  content: TiptapDocument | string;
+  content: TiptapDocument;
   canEdit?: boolean;
   emptyContentLabel: string;
   isUpdatingLesson?: boolean;
   onSave?: (
-    data: { title: string; content: TiptapDocument | string },
+    data: { title: string; content: TiptapDocument },
     options: { onSuccess: () => void }
   ) => void;
 }
@@ -83,6 +84,9 @@ export function LessonEditor({
       TaskItem.configure({ nested: true }),
       Highlight.configure({ multicolor: true }),
       Image,
+      Youtube.configure({
+        addPasteHandler: true,
+      }),
       Typography,
       Superscript,
       Subscript,
@@ -90,7 +94,7 @@ export function LessonEditor({
     ],
     content,
     onUpdate: ({ editor }) => {
-      setEditContent(editor.getHTML());
+      setEditContent(editor.getJSON());
     },
   });
 
@@ -104,9 +108,7 @@ export function LessonEditor({
 
     if (
       !isEditing &&
-      ((typeof content === 'string' && editor.getHTML() !== content) ||
-        (typeof content !== 'string' &&
-          JSON.stringify(editor.getJSON()) !== JSON.stringify(content)))
+      JSON.stringify(editor.getJSON()) !== JSON.stringify(content)
     ) {
       editor.commands.setContent(content, { emitUpdate: false });
     }
@@ -136,7 +138,7 @@ export function LessonEditor({
     onSave?.(
       {
         title: editTitle,
-        content: (editor?.getHTML() as string | undefined) ?? editContent,
+        content: editor?.getJSON() ?? editContent,
       },
       { onSuccess: () => setIsEditing(false) }
     );

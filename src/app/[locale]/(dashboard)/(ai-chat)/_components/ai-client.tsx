@@ -14,7 +14,7 @@ import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { type ChatModel, DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
+import { DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
 import { ChatSidebar } from '../../_components/chat-sidebar';
 import { ChatWorkspaceShell } from '../../_components/chat-workspace-shell';
 import { useChatController } from '../use-chat';
@@ -46,24 +46,25 @@ export function AIClient({
   isAuthenticated,
 }: AIClientProps) {
   const t = useTranslations('AIChat');
+
   const [view, setView] = useState<ViewState>('home');
-  const [selectedModel, setSelectedModel] =
-    useState<ChatModel>(DEFAULT_CHAT_MODEL);
   const [isUploadingAttachments, setIsUploadingAttachments] = useState(false);
+
   const {
-    displayMessages,
-    isStreaming,
-    isChatting,
-    isLimitReached,
+    messages,
+    maxMessages,
     userMessageCount,
+    hasOutput,
+    pendingModel,
+    isStreaming,
+    isLimitReached,
+    setPendingModel,
     startChat,
     stop,
-    maxMessages,
   } = useChatController({
     chatId,
     initialMessages,
     isAuthenticated,
-    selectedModel,
   });
 
   const notifyLimitReached = () => {
@@ -164,7 +165,7 @@ export function AIClient({
     },
   ];
 
-  const viewport = !isChatting ? (
+  const viewport = !hasOutput ? (
     <LandingView
       userName={userName ?? 'Guest'}
       view={view}
@@ -180,7 +181,7 @@ export function AIClient({
       }}
     />
   ) : (
-    <ChatView messages={displayMessages} isStreaming={isStreaming} />
+    <ChatView messages={messages} isStreaming={isStreaming} />
   );
 
   const composer = (
@@ -189,13 +190,13 @@ export function AIClient({
       isAuthenticated={isAuthenticated}
       isStreaming={isStreaming}
       isUploading={isUploadingAttachments}
-      isChatting={isChatting}
+      isChatting={hasOutput}
       isLimitReached={isLimitReached}
       limitCount={maxMessages}
       userMessageCount={userMessageCount}
       onStop={stop}
-      selectedModel={selectedModel}
-      onModelChange={setSelectedModel}
+      selectedModel={pendingModel ?? DEFAULT_CHAT_MODEL}
+      onModelChange={setPendingModel}
     />
   );
 

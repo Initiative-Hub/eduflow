@@ -85,11 +85,13 @@ for any tasks.).
 - **Next-intl Components**: When extracting text-heavy components, pass plain strings or call next-intl helpers inside the component instead of threading translator functions through props.
 - **SSR Page Entries**: Keep `src/app/**/page.tsx` as Server Components by NEVER adding 'use client' on top of them. Move only interactive logic into focused local client islands.
 - **Shared Shells**: Reuse `DialogTemplate` and `FormTemplate` for modal and form shells instead of rebuilding the same structure ad hoc.
+- **Pipeline Step Panels**: In generation/progress dialogs, render step-specific detail panels only while their step is active; add explicit step navigation before showing historical step details.
 - **Dialog Success Flow**: When a dialog triggers an async mutation, close it via `onOpenChange(false)` before navigation and guard entry points with the mutation pending state to avoid duplicate opens/submits.
 - **Tabular Lists**: Use the shared `Table` components for list-style layouts instead of custom row divs to keep alignment consistent.
 - **Server Layouts**: For async server layouts that only pass through children, return a fragment instead of raw children.
 - **Icons and Styling**: Use `lucide-react` for new icons and keep styling in the existing Tailwind utility style used throughout the app.
 - **Textarea Typography Overrides**: Shared `Textarea` includes a responsive `md:text-sm`; when a feature requires a larger reading size, set both the base `text-*` and matching `md:text-*` class so desktop does not silently shrink.
+- **Icon Availability**: When introducing a new `lucide-react` icon, verify the installed package exports it; use a generic available icon when brand-specific icons are absent.
 - **JSX Curly Braces**: Literally render double curly braces `{{` and `}}` in JSX text by quoting them, like `{'{{placeholder}}'}`, to prevent the JSX compiler from parsing them as JS object shorthand syntax.
 - **English Dictionary UX**: On `/english`, keep single-word dictionary interactions scoped to the left source selection and rendered English translation text; use anchored popovers instead of global text-selection popups.
 - **English Pronunciation Data**: For learner-facing key vocabulary IPA on `/english`, keep the AI-generated IPA value; use Merriam-Webster lookup for pronunciation audio enrichment only.
@@ -116,7 +118,7 @@ for any tasks.).
 
 - **UUID Params**: Validate UUID path params with shared Zod schemas when an API route accepts IDs from the URL.
 - **Typed JSON**: Use Zod transforms to keep JSON request payloads typed before handing them to Prisma create/update calls.
-- **Lesson Content Payloads**: Lesson editors may submit either Tiptap JSON or HTML strings; keep route validation and service signatures aligned with both shapes before persisting lesson content.
+- **Lesson Content Payloads**: Lesson editors must load and save only Tiptap JSON documents (`{"type":"doc","content":[...]}`); AI generation may emit transient lesson HTML only if it is converted to Tiptap JSON before persistence.
 - **Inferred Types**: Prefer inferred Prisma and Zod types over handwritten duplicates; when a shape repeats, extract it into a local type alias or helper instead of retyping the structure.
 - **ICU Messages**: Use ICU-style placeholders in `next-intl` messages (`{name}`, `{count}`) when adding plurals or selects.
 - **Generated Prisma Sync**: If `src/generated/prisma` and `prisma/schema.prisma` drift, rerun `bun db:generate` before assuming a storage or Prisma-backed service is broken.

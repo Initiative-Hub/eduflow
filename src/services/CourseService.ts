@@ -5,6 +5,7 @@ import {
   type CoursePermissionKey,
 } from '@/lib/permissions/permission-keys';
 import { prisma } from '@/lib/prisma';
+import { htmlToTiptapDocument } from '@/lib/tiptap-html';
 import type { AICourseGeneration } from '@/lib/validations/course.schema';
 import { OpenRouterService } from '@/services/ai/OpenRouterService';
 import { StorageService } from '@/services/StorageService';
@@ -415,8 +416,9 @@ export class CourseService {
     courseId: string;
     fileId?: string;
     file?: File;
-    apiKey?: string;
     context?: string;
+    apiKey?: string;
+    model?: string;
   }): ReadableStream<string> {
     const { readable, writable } = new TransformStream<string, string>();
     const writer = writable.getWriter();
@@ -431,15 +433,16 @@ export class CourseService {
             userId: data.userId,
             fileId: data.fileId,
             file: data.file,
-            apiKey: data.apiKey,
             context: data.context,
+            apiKey: data.apiKey,
+            model: data.model,
             onFinish: async ({ object }) => {
               if (!object) return;
               // Emit save event before persisting
-              await writer.write(JSON.stringify({ type: 'save' }) + '\n');
+              await writer.write(`${JSON.stringify({ type: 'save' })}\n`);
               await CourseService.saveGeneratedCourseData(
                 data.courseId,
-                object as AICourseGeneration
+                object
               );
             },
           },
@@ -447,7 +450,8 @@ export class CourseService {
         );
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Unknown error';
-        await writer.write(JSON.stringify({ type: 'error', message }) + '\n');
+        console.log('Error in course generation stream:', message);
+        await writer.write(`${JSON.stringify({ type: 'error', message })}\n`);
       } finally {
         await writer.close();
       }
@@ -484,14 +488,12 @@ export class CourseService {
 
         if (mod.lessons && Array.isArray(mod.lessons)) {
           let currentLessonOrder = 0;
-          const lessonData = mod.lessons.map(
-            (lesson: { lessonTitle?: string; content?: string }) => ({
-              moduleId: createdModule.id,
-              title: lesson.lessonTitle || 'Untitled Lesson',
-              content: lesson.content || '',
-              orderIndex: currentLessonOrder++,
-            })
-          );
+          const lessonData = mod.lessons.map((lesson) => ({
+            moduleId: createdModule.id,
+            title: lesson.lessonTitle || 'Untitled Lesson',
+            content: htmlToTiptapDocument(lesson.content || ''),
+            orderIndex: currentLessonOrder++,
+          }));
 
           if (lessonData.length > 0) {
             await tx.lesson.createMany({

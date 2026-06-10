@@ -1,18 +1,11 @@
 /**
- * Utility to convert PDF buffer to Markdown using an external MarkItDown service.
+ * Utility to convert PDF buffer to Markdown using an Python external MarkItDown service.
  */
 export async function pdfToMarkdown(pdfBuffer: Buffer): Promise<string> {
-  let endpoint =
-    process.env.MARKITDOWN_ENDPOINT_URL || 'http://localhost:8000/markitdown';
-
-  // If the endpoint is just a base URL (e.g., from .env), ensure it hits the conversion path
-  if (
-    endpoint.endsWith(':8000') ||
-    endpoint.endsWith(':8000/') ||
-    endpoint.endsWith('localhost:8000')
-  ) {
-    endpoint = endpoint.replace(/\/$/, '') + '/markitdown';
-  }
+  const baseUrl = (
+    process.env.EXTERNAL_SERVICE_URL || 'http://localhost:8000'
+  ).replace(/\/$/, '');
+  const endpoint = `${baseUrl}/markitdown`;
 
   try {
     const formData = new FormData();
