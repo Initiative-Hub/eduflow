@@ -3,7 +3,6 @@
 import { useChat } from '@ai-sdk/react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { DefaultChatTransport, type UIMessage } from 'ai';
-import { warnOptionHasBeenMovedOutOfExperimental } from 'next/dist/server/config';
 import { useEffect, useMemo, useRef } from 'react';
 import { toast } from 'sonner';
 import { usePathname, useRouter } from '@/i18n/navigation';
@@ -89,7 +88,7 @@ export const useStudy = ({
   const optimisticForChat =
     optimisticChatId && optimisticChatId === chatId ? optimisticMessages : [];
 
-  const displayMessages = messages.length > 0 ? messages : optimisticMessages;
+  const displayMessages = messages.length > 0 ? messages : optimisticForChat;
 
   useEffect(() => {
     if (!pendingMessage || !pendingChatId || !chatId) return;
