@@ -104,26 +104,72 @@ export class DictionaryService {
     const entry = await provider.lookup(word);
     if (!entry) return null;
 
+    // Replace MW proprietary phonetic notation with Free Dictionary API's IPA.
+    // MW Collegiate uses its own notation (e.g. "ˈkän-ˌtekst"), not IPA.
+    // MW Learners uses a non-standard IPA variant. Both are replaced here.
+    const aiIpa = await DictionaryService.generateIPA(word);
+    const enrichedEntry: DictionaryEntry = {
+      ...entry,
+      phonetic: aiIpa ?? entry.phonetic,
+    };
+
     // Cache the result — store full entry data in meanings JSON
     const cachePayload = {
-      meanings: entry.meanings,
-      ...(entry.etymology && { etymology: entry.etymology }),
-      ...(entry.synonyms?.length && { synonyms: entry.synonyms }),
-      ...(entry.antonyms?.length && { antonyms: entry.antonyms }),
-      ...(entry.dateFirstUsed && { dateFirstUsed: entry.dateFirstUsed }),
-      ...(entry.functionalLabel && { functionalLabel: entry.functionalLabel }),
+      meanings: enrichedEntry.meanings,
+      ...(enrichedEntry.etymology && { etymology: enrichedEntry.etymology }),
+      ...(enrichedEntry.synonyms?.length && {
+        synonyms: enrichedEntry.synonyms,
+      }),
+      ...(enrichedEntry.antonyms?.length && {
+        antonyms: enrichedEntry.antonyms,
+      }),
+      ...(enrichedEntry.dateFirstUsed && {
+        dateFirstUsed: enrichedEntry.dateFirstUsed,
+      }),
+      ...(enrichedEntry.functionalLabel && {
+        functionalLabel: enrichedEntry.functionalLabel,
+      }),
     };
 
     await prisma.dictionaryCache.create({
       data: {
-        word: entry.word,
+        word: enrichedEntry.word,
         source: providerId,
-        phonetic: entry.phonetic,
-        audioUrl: entry.audioUrl,
+        phonetic: enrichedEntry.phonetic,
+        audioUrl: enrichedEntry.audioUrl,
         meanings: cachePayload as unknown as Prisma.InputJsonValue,
       },
     });
 
-    return entry;
+    return enrichedEntry;
+  }
+
+  /**
+   * Fetch standard IPA phonemic transcription for a word from Free Dictionary IPA.
+   * Returns the IPA string (e.g. /ˈkɑːn.tɛkst/) or null on failure.
+   * This is best-effort — callers should fall back to the provider's phonetic.
+   */
+  private static async generateIPA(word: string): Promise<string | null> {
+    try {
+      const response = await fetch(
+        `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`,
+        { cache: 'no-store' }
+      );
+
+      if (!response.ok) return null;
+
+      const data = await response.json();
+      if (!Array.isArray(data) || data.length === 0) return null;
+
+      const entry = data[0];
+      const phonetic =
+        entry.phonetic ||
+        entry.phonetics?.find((p: { text?: string }) => p.text)?.text ||
+        null;
+
+      return phonetic;
+    } catch {
+      return null;
+    }
   }
 }
