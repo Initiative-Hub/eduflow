@@ -1,4 +1,3 @@
-import { limitShift } from '@floating-ui/react';
 import { apiClient } from '@/lib/api';
 import type {
   ChatListResponse,
