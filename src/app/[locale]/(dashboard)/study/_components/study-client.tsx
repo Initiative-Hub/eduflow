@@ -13,6 +13,7 @@ import { ChatSidebar } from '../../_components/chat-sidebar';
 import { ChatWorkspaceShell } from '../../_components/chat-workspace-shell';
 import { studyService } from '../study.service';
 import { useStudy } from '../use-study';
+import { StudyModeSelector } from './study-mode-selector';
 
 const ChatView = dynamic(() =>
   import('../../_components/chat-view').then((mod) => mod.ChatView)
@@ -74,36 +75,12 @@ export function StudyClient({
     submitText(customValue || '');
   };
 
-  //TODO: should i extract this constant to new component
-  const FEATURE_CARDS = [
-    {
-      key: 'review' as StudyMode,
-      icon: BookMarked,
-      label: t('modes.review'),
-      accent:
-        'bg-violet-50 text-violet-600 border-violet-200 dark:bg-violet-950/30 dark:text-violet-400 dark:border-violet-900/40',
-      activeAccent: 'ring-2 ring-violet-400 bg-violet-50 dark:bg-violet-950/30',
-    },
-    {
-      key: 'practiceTest' as StudyMode,
-      icon: ClipboardList,
-      label: t('modes.practiceTest'),
-      accent:
-        'bg-indigo-50 text-indigo-600 border-indigo-200 dark:bg-indigo-950/30 dark:text-indigo-400 dark:border-indigo-900/40',
-      activeAccent: 'ring-2 ring-indigo-400 bg-indigo-50 dark:bg-indigo-950/30',
-    },
-    {
-      key: 'keywords' as StudyMode,
-      icon: Tag,
-      label: t('modes.keywords'),
-      accent:
-        'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900/40',
-      activeAccent: 'ring-2 ring-amber-400 bg-amber-50 dark:bg-amber-950/30',
-    },
-  ];
-
   const viewport = !hasOutput ? (
-    <>LANDING PAGE</>
+    <StudyModeSelector
+      mode={mode}
+      onModeChange={setMode}
+      onSelectPrompt={submitText}
+    />
   ) : (
     <ChatView
       messages={messages}
