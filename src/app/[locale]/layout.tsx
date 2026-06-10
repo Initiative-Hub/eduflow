@@ -4,11 +4,14 @@ import { Analytics as VercelAnalytics } from '@vercel/analytics/next';
 import { SpeedInsights as VercelInsights } from '@vercel/speed-insights/next';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import Script from 'next/script';
 import { hasLocale } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
 import type { ReactNode } from 'react';
 import { Toaster } from 'sonner';
 import { GlobalLoader } from '@/components/global-loader';
+import Locator from '@/components/locator';
+import { DEV_MODE } from '@/constants/common';
 import { routing } from '@/i18n/routing';
 import Providers from '@/providers/providers';
 
@@ -93,6 +96,15 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} suppressHydrationWarning>
+      {DEV_MODE && (
+        <head>
+          <Script
+            src="//unpkg.com/react-scan/dist/auto.global.js"
+            crossOrigin="anonymous"
+            strategy="beforeInteractive"
+          />
+        </head>
+      )}
       <body
         className={`${inter.variable} ${lexend.variable} font-sans antialiased`}
       >
@@ -103,6 +115,7 @@ export default async function RootLayout({
         <VercelAnalytics />
         <VercelInsights />
         <Toaster />
+        {DEV_MODE && <Locator />}
       </body>
     </html>
   );
