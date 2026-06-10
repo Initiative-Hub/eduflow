@@ -9,6 +9,9 @@ import { setRequestLocale } from 'next-intl/server';
 import type { ReactNode } from 'react';
 import { Toaster } from 'sonner';
 import { GlobalLoader } from '@/components/global-loader';
+import Locator from '@/components/locator';
+import ReactScan from '@/components/react-scan';
+import { DEV_MODE } from '@/constants/common';
 import { routing } from '@/i18n/routing';
 import Providers from '@/providers/providers';
 
@@ -103,6 +106,8 @@ export default async function RootLayout({
         <VercelAnalytics />
         <VercelInsights />
         <Toaster />
+        {DEV_MODE && <Locator />}
+        {DEV_MODE && <ReactScan />}
       </body>
     </html>
   );
