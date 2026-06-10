@@ -1,73 +1,150 @@
-import { BookMarked, ClipboardList, Tag } from 'lucide-react';
-import { getTranslations } from 'next-intl/server';
-import { Card } from '@/components/ui/card';
-import { StudyUploadZone } from './study-upload-zone';
+'use client';
 
-const FEATURE_CARDS = [
-  {
-    key: 'reviewMaterials' as const,
-    icon: BookMarked,
-    accent:
-      'bg-violet-50 text-violet-600 border-violet-100 dark:bg-violet-950/30 dark:text-violet-400 dark:border-violet-900/40',
-  },
-  {
-    key: 'practiceTests' as const,
-    icon: ClipboardList,
-    accent:
-      'bg-indigo-50 text-indigo-600 border-indigo-100 dark:bg-indigo-950/30 dark:text-indigo-400 dark:border-indigo-900/40',
-  },
-  {
-    key: 'keywordSummaries' as const,
-    icon: Tag,
-    accent:
-      'bg-amber-50 text-amber-600 border-amber-100 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900/40',
-  },
-] as const;
+import type { UIMessage } from 'ai';
+import { BookMarked, ClipboardList, GraduationCap, Tag } from 'lucide-react';
+import dynamic from 'next/dynamic';
+import { useTranslations } from 'next-intl';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import type { StudyMode } from '@/lib/validations/study.schema';
+import { type ChatModel, DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
+import { ChatInput } from '../../_components/chat-input';
+import { ChatSidebar } from '../../_components/chat-sidebar';
+import { ChatWorkspaceShell } from '../../_components/chat-workspace-shell';
+import { studyService } from '../study.service';
+import { useStudy } from '../use-study';
 
-export async function StudyClient() {
-  const t = await getTranslations('StudyPage');
+const ChatView = dynamic(() =>
+  import('../../_components/chat-view').then((mod) => mod.ChatView)
+);
+
+interface StudyClientProps {
+  chatId?: string;
+  initialMessages?: UIMessage[];
+  initialMode?: StudyMode;
+  isAuthenticated: boolean;
+}
+
+export function StudyClient({
+  chatId,
+  initialMessages,
+  initialMode = 'review',
+  isAuthenticated,
+}: StudyClientProps) {
+  const t = useTranslations('StudyPage');
+  const [selectedModel, setSelectedModel] =
+    useState<ChatModel>(DEFAULT_CHAT_MODEL);
+
+  const [mode, setMode] = useState<StudyMode>(initialMode);
+
+  const {
+    messages,
+    isStreaming,
+    startChat,
+    stop,
+    hasOutput,
+    isLimitReached,
+    maxMessage,
+    userMessageCount,
+  } = useStudy({
+    mode,
+    chatId,
+    initialMessages,
+    selectedModel,
+    isAuthenticated,
+  });
+
+  const notifyLimitReached = () => {
+    toast.error(t('limitReachedToast', { count: maxMessage }));
+  };
+
+  const submitText = async (text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    if (isLimitReached) {
+      notifyLimitReached();
+      return;
+    }
+
+    await startChat(trimmed);
+  };
+
+  const handleSubmit = (e?: React.SyntheticEvent, customValue?: string) => {
+    e?.preventDefault();
+    submitText(customValue || '');
+  };
+
+  //TODO: should i extract this constant to new component
+  const FEATURE_CARDS = [
+    {
+      key: 'review' as StudyMode,
+      icon: BookMarked,
+      label: t('modes.review'),
+      accent:
+        'bg-violet-50 text-violet-600 border-violet-200 dark:bg-violet-950/30 dark:text-violet-400 dark:border-violet-900/40',
+      activeAccent: 'ring-2 ring-violet-400 bg-violet-50 dark:bg-violet-950/30',
+    },
+    {
+      key: 'practiceTest' as StudyMode,
+      icon: ClipboardList,
+      label: t('modes.practiceTest'),
+      accent:
+        'bg-indigo-50 text-indigo-600 border-indigo-200 dark:bg-indigo-950/30 dark:text-indigo-400 dark:border-indigo-900/40',
+      activeAccent: 'ring-2 ring-indigo-400 bg-indigo-50 dark:bg-indigo-950/30',
+    },
+    {
+      key: 'keywords' as StudyMode,
+      icon: Tag,
+      label: t('modes.keywords'),
+      accent:
+        'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900/40',
+      activeAccent: 'ring-2 ring-amber-400 bg-amber-50 dark:bg-amber-950/30',
+    },
+  ];
+
+  const viewport = !hasOutput ? (
+    <>LANDING PAGE</>
+  ) : (
+    <ChatView
+      messages={messages}
+      isStreaming
+      onSuggestionSelect={(suggestion) => void submitText(suggestion)}
+    />
+  );
+
+  const composer = (
+    <ChatInput
+      handleSubmit={handleSubmit}
+      isAuthenticated={isAuthenticated}
+      isStreaming={isStreaming}
+      isUploading={false}
+      isChatting={hasOutput}
+      isLimitReached={isLimitReached}
+      limitCount={maxMessage}
+      userMessageCount={userMessageCount}
+      onStop={stop}
+      selectedModel={selectedModel}
+      onModelChange={setSelectedModel}
+      placeholder={t('input.placeholder')}
+    />
+  );
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-8">
-      {/* Header */}
-      <div className="space-y-8 px-4 pt-6 text-center">
-        <div className="relative flex flex-col items-center text-center">
-          <h1 className="mt-5 font-black font-heading text-3xl text-foreground leading-tight tracking-tight sm:text-4xl lg:text-5xl">
-            {t.rich('title', {
-              accent: (chunks) => (
-                <span className="text-primary italic">{chunks}</span>
-              ),
-            })}
-          </h1>
-          <p className="mt-4 max-w-2xl text-balance text-base text-muted-foreground leading-7 sm:text-lg">
-            {t('subtitle')}
-          </p>
-        </div>
-      </div>
-
-      {/* Feature cards */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        {FEATURE_CARDS.map(({ key, icon: Icon, accent }) => (
-          <Card
-            key={key}
-            className="cursor-pointer rounded-2xl border border-border/60 bg-card/95 p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
-          >
-            <div
-              className={`mb-3 flex size-10 items-center justify-center rounded-xl border ${accent}`}
-            >
-              <Icon className="size-5" />
-            </div>
-            <h2 className="font-bold text-foreground text-sm leading-snug">
-              {t(`features.${key}.title`)}
-            </h2>
-            <p className="mt-1 text-muted-foreground text-xs leading-relaxed">
-              {t(`features.${key}.description`)}
-            </p>
-          </Card>
-        ))}
-      </div>
-
-      <StudyUploadZone />
-    </div>
+    <>
+      <ChatWorkspaceShell composer={composer} viewport={viewport} />
+      <ChatSidebar
+        currentChatId={chatId}
+        emptyIcon={GraduationCap}
+        itemIcon={GraduationCap}
+        newSessionHref="/study"
+        queryKey="study-chat-list"
+        sessionHrefPrefix="/study"
+        service={{
+          listChats: studyService.listChats,
+          updateChat: studyService.updateChat,
+        }}
+        translationNamespace="StudyPage.sidebar"
+      />
+    </>
   );
 }
