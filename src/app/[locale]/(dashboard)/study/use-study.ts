@@ -9,7 +9,9 @@ import { usePathname, useRouter } from '@/i18n/navigation';
 import type { StudyMode } from '@/lib/validations/study.schema';
 import type { ChatModel } from '@/services/ai/chat-models';
 import { useChatSessionStore } from '@/stores/useChatSessionStore';
+import type { ChatFileUIPart } from '@/types/chat-attachments';
 import { hasReachedUserMessageLimit } from '@/utils/chat-limit';
+import { uploadChatAttachments } from '../(ai-chat)/chat-attachments.service';
 import { studyService } from './study.service';
 
 // TODO: do we need this because this is not allow the unauthorized user
@@ -54,10 +56,13 @@ export const useStudy = ({
     },
   });
 
-  const createUserMessage = (text: string): UIMessage => ({
+  const createUserMessage = (
+    text: string,
+    files: ChatFileUIPart[] = []
+  ): UIMessage => ({
     id: crypto.randomUUID(),
     role: 'user',
-    parts: [{ type: 'text', text }],
+    parts: [...files, { type: 'text', text }],
   });
 
   const transport = useMemo(
@@ -130,15 +135,17 @@ export const useStudy = ({
 
   const isStreaming = status === 'streaming' || status === 'submitted';
 
-  const startChat = async (text: string) => {
+  const startChat = async (text: string, files: File[] = []) => {
     if (!chatId) {
       try {
         const newChatId = await createSessionMutation.mutateAsync(text);
 
+        const uploadedFiles = await uploadChatAttachments(files, newChatId);
+
         await queryClient.invalidateQueries({
           queryKey: ['study-chat-list'],
         });
-        setPendingMessage(createUserMessage(text));
+        setPendingMessage(createUserMessage(text, uploadedFiles));
         setPendingChatId(newChatId);
         setPendingModel(selectedModel);
 
@@ -153,8 +160,10 @@ export const useStudy = ({
       return;
     }
 
+    const uploadedFiles = await uploadChatAttachments(files, chatId);
+
     sendMessage(
-      { text },
+      uploadedFiles.length > 0 ? { text, files: uploadedFiles } : { text },
       {
         body: {
           mode,

@@ -9,14 +9,17 @@ import type { StudyMode } from '@/lib/validations/study.schema';
 interface StudyModeSelectorProps {
   mode: StudyMode;
   onModeChange: (mode: StudyMode) => void;
+  files: File[];
+  onFilesChange: (files: File[]) => void;
 }
 
 export function StudyModeSelector({
   mode,
   onModeChange,
+  files,
+  onFilesChange,
 }: StudyModeSelectorProps) {
   const t = useTranslations('StudyPage');
-  const [files, setFiles] = useState<File[]>();
 
   const FEATURE_CARDS = [
     {
@@ -101,7 +104,7 @@ export function StudyModeSelector({
           'image/*': ['.png', '.jpg', '.jpeg', '.webp'],
         }}
         onDrop={(acceptedFiles) =>
-          setFiles((prev) => [...(prev ?? []), ...acceptedFiles])
+          onFilesChange([...(files ?? []), ...acceptedFiles])
         }
         className="min-h-36 rounded-2xl"
       >

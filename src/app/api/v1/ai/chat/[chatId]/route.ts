@@ -270,7 +270,7 @@ export async function POST(
     }
 
     const limitStatus = userId
-      ? { allowed: true, remaining: Number.POSITIVE_INFINITY }
+      ? { allowed: true, remaining: Number.POSITIVE_INFINITY, message: '' }
       : await CacheService.checkGuestLimit(guestId as string);
     if (!limitStatus.allowed) {
       return new Response(

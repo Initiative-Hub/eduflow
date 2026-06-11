@@ -37,6 +37,7 @@ export function StudyClient({
     useState<ChatModel>(DEFAULT_CHAT_MODEL);
 
   const [mode, setMode] = useState<StudyMode>(initialMode);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
 
   const {
     messages,
@@ -59,31 +60,33 @@ export function StudyClient({
     toast.error(t('limitReachedToast', { count: maxMessages }));
   };
 
-  const submitText = async (text: string) => {
-    const trimmed = text.trim();
-    if (!trimmed) return;
+  const handleSubmit = async (
+    e?: React.SyntheticEvent,
+    customValue?: string,
+    files: File[] = []
+  ) => {
+    e?.preventDefault();
+    const text = customValue?.trim() || '';
+    const allFiles = [...pendingFiles, ...files];
+    if (!text && allFiles.length === 0) return;
     if (isLimitReached) {
       notifyLimitReached();
       return;
     }
 
-    await startChat(trimmed);
-  };
-
-  const handleSubmit = (e?: React.SyntheticEvent, customValue?: string) => {
-    e?.preventDefault();
-    submitText(customValue || '');
+    await startChat(text, allFiles);
+    setPendingFiles([]);
   };
 
   const viewport = !hasOutput ? (
-    <StudyModeSelector mode={mode} onModeChange={setMode} />
-  ) : (
-    <ChatView
-      messages={messages}
-      isStreaming={isStreaming}
-      onSuggestionSelect={(suggestion) => void submitText(suggestion)}
-      suggestionsDisabled={isStreaming || isLimitReached}
+    <StudyModeSelector
+      mode={mode}
+      onModeChange={setMode}
+      files={pendingFiles}
+      onFilesChange={setPendingFiles}
     />
+  ) : (
+    <ChatView messages={messages} isStreaming={isStreaming} />
   );
 
   const composer = (
