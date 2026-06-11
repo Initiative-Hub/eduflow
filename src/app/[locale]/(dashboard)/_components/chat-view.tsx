@@ -1,13 +1,28 @@
 'use client';
 
 import type { UIMessage } from 'ai';
-import { Bot, Loader2, User } from 'lucide-react';
+import {
+  Bot,
+  FileTextIcon,
+  GlobeIcon,
+  ImageIcon,
+  Loader2,
+  Music2Icon,
+  PaperclipIcon,
+  User,
+  VideoIcon,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import {
   Attachment,
-  AttachmentInfo,
+  AttachmentHoverCard,
+  AttachmentHoverCardContent,
+  AttachmentHoverCardTrigger,
+  type AttachmentMediaCategory,
   AttachmentPreview,
   Attachments,
+  getAttachmentLabel,
+  getMediaCategory,
 } from '@/components/ai-elements/attachments';
 import {
   Conversation,
@@ -33,6 +48,49 @@ interface ChatViewProps {
   isStreaming: boolean;
   onSuggestionSelect?: (suggestion: string) => void;
   suggestionsDisabled?: boolean;
+}
+
+const mediaCategoryIcons: Record<AttachmentMediaCategory, typeof ImageIcon> = {
+  audio: Music2Icon,
+  document: FileTextIcon,
+  image: ImageIcon,
+  source: GlobeIcon,
+  unknown: PaperclipIcon,
+  video: VideoIcon,
+};
+
+function AttachmentFallback({
+  mediaCategory,
+  label,
+}: {
+  mediaCategory: AttachmentMediaCategory;
+  label: string;
+}) {
+  const Icon = mediaCategoryIcons[mediaCategory];
+
+  return (
+    <div className="flex size-full flex-col items-center justify-center gap-1 px-2 text-center">
+      <Icon className="size-5 text-muted-foreground" />
+      <span className="w-full truncate text-xs">{label}</span>
+    </div>
+  );
+}
+
+function AttachmentMetadata({
+  mediaType,
+  label,
+}: {
+  mediaType: string;
+  label: string;
+}) {
+  return (
+    <div className="min-w-0 space-y-0.5">
+      <div className="max-w-56 truncate font-medium text-sm">{label}</div>
+      <div className="max-w-56 truncate text-muted-foreground text-xs">
+        {mediaType}
+      </div>
+    </div>
+  );
 }
 
 export function ChatView({
@@ -92,72 +150,72 @@ export function ChatView({
                         <User className="size-5" />
                       )}
                     </div>
-                    <MessageContent
-                      className={`max-w-[80%] px-5 py-3 ${
-                        message.role === 'user' &&
-                        'group-[.is-user]:rounded-2xl group-[.is-user]:bg-primary group-[.is-user]:px-5 group-[.is-user]:py-3 group-[.is-user]:text-primary-foreground'
-                      }`}
-                    >
-                      {message.role === 'assistant' ? (
-                        <>
-                          {attachments.length > 0 && (
-                            <Attachments className="mb-3" variant="inline">
-                              {attachments.map((attachment) => (
-                                <Attachment
-                                  data={attachment}
-                                  key={attachment.id}
-                                >
-                                  <AttachmentPreview />
-                                  <AttachmentInfo />
-                                </Attachment>
-                              ))}
-                            </Attachments>
-                          )}
-                          <Reasoning
-                            className="mb-3 w-full"
-                            defaultOpen={false}
-                            isStreaming={isReasoningStreaming}
-                          >
-                            <ReasoningTrigger />
-                            <ReasoningContent>{reasoning}</ReasoningContent>
-                          </Reasoning>
-                          <MessageResponse
-                            caret="block"
-                            className="text-[15px] leading-relaxed"
-                            controls={false}
-                            isAnimating={isTextStreaming}
-                            mode="streaming"
-                            skipHtml
-                          >
-                            {text}
-                          </MessageResponse>
-                        </>
-                      ) : (
-                        <>
-                          {attachments.length > 0 ? (
-                            <Attachments
-                              className={text ? 'mb-2' : undefined}
-                              variant="inline"
-                            >
-                              {attachments.map((attachment) => (
-                                <Attachment
-                                  data={attachment}
-                                  key={attachment.id}
-                                >
-                                  <AttachmentPreview />
-                                  <AttachmentInfo />
-                                </Attachment>
-                              ))}
-                            </Attachments>
-                          ) : null}
-                          {text ? (
-                            <p className="whitespace-pre-wrap text-[15px] leading-relaxed">
-                              {text}
-                            </p>
-                          ) : null}
-                        </>
+                    <div className="space-y-2">
+                      {attachments.length > 0 && (
+                        <Attachments variant="grid">
+                          {attachments.map((attachment) => {
+                            const mediaCategory = getMediaCategory(attachment);
+                            const label = getAttachmentLabel(attachment);
+
+                            return (
+                              <AttachmentHoverCard key={attachment.id}>
+                                <AttachmentHoverCardTrigger asChild>
+                                  <Attachment data={attachment}>
+                                    <AttachmentPreview
+                                      fallbackIcon={
+                                        <AttachmentFallback
+                                          mediaCategory={mediaCategory}
+                                          label={label}
+                                        />
+                                      }
+                                    />
+                                  </Attachment>
+                                </AttachmentHoverCardTrigger>
+                                <AttachmentHoverCardContent>
+                                  <AttachmentMetadata
+                                    label={label}
+                                    mediaType={attachment.mediaType}
+                                  />
+                                </AttachmentHoverCardContent>
+                              </AttachmentHoverCard>
+                            );
+                          })}
+                        </Attachments>
                       )}
-                    </MessageContent>
+                      <MessageContent
+                        className={`max-w-[80%] px-5 py-3 ${
+                          message.role === 'user' &&
+                          'group-[.is-user]:rounded-2xl group-[.is-user]:bg-primary group-[.is-user]:px-5 group-[.is-user]:py-3 group-[.is-user]:text-primary-foreground'
+                        }`}
+                      >
+                        {message.role === 'assistant' ? (
+                          <>
+                            <Reasoning
+                              className="mb-3 w-full"
+                              defaultOpen={false}
+                              isStreaming={isReasoningStreaming}
+                            >
+                              <ReasoningTrigger />
+                              <ReasoningContent>{reasoning}</ReasoningContent>
+                            </Reasoning>
+                            <MessageResponse
+                              caret="block"
+                              className="text-[15px] leading-relaxed"
+                              controls={false}
+                              isAnimating={isTextStreaming}
+                              mode="streaming"
+                              skipHtml
+                            >
+                              {text}
+                            </MessageResponse>
+                          </>
+                        ) : (
+                          <p className="whitespace-pre-wrap text-[15px] leading-relaxed">
+                            {text}
+                          </p>
+                        )}
+                      </MessageContent>
+                    </div>
                   </div>
                   {suggestions.length > 0 && onSuggestionSelect ? (
                     <div className="ml-14 max-w-[calc(100%-3.5rem)]">

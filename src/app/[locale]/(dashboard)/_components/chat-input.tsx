@@ -161,7 +161,7 @@ export function ChatInput({
           onSubmit={onPromptSubmit}
         >
           {selectedFiles.length > 0 && (
-            <PromptInputHeader className="px-2 pt-2">
+            <PromptInputHeader>
               <ChatInputAttachments
                 files={selectedFiles}
                 getRemoveLabel={(fileName) =>

@@ -1,14 +1,25 @@
 'use client';
 
 import {
+  FileTextIcon,
+  GlobeIcon,
+  ImageIcon,
+  Music2Icon,
+  PaperclipIcon,
+  VideoIcon,
+} from 'lucide-react';
+import {
   Attachment,
-  AttachmentInfo,
+  AttachmentHoverCard,
+  AttachmentHoverCardContent,
+  AttachmentHoverCardTrigger,
+  type AttachmentMediaCategory,
   AttachmentPreview,
   AttachmentRemove,
   Attachments,
+  getAttachmentLabel,
+  getMediaCategory,
 } from '@/components/ai-elements/attachments';
-
-const DEFAULT_MEDIA_TYPE = 'application/octet-stream';
 
 export interface SelectedChatFile {
   file: File;
@@ -22,6 +33,49 @@ interface ChatInputAttachmentsProps {
   onRemove: (fileId: string) => void;
 }
 
+const mediaCategoryIcons: Record<AttachmentMediaCategory, typeof ImageIcon> = {
+  audio: Music2Icon,
+  document: FileTextIcon,
+  image: ImageIcon,
+  source: GlobeIcon,
+  unknown: PaperclipIcon,
+  video: VideoIcon,
+};
+
+function AttachmentFallback({
+  mediaCategory,
+  label,
+}: {
+  mediaCategory: AttachmentMediaCategory;
+  label: string;
+}) {
+  const Icon = mediaCategoryIcons[mediaCategory];
+
+  return (
+    <div className="flex size-full flex-col items-center justify-center gap-1 px-2 text-center">
+      <Icon className="size-5 text-muted-foreground" />
+      <span className="w-full truncate text-xs">{label}</span>
+    </div>
+  );
+}
+
+function AttachmentMetadata({
+  mediaType,
+  label,
+}: {
+  mediaType: string;
+  label: string;
+}) {
+  return (
+    <div className="min-w-0 space-y-0.5">
+      <div className="max-w-56 truncate font-medium text-sm">{label}</div>
+      <div className="max-w-56 truncate text-muted-foreground text-xs">
+        {mediaType}
+      </div>
+    </div>
+  );
+}
+
 export function ChatInputAttachments({
   files,
   getRemoveLabel,
@@ -32,24 +86,42 @@ export function ChatInputAttachments({
   }
 
   return (
-    <Attachments className="max-w-full" variant="inline">
-      {files.map((item) => (
-        <Attachment
-          data={{
-            filename: item.file.name,
-            id: item.id,
-            mediaType: item.file.type || DEFAULT_MEDIA_TYPE,
-            type: 'file',
-            url: item.previewUrl,
-          }}
-          key={item.id}
-          onRemove={() => onRemove(item.id)}
-        >
-          <AttachmentPreview />
-          <AttachmentInfo />
-          <AttachmentRemove label={getRemoveLabel(item.file.name)} />
-        </Attachment>
-      ))}
+    <Attachments className="m-0" variant="grid">
+      {files.map((item) => {
+        const attachment = {
+          filename: item.file.name,
+          id: item.id,
+          mediaType: item.file.type,
+          type: 'file' as const,
+          url: item.previewUrl,
+        };
+        const label = getAttachmentLabel(attachment);
+        const mediaCategory = getMediaCategory(attachment);
+
+        return (
+          <AttachmentHoverCard key={item.id}>
+            <AttachmentHoverCardTrigger asChild>
+              <Attachment data={attachment} onRemove={() => onRemove(item.id)}>
+                <AttachmentPreview
+                  fallbackIcon={
+                    <AttachmentFallback
+                      mediaCategory={mediaCategory}
+                      label={label}
+                    />
+                  }
+                />
+                <AttachmentRemove label={getRemoveLabel(item.file.name)} />
+              </Attachment>
+            </AttachmentHoverCardTrigger>
+            <AttachmentHoverCardContent>
+              <AttachmentMetadata
+                label={label}
+                mediaType={attachment.mediaType}
+              />
+            </AttachmentHoverCardContent>
+          </AttachmentHoverCard>
+        );
+      })}
     </Attachments>
   );
 }
