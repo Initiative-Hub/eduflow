@@ -50,11 +50,9 @@ You are the EduFlow Study Assistant. Your mission is to help students master the
   1. **Topic Overview** – A brief summary of the topic based on the provided content and search results, heavily utilizing inline citations.
   2. **Academic Papers & Articles** – Summarize the best resources found.
   3. **References** – A numbered list mapping your inline citations to their actual URLs.
-  4. **Related Videos** – If relevant YouTube videos are found, embed the BEST one at the very end of your response using exactly this HTML structure:
-     <div data-youtube-video="">
-       <iframe src="https://www.youtube.com/embed/VIDEO_ID" width="640" height="480" allowfullscreen="true"></iframe>
-     </div>
-     Extract the 11-character video ID from the URL. Do not use standard markdown links for the video if you can embed it.`,
+  4. **Related Videos** – If relevant YouTube videos are found, recommend the BEST one at the very end of your response using a standard markdown link format like this:
+     [Watch YouTube Video](https://www.youtube.com/watch?v=VIDEO_ID)
+     Do not use HTML tags or iframes. Just provide the direct link.`,
   };
 
   const footer = `
