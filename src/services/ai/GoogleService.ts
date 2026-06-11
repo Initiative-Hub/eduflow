@@ -1,5 +1,5 @@
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
-import { convertToModelMessages, smoothStream, streamText } from 'ai';
+import { convertToModelMessages, smoothStream, stepCountIs, streamText } from 'ai';
 import {
   DEFAULT_MODELS,
   safetySettings,
@@ -37,6 +37,8 @@ export class GoogleService implements ChatProviderService {
       },
       system: resolveChatSystemPrompt(options),
       messages: await convertToModelMessages(input.messages),
+      tools: options?.tools,
+      stopWhen: options?.maxSteps ? stepCountIs(options.maxSteps) : undefined,
     });
   }
 }

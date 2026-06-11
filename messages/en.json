@@ -1208,6 +1208,9 @@
       "practiceTest": {
         "description": "Challenge yourself with AI-generated multiple choice, short answer, and flashcard sets."
       },
+      "research": {
+        "description": "Find relevant news articles, videos, and academic papers using AI web search."
+      },
       "review": {
         "description": "Synthesize key concepts and definitions from your sources into digestible study guides."
       }
@@ -1220,6 +1223,7 @@
     "modes": {
       "keywords": "Keyword Summaries",
       "practiceTest": "Practice Tests",
+      "research": "Research Mode",
       "review": "Review Materials"
     },
     "recentSessions": {

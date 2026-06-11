@@ -1,3 +1,4 @@
+import { tavilySearch } from '@tavily/ai-sdk';
 import type { UIMessage } from 'ai';
 import { z } from 'zod';
 import { AiChatType } from '@/generated/prisma';
@@ -266,6 +267,13 @@ export async function POST(
     const provider = ChatProviderFactory.create(providerName);
     const systemPrompt = getStudySystemPrompt(parsedBody.data.mode);
 
+    const tools =
+      parsedBody.data.mode === 'research'
+        ? { webSearch: tavilySearch({ maxResults: 5 }) }
+        : undefined;
+
+    const maxSteps = parsedBody.data.mode === 'research' ? 5 : undefined;
+
     const result = await provider.streamChat(
       {
         messages: messagesForModel,
@@ -274,7 +282,7 @@ export async function POST(
         apiKey: parsedBody.data.apiKey,
         providerOptions: parsedBody.data.providerOptions,
       },
-      { prompt: systemPrompt }
+      { prompt: systemPrompt, tools, maxSteps }
     );
 
     const response = result.toUIMessageStreamResponse({

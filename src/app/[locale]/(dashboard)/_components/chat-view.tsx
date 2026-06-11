@@ -1,7 +1,7 @@
 'use client';
 
 import type { UIMessage } from 'ai';
-import { Bot, Loader2, User } from 'lucide-react';
+import { Bot, Globe, Loader2, User } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import {
   Attachment,
@@ -121,13 +121,41 @@ export function ChatView({
                             <ReasoningTrigger />
                             <ReasoningContent>{reasoning}</ReasoningContent>
                           </Reasoning>
+                          {message.parts?.some((part) =>
+                              part.type.startsWith('tool-')
+                            ) && (
+                              <div className="mb-4 flex flex-col gap-2">
+                                {message.parts
+                                  .filter((part): part is any =>
+                                    part.type.startsWith('tool-')
+                                  )
+                                  .map((tool) => (
+                                    <div
+                                      key={tool.toolCallId}
+                                      className="flex w-fit items-center gap-2 rounded-lg border bg-muted/50 px-3 py-2 text-muted-foreground text-sm"
+                                    >
+                                      <Globe className="h-4 w-4 animate-pulse" />
+                                      {tool.state === 'output-available' ? (
+                                        <span>
+                                          Searched the web for: "
+                                          {tool.input?.query || 'resources'}"
+                                        </span>
+                                      ) : (
+                                        <span>
+                                          Searching the web for: "
+                                          {tool.input?.query || 'resources'}"...
+                                        </span>
+                                      )}
+                                    </div>
+                                  ))}
+                              </div>
+                            )}
                           <MessageResponse
                             caret="block"
                             className="text-[15px] leading-relaxed"
                             controls={false}
                             isAnimating={isTextStreaming}
                             mode="streaming"
-                            skipHtml
                           >
                             {text}
                           </MessageResponse>

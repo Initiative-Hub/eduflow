@@ -1208,6 +1208,9 @@
       "practiceTest": {
         "description": "Thử thách bản thân với câu hỏi trắc nghiệm, câu ngắn và thẻ ghi nhớ do AI tạo ra."
       },
+      "research": {
+        "description": "Tìm kiếm các bài báo, video và tài liệu học thuật liên quan bằng AI web search."
+      },
       "review": {
         "description": "Tổng hợp các khái niệm và định nghĩa chính thành hướng dẫn học tập dễ hiểu."
       }
@@ -1220,6 +1223,7 @@
     "modes": {
       "keywords": "Tóm Tắt Từ Khóa",
       "practiceTest": "Bài Kiểm Tra Thực Hành",
+      "research": "Nghiên cứu",
       "review": "Tài Liệu Ôn Tập"
     },
     "recentSessions": {
