@@ -104,15 +104,17 @@ export function ChatView({
                       )}
                     </div>
                     <div className="flex flex-col gap-2">
-                      {attachments.length > 0 && (
-                        <ChatInputAttachments
-                          files={attachments.map((attachment) => ({
-                            filename: attachment.filename ?? attachment.id,
-                            id: attachment.id,
-                            mediaType: attachment.mediaType,
-                            previewUrl: attachment.url,
-                          }))}
-                        />
+                      {message.role === 'user' && attachments.length > 0 && (
+                        <div className="ml-auto">
+                          <ChatInputAttachments
+                            files={attachments.map((attachment) => ({
+                              filename: attachment.filename ?? attachment.id,
+                              id: attachment.id,
+                              mediaType: attachment.mediaType,
+                              previewUrl: attachment.url,
+                            }))}
+                          />
+                        </div>
                       )}
                       <MessageContent
                         className={`max-w-[80%] px-5 py-3 ${

@@ -4,7 +4,6 @@ import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query';
 import {
   ArrowLeft,
   BookOpen,
-  Check,
   FileIcon,
   FolderOpen,
   Loader2,
@@ -13,16 +12,6 @@ import {
 import { useTranslations } from 'next-intl';
 import { useDeferredValue, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { courseFilesService } from '../courses/[courseId]/(course-tabs)/files/course-files.service';
-import { inventoryService } from '../inventory/inventory.service';
-import {
-  type InventoryEntry,
-  STORAGE_PAGE_SIZE,
-} from '../inventory/inventory.types';
-import {
-  formatFileSize,
-  getEntryTypeLabel,
-} from '../inventory/inventory.utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -46,6 +35,16 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { apiClient } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import type { ChatFileUIPart } from '@/types/chat-attachments';
+import { courseFilesService } from '../courses/[courseId]/(course-tabs)/files/course-files.service';
+import { inventoryService } from '../inventory/inventory.service';
+import {
+  type InventoryEntry,
+  STORAGE_PAGE_SIZE,
+} from '../inventory/inventory.types';
+import {
+  formatFileSize,
+  getEntryTypeLabel,
+} from '../inventory/inventory.utils';
 
 type AttachmentSource = 'personal' | 'course';
 
@@ -104,7 +103,7 @@ function GridSkeleton() {
   return (
     <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
       {Array.from({ length: 8 }).map((_, index) => (
-        <Skeleton key={index} className="aspect-[4/3] rounded-lg" />
+        <Skeleton key={index} className="aspect-4/3 rounded-lg" />
       ))}
     </div>
   );
@@ -147,9 +146,9 @@ function PickerTile({
           onCheckedChange={() => onToggle(entry)}
         />
       )}
-      <button
-        type="button"
-        className="flex aspect-[4/3] w-full min-w-0 flex-col items-start justify-between gap-3 p-3 text-left"
+      <Button
+        variant="ghost"
+        className="flex aspect-4/3 h-full w-full cursor-pointer flex-col items-start justify-between gap-3 p-3 text-left"
         disabled={!isFolder && disabled}
         onClick={() => {
           if (isFolder) {
@@ -159,18 +158,11 @@ function PickerTile({
           onToggle(entry);
         }}
       >
-        <div className="flex w-full items-start justify-between gap-2">
-          <div className="flex size-10 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-            {isFolder ? <FolderOpen /> : <FileIcon />}
-          </div>
-          {checked ? (
-            <Badge variant="secondary" className="shrink-0">
-              <Check />
-            </Badge>
-          ) : null}
+        <div className="flex size-10 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+          {isFolder ? <FolderOpen /> : <FileIcon />}
         </div>
-        <div className="min-w-0 space-y-1">
-          <div className="line-clamp-2 break-words font-medium text-sm">
+        <div className="w-full space-y-1">
+          <div className="line-clamp-2 whitespace-normal font-medium text-sm">
             {entry.name}
           </div>
           <div className="flex flex-wrap items-center gap-1.5 text-muted-foreground text-xs">
@@ -187,7 +179,7 @@ function PickerTile({
             </div>
           ) : null}
         </div>
-      </button>
+      </Button>
     </div>
   );
 }
@@ -200,25 +192,23 @@ function CourseTile({
   onSelect: (course: PickerCourse) => void;
 }) {
   return (
-    <button
-      type="button"
-      className="flex aspect-[4/3] min-w-0 flex-col items-start justify-between rounded-lg border bg-background p-3 text-left transition-colors hover:bg-muted/50"
+    <Button
+      variant="ghost"
+      className="flex aspect-4/3 h-full w-full cursor-pointer flex-col items-start justify-between gap-3 bg-background p-3 text-left"
       onClick={() => onSelect(course)}
     >
       <div className="flex size-10 items-center justify-center rounded-lg bg-muted text-muted-foreground">
         <BookOpen />
       </div>
-      <div className="min-w-0 space-y-1">
-        <div className="line-clamp-2 break-words font-medium text-sm">
-          {course.title}
-        </div>
+      <div className="space-y-1">
+        <div className="truncate font-medium text-sm">{course.title}</div>
         {course.description ? (
-          <div className="line-clamp-2 text-muted-foreground text-xs">
+          <div className="line-clamp-2 whitespace-normal text-muted-foreground text-xs">
             {course.description}
           </div>
         ) : null}
       </div>
-    </button>
+    </Button>
   );
 }
 
@@ -393,16 +383,18 @@ export function ChatInventoryAttachmentDialog({
     setSelectedEntries({});
   };
 
-  const title = source === 'course' ? t('courseTitle') : t('personalTitle');
-  const description =
-    source === 'course' ? t('courseDescription') : t('personalDescription');
-
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-h-[min(760px,calc(100vh-2rem))] overflow-hidden sm:max-w-4xl">
         <DialogHeader className="border-b px-5 py-4">
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>{description}</DialogDescription>
+          <DialogTitle>
+            {source === 'course' ? t('courseTitle') : t('personalTitle')}
+          </DialogTitle>
+          <DialogDescription>
+            {source === 'course'
+              ? t('courseDescription')
+              : t('personalDescription')}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="flex min-h-0 flex-col gap-3 px-5">
@@ -414,7 +406,7 @@ export function ChatInventoryAttachmentDialog({
               {coursesQuery.isLoading ? (
                 <GridSkeleton />
               ) : coursesQuery.data?.length ? (
-                <ScrollArea className="h-[420px] pr-3">
+                <ScrollArea className="h-105 pr-3">
                   <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
                     {coursesQuery.data.map((course) => (
                       <CourseTile
@@ -497,7 +489,7 @@ export function ChatInventoryAttachmentDialog({
                 })}
               </div>
 
-              <ScrollArea className="h-[420px] pr-3">
+              <ScrollArea className="h-105 pr-3">
                 {listQuery.isLoading ? (
                   <GridSkeleton />
                 ) : entries.length > 0 ? (
