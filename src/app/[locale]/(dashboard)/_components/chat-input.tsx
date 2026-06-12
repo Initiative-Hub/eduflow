@@ -41,11 +41,11 @@ import type {
   ChatFileUIPart,
   ChatSubmitAttachments,
 } from '@/types/chat-attachments';
-import { ChatInventoryAttachmentDialog } from './chat-inventory-attachment-dialog';
 import {
   ChatInputAttachments,
   type SelectedChatFile,
 } from './chat-input-attachments';
+import { ChatInventoryAttachmentDialog } from './chat-inventory-attachment-dialog';
 import { ChatModelSelectControl } from './chat-model-select-control';
 import { useChatInputFiles } from './use-chat-input-files';
 
@@ -297,7 +297,7 @@ export function ChatInput({
                           }}
                         >
                           <FolderOpen />
-                          <span>{t('actionMenu.fromPersonalInventory')}</span>
+                          <span>{t('actionMenu.fromUserInventory')}</span>
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onSelect={(event) => {
