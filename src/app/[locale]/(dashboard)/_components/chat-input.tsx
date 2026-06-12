@@ -11,16 +11,12 @@ import {
   Plus,
   Settings2,
   Square,
-  X,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { type FormEvent, type ReactNode, useState } from 'react';
 import { toast } from 'sonner';
 import {
   PromptInput,
-  PromptInputActionMenu,
-  PromptInputActionMenuContent,
-  PromptInputActionMenuTrigger,
   PromptInputBody,
   PromptInputFooter,
   PromptInputHeader,
@@ -29,13 +25,8 @@ import {
   PromptInputTextarea,
   PromptInputTools,
 } from '@/components/ai-elements/prompt-input';
+import { DropdownTemplate, type MenuItem } from '@/components/custom/dropdown';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenuItem,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-} from '@/components/ui/dropdown-menu';
 import type { ChatModel } from '@/services/ai/chat-models';
 import type {
   ChatFileUIPart,
@@ -90,7 +81,6 @@ export function ChatInput({
 }: ChatInputProps) {
   const t = useTranslations('AIChat');
   const [inputValue, setInputValue] = useState('');
-  const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
   const [pickerSource, setPickerSource] = useState<
     'personal' | 'course' | null
   >(null);
@@ -183,12 +173,36 @@ export function ChatInput({
       return;
     }
 
-    setIsActionMenuOpen(false);
     setPickerSource(source);
   };
 
   const inputPlaceholder = placeholder ?? t('placeholder');
   const hasCompactActions = isAuthenticated;
+  const actionMenuItems: MenuItem[] = [
+    {
+      type: 'submenu',
+      label: t('actionMenu.uploadFiles'),
+      icon: <Paperclip />,
+      className: 'rounded-2xl',
+      items: [
+        {
+          label: t('actionMenu.fromUserInventory'),
+          icon: <FolderOpen />,
+          onClick: () => openInventoryPicker('personal'),
+        },
+        {
+          label: t('actionMenu.fromCourseInventory'),
+          icon: <Cloud />,
+          onClick: () => openInventoryPicker('course'),
+        },
+        {
+          label: t('actionMenu.fromDevice'),
+          icon: <HardDrive />,
+          onClick: () => fileInputRef.current?.click(),
+        },
+      ],
+    },
+  ];
   const defaultFooter = (
     <div className="flex items-center justify-center gap-6 px-4">
       <div className="flex cursor-default items-center gap-1.5 text-muted-foreground/50 transition-colors hover:text-muted-foreground/80">
@@ -259,69 +273,23 @@ export function ChatInput({
           <PromptInputFooter className="flex items-center justify-between gap-2 px-1 pb-0.5">
             <div className="flex min-w-0 flex-1 items-center gap-1.5">
               {hasCompactActions ? (
-                <PromptInputActionMenu
-                  onOpenChange={setIsActionMenuOpen}
-                  open={isActionMenuOpen}
-                >
-                  <PromptInputActionMenuTrigger
-                    aria-label={
-                      isActionMenuOpen
-                        ? t('actionMenu.close')
-                        : t('actionMenu.open')
-                    }
-                    className="size-9 rounded-full text-foreground transition-colors hover:bg-muted"
-                    disabled={isStreaming || isUploading || isLimitReached}
-                  >
-                    {isActionMenuOpen ? (
-                      <X className="size-4.5" />
-                    ) : (
+                <DropdownTemplate
+                  align="start"
+                  className="w-56 rounded-2xl p-1.5"
+                  items={actionMenuItems}
+                  trigger={
+                    <Button
+                      aria-label={t('actionMenu.open')}
+                      className="size-9 rounded-full text-foreground transition-colors hover:bg-muted"
+                      disabled={isStreaming || isUploading || isLimitReached}
+                      size="icon-sm"
+                      type="button"
+                      variant="ghost"
+                    >
                       <Plus className="size-4.5" />
-                    )}
-                  </PromptInputActionMenuTrigger>
-                  <PromptInputActionMenuContent
-                    align="start"
-                    className="w-56 rounded-2xl p-1.5"
-                  >
-                    <DropdownMenuSub>
-                      <DropdownMenuSubTrigger
-                        disabled={isStreaming || isUploading || isLimitReached}
-                      >
-                        <Paperclip />
-                        <span>{t('actionMenu.uploadFiles')}</span>
-                      </DropdownMenuSubTrigger>
-                      <DropdownMenuSubContent className="w-56 rounded-2xl p-1.5">
-                        <DropdownMenuItem
-                          onSelect={(event) => {
-                            event.preventDefault();
-                            openInventoryPicker('personal');
-                          }}
-                        >
-                          <FolderOpen />
-                          <span>{t('actionMenu.fromUserInventory')}</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onSelect={(event) => {
-                            event.preventDefault();
-                            openInventoryPicker('course');
-                          }}
-                        >
-                          <Cloud />
-                          <span>{t('actionMenu.fromCourseInventory')}</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onSelect={(event) => {
-                            event.preventDefault();
-                            setIsActionMenuOpen(false);
-                            fileInputRef.current?.click();
-                          }}
-                        >
-                          <HardDrive />
-                          <span>{t('actionMenu.fromDevice')}</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuSubContent>
-                    </DropdownMenuSub>
-                  </PromptInputActionMenuContent>
-                </PromptInputActionMenu>
+                    </Button>
+                  }
+                />
               ) : null}
               {tools ? (
                 <PromptInputTools className="min-w-0 gap-1.5">
