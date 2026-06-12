@@ -1,5 +1,5 @@
 import { tavilySearch } from '@tavily/ai-sdk';
-import type { UIMessage } from 'ai';
+import { createUIMessageStream, createUIMessageStreamResponse, type UIMessage } from 'ai';
 import { z } from 'zod';
 import { AiChatType } from '@/generated/prisma';
 import { getChatOwner } from '@/lib/api/guest-session';
@@ -16,7 +16,10 @@ import {
   hasChatFileParts,
   hydrateChatAttachmentDataUrls,
 } from '@/utils/chat-attachments';
-import { getStudySystemPrompt } from './study.constant';
+import {
+  generateStudySuggestions,
+  getStudySystemPrompt,
+} from './study.constant';
 export const maxDuration = 30;
 
 const studyRequestSchema = z.object({
@@ -285,9 +288,40 @@ export async function POST(
       { prompt: systemPrompt, tools, maxSteps }
     );
 
-    const response = result.toUIMessageStreamResponse({
+    const stream = createUIMessageStream<UIMessage>({
       originalMessages: messagesForModel,
-      generateMessageId: () => `${crypto.randomUUID()}`,
+      generateId: () => `${crypto.randomUUID()}`,
+      execute: async ({ writer }) => {
+        let assistantText = '';
+
+        for await (const chunk of result.toUIMessageStream<UIMessage>({
+          sendFinish: false,
+        })) {
+          if (chunk.type === 'text-delta') {
+            assistantText += chunk.delta;
+          }
+
+          writer.write(chunk);
+        }
+
+        const suggestions = await generateStudySuggestions({
+          provider,
+          messages: messagesForModel,
+          assistantText,
+          providerName,
+          model: parsedBody.data.model,
+          apiKey: parsedBody.data.apiKey,
+          providerOptions: parsedBody.data.providerOptions,
+        });
+
+        writer.write({
+          type: 'data-suggestions',
+          id: `suggestions-${crypto.randomUUID()}`,
+          data: { items: suggestions },
+        });
+        writer.write({ type: 'finish', finishReason: 'stop' });
+      },
+
       onFinish: async ({ messages }) => {
         await ChatPersistenceService.saveMessages({
           chatId,
@@ -300,7 +334,8 @@ export async function POST(
         });
       },
     });
-    return response;
+    return createUIMessageStreamResponse({ stream });
+
   } catch (error: unknown) {
     const message =
       error instanceof Error ? error.message : 'Unknown error occurred';
