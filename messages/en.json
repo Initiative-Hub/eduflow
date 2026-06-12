@@ -133,6 +133,9 @@
       "description": "This chat doesn't exist or has expired.",
       "title": "Chat not found"
     },
+    "citations": {
+      "sourceCount": "{count, plural, one {# source} other {# sources}}"
+    },
     "exploreMore": "Explore more scholarly prompts",
     "footer": {
       "academicDraft": "Lexend Academic Draft",
@@ -1230,42 +1233,72 @@
     "title": "How can I <accent>guide</accent> your thinking today?"
   },
   "StudyPage": {
-    "description": "Browse the subject areas this assistant will support, from problem-solving to language and humanities.",
-    "subjects": {
-      "biology": {
-        "description": "Trace systems, evidence, and cause-effect relationships.",
-        "title": "Biology"
+    "aiActive": "AI Processing Active",
+    "features": {
+      "keywords": {
+        "description": "Extract critical terminology and concepts with detailed contextual explanations."
       },
-      "chemistry": {
-        "description": "Reason through reactions, bonding, and particle-level changes.",
-        "title": "Chemistry"
+      "practiceTest": {
+        "description": "Challenge yourself with AI-generated multiple choice, short answer, and flashcard sets."
       },
-      "english": {
-        "description": "Explore grammar, reading, vocabulary, and revision choices.",
-        "title": "English"
+      "research": {
+        "description": "Find relevant news articles, videos, and academic papers using AI web search."
       },
-      "geography": {
-        "description": "Investigate maps, spatial patterns, regions, and environments.",
-        "title": "Geography"
-      },
-      "history": {
-        "description": "Analyze causes, evidence, timelines, and perspectives.",
-        "title": "History"
-      },
-      "math": {
-        "description": "Work through concepts, proofs, and problem-solving steps.",
-        "title": "Math"
-      },
-      "other": {
-        "description": "Use guided questions for any topic you want to understand.",
-        "title": "Other subject"
-      },
-      "physics": {
-        "description": "Connect formulas, units, diagrams, and physical intuition.",
-        "title": "Physics"
+      "review": {
+        "description": "Synthesize key concepts and definitions from your sources into digestible study guides."
       }
     },
-    "title": "Explore familiar study subjects"
+    "input": {
+      "examples": "Or try an example:",
+      "placeholder": "Describe a topic or paste your lesson content to get started..."
+    },
+    "limitReachedToast": "You've reached the {count}-message Study limit. Start a new session to continue.",
+    "modes": {
+      "keywords": "Keyword Summaries",
+      "practiceTest": "Practice Tests",
+      "research": "Research Mode",
+      "review": "Review Materials"
+    },
+    "recentSessions": {
+      "title": "Recent Sessions",
+      "viewAll": "View All"
+    },
+    "sidebar": {
+      "actionsLabel": "Actions for {title}",
+      "cancel": "Cancel",
+      "close": "Collapse study history",
+      "delete": "Delete",
+      "deleteDialogDescription": "Delete \"{title}\" from your study history? This action cannot be undone.",
+      "deleteDialogTitle": "Delete study session",
+      "deleteError": "Unable to delete study session.",
+      "deleteSuccess": "Study session deleted.",
+      "description": "Search and reopen prior study sessions.",
+      "editDialogDescription": "Choose a concise title for this study session.",
+      "editDialogTitle": "Edit study title",
+      "editError": "Unable to update study session title.",
+      "editTitle": "Edit Title",
+      "editTitleLabel": "Study session title",
+      "editTitlePlaceholder": "Enter study session title",
+      "emptyDescription": "Start a new study session and it will appear here.",
+      "emptySearch": "No study sessions match your search.",
+      "emptyTitle": "No study sessions yet",
+      "loadingMore": "Loading more study sessions...",
+      "messageCount": "{count, plural, one {# message} other {# messages}}",
+      "newChat": "New study session",
+      "open": "Open study history",
+      "saveTitle": "Save title",
+      "searchLabel": "Search study sessions",
+      "searchPlaceholder": "Search study sessions...",
+      "title": "Study history",
+      "untitled": "Untitled study session"
+    },
+    "subtitle": "Transform your materials into powerful academic insights. Upload anything and let AI do the work.",
+    "title": "What can I help you <accent>study</accent> today?",
+    "upload": {
+      "description": "Drag and drop PDF, Word, or Images here.",
+      "replace": "Drag and drop or click to replace",
+      "title": "Upload Materials to Start"
+    }
   },
   "WritingPage": {
     "recentSessions": {

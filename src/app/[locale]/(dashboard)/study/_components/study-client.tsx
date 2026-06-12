@@ -1,81 +1,134 @@
-import {
-  Atom,
-  BookOpen,
-  Calculator,
-  FlaskConical,
-  Globe2,
-  Landmark,
-  Languages,
-  Leaf,
-  type LucideIcon,
-} from 'lucide-react';
-import { getTranslations } from 'next-intl/server';
-import { Card } from '@/components/ui/card';
+'use client';
 
-const studySubjects = [
-  'math',
-  'physics',
-  'chemistry',
-  'biology',
-  'history',
-  'geography',
-  'english',
-  'other',
-] as const;
+import type { UIMessage } from 'ai';
+import { GraduationCap } from 'lucide-react';
+import dynamic from 'next/dynamic';
+import { useTranslations } from 'next-intl';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import type { StudyMode } from '@/lib/validations/study.schema';
+import { type ChatModel, DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
+import { ChatInput } from '../../_components/chat-input';
+import { ChatSidebar } from '../../_components/chat-sidebar';
+import { ChatWorkspaceShell } from '../../_components/chat-workspace-shell';
+import { studyService } from '../study.service';
+import { useStudy } from '../use-study';
+import { StudyModeSelector } from './study-mode-selector';
 
-type StudySubject = (typeof studySubjects)[number];
+const ChatView = dynamic(() =>
+  import('../../_components/chat-view').then((mod) => mod.ChatView)
+);
 
-const subjectIcons: Record<StudySubject, LucideIcon> = {
-  math: Calculator,
-  physics: Atom,
-  chemistry: FlaskConical,
-  biology: Leaf,
-  history: Landmark,
-  geography: Globe2,
-  english: Languages,
-  other: BookOpen,
-};
+interface StudyClientProps {
+  chatId?: string;
+  initialMessages?: UIMessage[];
+  initialMode?: StudyMode;
+  isAuthenticated: boolean;
+}
 
-export async function StudyClient() {
-  const t = await getTranslations('StudyPage');
+export function StudyClient({
+  chatId,
+  initialMessages,
+  initialMode = 'review',
+  isAuthenticated,
+}: StudyClientProps) {
+  const t = useTranslations('StudyPage');
+  const [selectedModel, setSelectedModel] =
+    useState<ChatModel>(DEFAULT_CHAT_MODEL);
+
+  const [mode, setMode] = useState<StudyMode>(initialMode);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+
+  const {
+    messages,
+    isStreaming,
+    startChat,
+    stop,
+    hasOutput,
+    isLimitReached,
+    maxMessages,
+    userMessageCount,
+  } = useStudy({
+    mode,
+    chatId,
+    initialMessages,
+    selectedModel,
+    isAuthenticated,
+  });
+
+  const notifyLimitReached = () => {
+    toast.error(t('limitReachedToast', { count: maxMessages }));
+  };
+
+  const handleSubmit = async (
+    e?: React.SyntheticEvent,
+    customValue?: string,
+    files: File[] = []
+  ) => {
+    e?.preventDefault();
+    const text = customValue?.trim() || '';
+    const allFiles = [...pendingFiles, ...files];
+    if (!text && allFiles.length === 0) return;
+    if (isLimitReached) {
+      notifyLimitReached();
+      return;
+    }
+
+    await startChat(text, allFiles);
+    setPendingFiles([]);
+  };
+
+  const viewport = !hasOutput ? (
+    <StudyModeSelector
+      mode={mode}
+      onModeChange={setMode}
+      files={pendingFiles}
+      onFilesChange={setPendingFiles}
+    />
+  ) : (
+    <ChatView
+      messages={messages}
+      isStreaming={isStreaming}
+      onSuggestionSelect={(suggestion) =>
+        void handleSubmit(undefined, suggestion)
+      }
+      suggestionsDisabled={isStreaming || isLimitReached}
+    />
+  );
+
+  const composer = (
+    <ChatInput
+      handleSubmit={handleSubmit}
+      isAuthenticated={isAuthenticated}
+      isStreaming={isStreaming}
+      isUploading={false}
+      isChatting={hasOutput}
+      isLimitReached={isLimitReached}
+      limitCount={maxMessages}
+      userMessageCount={userMessageCount}
+      onStop={stop}
+      selectedModel={selectedModel}
+      onModelChange={setSelectedModel}
+      placeholder={t('input.placeholder')}
+    />
+  );
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-10">
-      <div className="space-y-3 text-center">
-        <h1 className="font-black font-heading text-3xl text-foreground tracking-tight sm:text-4xl">
-          {t('title')}
-        </h1>
-        <p className="text-base text-muted-foreground leading-7 sm:text-lg">
-          {t('description')}
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {studySubjects.map((subject) => {
-          const Icon = subjectIcons[subject];
-
-          return (
-            <Card
-              className="min-h-44 rounded-[1.5rem] border border-border/60 bg-card/95 p-5 shadow-md shadow-primary/5 transition-transform duration-200 hover:-translate-y-1"
-              key={subject}
-            >
-              <div className="flex h-full flex-col">
-                <div className="flex size-11 items-center justify-center rounded-2xl border border-primary/10 bg-primary/10 text-primary">
-                  <Icon className="size-5" />
-                </div>
-                <div className="mt-6 space-y-2">
-                  <h2 className="font-bold text-foreground text-lg leading-tight">
-                    {t(`subjects.${subject}.title`)}
-                  </h2>
-                  <p className="text-muted-foreground text-sm leading-6">
-                    {t(`subjects.${subject}.description`)}
-                  </p>
-                </div>
-              </div>
-            </Card>
-          );
-        })}
-      </div>
-    </div>
+    <>
+      <ChatWorkspaceShell composer={composer} viewport={viewport} />
+      <ChatSidebar
+        currentChatId={chatId}
+        emptyIcon={GraduationCap}
+        itemIcon={GraduationCap}
+        newSessionHref="/study"
+        queryKey="study-chat-list"
+        sessionHrefPrefix="/study"
+        service={{
+          listChats: studyService.listChats,
+          updateChat: studyService.updateChat,
+        }}
+        translationNamespace="StudyPage.sidebar"
+      />
+    </>
   );
 }

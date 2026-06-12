@@ -40,8 +40,16 @@ import {
   ReasoningTrigger,
 } from '@/components/ai-elements/reasoning';
 import { Suggestion, Suggestions } from '@/components/ai-elements/suggestion';
+import {
+  buildInlineCitationMarkdown,
+  getCitationSources,
+} from '@/utils/chat-citations';
 import { getMessageReasoning, getMessageText } from '@/utils/chat-message';
 import { getSocraticSuggestionItems } from '@/utils/socratic-suggestions';
+import {
+  ChatToolInvocations,
+  createChatMarkdownComponents,
+} from './chat-markdown';
 
 interface ChatViewProps {
   messages: UIMessage[];
@@ -108,6 +116,14 @@ export function ChatView({
           {messages.map((message) => {
             const text = getMessageText(message);
             const reasoning = getMessageReasoning(message);
+            const citationSources =
+              message.role === 'assistant'
+                ? getCitationSources(message.parts)
+                : [];
+            const responseText =
+              message.role === 'assistant'
+                ? buildInlineCitationMarkdown(text, citationSources)
+                : text;
             const suggestions =
               message.role === 'assistant'
                 ? getSocraticSuggestionItems(message)
@@ -198,15 +214,23 @@ export function ChatView({
                               <ReasoningTrigger />
                               <ReasoningContent>{reasoning}</ReasoningContent>
                             </Reasoning>
+                            <ChatToolInvocations parts={message.parts} />
                             <MessageResponse
                               caret="block"
                               className="text-[15px] leading-relaxed"
                               controls={false}
                               isAnimating={isTextStreaming}
                               mode="streaming"
-                              skipHtml
+                              skipHtml={false}
+                              components={createChatMarkdownComponents(
+                                citationSources,
+                                {
+                                  sourceCount: (count) =>
+                                    t('citations.sourceCount', { count }),
+                                }
+                              )}
                             >
-                              {text}
+                              {responseText}
                             </MessageResponse>
                           </>
                         ) : (

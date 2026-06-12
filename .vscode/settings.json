@@ -51,5 +51,6 @@
   "i18n-ally.sourceLanguage": "en",
   "typescript.autoClosingTags": false,
   "WillLuke.nextjs.addTypesOnSave": true,
-  "WillLuke.nextjs.hasPrompted": true
+  "WillLuke.nextjs.hasPrompted": true,
+  "cSpell.words": ["openrouter"]
 }
