@@ -23,6 +23,11 @@ type SerializedFileInventory = Omit<FileInventory, 'fileSize'> & {
   fileSize: number | null;
 };
 
+type ChatAttachmentFileRef = {
+  courseId?: string | null;
+  fileId: string;
+};
+
 function serializeFileInventory(
   record: FileInventory
 ): SerializedFileInventory {
@@ -508,12 +513,15 @@ export class StorageService {
   static async createShareUrl(options: {
     userId: string;
     fileId: string;
+    courseId?: string | null;
     expiresInSeconds?: number;
   }) {
     const file = await prisma.fileInventory.findFirst({
       where: {
         id: options.fileId,
-        userId: options.userId,
+        ...(options.courseId
+          ? { courseId: options.courseId }
+          : { userId: options.userId, courseId: null }),
         isFolder: false,
         status: 'READY',
         deletedAt: null,
@@ -539,6 +547,7 @@ export class StorageService {
   static async createShareUrlsBatch(options: {
     userId: string;
     fileIds: string[];
+    courseId?: string | null;
     expiresInSeconds?: number;
   }) {
     const uniqueIds = Array.from(new Set(options.fileIds));
@@ -551,7 +560,9 @@ export class StorageService {
         id: {
           in: uniqueIds,
         },
-        userId: options.userId,
+        ...(options.courseId
+          ? { courseId: options.courseId }
+          : { userId: options.userId, courseId: null }),
         isFolder: false,
         status: 'READY',
         deletedAt: null,
@@ -586,20 +597,52 @@ export class StorageService {
   static async createChatAttachmentUrls(options: {
     userId: string;
     fileIds: string[];
+    fileRefs?: ChatAttachmentFileRef[];
     expiresInSeconds?: number;
   }) {
     const uniqueIds = Array.from(new Set(options.fileIds));
     if (uniqueIds.length === 0) {
       return [];
     }
+    const courseIdByFileId = new Map(
+      (options.fileRefs ?? [])
+        .filter((ref) => Boolean(ref.courseId))
+        .map((ref) => [ref.fileId, ref.courseId as string])
+    );
+    const courseIds = Array.from(new Set(courseIdByFileId.values()));
 
     const files = await prisma.fileInventory.findMany({
       where: {
         id: {
           in: uniqueIds,
         },
-        userId: options.userId,
-        courseId: null,
+        OR: [
+          {
+            userId: options.userId,
+            courseId: null,
+          },
+          ...(courseIds.length > 0
+            ? [
+                {
+                  courseId: {
+                    in: courseIds,
+                  },
+                  course: {
+                    OR: [
+                      { ownerId: options.userId },
+                      {
+                        enrollments: {
+                          some: {
+                            memberId: options.userId,
+                          },
+                        },
+                      },
+                    ],
+                  },
+                },
+              ]
+            : []),
+        ],
         isFolder: false,
         status: 'READY',
         deletedAt: null,
@@ -609,13 +652,18 @@ export class StorageService {
         objectKey: true,
         name: true,
         bucket: true,
+        courseId: true,
         mimeType: true,
       },
     });
 
     const signed = await Promise.all(
       files
-        .filter((file) => Boolean(file.objectKey))
+        .filter(
+          (file) =>
+            Boolean(file.objectKey) &&
+            (!file.courseId || courseIdByFileId.get(file.id) === file.courseId)
+        )
         .map(async (file) => ({
           fileId: file.id,
           name: file.name,
@@ -639,25 +687,58 @@ export class StorageService {
   static async getChatAttachmentPayloads(options: {
     userId: string;
     fileIds: string[];
+    fileRefs?: ChatAttachmentFileRef[];
   }) {
     const uniqueIds = Array.from(new Set(options.fileIds));
     if (uniqueIds.length === 0) {
       return [];
     }
+    const courseIdByFileId = new Map(
+      (options.fileRefs ?? [])
+        .filter((ref) => Boolean(ref.courseId))
+        .map((ref) => [ref.fileId, ref.courseId as string])
+    );
+    const courseIds = Array.from(new Set(courseIdByFileId.values()));
 
     const files = await prisma.fileInventory.findMany({
       where: {
         id: {
           in: uniqueIds,
         },
-        userId: options.userId,
-        courseId: null,
+        OR: [
+          {
+            userId: options.userId,
+            courseId: null,
+          },
+          ...(courseIds.length > 0
+            ? [
+                {
+                  courseId: {
+                    in: courseIds,
+                  },
+                  course: {
+                    OR: [
+                      { ownerId: options.userId },
+                      {
+                        enrollments: {
+                          some: {
+                            memberId: options.userId,
+                          },
+                        },
+                      },
+                    ],
+                  },
+                },
+              ]
+            : []),
+        ],
         isFolder: false,
         status: 'READY',
         deletedAt: null,
       },
       select: {
         id: true,
+        courseId: true,
         objectKey: true,
         name: true,
         mimeType: true,
@@ -666,7 +747,11 @@ export class StorageService {
 
     return Promise.all(
       files
-        .filter((file) => Boolean(file.objectKey))
+        .filter(
+          (file) =>
+            Boolean(file.objectKey) &&
+            (!file.courseId || courseIdByFileId.get(file.id) === file.courseId)
+        )
         .map(async (file) => {
           const downloaded = await downloadInventoryObject({
             objectKey: file.objectKey as string,

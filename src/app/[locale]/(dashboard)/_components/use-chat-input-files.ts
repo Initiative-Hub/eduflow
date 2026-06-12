@@ -74,7 +74,9 @@ export function useChatInputFiles({
         return [
           {
             file,
+            filename: file.name,
             id: crypto.randomUUID(),
+            mediaType: file.type || 'application/octet-stream',
             previewUrl: URL.createObjectURL(file),
           },
         ];

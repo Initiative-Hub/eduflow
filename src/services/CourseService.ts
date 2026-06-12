@@ -147,6 +147,29 @@ export class CourseService {
     });
   }
 
+  static async getJoinedCourses(userId: string) {
+    return await prisma.course.findMany({
+      where: {
+        OR: [
+          { ownerId: userId },
+          {
+            enrollments: {
+              some: {
+                memberId: userId,
+              },
+            },
+          },
+        ],
+      },
+      orderBy: { updatedAt: 'desc' },
+      include: {
+        _count: {
+          select: { modules: true, enrollments: true },
+        },
+      },
+    });
+  }
+
   static async getCourseById(courseId: string, userId: string) {
     const course = await prisma.course.findUnique({
       where: { id: courseId },
@@ -352,6 +375,7 @@ export class CourseService {
     }
 
     return await StorageService.createShareUrl({
+      courseId,
       userId,
       fileId,
     });
@@ -377,6 +401,7 @@ export class CourseService {
     }
 
     return await StorageService.createShareUrlsBatch({
+      courseId,
       userId,
       fileIds,
       expiresInSeconds,

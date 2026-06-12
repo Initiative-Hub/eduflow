@@ -78,8 +78,38 @@
   "AIChat": {
     "actionMenu": {
       "close": "Close actions",
+      "fromCourseInventory": "From course inventory",
+      "fromDevice": "From this device",
+      "fromPersonalInventory": "From personal inventory",
       "open": "Open actions",
       "uploadFiles": "Upload files"
+    },
+    "attachmentPicker": {
+      "alreadyAttached": "Already attached",
+      "attach": "Attach {count, plural, one {# file} other {# files}}",
+      "attachError": "Unable to attach selected files.",
+      "attaching": "Attaching...",
+      "backToCourses": "Courses",
+      "cancel": "Cancel",
+      "courseDescription": "Choose files from a course without uploading them again.",
+      "courseSelectionDescription": "Choose a joined course before browsing its files.",
+      "courseTitle": "Attach from course inventory",
+      "emptyCoursesDescription": "No joined courses are available.",
+      "emptyCoursesTitle": "No courses found",
+      "emptyDescription": "No files or folders match this location.",
+      "emptyTitle": "No files found",
+      "folder": "Folder",
+      "next": "Next",
+      "pageInfo": "Page {page} of {total}",
+      "personalDescription": "Choose files from your inventory without uploading them again.",
+      "personalTitle": "Attach from personal inventory",
+      "previous": "Previous",
+      "processing": "Processing",
+      "root": "Inventory",
+      "searchPlaceholder": "Search files and folders",
+      "selectFile": "Select {name}",
+      "selectedCount": "{count}/{max} selected",
+      "tooMany": "Attachment limit reached."
     },
     "attachments": {
       "defaultMessage": "Please use the attached {count, plural, one {file} other {files}}.",

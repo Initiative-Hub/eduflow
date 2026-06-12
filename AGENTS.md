@@ -86,6 +86,7 @@ for any tasks.).
 - **Shared Shells**: Reuse `DialogTemplate` and `FormTemplate` for modal and form shells instead of rebuilding the same structure ad hoc.
 - **Pipeline Step Panels**: In generation/progress dialogs, render step-specific detail panels only while their step is active; add explicit step navigation before showing historical step details.
 - **Dialog Success Flow**: When a dialog triggers an async mutation, close it via `onOpenChange(false)` before navigation and guard entry points with the mutation pending state to avoid duplicate opens/submits.
+- **Chat Attachment Pickers**: Personal and course inventory pickers launched from chat upload actions should use grid-only selection views; do not add table/list toggles there unless explicitly requested.
 - **Tabular Lists**: Use the shared `Table` components for list-style layouts instead of custom row divs to keep alignment consistent.
 - **Server Layouts**: For async server layouts that only pass through children, return a fragment instead of raw children.
 - **Icons and Styling**: Use `lucide-react` for new icons and keep styling in the existing Tailwind utility style used throughout the app.

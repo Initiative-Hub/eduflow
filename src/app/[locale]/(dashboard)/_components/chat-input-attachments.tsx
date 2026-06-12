@@ -20,10 +20,14 @@ import {
   getAttachmentLabel,
   getMediaCategory,
 } from '@/components/ai-elements/attachments';
+import type { ChatFileUIPart } from '@/types/chat-attachments';
 
 export interface SelectedChatFile {
-  file: File;
+  file?: File;
+  filePart?: ChatFileUIPart;
+  filename: string;
   id: string;
+  mediaType: string;
   previewUrl: string;
 }
 
@@ -89,9 +93,9 @@ export function ChatInputAttachments({
     <Attachments className="m-0" variant="grid">
       {files.map((item) => {
         const attachment = {
-          filename: item.file.name,
+          filename: item.filename,
           id: item.id,
-          mediaType: item.file.type,
+          mediaType: item.mediaType,
           type: 'file' as const,
           url: item.previewUrl,
         };
@@ -110,7 +114,7 @@ export function ChatInputAttachments({
                     />
                   }
                 />
-                <AttachmentRemove label={getRemoveLabel(item.file.name)} />
+                <AttachmentRemove label={getRemoveLabel(item.filename)} />
               </Attachment>
             </AttachmentHoverCardTrigger>
             <AttachmentHoverCardContent>
