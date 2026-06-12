@@ -103,7 +103,7 @@ export function ChatView({
                         <User className="size-5" />
                       )}
                     </div>
-                    <div className="space-y-2">
+                    <div className="flex flex-col gap-2">
                       {attachments.length > 0 && (
                         <ChatInputAttachments
                           files={attachments.map((attachment) => ({
