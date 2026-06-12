@@ -1,8 +1,14 @@
-import type { UIMessage } from 'ai';
+import { tavilySearch } from '@tavily/ai-sdk';
+import {
+  createUIMessageStream,
+  createUIMessageStreamResponse,
+  type UIMessage,
+} from 'ai';
 import { z } from 'zod';
+import { AiChatType } from '@/generated/prisma';
 import { getChatOwner } from '@/lib/api/guest-session';
+import { studyModeSchema } from '@/lib/validations/study.schema';
 import { ChatProviderFactory } from '@/services/ai/ChatProviderFactory';
-import { CHAT_MODEL_IDS } from '@/services/ai/chat-models';
 import { DEFAULT_PROVIDER } from '@/services/ai/chat-provider.constants';
 import type {
   ChatProvider,
@@ -14,21 +20,25 @@ import {
   hasChatFileParts,
   hydrateChatAttachmentDataUrls,
 } from '@/utils/chat-attachments';
-
+import {
+  generateStudySuggestions,
+  getStudySystemPrompt,
+} from './study.constant';
 export const maxDuration = 30;
 
-const chatRequestSchema = z.object({
+const studyRequestSchema = z.object({
   messages: z.array(z.custom<UIMessage>()).min(1),
+  mode: studyModeSchema.default('review'),
   provider: z.custom<ChatProvider>().optional(),
-  model: z.enum(CHAT_MODEL_IDS).optional(),
+  model: z.string().min(1).optional(),
   apiKey: z.string().min(1).optional(),
   providerOptions: z.custom<StreamChatInput['providerOptions']>().optional(),
 });
 
-const chatUpdateSchema = z
+const studyUpdateSchema = z
   .object({
     title: z.string().trim().min(1).max(120).optional(),
-    deleted_at: z.string().datetime().optional(),
+    deleted_at: z.coerce.date().optional(),
   })
   .refine((data) => data.title !== undefined || data.deleted_at !== undefined, {
     message: 'Provide title or deleted_at',
@@ -36,26 +46,16 @@ const chatUpdateSchema = z
 
 /**
  * @swagger
- * /api/v1/ai/chat/{chatId}:
+ * /api/v1/ai/study/{chatId}:
  *   get:
  *     tags:
- *       - Chat
- *     summary: Get chat metadata and messages for an existing chat
- *     parameters:
- *       - in: path
- *         name: chatId
- *         required: true
- *         schema:
- *           type: string
+ *       - Study
+ *     summary: Get Study Assistant session metadata and messages
  *     responses:
  *       200:
- *         description: Chat data
- *       401:
- *         description: Missing guest session
- *       403:
- *         description: Access denied
+ *         description: Study session data
  *       404:
- *         description: Chat not found
+ *         description: Session not found
  */
 export async function GET(
   _req: Request,
@@ -63,7 +63,6 @@ export async function GET(
 ) {
   try {
     const { chatId } = await params;
-
     const { userId, guestId } = await getChatOwner();
 
     if (!userId && !guestId) {
@@ -73,20 +72,23 @@ export async function GET(
       });
     }
 
-    const chatData = await ChatPersistenceService.getChat({
+    const studyData = await ChatPersistenceService.getChat({
       chatId,
       userId,
       guestId,
+      chatType: AiChatType.STUDY_ASSISTANT,
     });
 
-    if (!chatData) {
-      return new Response(JSON.stringify({ error: 'Chat not found' }), {
-        status: 404,
-        headers: { 'Content-Type': 'application/json' },
-      });
+    if (!studyData) {
+      return new Response(
+        JSON.stringify({
+          error: 'Session not found or access denied',
+        }),
+        { status: 404, headers: { 'Content-Type': 'application/json' } }
+      );
     }
 
-    return new Response(JSON.stringify(chatData), {
+    return new Response(JSON.stringify(studyData), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });
@@ -102,38 +104,18 @@ export async function GET(
 
 /**
  * @swagger
- * /api/v1/ai/chat/{chatId}:
+ * /api/v1/ai/study/{chatId}:
  *   patch:
  *     tags:
- *       - Chat
- *     summary: Update chat title or soft delete a chat
- *     parameters:
- *       - in: path
- *         name: chatId
- *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               title:
- *                 type: string
- *               deleted_at:
- *                 type: string
- *                 format: date-time
+ *       - Study
+ *     summary: Update Study session title or soft delete
  *     responses:
  *       200:
- *         description: Updated chat metadata
+ *         description: Updated study session metadata
  *       400:
  *         description: Invalid request payload
- *       401:
- *         description: Missing guest session
  *       404:
- *         description: Chat not found
+ *         description: Session not found
  */
 export async function PATCH(
   req: Request,
@@ -141,8 +123,8 @@ export async function PATCH(
 ) {
   try {
     const [{ chatId }, body] = await Promise.all([params, req.json()]);
+    const parsedBody = studyUpdateSchema.safeParse(body);
 
-    const parsedBody = chatUpdateSchema.safeParse(body);
     if (!parsedBody.success) {
       return new Response(
         JSON.stringify({
@@ -170,13 +152,14 @@ export async function PATCH(
       deletedAt: parsedBody.data.deleted_at
         ? new Date(parsedBody.data.deleted_at)
         : undefined,
+      chatType: AiChatType.STUDY_ASSISTANT,
     });
 
     if (!updatedChat) {
-      return new Response(JSON.stringify({ error: 'Chat not found' }), {
-        status: 404,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return new Response(
+        JSON.stringify({ error: 'Session not found or access denied' }),
+        { status: 404, headers: { 'Content-Type': 'application/json' } }
+      );
     }
 
     return new Response(JSON.stringify(updatedChat), {
@@ -195,52 +178,18 @@ export async function PATCH(
 
 /**
  * @swagger
- * /api/v1/ai/chat/{chatId}:
+ * /api/v1/ai/study/{chatId}:
  *   post:
  *     tags:
- *       - Chat
- *     summary: Send a message to an existing chat and receive a streamed response
- *     parameters:
- *       - in: path
- *         name: chatId
- *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               messages:
- *                 type: array
- *                 items:
- *                   type: object
- *               provider:
- *                 type: string
- *                 enum: [ai-gateway, google, openrouter]
- *                 default: ai-gateway
- *               model:
- *                 type: string
- *               apiKey:
- *                 type: string
- *               providerOptions:
- *                 type: object
+ *       - Study
+ *     summary: Send a study prompt and receive a streamed response
  *     responses:
  *       200:
- *         description: Streamed AI response
+ *         description: Streamed study response
  *       400:
  *         description: Invalid request payload
- *       401:
- *         description: Missing guest session
- *       403:
- *         description: Access denied
- *       404:
- *         description: Chat not found
  *       429:
  *         description: Guest limit reached
- *
  */
 export async function POST(
   req: Request,
@@ -248,8 +197,8 @@ export async function POST(
 ) {
   try {
     const [{ chatId }, body] = await Promise.all([params, req.json()]);
+    const parsedBody = studyRequestSchema.safeParse(body);
 
-    const parsedBody = chatRequestSchema.safeParse(body);
     if (!parsedBody.success) {
       return new Response(
         JSON.stringify({
@@ -261,7 +210,6 @@ export async function POST(
     }
 
     const { userId, guestId } = await getChatOwner();
-
     if (!userId && !guestId) {
       return new Response(JSON.stringify({ error: 'Missing guest session' }), {
         status: 401,
@@ -272,6 +220,7 @@ export async function POST(
     const limitStatus = userId
       ? { allowed: true, remaining: Number.POSITIVE_INFINITY, message: '' }
       : await CacheService.checkGuestLimit(guestId as string);
+
     if (!limitStatus.allowed) {
       return new Response(
         JSON.stringify({
@@ -282,17 +231,18 @@ export async function POST(
       );
     }
 
-    const chatData = await ChatPersistenceService.getChat({
+    const studyData = await ChatPersistenceService.getChat({
       chatId,
       userId,
       guestId,
+      chatType: AiChatType.STUDY_ASSISTANT,
     });
 
-    if (!chatData) {
-      return new Response(JSON.stringify({ error: 'Chat not found' }), {
-        status: 404,
-        headers: { 'Content-Type': 'application/json' },
-      });
+    if (!studyData) {
+      return new Response(
+        JSON.stringify({ error: 'Session not found or access denied' }),
+        { status: 404, headers: { 'Content-Type': 'application/json' } }
+      );
     }
 
     const hasFileParts = hasChatFileParts(parsedBody.data.messages);
@@ -320,34 +270,75 @@ export async function POST(
       }
     }
 
-    const provider = ChatProviderFactory.create(
-      parsedBody.data.provider ?? DEFAULT_PROVIDER
+    const providerName = parsedBody.data.provider ?? DEFAULT_PROVIDER;
+    const provider = ChatProviderFactory.create(providerName);
+    const systemPrompt = getStudySystemPrompt(parsedBody.data.mode);
+
+    const tools =
+      parsedBody.data.mode === 'research'
+        ? { webSearch: tavilySearch({ includeFavicon: true, maxResults: 5 }) }
+        : undefined;
+
+    const maxSteps = parsedBody.data.mode === 'research' ? 5 : undefined;
+
+    const result = await provider.streamChat(
+      {
+        messages: messagesForModel,
+        provider: parsedBody.data.provider,
+        model: parsedBody.data.model,
+        apiKey: parsedBody.data.apiKey,
+        providerOptions: parsedBody.data.providerOptions,
+      },
+      { prompt: systemPrompt, tools, maxSteps }
     );
 
-    const result = await provider.streamChat({
-      messages: messagesForModel,
-      provider: parsedBody.data.provider,
-      model: parsedBody.data.model,
-      apiKey: parsedBody.data.apiKey,
-      providerOptions: parsedBody.data.providerOptions,
-    });
-
-    const response = result.toUIMessageStreamResponse({
+    const stream = createUIMessageStream<UIMessage>({
       originalMessages: messagesForModel,
-      generateMessageId: () => `${crypto.randomUUID()}`,
+      generateId: () => `${crypto.randomUUID()}`,
+      execute: async ({ writer }) => {
+        let assistantText = '';
+
+        for await (const chunk of result.toUIMessageStream<UIMessage>({
+          sendFinish: false,
+        })) {
+          if (chunk.type === 'text-delta') {
+            assistantText += chunk.delta;
+          }
+
+          writer.write(chunk);
+        }
+
+        const suggestions = await generateStudySuggestions({
+          provider,
+          messages: messagesForModel,
+          assistantText,
+          providerName,
+          model: parsedBody.data.model,
+          apiKey: parsedBody.data.apiKey,
+          providerOptions: parsedBody.data.providerOptions,
+        });
+
+        writer.write({
+          type: 'data-suggestions',
+          id: `suggestions-${crypto.randomUUID()}`,
+          data: { items: suggestions },
+        });
+        writer.write({ type: 'finish', finishReason: 'stop' });
+      },
+
       onFinish: async ({ messages }) => {
         await ChatPersistenceService.saveMessages({
           chatId,
           userId,
           guestId,
           messages,
-          provider: parsedBody.data.provider ?? DEFAULT_PROVIDER,
+          provider: providerName,
           model: parsedBody.data.model,
+          chatType: AiChatType.STUDY_ASSISTANT,
         });
       },
     });
-
-    return response;
+    return createUIMessageStreamResponse({ stream });
   } catch (error: unknown) {
     const message =
       error instanceof Error ? error.message : 'Unknown error occurred';

@@ -103,6 +103,9 @@
       "description": "Cuộc trò chuyện này không tồn tại hoặc đã hết hạn.",
       "title": "Không tìm thấy cuộc trò chuyện"
     },
+    "citations": {
+      "sourceCount": "{count, plural, one {# nguồn} other {# nguồn}}"
+    },
     "exploreMore": "Khám phá thêm các gợi ý học thuật",
     "footer": {
       "academicDraft": "Dự thảo học thuật Lexend",
@@ -1200,42 +1203,72 @@
     "title": "Hôm nay tôi có thể <accent>gợi mở</accent> tư duy của bạn như thế nào?"
   },
   "StudyPage": {
-    "description": "Khám phá các nhóm môn học mà trợ lý này sẽ hỗ trợ, từ giải bài đến ngôn ngữ và khoa học xã hội.",
-    "subjects": {
-      "biology": {
-        "description": "Lần theo hệ thống, bằng chứng và quan hệ nguyên nhân - kết quả.",
-        "title": "Sinh học"
+    "aiActive": "AI Đang Hoạt Động",
+    "features": {
+      "keywords": {
+        "description": "Trích xuất thuật ngữ và khái niệm quan trọng với giải thích chi tiết theo ngữ cảnh."
       },
-      "chemistry": {
-        "description": "Suy luận về phản ứng, liên kết và biến đổi ở cấp độ hạt.",
-        "title": "Hóa học"
+      "practiceTest": {
+        "description": "Thử thách bản thân với câu hỏi trắc nghiệm, câu ngắn và thẻ ghi nhớ do AI tạo ra."
       },
-      "english": {
-        "description": "Khám phá ngữ pháp, đọc hiểu, từ vựng và cách chỉnh sửa.",
-        "title": "Tiếng Anh"
+      "research": {
+        "description": "Tìm kiếm các bài báo, video và tài liệu học thuật liên quan bằng AI web search."
       },
-      "geography": {
-        "description": "Tìm hiểu bản đồ, mô hình không gian, vùng miền và môi trường.",
-        "title": "Địa lý"
-      },
-      "history": {
-        "description": "Phân tích nguyên nhân, bằng chứng, dòng thời gian và góc nhìn.",
-        "title": "Lịch sử"
-      },
-      "math": {
-        "description": "Từng bước xử lý khái niệm, chứng minh và bài toán.",
-        "title": "Toán"
-      },
-      "other": {
-        "description": "Dùng câu hỏi gợi mở cho bất kỳ chủ đề nào bạn muốn hiểu.",
-        "title": "Môn học khác"
-      },
-      "physics": {
-        "description": "Kết nối công thức, đơn vị, sơ đồ và trực giác vật lý.",
-        "title": "Vật lý"
+      "review": {
+        "description": "Tổng hợp các khái niệm và định nghĩa chính thành hướng dẫn học tập dễ hiểu."
       }
     },
-    "title": "Khám phá các môn học quen thuộc"
+    "input": {
+      "examples": "Hoặc thử ví dụ:",
+      "placeholder": "Mô tả chủ đề hoặc dán nội dung bài học để bắt đầu..."
+    },
+    "limitReachedToast": "Bạn đã đạt giới hạn {count} tin nhắn. Hãy bắt đầu phiên mới để tiếp tục.",
+    "modes": {
+      "keywords": "Tóm Tắt Từ Khóa",
+      "practiceTest": "Bài Kiểm Tra Thực Hành",
+      "research": "Nghiên cứu",
+      "review": "Tài Liệu Ôn Tập"
+    },
+    "recentSessions": {
+      "title": "Phiên Gần Đây",
+      "viewAll": "Xem Tất Cả"
+    },
+    "sidebar": {
+      "actionsLabel": "Hành động cho {title}",
+      "cancel": "Hủy",
+      "close": "Thu gọn lịch sử học tập",
+      "delete": "Xóa",
+      "deleteDialogDescription": "Xóa \"{title}\" khỏi lịch sử học tập? Không thể hoàn tác.",
+      "deleteDialogTitle": "Xóa phiên học tập",
+      "deleteError": "Không thể xóa phiên học tập.",
+      "deleteSuccess": "Đã xóa phiên học tập.",
+      "description": "Tìm kiếm và mở lại các phiên học trước.",
+      "editDialogDescription": "Chọn một tiêu đề ngắn gọn cho phiên học tập này.",
+      "editDialogTitle": "Chỉnh sửa tiêu đề học tập",
+      "editError": "Không thể cập nhật tiêu đề phiên học tập.",
+      "editTitle": "Sửa tiêu đề",
+      "editTitleLabel": "Tiêu đề phiên học tập",
+      "editTitlePlaceholder": "Nhập tiêu đề phiên học tập",
+      "emptyDescription": "Bắt đầu phiên học mới và nó sẽ xuất hiện ở đây.",
+      "emptySearch": "Không có phiên học nào khớp với tìm kiếm.",
+      "emptyTitle": "Chưa có phiên học tập",
+      "loadingMore": "Đang tải thêm phiên học...",
+      "messageCount": "{count, plural, one {# tin nhắn} other {# tin nhắn}}",
+      "newChat": "Phiên học tập mới",
+      "open": "Mở lịch sử học tập",
+      "saveTitle": "Lưu tiêu đề",
+      "searchLabel": "Tìm kiếm phiên học tập",
+      "searchPlaceholder": "Tìm kiếm phiên học tập...",
+      "title": "Lịch sử học tập",
+      "untitled": "Phiên học tập chưa đặt tên"
+    },
+    "subtitle": "Biến tài liệu của bạn thành kiến thức học thuật sâu sắc. Tải lên bất cứ thứ gì và để AI làm phần còn lại.",
+    "title": "Hôm nay tôi có thể giúp bạn <accent>học</accent> gì?",
+    "upload": {
+      "description": "Kéo và thả PDF, Word hoặc Hình ảnh vào đây.",
+      "replace": "Kéo thả hoặc nhấp để thay thế",
+      "title": "Tải Lên Tài Liệu Để Bắt Đầu"
+    }
   },
   "WritingPage": {
     "recentSessions": {
