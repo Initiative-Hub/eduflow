@@ -33,8 +33,8 @@ export interface SelectedChatFile {
 
 interface ChatInputAttachmentsProps {
   files: SelectedChatFile[];
-  getRemoveLabel: (fileName: string) => string;
-  onRemove: (fileId: string) => void;
+  getRemoveLabel?: (fileName: string) => string;
+  onRemove?: (fileId: string) => void;
 }
 
 const mediaCategoryIcons: Record<AttachmentMediaCategory, typeof ImageIcon> = {
@@ -105,7 +105,10 @@ export function ChatInputAttachments({
         return (
           <AttachmentHoverCard key={item.id}>
             <AttachmentHoverCardTrigger asChild>
-              <Attachment data={attachment} onRemove={() => onRemove(item.id)}>
+              <Attachment
+                data={attachment}
+                onRemove={() => onRemove?.(item.id)}
+              >
                 <AttachmentPreview
                   fallbackIcon={
                     <AttachmentFallback
@@ -114,7 +117,9 @@ export function ChatInputAttachments({
                     />
                   }
                 />
-                <AttachmentRemove label={getRemoveLabel(item.filename)} />
+                {getRemoveLabel && onRemove ? (
+                  <AttachmentRemove label={getRemoveLabel(item.filename)} />
+                ) : null}
               </Attachment>
             </AttachmentHoverCardTrigger>
             <AttachmentHoverCardContent>

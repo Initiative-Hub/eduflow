@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import type { StudyMode } from '@/lib/validations/study.schema';
 import { type ChatModel, DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
+import type { ChatSubmitAttachments } from '@/types/chat-attachments';
 import { ChatInput } from '../../_components/chat-input';
 import { ChatSidebar } from '../../_components/chat-sidebar';
 import { ChatWorkspaceShell } from '../../_components/chat-workspace-shell';
@@ -63,11 +64,11 @@ export function StudyClient({
   const handleSubmit = async (
     e?: React.SyntheticEvent,
     customValue?: string,
-    files: File[] = []
+    attachments?: ChatSubmitAttachments
   ) => {
     e?.preventDefault();
     const text = customValue?.trim() || '';
-    const allFiles = [...pendingFiles, ...files];
+    const allFiles = [...pendingFiles, ...(attachments?.files ?? [])];
     if (!text && allFiles.length === 0) return;
     if (isLimitReached) {
       notifyLimitReached();
