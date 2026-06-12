@@ -103,6 +103,9 @@
       "description": "Cuộc trò chuyện này không tồn tại hoặc đã hết hạn.",
       "title": "Không tìm thấy cuộc trò chuyện"
     },
+    "citations": {
+      "sourceCount": "{count, plural, one {# nguồn} other {# nguồn}}"
+    },
     "exploreMore": "Khám phá thêm các gợi ý học thuật",
     "footer": {
       "academicDraft": "Dự thảo học thuật Lexend",

@@ -146,7 +146,11 @@ export function ChatView({
                             mode="streaming"
                             skipHtml={false}
                             components={createChatMarkdownComponents(
-                              citationSources
+                              citationSources,
+                              {
+                                sourceCount: (count) =>
+                                  t('citations.sourceCount', { count }),
+                              }
                             )}
                           >
                             {responseText}

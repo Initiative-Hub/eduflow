@@ -25,11 +25,17 @@ describe('chat citation helpers', () => {
               title: 'Learning Science Review',
               url: 'https://journal.example/review',
               content: 'A review of learning science findings.',
+              favicon: 'https://journal.example/favicon.ico',
             },
             {
               title: 'Duplicate should be skipped',
               url: 'https://example.edu/research',
               content: 'Already emitted as a source part.',
+            },
+            {
+              title: 'Fallback favicon source',
+              url: 'https://fallback.example/article',
+              content: 'A source without Tavily favicon metadata.',
             },
           ],
         },
@@ -44,14 +50,22 @@ describe('chat citation helpers', () => {
       },
       {
         description: 'A review of learning science findings.',
+        favicon: 'https://journal.example/favicon.ico',
         index: 2,
         title: 'Learning Science Review',
         url: 'https://journal.example/review',
       },
+      {
+        description: 'A source without Tavily favicon metadata.',
+        favicon: 'https://fallback.example/favicon.ico',
+        index: 3,
+        title: 'Fallback favicon source',
+        url: 'https://fallback.example/article',
+      },
     ]);
   });
 
-  it('turns numbered markers into markdown links backed by collected sources', () => {
+  it('turns numbered markers into grouped markdown links backed by collected sources', () => {
     const sources = [
       {
         index: 1,
@@ -71,7 +85,7 @@ describe('chat citation helpers', () => {
         sources
       )
     ).toBe(
-      'Retrieval practice improves recall [[1]](https://example.edu/research "Research Primer") [[2]](https://journal.example/review "Learning Science Review"), but spacing matters [3].'
+      'Retrieval practice improves recall [[1, 2]](#citation-1-2 "Research Primer"), but spacing matters [3].'
     );
   });
 });

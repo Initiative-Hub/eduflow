@@ -5,15 +5,26 @@ export interface ChatCitationSource {
   url: string;
   title?: string;
   description?: string;
+  favicon?: string;
 }
 
 const CITATION_MARKER_PATTERN = /\[(\d+(?:\s*,\s*\d+)*)\](?!\()/g;
+const CITATION_LINK_PREFIX = '#citation-';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
 
 const asString = (value: unknown): string | undefined =>
   typeof value === 'string' && value.trim() ? value.trim() : undefined;
+
+function getDefaultFaviconUrl(url: string): string | undefined {
+  try {
+    const parsed = new URL(url);
+    return `${parsed.origin}/favicon.ico`;
+  } catch {
+    return undefined;
+  }
+}
 
 function getSearchResults(output: unknown): unknown[] {
   if (!isRecord(output) || !Array.isArray(output.results)) return [];
@@ -25,6 +36,15 @@ function formatMarkdownTitle(title?: string) {
   if (!title) return '';
 
   return ` "${title.replaceAll('"', '\\"')}"`;
+}
+
+function parseCitationIndices(value: string): number[] {
+  const normalized = value.trim().replace(/^\[/, '').replace(/\]$/, '');
+
+  return normalized
+    .split(',')
+    .map((rawIndex) => Number.parseInt(rawIndex.trim(), 10))
+    .filter(Number.isFinite);
 }
 
 function addSource(
@@ -70,6 +90,7 @@ export function getCitationSources(
 
       addSource(sources, seenUrls, {
         description: asString(result.content) ?? asString(result.snippet),
+        favicon: asString(result.favicon) ?? getDefaultFaviconUrl(url),
         title: asString(result.title),
         url,
       });
@@ -77,6 +98,20 @@ export function getCitationSources(
   }
 
   return sources;
+}
+
+export function getCitationSourceGroup(
+  citationText: string,
+  sources: ChatCitationSource[]
+): ChatCitationSource[] {
+  const sourcesByIndex = new Map(
+    sources.map((source) => [source.index, source] as const)
+  );
+
+  return parseCitationIndices(citationText).flatMap((index) => {
+    const source = sourcesByIndex.get(index);
+    return source ? [source] : [];
+  });
 }
 
 export function buildInlineCitationMarkdown(
@@ -90,19 +125,19 @@ export function buildInlineCitationMarkdown(
   );
 
   return markdown.replace(CITATION_MARKER_PATTERN, (marker, group: string) => {
-    let hasCitationLink = false;
-    const replacements = group.split(',').map((rawIndex) => {
-      const index = Number.parseInt(rawIndex.trim(), 10);
+    const citationSources = parseCitationIndices(group).flatMap((index) => {
       const source = sourcesByIndex.get(index);
-
-      if (!source) return `[${index}]`;
-
-      hasCitationLink = true;
-      return `[[${index}]](${source.url}${formatMarkdownTitle(source.title)})`;
+      return source ? [source] : [];
     });
 
-    if (!hasCitationLink) return marker;
+    if (citationSources.length === 0) return marker;
 
-    return replacements.join(' ');
+    const label = citationSources.map((source) => source.index).join(', ');
+    const href = `${CITATION_LINK_PREFIX}${citationSources
+      .map((source) => source.index)
+      .join('-')}`;
+    const firstSource = citationSources[0];
+
+    return `[[${label}]](${href}${formatMarkdownTitle(firstSource?.title)})`;
   });
 }

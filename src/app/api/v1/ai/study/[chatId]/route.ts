@@ -1,5 +1,9 @@
 import { tavilySearch } from '@tavily/ai-sdk';
-import { createUIMessageStream, createUIMessageStreamResponse, type UIMessage } from 'ai';
+import {
+  createUIMessageStream,
+  createUIMessageStreamResponse,
+  type UIMessage,
+} from 'ai';
 import { z } from 'zod';
 import { AiChatType } from '@/generated/prisma';
 import { getChatOwner } from '@/lib/api/guest-session';
@@ -272,7 +276,7 @@ export async function POST(
 
     const tools =
       parsedBody.data.mode === 'research'
-        ? { webSearch: tavilySearch({ maxResults: 5 }) }
+        ? { webSearch: tavilySearch({ includeFavicon: true, maxResults: 5 }) }
         : undefined;
 
     const maxSteps = parsedBody.data.mode === 'research' ? 5 : undefined;
@@ -335,7 +339,6 @@ export async function POST(
       },
     });
     return createUIMessageStreamResponse({ stream });
-
   } catch (error: unknown) {
     const message =
       error instanceof Error ? error.message : 'Unknown error occurred';

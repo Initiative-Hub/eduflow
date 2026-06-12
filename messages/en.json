@@ -103,6 +103,9 @@
       "description": "This chat doesn't exist or has expired.",
       "title": "Chat not found"
     },
+    "citations": {
+      "sourceCount": "{count, plural, one {# source} other {# sources}}"
+    },
     "exploreMore": "Explore more scholarly prompts",
     "footer": {
       "academicDraft": "Lexend Academic Draft",

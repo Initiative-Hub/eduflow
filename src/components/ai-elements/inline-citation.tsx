@@ -13,7 +13,8 @@ import {
   HoverCardTrigger,
 } from '@/components/ui/hover-card';
 import { cn } from '@/lib/utils';
-import { ArrowLeftIcon, ArrowRightIcon } from 'lucide-react';
+import { ArrowLeftIcon, ArrowRightIcon, GlobeIcon } from 'lucide-react';
+import Image from 'next/image';
 import type { ComponentProps } from 'react';
 import {
   createContext,
@@ -60,17 +61,21 @@ export type InlineCitationCardTriggerProps = ComponentProps<typeof Badge> & {
 export const InlineCitationCardTrigger = ({
   sources,
   className,
+  variant = 'secondary',
   ...props
 }: InlineCitationCardTriggerProps) => (
   <HoverCardTrigger asChild>
     <Badge
-      className={cn('ml-1 rounded-full', className)}
-      variant="secondary"
+      className={cn(
+        'ml-1 rounded-md border-border bg-muted px-1.5 font-mono font-normal text-muted-foreground text-[10px] leading-none hover:bg-muted/80',
+        className
+      )}
+      variant={variant}
       {...props}
     >
       {sources[0] ? (
         <>
-          {new URL(sources[0]).hostname}{' '}
+          {getHostname(sources[0])}{' '}
           {sources.length > 1 && `+${sources.length - 1}`}
         </>
       ) : (
@@ -86,7 +91,13 @@ export const InlineCitationCardBody = ({
   className,
   ...props
 }: InlineCitationCardBodyProps) => (
-  <HoverCardContent className={cn('relative w-80 p-0', className)} {...props} />
+  <HoverCardContent
+    className={cn(
+      'relative w-80 overflow-hidden rounded-xl border bg-popover p-0 shadow-lg',
+      className
+    )}
+    {...props}
+  />
 );
 
 const CarouselApiContext = createContext<CarouselApi | undefined>(undefined);
@@ -127,7 +138,7 @@ export const InlineCitationCarouselItem = ({
   ...props
 }: InlineCitationCarouselItemProps) => (
   <CarouselItem
-    className={cn('w-full space-y-2 p-4 pl-8', className)}
+    className={cn('flex w-full flex-col gap-2 p-4 pl-8', className)}
     {...props}
   />
 );
@@ -140,7 +151,7 @@ export const InlineCitationCarouselHeader = ({
 }: InlineCitationCarouselHeaderProps) => (
   <div
     className={cn(
-      'flex items-center justify-between gap-2 rounded-t-md bg-secondary p-2',
+      'flex items-center justify-between gap-2 border-b bg-popover px-3 py-2',
       className
     )}
     {...props}
@@ -183,7 +194,7 @@ export const InlineCitationCarouselIndex = ({
   return (
     <div
       className={cn(
-        'flex flex-1 items-center justify-end px-3 py-1 text-muted-foreground text-xs',
+        'flex items-center px-1 text-muted-foreground text-xs tabular-nums',
         className
       )}
       {...props}
@@ -210,12 +221,16 @@ export const InlineCitationCarouselPrev = ({
   return (
     <button
       aria-label="Previous"
-      className={cn('shrink-0', className)}
+      className={cn(
+        'inline-flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground',
+        '[&>svg]:size-3.5',
+        className
+      )}
       onClick={handleClick}
       type="button"
       {...props}
     >
-      <ArrowLeftIcon className="size-4 text-muted-foreground" />
+      <ArrowLeftIcon />
     </button>
   );
 };
@@ -237,12 +252,16 @@ export const InlineCitationCarouselNext = ({
   return (
     <button
       aria-label="Next"
-      className={cn('shrink-0', className)}
+      className={cn(
+        'inline-flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground',
+        '[&>svg]:size-3.5',
+        className
+      )}
       onClick={handleClick}
       type="button"
       {...props}
     >
-      <ArrowRightIcon className="size-4 text-muted-foreground" />
+      <ArrowRightIcon />
     </button>
   );
 };
@@ -251,22 +270,50 @@ export type InlineCitationSourceProps = ComponentProps<'div'> & {
   title?: string;
   url?: string;
   description?: string;
+  favicon?: string;
 };
+
+function getHostname(url?: string) {
+  if (!url) return undefined;
+
+  try {
+    return new URL(url).hostname.replace(/^www\./, '');
+  } catch {
+    return url;
+  }
+}
 
 export const InlineCitationSource = ({
   title,
   url,
   description,
+  favicon,
   className,
   children,
   ...props
 }: InlineCitationSourceProps) => (
-  <div className={cn('space-y-1', className)} {...props}>
-    {title && (
-      <h4 className="truncate font-medium text-sm leading-tight">{title}</h4>
-    )}
+  <div className={cn('flex flex-col gap-1.5', className)} {...props}>
     {url && (
-      <p className="truncate break-all text-muted-foreground text-xs">{url}</p>
+      <div className="flex items-center gap-1.5 text-muted-foreground text-xs [&>svg]:size-3">
+        {favicon ? (
+          <Image
+            alt=""
+            className="size-3 rounded-sm"
+            height={12}
+            src={favicon}
+            unoptimized
+            width={12}
+          />
+        ) : (
+          <GlobeIcon />
+        )}
+        <span className="truncate">{getHostname(url)}</span>
+      </div>
+    )}
+    {title && (
+      <h4 className="line-clamp-2 font-medium text-foreground text-sm leading-snug">
+        {title}
+      </h4>
     )}
     {description && (
       <p className="line-clamp-3 text-muted-foreground text-sm leading-relaxed">

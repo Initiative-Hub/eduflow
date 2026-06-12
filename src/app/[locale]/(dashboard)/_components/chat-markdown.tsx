@@ -1,14 +1,29 @@
 import type { UIMessage } from 'ai';
 import { Globe } from 'lucide-react';
+import Image from 'next/image';
 import type { ReactNode } from 'react';
 import {
   InlineCitation,
   InlineCitationCard,
   InlineCitationCardBody,
   InlineCitationCardTrigger,
+  InlineCitationCarousel,
+  InlineCitationCarouselContent,
+  InlineCitationCarouselHeader,
+  InlineCitationCarouselIndex,
+  InlineCitationCarouselItem,
+  InlineCitationCarouselNext,
+  InlineCitationCarouselPrev,
   InlineCitationSource,
 } from '@/components/ai-elements/inline-citation';
-import type { ChatCitationSource } from '@/utils/chat-citations';
+import {
+  type ChatCitationSource,
+  getCitationSourceGroup,
+} from '@/utils/chat-citations';
+
+type ChatMarkdownLabels = {
+  sourceCount: (count: number) => string;
+};
 
 const getTextContent = (children: ReactNode): string => {
   if (typeof children === 'string' || typeof children === 'number') {
@@ -22,36 +37,89 @@ const getTextContent = (children: ReactNode): string => {
   return '';
 };
 
-const getCitationByHref = (
+const getCitationSourcesByLink = (
   href: string | undefined,
   children: ReactNode,
   citationSources: ChatCitationSource[]
 ) => {
   if (!href) return undefined;
+  if (!href.startsWith('#citation-')) return undefined;
 
   const text = getTextContent(children).trim();
-  if (!/^\[\d+\]$/.test(text)) return undefined;
+  if (!/^\[\d+(?:,\s*\d+)*\]$/.test(text)) return undefined;
 
-  return citationSources.find((source) => source.url === href);
+  const sources = getCitationSourceGroup(text, citationSources);
+  return sources.length > 0 ? sources : undefined;
 };
 
+const CitationSourceLogo = ({ source }: { source: ChatCitationSource }) => (
+  <span className="flex size-5 items-center justify-center rounded-full border bg-background [&>svg]:size-3">
+    {source.favicon ? (
+      <Image
+        alt=""
+        className="size-3 rounded-sm"
+        height={12}
+        src={source.favicon}
+        unoptimized
+        width={12}
+      />
+    ) : (
+      <Globe />
+    )}
+  </span>
+);
+
 export const createChatMarkdownComponents = (
-  citationSources: ChatCitationSource[] = []
+  citationSources: ChatCitationSource[] = [],
+  labels?: ChatMarkdownLabels
 ) => ({
   a: ({ href, children, ...props }: any) => {
-    const citation = getCitationByHref(href, children, citationSources);
-    if (citation) {
+    const sources = getCitationSourcesByLink(href, children, citationSources);
+    if (sources) {
       return (
         <InlineCitation>
           <InlineCitationCard>
-            <InlineCitationCardTrigger sources={[citation.url]} />
+            <InlineCitationCardTrigger
+              sources={sources.map((source) => source.url)}
+            />
             <InlineCitationCardBody>
-              <InlineCitationSource
-                description={citation.description}
-                title={citation.title}
-                url={citation.url}
-                className="p-4"
-              />
+              <InlineCitationCarousel>
+                {sources.length > 1 && (
+                  <InlineCitationCarouselHeader>
+                    <div className="flex items-center gap-1">
+                      <InlineCitationCarouselPrev />
+                      <InlineCitationCarouselIndex />
+                      <InlineCitationCarouselNext />
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground text-xs">
+                      <CitationSourceLogo source={sources[0]} />
+                      <span>
+                        {labels?.sourceCount(sources.length) ??
+                          String(sources.length)}
+                      </span>
+                    </div>
+                  </InlineCitationCarouselHeader>
+                )}
+                <InlineCitationCarouselContent>
+                  {sources.map((source) => (
+                    <InlineCitationCarouselItem key={source.url}>
+                      <a
+                        className="-m-2 block rounded-lg p-2 outline-none hover:bg-muted/60"
+                        href={source.url}
+                        rel="noopener noreferrer"
+                        target="_blank"
+                      >
+                        <InlineCitationSource
+                          description={source.description}
+                          favicon={source.favicon}
+                          title={source.title}
+                          url={source.url}
+                        />
+                      </a>
+                    </InlineCitationCarouselItem>
+                  ))}
+                </InlineCitationCarouselContent>
+              </InlineCitationCarousel>
             </InlineCitationCardBody>
           </InlineCitationCard>
         </InlineCitation>
