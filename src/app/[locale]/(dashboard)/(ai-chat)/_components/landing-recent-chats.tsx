@@ -68,7 +68,7 @@ export function LandingRecentChats() {
               href={`/chat/${chat.id}`}
               key={chat.id}
             >
-              <Card className="group flex cursor-pointer flex-row items-center gap-3 border-primary p-4 transition-all duration-200 ease-in-out hover:-translate-y-0.5 hover:border-primary/20">
+              <Card className="group mt-2 flex cursor-pointer flex-row items-center gap-3 border-primary p-4 transition-all duration-200 ease-in-out hover:-translate-y-0.5 hover:border-primary/20">
                 <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-border/50 bg-white/80 shadow-sm dark:bg-zinc-900/80">
                   <MessageSquare className="size-4 text-primary" />
                 </div>
