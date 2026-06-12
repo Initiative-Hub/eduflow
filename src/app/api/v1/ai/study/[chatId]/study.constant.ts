@@ -1,7 +1,6 @@
 import type { UIMessage } from 'ai';
 import { z } from 'zod';
 import type { StudyMode } from '@/lib/validations/study.schema';
-import Providers from '@/providers/providers';
 import type { ChatProviderService } from '@/services/ai/ChatProviderService';
 import type {
   ChatProvider,
@@ -67,8 +66,7 @@ You are the EduFlow Study Assistant. Your mission is to help students master the
 
   const footer = `
 ### OUTPUT FORMATTING
-- End every response with **3 Follow-up Suggestions** as short clickable questions.
-- Example: "Explain concept X in simpler terms?", "Generate 5 more practice questions?", "Find related papers on this topic?"
+- The app will render follow-up suggestions separately as clickable buttons; do NOT print follow-up suggestions, numbered question lists, or "How would you like to proceed?" sections in the visible answer.
 `;
 
   return `${basePersona}${modeInstructions[mode]}${footer}`;
