@@ -1,5 +1,10 @@
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
-import { convertToModelMessages, smoothStream, stepCountIs, streamText } from 'ai';
+import {
+  convertToModelMessages,
+  smoothStream,
+  stepCountIs,
+  streamText,
+} from 'ai';
 import {
   DEFAULT_MODELS,
   safetySettings,
