@@ -1,8 +1,63 @@
 import type { UIMessage } from 'ai';
 import { Globe } from 'lucide-react';
+import type { ReactNode } from 'react';
+import {
+  InlineCitation,
+  InlineCitationCard,
+  InlineCitationCardBody,
+  InlineCitationCardTrigger,
+  InlineCitationSource,
+} from '@/components/ai-elements/inline-citation';
+import type { ChatCitationSource } from '@/utils/chat-citations';
 
-export const ChatMarkdownComponents = {
+const getTextContent = (children: ReactNode): string => {
+  if (typeof children === 'string' || typeof children === 'number') {
+    return String(children);
+  }
+
+  if (Array.isArray(children)) {
+    return children.map(getTextContent).join('');
+  }
+
+  return '';
+};
+
+const getCitationByHref = (
+  href: string | undefined,
+  children: ReactNode,
+  citationSources: ChatCitationSource[]
+) => {
+  if (!href) return undefined;
+
+  const text = getTextContent(children).trim();
+  if (!/^\[\d+\]$/.test(text)) return undefined;
+
+  return citationSources.find((source) => source.url === href);
+};
+
+export const createChatMarkdownComponents = (
+  citationSources: ChatCitationSource[] = []
+) => ({
   a: ({ href, children, ...props }: any) => {
+    const citation = getCitationByHref(href, children, citationSources);
+    if (citation) {
+      return (
+        <InlineCitation>
+          <InlineCitationCard>
+            <InlineCitationCardTrigger sources={[citation.url]} />
+            <InlineCitationCardBody>
+              <InlineCitationSource
+                description={citation.description}
+                title={citation.title}
+                url={citation.url}
+                className="p-4"
+              />
+            </InlineCitationCardBody>
+          </InlineCitationCard>
+        </InlineCitation>
+      );
+    }
+
     if (
       href &&
       (href.includes('youtube.com/watch') || href.includes('youtu.be/'))
@@ -44,7 +99,7 @@ export const ChatMarkdownComponents = {
       </a>
     );
   },
-};
+});
 
 export const ChatToolInvocations = ({
   parts,

@@ -91,6 +91,7 @@ for any tasks.).
 - **Icons and Styling**: Use `lucide-react` for new icons and keep styling in the existing Tailwind utility style used throughout the app.
 - **Icon Availability**: When introducing a new `lucide-react` icon, verify the installed package exports it; use a generic available icon when brand-specific icons are absent.
 - **JSX Curly Braces**: Literally render double curly braces `{{` and `}}` in JSX text by quoting them, like `{'{{placeholder}}'}`, to prevent the JSX compiler from parsing them as JS object shorthand syntax.
+- **Research Citations**: For AI research/chat responses with numbered citations, derive source metadata from AI SDK `source-url` parts and web-search tool outputs in shared helpers, then render inline citation UI from that normalized source list instead of hardcoding source parsing in components.
 
 ### 6.3 Security & Validation
 
