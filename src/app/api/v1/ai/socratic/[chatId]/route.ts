@@ -14,6 +14,10 @@ import { CacheService } from '@/services/CacheService';
 import { ChatPersistenceService } from '@/services/ChatPersistenceService';
 import type { SocraticUIMessage } from '@/types/socratic-ui-message';
 import {
+  hasChatFileParts,
+  hydrateChatAttachmentDataUrls,
+} from '@/utils/chat-attachments';
+import {
   generateSocraticSuggestions,
   getSocraticSystemPrompt,
 } from './socratic.constants';
@@ -237,9 +241,33 @@ export async function POST(
       );
     }
 
+    const hasFileParts = hasChatFileParts(parsedBody.data.messages);
+    if (hasFileParts && !userId) {
+      return new Response(
+        JSON.stringify({ error: 'File attachments require sign-in' }),
+        { status: 403, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
     const providerName = parsedBody.data.provider ?? DEFAULT_PROVIDER;
     const provider = ChatProviderFactory.create(providerName);
-    const messagesForModel = parsedBody.data.messages;
+    let messagesForModel: SocraticUIMessage[] = parsedBody.data.messages;
+    if (hasFileParts && userId) {
+      try {
+        messagesForModel = (await hydrateChatAttachmentDataUrls({
+          messages: parsedBody.data.messages,
+          userId,
+        })) as SocraticUIMessage[];
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : 'File attachment not found';
+        return new Response(JSON.stringify({ error: message }), {
+          status: 404,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
     const systemPrompt = getSocraticSystemPrompt(parsedBody.data.guidanceDepth);
 
     const result = await provider.streamChat(

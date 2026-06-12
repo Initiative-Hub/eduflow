@@ -7,7 +7,7 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import type { StudyMode } from '@/lib/validations/study.schema';
-import { type ChatModel, DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
+import { DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
 import type { ChatSubmitAttachments } from '@/types/chat-attachments';
 import { ChatInput } from '../../_components/chat-input';
 import { ChatSidebar } from '../../_components/chat-sidebar';
@@ -34,26 +34,27 @@ export function StudyClient({
   isAuthenticated,
 }: StudyClientProps) {
   const t = useTranslations('StudyPage');
-  const [selectedModel, setSelectedModel] =
-    useState<ChatModel>(DEFAULT_CHAT_MODEL);
+  const tChat = useTranslations('AIChat');
 
   const [mode, setMode] = useState<StudyMode>(initialMode);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [isUploadingAttachments, setIsUploadingAttachments] = useState(false);
 
   const {
     messages,
-    isStreaming,
-    startChat,
-    stop,
-    hasOutput,
-    isLimitReached,
     maxMessages,
     userMessageCount,
+    hasOutput,
+    pendingModel,
+    isStreaming,
+    isLimitReached,
+    setPendingModel,
+    startChat,
+    stop,
   } = useStudy({
     mode,
     chatId,
     initialMessages,
-    selectedModel,
     isAuthenticated,
   });
 
@@ -61,22 +62,62 @@ export function StudyClient({
     toast.error(t('limitReachedToast', { count: maxMessages }));
   };
 
+  const getErrorMessage = (error: unknown) => {
+    if (error instanceof Error) return error.message;
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'message' in error &&
+      typeof error.message === 'string'
+    ) {
+      return error.message;
+    }
+
+    return tChat('attachments.uploadError');
+  };
+
   const handleSubmit = async (
     e?: React.SyntheticEvent,
     customValue?: string,
-    attachments?: ChatSubmitAttachments
+    attachments: ChatSubmitAttachments = { files: [], referencedFiles: [] }
   ) => {
     e?.preventDefault();
+
     const text = customValue?.trim() || '';
-    const allFiles = [...pendingFiles, ...(attachments?.files ?? [])];
-    if (!text && allFiles.length === 0) return;
+    const finalAttachments = {
+      files: [...pendingFiles, ...attachments.files],
+      referencedFiles: attachments.referencedFiles,
+    };
+    const attachmentCount =
+      finalAttachments.files.length + finalAttachments.referencedFiles.length;
+    if (!text && attachmentCount === 0) return;
+
     if (isLimitReached) {
       notifyLimitReached();
       return;
     }
 
-    await startChat(text, allFiles);
-    setPendingFiles([]);
+    if (attachmentCount > 0 && !isAuthenticated) {
+      const error = new Error(tChat('attachments.signInRequired'));
+      toast.error(error.message);
+      throw error;
+    }
+
+    try {
+      setIsUploadingAttachments(finalAttachments.files.length > 0);
+      const messageText =
+        text ||
+        tChat('attachments.defaultMessage', {
+          count: attachmentCount,
+        });
+
+      await startChat(messageText, finalAttachments);
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+      throw error;
+    } finally {
+      setIsUploadingAttachments(false);
+    }
   };
 
   const viewport = !hasOutput ? (
@@ -102,14 +143,14 @@ export function StudyClient({
       handleSubmit={handleSubmit}
       isAuthenticated={isAuthenticated}
       isStreaming={isStreaming}
-      isUploading={false}
+      isUploading={isUploadingAttachments}
       isChatting={hasOutput}
       isLimitReached={isLimitReached}
       limitCount={maxMessages}
       userMessageCount={userMessageCount}
       onStop={stop}
-      selectedModel={selectedModel}
-      onModelChange={setSelectedModel}
+      selectedModel={pendingModel ?? DEFAULT_CHAT_MODEL}
+      onModelChange={setPendingModel}
       placeholder={t('input.placeholder')}
     />
   );

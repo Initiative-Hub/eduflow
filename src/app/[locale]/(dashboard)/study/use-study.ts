@@ -7,9 +7,12 @@ import { useEffect, useMemo, useRef } from 'react';
 import { toast } from 'sonner';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import type { StudyMode } from '@/lib/validations/study.schema';
-import type { ChatModel } from '@/services/ai/chat-models';
+import { DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
 import { useChatSessionStore } from '@/stores/useChatSessionStore';
-import type { ChatFileUIPart } from '@/types/chat-attachments';
+import type {
+  ChatFileUIPart,
+  ChatSubmitAttachments,
+} from '@/types/chat-attachments';
 import { hasReachedUserMessageLimit } from '@/utils/chat-limit';
 import { uploadChatAttachments } from '../(ai-chat)/chat-attachments.service';
 import { studyService } from './study.service';
@@ -21,7 +24,6 @@ type UseStudyOptions = {
   mode: StudyMode;
   chatId?: string;
   initialMessages?: UIMessage[];
-  selectedModel: ChatModel;
   isAuthenticated: boolean;
 };
 
@@ -29,7 +31,6 @@ export const useStudy = ({
   mode,
   chatId,
   initialMessages = [],
-  selectedModel,
   isAuthenticated,
 }: UseStudyOptions) => {
   const router = useRouter();
@@ -46,7 +47,6 @@ export const useStudy = ({
     setPendingMessage,
     clearPendingMessage,
     clearPendingChatId,
-    clearPendingModel,
   } = useChatSessionStore();
 
   const createSessionMutation = useMutation({
@@ -101,12 +101,11 @@ export const useStudy = ({
     const pendingKey = `${pendingChatId}:${JSON.stringify(pendingMessage)}`;
     if (lastPendingSendRef.current === pendingKey) return;
 
-    const inputModel = pendingModel ?? selectedModel;
+    const inputModel = pendingModel;
 
     lastPendingSendRef.current = pendingKey;
     clearPendingMessage();
     clearPendingChatId();
-    clearPendingModel();
 
     sendMessage(pendingMessage, {
       body: {
@@ -121,12 +120,10 @@ export const useStudy = ({
     pendingModel,
     chatId,
     pathname,
-    selectedModel,
     mode,
     sendMessage,
     clearPendingMessage,
     clearPendingChatId,
-    clearPendingModel,
   ]);
 
   const isLimitReached = isAuthenticated
@@ -135,19 +132,26 @@ export const useStudy = ({
 
   const isStreaming = status === 'streaming' || status === 'submitted';
 
-  const startChat = async (text: string, files: File[] = []) => {
+  const startChat = async (
+    text: string,
+    attachments: ChatSubmitAttachments = { files: [], referencedFiles: [] }
+  ) => {
     if (!chatId) {
       try {
         const newChatId = await createSessionMutation.mutateAsync(text);
 
-        const uploadedFiles = await uploadChatAttachments(files, newChatId);
+        const uploadedFiles = await uploadChatAttachments(
+          attachments.files,
+          newChatId
+        );
+        const messageFiles = [...uploadedFiles, ...attachments.referencedFiles];
 
         await queryClient.invalidateQueries({
           queryKey: ['study-chat-list'],
         });
-        setPendingMessage(createUserMessage(text, uploadedFiles));
+        setPendingMessage(createUserMessage(text, messageFiles));
         setPendingChatId(newChatId);
-        setPendingModel(selectedModel);
+        setPendingModel(pendingModel ?? DEFAULT_CHAT_MODEL);
 
         router.push(`/study/${newChatId}`);
       } catch (error: unknown) {
@@ -160,15 +164,19 @@ export const useStudy = ({
       return;
     }
 
-    const uploadedFiles = await uploadChatAttachments(files, chatId);
+    const uploadedFiles = await uploadChatAttachments(
+      attachments.files,
+      chatId
+    );
+    const messageFiles = [...uploadedFiles, ...attachments.referencedFiles];
 
     sendMessage(
-      uploadedFiles.length > 0 ? { text, files: uploadedFiles } : { text },
+      messageFiles.length > 0 ? { text, files: messageFiles } : { text },
       {
         body: {
           mode,
           provider: 'openrouter',
-          model: selectedModel,
+          model: pendingModel ?? DEFAULT_CHAT_MODEL,
         },
       }
     );
@@ -176,12 +184,14 @@ export const useStudy = ({
 
   return {
     messages: displayMessages,
-    startChat,
-    isStreaming,
-    stop,
-    hasOutput: displayMessages.length > 0,
-    isLimitReached,
     maxMessages: MAX_USER_MESSAGES,
     userMessageCount: displayMessages.filter((m) => m.role === 'user').length,
+    hasOutput: displayMessages.length > 0,
+    pendingModel,
+    isStreaming,
+    isLimitReached,
+    setPendingModel,
+    startChat,
+    stop,
   };
 };
