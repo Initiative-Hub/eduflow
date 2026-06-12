@@ -28,6 +28,22 @@ type ChatAttachmentFileRef = {
   fileId: string;
 };
 
+function buildInventoryScope(options: {
+  userId: string;
+  courseId?: string | null;
+}): Prisma.FileInventoryWhereInput {
+  if (options.courseId) {
+    return {
+      courseId: options.courseId,
+    };
+  }
+
+  return {
+    userId: options.userId,
+    courseId: null,
+  };
+}
+
 function serializeFileInventory(
   record: FileInventory
 ): SerializedFileInventory {
@@ -53,8 +69,7 @@ async function ensureParentFolder(
   const parent = await prisma.fileInventory.findFirst({
     where: {
       id: parentId,
-      userId,
-      courseId: courseId ?? null,
+      ...buildInventoryScope({ userId, courseId }),
       isFolder: true,
       deletedAt: null,
     },
@@ -88,8 +103,10 @@ async function ensureFolderPath(options: {
     const existing: Pick<FileInventory, 'id' | 'isFolder'> | null =
       await prisma.fileInventory.findFirst({
         where: {
-          userId: options.userId,
-          courseId: options.courseId ?? null,
+          ...buildInventoryScope({
+            userId: options.userId,
+            courseId: options.courseId,
+          }),
           parentId,
           deletedAt: null,
           name: {
@@ -134,6 +151,7 @@ async function ensureFolderPath(options: {
  */
 async function isDescendantOf(options: {
   userId: string;
+  courseId?: string | null;
   ancestorId: string;
   candidateId: string;
 }) {
@@ -148,7 +166,10 @@ async function isDescendantOf(options: {
       await prisma.fileInventory.findFirst({
         where: {
           id: cursor,
-          userId: options.userId,
+          ...buildInventoryScope({
+            userId: options.userId,
+            courseId: options.courseId,
+          }),
           deletedAt: null,
         },
         select: {
@@ -170,7 +191,11 @@ async function isDescendantOf(options: {
  * Collects all descendant ids (including the root id) for recursive
  * folder operations such as soft deletion.
  */
-async function collectDescendantIds(userId: string, rootId: string) {
+async function collectDescendantIds(
+  userId: string,
+  rootId: string,
+  courseId?: string | null
+) {
   const ids: string[] = [rootId];
   const queue: string[] = [rootId];
 
@@ -182,7 +207,7 @@ async function collectDescendantIds(userId: string, rootId: string) {
 
     const children = await prisma.fileInventory.findMany({
       where: {
-        userId,
+        ...buildInventoryScope({ userId, courseId }),
         parentId: current,
         deletedAt: null,
       },
@@ -204,7 +229,11 @@ async function collectDescendantIds(userId: string, rootId: string) {
  * Collects recursive entries (folders and files) from a root node,
  * including object keys needed for storage cleanup.
  */
-async function collectDescendantEntries(userId: string, rootId: string) {
+async function collectDescendantEntries(
+  userId: string,
+  rootId: string,
+  courseId?: string | null
+) {
   const entries: Array<Pick<FileInventory, 'id' | 'isFolder' | 'objectKey'>> =
     [];
   const queue: string[] = [rootId];
@@ -218,7 +247,7 @@ async function collectDescendantEntries(userId: string, rootId: string) {
     const node = await prisma.fileInventory.findFirst({
       where: {
         id: current,
-        userId,
+        ...buildInventoryScope({ userId, courseId }),
         deletedAt: null,
       },
       select: {
@@ -240,7 +269,7 @@ async function collectDescendantEntries(userId: string, rootId: string) {
 
     const children = await prisma.fileInventory.findMany({
       where: {
-        userId,
+        ...buildInventoryScope({ userId, courseId }),
         parentId: node.id,
         deletedAt: null,
       },
@@ -276,8 +305,10 @@ export class StorageService {
     );
 
     const where: Prisma.FileInventoryWhereInput = {
-      userId: options.userId,
-      courseId: options.courseId ?? null,
+      ...buildInventoryScope({
+        userId: options.userId,
+        courseId: options.courseId,
+      }),
       parentId: options.parentId ?? null,
       deletedAt: null,
       ...(options.search
@@ -329,8 +360,10 @@ export class StorageService {
 
     const duplicate = await prisma.fileInventory.findFirst({
       where: {
-        userId: options.userId,
-        courseId: options.courseId ?? null,
+        ...buildInventoryScope({
+          userId: options.userId,
+          courseId: options.courseId,
+        }),
         parentId: options.parentId ?? null,
         deletedAt: null,
         name: {
@@ -809,13 +842,17 @@ export class StorageService {
   static async updateEntry(options: {
     userId: string;
     fileId: string;
+    courseId?: string | null;
     name?: string;
     parentId?: string | null;
   }) {
     const current = await prisma.fileInventory.findFirst({
       where: {
         id: options.fileId,
-        userId: options.userId,
+        ...buildInventoryScope({
+          userId: options.userId,
+          courseId: options.courseId,
+        }),
         deletedAt: null,
       },
     });
@@ -826,11 +863,12 @@ export class StorageService {
 
     const nextParentId =
       options.parentId === undefined ? current.parentId : options.parentId;
-    await ensureParentFolder(options.userId, nextParentId);
+    await ensureParentFolder(options.userId, nextParentId, current.courseId);
 
     if (nextParentId && current.isFolder) {
       const cycle = await isDescendantOf({
         userId: options.userId,
+        courseId: current.courseId,
         ancestorId: current.id,
         candidateId: nextParentId,
       });
@@ -848,7 +886,10 @@ export class StorageService {
 
     const duplicate = await prisma.fileInventory.findFirst({
       where: {
-        userId: options.userId,
+        ...buildInventoryScope({
+          userId: options.userId,
+          courseId: current.courseId,
+        }),
         parentId: nextParentId ?? null,
         deletedAt: null,
         id: {
@@ -930,7 +971,11 @@ export class StorageService {
    * Soft-deletes multiple entries and attempts object storage cleanup for
    * non-folder descendants.
    */
-  static async deleteEntries(options: { userId: string; fileIds: string[] }) {
+  static async deleteEntries(options: {
+    userId: string;
+    fileIds: string[];
+    courseId?: string | null;
+  }) {
     const uniqueIds = Array.from(new Set(options.fileIds));
     if (uniqueIds.length === 0) {
       return { deletedCount: 0 };
@@ -941,7 +986,10 @@ export class StorageService {
         id: {
           in: uniqueIds,
         },
-        userId: options.userId,
+        ...buildInventoryScope({
+          userId: options.userId,
+          courseId: options.courseId,
+        }),
         deletedAt: null,
       },
       select: {
@@ -954,7 +1002,11 @@ export class StorageService {
     > = [];
 
     for (const root of roots) {
-      const entries = await collectDescendantEntries(options.userId, root.id);
+      const entries = await collectDescendantEntries(
+        options.userId,
+        root.id,
+        options.courseId
+      );
       allEntries.push(...entries);
     }
 
@@ -971,7 +1023,10 @@ export class StorageService {
     const now = new Date();
     const updated = await prisma.fileInventory.updateMany({
       where: {
-        userId: options.userId,
+        ...buildInventoryScope({
+          userId: options.userId,
+          courseId: options.courseId,
+        }),
         id: {
           in: allIds,
         },
@@ -996,8 +1051,10 @@ export class StorageService {
     courseId?: string | null;
   }) {
     const where: Prisma.FileInventoryWhereInput = {
-      userId: options.userId,
-      courseId: options.courseId ?? null,
+      ...buildInventoryScope({
+        userId: options.userId,
+        courseId: options.courseId,
+      }),
       isFolder: false,
       deletedAt: null,
       status: 'READY',
@@ -1009,8 +1066,10 @@ export class StorageService {
       }),
       prisma.fileInventory.count({
         where: {
-          userId: options.userId,
-          courseId: options.courseId ?? null,
+          ...buildInventoryScope({
+            userId: options.userId,
+            courseId: options.courseId,
+          }),
           isFolder: true,
           deletedAt: null,
         },

@@ -324,6 +324,7 @@ export class CourseService {
 
     return await StorageService.deleteEntries({
       userId,
+      courseId,
       fileIds,
     });
   }
@@ -350,6 +351,7 @@ export class CourseService {
 
     return await StorageService.updateEntry({
       userId: options.userId,
+      courseId: options.courseId,
       fileId: options.fileId,
       name: options.name,
       parentId: options.parentId,
