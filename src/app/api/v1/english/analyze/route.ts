@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { z } from 'zod';
+import * as z from 'zod';
 import { VocabularyService } from '@/services/english/vocabulary.service';
 
 const bodySchema = z.object({

@@ -1,6 +1,6 @@
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { generateObject } from 'ai';
-import { z } from 'zod';
+import * as z from 'zod';
 import { DictionaryService } from '@/services/dictionary';
 import { DEFAULT_MODELS } from '@/services/ai/chat-provider.constants';
 
