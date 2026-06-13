@@ -1,6 +1,6 @@
 'use client';
 
-import { Languages, Sparkles } from 'lucide-react';
+import { Languages, Lightbulb, Sparkles, Text } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useCallback, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -159,6 +159,11 @@ export function EnglishAssistantClient() {
             <Languages className="size-7 text-primary" />
             {t('assistantTitle')}
           </h1>
+          <div className="flex items-center gap-1.5">
+        <span className="font-medium text-muted-foreground text-sm">
+          {t('hoverLookupHint')}
+        </span>
+      </div>
         </div>
         <div className="flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5">
           <Sparkles className="size-4 text-primary" />
@@ -167,6 +172,7 @@ export function EnglishAssistantClient() {
           </span>
         </div>
       </div>
+      
 
       <TranslationPanel
         sourceText={sourceText}
@@ -198,10 +204,22 @@ export function EnglishAssistantClient() {
       {/* Analysis Results */}
       {analyzeEnglishMutation.data?.sentences &&
         analyzeEnglishMutation.data.sentences.length > 0 && (
-          <SentencePlayer
-            sentences={analyzeEnglishMutation.data.sentences}
-            onAnalyzeGrammar={handleAnalyzeGrammar}
-          />
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10">
+                <Text className="size-5 text-primary" />
+              </div>
+              <h2 className="font-bold text-foreground text-xl">
+                {t('sentencesTitle')}
+              </h2>
+            </div>
+            <div className="overflow-hidden rounded-xl border bg-background shadow-sm p-4">
+              <SentencePlayer
+                sentences={analyzeEnglishMutation.data.sentences}
+                onAnalyzeGrammar={handleAnalyzeGrammar}
+              />
+            </div>
+          </div>
         )}
 
       <VocabularyList

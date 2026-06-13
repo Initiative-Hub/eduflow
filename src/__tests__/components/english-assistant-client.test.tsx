@@ -18,7 +18,7 @@ const messages: Record<string, string> = {
   emptyState: 'No vocabulary items yet.',
   english: 'English',
   exportPdf: 'Export PDF',
-  highlightLookupHint: 'Highlight a word on the left to look it up.',
+  hoverLookupHint: 'Hover a word to look it up.',
   inputPlaceholder: 'Paste or type your English text here...',
   pageSubtitle: 'English study tools',
   saveToLibrary: 'Save to Library',

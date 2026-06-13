@@ -1,6 +1,6 @@
 'use client';
 
-import { Lightbulb, Loader2, Pause, Play } from 'lucide-react';
+import { Lightbulb, Loader2, Pause, Play, Sparkles } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useCallback, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
@@ -95,12 +95,6 @@ export function SentencePlayer({
 
   return (
     <div className={cn('flex flex-col gap-1', className)}>
-      <div className="mb-2 flex items-center gap-1.5">
-        <Lightbulb className="size-3.5 text-primary" />
-        <span className="font-medium text-muted-foreground text-sm">
-          {t('grammarBreakdownHint')}
-        </span>
-      </div>
 
       {sentences.map((sentence, idx) => {
         const isActive = activeIdx === idx;
@@ -140,30 +134,31 @@ export function SentencePlayer({
               )}
             </button>
 
-            {onAnalyzeGrammar ? (
+            <p
+              className={cn(
+                'flex-1 text-sm leading-relaxed py-1',
+                isActive ? 'text-foreground font-medium' : 'text-foreground/80'
+              )}
+            >
+              {sentence}
+            </p>
+
+            {onAnalyzeGrammar && (
               <button
                 type="button"
                 id={`sentence-grammar-${idx}`}
                 onClick={() => onAnalyzeGrammar(sentence)}
                 className={cn(
-                  'min-w-0 flex-1 rounded-md px-2 py-1 text-left transition-colors hover:bg-primary/8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30',
-                  isActive ? 'text-foreground' : 'text-foreground/80'
+                  'mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30',
+                  isActive
+                    ? 'bg-primary text-primary-foreground shadow-sm hover:bg-primary/90'
+                    : 'bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground'
                 )}
                 aria-label={t('analyzeGrammar')}
+                title={t('analyzeGrammar')}
               >
-                <span className="block text-sm leading-relaxed">
-                  {sentence}
-                </span>
+                <Sparkles className="size-3.5" />
               </button>
-            ) : (
-              <p
-                className={cn(
-                  'flex-1 text-sm leading-relaxed',
-                  isActive ? 'text-foreground' : 'text-foreground/80'
-                )}
-              >
-                {sentence}
-              </p>
             )}
           </div>
         );
