@@ -1,0 +1,361 @@
+'use client';
+
+import {
+  keepPreviousData,
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
+import { useLocale, useTranslations } from 'next-intl';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
+import type { ApiError } from '@/lib/api';
+import {
+  type AssignableCourseMemberRole,
+  COURSE_MEMBER_CANDIDATE_PAGE_SIZE,
+  COURSE_MEMBER_ROLE_OPTIONS,
+  COURSE_MEMBER_SEARCH_DEBOUNCE_MS,
+  COURSE_MEMBERS_PAGE_SIZE_OPTIONS,
+  COURSE_MEMBERS_QUERY_KEY,
+  type CourseMember,
+  type CourseMemberRole,
+  type CourseMemberRoleFilter,
+  getCourseMemberInitials,
+} from './members.config';
+import { courseMembersService } from './members.service';
+
+type RoleBadgeView = {
+  label: string;
+  variant?: 'default' | 'secondary' | 'outline' | 'destructive' | 'ghost';
+};
+
+type EditDialogState = {
+  member: CourseMember;
+  role: AssignableCourseMemberRole;
+} | null;
+
+function getErrorMessage(error: ApiError, fallback: string) {
+  return error.message || fallback;
+}
+
+export function useMembers({
+  courseId,
+  initialCanManageMembers,
+}: {
+  courseId: string;
+  initialCanManageMembers: boolean;
+}) {
+  const t = useTranslations('CourseMembersPage');
+  const locale = useLocale();
+  const queryClient = useQueryClient();
+  const queryKey = COURSE_MEMBERS_QUERY_KEY(courseId);
+
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [roleFilter, setRoleFilter] = useState<CourseMemberRoleFilter>('ALL');
+  const [itemsPerPage, setItemsPerPage] = useState(20);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [addRole, setAddRole] = useState<AssignableCourseMemberRole>('STUDENT');
+  const [candidateSearch, setCandidateSearch] = useState('');
+  const [debouncedCandidateSearch, setDebouncedCandidateSearch] = useState('');
+  const [editDialog, setEditDialog] = useState<EditDialogState>(null);
+  const [removeDialog, setRemoveDialog] = useState<CourseMember | null>(null);
+  const candidateSentinelRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setDebouncedSearch(search.trim());
+    }, COURSE_MEMBER_SEARCH_DEBOUNCE_MS);
+
+    return () => window.clearTimeout(timeout);
+  }, [search]);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setDebouncedCandidateSearch(candidateSearch.trim());
+    }, COURSE_MEMBER_SEARCH_DEBOUNCE_MS);
+
+    return () => window.clearTimeout(timeout);
+  }, [candidateSearch]);
+
+  const membersQuery = useQuery({
+    queryKey: [
+      ...queryKey,
+      'list',
+      debouncedSearch,
+      roleFilter,
+      itemsPerPage,
+      currentPage,
+    ],
+    queryFn: () =>
+      courseMembersService.listMembers({
+        courseId,
+        search: debouncedSearch || undefined,
+        role: roleFilter,
+        limit: itemsPerPage,
+        offset: (currentPage - 1) * itemsPerPage,
+      }),
+    placeholderData: keepPreviousData,
+  });
+
+  const candidateQuery = useInfiniteQuery({
+    queryKey: [...queryKey, 'candidates', debouncedCandidateSearch],
+    initialPageParam: 0,
+    enabled: addDialogOpen,
+    queryFn: ({ pageParam }) =>
+      courseMembersService.listCandidates({
+        courseId,
+        search: debouncedCandidateSearch || undefined,
+        limit: COURSE_MEMBER_CANDIDATE_PAGE_SIZE,
+        offset: pageParam,
+      }),
+    getNextPageParam: (lastPage) => {
+      const nextOffset = lastPage.pagination.offset + lastPage.pagination.limit;
+      return nextOffset < lastPage.pagination.total ? nextOffset : undefined;
+    },
+  });
+
+  useEffect(() => {
+    if (!addDialogOpen) return;
+
+    const sentinel = candidateSentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+
+        if (
+          entry?.isIntersecting &&
+          candidateQuery.hasNextPage &&
+          !candidateQuery.isFetchingNextPage
+        ) {
+          void candidateQuery.fetchNextPage();
+        }
+      },
+      { rootMargin: '160px' }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [
+    addDialogOpen,
+    candidateQuery.fetchNextPage,
+    candidateQuery.hasNextPage,
+    candidateQuery.isFetchingNextPage,
+  ]);
+
+  const addMemberMutation = useMutation({
+    mutationFn: (userId: string) =>
+      courseMembersService.addMember(courseId, { userId, role: addRole }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey });
+      toast.success(t('toast.added'));
+    },
+    onError: (error: ApiError) => {
+      toast.error(getErrorMessage(error, t('toast.addFailed')));
+    },
+  });
+
+  const updateMemberMutation = useMutation({
+    mutationFn: ({
+      memberId,
+      role,
+    }: {
+      memberId: string;
+      role: AssignableCourseMemberRole;
+    }) => courseMembersService.updateMember(courseId, { memberId, role }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey });
+      setEditDialog(null);
+      toast.success(t('toast.updated'));
+    },
+    onError: (error: ApiError) => {
+      toast.error(getErrorMessage(error, t('toast.updateFailed')));
+    },
+  });
+
+  const removeMemberMutation = useMutation({
+    mutationFn: (memberId: string) =>
+      courseMembersService.removeMember(courseId, memberId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey });
+      setRemoveDialog(null);
+      toast.success(t('toast.removed'));
+    },
+    onError: (error: ApiError) => {
+      toast.error(getErrorMessage(error, t('toast.removeFailed')));
+    },
+  });
+
+  const members = membersQuery.data?.data ?? [];
+  const pagination = membersQuery.data?.pagination;
+  const totalMembers = pagination?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalMembers / itemsPerPage));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const visibleStart =
+    totalMembers === 0
+      ? 0
+      : Math.min((safeCurrentPage - 1) * itemsPerPage + 1, totalMembers);
+  const visibleEnd = Math.min(safeCurrentPage * itemsPerPage, totalMembers);
+  const canManageMembers =
+    membersQuery.data?.permissions.canManageMembers ?? initialCanManageMembers;
+  const candidates = useMemo(
+    () => candidateQuery.data?.pages.flatMap((page) => page.data) ?? [],
+    [candidateQuery.data]
+  );
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setCurrentPage(1);
+  };
+
+  const handleRoleFilterChange = (value: string) => {
+    setRoleFilter(value as CourseMemberRoleFilter);
+    setCurrentPage(1);
+  };
+
+  const handleItemsPerPageChange = (value: string) => {
+    setItemsPerPage(Number.parseInt(value, 10));
+    setCurrentPage(1);
+  };
+
+  const handlePreviousPage = () => {
+    if (safeCurrentPage > 1) {
+      setCurrentPage(safeCurrentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (safeCurrentPage < totalPages) {
+      setCurrentPage(safeCurrentPage + 1);
+    }
+  };
+
+  const handleAddDialogOpenChange = (open: boolean) => {
+    setAddDialogOpen(open);
+
+    if (!open) {
+      setCandidateSearch('');
+      setDebouncedCandidateSearch('');
+      setAddRole('STUDENT');
+    }
+  };
+
+  const openEditDialog = (member: CourseMember) => {
+    if (member.user.role === 'COURSE_OWNER') return;
+
+    setEditDialog({
+      member,
+      role: member.user.role as AssignableCourseMemberRole,
+    });
+  };
+
+  const updateEditRole = (role: string) => {
+    if (!editDialog) return;
+
+    setEditDialog({
+      ...editDialog,
+      role: role as AssignableCourseMemberRole,
+    });
+  };
+
+  const saveEditRole = () => {
+    if (!editDialog) return;
+
+    updateMemberMutation.mutate({
+      memberId: editDialog.member.user.id,
+      role: editDialog.role,
+    });
+  };
+
+  const confirmRemoveMember = () => {
+    if (!removeDialog) return;
+    removeMemberMutation.mutate(removeDialog.user.id);
+  };
+
+  const getRoleBadge = (role: CourseMemberRole): RoleBadgeView => {
+    if (role === 'COURSE_OWNER') {
+      return { label: t('roles.courseOwner'), variant: 'default' };
+    }
+
+    if (role === 'TEACHER') {
+      return { label: t('roles.teacher'), variant: 'secondary' };
+    }
+
+    return { label: t('roles.student'), variant: 'outline' };
+  };
+
+  const getRoleLabel = (role: CourseMemberRoleFilter) => {
+    if (role === 'ALL') {
+      return t('roles.all');
+    }
+
+    return getRoleBadge(role).label;
+  };
+
+  const getJoinDate = (enrolledAt: string) => {
+    return new Intl.DateTimeFormat(locale, {
+      day: 'numeric',
+      month: 'short',
+      timeZone: 'UTC',
+      year: 'numeric',
+    }).format(new Date(enrolledAt));
+  };
+
+  return {
+    addDialogOpen,
+    addMember: addMemberMutation.mutate,
+    addPending: addMemberMutation.isPending,
+    addRole,
+    assignableRoles: ['TEACHER', 'STUDENT'] as AssignableCourseMemberRole[],
+    canManageMembers,
+    candidateSearch,
+    candidateSentinelRef,
+    candidates,
+    confirmRemoveMember,
+    editDialog,
+    getInitials: getCourseMemberInitials,
+    getJoinDate,
+    getRoleBadge,
+    getRoleLabel,
+    handleAddDialogOpenChange,
+    handleItemsPerPageChange,
+    handleNextPage,
+    handlePreviousPage,
+    handleRoleFilterChange,
+    handleSearchChange,
+    isCandidatesError: candidateQuery.isError,
+    isCandidatesLoading: candidateQuery.isLoading,
+    isError: membersQuery.isError,
+    isFetchingCandidatesNextPage: candidateQuery.isFetchingNextPage,
+    isLoading: membersQuery.isLoading,
+    isRemoving: removeMemberMutation.isPending,
+    isUpdating: updateMemberMutation.isPending,
+    itemsPerPage,
+    members,
+    openEditDialog,
+    pageSizeOptions: COURSE_MEMBERS_PAGE_SIZE_OPTIONS,
+    removeDialog,
+    roleFilter,
+    roleOptions: COURSE_MEMBER_ROLE_OPTIONS,
+    safeCurrentPage,
+    saveEditRole,
+    search,
+    setAddDialogOpen,
+    setAddRole,
+    setCandidateSearch,
+    setEditDialog,
+    setRemoveDialog,
+    t,
+    totalMembers,
+    totalPages,
+    updateEditRole,
+    visibleEnd,
+    visibleStart,
+  };
+}
+
+export type UseMembersState = ReturnType<typeof useMembers>;

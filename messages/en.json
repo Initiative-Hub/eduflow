@@ -75,6 +75,85 @@
       "emailPasswordRequired": "Email and password are required."
     }
   },
+  "CourseMembersPage": {
+    "actions": {
+      "add": "Add",
+      "addMember": "Add member",
+      "cancel": "Cancel",
+      "edit": "Edit",
+      "remove": "Remove",
+      "save": "Save"
+    },
+    "addDialog": {
+      "alreadyMember": "Already {role}",
+      "description": "Choose a course role, then add an existing user to this course.",
+      "emptyDescription": "Try another search term.",
+      "emptyTitle": "No users found",
+      "loadingMore": "Loading more users...",
+      "searchPlaceholder": "Search users by name, email, or ID...",
+      "title": "Add course member"
+    },
+    "description": "View course members, roles, and enrollment dates.",
+    "editDialog": {
+      "description": "Change {name}'s course role.",
+      "title": "Edit member role"
+    },
+    "empty": {
+      "description": "Try a different search or role filter.",
+      "title": "No members found"
+    },
+    "errors": {
+      "candidatesDescription": "We could not load users right now.",
+      "candidatesTitle": "Users unavailable",
+      "description": "We could not load course members right now.",
+      "title": "Members unavailable"
+    },
+    "fallback": {
+      "noName": "No name"
+    },
+    "filters": {
+      "role": "Role filter"
+    },
+    "form": {
+      "role": "Role"
+    },
+    "pagination": {
+      "itemsPerPage": "Items per page",
+      "next": "Next",
+      "page": "Page {page} of {total}",
+      "perPage": "{count} per page",
+      "previous": "Previous",
+      "range": "Showing {start}-{end} of {total} members"
+    },
+    "removeDialog": {
+      "description": "Remove {name} from this course? They will lose access to course resources.",
+      "title": "Remove member"
+    },
+    "roles": {
+      "all": "All roles",
+      "courseOwner": "Course Owner",
+      "student": "Student",
+      "teacher": "Teacher",
+      "unknown": "Unknown"
+    },
+    "searchLabel": "Search members",
+    "searchPlaceholder": "Search members by name, email, or ID...",
+    "table": {
+      "actions": "Actions",
+      "joinDate": "Join date",
+      "role": "Role",
+      "user": "User"
+    },
+    "title": "Course Members",
+    "toast": {
+      "added": "Member added.",
+      "addFailed": "Failed to add member.",
+      "removed": "Member removed.",
+      "removeFailed": "Failed to remove member.",
+      "updated": "Member role updated.",
+      "updateFailed": "Failed to update member role."
+    }
+  },
   "AIChat": {
     "actionMenu": {
       "close": "Close actions",
