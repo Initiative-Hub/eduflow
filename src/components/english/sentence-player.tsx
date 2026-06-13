@@ -95,7 +95,6 @@ export function SentencePlayer({
 
   return (
     <div className={cn('flex flex-col gap-1', className)}>
-
       {sentences.map((sentence, idx) => {
         const isActive = activeIdx === idx;
         const isLoading = isActive && playState === 'loading';
