@@ -22,7 +22,8 @@
       "title": "Người dùng không khả dụng"
     },
     "fallback": {
-      "noName": "Chưa có tên"
+      "noName": "Chưa có tên",
+      "notAvailable": "Không có"
     },
     "filters": {
       "role": "Bộ lọc vai trò"
@@ -78,10 +79,41 @@
   "AIChat": {
     "actionMenu": {
       "close": "Đóng tùy chọn",
+      "fromCourseInventory": "Từ kho khóa học",
+      "fromDevice": "Từ thiết bị này",
+      "fromUserInventory": "Từ kho cá nhân",
       "open": "Mở tùy chọn",
       "uploadFiles": "Tải tệp lên"
     },
+    "attachmentPicker": {
+      "alreadyAttached": "Đã đính kèm",
+      "attach": "Đính kèm {count, plural, one {# tệp} other {# tệp}}",
+      "attachError": "Không thể đính kèm các tệp đã chọn.",
+      "attaching": "Đang đính kèm...",
+      "backToCourses": "Khóa học",
+      "cancel": "Hủy",
+      "courseDescription": "Chọn tệp từ kho lưu trữ của các khóa học bạn đã tham gia.",
+      "courseSelectionDescription": "Chọn một khóa học bạn tham gia trước khi duyệt tệp.",
+      "courseTitle": "Kho lưu trữ theo khóa học",
+      "emptyCoursesDescription": "Không có khóa học đã tham gia.",
+      "emptyCoursesTitle": "Không tìm thấy khóa học",
+      "emptyDescription": "Không có tệp hoặc thư mục nào ở vị trí này.",
+      "emptyTitle": "Không tìm thấy tệp",
+      "folder": "Thư mục",
+      "next": "Tiếp",
+      "pageInfo": "Trang {page}/{total}",
+      "personalDescription": "Chọn tệp từ kho lưu trữ cá nhân của bạn",
+      "personalTitle": "Kho lưu trữ cá nhân",
+      "previous": "Trước",
+      "processing": "Đang xử lý",
+      "root": "Kho tệp",
+      "searchPlaceholder": "Tìm tệp và thư mục",
+      "selectedCount": "Đã chọn {count}/{max}",
+      "selectFile": "Chọn {name}",
+      "tooMany": "Đã đạt giới hạn đính kèm."
+    },
     "attachments": {
+      "add": "Đính kèm tệp",
       "defaultMessage": "Vui lòng sử dụng {count, plural, one {tệp đính kèm} other {các tệp đính kèm}}.",
       "fileTooLarge": "{name} vượt quá dung lượng tải lên tối đa.",
       "remove": "Gỡ {name}",
@@ -103,6 +135,9 @@
       "description": "Cuộc trò chuyện này không tồn tại hoặc đã hết hạn.",
       "title": "Không tìm thấy cuộc trò chuyện"
     },
+    "citations": {
+      "sourceCount": "{count, plural, one {# nguồn} other {# nguồn}}"
+    },
     "exploreMore": "Khám phá thêm các gợi ý học thuật",
     "footer": {
       "academicDraft": "Dự thảo học thuật Lexend",
@@ -113,7 +148,8 @@
     "modelSelector": {
       "empty": "Không tìm thấy mô hình nào.",
       "heading": "Chọn mô hình",
-      "label": "Chọn mô hình AI"
+      "label": "Chọn mô hình AI",
+      "placeholder": "Chọn mô hình"
     },
     "placeholder": "Đặt câu hỏi học thuật...",
     "promptLibrary": {
@@ -139,6 +175,7 @@
     },
     "recentChats": {
       "description": "Quay lại các mạch học tập gần đây của bạn.",
+      "empty": "Chưa có cuộc trò chuyện gần đây. Hãy bắt đầu câu hỏi ở trên và nó sẽ xuất hiện tại đây.",
       "error": "Hiện không thể tải các cuộc trò chuyện gần đây.",
       "openChat": "Mở cuộc trò chuyện {title}",
       "title": "Trò chuyện gần đây",
@@ -212,7 +249,10 @@
       "description": "Nếu có tài khoản cho {email}, bạn sẽ sớm nhận được hướng dẫn đặt lại mật khẩu.",
       "title": "Kiểm tra hộp thư"
     },
-    "title": "Đặt lại mật khẩu"
+    "title": "Đặt lại mật khẩu",
+    "validation": {
+      "invalidEmail": "Vui lòng nhập địa chỉ email hợp lệ."
+    }
   },
   "AuthLogin": {
     "actions": {
@@ -231,7 +271,11 @@
         "placeholder": "Nhập mật khẩu của bạn"
       }
     },
-    "title": "Chào mừng trở lại"
+    "title": "Chào mừng trở lại",
+    "validation": {
+      "emptyPassword": "Mật khẩu không được để trống.",
+      "invalidEmail": "Vui lòng nhập địa chỉ email hợp lệ."
+    }
   },
   "AuthPageSwitcher": {
     "alreadyPart": "Đã là thành viên?",
@@ -273,9 +317,11 @@
   },
   "AuthResetPassword": {
     "actions": {
+      "backToForgot": "Quay lại yêu cầu đặt lại",
       "backToLogin": "Quay lại đăng nhập",
       "reset": "Cập nhật mật khẩu"
     },
+    "description": "Tạo một mật khẩu mới mạnh để bảo mật tài khoản của bạn.",
     "form": {
       "confirmPassword": {
         "label": "Xác nhận mật khẩu mới",
@@ -286,10 +332,15 @@
         "placeholder": "Ít nhất 8 ký tự"
       }
     },
+    "invalidToken": {
+      "description": "Liên kết này không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu liên kết đặt lại mật khẩu mới.",
+      "title": "Liên kết không hợp lệ"
+    },
     "success": {
       "description": "Mật khẩu của bạn đã được cập nhật thành công. Bây giờ bạn có thể sử dụng mật khẩu mới để đăng nhập.",
       "title": "Đã cập nhật mật khẩu"
-    }
+    },
+    "title": "Tạo mật khẩu mới"
   },
   "AuthSocialOptions": {
     "ariaLabel": "Tùy chọn đăng nhập qua mạng xã hội",
@@ -301,13 +352,33 @@
       "verify": "Xác minh và tiếp tục",
       "verifying": "Đang xác minh..."
     },
+    "description": "Chúng tôi đã gửi mã xác minh 6 chữ số đến địa chỉ email của bạn:",
+    "form": {
+      "email": {
+        "label": "Email",
+        "placeholder": "Nhập email của bạn"
+      },
+      "otp": {
+        "description": "Sử dụng mã trong hộp thư của bạn.",
+        "label": "Mã xác minh",
+        "placeholder": "Nhập mã 6 chữ số"
+      }
+    },
     "resend": {
       "action": "Bạn chưa nhận được mã?",
       "cooldown": "Gửi lại sau {seconds}s",
+      "label": "Bạn chưa nhận được mã?",
       "loading": "Đang gửi lại..."
+    },
+    "title": "Kiểm tra hộp thư",
+    "validation": {
+      "invalidEmail": "Vui lòng nhập địa chỉ email hợp lệ.",
+      "otpInvalid": "Mã OTP phải gồm đúng 6 chữ số.",
+      "otpRequired": "Mã OTP là bắt buộc."
     }
   },
   "Common": {
+    "comingSoon": "Sẽ sớm có.",
     "logout": "Đăng xuất"
   },
   "CourseFilesPage": {
@@ -326,6 +397,9 @@
       "share": "Chia sẻ",
       "shareSelected": "Chia sẻ mục đã chọn",
       "upload": "Tải tệp lên"
+    },
+    "breadcrumbs": {
+      "root": "Tài liệu khóa học"
     },
     "browser": {
       "description": "Khóa học này có {count} tài nguyên.",
@@ -363,9 +437,14 @@
     },
     "fileCard": {
       "folder": "Thư mục",
+      "processing": "Đang xử lý",
+      "ready": "Sẵn sàng",
+      "size": "Dung lượng",
+      "type": "Loại",
       "uploadProgress": "Đang tải lên {progress}%"
     },
     "hero": {
+      "badge": "Tài nguyên khóa học",
       "description": "Truy cập và quản lý các tệp dành riêng cho không gian khóa học này. Tải lên ghi chú bài giảng, bài tập và tài liệu học tập."
     },
     "list": {
@@ -376,7 +455,8 @@
         "status": "Trạng thái",
         "type": "Loại",
         "updated": "Đã cập nhật"
-      }
+      },
+      "uploadProgress": "Đang tải lên {progress}%"
     },
     "moveDialog": {
       "description": "Chọn vị trí đích cho mục này.",
@@ -402,6 +482,7 @@
       "title": "Đổi tên mục"
     },
     "selection": {
+      "count": "Đã chọn {count} mục",
       "label": "Các mục đã chọn",
       "toggleAll": "Chọn tất cả mục trên trang này",
       "toggleItem": "Chọn {name}"
@@ -424,7 +505,18 @@
     },
     "title": "Tài liệu khóa học",
     "toast": {
-      "fileTooLarge": "Tệp vượt quá kích thước tải lên tối đa {size}."
+      "deleted": "Đã xóa {count} mục.",
+      "fileTooLarge": "Tệp vượt quá kích thước tải lên tối đa {size}.",
+      "folderCreated": "Đã tạo thư mục.",
+      "genericError": "Đã xảy ra lỗi. Vui lòng thử lại.",
+      "moved": "Đã di chuyển mục.",
+      "previewUnavailable": "Hiện tại không thể xem trước tệp này.",
+      "renamed": "Đã đổi tên mục.",
+      "shareBatchDescription": "Đã sao chép {count} liên kết chia sẻ vào clipboard.",
+      "shareCopied": "Đã sao chép liên kết chia sẻ.",
+      "shareFilesOnly": "Hãy chọn ít nhất một tệp để chia sẻ.",
+      "shareFoldersUnsupported": "Không thể chia sẻ thư mục bằng liên kết ký sẵn.",
+      "uploaded": "Tải lên hoàn tất."
     },
     "toolbar": {
       "refresh": "Tải lại",
@@ -464,12 +556,16 @@
       "submit": "Thêm mô-đun",
       "title": "Thêm mô-đun"
     },
+    "AnalyticsPage": "Phân tích",
+    "AssessmentsPage": "Bài kiểm tra",
     "Card": {
+      "manage": "Quản lý",
       "members": "{count, plural, =1 {1 Thành viên} other {# Thành viên}}",
       "modules": "{count, plural, =1 {1 Mô-đun} other {# Mô-đun}}",
       "noDescription": "Không có mô tả nào được cung cấp.",
       "togglePublish": "Chuyển đổi trạng thái xuất bản"
     },
+    "ChatPage": "Trò chuyện AI",
     "CourseModules": {
       "addModule": "Thêm mô-đun",
       "aiAssistant": "Trợ lý AI",
@@ -501,6 +597,7 @@
         "readyForAi": "Sẵn sàng cho AI",
         "selectedPdf": "{count, plural, =1 {1 PDF được chọn} other {# PDF được chọn}}",
         "tabs": {
+          "context": "Thêm ngữ cảnh",
           "course": "Tài liệu khóa học",
           "personal": "Tài liệu cá nhân",
           "upload": "Tải PDF lên"
@@ -513,6 +610,7 @@
       },
       "AiGeneration": {
         "craftingCurriculum": "AI đang xây dựng chương trình giảng dạy của bạn từ tài liệu đã cung cấp",
+        "creatingLessons": "Đang tạo các bài học...",
         "dismiss": "Đóng",
         "documentReceived": "Đã nhận tài liệu, đang trích xuất thông tin...",
         "draftingLesson": "Đang soạn thảo bài học...",
@@ -521,6 +619,7 @@
         "generatingCourse": "Đang tạo khóa học...",
         "identifyingModule": "Đang xác định mô-đun...",
         "retry": "Thử lại",
+        "saving": "Đang lưu",
         "savingModules": "Đang lưu các mô-đun và bài học mới của bạn...",
         "sourcePreview": {
           "empty": "Chưa tìm thấy nguồn nào",
@@ -532,6 +631,7 @@
           "youtube": "YouTube",
           "youtubeDescription": "Video phù hợp"
         },
+        "startingGeneration": "Đang bắt đầu tạo AI...",
         "success": "Các mô-đun khóa học đã được tạo và lưu thành công!",
         "webSearching": "Đang tìm kiếm trên web để lấy thêm ngữ cảnh và tài liệu tham khảo..."
       },
@@ -557,6 +657,8 @@
       "aiGenerateDescription": "Tạo câu hỏi từ nội dung bài học đã chọn bằng AI.",
       "aiGenerateError": "Không thể tạo câu hỏi. Vui lòng thử lại.",
       "allModulesSelected": "Đã chọn tất cả nội dung: {moduleCount} mô-đun, {lessonCount} bài học",
+      "availableQuestions": "{count} câu hỏi phù hợp có sẵn trong ngân hàng",
+      "back": "Quay lại",
       "cancel": "Hủy",
       "category": "Danh mục bài kiểm tra",
       "categoryPlaceholder": "Chọn danh mục...",
@@ -567,20 +669,24 @@
       "contentSourceLessons": "Bài học cụ thể",
       "contentSourceLessonsHint": "Chọn một hoặc nhiều bài học",
       "createQuiz": "Tạo bài kiểm tra",
+      "createQuizButton": "Tạo bài kiểm tra",
       "creating": "Đang tạo...",
       "deliveryMode": "Chế độ phản hồi",
       "description": "Tạo bài kiểm tra dựa trên nội dung mô-đun của bạn.",
       "deselectAll": "Bỏ chọn tất cả",
       "errors": {
         "categoryRequired": "Vui lòng chọn danh mục bài kiểm tra.",
+        "insufficientQuestions": "Chỉ có {available} câu hỏi, nhưng yêu cầu {requested}.",
         "lessonRequired": "Vui lòng chọn ít nhất một bài học.",
         "questionCountMin": "Cần ít nhất 1 câu hỏi.",
         "subTypeRequired": "Vui lòng chọn loại câu hỏi.",
         "titleRequired": "Vui lòng nhập tiêu đề bài kiểm tra."
       },
+      "generate": "Tạo",
       "generateQuiz": "Tạo bài kiểm tra",
       "generatingQuestions": "Đang tạo...",
       "lessonsSelected": "{count, plural, =1 {1 bài học đã chọn} other {# bài học đã chọn}}",
+      "next": "Tiếp theo",
       "noLessonsAvailable": "Không có bài học nào. Hãy thêm bài học vào mô-đun trước.",
       "questionCount": "Số lượng câu hỏi",
       "quizDescription": "Mô tả (tùy chọn)",
@@ -588,22 +694,30 @@
       "quizTitle": "Tiêu đề bài kiểm tra",
       "quizTitlePlaceholder": "VD: Ôn tập Chương 1",
       "selectAll": "Chọn tất cả",
+      "selectionMethod": "Phương thức chọn câu hỏi",
+      "selectLesson": "Chọn bài học",
+      "selectLessonPlaceholder": "Chọn một bài học...",
       "selectLessons": "Chọn bài học",
       "subType": "Loại câu hỏi",
       "subTypePlaceholder": "Chọn loại câu hỏi...",
       "title": "Tạo bài kiểm tra"
     },
     "description": "Quản lý và xuất bản các khóa học của bạn tại đây.",
+    "FilesPage": "Tài liệu",
     "LessonEditor": {
       "cancel": "Hủy",
+      "content": "Nội dung bài học",
       "save": "Lưu",
       "saveError": "Không thể cập nhật bài học",
       "saveSuccess": "Đã lưu bài học thành công!",
       "saving": "Đang lưu...",
-      "title": "Tiêu đề bài học"
+      "title": "Tiêu đề bài học",
+      "writeReview": "Soạn/Xem lại"
     },
     "LessonHeader": {
-      "edit": "Chỉnh sửa bài học"
+      "edit": "Chỉnh sửa bài học",
+      "lesson": "Bài học",
+      "modules": "Mô-đun"
     },
     "LessonOutline": {
       "addFirstModule": "Thêm mô-đun đầu tiên của bạn",
@@ -621,7 +735,19 @@
       "noModules": "Chưa có mô-đun nào.",
       "title": "Nội dung"
     },
+    "LessonPage": {
+      "notFound": "Không tìm thấy bài học."
+    },
+    "LessonPagination": {
+      "next": "Tiếp theo",
+      "previous": "Trước"
+    },
+    "LessonView": {
+      "empty": "Nội dung bài học trống."
+    },
+    "MembersPage": "Thành viên",
     "ModuleAccordion": {
+      "add": "Thêm",
       "addLesson": "Bài học",
       "addQuiz": "Bài kiểm tra",
       "noLessons": "Chưa có bài học nào"
@@ -630,14 +756,20 @@
     "noCourses": "Chưa có khóa học nào",
     "noCoursesDescription": "Chưa có khóa học nào tồn tại",
     "QuestionBank": {
+      "allCategories": "Tất cả danh mục",
+      "allLessons": "Tất cả bài học",
+      "allSubTypes": "Tất cả loại",
       "cancel": "Hủy",
       "clearFilters": "Xóa tất cả bộ lọc",
       "confirmDelete": "Xóa",
       "description": "Xem và quản lý tất cả câu hỏi cho khóa học này.",
+      "filterCategory": "Danh mục",
       "filterLesson": "Bài học",
       "filterLessonActive": "Bài học: {count} đã chọn",
       "filterModule": "Mô-đun",
       "filterModuleActive": "Mô-đun: {count} đã chọn",
+      "filters": "Bộ lọc",
+      "filterSubType": "Loại",
       "filterType": "Loại câu hỏi",
       "filterTypeActive": "Loại: {count} đã chọn",
       "noLesson": "Không có bài học",
@@ -655,6 +787,7 @@
       "title": "Xem trước các loại câu hỏi"
     },
     "QuizPlayer": {
+      "acceptableAnswers": "Đáp án được chấp nhận (phân tách bằng dấu phẩy)",
       "addItem": "Thêm mục",
       "addOption": "Thêm lựa chọn",
       "addPair": "Thêm cặp ghép",
@@ -668,14 +801,15 @@
       "aiContextSubmit": "Tạo câu hỏi",
       "allowAttachments": "Cho phép đính kèm",
       "allowTeacherRubric": "Cho phép hướng dẫn chấm điểm của giáo viên (hỗ trợ AI chấm)",
-      "cancel": "Hủy",
       "completed": "Hoàn thành bài kiểm tra! Điểm: {score}%",
       "confirmDelete": "Bạn có chắc chắn muốn xóa câu hỏi này? Hành động này không thể hoàn tác.",
+      "correct": "Đúng",
       "correctAnswer": "Đáp án đúng",
       "correctMapping": "Ánh xạ đúng (Vùng thả -> Mục)",
       "course": "Khóa học",
       "deleteQuestion": "Xóa câu hỏi",
       "deliveryOption": "Cách gửi phản hồi đánh giá AI",
+      "dragAndDropSentenceTemplate": "Mẫu câu (sử dụng {{zoneId}} cho các vùng thả)",
       "draggableItems": "Mục có thể kéo",
       "editQuestion": "Chỉnh sửa câu hỏi",
       "editQuestions": "Chỉnh sửa câu hỏi",
@@ -684,6 +818,7 @@
       "generateAIQuestions": "Tạo câu hỏi bằng AI",
       "generatingAIQuestions": "Đang tạo câu hỏi bằng AI...",
       "innerQuestionType": "Loại câu hỏi bên trong",
+      "leftItem": "Mục bên trái",
       "leftItems": "Các mục bên trái",
       "loadError": "Không thể tải bài kiểm tra",
       "loadErrorDescription": "Đã xảy ra lỗi khi tải dữ liệu bài kiểm tra. Vui lòng thử lại.",
@@ -695,18 +830,22 @@
       "notFoundDescription": "Bài kiểm tra này không tồn tại hoặc đã bị xóa.",
       "options": "Lựa chọn",
       "orderingItems": "Mục sắp xếp (theo thứ tự đúng)",
+      "points": "Điểm số",
       "prompt": "Câu hỏi",
       "questionType": "Loại câu hỏi",
       "retry": "Thử lại",
+      "rightItem": "Mục bên phải",
       "rightItems": "Các mục bên phải",
       "saveChanges": "Lưu thay đổi",
       "saveSuccess": "Đã lưu câu hỏi thành công!",
-      "sentenceTemplate": "Mẫu câu (sử dụng {blankId} cho các ô trống)",
+      "sentenceTemplate": "Mẫu câu (sử dụng {{blankId}} cho các ô trống)",
       "studentView": "Giao diện học sinh",
       "teacherView": "Giao diện giáo viên",
       "timeLimit": "Giới hạn thời gian (giây)",
-      "true": "Đúng"
+      "true": "Đúng",
+      "zones": "Các vùng thả"
     },
+    "SettingsPage": "Cài đặt khóa học",
     "title": "Các khóa học"
   },
   "HomePage": {
@@ -768,9 +907,14 @@
     },
     "fileCard": {
       "folder": "Thư mục",
+      "processing": "Đang xử lý",
+      "ready": "Sẵn sàng",
+      "size": "Dung lượng",
+      "type": "Loại",
       "uploadProgress": "Đang tải lên {progress}%"
     },
     "hero": {
+      "badge": "Không gian lưu trữ trực tiếp",
       "description": "Duyệt thư mục, tải tệp lên, đổi tên mục và chia sẻ liên kết ký sẵn trực tiếp qua API lưu trữ."
     },
     "list": {
@@ -781,7 +925,8 @@
         "status": "Trạng thái",
         "type": "Loại",
         "updated": "Đã cập nhật"
-      }
+      },
+      "uploadProgress": "Đang tải lên {progress}%"
     },
     "moveDialog": {
       "description": "Chọn vị trí đích cho mục này.",
@@ -807,6 +952,7 @@
       "title": "Đổi tên mục"
     },
     "selection": {
+      "count": "Đã chọn {count} mục",
       "label": "Các mục đã chọn",
       "toggleAll": "Chọn tất cả mục trên trang này",
       "toggleItem": "Chọn {name}"
@@ -859,6 +1005,10 @@
       "list": "Danh sách"
     }
   },
+  "LanguageSwitcher": {
+    "label": "Ngôn ngữ",
+    "system": "Hệ thống"
+  },
   "Layout": {
     "adminHeading": "Quản trị",
     "adminRoles": "Vai trò",
@@ -892,9 +1042,12 @@
       "user": "Người dùng"
     },
     "menu": {
+      "academicPulse": "Academic Pulse",
+      "aiBadge": "AI",
       "darkMode": "Chế độ tối",
       "english": "English",
       "helpCenter": "Trung tâm trợ giúp",
+      "language": "Ngôn ngữ",
       "languagePreference": "Tùy chọn ngôn ngữ",
       "profile": "Hồ sơ",
       "settings": "Cài đặt",
@@ -1020,6 +1173,7 @@
     "subtitle": "Quản lý thông tin cá nhân của bạn",
     "title": "Hồ sơ",
     "toast": {
+      "discarded": "Đã huỷ thay đổi",
       "passwordChanged": "Đã đổi mật khẩu",
       "passwordChangedDesc": "Mật khẩu của bạn đã được cập nhật thành công.",
       "passwordSet": "Đã thiết lập mật khẩu",
@@ -1029,6 +1183,9 @@
     },
     "validation": {
       "confirmPasswordRequired": "Vui lòng xác nhận mật khẩu.",
+      "currentPasswordRequired": "Mật khẩu hiện tại là bắt buộc.",
+      "nameRequired": "Họ và tên là bắt buộc.",
+      "nameTooShort": "Tên phải có ít nhất 2 ký tự.",
       "passwordInvalid": "Mật khẩu phải chứa ít nhất 1 chữ số, 1 ký tự đặc biệt ($#@!), và 1 chữ hoa.",
       "passwordSameAsCurrent": "Mật khẩu mới phải khác mật khẩu hiện tại.",
       "passwordsMustMatch": "Mật khẩu không khớp.",
@@ -1055,7 +1212,9 @@
     "essayMinWords": "tối thiểu {count}",
     "essayOverLimit": "Vượt giới hạn từ",
     "essayPlaceholder": "Viết câu trả lời của bạn tại đây...",
+    "essayPoints": "điểm",
     "essayRemoveFile": "Xóa tệp",
+    "essayRubric": "Tiêu chí chấm điểm",
     "essayStudentAnswer": "Câu trả lời của bạn",
     "essayTeacherRubricAttachments": "Tệp đáp án mẫu & tiêu chí",
     "essayTeacherRubricDescription": "Cung cấp đáp án mẫu và tiêu chí chấm điểm cho AI đánh giá. Bạn có thể nhập đáp án mẫu và tiêu chí hoặc tải lên tệp.",
@@ -1066,17 +1225,25 @@
     "essayWordCount": "{count} từ",
     "explanation": "Giải thích",
     "false": "Sai",
+    "flashcardBack": "Đáp án",
+    "flashcardFront": "Câu hỏi",
+    "flashcardMode": "Chế độ thẻ ghi nhớ — không chấm điểm",
+    "flipCard": "Lật thẻ",
     "gradeExcellent": "Xuất sắc",
     "gradeFair": "Trung bình",
     "gradeGood": "Tốt",
     "gradeNeedsWork": "Cần cải thiện",
     "incorrectAnswer": "Sai",
     "matchingInstruction": "Chọn một mục bên trái, sau đó nhấp vào mục tương ứng bên phải.",
+    "moveDown": "Di chuyển xuống",
+    "moveUp": "Di chuyển lên",
     "next": "Tiếp theo",
     "orderingInstruction": "Kéo các mục để sắp xếp theo đúng thứ tự.",
     "pendingReview": "Một số câu trả lời đang chờ AI/giáo viên chấm điểm.",
     "points": "điểm",
+    "pointsEarned": "Điểm đạt được",
     "previous": "Trước",
+    "questionBreakdown": "Chi tiết từng câu",
     "questionCount": "{count, plural, =1 {1 Câu hỏi} other {# Câu hỏi}}",
     "questionLabel": "Câu {number}",
     "quizComplete": "Hoàn thành bài kiểm tra",
@@ -1163,6 +1330,7 @@
     "limitReachedToast": "Bạn đã đạt giới hạn {count} tin nhắn Socratic. Hãy bắt đầu phiên mới để tiếp tục.",
     "recentSessions": {
       "description": "Quay lại các câu hỏi gợi mở và mạch suy luận trước đây.",
+      "empty": "Chưa có phiên Socratic. Hãy chọn một thẻ gợi ý hoặc hỏi phần bạn đang mắc.",
       "error": "Hiện không thể tải các phiên Socratic gần đây.",
       "openChat": "Mở phiên Socratic {title}",
       "title": "Phiên Socratic gần đây",
@@ -1201,46 +1369,77 @@
     "title": "Hôm nay tôi có thể <accent>gợi mở</accent> tư duy của bạn như thế nào?"
   },
   "StudyPage": {
-    "description": "Khám phá các nhóm môn học mà trợ lý này sẽ hỗ trợ, từ giải bài đến ngôn ngữ và khoa học xã hội.",
-    "subjects": {
-      "biology": {
-        "description": "Lần theo hệ thống, bằng chứng và quan hệ nguyên nhân - kết quả.",
-        "title": "Sinh học"
+    "aiActive": "AI Đang Hoạt Động",
+    "features": {
+      "keywords": {
+        "description": "Trích xuất thuật ngữ và khái niệm quan trọng với giải thích chi tiết theo ngữ cảnh."
       },
-      "chemistry": {
-        "description": "Suy luận về phản ứng, liên kết và biến đổi ở cấp độ hạt.",
-        "title": "Hóa học"
+      "practiceTest": {
+        "description": "Thử thách bản thân với câu hỏi trắc nghiệm, câu ngắn và thẻ ghi nhớ do AI tạo ra."
       },
-      "english": {
-        "description": "Khám phá ngữ pháp, đọc hiểu, từ vựng và cách chỉnh sửa.",
-        "title": "Tiếng Anh"
+      "research": {
+        "description": "Tìm kiếm các bài báo, video và tài liệu học thuật liên quan bằng AI web search."
       },
-      "geography": {
-        "description": "Tìm hiểu bản đồ, mô hình không gian, vùng miền và môi trường.",
-        "title": "Địa lý"
-      },
-      "history": {
-        "description": "Phân tích nguyên nhân, bằng chứng, dòng thời gian và góc nhìn.",
-        "title": "Lịch sử"
-      },
-      "math": {
-        "description": "Từng bước xử lý khái niệm, chứng minh và bài toán.",
-        "title": "Toán"
-      },
-      "other": {
-        "description": "Dùng câu hỏi gợi mở cho bất kỳ chủ đề nào bạn muốn hiểu.",
-        "title": "Môn học khác"
-      },
-      "physics": {
-        "description": "Kết nối công thức, đơn vị, sơ đồ và trực giác vật lý.",
-        "title": "Vật lý"
+      "review": {
+        "description": "Tổng hợp các khái niệm và định nghĩa chính thành hướng dẫn học tập dễ hiểu."
       }
     },
-    "title": "Khám phá các môn học quen thuộc"
+    "input": {
+      "examples": "Hoặc thử ví dụ:",
+      "placeholder": "Mô tả chủ đề hoặc dán nội dung bài học để bắt đầu..."
+    },
+    "limitReachedToast": "Bạn đã đạt giới hạn {count} tin nhắn. Hãy bắt đầu phiên mới để tiếp tục.",
+    "modes": {
+      "keywords": "Tóm Tắt Từ Khóa",
+      "practiceTest": "Bài Kiểm Tra Thực Hành",
+      "research": "Nghiên cứu",
+      "review": "Tài Liệu Ôn Tập"
+    },
+    "recentSessions": {
+      "title": "Phiên Gần Đây",
+      "viewAll": "Xem Tất Cả"
+    },
+    "sidebar": {
+      "actionsLabel": "Hành động cho {title}",
+      "cancel": "Hủy",
+      "close": "Thu gọn lịch sử học tập",
+      "delete": "Xóa",
+      "deleteDialogDescription": "Xóa \"{title}\" khỏi lịch sử học tập? Không thể hoàn tác.",
+      "deleteDialogTitle": "Xóa phiên học tập",
+      "deleteError": "Không thể xóa phiên học tập.",
+      "deleteSuccess": "Đã xóa phiên học tập.",
+      "description": "Tìm kiếm và mở lại các phiên học trước.",
+      "editDialogDescription": "Chọn một tiêu đề ngắn gọn cho phiên học tập này.",
+      "editDialogTitle": "Chỉnh sửa tiêu đề học tập",
+      "editError": "Không thể cập nhật tiêu đề phiên học tập.",
+      "editTitle": "Sửa tiêu đề",
+      "editTitleLabel": "Tiêu đề phiên học tập",
+      "editTitlePlaceholder": "Nhập tiêu đề phiên học tập",
+      "emptyDescription": "Bắt đầu phiên học mới và nó sẽ xuất hiện ở đây.",
+      "emptySearch": "Không có phiên học nào khớp với tìm kiếm.",
+      "emptyTitle": "Chưa có phiên học tập",
+      "loadingMore": "Đang tải thêm phiên học...",
+      "messageCount": "{count, plural, one {# tin nhắn} other {# tin nhắn}}",
+      "newChat": "Phiên học tập mới",
+      "open": "Mở lịch sử học tập",
+      "saveTitle": "Lưu tiêu đề",
+      "searchLabel": "Tìm kiếm phiên học tập",
+      "searchPlaceholder": "Tìm kiếm phiên học tập...",
+      "title": "Lịch sử học tập",
+      "untitled": "Phiên học tập chưa đặt tên"
+    },
+    "subtitle": "Biến tài liệu của bạn thành kiến thức học thuật sâu sắc. Tải lên bất cứ thứ gì và để AI làm phần còn lại.",
+    "title": "Hôm nay tôi có thể giúp bạn <accent>học</accent> gì?",
+    "upload": {
+      "description": "Kéo và thả PDF, Word hoặc Hình ảnh vào đây.",
+      "replace": "Kéo thả hoặc nhấp để thay thế",
+      "title": "Tải Lên Tài Liệu Để Bắt Đầu"
+    }
   },
   "WritingPage": {
     "recentSessions": {
       "description": "Quay lại các bản nháp, phần viết lại và phiên chỉnh sửa gần đây.",
+      "empty": "Chưa có phiên viết gần đây. Hãy bắt đầu với một công cụ viết và phiên đó sẽ xuất hiện tại đây.",
       "error": "Hiện không thể tải các phiên viết gần đây.",
       "openChat": "Mở phiên viết {title}",
       "title": "Phiên viết gần đây",

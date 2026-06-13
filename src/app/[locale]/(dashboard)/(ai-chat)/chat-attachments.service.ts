@@ -1,8 +1,6 @@
 import type { ChatFileUIPart } from '@/types/chat-attachments';
 import { inventoryService } from '../inventory/inventory.service';
 
-const DEFAULT_MEDIA_TYPE = 'application/octet-stream';
-
 export async function uploadChatAttachments(
   files: File[],
   chatId: string
@@ -29,11 +27,11 @@ export async function uploadChatAttachments(
 
     const sourceFile = files[index];
     return {
-      bucket: entry.bucket ?? undefined,
+      bucket: entry.bucket,
       fileId: entry.id,
       fileSize: entry.fileSize,
-      filename: entry.name || sourceFile?.name,
-      mediaType: entry.mimeType || sourceFile?.type || DEFAULT_MEDIA_TYPE,
+      filename: entry.name,
+      mediaType: entry.mimeType || sourceFile?.type,
       objectKey: entry.objectKey,
       type: 'file',
       url: signedUrlByFileId.get(entry.id) ?? entry.objectKey,

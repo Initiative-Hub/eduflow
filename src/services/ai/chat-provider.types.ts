@@ -1,5 +1,5 @@
 import type { ProviderOptions } from '@ai-sdk/provider-utils';
-import type { UIMessage } from 'ai';
+import type { ToolSet, UIMessage } from 'ai'; // Add CoreTool here
 import type { AICourseGeneration } from '@/lib/validations/course.schema';
 
 export type ChatProvider = 'ai-gateway' | 'google' | 'openrouter';
@@ -16,6 +16,8 @@ export type StreamChatInput = {
 export type StreamChatInternalOptions = {
   prompt?: string;
   mode?: StreamChatPromptMode;
+  tools?: ToolSet;
+  maxSteps?: number;
 };
 
 export type StreamCourseInput = {

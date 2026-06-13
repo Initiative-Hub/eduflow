@@ -76,6 +76,7 @@ describe('chat attachment helpers', () => {
 
     expect(storageMock.createChatAttachmentUrls).toHaveBeenCalledWith({
       fileIds: ['file-1'],
+      fileRefs: [{ courseId: undefined, fileId: 'file-1' }],
       userId: 'user-1',
     });
     expect(hydrated[0].parts[0]).toMatchObject({
@@ -119,6 +120,7 @@ describe('chat attachment helpers', () => {
 
     expect(storageMock.getChatAttachmentPayloads).toHaveBeenCalledWith({
       fileIds: ['file-1'],
+      fileRefs: [{ courseId: undefined, fileId: 'file-1' }],
       userId: 'user-1',
     });
     expect(dataUrlMessages[0].parts[0]).toMatchObject({

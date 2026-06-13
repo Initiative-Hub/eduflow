@@ -2,6 +2,7 @@ import {
   convertToModelMessages,
   createGateway,
   smoothStream,
+  stepCountIs,
   streamText,
 } from 'ai';
 import { DEFAULT_MODELS } from '@/services/ai/chat-provider.constants';
@@ -29,6 +30,8 @@ export class AIGatewayService implements ChatProviderService {
       system: resolveChatSystemPrompt(options),
       messages: await convertToModelMessages(input.messages),
       providerOptions: input.providerOptions,
+      tools: options?.tools,
+      stopWhen: options?.maxSteps ? stepCountIs(options.maxSteps) : undefined,
     });
   }
 }

@@ -76,6 +76,26 @@ const getFileIds = (messages: UIMessage[]) =>
     )
   );
 
+const getFileRefs = (messages: UIMessage[]) =>
+  Array.from(
+    new Map(
+      messages.flatMap((message) =>
+        message.parts.flatMap((part) => {
+          if (!isChatFilePart(part) || !part.fileId) return [];
+          return [
+            [
+              part.fileId,
+              {
+                courseId: part.courseId,
+                fileId: part.fileId,
+              },
+            ],
+          ];
+        })
+      )
+    ).values()
+  );
+
 const toDataUrl = (bytes: Uint8Array, mediaType: string) =>
   `data:${mediaType};base64,${Buffer.from(bytes).toString('base64')}`;
 
@@ -87,6 +107,7 @@ export async function hydrateChatAttachmentUrls({
   userId: string;
 }) {
   const fileIds = getFileIds(messages);
+  const fileRefs = getFileRefs(messages);
 
   if (fileIds.length === 0) {
     if (hasChatFileParts(messages)) {
@@ -98,6 +119,7 @@ export async function hydrateChatAttachmentUrls({
 
   const attachments = await StorageService.createChatAttachmentUrls({
     fileIds,
+    fileRefs,
     userId,
   });
   const attachmentsByFileId = getAttachmentByFileId(attachments);
@@ -134,6 +156,7 @@ export async function hydrateChatAttachmentDataUrls({
   userId: string;
 }) {
   const fileIds = getFileIds(messages);
+  const fileRefs = getFileRefs(messages);
   if (fileIds.length === 0) {
     if (hasChatFileParts(messages)) {
       throw new Error('File attachment not found');
@@ -144,6 +167,7 @@ export async function hydrateChatAttachmentDataUrls({
 
   const payloads = await StorageService.getChatAttachmentPayloads({
     fileIds,
+    fileRefs,
     userId,
   });
   const payloadsByFileId = getPayloadByFileId(payloads);
