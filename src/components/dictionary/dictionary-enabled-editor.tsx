@@ -19,6 +19,7 @@ interface DictionaryEnabledEditorProps {
     anchor: { getBoundingClientRect: () => DOMRect }
   ) => void;
   onClearLookup: () => void;
+  ariaLabel?: string;
   placeholder?: string;
   className?: string;
   /** Expected input language. 'vi' disables all hover/click effects. */
@@ -113,7 +114,13 @@ function getHoverWordPlugin(
               offset <= match.index + match[0].length
             ) {
               // Skip tokens that are sub-strings of Vietnamese words
-              if (isEmbeddedInUnicodeWord(text, match.index, match.index + match[0].length)) {
+              if (
+                isEmbeddedInUnicodeWord(
+                  text,
+                  match.index,
+                  match.index + match[0].length
+                )
+              ) {
                 break;
               }
               foundMatch = match;
@@ -184,7 +191,13 @@ function getHoverWordPlugin(
               offset <= match.index + match[0].length
             ) {
               // Skip tokens embedded in Vietnamese words
-              if (isEmbeddedInUnicodeWord(text, match.index, match.index + match[0].length)) {
+              if (
+                isEmbeddedInUnicodeWord(
+                  text,
+                  match.index,
+                  match.index + match[0].length
+                )
+              ) {
                 break;
               }
               foundWord = match[0];
@@ -225,10 +238,12 @@ function getHoverWordPlugin(
 }
 
 const DictionaryHoverExtension = Extension.create<{
-  onWordClick: (word: string, anchor: { getBoundingClientRect: () => DOMRect }) => void;
+  onWordClick: (
+    word: string,
+    anchor: { getBoundingClientRect: () => DOMRect }
+  ) => void;
   language: 'en' | 'vi';
-}>(
-{
+}>({
   name: 'dictionaryHover',
   addOptions() {
     return {
@@ -237,7 +252,9 @@ const DictionaryHoverExtension = Extension.create<{
     };
   },
   addProseMirrorPlugins() {
-    return [getHoverWordPlugin(this.options.onWordClick, this.options.language)];
+    return [
+      getHoverWordPlugin(this.options.onWordClick, this.options.language),
+    ];
   },
 });
 
@@ -246,6 +263,7 @@ export function DictionaryEnabledEditor({
   onChange,
   onWordLookup,
   onClearLookup,
+  ariaLabel,
   placeholder,
   className,
   language = 'en',
@@ -264,13 +282,18 @@ export function DictionaryEnabledEditor({
       Text,
       History,
       Placeholder.configure({ placeholder }),
-      DictionaryHoverExtension.configure({ onWordClick: handleWordClick, language }),
+      DictionaryHoverExtension.configure({
+        onWordClick: handleWordClick,
+        language,
+      }),
     ],
     content: value,
     editorProps: {
       attributes: {
+        'aria-label': ariaLabel ?? placeholder ?? 'Dictionary editor',
         class:
           'prose prose-sm dark:prose-invert max-w-none focus:outline-none min-h-[200px]',
+        role: 'textbox',
       },
       // Ensure only plain text is pasted by letting the restricted schema strip unsupported HTML
     },

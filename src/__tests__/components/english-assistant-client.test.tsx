@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EnglishAssistantClient } from '@/app/[locale]/(dashboard)/english/_components/english-assistant-client';
@@ -57,6 +58,52 @@ vi.mock('@/components/english/grammar-analysis-dialog', () => ({
   GrammarAnalysisDialog: () => null,
 }));
 
+vi.mock('@/components/dictionary/dictionary-enabled-editor', () => ({
+  DictionaryEnabledEditor: ({
+    value,
+    onChange,
+    onWordLookup,
+    ariaLabel,
+    placeholder,
+    className,
+    language,
+  }: {
+    value: string;
+    onChange: (value: string) => void;
+    onWordLookup: (
+      word: string,
+      anchor: { getBoundingClientRect: () => DOMRect }
+    ) => void;
+    ariaLabel?: string;
+    placeholder?: string;
+    className?: string;
+    language?: 'en' | 'vi';
+  }) => (
+    <textarea
+      aria-label={ariaLabel}
+      className={className}
+      placeholder={placeholder}
+      value={value}
+      onChange={(event) => onChange(event.currentTarget.value)}
+      onMouseUp={(event) => {
+        if (language !== 'en') return;
+
+        const selectedText = event.currentTarget.value
+          .slice(
+            event.currentTarget.selectionStart,
+            event.currentTarget.selectionEnd
+          )
+          .trim();
+        if (!selectedText) return;
+
+        onWordLookup(selectedText, {
+          getBoundingClientRect: () => new DOMRect(),
+        });
+      }}
+    />
+  ),
+}));
+
 vi.mock('@/components/dictionary/word-dictionary-popover', () => ({
   WordDictionaryPopover: ({
     open,
@@ -69,6 +116,21 @@ vi.mock('@/components/dictionary/word-dictionary-popover', () => ({
       <div data-testid="word-dictionary-popover">Dictionary lookup: {word}</div>
     ) : null,
 }));
+
+function renderEnglishAssistantClient() {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  });
+
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <EnglishAssistantClient />
+    </QueryClientProvider>
+  );
+}
 
 describe('EnglishAssistantClient', () => {
   const clipboardWriteText = vi.fn(() => Promise.resolve());
@@ -127,7 +189,7 @@ describe('EnglishAssistantClient', () => {
   it('clears the translated text when the source text is emptied', async () => {
     const user = userEvent.setup();
 
-    render(<EnglishAssistantClient />);
+    renderEnglishAssistantClient();
 
     const sourceInput = screen.getByRole('textbox', {
       name: 'Source Content',
@@ -152,7 +214,7 @@ describe('EnglishAssistantClient', () => {
   it('sends the default translation engine to the translate endpoint', async () => {
     const user = userEvent.setup();
 
-    render(<EnglishAssistantClient />);
+    renderEnglishAssistantClient();
 
     await user.type(
       screen.getByRole('textbox', { name: 'Source Content' }),
@@ -175,7 +237,7 @@ describe('EnglishAssistantClient', () => {
   it('uses the same intermediate reading text size for source and translation', async () => {
     const user = userEvent.setup();
 
-    render(<EnglishAssistantClient />);
+    renderEnglishAssistantClient();
 
     const sourceInput = screen.getByRole('textbox', {
       name: 'Source Content',
@@ -192,7 +254,7 @@ describe('EnglishAssistantClient', () => {
   it('does not open the dictionary lookup when selecting Vietnamese source text', async () => {
     const user = userEvent.setup();
 
-    render(<EnglishAssistantClient />);
+    renderEnglishAssistantClient();
 
     await user.click(
       screen.getAllByRole('button', { name: 'Swap translation direction' })[0]
@@ -214,7 +276,7 @@ describe('EnglishAssistantClient', () => {
     const user = userEvent.setup();
     const writeText = vi.spyOn(window.navigator.clipboard, 'writeText');
 
-    render(<EnglishAssistantClient />);
+    renderEnglishAssistantClient();
 
     await user.type(
       screen.getByRole('textbox', { name: 'Source Content' }),

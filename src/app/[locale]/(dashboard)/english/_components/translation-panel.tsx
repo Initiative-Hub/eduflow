@@ -38,7 +38,7 @@ interface TranslationPanelProps {
 }
 
 const MAX_TRANSLATION_TEXT_LENGTH = 1000;
-const READING_TEXT_CLASS = 'text-base md:text-base leading-relaxed';
+const READING_TEXT_CLASS = 'text-2xl md:text-2xl leading-relaxed';
 
 interface CopyTextButtonProps {
   id: string;
@@ -199,6 +199,7 @@ export function TranslationPanel({
               }
             }}
             onClearLookup={onClearLookup}
+            ariaLabel={t('sourceContent')}
             placeholder={t('inputPlaceholder')}
             language={direction === 'en-vi' ? 'en' : 'vi'}
             className={cn(
