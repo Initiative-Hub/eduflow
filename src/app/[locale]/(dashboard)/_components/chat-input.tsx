@@ -2,23 +2,21 @@
 
 import {
   ArrowUp,
+  Cloud,
+  FolderOpen,
+  HardDrive,
   Library,
   Loader2,
   Paperclip,
   Plus,
   Settings2,
   Square,
-  X,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { type FormEvent, type ReactNode, useState } from 'react';
 import { toast } from 'sonner';
 import {
   PromptInput,
-  PromptInputActionMenu,
-  PromptInputActionMenuContent,
-  PromptInputActionMenuItem,
-  PromptInputActionMenuTrigger,
   PromptInputBody,
   PromptInputFooter,
   PromptInputHeader,
@@ -27,9 +25,18 @@ import {
   PromptInputTextarea,
   PromptInputTools,
 } from '@/components/ai-elements/prompt-input';
+import { DropdownTemplate, type MenuItem } from '@/components/custom/dropdown';
 import { Button } from '@/components/ui/button';
 import type { ChatModel } from '@/services/ai/chat-models';
-import { ChatInputAttachments } from './chat-input-attachments';
+import type {
+  ChatFileUIPart,
+  ChatSubmitAttachments,
+} from '@/types/chat-attachments';
+import {
+  ChatInputAttachments,
+  type SelectedChatFile,
+} from './chat-input-attachments';
+import { ChatInventoryAttachmentDialog } from './chat-inventory-attachment-dialog';
 import { ChatModelSelectControl } from './chat-model-select-control';
 import { useChatInputFiles } from './use-chat-input-files';
 
@@ -39,7 +46,7 @@ interface ChatInputProps {
   handleSubmit: (
     e?: FormEvent,
     customValue?: string,
-    files?: File[]
+    attachments?: ChatSubmitAttachments
   ) => Promise<void> | void;
   isStreaming: boolean;
   isUploading: boolean;
@@ -74,7 +81,12 @@ export function ChatInput({
 }: ChatInputProps) {
   const t = useTranslations('AIChat');
   const [inputValue, setInputValue] = useState('');
-  const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
+  const [pickerSource, setPickerSource] = useState<
+    'personal' | 'course' | null
+  >(null);
+  const [selectedReferenceFiles, setSelectedReferenceFiles] = useState<
+    SelectedChatFile[]
+  >([]);
   const {
     clearSelectedFiles,
     fileInputRef,
@@ -89,32 +101,108 @@ export function ChatInput({
     onTooMany: () =>
       toast.error(t('attachments.tooMany', { count: MAX_CHAT_ATTACHMENTS })),
   });
+  const selectedAttachments = [...selectedFiles, ...selectedReferenceFiles];
+  const remainingAttachmentSlots = Math.max(
+    0,
+    MAX_CHAT_ATTACHMENTS - selectedAttachments.length
+  );
 
   const onPromptSubmit = async (message: PromptInputMessage) => {
     if (
       isStreaming ||
       isUploading ||
       isLimitReached ||
-      (!message.text.trim() && selectedFiles.length === 0)
+      (!message.text.trim() && selectedAttachments.length === 0)
     ) {
       return;
     }
 
     try {
-      await handleSubmit(
-        undefined,
-        message.text,
-        selectedFiles.map((item) => item.file)
-      );
+      await handleSubmit(undefined, message.text, {
+        files: selectedFiles.flatMap((item) => (item.file ? [item.file] : [])),
+        referencedFiles: selectedReferenceFiles.flatMap((item) =>
+          item.filePart ? [item.filePart] : []
+        ),
+      });
       setInputValue('');
       clearSelectedFiles();
+      setSelectedReferenceFiles([]);
     } catch {
       // Keep the draft and attachments so the user can retry.
     }
   };
+  const removeSelectedAttachment = (fileId: string) => {
+    removeSelectedFile(fileId);
+    setSelectedReferenceFiles((current) =>
+      current.filter((item) => item.id !== fileId)
+    );
+  };
+  const addReferenceFiles = (files: ChatFileUIPart[]) => {
+    if (files.length === 0) return;
+
+    setSelectedReferenceFiles((current) => {
+      const existingIds = new Set([
+        ...selectedFiles.map((item) => item.filePart?.fileId ?? item.id),
+        ...current.map((item) => item.filePart?.fileId ?? item.id),
+      ]);
+      const capacity = Math.max(
+        0,
+        MAX_CHAT_ATTACHMENTS - selectedFiles.length - current.length
+      );
+      const accepted = files
+        .filter((file) => !existingIds.has(file.fileId))
+        .slice(0, capacity)
+        .map((file) => ({
+          filePart: file,
+          filename: file.filename ?? file.fileId,
+          id: file.fileId,
+          mediaType: file.mediaType,
+          previewUrl: file.url,
+        }));
+
+      if (files.length > accepted.length) {
+        toast.error(t('attachments.tooMany', { count: MAX_CHAT_ATTACHMENTS }));
+      }
+
+      return [...current, ...accepted];
+    });
+  };
+  const openInventoryPicker = (source: 'personal' | 'course') => {
+    if (remainingAttachmentSlots === 0) {
+      toast.error(t('attachments.tooMany', { count: MAX_CHAT_ATTACHMENTS }));
+      return;
+    }
+
+    setPickerSource(source);
+  };
 
   const inputPlaceholder = placeholder ?? t('placeholder');
   const hasCompactActions = isAuthenticated;
+  const actionMenuItems: MenuItem[] = [
+    {
+      type: 'submenu',
+      label: t('actionMenu.uploadFiles'),
+      icon: <Paperclip />,
+      className: 'rounded-2xl',
+      items: [
+        {
+          label: t('actionMenu.fromUserInventory'),
+          icon: <FolderOpen />,
+          onClick: () => openInventoryPicker('personal'),
+        },
+        {
+          label: t('actionMenu.fromCourseInventory'),
+          icon: <Cloud />,
+          onClick: () => openInventoryPicker('course'),
+        },
+        {
+          label: t('actionMenu.fromDevice'),
+          icon: <HardDrive />,
+          onClick: () => fileInputRef.current?.click(),
+        },
+      ],
+    },
+  ];
   const defaultFooter = (
     <div className="flex items-center justify-center gap-6 px-4">
       <div className="flex cursor-default items-center gap-1.5 text-muted-foreground/50 transition-colors hover:text-muted-foreground/80">
@@ -160,14 +248,14 @@ export function ChatInput({
           maxFiles={0}
           onSubmit={onPromptSubmit}
         >
-          {selectedFiles.length > 0 && (
-            <PromptInputHeader className="px-2 pt-2">
+          {selectedAttachments.length > 0 && (
+            <PromptInputHeader>
               <ChatInputAttachments
-                files={selectedFiles}
+                files={selectedAttachments}
                 getRemoveLabel={(fileName) =>
                   t('attachments.remove', { name: fileName })
                 }
-                onRemove={removeSelectedFile}
+                onRemove={removeSelectedAttachment}
               />
             </PromptInputHeader>
           )}
@@ -185,42 +273,23 @@ export function ChatInput({
           <PromptInputFooter className="flex items-center justify-between gap-2 px-1 pb-0.5">
             <div className="flex min-w-0 flex-1 items-center gap-1.5">
               {hasCompactActions ? (
-                <PromptInputActionMenu
-                  onOpenChange={setIsActionMenuOpen}
-                  open={isActionMenuOpen}
-                >
-                  <PromptInputActionMenuTrigger
-                    aria-label={
-                      isActionMenuOpen
-                        ? t('actionMenu.close')
-                        : t('actionMenu.open')
-                    }
-                    className="size-9 rounded-full text-foreground transition-colors hover:bg-muted"
-                    disabled={isStreaming || isUploading || isLimitReached}
-                  >
-                    {isActionMenuOpen ? (
-                      <X className="size-4.5" />
-                    ) : (
-                      <Plus className="size-4.5" />
-                    )}
-                  </PromptInputActionMenuTrigger>
-                  <PromptInputActionMenuContent
-                    align="start"
-                    className="w-56 rounded-2xl p-1.5"
-                  >
-                    <PromptInputActionMenuItem
+                <DropdownTemplate
+                  align="start"
+                  className="w-56 rounded-2xl p-1.5"
+                  items={actionMenuItems}
+                  trigger={
+                    <Button
+                      aria-label={t('actionMenu.open')}
+                      className="size-9 rounded-full text-foreground transition-colors hover:bg-muted"
                       disabled={isStreaming || isUploading || isLimitReached}
-                      onSelect={(event) => {
-                        event.preventDefault();
-                        setIsActionMenuOpen(false);
-                        fileInputRef.current?.click();
-                      }}
+                      size="icon-sm"
+                      type="button"
+                      variant="ghost"
                     >
-                      <Paperclip className="size-4" />
-                      <span>{t('actionMenu.uploadFiles')}</span>
-                    </PromptInputActionMenuItem>
-                  </PromptInputActionMenuContent>
-                </PromptInputActionMenu>
+                      <Plus className="size-4.5" />
+                    </Button>
+                  }
+                />
               ) : null}
               {tools ? (
                 <PromptInputTools className="min-w-0 gap-1.5">
@@ -248,7 +317,7 @@ export function ChatInput({
                 isUploading ||
                 (!isStreaming &&
                   !inputValue.trim() &&
-                  selectedFiles.length === 0)
+                  selectedAttachments.length === 0)
               }
               onStop={onStop}
               status={
@@ -278,6 +347,27 @@ export function ChatInput({
           })}
         </p>
       )}
+
+      <ChatInventoryAttachmentDialog
+        disabledFileIds={selectedReferenceFiles.flatMap((item) =>
+          item.filePart ? [item.filePart.fileId] : []
+        )}
+        maxSelectable={remainingAttachmentSlots}
+        onAttach={addReferenceFiles}
+        onOpenChange={(open) => setPickerSource(open ? pickerSource : null)}
+        open={pickerSource === 'personal'}
+        source="personal"
+      />
+      <ChatInventoryAttachmentDialog
+        disabledFileIds={selectedReferenceFiles.flatMap((item) =>
+          item.filePart ? [item.filePart.fileId] : []
+        )}
+        maxSelectable={remainingAttachmentSlots}
+        onAttach={addReferenceFiles}
+        onOpenChange={(open) => setPickerSource(open ? pickerSource : null)}
+        open={pickerSource === 'course'}
+        source="course"
+      />
     </div>
   );
 }

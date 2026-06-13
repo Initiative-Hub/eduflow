@@ -15,6 +15,7 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
+import type { ChatSubmitAttachments } from '@/types/chat-attachments';
 import { ChatSidebar } from '../../_components/chat-sidebar';
 import { ChatWorkspaceShell } from '../../_components/chat-workspace-shell';
 import { useChatController } from '../use-chat';
@@ -88,30 +89,32 @@ export function AIClient({
   const handleSubmit = async (
     e?: React.FormEvent,
     customValue?: string,
-    files: File[] = []
+    attachments: ChatSubmitAttachments = { files: [], referencedFiles: [] }
   ) => {
     e?.preventDefault();
 
     const text = customValue?.trim() || '';
-    if (!text && files.length === 0) return;
+    const attachmentCount =
+      attachments.files.length + attachments.referencedFiles.length;
+    if (!text && attachmentCount === 0) return;
 
     if (isLimitReached) {
       notifyLimitReached();
       return;
     }
 
-    if (files.length > 0 && !isAuthenticated) {
+    if (attachmentCount > 0 && !isAuthenticated) {
       const error = new Error(t('attachments.signInRequired'));
       toast.error(error.message);
       throw error;
     }
 
     try {
-      setIsUploadingAttachments(files.length > 0);
+      setIsUploadingAttachments(attachments.files.length > 0);
       const messageText =
-        text || t('attachments.defaultMessage', { count: files.length });
+        text || t('attachments.defaultMessage', { count: attachmentCount });
 
-      await startChat(messageText, files);
+      await startChat(messageText, attachments);
     } catch (error) {
       toast.error(getErrorMessage(error));
       throw error;

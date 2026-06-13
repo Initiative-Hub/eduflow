@@ -8,7 +8,10 @@ import { toast } from 'sonner';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
 import { useChatSessionStore } from '@/stores/useChatSessionStore';
-import type { ChatFileUIPart } from '@/types/chat-attachments';
+import type {
+  ChatFileUIPart,
+  ChatSubmitAttachments,
+} from '@/types/chat-attachments';
 import {
   getUserMessageCount,
   hasReachedUserMessageLimit,
@@ -123,13 +126,20 @@ export const useChatController = ({
     parts: [...files, { type: 'text', text }],
   });
 
-  const startChat = async (text: string, files: File[] = []) => {
+  const startChat = async (
+    text: string,
+    attachments: ChatSubmitAttachments = { files: [], referencedFiles: [] }
+  ) => {
     if (!initialChatId) {
       try {
         const newChatId = await createChatMutation.mutateAsync(text);
-        const uploadedFiles = await uploadChatAttachments(files, newChatId);
+        const uploadedFiles = await uploadChatAttachments(
+          attachments.files,
+          newChatId
+        );
+        const messageFiles = [...uploadedFiles, ...attachments.referencedFiles];
         await queryClient.invalidateQueries({ queryKey: ['chat-list'] });
-        setPendingMessage(createUserMessage(text, uploadedFiles));
+        setPendingMessage(createUserMessage(text, messageFiles));
         setPendingChatId(newChatId);
         setPendingModel(pendingModel ?? DEFAULT_CHAT_MODEL);
         router.push(`/chat/${newChatId}`);
@@ -141,10 +151,14 @@ export const useChatController = ({
       return;
     }
 
-    const uploadedFiles = await uploadChatAttachments(files, initialChatId);
+    const uploadedFiles = await uploadChatAttachments(
+      attachments.files,
+      initialChatId
+    );
+    const messageFiles = [...uploadedFiles, ...attachments.referencedFiles];
 
     sendMessage(
-      uploadedFiles.length > 0 ? { text, files: uploadedFiles } : { text },
+      messageFiles.length > 0 ? { text, files: messageFiles } : { text },
       {
         body: {
           provider: 'openrouter',
