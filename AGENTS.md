@@ -93,9 +93,13 @@ for any tasks.).
 - **Textarea Typography Overrides**: Shared `Textarea` includes a responsive `md:text-sm`; when a feature requires a larger reading size, set both the base `text-*` and matching `md:text-*` class so desktop does not silently shrink.
 - **Icon Availability**: When introducing a new `lucide-react` icon, verify the installed package exports it; use a generic available icon when brand-specific icons are absent.
 - **JSX Curly Braces**: Literally render double curly braces `{{` and `}}` in JSX text by quoting them, like `{'{{placeholder}}'}`, to prevent the JSX compiler from parsing them as JS object shorthand syntax.
-- **English Dictionary UX**: On `/english`, keep single-word dictionary interactions scoped to the left source selection and rendered English translation text; use anchored popovers instead of global text-selection popups.
-- **English Pronunciation Data**: For learner-facing key vocabulary IPA on `/english`, keep the AI-generated IPA value; use Merriam-Webster lookup for pronunciation audio enrichment only.
-- **English TTS Provider**: The `/api/v1/english/tts` default path uses AI SDK OpenAI `tts-1`; preflight `OPENAI_API_KEY` with a clear service error and keep Amazon Polly available only as an explicit fallback path.
+- **Research Citations**: For AI research/chat responses with numbered citations, derive source metadata from AI SDK `source-url` parts and web-search tool outputs in shared helpers, then render inline citation UI from that normalized source list instead of hardcoding source parsing in components.
+- **Grouped Citation UI**: Keep multi-source citation markers such as `[1, 2]` as a single inline trigger that previews the first source, shows the additional source count, and exposes the full source set in a clickable hover-card carousel.
+- **Citation Labels**: Keep citation hover-card labels such as source counts localized through `next-intl`; do not hardcode English fallback copy in citation UI components.
+- **Citation Link Hover**: Use subtle semantic hover states such as `hover:bg-muted/60` for citation source cards; avoid saturated accent fills that compete with the citation content.
+- **Citation Source Identity**: Prefer source favicons from web-search metadata for citation identity marks, with a generic `lucide-react` icon only as a fallback.
+- **Remote Favicons**: Render arbitrary citation favicons with `next/image` and `unoptimized` unless the remote domains are explicitly configured in `next.config`.
+- **Search Favicons**: Enable favicon metadata on web-search tools when citation UI depends on source identity, and provide a deterministic domain favicon fallback for older results without favicon metadata.
 
 ### 6.3 Security & Validation
 

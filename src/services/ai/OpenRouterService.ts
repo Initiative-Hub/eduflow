@@ -4,6 +4,7 @@ import {
   generateText,
   Output,
   smoothStream,
+  stepCountIs,
   streamText,
 } from 'ai';
 import type { z } from 'zod';
@@ -53,6 +54,8 @@ export class OpenRouterService implements ChatProviderService {
       system: resolveChatSystemPrompt(options),
       messages: await convertToModelMessages(input.messages),
       providerOptions: input.providerOptions,
+      tools: options?.tools,
+      stopWhen: options?.maxSteps ? stepCountIs(options.maxSteps) : undefined,
     });
   }
 
