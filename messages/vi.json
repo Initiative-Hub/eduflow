@@ -157,8 +157,38 @@
   "AIChat": {
     "actionMenu": {
       "close": "Đóng tùy chọn",
+      "fromCourseInventory": "Từ kho khóa học",
+      "fromDevice": "Từ thiết bị này",
+      "fromUserInventory": "Từ kho cá nhân",
       "open": "Mở tùy chọn",
       "uploadFiles": "Tải tệp lên"
+    },
+    "attachmentPicker": {
+      "alreadyAttached": "Đã đính kèm",
+      "attach": "Đính kèm {count, plural, one {# tệp} other {# tệp}}",
+      "attachError": "Không thể đính kèm các tệp đã chọn.",
+      "attaching": "Đang đính kèm...",
+      "backToCourses": "Khóa học",
+      "cancel": "Hủy",
+      "courseDescription": "Chọn tệp từ kho lưu trữ của các khóa học bạn đã tham gia.",
+      "courseSelectionDescription": "Chọn một khóa học bạn tham gia trước khi duyệt tệp.",
+      "courseTitle": "Kho lưu trữ theo khóa học",
+      "emptyCoursesDescription": "Không có khóa học đã tham gia.",
+      "emptyCoursesTitle": "Không tìm thấy khóa học",
+      "emptyDescription": "Không có tệp hoặc thư mục nào ở vị trí này.",
+      "emptyTitle": "Không tìm thấy tệp",
+      "folder": "Thư mục",
+      "next": "Tiếp",
+      "pageInfo": "Trang {page}/{total}",
+      "personalDescription": "Chọn tệp từ kho lưu trữ cá nhân của bạn",
+      "personalTitle": "Kho lưu trữ cá nhân",
+      "previous": "Trước",
+      "processing": "Đang xử lý",
+      "root": "Kho tệp",
+      "searchPlaceholder": "Tìm tệp và thư mục",
+      "selectedCount": "Đã chọn {count}/{max}",
+      "selectFile": "Chọn {name}",
+      "tooMany": "Đã đạt giới hạn đính kèm."
     },
     "attachments": {
       "defaultMessage": "Vui lòng sử dụng {count, plural, one {tệp đính kèm} other {các tệp đính kèm}}.",

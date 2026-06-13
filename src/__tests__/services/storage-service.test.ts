@@ -92,6 +92,39 @@ describe('StorageService', () => {
         })
       ).rejects.toThrow('Parent folder not found');
     });
+
+    it('lists course entries without restricting results to the current user', async () => {
+      fileInventory.findMany.mockResolvedValue([
+        { id: 'f1', fileSize: BigInt(2), userId: 'u2' },
+      ]);
+      fileInventory.count.mockResolvedValue(1);
+
+      await StorageService.listDirectory({
+        userId: 'u1',
+        courseId: 'course-1',
+        parentId: null,
+        limit: 10,
+        offset: 0,
+      });
+
+      expect(fileInventory.findMany).toHaveBeenCalledWith({
+        where: {
+          courseId: 'course-1',
+          deletedAt: null,
+          parentId: null,
+        },
+        take: 10,
+        skip: 0,
+        orderBy: [{ isFolder: 'desc' }, { name: 'asc' }, { createdAt: 'desc' }],
+      });
+      expect(fileInventory.count).toHaveBeenCalledWith({
+        where: {
+          courseId: 'course-1',
+          deletedAt: null,
+          parentId: null,
+        },
+      });
+    });
   });
 
   describe('createFolder', () => {
@@ -133,6 +166,52 @@ describe('StorageService', () => {
           name: 'Docs',
         })
       ).rejects.toThrow('An item with this name already exists');
+    });
+
+    it('allows creating a folder inside a course parent owned by another member', async () => {
+      fileInventory.findFirst
+        .mockResolvedValueOnce({
+          id: 'parent',
+          courseId: 'course-1',
+          isFolder: true,
+          userId: 'u2',
+        })
+        .mockResolvedValueOnce(null);
+      fileInventory.create.mockResolvedValue({
+        id: 'n1',
+        fileSize: null,
+        name: 'Shared Folder',
+      });
+
+      await StorageService.createFolder({
+        userId: 'u1',
+        courseId: 'course-1',
+        parentId: 'parent',
+        name: 'Shared Folder',
+      });
+
+      expect(fileInventory.findFirst).toHaveBeenNthCalledWith(1, {
+        where: {
+          courseId: 'course-1',
+          deletedAt: null,
+          id: 'parent',
+          isFolder: true,
+        },
+      });
+      expect(fileInventory.findFirst).toHaveBeenNthCalledWith(2, {
+        where: {
+          courseId: 'course-1',
+          deletedAt: null,
+          name: {
+            equals: 'Shared Folder',
+            mode: 'insensitive',
+          },
+          parentId: 'parent',
+        },
+        select: {
+          id: true,
+        },
+      });
     });
   });
 
@@ -384,15 +463,20 @@ describe('StorageService', () => {
 
       expect(fileInventory.findMany).toHaveBeenCalledWith({
         where: {
-          courseId: null,
           deletedAt: null,
           id: { in: ['f1'] },
           isFolder: false,
+          OR: [
+            {
+              courseId: null,
+              userId: 'u1',
+            },
+          ],
           status: 'READY',
-          userId: 'u1',
         },
         select: {
           bucket: true,
+          courseId: true,
           id: true,
           mimeType: true,
           name: true,
@@ -434,14 +518,19 @@ describe('StorageService', () => {
 
       expect(fileInventory.findMany).toHaveBeenCalledWith({
         where: {
-          courseId: null,
           deletedAt: null,
           id: { in: ['f1'] },
           isFolder: false,
+          OR: [
+            {
+              courseId: null,
+              userId: 'u1',
+            },
+          ],
           status: 'READY',
-          userId: 'u1',
         },
         select: {
+          courseId: true,
           id: true,
           mimeType: true,
           name: true,
@@ -528,6 +617,48 @@ describe('StorageService', () => {
         StorageService.updateEntry({ userId: 'u1', fileId: 'f1', name: 'A' })
       ).rejects.toThrow('An item with this name already exists');
     });
+
+    it('checks course-scoped duplicates when renaming a course entry', async () => {
+      fileInventory.findFirst.mockReset();
+      fileInventory.update.mockReset();
+      fileInventory.findFirst
+        .mockResolvedValueOnce({
+          courseId: 'course-1',
+          id: 'f1',
+          isFolder: false,
+          name: 'Old',
+          parentId: null,
+          userId: 'u2',
+        })
+        .mockResolvedValueOnce({ id: 'dup' });
+
+      await expect(
+        StorageService.updateEntry({
+          userId: 'u1',
+          courseId: 'course-1',
+          fileId: 'f1',
+          name: 'Shared',
+        })
+      ).rejects.toThrow('An item with this name already exists');
+
+      expect(fileInventory.findFirst).toHaveBeenNthCalledWith(2, {
+        where: {
+          courseId: 'course-1',
+          deletedAt: null,
+          id: {
+            not: 'f1',
+          },
+          name: {
+            equals: 'Shared',
+            mode: 'insensitive',
+          },
+          parentId: null,
+        },
+        select: {
+          id: true,
+        },
+      });
+    });
   });
 
   describe('softDeleteEntry', () => {
@@ -584,6 +715,64 @@ describe('StorageService', () => {
       expect(result).toEqual({ deletedCount: 2 });
       expect(fileInventory.updateMany).toHaveBeenCalled();
     });
+
+    it('deletes course entries across mixed owners within the same course', async () => {
+      fileInventory.findMany.mockReset();
+      fileInventory.findFirst.mockReset();
+      fileInventory.updateMany.mockReset();
+      fileInventory.findMany
+        .mockResolvedValueOnce([{ id: 'root' }])
+        .mockResolvedValueOnce([{ id: 'child-file' }])
+        .mockResolvedValueOnce([]);
+      fileInventory.findFirst
+        .mockResolvedValueOnce({
+          courseId: 'course-1',
+          id: 'root',
+          isFolder: true,
+          objectKey: null,
+          userId: 'u2',
+        })
+        .mockResolvedValueOnce({
+          courseId: 'course-1',
+          id: 'child-file',
+          isFolder: false,
+          objectKey: 'obj-child',
+          userId: 'u3',
+        });
+      fileInventory.updateMany.mockResolvedValue({ count: 2 });
+
+      await StorageService.deleteEntries({
+        userId: 'u1',
+        courseId: 'course-1',
+        fileIds: ['root'],
+      });
+
+      expect(fileInventory.findMany).toHaveBeenNthCalledWith(1, {
+        where: {
+          courseId: 'course-1',
+          deletedAt: null,
+          id: {
+            in: ['root'],
+          },
+        },
+        select: {
+          id: true,
+        },
+      });
+      expect(fileInventory.updateMany).toHaveBeenCalledWith({
+        where: {
+          courseId: 'course-1',
+          deletedAt: null,
+          id: {
+            in: ['root', 'child-file'],
+          },
+        },
+        data: {
+          deletedAt: expect.any(Date),
+          status: 'DELETED',
+        },
+      });
+    });
   });
 
   describe('getAnalytics', () => {
@@ -607,6 +796,50 @@ describe('StorageService', () => {
 
       const result = await StorageService.getAnalytics({ userId: 'u1' });
       expect(result.totalSizeBytes).toBe(0);
+    });
+
+    it('aggregates course analytics across files owned by different members', async () => {
+      fileInventory.count.mockResolvedValueOnce(4).mockResolvedValueOnce(1);
+      fileInventory.aggregate.mockResolvedValue({
+        _sum: { fileSize: BigInt(8192) },
+      });
+
+      const result = await StorageService.getAnalytics({
+        userId: 'u1',
+        courseId: 'course-1',
+      });
+
+      expect(fileInventory.count).toHaveBeenNthCalledWith(1, {
+        where: {
+          courseId: 'course-1',
+          deletedAt: null,
+          isFolder: false,
+          status: 'READY',
+        },
+      });
+      expect(fileInventory.count).toHaveBeenNthCalledWith(2, {
+        where: {
+          courseId: 'course-1',
+          deletedAt: null,
+          isFolder: true,
+        },
+      });
+      expect(fileInventory.aggregate).toHaveBeenCalledWith({
+        where: {
+          courseId: 'course-1',
+          deletedAt: null,
+          isFolder: false,
+          status: 'READY',
+        },
+        _sum: {
+          fileSize: true,
+        },
+      });
+      expect(result).toEqual({
+        fileCount: 4,
+        folderCount: 1,
+        totalSizeBytes: 8192,
+      });
     });
   });
 });

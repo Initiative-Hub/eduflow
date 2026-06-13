@@ -9,8 +9,13 @@ import { DEFAULT_SOCRATIC_GUIDANCE_DEPTH } from '@/app/api/v1/ai/socratic/[chatI
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
 import { useChatSessionStore } from '@/stores/useChatSessionStore';
+import type {
+  ChatFileUIPart,
+  ChatSubmitAttachments,
+} from '@/types/chat-attachments';
 import type { SocraticUIMessage } from '@/types/socratic-ui-message';
 import { hasReachedUserMessageLimit } from '@/utils/chat-limit';
+import { uploadChatAttachments } from '../(ai-chat)/chat-attachments.service';
 import { socraticService } from './socratic.service';
 
 const MAX_USER_MESSAGES = 5;
@@ -74,10 +79,13 @@ export const useSocratic = ({
     },
   });
 
-  const createUserMessage = (text: string): SocraticUIMessage => ({
+  const createUserMessage = (
+    text: string,
+    files: ChatFileUIPart[] = []
+  ): SocraticUIMessage => ({
     id: crypto.randomUUID(),
     role: 'user',
-    parts: [{ type: 'text', text }],
+    parts: [...files, { type: 'text', text }],
   });
 
   const pendingForChat =
@@ -126,17 +134,25 @@ export const useSocratic = ({
     : hasReachedUserMessageLimit(displayMessages, MAX_USER_MESSAGES);
   const isStreaming = status === 'streaming' || status === 'submitted';
 
-  const startChat = async (text: string) => {
+  const startChat = async (
+    text: string,
+    attachments: ChatSubmitAttachments = { files: [], referencedFiles: [] }
+  ) => {
     if (!chatId) {
       try {
         const newChatId = await createSessionMutation.mutateAsync(text);
+        const uploadedFiles = await uploadChatAttachments(
+          attachments.files,
+          newChatId
+        );
+        const messageFiles = [...uploadedFiles, ...attachments.referencedFiles];
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: ['socratic-chat-list'] }),
           queryClient.invalidateQueries({
             queryKey: ['recent-socratic-chats'],
           }),
         ]);
-        setPendingMessage(createUserMessage(text));
+        setPendingMessage(createUserMessage(text, messageFiles));
         setPendingChatId(newChatId);
         setPendingModel(pendingModel ?? DEFAULT_CHAT_MODEL);
         setPendingSocraticGuidanceDepth(
@@ -154,8 +170,14 @@ export const useSocratic = ({
       return;
     }
 
+    const uploadedFiles = await uploadChatAttachments(
+      attachments.files,
+      chatId
+    );
+    const messageFiles = [...uploadedFiles, ...attachments.referencedFiles];
+
     sendMessage(
-      { text },
+      messageFiles.length > 0 ? { text, files: messageFiles } : { text },
       {
         body: {
           provider: 'openrouter',

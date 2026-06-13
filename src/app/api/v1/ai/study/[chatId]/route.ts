@@ -276,7 +276,7 @@ export async function POST(
 
     const tools =
       parsedBody.data.mode === 'research'
-        ? { webSearch: tavilySearch({ includeFavicon: true, maxResults: 5 }) }
+        ? { webSearch: tavilySearch({ includeFavicon: true, maxResults: 10 }) }
         : undefined;
 
     const maxSteps = parsedBody.data.mode === 'research' ? 5 : undefined;
