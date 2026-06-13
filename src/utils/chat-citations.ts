@@ -9,6 +9,8 @@ export interface ChatCitationSource {
 }
 
 const CITATION_MARKER_PATTERN = /\[(\d+(?:\s*,\s*\d+)*)\](?!\()/g;
+const CITATION_RUN_PATTERN =
+  /\[(?:\d+(?:\s*,\s*\d+)*)\](?!\()(?:\s*,?\s*\[(?:\d+(?:\s*,\s*\d+)*)\](?!\())*/g;
 const CITATION_LINK_PREFIX = '#citation-';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -45,6 +47,23 @@ function parseCitationIndices(value: string): number[] {
     .split(',')
     .map((rawIndex) => Number.parseInt(rawIndex.trim(), 10))
     .filter(Number.isFinite);
+}
+
+function parseCitationRun(value: string): number[] {
+  const seenIndices = new Set<number>();
+  const indices: number[] = [];
+  const markers = value.match(CITATION_MARKER_PATTERN) ?? [];
+
+  for (const marker of markers) {
+    for (const index of parseCitationIndices(marker)) {
+      if (seenIndices.has(index)) continue;
+
+      seenIndices.add(index);
+      indices.push(index);
+    }
+  }
+
+  return indices;
 }
 
 function addSource(
@@ -124,13 +143,19 @@ export function buildInlineCitationMarkdown(
     sources.map((source) => [source.index, source] as const)
   );
 
-  return markdown.replace(CITATION_MARKER_PATTERN, (marker, group: string) => {
-    const citationSources = parseCitationIndices(group).flatMap((index) => {
+  return markdown.replace(CITATION_RUN_PATTERN, (marker) => {
+    const citationIndices = parseCitationRun(marker);
+    const citationSources = citationIndices.flatMap((index) => {
       const source = sourcesByIndex.get(index);
       return source ? [source] : [];
     });
 
-    if (citationSources.length === 0) return marker;
+    if (
+      citationSources.length === 0 ||
+      citationSources.length !== citationIndices.length
+    ) {
+      return marker;
+    }
 
     const label = citationSources.map((source) => source.index).join(', ');
     const href = `${CITATION_LINK_PREFIX}${citationSources
