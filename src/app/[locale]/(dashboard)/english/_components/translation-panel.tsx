@@ -200,6 +200,7 @@ export function TranslationPanel({
             }}
             onClearLookup={onClearLookup}
             placeholder={t('inputPlaceholder')}
+            language={direction === 'en-vi' ? 'en' : 'vi'}
             className={cn(
               'min-h-[200px] border-0 bg-transparent p-0 shadow-none focus-visible:outline-none',
               READING_TEXT_CLASS

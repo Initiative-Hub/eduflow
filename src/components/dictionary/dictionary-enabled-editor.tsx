@@ -21,15 +21,33 @@ interface DictionaryEnabledEditorProps {
   onClearLookup: () => void;
   placeholder?: string;
   className?: string;
+  /** Expected input language. 'vi' disables all hover/click effects. */
+  language?: 'en' | 'vi';
 }
 
 const HoverWordPluginKey = new PluginKey('hoverWord');
+
+/**
+ * Returns true when an ASCII match is embedded inside a Unicode word
+ * (e.g. "huy" within "huyền"). In that case we should not highlight it.
+ */
+function isEmbeddedInUnicodeWord(
+  text: string,
+  matchStart: number,
+  matchEnd: number
+): boolean {
+  const before = matchStart > 0 ? text[matchStart - 1] : '';
+  const after = matchEnd < text.length ? text[matchEnd] : '';
+  // \p{L} matches any Unicode letter (including Vietnamese diacritics)
+  return /\p{L}/u.test(before) || /\p{L}/u.test(after);
+}
 
 function getHoverWordPlugin(
   onWordClick: (
     word: string,
     anchor: { getBoundingClientRect: () => DOMRect }
-  ) => void
+  ) => void,
+  language: 'en' | 'vi' = 'en'
 ) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const clearDecorations = (view: any) => {
@@ -63,6 +81,12 @@ function getHoverWordPlugin(
       },
       handleDOMEvents: {
         mousemove(view, event) {
+          // Vietnamese input — no hover effects
+          if (language === 'vi') {
+            clearDecorations(view);
+            return false;
+          }
+
           const coords = { left: event.clientX, top: event.clientY };
           const pos = view.posAtCoords(coords);
 
@@ -88,6 +112,10 @@ function getHoverWordPlugin(
               offset >= match.index &&
               offset <= match.index + match[0].length
             ) {
+              // Skip tokens that are sub-strings of Vietnamese words
+              if (isEmbeddedInUnicodeWord(text, match.index, match.index + match[0].length)) {
+                break;
+              }
               foundMatch = match;
               break;
             }
@@ -132,6 +160,9 @@ function getHoverWordPlugin(
           return false;
         },
         click(view, event) {
+          // Vietnamese input — no click lookup
+          if (language === 'vi') return false;
+
           const coords = { left: event.clientX, top: event.clientY };
           const pos = view.posAtCoords(coords);
           if (!pos) return false;
@@ -152,6 +183,10 @@ function getHoverWordPlugin(
               offset >= match.index &&
               offset <= match.index + match[0].length
             ) {
+              // Skip tokens embedded in Vietnamese words
+              if (isEmbeddedInUnicodeWord(text, match.index, match.index + match[0].length)) {
+                break;
+              }
               foundWord = match[0];
               foundStart = resolved.start() + match.index;
               foundEnd = foundStart + match[0].length;
@@ -191,15 +226,18 @@ function getHoverWordPlugin(
 
 const DictionaryHoverExtension = Extension.create<{
   onWordClick: (word: string, anchor: { getBoundingClientRect: () => DOMRect }) => void;
-}>({
+  language: 'en' | 'vi';
+}>(
+{
   name: 'dictionaryHover',
   addOptions() {
     return {
       onWordClick: () => {},
+      language: 'en' as const,
     };
   },
   addProseMirrorPlugins() {
-    return [getHoverWordPlugin(this.options.onWordClick)];
+    return [getHoverWordPlugin(this.options.onWordClick, this.options.language)];
   },
 });
 
@@ -210,6 +248,7 @@ export function DictionaryEnabledEditor({
   onClearLookup,
   placeholder,
   className,
+  language = 'en',
 }: DictionaryEnabledEditorProps) {
   const handleWordClick = useCallback(
     (word: string, anchor: { getBoundingClientRect: () => DOMRect }) => {
@@ -225,7 +264,7 @@ export function DictionaryEnabledEditor({
       Text,
       History,
       Placeholder.configure({ placeholder }),
-      DictionaryHoverExtension.configure({ onWordClick: handleWordClick }),
+      DictionaryHoverExtension.configure({ onWordClick: handleWordClick, language }),
     ],
     content: value,
     editorProps: {
