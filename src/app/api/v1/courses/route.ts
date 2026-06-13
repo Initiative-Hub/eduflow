@@ -8,13 +8,29 @@ const createCourseSchema = z.object({
   description: z.string().max(1000).optional(),
 });
 
+const booleanQuerySchema = z
+  .enum(['true', 'false'])
+  .optional()
+  .transform((value) => value === 'true');
+
+const courseListQuerySchema = z.object({
+  ownedOnly: booleanQuerySchema.default(false),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(12),
+  publicOnly: booleanQuerySchema.default(false),
+  search: z.string().default(''),
+  sort: z
+    .enum(['updated-desc', 'created-desc', 'title-asc', 'members-desc'])
+    .default('updated-desc'),
+});
+
 /**
  * @swagger
  * /api/v1/courses:
  *   get:
  *     tags:
  *       - Courses
- *     summary: List courses for the current teacher
+ *     summary: List accessible courses for the current user
  *     security:
  *       - SessionCookie: []
  *     responses:
@@ -25,10 +41,25 @@ const createCourseSchema = z.object({
  *       500:
  *         description: Internal server error
  */
-export const GET = withAuth(async (_req, sessionData) => {
+export const GET = withAuth(async (req, sessionData) => {
   try {
     const userId = sessionData.user.id;
-    const courses = await CourseService.getCoursesByOwner(userId);
+    const { searchParams } = new URL(req.url);
+    const query = courseListQuerySchema.safeParse(
+      Object.fromEntries(searchParams)
+    );
+
+    if (!query.success) {
+      return NextResponse.json(
+        { message: 'Invalid query parameters', errors: query.error.format() },
+        { status: 400 }
+      );
+    }
+
+    const courses = await CourseService.listAccessibleCourses(
+      userId,
+      query.data
+    );
 
     return NextResponse.json(courses);
   } catch (error: any) {
