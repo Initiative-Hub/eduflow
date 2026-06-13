@@ -22,7 +22,8 @@
       "title": "Users unavailable"
     },
     "fallback": {
-      "noName": "No name"
+      "noName": "No name",
+      "notAvailable": "N/A"
     },
     "filters": {
       "role": "Role filter"
@@ -191,6 +192,7 @@
       "tooMany": "Attachment limit reached."
     },
     "attachments": {
+      "add": "Attach files",
       "defaultMessage": "Please use the attached {count, plural, one {file} other {files}}.",
       "fileTooLarge": "{name} exceeds the maximum upload size.",
       "remove": "Remove {name}",
@@ -225,7 +227,8 @@
     "modelSelector": {
       "empty": "No models found.",
       "heading": "Choose model",
-      "label": "Select AI model"
+      "label": "Select AI model",
+      "placeholder": "Choose model"
     },
     "placeholder": "Ask a scholarly question...",
     "promptLibrary": {
@@ -250,6 +253,7 @@
     },
     "recentChats": {
       "description": "Return to your latest study threads.",
+      "empty": "No recent chats yet. Start a question above and it will appear here.",
       "error": "Unable to load recent chats right now.",
       "openChat": "Open chat {title}",
       "title": "Recent chats",
@@ -323,7 +327,10 @@
       "description": "If an account exists for {email}, you'll receive password reset instructions shortly.",
       "title": "Check your inbox"
     },
-    "title": "Reset Password"
+    "title": "Reset Password",
+    "validation": {
+      "invalidEmail": "Please enter a valid email address."
+    }
   },
   "AuthLogin": {
     "actions": {
@@ -342,7 +349,11 @@
         "placeholder": "Enter your password"
       }
     },
-    "title": "Welcome Back"
+    "title": "Welcome Back",
+    "validation": {
+      "emptyPassword": "Password cannot be empty.",
+      "invalidEmail": "Please enter a valid email address."
+    }
   },
   "AuthPageSwitcher": {
     "alreadyPart": "Already part of us?",
@@ -384,9 +395,11 @@
   },
   "AuthResetPassword": {
     "actions": {
+      "backToForgot": "Back to Reset Request",
       "backToLogin": "Back to Login",
       "reset": "Update Password"
     },
+    "description": "Create a new strong password to secure your account.",
     "form": {
       "confirmPassword": {
         "label": "Confirm New Password",
@@ -397,10 +410,15 @@
         "placeholder": "At least 8 characters"
       }
     },
+    "invalidToken": {
+      "description": "This link is invalid or has expired. Please request a new password reset link.",
+      "title": "Invalid Reset Link"
+    },
     "success": {
       "description": "Your password has been successfully updated. You can now use your new password to sign in.",
       "title": "Password updated"
-    }
+    },
+    "title": "Create New Password"
   },
   "AuthSocialOptions": {
     "ariaLabel": "Social sign in options",
@@ -412,13 +430,33 @@
       "verify": "Verify and Continue",
       "verifying": "Verifying..."
     },
+    "description": "We've sent a 6-digit verification code to your email address:",
+    "form": {
+      "email": {
+        "label": "Email",
+        "placeholder": "Enter your email"
+      },
+      "otp": {
+        "description": "Use the code from your inbox.",
+        "label": "Verification code",
+        "placeholder": "Enter 6-digit code"
+      }
+    },
     "resend": {
       "action": "Not received the code?",
       "cooldown": "Resend in {seconds}s",
+      "label": "Didn't receive the code?",
       "loading": "Resending..."
+    },
+    "title": "Check your inbox",
+    "validation": {
+      "invalidEmail": "Please enter a valid email address.",
+      "otpInvalid": "OTP code must be exactly 6 digits.",
+      "otpRequired": "OTP code is required."
     }
   },
   "Common": {
+    "comingSoon": "Coming soon.",
     "logout": "Log out"
   },
   "CourseFilesPage": {
@@ -437,6 +475,9 @@
       "share": "Share",
       "shareSelected": "Share selected",
       "upload": "Upload file"
+    },
+    "breadcrumbs": {
+      "root": "Course Files"
     },
     "browser": {
       "description": "This course has {count} resources.",
@@ -474,9 +515,14 @@
     },
     "fileCard": {
       "folder": "Folder",
+      "processing": "Processing",
+      "ready": "Ready",
+      "size": "Size",
+      "type": "Type",
       "uploadProgress": "Uploading {progress}%"
     },
     "hero": {
+      "badge": "Course Resources",
       "description": "Access and manage files specifically for this course workspace. Upload lecture notes, assignments, and study materials."
     },
     "list": {
@@ -487,7 +533,8 @@
         "status": "Status",
         "type": "Type",
         "updated": "Updated"
-      }
+      },
+      "uploadProgress": "Uploading {progress}%"
     },
     "moveDialog": {
       "description": "Choose a destination for this item.",
@@ -513,6 +560,7 @@
       "title": "Rename item"
     },
     "selection": {
+      "count": "Selected {count} items",
       "label": "Selected items",
       "toggleAll": "Select all items on this page",
       "toggleItem": "Select {name}"
@@ -535,7 +583,18 @@
     },
     "title": "Course Materials",
     "toast": {
-      "fileTooLarge": "File exceeds the maximum upload size of {size}."
+      "deleted": "Deleted {count} items.",
+      "fileTooLarge": "File exceeds the maximum upload size of {size}.",
+      "folderCreated": "Folder created.",
+      "genericError": "Something went wrong. Try again.",
+      "moved": "Item moved.",
+      "previewUnavailable": "This file cannot be previewed right now.",
+      "renamed": "Item renamed.",
+      "shareBatchDescription": "Copied {count} share links to your clipboard.",
+      "shareCopied": "Share link copied.",
+      "shareFilesOnly": "Select at least one file to share.",
+      "shareFoldersUnsupported": "Folders cannot be shared with signed links.",
+      "uploaded": "Upload complete."
     },
     "toolbar": {
       "refresh": "Refresh",
@@ -575,12 +634,16 @@
       "submit": "Add Module",
       "title": "Add Module"
     },
+    "AnalyticsPage": "Analytics",
+    "AssessmentsPage": "Assessments",
     "Card": {
+      "manage": "Manage",
       "members": "{count, plural, =1 {1 Member} other {# Members}}",
       "modules": "{count, plural, =1 {1 Module} other {# Modules}}",
       "noDescription": "No description provided.",
       "togglePublish": "Toggle publish status"
     },
+    "ChatPage": "Course AI Chat",
     "CourseModules": {
       "addModule": "Add Module",
       "aiAssistant": "AI Assistant",
@@ -612,6 +675,7 @@
         "readyForAi": "Ready for AI",
         "selectedPdf": "{count, plural, =1 {1 PDF selected} other {# PDFs selected}}",
         "tabs": {
+          "context": "Add Context",
           "course": "Course Files",
           "personal": "Personal Files",
           "upload": "Upload PDF"
@@ -624,6 +688,7 @@
       },
       "AiGeneration": {
         "craftingCurriculum": "AI is crafting your curriculum from the provided document",
+        "creatingLessons": "Creating lessons...",
         "dismiss": "Dismiss",
         "documentReceived": "Document received, extracting PDF content...",
         "draftingLesson": "Drafting Lesson...",
@@ -632,6 +697,7 @@
         "generatingCourse": "Generating Course...",
         "identifyingModule": "Identifying Module...",
         "retry": "Try Again",
+        "saving": "Saving",
         "savingModules": "Saving your new modules and lessons...",
         "sourcePreview": {
           "empty": "No sources found yet",
@@ -643,6 +709,7 @@
           "youtube": "YouTube",
           "youtubeDescription": "Video options"
         },
+        "startingGeneration": "Starting AI generation...",
         "success": "Course modules generated and saved successfully!",
         "webSearching": "Searching the web for additional context and references..."
       },
@@ -668,6 +735,8 @@
       "aiGenerateDescription": "Generate questions from the selected lesson content using AI.",
       "aiGenerateError": "Failed to generate questions. Please try again.",
       "allModulesSelected": "All content selected: {moduleCount} modules, {lessonCount} lessons",
+      "availableQuestions": "{count} matching questions available in bank",
+      "back": "Back",
       "cancel": "Cancel",
       "category": "Quiz Category",
       "categoryPlaceholder": "Select a category...",
@@ -678,20 +747,24 @@
       "contentSourceLessons": "Specific Lessons",
       "contentSourceLessonsHint": "Pick one or more lessons",
       "createQuiz": "Create Quiz",
+      "createQuizButton": "Create Quiz",
       "creating": "Creating...",
       "deliveryMode": "Delivery Mode",
       "description": "Create a quiz based on your module content.",
       "deselectAll": "Deselect All",
       "errors": {
         "categoryRequired": "Please select a quiz category.",
+        "insufficientQuestions": "Only {available} questions available, but {requested} requested.",
         "lessonRequired": "Please select at least one lesson.",
         "questionCountMin": "At least 1 question is required.",
         "subTypeRequired": "Please select a question sub-type.",
         "titleRequired": "Please enter a quiz title."
       },
+      "generate": "Generate",
       "generateQuiz": "Generate Quiz",
       "generatingQuestions": "Generating...",
       "lessonsSelected": "{count, plural, =1 {1 lesson selected} other {# lessons selected}}",
+      "next": "Next",
       "noLessonsAvailable": "No lessons available. Add lessons to your modules first.",
       "questionCount": "Number of Questions",
       "quizDescription": "Description (optional)",
@@ -699,22 +772,30 @@
       "quizTitle": "Quiz Title",
       "quizTitlePlaceholder": "E.g., Chapter 1 Review",
       "selectAll": "Select All",
+      "selectionMethod": "Selection Method",
+      "selectLesson": "Select Lesson",
+      "selectLessonPlaceholder": "Choose a lesson...",
       "selectLessons": "Select Lessons",
       "subType": "Question Type",
       "subTypePlaceholder": "Select a question type...",
       "title": "Create Quiz"
     },
     "description": "Manage and publish your courses here.",
+    "FilesPage": "Files",
     "LessonEditor": {
       "cancel": "Cancel",
+      "content": "Lesson Content",
       "save": "Save",
       "saveError": "Failed to update lesson",
       "saveSuccess": "Lesson saved successfully!",
       "saving": "Saving...",
-      "title": "Lesson Title"
+      "title": "Lesson Title",
+      "writeReview": "Write/Review"
     },
     "LessonHeader": {
-      "edit": "Edit Lesson"
+      "edit": "Edit Lesson",
+      "lesson": "Lesson",
+      "modules": "Modules"
     },
     "LessonOutline": {
       "addFirstModule": "Add your first module",
@@ -732,7 +813,19 @@
       "noModules": "No modules yet.",
       "title": "Contents"
     },
+    "LessonPage": {
+      "notFound": "Lesson not found."
+    },
+    "LessonPagination": {
+      "next": "Next",
+      "previous": "Previous"
+    },
+    "LessonView": {
+      "empty": "Lesson content is empty."
+    },
+    "MembersPage": "Members",
     "ModuleAccordion": {
+      "add": "Add",
       "addLesson": "Lesson",
       "addQuiz": "Quiz",
       "noLessons": "No lessons yet"
@@ -741,14 +834,20 @@
     "noCourses": "No courses yet",
     "noCoursesDescription": "No courses available",
     "QuestionBank": {
+      "allCategories": "All Categories",
+      "allLessons": "All Lessons",
+      "allSubTypes": "All Types",
       "cancel": "Cancel",
       "clearFilters": "Clear All Filters",
       "confirmDelete": "Delete",
       "description": "View and manage all questions for this course.",
+      "filterCategory": "Category",
       "filterLesson": "Lesson",
       "filterLessonActive": "Lesson: {count} selected",
       "filterModule": "Module",
       "filterModuleActive": "Module: {count} selected",
+      "filters": "Filters",
+      "filterSubType": "Type",
       "filterType": "Question Type",
       "filterTypeActive": "Type: {count} selected",
       "noLesson": "No lesson",
@@ -766,6 +865,7 @@
       "title": "Question Types Preview"
     },
     "QuizPlayer": {
+      "acceptableAnswers": "Acceptable Answers (comma separated)",
       "addItem": "Add Item",
       "addOption": "Add Option",
       "addPair": "Add Pair",
@@ -779,14 +879,15 @@
       "aiContextSubmit": "Generate",
       "allowAttachments": "Allow Attachments",
       "allowTeacherRubric": "Allow Teacher Rubric (AI grading helper)",
-      "cancel": "Cancel",
       "completed": "Quiz completed! Score: {score}%",
       "confirmDelete": "Are you sure you want to delete this question? This cannot be undone.",
+      "correct": "Correct",
       "correctAnswer": "Correct Answer",
       "correctMapping": "Correct Mapping (Zone to Item)",
       "course": "Course",
       "deleteQuestion": "Delete Question",
       "deliveryOption": "AI Evaluation Feedback Delivery",
+      "dragAndDropSentenceTemplate": "Sentence Template (use {{zoneId}} for drop zones)",
       "draggableItems": "Draggable Items",
       "editQuestion": "Edit Question",
       "editQuestions": "Edit Questions",
@@ -795,6 +896,7 @@
       "generateAIQuestions": "Generate AI Questions",
       "generatingAIQuestions": "Generating AI Questions...",
       "innerQuestionType": "Inner Question Type",
+      "leftItem": "Left Item",
       "leftItems": "Left Items",
       "loadError": "Failed to Load Quiz",
       "loadErrorDescription": "Something went wrong while loading the quiz data. Please try again.",
@@ -806,18 +908,22 @@
       "notFoundDescription": "This quiz does not exist or has been removed.",
       "options": "Options",
       "orderingItems": "Ordering Items (in correct order)",
+      "points": "Points",
       "prompt": "Prompt",
       "questionType": "Question Type",
       "retry": "Retry",
+      "rightItem": "Right Item",
       "rightItems": "Right Items",
       "saveChanges": "Save Changes",
       "saveSuccess": "Quiz questions saved successfully!",
-      "sentenceTemplate": "Sentence Template (use {blankId} for blanks)",
+      "sentenceTemplate": "Sentence Template (use {{blankId}} for blanks)",
       "studentView": "Student View",
       "teacherView": "Teacher View",
       "timeLimit": "Time Limit (seconds)",
-      "true": "True"
+      "true": "True",
+      "zones": "Drop Zones"
     },
+    "SettingsPage": "Course Settings",
     "title": "Courses"
   },
   "HomePage": {
@@ -879,9 +985,14 @@
     },
     "fileCard": {
       "folder": "Folder",
+      "processing": "Processing",
+      "ready": "Ready",
+      "size": "Size",
+      "type": "Type",
       "uploadProgress": "Uploading {progress}%"
     },
     "hero": {
+      "badge": "Live storage workspace",
       "description": "Browse folders, upload files, rename entries, and share signed links directly against the storage API."
     },
     "list": {
@@ -892,7 +1003,8 @@
         "status": "Status",
         "type": "Type",
         "updated": "Updated"
-      }
+      },
+      "uploadProgress": "Uploading {progress}%"
     },
     "moveDialog": {
       "description": "Choose a destination for this item.",
@@ -918,6 +1030,7 @@
       "title": "Rename item"
     },
     "selection": {
+      "count": "Selected {count} items",
       "label": "Selected items",
       "toggleAll": "Select all items on this page",
       "toggleItem": "Select {name}"
@@ -970,6 +1083,10 @@
       "list": "List"
     }
   },
+  "LanguageSwitcher": {
+    "label": "Language",
+    "system": "System"
+  },
   "Layout": {
     "adminHeading": "Admin",
     "adminRoles": "Roles",
@@ -1003,9 +1120,12 @@
       "user": "User"
     },
     "menu": {
+      "academicPulse": "Academic Pulse",
+      "aiBadge": "AI",
       "darkMode": "Dark Mode",
       "english": "English",
       "helpCenter": "Help Center",
+      "language": "Language",
       "languagePreference": "Language Preference",
       "profile": "Profile",
       "settings": "Settings",
@@ -1131,6 +1251,7 @@
     "subtitle": "Manage your personal information",
     "title": "Profile",
     "toast": {
+      "discarded": "Changes discarded",
       "passwordChanged": "Password changed",
       "passwordChangedDesc": "Your password has been updated successfully.",
       "passwordSet": "Password set",
@@ -1140,6 +1261,9 @@
     },
     "validation": {
       "confirmPasswordRequired": "Please confirm your password.",
+      "currentPasswordRequired": "Current password is required.",
+      "nameRequired": "Full name is required.",
+      "nameTooShort": "Name must be at least 2 characters.",
       "passwordInvalid": "Password must contain at least 1 number, 1 special character ($#@!), and 1 uppercase letter.",
       "passwordSameAsCurrent": "New password must be different from the current password.",
       "passwordsMustMatch": "Passwords do not match.",
@@ -1166,7 +1290,9 @@
     "essayMinWords": "min {count}",
     "essayOverLimit": "Over word limit",
     "essayPlaceholder": "Write your answer here...",
+    "essayPoints": "pts",
     "essayRemoveFile": "Remove file",
+    "essayRubric": "Grading Criteria",
     "essayStudentAnswer": "Your Answer",
     "essayTeacherRubricAttachments": "Sample answer & rubric files",
     "essayTeacherRubricDescription": "Provide a sample answer and grading rubric for AI evaluation. You can type your sample answer and criteria or upload files.",
@@ -1177,17 +1303,25 @@
     "essayWordCount": "{count} words",
     "explanation": "Explanation",
     "false": "False",
+    "flashcardBack": "Answer",
+    "flashcardFront": "Question",
+    "flashcardMode": "Flashcard mode — no scoring",
+    "flipCard": "Flip Card",
     "gradeExcellent": "Excellent",
     "gradeFair": "Fair",
     "gradeGood": "Good",
     "gradeNeedsWork": "Needs Work",
     "incorrectAnswer": "Incorrect",
     "matchingInstruction": "Select an item on the left, then click its match on the right.",
+    "moveDown": "Move down",
+    "moveUp": "Move up",
     "next": "Next",
     "orderingInstruction": "Drag items to arrange them in the correct order.",
     "pendingReview": "Some answers are pending AI/teacher review.",
     "points": "points",
+    "pointsEarned": "Points earned",
     "previous": "Previous",
+    "questionBreakdown": "Question Breakdown",
     "questionCount": "{count, plural, =1 {1 Question} other {# Questions}}",
     "questionLabel": "Question {number}",
     "quizComplete": "Quiz Complete",
@@ -1274,6 +1408,7 @@
     "limitReachedToast": "You've reached the {count}-message Socratic limit. Start a new session to continue.",
     "recentSessions": {
       "description": "Return to guided questions and prior reasoning threads.",
+      "empty": "No Socratic sessions yet. Pick a prompt card or ask where you're stuck.",
       "error": "Unable to load recent Socratic sessions right now.",
       "openChat": "Open Socratic session {title}",
       "title": "Recent Socratic sessions",
@@ -1382,6 +1517,7 @@
   "WritingPage": {
     "recentSessions": {
       "description": "Return to drafts, rewrites, and polished writing sessions.",
+      "empty": "No recent writing sessions yet. Start with a writing tool and it will appear here.",
       "error": "Unable to load recent writing sessions right now.",
       "openChat": "Open writing session {title}",
       "title": "Recent writing sessions",
