@@ -568,6 +568,34 @@
       "togglePublish": "Toggle publish status"
     },
     "ChatPage": "Course AI Chat",
+    "controls": {
+      "filters": {
+        "ownedOnly": {
+          "description": "Limit results to courses you created.",
+          "label": "Owned courses only"
+        },
+        "publicOnly": {
+          "description": "Show published courses in your accessible list.",
+          "label": "Published courses only"
+        },
+        "reset": "Reset filters",
+        "title": "Filters",
+        "trigger": "Filter"
+      },
+      "search": {
+        "label": "Search courses",
+        "placeholder": "Search courses..."
+      },
+      "sort": {
+        "label": "Sort by",
+        "options": {
+          "created": "Newest created",
+          "members": "Most members",
+          "title": "Title A-Z",
+          "updated": "Recently updated"
+        }
+      }
+    },
     "CourseModules": {
       "addModule": "Add Module",
       "aiAssistant": "AI Assistant",
@@ -654,34 +682,6 @@
       "title": "Create New Course"
     },
     "createFirstCourse": "Create Your First Course",
-    "controls": {
-      "filters": {
-        "ownedOnly": {
-          "description": "Limit results to courses you created.",
-          "label": "Owned courses only"
-        },
-        "publicOnly": {
-          "description": "Show published courses in your accessible list.",
-          "label": "Published courses only"
-        },
-        "reset": "Reset filters",
-        "title": "Filters",
-        "trigger": "Filter"
-      },
-      "search": {
-        "label": "Search courses",
-        "placeholder": "Search courses..."
-      },
-      "sort": {
-        "label": "Sort by",
-        "options": {
-          "created": "Newest created",
-          "members": "Most members",
-          "title": "Title A-Z",
-          "updated": "Recently updated"
-        }
-      }
-    },
     "CreateQuiz": {
       "aiGenerate": "AI Question Generation",
       "aiGenerateDescription": "Generate questions from the selected lesson content using AI.",
@@ -890,14 +890,14 @@
       "zones": "Drop Zones"
     },
     "SettingsPage": "Course Settings",
+    "title": "Courses",
     "toast": {
       "created": "Course created.",
       "createFailed": "Failed to create course.",
       "published": "Course published.",
       "unpublished": "Course unpublished.",
       "updateFailed": "Failed to update course status."
-    },
-    "title": "Courses"
+    }
   },
   "HomePage": {
     "title": "Hello world!"

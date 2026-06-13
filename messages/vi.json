@@ -568,6 +568,34 @@
       "togglePublish": "Chuyển đổi trạng thái xuất bản"
     },
     "ChatPage": "Trò chuyện AI",
+    "controls": {
+      "filters": {
+        "ownedOnly": {
+          "description": "Chỉ hiển thị các khóa học bạn đã tạo.",
+          "label": "Chỉ khóa học của tôi"
+        },
+        "publicOnly": {
+          "description": "Hiển thị các khóa học đã xuất bản trong danh sách bạn có quyền truy cập.",
+          "label": "Chỉ khóa học đã xuất bản"
+        },
+        "reset": "Đặt lại bộ lọc",
+        "title": "Bộ lọc",
+        "trigger": "Lọc"
+      },
+      "search": {
+        "label": "Tìm kiếm khóa học",
+        "placeholder": "Tìm khóa học..."
+      },
+      "sort": {
+        "label": "Sắp xếp theo",
+        "options": {
+          "created": "Mới tạo gần đây",
+          "members": "Nhiều thành viên nhất",
+          "title": "Tiêu đề A-Z",
+          "updated": "Cập nhật gần đây"
+        }
+      }
+    },
     "CourseModules": {
       "addModule": "Thêm mô-đun",
       "aiAssistant": "Trợ lý AI",
@@ -654,34 +682,6 @@
       "title": "Tạo khóa học mới"
     },
     "createFirstCourse": "Tạo khóa học đầu tiên của bạn",
-    "controls": {
-      "filters": {
-        "ownedOnly": {
-          "description": "Chỉ hiển thị các khóa học bạn đã tạo.",
-          "label": "Chỉ khóa học của tôi"
-        },
-        "publicOnly": {
-          "description": "Hiển thị các khóa học đã xuất bản trong danh sách bạn có quyền truy cập.",
-          "label": "Chỉ khóa học đã xuất bản"
-        },
-        "reset": "Đặt lại bộ lọc",
-        "title": "Bộ lọc",
-        "trigger": "Lọc"
-      },
-      "search": {
-        "label": "Tìm kiếm khóa học",
-        "placeholder": "Tìm khóa học..."
-      },
-      "sort": {
-        "label": "Sắp xếp theo",
-        "options": {
-          "created": "Mới tạo gần đây",
-          "members": "Nhiều thành viên nhất",
-          "title": "Tiêu đề A-Z",
-          "updated": "Cập nhật gần đây"
-        }
-      }
-    },
     "CreateQuiz": {
       "aiGenerate": "Tạo câu hỏi bằng AI",
       "aiGenerateDescription": "Tạo câu hỏi từ nội dung bài học đã chọn bằng AI.",
@@ -890,14 +890,14 @@
       "zones": "Các vùng thả"
     },
     "SettingsPage": "Cài đặt khóa học",
+    "title": "Các khóa học",
     "toast": {
       "created": "Đã tạo khóa học.",
       "createFailed": "Không thể tạo khóa học.",
       "published": "Đã xuất bản khóa học.",
       "unpublished": "Đã hủy xuất bản khóa học.",
       "updateFailed": "Không thể cập nhật trạng thái khóa học."
-    },
-    "title": "Các khóa học"
+    }
   },
   "HomePage": {
     "title": "Xin chào thế giới!"
