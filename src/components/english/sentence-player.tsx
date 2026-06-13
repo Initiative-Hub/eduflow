@@ -3,6 +3,7 @@
 import { Lightbulb, Loader2, Pause, Play } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useCallback, useRef, useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 
 interface SentencePlayerProps {
@@ -35,9 +36,25 @@ export function SentencePlayer({
     setActiveIdx(null);
   }, []);
 
+  const ttsMutation = useMutation({
+    mutationFn: async (text: string) => {
+      const res = await fetch('/api/v1/english/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text,
+          provider: 'polly', // Switch to 'openai' or 'polly' to use Amazon Polly
+        }),
+        cache: 'no-store',
+      });
+      if (!res.ok) throw new Error('TTS request failed');
+      const blob = await res.blob();
+      return URL.createObjectURL(blob);
+    },
+  });
+
   const playSentence = useCallback(
     async (text: string, idx: number) => {
-      // Toggle off if already playing this sentence
       if (activeIdx === idx && playState === 'playing') {
         stopCurrent();
         return;
@@ -48,17 +65,7 @@ export function SentencePlayer({
       setPlayState('loading');
 
       try {
-        const res = await fetch('/api/v1/english/tts', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text }),
-          cache: 'no-store',
-        });
-
-        if (!res.ok) throw new Error('TTS request failed');
-
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
+        const url = await ttsMutation.mutateAsync(text);
         const audio = new Audio(url);
         audioRef.current = audio;
 
@@ -81,7 +88,7 @@ export function SentencePlayer({
         setActiveIdx(null);
       }
     },
-    [activeIdx, playState, stopCurrent]
+    [activeIdx, playState, stopCurrent, ttsMutation]
   );
 
   if (!sentences.length) return null;
