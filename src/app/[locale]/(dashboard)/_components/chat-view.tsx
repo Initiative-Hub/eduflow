@@ -4,12 +4,6 @@ import type { UIMessage } from 'ai';
 import { Bot, Loader2, User } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import {
-  Attachment,
-  AttachmentInfo,
-  AttachmentPreview,
-  Attachments,
-} from '@/components/ai-elements/attachments';
-import {
   Conversation,
   ConversationContent,
   ConversationScrollButton,
@@ -31,6 +25,7 @@ import {
 } from '@/utils/chat-citations';
 import { getMessageReasoning, getMessageText } from '@/utils/chat-message';
 import { getSocraticSuggestionItems } from '@/utils/socratic-suggestions';
+import { ChatInputAttachments } from './chat-input-attachments';
 import {
   ChatToolInvocations,
   createChatMarkdownComponents,
@@ -108,80 +103,63 @@ export function ChatView({
                         <User className="size-5" />
                       )}
                     </div>
-                    <MessageContent
-                      className={`max-w-[80%] px-5 py-3 ${
-                        message.role === 'user' &&
-                        'group-[.is-user]:rounded-2xl group-[.is-user]:bg-primary group-[.is-user]:px-5 group-[.is-user]:py-3 group-[.is-user]:text-primary-foreground'
+                    <div
+                      className={`flex min-w-0 flex-1 flex-col gap-2 ${
+                        message.role === 'user' ? 'items-end' : 'items-start'
                       }`}
                     >
-                      {message.role === 'assistant' ? (
-                        <>
-                          {attachments.length > 0 && (
-                            <Attachments className="mb-3" variant="inline">
-                              {attachments.map((attachment) => (
-                                <Attachment
-                                  data={attachment}
-                                  key={attachment.id}
-                                >
-                                  <AttachmentPreview />
-                                  <AttachmentInfo />
-                                </Attachment>
-                              ))}
-                            </Attachments>
-                          )}
-                          <Reasoning
-                            className="mb-3 w-full"
-                            defaultOpen={false}
-                            isStreaming={isReasoningStreaming}
-                          >
-                            <ReasoningTrigger />
-                            <ReasoningContent>{reasoning}</ReasoningContent>
-                          </Reasoning>
-                          <ChatToolInvocations parts={message.parts} />
-                          <MessageResponse
-                            caret="block"
-                            className="text-[15px] leading-relaxed"
-                            controls={false}
-                            isAnimating={isTextStreaming}
-                            mode="streaming"
-                            skipHtml={false}
-                            components={createChatMarkdownComponents(
-                              citationSources,
-                              {
-                                sourceCount: (count) =>
-                                  t('citations.sourceCount', { count }),
-                              }
-                            )}
-                          >
-                            {responseText}
-                          </MessageResponse>
-                        </>
-                      ) : (
-                        <>
-                          {attachments.length > 0 ? (
-                            <Attachments
-                              className={text ? 'mb-2' : undefined}
-                              variant="inline"
-                            >
-                              {attachments.map((attachment) => (
-                                <Attachment
-                                  data={attachment}
-                                  key={attachment.id}
-                                >
-                                  <AttachmentPreview />
-                                  <AttachmentInfo />
-                                </Attachment>
-                              ))}
-                            </Attachments>
-                          ) : null}
-                          {text ? (
-                            <p className="whitespace-pre-wrap text-[15px] leading-relaxed">
-                              {text}
-                            </p>
-                          ) : null}
-                        </>
+                      {message.role === 'user' && attachments.length > 0 && (
+                        <ChatInputAttachments
+                          files={attachments.map((attachment) => ({
+                            filename: attachment.filename ?? attachment.id,
+                            id: attachment.id,
+                            mediaType: attachment.mediaType,
+                            previewUrl: attachment.url,
+                          }))}
+                        />
                       )}
-                    </MessageContent>
+                      <MessageContent
+                        className={`max-w-[80%] px-5 py-3 ${
+                          message.role === 'user' &&
+                          'group-[.is-user]:rounded-2xl group-[.is-user]:bg-primary group-[.is-user]:px-5 group-[.is-user]:py-3 group-[.is-user]:text-primary-foreground'
+                        }`}
+                      >
+                        {message.role === 'assistant' ? (
+                          <>
+                            <Reasoning
+                              className="mb-3 w-full"
+                              defaultOpen={false}
+                              isStreaming={isReasoningStreaming}
+                            >
+                              <ReasoningTrigger />
+                              <ReasoningContent>{reasoning}</ReasoningContent>
+                            </Reasoning>
+                            <ChatToolInvocations parts={message.parts} />
+                            <MessageResponse
+                              caret="block"
+                              className="text-[15px] leading-relaxed"
+                              controls={false}
+                              isAnimating={isTextStreaming}
+                              mode="streaming"
+                              skipHtml={false}
+                              components={createChatMarkdownComponents(
+                                citationSources,
+                                {
+                                  sourceCount: (count) =>
+                                    t('citations.sourceCount', { count }),
+                                }
+                              )}
+                            >
+                              {responseText}
+                            </MessageResponse>
+                          </>
+                        ) : (
+                          <p className="whitespace-pre-wrap text-[15px] leading-relaxed">
+                            {text}
+                          </p>
+                        )}
+                      </MessageContent>
+                    </div>
                   </div>
                   {suggestions.length > 0 && onSuggestionSelect ? (
                     <div className="ml-14 max-w-[calc(100%-3.5rem)]">

@@ -9,7 +9,6 @@ Foundational mandates here take absolute precedence. **NEVER** invent ad-hoc beh
 ### 2.1 Hard Prohibitions (NEVER DO)
 
 - **Long-Running / Build Commands**: NEVER run `bun dev`, `bun run build`, `bun build`, or equivalent build/compile/bundling operations unless the user **explicitly requests** it.
-- **Auto-Fixing & Verification**: assistants may run `bun type-check` and `bun format:fix` when the user explicitly requests it or when a workspace playbook requires it for files you changed.
 - **Sensitive Data**: NEVER commit secrets, API keys, tokens, or credentials. Reference environment variables by name only.
 - **Secret Remediation**: If a secret is found in code, remove it immediately and ask the user to rotate it; never reprint the value.
 - **Manual Dependency Edits**: NEVER manually edit `package.json` to add or update dependencies. Always use the CLI.
@@ -40,6 +39,7 @@ for any tasks.).
 - **Server Components**: Default to Server Components; use 'use client' only when state or interactivity is required.
 - **Type Inference**: Prefer inferred Prisma and Zod types over handwritten duplicates. If a shape is reused across multiple files, extract a local type alias or helper near the feature instead of repeating the structure inline.
 - **Shared UI Shells**: Keep reusable UI shells in shared components such as `src/components/custom/form` and `src/components/custom/dialog` rather than duplicating layout scaffolding.
+- **Vendor UI Boundaries**: Do not edit components inside `src/components/ai-elements` or `src/components/ui` during implementation, refactoring, or bug fixes unless the user explicitly asks for changes there, because those directories are installed vendor primitives from Vercel AI Elements and shadcn/ui.
 
 ## 4. Canonical Workflows
 
@@ -139,6 +139,6 @@ for any tasks.).
 At the **END** of every session, you MUST:
 
 1. Review mistakes, edge cases, or ambiguities encountered.
-2. Update `AGENTS.md` with durable standards/rules (no chronological logs).
+2. Update `AGENTS.md` only with durable, high-value standards/rules (no chronological logs); do not add low-value, overly specific, or one-off observations that should not become future agent rules.
 3. Eliminate redundancy—ensure new knowledge isn't already covered by specialized skills.
 4. Propose future improvements to the human partner.
