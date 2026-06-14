@@ -1,5 +1,5 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EnglishAssistantClient } from '@/app/[locale]/(dashboard)/english/_components/english-assistant-client';
@@ -24,6 +24,8 @@ const messages: Record<string, string> = {
   pageSubtitle: 'English study tools',
   saveToLibrary: 'Save to Library',
   shareTooltip: 'Share',
+  sentencesEmptyState: 'No grammar analysis yet.',
+  sentencesTitle: 'Grammar Analysis',
   sourceContent: 'Source Content',
   swapDirection: 'Swap translation direction',
   title: 'Key Vocabulary',
@@ -234,7 +236,7 @@ describe('EnglishAssistantClient', () => {
     });
   });
 
-  it('uses the same intermediate reading text size for source and translation', async () => {
+  it('uses the same compact reading text size for source and translation', async () => {
     const user = userEvent.setup();
 
     renderEnglishAssistantClient();
@@ -247,8 +249,17 @@ describe('EnglishAssistantClient', () => {
       screen.getByRole('button', { name: 'Translate & Analyze' })
     );
 
-    expect(sourceInput).toHaveClass('text-2xl');
-    expect(await screen.findByText('Xin chào')).toHaveClass('text-2xl');
+    expect(sourceInput).toHaveClass('text-lg');
+    expect(await screen.findByText('Xin chào')).toHaveClass('text-lg');
+  });
+
+  it('shows the grammar analysis section before content is analyzed', () => {
+    renderEnglishAssistantClient();
+
+    expect(
+      screen.getByRole('heading', { name: 'Grammar Analysis' })
+    ).toBeInTheDocument();
+    expect(screen.getByText('No grammar analysis yet.')).toBeInTheDocument();
   });
 
   it('does not open the dictionary lookup when selecting Vietnamese source text', async () => {

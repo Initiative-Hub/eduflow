@@ -1599,6 +1599,7 @@
     "playSentence": "Play sentence",
     "saveToLibrary": "Save to Library",
     "sentenceAudio": "Sentence Audio",
+    "sentencesEmptyState": "No grammar analysis yet. Paste English text above and click Translate & Analyze.",
     "sentencesTitle": "Grammar Analysis",
     "shareTooltip": "Share",
     "sourceContent": "Source Content",

@@ -1599,6 +1599,7 @@
     "playSentence": "Phát câu này",
     "saveToLibrary": "Lưu vào Thư viện",
     "sentenceAudio": "Âm thanh từng câu",
+    "sentencesEmptyState": "Chưa có phân tích ngữ pháp. Dán văn bản tiếng Anh phía trên và nhấn Dịch & Phân tích tất cả.",
     "sentencesTitle": "Phân tích ngữ pháp",
     "shareTooltip": "Chia sẻ",
     "sourceContent": "Nội dung gốc",
