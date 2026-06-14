@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { GrammarService } from '@/services/english/grammar.service';
+import { GrammarService } from '@/services/english/GrammarService';
 
 const bodySchema = z.object({
   sentence: z.string().min(1).max(2000),

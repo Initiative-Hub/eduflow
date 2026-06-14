@@ -3,7 +3,7 @@
 import { Bot, Cloud, Globe, Zap } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
-import type { TranslationProvider } from '@/services/english/translation.service';
+import type { TranslationProvider } from '@/services/english/TranslationService';
 
 interface ProviderConfig {
   id: TranslationProvider;

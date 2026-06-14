@@ -43,7 +43,7 @@ describe('TTSService', () => {
   });
 
   it('uses OpenAI tts-1 through AI SDK for the default synthesis path', async () => {
-    const { TTSService } = await import('@/services/english/tts.service');
+    const { TTSService } = await import('@/services/english/TTSService');
 
     const audio = await TTSService.synthesize({ text: 'Hello there.' });
 
@@ -64,7 +64,7 @@ describe('TTSService', () => {
   it('fails with a clear configuration message when the OpenAI API key is missing', async () => {
     delete process.env.OPENAI_API_KEY;
 
-    const { TTSService } = await import('@/services/english/tts.service');
+    const { TTSService } = await import('@/services/english/TTSService');
 
     await expect(
       TTSService.synthesize({ text: 'Hello there.' })

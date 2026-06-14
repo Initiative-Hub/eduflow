@@ -6,7 +6,7 @@ import {
   type OpenAITTSVoice,
   type PollyVoiceId,
   type TTSProvider,
-} from '@/services/english/tts.service';
+} from '@/services/english/TTSService';
 
 const bodySchema = z.object({
   text: z.string().min(1).max(3000),

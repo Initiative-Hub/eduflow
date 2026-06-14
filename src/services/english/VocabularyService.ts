@@ -1,5 +1,5 @@
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
-import { generateObject } from 'ai';
+import { generateText, Output } from 'ai';
 import * as z from 'zod';
 import { DictionaryService } from '@/services/dictionary';
 import { DEFAULT_MODELS } from '@/services/ai/chat-provider.constants';
@@ -65,9 +65,9 @@ export class VocabularyService {
 
     const provider = createOpenRouter({ apiKey: key });
 
-    const { object } = await generateObject({
+    const { output } = await generateText({
       model: provider(DEFAULT_MODELS.openrouter),
-      schema: vocabularySchema,
+      output: Output.object({ schema: vocabularySchema }),
       system: `You are an English vocabulary tutor.
 Analyze the given text and extract 8-12 key vocabulary words that are important for understanding the text.
 Prefer words that are: advanced, academic, or contextually significant.
@@ -87,7 +87,7 @@ Do not correct grammar, spelling, capitalization, punctuation, or tense in the s
 
     // Enrich with Merriam-Webster audio in parallel (best-effort).
     const enriched = await Promise.all(
-      object.vocabulary.map(async (item) => {
+      output.vocabulary.map(async (item) => {
         const audioUrl = await VocabularyService.lookupMerriamWebsterAudio(
           item.word.toLowerCase()
         );

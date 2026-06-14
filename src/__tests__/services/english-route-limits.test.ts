@@ -4,13 +4,13 @@ import { describe, expect, it, vi } from 'vitest';
 const translate = vi.hoisted(() => vi.fn());
 const analyze = vi.hoisted(() => vi.fn());
 
-vi.mock('@/services/english/translation.service', () => ({
+vi.mock('@/services/english/TranslationService', () => ({
   TranslationService: {
     translate,
   },
 }));
 
-vi.mock('@/services/english/vocabulary.service', () => ({
+vi.mock('@/services/english/VocabularyService', () => ({
   VocabularyService: {
     analyze,
   },

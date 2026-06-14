@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import * as z from 'zod';
-import { VocabularyService } from '@/services/english/vocabulary.service';
+import { VocabularyService } from '@/services/english/VocabularyService';
 
 const bodySchema = z.object({
   text: z.string().min(1).max(1000),

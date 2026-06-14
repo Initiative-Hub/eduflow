@@ -1,5 +1,5 @@
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
-import { generateObject } from 'ai';
+import { generateText, Output } from 'ai';
 import * as z from 'zod';
 import { DEFAULT_MODELS } from '@/services/ai/chat-provider.constants';
 
@@ -81,9 +81,9 @@ export class GrammarService {
 
     const provider = createOpenRouter({ apiKey: key });
 
-    const { object } = await generateObject({
+    const { output } = await generateText({
       model: provider(DEFAULT_MODELS.openrouter),
-      schema: grammarAnalysisSchema,
+      output: Output.object({ schema: grammarAnalysisSchema }),
       system: `You are a friendly English grammar teacher helping ESL/EFL students.
 Analyze the given sentence for grammar, spelling, punctuation, and style issues.
 Be encouraging and constructive. Keep explanations simple and clear.
@@ -100,8 +100,8 @@ If there are errors, keep feedback actionable with original text, correction, an
     });
 
     return {
-      ...object,
-      structuralMap: object.structuralMap.map((part) => ({
+      ...output,
+      structuralMap: output.structuralMap.map((part) => ({
         ...part,
         role: part.role.toLowerCase(),
       })),

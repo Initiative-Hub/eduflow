@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
-import type { GrammarAnalysis } from '@/services/english/grammar.service';
-import type { TranslationProvider } from '@/services/english/translation.service';
-import type { VocabularyItem } from '@/services/english/vocabulary.service';
+import type { GrammarAnalysis } from '@/services/english/GrammarService';
+import type { TranslationProvider } from '@/services/english/TranslationService';
+import type { VocabularyItem } from '@/services/english/VocabularyService';
 
 interface TranslateParams {
   text: string;

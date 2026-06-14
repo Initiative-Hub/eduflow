@@ -4,7 +4,7 @@ import * as z from 'zod';
 import {
   TranslationService,
   type TranslationProvider,
-} from '@/services/english/translation.service';
+} from '@/services/english/TranslationService';
 
 const bodySchema = z.object({
   text: z.string().min(1).max(1000),

@@ -17,7 +17,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
-import type { GrammarAnalysis } from '@/services/english/grammar.service';
+import type { GrammarAnalysis } from '@/services/english/GrammarService';
 
 const issueTypeColors: Record<string, string> = {
   grammar: 'bg-destructive/10 text-destructive',

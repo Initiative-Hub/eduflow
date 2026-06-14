@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import type { TranslationProvider } from '@/services/english/translation.service';
+import type { TranslationProvider } from '@/services/english/TranslationService';
 
 const STORAGE_KEY = 'translation-provider-preference';
 const DEFAULT_PROVIDER: TranslationProvider = 'amazon';

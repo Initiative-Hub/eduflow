@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const generateObject = vi.hoisted(() =>
+const generateText = vi.hoisted(() =>
   vi.fn(async () => ({
-    object: {
+    output: {
       vocabulary: [
         {
           word: 'hello',
@@ -29,7 +29,7 @@ const dictionaryLookup = vi.hoisted(() =>
 
 vi.mock('ai', async (importOriginal) => ({
   ...(await importOriginal<typeof import('ai')>()),
-  generateObject,
+  generateText,
 }));
 
 vi.mock('@openrouter/ai-sdk-provider', () => ({
@@ -53,7 +53,7 @@ describe('VocabularyService', () => {
 
   it('keeps AI-generated IPA and enriches audio from Merriam-Webster', async () => {
     const { VocabularyService } = await import(
-      '@/services/english/vocabulary.service'
+      '@/services/english/VocabularyService'
     );
 
     const result = await VocabularyService.analyze('Hello there!');
@@ -65,24 +65,25 @@ describe('VocabularyService', () => {
 
   it('asks the AI model to produce IPA notation for each vocabulary item', async () => {
     const { VocabularyService } = await import(
-      '@/services/english/vocabulary.service'
+      '@/services/english/VocabularyService'
     );
 
     await VocabularyService.analyze('Hello there!');
 
-    const calls = generateObject.mock.calls as unknown as Array<
-      [{ system: string }]
+    const calls = generateText.mock.calls as unknown as Array<
+      [{ system: string; output: { name: string } }]
     >;
     const request = calls[0]?.[0];
-    if (!request) throw new Error('generateObject was not called');
+    if (!request) throw new Error('generateText was not called');
 
     expect(request.system).toContain('IPA');
     expect(request.system).toContain('phonemic');
+    expect(request.output.name).toBe('object');
   });
 
   it('preserves learner sentence text instead of using AI-corrected sentence splits', async () => {
-    generateObject.mockResolvedValueOnce({
-      object: {
+    generateText.mockResolvedValueOnce({
+      output: {
         vocabulary: [
           {
             word: 'eat',
@@ -98,7 +99,7 @@ describe('VocabularyService', () => {
     });
 
     const { VocabularyService } = await import(
-      '@/services/english/vocabulary.service'
+      '@/services/english/VocabularyService'
     );
 
     const result = await VocabularyService.analyze('I were ate.');

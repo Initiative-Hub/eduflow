@@ -2,7 +2,7 @@
 
 import { Languages, Loader2, Volume2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import type { VocabularyItem } from '@/services/english/vocabulary.service';
+import type { VocabularyItem } from '@/services/english/VocabularyService';
 
 interface VocabularyListProps {
   vocabularyList: VocabularyItem[];
