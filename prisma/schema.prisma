@@ -276,9 +276,13 @@ model Course {
   files       FileInventory[]
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
+  archivedAt  DateTime?
+  deletedAt   DateTime?
   questions   Question[]
   quizzes     Quiz[]
 
+  @@index([deletedAt])
+  @@index([archivedAt])
   @@map("course")
 }
 

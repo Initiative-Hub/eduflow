@@ -613,6 +613,122 @@
       "updateFailed": "Failed to update member role."
     }
   },
+  "CourseSettingsPage": {
+    "actions": {
+      "archive": "Archive",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "edit": "Edit",
+      "leave": "Leave course",
+      "save": "Save changes",
+      "transfer": "Transfer ownership",
+      "unarchive": "Unarchive"
+    },
+    "archivedNotice": {
+      "description": "Members can still review the course, but owners should unarchive it before making it active again.",
+      "title": "This course is archived"
+    },
+    "archiveDialog": {
+      "description": "Archive this course? Type the course ID to confirm.",
+      "title": "Archive course"
+    },
+    "confirmation": {
+      "description": "Type {courseId} to confirm this action.",
+      "label": "Course ID confirmation"
+    },
+    "dangerZone": {
+      "archive": {
+        "description": "Mark the course as archived without deleting course data.",
+        "title": "Archive course"
+      },
+      "delete": {
+        "description": "Soft delete the course and remove it from active course lists.",
+        "title": "Delete course"
+      },
+      "description": "Sensitive actions that affect membership, ownership, or course availability.",
+      "leave": {
+        "description": "Leave this course and remove your member access.",
+        "title": "Leave course"
+      },
+      "title": "Danger zone",
+      "transfer": {
+        "description": "Choose another member to become owner. Your role will be swapped with theirs.",
+        "title": "Transfer ownership"
+      },
+      "unarchive": {
+        "description": "Restore this course to the active course list.",
+        "title": "Unarchive course"
+      }
+    },
+    "deleteDialog": {
+      "description": "Soft delete this course? Type the course ID to confirm.",
+      "title": "Delete course"
+    },
+    "description": "Manage course identity, visibility, and high-impact course actions.",
+    "errors": {
+      "description": "We could not refresh course settings right now.",
+      "title": "Settings unavailable"
+    },
+    "fallback": {
+      "noDescription": "No description provided.",
+      "noName": "No name"
+    },
+    "fields": {
+      "courseId": "Course ID",
+      "description": "Description",
+      "role": "Role",
+      "title": "Title",
+      "visibility": "Visibility"
+    },
+    "form": {
+      "description": "Description",
+      "title": "Title",
+      "visibility": "Visibility"
+    },
+    "leaveDialog": {
+      "description": "Leave this course? You will lose access unless another owner or teacher adds you again.",
+      "title": "Leave course"
+    },
+    "roles": {
+      "courseOwner": "Course Owner",
+      "student": "Student",
+      "teacher": "Teacher"
+    },
+    "status": {
+      "archived": "Archived"
+    },
+    "title": "Course Settings",
+    "toast": {
+      "archived": "Course archived.",
+      "archiveFailed": "Failed to archive course.",
+      "deleted": "Course deleted.",
+      "deleteFailed": "Failed to delete course.",
+      "left": "You left the course.",
+      "leaveFailed": "Failed to leave course.",
+      "transferred": "Ownership transferred.",
+      "transferFailed": "Failed to transfer ownership.",
+      "unarchived": "Course unarchived.",
+      "unarchiveFailed": "Failed to unarchive course.",
+      "updated": "Course settings updated.",
+      "updateFailed": "Failed to update course settings."
+    },
+    "transferDialog": {
+      "description": "Select the member who should become the new course owner.",
+      "emptyDescription": "Add another member before transferring ownership.",
+      "emptyTitle": "No members available",
+      "memberLabel": "New owner",
+      "memberPlaceholder": "Choose a course member",
+      "title": "Transfer ownership"
+    },
+    "unarchiveDialog": {
+      "description": "Unarchive this course and make it active again?",
+      "title": "Unarchive course"
+    },
+    "visibility": {
+      "private": "Private",
+      "public": "Public"
+    }
+  },
   "Courses": {
     "AddLessonDialog": {
       "description": "Provide a title for the new lesson within this module.",
