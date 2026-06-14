@@ -55,7 +55,6 @@ for any tasks.).
 1. Put localized routes under `src/app/[locale]/` and use route groups like `(auth)`, `(dashboard)` and `(marketing)` to separate flows.
 2. Update `messages/en.json` and `messages/vi.json` for every user-facing string.
 3. Reuse `src/components/custom/dialog` and `src/components/custom/form` for dialog and form shells; use `lucide-react` for new icons.
-4. Treat literal escaped route folders like `\(dashboard\)` as invalid duplicates; files for `/english` belong under the real `(dashboard)` route group.
 
 ### 4.3 Adding Dependencies
 
@@ -90,7 +89,6 @@ for any tasks.).
 - **Tabular Lists**: Use the shared `Table` components for list-style layouts instead of custom row divs to keep alignment consistent.
 - **Server Layouts**: For async server layouts that only pass through children, return a fragment instead of raw children.
 - **Icons and Styling**: Use `lucide-react` for new icons and keep styling in the existing Tailwind utility style used throughout the app.
-- **Textarea Typography Overrides**: Shared `Textarea` includes a responsive `md:text-sm`; when a feature requires a larger reading size, set both the base `text-*` and matching `md:text-*` class so desktop does not silently shrink.
 - **Icon Availability**: When introducing a new `lucide-react` icon, verify the installed package exports it; use a generic available icon when brand-specific icons are absent.
 - **JSX Curly Braces**: Literally render double curly braces `{{` and `}}` in JSX text by quoting them, like `{'{{placeholder}}'}`, to prevent the JSX compiler from parsing them as JS object shorthand syntax.
 - **Research Citations**: For AI research/chat responses with numbered citations, derive source metadata from AI SDK `source-url` parts and web-search tool outputs in shared helpers, then render inline citation UI from that normalized source list instead of hardcoding source parsing in components.

@@ -13,6 +13,7 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -99,7 +100,7 @@ export function GrammarAnalysisDialog({
         showCloseButton={false}
       >
         <DialogHeader className="flex-row items-start justify-between gap-4 space-y-0">
-          <DialogTitle className="flex items-center gap-3 text-2xl">
+          <DialogTitle className="flex items-center gap-2.5 text-xl">
             <Lightbulb className="size-5 text-primary" />
             {t('title')}
           </DialogTitle>
@@ -116,28 +117,30 @@ export function GrammarAnalysisDialog({
 
         {/* Analyzed sentence */}
         <div className="rounded-lg border bg-muted/30 px-5 py-4">
-          <p className="mb-2 text-muted-foreground text-sm uppercase tracking-wide">
+          <p className="mb-2 text-muted-foreground text-xs uppercase tracking-wide">
             {t('analyzedSentence')}
           </p>
-          <p
-            id="grammar-analysis-desc"
-            className="text-foreground text-xl italic leading-relaxed"
-          >
-            <span>&ldquo;</span>
-            {highlightedSentenceParts.map((part, index) =>
-              part.isIssue ? (
-                <mark
-                  key={`${part.text}-${index}`}
-                  className="rounded bg-destructive/15 px-1 text-destructive"
-                >
-                  {part.text}
-                </mark>
-              ) : (
-                <span key={`${part.text}-${index}`}>{part.text}</span>
-              )
-            )}
-            <span>&rdquo;</span>
-          </p>
+          <DialogDescription asChild>
+            <p
+              id="grammar-analysis-desc"
+              className="text-foreground text-sm italic leading-relaxed"
+            >
+              <span>&ldquo;</span>
+              {highlightedSentenceParts.map((part, index) =>
+                part.isIssue ? (
+                  <mark
+                    key={`${part.text}-${index}`}
+                    className="rounded bg-destructive/15 px-1 text-destructive"
+                  >
+                    {part.text}
+                  </mark>
+                ) : (
+                  <span key={`${part.text}-${index}`}>{part.text}</span>
+                )
+              )}
+              <span>&rdquo;</span>
+            </p>
+          </DialogDescription>
         </div>
 
         {/* Loading */}
@@ -253,7 +256,7 @@ export function GrammarAnalysisDialog({
                   >
                     <span
                       className={cn(
-                        'shrink-0 rounded px-1.5 py-0.5 text-xs font-medium capitalize',
+                        'shrink-0 rounded px-1.5 py-0.5 font-medium text-xs capitalize',
                         issueTypeColors[issue.type] ??
                           'bg-muted text-muted-foreground'
                       )}
@@ -265,8 +268,8 @@ export function GrammarAnalysisDialog({
                         <span className="font-mono text-destructive line-through">
                           {issue.original}
                         </span>
-                        <ChevronRight className="size-3 text-muted-foreground shrink-0" />
-                        <span className="font-mono text-emerald-600 dark:text-emerald-400 font-medium">
+                        <ChevronRight className="size-3 shrink-0 text-muted-foreground" />
+                        <span className="font-medium font-mono text-emerald-600 dark:text-emerald-400">
                           {issue.suggestion}
                         </span>
                       </div>
@@ -322,7 +325,7 @@ export function GrammarAnalysisDialog({
             )}
 
             {/* Explanation */}
-            <div className="rounded-lg bg-primary/5 border border-primary/15 px-4 py-3">
+            <div className="rounded-lg border border-primary/15 bg-primary/5 px-4 py-3">
               <p className="text-foreground text-sm leading-relaxed">
                 {analysis.explanation}
               </p>
