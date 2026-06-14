@@ -7,11 +7,13 @@ import type { VocabularyItem } from '@/services/english/VocabularyService';
 interface VocabularyListProps {
   vocabularyList: VocabularyItem[];
   isAnalyzing: boolean;
+  hasAnalysisResult: boolean;
 }
 
 export function VocabularyList({
   vocabularyList,
   isAnalyzing,
+  hasAnalysisResult,
 }: VocabularyListProps) {
   const t = useTranslations('StudyReader');
 
@@ -69,7 +71,7 @@ export function VocabularyList({
                     <Volume2 className="size-3.5" />
                   </button>
                   <div>
-                    <span className="font-bold text-primary block">
+                    <span className="block font-bold text-primary">
                       {vocab.word}
                     </span>
                     <span className="text-muted-foreground text-sm">
@@ -78,7 +80,7 @@ export function VocabularyList({
                   </div>
                 </div>
                 {/* IPA */}
-                <span className="font-mono text-base text-muted-foreground self-center">
+                <span className="self-center font-mono text-base text-muted-foreground">
                   {vocab.ipa ?? '—'}
                 </span>
                 {/* Definition EN + VI */}
@@ -107,7 +109,9 @@ export function VocabularyList({
                 </p>
               </div>
             ) : (
-              <p className="text-muted-foreground text-sm">{t('emptyState')}</p>
+              <p className="text-muted-foreground text-sm">
+                {hasAnalysisResult ? t('emptyAnalyzedState') : t('emptyState')}
+              </p>
             )}
           </div>
         )}

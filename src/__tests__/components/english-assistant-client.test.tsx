@@ -16,6 +16,7 @@ const messages: Record<string, string> = {
   copySourceTooltip: 'Copy source text',
   copyTooltip: 'Copy translation',
   copiedTooltip: 'Copied',
+  emptyAnalyzedState: 'No key vocabulary found in this text.',
   emptyState: 'No vocabulary items yet.',
   english: 'English',
   exportPdf: 'Export PDF',
@@ -260,6 +261,61 @@ describe('EnglishAssistantClient', () => {
       screen.getByRole('heading', { name: 'Grammar Analysis' })
     ).toBeInTheDocument();
     expect(screen.getByText('No grammar analysis yet.')).toBeInTheDocument();
+  });
+
+  it('shows a completed-analysis empty state when no key vocabulary is found', async () => {
+    const user = userEvent.setup();
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+
+        if (url.includes('/api/v1/english/translate')) {
+          return new Response(
+            JSON.stringify({
+              translatedText: 'xxGrammarAnalysisDialogProps',
+            }),
+            {
+              status: 200,
+              headers: { 'Content-Type': 'application/json' },
+            }
+          );
+        }
+
+        if (url.includes('/api/v1/english/analyze')) {
+          return new Response(
+            JSON.stringify({
+              vocabulary: [],
+              sentences: ['xxGrammarAnalysisDialogProps'],
+            }),
+            {
+              status: 200,
+              headers: { 'Content-Type': 'application/json' },
+            }
+          );
+        }
+
+        return new Response(null, { status: 404 });
+      })
+    );
+
+    renderEnglishAssistantClient();
+
+    await user.type(
+      screen.getByRole('textbox', { name: 'Source Content' }),
+      'xxGrammarAnalysisDialogProps'
+    );
+    await user.click(
+      screen.getByRole('button', { name: 'Translate & Analyze' })
+    );
+
+    expect(
+      await screen.findByText('No key vocabulary found in this text.')
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText('No vocabulary items yet.')
+    ).not.toBeInTheDocument();
   });
 
   it('does not open the dictionary lookup when selecting Vietnamese source text', async () => {

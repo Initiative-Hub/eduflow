@@ -60,6 +60,7 @@ export function EnglishAssistantClient() {
       />
 
       <VocabularyList
+        hasAnalysisResult={assistant.hasVocabularyAnalysisResult}
         isAnalyzing={assistant.isAnalyzing}
         vocabularyList={assistant.vocabularyList}
       />

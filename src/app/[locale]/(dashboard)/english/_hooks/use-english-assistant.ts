@@ -298,6 +298,7 @@ export function useEnglishAssistantController() {
       lookupActions: translationPanelLookupActions,
     },
     vocabularyList: analyzeEnglishMutation.data?.vocabulary ?? [],
+    hasVocabularyAnalysisResult: Boolean(analyzeEnglishMutation.data),
     isAnalyzing,
   };
 }

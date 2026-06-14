@@ -1588,6 +1588,7 @@
     "copySourceTooltip": "Sao chép văn bản gốc",
     "copyTooltip": "Sao chép bản dịch",
     "description": "Được tạo bởi AI để giúp bạn hiểu bài đọc này.",
+    "emptyAnalyzedState": "Không tìm thấy từ vựng trọng tâm trong văn bản này.",
     "emptyState": "Chưa có từ vựng. Dán văn bản tiếng Anh phía trên và nhấn Dịch & Phân tích.",
     "english": "Tiếng Anh",
     "exportPdf": "Xuất PDF",
