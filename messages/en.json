@@ -795,7 +795,19 @@
     "LessonHeader": {
       "edit": "Edit Lesson",
       "lesson": "Lesson",
-      "modules": "Modules"
+      "modules": "Modules",
+      "preview": "Preview",
+      "presentation": "Presentation Mode"
+    },
+    "LessonPresentation": {
+      "title": "Presentation Mode",
+      "close": "Exit Presentation",
+      "fullscreen": "Toggle Fullscreen",
+      "previous": "Previous",
+      "next": "Next",
+      "slideProgress": "Slide {current} of {total}",
+      "keyboardTip": "Use Left/Right arrows or Space to navigate, ESC to exit.",
+      "empty": "No content to display in this slide."
     },
     "LessonOutline": {
       "addFirstModule": "Add your first module",

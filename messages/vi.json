@@ -795,7 +795,19 @@
     "LessonHeader": {
       "edit": "Chỉnh sửa bài học",
       "lesson": "Bài học",
-      "modules": "Mô-đun"
+      "modules": "Mô-đun",
+      "preview": "Xem trước",
+      "presentation": "Trình chiếu"
+    },
+    "LessonPresentation": {
+      "title": "Chế độ trình chiếu",
+      "close": "Thoát trình chiếu",
+      "fullscreen": "Bật/Tắt toàn màn hình",
+      "previous": "Trang trước",
+      "next": "Trang sau",
+      "slideProgress": "Trang {current} trên {total}",
+      "keyboardTip": "Sử dụng phím Mũi tên trái/phải hoặc phím Cách để di chuyển, ESC để thoát.",
+      "empty": "Không có nội dung để hiển thị ở trang này."
     },
     "LessonOutline": {
       "addFirstModule": "Thêm mô-đun đầu tiên của bạn",
