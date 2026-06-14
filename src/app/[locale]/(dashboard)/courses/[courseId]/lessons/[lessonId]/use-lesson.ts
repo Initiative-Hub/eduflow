@@ -1,9 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { apiClient } from '@/lib/api/api-client';
 import type { TiptapDocument } from '@/utils/lesson-content';
 import type { Lesson } from '../../use-modules';
+import { lessonService } from './lesson.service';
 
 /**
  * Fetches the full lesson record (including content) for a given lessonId.
@@ -13,7 +13,7 @@ import type { Lesson } from '../../use-modules';
 export function useLesson(lessonId: string) {
   const query = useQuery({
     queryKey: ['lesson', lessonId],
-    queryFn: () => apiClient.get<Lesson>(`/v1/lessons/${lessonId}`),
+    queryFn: () => lessonService.getLesson(lessonId),
     enabled: !!lessonId,
   });
 
@@ -38,11 +38,7 @@ export function useUpdateLesson(courseId: string) {
       lessonId: string;
       title?: string;
       content?: TiptapDocument;
-    }) =>
-      apiClient.patch<Lesson>(`/v1/lessons/${data.lessonId}`, {
-        title: data.title,
-        content: data.content,
-      }),
+    }) => lessonService.updateLesson(data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['modules', courseId] });
       queryClient.invalidateQueries({
@@ -58,5 +54,24 @@ export function useUpdateLesson(courseId: string) {
   return {
     isUpdatingLesson: mutation.isPending,
     handleUpdateLesson: mutation.mutate,
+  };
+}
+
+/**
+ * Mutation hook for planning presentation slides.
+ */
+export function usePlanPresentation() {
+  const mutation = useMutation({
+    mutationFn: (data: {
+      lessonId: string;
+      duration: string;
+      context?: string;
+    }) => lessonService.planPresentation(data),
+  });
+
+  return {
+    planPresentation: mutation.mutateAsync,
+    isPlanning: mutation.isPending,
+    error: mutation.error,
   };
 }

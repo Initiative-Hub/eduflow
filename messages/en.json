@@ -830,7 +830,13 @@
       "duration45": "45 minutes (Detailed class)",
       "duration60": "60 minutes (Comprehensive lecture)",
       "duration90": "90 minutes (Detailed workshop)",
-      "duration120": "120 minutes (2-hour masterclass)"
+      "duration120": "120 minutes (2-hour masterclass)",
+      "referencesLayout": "References & Sources",
+      "referenceSources": "Reference Sources",
+      "addReference": "Add Reference",
+      "titlePlaceholder": "Title",
+      "urlPlaceholder": "URL",
+      "summaryPlaceholder": "Summary (optional)"
     },
     "LessonOutline": {
       "addFirstModule": "Add your first module",

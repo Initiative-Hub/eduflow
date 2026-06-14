@@ -1,17 +1,5 @@
 'use client';
 
-import type { JSONContent } from '@tiptap/core';
-import { Highlight } from '@tiptap/extension-highlight';
-import { Image } from '@tiptap/extension-image';
-import { TaskItem, TaskList } from '@tiptap/extension-list';
-import { Subscript } from '@tiptap/extension-subscript';
-import { Superscript } from '@tiptap/extension-superscript';
-import { TextAlign } from '@tiptap/extension-text-align';
-import { Typography } from '@tiptap/extension-typography';
-import { Youtube } from '@tiptap/extension-youtube';
-import { Selection } from '@tiptap/extensions';
-import { EditorContent, useEditor } from '@tiptap/react';
-import { StarterKit } from '@tiptap/starter-kit';
 import {
   ArrowRight,
   ChevronLeft,
@@ -24,8 +12,6 @@ import {
   X,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { HorizontalRule } from '@/components/tiptap-node/horizontal-rule-node/horizontal-rule-node-extension';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -39,20 +25,13 @@ import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import type { TiptapDocument } from '@/utils/lesson-content';
+import { usePresentation, type PlannedSlide } from '../use-presentation';
 
 interface LessonPresentationProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
   content: TiptapDocument;
-}
-
-type Step = 'input' | 'planning' | 'planned' | 'generating' | 'generated';
-
-interface PlannedSlide {
-  id: string;
-  title: string;
-  bullets: string[];
 }
 
 export function LessonPresentation({
@@ -62,357 +41,1074 @@ export function LessonPresentation({
   content,
 }: LessonPresentationProps) {
   const t = useTranslations('Courses.LessonPresentation');
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const {
+    step,
+    setStep,
+    instructions,
+    setInstructions,
+    duration,
+    setDuration,
+    plannedSlides,
+    setPlannedSlides,
+    loaderStep,
+    currentSlideIndex,
+    setCurrentSlideIndex,
+    isFullscreen,
+    containerRef,
+    toggleFullscreen,
+    handleStartPlanning,
+    handleStartGenerating,
+    updateSlideTitle,
+    changeSlideLayout,
+    deleteSlide,
+    addSlide,
+    searchSources,
+    searchQueries,
+    streamingStatus,
+  } = usePresentation({ title, content, isOpen, onClose });
 
-  // State Machine
-  const [step, setStep] = useState<Step>('input');
-  const [instructions, setInstructions] = useState('');
-  const [duration, setDuration] = useState('15');
-  const [plannedSlides, setPlannedSlides] = useState<PlannedSlide[]>([]);
-  const [loaderStep, setLoaderStep] = useState(0);
-  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+  // Dynamic layout renderer for presentation view mode
+  const renderSlideContent = (slide: PlannedSlide) => {
+    const { layoutType, slideTitle, bindings = {} } = slide;
 
-  // Dynamic Dynamic Outlines from Lesson Content
-  const generateOutlines = useCallback(
-    (userPrompt: string, slideDuration: string): PlannedSlide[] => {
-      if (!content || !content.content) return [];
+    switch (layoutType) {
+      case 'TITLE_SLIDE':
+        return (
+          <div className="flex h-full min-h-[30vh] flex-col items-center justify-center py-6 text-center">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.08),transparent_60%)]" />
+            <h1 className="mb-6 bg-gradient-to-r from-blue-400 via-indigo-200 to-purple-400 bg-clip-text font-extrabold text-3xl text-transparent tracking-tight drop-shadow-md md:text-4xl lg:text-5xl">
+              {slideTitle}
+            </h1>
+            {bindings.subtitle && (
+              <p className="mb-8 max-w-2xl font-medium text-base text-slate-300 leading-relaxed md:text-lg">
+                {bindings.subtitle}
+              </p>
+            )}
+            {bindings.author && (
+              <div className="inline-flex items-center gap-2 rounded-full border border-slate-800 bg-slate-900/60 px-4 py-1.5 font-semibold text-primary text-xs uppercase tracking-wide">
+                {bindings.author}
+              </div>
+            )}
+          </div>
+        );
 
-      let maxSlides = 5;
-      if (slideDuration === '5') maxSlides = 3;
-      else if (slideDuration === '10') maxSlides = 4;
-      else if (slideDuration === '15') maxSlides = 5;
-      else if (slideDuration === '30') maxSlides = 8;
-      else if (slideDuration === '45') maxSlides = 10;
-      else if (slideDuration === '60') maxSlides = 12;
-      else if (slideDuration === '90') maxSlides = 16;
-      else if (slideDuration === '120') maxSlides = 20;
+      case 'AGENDA_OUTLINE':
+        return (
+          <div className="w-full py-2 text-left">
+            <h2 className="mb-6 border-slate-800 border-b pb-3 font-extrabold text-slate-100 text-xl md:text-2xl">
+              {slideTitle}
+            </h2>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              {Array.isArray(bindings.items) &&
+                bindings.items.map((item: string, index: number) => (
+                  <div
+                    key={index}
+                    className="flex items-center gap-4 rounded-xl border border-slate-800/80 bg-slate-950/45 p-4 transition-colors hover:border-slate-700"
+                  >
+                    <span className="font-extrabold text-lg text-primary/80">
+                      {(index + 1).toString().padStart(2, '0')}
+                    </span>
+                    <span className="font-semibold text-slate-200 text-sm leading-snug">
+                      {item}
+                    </span>
+                  </div>
+                ))}
+            </div>
+          </div>
+        );
 
-      const headings = content.content
-        .filter((node) => node.type === 'heading')
-        .map((node) => node.content?.map((c) => c.text).join('') || '')
-        .filter(Boolean);
+      case 'SECTION_HEADER':
+        return (
+          <div className="flex h-full min-h-[30vh] flex-col items-center justify-center py-8 text-center">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(168,85,247,0.08),transparent_60%)]" />
+            <span className="mb-4 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 font-extrabold text-[10px] text-primary uppercase tracking-widest">
+              Next Module
+            </span>
+            <h1 className="mb-4 font-extrabold text-2xl text-slate-100 tracking-wide md:text-4xl">
+              {slideTitle}
+            </h1>
+            {bindings.sub_module_name && (
+              <div className="mt-2 font-semibold text-lg text-slate-400 italic">
+                {bindings.sub_module_name}
+              </div>
+            )}
+          </div>
+        );
 
-      const list: PlannedSlide[] = [];
+      case 'TITLE_BULLETS':
+        return (
+          <div className="w-full py-2 text-left">
+            <h2 className="mb-6 border-slate-800 border-b pb-3 font-extrabold text-slate-100 text-xl md:text-2xl">
+              {slideTitle}
+            </h2>
+            <ul className="max-w-3xl space-y-4">
+              {Array.isArray(bindings.bullets) &&
+                bindings.bullets.map((bullet: string, index: number) => (
+                  <li
+                    key={index}
+                    className="flex items-start gap-3 text-slate-300"
+                  >
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-primary/10 font-bold text-primary text-xs">
+                      ✓
+                    </span>
+                    <span className="font-medium text-sm leading-relaxed md:text-base">
+                      {bullet}
+                    </span>
+                  </li>
+                ))}
+            </ul>
+          </div>
+        );
 
-      // Title Slide
-      list.push({
-        id: 'slide-title',
-        title: title,
-        bullets: [
-          'Presentation Title Slide',
-          userPrompt
-            ? `Guidelines: "${userPrompt}"`
-            : 'Overview of the lesson concepts',
-          `Planned Duration: ${slideDuration} minutes`,
-        ],
-      });
+      case 'TWO_COLUMN_SPLIT':
+        return (
+          <div className="w-full py-2 text-left">
+            <h2 className="mb-6 border-slate-800 border-b pb-3 font-extrabold text-slate-100 text-xl md:text-2xl">
+              {slideTitle}
+            </h2>
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <div className="rounded-2xl border border-slate-800 bg-slate-950/30 p-5">
+                <h3 className="mb-3 border-slate-800 border-b pb-2 font-bold text-slate-200 text-sm">
+                  {bindings.left_col_title || 'Column A'}
+                </h3>
+                <ul className="space-y-2.5">
+                  {Array.isArray(bindings.left_col_text) &&
+                    bindings.left_col_text.map(
+                      (bullet: string, index: number) => (
+                        <li
+                          key={index}
+                          className="flex items-start gap-2 text-slate-300 text-xs"
+                        >
+                          <span className="mt-0.5 text-primary">•</span>
+                          <span className="font-medium leading-relaxed">
+                            {bullet}
+                          </span>
+                        </li>
+                      )
+                    )}
+                </ul>
+              </div>
+              <div className="rounded-2xl border border-slate-800 bg-slate-950/30 p-5">
+                <h3 className="mb-3 border-slate-800 border-b pb-2 font-bold text-slate-200 text-sm">
+                  {bindings.right_col_title || 'Column B'}
+                </h3>
+                <ul className="space-y-2.5">
+                  {Array.isArray(bindings.right_col_text) &&
+                    bindings.right_col_text.map(
+                      (bullet: string, index: number) => (
+                        <li
+                          key={index}
+                          className="flex items-start gap-2 text-slate-300 text-xs"
+                        >
+                          <span className="mt-0.5 text-indigo-400">•</span>
+                          <span className="font-medium leading-relaxed">
+                            {bullet}
+                          </span>
+                        </li>
+                      )
+                    )}
+                </ul>
+              </div>
+            </div>
+          </div>
+        );
 
-      const availableHeadingSlots = Math.max(1, maxSlides - 2);
+      case 'BIG_QUOTE_TAKEAWAY':
+        return (
+          <div className="mx-auto flex w-full max-w-2xl flex-col items-center justify-center py-6 text-center">
+            <span className="select-none font-serif text-4xl text-primary/30 leading-none">
+              “
+            </span>
+            <blockquote className="-mt-3 mb-6 font-medium text-lg text-slate-100 italic leading-relaxed md:text-xl lg:text-2xl">
+              {bindings.quote}
+            </blockquote>
+            <span className="-mt-3 select-none font-serif text-4xl text-primary/30 leading-none">
+              ”
+            </span>
+            {bindings.author_or_source && (
+              <cite className="block border-slate-800 border-t px-6 pt-3 font-bold text-[10px] text-slate-400 uppercase not-italic tracking-widest">
+                {bindings.author_or_source}
+              </cite>
+            )}
+          </div>
+        );
 
-      if (headings.length > 0) {
-        const slicedHeadings = headings.slice(0, availableHeadingSlots);
-        slicedHeadings.forEach((heading, idx) => {
-          list.push({
-            id: `slide-heading-${idx}`,
-            title: heading,
-            bullets: [
-              `Key point: ${heading}`,
-              'Detailed discussion and practical context',
-              'Review questions / self-reflection',
-            ],
-          });
-        });
+      case 'KPI_BIG_NUMBER':
+        return (
+          <div className="w-full py-2 text-left">
+            <h2 className="mb-8 border-slate-800 border-b pb-3 font-extrabold text-slate-100 text-xl md:text-2xl">
+              {slideTitle}
+            </h2>
+            <div className="flex flex-wrap justify-around gap-6">
+              {Array.isArray(bindings.metrics) &&
+                bindings.metrics.map((metric: any, index: number) => (
+                  <div
+                    key={index}
+                    className="min-w-[150px] flex-1 rounded-2xl border border-slate-800 bg-slate-950/40 p-5 text-center shadow-inner"
+                  >
+                    <div className="mb-2 bg-gradient-to-r from-emerald-400 to-teal-200 bg-clip-text font-extrabold text-3xl text-transparent md:text-5xl">
+                      {metric.value}
+                    </div>
+                    <div className="font-bold text-slate-400 text-xs uppercase tracking-wider">
+                      {metric.label}
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </div>
+        );
 
-        // Fill remaining slots
-        while (list.length < maxSlides - 1) {
-          const idx = list.length;
-          list.push({
-            id: `slide-extra-${idx}`,
-            title: `Supplemental Concept ${idx - slicedHeadings.length}`,
-            bullets: [
-              'Additional insight regarding this topic',
-              'Context and key takeaways',
-              'Exercise or reflection point',
-            ],
-          });
-        }
-      } else {
-        const fallbacks = [
-          {
-            title: 'Core Objectives',
-            bullets: [
-              'Understand key theoretical concepts',
-              'Analyze practical implementation strategies',
-              'Review real-world examples and data',
-            ],
-          },
-          {
-            title: 'Key Mechanics',
-            bullets: [
-              'Detailed step-by-step breakdown',
-              'Interactive coding/design exercises',
-              'Common mistakes and how to solve them',
-            ],
-          },
-          {
-            title: 'Advanced Applications',
-            bullets: [
-              'Complex use cases and scaling',
-              'Performance optimizations and safety measures',
-              'Integration guidelines and ecosystem tools',
-            ],
-          },
-          {
-            title: 'Evaluation Criteria',
-            bullets: [
-              'Self-assessment guidelines',
-              'Evaluation metrics and benchmarks',
-              'Rubrics and verification procedures',
-            ],
-          },
-        ];
+      case 'CHART_INSIGHT':
+        return (
+          <div className="w-full py-2 text-left">
+            <h2 className="mb-6 border-slate-800 border-b pb-3 font-extrabold text-slate-100 text-xl md:text-2xl">
+              {slideTitle}
+            </h2>
+            <div className="grid grid-cols-1 items-center gap-6 md:grid-cols-5">
+              <div className="flex h-40 flex-col justify-center rounded-2xl border border-slate-800 bg-slate-950/60 p-5 md:col-span-3">
+                <span className="mb-3 block font-bold text-[10px] text-slate-500 uppercase tracking-wider">
+                  Data Projection ({bindings.chart_type || 'bar'} chart)
+                </span>
+                <div className="flex h-20 items-end justify-around gap-2">
+                  {Array.isArray(bindings.chart_data) &&
+                    bindings.chart_data.map((item: any, idx: number) => {
+                      const maxVal = Math.max(
+                        ...bindings.chart_data.map(
+                          (d: any) => Number(d.value) || 1
+                        ),
+                        1
+                      );
+                      const heightPct = Math.min(
+                        100,
+                        Math.max(10, ((Number(item.value) || 0) / maxVal) * 100)
+                      );
+                      return (
+                        <div
+                          key={idx}
+                          className="flex flex-1 flex-col items-center"
+                        >
+                          <div
+                            className="w-full max-w-[20px] rounded-t bg-gradient-to-t from-primary/40 to-primary transition-all duration-500"
+                            style={{ height: `${heightPct}%` }}
+                          />
+                          <span className="mt-1.5 max-w-full truncate font-bold text-[9px] text-slate-500">
+                            {item.label}
+                          </span>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+              <div className="md:col-span-2">
+                <div className="rounded-xl border border-slate-800 border-dashed bg-slate-900/10 p-4">
+                  <span className="mb-1.5 block font-extrabold text-[10px] text-primary uppercase tracking-widest">
+                    Strategic Insight
+                  </span>
+                  <p className="font-medium text-slate-300 text-xs leading-relaxed md:text-sm">
+                    {bindings.insight_text}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
 
-        const count = Math.min(availableHeadingSlots, fallbacks.length);
-        for (let i = 0; i < count; i++) {
-          list.push({
-            id: `slide-fallback-${i}`,
-            title: fallbacks[i].title,
-            bullets: fallbacks[i].bullets,
-          });
-        }
-      }
+      case 'DATA_TABLE':
+        return (
+          <div className="w-full py-2 text-left">
+            <h2 className="mb-6 border-slate-800 border-b pb-3 font-extrabold text-slate-100 text-xl md:text-2xl">
+              {slideTitle}
+            </h2>
+            <div className="overflow-x-auto rounded-xl border border-slate-800">
+              <table className="w-full border-collapse text-left text-slate-300 text-xs">
+                <thead className="bg-slate-950 font-bold text-[10px] text-slate-200 uppercase tracking-wider">
+                  <tr>
+                    {Array.isArray(bindings.headers) &&
+                      bindings.headers.map((h: string, idx: number) => (
+                        <th
+                          key={idx}
+                          className="border-slate-800 border-b px-4 py-2.5"
+                        >
+                          {h}
+                        </th>
+                      ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800 bg-slate-900/10">
+                  {Array.isArray(bindings.rows) &&
+                    bindings.rows.map((row: string[], idx: number) => (
+                      <tr
+                        key={idx}
+                        className="transition-colors hover:bg-slate-800/20"
+                      >
+                        {row.map((cell: string, cellIdx: number) => (
+                          <td key={cellIdx} className="px-4 py-2.5">
+                            {cell}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
 
-      // Conclusion Slide
-      list.push({
-        id: 'slide-conclusion',
-        title: 'Summary & Wrap Up',
-        bullets: [
-          'Recap of primary learning objectives',
-          `Wrap-up for a ${slideDuration}-minute presentation`,
-          'Q&A / Discussion guidelines',
-        ],
-      });
+      case 'MEDIA_TEXT':
+        return (
+          <div className="w-full py-2 text-left">
+            <h2 className="mb-6 border-slate-800 border-b pb-3 font-extrabold text-slate-100 text-xl md:text-2xl">
+              {slideTitle}
+            </h2>
+            <div className="grid grid-cols-1 items-center gap-6 md:grid-cols-2">
+              <div className="relative flex h-40 flex-col items-center justify-center overflow-hidden rounded-2xl border border-slate-800 border-dashed bg-slate-950/60 p-5 text-center">
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/50 to-transparent" />
+                <span className="z-10 mb-1 font-bold text-[10px] text-primary/80 uppercase tracking-widest">
+                  Suggested Visual Asset
+                </span>
+                <p className="z-10 max-w-xs font-medium text-[10px] text-slate-400 leading-relaxed">
+                  "{bindings.image_prompt_description}"
+                </p>
+                <div className="z-10 mt-3 rounded-full border border-slate-800 bg-slate-900/80 px-3 py-0.5 font-semibold text-[9px] text-slate-500 uppercase tracking-wider">
+                  AI Image Generator Prompt
+                </div>
+              </div>
+              <div className="font-medium text-slate-300 text-xs leading-relaxed md:text-sm">
+                {bindings.body_text}
+              </div>
+            </div>
+          </div>
+        );
 
-      return list;
-    },
-    [content, title]
-  );
+      case 'TIMELINE_MILESTONES':
+        return (
+          <div className="w-full py-2 text-left">
+            <h2 className="mb-6 border-slate-800 border-b pb-3 font-extrabold text-slate-100 text-xl md:text-2xl">
+              {slideTitle}
+            </h2>
+            <div className="relative ml-2 space-y-4 border-primary/20 border-l-2 pl-5">
+              {Array.isArray(bindings.events) &&
+                bindings.events.map((event: any, index: number) => (
+                  <div key={index} className="relative">
+                    <span className="absolute top-1.5 -left-[27px] flex h-3.5 w-3.5 items-center justify-center rounded-full border border-primary bg-slate-950 text-primary" />
+                    <div>
+                      <span className="mb-0.5 inline-block rounded border border-primary/20 bg-primary/10 px-1.5 py-0.5 font-extrabold text-[9px] text-primary uppercase">
+                        {event.date_or_step}
+                      </span>
+                      <p className="font-semibold text-slate-200 text-xs leading-snug">
+                        {event.description}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </div>
+        );
 
-  // Planning trigger
-  const handleStartPlanning = () => {
-    setStep('planning');
-    setLoaderStep(0);
+      case 'STEP_BY_STEP':
+        return (
+          <div className="w-full py-2 text-left">
+            <h2 className="mb-6 border-slate-800 border-b pb-3 font-extrabold text-slate-100 text-xl md:text-2xl">
+              {slideTitle}
+            </h2>
+            <div className="grid grid-cols-1 gap-2.5">
+              {Array.isArray(bindings.steps) &&
+                bindings.steps.map((stepItem: string, index: number) => (
+                  <div
+                    key={index}
+                    className="flex items-center gap-3.5 rounded-xl border border-slate-800/80 bg-slate-950/45 p-3 transition-colors hover:border-slate-700"
+                  >
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-primary/10 font-extrabold text-primary text-xs">
+                      {index + 1}
+                    </span>
+                    <span className="font-semibold text-slate-200 text-xs leading-snug">
+                      {stepItem}
+                    </span>
+                  </div>
+                ))}
+            </div>
+          </div>
+        );
 
-    // Simulate steps of the planning route
-    const t1 = setTimeout(() => setLoaderStep(1), 500);
-    const t2 = setTimeout(() => setLoaderStep(2), 1000);
-    const t3 = setTimeout(() => setLoaderStep(3), 1500);
+      case 'CONCLUSION_SUMMARY':
+        return (
+          <div className="w-full py-2 text-left">
+            <h2 className="mb-6 border-slate-800 border-b pb-3 font-extrabold text-slate-100 text-xl md:text-2xl">
+              {slideTitle}
+            </h2>
+            <div className="max-w-3xl space-y-3">
+              {Array.isArray(bindings.summary_points) &&
+                bindings.summary_points.map((point: string, index: number) => (
+                  <div
+                    key={index}
+                    className="flex items-start gap-3 rounded-xl border border-slate-800 bg-slate-950/20 p-3.5"
+                  >
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-emerald-500/20 bg-emerald-500/10 font-bold text-emerald-400 text-xs">
+                      ✓
+                    </span>
+                    <span className="font-semibold text-slate-300 text-sm leading-relaxed">
+                      {point}
+                    </span>
+                  </div>
+                ))}
+            </div>
+          </div>
+        );
 
-    const t4 = setTimeout(() => {
-      const outlines = generateOutlines(instructions, duration);
-      setPlannedSlides(outlines);
-      setStep('planned');
-    }, 2000);
+      case 'CALL_TO_ACTION':
+        return (
+          <div className="w-full py-2 text-left">
+            <h2 className="mb-6 border-slate-800 border-b pb-3 font-extrabold text-slate-100 text-xl md:text-2xl">
+              {slideTitle}
+            </h2>
+            <div className="rounded-2xl border border-amber-500/10 bg-amber-500/5 p-5 md:p-6">
+              <span className="mb-2.5 block font-extrabold text-[10px] text-amber-400 uppercase tracking-widest">
+                Assignment / Next Steps
+              </span>
+              <ul className="space-y-3">
+                {Array.isArray(bindings.action_items) &&
+                  bindings.action_items.map((item: string, index: number) => (
+                    <li
+                      key={index}
+                      className="flex items-start gap-3 text-slate-300"
+                    >
+                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border border-slate-800 bg-slate-950 font-bold text-amber-400 text-xs">
+                        [ ]
+                      </span>
+                      <span className="font-semibold text-sm leading-relaxed">
+                        {item}
+                      </span>
+                    </li>
+                  ))}
+              </ul>
+            </div>
+          </div>
+        );
 
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
-      clearTimeout(t4);
-    };
+      case 'REFERENCES_LIST':
+        return (
+          <div className="w-full py-2 text-left">
+            <h2 className="mb-6 border-slate-800 border-b pb-3 font-extrabold text-slate-100 text-xl md:text-2xl">
+              {slideTitle}
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[50vh] overflow-y-auto pr-1">
+              {Array.isArray(bindings.sources) &&
+                bindings.sources.map(
+                  (
+                    source: { title: string; url: string; summary?: string },
+                    index: number
+                  ) => (
+                    <a
+                      key={index}
+                      href={source.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex flex-col gap-2 rounded-xl border border-slate-800 bg-slate-950/45 p-4 transition-all duration-200 hover:border-emerald-500/30 hover:bg-slate-900/50 hover:shadow-lg hover:shadow-emerald-500/5 group"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-emerald-500/20 bg-emerald-500/10 font-bold text-emerald-400 text-xs">
+                          {index + 1}
+                        </span>
+                        <span className="font-bold text-slate-200 text-sm leading-snug group-hover:text-emerald-400 transition-colors line-clamp-1">
+                          {source.title || 'Untitled Reference'}
+                        </span>
+                      </div>
+                      {source.summary && (
+                        <p className="font-normal text-slate-400 text-xs leading-relaxed line-clamp-2 pl-8">
+                          {source.summary}
+                        </p>
+                      )}
+                      <span className="text-[10px] text-slate-500 truncate pl-8 group-hover:text-slate-400 transition-colors font-mono">
+                        {source.url}
+                      </span>
+                    </a>
+                  )
+                )}
+            </div>
+          </div>
+        );
+
+      case 'QA_CONTACT':
+        return (
+          <div className="flex h-full min-h-[30vh] flex-col items-center justify-center py-8 text-center">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.08),transparent_60%)]" />
+            <h1 className="mb-6 bg-gradient-to-r from-emerald-400 via-teal-200 to-blue-400 bg-clip-text font-extrabold text-3xl text-transparent tracking-tight md:text-4xl">
+              Questions & Answers
+            </h1>
+            {bindings.footer_note && (
+              <p className="mb-4 max-w-xl font-medium text-slate-300 text-sm italic leading-relaxed md:text-base">
+                "{bindings.footer_note}"
+              </p>
+            )}
+            <div className="mt-4 flex items-center gap-2 rounded-full border border-slate-800 bg-slate-900 px-3 py-1 font-semibold text-[9px] text-slate-400 uppercase tracking-wider">
+              Thank you for participating!
+            </div>
+          </div>
+        );
+
+      default:
+        return (
+          <div className="py-2 text-left">
+            <h2 className="mb-4 font-extrabold text-lg text-slate-100">
+              {slideTitle}
+            </h2>
+            <pre className="overflow-auto rounded-xl border border-slate-800 bg-slate-950 p-4 text-slate-400 text-xs">
+              {JSON.stringify(bindings, null, 2)}
+            </pre>
+          </div>
+        );
+    }
   };
 
-  // Outline updates
-  const updateSlideTitle = (index: number, newTitle: string) => {
-    setPlannedSlides((prev) =>
-      prev.map((slide, idx) =>
-        idx === index ? { ...slide, title: newTitle } : slide
-      )
-    );
-  };
+  // Dynamic layout bindings form editor in planned mode
+  const renderBindingsEditor = (slide: PlannedSlide, idx: number) => {
+    const { layoutType, bindings = {} } = slide;
 
-  const updateSlideBullets = (index: number, rawText: string) => {
-    setPlannedSlides((prev) =>
-      prev.map((slide, idx) => {
-        if (idx === index) {
-          return {
-            ...slide,
-            bullets: rawText.split('\n'),
-          };
-        }
-        return slide;
-      })
-    );
-  };
-
-  const deleteSlide = (index: number) => {
-    setPlannedSlides((prev) => prev.filter((_, idx) => idx !== index));
-  };
-
-  const addSlide = () => {
-    setPlannedSlides((prev) => [
-      ...prev,
-      {
-        id: `slide-custom-${Date.now()}`,
-        title: 'New Slide Title',
-        bullets: ['First bullet point outline', 'Second bullet point outline'],
-      },
-    ]);
-  };
-
-  // Generation trigger
-  const handleStartGenerating = () => {
-    setStep('generating');
-    setLoaderStep(0);
-
-    const t1 = setTimeout(() => setLoaderStep(1), 600);
-    const t2 = setTimeout(() => setLoaderStep(2), 1200);
-
-    const t3 = setTimeout(() => {
-      setStep('generated');
-      setCurrentSlideIndex(0);
-    }, 1800);
-
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
-    };
-  };
-
-  // Map planned slides content structure directly into Tiptap slides JSON format
-  const slides = useMemo(() => {
-    if (step === 'generated' || step === 'generating') {
-      return plannedSlides.map((slide) => {
-        const contentNodes: JSONContent[] = [
-          {
-            type: 'heading',
-            attrs: { level: 2 },
-            content: [{ type: 'text', text: slide.title }],
-          },
-        ];
-        if (slide.bullets && slide.bullets.length > 0) {
-          const listItems = slide.bullets
-            .map((b) => b.trim())
-            .filter(Boolean)
-            .map((bullet) => ({
-              type: 'listItem',
-              content: [
-                {
-                  type: 'paragraph',
-                  content: [{ type: 'text', text: bullet }],
+    const updateBinding = (key: string, value: any) => {
+      setPlannedSlides((prev) =>
+        prev.map((s, i) =>
+          i === idx
+            ? {
+                ...s,
+                bindings: {
+                  ...s.bindings,
+                  [key]: value,
                 },
-              ],
-            }));
-          if (listItems.length > 0) {
-            contentNodes.push({
-              type: 'bulletList',
-              content: listItems,
-            });
-          }
-        }
-        return contentNodes;
-      });
-    }
-
-    return [[]];
-  }, [step, plannedSlides]);
-
-  const editor = useEditor({
-    immediatelyRender: false,
-    editable: false,
-    editorProps: {
-      attributes: {
-        class:
-          'lesson-tiptap-editor ProseMirror max-w-none text-slate-100 outline-none',
-      },
-    },
-    extensions: [
-      StarterKit.configure({
-        horizontalRule: false,
-        link: {
-          openOnClick: true,
-          enableClickSelection: true,
-        },
-      }),
-      HorizontalRule,
-      TextAlign.configure({ types: ['heading', 'paragraph'] }),
-      TaskList,
-      TaskItem.configure({ nested: true }),
-      Highlight.configure({ multicolor: true }),
-      Image,
-      Youtube.configure({
-        addPasteHandler: true,
-      }),
-      Typography,
-      Superscript,
-      Subscript,
-      Selection,
-    ],
-    content: {
-      type: 'doc',
-      content: slides[0] || [],
-    },
-  });
-
-  // Sync editor content with active slide
-  useEffect(() => {
-    if (editor && slides[currentSlideIndex]) {
-      editor.commands.setContent({
-        type: 'doc',
-        content: slides[currentSlideIndex],
-      });
-    }
-  }, [editor, currentSlideIndex, slides]);
-
-  // Fullscreen support
-  const toggleFullscreen = useCallback(() => {
-    if (!containerRef.current) return;
-    if (!document.fullscreenElement) {
-      containerRef.current.requestFullscreen().catch((err) => {
-        console.error('Failed to enter fullscreen mode:', err);
-      });
-    } else {
-      document.exitFullscreen().catch((err) => {
-        console.error('Failed to exit fullscreen mode:', err);
-      });
-    }
-  }, []);
-
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
+              }
+            : s
+        )
+      );
     };
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
-    };
-  }, []);
 
-  // Keyboard navigation
-  useEffect(() => {
-    if (!isOpen || step !== 'generated') return;
+    switch (layoutType) {
+      case 'TITLE_SLIDE':
+        return (
+          <div className="mt-2 grid grid-cols-1 gap-3 md:grid-cols-2">
+            <div className="flex flex-col gap-1.5">
+              <span className="font-bold text-[10px] text-slate-500 uppercase tracking-wider">
+                Subtitle
+              </span>
+              <Input
+                value={bindings.subtitle || ''}
+                onChange={(e) => updateBinding('subtitle', e.target.value)}
+                placeholder="Slide Subtitle"
+                className="h-10 rounded-xl border-slate-800 bg-slate-950 px-4 text-slate-100 text-sm focus:border-primary focus:ring-1 focus:ring-primary"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <span className="font-bold text-[10px] text-slate-500 uppercase tracking-wider">
+                Author / Info
+              </span>
+              <Input
+                value={bindings.author || ''}
+                onChange={(e) => updateBinding('author', e.target.value)}
+                placeholder="Author / Date info"
+                className="h-10 rounded-xl border-slate-800 bg-slate-950 px-4 text-slate-100 text-sm focus:border-primary focus:ring-1 focus:ring-primary"
+              />
+            </div>
+          </div>
+        );
 
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight' || e.key === ' ') {
-        e.preventDefault();
-        setCurrentSlideIndex((prev) => Math.min(prev + 1, slides.length - 1));
-      } else if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        setCurrentSlideIndex((prev) => Math.max(prev - 1, 0));
-      } else if (e.key === 'Escape') {
-        if (!document.fullscreenElement) {
-          onClose();
-        }
+      case 'SECTION_HEADER':
+        return (
+          <div className="mt-2 flex flex-col gap-1.5">
+            <span className="font-bold text-[10px] text-slate-500 uppercase tracking-wider">
+              Sub-module Name
+            </span>
+            <Input
+              value={bindings.sub_module_name || ''}
+              onChange={(e) => updateBinding('sub_module_name', e.target.value)}
+              placeholder="Sub-module or Section name"
+              className="h-10 rounded-xl border-slate-800 bg-slate-950 px-4 text-slate-100 text-sm focus:border-primary focus:ring-1 focus:ring-primary"
+            />
+          </div>
+        );
+
+      case 'BIG_QUOTE_TAKEAWAY':
+        return (
+          <div className="mt-2 space-y-2">
+            <div className="flex flex-col gap-1.5">
+              <span className="font-bold text-[10px] text-slate-500 uppercase tracking-wider">
+                Quote Text
+              </span>
+              <Textarea
+                value={bindings.quote || ''}
+                onChange={(e) => updateBinding('quote', e.target.value)}
+                placeholder="Important quote..."
+                className="h-20 resize-none rounded-xl border-slate-800 bg-slate-950 px-4 py-2 text-slate-100 text-sm focus:border-primary focus:ring-1 focus:ring-primary"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <span className="font-bold text-[10px] text-slate-500 uppercase tracking-wider">
+                Author or Source
+              </span>
+              <Input
+                value={bindings.author_or_source || ''}
+                onChange={(e) =>
+                  updateBinding('author_or_source', e.target.value)
+                }
+                placeholder="Leonardo da Vinci, etc."
+                className="h-10 rounded-xl border-slate-800 bg-slate-950 px-4 text-slate-100 text-sm focus:border-primary focus:ring-1 focus:ring-primary"
+              />
+            </div>
+          </div>
+        );
+
+      case 'MEDIA_TEXT':
+        return (
+          <div className="mt-2 space-y-2">
+            <div className="flex flex-col gap-1.5">
+              <span className="font-bold text-[10px] text-slate-500 uppercase tracking-wider">
+                Suggested Visual Prompt Description
+              </span>
+              <Textarea
+                value={bindings.image_prompt_description || ''}
+                onChange={(e) =>
+                  updateBinding('image_prompt_description', e.target.value)
+                }
+                placeholder="E.g., A clean workflow flow diagram representing data architecture..."
+                className="h-20 resize-none rounded-xl border-slate-800 bg-slate-950 px-4 py-2 text-slate-100 text-sm focus:border-primary focus:ring-1 focus:ring-primary"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <span className="font-bold text-[10px] text-slate-500 uppercase tracking-wider">
+                Body Text
+              </span>
+              <Textarea
+                value={bindings.body_text || ''}
+                onChange={(e) => updateBinding('body_text', e.target.value)}
+                placeholder="Body detail explanation..."
+                className="h-20 resize-none rounded-xl border-slate-800 bg-slate-950 px-4 py-2 text-slate-100 text-sm focus:border-primary focus:ring-1 focus:ring-primary"
+              />
+            </div>
+          </div>
+        );
+
+      case 'REFERENCES_LIST': {
+        const sources = Array.isArray(bindings.sources) ? bindings.sources : [];
+        return (
+          <div className="mt-2 flex flex-col gap-3">
+            <span className="font-bold text-[10px] text-slate-500 uppercase tracking-wider">
+              {t('referenceSources')}
+            </span>
+            <div className="flex flex-col gap-2.5 max-h-64 overflow-y-auto pr-1">
+              {sources.map(
+                (
+                  src: { title: string; url: string; summary?: string },
+                  index: number
+                ) => (
+                  <div
+                    key={index}
+                    className="flex items-start gap-2 rounded-xl border border-slate-800/80 bg-slate-950/40 p-2.5"
+                  >
+                    <div className="flex-1 grid grid-cols-1 gap-2">
+                      <Input
+                        value={src.title || ''}
+                        onChange={(e) => {
+                          const updated = [...sources];
+                          updated[index] = { ...src, title: e.target.value };
+                          updateBinding('sources', updated);
+                        }}
+                        placeholder={t('titlePlaceholder')}
+                        className="h-8 rounded-lg border-slate-800 bg-slate-900/60 px-2.5 text-slate-100 text-xs focus:border-primary focus:ring-1 focus:ring-primary"
+                      />
+                      <Input
+                        value={src.url || ''}
+                        onChange={(e) => {
+                          const updated = [...sources];
+                          updated[index] = { ...src, url: e.target.value };
+                          updateBinding('sources', updated);
+                        }}
+                        placeholder={t('urlPlaceholder')}
+                        className="h-8 rounded-lg border-slate-800 bg-slate-900/60 px-2.5 text-slate-100 text-xs focus:border-primary focus:ring-1 focus:ring-primary font-mono"
+                      />
+                      <Input
+                        value={src.summary || ''}
+                        onChange={(e) => {
+                          const updated = [...sources];
+                          updated[index] = { ...src, summary: e.target.value };
+                          updateBinding('sources', updated);
+                        }}
+                        placeholder={t('summaryPlaceholder')}
+                        className="h-8 rounded-lg border-slate-800 bg-slate-900/60 px-2.5 text-slate-100 text-xs focus:border-primary focus:ring-1 focus:ring-primary"
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        const updated = sources.filter(
+                          (_, idx) => idx !== index
+                        );
+                        updateBinding('sources', updated);
+                      }}
+                      className="h-8 w-8 text-rose-500 hover:text-rose-400 hover:bg-rose-500/10 shrink-0"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )
+              )}
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const updated = [
+                  ...sources,
+                  { title: '', url: '', summary: '' },
+                ];
+                updateBinding('sources', updated);
+              }}
+              className="mt-1 border-slate-800 bg-slate-950 text-slate-300 hover:bg-slate-900 hover:text-slate-200 gap-1.5"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              {t('addReference')}
+            </Button>
+          </div>
+        );
       }
-    };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isOpen, step, onClose, slides.length]);
+      case 'QA_CONTACT':
+        return (
+          <div className="mt-2 flex flex-col gap-1.5">
+            <span className="font-bold text-[10px] text-slate-500 uppercase tracking-wider">
+              Footer Closing Note
+            </span>
+            <Textarea
+              value={bindings.footer_note || ''}
+              onChange={(e) => updateBinding('footer_note', e.target.value)}
+              placeholder="E.g., Thank you! Feel free to raise questions."
+              className="h-16 resize-none rounded-xl border-slate-800 bg-slate-950 px-4 py-2 text-slate-100 text-sm focus:border-primary focus:ring-1 focus:ring-primary"
+            />
+          </div>
+        );
+
+      case 'AGENDA_OUTLINE':
+      case 'TITLE_BULLETS':
+      case 'STEP_BY_STEP':
+      case 'CONCLUSION_SUMMARY':
+      case 'CALL_TO_ACTION': {
+        const listKey =
+          layoutType === 'AGENDA_OUTLINE'
+            ? 'items'
+            : layoutType === 'TITLE_BULLETS'
+              ? 'bullets'
+              : layoutType === 'STEP_BY_STEP'
+                ? 'steps'
+                : layoutType === 'CONCLUSION_SUMMARY'
+                  ? 'summary_points'
+                  : 'action_items';
+        const arr = Array.isArray(bindings[listKey]) ? bindings[listKey] : [];
+        return (
+          <div className="mt-2 flex flex-col gap-1.5">
+            <span className="font-bold text-[10px] text-slate-500 uppercase tracking-wider">
+              List Items (One per line)
+            </span>
+            <Textarea
+              value={arr.join('\n')}
+              onChange={(e) =>
+                updateBinding(listKey, e.target.value.split('\n'))
+              }
+              placeholder="Item 1&#10;Item 2&#10;Item 3"
+              className="h-28 resize-none rounded-xl border-slate-800 bg-slate-950 px-4 py-2 text-slate-100 text-sm focus:border-primary focus:ring-1 focus:ring-primary"
+            />
+          </div>
+        );
+      }
+
+      case 'TWO_COLUMN_SPLIT': {
+        const leftArr = Array.isArray(bindings.left_col_text)
+          ? bindings.left_col_text
+          : [];
+        const rightArr = Array.isArray(bindings.right_col_text)
+          ? bindings.right_col_text
+          : [];
+        return (
+          <div className="mt-2 grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <div className="flex flex-col gap-1.5">
+                <span className="font-bold text-[10px] text-slate-500 uppercase tracking-wider">
+                  Left Column Title
+                </span>
+                <Input
+                  value={bindings.left_col_title || ''}
+                  onChange={(e) =>
+                    updateBinding('left_col_title', e.target.value)
+                  }
+                  placeholder="Column title..."
+                  className="h-10 rounded-xl border-slate-800 bg-slate-950 px-4 text-slate-100 text-sm focus:border-primary focus:ring-1 focus:ring-primary"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <span className="font-bold text-[10px] text-slate-500 uppercase tracking-wider">
+                  Left Column Items (One per line)
+                </span>
+                <Textarea
+                  value={leftArr.join('\n')}
+                  onChange={(e) =>
+                    updateBinding('left_col_text', e.target.value.split('\n'))
+                  }
+                  placeholder="Detail 1&#10;Detail 2"
+                  className="h-24 resize-none rounded-xl border-slate-800 bg-slate-950 px-4 py-2 text-slate-100 text-sm focus:border-primary focus:ring-1 focus:ring-primary"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div className="flex flex-col gap-1.5">
+                <span className="font-bold text-[10px] text-slate-500 uppercase tracking-wider">
+                  Right Column Title
+                </span>
+                <Input
+                  value={bindings.right_col_title || ''}
+                  onChange={(e) =>
+                    updateBinding('right_col_title', e.target.value)
+                  }
+                  placeholder="Column title..."
+                  className="h-10 rounded-xl border-slate-800 bg-slate-950 px-4 text-slate-100 text-sm focus:border-primary focus:ring-1 focus:ring-primary"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <span className="font-bold text-[10px] text-slate-500 uppercase tracking-wider">
+                  Right Column Items (One per line)
+                </span>
+                <Textarea
+                  value={rightArr.join('\n')}
+                  onChange={(e) =>
+                    updateBinding('right_col_text', e.target.value.split('\n'))
+                  }
+                  placeholder="Detail 1&#10;Detail 2"
+                  className="h-24 resize-none rounded-xl border-slate-800 bg-slate-950 px-4 py-2 text-slate-100 text-sm focus:border-primary focus:ring-1 focus:ring-primary"
+                />
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      case 'KPI_BIG_NUMBER': {
+        const metrics = Array.isArray(bindings.metrics) ? bindings.metrics : [];
+        const updateMetric = (
+          idx: number,
+          field: 'value' | 'label',
+          val: string
+        ) => {
+          const updated = [...metrics];
+          if (!updated[idx]) updated[idx] = { value: '', label: '' };
+          updated[idx] = {
+            ...updated[idx],
+            [field]: val,
+          };
+          updateBinding('metrics', updated);
+        };
+        return (
+          <div className="mt-2 grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="space-y-2 rounded-xl border border-slate-800 bg-slate-950/20 p-3">
+              <span className="block font-bold text-[10px] text-slate-400">
+                Metric 1
+              </span>
+              <Input
+                value={metrics[0]?.value || ''}
+                onChange={(e) => updateMetric(0, 'value', e.target.value)}
+                placeholder="E.g., 98% or 10M+"
+                className="h-9 rounded-xl border-slate-800 bg-slate-950 px-3 text-slate-100 text-sm focus:border-primary focus:ring-1 focus:ring-primary"
+              />
+              <Input
+                value={metrics[0]?.label || ''}
+                onChange={(e) => updateMetric(0, 'label', e.target.value)}
+                placeholder="Label (E.g., Accuracy)"
+                className="h-9 rounded-xl border-slate-800 bg-slate-950 px-3 text-slate-100 text-sm focus:border-primary focus:ring-1 focus:ring-primary"
+              />
+            </div>
+            <div className="space-y-2 rounded-xl border border-slate-800 bg-slate-950/20 p-3">
+              <span className="block font-bold text-[10px] text-slate-400">
+                Metric 2
+              </span>
+              <Input
+                value={metrics[1]?.value || ''}
+                onChange={(e) => updateMetric(1, 'value', e.target.value)}
+                placeholder="E.g., 45ms or $1.2B"
+                className="h-9 rounded-xl border-slate-800 bg-slate-950 px-3 text-slate-100 text-sm focus:border-primary focus:ring-1 focus:ring-primary"
+              />
+              <Input
+                value={metrics[1]?.label || ''}
+                onChange={(e) => updateMetric(1, 'label', e.target.value)}
+                placeholder="Label (E.g., Query latency)"
+                className="h-9 rounded-xl border-slate-800 bg-slate-950 px-3 text-slate-100 text-sm focus:border-primary focus:ring-1 focus:ring-primary"
+              />
+            </div>
+          </div>
+        );
+      }
+
+      case 'CHART_INSIGHT': {
+        const chartData = Array.isArray(bindings.chart_data)
+          ? bindings.chart_data
+          : [];
+        const chartDataStr = chartData
+          .map((d: any) => `${d.label}:${d.value}`)
+          .join('\n');
+        const updateChartData = (val: string) => {
+          const parsedData = val
+            .split('\n')
+            .map((line) => {
+              const [label, numStr] = line.split(':');
+              if (!label) return null;
+              return {
+                label: label.trim(),
+                value: Number(numStr?.trim() || 0),
+              };
+            })
+            .filter(Boolean);
+          updateBinding('chart_data', parsedData);
+        };
+        return (
+          <div className="mt-2 grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <div className="flex flex-col gap-1.5">
+                <span className="font-bold text-[10px] text-slate-500 uppercase tracking-wider">
+                  Chart Type
+                </span>
+                <Select
+                  value={bindings.chart_type || 'bar'}
+                  onValueChange={(val) => updateBinding('chart_type', val)}
+                >
+                  <SelectTrigger className="h-10 rounded-xl border-slate-800 bg-slate-950 text-slate-300 text-xs focus:border-primary focus:ring-1 focus:ring-primary">
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent className="border-slate-800 bg-slate-950 text-slate-300">
+                    <SelectItem value="bar">Bar</SelectItem>
+                    <SelectItem value="line">Line</SelectItem>
+                    <SelectItem value="pie">Pie</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <span className="font-bold text-[10px] text-slate-500 uppercase tracking-wider">
+                  Chart Data (Label:Value, one per line)
+                </span>
+                <Textarea
+                  value={chartDataStr}
+                  onChange={(e) => updateChartData(e.target.value)}
+                  placeholder="Q1:20&#10;Q2:80&#10;Q3:45"
+                  className="h-24 resize-none rounded-xl border-slate-800 bg-slate-950 px-4 py-2 text-slate-100 text-sm focus:border-primary focus:ring-1 focus:ring-primary"
+                />
+              </div>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <span className="font-bold text-[10px] text-slate-500 uppercase tracking-wider">
+                Insight Explanation
+              </span>
+              <Textarea
+                value={bindings.insight_text || ''}
+                onChange={(e) => updateBinding('insight_text', e.target.value)}
+                placeholder="Visual analytics insights..."
+                className="h-full min-h-[140px] resize-none rounded-xl border-slate-800 bg-slate-950 px-4 py-2 text-slate-100 text-sm focus:border-primary focus:ring-1 focus:ring-primary"
+              />
+            </div>
+          </div>
+        );
+      }
+
+      case 'DATA_TABLE': {
+        const headers = Array.isArray(bindings.headers) ? bindings.headers : [];
+        const rows = Array.isArray(bindings.rows) ? bindings.rows : [];
+        const rowsStr = rows.map((r: string[]) => r.join(',')).join('\n');
+        return (
+          <div className="mt-2 grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="flex flex-col gap-1.5">
+              <span className="font-bold text-[10px] text-slate-500 uppercase tracking-wider">
+                Headers (comma-separated)
+              </span>
+              <Input
+                value={headers.join(', ')}
+                onChange={(e) =>
+                  updateBinding(
+                    'headers',
+                    e.target.value.split(',').map((s) => s.trim())
+                  )
+                }
+                placeholder="Heading 1, Heading 2"
+                className="h-10 rounded-xl border-slate-800 bg-slate-950 px-4 text-slate-100 text-sm focus:border-primary focus:ring-1 focus:ring-primary"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <span className="font-bold text-[10px] text-slate-500 uppercase tracking-wider">
+                Rows (cols comma-separated, one row per line)
+              </span>
+              <Textarea
+                value={rowsStr}
+                onChange={(e) =>
+                  updateBinding(
+                    'rows',
+                    e.target.value
+                      .split('\n')
+                      .map((line) => line.split(',').map((c) => c.trim()))
+                  )
+                }
+                placeholder="Row1Col1, Row1Col2&#10;Row2Col1, Row2Col2"
+                className="h-20 resize-none rounded-xl border-slate-800 bg-slate-950 px-4 py-2 text-slate-100 text-sm focus:border-primary focus:ring-1 focus:ring-primary"
+              />
+            </div>
+          </div>
+        );
+      }
+
+      case 'TIMELINE_MILESTONES': {
+        const events = Array.isArray(bindings.events) ? bindings.events : [];
+        const eventsStr = events
+          .map((ev: any) => `${ev.date_or_step}:${ev.description}`)
+          .join('\n');
+        const updateEvents = (val: string) => {
+          const parsedEvents = val
+            .split('\n')
+            .map((line) => {
+              const [dateStr, desc] = line.split(':');
+              if (!dateStr) return null;
+              return {
+                date_or_step: dateStr.trim(),
+                description: desc?.trim() || '',
+              };
+            })
+            .filter(Boolean);
+          updateBinding('events', parsedEvents);
+        };
+        return (
+          <div className="mt-2 flex flex-col gap-1.5">
+            <span className="font-bold text-[10px] text-slate-500 uppercase tracking-wider">
+              Events List (Date/Step:Description, one per line)
+            </span>
+            <Textarea
+              value={eventsStr}
+              onChange={(e) => updateEvents(e.target.value)}
+              placeholder="Phase 1:Setup project configuration&#10;Phase 2:Release production build"
+              className="h-28 resize-none rounded-xl border-slate-800 bg-slate-950 px-4 py-2 text-slate-100 text-sm focus:border-primary focus:ring-1 focus:ring-primary"
+            />
+          </div>
+        );
+      }
+
+      default:
+        return (
+          <div className="mt-2 flex flex-col gap-1.5">
+            <span className="font-bold text-[10px] text-slate-500 uppercase tracking-wider">
+              Raw Bindings Data (JSON)
+            </span>
+            <Textarea
+              value={JSON.stringify(bindings, null, 2)}
+              onChange={(e) => {
+                try {
+                  updateBinding('bindings', JSON.parse(e.target.value));
+                } catch (_) {}
+              }}
+              className="h-28 rounded-xl border-slate-800 bg-slate-950 px-4 py-2 font-mono text-slate-100 text-xs focus:border-primary focus:ring-1 focus:ring-primary"
+            />
+          </div>
+        );
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -431,7 +1127,7 @@ export function LessonPresentation({
           <div
             className="h-full bg-primary transition-all duration-300 ease-out"
             style={{
-              width: `${((currentSlideIndex + 1) / slides.length) * 100}%`,
+              width: `${((currentSlideIndex + 1) / plannedSlides.length) * 100}%`,
             }}
           />
         </div>
@@ -488,12 +1184,18 @@ export function LessonPresentation({
             </p>
 
             <div className="space-y-4">
-              <Textarea
-                value={instructions}
-                onChange={(e) => setInstructions(e.target.value)}
-                placeholder={t('inputPlaceholder')}
-                className="h-36 resize-none rounded-xl border-slate-800 bg-slate-950 p-4 font-sans text-slate-100 focus:border-primary focus:ring-1 focus:ring-primary"
-              />
+              <div className="relative">
+                <Textarea
+                  value={instructions}
+                  onChange={(e) => setInstructions(e.target.value)}
+                  maxLength={500}
+                  placeholder={t('inputPlaceholder')}
+                  className="h-36 w-full resize-none rounded-xl border-slate-800 bg-slate-950 p-4 pb-8 font-sans text-slate-100 focus:border-primary focus:ring-1 focus:ring-primary"
+                />
+                <span className="absolute right-4 bottom-3 select-none font-medium text-slate-500 text-xs">
+                  {instructions.length} / 500
+                </span>
+              </div>
 
               <div className="flex flex-col gap-1.5">
                 <span className="font-semibold text-slate-500 text-xs uppercase tracking-wider">
@@ -567,7 +1269,7 @@ export function LessonPresentation({
       )}
 
       {step === 'planning' && (
-        <div className="mx-auto flex max-w-md flex-1 flex-col items-center justify-center p-8 text-center">
+        <div className="mx-auto flex max-w-lg flex-1 flex-col items-center justify-center p-8 text-center">
           <div className="relative mb-6">
             <div className="absolute inset-0 animate-pulse rounded-full bg-primary/20 blur-md" />
             <Spinner className="h-12 w-12 text-primary" />
@@ -576,7 +1278,7 @@ export function LessonPresentation({
             {t('planningText')}
           </h3>
 
-          <div className="mt-6 w-full space-y-3 rounded-xl border border-slate-900/80 bg-slate-950/50 p-4 text-left">
+          <div className="mt-6 w-full space-y-4 rounded-xl border border-slate-800/80 bg-slate-950/50 p-6 text-left shadow-xl">
             <div className="flex items-center gap-3 text-sm">
               <span
                 className={cn(
@@ -595,7 +1297,7 @@ export function LessonPresentation({
                     : 'text-slate-500'
                 }
               >
-                Analyzing lesson structure...
+                Planning slide sequence...
               </span>
             </div>
             <div className="flex items-center gap-3 text-sm">
@@ -616,7 +1318,7 @@ export function LessonPresentation({
                     : 'text-slate-500'
                 }
               >
-                Applying custom instructions...
+                Searching web for grounding context...
               </span>
             </div>
             <div className="flex items-center gap-3 text-sm">
@@ -637,9 +1339,55 @@ export function LessonPresentation({
                     : 'text-slate-500'
                 }
               >
-                Structuring slide outlines...
+                Compiling slide data & layouts...
               </span>
             </div>
+
+            {searchQueries.length > 0 && (
+              <div className="mt-4 border-slate-900 border-t pt-4">
+                <span className="mb-2.5 block font-bold text-[10px] text-slate-500 uppercase tracking-widest">
+                  Search Queries Executed:
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {searchQueries.map((query, idx) => (
+                    <span
+                      key={idx}
+                      className="rounded-lg border border-slate-800/80 bg-slate-900/40 px-3 py-1 font-medium text-slate-300 text-xs"
+                    >
+                      🔍 {query}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {searchSources.length > 0 && (
+              <div className="mt-4 border-slate-900 border-t pt-4">
+                <span className="mb-2.5 block font-bold text-[10px] text-slate-500 uppercase tracking-widest">
+                  Grounded Sources Found:
+                </span>
+                <div className="max-h-36 space-y-2 overflow-y-auto pr-1">
+                  {searchSources.map((source, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between rounded-lg border border-slate-800/80 bg-slate-900/25 p-2.5 text-xs transition-colors hover:border-slate-800 hover:bg-slate-900/40"
+                    >
+                      <span className="max-w-[75%] truncate font-medium text-slate-300">
+                        📄 {source.title}
+                      </span>
+                      <a
+                        href={source.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-bold text-primary hover:underline"
+                      >
+                        Visit Source ↗
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -683,28 +1431,98 @@ export function LessonPresentation({
                   {(idx + 1).toString().padStart(2, '0')}
                 </div>
 
-                <div className="max-w-[85%]">
+                <div className="w-full max-w-[90%]">
                   <span className="mb-1 block font-semibold text-primary/80 text-xs uppercase tracking-wider">
                     {t('slideOutlineLabel', { number: idx + 1 })}
                   </span>
 
-                  <div className="mt-2 space-y-3">
-                    <Input
-                      value={slide.title}
-                      onChange={(e) => updateSlideTitle(idx, e.target.value)}
-                      placeholder="Slide Title"
-                      className="h-10 rounded-xl border-slate-800 bg-slate-950 px-4 py-2 font-bold text-base text-slate-100 focus:border-primary focus:ring-1 focus:ring-primary"
-                    />
+                  <div className="mt-2 space-y-4">
+                    {/* Slide Layout Selection */}
+                    <div className="flex flex-col gap-1.5">
+                      <span className="font-bold text-[10px] text-slate-500 uppercase tracking-wider">
+                        Layout Type
+                      </span>
+                      <Select
+                        value={slide.layoutType}
+                        onValueChange={(val) =>
+                          changeSlideLayout(
+                            idx,
+                            val as PlannedSlide['layoutType']
+                          )
+                        }
+                      >
+                        <SelectTrigger className="flex h-10 w-full justify-between rounded-xl border-slate-800 bg-slate-950 px-4 text-slate-100 text-sm">
+                          <SelectValue placeholder="Select Layout" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-60 border-slate-800 bg-slate-950 text-slate-100">
+                          <SelectItem value="TITLE_SLIDE">
+                            Title Slide
+                          </SelectItem>
+                          <SelectItem value="AGENDA_OUTLINE">
+                            Agenda & Outline
+                          </SelectItem>
+                          <SelectItem value="SECTION_HEADER">
+                            Section Header
+                          </SelectItem>
+                          <SelectItem value="TITLE_BULLETS">
+                            Title & Bullets
+                          </SelectItem>
+                          <SelectItem value="TWO_COLUMN_SPLIT">
+                            Two Column Split
+                          </SelectItem>
+                          <SelectItem value="BIG_QUOTE_TAKEAWAY">
+                            Big Quote Takeaway
+                          </SelectItem>
+                          <SelectItem value="KPI_BIG_NUMBER">
+                            KPI & Big Numbers
+                          </SelectItem>
+                          <SelectItem value="CHART_INSIGHT">
+                            Chart & Insight
+                          </SelectItem>
+                          <SelectItem value="DATA_TABLE">Data Table</SelectItem>
+                          <SelectItem value="MEDIA_TEXT">
+                            Media & Text
+                          </SelectItem>
+                          <SelectItem value="TIMELINE_MILESTONES">
+                            Timeline & Milestones
+                          </SelectItem>
+                          <SelectItem value="STEP_BY_STEP">
+                            Step By Step Process
+                          </SelectItem>
+                          <SelectItem value="CONCLUSION_SUMMARY">
+                            Conclusion & Summary
+                          </SelectItem>
+                          <SelectItem value="CALL_TO_ACTION">
+                            Call To Action / Homework
+                          </SelectItem>
+                          <SelectItem value="QA_CONTACT">
+                            Q&A Closing Slide
+                          </SelectItem>
+                          <SelectItem value="REFERENCES_LIST">
+                            {t('referencesLayout')}
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                    <Textarea
-                      value={slide.bullets.join('\n')}
-                      onChange={(e) => updateSlideBullets(idx, e.target.value)}
-                      className="h-28 resize-none rounded-xl border-slate-800 bg-slate-950/45 px-4 py-3 font-medium font-sans text-slate-300 text-sm focus:border-primary focus:ring-1 focus:ring-primary"
-                      placeholder="Bullet outlines, one per line..."
-                    />
+                    {/* Slide Title Input */}
+                    <div className="flex flex-col gap-1.5">
+                      <span className="font-bold text-[10px] text-slate-500 uppercase tracking-wider">
+                        Slide Title
+                      </span>
+                      <Input
+                        value={slide.slideTitle}
+                        onChange={(e) => updateSlideTitle(idx, e.target.value)}
+                        placeholder="Slide Title"
+                        className="h-10 rounded-xl border-slate-800 bg-slate-950 px-4 py-2 font-bold text-base text-slate-100 focus:border-primary focus:ring-1 focus:ring-primary"
+                      />
+                    </div>
+
+                    {/* Dynamic Layout bindings editor */}
+                    {renderBindingsEditor(slide, idx)}
                   </div>
 
-                  <div className="mt-2 flex justify-end border-slate-900/40 border-t pt-2">
+                  <div className="mt-4 flex justify-end border-slate-900/40 border-t pt-2">
                     <Button
                       variant="ghost"
                       size="sm"
@@ -796,12 +1614,12 @@ export function LessonPresentation({
               isFullscreen ? 'h-[65vh] max-h-[65vh]' : 'h-[45vh] max-h-[45vh]'
             )}
           >
-            {slides[currentSlideIndex]?.length === 0 ? (
+            {plannedSlides[currentSlideIndex] ? (
+              renderSlideContent(plannedSlides[currentSlideIndex])
+            ) : (
               <div className="flex h-full items-center justify-center text-slate-500 italic">
                 {t('empty')}
               </div>
-            ) : (
-              editor && <EditorContent editor={editor} />
             )}
           </div>
         </div>
@@ -831,7 +1649,7 @@ export function LessonPresentation({
             <span className="min-w-28 text-center font-semibold text-slate-400 text-sm">
               {t('slideProgress', {
                 current: currentSlideIndex + 1,
-                total: slides.length,
+                total: plannedSlides.length,
               })}
             </span>
 
@@ -841,10 +1659,10 @@ export function LessonPresentation({
               className="border-slate-800 bg-slate-900/60 font-medium text-slate-300 hover:bg-slate-800 hover:text-slate-100 disabled:opacity-50"
               onClick={() =>
                 setCurrentSlideIndex((prev) =>
-                  Math.min(prev + 1, slides.length - 1)
+                  Math.min(prev + 1, plannedSlides.length - 1)
                 )
               }
-              disabled={currentSlideIndex === slides.length - 1}
+              disabled={currentSlideIndex === plannedSlides.length - 1}
             >
               {t('next')}
               <ChevronRight className="ml-1.5 h-4 w-4" />
