@@ -3,17 +3,8 @@ import { generateText, Output } from 'ai';
 import { z } from 'zod';
 import { DEFAULT_MODELS } from '@/services/ai/chat-provider.constants';
 import { LessonService } from '@/services/LessonService';
-// Assuming you have or will implement a WebSearchService
-import { WebSearchService } from './WebSearchService';
-
-// 1. The Schema for the Intermediate Agent Step (Structure + Search Queries)
-const intermediateAnalysisSchema = z.object({
-  searchQueries: z
-    .array(z.string())
-    .describe(
-      'Highly specific, targeted search queries (2-4 queries total) to fetch real-world data, latest examples, or statistics relevant to this lesson content.'
-    ),
-  plannedSlides: z.array(
+export const presentationPlanSchema = z.object({
+  slides: z.array(
     z.object({
       layoutType: z.enum([
         'TITLE_SLIDE',
@@ -31,21 +22,8 @@ const intermediateAnalysisSchema = z.object({
         'CONCLUSION_SUMMARY',
         'CALL_TO_ACTION',
         'QA_CONTACT',
+        'REFERENCES_LIST',
       ]),
-      focusTopic: z
-        .string()
-        .describe(
-          'The primary educational concept this specific slide must address.'
-        ),
-    })
-  ),
-});
-
-// 2. The Final Output Schema for the Presentation Builder
-export const presentationPlanSchema = z.object({
-  slides: z.array(
-    z.object({
-      layoutType: z.string(),
       slideTitle: z.string(),
       bindings: z.record(z.string(), z.any()),
     })
@@ -95,106 +73,49 @@ export class PresentationService {
         : String(lessonContent || '');
     contentSnippet = contentSnippet.slice(0, 12000);
 
-    // ==========================================
-    // AGENT STEP 1: Structural Planner & Search Extractor
-    // ==========================================
-    const plannerPrompt = `
-      You are an instructional architect. Analyze this lesson content and plan the macro presentation flow.
-      Identify what real-world validation, recent case studies, or statistics are missing that could enrich this deck, and generate targeted web search queries for them.
-
-      Lesson Title: "${lessonTitle}"
-      Content: ${contentSnippet}
-      Target Slide Count: Exactly ${targetSlideCount} slides.
-      
-      Requirements:
-      1. You MUST generate EXACTLY ${targetSlideCount} slides in your 'plannedSlides' array. Do not generate more or fewer slides.
-      ${context ? `2. User Custom Guidelines / Specific Request:\n"${context}"\nYou MUST incorporate these custom instructions into the structure, layout selections, and focus topics.` : ''}
-    `;
-
-    const plannerResponse = await generateText({
-      model: provider(model),
-      output: Output.object({ schema: intermediateAnalysisSchema }),
-      prompt: plannerPrompt,
-      system:
-        'You are an AI planner. Your job is to read lesson material, decide the sequence of presentation layouts, and output search keywords to find grounding context on the web.',
-    });
-
-    const { searchQueries, plannedSlides } = plannerResponse.output;
-
-    // ==========================================
-    // AGENT STEP 2: Execute Tool (Web Search)
-    // ==========================================
-    let webSearchContext = '';
-    const sourcesList: Array<{ title: string; url: string }> = [];
-    if (searchQueries && searchQueries.length > 0) {
-      try {
-        // Execute queries concurrently to optimize performance
-        const searchResults = await Promise.all(
-          searchQueries.slice(0, 3).map(async (query) => {
-            const results = await WebSearchService.search(query);
-            if (results && Array.isArray(results.results)) {
-              for (const r of results.results) {
-                if (
-                  r.title &&
-                  r.url &&
-                  !sourcesList.some((s) => s.url === r.url)
-                ) {
-                  sourcesList.push({ title: r.title, url: r.url });
-                }
-              }
-            }
-            return `Results for query "${query}":\n${JSON.stringify(results)}`;
-          })
-        );
-        webSearchContext = searchResults.join('\n\n');
-      } catch (error) {
-        console.error(
-          'Web search pipeline execution failed, proceeding with original context only.',
-          error
-        );
-      }
-    }
-
-    // ==========================================
-    // AGENT STEP 3: Content Compiler & Binding Generation
-    // ==========================================
-    const compilerPrompt = `
-      You are a presentation compilation engine. Assemble the final slide data values using the structural blueprint and the live web search context collected by your retrieval agent.
+    const masterPrompt = `
+      You are an instructional architect and presentation compilation engine. Your job is to analyze the lesson content and build a slide presentation plan structure and content.
 
       Lesson Title: "${lessonTitle}"
       Core Lesson Content: ${contentSnippet}
-      
-      Live Grounding Web Context:
-      ${webSearchContext || 'No external web data retrieved.'}
+      Target Slide Count: Exactly ${targetSlideCount} slides.
 
-      Pre-Planned Layout Blueprint Sequence:
-      ${JSON.stringify(plannedSlides, null, 2)}
+      Requirements:
+      1. You MUST generate EXACTLY ${targetSlideCount} slides in your 'slides' list. Do not generate more or fewer slides.
+      2. For each slide, select the most appropriate layoutType from the allowed schema enum values.
+      3. For each slide, compile and populate the content values directly into the required fields inside the 'bindings' object.
+      ${context ? `4. User Custom Guidelines / Specific Request:\n"${context}"\nYou MUST incorporate these custom instructions into the structure, layout selections, focus topics, and slide content compilation.` : ''}
 
-      Instructions:
-      For each slide listed in the blueprint sequence, map the compiled information into the requested schema fields. Use the Web Context to fill out data points like statistics (for KPI slides), charts, or recent real-world examples to make the lesson exceptionally practical.
-      ${context ? `\nUser Custom Guidelines / Specific Request:\n"${context}"\nEnsure that all compiled slide content strictly adheres to these instructions.` : ''}
+      Layout Binding Specifications (You MUST use these exact keys in the 'bindings' object of each slide):
+      - 'TITLE_SLIDE': { "subtitle": string, "author": string }
+      - 'AGENDA_OUTLINE': { "items": string[] }
+      - 'SECTION_HEADER': { "sub_module_name": string }
+      - 'TITLE_BULLETS': { "bullets": string[] }
+      - 'TWO_COLUMN_SPLIT': { "left_col_title": string, "left_col_text": string[], "right_col_title": string, "right_col_text": string[] }
+      - 'BIG_QUOTE_TAKEAWAY': { "quote": string, "author_or_source": string }
+      - 'KPI_BIG_NUMBER': { "metrics": Array<{ "value": string, "label": string }> }
+      - 'CHART_INSIGHT': { "chart_type": "bar" | "line" | "pie", "chart_data": Array<{ "label": string, "value": number }>, "insight_text": string }
+      - 'DATA_TABLE': { "headers": string[], "rows": string[][] }
+      - 'MEDIA_TEXT': { "image_prompt_description": string, "body_text": string }
+      - 'TIMELINE_MILESTONES': { "events": Array<{ "date_or_step": string, "description": string }> }
+      - 'STEP_BY_STEP': { "steps": string[] }
+      - 'CONCLUSION_SUMMARY': { "summary_points": string[] }
+      - 'CALL_TO_ACTION': { "action_items": string[] }
+      - 'QA_CONTACT': { "footer_note": string }
+      - 'REFERENCES_LIST': { "sources": Array<{ "title": string, "url": string, "summary"?: string }> }
+
+      Ensure that all slide content bindings strictly adhere to these instructions.
     `;
 
     const finalResponse = await generateText({
       model: provider(model),
       output: Output.object({ schema: presentationPlanSchema }),
-      prompt: compilerPrompt,
+      prompt: masterPrompt,
       system:
-        'You are an execution agent that binds raw core content and web retrieval contexts directly into precise presentation design specifications.',
+        'You are an instructional presentation architect that compiles core lesson material directly into precise, complete slide deck designs.',
     });
 
-    const slides = [...finalResponse.output.slides];
-    if (sourcesList.length > 0) {
-      slides.push({
-        layoutType: 'REFERENCES_LIST',
-        slideTitle: 'References & Sources',
-        bindings: {
-          sources: sourcesList,
-        },
-      });
-    }
-
-    return { slides };
+    return finalResponse.output;
   }
 
   static planPresentationStream(options: {
@@ -242,126 +163,53 @@ export class PresentationService {
         contentSnippet = contentSnippet.slice(0, 12000);
 
         // ==========================================
-        // AGENT STEP 1: Structural Planner & Search Extractor
-        // ==========================================
-        await writer.write(`${JSON.stringify({ type: 'planning' })}\n`);
-
-        const plannerPrompt = `
-          You are an instructional architect. Analyze this lesson content and plan the macro presentation flow.
-          Identify what real-world validation, recent case studies, or statistics are missing that could enrich this deck, and generate targeted web search queries for them.
-
-          Lesson Title: "${lessonTitle}"
-          Content: ${contentSnippet}
-          Target Slide Count: Exactly ${targetSlideCount} slides.
-
-          Requirements:
-          1. You MUST generate EXACTLY ${targetSlideCount} slides in your 'plannedSlides' array. Do not generate more or fewer slides.
-          ${context ? `2. User Custom Guidelines / Specific Request:\n"${context}"\nYou MUST incorporate these custom instructions into the structure, layout selections, and focus topics.` : ''}
-        `;
-
-        const plannerResponse = await generateText({
-          model: provider(model),
-          output: Output.object({ schema: intermediateAnalysisSchema }),
-          prompt: plannerPrompt,
-          system:
-            'You are an AI planner. Your job is to read lesson material, decide the sequence of presentation layouts, and output search keywords to find grounding context on the web.',
-        });
-
-        const { searchQueries, plannedSlides } = plannerResponse.output;
-
-        // Emit search queries to client
-        await writer.write(
-          `${JSON.stringify({ type: 'search-queries', queries: searchQueries || [] })}\n`
-        );
-
-        // ==========================================
-        // AGENT STEP 2: Execute Tool (Web Search)
-        // ==========================================
-        let webSearchContext = '';
-        const sourcesList: Array<{ title: string; url: string }> = [];
-        if (searchQueries && searchQueries.length > 0) {
-          try {
-            // Execute queries concurrently to optimize performance
-            const searchResults = await Promise.all(
-              searchQueries.slice(0, 3).map(async (query) => {
-                const results = await WebSearchService.search(query);
-
-                // Stream each result/source found to client
-                if (results && Array.isArray(results.results)) {
-                  for (const r of results.results) {
-                    if (
-                      r.title &&
-                      r.url &&
-                      !sourcesList.some((s) => s.url === r.url)
-                    ) {
-                      sourcesList.push({ title: r.title, url: r.url });
-                    }
-                    await writer.write(
-                      `${JSON.stringify({
-                        type: 'source-found',
-                        source: {
-                          title: r.title,
-                          url: r.url,
-                          summary: r.content ? r.content.slice(0, 200) : '',
-                        },
-                      })}\n`
-                    );
-                  }
-                }
-
-                return `Results for query "${query}":\n${JSON.stringify(results)}`;
-              })
-            );
-            webSearchContext = searchResults.join('\n\n');
-          } catch (error) {
-            console.error(
-              'Web search pipeline execution failed, proceeding with original context only.',
-              error
-            );
-          }
-        }
-
-        // ==========================================
-        // AGENT STEP 3: Content Compiler & Binding Generation
+        // SINGLE MASTER PLANNER & COMPILER CALL
         // ==========================================
         await writer.write(`${JSON.stringify({ type: 'compiling' })}\n`);
 
-        const compilerPrompt = `
-          You are a presentation compilation engine. Assemble the final slide data values using the structural blueprint and the live web search context collected by your retrieval agent.
+        const masterPrompt = `
+          You are an instructional architect and presentation compilation engine. Your job is to analyze the lesson content and build a slide presentation plan structure and content.
 
           Lesson Title: "${lessonTitle}"
           Core Lesson Content: ${contentSnippet}
-          
-          Live Grounding Web Context:
-          ${webSearchContext || 'No external web data retrieved.'}
+          Target Slide Count: Exactly ${targetSlideCount} slides.
 
-          Pre-Planned Layout Blueprint Sequence:
-          ${JSON.stringify(plannedSlides, null, 2)}
+          Requirements:
+          1. You MUST generate EXACTLY ${targetSlideCount} slides in your 'slides' list. Do not generate more or fewer slides.
+          2. For each slide, select the most appropriate layoutType from the allowed schema enum values.
+          3. For each slide, compile and populate the content values directly into the required fields inside the 'bindings' object.
+          ${context ? `4. User Custom Guidelines / Specific Request:\n"${context}"\nYou MUST incorporate these custom instructions into the structure, layout selections, focus topics, and slide content compilation.` : ''}
 
-          Instructions:
-          For each slide listed in the blueprint sequence, map the compiled information into the requested schema fields. Use the Web Context to fill out data points like statistics (for KPI slides), charts, or recent real-world examples to make the lesson exceptionally practical.
-          ${context ? `\nUser Custom Guidelines / Specific Request:\n"${context}"\nEnsure that all compiled slide content strictly adheres to these instructions.` : ''}
+          Layout Binding Specifications (You MUST use these exact keys in the 'bindings' object of each slide):
+          - 'TITLE_SLIDE': { "subtitle": string, "author": string }
+          - 'AGENDA_OUTLINE': { "items": string[] }
+          - 'SECTION_HEADER': { "sub_module_name": string }
+          - 'TITLE_BULLETS': { "bullets": string[] }
+          - 'TWO_COLUMN_SPLIT': { "left_col_title": string, "left_col_text": string[], "right_col_title": string, "right_col_text": string[] }
+          - 'BIG_QUOTE_TAKEAWAY': { "quote": string, "author_or_source": string }
+          - 'KPI_BIG_NUMBER': { "metrics": Array<{ "value": string, "label": string }> }
+          - 'CHART_INSIGHT': { "chart_type": "bar" | "line" | "pie", "chart_data": Array<{ "label": string, "value": number }>, "insight_text": string }
+          - 'DATA_TABLE': { "headers": string[], "rows": string[][] }
+          - 'MEDIA_TEXT': { "image_prompt_description": string, "body_text": string }
+          - 'TIMELINE_MILESTONES': { "events": Array<{ "date_or_step": string, "description": string }> }
+          - 'STEP_BY_STEP': { "steps": string[] }
+          - 'CONCLUSION_SUMMARY': { "summary_points": string[] }
+          - 'CALL_TO_ACTION': { "action_items": string[] }
+          - 'QA_CONTACT': { "footer_note": string }
+          - 'REFERENCES_LIST': { "sources": Array<{ "title": string, "url": string, "summary"?: string }> }
+
+          Ensure that all slide content bindings strictly adhere to these instructions.
         `;
 
         const finalResponse = await generateText({
           model: provider(model),
           output: Output.object({ schema: presentationPlanSchema }),
-          prompt: compilerPrompt,
+          prompt: masterPrompt,
           system:
-            'You are an execution agent that binds raw core content and web retrieval contexts directly into precise presentation design specifications.',
+            'You are an instructional presentation architect that compiles core lesson material directly into precise, complete slide deck designs.',
         });
 
-        const slides = [...finalResponse.output.slides];
-        if (sourcesList.length > 0) {
-          slides.push({
-            layoutType: 'REFERENCES_LIST',
-            slideTitle: 'References & Sources',
-            bindings: {
-              sources: sourcesList,
-            },
-          });
-        }
-
+        const slides = finalResponse.output.slides;
         await writer.write(`${JSON.stringify({ type: 'done', slides })}\n`);
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Unknown error';

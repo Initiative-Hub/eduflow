@@ -815,7 +815,7 @@
       "suggest2": "Highly visual, concise bullet points",
       "suggest3": "Structured for a 10-minute workshop",
       "btnPlan": "Generate Presentation Plan",
-      "planningText": "AI is analyzing lesson content and planning slide structure...",
+      "planningText": "Compiling presentation from lesson material...",
       "plannedTitle": "AI Presentation Slide Outline",
       "plannedDesc": "Review and refine the planned slides. Click on titles or bullets to customize them before generation.",
       "btnGenerate": "Generate Slide Deck",

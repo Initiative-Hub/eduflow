@@ -62,9 +62,6 @@ export function LessonPresentation({
     changeSlideLayout,
     deleteSlide,
     addSlide,
-    searchSources,
-    searchQueries,
-    streamingStatus,
   } = usePresentation({ title, content, isOpen, onClose });
 
   // Dynamic layout renderer for presentation view mode
@@ -1277,118 +1274,10 @@ export function LessonPresentation({
           <h3 className="mb-2 font-bold text-slate-100 text-xl">
             {t('planningText')}
           </h3>
-
-          <div className="mt-6 w-full space-y-4 rounded-xl border border-slate-800/80 bg-slate-950/50 p-6 text-left shadow-xl">
-            <div className="flex items-center gap-3 text-sm">
-              <span
-                className={cn(
-                  'flex h-5 w-5 items-center justify-center rounded-full font-semibold text-xs',
-                  loaderStep >= 1
-                    ? 'border border-emerald-500/20 bg-emerald-500/10 text-emerald-400'
-                    : 'border border-slate-800 bg-slate-905 text-slate-500'
-                )}
-              >
-                {loaderStep >= 1 ? '✓' : '1'}
-              </span>
-              <span
-                className={
-                  loaderStep >= 1
-                    ? 'font-medium text-slate-300'
-                    : 'text-slate-500'
-                }
-              >
-                Planning slide sequence...
-              </span>
-            </div>
-            <div className="flex items-center gap-3 text-sm">
-              <span
-                className={cn(
-                  'flex h-5 w-5 items-center justify-center rounded-full font-semibold text-xs',
-                  loaderStep >= 2
-                    ? 'border border-emerald-500/20 bg-emerald-500/10 text-emerald-400'
-                    : 'border border-slate-800 bg-slate-905 text-slate-500'
-                )}
-              >
-                {loaderStep >= 2 ? '✓' : '2'}
-              </span>
-              <span
-                className={
-                  loaderStep >= 2
-                    ? 'font-medium text-slate-300'
-                    : 'text-slate-500'
-                }
-              >
-                Searching web for grounding context...
-              </span>
-            </div>
-            <div className="flex items-center gap-3 text-sm">
-              <span
-                className={cn(
-                  'flex h-5 w-5 items-center justify-center rounded-full font-semibold text-xs',
-                  loaderStep >= 3
-                    ? 'border border-emerald-500/20 bg-emerald-500/10 text-emerald-400'
-                    : 'border border-slate-800 bg-slate-905 text-slate-500'
-                )}
-              >
-                {loaderStep >= 3 ? '✓' : '3'}
-              </span>
-              <span
-                className={
-                  loaderStep >= 3
-                    ? 'font-medium text-slate-300'
-                    : 'text-slate-500'
-                }
-              >
-                Compiling slide data & layouts...
-              </span>
-            </div>
-
-            {searchQueries.length > 0 && (
-              <div className="mt-4 border-slate-900 border-t pt-4">
-                <span className="mb-2.5 block font-bold text-[10px] text-slate-500 uppercase tracking-widest">
-                  Search Queries Executed:
-                </span>
-                <div className="flex flex-wrap gap-2">
-                  {searchQueries.map((query, idx) => (
-                    <span
-                      key={idx}
-                      className="rounded-lg border border-slate-800/80 bg-slate-900/40 px-3 py-1 font-medium text-slate-300 text-xs"
-                    >
-                      🔍 {query}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {searchSources.length > 0 && (
-              <div className="mt-4 border-slate-900 border-t pt-4">
-                <span className="mb-2.5 block font-bold text-[10px] text-slate-500 uppercase tracking-widest">
-                  Grounded Sources Found:
-                </span>
-                <div className="max-h-36 space-y-2 overflow-y-auto pr-1">
-                  {searchSources.map((source, idx) => (
-                    <div
-                      key={idx}
-                      className="flex items-center justify-between rounded-lg border border-slate-800/80 bg-slate-900/25 p-2.5 text-xs transition-colors hover:border-slate-800 hover:bg-slate-900/40"
-                    >
-                      <span className="max-w-[75%] truncate font-medium text-slate-300">
-                        📄 {source.title}
-                      </span>
-                      <a
-                        href={source.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-bold text-primary hover:underline"
-                      >
-                        Visit Source ↗
-                      </a>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+          <p className="text-slate-405 text-sm">
+            Please wait while the slide structures and layout content bindings
+            are compiled.
+          </p>
         </div>
       )}
 

@@ -48,11 +48,6 @@ export function usePresentation(options: {
   const [plannedSlides, setPlannedSlides] = useState<PlannedSlide[]>([]);
   const [loaderStep, setLoaderStep] = useState(0);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
-  const [searchSources, setSearchSources] = useState<
-    Array<{ title: string; url: string; summary?: string }>
-  >([]);
-  const [searchQueries, setSearchQueries] = useState<string[]>([]);
-  const [streamingStatus, setStreamingStatus] = useState<string>('idle');
 
   // Dynamic Outlines fallback generator
   const generateOutlines = useCallback(
@@ -249,9 +244,6 @@ export function usePresentation(options: {
   const handleStartPlanning = async () => {
     setStep('planning');
     setLoaderStep(0);
-    setSearchSources([]);
-    setSearchQueries([]);
-    setStreamingStatus('planning');
 
     try {
       const response = await fetch('/api/v1/presentation/plan', {
@@ -293,27 +285,10 @@ export function usePresentation(options: {
           }
 
           switch (event.type) {
-            case 'planning':
-              setStreamingStatus('planning');
+            case 'compiling':
               setLoaderStep(1);
               break;
-            case 'search-queries':
-              setStreamingStatus('searching');
-              setSearchQueries(event.queries || []);
-              setLoaderStep(2);
-              break;
-            case 'source-found':
-              setSearchSources((prev) => {
-                if (prev.some((s) => s.url === event.source.url)) return prev;
-                return [...prev, event.source];
-              });
-              break;
-            case 'compiling':
-              setStreamingStatus('compiling');
-              setLoaderStep(3);
-              break;
             case 'done': {
-              setStreamingStatus('done');
               const slidesWithIds = (event.slides || []).map(
                 (s: any, idx: number) => ({
                   id: s.id || `slide-${idx}-${Date.now()}`,
@@ -577,8 +552,5 @@ export function usePresentation(options: {
     changeSlideLayout,
     deleteSlide,
     addSlide,
-    searchSources,
-    searchQueries,
-    streamingStatus,
   };
 }
