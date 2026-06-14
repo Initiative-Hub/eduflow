@@ -535,6 +535,85 @@
       "list": "Danh sách"
     }
   },
+  "CourseMembersPage": {
+    "actions": {
+      "add": "Thêm",
+      "addMember": "Thêm thành viên",
+      "cancel": "Hủy",
+      "edit": "Chỉnh sửa",
+      "remove": "Xóa",
+      "save": "Lưu"
+    },
+    "addDialog": {
+      "alreadyMember": "Đã là {role}",
+      "description": "Chọn vai trò khóa học, sau đó thêm người dùng hiện có vào khóa học này.",
+      "emptyDescription": "Hãy thử từ khóa tìm kiếm khác.",
+      "emptyTitle": "Không tìm thấy người dùng",
+      "loadingMore": "Đang tải thêm người dùng...",
+      "searchPlaceholder": "Tìm người dùng theo tên, email hoặc ID...",
+      "title": "Thêm thành viên khóa học"
+    },
+    "description": "Xem thành viên khóa học, vai trò và ngày tham gia.",
+    "editDialog": {
+      "description": "Thay đổi vai trò khóa học của {name}.",
+      "title": "Chỉnh sửa vai trò thành viên"
+    },
+    "empty": {
+      "description": "Hãy thử tìm kiếm hoặc bộ lọc vai trò khác.",
+      "title": "Không tìm thấy thành viên"
+    },
+    "errors": {
+      "candidatesDescription": "Hiện không thể tải danh sách người dùng.",
+      "candidatesTitle": "Người dùng không khả dụng",
+      "description": "Hiện không thể tải danh sách thành viên khóa học.",
+      "title": "Thành viên không khả dụng"
+    },
+    "fallback": {
+      "noName": "Chưa có tên"
+    },
+    "filters": {
+      "role": "Bộ lọc vai trò"
+    },
+    "form": {
+      "role": "Vai trò"
+    },
+    "pagination": {
+      "itemsPerPage": "Số mục mỗi trang",
+      "next": "Tiếp",
+      "page": "Trang {page}/{total}",
+      "perPage": "{count} mỗi trang",
+      "previous": "Trước",
+      "range": "Đang hiển thị {start}-{end} trong {total} thành viên"
+    },
+    "removeDialog": {
+      "description": "Xóa {name} khỏi khóa học này? Người dùng sẽ mất quyền truy cập tài nguyên khóa học.",
+      "title": "Xóa thành viên"
+    },
+    "roles": {
+      "all": "Tất cả vai trò",
+      "courseOwner": "Chủ khóa học",
+      "student": "Sinh viên",
+      "teacher": "Giảng viên",
+      "unknown": "Không xác định"
+    },
+    "searchLabel": "Tìm thành viên",
+    "searchPlaceholder": "Tìm thành viên theo tên, email hoặc ID...",
+    "table": {
+      "actions": "Thao tác",
+      "joinDate": "Ngày tham gia",
+      "role": "Vai trò",
+      "user": "Người dùng"
+    },
+    "title": "Thành viên khóa học",
+    "toast": {
+      "added": "Đã thêm thành viên.",
+      "addFailed": "Không thể thêm thành viên.",
+      "removed": "Đã xóa thành viên.",
+      "removeFailed": "Không thể xóa thành viên.",
+      "updated": "Đã cập nhật vai trò thành viên.",
+      "updateFailed": "Không thể cập nhật vai trò thành viên."
+    }
+  },
   "Courses": {
     "AddLessonDialog": {
       "description": "Cung cấp tiêu đề cho bài học mới trong mô-đun này.",

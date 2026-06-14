@@ -2,10 +2,10 @@
 
 import { useState } from 'react';
 import {
-  AIPreferencesCard,
   type AIPreferencesData,
-} from '../../ai-preferences/ai-preferences-card';
-import { DEFAULT_AI_PREFERENCES } from '../../profile/profile.config';
+  DEFAULT_AI_PREFERENCES,
+} from '../../profile/profile.config';
+import { AIPreferencesCard } from './ai-preferences-card';
 
 export default function AiPreferencesClient() {
   const [aiPreferences, setAiPreferences] = useState<AIPreferencesData>(
