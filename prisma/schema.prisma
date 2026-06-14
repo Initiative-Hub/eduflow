@@ -30,7 +30,6 @@ model User {
   role         PlatformRole?   @relation(fields: [roleId], references: [id])
   sessions     Session[]
   accounts     Account[]
-  posts        Post[]
   files        FileInventory[]
   coursesOwned Course[]        @relation("OwnerCourses")
   enrollments  Enrollment[]
@@ -148,19 +147,6 @@ model CoursePermission {
   @@unique([courseId, courseRoleId, permission])
   @@index([courseId, courseRoleId, enabled])
   @@map("course_permissions")
-}
-
-model Post {
-  id        String   @id @default(uuid())
-  title     String
-  content   String?
-  published Boolean  @default(false)
-  authorId  String
-  author    User     @relation(fields: [authorId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("posts")
 }
 
 enum FileInventoryStatus {
