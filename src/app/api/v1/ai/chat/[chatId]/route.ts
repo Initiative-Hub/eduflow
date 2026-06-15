@@ -18,7 +18,10 @@ import {
   hasChatFileParts,
   hydrateChatAttachmentDataUrls,
 } from '@/utils/chat-attachments';
-import { generateAiChatSuggestions } from './chat.constants';
+import {
+  generateAiChatSuggestions,
+  getAiChatSystemPrompt,
+} from './chat.constants';
 
 export const maxDuration = 30;
 
@@ -328,13 +331,16 @@ export async function POST(
     const providerName = parsedBody.data.provider ?? DEFAULT_PROVIDER;
     const provider = ChatProviderFactory.create(providerName);
 
-    const result = await provider.streamChat({
-      messages: messagesForModel,
-      provider: parsedBody.data.provider,
-      model: parsedBody.data.model,
-      apiKey: parsedBody.data.apiKey,
-      providerOptions: parsedBody.data.providerOptions,
-    });
+    const result = await provider.streamChat(
+      {
+        messages: messagesForModel,
+        provider: parsedBody.data.provider,
+        model: parsedBody.data.model,
+        apiKey: parsedBody.data.apiKey,
+        providerOptions: parsedBody.data.providerOptions,
+      },
+      { prompt: getAiChatSystemPrompt(), mode: 'replace' }
+    );
 
     const stream = createUIMessageStream<UIMessage>({
       originalMessages: messagesForModel,
