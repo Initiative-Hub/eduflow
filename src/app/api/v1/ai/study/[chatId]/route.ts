@@ -20,6 +20,8 @@ import {
   hasChatFileParts,
   hydrateChatAttachmentDataUrls,
 } from '@/utils/chat-attachments';
+import type { StudyUIMessage } from '@/utils/study-practice-quiz';
+import { generatePracticeQuiz } from './practice-quiz';
 import {
   generateStudySuggestions,
   getStudySystemPrompt,
@@ -281,6 +283,71 @@ export async function POST(
 
     const maxSteps = parsedBody.data.mode === 'research' ? 5 : undefined;
 
+    //TODO: Try to simpler and decouple these code
+    if (parsedBody.data.mode === 'practiceTest') {
+      const stream = createUIMessageStream<StudyUIMessage>({
+        originalMessages: messagesForModel as StudyUIMessage[],
+        generateId: () => `${crypto.randomUUID()}`,
+        execute: async ({ writer }) => {
+          const quiz = await generatePracticeQuiz({
+            messages: messagesForModel,
+            model: parsedBody.data.model,
+            apiKey: parsedBody.data.apiKey,
+            providerOptions: parsedBody.data.providerOptions,
+          });
+
+          const assistantText =
+            'I created an interactive practice quiz for you. Answer each question and use instant feedback to review the concept.';
+
+          const textId = `practice-intro-${crypto.randomUUID()}`;
+          writer.write({ type: 'text-start', id: textId });
+          writer.write({
+            type: 'text-delta',
+            id: textId,
+            delta: assistantText,
+          });
+          writer.write({ type: 'text-end', id: textId });
+
+          writer.write({
+            type: 'data-practice-quiz',
+            id: `practice-quiz-${crypto.randomUUID()}`,
+            data: { quiz, deliveryMode: 'INSTANT_FEEDBACK' },
+          });
+
+          const suggestions = await generateStudySuggestions({
+            provider,
+            messages: messagesForModel,
+            assistantText,
+            providerName,
+            model: parsedBody.data.model,
+            apiKey: parsedBody.data.apiKey,
+            providerOptions: parsedBody.data.providerOptions,
+          });
+
+          writer.write({
+            type: 'data-suggestions',
+            id: `suggestions-${crypto.randomUUID()}`,
+            data: { items: suggestions },
+          });
+          writer.write({ type: 'finish', finishReason: 'stop' });
+        },
+
+        onFinish: async ({ messages }) => {
+          await ChatPersistenceService.saveMessages({
+            chatId,
+            userId,
+            guestId,
+            messages,
+            provider: providerName,
+            model: parsedBody.data.model,
+            chatType: AiChatType.STUDY_ASSISTANT,
+          });
+        },
+      });
+
+      return createUIMessageStreamResponse({ stream });
+    }
+
     const result = await provider.streamChat(
       {
         messages: messagesForModel,
@@ -338,6 +405,7 @@ export async function POST(
         });
       },
     });
+
     return createUIMessageStreamResponse({ stream });
   } catch (error: unknown) {
     const message =

@@ -30,14 +30,13 @@ You are the EduFlow Study Assistant. Your mission is to help students master the
 - **Tip:** Keep each bullet concise; depth can be explored through follow-up questions.`,
 
     practiceTest: `
-### MODE: PRACTICE TESTS
-- **Goal:** Generate a varied set of practice questions from the provided content.
-- **Required output:**
-  1. **5 Multiple Choice Questions** – Each with 4 options (A-D) and the correct answer noted.
-  2. **3 True / False Questions** – With a brief explanation for each answer.
-  3. **2 Short Answer Questions** – Open-ended, with a model answer.
+### MODE: INTERACTIVE PRACTICE TEST
+- **Goal:** Help the student practice concepts through an interactive quiz rendered by the app.
+- **Visible response:** Briefly introduce the quiz and encourage the student to use instant feedback.
+- **Do not print the full quiz in Markdown.** The app will render the generated quiz separately.
+- **Question mix:** The structured quiz should use auto-scoreable questions only: multiple choice, true/false, and fill-in-the-blank.
 - **Difficulty:** Mix easy, medium, and hard questions.
-- **End with:** A "Study Tips" section identifying which areas need more review based on the questions.`,
+- **Feedback:** Explanations should teach the concept behind the correct answer.`,
 
     keywords: `
 ### MODE: KEY TERMS & KEYWORDS
