@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 810">
+  <!-- Background -->
+  <rect width="1440" height="810" fill="#0A0E1A"/>
+  
+  <line x1="80" y1="0" x2="80" y2="810" stroke="#FF007F" stroke-width="3" stroke-opacity="0.3"/>
+  <circle cx="150" cy="100" r="140" fill="#00F0FF" fill-opacity="0.08"/>
+  <circle cx="1290" cy="700" r="120" fill="#FF007F" fill-opacity="0.08"/>
+
+  <!-- Heading -->
+  <text x="140" y="150" font-family="system-ui, -apple-system, sans-serif" font-size="56" font-weight="bold" fill="#FFFFFF">{{heading|24}}</text>
+  <rect x="140" y="175" width="220" height="4" fill="#00F0FF" rx="2"/>
+
+  <!-- Takeaways -->
+  <g>
+    <text x="140" y="290" font-family="system-ui, -apple-system, sans-serif" font-size="32" font-weight="900" fill="#FF007F">01</text>
+    <text x="210" y="290" font-family="system-ui, -apple-system, sans-serif" font-size="28" fill="#FFFFFF">{{takeaway.1|58}}</text>
+  </g>
+  <g>
+    <text x="140" y="400" font-family="system-ui, -apple-system, sans-serif" font-size="32" font-weight="900" fill="#00F0FF">02</text>
+    <text x="210" y="400" font-family="system-ui, -apple-system, sans-serif" font-size="28" fill="#FFFFFF">{{takeaway.2|58}}</text>
+  </g>
+  <g>
+    <text x="140" y="510" font-family="system-ui, -apple-system, sans-serif" font-size="32" font-weight="900" fill="#FF007F">03</text>
+    <text x="210" y="510" font-family="system-ui, -apple-system, sans-serif" font-size="28" fill="#FFFFFF">{{takeaway.3|58}}</text>
+  </g>
+
+  <!-- Closing -->
+  <text x="140" y="650" font-family="system-ui, -apple-system, sans-serif" font-size="30" font-style="italic" fill="#00F0FF">{{closing|44}}</text>
+</svg>

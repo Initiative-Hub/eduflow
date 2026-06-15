@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 810">
+  <!-- Background -->
+  <rect width="1440" height="810" fill="#0A0E1A"/>
+  
+  <line x1="80" y1="0" x2="80" y2="810" stroke="#00F0FF" stroke-width="3" stroke-opacity="0.3"/>
+  <circle cx="1200" cy="150" r="160" fill="#FF007F" fill-opacity="0.05"/>
+
+  <!-- Heading -->
+  <text x="140" y="150" font-family="system-ui, -apple-system, sans-serif" font-size="56" font-weight="bold" fill="#FFFFFF">{{heading|24}}</text>
+  <rect x="140" y="175" width="220" height="4" fill="#00F0FF" rx="2"/>
+
+  <!-- Body Text (Wrapped lines) -->
+  <text x="140" y="260" font-family="system-ui, -apple-system, sans-serif" font-size="28" fill="#E2E8F0">{{body_text.1|50}}</text>
+  <text x="140" y="310" font-family="system-ui, -apple-system, sans-serif" font-size="28" fill="#E2E8F0">{{body_text.2|50}}</text>
+  <text x="140" y="360" font-family="system-ui, -apple-system, sans-serif" font-size="28" fill="#E2E8F0">{{body_text.3|50}}</text>
+  <text x="140" y="410" font-family="system-ui, -apple-system, sans-serif" font-size="28" fill="#E2E8F0">{{body_text.4|50}}</text>
+  <text x="140" y="460" font-family="system-ui, -apple-system, sans-serif" font-size="28" fill="#E2E8F0">{{body_text.5|50}}</text>
+  <text x="140" y="510" font-family="system-ui, -apple-system, sans-serif" font-size="28" fill="#E2E8F0">{{body_text.6|50}}</text>
+
+  <!-- Image Frame -->
+  <g>
+    <rect x="795" y="215" width="510" height="430" rx="16" fill="none" stroke="#00F0FF" stroke-width="2" stroke-opacity="0.6"/>
+    <image x="800" y="220" width="500" height="420" href="__IMAGE_URL_PLACEHOLDER__" rx="12" preserveAspectRatio="xMidYMid slice"/>
+  </g>
+</svg>
