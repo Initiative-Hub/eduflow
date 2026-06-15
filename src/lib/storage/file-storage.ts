@@ -5,7 +5,7 @@ import {
   PutObjectCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { createS3Client } from './s3-client';
+import { createS3Client } from '../aws/s3-client';
 
 const DEFAULT_READ_EXPIRES_SECONDS = 30 * 60;
 export const STORAGE_MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024;
