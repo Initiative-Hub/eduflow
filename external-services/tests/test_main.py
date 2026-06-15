@@ -82,6 +82,8 @@ class MarkItDownServiceTests(unittest.TestCase):
                 "markitdown[pdf]==0.1.6",
                 "modal==1.4.3",
                 "youtube-transcript-api>=1.2.4",
+                "slide-skills>=0.2.3",
+                "tavily-python>=0.7.26",
             ],
         )
 
