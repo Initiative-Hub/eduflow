@@ -29,10 +29,10 @@ export class CourseService {
   static async assertCourseOwner(courseId: string, userId: string) {
     const course = await prisma.course.findUnique({
       where: { id: courseId },
-      select: { ownerId: true },
+      select: { deletedAt: true, ownerId: true },
     });
 
-    if (!course) {
+    if (!course || course.deletedAt) {
       throw new Error('Course not found');
     }
 
@@ -153,7 +153,7 @@ export class CourseService {
 
   static async getCoursesByOwner(ownerId: string) {
     return await prisma.course.findMany({
-      where: { ownerId },
+      where: { deletedAt: null, ownerId },
       orderBy: { createdAt: 'desc' },
       include: {
         _count: {
@@ -166,6 +166,7 @@ export class CourseService {
   static async getJoinedCourses(userId: string) {
     return await prisma.course.findMany({
       where: {
+        deletedAt: null,
         OR: [
           { ownerId: userId },
           {
@@ -275,16 +276,16 @@ export class CourseService {
       where: { id: courseId },
     });
 
+    if (!course || course.deletedAt) {
+      throw new Error('Course not found');
+    }
+
     const member = await prisma.enrollment.findFirst({
       where: {
         courseId,
         memberId: userId,
       },
     });
-
-    if (!course) {
-      throw new Error('Course not found');
-    }
 
     if (!member && course.ownerId !== userId) {
       throw new Error('Unauthorized');
@@ -296,10 +297,10 @@ export class CourseService {
   static async isMember(courseId: string, userId: string) {
     const course = await prisma.course.findUnique({
       where: { id: courseId },
-      select: { ownerId: true },
+      select: { deletedAt: true, ownerId: true },
     });
 
-    if (!course) return false;
+    if (!course || course.deletedAt) return false;
     if (course.ownerId === userId) return true;
 
     const enrollment = await prisma.enrollment.findFirst({
@@ -519,7 +520,7 @@ export class CourseService {
       where: { id: courseId },
     });
 
-    if (!course) {
+    if (!course || course.deletedAt) {
       throw new Error('Course not found');
     }
 
