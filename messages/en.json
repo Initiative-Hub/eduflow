@@ -1557,6 +1557,7 @@
       "matching": "Matching",
       "multiple_choice": "Multiple Choice",
       "ordering": "Ordering",
+      "practice_test": "Practice Test",
       "timed_challenge": "Timed Challenge",
       "true_false": "True / False"
     }
@@ -1675,9 +1676,6 @@
   "StudyPage": {
     "aiActive": "AI Processing Active",
     "features": {
-      "keywords": {
-        "description": "Extract critical terminology and concepts with detailed contextual explanations."
-      },
       "practiceTest": {
         "description": "Challenge yourself with AI-generated multiple choice, short answer, and flashcard sets."
       },
@@ -1694,7 +1692,6 @@
     },
     "limitReachedToast": "You've reached the {count}-message Study limit. Start a new session to continue.",
     "modes": {
-      "keywords": "Keyword Summaries",
       "practiceTest": "Practice Tests",
       "research": "Research Mode",
       "review": "Review Materials"
