@@ -1,21 +1,40 @@
 'use client';
 
-import { Languages, Loader2, Volume2 } from 'lucide-react';
+import {
+  BookmarkMinus,
+  BookmarkPlus,
+  BookMarked,
+  Languages,
+  Loader2,
+  Volume2,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import type { VocabularyItem } from '@/services/english/VocabularyService';
 
 interface VocabularyListProps {
   vocabularyList: VocabularyItem[];
   isAnalyzing: boolean;
   hasAnalysisResult: boolean;
+  wordbank: {
+    savedWords: string[];
+    unsavedCount: number;
+    isSaving: boolean;
+    isRemoving: boolean;
+    onSaveAll: () => void;
+    onToggleVocabulary: (item: VocabularyItem) => void;
+  };
 }
 
 export function VocabularyList({
   vocabularyList,
   isAnalyzing,
   hasAnalysisResult,
+  wordbank,
 }: VocabularyListProps) {
   const t = useTranslations('StudyReader');
+  const savedWords = new Set(wordbank.savedWords);
 
   function handlePlayVocabAudio(audioUrl: string) {
     const safeUrl = audioUrl.startsWith('//') ? `https:${audioUrl}` : audioUrl;
@@ -34,7 +53,7 @@ export function VocabularyList({
 
       <div className="overflow-hidden rounded-xl border bg-background shadow-sm">
         {/* Table header */}
-        <div className="grid grid-cols-[1fr_0.9fr_2fr_1.8fr] items-center gap-3 border-b bg-muted/30 px-6 py-3">
+        <div className="hidden grid-cols-[1fr_0.9fr_2fr_1.8fr_3rem] items-center gap-3 border-b bg-muted/30 px-6 py-3 lg:grid">
           <span className="font-semibold text-muted-foreground text-sm">
             {t('columnWord')}
           </span>
@@ -47,57 +66,87 @@ export function VocabularyList({
           <span className="font-semibold text-muted-foreground text-sm">
             {t('columnExample')}
           </span>
+          <span className="sr-only">{t('wordbank')}</span>
         </div>
 
         {vocabularyList.length > 0 ? (
           <div className="divide-y">
-            {vocabularyList.map((vocab) => (
-              <div
-                key={vocab.word}
-                className="grid grid-cols-[1fr_0.9fr_2fr_1.8fr] items-start gap-3 px-6 py-4 transition-colors hover:bg-muted/20"
-              >
-                {/* Audio button + Word + PoS */}
-                <div className="flex items-start gap-2">
-                  <button
-                    type="button"
-                    id={`vocab-audio-${vocab.word}`}
-                    onClick={() =>
-                      vocab.audioUrl && handlePlayVocabAudio(vocab.audioUrl)
-                    }
-                    disabled={!vocab.audioUrl}
-                    className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary transition-all hover:bg-primary hover:text-primary-foreground disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
-                    aria-label={`Play pronunciation of ${vocab.word}`}
-                  >
-                    <Volume2 className="size-3.5" />
-                  </button>
-                  <div>
-                    <span className="block font-bold text-primary">
-                      {vocab.word}
-                    </span>
-                    <span className="text-muted-foreground text-sm">
-                      {vocab.partOfSpeech}
-                    </span>
+            {vocabularyList.map((vocab) => {
+              const isSaved = savedWords.has(vocab.word.trim().toLowerCase());
+              const wordbankActionLabel = isSaved
+                ? t('removeFromWordbank', { word: vocab.word })
+                : t('saveToWordbank', { word: vocab.word });
+
+              return (
+                <div
+                  key={vocab.word}
+                  className="grid items-center gap-4 px-5 py-5 transition-colors hover:bg-muted/20 lg:grid-cols-[1fr_0.9fr_2fr_1.8fr_3rem] lg:items-center lg:gap-3 lg:px-6 lg:py-4"
+                >
+                  {/* Audio button + Word + PoS */}
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      id={`vocab-audio-${vocab.word}`}
+                      onClick={() =>
+                        vocab.audioUrl && handlePlayVocabAudio(vocab.audioUrl)
+                      }
+                      disabled={!vocab.audioUrl}
+                      className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary transition-all hover:bg-primary hover:text-primary-foreground disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+                      aria-label={`Play pronunciation of ${vocab.word}`}
+                    >
+                      <Volume2 className="size-3.5" />
+                    </button>
+                    <div>
+                      <span className="block font-bold text-primary">
+                        {vocab.word}
+                      </span>
+                      <span className="text-muted-foreground text-sm">
+                        {vocab.partOfSpeech}
+                      </span>
+                    </div>
+                  </div>
+                  {/* IPA */}
+                  <span className="self-center font-mono text-base text-muted-foreground">
+                    {vocab.ipa ?? '—'}
+                  </span>
+                  {/* Definition EN + VI */}
+                  <div className="self-center">
+                    <p className="text-base text-foreground">
+                      {vocab.englishDefinition}
+                    </p>
+                    <p className="mt-1 text-muted-foreground text-sm italic">
+                      {vocab.vietnameseTranslation}
+                    </p>
+                  </div>
+                  {/* Example sentence */}
+                  <p className="self-center text-base text-foreground leading-relaxed">
+                    &ldquo;{vocab.exampleSentence}&rdquo;
+                  </p>
+                  <div className="flex justify-end lg:self-center">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => wordbank.onToggleVocabulary(vocab)}
+                      disabled={wordbank.isSaving || wordbank.isRemoving}
+                      className={cn(
+                        'min-h-11 min-w-11 rounded-full border border-border/70 bg-background text-muted-foreground hover:border-primary/30 hover:bg-primary/10 hover:text-primary',
+                        isSaved &&
+                          'border-destructive/20 bg-destructive/10 text-destructive hover:border-destructive/30 hover:bg-destructive/15 hover:text-destructive'
+                      )}
+                      aria-label={wordbankActionLabel}
+                      title={wordbankActionLabel}
+                    >
+                      {isSaved ? (
+                        <BookmarkMinus className="size-5" />
+                      ) : (
+                        <BookmarkPlus className="size-5" />
+                      )}
+                    </Button>
                   </div>
                 </div>
-                {/* IPA */}
-                <span className="self-center font-mono text-base text-muted-foreground">
-                  {vocab.ipa ?? '—'}
-                </span>
-                {/* Definition EN + VI */}
-                <div className="self-center">
-                  <p className="text-base text-foreground">
-                    {vocab.englishDefinition}
-                  </p>
-                  <p className="mt-1 text-muted-foreground text-sm italic">
-                    {vocab.vietnameseTranslation}
-                  </p>
-                </div>
-                {/* Example sentence */}
-                <p className="self-center text-base text-foreground leading-relaxed">
-                  &ldquo;{vocab.exampleSentence}&rdquo;
-                </p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="px-6 py-10 text-center">
@@ -116,6 +165,28 @@ export function VocabularyList({
           </div>
         )}
       </div>
+
+      {vocabularyList.length > 0 && wordbank.unsavedCount > 0 ? (
+        <div className="fixed right-5 bottom-5 z-30 md:right-8 md:bottom-8">
+          <Button
+            type="button"
+            size="lg"
+            onClick={wordbank.onSaveAll}
+            disabled={wordbank.isSaving}
+            className="min-h-12 rounded-full px-5 shadow-xl shadow-primary/20"
+          >
+            {wordbank.isSaving ? (
+              <Loader2
+                data-icon="inline-start"
+                className="size-4 animate-spin"
+              />
+            ) : (
+              <BookMarked data-icon="inline-start" className="size-4" />
+            )}
+            {t('saveAllToWordbank', { count: wordbank.unsavedCount })}
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 }

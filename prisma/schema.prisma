@@ -27,15 +27,16 @@ model User {
   bio           String?
 
   // relations
-  role         PlatformRole?   @relation(fields: [roleId], references: [id])
-  sessions     Session[]
-  accounts     Account[]
-  files        FileInventory[]
-  coursesOwned Course[]        @relation("OwnerCourses")
-  enrollments  Enrollment[]
-  aiChats      AiChat[]
-  aiMessages   AiChatMessage[]
-  quizAttempts QuizAttempt[]
+  role            PlatformRole?     @relation(fields: [roleId], references: [id])
+  sessions        Session[]
+  accounts        Account[]
+  files           FileInventory[]
+  coursesOwned    Course[]          @relation("OwnerCourses")
+  enrollments     Enrollment[]
+  aiChats         AiChat[]
+  aiMessages      AiChatMessage[]
+  quizAttempts    QuizAttempt[]
+  savedVocabulary SavedVocabulary[]
 
   @@map("user")
 }
@@ -433,6 +434,29 @@ model QuizAttempt {
   @@index([quizId, userId])
   @@index([userId])
   @@map("quiz_attempt")
+}
+
+// ─── Saved Vocabulary ────────────────────────────────────────────────────────
+
+model SavedVocabulary {
+  id     String @id @default(uuid())
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  word                  String
+  partOfSpeech          String  @map("part_of_speech")
+  ipa                   String?
+  audioUrl              String? @map("audio_url")
+  englishDefinition     String  @map("english_definition")
+  vietnameseTranslation String  @map("vietnamese_translation")
+  exampleSentence       String  @map("example_sentence")
+  sourceSnippet         String? @map("source_snippet")
+
+  savedAt DateTime @default(now()) @map("saved_at")
+
+  @@unique([userId, word])
+  @@index([userId, savedAt(sort: Desc)])
+  @@map("saved_vocabulary")
 }
 
 // ─── Dictionary Cache ────────────────────────────────────────────────────────
