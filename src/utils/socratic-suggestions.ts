@@ -9,7 +9,7 @@ const MAX_SOCRATIC_SUGGESTIONS = 3;
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
 
-export function normalizeSocraticSuggestionItems(items: unknown): string[] {
+export function normalizeChatSuggestionItems(items: unknown): string[] {
   if (!Array.isArray(items)) return [];
 
   const normalized: string[] = [];
@@ -30,6 +30,9 @@ export function normalizeSocraticSuggestionItems(items: unknown): string[] {
 
   return normalized;
 }
+
+//TODO: Should we bring this to another helper function?
+export const normalizeSocraticSuggestionItems = normalizeChatSuggestionItems;
 
 export function getSocraticSuggestionItems(message: UIMessage): string[] {
   return message.parts.flatMap((part) => {
