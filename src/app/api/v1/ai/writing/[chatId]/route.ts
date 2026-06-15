@@ -1,4 +1,8 @@
-import type { UIMessage } from 'ai';
+import {
+  createUIMessageStream,
+  createUIMessageStreamResponse,
+  type UIMessage,
+} from 'ai';
 import { z } from 'zod';
 import { AiChatType } from '@/generated/prisma';
 import { getChatOwner } from '@/lib/api/guest-session';
@@ -11,7 +15,10 @@ import type {
 } from '@/services/ai/chat-provider.types';
 import { CacheService } from '@/services/CacheService';
 import { ChatPersistenceService } from '@/services/ChatPersistenceService';
-import { getWritingSystemPrompt } from './writing.constants';
+import {
+  generateWritingSuggestions,
+  getWritingSystemPrompt,
+} from './writing.constants';
 
 export const maxDuration = 30;
 
@@ -197,9 +204,8 @@ export async function POST(
     const writingTool = parsedBody.data.tool;
     const systemPrompt = getWritingSystemPrompt(writingTool);
 
-    const provider = ChatProviderFactory.create(
-      parsedBody.data.provider ?? DEFAULT_PROVIDER
-    );
+    const providerName = parsedBody.data.provider ?? DEFAULT_PROVIDER;
+    const provider = ChatProviderFactory.create(providerName);
 
     const result = await provider.streamChat(
       {
@@ -212,23 +218,53 @@ export async function POST(
       { prompt: systemPrompt }
     );
 
-    const response = result.toUIMessageStreamResponse({
+    const stream = createUIMessageStream<UIMessage>({
       originalMessages: parsedBody.data.messages,
-      generateMessageId: () => `${crypto.randomUUID()}`,
+      generateId: () => `${crypto.randomUUID()}`,
+      execute: async ({ writer }) => {
+        let assistantText = '';
+
+        for await (const chunk of result.toUIMessageStream<UIMessage>({
+          sendFinish: false,
+        })) {
+          if (chunk.type === 'text-delta') {
+            assistantText += chunk.delta;
+          }
+
+          writer.write(chunk);
+        }
+
+        const suggestions = await generateWritingSuggestions({
+          provider,
+          messages: parsedBody.data.messages,
+          assistantText,
+          providerName,
+          model: parsedBody.data.model,
+          apiKey: parsedBody.data.apiKey,
+          providerOptions: parsedBody.data.providerOptions,
+        });
+
+        writer.write({
+          type: 'data-suggestions',
+          id: `suggestions-${crypto.randomUUID()}`,
+          data: { items: suggestions },
+        });
+        writer.write({ type: 'finish', finishReason: 'stop' });
+      },
       onFinish: async ({ messages }) => {
         await ChatPersistenceService.saveMessages({
           chatId,
           userId,
           guestId,
           messages,
-          provider: parsedBody.data.provider ?? DEFAULT_PROVIDER,
+          provider: providerName,
           model: parsedBody.data.model,
           chatType: AiChatType.WRITING_ASSISTANT,
         });
       },
     });
 
-    return response;
+    return createUIMessageStreamResponse({ stream });
   } catch (error: unknown) {
     const message =
       error instanceof Error ? error.message : 'Unknown error occurred';

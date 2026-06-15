@@ -1,4 +1,9 @@
+import type { UIMessage } from 'ai';
 import type { WritingTool } from '@/lib/validations/writing.schema';
+import {
+  type GenerateChatSuggestionsInput,
+  generateChatSuggestions,
+} from '@/services/ai/chat-suggestions';
 
 export function getWritingSystemPrompt(tool: WritingTool): string {
   const basePersona = `
@@ -50,8 +55,34 @@ You are the EduFlow Writing Assistant. Your mission is to empower students and e
   const footer = `
 ### OUTPUT FORMATTING
 1. Provide the requested text clearly.
-2. End with 3 "Follow-up Suggestions" as clickable questions (e.g., "Make it more formal?", "Translate to Vietnamese?", "Explain the grammar fix?").
+2. The app will render follow-up suggestions separately as clickable buttons; do NOT print follow-up suggestions, JSON, markdown chips, or a numbered suggestion list in the visible answer.
   `;
 
   return `${basePersona}${toolInstructions[tool]}${footer}`;
+}
+
+type WritingSuggestionInput = Omit<
+  GenerateChatSuggestionsInput<UIMessage>,
+  'prompt' | 'fallbackSuggestions'
+>;
+
+const writingFallbackSuggestions = [
+  'Make it more formal.',
+  'Shorten this version.',
+  'Explain the strongest edit.',
+];
+
+export async function generateWritingSuggestions(
+  input: WritingSuggestionInput
+) {
+  return generateChatSuggestions({
+    ...input,
+    fallbackSuggestions: writingFallbackSuggestions,
+    prompt: `
+Generate exactly three short follow-up suggestions for a Writing Assistant.
+The suggestions must be clickable user messages, asking for tone changes, shorter or longer versions, translation, grammar explanation, or stronger wording.
+Match the learner's language.
+Return only JSON in this shape: {"suggestions":["...","...","..."]}.
+`,
+  });
 }

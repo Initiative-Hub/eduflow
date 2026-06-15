@@ -1,30 +1,21 @@
-import { z } from 'zod';
 import {
   DEFAULT_SOCRATIC_GUIDANCE_DEPTH,
   SOCRATIC_GUIDANCE_DEPTHS,
   type SocraticGuidanceDepth,
   socraticGuidanceDepthSchema,
 } from '@/lib/validations/socratic.schema';
-import type { ChatProviderService } from '@/services/ai/ChatProviderService';
-import type {
-  ChatProvider,
-  StreamChatInput,
-} from '@/services/ai/chat-provider.types';
+import {
+  type GenerateChatSuggestionsInput,
+  generateChatSuggestions,
+} from '@/services/ai/chat-suggestions';
 import type { SocraticUIMessage } from '@/types/socratic-ui-message';
-import { getMessageText } from '@/utils/chat-message';
-import { normalizeSocraticSuggestionItems } from '@/utils/socratic-suggestions';
 
-interface SuggestionGenerationInput {
-  provider: ChatProviderService;
-  messages: SocraticUIMessage[];
-  assistantText: string;
-  providerName?: ChatProvider;
-  model?: string;
-  apiKey?: string;
-  providerOptions?: StreamChatInput['providerOptions'];
-}
+type SocraticSuggestionInput = Omit<
+  GenerateChatSuggestionsInput<SocraticUIMessage>,
+  'prompt' | 'fallbackSuggestions'
+>;
 
-const fallbackSuggestions = [
+const socraticFallbackSuggestions = [
   'Which idea should I examine first?',
   'Can you give me one smaller hint?',
   'What question should I answer next?',
@@ -90,97 +81,16 @@ export function getSocraticSystemPrompt(
   `;
 }
 
-function extractJsonObject(text: string): unknown {
-  const firstBrace = text.indexOf('{');
-  const lastBrace = text.lastIndexOf('}');
-
-  if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(text.slice(firstBrace, lastBrace + 1));
-  } catch {
-    return null;
-  }
-}
-
-const suggestionResponseSchema = z.object({
-  suggestions: z.array(z.string()).min(1).max(3),
-});
-
-function fillSuggestions(suggestions: string[]): string[] {
-  return normalizeSocraticSuggestionItems([
-    ...suggestions,
-    ...fallbackSuggestions,
-  ]);
-}
-
-export async function generateSocraticSuggestions({
-  provider,
-  messages,
-  assistantText,
-  providerName,
-  model,
-  apiKey,
-  providerOptions,
-}: SuggestionGenerationInput): Promise<string[]> {
-  const latestUserMessage = messages
-    .toReversed()
-    .find((message) => message.role === 'user');
-  const latestUserText = latestUserMessage
-    ? getMessageText(latestUserMessage)
-    : '';
-
-  try {
-    const result = await provider.streamChat(
-      {
-        provider: providerName,
-        model,
-        apiKey,
-        providerOptions,
-        messages: [
-          {
-            id: `suggestions-${crypto.randomUUID()}`,
-            role: 'user',
-            parts: [
-              {
-                type: 'text',
-                text: `
-                Latest learner message:
-                ${latestUserText}
-
-                Latest tutor response:
-                ${assistantText}`,
-              },
-            ],
-          },
-        ],
-      },
-      {
-        prompt: `
-        Generate exactly three short follow-up suggestions for Socratic tutoring.
-        The suggestions must be clickable learner messages, not tutor statements.
-        Each suggestion should ask for a hint, a next reasoning step, or a clarification.
-        Match the learner's language.
-        Return only JSON in this shape: {"suggestions":["...","...","..."]}.
-        `,
-        mode: 'replace',
-      }
-    );
-
-    const parsed = suggestionResponseSchema.safeParse(
-      extractJsonObject(await result.text)
-    );
-
-    if (!parsed.success) {
-      return fallbackSuggestions;
-    }
-
-    return fillSuggestions(parsed.data.suggestions);
-  } catch {
-    return fallbackSuggestions;
-  }
+export async function generateSocraticSuggestions(
+  input: SocraticSuggestionInput
+) {
+  return generateChatSuggestions({
+    ...input,
+    fallbackSuggestions: socraticFallbackSuggestions,
+    prompt: `
+    Generate exactly three short follow-up suggestions for Socratic tutoring. The suggestions must be clickable learner messages, not tutor statements. Each suggestion should ask for a hint, a next reasoning step, or a clarification. Match the learner's language. Return only JSON in this shape: {"suggestions":["...","...","..."]}.
+    `,
+  });
 }
 
 export { DEFAULT_SOCRATIC_GUIDANCE_DEPTH, SOCRATIC_GUIDANCE_DEPTHS };

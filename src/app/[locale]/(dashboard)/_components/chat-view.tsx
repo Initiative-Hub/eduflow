@@ -2,6 +2,7 @@
 
 import type { UIMessage } from 'ai';
 import { Bot, Loader2, User } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import {
   Conversation,
@@ -24,7 +25,8 @@ import {
   getCitationSources,
 } from '@/utils/chat-citations';
 import { getMessageReasoning, getMessageText } from '@/utils/chat-message';
-import { getSocraticSuggestionItems } from '@/utils/socratic-suggestions';
+import { getChatSuggestionItems } from '@/utils/chat-suggestions';
+import { getStudyPracticeQuizParts } from '@/utils/study-practice-quiz';
 import { ChatInputAttachments } from './chat-input-attachments';
 import {
   ChatToolInvocations,
@@ -37,6 +39,8 @@ interface ChatViewProps {
   onSuggestionSelect?: (suggestion: string) => void;
   suggestionsDisabled?: boolean;
 }
+
+const Quiz = dynamic(() => import('@/components/quiz').then((mod) => mod.Quiz));
 
 export function ChatView({
   messages,
@@ -63,14 +67,24 @@ export function ChatView({
                 : text;
             const suggestions =
               message.role === 'assistant'
-                ? getSocraticSuggestionItems(message)
+                ? getChatSuggestionItems(message)
+                : [];
+            const practiceQuizzes =
+              message.role === 'assistant'
+                ? getStudyPracticeQuizParts(message)
                 : [];
             const attachments = message.parts.flatMap((part, index) =>
               part.type === 'file'
                 ? [{ ...part, id: `${message.id}-file-${index}` }]
                 : []
             );
-            if (!text && !reasoning && attachments.length === 0) return null;
+            if (
+              !text &&
+              !reasoning &&
+              attachments.length === 0 &&
+              practiceQuizzes.length === 0
+            )
+              return null;
 
             const isTextStreaming =
               isStreaming &&
@@ -159,8 +173,22 @@ export function ChatView({
                           </p>
                         )}
                       </MessageContent>
+                      {message.role === 'assistant' &&
+                        practiceQuizzes.map((practiceQuiz, index) => (
+                          <div
+                            key={`${message.id}-practice-quiz-${index}`}
+                            className="w-full max-w-3xl"
+                          >
+                            <Quiz
+                              quiz={practiceQuiz.quiz}
+                              quizWithAnswers={practiceQuiz.quiz}
+                              deliveryMode={practiceQuiz.deliveryMode}
+                            />
+                          </div>
+                        ))}
                     </div>
                   </div>
+
                   {suggestions.length > 0 && onSuggestionSelect ? (
                     <div className="ml-14 max-w-[calc(100%-3.5rem)]">
                       <Suggestions className="py-1">

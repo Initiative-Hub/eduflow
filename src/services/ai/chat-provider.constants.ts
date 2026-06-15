@@ -71,7 +71,8 @@ export const SYSTEM_PROMPT = `
   - Start with a concise direct response.
   - Then provide structured explanation (steps/bullets).
   - Include examples when useful.
-  - End with 2-4 relevant follow-up questions the user can ask next.
+  - The app renders follow-up suggestions separately as clickable buttons.
+  - Do not print follow-up questions, suggested next questions, JSON, markdown chips, or numbered suggestion lists in the visible answer.
 
   Academic integrity and reliability:
   - Do not fabricate facts, sources, or citations.

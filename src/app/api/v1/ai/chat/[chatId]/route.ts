@@ -1,4 +1,8 @@
-import type { UIMessage } from 'ai';
+import {
+  createUIMessageStream,
+  createUIMessageStreamResponse,
+  type UIMessage,
+} from 'ai';
 import { z } from 'zod';
 import { getChatOwner } from '@/lib/api/guest-session';
 import { ChatProviderFactory } from '@/services/ai/ChatProviderFactory';
@@ -14,6 +18,10 @@ import {
   hasChatFileParts,
   hydrateChatAttachmentDataUrls,
 } from '@/utils/chat-attachments';
+import {
+  generateAiChatSuggestions,
+  getAiChatSystemPrompt,
+} from './chat.constants';
 
 export const maxDuration = 30;
 
@@ -320,34 +328,67 @@ export async function POST(
       }
     }
 
-    const provider = ChatProviderFactory.create(
-      parsedBody.data.provider ?? DEFAULT_PROVIDER
+    const providerName = parsedBody.data.provider ?? DEFAULT_PROVIDER;
+    const provider = ChatProviderFactory.create(providerName);
+
+    const result = await provider.streamChat(
+      {
+        messages: messagesForModel,
+        provider: parsedBody.data.provider,
+        model: parsedBody.data.model,
+        apiKey: parsedBody.data.apiKey,
+        providerOptions: parsedBody.data.providerOptions,
+      },
+      { prompt: getAiChatSystemPrompt(), mode: 'replace' }
     );
 
-    const result = await provider.streamChat({
-      messages: messagesForModel,
-      provider: parsedBody.data.provider,
-      model: parsedBody.data.model,
-      apiKey: parsedBody.data.apiKey,
-      providerOptions: parsedBody.data.providerOptions,
-    });
-
-    const response = result.toUIMessageStreamResponse({
+    const stream = createUIMessageStream<UIMessage>({
       originalMessages: messagesForModel,
-      generateMessageId: () => `${crypto.randomUUID()}`,
+      generateId: () => `${crypto.randomUUID()}`,
+      execute: async ({ writer }) => {
+        let assistantText = '';
+
+        for await (const chunk of result.toUIMessageStream<UIMessage>({
+          sendFinish: false,
+        })) {
+          if (chunk.type === 'text-delta') {
+            assistantText += chunk.delta;
+          }
+
+          writer.write(chunk);
+        }
+
+        const suggestions = await generateAiChatSuggestions({
+          provider,
+          messages: messagesForModel,
+          assistantText,
+          providerName,
+          model: parsedBody.data.model,
+          apiKey: parsedBody.data.apiKey,
+          providerOptions: parsedBody.data.providerOptions,
+        });
+
+        writer.write({
+          type: 'data-suggestions',
+          id: `suggestions-${crypto.randomUUID()}`,
+          data: { items: suggestions },
+        });
+        writer.write({ type: 'finish', finishReason: 'stop' });
+      },
+
       onFinish: async ({ messages }) => {
         await ChatPersistenceService.saveMessages({
           chatId,
           userId,
           guestId,
           messages,
-          provider: parsedBody.data.provider ?? DEFAULT_PROVIDER,
+          provider: providerName,
           model: parsedBody.data.model,
         });
       },
     });
 
-    return response;
+    return createUIMessageStreamResponse({ stream });
   } catch (error: unknown) {
     const message =
       error instanceof Error ? error.message : 'Unknown error occurred';
