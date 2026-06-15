@@ -1,13 +1,9 @@
 import type { UIMessage } from 'ai';
-import { z } from 'zod';
 import type { StudyMode } from '@/lib/validations/study.schema';
-import type { ChatProviderService } from '@/services/ai/ChatProviderService';
-import type {
-  ChatProvider,
-  StreamChatInput,
-} from '@/services/ai/chat-provider.types';
-import { getMessageText } from '@/utils/chat-message';
-import { normalizeSocraticSuggestionItems } from '@/utils/socratic-suggestions';
+import {
+  type GenerateChatSuggestionsInput,
+  generateChatSuggestions,
+} from '@/services/ai/chat-suggestions';
 
 export function getStudySystemPrompt(mode: StudyMode): string {
   const basePersona = `
@@ -73,109 +69,23 @@ You are the EduFlow Study Assistant. Your mission is to help students master the
   return `${basePersona}${modeInstructions[mode]}${footer}`;
 }
 
-interface SuggestionGenerationInput {
-  provider: ChatProviderService;
-  messages: UIMessage[];
-  assistantText: string;
-  providerName?: ChatProvider;
-  model?: string;
-  apiKey?: string;
-  providerOptions?: StreamChatInput['providerOptions'];
-}
+type StudySuggestionInput = Omit<
+  GenerateChatSuggestionsInput<UIMessage>,
+  'prompt' | 'fallbackSuggestions'
+>;
 
-// TODO: Should extract this because the socratic has the same one?
-function extractJsonObject(text: string): unknown {
-  const firstBrace = text.indexOf('{');
-  const lastBrace = text.lastIndexOf('}');
-
-  if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace)
-    return null;
-
-  try {
-    return JSON.parse(text.slice(firstBrace, lastBrace + 1));
-  } catch {
-    return null;
-  }
-}
-
-const suggestionResponseSchema = z.object({
-  suggestions: z.array(z.string()).min(1).max(3),
-});
-
-const fallbackSuggestions = [
+const studyFallbackSuggestions = [
   'Can you explain that more simply?',
   'Give me an example of this.',
   'What are the key takeaways?',
 ];
 
-function fillSuggestions(suggestions: string[]): string[] {
-  return normalizeSocraticSuggestionItems([
-    ...suggestions,
-    ...fallbackSuggestions,
-  ]);
-}
-
-export async function generateStudySuggestions({
-  provider,
-  messages,
-  assistantText,
-  providerName,
-  model,
-  apiKey,
-  providerOptions,
-}: SuggestionGenerationInput) {
-  const latestUserMessage = messages
-    .toReversed()
-    .find((message) => message.role === 'user');
-
-  const latestUserText = latestUserMessage
-    ? getMessageText(latestUserMessage)
-    : '';
-
-  try {
-    const result = await provider.streamChat(
-      {
-        provider: providerName,
-        model,
-        apiKey,
-        providerOptions,
-        messages: [
-          {
-            id: `suggestions-${crypto.randomUUID()}`,
-            role: 'user',
-            parts: [
-              {
-                type: 'text',
-                text: `
-                Latest learner message:
-                ${latestUserText}
-                Latest tutor response:
-                ${assistantText}`,
-              },
-            ],
-          },
-        ],
-      },
-      {
-        prompt: `
-         Generate exactly three short follow-up suggestions for a Study Assistant.
-        The suggestions must be clickable learner messages, asking for clarification, practice questions, or further reading.
-        Match the learner's language.
-        Return only JSON in this shape: {"suggestions":["...","...","..."]}.`,
-        mode: 'replace',
-      }
-    );
-
-    const parsed = suggestionResponseSchema.safeParse(
-      extractJsonObject(await result.text)
-    );
-
-    if (!parsed.success) {
-      return fallbackSuggestions;
-    }
-
-    return fillSuggestions(parsed.data.suggestions);
-  } catch {
-    return fallbackSuggestions;
-  }
+export async function generateStudySuggestions(input: StudySuggestionInput) {
+  return generateChatSuggestions({
+    ...input,
+    fallbackSuggestions: studyFallbackSuggestions,
+    prompt: `
+  Generate exactly three short follow-up suggestions for a Study Assistant. The suggestions must be clickable learner messages, asking for clarification, practice questions, or further reading. Match the learner's language. Return only JSON in this shape: {"suggestions":["...","...","..."]}.
+  `,
+  });
 }
