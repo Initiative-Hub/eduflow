@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
+import { DictionarySettingsCard } from './_components/dictionary-settings-card';
 
 export const metadata: Metadata = {
   title: 'Settings',
@@ -13,5 +14,9 @@ export default async function SettingsPage() {
     redirect('/login');
   }
 
-  return <section className="space-y-6">Setting pages</section>;
+  return (
+    <section className="space-y-6">
+      <DictionarySettingsCard />
+    </section>
+  );
 }
