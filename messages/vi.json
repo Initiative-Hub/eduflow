@@ -153,8 +153,8 @@
     },
     "placeholder": "Đặt câu hỏi học thuật...",
     "promptLibrary": {
-      "description": "Chọn một khung truy vấn chuyên biệt để hướng dẫn phiên làm việc của bạn.",
       "back": "Quay lại",
+      "description": "Chọn một khung truy vấn chuyên biệt để hướng dẫn phiên làm việc của bạn.",
       "hist": {
         "description": "Phân tích các tác động kinh tế xã hội trên các khu vực khác nhau.",
         "title": "Lịch sử thực dân so sánh"

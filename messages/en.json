@@ -153,8 +153,8 @@
     },
     "placeholder": "Ask a scholarly question...",
     "promptLibrary": {
-      "description": "Select a specialized inquiry framework to guide your session.",
       "back": "Back",
+      "description": "Select a specialized inquiry framework to guide your session.",
       "hist": {
         "description": "Analyze socio-economic impacts across different regions.",
         "title": "Comparative colonial history"
