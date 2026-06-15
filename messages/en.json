@@ -638,12 +638,43 @@
     "AssessmentsPage": "Assessments",
     "Card": {
       "manage": "Manage",
+      "memberLabel": "Members",
       "members": "{count, plural, =1 {1 Member} other {# Members}}",
+      "moduleLabel": "Modules",
       "modules": "{count, plural, =1 {1 Module} other {# Modules}}",
       "noDescription": "No description provided.",
+      "open": "Open course",
       "togglePublish": "Toggle publish status"
     },
     "ChatPage": "Course AI Chat",
+    "controls": {
+      "filters": {
+        "ownedOnly": {
+          "description": "Limit results to courses you created.",
+          "label": "Owned courses only"
+        },
+        "publicOnly": {
+          "description": "Show published courses in your accessible list.",
+          "label": "Published courses only"
+        },
+        "reset": "Reset filters",
+        "title": "Filters",
+        "trigger": "Filter"
+      },
+      "search": {
+        "label": "Search courses",
+        "placeholder": "Search courses..."
+      },
+      "sort": {
+        "label": "Sort by",
+        "options": {
+          "created": "Newest created",
+          "members": "Most members",
+          "title": "Title A-Z",
+          "updated": "Recently updated"
+        }
+      }
+    },
     "CourseModules": {
       "addModule": "Add Module",
       "aiAssistant": "AI Assistant",
@@ -781,6 +812,14 @@
       "title": "Create Quiz"
     },
     "description": "Manage and publish your courses here.",
+    "emptySearch": {
+      "description": "Try a different search or adjust the course filters.",
+      "title": "No courses found"
+    },
+    "errors": {
+      "description": "We could not load your courses right now.",
+      "title": "Courses unavailable"
+    },
     "FilesPage": "Files",
     "LessonEditor": {
       "cancel": "Cancel",
@@ -833,6 +872,12 @@
     "newCourse": "New Course",
     "noCourses": "No courses yet",
     "noCoursesDescription": "No courses available",
+    "pagination": {
+      "next": "Next",
+      "page": "Page {page} of {total}",
+      "previous": "Previous",
+      "range": "Showing {start}-{end} of {total} courses"
+    },
     "QuestionBank": {
       "allCategories": "All Categories",
       "allLessons": "All Lessons",
@@ -924,7 +969,14 @@
       "zones": "Drop Zones"
     },
     "SettingsPage": "Course Settings",
-    "title": "Courses"
+    "title": "Courses",
+    "toast": {
+      "created": "Course created.",
+      "createFailed": "Failed to create course.",
+      "published": "Course published.",
+      "unpublished": "Course unpublished.",
+      "updateFailed": "Failed to update course status."
+    }
   },
   "DictionaryDialog": {
     "antonyms": "Antonyms",

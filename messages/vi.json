@@ -638,12 +638,43 @@
     "AssessmentsPage": "Bài kiểm tra",
     "Card": {
       "manage": "Quản lý",
+      "memberLabel": "Thành viên",
       "members": "{count, plural, =1 {1 Thành viên} other {# Thành viên}}",
+      "moduleLabel": "Mô-đun",
       "modules": "{count, plural, =1 {1 Mô-đun} other {# Mô-đun}}",
       "noDescription": "Không có mô tả nào được cung cấp.",
+      "open": "Mở khóa học",
       "togglePublish": "Chuyển đổi trạng thái xuất bản"
     },
     "ChatPage": "Trò chuyện AI",
+    "controls": {
+      "filters": {
+        "ownedOnly": {
+          "description": "Chỉ hiển thị các khóa học bạn đã tạo.",
+          "label": "Chỉ khóa học của tôi"
+        },
+        "publicOnly": {
+          "description": "Hiển thị các khóa học đã xuất bản trong danh sách bạn có quyền truy cập.",
+          "label": "Chỉ khóa học đã xuất bản"
+        },
+        "reset": "Đặt lại bộ lọc",
+        "title": "Bộ lọc",
+        "trigger": "Lọc"
+      },
+      "search": {
+        "label": "Tìm kiếm khóa học",
+        "placeholder": "Tìm khóa học..."
+      },
+      "sort": {
+        "label": "Sắp xếp theo",
+        "options": {
+          "created": "Mới tạo gần đây",
+          "members": "Nhiều thành viên nhất",
+          "title": "Tiêu đề A-Z",
+          "updated": "Cập nhật gần đây"
+        }
+      }
+    },
     "CourseModules": {
       "addModule": "Thêm mô-đun",
       "aiAssistant": "Trợ lý AI",
@@ -781,6 +812,14 @@
       "title": "Tạo bài kiểm tra"
     },
     "description": "Quản lý và xuất bản các khóa học của bạn tại đây.",
+    "emptySearch": {
+      "description": "Hãy thử từ khóa khác hoặc điều chỉnh bộ lọc khóa học.",
+      "title": "Không tìm thấy khóa học"
+    },
+    "errors": {
+      "description": "Hiện không thể tải danh sách khóa học của bạn.",
+      "title": "Không thể tải khóa học"
+    },
     "FilesPage": "Tài liệu",
     "LessonEditor": {
       "cancel": "Hủy",
@@ -833,6 +872,12 @@
     "newCourse": "Khóa học mới",
     "noCourses": "Chưa có khóa học nào",
     "noCoursesDescription": "Chưa có khóa học nào tồn tại",
+    "pagination": {
+      "next": "Tiếp",
+      "page": "Trang {page}/{total}",
+      "previous": "Trước",
+      "range": "Đang hiển thị {start}-{end} trong {total} khóa học"
+    },
     "QuestionBank": {
       "allCategories": "Tất cả danh mục",
       "allLessons": "Tất cả bài học",
@@ -924,7 +969,14 @@
       "zones": "Các vùng thả"
     },
     "SettingsPage": "Cài đặt khóa học",
-    "title": "Các khóa học"
+    "title": "Các khóa học",
+    "toast": {
+      "created": "Đã tạo khóa học.",
+      "createFailed": "Không thể tạo khóa học.",
+      "published": "Đã xuất bản khóa học.",
+      "unpublished": "Đã hủy xuất bản khóa học.",
+      "updateFailed": "Không thể cập nhật trạng thái khóa học."
+    }
   },
   "DictionaryDialog": {
     "antonyms": "Từ trái nghĩa",
