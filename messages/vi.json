@@ -1508,9 +1508,6 @@
   "StudyPage": {
     "aiActive": "AI Đang Hoạt Động",
     "features": {
-      "keywords": {
-        "description": "Trích xuất thuật ngữ và khái niệm quan trọng với giải thích chi tiết theo ngữ cảnh."
-      },
       "practiceTest": {
         "description": "Thử thách bản thân với câu hỏi trắc nghiệm, câu ngắn và thẻ ghi nhớ do AI tạo ra."
       },
@@ -1527,7 +1524,6 @@
     },
     "limitReachedToast": "Bạn đã đạt giới hạn {count} tin nhắn. Hãy bắt đầu phiên mới để tiếp tục.",
     "modes": {
-      "keywords": "Tóm Tắt Từ Khóa",
       "practiceTest": "Bài Kiểm Tra Thực Hành",
       "research": "Nghiên cứu",
       "review": "Tài Liệu Ôn Tập"

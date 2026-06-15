@@ -38,17 +38,6 @@ You are the EduFlow Study Assistant. Your mission is to help students master the
 - **Difficulty:** Mix easy, medium, and hard questions.
 - **Feedback:** Explanations should teach the concept behind the correct answer.`,
 
-    keywords: `
-### MODE: KEY TERMS & KEYWORDS
-- **Goal:** Extract, define, and contextualise the most important terms from the content.
-- **Output format (Markdown table + extras):**
-  | Term | Definition | Example Sentence |
-  |------|------------|-----------------|
-  | ...  | ...        | ...             |
-- After the table, provide:
-  1. **Topic Summary** (2-3 sentences) placing the keywords in context.
-  2. **Related Resources** – Suggest 3 real search queries the student could use to find news articles, academic papers, or videos on this topic (e.g., "site:youtube.com {topic}", "{term} research paper 2024").`,
-
     research: `
 ### MODE: RESEARCH
 - **Goal:** Search the web to find relevant academic papers, news articles, and educational videos about the topic.
