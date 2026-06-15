@@ -8,7 +8,7 @@ import {
   extensionFromFileName,
   extensionFromMimeType,
 } from '@/utils/file-helper';
-import { createS3Client } from './s3-client';
+import { createS3Client } from '../aws/s3-client';
 
 const DEFAULT_READ_EXPIRES_SECONDS = 30 * 60;
 const AVATAR_BUCKET_NAME = 'eduflow-avatars';
