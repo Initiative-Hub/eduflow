@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withAuth } from '@/lib/api/middlewares';
 import { CourseService } from '@/services/CourseService';
-import { StorageService } from '@/services/StorageService';
 
 const listQuerySchema = z.object({
   parentId: z.string().uuid().optional(),
