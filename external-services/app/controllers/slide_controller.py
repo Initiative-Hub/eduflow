@@ -7,6 +7,7 @@ from fastapi.responses import FileResponse
 from app.schemas.slide_schema import GenReq, PlanGenReq
 from app.services.slide_service import SlideService
 from app.deps import STORAGE_DIR
+from app.services.s3_service import upload_file_to_s3, download_file_from_s3
 
 router = APIRouter(prefix="/slides", tags=["Slides"])
 slide_service = SlideService()
@@ -26,12 +27,18 @@ async def execute_generation_job(job_id: str, req: GenReq, out_path: Path):
             language=req.language,
             animation=req.animation,
         )
+        # Upload to S3
+        s3_key = f"slides/{job_id}.html"
+        uploaded = await upload_file_to_s3(out_path, s3_key)
+
         jobs[job_id]["status"] = "done"
         jobs[job_id]["result"] = {
             "deck_id": job_id,
             "slides": result.get("slides", []),
             "usage": result.get("usage", {}),
         }
+        if uploaded:
+            jobs[job_id]["result"]["s3_key"] = s3_key
     except Exception as e:
         jobs[job_id]["status"] = "error"
         jobs[job_id]["message"] = str(e)
@@ -46,6 +53,10 @@ async def execute_plan_generation_job(job_id: str, req: PlanGenReq, out_path: Pa
             output_path=out_path,
             palette=req.palette,
         )
+        # Upload to S3
+        s3_key = f"slides/{job_id}.html"
+        uploaded = await upload_file_to_s3(out_path, s3_key)
+
         jobs[job_id]["status"] = "done"
         jobs[job_id]["result"] = {
             "deck_id": job_id,
@@ -53,6 +64,8 @@ async def execute_plan_generation_job(job_id: str, req: PlanGenReq, out_path: Pa
             "usage": result.get("usage", {}),
             "warnings": result.get("warnings", []),
         }
+        if uploaded:
+            jobs[job_id]["result"]["s3_key"] = s3_key
     except Exception as e:
         jobs[job_id]["status"] = "error"
         jobs[job_id]["message"] = str(e)
@@ -111,7 +124,10 @@ async def get_job_status(job_id: str):
 async def get_deck(deck_id: str):
     file_path = STORAGE_DIR / f"{deck_id}.html"
     if not file_path.exists():
-        raise HTTPException(status_code=404, detail="Deck file not found")
+        s3_key = f"slides/{deck_id}.html"
+        downloaded = await download_file_from_s3(s3_key, file_path)
+        if not downloaded:
+            raise HTTPException(status_code=404, detail="Deck file not found")
     return FileResponse(file_path, media_type="text/html")
 
 

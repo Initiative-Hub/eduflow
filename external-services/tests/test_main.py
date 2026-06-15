@@ -84,6 +84,7 @@ class MarkItDownServiceTests(unittest.TestCase):
                 "youtube-transcript-api>=1.2.4",
                 "slide-skills>=0.2.3",
                 "tavily-python>=0.7.26",
+                "boto3>=1.43.29",
             ],
         )
 
