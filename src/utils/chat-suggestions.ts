@@ -1,6 +1,6 @@
 import type { UIMessage } from 'ai';
 
-export interface SocraticSuggestionsData {
+export interface ChatSuggestionsData {
   items: string[];
 }
 
@@ -9,7 +9,7 @@ const MAX_SOCRATIC_SUGGESTIONS = 3;
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
 
-export function normalizeSocraticSuggestionItems(items: unknown): string[] {
+export function normalizeChatSuggestionItems(items: unknown): string[] {
   if (!Array.isArray(items)) return [];
 
   const normalized: string[] = [];
@@ -31,11 +31,11 @@ export function normalizeSocraticSuggestionItems(items: unknown): string[] {
   return normalized;
 }
 
-export function getSocraticSuggestionItems(message: UIMessage): string[] {
+export function getChatSuggestionItems(message: UIMessage): string[] {
   return message.parts.flatMap((part) => {
     if (part.type !== 'data-suggestions') return [];
     if (!isRecord(part.data)) return [];
 
-    return normalizeSocraticSuggestionItems(part.data.items);
+    return normalizeChatSuggestionItems(part.data.items);
   });
 }

@@ -92,6 +92,7 @@ for any tasks.).
 - **Icon Availability**: When introducing a new `lucide-react` icon, verify the installed package exports it; use a generic available icon when brand-specific icons are absent.
 - **JSX Curly Braces**: Literally render double curly braces `{{` and `}}` in JSX text by quoting them, like `{'{{placeholder}}'}`, to prevent the JSX compiler from parsing them as JS object shorthand syntax.
 - **Research Citations**: For AI research/chat responses with numbered citations, derive source metadata from AI SDK `source-url` parts and web-search tool outputs in shared helpers, then render inline citation UI from that normalized source list instead of hardcoding source parsing in components.
+- **Generated Suggestions**: When AI routes stream `data-suggestions` parts for clickable follow-ups, make system prompts explicitly tell the model not to print follow-up questions, JSON, markdown chips, or numbered suggestion lists in the visible assistant response.
 - **Grouped Citation UI**: Keep multi-source citation markers such as `[1, 2]` as a single inline trigger that previews the first source, shows the additional source count, and exposes the full source set in a clickable hover-card carousel.
 - **Citation Labels**: Keep citation hover-card labels such as source counts localized through `next-intl`; do not hardcode English fallback copy in citation UI components.
 - **Citation Link Hover**: Use subtle semantic hover states such as `hover:bg-muted/60` for citation source cards; avoid saturated accent fills that compete with the citation content.
