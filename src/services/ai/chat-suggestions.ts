@@ -1,7 +1,7 @@
 import type { UIMessage } from 'ai';
 import { z } from 'zod';
 import { getMessageText } from '@/utils/chat-message';
-import { normalizeChatSuggestionItems } from '@/utils/socratic-suggestions';
+import { normalizeChatSuggestionItems } from '@/utils/chat-suggestions';
 import type { ChatProviderService } from './ChatProviderService';
 import type { ChatProvider, StreamChatInput } from './chat-provider.types';
 

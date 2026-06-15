@@ -1,6 +1,6 @@
 import type { UIMessage } from 'ai';
 
-export interface SocraticSuggestionsData {
+export interface ChatSuggestionsData {
   items: string[];
 }
 
@@ -31,14 +31,11 @@ export function normalizeChatSuggestionItems(items: unknown): string[] {
   return normalized;
 }
 
-//TODO: Should we bring this to another helper function?
-export const normalizeSocraticSuggestionItems = normalizeChatSuggestionItems;
-
-export function getSocraticSuggestionItems(message: UIMessage): string[] {
+export function getChatSuggestionItems(message: UIMessage): string[] {
   return message.parts.flatMap((part) => {
     if (part.type !== 'data-suggestions') return [];
     if (!isRecord(part.data)) return [];
 
-    return normalizeSocraticSuggestionItems(part.data.items);
+    return normalizeChatSuggestionItems(part.data.items);
   });
 }

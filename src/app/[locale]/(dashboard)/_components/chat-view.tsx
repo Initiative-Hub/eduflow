@@ -24,7 +24,7 @@ import {
   getCitationSources,
 } from '@/utils/chat-citations';
 import { getMessageReasoning, getMessageText } from '@/utils/chat-message';
-import { getSocraticSuggestionItems } from '@/utils/socratic-suggestions';
+import { getChatSuggestionItems } from '@/utils/chat-suggestions';
 import { ChatInputAttachments } from './chat-input-attachments';
 import {
   ChatToolInvocations,
@@ -63,7 +63,7 @@ export function ChatView({
                 : text;
             const suggestions =
               message.role === 'assistant'
-                ? getSocraticSuggestionItems(message)
+                ? getChatSuggestionItems(message)
                 : [];
             const attachments = message.parts.flatMap((part, index) =>
               part.type === 'file'
