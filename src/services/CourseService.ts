@@ -9,14 +9,30 @@ import { htmlToTiptapDocument } from '@/lib/tiptap-html';
 import type { AICourseGeneration } from '@/lib/validations/course.schema';
 import { OpenRouterService } from '@/services/ai/OpenRouterService';
 import { StorageService } from '@/services/StorageService';
+
+export type CourseListSort =
+  | 'updated-desc'
+  | 'created-desc'
+  | 'title-asc'
+  | 'members-desc';
+
+export type CourseListParams = {
+  ownedOnly: boolean;
+  page: number;
+  pageSize: number;
+  publicOnly: boolean;
+  search: string;
+  sort: CourseListSort;
+};
+
 export class CourseService {
   static async assertCourseOwner(courseId: string, userId: string) {
     const course = await prisma.course.findUnique({
       where: { id: courseId },
-      select: { ownerId: true },
+      select: { deletedAt: true, ownerId: true },
     });
 
-    if (!course) {
+    if (!course || course.deletedAt) {
       throw new Error('Course not found');
     }
 
@@ -137,7 +153,7 @@ export class CourseService {
 
   static async getCoursesByOwner(ownerId: string) {
     return await prisma.course.findMany({
-      where: { ownerId },
+      where: { deletedAt: null, ownerId },
       orderBy: { createdAt: 'desc' },
       include: {
         _count: {
@@ -150,6 +166,7 @@ export class CourseService {
   static async getJoinedCourses(userId: string) {
     return await prisma.course.findMany({
       where: {
+        deletedAt: null,
         OR: [
           { ownerId: userId },
           {
@@ -170,10 +187,98 @@ export class CourseService {
     });
   }
 
+  static async listAccessibleCourses(userId: string, params: CourseListParams) {
+    const page = Math.max(1, params.page);
+    const pageSize = Math.min(Math.max(1, params.pageSize), 100);
+    const search = params.search.trim();
+    const accessWhere = params.ownedOnly
+      ? { ownerId: userId }
+      : {
+          OR: [
+            { ownerId: userId },
+            {
+              enrollments: {
+                some: {
+                  memberId: userId,
+                },
+              },
+            },
+          ],
+        };
+
+    const where = {
+      AND: [
+        accessWhere,
+        ...(params.publicOnly ? [{ isPublished: true }] : []),
+        ...(search
+          ? [
+              {
+                OR: [
+                  { title: { contains: search, mode: 'insensitive' as const } },
+                  {
+                    description: {
+                      contains: search,
+                      mode: 'insensitive' as const,
+                    },
+                  },
+                ],
+              },
+            ]
+          : []),
+      ],
+    };
+
+    const orderBy =
+      params.sort === 'created-desc'
+        ? { createdAt: 'desc' as const }
+        : params.sort === 'title-asc'
+          ? { title: 'asc' as const }
+          : params.sort === 'members-desc'
+            ? { enrollments: { _count: 'desc' as const } }
+            : { updatedAt: 'desc' as const };
+
+    const [total, courses] = await Promise.all([
+      prisma.course.count({ where }),
+      prisma.course.findMany({
+        where,
+        orderBy,
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+        select: {
+          id: true,
+          ownerId: true,
+          title: true,
+          description: true,
+          isPublished: true,
+          createdAt: true,
+          updatedAt: true,
+          _count: {
+            select: { modules: true, enrollments: true },
+          },
+        },
+      }),
+    ]);
+
+    return {
+      items: courses.map((course) => ({
+        ...course,
+        isOwner: course.ownerId === userId,
+      })),
+      page,
+      pageSize,
+      total,
+      totalPages: Math.ceil(total / pageSize),
+    };
+  }
+
   static async getCourseById(courseId: string, userId: string) {
     const course = await prisma.course.findUnique({
       where: { id: courseId },
     });
+
+    if (!course || course.deletedAt) {
+      throw new Error('Course not found');
+    }
 
     const member = await prisma.enrollment.findFirst({
       where: {
@@ -181,10 +286,6 @@ export class CourseService {
         memberId: userId,
       },
     });
-
-    if (!course) {
-      throw new Error('Course not found');
-    }
 
     if (!member && course.ownerId !== userId) {
       throw new Error('Unauthorized');
@@ -196,10 +297,10 @@ export class CourseService {
   static async isMember(courseId: string, userId: string) {
     const course = await prisma.course.findUnique({
       where: { id: courseId },
-      select: { ownerId: true },
+      select: { deletedAt: true, ownerId: true },
     });
 
-    if (!course) return false;
+    if (!course || course.deletedAt) return false;
     if (course.ownerId === userId) return true;
 
     const enrollment = await prisma.enrollment.findFirst({
@@ -419,7 +520,7 @@ export class CourseService {
       where: { id: courseId },
     });
 
-    if (!course) {
+    if (!course || course.deletedAt) {
       throw new Error('Course not found');
     }
 

@@ -638,12 +638,43 @@
     "AssessmentsPage": "Assessments",
     "Card": {
       "manage": "Manage",
+      "memberLabel": "Members",
       "members": "{count, plural, =1 {1 Member} other {# Members}}",
+      "moduleLabel": "Modules",
       "modules": "{count, plural, =1 {1 Module} other {# Modules}}",
       "noDescription": "No description provided.",
+      "open": "Open course",
       "togglePublish": "Toggle publish status"
     },
     "ChatPage": "Course AI Chat",
+    "controls": {
+      "filters": {
+        "ownedOnly": {
+          "description": "Limit results to courses you created.",
+          "label": "Owned courses only"
+        },
+        "publicOnly": {
+          "description": "Show published courses in your accessible list.",
+          "label": "Published courses only"
+        },
+        "reset": "Reset filters",
+        "title": "Filters",
+        "trigger": "Filter"
+      },
+      "search": {
+        "label": "Search courses",
+        "placeholder": "Search courses..."
+      },
+      "sort": {
+        "label": "Sort by",
+        "options": {
+          "created": "Newest created",
+          "members": "Most members",
+          "title": "Title A-Z",
+          "updated": "Recently updated"
+        }
+      }
+    },
     "CourseModules": {
       "addModule": "Add Module",
       "aiAssistant": "AI Assistant",
@@ -781,6 +812,14 @@
       "title": "Create Quiz"
     },
     "description": "Manage and publish your courses here.",
+    "emptySearch": {
+      "description": "Try a different search or adjust the course filters.",
+      "title": "No courses found"
+    },
+    "errors": {
+      "description": "We could not load your courses right now.",
+      "title": "Courses unavailable"
+    },
     "FilesPage": "Files",
     "LessonEditor": {
       "cancel": "Cancel",
@@ -833,6 +872,12 @@
     "newCourse": "New Course",
     "noCourses": "No courses yet",
     "noCoursesDescription": "No courses available",
+    "pagination": {
+      "next": "Next",
+      "page": "Page {page} of {total}",
+      "previous": "Previous",
+      "range": "Showing {start}-{end} of {total} courses"
+    },
     "QuestionBank": {
       "allCategories": "All Categories",
       "allLessons": "All Lessons",
@@ -924,7 +969,130 @@
       "zones": "Drop Zones"
     },
     "SettingsPage": "Course Settings",
-    "title": "Courses"
+    "title": "Courses",
+    "toast": {
+      "created": "Course created.",
+      "createFailed": "Failed to create course.",
+      "published": "Course published.",
+      "unpublished": "Course unpublished.",
+      "updateFailed": "Failed to update course status."
+    }
+  },
+  "CourseSettingsPage": {
+    "actions": {
+      "archive": "Archive",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "edit": "Edit",
+      "leave": "Leave course",
+      "save": "Save changes",
+      "transfer": "Transfer ownership",
+      "unarchive": "Unarchive"
+    },
+    "archiveDialog": {
+      "description": "Archive this course? Type the course ID to confirm.",
+      "title": "Archive course"
+    },
+    "archivedNotice": {
+      "description": "Members can still review the course, but owners should unarchive it before making it active again.",
+      "title": "This course is archived"
+    },
+    "confirmation": {
+      "description": "Type {courseId} to confirm this action.",
+      "label": "Course ID confirmation"
+    },
+    "dangerZone": {
+      "archive": {
+        "description": "Mark the course as archived without deleting course data.",
+        "title": "Archive course"
+      },
+      "delete": {
+        "description": "Soft delete the course and remove it from active course lists.",
+        "title": "Delete course"
+      },
+      "description": "Sensitive actions that affect membership, ownership, or course availability.",
+      "leave": {
+        "description": "Leave this course and remove your member access.",
+        "title": "Leave course"
+      },
+      "title": "Danger zone",
+      "transfer": {
+        "description": "Choose another member to become owner. Your role will be swapped with theirs.",
+        "title": "Transfer ownership"
+      },
+      "unarchive": {
+        "description": "Restore this course to the active course list.",
+        "title": "Unarchive course"
+      }
+    },
+    "deleteDialog": {
+      "description": "Soft delete this course? Type the course ID to confirm.",
+      "title": "Delete course"
+    },
+    "description": "Manage course identity, visibility, and high-impact course actions.",
+    "errors": {
+      "description": "We could not refresh course settings right now.",
+      "title": "Settings unavailable"
+    },
+    "fallback": {
+      "noDescription": "No description provided.",
+      "noName": "No name"
+    },
+    "fields": {
+      "courseId": "Course ID",
+      "description": "Description",
+      "role": "Role",
+      "title": "Title",
+      "visibility": "Visibility"
+    },
+    "form": {
+      "description": "Description",
+      "title": "Title",
+      "visibility": "Visibility"
+    },
+    "leaveDialog": {
+      "description": "Leave this course? You will lose access unless another owner or teacher adds you again.",
+      "title": "Leave course"
+    },
+    "roles": {
+      "courseOwner": "Course Owner",
+      "student": "Student",
+      "teacher": "Teacher"
+    },
+    "status": {
+      "archived": "Archived"
+    },
+    "title": "Course Settings",
+    "toast": {
+      "archived": "Course archived.",
+      "archiveFailed": "Failed to archive course.",
+      "deleted": "Course deleted.",
+      "deleteFailed": "Failed to delete course.",
+      "leaveFailed": "Failed to leave course.",
+      "left": "You left the course.",
+      "transferFailed": "Failed to transfer ownership.",
+      "transferred": "Ownership transferred.",
+      "unarchived": "Course unarchived.",
+      "unarchiveFailed": "Failed to unarchive course.",
+      "updated": "Course settings updated.",
+      "updateFailed": "Failed to update course settings."
+    },
+    "transferDialog": {
+      "description": "Select the member who should become the new course owner.",
+      "emptyDescription": "Add another member before transferring ownership.",
+      "emptyTitle": "No members available",
+      "memberLabel": "New owner",
+      "memberPlaceholder": "Choose a course member",
+      "title": "Transfer ownership"
+    },
+    "unarchiveDialog": {
+      "description": "Unarchive this course and make it active again?",
+      "title": "Unarchive course"
+    },
+    "visibility": {
+      "private": "Private",
+      "public": "Public"
+    }
   },
   "DictionaryDialog": {
     "antonyms": "Antonyms",

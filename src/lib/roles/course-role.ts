@@ -4,7 +4,8 @@ export async function getCourseRole(userId: string, courseId: string) {
   const enrollment = await prisma.enrollment.findFirst({
     where: {
       memberId: userId,
-      courseId: courseId,
+      courseId,
+      course: { deletedAt: null },
     },
     select: {
       role: true,

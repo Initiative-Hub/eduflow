@@ -638,12 +638,43 @@
     "AssessmentsPage": "Bài kiểm tra",
     "Card": {
       "manage": "Quản lý",
+      "memberLabel": "Thành viên",
       "members": "{count, plural, =1 {1 Thành viên} other {# Thành viên}}",
+      "moduleLabel": "Mô-đun",
       "modules": "{count, plural, =1 {1 Mô-đun} other {# Mô-đun}}",
       "noDescription": "Không có mô tả nào được cung cấp.",
+      "open": "Mở khóa học",
       "togglePublish": "Chuyển đổi trạng thái xuất bản"
     },
     "ChatPage": "Trò chuyện AI",
+    "controls": {
+      "filters": {
+        "ownedOnly": {
+          "description": "Chỉ hiển thị các khóa học bạn đã tạo.",
+          "label": "Chỉ khóa học của tôi"
+        },
+        "publicOnly": {
+          "description": "Hiển thị các khóa học đã xuất bản trong danh sách bạn có quyền truy cập.",
+          "label": "Chỉ khóa học đã xuất bản"
+        },
+        "reset": "Đặt lại bộ lọc",
+        "title": "Bộ lọc",
+        "trigger": "Lọc"
+      },
+      "search": {
+        "label": "Tìm kiếm khóa học",
+        "placeholder": "Tìm khóa học..."
+      },
+      "sort": {
+        "label": "Sắp xếp theo",
+        "options": {
+          "created": "Mới tạo gần đây",
+          "members": "Nhiều thành viên nhất",
+          "title": "Tiêu đề A-Z",
+          "updated": "Cập nhật gần đây"
+        }
+      }
+    },
     "CourseModules": {
       "addModule": "Thêm mô-đun",
       "aiAssistant": "Trợ lý AI",
@@ -781,6 +812,14 @@
       "title": "Tạo bài kiểm tra"
     },
     "description": "Quản lý và xuất bản các khóa học của bạn tại đây.",
+    "emptySearch": {
+      "description": "Hãy thử từ khóa khác hoặc điều chỉnh bộ lọc khóa học.",
+      "title": "Không tìm thấy khóa học"
+    },
+    "errors": {
+      "description": "Hiện không thể tải danh sách khóa học của bạn.",
+      "title": "Không thể tải khóa học"
+    },
     "FilesPage": "Tài liệu",
     "LessonEditor": {
       "cancel": "Hủy",
@@ -833,6 +872,12 @@
     "newCourse": "Khóa học mới",
     "noCourses": "Chưa có khóa học nào",
     "noCoursesDescription": "Chưa có khóa học nào tồn tại",
+    "pagination": {
+      "next": "Tiếp",
+      "page": "Trang {page}/{total}",
+      "previous": "Trước",
+      "range": "Đang hiển thị {start}-{end} trong {total} khóa học"
+    },
     "QuestionBank": {
       "allCategories": "Tất cả danh mục",
       "allLessons": "Tất cả bài học",
@@ -924,7 +969,130 @@
       "zones": "Các vùng thả"
     },
     "SettingsPage": "Cài đặt khóa học",
-    "title": "Các khóa học"
+    "title": "Các khóa học",
+    "toast": {
+      "created": "Đã tạo khóa học.",
+      "createFailed": "Không thể tạo khóa học.",
+      "published": "Đã xuất bản khóa học.",
+      "unpublished": "Đã hủy xuất bản khóa học.",
+      "updateFailed": "Không thể cập nhật trạng thái khóa học."
+    }
+  },
+  "CourseSettingsPage": {
+    "actions": {
+      "archive": "Lưu trữ",
+      "cancel": "Hủy",
+      "delete": "Xóa",
+      "edit": "Chỉnh sửa",
+      "leave": "Rời khóa học",
+      "save": "Lưu thay đổi",
+      "transfer": "Chuyển quyền sở hữu",
+      "unarchive": "Bỏ lưu trữ"
+    },
+    "archiveDialog": {
+      "description": "Lưu trữ khóa học này? Nhập ID khóa học để xác nhận.",
+      "title": "Lưu trữ khóa học"
+    },
+    "archivedNotice": {
+      "description": "Thành viên vẫn có thể xem lại khóa học, nhưng chủ khóa học nên bỏ lưu trữ trước khi kích hoạt lại.",
+      "title": "Khóa học này đang được lưu trữ"
+    },
+    "confirmation": {
+      "description": "Nhập {courseId} để xác nhận thao tác này.",
+      "label": "Xác nhận ID khóa học"
+    },
+    "dangerZone": {
+      "archive": {
+        "description": "Đánh dấu khóa học là đã lưu trữ mà không xóa dữ liệu khóa học.",
+        "title": "Lưu trữ khóa học"
+      },
+      "delete": {
+        "description": "Xóa mềm khóa học và ẩn khỏi danh sách khóa học đang hoạt động.",
+        "title": "Xóa khóa học"
+      },
+      "description": "Các thao tác nhạy cảm ảnh hưởng đến thành viên, quyền sở hữu hoặc trạng thái khóa học.",
+      "leave": {
+        "description": "Rời khóa học này và xóa quyền truy cập thành viên của bạn.",
+        "title": "Rời khóa học"
+      },
+      "title": "Khu vực nguy hiểm",
+      "transfer": {
+        "description": "Chọn thành viên khác làm chủ khóa học. Vai trò của bạn sẽ được hoán đổi với họ.",
+        "title": "Chuyển quyền sở hữu"
+      },
+      "unarchive": {
+        "description": "Khôi phục khóa học này vào danh sách khóa học đang hoạt động.",
+        "title": "Bỏ lưu trữ khóa học"
+      }
+    },
+    "deleteDialog": {
+      "description": "Xóa mềm khóa học này? Nhập ID khóa học để xác nhận.",
+      "title": "Xóa khóa học"
+    },
+    "description": "Quản lý thông tin, hiển thị và các thao tác quan trọng của khóa học.",
+    "errors": {
+      "description": "Hiện không thể làm mới cài đặt khóa học.",
+      "title": "Cài đặt không khả dụng"
+    },
+    "fallback": {
+      "noDescription": "Không có mô tả nào được cung cấp.",
+      "noName": "Chưa có tên"
+    },
+    "fields": {
+      "courseId": "ID khóa học",
+      "description": "Mô tả",
+      "role": "Vai trò",
+      "title": "Tiêu đề",
+      "visibility": "Hiển thị"
+    },
+    "form": {
+      "description": "Mô tả",
+      "title": "Tiêu đề",
+      "visibility": "Hiển thị"
+    },
+    "leaveDialog": {
+      "description": "Rời khóa học này? Bạn sẽ mất quyền truy cập trừ khi chủ khóa học hoặc giảng viên thêm lại bạn.",
+      "title": "Rời khóa học"
+    },
+    "roles": {
+      "courseOwner": "Chủ khóa học",
+      "student": "Sinh viên",
+      "teacher": "Giảng viên"
+    },
+    "status": {
+      "archived": "Đã lưu trữ"
+    },
+    "title": "Cài đặt khóa học",
+    "toast": {
+      "archived": "Đã lưu trữ khóa học.",
+      "archiveFailed": "Không thể lưu trữ khóa học.",
+      "deleted": "Đã xóa khóa học.",
+      "deleteFailed": "Không thể xóa khóa học.",
+      "leaveFailed": "Không thể rời khóa học.",
+      "left": "Bạn đã rời khóa học.",
+      "transferFailed": "Không thể chuyển quyền sở hữu.",
+      "transferred": "Đã chuyển quyền sở hữu.",
+      "unarchived": "Đã bỏ lưu trữ khóa học.",
+      "unarchiveFailed": "Không thể bỏ lưu trữ khóa học.",
+      "updated": "Đã cập nhật cài đặt khóa học.",
+      "updateFailed": "Không thể cập nhật cài đặt khóa học."
+    },
+    "transferDialog": {
+      "description": "Chọn thành viên sẽ trở thành chủ khóa học mới.",
+      "emptyDescription": "Hãy thêm thành viên khác trước khi chuyển quyền sở hữu.",
+      "emptyTitle": "Không có thành viên khả dụng",
+      "memberLabel": "Chủ khóa học mới",
+      "memberPlaceholder": "Chọn thành viên khóa học",
+      "title": "Chuyển quyền sở hữu"
+    },
+    "unarchiveDialog": {
+      "description": "Bỏ lưu trữ khóa học này và kích hoạt lại?",
+      "title": "Bỏ lưu trữ khóa học"
+    },
+    "visibility": {
+      "private": "Riêng tư",
+      "public": "Công khai"
+    }
   },
   "DictionaryDialog": {
     "antonyms": "Từ trái nghĩa",
