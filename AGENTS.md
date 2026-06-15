@@ -99,6 +99,7 @@ for any tasks.).
 - **Citation Source Identity**: Prefer source favicons from web-search metadata for citation identity marks, with a generic `lucide-react` icon only as a fallback.
 - **Remote Favicons**: Render arbitrary citation favicons with `next/image` and `unoptimized` unless the remote domains are explicitly configured in `next.config`.
 - **Search Favicons**: Enable favicon metadata on web-search tools when citation UI depends on source identity, and provide a deterministic domain favicon fallback for older results without favicon metadata.
+- **Study Modes**: When adding or removing a Study mode, update the shared Zod mode schema, mode selector cards, mode-specific system prompts, and both locale files together so the UI, API validation, and prompt behavior stay synchronized.
 
 ### 6.3 Security & Validation
 
