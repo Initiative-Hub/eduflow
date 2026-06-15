@@ -1,14 +1,9 @@
-import { Globe } from 'lucide-react';
+import { BookOpen, Globe } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 
@@ -21,17 +16,6 @@ interface CourseCardProps {
   modulesCount: number;
   enrollmentsCount: number;
   onTogglePublish: (id: string, isPublished: boolean) => void;
-}
-
-function CourseMetric({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="min-w-0">
-      <div className="truncate text-muted-foreground text-xs">{label}</div>
-      <div className="mt-1 font-semibold text-foreground text-lg tabular-nums leading-none">
-        {value}
-      </div>
-    </div>
-  );
 }
 
 export function CourseCard({
@@ -49,44 +33,74 @@ export function CourseCard({
   return (
     <Card
       className={cn(
-        'group relative flex h-full flex-col overflow-hidden rounded-lg border bg-card shadow-none transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-foreground/20 hover:bg-muted/20'
+        'group/card relative flex h-full flex-col overflow-hidden rounded-xl border bg-card p-0 transition-all duration-300 hover:-translate-y-1 hover:border-foreground/25 hover:shadow-sm'
       )}
     >
-      <CardContent className="gap-4 p-5 pb-3">
-        <div className="flex items-start justify-between gap-4">
-          <Link
-            href={`/courses/${id}`}
-            className="min-w-0 flex-1 rounded-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-          >
-            <CardTitle className="text-balance font-semibold text-xl leading-tight transition-colors group-hover:text-primary">
-              {title}
-            </CardTitle>
-            <CardDescription className="mt-3 line-clamp-2 min-h-10 text-sm leading-relaxed">
-              {description || t('noDescription')}
-            </CardDescription>
-          </Link>
-          {isOwner && (
-            <div className="flex items-center gap-3">
-              <Badge variant="outline">Owned</Badge>
-              <div className="flex items-center gap-2">
-                <Globe className="h-4 w-4 text-muted-foreground" />
-                <Switch
-                  checked={isPublished}
-                  onCheckedChange={(val) => onTogglePublish(id, val)}
-                  aria-label={t('togglePublish')}
-                  size="sm"
-                />
-              </div>
+      {/* Top Background / Banner */}
+      <div className="relative flex aspect-video w-full items-center justify-center overflow-hidden border-b bg-linear-to-br from-muted/70 to-muted/20">
+        {/* Centered course icon with card hover scale-up effect */}
+        <div className="relative z-10 flex h-12 w-12 items-center justify-center rounded-xl border bg-background shadow-sm transition-transform duration-300 group-hover/card:scale-105">
+          <BookOpen className="h-5 w-5 text-primary" />
+        </div>
+
+        {/* Badge & Publish switch overlay */}
+        {isOwner && (
+          <div className="absolute top-3 right-3 z-20 flex items-center gap-2">
+            <Badge
+              variant="secondary"
+              className="pointer-events-none rounded-full bg-background/90 px-2 py-0.5 font-medium text-[10px] text-foreground uppercase tracking-wider shadow-sm"
+            >
+              Owned
+            </Badge>
+            <div className="flex items-center gap-1.5 rounded-full border bg-background/90 py-0.5 pr-1 pl-2 shadow-sm">
+              <Globe className="h-3.5 w-3.5 text-muted-foreground" />
+              <Switch
+                checked={isPublished}
+                onCheckedChange={(val) => onTogglePublish(id, val)}
+                aria-label={t('togglePublish')}
+                size="sm"
+                className="origin-right scale-75"
+              />
             </div>
-          )}
+          </div>
+        )}
+      </div>
+
+      {/* Course Info Section */}
+      <div className="flex flex-1 flex-col p-5">
+        <Link href={`/courses/${id}`} className="min-w-0 flex-1 outline-none">
+          <h3 className="line-clamp-2 font-semibold text-foreground text-lg leading-snug transition-colors group-hover/card:text-primary">
+            {title}
+          </h3>
+          <p className="mt-2 line-clamp-2 min-h-10 text-muted-foreground text-sm leading-relaxed">
+            {description || (
+              <span className="text-muted-foreground/70 italic">
+                {t('noDescription')}
+              </span>
+            )}
+          </p>
+        </Link>
+
+        {/* Divider */}
+        <Separator className="my-4" />
+
+        {/* Metrics Row */}
+        <div className="flex items-center gap-4 text-muted-foreground text-xs">
+          <div className="flex items-center gap-1.5">
+            <span className="font-semibold text-foreground text-sm tabular-nums">
+              {modulesCount}
+            </span>
+            <span>{t('moduleLabel')}</span>
+          </div>
+          <div className="h-1 w-1 rounded-full bg-muted-foreground/30" />
+          <div className="flex items-center gap-1.5">
+            <span className="font-semibold text-foreground text-sm tabular-nums">
+              {enrollmentsCount}
+            </span>
+            <span>{t('memberLabel')}</span>
+          </div>
         </div>
-      </CardContent>
-      <CardFooter className="mt-auto p-5 pt-2">
-        <div className="flex gap-3 pt-4">
-          <CourseMetric label={t('moduleLabel')} value={modulesCount} />
-          <CourseMetric label={t('memberLabel')} value={enrollmentsCount} />
-        </div>
-      </CardFooter>
+      </div>
     </Card>
   );
 }
