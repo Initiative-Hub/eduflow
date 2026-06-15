@@ -28,8 +28,8 @@ export interface GenerateChatSuggestionsInput<TMessage extends UIMessage> {
 
 function extractJsonObject(text: string): unknown {
   const firstBrace = text.indexOf('{');
-  const lastBrace = text.indexOf('}');
-
+  const lastBrace = text.lastIndexOf('}');
+  
   if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace)
     return null;
 
