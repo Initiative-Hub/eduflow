@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 810">
+  <rect width="1440" height="810" fill="#0A0E1A"/>
+  <line x1="80" y1="0" x2="80" y2="810" stroke="#00F0FF" stroke-width="3" stroke-opacity="0.3"/>
+
+  <!-- Heading -->
+  <text x="140" y="130" font-family="system-ui, -apple-system, sans-serif" font-size="50" font-weight="bold" fill="#FFFFFF">{{heading|24}}</text>
+  <rect x="140" y="155" width="220" height="4" fill="#00F0FF" rx="2"/>
+
+  <!-- Left Column -->
+  <g transform="translate(140, 220)">
+    <rect width="520" height="500" fill="#111827" fill-opacity="0.6" rx="16" stroke="#00F0FF" stroke-width="1.5" stroke-opacity="0.3"/>
+    <text x="40" y="60" font-family="system-ui, -apple-system, sans-serif" font-size="32" font-weight="bold" fill="#00F0FF">{{left_col_title|30}}</text>
+    <line x1="40" y1="90" x2="480" y2="90" stroke="#00F0FF" stroke-opacity="0.2" stroke-width="1"/>
+    
+    <!-- Text lines -->
+    <text x="40" y="150" font-family="system-ui, -apple-system, sans-serif" font-size="22" fill="#E2E8F0">{{left_col_text.1|40}}</text>
+    <text x="40" y="210" font-family="system-ui, -apple-system, sans-serif" font-size="22" fill="#E2E8F0">{{left_col_text.2|40}}</text>
+    <text x="40" y="270" font-family="system-ui, -apple-system, sans-serif" font-size="22" fill="#E2E8F0">{{left_col_text.3|40}}</text>
+    <text x="40" y="330" font-family="system-ui, -apple-system, sans-serif" font-size="22" fill="#E2E8F0">{{left_col_text.4|40}}</text>
+    <text x="40" y="390" font-family="system-ui, -apple-system, sans-serif" font-size="22" fill="#E2E8F0">{{left_col_text.5|40}}</text>
+  </g>
+
+  <!-- Right Column -->
+  <g transform="translate(740, 220)">
+    <rect width="520" height="500" fill="#111827" fill-opacity="0.6" rx="16" stroke="#FF007F" stroke-width="1.5" stroke-opacity="0.3"/>
+    <text x="40" y="60" font-family="system-ui, -apple-system, sans-serif" font-size="32" font-weight="bold" fill="#FF007F">{{right_col_title|30}}</text>
+    <line x1="40" y1="90" x2="480" y2="90" stroke="#FF007F" stroke-opacity="0.2" stroke-width="1"/>
+    
+    <!-- Text lines -->
+    <text x="40" y="150" font-family="system-ui, -apple-system, sans-serif" font-size="22" fill="#E2E8F0">{{right_col_text.1|40}}</text>
+    <text x="40" y="210" font-family="system-ui, -apple-system, sans-serif" font-size="22" fill="#E2E8F0">{{right_col_text.2|40}}</text>
+    <text x="40" y="270" font-family="system-ui, -apple-system, sans-serif" font-size="22" fill="#E2E8F0">{{right_col_text.3|40}}</text>
+    <text x="40" y="330" font-family="system-ui, -apple-system, sans-serif" font-size="22" fill="#E2E8F0">{{right_col_text.4|40}}</text>
+    <text x="40" y="390" font-family="system-ui, -apple-system, sans-serif" font-size="22" fill="#E2E8F0">{{right_col_text.5|40}}</text>
+  </g>
+</svg>

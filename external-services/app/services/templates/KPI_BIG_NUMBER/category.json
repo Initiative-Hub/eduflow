@@ -1,0 +1,6 @@
+{
+  "description": "Dashboard slide containing three major statistics or numeric KPIs.",
+  "variants": {
+    "standard": "Sleek three-column statistic cards with huge glowing values."
+  }
+}

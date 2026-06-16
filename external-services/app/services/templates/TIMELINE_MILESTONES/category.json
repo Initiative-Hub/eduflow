@@ -1,0 +1,6 @@
+{
+  "description": "Timeline slide displaying a list of chronological events, milestones or steps.",
+  "variants": {
+    "standard": "Alternating chronological timeline nodes on a glowing dashed path."
+  }
+}

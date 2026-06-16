@@ -37,6 +37,110 @@ async def generate_and_encode_image(prompt: str, aspect_ratio: float = 1.0) -> s
         return f"data:image/svg+xml;base64,{b64_svg}"
 
 
+def flatten_slide_bindings(category: str, slide_title: str, bindings: dict) -> dict:
+    flat = bindings.copy()
+
+    # Always ensure slide title is mapped to heading for SVG template consistency
+    if slide_title:
+        flat["heading"] = slide_title
+
+    # 1. Flatten AGENDA_OUTLINE: items -> items.1, items.2, etc.
+    if "items" in bindings and isinstance(bindings["items"], list):
+        for idx, item in enumerate(bindings["items"][:5], 1):
+            flat[f"items.{idx}"] = str(item)
+            flat[f"item_{idx}"] = str(item)
+
+    # 2. Flatten TITLE_BULLETS: bullets -> bullets.1, bullets.2, etc.
+    if "bullets" in bindings and isinstance(bindings["bullets"], list):
+        for idx, item in enumerate(bindings["bullets"][:5], 1):
+            flat[f"bullets.{idx}"] = str(item)
+            flat[f"bullet_{idx}"] = str(item)
+
+    # 3. Flatten TWO_COLUMN_SPLIT: left_col_text and right_col_text arrays
+    if "left_col_text" in bindings and isinstance(bindings["left_col_text"], list):
+        for idx, item in enumerate(bindings["left_col_text"][:5], 1):
+            flat[f"left_col_text.{idx}"] = str(item)
+    if "right_col_text" in bindings and isinstance(bindings["right_col_text"], list):
+        for idx, item in enumerate(bindings["right_col_text"][:5], 1):
+            flat[f"right_col_text.{idx}"] = str(item)
+
+    # 4. Flatten BIG_QUOTE_TAKEAWAY: quote textwrap
+    if "quote" in bindings and isinstance(bindings["quote"], str):
+        wrapped = textwrap.wrap(bindings["quote"], width=50)
+        for idx, line in enumerate(wrapped[:3], 1):
+            flat[f"quote.{idx}"] = line
+
+    # 5. Flatten KPI_BIG_NUMBER: metrics -> stat_1, label_1, etc.
+    if "metrics" in bindings and isinstance(bindings["metrics"], list):
+        for idx, metric in enumerate(bindings["metrics"][:3], 1):
+            if isinstance(metric, dict):
+                flat[f"stat_{idx}"] = str(metric.get("value", ""))
+                flat[f"label_{idx}"] = str(metric.get("label", ""))
+
+    # 6. Flatten CHART_INSIGHT: chart_data & insight_text wrap
+    if "chart_data" in bindings and isinstance(bindings["chart_data"], list):
+        for idx, data_point in enumerate(bindings["chart_data"][:4], 1):
+            if isinstance(data_point, dict):
+                flat[f"chart_label_{idx}"] = str(data_point.get("label", ""))
+                flat[f"chart_value_{idx}"] = str(data_point.get("value", ""))
+    if "insight_text" in bindings and isinstance(bindings["insight_text"], str):
+        wrapped = textwrap.wrap(bindings["insight_text"], width=45)
+        for idx, line in enumerate(wrapped[:3], 1):
+            flat[f"insight_text.{idx}"] = line
+
+    # 7. Flatten DATA_TABLE: headers & rows
+    if "headers" in bindings and isinstance(bindings["headers"], list):
+        for idx, header in enumerate(bindings["headers"][:4], 1):
+            flat[f"header_{idx}"] = str(header)
+    if "rows" in bindings and isinstance(bindings["rows"], list):
+        for r_idx, row in enumerate(bindings["rows"][:3], 1):
+            if isinstance(row, list):
+                for c_idx, val in enumerate(row[:4], 1):
+                    flat[f"row_{r_idx}_{c_idx}"] = str(val)
+
+    # 8. Flatten TIMELINE_MILESTONES: events date & desc wrap
+    if "events" in bindings and isinstance(bindings["events"], list):
+        for idx, ev in enumerate(bindings["events"][:4], 1):
+            if isinstance(ev, dict):
+                flat[f"date_{idx}"] = str(
+                    ev.get("date_or_step", "") or ev.get("date", "")
+                )
+                desc = str(ev.get("description", ""))
+                wrapped = textwrap.wrap(desc, width=25)
+                for line_idx, line in enumerate(wrapped[:2], 1):
+                    flat[f"desc_{idx}.{line_idx}"] = line
+
+    # 9. Flatten STEP_BY_STEP: steps -> step_1, step_2, etc.
+    if "steps" in bindings and isinstance(bindings["steps"], list):
+        for idx, step in enumerate(bindings["steps"][:4], 1):
+            flat[f"step_{idx}"] = str(step)
+
+    # 10. Flatten CONCLUSION_SUMMARY: summary_points -> summary_points.1, etc.
+    if "summary_points" in bindings and isinstance(bindings["summary_points"], list):
+        for idx, pt in enumerate(bindings["summary_points"][:4], 1):
+            flat[f"summary_points.{idx}"] = str(pt)
+
+    # 11. Flatten CALL_TO_ACTION: action_items -> action_items.1, etc.
+    if "action_items" in bindings and isinstance(bindings["action_items"], list):
+        for idx, item in enumerate(bindings["action_items"][:4], 1):
+            flat[f"action_items.{idx}"] = str(item)
+
+    # 12. Flatten QA_CONTACT: footer_note
+    if "footer_note" in bindings and isinstance(bindings["footer_note"], str):
+        wrapped = textwrap.wrap(bindings["footer_note"], width=50)
+        for idx, line in enumerate(wrapped[:2], 1):
+            flat[f"footer_note.{idx}"] = line
+
+    # 13. Flatten REFERENCES_LIST: sources -> source_title_1, source_url_1
+    if "sources" in bindings and isinstance(bindings["sources"], list):
+        for idx, src in enumerate(bindings["sources"][:3], 1):
+            if isinstance(src, dict):
+                flat[f"source_title_{idx}"] = str(src.get("title", ""))
+                flat[f"source_url_{idx}"] = str(src.get("url", ""))
+
+    return flat
+
+
 class SlideService:
     async def get_categories(self) -> List[Dict[str, Any]]:
         library = await run_in_threadpool(
@@ -89,6 +193,13 @@ class SlideService:
         for slide in slides_list:
             bindings = slide.get("bindings") or {}
             category = slide.get("category") or slide.get("layoutType") or ""
+            slide_title = slide.get("slideTitle") or ""
+
+            # Ensure category field is populated for slide_skills resolver
+            slide["category"] = category
+
+            # Flatten bindings to map to flat SVG placeholders
+            bindings = flatten_slide_bindings(category, slide_title, bindings)
 
             if "body_text" in bindings and isinstance(bindings["body_text"], str):
                 bindings["body_text"] = textwrap.wrap(bindings["body_text"], width=50)

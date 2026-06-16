@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 810">
+  <rect width="1440" height="810" fill="#0A0E1A"/>
+  <line x1="80" y1="0" x2="80" y2="810" stroke="#00F0FF" stroke-width="3" stroke-opacity="0.3"/>
+
+  <!-- Heading -->
+  <text x="140" y="150" font-family="system-ui, -apple-system, sans-serif" font-size="56" font-weight="bold" fill="#FFFFFF">{{heading|24}}</text>
+  <rect x="140" y="175" width="220" height="4" fill="#00F0FF" rx="2"/>
+
+  <!-- References list -->
+  <g transform="translate(140, 240)">
+    <!-- Source 1 -->
+    <rect x="0" y="0" width="1160" height="120" fill="#111827" rx="12" stroke="#00F0FF" stroke-width="1" stroke-opacity="0.3"/>
+    <text x="40" y="50" font-family="system-ui, -apple-system, sans-serif" font-size="26" font-weight="bold" fill="#FFFFFF">{{source_title_1|70}}</text>
+    <text x="40" y="90" font-family="system-ui, -apple-system, sans-serif" font-size="20" fill="#00F0FF">{{source_url_1|80}}</text>
+
+    <!-- Source 2 -->
+    <rect x="0" y="150" width="1160" height="120" fill="#111827" rx="12" stroke="#FF007F" stroke-width="1" stroke-opacity="0.3"/>
+    <text x="40" y="200" font-family="system-ui, -apple-system, sans-serif" font-size="26" font-weight="bold" fill="#FFFFFF">{{source_title_2|70}}</text>
+    <text x="40" y="240" font-family="system-ui, -apple-system, sans-serif" font-size="20" fill="#FF007F">{{source_url_2|80}}</text>
+
+    <!-- Source 3 -->
+    <rect x="0" y="300" width="1160" height="120" fill="#111827" rx="12" stroke="#00F0FF" stroke-width="1" stroke-opacity="0.3"/>
+    <text x="40" y="350" font-family="system-ui, -apple-system, sans-serif" font-size="26" font-weight="bold" fill="#FFFFFF">{{source_title_3|70}}</text>
+    <text x="40" y="390" font-family="system-ui, -apple-system, sans-serif" font-size="20" fill="#00F0FF">{{source_url_3|80}}</text>
+  </g>
+</svg>

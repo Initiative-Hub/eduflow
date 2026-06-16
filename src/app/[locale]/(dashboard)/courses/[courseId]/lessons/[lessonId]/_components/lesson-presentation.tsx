@@ -25,7 +25,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import type { TiptapDocument } from '@/utils/lesson-content';
-import { usePresentation, type PlannedSlide } from '../use-presentation';
+import { type PlannedSlide, usePresentation } from '../use-presentation';
 
 interface LessonPresentationProps {
   isOpen: boolean;
@@ -64,6 +64,7 @@ export function LessonPresentation({
     addSlide,
   } = usePresentation({ title, content, isOpen, onClose });
 
+  console.log(content, ' content');
   // Dynamic layout renderer for presentation view mode
   const renderSlideContent = (slide: PlannedSlide) => {
     const { layoutType, slideTitle, bindings = {} } = slide;
@@ -488,7 +489,7 @@ export function LessonPresentation({
             <h2 className="mb-6 border-slate-800 border-b pb-3 font-extrabold text-slate-100 text-xl md:text-2xl">
               {slideTitle}
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[50vh] overflow-y-auto pr-1">
+            <div className="grid max-h-[50vh] grid-cols-1 gap-4 overflow-y-auto pr-1 md:grid-cols-2">
               {Array.isArray(bindings.sources) &&
                 bindings.sources.map(
                   (
@@ -500,22 +501,22 @@ export function LessonPresentation({
                       href={source.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex flex-col gap-2 rounded-xl border border-slate-800 bg-slate-950/45 p-4 transition-all duration-200 hover:border-emerald-500/30 hover:bg-slate-900/50 hover:shadow-lg hover:shadow-emerald-500/5 group"
+                      className="group flex flex-col gap-2 rounded-xl border border-slate-800 bg-slate-950/45 p-4 transition-all duration-200 hover:border-emerald-500/30 hover:bg-slate-900/50 hover:shadow-emerald-500/5 hover:shadow-lg"
                     >
                       <div className="flex items-center gap-2">
                         <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-emerald-500/20 bg-emerald-500/10 font-bold text-emerald-400 text-xs">
                           {index + 1}
                         </span>
-                        <span className="font-bold text-slate-200 text-sm leading-snug group-hover:text-emerald-400 transition-colors line-clamp-1">
+                        <span className="line-clamp-1 font-bold text-slate-200 text-sm leading-snug transition-colors group-hover:text-emerald-400">
                           {source.title || 'Untitled Reference'}
                         </span>
                       </div>
                       {source.summary && (
-                        <p className="font-normal text-slate-400 text-xs leading-relaxed line-clamp-2 pl-8">
+                        <p className="line-clamp-2 pl-8 font-normal text-slate-400 text-xs leading-relaxed">
                           {source.summary}
                         </p>
                       )}
-                      <span className="text-[10px] text-slate-500 truncate pl-8 group-hover:text-slate-400 transition-colors font-mono">
+                      <span className="truncate pl-8 font-mono text-[10px] text-slate-500 transition-colors group-hover:text-slate-400">
                         {source.url}
                       </span>
                     </a>
@@ -688,7 +689,7 @@ export function LessonPresentation({
             <span className="font-bold text-[10px] text-slate-500 uppercase tracking-wider">
               {t('referenceSources')}
             </span>
-            <div className="flex flex-col gap-2.5 max-h-64 overflow-y-auto pr-1">
+            <div className="flex max-h-64 flex-col gap-2.5 overflow-y-auto pr-1">
               {sources.map(
                 (
                   src: { title: string; url: string; summary?: string },
@@ -698,7 +699,7 @@ export function LessonPresentation({
                     key={index}
                     className="flex items-start gap-2 rounded-xl border border-slate-800/80 bg-slate-950/40 p-2.5"
                   >
-                    <div className="flex-1 grid grid-cols-1 gap-2">
+                    <div className="grid flex-1 grid-cols-1 gap-2">
                       <Input
                         value={src.title || ''}
                         onChange={(e) => {
@@ -717,7 +718,7 @@ export function LessonPresentation({
                           updateBinding('sources', updated);
                         }}
                         placeholder={t('urlPlaceholder')}
-                        className="h-8 rounded-lg border-slate-800 bg-slate-900/60 px-2.5 text-slate-100 text-xs focus:border-primary focus:ring-1 focus:ring-primary font-mono"
+                        className="h-8 rounded-lg border-slate-800 bg-slate-900/60 px-2.5 font-mono text-slate-100 text-xs focus:border-primary focus:ring-1 focus:ring-primary"
                       />
                       <Input
                         value={src.summary || ''}
@@ -740,7 +741,7 @@ export function LessonPresentation({
                         );
                         updateBinding('sources', updated);
                       }}
-                      className="h-8 w-8 text-rose-500 hover:text-rose-400 hover:bg-rose-500/10 shrink-0"
+                      className="h-8 w-8 shrink-0 text-rose-500 hover:bg-rose-500/10 hover:text-rose-400"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -759,7 +760,7 @@ export function LessonPresentation({
                 ];
                 updateBinding('sources', updated);
               }}
-              className="mt-1 border-slate-800 bg-slate-950 text-slate-300 hover:bg-slate-900 hover:text-slate-200 gap-1.5"
+              className="mt-1 gap-1.5 border-slate-800 bg-slate-950 text-slate-300 hover:bg-slate-900 hover:text-slate-200"
             >
               <Plus className="h-3.5 w-3.5" />
               {t('addReference')}
