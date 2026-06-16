@@ -94,9 +94,9 @@ export function LandingRecentChatList<
 
   if (isLoading) {
     return (
-      <div className="space-y-2">
+      <div className="flex flex-col gap-3">
         {Array.from({ length: limit }).map((_, index) => (
-          <Skeleton className="h-16" key={index} />
+          <Skeleton className="h-20 rounded-xl" key={index} />
         ))}
       </div>
     );
@@ -114,7 +114,7 @@ export function LandingRecentChatList<
 
   return (
     <section className="w-full px-4 py-6">
-      <div className="mb-3 flex items-center justify-between">
+      <div className="mb-4 flex items-center justify-between">
         <div>
           <h2 className="font-bold font-heading text-foreground/90 text-lg">
             {title}
@@ -124,40 +124,60 @@ export function LandingRecentChatList<
       </div>
 
       <TooltipProvider>
-        <div className="space-y-2">
+        <div className="flex flex-col gap-3">
           {data.data.map((chat) => {
             const chatTitle = chat.title || untitledLabel;
             const displayTitle = getRecentChatDisplayTitle(chatTitle);
+            const isTitleShortened = displayTitle !== chatTitle;
+            const chatCard = (
+              <Card className="group flex cursor-pointer flex-row items-center gap-3 p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md hover:ring-primary/30">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary/15">
+                  <Icon className="size-4" />
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <h3 className="truncate font-semibold text-foreground/90 text-sm">
+                    {displayTitle}
+                  </h3>
+                  <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-muted-foreground text-xs">
+                    <span>{getMessageCountLabel(chat.messageCount)}</span>
+                    <span className="flex items-center gap-1">
+                      <Clock3 className="size-3" />
+                      {getUpdatedLabel(
+                        dateFormatter.format(new Date(chat.updatedAt))
+                      )}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors group-hover:bg-primary/10 group-hover:text-primary">
+                  <ArrowUpRight className="size-4" />
+                </div>
+              </Card>
+            );
+
+            if (!isTitleShortened) {
+              return (
+                <Link
+                  aria-label={getOpenChatLabel(chatTitle)}
+                  className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                  href={hrefForChat(chat)}
+                  key={chat.id}
+                >
+                  {chatCard}
+                </Link>
+              );
+            }
 
             return (
               <Tooltip key={chat.id}>
                 <TooltipTrigger asChild>
                   <Link
                     aria-label={getOpenChatLabel(chatTitle)}
+                    className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                     href={hrefForChat(chat)}
                   >
-                    <Card className="group flex cursor-pointer flex-row items-center gap-3 border-primary p-4 transition-all duration-200 ease-in-out hover:-translate-y-0.5 hover:border-primary/20">
-                      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-border/50 bg-white/80 shadow-sm dark:bg-zinc-900/80">
-                        <Icon className="size-4 text-primary" />
-                      </div>
-
-                      <div className="min-w-0 flex-1">
-                        <h3 className="truncate font-semibold text-foreground/90 text-sm">
-                          {displayTitle}
-                        </h3>
-                        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-muted-foreground text-xs">
-                          <span>{getMessageCountLabel(chat.messageCount)}</span>
-                          <span className="flex items-center gap-1">
-                            <Clock3 className="size-3" />
-                            {getUpdatedLabel(
-                              dateFormatter.format(new Date(chat.updatedAt))
-                            )}
-                          </span>
-                        </div>
-                      </div>
-
-                      <ArrowUpRight className="size-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary" />
-                    </Card>
+                    {chatCard}
                   </Link>
                 </TooltipTrigger>
                 <TooltipContent
