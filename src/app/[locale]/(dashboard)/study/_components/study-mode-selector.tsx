@@ -1,23 +1,17 @@
 'use client';
 
-import { BookMarked, ClipboardList, CloudUpload, Globe } from 'lucide-react';
+import { BookMarked, ClipboardList, Globe } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
-import { Dropzone } from '@/components/ui/dropzone';
 import type { StudyMode } from '@/lib/validations/study.schema';
 
 interface StudyModeSelectorProps {
   mode: StudyMode;
   onModeChange: (mode: StudyMode) => void;
-  files: File[];
-  onFilesChange: (files: File[]) => void;
 }
 
 export function StudyModeSelector({
   mode,
   onModeChange,
-  files,
-  onFilesChange,
 }: StudyModeSelectorProps) {
   const t = useTranslations('StudyPage');
 
@@ -92,50 +86,6 @@ export function StudyModeSelector({
           )
         )}
       </div>
-      {/* Upload zone */}
-      <Dropzone
-        src={files}
-        maxFiles={10}
-        accept={{
-          'application/pdf': ['.pdf'],
-          'application/msword': ['.doc'],
-          'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
-            ['.docx'],
-          'image/*': ['.png', '.jpg', '.jpeg', '.webp'],
-        }}
-        onDrop={(acceptedFiles) =>
-          onFilesChange([...(files ?? []), ...acceptedFiles])
-        }
-        className="min-h-36 rounded-2xl"
-      >
-        {files && files.length > 0 ? (
-          <div className="flex flex-col items-center gap-2">
-            <div className="flex size-12 items-center justify-center rounded-2xl border border-border/60 bg-background shadow-sm">
-              <CloudUpload className="size-5 text-primary" />
-            </div>
-            <p className="font-semibold text-foreground text-sm">
-              {files.length === 1
-                ? files[0].name
-                : `${files.length} files selected`}
-            </p>
-            <p className="text-muted-foreground text-xs">
-              {t('upload.replace')}
-            </p>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center gap-2">
-            <div className="flex size-12 items-center justify-center rounded-2xl border border-border/60 bg-background shadow-sm">
-              <CloudUpload className="size-5 text-muted-foreground" />
-            </div>
-            <p className="font-semibold text-foreground text-lg">
-              {t('upload.title')}
-            </p>
-            <p className="text-muted-foreground text-sm">
-              {t('upload.description')}
-            </p>
-          </div>
-        )}
-      </Dropzone>
     </div>
   );
 }

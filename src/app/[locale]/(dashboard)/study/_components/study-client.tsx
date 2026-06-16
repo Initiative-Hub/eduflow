@@ -14,6 +14,7 @@ import { ChatSidebar } from '../../_components/chat-sidebar';
 import { ChatWorkspaceShell } from '../../_components/chat-workspace-shell';
 import { studyService } from '../study.service';
 import { useStudy } from '../use-study';
+import { LandingRecentStudyChats } from './landing-recent-study-chats';
 import { StudyModeSelector } from './study-mode-selector';
 
 const ChatView = dynamic(() =>
@@ -37,7 +38,6 @@ export function StudyClient({
   const tChat = useTranslations('AIChat');
 
   const [mode, setMode] = useState<StudyMode>(initialMode);
-  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [isUploadingAttachments, setIsUploadingAttachments] = useState(false);
 
   const {
@@ -85,7 +85,7 @@ export function StudyClient({
 
     const text = customValue?.trim() || '';
     const finalAttachments = {
-      files: [...pendingFiles, ...attachments.files],
+      files: attachments.files,
       referencedFiles: attachments.referencedFiles,
     };
     const attachmentCount =
@@ -121,12 +121,10 @@ export function StudyClient({
   };
 
   const viewport = !hasOutput ? (
-    <StudyModeSelector
-      mode={mode}
-      onModeChange={setMode}
-      files={pendingFiles}
-      onFilesChange={setPendingFiles}
-    />
+    <div>
+      <StudyModeSelector mode={mode} onModeChange={setMode} />
+      <LandingRecentStudyChats />
+    </div>
   ) : (
     <ChatView
       messages={messages}

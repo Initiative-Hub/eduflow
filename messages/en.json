@@ -1698,7 +1698,11 @@
       "review": "Review Materials"
     },
     "recentSessions": {
+      "description": "Return to study guides, practice sets, and research threads.",
+      "error": "Unable to load recent study sessions right now.",
+      "openChat": "Open study session {title}",
       "title": "Recent Sessions",
+      "updated": "Updated {date}",
       "viewAll": "View All"
     },
     "sidebar": {
@@ -1730,7 +1734,7 @@
       "title": "Study history",
       "untitled": "Untitled study session"
     },
-    "subtitle": "Transform your materials into powerful academic insights. Upload anything and let AI do the work.",
+    "subtitle": "Turn topics, notes, and questions into focused study support.",
     "title": "What can I help you <accent>study</accent> today?",
     "upload": {
       "description": "Drag and drop PDF, Word, or Images here.",
