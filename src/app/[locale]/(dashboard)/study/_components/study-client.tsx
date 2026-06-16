@@ -121,9 +121,11 @@ export function StudyClient({
   };
 
   const viewport = !hasOutput ? (
-    <div>
-      <StudyModeSelector mode={mode} onModeChange={setMode} />
-      <LandingRecentStudyChats />
+    <div className="flex flex-col items-center justify-center">
+      <div className="mb-2 w-full max-w-4xl space-y-2">
+        <StudyModeSelector mode={mode} onModeChange={setMode} />
+        <LandingRecentStudyChats />
+      </div>
     </div>
   ) : (
     <ChatView

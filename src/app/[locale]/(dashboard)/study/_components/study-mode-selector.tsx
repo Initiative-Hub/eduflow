@@ -43,7 +43,7 @@ export function StudyModeSelector({
   ];
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-8">
+    <div className="flex w-full flex-col gap-6 px-4 py-8">
       {/* Header */}
       <div className="space-y-4 px-4 pt-6 text-center">
         <div className="relative flex flex-col items-center text-center">
