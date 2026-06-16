@@ -72,7 +72,14 @@ export default function WritingClient({
   const viewport = !hasOutput ? (
     <WritingSelector selected={selectedTool} onSelect={setSelectedTool} />
   ) : (
-    <ChatView messages={messages} isStreaming={isStreaming} />
+    <ChatView
+      messages={messages}
+      isStreaming={isStreaming}
+      onSuggestionSelect={(suggestion) =>
+        void handleSubmit(undefined, suggestion)
+      }
+      suggestionsDisabled={isStreaming || isLimitReached}
+    />
   );
 
   const composer = (

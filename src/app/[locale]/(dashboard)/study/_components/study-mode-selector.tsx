@@ -1,12 +1,6 @@
 'use client';
 
-import {
-  BookMarked,
-  ClipboardList,
-  CloudUpload,
-  Globe,
-  Tag,
-} from 'lucide-react';
+import { BookMarked, ClipboardList, CloudUpload, Globe } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { Dropzone } from '@/components/ui/dropzone';
@@ -45,14 +39,6 @@ export function StudyModeSelector({
       activeAccent: 'ring-2 ring-indigo-400 bg-indigo-50 dark:bg-indigo-950/30',
     },
     {
-      key: 'keywords' as StudyMode,
-      icon: Tag,
-      label: t('modes.keywords'),
-      accent:
-        'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900/40',
-      activeAccent: 'ring-2 ring-amber-400 bg-amber-50 dark:bg-amber-950/30',
-    },
-    {
       key: 'research' as StudyMode,
       icon: Globe,
       label: t('modes.research'),
@@ -80,7 +66,7 @@ export function StudyModeSelector({
         </div>
       </div>
       {/* Mode selector */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {FEATURE_CARDS.map(
           ({ key, icon: Icon, label, accent, activeAccent }) => (
             <button

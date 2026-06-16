@@ -30,7 +30,6 @@ model User {
   role         PlatformRole?   @relation(fields: [roleId], references: [id])
   sessions     Session[]
   accounts     Account[]
-  posts        Post[]
   files        FileInventory[]
   coursesOwned Course[]        @relation("OwnerCourses")
   enrollments  Enrollment[]
@@ -148,19 +147,6 @@ model CoursePermission {
   @@unique([courseId, courseRoleId, permission])
   @@index([courseId, courseRoleId, enabled])
   @@map("course_permissions")
-}
-
-model Post {
-  id        String   @id @default(uuid())
-  title     String
-  content   String?
-  published Boolean  @default(false)
-  authorId  String
-  author    User     @relation(fields: [authorId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("posts")
 }
 
 enum FileInventoryStatus {
@@ -290,9 +276,13 @@ model Course {
   files       FileInventory[]
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
+  archivedAt  DateTime?
+  deletedAt   DateTime?
   questions   Question[]
   quizzes     Quiz[]
 
+  @@index([deletedAt])
+  @@index([archivedAt])
   @@map("course")
 }
 
@@ -443,4 +433,21 @@ model QuizAttempt {
   @@index([quizId, userId])
   @@index([userId])
   @@map("quiz_attempt")
+}
+
+// ─── Dictionary Cache ────────────────────────────────────────────────────────
+
+model DictionaryCache {
+  id        String   @id @default(uuid())
+  word      String
+  source    String   @default("free-dictionary")
+  phonetic  String?
+  audioUrl  String?  @map("audio_url")
+  meanings  Json
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([word, source])
+  @@index([word, source])
+  @@map("dictionary_cache")
 }

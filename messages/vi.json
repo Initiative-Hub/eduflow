@@ -638,12 +638,43 @@
     "AssessmentsPage": "Bài kiểm tra",
     "Card": {
       "manage": "Quản lý",
+      "memberLabel": "Thành viên",
       "members": "{count, plural, =1 {1 Thành viên} other {# Thành viên}}",
+      "moduleLabel": "Mô-đun",
       "modules": "{count, plural, =1 {1 Mô-đun} other {# Mô-đun}}",
       "noDescription": "Không có mô tả nào được cung cấp.",
+      "open": "Mở khóa học",
       "togglePublish": "Chuyển đổi trạng thái xuất bản"
     },
     "ChatPage": "Trò chuyện AI",
+    "controls": {
+      "filters": {
+        "ownedOnly": {
+          "description": "Chỉ hiển thị các khóa học bạn đã tạo.",
+          "label": "Chỉ khóa học của tôi"
+        },
+        "publicOnly": {
+          "description": "Hiển thị các khóa học đã xuất bản trong danh sách bạn có quyền truy cập.",
+          "label": "Chỉ khóa học đã xuất bản"
+        },
+        "reset": "Đặt lại bộ lọc",
+        "title": "Bộ lọc",
+        "trigger": "Lọc"
+      },
+      "search": {
+        "label": "Tìm kiếm khóa học",
+        "placeholder": "Tìm khóa học..."
+      },
+      "sort": {
+        "label": "Sắp xếp theo",
+        "options": {
+          "created": "Mới tạo gần đây",
+          "members": "Nhiều thành viên nhất",
+          "title": "Tiêu đề A-Z",
+          "updated": "Cập nhật gần đây"
+        }
+      }
+    },
     "CourseModules": {
       "addModule": "Thêm mô-đun",
       "aiAssistant": "Trợ lý AI",
@@ -781,6 +812,14 @@
       "title": "Tạo bài kiểm tra"
     },
     "description": "Quản lý và xuất bản các khóa học của bạn tại đây.",
+    "emptySearch": {
+      "description": "Hãy thử từ khóa khác hoặc điều chỉnh bộ lọc khóa học.",
+      "title": "Không tìm thấy khóa học"
+    },
+    "errors": {
+      "description": "Hiện không thể tải danh sách khóa học của bạn.",
+      "title": "Không thể tải khóa học"
+    },
     "FilesPage": "Tài liệu",
     "LessonEditor": {
       "cancel": "Hủy",
@@ -874,6 +913,12 @@
     "newCourse": "Khóa học mới",
     "noCourses": "Chưa có khóa học nào",
     "noCoursesDescription": "Chưa có khóa học nào tồn tại",
+    "pagination": {
+      "next": "Tiếp",
+      "page": "Trang {page}/{total}",
+      "previous": "Trước",
+      "range": "Đang hiển thị {start}-{end} trong {total} khóa học"
+    },
     "QuestionBank": {
       "allCategories": "Tất cả danh mục",
       "allLessons": "Tất cả bài học",
@@ -965,7 +1010,177 @@
       "zones": "Các vùng thả"
     },
     "SettingsPage": "Cài đặt khóa học",
-    "title": "Các khóa học"
+    "title": "Các khóa học",
+    "toast": {
+      "created": "Đã tạo khóa học.",
+      "createFailed": "Không thể tạo khóa học.",
+      "published": "Đã xuất bản khóa học.",
+      "unpublished": "Đã hủy xuất bản khóa học.",
+      "updateFailed": "Không thể cập nhật trạng thái khóa học."
+    }
+  },
+  "CourseSettingsPage": {
+    "actions": {
+      "archive": "Lưu trữ",
+      "cancel": "Hủy",
+      "delete": "Xóa",
+      "edit": "Chỉnh sửa",
+      "leave": "Rời khóa học",
+      "save": "Lưu thay đổi",
+      "transfer": "Chuyển quyền sở hữu",
+      "unarchive": "Bỏ lưu trữ"
+    },
+    "archiveDialog": {
+      "description": "Lưu trữ khóa học này? Nhập ID khóa học để xác nhận.",
+      "title": "Lưu trữ khóa học"
+    },
+    "archivedNotice": {
+      "description": "Thành viên vẫn có thể xem lại khóa học, nhưng chủ khóa học nên bỏ lưu trữ trước khi kích hoạt lại.",
+      "title": "Khóa học này đang được lưu trữ"
+    },
+    "confirmation": {
+      "description": "Nhập {courseId} để xác nhận thao tác này.",
+      "label": "Xác nhận ID khóa học"
+    },
+    "dangerZone": {
+      "archive": {
+        "description": "Đánh dấu khóa học là đã lưu trữ mà không xóa dữ liệu khóa học.",
+        "title": "Lưu trữ khóa học"
+      },
+      "delete": {
+        "description": "Xóa mềm khóa học và ẩn khỏi danh sách khóa học đang hoạt động.",
+        "title": "Xóa khóa học"
+      },
+      "description": "Các thao tác nhạy cảm ảnh hưởng đến thành viên, quyền sở hữu hoặc trạng thái khóa học.",
+      "leave": {
+        "description": "Rời khóa học này và xóa quyền truy cập thành viên của bạn.",
+        "title": "Rời khóa học"
+      },
+      "title": "Khu vực nguy hiểm",
+      "transfer": {
+        "description": "Chọn thành viên khác làm chủ khóa học. Vai trò của bạn sẽ được hoán đổi với họ.",
+        "title": "Chuyển quyền sở hữu"
+      },
+      "unarchive": {
+        "description": "Khôi phục khóa học này vào danh sách khóa học đang hoạt động.",
+        "title": "Bỏ lưu trữ khóa học"
+      }
+    },
+    "deleteDialog": {
+      "description": "Xóa mềm khóa học này? Nhập ID khóa học để xác nhận.",
+      "title": "Xóa khóa học"
+    },
+    "description": "Quản lý thông tin, hiển thị và các thao tác quan trọng của khóa học.",
+    "errors": {
+      "description": "Hiện không thể làm mới cài đặt khóa học.",
+      "title": "Cài đặt không khả dụng"
+    },
+    "fallback": {
+      "noDescription": "Không có mô tả nào được cung cấp.",
+      "noName": "Chưa có tên"
+    },
+    "fields": {
+      "courseId": "ID khóa học",
+      "description": "Mô tả",
+      "role": "Vai trò",
+      "title": "Tiêu đề",
+      "visibility": "Hiển thị"
+    },
+    "form": {
+      "description": "Mô tả",
+      "title": "Tiêu đề",
+      "visibility": "Hiển thị"
+    },
+    "leaveDialog": {
+      "description": "Rời khóa học này? Bạn sẽ mất quyền truy cập trừ khi chủ khóa học hoặc giảng viên thêm lại bạn.",
+      "title": "Rời khóa học"
+    },
+    "roles": {
+      "courseOwner": "Chủ khóa học",
+      "student": "Sinh viên",
+      "teacher": "Giảng viên"
+    },
+    "status": {
+      "archived": "Đã lưu trữ"
+    },
+    "title": "Cài đặt khóa học",
+    "toast": {
+      "archived": "Đã lưu trữ khóa học.",
+      "archiveFailed": "Không thể lưu trữ khóa học.",
+      "deleted": "Đã xóa khóa học.",
+      "deleteFailed": "Không thể xóa khóa học.",
+      "leaveFailed": "Không thể rời khóa học.",
+      "left": "Bạn đã rời khóa học.",
+      "transferFailed": "Không thể chuyển quyền sở hữu.",
+      "transferred": "Đã chuyển quyền sở hữu.",
+      "unarchived": "Đã bỏ lưu trữ khóa học.",
+      "unarchiveFailed": "Không thể bỏ lưu trữ khóa học.",
+      "updated": "Đã cập nhật cài đặt khóa học.",
+      "updateFailed": "Không thể cập nhật cài đặt khóa học."
+    },
+    "transferDialog": {
+      "description": "Chọn thành viên sẽ trở thành chủ khóa học mới.",
+      "emptyDescription": "Hãy thêm thành viên khác trước khi chuyển quyền sở hữu.",
+      "emptyTitle": "Không có thành viên khả dụng",
+      "memberLabel": "Chủ khóa học mới",
+      "memberPlaceholder": "Chọn thành viên khóa học",
+      "title": "Chuyển quyền sở hữu"
+    },
+    "unarchiveDialog": {
+      "description": "Bỏ lưu trữ khóa học này và kích hoạt lại?",
+      "title": "Bỏ lưu trữ khóa học"
+    },
+    "visibility": {
+      "private": "Riêng tư",
+      "public": "Công khai"
+    }
+  },
+  "DictionaryDialog": {
+    "antonyms": "Từ trái nghĩa",
+    "close": "Đóng từ điển",
+    "definition": "Định nghĩa",
+    "etymology": "Nguồn gốc",
+    "example": "Ví dụ",
+    "listen": "Nghe phát âm",
+    "loading": "Đang tải định nghĩa...",
+    "notFound": "Không tìm thấy từ",
+    "partOfSpeech": "Từ loại",
+    "pronunciation": "Phát âm",
+    "synonyms": "Từ đồng nghĩa",
+    "title": "Từ điển",
+    "usageNotes": "Ghi chú sử dụng",
+    "word": "Từ"
+  },
+  "DictionarySettings": {
+    "active": "Đang dùng",
+    "description": "Chọn từ điển sử dụng khi bạn bôi đen một từ.",
+    "freeDictionary": "Free Dictionary API",
+    "freeDictionaryDescription": "Từ điển mã nguồn mở với phiên âm và âm thanh. Không giới hạn số lượng yêu cầu hàng ngày.",
+    "mwCollegiate": "Merriam-Webster Collegiate",
+    "mwCollegiateDescription": "Từ điển uy tín nhất nước Mỹ với hơn 250.000 định nghĩa và phát âm có âm thanh.",
+    "mwLearners": "Merriam-Webster Learner's",
+    "mwLearnersDescription": "Thiết kế cho học viên ESL/EFL nâng cao với phiên âm IPA và hơn 160.000 ví dụ sử dụng.",
+    "title": "Từ điển bật lên"
+  },
+  "GrammarAnalysis": {
+    "analyzedSentence": "Câu được phân tích",
+    "analyzing": "Đang phân tích...",
+    "close": "Đóng",
+    "correctedSentence": "Câu được sửa",
+    "explanation": "Giải thích",
+    "grammarMap": "Bản đồ ngữ pháp",
+    "grammarStructure": "Cấu trúc Ngữ pháp",
+    "issues": "Lỗi được tìm thấy",
+    "issuesFound": "Phát hiện lỗi",
+    "issueType": "{type, select, grammar {Ngữ pháp} spelling {Chính tả} style {Phong cách} punctuation {Dấu câu} other {Vấn đề}}",
+    "looksGood": "Rất tốt!",
+    "strengths": "Điểm dùng tốt",
+    "structure": "Cấu trúc",
+    "suggestion": "Đề xuất sửa",
+    "tense": "Thì",
+    "tenseWhy": "Vì sao dùng thì này:",
+    "title": "Phân tích Ngữ pháp & Phong cách",
+    "waysToSayThis": "Cách diễn đạt khác"
   },
   "HomePage": {
     "title": "Xin chào thế giới!"
@@ -1383,6 +1598,7 @@
       "matching": "Nối cặp",
       "multiple_choice": "Trắc nghiệm",
       "ordering": "Sắp xếp thứ tự",
+      "practice_test": "Bài luyện tập",
       "timed_challenge": "Thử thách thời gian",
       "true_false": "Đúng / Sai"
     }
@@ -1411,6 +1627,17 @@
       "title": "Chào mừng bạn!"
     },
     "title": "Chào mừng bạn đến với Hệ sinh thái <brand>EduFlow</brand>"
+  },
+  "SelectionDictionary": {
+    "antonyms": "Từ trái nghĩa",
+    "etymology": "Nguồn gốc từ",
+    "fetchError": "Không thể tra cứu định nghĩa",
+    "firstUsed": "Sử dụng lần đầu",
+    "lookingUp": "Đang tra cứu...",
+    "rateLimitDescription": "Bạn đã hết lượt tra từ điển này trong ngày. Hãy chuyển sang nguồn khác trong Cài đặt.",
+    "rateLimitTitle": "Đã hết lượt tra hàng ngày",
+    "synonyms": "Từ đồng nghĩa",
+    "wordNotFound": "Không tìm thấy từ"
   },
   "SocraticPage": {
     "disciplines": {
@@ -1490,9 +1717,6 @@
   "StudyPage": {
     "aiActive": "AI Đang Hoạt Động",
     "features": {
-      "keywords": {
-        "description": "Trích xuất thuật ngữ và khái niệm quan trọng với giải thích chi tiết theo ngữ cảnh."
-      },
       "practiceTest": {
         "description": "Thử thách bản thân với câu hỏi trắc nghiệm, câu ngắn và thẻ ghi nhớ do AI tạo ra."
       },
@@ -1509,7 +1733,6 @@
     },
     "limitReachedToast": "Bạn đã đạt giới hạn {count} tin nhắn. Hãy bắt đầu phiên mới để tiếp tục.",
     "modes": {
-      "keywords": "Tóm Tắt Từ Khóa",
       "practiceTest": "Bài Kiểm Tra Thực Hành",
       "research": "Nghiên cứu",
       "review": "Tài Liệu Ôn Tập"
@@ -1554,6 +1777,58 @@
       "replace": "Kéo thả hoặc nhấp để thay thế",
       "title": "Tải Lên Tài Liệu Để Bắt Đầu"
     }
+  },
+  "StudyReader": {
+    "aiAnalyticsActive": "AI Phân tích đang hoạt động",
+    "analyzeGrammar": "Phân tích ngữ pháp",
+    "analyzing": "Đang phân tích...",
+    "assistantTitle": "Trợ lý Tiếng Anh",
+    "audioFailed": "Không thể phát âm thanh",
+    "characters": "ký tự",
+    "columnAudio": "Âm thanh",
+    "columnDefinition": "Định nghĩa (AN → VI)",
+    "columnExample": "Ví dụ",
+    "columnIPA": "Phiên âm",
+    "columnWord": "Từ",
+    "copiedTooltip": "Đã sao chép",
+    "copySourceTooltip": "Sao chép văn bản gốc",
+    "copyTooltip": "Sao chép bản dịch",
+    "description": "Được tạo bởi AI để giúp bạn hiểu bài đọc này.",
+    "emptyAnalyzedState": "Không tìm thấy từ vựng trọng tâm trong văn bản này.",
+    "emptyState": "Chưa có từ vựng. Dán văn bản tiếng Anh phía trên và nhấn Dịch & Phân tích.",
+    "english": "Tiếng Anh",
+    "exportPdf": "Xuất PDF",
+    "hoverLookupHint": "Di chuột qua từ tiếng Anh để tra nghĩa.",
+    "inputPlaceholder": "Dán hoặc nhập văn bản tiếng Anh tại đây...",
+    "listenTooltip": "Nghe bản dịch",
+    "pageSubtitle": "Tinh chỉnh sắc thái ngôn ngữ với dịch thuật AI và trích xuất từ vựng theo ngữ cảnh.",
+    "pauseSentence": "Tạm dừng",
+    "playSentence": "Phát câu này",
+    "saveToLibrary": "Lưu vào Thư viện",
+    "sentenceAudio": "Âm thanh từng câu",
+    "sentencesEmptyState": "Chưa có phân tích ngữ pháp. Dán văn bản tiếng Anh phía trên và nhấn Dịch & Phân tích tất cả.",
+    "sentencesTitle": "Phân tích ngữ pháp",
+    "shareTooltip": "Chia sẻ",
+    "sourceContent": "Nội dung gốc",
+    "swapDirection": "Đổi chiều dịch",
+    "title": "Từ vựng trọng tâm tự động",
+    "translateAndAnalyze": "Dịch & Phân tích tất cả",
+    "translationFailed": "Dịch thất bại",
+    "translationPlaceholder": "Bản dịch sẽ xuất hiện ở đây sau khi phân tích...",
+    "vietnamese": "Tiếng Việt",
+    "words": "từ"
+  },
+  "TranslationSelector": {
+    "label": "Công cụ dịch",
+    "providerAI": "AI (Gemini)",
+    "providerAIBadge": "Tokens AI",
+    "providerAIInfo": "✦ Sử dụng tokens AI · Chất lượng tốt nhất · Theo ngữ cảnh",
+    "providerAmazon": "Amazon Translate",
+    "providerAmazonBadge": "2M miễn phí/tháng",
+    "providerAmazonInfo": "✓ MT không sử dụng mẫu · 2M ký tự/tháng · Cần AWS key",
+    "providerMyMemory": "MyMemory",
+    "providerMyMemoryBadge": "MIỄN PHÍ",
+    "providerMyMemoryInfo": "✓ Không cần API key · 10M ký tự/tháng · Cộng đồng"
   },
   "WritingPage": {
     "recentSessions": {

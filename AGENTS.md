@@ -92,12 +92,14 @@ for any tasks.).
 - **Icon Availability**: When introducing a new `lucide-react` icon, verify the installed package exports it; use a generic available icon when brand-specific icons are absent.
 - **JSX Curly Braces**: Literally render double curly braces `{{` and `}}` in JSX text by quoting them, like `{'{{placeholder}}'}`, to prevent the JSX compiler from parsing them as JS object shorthand syntax.
 - **Research Citations**: For AI research/chat responses with numbered citations, derive source metadata from AI SDK `source-url` parts and web-search tool outputs in shared helpers, then render inline citation UI from that normalized source list instead of hardcoding source parsing in components.
+- **Generated Suggestions**: When AI routes stream `data-suggestions` parts for clickable follow-ups, make system prompts explicitly tell the model not to print follow-up questions, JSON, markdown chips, or numbered suggestion lists in the visible assistant response.
 - **Grouped Citation UI**: Keep multi-source citation markers such as `[1, 2]` as a single inline trigger that previews the first source, shows the additional source count, and exposes the full source set in a clickable hover-card carousel.
 - **Citation Labels**: Keep citation hover-card labels such as source counts localized through `next-intl`; do not hardcode English fallback copy in citation UI components.
 - **Citation Link Hover**: Use subtle semantic hover states such as `hover:bg-muted/60` for citation source cards; avoid saturated accent fills that compete with the citation content.
 - **Citation Source Identity**: Prefer source favicons from web-search metadata for citation identity marks, with a generic `lucide-react` icon only as a fallback.
 - **Remote Favicons**: Render arbitrary citation favicons with `next/image` and `unoptimized` unless the remote domains are explicitly configured in `next.config`.
 - **Search Favicons**: Enable favicon metadata on web-search tools when citation UI depends on source identity, and provide a deterministic domain favicon fallback for older results without favicon metadata.
+- **Study Modes**: When adding or removing a Study mode, update the shared Zod mode schema, mode selector cards, mode-specific system prompts, and both locale files together so the UI, API validation, and prompt behavior stay synchronized.
 
 ### 6.3 Security & Validation
 
