@@ -72,7 +72,7 @@ export function StudyQuizOptionsPanel({
               <ToggleGroupItem
                 key={type}
                 value={type}
-                className="cursor-pointer rounded-full border-border bg-muted/40 px-5 text-muted-foreground shadow-xs transition-[background-color,border-color,color,box-shadow] hover:border-primary/30 hover:bg-primary/5 hover:text-foreground data-[state=on]:border-primary/40 data-[state=on]:bg-primary/10 data-[state=on]:text-primary data-[state=on]:shadow-sm"
+                className="cursor-pointer rounded-full px-5 data-[state=on]:border-primary/40 data-[state=on]:bg-primary/10 data-[state=on]:text-primary"
               >
                 <Icon data-icon="inline-start" />
                 {t(`types.${type}`)}
