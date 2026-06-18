@@ -4,7 +4,9 @@ import { AiChatType } from '@/generated/prisma';
 import { auth } from '@/lib/auth';
 import {
   type StudyMode,
+  type StudyQuizOptions,
   studyModeSchema,
+  studyQuizOptionsSchema,
 } from '@/lib/validations/study.schema';
 import { ChatPersistenceService } from '@/services/ChatPersistenceService';
 import { StudyClient } from '../_components/study-client';
@@ -18,6 +20,17 @@ function getInitialStudyMode(metadata: unknown): StudyMode {
   const value = (metadata as { studyMode?: unknown }).studyMode;
   const parsed = studyModeSchema.safeParse(value);
   return parsed.success ? parsed.data : 'review';
+}
+
+function getInitialStudyQuizOptions(
+  metadata: unknown
+): StudyQuizOptions | undefined {
+  if (!metadata || typeof metadata !== 'object') return undefined;
+
+  const value = (metadata as { studyQuizOptions?: unknown }).studyQuizOptions;
+  const parsed = studyQuizOptionsSchema.safeParse(value);
+
+  return parsed.success ? parsed.data : undefined;
 }
 
 export default async function StudySessionPage({
@@ -45,6 +58,7 @@ export default async function StudySessionPage({
     <StudyClient
       chatId={chatId}
       initialMode={getInitialStudyMode(studyData?.metadata)}
+      initialQuizOptions={getInitialStudyQuizOptions(studyData?.metadata)}
       initialMessages={studyData?.messages ?? []}
       isAuthenticated={!!session?.user}
     />

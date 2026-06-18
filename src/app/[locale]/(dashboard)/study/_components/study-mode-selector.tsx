@@ -2,16 +2,24 @@
 
 import { BookMarked, ClipboardList, Globe } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import type { StudyMode } from '@/lib/validations/study.schema';
+import type {
+  StudyMode,
+  StudyQuizOptions,
+} from '@/lib/validations/study.schema';
+import { StudyQuizOptionsPanel } from './study-quiz-options';
 
 interface StudyModeSelectorProps {
   mode: StudyMode;
+  quizOptions: StudyQuizOptions;
   onModeChange: (mode: StudyMode) => void;
+  onQuizOptionsChange: (options: StudyQuizOptions) => void;
 }
 
 export function StudyModeSelector({
   mode,
+  quizOptions,
   onModeChange,
+  onQuizOptionsChange,
 }: StudyModeSelectorProps) {
   const t = useTranslations('StudyPage');
 
@@ -86,6 +94,12 @@ export function StudyModeSelector({
           )
         )}
       </div>
+      {mode === 'practiceTest' ? (
+        <StudyQuizOptionsPanel
+          options={quizOptions}
+          onOptionsChange={onQuizOptionsChange}
+        />
+      ) : null}
     </div>
   );
 }

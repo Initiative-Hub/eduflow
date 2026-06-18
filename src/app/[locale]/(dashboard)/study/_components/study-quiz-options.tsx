@@ -66,6 +66,9 @@ export function StudyQuizOptionsPanel({
           </FieldLabel>
           <Input
             id="study-question-count"
+            name="study-question-count"
+            inputMode="numeric"
+            autoComplete="off"
             type="number"
             min={1}
             max={30}
