@@ -7,7 +7,10 @@ import {
 import { z } from 'zod';
 import { AiChatType } from '@/generated/prisma';
 import { getChatOwner } from '@/lib/api/guest-session';
-import { studyModeSchema } from '@/lib/validations/study.schema';
+import {
+  studyModeSchema,
+  studyQuizOptionsSchema,
+} from '@/lib/validations/study.schema';
 import { ChatProviderFactory } from '@/services/ai/ChatProviderFactory';
 import { DEFAULT_PROVIDER } from '@/services/ai/chat-provider.constants';
 import type {
@@ -31,6 +34,7 @@ export const maxDuration = 30;
 const studyRequestSchema = z.object({
   messages: z.array(z.custom<UIMessage>()).min(1),
   mode: studyModeSchema.default('review'),
+  quizOptions: studyQuizOptionsSchema.optional(),
   provider: z.custom<ChatProvider>().optional(),
   model: z.string().min(1).optional(),
   apiKey: z.string().min(1).optional(),
@@ -291,6 +295,7 @@ export async function POST(
         execute: async ({ writer }) => {
           const quiz = await generatePracticeQuiz({
             messages: messagesForModel,
+            quizOptions: parsedBody.data.quizOptions,
             model: parsedBody.data.model,
             apiKey: parsedBody.data.apiKey,
             providerOptions: parsedBody.data.providerOptions,
