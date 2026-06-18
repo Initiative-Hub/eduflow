@@ -10,9 +10,7 @@ import { getChatOwner } from '@/lib/api/guest-session';
 import { studyModeSchema } from '@/lib/validations/study.schema';
 import { ChatProviderFactory } from '@/services/ai/ChatProviderFactory';
 import { DEFAULT_PROVIDER } from '@/services/ai/chat-provider.constants';
-import type {
-  ChatProvider,
-} from '@/services/ai/chat-provider.types';
+import type { ChatProvider } from '@/services/ai/chat-provider.types';
 import { CacheService } from '@/services/CacheService';
 import { ChatPersistenceService } from '@/services/ChatPersistenceService';
 import {
