@@ -1,5 +1,5 @@
 import type { UIMessage } from 'ai';
-import { Globe } from 'lucide-react';
+import { BookOpen, Globe, Search } from 'lucide-react';
 import Image from 'next/image';
 import type { ReactNode } from 'react';
 import {
@@ -66,23 +66,40 @@ const ChatCitationTrigger = ({
   sources,
 }: {
   sources: ChatCitationSource[];
-}) => (
-  <HoverCardTrigger asChild>
-    <Badge
-      className="ml-1 rounded-md border-border bg-muted px-1.5 font-mono font-normal text-muted-foreground text-[10px] leading-none hover:bg-muted/80"
-      variant="secondary"
-    >
-      {sources[0] ? (
-        <>
-          {getHostname(sources[0].url)}{' '}
-          {sources.length > 1 && `+${sources.length - 1}`}
-        </>
-      ) : (
-        'unknown'
-      )}
-    </Badge>
-  </HoverCardTrigger>
-);
+}) => {
+  const firstSource = sources[0];
+  let label: string;
+
+  if (!firstSource) {
+    label = 'unknown';
+  } else {
+    // Relative paths (e.g. lesson URLs like /courses/…/lessons/…)
+    try {
+      label = new URL(firstSource.url).hostname.replace(/^www\./, '');
+    } catch {
+      // Strip leading slash and take first two path segments as a short label
+      const segments = firstSource.url.replace(/^\//, '').split('/');
+      label = segments.slice(0, 2).join('/');
+    }
+  }
+
+  return (
+    <HoverCardTrigger asChild>
+      <Badge
+        className="ml-1 rounded-md border-border bg-muted px-1.5 font-mono font-normal text-[10px] text-muted-foreground leading-none hover:bg-muted/80"
+        variant="secondary"
+      >
+        {firstSource ? (
+          <>
+            {label} {sources.length > 1 && `+${sources.length - 1}`}
+          </>
+        ) : (
+          'unknown'
+        )}
+      </Badge>
+    </HoverCardTrigger>
+  );
+};
 
 const CitationSourceLogo = ({ source }: { source: ChatCitationSource }) => (
   <span className="flex size-5 items-center justify-center rounded-full border bg-background [&>svg]:size-3">
@@ -244,23 +261,78 @@ export const ChatToolInvocations = ({
 
   return (
     <div className="mb-4 flex flex-col gap-2">
-      {toolParts.map((tool) => (
-        <div
-          key={tool.toolCallId}
-          className="flex w-fit items-center gap-2 rounded-lg border bg-muted/50 px-3 py-2 text-muted-foreground text-sm"
-        >
-          <Globe className="h-4 w-4 animate-pulse" />
-          {tool.state === 'output-available' ? (
-            <span>
-              Searched the web for: "{tool.input?.query || 'resources'}"
-            </span>
-          ) : (
-            <span>
-              Searching the web for: "{tool.input?.query || 'resources'}"...
-            </span>
-          )}
-        </div>
-      ))}
+      {toolParts.map((tool) => {
+        const isDone = tool.state === 'output-available';
+
+        // ── getEnrolledCourses ──────────────────────────────────────────────
+        if (tool.type === 'tool-getEnrolledCourses') {
+          const count =
+            isDone && Array.isArray(tool.output?.courses)
+              ? tool.output.courses.length
+              : 0;
+          return (
+            <div
+              key={tool.toolCallId}
+              className="flex w-fit items-center gap-2 rounded-lg border bg-muted/50 px-3 py-2 text-muted-foreground text-sm"
+            >
+              <BookOpen
+                className={`h-4 w-4 ${isDone ? '' : 'animate-pulse'}`}
+              />
+              {isDone ? (
+                <span>{`Loaded ${count} ${count === 1 ? 'course' : 'courses'}`}</span>
+              ) : (
+                <span>Loading your enrolled courses…</span>
+              )}
+            </div>
+          );
+        }
+
+        // ── searchLessonContent ─────────────────────────────────────────────
+        if (tool.type === 'tool-searchLessonContent') {
+          const count =
+            isDone && Array.isArray(tool.output?.results)
+              ? tool.output.results.length
+              : 0;
+          const query =
+            (tool.state === 'input-available' ||
+              tool.state === 'output-available') &&
+            tool.input?.query
+              ? tool.input.query
+              : 'lesson content';
+          return (
+            <div
+              key={tool.toolCallId}
+              className="flex w-fit items-center gap-2 rounded-lg border bg-muted/50 px-3 py-2 text-muted-foreground text-sm"
+            >
+              <Search className={`h-4 w-4 ${isDone ? '' : 'animate-pulse'}`} />
+              {isDone ? (
+                <span>{`Found ${count} relevant ${count === 1 ? 'section' : 'sections'} for "${query}"`}</span>
+              ) : (
+                <span>{`Searching lesson content for "${query}"…`}</span>
+              )}
+            </div>
+          );
+        }
+
+        // ── Generic web-search fallback (existing behaviour) ─────────────────
+        return (
+          <div
+            key={tool.toolCallId}
+            className="flex w-fit items-center gap-2 rounded-lg border bg-muted/50 px-3 py-2 text-muted-foreground text-sm"
+          >
+            <Globe className="h-4 w-4 animate-pulse" />
+            {isDone ? (
+              <span>
+                Searched the web for: "{tool.input?.query || 'resources'}"
+              </span>
+            ) : (
+              <span>
+                Searching the web for: "{tool.input?.query || 'resources'}"...
+              </span>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 };

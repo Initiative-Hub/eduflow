@@ -4,6 +4,7 @@ import {
   type UIMessage,
 } from 'ai';
 import { z } from 'zod';
+import { createChatTools } from '@/lib/ai/chat-tools';
 import { getChatOwner } from '@/lib/api/guest-session';
 import { ChatProviderFactory } from '@/services/ai/ChatProviderFactory';
 import { CHAT_MODEL_IDS } from '@/services/ai/chat-models';
@@ -325,6 +326,8 @@ export async function POST(
     const providerName = parsedBody.data.provider ?? DEFAULT_PROVIDER;
     const provider = ChatProviderFactory.create(providerName);
 
+    const chatTools = createChatTools(userId);
+
     const result = await provider.streamChat(
       {
         messages: messagesForModel,
@@ -332,7 +335,12 @@ export async function POST(
         model: parsedBody.data.model,
         apiKey: parsedBody.data.apiKey,
       },
-      { prompt: getAiChatSystemPrompt(), mode: 'replace' }
+      {
+        prompt: getAiChatSystemPrompt(),
+        mode: 'replace',
+        tools: chatTools,
+        maxSteps: 5,
+      }
     );
 
     const stream = createUIMessageStream<UIMessage>({

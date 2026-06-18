@@ -218,7 +218,13 @@
       "trends": "Tóm tắt các xu hướng mới nhất về năng lượng tái tạo"
     },
     "thinking": "EduFlow AI đang suy nghĩ...",
-    "title": "Chào học giả {name}. Bạn đã sẵn sàng đào sâu kiến thức chưa?"
+    "title": "Chào học giả {name}. Bạn đã sẵn sàng đào sâu kiến thức chưa?",
+    "tools": {
+      "foundContent": "Tìm thấy {count} {count, plural, one {đoạn} other {đoạn}} liên quan",
+      "loadedCourses": "Đã tải {count} khoá học",
+      "loadingCourses": "Đang tải các khoá học đã đăng ký...",
+      "searchingContent": "Đang tìm kiếm nội dung bài học..."
+    }
   },
   "ApiDocsPage": {
     "cookieHint": "Hãy đăng nhập ở tab khác để dùng lại cookie phiên Better Auth.",
