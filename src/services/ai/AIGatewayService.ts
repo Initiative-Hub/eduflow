@@ -29,7 +29,6 @@ export class AIGatewayService implements ChatProviderService {
       model: provider(model),
       system: resolveChatSystemPrompt(options),
       messages: await convertToModelMessages(input.messages),
-      providerOptions: input.providerOptions,
       tools: options?.tools,
       stopWhen: options?.maxSteps ? stepCountIs(options.maxSteps) : undefined,
     });

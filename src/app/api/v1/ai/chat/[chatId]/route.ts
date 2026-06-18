@@ -8,10 +8,7 @@ import { getChatOwner } from '@/lib/api/guest-session';
 import { ChatProviderFactory } from '@/services/ai/ChatProviderFactory';
 import { CHAT_MODEL_IDS } from '@/services/ai/chat-models';
 import { DEFAULT_PROVIDER } from '@/services/ai/chat-provider.constants';
-import type {
-  ChatProvider,
-  StreamChatInput,
-} from '@/services/ai/chat-provider.types';
+import type { ChatProvider } from '@/services/ai/chat-provider.types';
 import { CacheService } from '@/services/CacheService';
 import { ChatPersistenceService } from '@/services/ChatPersistenceService';
 import {
@@ -30,7 +27,6 @@ const chatRequestSchema = z.object({
   provider: z.custom<ChatProvider>().optional(),
   model: z.enum(CHAT_MODEL_IDS).optional(),
   apiKey: z.string().min(1).optional(),
-  providerOptions: z.custom<StreamChatInput['providerOptions']>().optional(),
 });
 
 const chatUpdateSchema = z
@@ -233,8 +229,6 @@ export async function PATCH(
  *                 type: string
  *               apiKey:
  *                 type: string
- *               providerOptions:
- *                 type: object
  *     responses:
  *       200:
  *         description: Streamed AI response
@@ -337,7 +331,6 @@ export async function POST(
         provider: parsedBody.data.provider,
         model: parsedBody.data.model,
         apiKey: parsedBody.data.apiKey,
-        providerOptions: parsedBody.data.providerOptions,
       },
       { prompt: getAiChatSystemPrompt(), mode: 'replace' }
     );
@@ -365,7 +358,6 @@ export async function POST(
           providerName,
           model: parsedBody.data.model,
           apiKey: parsedBody.data.apiKey,
-          providerOptions: parsedBody.data.providerOptions,
         });
 
         writer.write({

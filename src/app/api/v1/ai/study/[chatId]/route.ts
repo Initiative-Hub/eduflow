@@ -13,10 +13,7 @@ import {
 } from '@/lib/validations/study.schema';
 import { ChatProviderFactory } from '@/services/ai/ChatProviderFactory';
 import { DEFAULT_PROVIDER } from '@/services/ai/chat-provider.constants';
-import type {
-  ChatProvider,
-  StreamChatInput,
-} from '@/services/ai/chat-provider.types';
+import type { ChatProvider } from '@/services/ai/chat-provider.types';
 import { CacheService } from '@/services/CacheService';
 import { ChatPersistenceService } from '@/services/ChatPersistenceService';
 import {
@@ -38,7 +35,6 @@ const studyRequestSchema = z.object({
   provider: z.custom<ChatProvider>().optional(),
   model: z.string().min(1).optional(),
   apiKey: z.string().min(1).optional(),
-  providerOptions: z.custom<StreamChatInput['providerOptions']>().optional(),
 });
 
 const studyUpdateSchema = z
@@ -298,7 +294,6 @@ export async function POST(
             quizOptions: parsedBody.data.quizOptions,
             model: parsedBody.data.model,
             apiKey: parsedBody.data.apiKey,
-            providerOptions: parsedBody.data.providerOptions,
           });
 
           const assistantText =
@@ -326,7 +321,6 @@ export async function POST(
             providerName,
             model: parsedBody.data.model,
             apiKey: parsedBody.data.apiKey,
-            providerOptions: parsedBody.data.providerOptions,
           });
 
           writer.write({
@@ -359,7 +353,6 @@ export async function POST(
         provider: parsedBody.data.provider,
         model: parsedBody.data.model,
         apiKey: parsedBody.data.apiKey,
-        providerOptions: parsedBody.data.providerOptions,
       },
       { prompt: systemPrompt, tools, maxSteps }
     );
@@ -387,7 +380,6 @@ export async function POST(
           providerName,
           model: parsedBody.data.model,
           apiKey: parsedBody.data.apiKey,
-          providerOptions: parsedBody.data.providerOptions,
         });
 
         writer.write({

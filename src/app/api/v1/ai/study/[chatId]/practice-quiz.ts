@@ -18,7 +18,6 @@ import {
   type StudyQuizQuestionType,
 } from '@/lib/validations/study.schema';
 import { DEFAULT_MODELS } from '@/services/ai/chat-provider.constants';
-import type { StreamChatInput } from '@/services/ai/chat-provider.types';
 
 const DEFAULT_PRACTICE_QUIZ_COUNTS: Record<StudyQuizQuestionType, number> = {
   multiple_choice: 5,
@@ -113,13 +112,11 @@ export async function generatePracticeQuiz({
   messages,
   model,
   apiKey,
-  providerOptions,
   quizOptions,
 }: {
   messages: UIMessage[];
   model?: string;
   apiKey?: string;
-  providerOptions?: StreamChatInput['providerOptions'];
   quizOptions?: StudyQuizOptions;
 }): Promise<QuizContent> {
   const resolvedApiKey = apiKey ?? process.env.OPENROUTER_API_KEY;
@@ -144,20 +141,19 @@ export async function generatePracticeQuiz({
       description: 'A mixed interactive practice quiz for self-study.',
     }),
     system: `
-You are EduFlow's Study Assistant. Generate a self-study interactive quiz from the learner's latest message and attached materials.
+      You are EduFlow's Study Assistant. Generate a self-study interactive quiz from the learner's latest message and attached materials.
 
-Rules:
-- Generate exactly ${questionTotal} questions.
-- Use exactly ${counts.multiple_choice} multiple choice, ${counts.true_false} true/false, and ${counts.fill_in_the_blank} fill-in-the-blank questions.
-- Return empty arrays for question types with a count of 0.
-- Every multiple choice question must have exactly 4 options and exactly 1 correct option.
-- Fill-in-the-blank templates must use {{blankId}} placeholders matching the blanks array.
-- Explanations must teach the concept, not only reveal the answer.
-- Match the learner's language when possible.
-- Do not include essay or short-answer questions.
-`,
+      Rules:
+      - Generate exactly ${questionTotal} questions.
+      - Use exactly ${counts.multiple_choice} multiple choice, ${counts.true_false} true/false, and ${counts.fill_in_the_blank} fill-in-the-blank questions.
+      - Return empty arrays for question types with a count of 0.
+      - Every multiple choice question must have exactly 4 options and exactly 1 correct option.
+      - Fill-in-the-blank templates must use {{blankId}} placeholders matching the blanks array.
+      - Explanations must teach the concept, not only reveal the answer.
+      - Match the learner's language when possible.
+      - Do not include essay or short-answer questions.
+    `,
     messages: await convertToModelMessages(messages),
-    providerOptions,
   });
 
   return buildPracticeQuizContent(result.output);

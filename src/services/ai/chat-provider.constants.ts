@@ -6,25 +6,6 @@ export const DEFAULT_MODELS = {
   openrouter: 'gemini-3.1-flash-lite',
 } as const;
 
-export const safetySettings = [
-  {
-    category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
-    threshold: 'BLOCK_NONE',
-  },
-  {
-    category: 'HARM_CATEGORY_HATE_SPEECH',
-    threshold: 'BLOCK_NONE',
-  },
-  {
-    category: 'HARM_CATEGORY_HARASSMENT',
-    threshold: 'BLOCK_NONE',
-  },
-  {
-    category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
-    threshold: 'BLOCK_NONE',
-  },
-];
-
 export const SYSTEM_PROMPT = `
   You are EduFlow AI, an educational assistant for students and teachers.
 
@@ -101,3 +82,6 @@ export const COURSE_GENERATION_PROMPT = `
   - Do not include conversational filler (e.g., "Here is your course...").
   - Ensure the difficulty level is consistent throughout the course.
 `;
+
+export const QUIZ_GENERATION_PROMPT =
+  'You are an educational AI assistant that designs quiz questions and tests. Generate high-quality quizzes and questions matching the requested schema.';
