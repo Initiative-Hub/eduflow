@@ -31,7 +31,7 @@ import type {
   StreamChatInternalOptions,
   StreamCourseInput,
 } from '@/services/ai/chat-provider.types';
-import { generateSupplementarySearchContexts } from '@/services/ai/web-search';
+import { generateSupplementarySearchContexts } from '@/services/ai/course-web-search';
 import type { CourseStreamEvent } from '@/types/course-stream-event';
 import { StorageService } from '../StorageService';
 import type { ChatProviderService } from './ChatProviderService';

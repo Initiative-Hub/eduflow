@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { generateSupplementarySearchContexts } from '@/services/ai/web-search';
+import { generateSupplementarySearchContexts } from '@/services/ai/course-web-search';
 
 const mocks = vi.hoisted(() => ({
   generateText: vi.fn(),
