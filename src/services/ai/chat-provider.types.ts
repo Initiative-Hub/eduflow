@@ -1,4 +1,3 @@
-import type { ProviderOptions } from '@ai-sdk/provider-utils';
 import type { ToolSet, UIMessage } from 'ai'; // Add CoreTool here
 import type { AICourseGeneration } from '@/lib/validations/course.schema';
 
@@ -10,7 +9,6 @@ export type StreamChatInput = {
   provider?: ChatProvider;
   model?: string;
   apiKey?: string;
-  providerOptions?: ProviderOptions;
 };
 
 export type StreamChatInternalOptions = {
@@ -27,7 +25,6 @@ export type StreamCourseInput = {
   context?: string;
   model?: string;
   apiKey?: string;
-  providerOptions?: ProviderOptions;
   onFinish?: (event: {
     object: AICourseGeneration;
   }) => PromiseLike<void> | void;

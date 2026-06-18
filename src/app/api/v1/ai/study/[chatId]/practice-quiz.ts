@@ -13,7 +13,6 @@ import {
   trueFalseQuestionSchema,
 } from '@/lib/validations/quiz.schema';
 import { DEFAULT_MODELS } from '@/services/ai/chat-provider.constants';
-import type { StreamChatInput } from '@/services/ai/chat-provider.types';
 
 const aiPracticeQuizSchema = z.object({
   title: z.string(),
@@ -55,12 +54,10 @@ export async function generatePracticeQuiz({
   messages,
   model,
   apiKey,
-  providerOptions,
 }: {
   messages: UIMessage[];
   model?: string;
   apiKey?: string;
-  providerOptions?: StreamChatInput['providerOptions'];
 }): Promise<QuizContent> {
   const resolvedApiKey = apiKey ?? process.env.OPENROUTER_API_KEY;
 
@@ -77,19 +74,18 @@ export async function generatePracticeQuiz({
       description: 'A mixed interactive practice quiz for self-study.',
     }),
     system: `
-You are EduFlow's Study Assistant. Generate a self-study interactive quiz from the learner's latest message and attached materials.
+      You are EduFlow's Study Assistant. Generate a self-study interactive quiz from the learner's latest message and attached materials.
 
-Rules:
-- Generate exactly 10 questions.
-- Use exactly 5 multiple choice, 3 true/false, and 2 fill-in-the-blank questions.
-- Every multiple choice question must have exactly 4 options and exactly 1 correct option.
-- Fill-in-the-blank templates must use {{blankId}} placeholders matching the blanks array.
-- Explanations must teach the concept, not only reveal the answer.
-- Match the learner's language when possible.
-- Do not include essay or short-answer questions.
-`,
+      Rules:
+      - Generate exactly 10 questions.
+      - Use exactly 5 multiple choice, 3 true/false, and 2 fill-in-the-blank questions.
+      - Every multiple choice question must have exactly 4 options and exactly 1 correct option.
+      - Fill-in-the-blank templates must use {{blankId}} placeholders matching the blanks array.
+      - Explanations must teach the concept, not only reveal the answer.
+      - Match the learner's language when possible.
+      - Do not include essay or short-answer questions.
+    `,
     messages: await convertToModelMessages(messages),
-    providerOptions,
   });
 
   return buildPracticeQuizContent(result.output);

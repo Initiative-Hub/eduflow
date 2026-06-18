@@ -5,10 +5,7 @@ import {
   stepCountIs,
   streamText,
 } from 'ai';
-import {
-  DEFAULT_MODELS,
-  safetySettings,
-} from '@/services/ai/chat-provider.constants';
+import { DEFAULT_MODELS } from '@/services/ai/chat-provider.constants';
 import type {
   StreamChatInput,
   StreamChatInternalOptions,
@@ -33,13 +30,6 @@ export class GoogleService implements ChatProviderService {
     return streamText({
       experimental_transform: smoothStream(),
       model: provider(model),
-      providerOptions: {
-        ...input.providerOptions,
-        google: {
-          safetySettings,
-          ...(input.providerOptions?.google ?? {}),
-        },
-      },
       system: resolveChatSystemPrompt(options),
       messages: await convertToModelMessages(input.messages),
       tools: options?.tools,
