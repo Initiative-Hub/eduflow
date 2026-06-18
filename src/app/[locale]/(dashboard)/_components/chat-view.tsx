@@ -19,7 +19,7 @@ import {
   ReasoningContent,
   ReasoningTrigger,
 } from '@/components/ai-elements/reasoning';
-import { Suggestion, Suggestions } from '@/components/ai-elements/suggestion';
+import { Suggestion } from '@/components/ai-elements/suggestion';
 import {
   buildInlineCitationMarkdown,
   getCitationSources,
@@ -190,17 +190,32 @@ export function ChatView({
                   </div>
 
                   {suggestions.length > 0 && onSuggestionSelect ? (
-                    <div className="ml-14 max-w-[calc(100%-3.5rem)]">
-                      <Suggestions className="py-1">
+                    <div className="ml-14 max-w-[calc(100%-3.5rem)] sm:max-w-3xl">
+                      <p className="mb-2 font-medium text-muted-foreground text-xs">
+                        {t('suggestions.followUp')}
+                      </p>
+                      <ul
+                        aria-label={t('suggestions.followUp')}
+                        className="flex w-full flex-col gap-2"
+                      >
                         {suggestions.map((suggestion) => (
-                          <Suggestion
-                            disabled={suggestionsDisabled}
+                          <li
+                            className="flex items-start gap-2"
                             key={suggestion}
-                            onClick={onSuggestionSelect}
-                            suggestion={suggestion}
-                          />
+                          >
+                            <Suggestion
+                              className="wrap-anywhere h-auto min-h-10 w-full max-w-full flex-1 items-start justify-start whitespace-normal rounded-xl border-border/80 bg-background/80 px-3.5 py-2.5 text-left text-foreground text-sm leading-relaxed shadow-none transition-colors hover:bg-muted/90"
+                              disabled={suggestionsDisabled}
+                              onClick={onSuggestionSelect}
+                              suggestion={suggestion}
+                            >
+                              <span className="block text-left">
+                                {suggestion}
+                              </span>
+                            </Suggestion>
+                          </li>
                         ))}
-                      </Suggestions>
+                      </ul>
                     </div>
                   ) : null}
                 </div>
