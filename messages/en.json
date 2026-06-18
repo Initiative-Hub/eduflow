@@ -213,6 +213,7 @@
     "subtitle": "Pick a starting point or ask anything to begin your inquiry.",
     "suggestions": {
       "brainstorm": "Help me brainstorm a thesis on Renaissance art",
+      "followUp": "Follow-up questions",
       "socratic": "Explain the Socratic method in simple terms",
       "trends": "Summarize the latest trends in renewable energy"
     },
