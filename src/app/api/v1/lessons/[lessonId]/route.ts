@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server';
-import { z } from 'zod';
+import { after, NextResponse } from 'next/server';
+import * as z from 'zod';
 import { withAuth } from '@/lib/api/middlewares';
+import { LessonContentEmbeddingService } from '@/services/LessonContentEmbeddingService';
 import { LessonService } from '@/services/LessonService';
 import { isTiptapDocument, type TiptapDocument } from '@/utils/lesson-content';
 
@@ -10,6 +11,22 @@ const patchLessonSchema = z.object({
   title: z.string().optional(),
   content: tiptapDocumentSchema.optional(),
 });
+
+function scheduleLessonContentIndexing(lessonId: string) {
+  const run = async () => {
+    try {
+      await LessonContentEmbeddingService.indexLessonContent(lessonId);
+    } catch (error) {
+      console.error('Lesson content indexing failed:', error);
+    }
+  };
+
+  try {
+    after(run);
+  } catch {
+    void run();
+  }
+}
 
 /**
  * @swagger
@@ -66,6 +83,10 @@ export const PATCH = withAuth(async (req, sessionData, { params }) => {
       title: parsed.data.title,
       content: parsed.data.content,
     });
+
+    if (parsed.data.content !== undefined) {
+      scheduleLessonContentIndexing(lessonId);
+    }
 
     return NextResponse.json(updatedLesson);
   } catch (error: any) {
