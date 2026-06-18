@@ -1,4 +1,4 @@
-import { ListChecks } from 'lucide-react';
+import { ArrowLeftRight, ListChecks, PencilLine } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import {
   Field,
@@ -9,16 +9,20 @@ import {
   FieldSet,
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { Separator } from '@/components/ui/separator';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import type {
   StudyQuizOptions,
   StudyQuizQuestionType,
 } from '@/lib/validations/study.schema';
 
-const QUESTION_TYPES: StudyQuizQuestionType[] = [
-  'multiple_choice',
-  'true_false',
-  'fill_in_the_blank',
+const QUESTION_TYPES: {
+  type: StudyQuizQuestionType;
+  icon: typeof ListChecks;
+}[] = [
+  { type: 'multiple_choice', icon: ListChecks },
+  { type: 'true_false', icon: ArrowLeftRight },
+  { type: 'fill_in_the_blank', icon: PencilLine },
 ];
 
 export function StudyQuizOptionsPanel({
@@ -31,18 +35,31 @@ export function StudyQuizOptionsPanel({
   const t = useTranslations('StudyPage.quizOptions');
 
   return (
-    <FieldSet className="rounded-lg border border-border bg-card p-4">
-      <FieldLegend>{t('title')}</FieldLegend>
-      <FieldDescription>{t('description')}</FieldDescription>
+    <FieldSet className="rounded-xl border border-border/80 bg-card/95 p-6 shadow-sm">
+      <div className="flex flex-col gap-1">
+        <FieldLegend className="mb-0 font-bold text-xl tracking-normal">
+          {t('title')}
+        </FieldLegend>
+        <FieldDescription className="max-w-3xl text-sm">
+          {t('description')}
+        </FieldDescription>
+      </div>
 
-      <FieldGroup>
+      <Separator />
+
+      <FieldGroup className="gap-7">
         <Field>
-          <FieldLabel>{t('questionTypes')}</FieldLabel>
+          <FieldLabel className="font-bold text-sm">
+            {t('questionTypes')}
+          </FieldLabel>
           <ToggleGroup
             type="multiple"
             variant="outline"
-            className="flex w-full flex-wrap gap-2"
+            size="lg"
+            spacing={2}
+            className="flex w-full flex-wrap items-center gap-3"
             value={options.questionTypes}
+            aria-label={t('questionTypes')}
             onValueChange={(value) => {
               if (value.length === 0) return;
               onOptionsChange({
@@ -51,17 +68,24 @@ export function StudyQuizOptionsPanel({
               });
             }}
           >
-            {QUESTION_TYPES.map((type) => (
-              <ToggleGroupItem key={type} value={type}>
-                <ListChecks data-icon="inline-start" />
+            {QUESTION_TYPES.map(({ type, icon: Icon }) => (
+              <ToggleGroupItem
+                key={type}
+                value={type}
+                className="cursor-pointer rounded-full border-border bg-muted/40 px-5 text-muted-foreground shadow-xs transition-[background-color,border-color,color,box-shadow] hover:border-primary/30 hover:bg-primary/5 hover:text-foreground data-[state=on]:border-primary/40 data-[state=on]:bg-primary/10 data-[state=on]:text-primary data-[state=on]:shadow-sm"
+              >
+                <Icon data-icon="inline-start" />
                 {t(`types.${type}`)}
               </ToggleGroupItem>
             ))}
           </ToggleGroup>
         </Field>
 
-        <Field>
-          <FieldLabel htmlFor="study-question-count">
+        <Field className="max-w-sm">
+          <FieldLabel
+            className="font-bold text-sm"
+            htmlFor="study-question-count"
+          >
             {t('questionCount')}
           </FieldLabel>
           <Input
@@ -72,6 +96,7 @@ export function StudyQuizOptionsPanel({
             type="number"
             min={1}
             max={30}
+            className="h-10 border-transparent bg-muted/50 px-4 font-semibold shadow-none focus-visible:border-primary/40 focus-visible:bg-background"
             value={options.questionCount}
             onChange={(event) => {
               const next = Number.parseInt(event.target.value, 10);
@@ -82,7 +107,9 @@ export function StudyQuizOptionsPanel({
               });
             }}
           />
-          <FieldDescription>{t('questionCountDescription')}</FieldDescription>
+          <FieldDescription className="text-xs">
+            {t('questionCountDescription')}
+          </FieldDescription>
         </Field>
       </FieldGroup>
     </FieldSet>

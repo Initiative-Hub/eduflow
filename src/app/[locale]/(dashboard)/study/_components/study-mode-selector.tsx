@@ -74,8 +74,9 @@ export function StudyModeSelector({
             <button
               key={key}
               type="button"
+              aria-pressed={mode === key}
               onClick={() => onModeChange(key)}
-              className={`cursor-pointer rounded-2xl border border-border/60 bg-card/95 p-5 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
+              className={`cursor-pointer rounded-2xl border border-border/60 bg-card/95 p-5 text-left shadow-sm transition-[background-color,border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                 mode === key ? activeAccent : ''
               }`}
             >
