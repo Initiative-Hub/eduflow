@@ -38,7 +38,9 @@ async function embedValues(values: string[]) {
 }
 
 export class LessonContentEmbeddingService {
-  static async indexLessonContent(lessonId: string): Promise<IndexLessonContentResult> {
+  static async indexLessonContent(
+    lessonId: string
+  ): Promise<IndexLessonContentResult> {
     const lesson = await prisma.lesson.findUnique({
       where: { id: lessonId },
       select: {
@@ -71,9 +73,7 @@ export class LessonContentEmbeddingService {
     }
 
     const chunks = chunkLessonMarkdown(markdown);
-    const embeddings = await embedValues(
-      chunks.map((chunk) => chunk.markdown)
-    );
+    const embeddings = await embedValues(chunks.map((chunk) => chunk.markdown));
 
     if (embeddings.length !== chunks.length) {
       throw new Error(
