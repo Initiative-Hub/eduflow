@@ -1698,6 +1698,18 @@
       "research": "Nghiên cứu",
       "review": "Tài Liệu Ôn Tập"
     },
+    "quizOptions": {
+      "description": "Chọn dạng câu hỏi và tổng số câu trước khi tạo.",
+      "questionCount": "Số lượng câu hỏi",
+      "questionCountDescription": "Mặc định là 10. Bạn có thể tạo từ 1 đến 30 câu.",
+      "questionTypes": "Dạng câu hỏi",
+      "title": "Thiết lập bài luyện tập",
+      "types": {
+        "fill_in_the_blank": "Điền vào chỗ trống",
+        "multiple_choice": "Trắc nghiệm",
+        "true_false": "Đúng/Sai"
+      }
+    },
     "recentSessions": {
       "description": "Quay lại hướng dẫn học, bộ luyện tập và luồng nghiên cứu gần đây.",
       "error": "Hiện không thể tải các phiên học gần đây.",
