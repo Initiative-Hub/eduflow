@@ -1704,6 +1704,18 @@
       "research": "Research Mode",
       "review": "Review Materials"
     },
+    "quizOptions": {
+      "description": "Choose the question formats and total number of questions before generating.",
+      "questionCount": "Number of questions",
+      "questionCountDescription": "Defaults to 10. You can generate 1 to 30 questions.",
+      "questionTypes": "Question types",
+      "title": "Practice quiz setup",
+      "types": {
+        "fill_in_the_blank": "Fill in the blank",
+        "multiple_choice": "Multiple choice",
+        "true_false": "True/False"
+      }
+    },
     "recentSessions": {
       "description": "Return to study guides, practice sets, and research threads.",
       "error": "Unable to load recent study sessions right now.",

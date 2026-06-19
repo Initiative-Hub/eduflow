@@ -1,12 +1,16 @@
 import { z } from 'zod';
 import { AiChatType } from '@/generated/prisma';
 import { getChatOwner } from '@/lib/api/guest-session';
-import { studyModeSchema } from '@/lib/validations/study.schema';
+import {
+  studyModeSchema,
+  studyQuizOptionsSchema,
+} from '@/lib/validations/study.schema';
 import { ChatPersistenceService } from '@/services/ChatPersistenceService';
 
 const createStudySessionSchema = z.object({
   firstMessage: z.string().trim().min(1),
   mode: studyModeSchema,
+  quizOptions: studyQuizOptionsSchema.optional(),
 });
 
 /**
@@ -44,7 +48,12 @@ export async function POST(req: Request) {
       guestId,
       firstMessage: parsedBody.data.firstMessage,
       chatType: AiChatType.STUDY_ASSISTANT,
-      metadata: { studyMode: parsedBody.data.mode },
+      metadata: {
+        studyMode: parsedBody.data.mode,
+        ...(parsedBody.data.quizOptions
+          ? { studyQuizOptions: parsedBody.data.quizOptions }
+          : {}),
+      },
     });
 
     return new Response(JSON.stringify({ chatId }), {
