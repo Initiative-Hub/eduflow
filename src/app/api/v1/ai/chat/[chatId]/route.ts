@@ -4,12 +4,12 @@ import {
   type UIMessage,
 } from 'ai';
 import { z } from 'zod';
-import { createChatTools } from '@/lib/ai/chat-tools';
 import { getChatOwner } from '@/lib/api/guest-session';
 import { ChatProviderFactory } from '@/services/ai/ChatProviderFactory';
 import { CHAT_MODEL_IDS } from '@/services/ai/chat-models';
 import { DEFAULT_PROVIDER } from '@/services/ai/chat-provider.constants';
 import type { ChatProvider } from '@/services/ai/chat-provider.types';
+import { createChatTools } from '@/services/ai/chat-tools';
 import { CacheService } from '@/services/CacheService';
 import { ChatPersistenceService } from '@/services/ChatPersistenceService';
 import {

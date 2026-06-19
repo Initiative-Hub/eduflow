@@ -65,6 +65,7 @@ const mockCreateOpenRouter = createOpenRouter as unknown as ReturnType<
 describe('LessonContentEmbeddingService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    process.env.OPENROUTER_API_KEY = 'test-key';
     mocks.transactionClient.$executeRaw.mockResolvedValue(1);
     mocks.transactionClient.lessonContentChunk.deleteMany.mockResolvedValue({
       count: 1,
@@ -89,10 +90,8 @@ describe('LessonContentEmbeddingService', () => {
     lesson.findUnique.mockResolvedValue({ content, id: 'lesson-1' });
     lessonContentChunk.findFirst.mockResolvedValue({ contentHash });
 
-    const result = await LessonContentEmbeddingService.indexLessonContent(
-      'lesson-1',
-      { apiKey: 'test-key' }
-    );
+    const result =
+      await LessonContentEmbeddingService.indexLessonContent('lesson-1');
 
     expect(result).toEqual({
       contentHash,
@@ -108,10 +107,8 @@ describe('LessonContentEmbeddingService', () => {
       id: 'lesson-1',
     });
 
-    const result = await LessonContentEmbeddingService.indexLessonContent(
-      'lesson-1',
-      { apiKey: 'test-key' }
-    );
+    const result =
+      await LessonContentEmbeddingService.indexLessonContent('lesson-1');
 
     expect(result).toEqual({ status: 'cleared' });
     expect(lessonContentChunk.deleteMany).toHaveBeenCalledWith({
@@ -134,10 +131,8 @@ describe('LessonContentEmbeddingService', () => {
     lessonContentChunk.findFirst.mockResolvedValue(null);
     mockEmbedMany.mockResolvedValue({ embeddings: [[0.1, -0.2, 0.3]] });
 
-    const result = await LessonContentEmbeddingService.indexLessonContent(
-      'lesson-1',
-      { apiKey: 'test-key' }
-    );
+    const result =
+      await LessonContentEmbeddingService.indexLessonContent('lesson-1');
 
     expect(result).toMatchObject({
       chunkCount: 1,

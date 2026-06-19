@@ -19,11 +19,11 @@ model User {
   id            String   @id @default(uuid())
   name          String
   email         String   @unique
-  emailVerified Boolean  @default(false)
+  emailVerified Boolean  @default(false) @map("email_verified")
   image         String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  roleId        String?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  roleId        String?  @map("role_id")
   bio           String?
 
   // relations
@@ -42,13 +42,13 @@ model User {
 
 model Session {
   id        String   @id @default(uuid())
-  expiresAt DateTime
+  expiresAt DateTime @map("expires_at")
   token     String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  ipAddress String?
-  userAgent String?
-  userId    String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  userId    String   @map("user_id")
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
@@ -57,19 +57,19 @@ model Session {
 
 model Account {
   id                    String    @id @default(uuid())
-  accountId             String
-  providerId            String
-  userId                String
+  accountId             String    @map("account_id")
+  providerId            String    @map("provider_id")
+  userId                String    @map("user_id")
   user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  accessToken           String?
-  refreshToken          String?
-  idToken               String?
-  accessTokenExpiresAt  DateTime?
-  refreshTokenExpiresAt DateTime?
+  accessToken           String?   @map("access_token")
+  refreshToken          String?   @map("refresh_token")
+  idToken               String?   @map("id_token")
+  accessTokenExpiresAt  DateTime? @map("access_token_expires_at")
+  refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at")
   scope                 String?
   password              String?
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
 
   @@index([userId])
   @@map("account")
@@ -79,9 +79,9 @@ model Verification {
   id         String   @id @default(uuid())
   identifier String
   value      String
-  expiresAt  DateTime
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  expiresAt  DateTime @map("expires_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
 
   @@index([identifier])
   @@map("verification")
@@ -125,12 +125,12 @@ model PlatformPermission {
   platformRole   PlatformRole @relation(fields: [platformRoleId], references: [id], onDelete: Cascade)
   permission     String
   enabled        Boolean      @default(true)
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
 
   @@unique([platformRoleId, permission])
   @@index([platformRoleId, enabled])
-  @@map("platform_permissions")
+  @@map("platform_permission")
 }
 
 model CoursePermission {
@@ -141,12 +141,12 @@ model CoursePermission {
   courseRole   CourseRole @relation(fields: [courseRoleId], references: [id], onDelete: Cascade)
   permission   String
   enabled      Boolean    @default(true)
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
 
   @@unique([courseId, courseRoleId, permission])
   @@index([courseId, courseRoleId, enabled])
-  @@map("course_permissions")
+  @@map("course_permission")
 }
 
 enum FileInventoryStatus {
@@ -203,10 +203,10 @@ model FileInventory {
   checksumSha256 String? @map("checksum_sha256")
   vectorDbId     String? @map("vector_db_id")
 
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  uploadedAt DateTime  @default(now())
-  deletedAt  DateTime?
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+  uploadedAt DateTime  @default(now()) @map("uploaded_at")
+  deletedAt  DateTime? @map("deleted_at")
 
   @@index([userId])
   @@index([courseId])
@@ -239,7 +239,7 @@ model AiChat {
   @@index([userId, type, updatedAt(sort: Desc)])
   @@index([status, updatedAt(sort: Desc)])
   @@index([type, status, updatedAt(sort: Desc)])
-  @@map("ai_chats")
+  @@map("ai_chat")
 }
 
 model AiChatMessage {
@@ -259,25 +259,25 @@ model AiChatMessage {
   @@index([chatId, createdAt])
   @@index([userId, createdAt(sort: Desc)])
   @@index([role])
-  @@map("ai_chat_messages")
+  @@map("ai_chat_message")
 }
 
 // ---- Course / Enrollment / Module / Lesson models based on ERD ----
 model Course {
   id          String             @id @default(uuid())
-  ownerId     String
+  ownerId     String             @map("owner_id")
   owner       User               @relation("OwnerCourses", fields: [ownerId], references: [id])
   title       String
   description String?
-  isPublished Boolean            @default(false)
+  isPublished Boolean            @default(false) @map("is_published")
   modules     Module[]
   enrollments Enrollment[]
   permissions CoursePermission[]
   files       FileInventory[]
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
-  archivedAt  DateTime?
-  deletedAt   DateTime?
+  createdAt   DateTime           @default(now()) @map("created_at")
+  updatedAt   DateTime           @updatedAt @map("updated_at")
+  archivedAt  DateTime?          @map("archived_at")
+  deletedAt   DateTime?          @map("deleted_at")
   questions   Question[]
   quizzes     Quiz[]
 
@@ -288,11 +288,11 @@ model Course {
 
 model Enrollment {
   id         String     @id @default(uuid())
-  memberId   String
+  memberId   String     @map("member_id")
   member     User       @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  roleId     String
+  roleId     String     @map("role_id")
   role       CourseRole @relation(fields: [roleId], references: [id], onDelete: Restrict)
-  courseId   String
+  courseId   String     @map("course_id")
   course     Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
   enrolledAt DateTime   @default(now()) @map("enrolled_at")
 
@@ -305,7 +305,7 @@ model Enrollment {
 
 model Module {
   id         String   @id @default(uuid())
-  courseId   String
+  courseId   String   @map("course_id")
   course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
   title      String
   orderIndex Int      @default(0) @map("order_index")
@@ -317,14 +317,14 @@ model Module {
 
 model Lesson {
   id            String               @id @default(uuid())
-  moduleId      String
+  moduleId      String               @map("module_id")
   module        Module               @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   title         String
   content       Json?
   orderIndex    Int                  @default(0) @map("order_index")
   contentChunks LessonContentChunk[]
   questions     Question[]
-  quizzes       Quiz[]
+  lessonQuizzes LessonQuiz[]
 
   @@map("lesson")
 }
@@ -408,8 +408,7 @@ model Quiz {
   id              String          @id @default(uuid())
   courseId        String          @map("course_id")
   course          Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  // A quiz can be based on multiple lessons. Use the relation field below.
-  lessons         Lesson[]
+  lessonQuizzes   LessonQuiz[]
   title           String
   description     String?
   category        QuizCategory
@@ -426,6 +425,17 @@ model Quiz {
 
   @@index([courseId])
   @@map("quiz")
+}
+
+model LessonQuiz {
+  lessonId String @map("lesson_id")
+  lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  quizId   String @map("quiz_id")
+  quiz     Quiz   @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@id([lessonId, quizId])
+  @@index([quizId])
+  @@map("lesson_quiz")
 }
 
 model QuizQuestion {

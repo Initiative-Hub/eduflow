@@ -84,7 +84,7 @@ async function findSimilarChunks(
     JOIN lesson    l ON l.id = lcc.lesson_id
     JOIN module    m ON m.id = l.module_id
     JOIN course    c ON c.id = m.course_id
-    WHERE c.id = ANY(${effectiveCourseIds}::uuid[])
+    WHERE c.id = ANY(${effectiveCourseIds}::text[])
       AND c.deleted_at IS NULL
       AND (1 - (lcc.embedding <=> ${vectorLiteral}::vector)) >= ${similarityThreshold}
     ORDER BY lcc.embedding <=> ${vectorLiteral}::vector
