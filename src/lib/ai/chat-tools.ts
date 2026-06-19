@@ -38,12 +38,12 @@ const GUEST_SIGN_IN_HINT =
   'The user is not signed in. Politely let them know that retrieving their enrolled courses or lesson content requires signing in to EduFlow.';
 
 async function embedQuery(query: string): Promise<number[]> {
-  const resolvedApiKey = process.env.OPENROUTER_API_KEY;
-  if (!resolvedApiKey) {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) {
     throw new Error('Missing OpenRouter API key for lesson content embeddings');
   }
 
-  const provider = createOpenRouter({ apiKey: resolvedApiKey });
+  const provider = createOpenRouter({ apiKey });
 
   const { embedding } = await embed({
     model: provider.textEmbeddingModel(LESSON_CONTENT_EMBEDDING_MODEL),

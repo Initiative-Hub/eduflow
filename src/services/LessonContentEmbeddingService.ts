@@ -18,16 +18,16 @@ type IndexLessonContentResult =
   | { status: 'skipped'; reason: 'unchanged'; contentHash: string }
   | { status: 'indexed'; contentHash: string; chunkCount: number };
 
-async function embedValues(values: string[], apiKey?: string) {
+async function embedValues(values: string[]) {
   if (values.length === 0) return [];
 
-  const resolvedApiKey = apiKey ?? process.env.OPENROUTER_API_KEY;
-  if (!resolvedApiKey) {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) {
     throw new Error('Missing OpenRouter API key for lesson content embeddings');
   }
 
   const model = LESSON_CONTENT_EMBEDDING_MODEL;
-  const provider = createOpenRouter({ apiKey: resolvedApiKey });
+  const provider = createOpenRouter({ apiKey });
 
   const { embeddings } = await embedMany({
     model: provider.textEmbeddingModel(model),
@@ -38,10 +38,7 @@ async function embedValues(values: string[], apiKey?: string) {
 }
 
 export class LessonContentEmbeddingService {
-  static async indexLessonContent(
-    lessonId: string,
-    options: { apiKey?: string } = {}
-  ): Promise<IndexLessonContentResult> {
+  static async indexLessonContent(lessonId: string): Promise<IndexLessonContentResult> {
     const lesson = await prisma.lesson.findUnique({
       where: { id: lessonId },
       select: {
@@ -75,8 +72,7 @@ export class LessonContentEmbeddingService {
 
     const chunks = chunkLessonMarkdown(markdown);
     const embeddings = await embedValues(
-      chunks.map((chunk) => chunk.markdown),
-      options.apiKey
+      chunks.map((chunk) => chunk.markdown)
     );
 
     if (embeddings.length !== chunks.length) {
