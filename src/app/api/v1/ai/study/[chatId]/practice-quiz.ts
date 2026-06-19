@@ -238,7 +238,14 @@ export async function generatePracticeQuiz({
 
   const provider = createOpenRouter({ apiKey: resolvedApiKey });
 
-  const counts = createPracticeQuizCounts(quizOptions);
+  const resolvedQuizOptions = await resolvePracticeQuizOptions({
+    messages,
+    quizOptions,
+    provider,
+    model,
+  });
+  const counts = createPracticeQuizCounts(resolvedQuizOptions);
+
   const questionTotal = Object.values(counts).reduce(
     (sum, count) => sum + count,
     0
