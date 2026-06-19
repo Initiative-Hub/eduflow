@@ -140,12 +140,21 @@ export async function resolvePracticeQuizOptions({
   model?: string;
 }) {
   const latestUserText = getLatestUserText(messages);
+  let intent: QuizIntent;
 
-  const intent = await extractPracticeQuizIntent({
-    latestUserText,
-    provider,
-    model,
-  });
+  try {
+    intent = await extractPracticeQuizIntent({
+      latestUserText,
+      provider,
+      model,
+    });
+  } catch {
+    intent = {
+      hasExplicitQuizOptions: false,
+      questionCount: null,
+      questionTypes: null,
+    };
+  }
 
   return mergeQuizIntentWithOptions({ intent, quizOptions });
 }
