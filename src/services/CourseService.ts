@@ -1,3 +1,4 @@
+import { after } from 'next/server';
 import { CourseRoleName } from '@/generated/prisma';
 import {
   COURSE_PERMISSION,
@@ -8,6 +9,7 @@ import { prisma } from '@/lib/prisma';
 import { htmlToTiptapDocument } from '@/lib/tiptap-html';
 import type { AICourseGeneration } from '@/lib/validations/course.schema';
 import { OpenRouterService } from '@/services/ai/OpenRouterService';
+import { LessonContentEmbeddingService } from '@/services/LessonContentEmbeddingService';
 import { StorageService } from '@/services/StorageService';
 
 export type CourseListSort =
@@ -24,6 +26,22 @@ export type CourseListParams = {
   search: string;
   sort: CourseListSort;
 };
+
+function scheduleLessonContentIndexing(lessonId: string) {
+  const run = async () => {
+    try {
+      await LessonContentEmbeddingService.indexLessonContent(lessonId);
+    } catch (error) {
+      console.error('Lesson content indexing failed:', error);
+    }
+  };
+
+  try {
+    after(run);
+  } catch {
+    void run();
+  }
+}
 
 export class CourseService {
   static async assertCourseOwner(courseId: string, userId: string) {
@@ -603,7 +621,9 @@ export class CourseService {
 
     let currentModuleOrder = lastModule ? lastModule.orderIndex + 1 : 0;
 
-    await prisma.$transaction(async (tx) => {
+    const createdLessonIds = await prisma.$transaction(async (tx) => {
+      const lessonIds: string[] = [];
+
       for (const mod of data.modules) {
         // Create the module
         const createdModule = await tx.module.create({
@@ -616,20 +636,28 @@ export class CourseService {
 
         if (mod.lessons && Array.isArray(mod.lessons)) {
           let currentLessonOrder = 0;
-          const lessonData = mod.lessons.map((lesson) => ({
-            moduleId: createdModule.id,
-            title: lesson.lessonTitle || 'Untitled Lesson',
-            content: htmlToTiptapDocument(lesson.content || ''),
-            orderIndex: currentLessonOrder++,
-          }));
 
-          if (lessonData.length > 0) {
-            await tx.lesson.createMany({
-              data: lessonData,
+          for (const lesson of mod.lessons) {
+            const createdLesson = await tx.lesson.create({
+              data: {
+                moduleId: createdModule.id,
+                title: lesson.lessonTitle || 'Untitled Lesson',
+                content: htmlToTiptapDocument(lesson.content || ''),
+                orderIndex: currentLessonOrder++,
+              },
+              select: { id: true },
             });
+
+            lessonIds.push(createdLesson.id);
           }
         }
       }
+
+      return lessonIds;
     });
+
+    for (const lessonId of createdLessonIds) {
+      scheduleLessonContentIndexing(lessonId);
+    }
   }
 }
