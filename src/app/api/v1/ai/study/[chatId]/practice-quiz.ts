@@ -16,6 +16,7 @@ import {
   DEFAULT_STUDY_QUIZ_OPTIONS,
   type StudyQuizOptions,
   type StudyQuizQuestionType,
+  studyQuizQuestionTypeSchema,
 } from '@/lib/validations/study.schema';
 import { DEFAULT_MODELS } from '@/services/ai/chat-provider.constants';
 
@@ -37,6 +38,117 @@ const aiPracticeQuizSchema = z.object({
     .length(2),
 });
 type AiPracticeQuiz = z.infer<typeof aiPracticeQuizSchema>;
+
+const quizIntentSchema = z.object({
+  hasExplicitQuizOptions: z.boolean(),
+  questionCount: z.number().int().min(1).max(30).nullable(),
+  questionTypes: z.array(studyQuizQuestionTypeSchema).min(1).nullable(),
+});
+type QuizIntent = z.infer<typeof quizIntentSchema>;
+
+function getLatestUserText(messages: UIMessage[]): string {
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    const message = messages[index];
+
+    if (message.role !== 'user') continue;
+
+    return message.parts
+      .map((part) => (part.type === 'text' ? part.text : ''))
+      .join(' ')
+      .trim();
+  }
+  return '';
+}
+
+function mergeQuizIntentWithOptions({
+  intent,
+  quizOptions,
+}: {
+  intent: QuizIntent;
+  quizOptions?: StudyQuizOptions;
+}): StudyQuizOptions {
+  const baseOptions = quizOptions ?? DEFAULT_STUDY_QUIZ_OPTIONS;
+
+  if (
+    !intent.hasExplicitQuizOptions ||
+    (!intent.questionCount && !intent.questionTypes)
+  ) {
+    return baseOptions;
+  }
+
+  return {
+    questionCount: intent.questionCount ?? baseOptions.questionCount,
+    questionTypes: intent.questionTypes ?? baseOptions.questionTypes,
+  };
+}
+
+async function extractPracticeQuizIntent({
+  latestUserText,
+  provider,
+  model,
+}: {
+  latestUserText: string;
+  provider: ReturnType<typeof createOpenRouter>;
+  model?: string;
+}): Promise<QuizIntent> {
+  if (!latestUserText) {
+    return {
+      hasExplicitQuizOptions: false,
+      questionCount: null,
+      questionTypes: null,
+    };
+  }
+
+  const result = await generateText({
+    model: provider(model ?? DEFAULT_MODELS.openrouter),
+    output: Output.object({
+      schema: quizIntentSchema,
+      name: 'practiceQuizIntent',
+      description:
+        'Explicit practice quiz question count and question type instructions.',
+    }),
+    system: `
+You extract explicit quiz configuration from the learner's latest message.
+Allowed questionTypes:
+- multiple_choice
+- true_false
+- fill_in_the_blank
+
+Rules:
+- Set hasExplicitQuizOptions to true only if the learner clearly asks for a question count or question type.
+- If the learner asks for "multiple choice", use "multiple_choice".
+- If the learner asks for "true false", "true/false", "true or false", or "yes/no style", use "true_false".
+- If the learner asks for "fill in the blank", "fill blanks", or "blank questions", use "fill_in_the_blank".
+- If the learner does not specify a count, return questionCount: null.
+- If the learner does not specify question types, return questionTypes: null.
+- Do not infer a quiz type from the old chat history. Only inspect the latest message.`,
+    prompt: latestUserText,
+  });
+
+  return result.output;
+}
+
+export async function resolvePracticeQuizOptions({
+  messages,
+  quizOptions,
+  provider,
+  model,
+}: {
+  messages: UIMessage[];
+  quizOptions?: StudyQuizOptions;
+  provider: ReturnType<typeof createOpenRouter>;
+  model?: string;
+}) {
+  const latestUserText = getLatestUserText(messages);
+
+  const intent = await extractPracticeQuizIntent({
+    latestUserText,
+    provider,
+    model,
+  });
+
+  return mergeQuizIntentWithOptions({ intent, quizOptions });
+}
 
 export function createPracticeQuizCounts(
   options: StudyQuizOptions = DEFAULT_STUDY_QUIZ_OPTIONS
