@@ -298,7 +298,7 @@ export function chunkLessonMarkdown(
 
   const chunkSize = options.chunkSize ?? DEFAULT_CHUNK_SIZE;
   const chunkOverlap = options.chunkOverlap ?? DEFAULT_CHUNK_OVERLAP;
-  
+
   if (!Number.isInteger(chunkSize) || chunkSize <= 0) {
     throw new Error('chunkSize must be a positive integer');
   }
