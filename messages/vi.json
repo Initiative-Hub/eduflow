@@ -877,7 +877,8 @@
       "addReference": "Thêm nguồn tham khảo",
       "titlePlaceholder": "Tiêu đề",
       "urlPlaceholder": "Đường dẫn (URL)",
-      "summaryPlaceholder": "Tóm tắt (tùy chọn)"
+      "summaryPlaceholder": "Tóm tắt (tùy chọn)",
+      "btnNewDeck": "Tạo bản mới"
     },
     "LessonOutline": {
       "addFirstModule": "Thêm mô-đun đầu tiên của bạn",

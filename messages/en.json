@@ -877,7 +877,8 @@
       "addReference": "Add Reference",
       "titlePlaceholder": "Title",
       "urlPlaceholder": "URL",
-      "summaryPlaceholder": "Summary (optional)"
+      "summaryPlaceholder": "Summary (optional)",
+      "btnNewDeck": "New Deck"
     },
     "LessonOutline": {
       "addFirstModule": "Add your first module",

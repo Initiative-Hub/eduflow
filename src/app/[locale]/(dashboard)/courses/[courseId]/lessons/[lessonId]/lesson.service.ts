@@ -27,6 +27,7 @@ export const lessonService = {
   },
 
   generateSlideDeck: (data: {
+    lessonId: string;
     title: string;
     palette?: string;
     slides: Array<{

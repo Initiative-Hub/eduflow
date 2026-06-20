@@ -59,6 +59,7 @@ export function LessonPresentation({
     toggleFullscreen,
     handleStartPlanning,
     handleStartGenerating,
+    startNewDeck,
     updateSlideTitle,
     changeSlideLayout,
     deleteSlide,
@@ -1142,6 +1143,17 @@ export function LessonPresentation({
           </h2>
         </div>
         <div className="flex items-center gap-2">
+          {step === 'generated' && deckUrl && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 gap-1.5 rounded-lg border-slate-800 bg-slate-900/60 font-medium text-slate-300 hover:bg-slate-800 hover:text-slate-100"
+              onClick={startNewDeck}
+            >
+              <Sparkles className="h-4 w-4" />
+              {t('btnNewDeck')}
+            </Button>
+          )}
           {step === 'generated' && (
             <Button
               variant="ghost"

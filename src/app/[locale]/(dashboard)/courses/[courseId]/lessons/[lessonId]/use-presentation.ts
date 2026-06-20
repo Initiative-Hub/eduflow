@@ -2,7 +2,11 @@ import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import type { TiptapDocument } from '@/utils/lesson-content';
-import { useGenerateSlideDeck, usePlanPresentation } from './use-lesson';
+import {
+  useGenerateSlideDeck,
+  useLesson,
+  usePlanPresentation,
+} from './use-lesson';
 
 type Step = 'input' | 'planning' | 'planned' | 'generating' | 'generated';
 
@@ -42,6 +46,8 @@ export function usePresentation(options: {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const { planPresentation } = usePlanPresentation();
   const { generateSlideDeck } = useGenerateSlideDeck();
+  const { lesson, isLoading: isLessonLoading } = useLesson(lessonId);
+  const savedDeckId = lesson?.presentationDeckId;
 
   // State Machine
   const [step, setStep] = useState<Step>('input');
@@ -479,6 +485,7 @@ export function usePresentation(options: {
 
     try {
       const deck = await generateSlideDeck({
+        lessonId,
         title,
         palette: 'auto',
         slides: plannedSlides.map((slide) => ({
@@ -504,6 +511,30 @@ export function usePresentation(options: {
       clearTimeout(t2);
     }
   };
+
+  // Discard the saved deck and return to the planner to build a new one.
+  const startNewDeck = useCallback(() => {
+    setDeckUrl(null);
+    setStep('input');
+  }, []);
+
+  // When the modal opens, surface a previously generated deck (if one is saved
+  // on the lesson) instead of starting from scratch. Runs once per open, after
+  // the lesson record has loaded.
+  const didInitDeckRef = useRef(false);
+  useEffect(() => {
+    if (!isOpen) {
+      didInitDeckRef.current = false;
+      return;
+    }
+    if (didInitDeckRef.current || isLessonLoading) return;
+    didInitDeckRef.current = true;
+    if (savedDeckId) {
+      setDeckUrl(`/api/v1/ai/slides/${savedDeckId}`);
+      setCurrentSlideIndex(0);
+      setStep('generated');
+    }
+  }, [isOpen, isLessonLoading, savedDeckId]);
 
   // Fullscreen support
   const toggleFullscreen = useCallback(() => {
@@ -574,6 +605,7 @@ export function usePresentation(options: {
     toggleFullscreen,
     handleStartPlanning,
     handleStartGenerating,
+    startNewDeck,
     updateSlideTitle,
     changeSlideLayout,
     deleteSlide,

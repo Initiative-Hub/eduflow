@@ -81,8 +81,11 @@ export function usePlanPresentation() {
  * external slide service.
  */
 export function useGenerateSlideDeck() {
+  const queryClient = useQueryClient();
+
   const mutation = useMutation({
     mutationFn: (data: {
+      lessonId: string;
       title: string;
       palette?: string;
       slides: Array<{
@@ -91,6 +94,12 @@ export function useGenerateSlideDeck() {
         bindings: Record<string, any>;
       }>;
     }) => lessonService.generateSlideDeck(data),
+    onSuccess: (_, variables) => {
+      // Refresh the lesson so the saved deck reference is available next time.
+      queryClient.invalidateQueries({
+        queryKey: ['lesson', variables.lessonId],
+      });
+    },
   });
 
   return {

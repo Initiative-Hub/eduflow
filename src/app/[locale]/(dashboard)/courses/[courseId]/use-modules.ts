@@ -14,6 +14,9 @@ export interface Lesson {
   orderIndex: number;
   content: TiptapDocument;
   canEdit?: boolean;
+  /** Most recently generated presentation deck reference (if any). */
+  presentationDeckId?: string | null;
+  presentationDeckKey?: string | null;
 }
 
 export interface Module {
