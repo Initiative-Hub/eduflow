@@ -11,6 +11,8 @@ import {
   PLATFORM_PERMISSION_KEYS,
   type PlatformPermissionKey,
 } from '../src/lib/permissions/permission-keys';
+import { seedDemoContent } from './seed-demo';
+import { DEMO_USERS } from './seed-data/demo-data';
 
 const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL!,
@@ -164,34 +166,6 @@ async function main() {
     STUDENT: courseStudentRole,
   };
 
-  const courses = await prisma.course.findMany({
-    select: { id: true },
-  });
-
-  const coursePermissions = courses.flatMap((course) =>
-    ['COURSE_OWNER', 'TEACHER', 'STUDENT'].flatMap((roleName) => {
-      const defaults = new Set<CoursePermissionKey>(
-        courseRolePermissionDefaults[roleName]
-      );
-
-      return COURSE_PERMISSION_KEYS.map((permission) => ({
-        courseId: course.id,
-        courseRoleId: courseRoles[roleName as keyof typeof courseRoles].id,
-        permission,
-        enabled: defaults.has(permission),
-      }));
-    })
-  );
-
-  if (coursePermissions.length > 0) {
-    await prisma.coursePermission.createMany({
-      data: coursePermissions,
-      skipDuplicates: true,
-    });
-  }
-
-  console.log(`Seeded ${coursePermissions.length} course permissions`);
-
   // 2. Create users and assign roles
   const adminUserId = randomUUID();
   const adminUser = await prisma.user.upsert({
@@ -218,12 +192,16 @@ async function main() {
 
   const teacherUserId = randomUUID();
   const teacherUser = await prisma.user.upsert({
-    where: { email: 'teacher@example.com' },
-    update: {},
+    where: { email: DEMO_USERS.teacher.email },
+    update: {
+      name: DEMO_USERS.teacher.name,
+      roleId: teacherRole.id,
+      emailVerified: true,
+    },
     create: {
       id: teacherUserId,
-      email: 'teacher@example.com',
-      name: 'Teacher User',
+      email: DEMO_USERS.teacher.email,
+      name: DEMO_USERS.teacher.name,
       roleId: teacherRole.id,
       emailVerified: true,
       accounts: {
@@ -241,12 +219,16 @@ async function main() {
 
   const studentUserId = randomUUID();
   const studentUser = await prisma.user.upsert({
-    where: { email: 'student@example.com' },
-    update: {},
+    where: { email: DEMO_USERS.student.email },
+    update: {
+      name: DEMO_USERS.student.name,
+      roleId: studentRole.id,
+      emailVerified: true,
+    },
     create: {
       id: studentUserId,
-      email: 'student@example.com',
-      name: 'Student User',
+      email: DEMO_USERS.student.email,
+      name: DEMO_USERS.student.name,
       roleId: studentRole.id,
       emailVerified: true,
       accounts: {
@@ -262,7 +244,40 @@ async function main() {
     },
   });
 
+  const demoCounts = await seedDemoContent({
+    prisma,
+    teacherUserId: teacherUser.id,
+    studentUserId: studentUser.id,
+    courseOwnerRoleId: courseOwnerRole.id,
+    courseStudentRoleId: courseStudentRole.id,
+  });
+
+  // Course permissions must be created after the demo courses exist.
+  const courses = await prisma.course.findMany({ select: { id: true } });
+  const coursePermissions = courses.flatMap((course) =>
+    ['COURSE_OWNER', 'TEACHER', 'STUDENT'].flatMap((roleName) => {
+      const defaults = new Set<CoursePermissionKey>(
+        courseRolePermissionDefaults[roleName]
+      );
+
+      return COURSE_PERMISSION_KEYS.map((permission) => ({
+        courseId: course.id,
+        courseRoleId: courseRoles[roleName as keyof typeof courseRoles].id,
+        permission,
+        enabled: defaults.has(permission),
+      }));
+    })
+  );
+
+  await prisma.coursePermission.createMany({
+    data: coursePermissions,
+    skipDuplicates: true,
+  });
+
   console.log({ adminUser, teacherUser, studentUser });
+  console.log(
+    `Seeded ${demoCounts.courseCount} demo courses, ${coursePermissions.length} course permissions, and ${demoCounts.chatCount} AI chats`
+  );
   console.log('Database seed completed successfully!');
 }
 
