@@ -76,11 +76,6 @@ export function LessonDetailsClient({
         currentLessonTitle={lesson?.title || lessonFallbackTitle}
         showOutline={showOutline}
         setShowOutline={setShowOutline}
-        actions={
-          lesson?.canDelete ? (
-            <DeleteLessonDialog courseId={courseId} lessonId={lessonId} />
-          ) : null
-        }
       />
 
       <div className="flex flex-col">
@@ -99,6 +94,11 @@ export function LessonDetailsClient({
             emptyContentLabel={emptyContentLabel}
             isUpdatingLesson={isUpdatingLesson}
             onSave={handleSave}
+            actions={
+              lesson?.canDelete ? (
+                <DeleteLessonDialog courseId={courseId} lessonId={lessonId} />
+              ) : null
+            }
           />
         )}
       </div>

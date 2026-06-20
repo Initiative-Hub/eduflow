@@ -13,7 +13,7 @@ import { EditorContent, EditorContext, useEditor } from '@tiptap/react';
 import { StarterKit } from '@tiptap/starter-kit';
 import { Edit3, Save } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
 import { HorizontalRule } from '@/components/tiptap-node/horizontal-rule-node/horizontal-rule-node-extension';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -41,6 +41,7 @@ interface LessonEditorProps {
     data: { title: string; content: TiptapDocument },
     options: { onSuccess: () => void }
   ) => void;
+  actions?: ReactNode;
 }
 
 export function LessonEditor({
@@ -50,6 +51,7 @@ export function LessonEditor({
   emptyContentLabel,
   isUpdatingLesson = false,
   onSave,
+  actions,
 }: LessonEditorProps) {
   const tEditor = useTranslations('Courses.LessonEditor');
   const tHeader = useTranslations('Courses.LessonHeader');
@@ -181,20 +183,27 @@ export function LessonEditor({
               onClick={handleSave}
               disabled={isUpdatingLesson || !editor}
             >
-              <Save className="mr-2 h-4 w-4" />
+              <Save data-icon="inline-start" />
               {isUpdatingLesson ? tEditor('saving') : tEditor('save')}
             </Button>
           </div>
-        ) : canEdit ? (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleStartEditing}
-            disabled={!editor}
-          >
-            <Edit3 className="mr-2 h-4 w-4" />
-            {tHeader('edit')}
-          </Button>
+        ) : canEdit || actions ? (
+          <div className="flex shrink-0 items-center gap-2">
+            {actions}
+
+            {canEdit ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleStartEditing}
+                disabled={!editor}
+                className="cursor-pointer"
+              >
+                <Edit3 data-icon="inline-start" />
+                {tHeader('edit')}
+              </Button>
+            ) : null}
+          </div>
         ) : null}
       </div>
 
