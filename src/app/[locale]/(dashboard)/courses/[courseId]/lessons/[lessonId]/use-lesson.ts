@@ -75,3 +75,27 @@ export function usePlanPresentation() {
     error: mutation.error,
   };
 }
+
+/**
+ * Mutation hook for rendering an HTML slide deck from a planned outline via the
+ * external slide service.
+ */
+export function useGenerateSlideDeck() {
+  const mutation = useMutation({
+    mutationFn: (data: {
+      title: string;
+      palette?: string;
+      slides: Array<{
+        layoutType: string;
+        slideTitle: string;
+        bindings: Record<string, any>;
+      }>;
+    }) => lessonService.generateSlideDeck(data),
+  });
+
+  return {
+    generateSlideDeck: mutation.mutateAsync,
+    isGenerating: mutation.isPending,
+    error: mutation.error,
+  };
+}

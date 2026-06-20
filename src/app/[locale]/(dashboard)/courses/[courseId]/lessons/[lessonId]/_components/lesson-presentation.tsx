@@ -53,6 +53,7 @@ export function LessonPresentation({
     loaderStep,
     currentSlideIndex,
     setCurrentSlideIndex,
+    deckUrl,
     isFullscreen,
     containerRef,
     toggleFullscreen,
@@ -64,7 +65,6 @@ export function LessonPresentation({
     addSlide,
   } = usePresentation({ title, content, isOpen, onClose });
 
-  console.log(content, ' content');
   // Dynamic layout renderer for presentation view mode
   const renderSlideContent = (slide: PlannedSlide) => {
     const { layoutType, slideTitle, bindings = {} } = slide;
@@ -1120,7 +1120,7 @@ export function LessonPresentation({
       )}
     >
       {/* Top progress bar */}
-      {step === 'generated' && (
+      {step === 'generated' && !deckUrl && (
         <div className="absolute top-0 right-0 left-0 h-1 bg-slate-800/80">
           <div
             className="h-full bg-primary transition-all duration-300 ease-out"
@@ -1496,27 +1496,40 @@ export function LessonPresentation({
         </div>
       )}
 
-      {step === 'generated' && (
-        <div className="mx-auto flex w-full max-w-4xl flex-1 items-center justify-center overflow-hidden px-4 py-8">
-          <div
-            className={cn(
-              'lesson-presentation-content w-full overflow-y-auto rounded-2xl border border-slate-800/80 bg-slate-900/40 p-8 shadow-2xl backdrop-blur-md transition-all duration-300 md:p-12',
-              isFullscreen ? 'h-[65vh] max-h-[65vh]' : 'h-[45vh] max-h-[45vh]'
-            )}
-          >
-            {plannedSlides[currentSlideIndex] ? (
-              renderSlideContent(plannedSlides[currentSlideIndex])
-            ) : (
-              <div className="flex h-full items-center justify-center text-slate-500 italic">
-                {t('empty')}
-              </div>
-            )}
+      {step === 'generated' &&
+        (deckUrl ? (
+          <div className="mx-auto flex w-full max-w-6xl flex-1 items-center justify-center overflow-hidden px-2 py-4">
+            <iframe
+              src={deckUrl}
+              title={title}
+              allow="fullscreen"
+              className={cn(
+                'w-full rounded-2xl border border-slate-800/80 bg-slate-950 shadow-2xl transition-all duration-300',
+                isFullscreen ? 'h-[82vh]' : 'h-[58vh]'
+              )}
+            />
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="mx-auto flex w-full max-w-4xl flex-1 items-center justify-center overflow-hidden px-4 py-8">
+            <div
+              className={cn(
+                'lesson-presentation-content w-full overflow-y-auto rounded-2xl border border-slate-800/80 bg-slate-900/40 p-8 shadow-2xl backdrop-blur-md transition-all duration-300 md:p-12',
+                isFullscreen ? 'h-[65vh] max-h-[65vh]' : 'h-[45vh] max-h-[45vh]'
+              )}
+            >
+              {plannedSlides[currentSlideIndex] ? (
+                renderSlideContent(plannedSlides[currentSlideIndex])
+              ) : (
+                <div className="flex h-full items-center justify-center text-slate-500 italic">
+                  {t('empty')}
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
 
-      {/* Footer / Navigation */}
-      {step === 'generated' && (
+      {/* Footer / Navigation (fallback preview only) */}
+      {step === 'generated' && !deckUrl && (
         <div className="flex shrink-0 flex-col items-center justify-between gap-4 border-slate-800 border-t pt-4 md:flex-row">
           <p className="order-3 font-medium text-slate-500 text-xs md:order-1">
             {t('keyboardTip')}

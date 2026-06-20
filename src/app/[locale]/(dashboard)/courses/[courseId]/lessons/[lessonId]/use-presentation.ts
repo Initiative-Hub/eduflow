@@ -1,7 +1,8 @@
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import type { TiptapDocument } from '@/utils/lesson-content';
-import { usePlanPresentation } from './use-lesson';
+import { useGenerateSlideDeck, usePlanPresentation } from './use-lesson';
 
 type Step = 'input' | 'planning' | 'planned' | 'generating' | 'generated';
 
@@ -40,6 +41,7 @@ export function usePresentation(options: {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const { planPresentation } = usePlanPresentation();
+  const { generateSlideDeck } = useGenerateSlideDeck();
 
   // State Machine
   const [step, setStep] = useState<Step>('input');
@@ -48,6 +50,8 @@ export function usePresentation(options: {
   const [plannedSlides, setPlannedSlides] = useState<PlannedSlide[]>([]);
   const [loaderStep, setLoaderStep] = useState(0);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+  // URL of the rendered HTML deck returned by the external slide service.
+  const [deckUrl, setDeckUrl] = useState<string | null>(null);
 
   // Dynamic Outlines fallback generator
   const generateOutlines = useCallback(
@@ -244,6 +248,7 @@ export function usePresentation(options: {
   const handleStartPlanning = async () => {
     setStep('planning');
     setLoaderStep(0);
+    setDeckUrl(null);
 
     try {
       const response = await fetch('/api/v1/presentation/plan', {
@@ -461,24 +466,43 @@ export function usePresentation(options: {
     ]);
   };
 
-  // Generation trigger
-  const handleStartGenerating = () => {
+  // Generation trigger — renders the real HTML deck via the external service.
+  const handleStartGenerating = async () => {
+    if (plannedSlides.length === 0) return;
+
     setStep('generating');
     setLoaderStep(0);
+    setDeckUrl(null);
 
     const t1 = setTimeout(() => setLoaderStep(1), 600);
     const t2 = setTimeout(() => setLoaderStep(2), 1200);
 
-    const t3 = setTimeout(() => {
-      setStep('generated');
-      setCurrentSlideIndex(0);
-    }, 1800);
+    try {
+      const deck = await generateSlideDeck({
+        title,
+        palette: 'auto',
+        slides: plannedSlides.map((slide) => ({
+          layoutType: slide.layoutType,
+          slideTitle: slide.slideTitle,
+          bindings: slide.bindings ?? {},
+        })),
+      });
 
-    return () => {
+      setDeckUrl(deck.deckUrl);
+      setCurrentSlideIndex(0);
+      setStep('generated');
+    } catch (error) {
+      console.error('Slide deck generation failed:', error);
+      const message =
+        (error as { message?: string })?.message ||
+        'Failed to generate slide deck. Please try again.';
+      toast.error(message);
+      // Return to the outline so the user can retry or tweak the plan.
+      setStep('planned');
+    } finally {
       clearTimeout(t1);
       clearTimeout(t2);
-      clearTimeout(t3);
-    };
+    }
   };
 
   // Fullscreen support
@@ -505,9 +529,10 @@ export function usePresentation(options: {
     };
   }, []);
 
-  // Keyboard navigation
+  // Keyboard navigation (fallback preview only — the rendered HTML deck handles
+  // its own navigation inside the iframe).
   useEffect(() => {
-    if (!isOpen || step !== 'generated') return;
+    if (!isOpen || step !== 'generated' || deckUrl) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'ArrowRight' || e.key === ' ') {
@@ -529,7 +554,7 @@ export function usePresentation(options: {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isOpen, step, onClose, plannedSlides.length]);
+  }, [isOpen, step, onClose, plannedSlides.length, deckUrl]);
 
   return {
     step,
@@ -543,6 +568,7 @@ export function usePresentation(options: {
     loaderStep,
     currentSlideIndex,
     setCurrentSlideIndex,
+    deckUrl,
     isFullscreen,
     containerRef,
     toggleFullscreen,

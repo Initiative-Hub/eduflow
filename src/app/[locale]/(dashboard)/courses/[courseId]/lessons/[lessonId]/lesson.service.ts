@@ -25,4 +25,23 @@ export const lessonService = {
   }) => {
     return apiClient.post<{ slides: any[] }>('/v1/presentation/plan', data);
   },
+
+  generateSlideDeck: (data: {
+    title: string;
+    palette?: string;
+    slides: Array<{
+      layoutType: string;
+      slideTitle: string;
+      bindings: Record<string, any>;
+    }>;
+  }) => {
+    // Slide rendering (image generation + HTML assembly) runs well beyond the
+    // default client timeout, so extend it for this request only.
+    return apiClient.post<{
+      deckId: string;
+      deckUrl: string;
+      slides: any[];
+      warnings: string[];
+    }>('/v1/ai/slides', data, { timeout: 300_000 });
+  },
 };
