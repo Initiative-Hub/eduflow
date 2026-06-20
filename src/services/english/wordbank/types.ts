@@ -31,6 +31,9 @@ export interface WordbankStats {
   savedWords: number;
   savedToday: number;
   dueWords: number;
+  newWords: number;
+  familiarWords: number;
+  masteredWords: number;
 }
 
 export interface SavedVocabularyListResult {
@@ -91,6 +94,7 @@ export interface UpdateSavedVocabularyItemsResult {
 
 export interface CreateReviewSessionInput {
   listId?: string;
+  vocabularyIds?: string[];
   limit?: number;
   now?: Date;
 }
@@ -104,6 +108,16 @@ export interface WordbankReviewSessionResult {
 export interface SubmitReviewSessionInput {
   answers: Record<string, StudentAnswer>;
   now?: Date;
+}
+
+export interface CheckReviewSessionAnswerInput {
+  questionIndex: number;
+  answer: StudentAnswer;
+}
+
+export interface CheckReviewSessionAnswerResult {
+  isCorrect: boolean;
+  reviewQuestion: QuestionBlock;
 }
 
 export interface WordbankReviewMasteryResult {

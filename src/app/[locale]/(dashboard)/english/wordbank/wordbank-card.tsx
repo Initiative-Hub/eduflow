@@ -1,6 +1,6 @@
 'use client';
 
-import { BookmarkX, Loader2, Volume2 } from 'lucide-react';
+import { Loader2, Volume2, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -10,35 +10,39 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import {
-  NativeSelect,
-  NativeSelectOption,
-} from '@/components/ui/native-select';
 import type {
   SavedVocabularyItem,
   VocabularyListSummary,
 } from '@/services/english/SavedVocabularyService';
 import { PracticeReveal } from './practice-reveal';
 import { playWordbankAudio } from './wordbank-audio';
+import {
+  type WordbankListUpdate,
+  WordbankListManager,
+} from './wordbank-list-manager';
 import { MasteryBadge, type WordbankTranslator } from './wordbank-mastery';
 
 export function WordbankCard({
   item,
   isRemoving,
+  isUpdating,
   practiceMode,
   lists,
   onRemoveWord,
-  onAssignList,
+  onUpdateLists,
   t,
 }: {
   item: SavedVocabularyItem;
   isRemoving: boolean;
+  isUpdating: boolean;
   practiceMode: boolean;
   lists: VocabularyListSummary[];
   onRemoveWord: (word: string) => void;
-  onAssignList: (vocabularyIds: string[], listId: string) => void;
+  onUpdateLists: (vocabularyIds: string[], update: WordbankListUpdate) => void;
   t: WordbankTranslator;
 }) {
+  const itemListIds = new Set(item.lists.map((list) => list.id));
+
   return (
     <Card className="min-h-80 rounded-xl">
       <CardHeader>
@@ -47,16 +51,15 @@ export function WordbankCard({
           <MasteryBadge level={item.masteryLevel} t={t} />
         </CardTitle>
         <CardAction className="flex items-center gap-1">
-          <Button
+          <button
             type="button"
-            variant="secondary"
-            size="icon-lg"
             onClick={() => item.audioUrl && playWordbankAudio(item.audioUrl)}
             disabled={!item.audioUrl}
+            className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary transition-all hover:bg-primary hover:text-primary-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
             aria-label={t('playPronunciation', { word: item.word })}
           >
-            <Volume2 />
-          </Button>
+            <Volume2 className="size-4" />
+          </button>
           <Button
             type="button"
             variant="ghost"
@@ -65,7 +68,7 @@ export function WordbankCard({
             onClick={() => onRemoveWord(item.word)}
             aria-label={t('removeWord', { word: item.word })}
           >
-            {isRemoving ? <Loader2 className="animate-spin" /> : <BookmarkX />}
+            {isRemoving ? <Loader2 className="animate-spin" /> : <X />}
           </Button>
         </CardAction>
       </CardHeader>
@@ -80,39 +83,39 @@ export function WordbankCard({
             </p>
           </PracticeReveal>
           <PracticeReveal enabled={practiceMode} label={t('revealAnswer')}>
-            <p className="text-muted-foreground text-base italic leading-relaxed">
+            <p className="text-muted-foreground text-sm leading-relaxed">
               {item.vietnameseTranslation}
             </p>
           </PracticeReveal>
         </div>
-        <blockquote className="border-primary/35 border-l-2 pl-4 text-muted-foreground text-base leading-relaxed">
+        <blockquote className="mb-1 border-primary/30 border-l-2 pl-4 text-muted-foreground text-base leading-relaxed">
           &ldquo;{item.exampleSentence}&rdquo;
         </blockquote>
         <div className="flex flex-wrap items-center gap-2">
           {item.lists.map((list) => (
-            <Badge key={list.id} variant="outline">
+            <Badge key={list.id} variant="outline" className="gap-1 pr-1">
               {list.name}
+              <button
+                type="button"
+                className="rounded-full text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
+                disabled={isUpdating}
+                onClick={() =>
+                  onUpdateLists([item.id], { removeListIds: [list.id] })
+                }
+                aria-label={t('removeFromList', { list: list.name })}
+              >
+                <X className="size-3" />
+              </button>
             </Badge>
           ))}
-          <NativeSelect
-            aria-label={t('addToWordList')}
-            className="h-8 w-full sm:w-44"
-            defaultValue=""
-            onChange={(event) => {
-              if (!event.currentTarget.value) return;
-              onAssignList([item.id], event.currentTarget.value);
-              event.currentTarget.value = '';
-            }}
-          >
-            <NativeSelectOption value="">
-              {t('addToWordList')}
-            </NativeSelectOption>
-            {lists.map((list) => (
-              <NativeSelectOption key={list.id} value={list.id}>
-                {list.name}
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
+          <WordbankListManager
+            vocabularyIds={[item.id]}
+            lists={lists}
+            disabled={isUpdating}
+            getMembership={(listId) => itemListIds.has(listId)}
+            onUpdateLists={onUpdateLists}
+            t={t}
+          />
         </div>
       </CardContent>
     </Card>

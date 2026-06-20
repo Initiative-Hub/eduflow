@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { WordDictionaryPopover } from '@/components/dictionary/word-dictionary-popover';
 import { GrammarAnalysisDialog } from '@/components/english/grammar-analysis-dialog';
+import { Button } from '@/components/ui/button';
 import { useEnglishAssistantController } from '../_hooks/use-english-assistant';
 import { GrammarAnalysisSection } from './grammar-analysis-section';
 import { TranslationPanel } from './translation-panel';
@@ -29,22 +30,24 @@ export function EnglishAssistantClient() {
             </span>
           </div>
         </div>
-        <Link
-          href="/english/wordbank"
-          aria-label={t('wordbankLinkLabel', {
-            count: assistant.wordbank.total,
-          })}
-          className="inline-flex min-h-10 items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-foreground/90 transition-colors hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+        <Button
+          asChild
+          variant="outline"
+          className="h-10 rounded-full border-primary/30 bg-background/80 px-4 text-foreground shadow-sm hover:border-primary/50 hover:bg-primary/5 hover:text-foreground focus-visible:ring-primary/30"
         >
-          <BookMarked
-            className="size-5 text-foreground/80"
-            strokeWidth={2.25}
-          />
-          <span className="font-normal text-base">{t('wordbank')}</span>
-          <span className="text-base text-muted-foreground">
-            ({assistant.wordbank.total})
-          </span>
-        </Link>
+          <Link
+            href="/english/wordbank"
+            aria-label={t('wordbankLinkLabel', {
+              count: assistant.wordbank.total,
+            })}
+          >
+            <BookMarked data-icon="inline-start" strokeWidth={2.25} />
+            <span className="font-semibold text-base">{t('wordbank')}</span>
+            <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-primary px-2.5 text-primary-foreground text-sm leading-none">
+              {assistant.wordbank.total}
+            </span>
+          </Link>
+        </Button>
       </div>
 
       <TranslationPanel

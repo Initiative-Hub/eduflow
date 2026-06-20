@@ -1,70 +1,83 @@
 'use client';
 
-import { FileDown, List } from 'lucide-react';
+import { BookOpen, FileDown, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import type {
+  SavedVocabularyItem,
+  VocabularyListSummary,
+} from '@/services/english/SavedVocabularyService';
 import {
-  NativeSelect,
-  NativeSelectOption,
-} from '@/components/ui/native-select';
-import type { VocabularyListSummary } from '@/services/english/SavedVocabularyService';
+  type WordbankListMembership,
+  type WordbankListUpdate,
+  WordbankListManager,
+} from './wordbank-list-manager';
 import type { WordbankTranslator } from './wordbank-mastery';
 
 export function BulkActionBar({
   selectedCount,
+  selectedItems,
   lists,
-  currentListId,
   isUpdating,
-  onAssignList,
-  onRemoveFromCurrentList,
+  isGeneratingQuiz,
+  onUpdateLists,
   onMarkMastery,
+  onGenerateQuiz,
   onExportCsv,
   t,
 }: {
   selectedCount: number;
+  selectedItems: SavedVocabularyItem[];
   lists: VocabularyListSummary[];
-  currentListId: string;
   isUpdating: boolean;
-  onAssignList: (listId: string) => void;
-  onRemoveFromCurrentList: () => void;
+  isGeneratingQuiz: boolean;
+  onUpdateLists: (vocabularyIds: string[], update: WordbankListUpdate) => void;
   onMarkMastery: (level: number) => void;
+  onGenerateQuiz: () => void;
   onExportCsv: () => void;
   t: WordbankTranslator;
 }) {
-  if (selectedCount === 0) return null;
+  if (selectedCount === 0 || selectedItems.length === 0) return null;
+
+  const selectedVocabularyIds = selectedItems.map((item) => item.id);
+
+  function getBulkMembership(listId: string): WordbankListMembership {
+    const membershipCount = selectedItems.filter((item) =>
+      item.lists.some((list) => list.id === listId)
+    ).length;
+
+    if (membershipCount === 0) return false;
+    if (membershipCount === selectedItems.length) return true;
+
+    return 'indeterminate';
+  }
 
   return (
     <div className="sticky bottom-4 z-10 flex flex-wrap items-center gap-2 rounded-xl border bg-background/95 p-3 shadow-lg backdrop-blur">
       <Badge variant="secondary">
         {t('bulkSelected', { count: selectedCount })}
       </Badge>
-      <NativeSelect
-        aria-label={t('addToWordList')}
-        className="w-48"
-        defaultValue=""
+      <WordbankListManager
+        vocabularyIds={selectedVocabularyIds}
+        lists={lists}
         disabled={isUpdating}
-        onChange={(event) => {
-          if (!event.currentTarget.value) return;
-          onAssignList(event.currentTarget.value);
-          event.currentTarget.value = '';
-        }}
-      >
-        <NativeSelectOption value="">{t('addToWordList')}</NativeSelectOption>
-        {lists.map((list) => (
-          <NativeSelectOption key={list.id} value={list.id}>
-            {list.name}
-          </NativeSelectOption>
-        ))}
-      </NativeSelect>
+        getMembership={getBulkMembership}
+        onUpdateLists={onUpdateLists}
+        t={t}
+      />
       <Button
         type="button"
         variant="outline"
         size="sm"
-        disabled={isUpdating || currentListId === 'all'}
-        onClick={onRemoveFromCurrentList}
+        disabled={isUpdating || isGeneratingQuiz}
+        onClick={onGenerateQuiz}
       >
-        <List data-icon="inline-start" />
-        {t('removeFromWordList')}
+        {isGeneratingQuiz ? (
+          <Loader2 data-icon="inline-start" className="animate-spin" />
+        ) : (
+          <BookOpen data-icon="inline-start" />
+        )}
+        {t('generateSelectedQuiz')}
       </Button>
       {[0, 1, 2].map((level) => (
         <Button

@@ -5,26 +5,27 @@ import { WordbankReviewDialog } from '@/app/[locale]/(dashboard)/english/wordban
 import type { WordbankReviewSessionResult } from '@/services/english/SavedVocabularyService';
 
 const { quizProps } = vi.hoisted(() => ({
-  quizProps: [] as Array<{ deliveryMode?: string }>,
+  quizProps: [] as Array<{ deliveryMode?: string; onStart?: () => void }>,
 }));
 
 vi.mock('@/components/quiz', () => ({
-  Quiz: (props: { deliveryMode?: string }) => {
+  Quiz: (props: { deliveryMode?: string; onStart?: () => void }) => {
     quizProps.push(props);
 
     return (
-      <div
-        data-delivery-mode={props.deliveryMode}
-        data-testid="wordbank-quiz"
-      />
+      <div data-delivery-mode={props.deliveryMode} data-testid="wordbank-quiz">
+        <button type="button" onClick={props.onStart}>
+          Start Quiz
+        </button>
+      </div>
     );
   },
 }));
 
 const messages: Record<string, string> = {
-  answerTimingEnd: 'At the end',
-  answerTimingInstant: 'Right away',
-  answerTimingLabel: 'Answer timing',
+  answerTimingEnd: 'After the quiz',
+  answerTimingInstant: 'After each question',
+  answerTimingLabel: 'Show feedback',
   reviewDialogDescription: 'Review due words.',
   reviewDialogTitle: 'Wordbank Due Quiz',
 };
@@ -43,7 +44,7 @@ const session: WordbankReviewSessionResult = {
 };
 
 describe('WordbankReviewDialog', () => {
-  it('lets learners choose whether due-quiz answers appear right away or at the end', async () => {
+  it('uses clear feedback timing copy and a visible pill-style selected state', async () => {
     const user = userEvent.setup();
 
     render(
@@ -57,6 +58,25 @@ describe('WordbankReviewDialog', () => {
       />
     );
 
+    const feedbackGroup = screen.getByRole('group', {
+      name: messages.answerTimingLabel,
+    });
+    expect(feedbackGroup).toHaveClass(
+      'rounded-full',
+      'bg-muted/60',
+      'p-1',
+      'shadow-inner'
+    );
+    expect(screen.getByText(messages.answerTimingLabel)).toBeInTheDocument();
+
+    const afterQuizOption = screen.getByRole('radio', {
+      name: messages.answerTimingEnd,
+    });
+    expect(afterQuizOption).toHaveClass(
+      'data-[state=on]:bg-primary/10',
+      'data-[state=on]:text-primary',
+      'data-[state=on]:shadow-sm'
+    );
     expect(screen.getByTestId('wordbank-quiz')).toHaveAttribute(
       'data-delivery-mode',
       'POST_QUIZ_REVIEW'
@@ -71,5 +91,28 @@ describe('WordbankReviewDialog', () => {
       'data-delivery-mode',
       'INSTANT_FEEDBACK'
     );
+  });
+
+  it('hides the feedback timing control after the quiz starts', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <WordbankReviewDialog
+        onComplete={vi.fn()}
+        onOpenChange={vi.fn()}
+        open
+        result={null}
+        session={session}
+        t={t}
+      />
+    );
+
+    expect(screen.getByText(messages.answerTimingLabel)).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Start Quiz' }));
+
+    expect(
+      screen.queryByText(messages.answerTimingLabel)
+    ).not.toBeInTheDocument();
   });
 });

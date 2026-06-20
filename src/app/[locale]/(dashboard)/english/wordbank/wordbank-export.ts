@@ -37,13 +37,42 @@ export function downloadWordbankCsv(
     .map((row) =>
       row.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(',')
     )
-    .join('\n');
+    .join('\r\n');
+  const utf8Bom = '\uFEFF';
   const url = URL.createObjectURL(
-    new Blob([csv], { type: 'text/csv;charset=utf-8' })
+    new Blob([utf8Bom, csv], { type: 'text/csv;charset=utf-8' })
   );
   const link = document.createElement('a');
   link.href = url;
-  link.download = `${labels.title.toLowerCase().replaceAll(' ', '-')}.csv`;
+  link.download = `${slugifyFilename(labels.title)}-${formatLocalTimestamp(
+    new Date()
+  )}.csv`;
+  document.body.append(link);
   link.click();
+  link.remove();
   URL.revokeObjectURL(url);
+}
+
+function slugifyFilename(value: string) {
+  const slug = value
+    .trim()
+    .toLowerCase()
+    .replaceAll(/[^a-z0-9]+/g, '-')
+    .replaceAll(/^-|-$/g, '');
+
+  return slug || 'wordbank';
+}
+
+function formatLocalTimestamp(date: Date) {
+  const day = padDatePart(date.getDate());
+  const month = padDatePart(date.getMonth() + 1);
+  const year = date.getFullYear();
+  const hours = padDatePart(date.getHours());
+  const minutes = padDatePart(date.getMinutes());
+
+  return `${day}-${month}-${year}-${hours}-${minutes}`;
+}
+
+function padDatePart(value: number) {
+  return String(value).padStart(2, '0');
 }

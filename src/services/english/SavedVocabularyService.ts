@@ -8,11 +8,17 @@ import {
   updateSavedVocabularyItems,
   updateVocabularyList,
 } from './wordbank/lists';
-import { createReviewSession, submitReviewSession } from './wordbank/review';
+import {
+  checkReviewSessionAnswer,
+  createReviewSession,
+  submitReviewSession,
+} from './wordbank/review';
 
 export { getNextReviewDate } from './wordbank/scheduling';
 export type {
   CreateReviewSessionInput,
+  CheckReviewSessionAnswerInput,
+  CheckReviewSessionAnswerResult,
   CreateVocabularyListInput,
   RemoveVocabularyResult,
   ReviewWordMapItem,
@@ -43,5 +49,6 @@ export class SavedVocabularyService {
   static deleteList = deleteVocabularyList;
   static updateItems = updateSavedVocabularyItems;
   static createReviewSession = createReviewSession;
+  static checkReviewSessionAnswer = checkReviewSessionAnswer;
   static submitReviewSession = submitReviewSession;
 }

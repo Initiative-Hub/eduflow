@@ -1,7 +1,6 @@
 'use client';
 
 import { BookMarked, Grid2X2, List, Loader2, Search } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   InputGroup,
@@ -9,9 +8,13 @@ import {
   InputGroupInput,
 } from '@/components/ui/input-group';
 import {
-  NativeSelect,
-  NativeSelectOption,
-} from '@/components/ui/native-select';
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import type {
@@ -22,6 +25,58 @@ import type {
 } from '@/services/english/SavedVocabularyService';
 import type { WordbankView } from './use-wordbank-display-preferences';
 import type { WordbankTranslator } from './wordbank-mastery';
+
+function getCountLabel(
+  label: string,
+  count: number | undefined,
+  t: WordbankTranslator
+) {
+  if (typeof count !== 'number') return label;
+
+  return t('filterOptionWithCount', { label, count });
+}
+
+function WordbankFilterSelect({
+  value,
+  options,
+  ariaLabel,
+  className,
+  onValueChange,
+}: {
+  value: string;
+  options: Array<{ value: string; label: string }>;
+  ariaLabel: string;
+  className?: string;
+  onValueChange: (value: string) => void;
+}) {
+  return (
+    <Select value={value} onValueChange={onValueChange}>
+      <SelectTrigger
+        aria-label={ariaLabel}
+        className={className}
+        size="default"
+      >
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent
+        position="popper"
+        className="bg-popover shadow-lg ring-border/80"
+      >
+        <SelectGroup>
+          {options.map((option) => (
+            <SelectItem
+              key={option.value}
+              value={option.value}
+              className="focus:bg-primary/10 focus:text-foreground data-[state=checked]:bg-primary/10 data-[state=checked]:text-foreground"
+            >
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectGroup>
+      </SelectContent>
+    </Select>
+  );
+}
 
 export function WordbankToolbar({
   search,
@@ -60,6 +115,47 @@ export function WordbankToolbar({
   onGenerateReview: () => void;
   t: WordbankTranslator;
 }) {
+  const listOptions = [
+    {
+      value: 'all',
+      label: getCountLabel(t('allWordLists'), stats.savedWords, t),
+    },
+    ...lists.map((list) => ({
+      value: list.id,
+      label: getCountLabel(list.name, list.wordCount, t),
+    })),
+  ];
+  const masteryOptions = [
+    {
+      value: 'all',
+      label: getCountLabel(t('masteryAll'), stats.savedWords, t),
+    },
+    {
+      value: 'due',
+      label: getCountLabel(t('masteryDue'), stats.dueWords, t),
+    },
+    {
+      value: '0',
+      label: getCountLabel(t('masteryNew'), stats.newWords, t),
+    },
+    {
+      value: '1',
+      label: getCountLabel(t('masteryFamiliar'), stats.familiarWords, t),
+    },
+    {
+      value: '2',
+      label: getCountLabel(t('masteryMastered'), stats.masteredWords, t),
+    },
+  ];
+  const sortOptions = [
+    {
+      value: 'recent',
+      label: t('sortRecentWithSavedToday', { count: stats.savedToday }),
+    },
+    { value: 'az', label: t('sortAz') },
+    { value: 'weakest', label: t('sortWeakest') },
+  ];
+
   return (
     <div className="sticky top-0 z-10 -mx-2 flex flex-col gap-3 border-b bg-background/90 px-2 py-3 backdrop-blur md:-mx-4 md:px-4">
       <div className="grid gap-3 xl:grid-cols-[minmax(16rem,1fr)_auto_auto_auto] xl:items-center">
@@ -76,61 +172,29 @@ export function WordbankToolbar({
           />
         </InputGroup>
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:flex">
-          <NativeSelect
+          <WordbankFilterSelect
             value={listId}
-            onChange={(event) => onListChange(event.currentTarget.value)}
-            aria-label={t('wordLists')}
-            className="min-w-40"
-          >
-            <NativeSelectOption value="all">
-              {t('allWordLists')}
-            </NativeSelectOption>
-            {lists.map((list) => (
-              <NativeSelectOption key={list.id} value={list.id}>
-                {list.name}
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
-          <NativeSelect
+            onValueChange={onListChange}
+            ariaLabel={t('wordLists')}
+            className="h-11 min-w-40 rounded-xl bg-background"
+            options={listOptions}
+          />
+          <WordbankFilterSelect
             value={mastery}
-            onChange={(event) =>
-              onMasteryChange(
-                event.currentTarget.value as WordbankMasteryFilter
-              )
+            onValueChange={(value) =>
+              onMasteryChange(value as WordbankMasteryFilter)
             }
-            aria-label={t('masteryLabel')}
-            className="min-w-40"
-          >
-            <NativeSelectOption value="all">
-              {t('masteryAll')}
-            </NativeSelectOption>
-            <NativeSelectOption value="due">
-              {t('masteryDue')}
-            </NativeSelectOption>
-            <NativeSelectOption value="0">{t('masteryNew')}</NativeSelectOption>
-            <NativeSelectOption value="1">
-              {t('masteryFamiliar')}
-            </NativeSelectOption>
-            <NativeSelectOption value="2">
-              {t('masteryMastered')}
-            </NativeSelectOption>
-          </NativeSelect>
-          <NativeSelect
+            ariaLabel={t('masteryLabel')}
+            className="h-11 min-w-40 rounded-xl bg-background"
+            options={masteryOptions}
+          />
+          <WordbankFilterSelect
             value={sort}
-            onChange={(event) =>
-              onSortChange(event.currentTarget.value as WordbankSort)
-            }
-            aria-label={t('sortLabel')}
-            className="min-w-40"
-          >
-            <NativeSelectOption value="recent">
-              {t('sortRecent')}
-            </NativeSelectOption>
-            <NativeSelectOption value="az">{t('sortAz')}</NativeSelectOption>
-            <NativeSelectOption value="weakest">
-              {t('sortWeakest')}
-            </NativeSelectOption>
-          </NativeSelect>
+            onValueChange={(value) => onSortChange(value as WordbankSort)}
+            ariaLabel={t('sortLabel')}
+            className="h-11 min-w-40 rounded-xl bg-background"
+            options={sortOptions}
+          />
         </div>
         <ToggleGroup
           type="single"
@@ -162,26 +226,17 @@ export function WordbankToolbar({
           {t('generateDueQuiz')}
         </Button>
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap gap-2 text-muted-foreground text-sm">
-          <Badge variant="secondary">
-            {t('savedWordsStat', { count: stats.savedWords })}
-          </Badge>
-          <Badge variant="outline">
-            {t('savedTodayStat', { count: stats.savedToday })}
-          </Badge>
-          <Badge variant="outline">
-            {t('dueWordsStat', { count: stats.dueWords })}
-          </Badge>
+      {view === 'grid' ? (
+        <div className="flex justify-end">
+          <label className="flex min-h-11 items-center gap-2 text-sm text-muted-foreground">
+            <Switch
+              checked={practiceMode}
+              onCheckedChange={onPracticeModeChange}
+            />
+            {t('practiceMode')}
+          </label>
         </div>
-        <label className="flex min-h-11 items-center gap-2 text-sm">
-          <Switch
-            checked={practiceMode}
-            onCheckedChange={onPracticeModeChange}
-          />
-          {t('practiceMode')}
-        </label>
-      </div>
+      ) : null}
     </div>
   );
 }

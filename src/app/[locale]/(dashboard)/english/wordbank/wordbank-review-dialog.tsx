@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Quiz } from '@/components/quiz';
 import {
   Dialog,
@@ -37,6 +37,17 @@ export function WordbankReviewDialog({
 }) {
   const [deliveryMode, setDeliveryMode] =
     useState<DeliveryMode>('POST_QUIZ_REVIEW');
+  const [quizStarted, setQuizStarted] = useState(false);
+
+  useEffect(() => {
+    if (!open) {
+      setQuizStarted(false);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    setQuizStarted(false);
+  }, [session?.sessionId]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -45,40 +56,48 @@ export function WordbankReviewDialog({
           <DialogTitle>{t('reviewDialogTitle')}</DialogTitle>
           <DialogDescription>{t('reviewDialogDescription')}</DialogDescription>
         </DialogHeader>
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-muted/30 p-3">
-          <span className="font-medium text-sm">{t('answerTimingLabel')}</span>
-          <ToggleGroup
-            type="single"
-            value={deliveryMode}
-            onValueChange={(value) => {
-              if (
-                value === 'INSTANT_FEEDBACK' ||
-                value === 'POST_QUIZ_REVIEW'
-              ) {
-                setDeliveryMode(value);
-              }
-            }}
-            variant="outline"
-            size="sm"
-            aria-label={t('answerTimingLabel')}
-          >
-            <ToggleGroupItem
-              value="POST_QUIZ_REVIEW"
-              aria-label={t('answerTimingEnd')}
+        {!quizStarted && !result ? (
+          <div className="flex flex-col gap-3 rounded-xl border bg-muted/20 p-3 sm:flex-row sm:items-center sm:justify-between">
+            <span className="font-semibold text-foreground text-sm">
+              {t('answerTimingLabel')}
+            </span>
+            <ToggleGroup
+              type="single"
+              value={deliveryMode}
+              onValueChange={(value) => {
+                if (
+                  value === 'INSTANT_FEEDBACK' ||
+                  value === 'POST_QUIZ_REVIEW'
+                ) {
+                  setDeliveryMode(value);
+                }
+              }}
+              spacing={1}
+              aria-label={t('answerTimingLabel')}
+              className="rounded-full bg-muted/60 p-1 shadow-inner ring-1 ring-border/70"
             >
-              {t('answerTimingEnd')}
-            </ToggleGroupItem>
-            <ToggleGroupItem
-              value="INSTANT_FEEDBACK"
-              aria-label={t('answerTimingInstant')}
-            >
-              {t('answerTimingInstant')}
-            </ToggleGroupItem>
-          </ToggleGroup>
-        </div>
+              <ToggleGroupItem
+                value="POST_QUIZ_REVIEW"
+                aria-label={t('answerTimingEnd')}
+                className="h-9 rounded-full px-4 text-muted-foreground hover:bg-background/70 hover:text-foreground data-[state=on]:bg-primary/10 data-[state=on]:text-primary data-[state=on]:shadow-sm data-[state=on]:ring-1 data-[state=on]:ring-primary/20"
+              >
+                {t('answerTimingEnd')}
+              </ToggleGroupItem>
+              <ToggleGroupItem
+                value="INSTANT_FEEDBACK"
+                aria-label={t('answerTimingInstant')}
+                className="h-9 rounded-full px-4 text-muted-foreground hover:bg-background/70 hover:text-foreground data-[state=on]:bg-primary/10 data-[state=on]:text-primary data-[state=on]:shadow-sm data-[state=on]:ring-1 data-[state=on]:ring-primary/20"
+              >
+                {t('answerTimingInstant')}
+              </ToggleGroupItem>
+            </ToggleGroup>
+          </div>
+        ) : null}
         {session ? (
           <Quiz
             deliveryMode={deliveryMode}
+            instantFeedbackUrl={`/api/v1/english/wordbank/review-sessions/${session.sessionId}/check`}
+            onStart={() => setQuizStarted(true)}
             quiz={session.quiz}
             quizId={session.sessionId}
             submitUrl={`/api/v1/english/wordbank/review-sessions/${session.sessionId}/submit`}

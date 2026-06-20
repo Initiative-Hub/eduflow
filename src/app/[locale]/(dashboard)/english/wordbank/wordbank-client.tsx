@@ -40,6 +40,7 @@ import {
   type WordbankExportLabels,
   downloadWordbankCsv,
 } from './wordbank-export';
+import type { WordbankListUpdate } from './wordbank-list-manager';
 
 function readSort(value: string | null): WordbankSort {
   return value === 'az' || value === 'weakest' ? value : 'recent';
@@ -93,6 +94,9 @@ export function WordbankClient() {
     savedWords: wordbankQuery.data?.total ?? 0,
     savedToday: 0,
     dueWords: 0,
+    newWords: 0,
+    familiarWords: 0,
+    masteredWords: 0,
   };
   const lists = wordbankQuery.data?.lists ?? [];
   const exportLabels = useMemo<WordbankExportLabels>(
@@ -152,11 +156,14 @@ export function WordbankClient() {
     }
   }
 
-  async function handleAssignList(vocabularyIds: string[], nextListId: string) {
+  async function handleUpdateLists(
+    vocabularyIds: string[],
+    update: WordbankListUpdate
+  ) {
     try {
       await updateItemsMutation.mutateAsync({
         vocabularyIds,
-        addListIds: [nextListId],
+        ...update,
       });
       toast.success(t('updatedToast'));
     } catch (err) {
@@ -170,25 +177,6 @@ export function WordbankClient() {
       await updateItemsMutation.mutateAsync({
         vocabularyIds: Array.from(selectedIds),
         masteryLevel: level,
-      });
-      toast.success(t('updatedToast'));
-      setSelectedIds(new Set());
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Wordbank update failed';
-      toast.error(t('updateFailedToast'), { description: msg });
-    }
-  }
-
-  async function handleRemoveFromCurrentList() {
-    if (listId === 'all') {
-      toast.error(t('noWordListSelected'));
-      return;
-    }
-
-    try {
-      await updateItemsMutation.mutateAsync({
-        vocabularyIds: Array.from(selectedIds),
-        removeListIds: [listId],
       });
       toast.success(t('updatedToast'));
       setSelectedIds(new Set());
@@ -217,6 +205,22 @@ export function WordbankClient() {
       setReviewSession(session);
       setReviewResult(null);
       setReviewOpen(true);
+      toast.success(t('reviewCreatedToast'));
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Review create failed';
+      toast.error(t('reviewCreateFailedToast'), { description: msg });
+    }
+  }
+
+  async function handleGenerateSelectedReview() {
+    try {
+      const session = await createReviewSessionMutation.mutateAsync({
+        vocabularyIds: Array.from(selectedIds),
+      });
+      setReviewSession(session);
+      setReviewResult(null);
+      setReviewOpen(true);
+      setSelectedIds(new Set());
       toast.success(t('reviewCreatedToast'));
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Review create failed';
@@ -325,10 +329,13 @@ export function WordbankClient() {
                 key={item.id}
                 item={item}
                 isRemoving={removeWordMutation.isPending}
+                isUpdating={updateItemsMutation.isPending}
                 practiceMode={preferences.practiceMode}
                 lists={lists}
                 onRemoveWord={handleRemoveWord}
-                onAssignList={handleAssignList}
+                onUpdateLists={(vocabularyIds, update) =>
+                  void handleUpdateLists(vocabularyIds, update)
+                }
                 t={t}
               />
             ))}
@@ -346,14 +353,15 @@ export function WordbankClient() {
             />
             <BulkActionBar
               selectedCount={selectedIds.size}
+              selectedItems={selectedItems}
               lists={lists}
-              currentListId={listId}
+              isGeneratingQuiz={createReviewSessionMutation.isPending}
               isUpdating={updateItemsMutation.isPending}
-              onAssignList={(nextListId) =>
-                void handleAssignList(Array.from(selectedIds), nextListId)
+              onUpdateLists={(vocabularyIds, update) =>
+                void handleUpdateLists(vocabularyIds, update)
               }
-              onRemoveFromCurrentList={() => void handleRemoveFromCurrentList()}
               onMarkMastery={(level) => void handleMarkMastery(level)}
+              onGenerateQuiz={() => void handleGenerateSelectedReview()}
               onExportCsv={() =>
                 downloadWordbankCsv(selectedItems, exportLabels)
               }

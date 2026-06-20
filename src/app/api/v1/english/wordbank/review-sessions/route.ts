@@ -5,6 +5,7 @@ import { SavedVocabularyService } from '@/services/english/SavedVocabularyServic
 
 const createReviewSessionSchema = z.object({
   listId: z.string().uuid().optional(),
+  vocabularyIds: z.array(z.string().uuid()).min(1).max(100).optional(),
   limit: z.number().int().min(1).max(30).optional(),
 });
 

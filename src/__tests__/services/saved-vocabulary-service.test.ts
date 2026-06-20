@@ -403,6 +403,65 @@ describe('SavedVocabularyService', () => {
     });
   });
 
+  it('creates a review quiz from selected vocabulary ids without due filtering', async () => {
+    savedVocabulary.findMany.mockResolvedValue([
+      {
+        id: 'saved-1',
+        word: 'comet',
+        partOfSpeech: 'noun',
+        ipa: '/ˈkɑːmɪt/',
+        audioUrl: null,
+        englishDefinition: 'A celestial object consisting of ice and dust.',
+        vietnameseTranslation: 'Sao chổi.',
+        exampleSentence:
+          'Along with asteroids and comets, the planets orbit the Sun.',
+        sourceSnippet: null,
+        masteryLevel: 0,
+        nextReviewAt: new Date('2026-07-16T00:00:00.000Z'),
+        savedAt: new Date('2026-06-16T00:00:00.000Z'),
+        listItems: [],
+      },
+      {
+        id: 'saved-2',
+        word: 'asteroid',
+        partOfSpeech: 'noun',
+        ipa: '/ˈæstərɔɪd/',
+        audioUrl: null,
+        englishDefinition: 'A small rocky body orbiting the sun.',
+        vietnameseTranslation: 'Tiểu hành tinh.',
+        exampleSentence: 'The asteroid moved through space.',
+        sourceSnippet: null,
+        masteryLevel: 1,
+        nextReviewAt: new Date('2026-07-16T00:00:00.000Z'),
+        savedAt: new Date('2026-06-15T00:00:00.000Z'),
+        listItems: [],
+      },
+    ]);
+
+    const { SavedVocabularyService } = await import(
+      '@/services/english/SavedVocabularyService'
+    );
+
+    await SavedVocabularyService.createReviewSession('user-1', {
+      vocabularyIds: ['saved-2', 'saved-1'],
+    });
+
+    const findInput = savedVocabulary.findMany.mock.calls[0]?.[0];
+    expect(findInput.where).toEqual({
+      id: { in: ['saved-2', 'saved-1'] },
+      userId: 'user-1',
+    });
+
+    const createInput = wordbankReviewSession.create.mock.calls[0]?.[0];
+    expect(createInput?.data.wordMap).toEqual([
+      { questionIndex: 0, savedVocabularyId: 'saved-2' },
+      { questionIndex: 1, savedVocabularyId: 'saved-1' },
+    ]);
+    expect(createInput?.data.quiz.questions[0].explanation).toBe(
+      'asteroid\nTiểu hành tinh.\nA small rocky body orbiting the sun.'
+    );
+  });
+
   it('returns word mastery changes after submitting a review quiz', async () => {
     wordbankReviewSession.findFirst.mockResolvedValue({
       id: 'session-1',
@@ -492,6 +551,79 @@ describe('SavedVocabularyService', () => {
         completedAt: new Date('2026-06-16T00:00:00.000Z'),
       },
     });
+  });
+
+  it('checks one review answer without completing the review session', async () => {
+    wordbankReviewSession.findFirst.mockResolvedValue({
+      id: 'session-1',
+      userId: 'user-1',
+      status: 'ACTIVE',
+      quiz: {
+        title: 'Wordbank Review',
+        description: 'Review due words from your Wordbank.',
+        type: 'multiple_choice',
+        questions: [
+          {
+            type: 'multiple_choice',
+            prompt: 'Which definition matches "comet"?',
+            options: [
+              {
+                id: 'q1-option-1',
+                text: 'A celestial object consisting of ice and dust.',
+                isCorrect: true,
+              },
+              {
+                id: 'q1-option-2',
+                text: 'A small rocky body orbiting the sun.',
+                isCorrect: false,
+              },
+            ],
+          },
+        ],
+      },
+      wordMap: [{ questionIndex: 0, savedVocabularyId: 'saved-1' }],
+      createdAt: new Date('2026-06-16T00:00:00.000Z'),
+      completedAt: null,
+    });
+
+    const { SavedVocabularyService } = await import(
+      '@/services/english/SavedVocabularyService'
+    );
+
+    const result = await SavedVocabularyService.checkReviewSessionAnswer(
+      'user-1',
+      'session-1',
+      {
+        questionIndex: 0,
+        answer: {
+          type: 'multiple_choice',
+          selectedOptionId: 'q1-option-2',
+        },
+      }
+    );
+
+    expect(result).toEqual({
+      isCorrect: false,
+      reviewQuestion: {
+        type: 'multiple_choice',
+        prompt: 'Which definition matches "comet"?',
+        options: [
+          {
+            id: 'q1-option-1',
+            text: 'A celestial object consisting of ice and dust.',
+            isCorrect: true,
+          },
+          {
+            id: 'q1-option-2',
+            text: 'A small rocky body orbiting the sun.',
+            isCorrect: false,
+          },
+        ],
+      },
+    });
+    expect(wordbankReviewSession.updateMany).not.toHaveBeenCalled();
+    expect(wordbankReviewAttempt.create).not.toHaveBeenCalled();
+    expect(savedVocabulary.updateMany).not.toHaveBeenCalled();
   });
 
   it('rejects duplicate review submissions after the active session is claimed', async () => {

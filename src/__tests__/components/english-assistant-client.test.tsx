@@ -4,6 +4,13 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EnglishAssistantClient } from '@/app/[locale]/(dashboard)/english/_components/english-assistant-client';
 
+const apiClient = vi.hoisted(() => ({
+  delete: vi.fn(),
+  get: vi.fn(),
+  patch: vi.fn(),
+  post: vi.fn(),
+}));
+
 const messages: Record<string, string> = {
   aiAnalyticsActive: 'AI Analytics Active',
   analyzing: 'Analyzing...',
@@ -70,6 +77,10 @@ vi.mock('sonner', () => ({
     error: vi.fn(),
     success: vi.fn(),
   },
+}));
+
+vi.mock('@/lib/api/api-client', () => ({
+  apiClient,
 }));
 
 vi.mock('@/components/english/grammar-analysis-dialog', () => ({
@@ -155,12 +166,63 @@ describe('EnglishAssistantClient', () => {
 
   beforeEach(() => {
     clipboardWriteText.mockClear();
+    apiClient.delete.mockReset();
+    apiClient.get.mockReset();
+    apiClient.patch.mockReset();
+    apiClient.post.mockReset();
     Object.defineProperty(window.navigator, 'clipboard', {
       value: { writeText: clipboardWriteText },
       configurable: true,
     });
 
     let savedWordbankWords: string[] = [];
+
+    apiClient.get.mockImplementation(async (url: string) => {
+      if (url === 'v1/english/wordbank') {
+        return {
+          items: [],
+          lists: [],
+          savedWords: savedWordbankWords,
+          stats: {
+            dueWords: 0,
+            familiarWords: 0,
+            masteredWords: 0,
+            newWords: 0,
+            savedToday: 0,
+            savedWords: savedWordbankWords.length,
+          },
+          total: savedWordbankWords.length,
+        };
+      }
+
+      return {};
+    });
+
+    apiClient.post.mockImplementation(async (url: string) => {
+      if (url === 'v1/english/wordbank') {
+        savedWordbankWords = ['hello'];
+        return {
+          savedCount: 1,
+          savedWords: savedWordbankWords,
+          total: savedWordbankWords.length,
+        };
+      }
+
+      return {};
+    });
+
+    apiClient.delete.mockImplementation(async (url: string) => {
+      if (url === 'v1/english/wordbank') {
+        savedWordbankWords = [];
+        return {
+          removedCount: 1,
+          savedWords: savedWordbankWords,
+          total: savedWordbankWords.length,
+        };
+      }
+
+      return {};
+    });
 
     vi.stubGlobal(
       'fetch',
@@ -273,23 +335,6 @@ describe('EnglishAssistantClient', () => {
     expect(
       screen.getByText('Translation will appear here after analysis...')
     ).toBeInTheDocument();
-  });
-
-  it('shows the wordbank entry point as a compact library link', () => {
-    renderEnglishAssistantClient();
-
-    const vocabLibraryLink = screen.getByRole('link', {
-      name: /Wordbank 0/,
-    });
-
-    expect(vocabLibraryLink).toHaveClass(
-      'rounded-full',
-      'bg-primary/10',
-      'hover:bg-primary/20',
-      'text-foreground/90'
-    );
-    expect(vocabLibraryLink).not.toHaveClass('border-primary/30');
-    expect(screen.getByText('(0)')).toBeInTheDocument();
   });
 
   it('sends the default translation engine to the translate endpoint', async () => {
@@ -457,13 +502,9 @@ describe('EnglishAssistantClient', () => {
     );
 
     await waitFor(() => {
-      expect(globalThis.fetch).toHaveBeenCalledWith(
-        '/api/v1/english/wordbank',
-        expect.objectContaining({
-          method: 'POST',
-          body: expect.stringContaining('"word":"hello"'),
-        })
-      );
+      expect(apiClient.post).toHaveBeenCalledWith('v1/english/wordbank', {
+        vocabulary: [expect.objectContaining({ word: 'hello' })],
+      });
     });
   });
 

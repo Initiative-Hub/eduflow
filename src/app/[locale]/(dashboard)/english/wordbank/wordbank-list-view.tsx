@@ -1,6 +1,6 @@
 'use client';
 
-import { BookmarkX, Loader2, Volume2 } from 'lucide-react';
+import { Loader2, Volume2, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -122,11 +122,7 @@ export function WordbankListView({
                   onClick={() => onRemoveWord(item.word)}
                   aria-label={t('removeWord', { word: item.word })}
                 >
-                  {isRemoving ? (
-                    <Loader2 className="animate-spin" />
-                  ) : (
-                    <BookmarkX />
-                  )}
+                  {isRemoving ? <Loader2 className="animate-spin" /> : <X />}
                 </Button>
               </TableCell>
             </TableRow>

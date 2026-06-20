@@ -15,6 +15,8 @@ import {
 } from './mappers';
 import { getNextReviewDate } from './scheduling';
 import type {
+  CheckReviewSessionAnswerInput,
+  CheckReviewSessionAnswerResult,
   CreateReviewSessionInput,
   ReviewWordMapItem,
   SavedVocabularyItem,
@@ -75,7 +77,7 @@ function buildReviewQuiz(items: SavedVocabularyItem[]): {
         text: option.text,
         isCorrect: option.isCorrect,
       })),
-      explanation: `${item.word}: ${item.vietnameseTranslation} ${item.exampleSentence}`,
+      explanation: `${item.word}\n${item.vietnameseTranslation}\n${item.englishDefinition}`,
     };
   });
 
@@ -111,26 +113,51 @@ export async function createReviewSession(
   input: CreateReviewSessionInput = {}
 ): Promise<WordbankReviewSessionResult> {
   const now = input.now ?? new Date();
-  const dueRows = await prisma.savedVocabulary.findMany({
-    where: {
-      userId,
-      nextReviewAt: { lte: now },
-      ...(input.listId
-        ? { listItems: { some: { listId: input.listId, list: { userId } } } }
-        : {}),
-    },
-    orderBy: [
-      { masteryLevel: 'asc' },
-      { nextReviewAt: 'asc' },
-      { savedAt: 'desc' },
-    ],
-    take: input.limit ?? 10,
-    include: savedVocabularyListInclude,
-  });
-  const dueItems = dueRows.map(toSavedVocabularyItem);
+  const selectedVocabularyIds = Array.from(new Set(input.vocabularyIds ?? []));
+  const reviewRows =
+    selectedVocabularyIds.length > 0
+      ? await prisma.savedVocabulary.findMany({
+          where: {
+            id: { in: selectedVocabularyIds },
+            userId,
+          },
+          include: savedVocabularyListInclude,
+        })
+      : await prisma.savedVocabulary.findMany({
+          where: {
+            userId,
+            nextReviewAt: { lte: now },
+            ...(input.listId
+              ? {
+                  listItems: {
+                    some: { listId: input.listId, list: { userId } },
+                  },
+                }
+              : {}),
+          },
+          orderBy: [
+            { masteryLevel: 'asc' },
+            { nextReviewAt: 'asc' },
+            { savedAt: 'desc' },
+          ],
+          take: input.limit ?? 10,
+          include: savedVocabularyListInclude,
+        });
+  const sortedReviewRows =
+    selectedVocabularyIds.length > 0
+      ? selectedVocabularyIds.flatMap((id) => {
+          const row = reviewRows.find((item) => item.id === id);
+          return row ? [row] : [];
+        })
+      : reviewRows;
+  const dueItems = sortedReviewRows.map(toSavedVocabularyItem);
 
   if (dueItems.length === 0) {
-    throw new Error('No due words available for review');
+    throw new Error(
+      selectedVocabularyIds.length > 0
+        ? 'No selected words available for review'
+        : 'No due words available for review'
+    );
   }
 
   const { quiz, wordMap } = buildReviewQuiz(dueItems);
@@ -247,4 +274,37 @@ export async function submitReviewSession(
       masteryResults,
     };
   });
+}
+
+export async function checkReviewSessionAnswer(
+  userId: string,
+  sessionId: string,
+  input: CheckReviewSessionAnswerInput
+): Promise<CheckReviewSessionAnswerResult> {
+  const session = await prisma.wordbankReviewSession.findFirst({
+    where: { id: sessionId, userId, status: 'ACTIVE' },
+  });
+
+  if (!session) {
+    throw new Error('Review session not found');
+  }
+
+  const quiz = session.quiz as unknown as QuizContent;
+  const reviewQuestion = quiz.questions[input.questionIndex];
+
+  if (!reviewQuestion) {
+    throw new Error('Review question not found');
+  }
+
+  const scoreResult = calculateScore(new Map([[0, input.answer]]), {
+    type: quiz.type,
+    constraints: { minQuestions: 1, maxQuestions: 100 },
+    scoring: { pointsPerQuestion: 10 },
+    questions: [reviewQuestion],
+  });
+
+  return {
+    isCorrect: scoreResult.questionResults[0]?.isCorrect ?? false,
+    reviewQuestion,
+  };
 }

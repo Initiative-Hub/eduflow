@@ -100,7 +100,14 @@ async function getStats(
   now = new Date()
 ): Promise<WordbankStats> {
   const { start, end } = getLocalDayRange(now);
-  const [savedWords, savedToday, dueWords] = await Promise.all([
+  const [
+    savedWords,
+    savedToday,
+    dueWords,
+    newWords,
+    familiarWords,
+    masteredWords,
+  ] = await Promise.all([
     prisma.savedVocabulary.count({ where: { userId } }),
     prisma.savedVocabulary.count({
       where: { userId, savedAt: { gte: start, lt: end } },
@@ -108,12 +115,18 @@ async function getStats(
     prisma.savedVocabulary.count({
       where: { userId, nextReviewAt: { lte: now } },
     }),
+    prisma.savedVocabulary.count({ where: { userId, masteryLevel: 0 } }),
+    prisma.savedVocabulary.count({ where: { userId, masteryLevel: 1 } }),
+    prisma.savedVocabulary.count({ where: { userId, masteryLevel: 2 } }),
   ]);
 
   return {
     savedWords,
     savedToday,
     dueWords,
+    newWords,
+    familiarWords,
+    masteredWords,
   };
 }
 
