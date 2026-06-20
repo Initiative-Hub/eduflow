@@ -2,8 +2,8 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { getCoursePermissions } from '@/lib/permissions/course-permission';
-import { CourseModulesClient } from './course-modules-client';
 import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
+import { CourseModulesClient } from './course-modules-client';
 
 interface CourseModulesPageProps {
   params: Promise<{ courseId: string }>;
@@ -25,7 +25,7 @@ export default async function CourseModulesPage({
   return (
     <CourseModulesClient
       courseId={courseId}
-      canDeleteLessons={permissions.containPermission(
+      canDeleteContent={permissions.containPermission(
         COURSE_PERMISSION.COURSE_CONTENT_DELETE
       )}
     />

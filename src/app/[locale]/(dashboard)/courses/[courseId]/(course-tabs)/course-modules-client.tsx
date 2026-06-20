@@ -17,12 +17,12 @@ import { AiClientDialog } from './ai-client/ai-client-dialog';
 
 interface CourseModulesClientProps {
   courseId: string;
-  canDeleteLessons: boolean;
+  canDeleteContent: boolean;
 }
 
 export function CourseModulesClient({
   courseId,
-  canDeleteLessons,
+  canDeleteContent,
 }: CourseModulesClientProps) {
   const t = useTranslations('Courses.CourseModules');
 
@@ -132,7 +132,7 @@ export function CourseModulesClient({
               key={moduleItem.id}
               moduleItem={moduleItem}
               courseId={courseId}
-              canDeleteLessons={canDeleteLessons}
+              canDeleteContent={canDeleteContent}
               onAddLesson={setActiveModuleIdForLesson}
               onCreateQuiz={handleCreateQuiz}
               quizzes={quizzes}
