@@ -23,11 +23,15 @@ import { useDeleteLesson } from '../use-lesson';
 interface DeleteLessonDialogProps {
   courseId: string;
   lessonId: string;
+  compact?: boolean;
+  navigateAfterDelete?: boolean;
 }
 
 const DeleteLessonDialog = ({
   courseId,
   lessonId,
+  compact = false,
+  navigateAfterDelete = true,
 }: DeleteLessonDialogProps) => {
   const t = useTranslations('Courses.LessonHeader');
   const router = useRouter();
@@ -38,7 +42,9 @@ const DeleteLessonDialog = ({
     handleDeleteLesson(lessonId, {
       onSuccess: () => {
         setOpen(false);
-        router.push(`/courses/${courseId}`);
+        if (navigateAfterDelete) {
+          router.push(`/courses/${courseId}`);
+        }
       },
     });
   };
@@ -53,9 +59,21 @@ const DeleteLessonDialog = ({
       }}
     >
       <AlertDialogTrigger asChild>
-        <Button type="button" variant="destructive" size="sm">
-          <Trash2 data-icon="inline-start" />
-          {t('delete')}
+        <Button
+          type="button"
+          variant="destructive"
+          size={compact ? 'icon-sm' : 'sm'}
+          title={compact ? t('delete') : undefined}
+        >
+          <Trash2
+            aria-hidden="true"
+            data-icon={compact ? undefined : 'inline-start'}
+          />
+          {compact ? (
+            <span className="sr-only">{t('delete')}</span>
+          ) : (
+            t('delete')
+          )}
         </Button>
       </AlertDialogTrigger>
 
@@ -74,6 +92,7 @@ const DeleteLessonDialog = ({
           <AlertDialogCancel disabled={isDeletingLesson}>
             {t('deleteDialog.cancel')}
           </AlertDialogCancel>
+
           <AlertDialogAction
             variant="destructive"
             disabled={isDeletingLesson}
@@ -96,4 +115,5 @@ const DeleteLessonDialog = ({
     </AlertDialog>
   );
 };
+
 export default DeleteLessonDialog;
