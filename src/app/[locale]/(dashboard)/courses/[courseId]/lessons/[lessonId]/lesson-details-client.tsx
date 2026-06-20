@@ -8,6 +8,7 @@ import {
 } from '@/utils/lesson-content';
 import { useModules } from '../../use-modules';
 import { useQuestionBank } from '../../use-question-bank';
+import DeleteLessonDialog from './_components/delete-lesson-dialog';
 import { LessonEditor } from './_components/lesson-editor';
 import { LessonHeader } from './_components/lesson-header';
 import { LessonNavigation } from './_components/lesson-navigation';
@@ -75,6 +76,11 @@ export function LessonDetailsClient({
         currentLessonTitle={lesson?.title || lessonFallbackTitle}
         showOutline={showOutline}
         setShowOutline={setShowOutline}
+        actions={
+          lesson?.canDelete ? (
+            <DeleteLessonDialog courseId={courseId} lessonId={lessonId} />
+          ) : null
+        }
       />
 
       <div className="flex flex-col">

@@ -3,6 +3,7 @@
 import { ChevronRight, Menu } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -18,6 +19,7 @@ interface LessonHeaderProps {
   currentLessonTitle: string;
   showOutline: boolean;
   setShowOutline: (val: boolean) => void;
+  actions?: ReactNode;
 }
 
 export function LessonHeader({
@@ -27,8 +29,11 @@ export function LessonHeader({
   currentLessonTitle,
   showOutline,
   setShowOutline,
+  actions,
 }: LessonHeaderProps) {
   const router = useRouter();
+
+  actions ? <div className="shrink-0">{actions}</div> : null;
 
   return (
     <div className="sticky top-0 z-40 -mx-6 -mt-6 flex items-center justify-between border-foreground/20 border-b bg-background/95 px-6 py-3 backdrop-blur-sm md:-mx-10 md:-mt-10 md:px-10 lg:-mx-12 lg:-mt-12 lg:px-12">

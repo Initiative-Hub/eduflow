@@ -14,6 +14,7 @@ export interface Lesson {
   orderIndex: number;
   content: TiptapDocument;
   canEdit?: boolean;
+  canDelete?: boolean;
 }
 
 export interface Module {
