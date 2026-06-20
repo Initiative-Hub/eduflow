@@ -70,11 +70,12 @@ export function ConfirmDialog({
         </AlertDialogHeader>
 
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isPending}>
+          <AlertDialogCancel className="cursor-pointer" disabled={isPending}>
             {cancelLabel}
           </AlertDialogCancel>
 
           <AlertDialogAction
+            className="cursor-pointer"
             variant={destructive ? 'destructive' : 'default'}
             disabled={isPending}
             onClick={(event) => {
