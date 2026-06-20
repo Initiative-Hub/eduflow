@@ -80,7 +80,7 @@ export function LandingView({
               <Button
                 variant="outline"
                 onClick={() => setView('library')}
-                className="gap-2 rounded-full border-primary/20 bg-white/40 px-6 py-5 font-medium text-primary shadow-sm transition-all hover:border-primary/50 hover:bg-primary/5 dark:bg-zinc-950/40"
+                className="cursor-pointer gap-2 rounded-full border-primary/20 bg-white/40 px-6 py-5 font-medium text-primary shadow-sm transition-all hover:border-primary/50 hover:bg-primary/5 dark:bg-zinc-950/40"
               >
                 <LayoutGrid className="size-4" />
                 <span>{t('exploreMore')}</span>
@@ -103,10 +103,10 @@ export function LandingView({
             <Button
               variant="ghost"
               onClick={() => setView('home')}
-              className="gap-2 rounded-full text-muted-foreground hover:text-primary"
+              className="cursor-pointer gap-2 rounded-full text-muted-foreground hover:text-primary"
             >
               <ChevronLeft className="size-4" />
-              <span>Back</span>
+              <span>{t('promptLibrary.back')}</span>
             </Button>
           </div>
 

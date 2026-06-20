@@ -1,23 +1,25 @@
 'use client';
 
-import { BookMarked, ClipboardList, CloudUpload, Globe } from 'lucide-react';
+import { BookMarked, ClipboardList, Globe } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
-import { Dropzone } from '@/components/ui/dropzone';
-import type { StudyMode } from '@/lib/validations/study.schema';
+import type {
+  StudyMode,
+  StudyQuizOptions,
+} from '@/lib/validations/study.schema';
+import { StudyQuizOptionsPanel } from './study-quiz-options';
 
 interface StudyModeSelectorProps {
   mode: StudyMode;
+  quizOptions: StudyQuizOptions;
   onModeChange: (mode: StudyMode) => void;
-  files: File[];
-  onFilesChange: (files: File[]) => void;
+  onQuizOptionsChange: (options: StudyQuizOptions) => void;
 }
 
 export function StudyModeSelector({
   mode,
+  quizOptions,
   onModeChange,
-  files,
-  onFilesChange,
+  onQuizOptionsChange,
 }: StudyModeSelectorProps) {
   const t = useTranslations('StudyPage');
 
@@ -49,7 +51,7 @@ export function StudyModeSelector({
   ];
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-8">
+    <div className="flex w-full flex-col gap-6 px-4 py-8">
       {/* Header */}
       <div className="space-y-4 px-4 pt-6 text-center">
         <div className="relative flex flex-col items-center text-center">
@@ -72,8 +74,9 @@ export function StudyModeSelector({
             <button
               key={key}
               type="button"
+              aria-pressed={mode === key}
               onClick={() => onModeChange(key)}
-              className={`cursor-pointer rounded-2xl border border-border/60 bg-card/95 p-5 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
+              className={`cursor-pointer rounded-2xl border border-border/60 bg-card/95 p-5 text-left shadow-sm transition-[background-color,border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                 mode === key ? activeAccent : ''
               }`}
             >
@@ -92,50 +95,12 @@ export function StudyModeSelector({
           )
         )}
       </div>
-      {/* Upload zone */}
-      <Dropzone
-        src={files}
-        maxFiles={10}
-        accept={{
-          'application/pdf': ['.pdf'],
-          'application/msword': ['.doc'],
-          'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
-            ['.docx'],
-          'image/*': ['.png', '.jpg', '.jpeg', '.webp'],
-        }}
-        onDrop={(acceptedFiles) =>
-          onFilesChange([...(files ?? []), ...acceptedFiles])
-        }
-        className="min-h-36 rounded-2xl"
-      >
-        {files && files.length > 0 ? (
-          <div className="flex flex-col items-center gap-2">
-            <div className="flex size-12 items-center justify-center rounded-2xl border border-border/60 bg-background shadow-sm">
-              <CloudUpload className="size-5 text-primary" />
-            </div>
-            <p className="font-semibold text-foreground text-sm">
-              {files.length === 1
-                ? files[0].name
-                : `${files.length} files selected`}
-            </p>
-            <p className="text-muted-foreground text-xs">
-              {t('upload.replace')}
-            </p>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center gap-2">
-            <div className="flex size-12 items-center justify-center rounded-2xl border border-border/60 bg-background shadow-sm">
-              <CloudUpload className="size-5 text-muted-foreground" />
-            </div>
-            <p className="font-semibold text-foreground text-lg">
-              {t('upload.title')}
-            </p>
-            <p className="text-muted-foreground text-sm">
-              {t('upload.description')}
-            </p>
-          </div>
-        )}
-      </Dropzone>
+      {mode === 'practiceTest' ? (
+        <StudyQuizOptionsPanel
+          options={quizOptions}
+          onOptionsChange={onQuizOptionsChange}
+        />
+      ) : null}
     </div>
   );
 }

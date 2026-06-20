@@ -24,6 +24,7 @@ import {
 import {
   COURSE_GENERATION_PROMPT,
   DEFAULT_MODELS,
+  QUIZ_GENERATION_PROMPT,
 } from '@/services/ai/chat-provider.constants';
 import type {
   AIQuizInput,
@@ -31,7 +32,7 @@ import type {
   StreamChatInternalOptions,
   StreamCourseInput,
 } from '@/services/ai/chat-provider.types';
-import { generateSupplementarySearchContexts } from '@/services/ai/web-search';
+import { generateSupplementarySearchContexts } from '@/services/ai/course-web-search';
 import type { CourseStreamEvent } from '@/types/course-stream-event';
 import { StorageService } from '../StorageService';
 import type { ChatProviderService } from './ChatProviderService';
@@ -53,7 +54,6 @@ export class OpenRouterService implements ChatProviderService {
       model: provider(model),
       system: resolveChatSystemPrompt(options),
       messages: await convertToModelMessages(input.messages),
-      providerOptions: input.providerOptions,
       tools: options?.tools,
       stopWhen: options?.maxSteps ? stepCountIs(options.maxSteps) : undefined,
     });
@@ -105,7 +105,6 @@ export class OpenRouterService implements ChatProviderService {
       await generateSupplementarySearchContexts({
         model: provider(model),
         searchQuery,
-        providerOptions: options.providerOptions,
         onSource: async ({ sourceKind, source }) => {
           await emit({ type: 'source-found', sourceKind, source });
         },
@@ -146,7 +145,6 @@ export class OpenRouterService implements ChatProviderService {
 
         ${youtubeContextJSON}
       `,
-      providerOptions: options.providerOptions,
     });
 
     for await (const chunk of result.textStream) {
@@ -207,8 +205,7 @@ export class OpenRouterService implements ChatProviderService {
       model: provider(model),
       output: Output.object({ schema: aiSchema }),
       prompt,
-      system:
-        'You are an educational AI assistant that designs quiz questions and tests. Generate high-quality quizzes and questions matching the requested schema.',
+      system: QUIZ_GENERATION_PROMPT,
     });
 
     // Inject the correct `type` field into every question (the AI schema omitted it)

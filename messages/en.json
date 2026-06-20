@@ -153,6 +153,7 @@
     },
     "placeholder": "Ask a scholarly question...",
     "promptLibrary": {
+      "back": "Back",
       "description": "Select a specialized inquiry framework to guide your session.",
       "hist": {
         "description": "Analyze socio-economic impacts across different regions.",
@@ -212,6 +213,7 @@
     "subtitle": "Pick a starting point or ask anything to begin your inquiry.",
     "suggestions": {
       "brainstorm": "Help me brainstorm a thesis on Renaissance art",
+      "followUp": "Follow-up questions",
       "socratic": "Explain the Socratic method in simple terms",
       "trends": "Summarize the latest trends in renewable energy"
     },
@@ -1737,8 +1739,24 @@
       "research": "Research Mode",
       "review": "Review Materials"
     },
+    "quizOptions": {
+      "description": "Choose the question formats and total number of questions before generating.",
+      "questionCount": "Number of questions",
+      "questionCountDescription": "Defaults to 10. You can generate 1 to 30 questions.",
+      "questionTypes": "Question types",
+      "title": "Practice quiz setup",
+      "types": {
+        "fill_in_the_blank": "Fill in the blank",
+        "multiple_choice": "Multiple choice",
+        "true_false": "True/False"
+      }
+    },
     "recentSessions": {
+      "description": "Return to study guides, practice sets, and research threads.",
+      "error": "Unable to load recent study sessions right now.",
+      "openChat": "Open study session {title}",
       "title": "Recent Sessions",
+      "updated": "Updated {date}",
       "viewAll": "View All"
     },
     "sidebar": {
@@ -1770,7 +1788,7 @@
       "title": "Study history",
       "untitled": "Untitled study session"
     },
-    "subtitle": "Transform your materials into powerful academic insights. Upload anything and let AI do the work.",
+    "subtitle": "Turn topics, notes, and questions into focused study support.",
     "title": "What can I help you <accent>study</accent> today?",
     "upload": {
       "description": "Drag and drop PDF, Word, or Images here.",

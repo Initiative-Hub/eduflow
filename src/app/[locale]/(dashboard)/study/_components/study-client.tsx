@@ -6,7 +6,11 @@ import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import type { StudyMode } from '@/lib/validations/study.schema';
+import {
+  DEFAULT_STUDY_QUIZ_OPTIONS,
+  type StudyMode,
+  type StudyQuizOptions,
+} from '@/lib/validations/study.schema';
 import { DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
 import type { ChatSubmitAttachments } from '@/types/chat-attachments';
 import { ChatInput } from '../../_components/chat-input';
@@ -14,6 +18,7 @@ import { ChatSidebar } from '../../_components/chat-sidebar';
 import { ChatWorkspaceShell } from '../../_components/chat-workspace-shell';
 import { studyService } from '../study.service';
 import { useStudy } from '../use-study';
+import { LandingRecentStudyChats } from './landing-recent-study-chats';
 import { StudyModeSelector } from './study-mode-selector';
 
 const ChatView = dynamic(() =>
@@ -24,6 +29,7 @@ interface StudyClientProps {
   chatId?: string;
   initialMessages?: UIMessage[];
   initialMode?: StudyMode;
+  initialQuizOptions?: StudyQuizOptions;
   isAuthenticated: boolean;
 }
 
@@ -31,13 +37,16 @@ export function StudyClient({
   chatId,
   initialMessages,
   initialMode = 'review',
+  initialQuizOptions,
   isAuthenticated,
 }: StudyClientProps) {
   const t = useTranslations('StudyPage');
   const tChat = useTranslations('AIChat');
 
   const [mode, setMode] = useState<StudyMode>(initialMode);
-  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [quizOptions, setQuizOptions] = useState<StudyQuizOptions>(
+    initialQuizOptions ?? DEFAULT_STUDY_QUIZ_OPTIONS
+  );
   const [isUploadingAttachments, setIsUploadingAttachments] = useState(false);
 
   const {
@@ -53,6 +62,7 @@ export function StudyClient({
     stop,
   } = useStudy({
     mode,
+    quizOptions,
     chatId,
     initialMessages,
     isAuthenticated,
@@ -85,7 +95,7 @@ export function StudyClient({
 
     const text = customValue?.trim() || '';
     const finalAttachments = {
-      files: [...pendingFiles, ...attachments.files],
+      files: attachments.files,
       referencedFiles: attachments.referencedFiles,
     };
     const attachmentCount =
@@ -121,12 +131,17 @@ export function StudyClient({
   };
 
   const viewport = !hasOutput ? (
-    <StudyModeSelector
-      mode={mode}
-      onModeChange={setMode}
-      files={pendingFiles}
-      onFilesChange={setPendingFiles}
-    />
+    <div className="flex flex-col items-center justify-center">
+      <div className="mb-2 w-full max-w-4xl space-y-2">
+        <StudyModeSelector
+          mode={mode}
+          quizOptions={quizOptions}
+          onModeChange={setMode}
+          onQuizOptionsChange={setQuizOptions}
+        />
+        <LandingRecentStudyChats />
+      </div>
+    </div>
   ) : (
     <ChatView
       messages={messages}

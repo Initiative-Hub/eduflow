@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { getMessageText } from '@/utils/chat-message';
 import { normalizeChatSuggestionItems } from '@/utils/chat-suggestions';
 import type { ChatProviderService } from './ChatProviderService';
-import type { ChatProvider, StreamChatInput } from './chat-provider.types';
+import type { ChatProvider } from './chat-provider.types';
 
 const suggestionResponseSchema = z.object({
   suggestions: z.array(z.string()).min(1).max(3),
@@ -21,7 +21,6 @@ export interface GenerateChatSuggestionsInput<TMessage extends UIMessage> {
   providerName?: ChatProvider;
   model?: string;
   apiKey?: string;
-  providerOptions?: StreamChatInput['providerOptions'];
   prompt: string;
   fallbackSuggestions: readonly string[];
 }
@@ -54,7 +53,6 @@ export async function generateChatSuggestions<TMessage extends UIMessage>({
   providerName,
   model,
   apiKey,
-  providerOptions,
   prompt,
   fallbackSuggestions,
 }: GenerateChatSuggestionsInput<TMessage>): Promise<string[]> {
@@ -72,7 +70,6 @@ export async function generateChatSuggestions<TMessage extends UIMessage>({
         provider: providerName,
         model,
         apiKey,
-        providerOptions,
         messages: [
           {
             id: `suggestions-${crypto.randomUUID()}`,
