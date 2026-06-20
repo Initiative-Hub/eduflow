@@ -3,15 +3,16 @@ import { join } from 'node:path';
 import { render, screen } from '@testing-library/react';
 import type React from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { createChatMarkdownComponents } from '@/app/[locale]/(dashboard)/_components/chat-markdown';
+import { createChatCitationComponents } from '@/app/[locale]/(dashboard)/_components/chat-citations';
 
 vi.mock('next/image', () => ({
   default: ({ alt, ...props }: React.ImgHTMLAttributes<HTMLImageElement>) => (
+    // biome-ignore lint/performance/noImgElement: We want to test that the inline citation component does not use next/image, so we mock it with a simple img element.
     <img alt={alt} {...props} />
   ),
 }));
 
-describe('chat markdown citations', () => {
+describe('chat citations', () => {
   it('keeps the reusable inline citation component free of app-specific favicon rendering', () => {
     const source = readFileSync(
       join(process.cwd(), 'src/components/ai-elements/inline-citation.tsx'),
@@ -23,7 +24,7 @@ describe('chat markdown citations', () => {
   });
 
   it('renders grouped citation triggers from chat markdown source metadata', () => {
-    const components = createChatMarkdownComponents(
+    const components = createChatCitationComponents(
       [
         {
           favicon: 'https://example.edu/favicon.ico',
