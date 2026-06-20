@@ -12,12 +12,13 @@ export type LessonMarkdownChunk = {
 };
 
 export type LessonChunkOptions = {
-  targetTokenCount?: number;
-  overlapTokenCount?: number;
+  chunkSize?: number;
+  chunkOverlap?: number;
 };
 
-const DEFAULT_TARGET_TOKEN_COUNT = 800;
-const DEFAULT_OVERLAP_TOKEN_COUNT = 100;
+const DEFAULT_CHUNK_SIZE = 512;
+const DEFAULT_CHUNK_OVERLAP = 100;
+const RECURSIVE_SEPARATORS = ['\n\n', '\n', ' ', ''];
 const WORD_PATTERN = /[\p{L}\p{N}_'-]+/gu;
 
 export function normalizeLessonMarkdown(markdown: string): string {
@@ -38,21 +39,221 @@ export function createLessonContentHash(markdown: string): string {
     .digest('hex')}`;
 }
 
-function getHeadingInfo(block: string) {
-  const match = /^(#{1,6})\s+(.+)$/.exec(block.trim());
+function getHeadingInfo(line: string) {
+  const match = /^ {0,3}(#{1,6})[ \t]+(.+?)\s*$/.exec(line);
   if (!match) return null;
 
   return {
     level: match[1].length,
-    title: match[2].replace(/\\([\\`*_{}\[\]()#+>|])/g, '$1').trim(),
+    title: match[2]
+      .replace(/[ \t]+#+[ \t]*$/g, '')
+      .replace(/\\([\\`*_{}[\]()#+>|])/g, '$1')
+      .trim(),
   };
 }
 
-function getOverlapText(markdown: string, overlapTokenCount: number): string {
-  if (overlapTokenCount <= 0) return '';
+function getFenceMarker(line: string) {
+  const match = /^ {0,3}(`{3,}|~{3,})/.exec(line);
+  if (!match) return null;
 
-  const words = [...markdown.matchAll(WORD_PATTERN)].map((match) => match[0]);
-  return words.slice(-overlapTokenCount).join(' ');
+  return {
+    character: match[1][0],
+    length: match[1].length,
+  };
+}
+
+function closesFence(
+  line: string,
+  marker: { character: string; length: number }
+) {
+  const match = /^ {0,3}(`{3,}|~{3,})\s*$/.exec(line);
+  return (
+    Boolean(match) &&
+    match?.[1][0] === marker.character &&
+    match[1].length >= marker.length
+  );
+}
+
+function createMetadata(headingPath: string[]): LessonChunkMetadata {
+  const compactHeadingPath = headingPath.filter(Boolean);
+  return compactHeadingPath.length > 0
+    ? { headingPath: compactHeadingPath }
+    : {};
+}
+
+function splitMarkdownByHeaders(markdown: string) {
+  const documents: { markdown: string; metadata: LessonChunkMetadata }[] = [];
+  const headingPath: string[] = [];
+  let currentLines: string[] = [];
+  let currentMetadata: LessonChunkMetadata = {};
+  let fenceMarker: { character: string; length: number } | null = null;
+
+  const flush = () => {
+    const chunkMarkdown = normalizeLessonMarkdown(currentLines.join('\n'));
+    if (!chunkMarkdown) return;
+
+    documents.push({
+      markdown: chunkMarkdown,
+      metadata: currentMetadata,
+    });
+    currentLines = [];
+  };
+
+  for (const line of markdown.split('\n')) {
+    if (fenceMarker) {
+      currentLines.push(line);
+      if (closesFence(line, fenceMarker)) {
+        fenceMarker = null;
+      }
+      continue;
+    }
+
+    const nextFenceMarker = getFenceMarker(line);
+    if (nextFenceMarker) {
+      fenceMarker = nextFenceMarker;
+      currentLines.push(line);
+      continue;
+    }
+
+    const headingInfo = getHeadingInfo(line);
+    if (headingInfo) {
+      flush();
+      headingPath.splice(headingInfo.level - 1);
+      headingPath[headingInfo.level - 1] = headingInfo.title;
+      currentMetadata = createMetadata(headingPath);
+    }
+
+    currentLines.push(line);
+  }
+
+  flush();
+
+  return documents;
+}
+
+function getOverlapText(markdown: string, chunkOverlap: number): string {
+  if (chunkOverlap <= 0) return '';
+
+  return markdown.slice(-chunkOverlap).trimStart();
+}
+
+function splitByCharacterWindow(
+  text: string,
+  chunkSize: number,
+  chunkOverlap: number
+): string[] {
+  const chunks: string[] = [];
+  const stepSize = chunkSize - chunkOverlap;
+
+  for (let index = 0; index < text.length; index += stepSize) {
+    const chunk = normalizeLessonMarkdown(text.slice(index, index + chunkSize));
+    if (chunk) {
+      chunks.push(chunk);
+    }
+
+    if (index + chunkSize >= text.length) {
+      break;
+    }
+  }
+
+  return chunks;
+}
+
+function mergeSplits(
+  splits: string[],
+  separator: string,
+  chunkSize: number,
+  chunkOverlap: number
+): string[] {
+  const chunks: string[] = [];
+  let currentParts: string[] = [];
+
+  const joinParts = (parts: string[]) =>
+    normalizeLessonMarkdown(parts.join(separator));
+
+  for (const split of splits) {
+    if (!split) continue;
+
+    const candidate = joinParts([...currentParts, split]);
+    if (candidate.length <= chunkSize) {
+      currentParts.push(split);
+      continue;
+    }
+
+    const currentChunk = joinParts(currentParts);
+    if (currentChunk) {
+      chunks.push(currentChunk);
+    }
+
+    const overlapText = getOverlapText(currentChunk, chunkOverlap);
+    const overlapCandidate = joinParts(
+      overlapText ? [overlapText, split] : [split]
+    );
+
+    currentParts =
+      overlapText && overlapCandidate.length <= chunkSize
+        ? [overlapText, split]
+        : [split];
+  }
+
+  const finalChunk = joinParts(currentParts);
+  if (finalChunk) {
+    chunks.push(finalChunk);
+  }
+
+  return chunks;
+}
+
+function splitTextRecursively(
+  text: string,
+  chunkSize: number,
+  chunkOverlap: number,
+  separators = RECURSIVE_SEPARATORS
+): string[] {
+  const normalized = normalizeLessonMarkdown(text);
+  if (!normalized) return [];
+  if (normalized.length <= chunkSize) return [normalized];
+
+  const [separator = ''] = separators;
+  const remainingSeparators = separators.slice(1);
+
+  if (separator === '') {
+    return splitByCharacterWindow(normalized, chunkSize, chunkOverlap);
+  }
+
+  const rawSplits = normalized.split(separator);
+  const chunks: string[] = [];
+  let mergeableSplits: string[] = [];
+
+  const flushMergeable = () => {
+    chunks.push(
+      ...mergeSplits(mergeableSplits, separator, chunkSize, chunkOverlap)
+    );
+    mergeableSplits = [];
+  };
+
+  for (const split of rawSplits) {
+    if (!split) continue;
+
+    if (split.length > chunkSize) {
+      flushMergeable();
+      chunks.push(
+        ...splitTextRecursively(
+          split,
+          chunkSize,
+          chunkOverlap,
+          remainingSeparators
+        )
+      );
+      continue;
+    }
+
+    mergeableSplits.push(split);
+  }
+
+  flushMergeable();
+
+  return chunks;
 }
 
 export function chunkLessonMarkdown(
@@ -62,57 +263,26 @@ export function chunkLessonMarkdown(
   const normalized = normalizeLessonMarkdown(markdown);
   if (!normalized) return [];
 
-  const targetTokenCount =
-    options.targetTokenCount ?? DEFAULT_TARGET_TOKEN_COUNT;
-  const overlapTokenCount =
-    options.overlapTokenCount ?? DEFAULT_OVERLAP_TOKEN_COUNT;
-  const blocks = normalized.split(/\n{2,}/);
+  const chunkSize = options.chunkSize ?? DEFAULT_CHUNK_SIZE;
+  const chunkOverlap = options.chunkOverlap ?? DEFAULT_CHUNK_OVERLAP;
+
+  const markdownDocuments = splitMarkdownByHeaders(normalized);
   const chunks: LessonMarkdownChunk[] = [];
-  const headingPath: string[] = [];
-  let currentBlocks: string[] = [];
-  let currentTokenCount = 0;
-  let currentMetadata: LessonChunkMetadata = {};
 
-  const flush = () => {
-    const chunkMarkdown = normalizeLessonMarkdown(currentBlocks.join('\n\n'));
-    if (!chunkMarkdown) return;
-
-    chunks.push({
-      chunkIndex: chunks.length,
-      markdown: chunkMarkdown,
-      tokenCount: estimateTokenCount(chunkMarkdown),
-      metadata: currentMetadata,
-    });
-
-    const overlapText = getOverlapText(chunkMarkdown, overlapTokenCount);
-    currentBlocks = overlapText ? [overlapText] : [];
-    currentTokenCount = overlapText ? estimateTokenCount(overlapText) : 0;
-  };
-
-  for (const block of blocks) {
-    const headingInfo = getHeadingInfo(block);
-    if (headingInfo) {
-      headingPath.splice(headingInfo.level - 1);
-      headingPath[headingInfo.level - 1] = headingInfo.title;
+  for (const document of markdownDocuments) {
+    for (const chunkMarkdown of splitTextRecursively(
+      document.markdown,
+      chunkSize,
+      chunkOverlap
+    )) {
+      chunks.push({
+        chunkIndex: chunks.length,
+        markdown: chunkMarkdown,
+        tokenCount: estimateTokenCount(chunkMarkdown),
+        metadata: document.metadata,
+      });
     }
-
-    const nextMetadata =
-      headingPath.length > 0 ? { headingPath: [...headingPath] } : {};
-    const blockTokenCount = estimateTokenCount(block);
-
-    if (
-      currentBlocks.length > 0 &&
-      currentTokenCount + blockTokenCount > targetTokenCount
-    ) {
-      flush();
-    }
-
-    currentBlocks.push(block);
-    currentTokenCount += blockTokenCount;
-    currentMetadata = nextMetadata;
   }
-
-  flush();
 
   return chunks;
 }
