@@ -64,6 +64,7 @@ const DeleteLessonDialog = ({
           variant="destructive"
           size={compact ? 'icon-sm' : 'sm'}
           title={compact ? t('delete') : undefined}
+          className="cursor-pointer"
         >
           <Trash2
             aria-hidden="true"
@@ -89,7 +90,10 @@ const DeleteLessonDialog = ({
         </AlertDialogHeader>
 
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeletingLesson}>
+          <AlertDialogCancel
+            disabled={isDeletingLesson}
+            className="cursor-pointer"
+          >
             {t('deleteDialog.cancel')}
           </AlertDialogCancel>
 
@@ -100,6 +104,7 @@ const DeleteLessonDialog = ({
               event.preventDefault();
               handleDelete();
             }}
+            className="cursor-pointers"
           >
             {isDeletingLesson ? (
               <Spinner data-icon="inline-start" />

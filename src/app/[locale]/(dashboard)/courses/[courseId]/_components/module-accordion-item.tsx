@@ -36,6 +36,7 @@ import { Badge } from '@/components/ui/badge';
 import type { QuizDefinition } from '@/lib/quiz-template';
 import { QUESTION_SUB_TYPE_LABELS } from '@/lib/quiz-template';
 import { cn } from '@/lib/utils';
+import DeleteLessonDialog from '../lessons/[lessonId]/_components/delete-lesson-dialog';
 import type { Module } from '../use-modules';
 import { useModuleOrderMutations } from './use-module-order-mutations';
 
@@ -54,6 +55,7 @@ export type AccordionListItem =
 interface ModuleAccordionItemProps {
   moduleItem: Module;
   courseId: string;
+  canDeleteLessons: boolean;
   /** Called with the module ID when the user clicks "Add lesson" */
   onAddLesson: (moduleId: string) => void;
   /** Called with the module ID when the user clicks "Create Quiz" from the dropdown */
@@ -108,6 +110,7 @@ function buildItemList(
 export function ModuleAccordionItem({
   moduleItem,
   courseId,
+  canDeleteLessons,
   onAddLesson,
   onCreateQuiz,
   quizzes = [],
@@ -296,6 +299,7 @@ export function ModuleAccordionItem({
                       key={item.id}
                       item={item}
                       courseId={courseId}
+                      canDeleteLessons={canDeleteLessons}
                       onIndent={handleIndent}
                       onOutdent={handleOutdent}
                     />
@@ -315,6 +319,7 @@ export function ModuleAccordionItem({
 interface SortableAccordionRowProps {
   item: AccordionListItem;
   courseId: string;
+  canDeleteLessons: boolean;
   onIndent: (id: string) => void;
   onOutdent: (id: string) => void;
 }
@@ -322,6 +327,7 @@ interface SortableAccordionRowProps {
 function SortableAccordionRow({
   item,
   courseId,
+  canDeleteLessons,
   onIndent,
   onOutdent,
 }: SortableAccordionRowProps) {
@@ -362,6 +368,14 @@ function SortableAccordionRow({
           <span className="font-medium">{item.title}</span>
         </Link>
         <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+          {canDeleteLessons ? (
+            <DeleteLessonDialog
+              courseId={courseId}
+              lessonId={item.id}
+              compact
+              navigateAfterDelete={false}
+            />
+          ) : null}
           <button
             type="button"
             className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30"
