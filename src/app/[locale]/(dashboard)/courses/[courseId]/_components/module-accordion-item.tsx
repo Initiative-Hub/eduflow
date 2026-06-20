@@ -36,7 +36,9 @@ import { Badge } from '@/components/ui/badge';
 import type { QuizDefinition } from '@/lib/quiz-template';
 import { QUESTION_SUB_TYPE_LABELS } from '@/lib/quiz-template';
 import { cn } from '@/lib/utils';
+import DeleteLessonDialog from '../lessons/[lessonId]/_components/delete-lesson-dialog';
 import type { Module } from '../use-modules';
+import { DeleteModuleDialog } from './delete-module-dialog';
 import { useModuleOrderMutations } from './use-module-order-mutations';
 
 // Unified item type for flat list rendering
@@ -54,6 +56,7 @@ export type AccordionListItem =
 interface ModuleAccordionItemProps {
   moduleItem: Module;
   courseId: string;
+  canDeleteContent: boolean;
   /** Called with the module ID when the user clicks "Add lesson" */
   onAddLesson: (moduleId: string) => void;
   /** Called with the module ID when the user clicks "Create Quiz" from the dropdown */
@@ -108,6 +111,7 @@ function buildItemList(
 export function ModuleAccordionItem({
   moduleItem,
   courseId,
+  canDeleteContent,
   onAddLesson,
   onCreateQuiz,
   quizzes = [],
@@ -246,7 +250,16 @@ export function ModuleAccordionItem({
         </AccordionTrigger>
 
         {/* Absolutely positioned so it doesn't nest inside the trigger */}
-        <div className="absolute top-3.25 right-12 z-10 flex gap-1.5">
+        <div className="absolute top-3.25 right-12 z-10 flex items-center gap-1.5">
+          {canDeleteContent ? (
+            <DeleteModuleDialog
+              courseId={courseId}
+              lessonCount={moduleItem.lessons.length}
+              moduleId={moduleItem.id}
+              moduleTitle={moduleItem.title}
+            />
+          ) : null}
+
           <DropdownTemplate
             trigger={
               <button
@@ -296,6 +309,7 @@ export function ModuleAccordionItem({
                       key={item.id}
                       item={item}
                       courseId={courseId}
+                      canDeleteContent={canDeleteContent}
                       onIndent={handleIndent}
                       onOutdent={handleOutdent}
                     />
@@ -315,6 +329,7 @@ export function ModuleAccordionItem({
 interface SortableAccordionRowProps {
   item: AccordionListItem;
   courseId: string;
+  canDeleteContent: boolean;
   onIndent: (id: string) => void;
   onOutdent: (id: string) => void;
 }
@@ -322,6 +337,7 @@ interface SortableAccordionRowProps {
 function SortableAccordionRow({
   item,
   courseId,
+  canDeleteContent,
   onIndent,
   onOutdent,
 }: SortableAccordionRowProps) {
@@ -361,7 +377,15 @@ function SortableAccordionRow({
           </div>
           <span className="font-medium">{item.title}</span>
         </Link>
-        <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+        <div className="flex items-center gap-1 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
+          {canDeleteContent ? (
+            <DeleteLessonDialog
+              courseId={courseId}
+              lessonId={item.id}
+              compact
+              navigateAfterDelete={false}
+            />
+          ) : null}
           <button
             type="button"
             className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30"

@@ -834,6 +834,16 @@
       "writeReview": "Soạn/Xem lại"
     },
     "LessonHeader": {
+      "delete": "Xóa bài học",
+      "deleteDialog": {
+        "cancel": "Hủy",
+        "confirm": "Xóa bài học",
+        "deleting": "Đang xóa...",
+        "description": "Thao tác này sẽ xóa vĩnh viễn bài học. Các câu hỏi liên kết vẫn được giữ trong ngân hàng câu hỏi nhưng sẽ không còn thuộc bài học này.",
+        "title": "Xóa bài học này?"
+      },
+      "deleteError": "Không thể xóa bài học",
+      "deleteSuccess": "Đã xóa bài học thành công",
       "edit": "Chỉnh sửa bài học",
       "lesson": "Bài học",
       "modules": "Mô-đun"
@@ -869,6 +879,16 @@
       "add": "Thêm",
       "addLesson": "Bài học",
       "addQuiz": "Bài kiểm tra",
+      "delete": "Xóa mô-đun",
+      "deleteDialog": {
+        "cancel": "Hủy",
+        "confirm": "Xóa mô-đun",
+        "deleting": "Đang xóa...",
+        "description": "Thao tác này sẽ xóa vĩnh viễn \"{title}\" và {count, plural, =0 {toàn bộ nội dung của mô-đun} =1 {1 bài học của mô-đun} other {# bài học của mô-đun}}. Các câu hỏi liên kết vẫn được giữ trong ngân hàng câu hỏi nhưng sẽ không còn thuộc các bài học này.",
+        "title": "Xóa mô-đun này?"
+      },
+      "deleteError": "Không thể xóa mô-đun",
+      "deleteSuccess": "Đã xóa mô-đun thành công",
       "noLessons": "Chưa có bài học nào"
     },
     "newCourse": "Khóa học mới",

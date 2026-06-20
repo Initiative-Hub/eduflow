@@ -60,3 +60,28 @@ export function useUpdateLesson(courseId: string) {
     handleUpdateLesson: mutation.mutate,
   };
 }
+
+// TODO: Should bring to lesson.service.ts for some api usage
+export function useDeleteLesson(courseId: string) {
+  const queryClient = useQueryClient();
+  const t = useTranslations('Courses.LessonHeader');
+
+  const mutation = useMutation({
+    mutationFn: (lessonId: string) =>
+      apiClient.delete<void>(`/v1/lessons/${lessonId}`),
+
+    onSuccess: (_, lessonId) => {
+      queryClient.removeQueries({ queryKey: ['lesson', lessonId] });
+      queryClient.invalidateQueries({ queryKey: ['modules', courseId] });
+      toast.success(t('deleteSuccess'));
+    },
+    onError: (error: { message?: string }) => {
+      toast.error(error.message || t('deleteError'));
+    },
+  });
+
+  return {
+    isDeletingLesson: mutation.isPending,
+    handleDeleteLesson: mutation.mutate,
+  };
+}
