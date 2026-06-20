@@ -32,6 +32,7 @@ import { QuizResult } from './quiz-result';
 interface QuizProps {
   quiz: ClientQuizContent | QuizContent;
   quizId?: string;
+  submitUrl?: string;
   quizWithAnswers?: QuizContent;
   deliveryMode?: DeliveryMode;
   onComplete?: (result: ScoreResult) => void;
@@ -41,6 +42,7 @@ interface QuizProps {
 export function Quiz({
   quiz,
   quizId,
+  submitUrl,
   quizWithAnswers,
   deliveryMode = 'POST_QUIZ_REVIEW',
   onComplete,
@@ -58,6 +60,7 @@ export function Quiz({
 
   const { submit, isSubmitting } = useQuizSubmission({
     quizId,
+    submitUrl,
     quizType: quiz.type,
     questionsForScoring,
     onSuccess: (scoreResult, reviewQs) => {

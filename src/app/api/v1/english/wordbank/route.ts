@@ -22,6 +22,15 @@ const removeBodySchema = z.object({
   word: z.string().min(1).max(80),
 });
 
+const listQuerySchema = z.object({
+  q: z.string().trim().max(120).optional(),
+  list: z.string().trim().max(80).default('all'),
+  mastery: z.enum(['all', 'due', '0', '1', '2']).default('all'),
+  sort: z.enum(['recent', 'az', 'weakest']).default('recent'),
+  limit: z.coerce.number().int().min(1).max(200).optional(),
+  offset: z.coerce.number().int().min(0).optional(),
+});
+
 /**
  * @swagger
  * /api/v1/english/wordbank:
@@ -37,8 +46,32 @@ const removeBodySchema = z.object({
  *       401:
  *         description: Unauthorized
  */
-export const GET = withAuth(async (_req, sessionData) => {
-  const result = await SavedVocabularyService.list(sessionData.user.id);
+export const GET = withAuth(async (req, sessionData) => {
+  const { searchParams } = new URL(req.url);
+  const parsed = listQuerySchema.safeParse({
+    q: searchParams.get('q') ?? undefined,
+    list: searchParams.get('list') ?? undefined,
+    mastery: searchParams.get('mastery') ?? undefined,
+    sort: searchParams.get('sort') ?? undefined,
+    limit: searchParams.get('limit') ?? undefined,
+    offset: searchParams.get('offset') ?? undefined,
+  });
+
+  if (!parsed.success) {
+    return NextResponse.json(
+      { message: 'Invalid request', errors: parsed.error.flatten() },
+      { status: 400 }
+    );
+  }
+
+  const result = await SavedVocabularyService.list(sessionData.user.id, {
+    search: parsed.data.q,
+    listId: parsed.data.list,
+    mastery: parsed.data.mastery,
+    sort: parsed.data.sort,
+    limit: parsed.data.limit,
+    offset: parsed.data.offset,
+  });
   return NextResponse.json(result);
 });
 

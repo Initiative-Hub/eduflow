@@ -1,32 +1,21 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { VocabularyItem } from '@/services/english/VocabularyService';
 import type {
-  RemoveVocabularyResult,
-  SavedVocabularyListResult,
-  SaveVocabularyResult,
+  CreateVocabularyListInput,
+  CreateReviewSessionInput,
+  UpdateSavedVocabularyItemsInput,
 } from '@/services/english/SavedVocabularyService';
+import {
+  type WordbankQueryParams,
+  wordbankApi,
+} from '../wordbank/wordbank.service';
 
 export const WORDBANK_QUERY_KEY = ['english', 'wordbank'] as const;
 
-async function parseJsonError(res: Response, fallback: string) {
-  const errBody = await res.json().catch(() => ({}));
-  throw new Error(errBody.message ?? `${fallback} (${res.status})`);
-}
-
-export function useWordbankQuery() {
+export function useWordbankQuery(params: WordbankQueryParams = {}) {
   return useQuery({
-    queryKey: WORDBANK_QUERY_KEY,
-    queryFn: async () => {
-      const res = await fetch('/api/v1/english/wordbank', {
-        cache: 'no-store',
-      });
-
-      if (!res.ok) {
-        await parseJsonError(res, 'Wordbank request failed');
-      }
-
-      return res.json() as Promise<SavedVocabularyListResult>;
-    },
+    queryKey: [...WORDBANK_QUERY_KEY, params],
+    queryFn: () => wordbankApi.list(params),
   });
 }
 
@@ -34,29 +23,8 @@ export function useSaveVocabularyMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (vocabulary: VocabularyItem[]) => {
-      const res = await fetch('/api/v1/english/wordbank', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ vocabulary }),
-        cache: 'no-store',
-      });
-
-      if (!res.ok) {
-        await parseJsonError(res, 'Wordbank save failed');
-      }
-
-      return res.json() as Promise<SaveVocabularyResult>;
-    },
-    onSuccess: (result) => {
-      queryClient.setQueryData<SavedVocabularyListResult>(
-        WORDBANK_QUERY_KEY,
-        (current) => ({
-          items: current?.items ?? [],
-          total: result.total,
-          savedWords: result.savedWords,
-        })
-      );
+    mutationFn: (vocabulary: VocabularyItem[]) => wordbankApi.save(vocabulary),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: WORDBANK_QUERY_KEY });
     },
   });
@@ -66,32 +34,44 @@ export function useRemoveVocabularyMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (word: string) => {
-      const res = await fetch('/api/v1/english/wordbank', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ word }),
-        cache: 'no-store',
-      });
-
-      if (!res.ok) {
-        await parseJsonError(res, 'Wordbank remove failed');
-      }
-
-      return res.json() as Promise<RemoveVocabularyResult>;
+    mutationFn: (word: string) => wordbankApi.remove(word),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: WORDBANK_QUERY_KEY });
     },
-    onSuccess: (result) => {
-      queryClient.setQueryData<SavedVocabularyListResult>(
-        WORDBANK_QUERY_KEY,
-        (current) => ({
-          items:
-            current?.items.filter((item) =>
-              result.savedWords.includes(item.word)
-            ) ?? [],
-          total: result.total,
-          savedWords: result.savedWords,
-        })
-      );
+  });
+}
+
+export function useCreateVocabularyListMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: CreateVocabularyListInput) =>
+      wordbankApi.createList(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: WORDBANK_QUERY_KEY });
+    },
+  });
+}
+
+export function useUpdateVocabularyItemsMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: UpdateSavedVocabularyItemsInput) =>
+      wordbankApi.updateItems(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: WORDBANK_QUERY_KEY });
+    },
+  });
+}
+
+export function useCreateReviewSessionMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: CreateReviewSessionInput = {}) =>
+      wordbankApi.createReviewSession(input),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: WORDBANK_QUERY_KEY });
     },
   });

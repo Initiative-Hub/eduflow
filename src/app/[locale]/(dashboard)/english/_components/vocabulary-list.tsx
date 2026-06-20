@@ -130,9 +130,8 @@ export function VocabularyList({
                       onClick={() => wordbank.onToggleVocabulary(vocab)}
                       disabled={wordbank.isSaving || wordbank.isRemoving}
                       className={cn(
-                        'min-h-11 min-w-11 rounded-full border border-border/70 bg-background text-muted-foreground hover:border-primary/30 hover:bg-primary/10 hover:text-primary',
-                        isSaved &&
-                          'border-destructive/20 bg-destructive/10 text-destructive hover:border-destructive/30 hover:bg-destructive/15 hover:text-destructive'
+                        'min-h-11 min-w-11 text-muted-foreground hover:bg-primary/10 hover:text-primary',
+                        isSaved && 'text-destructive hover:bg-muted/60'
                       )}
                       aria-label={wordbankActionLabel}
                       title={wordbankActionLabel}

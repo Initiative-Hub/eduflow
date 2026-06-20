@@ -14,6 +14,7 @@ import type {
 interface UseQuizSubmissionOptions {
   /** Quiz ID for server-side scoring (secure mode) */
   quizId?: string;
+  submitUrl?: string;
   quizType: string;
   /** Full questions with answers — used for local scoring in demo/offline mode when no quizId is provided */
   questionsForScoring?: QuestionBlock[];
@@ -31,6 +32,7 @@ interface UseQuizSubmissionReturn {
 
 export function useQuizSubmission({
   quizId,
+  submitUrl,
   quizType,
   questionsForScoring,
   onSuccess,
@@ -59,7 +61,7 @@ export function useQuizSubmission({
             answersRecord[index.toString()] = answer;
           }
 
-          const response = await fetch('/api/v1/quizzes/submit', {
+          const response = await fetch(submitUrl ?? '/api/v1/quizzes/submit', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             cache: 'no-store',
@@ -110,7 +112,7 @@ export function useQuizSubmission({
         setIsSubmitting(false);
       }
     },
-    [quizId, quizType, questionsForScoring, onSuccess, errorMessage]
+    [quizId, submitUrl, quizType, questionsForScoring, onSuccess, errorMessage]
   );
 
   return { submit, isSubmitting, result, reviewQuestions, error };

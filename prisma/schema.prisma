@@ -27,16 +27,19 @@ model User {
   bio           String?
 
   // relations
-  role            PlatformRole?     @relation(fields: [roleId], references: [id])
-  sessions        Session[]
-  accounts        Account[]
-  files           FileInventory[]
-  coursesOwned    Course[]          @relation("OwnerCourses")
-  enrollments     Enrollment[]
-  aiChats         AiChat[]
-  aiMessages      AiChatMessage[]
-  quizAttempts    QuizAttempt[]
-  savedVocabulary SavedVocabulary[]
+  role                   PlatformRole?           @relation(fields: [roleId], references: [id])
+  sessions               Session[]
+  accounts               Account[]
+  files                  FileInventory[]
+  coursesOwned           Course[]                @relation("OwnerCourses")
+  enrollments            Enrollment[]
+  aiChats                AiChat[]
+  aiMessages             AiChatMessage[]
+  quizAttempts           QuizAttempt[]
+  savedVocabulary        SavedVocabulary[]
+  vocabularyLists        VocabularyList[]
+  wordbankReviewSessions WordbankReviewSession[]
+  wordbankReviewAttempts WordbankReviewAttempt[]
 
   @@map("user")
 }
@@ -121,13 +124,13 @@ model CourseRole {
 }
 
 model PlatformPermission {
-  id             String                @id @default(uuid())
-  platformRoleId String                @map("platform_role_id")
-  platformRole   PlatformRole          @relation(fields: [platformRoleId], references: [id], onDelete: Cascade)
+  id             String       @id @default(uuid())
+  platformRoleId String       @map("platform_role_id")
+  platformRole   PlatformRole @relation(fields: [platformRoleId], references: [id], onDelete: Cascade)
   permission     String
-  enabled        Boolean               @default(true)
-  createdAt      DateTime              @default(now())
-  updatedAt      DateTime              @updatedAt
+  enabled        Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
   @@unique([platformRoleId, permission])
   @@index([platformRoleId, enabled])
@@ -135,15 +138,15 @@ model PlatformPermission {
 }
 
 model CoursePermission {
-  id           String              @id @default(uuid())
-  courseId     String              @map("course_id")
-  course       Course              @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  courseRoleId String              @map("course_role_id")
-  courseRole   CourseRole          @relation(fields: [courseRoleId], references: [id], onDelete: Cascade)
+  id           String     @id @default(uuid())
+  courseId     String     @map("course_id")
+  course       Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseRoleId String     @map("course_role_id")
+  courseRole   CourseRole @relation(fields: [courseRoleId], references: [id], onDelete: Cascade)
   permission   String
-  enabled      Boolean             @default(true)
-  createdAt    DateTime            @default(now())
-  updatedAt    DateTime            @updatedAt
+  enabled      Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 
   @@unique([courseId, courseRoleId, permission])
   @@index([courseId, courseRoleId, enabled])
@@ -357,6 +360,11 @@ enum SelectionMethod {
   MANUAL_CREATE
 }
 
+enum WordbankReviewStatus {
+  ACTIVE
+  COMPLETED
+}
+
 model Question {
   id          String          @id @default(uuid())
   courseId    String          @map("course_id")
@@ -444,19 +452,87 @@ model SavedVocabulary {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   word                  String
-  partOfSpeech          String  @map("part_of_speech")
+  partOfSpeech          String   @map("part_of_speech")
   ipa                   String?
-  audioUrl              String? @map("audio_url")
-  englishDefinition     String  @map("english_definition")
-  vietnameseTranslation String  @map("vietnamese_translation")
-  exampleSentence       String  @map("example_sentence")
-  sourceSnippet         String? @map("source_snippet")
+  audioUrl              String?  @map("audio_url")
+  englishDefinition     String   @map("english_definition")
+  vietnameseTranslation String   @map("vietnamese_translation")
+  exampleSentence       String   @map("example_sentence")
+  sourceSnippet         String?  @map("source_snippet")
+  masteryLevel          Int      @default(0) @map("mastery_level")
+  nextReviewAt          DateTime @default(now()) @map("next_review_at")
 
   savedAt DateTime @default(now()) @map("saved_at")
 
+  listItems SavedVocabularyListItem[]
+
   @@unique([userId, word])
   @@index([userId, savedAt(sort: Desc)])
+  @@index([userId, masteryLevel, nextReviewAt])
   @@map("saved_vocabulary")
+}
+
+model VocabularyList {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  colorCode String?  @map("color_code")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  items SavedVocabularyListItem[]
+
+  @@unique([userId, name])
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("vocabulary_list")
+}
+
+model SavedVocabularyListItem {
+  savedVocabularyId String          @map("saved_vocabulary_id")
+  listId            String          @map("list_id")
+  savedVocabulary   SavedVocabulary @relation(fields: [savedVocabularyId], references: [id], onDelete: Cascade)
+  list              VocabularyList  @relation(fields: [listId], references: [id], onDelete: Cascade)
+  createdAt         DateTime        @default(now()) @map("created_at")
+
+  @@id([savedVocabularyId, listId])
+  @@index([listId])
+  @@map("saved_vocabulary_list_item")
+}
+
+model WordbankReviewSession {
+  id          String               @id @default(uuid())
+  userId      String               @map("user_id")
+  user        User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status      WordbankReviewStatus @default(ACTIVE)
+  quiz        Json
+  clientQuiz  Json                 @map("client_quiz")
+  wordMap     Json                 @map("word_map")
+  createdAt   DateTime             @default(now()) @map("created_at")
+  completedAt DateTime?            @map("completed_at")
+
+  attempts WordbankReviewAttempt[]
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("wordbank_review_session")
+}
+
+model WordbankReviewAttempt {
+  id         String                @id @default(uuid())
+  sessionId  String                @map("session_id")
+  session    WordbankReviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  userId     String                @map("user_id")
+  user       User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  answers    Json
+  score      Float
+  maxScore   Float                 @map("max_score")
+  percentage Float
+  results    Json
+  createdAt  DateTime              @default(now()) @map("created_at")
+
+  @@index([sessionId])
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("wordbank_review_attempt")
 }
 
 // ─── Dictionary Cache ────────────────────────────────────────────────────────

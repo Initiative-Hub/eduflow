@@ -34,7 +34,8 @@ export function EnglishAssistantClient() {
           aria-label={t('wordbankLinkLabel', {
             count: assistant.wordbank.total,
           })}
-className="inline-flex min-h-10 items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-foreground/90 transition-colors hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"               >
+          className="inline-flex min-h-10 items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-foreground/90 transition-colors hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+        >
           <BookMarked
             className="size-5 text-foreground/80"
             strokeWidth={2.25}

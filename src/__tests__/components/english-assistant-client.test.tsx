@@ -34,8 +34,8 @@ const messages: Record<string, string> = {
   translationPlaceholder: 'Translation will appear here after analysis...',
   vietnamese: 'Vietnamese',
   words: 'words',
-  wordbank: 'Vocab Library',
-  wordbankLinkLabel: 'Vocab Library {count}',
+  wordbank: 'Wordbank',
+  wordbankLinkLabel: 'Wordbank {count}',
   wordbankCount: '{count} words',
   saveAllToWordbank: 'Save all to Wordbank ({count})',
   saveToWordbank: 'Save {word} to Wordbank',
@@ -275,20 +275,20 @@ describe('EnglishAssistantClient', () => {
     ).toBeInTheDocument();
   });
 
-  it('shows the vocab library entry point as a lightweight ghost link', () => {
+  it('shows the wordbank entry point as a compact library link', () => {
     renderEnglishAssistantClient();
 
     const vocabLibraryLink = screen.getByRole('link', {
-      name: /Vocab Library 0/,
+      name: /Wordbank 0/,
     });
 
     expect(vocabLibraryLink).toHaveClass(
       'rounded-full',
-      'hover:bg-muted/70',
+      'bg-primary/10',
+      'hover:bg-primary/20',
       'text-foreground/90'
     );
     expect(vocabLibraryLink).not.toHaveClass('border-primary/30');
-    expect(vocabLibraryLink).not.toHaveClass('bg-primary/5');
     expect(screen.getByText('(0)')).toBeInTheDocument();
   });
 
@@ -467,7 +467,7 @@ describe('EnglishAssistantClient', () => {
     });
   });
 
-  it('centers vocabulary rows and uses clearer save and remove affordances', async () => {
+  it('centers vocabulary rows and keeps wordbank bookmark actions borderless', async () => {
     const user = userEvent.setup();
 
     renderEnglishAssistantClient();
@@ -493,16 +493,14 @@ describe('EnglishAssistantClient', () => {
       name: 'Save hello to Wordbank',
     });
     expect(saveButton).toHaveClass('hover:bg-primary/10', 'hover:text-primary');
+    expect(saveButton).not.toHaveClass('border', 'rounded-full');
 
     await user.click(saveButton);
 
     const removeButton = await screen.findByRole('button', {
       name: 'Remove hello from Wordbank',
     });
-    expect(removeButton).toHaveClass(
-      'bg-destructive/10',
-      'text-destructive',
-      'hover:bg-destructive/15'
-    );
+    expect(removeButton).toHaveClass('text-destructive', 'hover:bg-muted/60');
+    expect(removeButton).not.toHaveClass('border', 'rounded-full');
   });
 });
