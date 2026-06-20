@@ -3,6 +3,8 @@ import {
   convertToModelMessages,
   generateText,
   Output,
+  stepCountIs,
+  type ToolSet,
   type UIMessage,
 } from 'ai';
 import { z } from 'zod';
@@ -234,11 +236,15 @@ export async function generatePracticeQuiz({
   model,
   apiKey,
   quizOptions,
+  tools,
+  maxSteps,
 }: {
   messages: UIMessage[];
   model?: string;
   apiKey?: string;
   quizOptions?: StudyQuizOptions;
+  tools?: ToolSet;
+  maxSteps?: number;
 }): Promise<QuizContent> {
   const resolvedApiKey = apiKey ?? process.env.OPENROUTER_API_KEY;
 
@@ -280,8 +286,16 @@ export async function generatePracticeQuiz({
       - Explanations must teach the concept, not only reveal the answer.
       - Match the learner's language when possible.
       - Do not include essay or short-answer questions.
+      ${
+        tools
+          ? `
+      You have access to course RAG tools. Only call them when the learner's request would benefit from EduFlow lesson content, course context, or enrolled-course material. If the request is already fully answerable from the prompt or attachments, generate the quiz without calling tools.`
+          : ''
+      }
     `,
     messages: await convertToModelMessages(messages),
+    tools,
+    stopWhen: tools ? stepCountIs(maxSteps ?? 6) : undefined,
   });
 
   return buildPracticeQuizContent(result.output);
