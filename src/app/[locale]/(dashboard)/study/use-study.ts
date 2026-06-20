@@ -6,7 +6,10 @@ import { DefaultChatTransport, type UIMessage } from 'ai';
 import { useEffect, useMemo, useRef } from 'react';
 import { toast } from 'sonner';
 import { usePathname, useRouter } from '@/i18n/navigation';
-import type { StudyMode } from '@/lib/validations/study.schema';
+import type {
+  StudyMode,
+  StudyQuizOptions,
+} from '@/lib/validations/study.schema';
 import { DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
 import { useChatSessionStore } from '@/stores/useChatSessionStore';
 import type {
@@ -22,6 +25,7 @@ const MAX_USER_MESSAGES = 5;
 
 type UseStudyOptions = {
   mode: StudyMode;
+  quizOptions: StudyQuizOptions;
   chatId?: string;
   initialMessages?: UIMessage[];
   isAuthenticated: boolean;
@@ -29,6 +33,7 @@ type UseStudyOptions = {
 
 export const useStudy = ({
   mode,
+  quizOptions,
   chatId,
   initialMessages = [],
   isAuthenticated,
@@ -51,7 +56,11 @@ export const useStudy = ({
 
   const createSessionMutation = useMutation({
     mutationFn: async (text: string) => {
-      const data = await studyService.createChat(text, mode);
+      const data = await studyService.createChat(
+        text,
+        mode,
+        mode === 'practiceTest' ? quizOptions : undefined
+      );
       return data.chatId;
     },
   });
@@ -110,6 +119,7 @@ export const useStudy = ({
     sendMessage(pendingMessage, {
       body: {
         mode,
+        quizOptions: mode === 'practiceTest' ? quizOptions : undefined,
         provider: 'openrouter',
         model: inputModel,
       },
@@ -124,6 +134,7 @@ export const useStudy = ({
     sendMessage,
     clearPendingMessage,
     clearPendingChatId,
+    quizOptions,
   ]);
 
   const isLimitReached = isAuthenticated
@@ -175,6 +186,7 @@ export const useStudy = ({
       {
         body: {
           mode,
+          quizOptions: mode === 'practiceTest' ? quizOptions : undefined,
           provider: 'openrouter',
           model: pendingModel ?? DEFAULT_CHAT_MODEL,
         },

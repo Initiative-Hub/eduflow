@@ -1,4 +1,3 @@
-import type { ProviderOptions } from '@ai-sdk/provider-utils';
 import { tavilySearch } from '@tavily/ai-sdk';
 import { type LanguageModel, Output, stepCountIs, streamText } from 'ai';
 import * as z from 'zod';
@@ -37,7 +36,6 @@ type SearchCompleteEvent = {
 type SupplementarySearchInput = {
   model: LanguageModel;
   searchQuery: string;
-  providerOptions?: ProviderOptions;
   onSource?: (event: SourceFoundEvent) => Promise<void> | void;
   onSearchComplete?: (event: SearchCompleteEvent) => Promise<void> | void;
 };
@@ -49,7 +47,6 @@ type SearchContextInput = SupplementarySearchInput & {
 export async function generateSupplementarySearchContexts({
   model,
   searchQuery,
-  providerOptions,
   onSource,
   onSearchComplete,
 }: SupplementarySearchInput) {
@@ -60,7 +57,6 @@ export async function generateSupplementarySearchContexts({
       model,
       searchQuery: trimmedQuery,
       purpose: 'web',
-      providerOptions,
       onSource,
       onSearchComplete,
     }),
@@ -68,7 +64,6 @@ export async function generateSupplementarySearchContexts({
       model,
       searchQuery: `${trimmedQuery} site:youtube.com`,
       purpose: 'youtube',
-      providerOptions,
       onSource,
       onSearchComplete,
     }),
@@ -81,14 +76,12 @@ async function generateSearchContext({
   model,
   searchQuery,
   purpose,
-  providerOptions,
   onSource,
   onSearchComplete,
 }: SearchContextInput): Promise<WebSearchContext> {
   try {
     const result = streamText({
       model,
-      providerOptions,
       output: Output.array({ element: webSearchSourceSchema }),
       tools: {
         webSearch: tavilySearch({

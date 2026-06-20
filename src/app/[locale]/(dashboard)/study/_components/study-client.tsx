@@ -6,7 +6,11 @@ import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import type { StudyMode } from '@/lib/validations/study.schema';
+import {
+  DEFAULT_STUDY_QUIZ_OPTIONS,
+  type StudyMode,
+  type StudyQuizOptions,
+} from '@/lib/validations/study.schema';
 import { DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
 import type { ChatSubmitAttachments } from '@/types/chat-attachments';
 import { ChatInput } from '../../_components/chat-input';
@@ -25,6 +29,7 @@ interface StudyClientProps {
   chatId?: string;
   initialMessages?: UIMessage[];
   initialMode?: StudyMode;
+  initialQuizOptions?: StudyQuizOptions;
   isAuthenticated: boolean;
 }
 
@@ -32,12 +37,16 @@ export function StudyClient({
   chatId,
   initialMessages,
   initialMode = 'review',
+  initialQuizOptions,
   isAuthenticated,
 }: StudyClientProps) {
   const t = useTranslations('StudyPage');
   const tChat = useTranslations('AIChat');
 
   const [mode, setMode] = useState<StudyMode>(initialMode);
+  const [quizOptions, setQuizOptions] = useState<StudyQuizOptions>(
+    initialQuizOptions ?? DEFAULT_STUDY_QUIZ_OPTIONS
+  );
   const [isUploadingAttachments, setIsUploadingAttachments] = useState(false);
 
   const {
@@ -53,6 +62,7 @@ export function StudyClient({
     stop,
   } = useStudy({
     mode,
+    quizOptions,
     chatId,
     initialMessages,
     isAuthenticated,
@@ -123,7 +133,12 @@ export function StudyClient({
   const viewport = !hasOutput ? (
     <div className="flex flex-col items-center justify-center">
       <div className="mb-2 w-full max-w-4xl space-y-2">
-        <StudyModeSelector mode={mode} onModeChange={setMode} />
+        <StudyModeSelector
+          mode={mode}
+          quizOptions={quizOptions}
+          onModeChange={setMode}
+          onQuizOptionsChange={setQuizOptions}
+        />
         <LandingRecentStudyChats />
       </div>
     </div>

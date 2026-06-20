@@ -6,10 +6,7 @@ import { socraticGuidanceDepthSchema } from '@/lib/validations/socratic.schema';
 import { ChatProviderFactory } from '@/services/ai/ChatProviderFactory';
 import { CHAT_MODEL_IDS } from '@/services/ai/chat-models';
 import { DEFAULT_PROVIDER } from '@/services/ai/chat-provider.constants';
-import type {
-  ChatProvider,
-  StreamChatInput,
-} from '@/services/ai/chat-provider.types';
+import type { ChatProvider } from '@/services/ai/chat-provider.types';
 import { CacheService } from '@/services/CacheService';
 import { ChatPersistenceService } from '@/services/ChatPersistenceService';
 import type { SocraticUIMessage } from '@/types/socratic-ui-message';
@@ -30,7 +27,6 @@ const socraticRequestSchema = z.object({
   provider: z.custom<ChatProvider>().optional(),
   model: z.enum(CHAT_MODEL_IDS).optional(),
   apiKey: z.string().min(1).optional(),
-  providerOptions: z.custom<StreamChatInput['providerOptions']>().optional(),
 });
 
 const socraticUpdateSchema = z
@@ -276,7 +272,6 @@ export async function POST(
         provider: parsedBody.data.provider,
         model: parsedBody.data.model,
         apiKey: parsedBody.data.apiKey,
-        providerOptions: parsedBody.data.providerOptions,
       },
       { prompt: systemPrompt }
     );
@@ -304,7 +299,6 @@ export async function POST(
           providerName,
           model: parsedBody.data.model,
           apiKey: parsedBody.data.apiKey,
-          providerOptions: parsedBody.data.providerOptions,
         });
 
         writer.write({

@@ -46,9 +46,11 @@ for any tasks.).
 ### 4.1 Database Migrations
 
 1. Use `prisma/schema.prisma` as the source of truth for database changes.
-2. Create/apply migrations with `bun db:migrate`.
-3. Refresh the generated client with `bun db:generate` after schema edits or before build-time type checks.
-4. Use `bun db:start` to start local PostgreSQL and `bun db:reset` for a clean reset/seed cycle.
+2. In `prisma/schema.prisma`, keep Prisma enum and model names in PascalCase and Prisma field names in camelCase.
+3. Map every Prisma model, enum-backed database value where applicable, and field that persists to a database object to snake_case database names with `@@map`/`@map`; physical table, column, index, and constraint names in migrations must also be snake_case.
+4. Create/apply migrations with `bun db:migrate`.
+5. Refresh the generated client with `bun db:generate` after schema edits or before build-time type checks.
+6. Use `bun db:start` to start local PostgreSQL and `bun db:reset` for a clean reset/seed cycle.
 
 ### 4.2 UI & Navigation
 

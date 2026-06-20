@@ -2,16 +2,24 @@
 
 import { BookMarked, ClipboardList, Globe } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import type { StudyMode } from '@/lib/validations/study.schema';
+import type {
+  StudyMode,
+  StudyQuizOptions,
+} from '@/lib/validations/study.schema';
+import { StudyQuizOptionsPanel } from './study-quiz-options';
 
 interface StudyModeSelectorProps {
   mode: StudyMode;
+  quizOptions: StudyQuizOptions;
   onModeChange: (mode: StudyMode) => void;
+  onQuizOptionsChange: (options: StudyQuizOptions) => void;
 }
 
 export function StudyModeSelector({
   mode,
+  quizOptions,
   onModeChange,
+  onQuizOptionsChange,
 }: StudyModeSelectorProps) {
   const t = useTranslations('StudyPage');
 
@@ -66,8 +74,9 @@ export function StudyModeSelector({
             <button
               key={key}
               type="button"
+              aria-pressed={mode === key}
               onClick={() => onModeChange(key)}
-              className={`cursor-pointer rounded-2xl border border-border/60 bg-card/95 p-5 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
+              className={`cursor-pointer rounded-2xl border border-border/60 bg-card/95 p-5 text-left shadow-sm transition-[background-color,border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                 mode === key ? activeAccent : ''
               }`}
             >
@@ -86,6 +95,12 @@ export function StudyModeSelector({
           )
         )}
       </div>
+      {mode === 'practiceTest' ? (
+        <StudyQuizOptionsPanel
+          options={quizOptions}
+          onOptionsChange={onQuizOptionsChange}
+        />
+      ) : null}
     </div>
   );
 }

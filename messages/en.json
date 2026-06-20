@@ -213,6 +213,7 @@
     "subtitle": "Pick a starting point or ask anything to begin your inquiry.",
     "suggestions": {
       "brainstorm": "Help me brainstorm a thesis on Renaissance art",
+      "followUp": "Follow-up questions",
       "socratic": "Explain the Socratic method in simple terms",
       "trends": "Summarize the latest trends in renewable energy"
     },
@@ -1696,6 +1697,18 @@
       "practiceTest": "Practice Tests",
       "research": "Research Mode",
       "review": "Review Materials"
+    },
+    "quizOptions": {
+      "description": "Choose the question formats and total number of questions before generating.",
+      "questionCount": "Number of questions",
+      "questionCountDescription": "Defaults to 10. You can generate 1 to 30 questions.",
+      "questionTypes": "Question types",
+      "title": "Practice quiz setup",
+      "types": {
+        "fill_in_the_blank": "Fill in the blank",
+        "multiple_choice": "Multiple choice",
+        "true_false": "True/False"
+      }
     },
     "recentSessions": {
       "description": "Return to study guides, practice sets, and research threads.",
