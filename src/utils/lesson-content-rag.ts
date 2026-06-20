@@ -39,6 +39,11 @@ export function createLessonContentHash(markdown: string): string {
     .digest('hex')}`;
 }
 
+/**
+ * Parses ATX Markdown headings (`#` through `######`) from a single line.
+ * Returns null for non-heading lines so fenced code and body text can pass
+ * through unchanged.
+ */
 function getHeadingInfo(line: string) {
   const match = /^ {0,3}(#{1,6})[ \t]+(.+?)\s*$/.exec(line);
   if (!match) return null;
@@ -52,6 +57,10 @@ function getHeadingInfo(line: string) {
   };
 }
 
+/**
+ * Detects the opening marker for a fenced code block.
+ * Markdown headings inside an active fence must not alter heading metadata.
+ */
 function getFenceMarker(line: string) {
   const match = /^ {0,3}(`{3,}|~{3,})/.exec(line);
   if (!match) return null;
@@ -75,12 +84,18 @@ function closesFence(
 }
 
 function createMetadata(headingPath: string[]): LessonChunkMetadata {
+  // A lesson can start at `##`; compacting prevents sparse heading paths.
   const compactHeadingPath = headingPath.filter(Boolean);
   return compactHeadingPath.length > 0
     ? { headingPath: compactHeadingPath }
     : {};
 }
 
+/**
+ * Performs the Markdown Header Chunking phase.
+ * Each returned document represents text under the same heading path while
+ * preserving the heading line in markdown (`strip_headers = false` behavior).
+ */
 function splitMarkdownByHeaders(markdown: string) {
   const documents: { markdown: string; metadata: LessonChunkMetadata }[] = [];
   const headingPath: string[] = [];
@@ -103,6 +118,7 @@ function splitMarkdownByHeaders(markdown: string) {
     if (fenceMarker) {
       currentLines.push(line);
       if (closesFence(line, fenceMarker)) {
+        // Resume heading detection only after the matching fence closes.
         fenceMarker = null;
       }
       continue;
@@ -110,6 +126,7 @@ function splitMarkdownByHeaders(markdown: string) {
 
     const nextFenceMarker = getFenceMarker(line);
     if (nextFenceMarker) {
+      // Keep fenced code in the current document, but suspend heading parsing.
       fenceMarker = nextFenceMarker;
       currentLines.push(line);
       continue;
@@ -117,6 +134,7 @@ function splitMarkdownByHeaders(markdown: string) {
 
     const headingInfo = getHeadingInfo(line);
     if (headingInfo) {
+      // A real heading starts a new header document with fresh metadata.
       flush();
       headingPath.splice(headingInfo.level - 1);
       headingPath[headingInfo.level - 1] = headingInfo.title;
@@ -137,12 +155,18 @@ function getOverlapText(markdown: string, chunkOverlap: number): string {
   return markdown.slice(-chunkOverlap).trimStart();
 }
 
+/**
+ * Final recursive fallback for separator-free text.
+ * This guarantees chunks can still respect chunkSize even for long continuous
+ * strings such as minified text, long URLs, or code-like content.
+ */
 function splitByCharacterWindow(
   text: string,
   chunkSize: number,
   chunkOverlap: number
 ): string[] {
   const chunks: string[] = [];
+  // Step by the non-overlapped span so adjacent windows share chunkOverlap chars.
   const stepSize = chunkSize - chunkOverlap;
 
   for (let index = 0; index < text.length; index += stepSize) {
@@ -185,6 +209,8 @@ function mergeSplits(
       chunks.push(currentChunk);
     }
 
+    // Carry only text from the current chunk, so overlap never crosses the
+    // outer Markdown header document boundary.
     const overlapText = getOverlapText(currentChunk, chunkOverlap);
     const overlapCandidate = joinParts(
       overlapText ? [overlapText, split] : [split]
@@ -204,6 +230,11 @@ function mergeSplits(
   return chunks;
 }
 
+/**
+ * Performs Recursive Character Chunking within a single Markdown header
+ * document. It tries broad separators first, then progressively smaller ones,
+ * matching the usual paragraph -> line -> word -> character fallback flow.
+ */
 function splitTextRecursively(
   text: string,
   chunkSize: number,
@@ -218,6 +249,7 @@ function splitTextRecursively(
   const remainingSeparators = separators.slice(1);
 
   if (separator === '') {
+    // Empty separator means no semantic boundary could split the text enough.
     return splitByCharacterWindow(normalized, chunkSize, chunkOverlap);
   }
 
@@ -236,6 +268,7 @@ function splitTextRecursively(
     if (!split) continue;
 
     if (split.length > chunkSize) {
+      // Preserve already-mergeable text before recursing into the oversized bit.
       flushMergeable();
       chunks.push(
         ...splitTextRecursively(
@@ -265,16 +298,31 @@ export function chunkLessonMarkdown(
 
   const chunkSize = options.chunkSize ?? DEFAULT_CHUNK_SIZE;
   const chunkOverlap = options.chunkOverlap ?? DEFAULT_CHUNK_OVERLAP;
+  
+  if (!Number.isInteger(chunkSize) || chunkSize <= 0) {
+    throw new Error('chunkSize must be a positive integer');
+  }
+
+  if (!Number.isInteger(chunkOverlap) || chunkOverlap < 0) {
+    throw new Error('chunkOverlap must be a non-negative integer');
+  }
+
+  if (chunkOverlap >= chunkSize) {
+    throw new Error('chunkOverlap must be smaller than chunkSize');
+  }
 
   const markdownDocuments = splitMarkdownByHeaders(normalized);
   const chunks: LessonMarkdownChunk[] = [];
 
   for (const document of markdownDocuments) {
-    for (const chunkMarkdown of splitTextRecursively(
+    // Header documents are split independently so overlap cannot leak across unrelated sections.
+    const chunkMarkdowns = splitTextRecursively(
       document.markdown,
       chunkSize,
       chunkOverlap
-    )) {
+    );
+
+    for (const chunkMarkdown of chunkMarkdowns) {
       chunks.push({
         chunkIndex: chunks.length,
         markdown: chunkMarkdown,
