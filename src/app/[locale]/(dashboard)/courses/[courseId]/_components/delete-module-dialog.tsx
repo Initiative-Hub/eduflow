@@ -2,21 +2,8 @@
 
 import { Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogMedia,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
+import { ConfirmDialog } from '@/components/custom/dialog';
 import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
 import { useDeleteModule } from '../use-modules';
 
 interface DeleteModuleDialogProps {
@@ -33,27 +20,26 @@ export function DeleteModuleDialog({
   moduleTitle,
 }: DeleteModuleDialogProps) {
   const t = useTranslations('Courses.ModuleAccordion');
-  const [open, setOpen] = useState(false);
   const { deleteModule, isDeletingModule } = useDeleteModule(courseId);
 
-  const handleDelete = () => {
-    deleteModule(moduleId, {
-      onSuccess: () => {
-        setOpen(false);
-      },
-    });
-  };
-
   return (
-    <AlertDialog
-      open={open}
-      onOpenChange={(nextOpen) => {
-        if (!isDeletingModule) {
-          setOpen(nextOpen);
-        }
+    <ConfirmDialog
+      cancelLabel={t('deleteDialog.cancel')}
+      confirmIcon={<Trash2 data-icon="inline-start" />}
+      confirmLabel={t('deleteDialog.confirm')}
+      description={t('deleteDialog.description', {
+        title: moduleTitle,
+        count: lessonCount,
+      })}
+      destructive
+      icon={<Trash2 />}
+      isPending={isDeletingModule}
+      onConfirm={({ close }) => {
+        deleteModule(moduleId, { onSuccess: close });
       }}
-    >
-      <AlertDialogTrigger asChild>
+      pendingLabel={t('deleteDialog.deleting')}
+      title={t('deleteDialog.title')}
+      trigger={
         <Button
           type="button"
           variant="destructive"
@@ -66,49 +52,7 @@ export function DeleteModuleDialog({
           <Trash2 aria-hidden="true" />
           <span className="sr-only">{t('delete')}</span>
         </Button>
-      </AlertDialogTrigger>
-
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogMedia>
-            <Trash2 />
-          </AlertDialogMedia>
-
-          <AlertDialogTitle>{t('deleteDialog.title')}</AlertDialogTitle>
-
-          <AlertDialogDescription>
-            {t('deleteDialog.description', {
-              title: moduleTitle,
-              count: lessonCount,
-            })}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeletingModule}>
-            {t('deleteDialog.cancel')}
-          </AlertDialogCancel>
-
-          <AlertDialogAction
-            variant="destructive"
-            disabled={isDeletingModule}
-            onClick={(event) => {
-              event.preventDefault();
-              handleDelete();
-            }}
-          >
-            {isDeletingModule ? (
-              <Spinner data-icon="inline-start" />
-            ) : (
-              <Trash2 data-icon="inline-start" />
-            )}
-
-            {isDeletingModule
-              ? t('deleteDialog.deleting')
-              : t('deleteDialog.confirm')}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+      }
+    />
   );
 }
