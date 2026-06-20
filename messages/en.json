@@ -878,7 +878,10 @@
       "titlePlaceholder": "Title",
       "urlPlaceholder": "URL",
       "summaryPlaceholder": "Summary (optional)",
-      "btnNewDeck": "New Deck"
+      "btnNewDeck": "New Deck",
+      "usageTokens": "{tokens} tokens used",
+      "usageCost": "~${cost}",
+      "usageRequests": "{requests} AI calls"
     },
     "LessonOutline": {
       "addFirstModule": "Add your first module",

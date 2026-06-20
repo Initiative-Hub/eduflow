@@ -43,6 +43,14 @@ export const lessonService = {
       deckUrl: string;
       slides: any[];
       warnings: string[];
+      usage?: {
+        input_tokens?: number;
+        output_tokens?: number;
+        total_tokens?: number;
+        requests?: number;
+        estimated_cost_usd?: number;
+        report?: string;
+      };
     }>('/v1/ai/slides', data, { timeout: 300_000 });
   },
 };

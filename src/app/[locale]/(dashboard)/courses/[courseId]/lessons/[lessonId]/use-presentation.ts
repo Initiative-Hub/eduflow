@@ -33,6 +33,15 @@ export interface PlannedSlide {
   bindings: Record<string, any>;
 }
 
+export interface DeckUsage {
+  input_tokens?: number;
+  output_tokens?: number;
+  total_tokens?: number;
+  requests?: number;
+  estimated_cost_usd?: number;
+  report?: string;
+}
+
 export function usePresentation(options: {
   title: string;
   content: TiptapDocument;
@@ -58,6 +67,8 @@ export function usePresentation(options: {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   // URL of the rendered HTML deck returned by the external slide service.
   const [deckUrl, setDeckUrl] = useState<string | null>(null);
+  // Token/cost usage reported for the most recent generation.
+  const [deckUsage, setDeckUsage] = useState<DeckUsage | null>(null);
 
   // Dynamic Outlines fallback generator
   const generateOutlines = useCallback(
@@ -479,6 +490,7 @@ export function usePresentation(options: {
     setStep('generating');
     setLoaderStep(0);
     setDeckUrl(null);
+    setDeckUsage(null);
 
     const t1 = setTimeout(() => setLoaderStep(1), 600);
     const t2 = setTimeout(() => setLoaderStep(2), 1200);
@@ -496,6 +508,7 @@ export function usePresentation(options: {
       });
 
       setDeckUrl(deck.deckUrl);
+      setDeckUsage(deck.usage ?? null);
       setCurrentSlideIndex(0);
       setStep('generated');
     } catch (error) {
@@ -515,6 +528,7 @@ export function usePresentation(options: {
   // Discard the saved deck and return to the planner to build a new one.
   const startNewDeck = useCallback(() => {
     setDeckUrl(null);
+    setDeckUsage(null);
     setStep('input');
   }, []);
 
@@ -600,6 +614,7 @@ export function usePresentation(options: {
     currentSlideIndex,
     setCurrentSlideIndex,
     deckUrl,
+    deckUsage,
     isFullscreen,
     containerRef,
     toggleFullscreen,

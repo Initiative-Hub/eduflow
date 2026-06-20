@@ -17,10 +17,21 @@ export interface DeckPlan {
   palette?: string;
 }
 
+/** Token/cost usage for a generation job, as reported by slide_skills. */
+export interface DeckUsage {
+  input_tokens?: number;
+  output_tokens?: number;
+  total_tokens?: number;
+  requests?: number;
+  estimated_cost_usd?: number;
+  report?: string;
+}
+
 export interface GeneratedDeck {
   deckId: string;
   slides: unknown[];
   warnings: string[];
+  usage?: DeckUsage;
   /** S3 object key when the deck was archived to storage. */
   s3Key?: string;
 }
@@ -30,7 +41,7 @@ interface JobResponse {
   result?: {
     deck_id: string;
     slides?: unknown[];
-    usage?: Record<string, unknown>;
+    usage?: DeckUsage;
     warnings?: string[];
     s3_key?: string;
   } | null;
@@ -106,6 +117,7 @@ export async function generateDeckFromPlan(
         deckId: job.result.deck_id,
         slides: job.result.slides ?? [],
         warnings: job.result.warnings ?? [],
+        usage: job.result.usage,
         s3Key: job.result.s3_key,
       };
     }

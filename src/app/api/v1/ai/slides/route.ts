@@ -108,6 +108,7 @@ export const POST = withAuth(
           deckUrl: `/api/v1/ai/slides/${deck.deckId}`,
           slides: deck.slides,
           warnings,
+          usage: deck.usage,
         },
         { status: 200 }
       );

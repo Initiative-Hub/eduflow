@@ -52,6 +52,8 @@ async def execute_plan_generation_job(job_id: str, req: PlanGenReq, out_path: Pa
             plan=plan_dict,
             output_path=out_path,
             palette=req.palette,
+            images=req.images,
+            image_source=req.image_source,
         )
         # Upload to S3
         s3_key = f"slides/{job_id}.html"

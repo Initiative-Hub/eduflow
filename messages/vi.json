@@ -878,7 +878,10 @@
       "titlePlaceholder": "Tiêu đề",
       "urlPlaceholder": "Đường dẫn (URL)",
       "summaryPlaceholder": "Tóm tắt (tùy chọn)",
-      "btnNewDeck": "Tạo bản mới"
+      "btnNewDeck": "Tạo bản mới",
+      "usageTokens": "Đã dùng {tokens} token",
+      "usageCost": "~${cost}",
+      "usageRequests": "{requests} lượt gọi AI"
     },
     "LessonOutline": {
       "addFirstModule": "Thêm mô-đun đầu tiên của bạn",

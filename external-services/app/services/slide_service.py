@@ -1,4 +1,3 @@
-import base64
 import logging
 import tempfile
 import textwrap
@@ -7,34 +6,9 @@ from pathlib import Path
 from typing import Any, Dict, List, Union
 from fastapi.concurrency import run_in_threadpool
 import slide_skills  # type: ignore
-from slide_skills.image_generator import generate_image  # type: ignore
 from app.deps import SLIDE_TEMPLATES_DIR
 
 logger = logging.getLogger(__name__)
-
-
-async def generate_and_encode_image(prompt: str, aspect_ratio: float = 1.0) -> str:
-    try:
-        # Generate image using slide_skills DALL-E runner
-        img_bytes = await run_in_threadpool(
-            generate_image,
-            prompt,
-            aspect_ratio=aspect_ratio,
-        )
-        b64_str = base64.b64encode(img_bytes).decode("utf-8")
-        return f"data:image/png;base64,{b64_str}"
-    except Exception as e:
-        logger.warning(f"DALL-E image generation failed, using SVG placeholder: {e}")
-        # Create a beautiful vector SVG placeholder matching our neon tech theme
-        prompt_snippet = prompt[:45] + "..." if len(prompt) > 45 else prompt
-        svg_content = f"""<svg xmlns="http://www.w3.org/2000/svg" width="500" height="420" viewBox="0 0 500 420">
-  <rect width="500" height="420" fill="#111827" rx="12"/>
-  <rect x="10" y="10" width="480" height="400" fill="none" stroke="#00F0FF" stroke-width="2" stroke-dasharray="8 4" stroke-opacity="0.4" rx="10"/>
-  <text x="250" y="190" font-family="system-ui, sans-serif" font-size="20" fill="#FFFFFF" text-anchor="middle" font-weight="bold">AI Generated Media</text>
-  <text x="250" y="230" font-family="system-ui, sans-serif" font-size="14" fill="#00F0FF" text-anchor="middle">{prompt_snippet}</text>
-</svg>"""
-        b64_svg = base64.b64encode(svg_content.encode("utf-8")).decode("utf-8")
-        return f"data:image/svg+xml;base64,{b64_svg}"
 
 
 def flatten_slide_bindings(category: str, slide_title: str, bindings: dict) -> dict:
@@ -181,14 +155,14 @@ class SlideService:
         language: str | None = None,
         animation: str = "rise",
         title: str | None = None,
+        images: bool = True,
+        image_source: str = "ai",
     ) -> Dict[str, Any]:
         slides_list = []
         if isinstance(plan, dict):
             slides_list = plan.get("slides", [])
         elif isinstance(plan, list):
             slides_list = plan
-
-        generated_images = []
 
         for slide in slides_list:
             bindings = slide.get("bindings") or {}
@@ -204,19 +178,12 @@ class SlideService:
             if "body_text" in bindings and isinstance(bindings["body_text"], str):
                 bindings["body_text"] = textwrap.wrap(bindings["body_text"], width=50)
 
-            image_prompt = (
-                bindings.get("image_prompt_description")
-                or bindings.get("image_prompt")
-                or (bindings.get("body_text") if category == "MEDIA_TEXT" else None)
-            )
-            if image_prompt:
-                image_url = await generate_and_encode_image(
-                    str(image_prompt), aspect_ratio=1.19
-                )
-                generated_images.append(image_url)
-
             slide["bindings"] = bindings
 
+        # slide_skills fills the template's <image> slots itself when images=True.
+        # image_source "ai" = photo model (gpt-image-1/DALL-E), "svg" = cheaper
+        # GPT-4o vector illustrations. Both require OPENAI_API_KEY; failures per
+        # image are reported back in the result's "warnings".
         actual_palette = None if palette == "auto" else palette
         res = await run_in_threadpool(
             slide_skills.generate_deck_from_plan,
@@ -226,24 +193,10 @@ class SlideService:
             palette=actual_palette,
             language=language,
             animation=animation,
+            images=images,
+            image_source=image_source,
             title=title,
         )
-
-        # Post-process compiled HTML to inject generated image base64 URIs sequentially
-        out_file_path = Path(output_path)
-        if out_file_path.exists() and generated_images:
-            try:
-                html_content = out_file_path.read_text(encoding="utf-8")
-                for img_url in generated_images:
-                    html_content = html_content.replace(
-                        "__IMAGE_URL_PLACEHOLDER__", img_url, 1
-                    )
-                out_file_path.write_text(html_content, encoding="utf-8")
-                logger.info(
-                    f"Successfully post-processed HTML to inject {len(generated_images)} image placeholders."
-                )
-            except Exception as pe:
-                logger.error(f"Failed to post-process slide image replacements: {pe}")
 
         return res
 

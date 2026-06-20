@@ -54,6 +54,7 @@ export function LessonPresentation({
     currentSlideIndex,
     setCurrentSlideIndex,
     deckUrl,
+    deckUsage,
     isFullscreen,
     containerRef,
     toggleFullscreen,
@@ -1510,7 +1511,7 @@ export function LessonPresentation({
 
       {step === 'generated' &&
         (deckUrl ? (
-          <div className="mx-auto flex w-full max-w-6xl flex-1 items-center justify-center overflow-hidden px-2 py-4">
+          <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col items-center justify-center gap-2 overflow-hidden px-2 py-4">
             <iframe
               src={deckUrl}
               title={title}
@@ -1520,6 +1521,29 @@ export function LessonPresentation({
                 isFullscreen ? 'h-[82vh]' : 'h-[58vh]'
               )}
             />
+            {deckUsage && (
+              <div className="flex shrink-0 flex-wrap items-center justify-center gap-x-4 gap-y-1 font-medium text-[11px] text-slate-500">
+                {typeof deckUsage.total_tokens === 'number' && (
+                  <span>
+                    {t('usageTokens', {
+                      tokens: deckUsage.total_tokens.toLocaleString(),
+                    })}
+                  </span>
+                )}
+                {typeof deckUsage.estimated_cost_usd === 'number' && (
+                  <span>
+                    {t('usageCost', {
+                      cost: deckUsage.estimated_cost_usd.toFixed(4),
+                    })}
+                  </span>
+                )}
+                {typeof deckUsage.requests === 'number' && (
+                  <span>
+                    {t('usageRequests', { requests: deckUsage.requests })}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         ) : (
           <div className="mx-auto flex w-full max-w-4xl flex-1 items-center justify-center overflow-hidden px-4 py-8">

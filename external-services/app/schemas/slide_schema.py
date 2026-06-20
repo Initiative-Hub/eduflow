@@ -33,3 +33,10 @@ class PlanGenReq(BaseModel):
     title: str = Field(..., description="Presentation title")
     slides: list[SlidePlanItem] = Field(..., description="Ordered list of slide plans")
     palette: str = Field(default="auto", description="The color palette selection")
+    images: bool = Field(
+        default=True, description="Whether to fill template image slots with generated art"
+    )
+    image_source: str = Field(
+        default="ai",
+        description="Image generator: 'ai' (photo model) or 'svg' (cheaper GPT-4o vector)",
+    )
