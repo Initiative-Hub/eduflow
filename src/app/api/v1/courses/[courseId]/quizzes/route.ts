@@ -62,8 +62,10 @@ export const GET = withAuth(async (_req, _sessionData, { params }) => {
     const quizzes = await prisma.quiz.findMany({
       where: { courseId },
       include: {
-        lessons: {
-          select: { id: true },
+        lessonQuizzes: {
+          select: {
+            lesson: { select: { id: true } },
+          },
         },
       },
       orderBy: { createdAt: 'desc' },
@@ -72,9 +74,9 @@ export const GET = withAuth(async (_req, _sessionData, { params }) => {
     // For quizzes with empty questions, populate from the question bank
     const populatedQuizzes = await Promise.all(
       quizzes.map(async (quiz) => {
-        const { lessons, ...quizData } = quiz;
+        const { lessonQuizzes, ...quizData } = quiz;
         const questions = quiz.questions as unknown[];
-        const lessonIds = lessons.map((lesson) => lesson.id);
+        const lessonIds = lessonQuizzes.map(({ lesson }) => lesson.id);
 
         if (questions && Array.isArray(questions) && questions.length > 0) {
           return { ...quizData, lessonIds };

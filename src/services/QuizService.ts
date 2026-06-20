@@ -49,11 +49,13 @@ function lessonContentToText(content: unknown): string {
   }
 }
 
-function withLessonIds<T extends { lessons?: { id: string }[] }>(quiz: T) {
-  const { lessons = [], ...rest } = quiz;
+function withLessonIds<
+  T extends { lessonQuizzes?: { lesson: { id: string } }[] },
+>(quiz: T) {
+  const { lessonQuizzes = [], ...rest } = quiz;
   return {
     ...rest,
-    lessonIds: lessons.map((lesson) => lesson.id),
+    lessonIds: lessonQuizzes.map(({ lesson }) => lesson.id),
   };
 }
 
@@ -144,9 +146,17 @@ export class QuizService {
         selectionMethod: data.selectionMethod,
         questionCount: data.questionCount,
         questions: resolvedQuestions as unknown as Prisma.InputJsonValue,
-        lessons: { connect: data.lessonIds.map((id) => ({ id })) },
+        lessonQuizzes: {
+          create: data.lessonIds.map((lessonId) => ({ lessonId })),
+        },
       },
-      include: { lessons: { select: { id: true } } },
+      include: {
+        lessonQuizzes: {
+          select: {
+            lesson: { select: { id: true } },
+          },
+        },
+      },
     });
 
     return withLessonIds(quiz);
@@ -170,7 +180,13 @@ export class QuizService {
         questions: questions as unknown as Prisma.InputJsonValue,
         questionCount: questions.length,
       },
-      include: { lessons: { select: { id: true } } },
+      include: {
+        lessonQuizzes: {
+          select: {
+            lesson: { select: { id: true } },
+          },
+        },
+      },
     });
 
     return withLessonIds(updatedQuiz);
@@ -198,7 +214,11 @@ export class QuizService {
       where: { id: quizId },
       include: {
         course: { select: { ownerId: true } },
-        lessons: { select: { id: true, title: true, content: true } },
+        lessonQuizzes: {
+          select: {
+            lesson: { select: { id: true, title: true, content: true } },
+          },
+        },
       },
     });
     if (!fetchedQuiz) {
@@ -212,7 +232,7 @@ export class QuizService {
       throw new Error('Quiz already has the maximum number of questions');
     }
     // Aggregate content from all linked lessons
-    const lessons = fetchedQuiz.lessons;
+    const lessons = fetchedQuiz.lessonQuizzes.map(({ lesson }) => lesson);
     if (lessons.length === 0) {
       throw new Error('No lessons linked to quiz');
     }
@@ -263,7 +283,13 @@ export class QuizService {
         questionCount: questionsToSave.length,
         questions: questionsToSave as unknown as Prisma.InputJsonValue,
       },
-      include: { lessons: { select: { id: true } } },
+      include: {
+        lessonQuizzes: {
+          select: {
+            lesson: { select: { id: true } },
+          },
+        },
+      },
     });
 
     return withLessonIds(quiz);
