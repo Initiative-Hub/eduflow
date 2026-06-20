@@ -17,11 +17,11 @@ import {
 import { useSession } from '@/lib/auth-client';
 import type { CourseListSort } from '../use-courses';
 import { useCourses } from '../use-courses';
+import { CourseCard } from './course-card';
 import { CourseListPagination } from './course-list-pagination';
 import { CourseListToolbar } from './course-list-toolbar';
-import { CourseCard } from './course-card';
-import { CreateCourseDialog } from './create-course-dialog';
 import { CoursesGridSkeleton } from './courses-grid-skeleton';
+import { CreateCourseDialog } from './create-course-dialog';
 
 const PAGE_SIZE = 12;
 const SEARCH_DEBOUNCE_MS = 300;
