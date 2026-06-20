@@ -1,20 +1,5 @@
-import type { TiptapDocument } from '../../src/utils/lesson-content';
-
-type DemoUserKey = 'teacher' | 'student';
-
-type DemoLesson = {
-  id: string;
-  title: string;
-  orderIndex: number;
-  content: TiptapDocument;
-};
-
-type DemoModule = {
-  id: string;
-  title: string;
-  orderIndex: number;
-  lessons: DemoLesson[];
-};
+import type { TiptapDocument } from '../../../src/utils/lesson-content';
+import type { DemoCourse } from './types';
 
 const lessonDocument = (
   heading: string,
@@ -34,26 +19,7 @@ const lessonDocument = (
   ],
 });
 
-export const DEMO_USERS = {
-  teacher: {
-    email: 'teacher@example.com',
-    name: 'Teacher User',
-    role: 'TEACHER',
-  },
-  student: {
-    email: 'student@example.com',
-    name: 'Student User',
-    role: 'STUDENT',
-  },
-} as const;
-
-export const DEMO_COURSES: Array<{
-  id: string;
-  title: string;
-  description: string;
-  isPublished: boolean;
-  modules: DemoModule[];
-}> = [
+export const demoCourses: DemoCourse[] = [
   {
     id: '10000000-0000-4000-8000-000000000001',
     title: 'Foundations of Web Development',
@@ -167,81 +133,6 @@ export const DEMO_COURSES: Array<{
               'Remove repeated ideas and replace vague words with precise language.',
               'Read the final draft aloud to catch awkward rhythm, missing words, and long sentences.',
             ]),
-          },
-        ],
-      },
-    ],
-  },
-];
-
-export const DEMO_CHATS: Array<{
-  id: string;
-  userKey: DemoUserKey;
-  title: string;
-  type: 'CHAT_ASSISTANT' | 'STUDY_ASSISTANT';
-  provider: string;
-  model: string;
-  messages: Array<{
-    id: string;
-    role: 'USER' | 'ASSISTANT';
-    parts: Array<{ type: 'text'; text: string }>;
-  }>;
-}> = [
-  {
-    id: '30000000-0000-4000-8000-000000000001',
-    userKey: 'teacher',
-    title: 'Ideas for an engaging web lesson',
-    type: 'CHAT_ASSISTANT',
-    provider: 'seed',
-    model: 'demo-assistant',
-    messages: [
-      {
-        id: '31000000-0000-4000-8000-000000000001',
-        role: 'USER',
-        parts: [
-          {
-            type: 'text',
-            text: 'Suggest a quick activity for teaching semantic HTML.',
-          },
-        ],
-      },
-      {
-        id: '31000000-0000-4000-8000-000000000002',
-        role: 'ASSISTANT',
-        parts: [
-          {
-            type: 'text',
-            text: 'Give learners a page made only from div elements, then ask them to replace each div with the most meaningful semantic element and explain one accessibility benefit.',
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: '30000000-0000-4000-8000-000000000002',
-    userKey: 'student',
-    title: 'Help me improve a paragraph',
-    type: 'STUDY_ASSISTANT',
-    provider: 'seed',
-    model: 'demo-assistant',
-    messages: [
-      {
-        id: '32000000-0000-4000-8000-000000000001',
-        role: 'USER',
-        parts: [
-          {
-            type: 'text',
-            text: 'How can I make my topic sentences clearer?',
-          },
-        ],
-      },
-      {
-        id: '32000000-0000-4000-8000-000000000002',
-        role: 'ASSISTANT',
-        parts: [
-          {
-            type: 'text',
-            text: 'State the paragraph’s main claim directly, use specific language, and make sure every supporting sentence develops that same claim.',
           },
         ],
       },
