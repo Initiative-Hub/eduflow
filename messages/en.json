@@ -834,6 +834,16 @@
       "writeReview": "Write/Review"
     },
     "LessonHeader": {
+      "delete": "Delete lesson",
+      "deleteDialog": {
+        "cancel": "Cancel",
+        "confirm": "Delete lesson",
+        "deleting": "Deleting...",
+        "description": "This permanently deletes the lesson. Questions linked to it will remain in the question bank but will no longer be associated with this lesson.",
+        "title": "Delete this lesson?"
+      },
+      "deleteError": "Failed to delete lesson",
+      "deleteSuccess": "Lesson deleted successfully",
       "edit": "Edit Lesson",
       "lesson": "Lesson",
       "modules": "Modules"
