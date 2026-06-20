@@ -3,13 +3,13 @@
 import { GraduationCap } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { LandingRecentChatList } from '../../_components/landing-recent-chat-list';
-import { socraticService } from '../socratic.service';
+import { studyService } from '../study.service';
 
-const RECENT_SOCRATIC_SESSION_LIMIT = 3;
+const RECENT_STUDY_SESSION_LIMIT = 3;
 
-export function LandingRecentSocraticChats() {
-  const t = useTranslations('SocraticPage.recentSessions');
-  const sidebarT = useTranslations('SocraticPage.sidebar');
+export function LandingRecentStudyChats() {
+  const t = useTranslations('StudyPage.recentSessions');
+  const sidebarT = useTranslations('StudyPage.sidebar');
 
   return (
     <LandingRecentChatList
@@ -18,11 +18,11 @@ export function LandingRecentSocraticChats() {
       getMessageCountLabel={(count) => sidebarT('messageCount', { count })}
       getOpenChatLabel={(title) => t('openChat', { title })}
       getUpdatedLabel={(date) => t('updated', { date })}
-      hrefForChat={(chat) => `/socratic/${chat.id}`}
+      hrefForChat={(chat) => `/study/${chat.id}`}
       icon={GraduationCap}
-      limit={RECENT_SOCRATIC_SESSION_LIMIT}
-      listChats={socraticService.listChats}
-      queryKey={['recent-socratic-chats']}
+      limit={RECENT_STUDY_SESSION_LIMIT}
+      listChats={studyService.listChats}
+      queryKey={['recent-study-chats']}
       title={t('title')}
       untitledLabel={sidebarT('untitled')}
     />

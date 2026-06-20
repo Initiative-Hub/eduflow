@@ -1,11 +1,8 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import { ArrowUpRight, Clock3, MessageSquare } from 'lucide-react';
-import { useLocale, useTranslations } from 'next-intl';
-import { Card } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Link } from '@/i18n/navigation';
+import { MessageSquare } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { LandingRecentChatList } from '../../_components/landing-recent-chat-list';
 import { chatService } from '../chat.service';
 
 const RECENT_CHAT_LIMIT = 3;
@@ -13,89 +10,21 @@ const RECENT_CHAT_LIMIT = 3;
 export function LandingRecentChats() {
   const t = useTranslations('AIChat.recentChats');
   const sidebarT = useTranslations('AIChat.sidebar');
-  const locale = useLocale();
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ['recent-chats'],
-    queryFn: () =>
-      chatService.listChats({
-        limit: RECENT_CHAT_LIMIT,
-        offset: 0,
-      }),
-  });
-
-  const dateFormatter = new Intl.DateTimeFormat(locale, {
-    month: 'short',
-    day: 'numeric',
-  });
-
-  if (isLoading) {
-    return (
-      <div className="space-y-2">
-        {Array.from({ length: 3 }).map((_, index) => (
-          <Skeleton className="h-16" key={index} />
-        ))}
-      </div>
-    );
-  }
-
-  if (isError) {
-    return (
-      <Card className="border-border/50 bg-background/50 p-4 text-muted-foreground text-sm">
-        {t('error')}
-      </Card>
-    );
-  }
-
-  if (!data?.data.length) return null;
 
   return (
-    <section className="w-full px-4 py-6">
-      <div className="mb-3 flex items-center justify-between">
-        <div>
-          <h2 className="font-bold font-heading text-foreground/90 text-lg">
-            {t('title')}
-          </h2>
-          <p className="text-muted-foreground text-sm">{t('description')}</p>
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        {data.data.map((chat) => {
-          const title = chat.title || sidebarT('untitled');
-          return (
-            <Link
-              aria-label={t('openChat', { title })}
-              href={`/chat/${chat.id}`}
-              key={chat.id}
-            >
-              <Card className="group flex cursor-pointer flex-row items-center gap-3 border-primary p-4 transition-all duration-200 ease-in-out hover:-translate-y-0.5 hover:border-primary/20">
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-border/50 bg-white/80 shadow-sm dark:bg-zinc-900/80">
-                  <MessageSquare className="size-4 text-primary" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h3 className="truncate font-semibold text-foreground/90 text-sm">
-                    {title}
-                  </h3>
-                  <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-muted-foreground text-xs">
-                    <span>
-                      {sidebarT('messageCount', {
-                        count: chat.messageCount,
-                      })}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Clock3 className="size-3" />
-                      {t('updated', {
-                        date: dateFormatter.format(new Date(chat.updatedAt)),
-                      })}
-                    </span>
-                  </div>
-                </div>
-                <ArrowUpRight className="size-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary" />
-              </Card>
-            </Link>
-          );
-        })}
-      </div>
-    </section>
+    <LandingRecentChatList
+      description={t('description')}
+      errorLabel={t('error')}
+      getMessageCountLabel={(count) => sidebarT('messageCount', { count })}
+      getOpenChatLabel={(title) => t('openChat', { title })}
+      getUpdatedLabel={(date) => t('updated', { date })}
+      hrefForChat={(chat) => `/chat/${chat.id}`}
+      icon={MessageSquare}
+      limit={RECENT_CHAT_LIMIT}
+      listChats={chatService.listChats}
+      queryKey={['recent-chats']}
+      title={t('title')}
+      untitledLabel={sidebarT('untitled')}
+    />
   );
 }
