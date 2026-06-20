@@ -1,0 +1,20 @@
+{
+  "fields": {
+    "heading": {
+      "type": "title",
+      "desc": "heading / title",
+      "max_chars": 24
+    },
+    "takeaway": {
+      "type": "text",
+      "desc": "text content",
+      "max_chars": 58,
+      "lines": 3
+    },
+    "closing": {
+      "type": "text",
+      "desc": "text content",
+      "max_chars": 44
+    }
+  }
+}

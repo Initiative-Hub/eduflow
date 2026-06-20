@@ -1,0 +1,20 @@
+{
+  "fields": {
+    "quote": {
+      "type": "text",
+      "desc": "a short, punchy quote",
+      "max_chars": 60,
+      "lines": 3
+    },
+    "author_or_source": {
+      "type": "text",
+      "desc": "text content",
+      "max_chars": 50
+    },
+    "heading": {
+      "type": "title",
+      "desc": "heading / title",
+      "max_chars": 24
+    }
+  }
+}

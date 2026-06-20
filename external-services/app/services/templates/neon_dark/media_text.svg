@@ -21,6 +21,6 @@
   <g>
     <rect x="795" y="215" width="510" height="430" rx="16" fill="none" stroke="#00F0FF" stroke-width="2" stroke-opacity="0.6"/>
     <!-- Nested Image element -->
-    <image x="800" y="220" width="500" height="420" href="__IMAGE_URL_PLACEHOLDER__" rx="12" preserveAspectRatio="xMidYMid slice"/>
+    <image x="800" y="220" width="500" height="420" href="{{media_image}}" rx="12" preserveAspectRatio="xMidYMid slice"/>
   </g>
 </svg>

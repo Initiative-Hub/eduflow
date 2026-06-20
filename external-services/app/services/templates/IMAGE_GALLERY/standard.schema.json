@@ -1,0 +1,11 @@
+{
+  "fields": {
+    "heading":   {"type": "title", "desc": "Section heading", "max_chars": 24},
+    "label_1":   {"type": "text",  "desc": "Name of the first item", "max_chars": 26},
+    "caption_1": {"type": "text",  "desc": "One-line description of the first item", "max_chars": 34},
+    "label_2":   {"type": "text",  "desc": "Name of the second item", "max_chars": 26},
+    "caption_2": {"type": "text",  "desc": "One-line description of the second item", "max_chars": 34},
+    "label_3":   {"type": "text",  "desc": "Name of the third item", "max_chars": 26},
+    "caption_3": {"type": "text",  "desc": "One-line description of the third item", "max_chars": 34}
+  }
+}

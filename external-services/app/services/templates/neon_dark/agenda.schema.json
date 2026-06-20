@@ -1,0 +1,15 @@
+{
+  "fields": {
+    "heading": {
+      "type": "title",
+      "desc": "heading / title",
+      "max_chars": 24
+    },
+    "item": {
+      "type": "text",
+      "desc": "body point — concise",
+      "max_chars": 52,
+      "lines": 4
+    }
+  }
+}

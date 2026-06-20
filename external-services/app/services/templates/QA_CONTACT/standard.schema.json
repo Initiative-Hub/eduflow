@@ -1,0 +1,10 @@
+{
+  "fields": {
+    "footer_note": {
+      "type": "text",
+      "desc": "text content",
+      "max_chars": 50,
+      "lines": 2
+    }
+  }
+}

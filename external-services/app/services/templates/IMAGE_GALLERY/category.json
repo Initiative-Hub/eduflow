@@ -1,0 +1,4 @@
+{
+  "description": "THE layout for a section that lists exactly THREE parallel items, types, services, options, or categories — each item gets its own image panel with a label and one-line caption. Strongly prefer this over a plain bullet list whenever a section presents exactly 3 distinct things that can each be pictured (e.g. '3 types of X', '3 options', '3 categories').",
+  "variants": { "standard": "Three image cards in a row — use for exactly 3 parallel items that each deserve a visual." }
+}
