@@ -49,6 +49,7 @@ export class LessonService {
     return {
       ...lesson,
       canEdit: containPermission(COURSE_PERMISSION.COURSE_CONTENT_UPDATE),
+      canDelete: containPermission(COURSE_PERMISSION.COURSE_CONTENT_DELETE),
     };
   }
 

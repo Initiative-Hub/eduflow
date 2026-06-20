@@ -33,8 +33,6 @@ export function LessonHeader({
 }: LessonHeaderProps) {
   const router = useRouter();
 
-  actions ? <div className="shrink-0">{actions}</div> : null;
-
   return (
     <div className="sticky top-0 z-40 -mx-6 -mt-6 flex items-center justify-between border-foreground/20 border-b bg-background/95 px-6 py-3 backdrop-blur-sm md:-mx-10 md:-mt-10 md:px-10 lg:-mx-12 lg:-mt-12 lg:px-12">
       <div className="mr-4 flex items-center gap-2 text-muted-foreground text-sm">
@@ -74,6 +72,9 @@ export function LessonHeader({
           {currentLessonTitle}
         </span>
       </div>
+      {actions ? (
+        <div className="shrink-0 cursor-pointer">{actions}</div>
+      ) : null}
     </div>
   );
 }

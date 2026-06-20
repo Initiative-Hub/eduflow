@@ -1,7 +1,6 @@
-'use-client';
+'use client';
 
 import { Trash2 } from 'lucide-react';
-import { useRouter } from 'next/router';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import {
@@ -18,6 +17,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import { useRouter } from '@/i18n/navigation';
 import { useDeleteLesson } from '../use-lesson';
 
 interface DeleteLessonDialogProps {
