@@ -135,6 +135,7 @@ describe('study practice quiz generation', () => {
         },
       ],
       tools,
+      maxSteps: 5,
     });
 
     expect(mockCreateOpenRouter).toHaveBeenCalledWith({ apiKey: 'test-key' });
