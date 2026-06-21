@@ -23,6 +23,7 @@ import {
   type ChatCitationSource,
   getCitationSourceGroup,
 } from '@/utils/chat-citations';
+import { getHostname } from '@/utils/url-helper';
 
 const getTextContent = (children: ReactNode): string => {
   if (typeof children === 'string' || typeof children === 'number') {
@@ -67,23 +68,13 @@ const getYouTubeVideoId = (href: string) => {
   }
 };
 
-const getHostname = (url: string | undefined) => {
-  if (!url) return 'unknown';
-
-  try {
-    return new URL(url).hostname.replace(/^www\./, '');
-  } catch {
-    return url || 'unknown';
-  }
-};
-
 const ChatCitationTrigger = ({
   sources,
 }: {
   sources: ChatCitationSource[];
 }) => {
   const firstSource = sources[0];
-  const displayName = getHostname(firstSource?.url);
+  const displayName = getHostname(firstSource.url) ?? firstSource.title;
 
   return (
     <HoverCardTrigger asChild>

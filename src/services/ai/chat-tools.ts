@@ -1,6 +1,7 @@
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { embed, tool } from 'ai';
 import { z } from 'zod';
+import { APP_URL } from '@/lib/api/endpoints';
 import { prisma } from '@/lib/prisma';
 import { CourseService } from '@/services/CourseService';
 import { LESSON_CONTENT_EMBEDDING_MODEL } from '@/services/LessonContentEmbeddingService';
@@ -97,7 +98,7 @@ async function findSimilarChunks(
     courseId: row.course_id,
     courseTitle: row.course_title,
     excerpt: row.markdown.slice(0, 600),
-    url: `/courses/${row.course_id}/lessons/${row.lesson_id}`,
+    url: `${APP_URL}/courses/${row.course_id}/lessons/${row.lesson_id}`,
     similarity: Number(row.similarity),
   }));
 }
@@ -133,7 +134,7 @@ export function createChatTools(userId: string | undefined) {
           description: course.description,
           moduleCount: course._count.modules,
           lessonCount: 0, // module-level count only; lesson count requires deeper include
-          url: `/courses/${course.id}`,
+          url: `${APP_URL}/courses/${course.id}`,
         })),
       };
     },
