@@ -58,9 +58,9 @@ describe('WordbankReviewDialog', () => {
       />
     );
 
-    const feedbackGroup = screen.getByRole('group', {
-      name: messages.answerTimingLabel,
-    });
+    const feedbackGroup =
+      screen.queryByRole('group', { name: messages.answerTimingLabel }) ??
+      screen.getByRole('radiogroup', { name: messages.answerTimingLabel });
     expect(feedbackGroup).toHaveClass(
       'rounded-full',
       'bg-muted/60',
