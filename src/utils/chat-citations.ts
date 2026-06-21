@@ -104,13 +104,10 @@ export function getCitationSources(
     const output = part.output;
 
     // ── Lesson content chunks from searchLessonContent tool ──────────────────
-    if (
-      part.type === 'tool-searchLessonContent' &&
-      isRecord(output) &&
-      Array.isArray(output.results)
-    ) {
-      for (const result of output.results) {
+    if (part.type === 'tool-searchLessonContent') {
+      for (const result of getSearchResults(output)) {
         if (!isRecord(result)) continue;
+
         const url = asString(result.url);
         if (!url) continue;
 
@@ -120,6 +117,7 @@ export function getCitationSources(
           url,
         });
       }
+
       continue;
     }
 

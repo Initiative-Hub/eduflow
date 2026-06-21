@@ -76,6 +76,7 @@ export function ChatView({
                 ? [{ ...part, id: `${message.id}-file-${index}` }]
                 : []
             );
+
             if (
               !text &&
               !reasoning &&
@@ -155,11 +156,7 @@ export function ChatView({
                               mode="streaming"
                               skipHtml={false}
                               components={createChatCitationComponents(
-                                citationSources,
-                                {
-                                  sourceCount: (count) =>
-                                    t('citations.sourceCount', { count }),
-                                }
+                                citationSources
                               )}
                             >
                               {responseText}
