@@ -67,7 +67,7 @@ function WordbankFilterSelect({
             <SelectItem
               key={option.value}
               value={option.value}
-              className="focus:bg-primary/10 focus:text-foreground data-[state=checked]:bg-primary/10 data-[state=checked]:text-foreground"
+              className="focus:bg-primary/10 focus:text-foreground focus:**:text-foreground! data-[state=checked]:bg-primary/10 data-[state=checked]:text-foreground data-[state=checked]:**:text-foreground!"
             >
               {option.label}
             </SelectItem>

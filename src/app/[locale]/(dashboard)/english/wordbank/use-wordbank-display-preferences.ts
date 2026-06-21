@@ -34,11 +34,18 @@ function readPreferences(): WordbankDisplayPreferences {
 
 export function useWordbankDisplayPreferences() {
   const [preferences, setPreferences] =
-    useState<WordbankDisplayPreferences>(readPreferences);
+    useState<WordbankDisplayPreferences>(DEFAULT_PREFERENCES);
+  const [hasLoadedPreferences, setHasLoadedPreferences] = useState(false);
 
   useEffect(() => {
+    setPreferences(readPreferences());
+    setHasLoadedPreferences(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hasLoadedPreferences) return;
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(preferences));
-  }, [preferences]);
+  }, [hasLoadedPreferences, preferences]);
 
   return { preferences, setPreferences };
 }

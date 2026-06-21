@@ -10,7 +10,7 @@ const vocabularyItemSchema = z.object({
   audioUrl: z.string().max(2048).nullable().optional().default(null),
   englishDefinition: z.string().min(1).max(600),
   vietnameseTranslation: z.string().min(1).max(600),
-  exampleSentence: z.string().min(1).max(700),
+  exampleSentence: z.string().min(1).max(1000),
   sourceSnippet: z.string().max(1000).nullable().optional().default(null),
 });
 

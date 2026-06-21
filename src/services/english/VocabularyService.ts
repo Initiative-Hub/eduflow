@@ -85,6 +85,8 @@ Do not correct grammar, spelling, capitalization, punctuation, or tense in the s
       prompt: `Extract key vocabulary from this English text:\n\n${text}`,
     });
 
+    const sourceSentences = splitTextIntoSentences(text);
+
     // Enrich with Merriam-Webster audio in parallel (best-effort).
     const enriched = await Promise.all(
       output.vocabulary.map(async (item) => {
@@ -94,6 +96,7 @@ Do not correct grammar, spelling, capitalization, punctuation, or tense in the s
 
         return {
           ...item,
+          exampleSentence: findSourceExampleSentence(item, sourceSentences),
           ipa: item.ipa ?? null,
           audioUrl,
         } satisfies VocabularyItem;
@@ -102,7 +105,7 @@ Do not correct grammar, spelling, capitalization, punctuation, or tense in the s
 
     return {
       vocabulary: enriched,
-      sentences: splitTextIntoSentences(text),
+      sentences: sourceSentences,
     };
   }
 
@@ -126,6 +129,39 @@ Do not correct grammar, spelling, capitalization, punctuation, or tense in the s
       return null;
     }
   }
+}
+
+function findSourceExampleSentence(
+  item: { word: string; exampleSentence: string },
+  sourceSentences: string[]
+) {
+  const example = item.exampleSentence.trim();
+  if (sourceSentences.length === 0) return example;
+
+  const normalizedExample = normalizeSearchText(example);
+  const sentenceFromExample = sourceSentences.find(
+    (sentence) =>
+      normalizedExample &&
+      normalizeSearchText(sentence).includes(normalizedExample)
+  );
+  if (sentenceFromExample) return sentenceFromExample;
+
+  const wordPattern = new RegExp(
+    `(^|[^\\p{L}\\p{N}_])${escapeRegExp(item.word.trim())}($|[^\\p{L}\\p{N}_])`,
+    'iu'
+  );
+
+  return (
+    sourceSentences.find((sentence) => wordPattern.test(sentence)) ?? example
+  );
+}
+
+function normalizeSearchText(value: string) {
+  return value.replace(/\s+/g, ' ').trim().toLowerCase();
+}
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function splitTextIntoSentences(text: string): string[] {
