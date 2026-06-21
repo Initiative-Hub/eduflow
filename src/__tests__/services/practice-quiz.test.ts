@@ -80,6 +80,11 @@ describe('study practice quiz generation', () => {
         },
       })
       .mockResolvedValueOnce({
+        response: {
+          messages: [],
+        },
+      })
+      .mockResolvedValueOnce({
         output: {
           description: 'Review core biology concepts.',
           fillInTheBlank: [
@@ -140,8 +145,12 @@ describe('study practice quiz generation', () => {
 
     expect(mockCreateOpenRouter).toHaveBeenCalledWith({ apiKey: 'test-key' });
     expect(mockConvertToModelMessages).toHaveBeenCalled();
-    expect(mockGenerateText).toHaveBeenCalledTimes(2);
+    expect(mockGenerateText).toHaveBeenCalledTimes(3);
     expect(mockGenerateText.mock.calls[1][0]).toMatchObject({ tools });
     expect(mockGenerateText.mock.calls[1][0].stopWhen).toBeDefined();
+    expect(mockGenerateText.mock.calls[2][0]).toMatchObject({
+      output: expect.any(Object),
+      system: expect.any(String),
+    });
   });
 });
