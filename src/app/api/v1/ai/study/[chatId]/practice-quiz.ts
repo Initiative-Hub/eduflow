@@ -311,6 +311,7 @@ export async function generatePracticeQuiz({
 
   // Phase 2: generate the structured quiz from the enriched message history.
   // No tools here so Output.object resolves correctly.
+  const toolResponseMessages = toolCallResult.response.messages;
   const result = await generateText({
     model: provider(model ?? DEFAULT_MODELS.openrouter),
     output: Output.object({
@@ -319,7 +320,7 @@ export async function generatePracticeQuiz({
       description: 'A mixed interactive practice quiz for self-study.',
     }),
     system: quizSystemPrompt,
-    messages: [...modelMessages, ...toolCallResult.response.messages],
+    messages: [...modelMessages, ...toolResponseMessages],
   });
 
   return buildPracticeQuizContent(result.output);
