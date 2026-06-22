@@ -106,7 +106,7 @@
     "lucide-react": "^1.21.0",
     "media-chrome": "^4.19.2",
     "motion": "^12.40.0",
-    "nanoid": "^5.1.14",
+    "nanoid": "^5.1.15",
     "next": "16.2.9",
     "next-intl": "^4.13.0",
     "next-swagger-doc": "^0.4.1",
@@ -147,7 +147,7 @@
     "@testing-library/user-event": "^14.6.1",
     "@types/bcryptjs": "^3.0.0",
     "@types/lodash.throttle": "^4.1.9",
-    "@types/node": "^25.9.4",
+    "@types/node": "^26.0.0",
     "@types/nodemailer": "^8.0.1",
     "@types/pg": "^8.20.0",
     "@types/react": "^19.2.17",
@@ -162,7 +162,7 @@
     "sass": "^1.101.0",
     "tailwindcss": "^4.3.1",
     "typescript": "^6.0.3",
-    "vercel": "^54.14.2",
+    "vercel": "^54.14.5",
     "vitest": "^4.1.9"
   },
   "packageManager": "bun@1.3.14"
