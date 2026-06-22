@@ -337,7 +337,6 @@ export async function POST(
       },
       {
         prompt: getAiChatSystemPrompt(),
-        mode: 'replace',
         tools: chatTools,
         maxSteps: 5,
       }

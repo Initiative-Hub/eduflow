@@ -83,7 +83,7 @@ export async function generateChatSuggestions<TMessage extends UIMessage>({
           },
         ],
       },
-      { prompt, mode: 'replace' }
+      { prompt }
     );
 
     const parsed = suggestionResponseSchema.safeParse(
