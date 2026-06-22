@@ -107,14 +107,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <Button
             className="group-data-[collapsible=icon]:justify-center! relative w-full justify-start rounded-xl bg-linear-to-br from-primary to-primary/80 px-4 py-6 font-semibold text-primary-foreground shadow-md transition-all hover:from-primary/90 hover:to-primary/70 hover:shadow-lg group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:h-12 group-data-[collapsible=icon]:w-12 group-data-[collapsible=icon]:p-0!"
             size="lg"
+            asChild
           >
-            <Plus
-              data-icon="inline-start"
-              className="size-5 shrink-0 opacity-80 group-data-[collapsible=icon]:absolute group-data-[collapsible=icon]:top-1/2 group-data-[collapsible=icon]:left-1/2 group-data-[collapsible=icon]:m-0 group-data-[collapsible=icon]:-translate-x-1/2 group-data-[collapsible=icon]:-translate-y-1/2"
-            />
-            <span className="text-sm group-data-[collapsible=icon]:hidden">
-              {t('newSession')}
-            </span>
+            <Link href="/">
+              <Plus
+                data-icon="inline-start"
+                className="size-5 shrink-0 opacity-80 group-data-[collapsible=icon]:absolute group-data-[collapsible=icon]:top-1/2 group-data-[collapsible=icon]:left-1/2 group-data-[collapsible=icon]:m-0 group-data-[collapsible=icon]:-translate-x-1/2 group-data-[collapsible=icon]:-translate-y-1/2"
+              />
+              <span className="text-sm group-data-[collapsible=icon]:hidden">
+                {t('newSession')}
+              </span>
+            </Link>
           </Button>
         ) : currentCourse ? (
           <div className="flex w-full flex-col gap-1 px-2 group-data-[collapsible=icon]:hidden">
