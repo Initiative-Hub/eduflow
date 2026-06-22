@@ -27,11 +27,9 @@ import {
 import { getMessageReasoning, getMessageText } from '@/utils/chat-message';
 import { getChatSuggestionItems } from '@/utils/chat-suggestions';
 import { getStudyPracticeQuizParts } from '@/utils/study-practice-quiz';
+import { createChatCitationComponents } from './chat-citations';
 import { ChatInputAttachments } from './chat-input-attachments';
-import {
-  ChatToolInvocations,
-  createChatMarkdownComponents,
-} from './chat-markdown';
+import { ChatToolInvocations } from './chat-tools';
 
 interface ChatViewProps {
   messages: UIMessage[];
@@ -78,6 +76,7 @@ export function ChatView({
                 ? [{ ...part, id: `${message.id}-file-${index}` }]
                 : []
             );
+
             if (
               !text &&
               !reasoning &&
@@ -156,12 +155,8 @@ export function ChatView({
                               isAnimating={isTextStreaming}
                               mode="streaming"
                               skipHtml={false}
-                              components={createChatMarkdownComponents(
-                                citationSources,
-                                {
-                                  sourceCount: (count) =>
-                                    t('citations.sourceCount', { count }),
-                                }
+                              components={createChatCitationComponents(
+                                citationSources
                               )}
                             >
                               {responseText}

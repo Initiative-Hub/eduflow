@@ -12,6 +12,7 @@ import { Spinner } from '@/components/ui/spinner';
 import type { SearchSourcesState } from '@/lib/course-generation/stream-state';
 import { cn } from '@/lib/utils';
 import type { CourseSearchSourcePreview } from '@/types/course-stream-event';
+import { getHostname } from '@/utils/url-helper';
 
 export type SearchSourcesPreviewLabels = {
   title: string;
@@ -176,12 +177,4 @@ function SourceCard({ source }: { source: CourseSearchSourcePreview }) {
       </CardContent>
     </Card>
   );
-}
-
-function getHostname(url: string) {
-  try {
-    return new URL(url).hostname.replace(/^www\./, '');
-  } catch {
-    return url;
-  }
 }

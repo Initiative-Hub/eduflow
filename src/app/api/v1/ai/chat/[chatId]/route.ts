@@ -9,6 +9,7 @@ import { ChatProviderFactory } from '@/services/ai/ChatProviderFactory';
 import { CHAT_MODEL_IDS } from '@/services/ai/chat-models';
 import { DEFAULT_PROVIDER } from '@/services/ai/chat-provider.constants';
 import type { ChatProvider } from '@/services/ai/chat-provider.types';
+import { createChatTools } from '@/services/ai/chat-tools';
 import { CacheService } from '@/services/CacheService';
 import { ChatPersistenceService } from '@/services/ChatPersistenceService';
 import {
@@ -325,6 +326,8 @@ export async function POST(
     const providerName = parsedBody.data.provider ?? DEFAULT_PROVIDER;
     const provider = ChatProviderFactory.create(providerName);
 
+    const chatTools = createChatTools(userId);
+
     const result = await provider.streamChat(
       {
         messages: messagesForModel,
@@ -332,7 +335,12 @@ export async function POST(
         model: parsedBody.data.model,
         apiKey: parsedBody.data.apiKey,
       },
-      { prompt: getAiChatSystemPrompt(), mode: 'replace' }
+      {
+        prompt: getAiChatSystemPrompt(),
+        mode: 'replace',
+        tools: chatTools,
+        maxSteps: 5,
+      }
     );
 
     const stream = createUIMessageStream<UIMessage>({
