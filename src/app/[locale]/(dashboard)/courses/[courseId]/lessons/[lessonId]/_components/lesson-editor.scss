@@ -9,7 +9,7 @@
 
 .lesson-editor-content .tiptap.ProseMirror.lesson-tiptap-editor {
   min-height: 25rem;
-  padding: 1rem 0;
+  padding: 2rem 0 1rem;
   color: var(--foreground);
   outline: none;
 }
@@ -45,7 +45,6 @@ div[data-youtube-video] {
     border: 0;
   }
 }
-
 /* Lesson Presentation Mode Styles */
 .lesson-presentation-content {
   scrollbar-width: thin;

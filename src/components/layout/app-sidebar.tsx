@@ -1,22 +1,10 @@
 'use client';
 
 import {
-  Archive,
-  BookOpen,
-  Cloud,
   GraduationCap,
-  Languages,
-  MessageSquare,
   PanelLeftClose,
   PanelLeftOpen,
-  PenLine,
   Plus,
-  School,
-  Settings,
-  ShieldCheck,
-  Sparkles,
-  User,
-  UserCog,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -40,9 +28,10 @@ import {
 import { useSession } from '@/lib/auth-client';
 import { NavbarAvatar } from './navbar-avatar';
 import {
+  getAdminNavItems,
+  getAssistantNavItems,
   getCourseNavItems,
-  type SidebarItem,
-  sidebarIconClassName,
+  getSettingNavItems,
 } from './sidebar-config';
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -54,87 +43,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { state, toggleSidebar } = useSidebar();
   const [isMounted, setIsMounted] = useState(false);
 
-  const assistants: SidebarItem[] = [
-    {
-      name: t('aiChat'),
-      url: '/',
-      icon: <MessageSquare className={sidebarIconClassName} />,
-      exact: true,
-    },
-    {
-      name: t('yourInventory'),
-      url: '/inventory',
-      icon: <Archive className={sidebarIconClassName} />,
-    },
-    {
-      name: t('socraticTutor'),
-      url: '/socratic',
-      icon: <GraduationCap className={sidebarIconClassName} />,
-    },
-    {
-      name: t('englishAssistant'),
-      url: '/english',
-      icon: <Languages className={sidebarIconClassName} />,
-    },
-    {
-      name: t('writingAssistant'),
-      url: '/writing',
-      icon: <PenLine className={sidebarIconClassName} />,
-    },
-    {
-      name: t('studyAssistant'),
-      url: '/study',
-      icon: <BookOpen className={sidebarIconClassName} />,
-    },
-  ];
-
-  const settingsItems: SidebarItem[] = [
-    {
-      name: t('settingsProfile'),
-      url: '/profile',
-      icon: <User className={sidebarIconClassName} />,
-      exact: true,
-    },
-    {
-      name: t('settingsAcademicContext'),
-      url: '/settings/academic-context',
-      icon: <School className={sidebarIconClassName} />,
-      exact: true,
-    },
-    {
-      name: t('settingsSystemSettings'),
-      url: '/settings',
-      icon: <Settings className={sidebarIconClassName} />,
-      exact: true,
-    },
-    {
-      name: t('settingsAiPreferences'),
-      url: '/settings/ai-preferences',
-      icon: <Sparkles className={sidebarIconClassName} />,
-      exact: true,
-    },
-    {
-      name: t('settingsIntegrations'),
-      url: '/settings/integrations',
-      icon: <Cloud className={sidebarIconClassName} />,
-      exact: true,
-    },
-  ];
-
-  const adminItems: SidebarItem[] = [
-    {
-      name: t('adminUserManagement'),
-      url: '/admin/users',
-      icon: <UserCog className={sidebarIconClassName} />,
-      exact: true,
-    },
-    {
-      name: t('adminRoles'),
-      url: '/admin/roles',
-      icon: <ShieldCheck className={sidebarIconClassName} />,
-      exact: true,
-    },
-  ];
+  const assistants = getAssistantNavItems(t);
+  const settingsItems = getSettingNavItems(t);
+  const adminItems = getAdminNavItems(t);
 
   const match = pathname.match(/\/courses\/([^/]+)/);
   const courseId = match ? match[1] : null;
@@ -144,9 +55,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     ? courses.find((c) => c.id === courseId)
     : null;
 
-  const courseItems = courseId
-    ? getCourseNavItems(courseId, sidebarIconClassName)
-    : [];
+  const courseItems = courseId ? getCourseNavItems(courseId) : [];
 
   const isSettingsContext =
     pathname === '/profile' || pathname.startsWith('/settings');
@@ -236,10 +145,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             ) : null}
             <SidebarMenu className="mt-2 gap-3 px-4 group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:px-0">
               {menuItems.map((item) => {
-                const isActive = item.exact
-                  ? pathname === item.url
-                  : pathname === item.url ||
-                    pathname.startsWith(`${item.url}/`);
+                const isActive = item.isActive(pathname);
 
                 return (
                   <SidebarMenuItem key={item.name}>

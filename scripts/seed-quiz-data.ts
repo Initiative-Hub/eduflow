@@ -85,7 +85,6 @@ async function main() {
       data: {
         id: quiz.id,
         courseId,
-        lessonId: quiz.lessonId,
         title: quiz.title,
         description: quiz.description,
         category: quiz.category as any,
@@ -93,6 +92,9 @@ async function main() {
         deliveryMode: quiz.deliveryMode as any,
         selectionMethod: quiz.selectionMethod as any,
         questionCount: quiz.questionCount,
+        lessonQuizzes: {
+          create: [{ lessonId: quiz.lessonId }],
+        },
         quizQuestions: {
           create: quiz.questionIds.map((qId, index) => ({
             questionId: qId,

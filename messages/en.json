@@ -218,7 +218,13 @@
       "trends": "Summarize the latest trends in renewable energy"
     },
     "thinking": "EduFlow AI is reflecting...",
-    "title": "Greetings, Scholar {name}. Ready to dive deep?"
+    "title": "Greetings, Scholar {name}. Ready to dive deep?",
+    "tools": {
+      "foundContent": "Found {count} relevant {count, plural, one {section} other {sections}}",
+      "loadedCourses": "Loaded {count} {count, plural, one {course} other {courses}}",
+      "loadingCourses": "Loading your enrolled courses...",
+      "searchingContent": "Searching lesson content..."
+    }
   },
   "ApiDocsPage": {
     "cookieHint": "Sign in another tab to reuse your Better Auth session cookie.",
@@ -834,6 +840,16 @@
       "writeReview": "Write/Review"
     },
     "LessonHeader": {
+      "delete": "Delete lesson",
+      "deleteDialog": {
+        "cancel": "Cancel",
+        "confirm": "Delete lesson",
+        "deleting": "Deleting...",
+        "description": "This permanently deletes the lesson. Questions linked to it will remain in the question bank but will no longer be associated with this lesson.",
+        "title": "Delete this lesson?"
+      },
+      "deleteError": "Failed to delete lesson",
+      "deleteSuccess": "Lesson deleted successfully",
       "edit": "Edit Lesson",
       "lesson": "Lesson",
       "modules": "Modules",
@@ -914,6 +930,16 @@
       "add": "Add",
       "addLesson": "Lesson",
       "addQuiz": "Quiz",
+      "delete": "Delete module",
+      "deleteDialog": {
+        "cancel": "Cancel",
+        "confirm": "Delete module",
+        "deleting": "Deleting...",
+        "description": "This permanently deletes \"{title}\" and {count, plural, =0 {all of its content} =1 {its 1 lesson} other {its # lessons}}. Linked questions will remain in the question bank but will no longer belong to these lessons.",
+        "title": "Delete this module?"
+      },
+      "deleteError": "Failed to delete module",
+      "deleteSuccess": "Module deleted successfully",
       "noLessons": "No lessons yet"
     },
     "newCourse": "New Course",

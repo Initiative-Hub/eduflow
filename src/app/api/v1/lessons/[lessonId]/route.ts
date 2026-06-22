@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server';
-import { z } from 'zod';
+import { after, NextResponse } from 'next/server';
+import * as z from 'zod';
 import { withAuth } from '@/lib/api/middlewares';
+import { LessonContentEmbeddingService } from '@/services/LessonContentEmbeddingService';
 import { LessonService } from '@/services/LessonService';
 import { isTiptapDocument, type TiptapDocument } from '@/utils/lesson-content';
 
@@ -10,6 +11,26 @@ const patchLessonSchema = z.object({
   title: z.string().optional(),
   content: tiptapDocumentSchema.optional(),
 });
+
+const lessonParamsSchema = z.object({
+  lessonId: z.string().uuid(),
+});
+
+function scheduleLessonContentIndexing(lessonId: string) {
+  const run = async () => {
+    try {
+      await LessonContentEmbeddingService.indexLessonContent(lessonId);
+    } catch (error) {
+      console.error('Lesson content indexing failed:', error);
+    }
+  };
+
+  try {
+    after(run);
+  } catch {
+    void run();
+  }
+}
 
 /**
  * @swagger
@@ -66,6 +87,10 @@ export const PATCH = withAuth(async (req, sessionData, { params }) => {
       title: parsed.data.title,
       content: parsed.data.content,
     });
+
+    if (parsed.data.content !== undefined) {
+      scheduleLessonContentIndexing(lessonId);
+    }
 
     return NextResponse.json(updatedLesson);
   } catch (error: any) {
@@ -127,6 +152,74 @@ export const GET = withAuth(async (_req, sessionData, { params }) => {
     }
     return NextResponse.json(
       { message: 'An internal error occurred while fetching the lesson.' },
+      { status: 500 }
+    );
+  }
+});
+
+/**
+ * @swagger
+ * /api/v1/lessons/{lessonId}:
+ *   delete:
+ *     tags:
+ *       - Lessons
+ *     summary: Delete a lesson
+ *     security:
+ *       - SessionCookie: []
+ *     parameters:
+ *       - in: path
+ *         name: lessonId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       204:
+ *         description: Lesson deleted
+ *       400:
+ *         description: Invalid lesson ID
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Lesson not found
+ *       500:
+ *         description: Internal server error
+ */
+export const DELETE = withAuth(async (_req, sessionData, { params }) => {
+  try {
+    const parsedParams = lessonParamsSchema.safeParse(await params);
+
+    if (!parsedParams.success) {
+      return NextResponse.json(
+        { message: 'Invalid lesson ID' },
+        { status: 400 }
+      );
+    }
+
+    await LessonService.deleteLesson(
+      parsedParams.data.lessonId,
+      sessionData.user.id
+    );
+
+    return new NextResponse(null, { status: 204 });
+  } catch (error: unknown) {
+    const message =
+      error instanceof Error ? error.message : 'Internal Server Error';
+
+    if (message === 'Lesson not found') {
+      return NextResponse.json({ message }, { status: 404 });
+    }
+
+    if (message.includes('Unauthorized')) {
+      return NextResponse.json({ message }, { status: 403 });
+    }
+
+    console.error('Delete lesson error:', error);
+
+    return NextResponse.json(
+      { message: 'An internal error occurred while deleting the lesson.' },
       { status: 500 }
     );
   }

@@ -2,7 +2,7 @@ name: eduflow
 
 services:
   postgres:
-    image: postgres:latest
+    image: pgvector/pgvector:pg18
     container_name: eduflow_postgres
     restart: unless-stopped
     environment: 

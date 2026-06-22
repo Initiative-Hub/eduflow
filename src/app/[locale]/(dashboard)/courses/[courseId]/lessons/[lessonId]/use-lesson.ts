@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
+import { apiClient } from '@/lib/api/api-client';
 import type { TiptapDocument } from '@/utils/lesson-content';
 import { lessonService } from './lesson.service';
 
@@ -105,5 +106,30 @@ export function useGenerateSlideDeck() {
     generateSlideDeck: mutation.mutateAsync,
     isGenerating: mutation.isPending,
     error: mutation.error,
+  };
+}
+
+// TODO: Should bring to lesson.service.ts for some api usage
+export function useDeleteLesson(courseId: string) {
+  const queryClient = useQueryClient();
+  const t = useTranslations('Courses.LessonHeader');
+
+  const mutation = useMutation({
+    mutationFn: (lessonId: string) =>
+      apiClient.delete<void>(`/v1/lessons/${lessonId}`),
+
+    onSuccess: (_, lessonId) => {
+      queryClient.removeQueries({ queryKey: ['lesson', lessonId] });
+      queryClient.invalidateQueries({ queryKey: ['modules', courseId] });
+      toast.success(t('deleteSuccess'));
+    },
+    onError: (error: { message?: string }) => {
+      toast.error(error.message || t('deleteError'));
+    },
+  });
+
+  return {
+    isDeletingLesson: mutation.isPending,
+    handleDeleteLesson: mutation.mutate,
   };
 }

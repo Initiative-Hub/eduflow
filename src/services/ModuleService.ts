@@ -1,3 +1,5 @@
+import { getCoursePermissions } from '@/lib/permissions/course-permission';
+import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
 import { prisma } from '@/lib/prisma';
 
 export class ModuleService {
@@ -39,6 +41,32 @@ export class ModuleService {
           },
         },
       },
+    });
+  }
+
+  static async deleteModule(moduleId: string, userId: string) {
+    const moduleRecord = await prisma.module.findUnique({
+      where: { id: moduleId },
+      select: {
+        id: true,
+        courseId: true,
+      },
+    });
+
+    if (!moduleRecord) throw new Error('Module not found');
+
+    const { containPermission } = await getCoursePermissions(
+      userId,
+      moduleRecord.courseId
+    );
+
+    if (!containPermission(COURSE_PERMISSION.COURSE_CONTENT_DELETE)) {
+      throw new Error('Unauthorized: Missing COURSE_CONTENT_DELETE permission');
+    }
+
+    return prisma.module.delete({
+      where: { id: moduleId },
+      select: { id: true },
     });
   }
 }

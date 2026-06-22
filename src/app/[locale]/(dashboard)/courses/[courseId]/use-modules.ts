@@ -14,6 +14,7 @@ export interface Lesson {
   orderIndex: number;
   content: TiptapDocument;
   canEdit?: boolean;
+  canDelete?: boolean;
   /** Most recently generated presentation deck reference (if any). */
   presentationDeckId?: string | null;
   presentationDeckKey?: string | null;
@@ -142,5 +143,39 @@ export function useModules(courseId: string) {
     resetGeneration: reset,
     generateCourseModules,
     getAdjacentLessons,
+  };
+}
+
+export function useDeleteModule(courseId: string) {
+  const queryClient = useQueryClient();
+  const t = useTranslations('Courses.ModuleAccordion');
+
+  const mutation = useMutation({
+    mutationFn: (moduleId: string) =>
+      apiClient.delete<void>(`/v1/modules/${moduleId}`),
+
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ['modules', courseId],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['question-bank', courseId],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['quizzes', courseId],
+        }),
+      ]);
+      toast.success(t('deleteSuccess'));
+    },
+
+    onError: (error: { message?: string }) => {
+      toast.error(error.message || t('deleteError'));
+    },
+  });
+
+  return {
+    deleteModule: mutation.mutate,
+    isDeletingModule: mutation.isPending,
   };
 }
