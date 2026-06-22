@@ -12,6 +12,7 @@ export async function seedModule({
       courseId,
       title: moduleData.title,
       orderIndex: moduleData.orderIndex,
+      deletedAt: null,
     },
     create: {
       id: moduleData.id,
