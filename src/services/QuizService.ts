@@ -86,7 +86,12 @@ export class QuizService {
     const linkedLessons = await prisma.lesson.findMany({
       where: {
         id: { in: data.lessonIds },
-        module: { courseId },
+        deletedAt: null,
+        module: {
+          courseId,
+          deletedAt: null,
+          course: { deletedAt: null },
+        },
       },
       select: { id: true },
     });

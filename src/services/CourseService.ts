@@ -175,7 +175,10 @@ export class CourseService {
       orderBy: { createdAt: 'desc' },
       include: {
         _count: {
-          select: { modules: true, enrollments: true },
+          select: {
+            modules: { where: { deletedAt: null } },
+            enrollments: true,
+          },
         },
       },
     });
@@ -199,7 +202,10 @@ export class CourseService {
       orderBy: { updatedAt: 'desc' },
       include: {
         _count: {
-          select: { modules: true, enrollments: true },
+          select: {
+            modules: { where: { deletedAt: null } },
+            enrollments: true,
+          },
         },
       },
     });
@@ -226,6 +232,7 @@ export class CourseService {
 
     const where = {
       AND: [
+        { deletedAt: null },
         accessWhere,
         ...(params.publicOnly ? [{ isPublished: true }] : []),
         ...(search
@@ -271,7 +278,10 @@ export class CourseService {
           createdAt: true,
           updatedAt: true,
           _count: {
-            select: { modules: true, enrollments: true },
+            select: {
+              modules: { where: { deletedAt: null } },
+              enrollments: true,
+            },
           },
         },
       }),
@@ -614,7 +624,7 @@ export class CourseService {
 
     // Get the current max order index for the modules of this course
     const lastModule = await prisma.module.findFirst({
-      where: { courseId },
+      where: { courseId, deletedAt: null },
       orderBy: { orderIndex: 'desc' },
       select: { orderIndex: true },
     });

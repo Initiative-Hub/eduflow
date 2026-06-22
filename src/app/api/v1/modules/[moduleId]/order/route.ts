@@ -90,8 +90,12 @@ const handler: AuthHandler = async (req, _sessionData, { params }) => {
     const { moduleId } = parsedParams.data;
 
     // Verify module exists and get current layout
-    const moduleRecord = await prisma.module.findUnique({
-      where: { id: moduleId },
+    const moduleRecord = await prisma.module.findFirst({
+      where: {
+        id: moduleId,
+        deletedAt: null,
+        course: { deletedAt: null },
+      },
       select: { id: true, itemLayout: true },
     });
 

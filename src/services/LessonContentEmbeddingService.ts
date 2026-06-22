@@ -41,8 +41,15 @@ export class LessonContentEmbeddingService {
   static async indexLessonContent(
     lessonId: string
   ): Promise<IndexLessonContentResult> {
-    const lesson = await prisma.lesson.findUnique({
-      where: { id: lessonId },
+    const lesson = await prisma.lesson.findFirst({
+      where: {
+        id: lessonId,
+        deletedAt: null,
+        module: {
+          deletedAt: null,
+          course: { deletedAt: null },
+        },
+      },
       select: {
         id: true,
         content: true,
