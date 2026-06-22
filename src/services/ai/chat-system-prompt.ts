@@ -1,5 +1,10 @@
-import { SYSTEM_PROMPT } from './chat-provider.constants';
+import { GENERAL_AI_TOOL_SYSTEM_PROMPT } from './chat-provider.constants';
 
-export function resolveChatSystemPrompt(prompt: string): string {
-  return `${SYSTEM_PROMPT}\n\n=== ADDITIONAL CONTEXT ===\n${prompt}`;
+export function resolveChatSystemPrompt(specificSystemPrompt: string): string {
+  const specificPrompt = specificSystemPrompt.trim();
+  const generalPrompt = GENERAL_AI_TOOL_SYSTEM_PROMPT.trim();
+
+  return specificPrompt
+    ? `${specificPrompt}\n\n${generalPrompt}`
+    : generalPrompt;
 }
