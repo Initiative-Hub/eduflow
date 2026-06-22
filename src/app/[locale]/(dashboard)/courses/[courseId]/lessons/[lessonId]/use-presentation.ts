@@ -2,11 +2,7 @@ import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import type { TiptapDocument } from '@/utils/lesson-content';
-import {
-  useGenerateSlideDeck,
-  useLesson,
-  usePlanPresentation,
-} from './use-lesson';
+import { useGenerateSlideDeck, useLesson } from './use-lesson';
 
 type Step = 'input' | 'planning' | 'planned' | 'generating' | 'generated';
 
@@ -53,7 +49,6 @@ export function usePresentation(options: {
   const lessonId = params?.lessonId as string;
   const containerRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const { planPresentation } = usePlanPresentation();
   const { generateSlideDeck } = useGenerateSlideDeck();
   const { lesson, isLoading: isLessonLoading } = useLesson(lessonId);
   const savedDeckId = lesson?.presentationDeckId;
@@ -73,7 +68,7 @@ export function usePresentation(options: {
   // Dynamic Outlines fallback generator
   const generateOutlines = useCallback(
     (userPrompt: string, slideDuration: string): PlannedSlide[] => {
-      if (!content || !content.content) return [];
+      if (!content?.content) return [];
 
       let maxSlides = 5;
       if (slideDuration === '5') maxSlides = 3;

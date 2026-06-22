@@ -2,7 +2,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import type { TiptapDocument } from '@/utils/lesson-content';
-import type { Lesson } from '../../use-modules';
 import { lessonService } from './lesson.service';
 
 /**
