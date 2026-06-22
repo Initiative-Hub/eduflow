@@ -67,8 +67,8 @@ const mockCreateOpenRouter = createOpenRouter as unknown as ReturnType<
 describe('LessonContentEmbeddingService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    lesson.findFirst.mockImplementation(
-      (...args) => new lesson.findUnique(...args)
+    lesson.findFirst.mockImplementation((...args) =>
+      (lesson.findUnique as any)(...args)
     );
     process.env.OPENROUTER_API_KEY = 'test-key';
     mocks.transactionClient.$executeRaw.mockResolvedValue(1);
