@@ -14,21 +14,20 @@ describe('sidebar-config', () => {
     expect(homeItem.isActive('/')).toBe(true);
     expect(homeItem.isActive('/inventory')).toBe(false);
     expect(inventoryItem.isActive('/inventory')).toBe(true);
-    expect(inventoryItem.isActive('/inventory/books')).toBe(true);
+    expect(inventoryItem.isActive('/inventory/books')).toBe(false);
   });
 
   it('keeps settings root item inactive on child routes', () => {
     const settingsItems = getSettingNavItems(t as never);
-    const systemSettingsItem = settingsItems[2];
 
-    expect(systemSettingsItem.isActive('/settings')).toBe(true);
-    expect(systemSettingsItem.isActive('/settings/ai-preferences')).toBe(true);
+    expect(settingsItems[2].isActive('/settings')).toBe(true);
+    expect(settingsItems[2].isActive('/settings/ai-preferences')).toBe(false);
   });
 
   it('supports course items that only match the course root route', () => {
     const courseItems = getCourseNavItems('course-123');
 
     expect(courseItems[0].isActive('/courses/course-123')).toBe(true);
-    expect(courseItems[0].isActive('/courses/course-123/chat')).toBe(true);
+    expect(courseItems[0].isActive('/courses/course-123/chat')).toBe(false);
   });
 });
