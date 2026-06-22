@@ -101,7 +101,28 @@ export function getCitationSources(
     if (!('state' in part) || part.state !== 'output-available') continue;
     if (!('output' in part)) continue;
 
-    for (const result of getSearchResults(part.output)) {
+    const output = part.output;
+
+    // ── Lesson content chunks from searchLessonContent tool ──────────────────
+    if (part.type === 'tool-searchLessonContent') {
+      for (const result of getSearchResults(output)) {
+        if (!isRecord(result)) continue;
+
+        const url = asString(result.url);
+        if (!url) continue;
+
+        addSource(sources, seenUrls, {
+          title: asString(result.lessonTitle),
+          description: asString(result.excerpt),
+          url,
+        });
+      }
+
+      continue;
+    }
+
+    // ── Generic web-search tool results (existing behaviour) ─────────────────
+    for (const result of getSearchResults(output)) {
       if (!isRecord(result)) continue;
 
       const url = asString(result.url);

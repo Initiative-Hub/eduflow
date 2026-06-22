@@ -14,6 +14,7 @@ import {
 import { ChatProviderFactory } from '@/services/ai/ChatProviderFactory';
 import { DEFAULT_PROVIDER } from '@/services/ai/chat-provider.constants';
 import type { ChatProvider } from '@/services/ai/chat-provider.types';
+import { createChatTools } from '@/services/ai/chat-tools';
 import { CacheService } from '@/services/CacheService';
 import { ChatPersistenceService } from '@/services/ChatPersistenceService';
 import {
@@ -25,7 +26,7 @@ import { generatePracticeQuiz } from './practice-quiz';
 import {
   generateStudySuggestions,
   getStudySystemPrompt,
-} from './study.constant';
+} from './study.constants';
 export const maxDuration = 30;
 
 const studyRequestSchema = z.object({
@@ -275,15 +276,19 @@ export async function POST(
     const providerName = parsedBody.data.provider ?? DEFAULT_PROVIDER;
     const provider = ChatProviderFactory.create(providerName);
     const systemPrompt = getStudySystemPrompt(parsedBody.data.mode);
+    const courseTools = createChatTools(userId);
 
     const tools =
       parsedBody.data.mode === 'research'
-        ? { webSearch: tavilySearch({ includeFavicon: true, maxResults: 10 }) }
-        : undefined;
+        ? {
+            ...courseTools,
+            webSearch: tavilySearch({ includeFavicon: true, maxResults: 10 }),
+          }
+        : courseTools;
 
-    const maxSteps = parsedBody.data.mode === 'research' ? 5 : undefined;
+    const maxSteps = 5;
 
-    //TODO: Try to simpler and decouple these code
+    // TODO: Try to simpler and decouple these code
     if (parsedBody.data.mode === 'practiceTest') {
       const stream = createUIMessageStream<StudyUIMessage>({
         originalMessages: messagesForModel as StudyUIMessage[],
@@ -294,6 +299,8 @@ export async function POST(
             quizOptions: parsedBody.data.quizOptions,
             model: parsedBody.data.model,
             apiKey: parsedBody.data.apiKey,
+            tools,
+            maxSteps,
           });
 
           const assistantText =

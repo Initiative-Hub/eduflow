@@ -218,7 +218,13 @@
       "trends": "Summarize the latest trends in renewable energy"
     },
     "thinking": "EduFlow AI is reflecting...",
-    "title": "Greetings, Scholar {name}. Ready to dive deep?"
+    "title": "Greetings, Scholar {name}. Ready to dive deep?",
+    "tools": {
+      "foundContent": "Found {count} relevant {count, plural, one {section} other {sections}}",
+      "loadedCourses": "Loaded {count} {count, plural, one {course} other {courses}}",
+      "loadingCourses": "Loading your enrolled courses...",
+      "searchingContent": "Searching lesson content..."
+    }
   },
   "ApiDocsPage": {
     "cookieHint": "Sign in another tab to reuse your Better Auth session cookie.",

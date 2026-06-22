@@ -120,13 +120,13 @@ model CourseRole {
 }
 
 model PlatformPermission {
-  id             String                @id @default(uuid())
-  platformRoleId String                @map("platform_role_id")
-  platformRole   PlatformRole          @relation(fields: [platformRoleId], references: [id], onDelete: Cascade)
+  id             String       @id @default(uuid())
+  platformRoleId String       @map("platform_role_id")
+  platformRole   PlatformRole @relation(fields: [platformRoleId], references: [id], onDelete: Cascade)
   permission     String
-  enabled        Boolean               @default(true)
-  createdAt      DateTime              @default(now()) @map("created_at")
-  updatedAt      DateTime              @updatedAt @map("updated_at")
+  enabled        Boolean      @default(true)
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
 
   @@unique([platformRoleId, permission])
   @@index([platformRoleId, enabled])
@@ -134,15 +134,15 @@ model PlatformPermission {
 }
 
 model CoursePermission {
-  id           String              @id @default(uuid())
-  courseId     String              @map("course_id")
-  course       Course              @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  courseRoleId String              @map("course_role_id")
-  courseRole   CourseRole          @relation(fields: [courseRoleId], references: [id], onDelete: Cascade)
+  id           String     @id @default(uuid())
+  courseId     String     @map("course_id")
+  course       Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseRoleId String     @map("course_role_id")
+  courseRole   CourseRole @relation(fields: [courseRoleId], references: [id], onDelete: Cascade)
   permission   String
-  enabled      Boolean             @default(true)
-  createdAt    DateTime            @default(now()) @map("created_at")
-  updatedAt    DateTime            @updatedAt @map("updated_at")
+  enabled      Boolean    @default(true)
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
 
   @@unique([courseId, courseRoleId, permission])
   @@index([courseId, courseRoleId, enabled])
@@ -316,16 +316,42 @@ model Module {
 }
 
 model Lesson {
-  id         String     @id @default(uuid())
-  moduleId   String     @map("module_id")
-  module     Module     @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  title      String
-  content    Json?
-  orderIndex Int        @default(0) @map("order_index")
-  questions  Question[]
+  id            String               @id @default(uuid())
+  moduleId      String               @map("module_id")
+  module        Module               @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  title         String
+  content       Json?
+  orderIndex    Int                  @default(0) @map("order_index")
+  contentChunks LessonContentChunk[]
+  questions     Question[]
   lessonQuizzes LessonQuiz[]
 
   @@map("lesson")
+}
+
+model LessonContentChunk {
+  id String @id @default(uuid())
+
+  lessonId String @map("lesson_id")
+  lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  contentHash String @map("content_hash")
+  chunkIndex  Int    @map("chunk_index")
+  markdown    String @db.Text
+  tokenCount  Int    @map("token_count")
+
+  embeddingModel String                      @map("embedding_model")
+  embedding      Unsupported("vector(1536)")
+
+  metadata  Json?    @default("{}")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([lessonId, chunkIndex])
+  @@index([lessonId])
+  @@index([contentHash])
+  @@index([embedding], map: "lesson_content_chunk_embedding_hnsw_idx")
+  @@map("lesson_content_chunk")
 }
 
 // ─── Quiz System ─────────────────────────────────────────────────────────────
