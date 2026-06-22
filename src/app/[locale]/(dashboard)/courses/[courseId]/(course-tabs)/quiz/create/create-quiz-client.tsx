@@ -7,8 +7,8 @@ import { useTranslations } from 'next-intl';
 import { QuizForm, type QuizFormSubmitData } from '@/components/quiz/quiz-form';
 import { Button } from '@/components/ui/button';
 import type { QuestionSubType, QuizCategory } from '@/lib/quiz-template';
-import { useModules } from '../../use-modules';
-import { useQuestionBank } from '../../use-question-bank';
+import { useModules } from '../../../use-modules';
+import { useQuestionBank } from '../../../use-question-bank';
 
 interface CreateQuizClientProps {
   courseId: string;
