@@ -1,5 +1,5 @@
-import { embedMany } from 'ai';
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
+import { embedMany } from 'ai';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { prisma } from '@/lib/prisma';
 import { tiptapDocumentToMarkdown } from '@/lib/tiptap-markdown';
@@ -67,8 +67,8 @@ const mockCreateOpenRouter = createOpenRouter as unknown as ReturnType<
 describe('LessonContentEmbeddingService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    lesson.findFirst.mockImplementation((...args) =>
-      lesson.findUnique(...args)
+    lesson.findFirst.mockImplementation(
+      (...args) => new lesson.findUnique(...args)
     );
     process.env.OPENROUTER_API_KEY = 'test-key';
     mocks.transactionClient.$executeRaw.mockResolvedValue(1);
