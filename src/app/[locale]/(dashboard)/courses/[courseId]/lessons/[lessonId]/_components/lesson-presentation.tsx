@@ -76,16 +76,16 @@ export function LessonPresentation({
         return (
           <div className="flex h-full min-h-[30vh] flex-col items-center justify-center py-6 text-center">
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.08),transparent_60%)]" />
-            <h1 className="mb-6 bg-gradient-to-r from-blue-400 via-indigo-200 to-purple-400 bg-clip-text font-extrabold text-3xl text-transparent tracking-tight drop-shadow-md md:text-4xl lg:text-5xl">
+            <h1 className="mb-6 bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-650 bg-clip-text font-extrabold text-3xl text-transparent tracking-tight drop-shadow-md md:text-4xl lg:text-5xl dark:from-blue-400 dark:via-indigo-200 dark:to-purple-400">
               {slideTitle}
             </h1>
             {bindings.subtitle && (
-              <p className="mb-8 max-w-2xl font-medium text-base text-slate-300 leading-relaxed md:text-lg">
+              <p className="mb-8 max-w-2xl font-medium text-base text-slate-650 leading-relaxed md:text-lg dark:text-slate-300">
                 {bindings.subtitle}
               </p>
             )}
             {bindings.author && (
-              <div className="inline-flex items-center gap-2 rounded-full border border-slate-800 bg-slate-900/60 px-4 py-1.5 font-semibold text-primary text-xs uppercase tracking-wide">
+              <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-4 py-1.5 font-semibold text-primary text-xs uppercase tracking-wide dark:border-slate-800 dark:bg-slate-900/60">
                 {bindings.author}
               </div>
             )}
@@ -95,7 +95,7 @@ export function LessonPresentation({
       case 'AGENDA_OUTLINE':
         return (
           <div className="w-full py-2 text-left">
-            <h2 className="mb-6 border-slate-800 border-b pb-3 font-extrabold text-slate-100 text-xl md:text-2xl">
+            <h2 className="mb-6 border-slate-200 border-b pb-3 font-extrabold text-slate-900 text-xl md:text-2xl dark:border-slate-800 dark:text-slate-100">
               {slideTitle}
             </h2>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -103,12 +103,12 @@ export function LessonPresentation({
                 bindings.items.map((item: string, index: number) => (
                   <div
                     key={index}
-                    className="flex items-center gap-4 rounded-xl border border-slate-800/80 bg-slate-950/45 p-4 transition-colors hover:border-slate-700"
+                    className="flex items-center gap-4 rounded-xl border border-slate-200 bg-slate-50/50 p-4 transition-colors hover:border-slate-300 dark:border-slate-800/80 dark:bg-slate-950/45 dark:hover:border-slate-700"
                   >
                     <span className="font-extrabold text-lg text-primary/80">
                       {(index + 1).toString().padStart(2, '0')}
                     </span>
-                    <span className="font-semibold text-slate-200 text-sm leading-snug">
+                    <span className="font-semibold text-slate-800 text-sm leading-snug dark:text-slate-200">
                       {item}
                     </span>
                   </div>
@@ -124,11 +124,11 @@ export function LessonPresentation({
             <span className="mb-4 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 font-extrabold text-[10px] text-primary uppercase tracking-widest">
               Next Module
             </span>
-            <h1 className="mb-4 font-extrabold text-2xl text-slate-100 tracking-wide md:text-4xl">
+            <h1 className="mb-4 font-extrabold text-2xl text-slate-900 tracking-wide md:text-4xl dark:text-slate-100">
               {slideTitle}
             </h1>
             {bindings.sub_module_name && (
-              <div className="mt-2 font-semibold text-lg text-slate-400 italic">
+              <div className="mt-2 font-semibold text-lg text-slate-500 italic dark:text-slate-400">
                 {bindings.sub_module_name}
               </div>
             )}
@@ -138,7 +138,7 @@ export function LessonPresentation({
       case 'TITLE_BULLETS':
         return (
           <div className="w-full py-2 text-left">
-            <h2 className="mb-6 border-slate-800 border-b pb-3 font-extrabold text-slate-100 text-xl md:text-2xl">
+            <h2 className="mb-6 border-slate-200 border-b pb-3 font-extrabold text-slate-900 text-xl md:text-2xl dark:border-slate-800 dark:text-slate-100">
               {slideTitle}
             </h2>
             <ul className="max-w-3xl space-y-4">
@@ -146,7 +146,7 @@ export function LessonPresentation({
                 bindings.bullets.map((bullet: string, index: number) => (
                   <li
                     key={index}
-                    className="flex items-start gap-3 text-slate-300"
+                    className="flex items-start gap-3 text-slate-700 dark:text-slate-300"
                   >
                     <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-primary/10 font-bold text-primary text-xs">
                       ✓
@@ -163,12 +163,12 @@ export function LessonPresentation({
       case 'TWO_COLUMN_SPLIT':
         return (
           <div className="w-full py-2 text-left">
-            <h2 className="mb-6 border-slate-800 border-b pb-3 font-extrabold text-slate-100 text-xl md:text-2xl">
+            <h2 className="mb-6 border-slate-200 border-b pb-3 font-extrabold text-slate-900 text-xl md:text-2xl dark:border-slate-800 dark:text-slate-100">
               {slideTitle}
             </h2>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <div className="rounded-2xl border border-slate-800 bg-slate-950/30 p-5">
-                <h3 className="mb-3 border-slate-800 border-b pb-2 font-bold text-slate-200 text-sm">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/40 p-5 dark:border-slate-800 dark:bg-slate-950/30">
+                <h3 className="mb-3 border-slate-200 border-b pb-2 font-bold text-slate-805 text-sm dark:border-slate-800 dark:text-slate-200">
                   {bindings.left_col_title || 'Column A'}
                 </h3>
                 <ul className="space-y-2.5">
@@ -177,7 +177,7 @@ export function LessonPresentation({
                       (bullet: string, index: number) => (
                         <li
                           key={index}
-                          className="flex items-start gap-2 text-slate-300 text-xs"
+                          className="flex items-start gap-2 text-slate-700 text-xs dark:text-slate-300"
                         >
                           <span className="mt-0.5 text-primary">•</span>
                           <span className="font-medium leading-relaxed">
@@ -188,8 +188,8 @@ export function LessonPresentation({
                     )}
                 </ul>
               </div>
-              <div className="rounded-2xl border border-slate-800 bg-slate-950/30 p-5">
-                <h3 className="mb-3 border-slate-800 border-b pb-2 font-bold text-slate-200 text-sm">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/40 p-5 dark:border-slate-800 dark:bg-slate-950/30">
+                <h3 className="mb-3 border-slate-200 border-b pb-2 font-bold text-slate-805 text-sm dark:border-slate-800 dark:text-slate-200">
                   {bindings.right_col_title || 'Column B'}
                 </h3>
                 <ul className="space-y-2.5">
@@ -198,7 +198,7 @@ export function LessonPresentation({
                       (bullet: string, index: number) => (
                         <li
                           key={index}
-                          className="flex items-start gap-2 text-slate-300 text-xs"
+                          className="flex items-start gap-2 text-slate-700 text-xs dark:text-slate-300"
                         >
                           <span className="mt-0.5 text-indigo-400">•</span>
                           <span className="font-medium leading-relaxed">
@@ -219,14 +219,14 @@ export function LessonPresentation({
             <span className="select-none font-serif text-4xl text-primary/30 leading-none">
               “
             </span>
-            <blockquote className="-mt-3 mb-6 font-medium text-lg text-slate-100 italic leading-relaxed md:text-xl lg:text-2xl">
+            <blockquote className="-mt-3 mb-6 font-medium text-lg text-slate-800 italic leading-relaxed md:text-xl lg:text-2xl dark:text-slate-100">
               {bindings.quote}
             </blockquote>
             <span className="-mt-3 select-none font-serif text-4xl text-primary/30 leading-none">
               ”
             </span>
             {bindings.author_or_source && (
-              <cite className="block border-slate-800 border-t px-6 pt-3 font-bold text-[10px] text-slate-400 uppercase not-italic tracking-widest">
+              <cite className="block border-slate-200 border-t px-6 pt-3 font-bold text-[10px] text-slate-500 uppercase not-italic tracking-widest dark:border-slate-800 dark:text-slate-400">
                 {bindings.author_or_source}
               </cite>
             )}
@@ -236,7 +236,7 @@ export function LessonPresentation({
       case 'KPI_BIG_NUMBER':
         return (
           <div className="w-full py-2 text-left">
-            <h2 className="mb-8 border-slate-800 border-b pb-3 font-extrabold text-slate-100 text-xl md:text-2xl">
+            <h2 className="mb-8 border-slate-200 border-b pb-3 font-extrabold text-slate-900 text-xl md:text-2xl dark:border-slate-800 dark:text-slate-100">
               {slideTitle}
             </h2>
             <div className="flex flex-wrap justify-around gap-6">
@@ -244,12 +244,12 @@ export function LessonPresentation({
                 bindings.metrics.map((metric: any, index: number) => (
                   <div
                     key={index}
-                    className="min-w-[150px] flex-1 rounded-2xl border border-slate-800 bg-slate-950/40 p-5 text-center shadow-inner"
+                    className="min-w-[150px] flex-1 rounded-2xl border border-slate-200 bg-slate-50/30 p-5 text-center shadow-inner dark:border-slate-800 dark:bg-slate-950/40"
                   >
-                    <div className="mb-2 bg-gradient-to-r from-emerald-400 to-teal-200 bg-clip-text font-extrabold text-3xl text-transparent md:text-5xl">
+                    <div className="mb-2 bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text font-extrabold text-3xl text-transparent md:text-5xl dark:from-emerald-400 dark:to-teal-200">
                       {metric.value}
                     </div>
-                    <div className="font-bold text-slate-400 text-xs uppercase tracking-wider">
+                    <div className="font-bold text-slate-500 text-xs uppercase tracking-wider dark:text-slate-400">
                       {metric.label}
                     </div>
                   </div>
@@ -261,12 +261,12 @@ export function LessonPresentation({
       case 'CHART_INSIGHT':
         return (
           <div className="w-full py-2 text-left">
-            <h2 className="mb-6 border-slate-800 border-b pb-3 font-extrabold text-slate-100 text-xl md:text-2xl">
+            <h2 className="mb-6 border-slate-200 border-b pb-3 font-extrabold text-slate-900 text-xl md:text-2xl dark:border-slate-800 dark:text-slate-100">
               {slideTitle}
             </h2>
             <div className="grid grid-cols-1 items-center gap-6 md:grid-cols-5">
-              <div className="flex h-40 flex-col justify-center rounded-2xl border border-slate-800 bg-slate-950/60 p-5 md:col-span-3">
-                <span className="mb-3 block font-bold text-[10px] text-slate-500 uppercase tracking-wider">
+              <div className="flex h-40 flex-col justify-center rounded-2xl border border-slate-200 bg-slate-50 p-5 md:col-span-3 dark:border-slate-800 dark:bg-slate-950/60">
+                <span className="mb-3 block font-bold text-[10px] text-slate-650 uppercase tracking-wider dark:text-slate-500">
                   Data Projection ({bindings.chart_type || 'bar'} chart)
                 </span>
                 <div className="flex h-20 items-end justify-around gap-2">
@@ -291,7 +291,7 @@ export function LessonPresentation({
                             className="w-full max-w-[20px] rounded-t bg-gradient-to-t from-primary/40 to-primary transition-all duration-500"
                             style={{ height: `${heightPct}%` }}
                           />
-                          <span className="mt-1.5 max-w-full truncate font-bold text-[9px] text-slate-500">
+                          <span className="mt-1.5 max-w-full truncate font-bold text-[9px] text-slate-650 dark:text-slate-500">
                             {item.label}
                           </span>
                         </div>
@@ -300,11 +300,11 @@ export function LessonPresentation({
                 </div>
               </div>
               <div className="md:col-span-2">
-                <div className="rounded-xl border border-slate-800 border-dashed bg-slate-900/10 p-4">
+                <div className="rounded-xl border border-slate-200 border-dashed bg-slate-100 p-4 dark:border-slate-800 dark:bg-slate-900/10">
                   <span className="mb-1.5 block font-extrabold text-[10px] text-primary uppercase tracking-widest">
                     Strategic Insight
                   </span>
-                  <p className="font-medium text-slate-300 text-xs leading-relaxed md:text-sm">
+                  <p className="font-medium text-slate-700 text-xs leading-relaxed md:text-sm dark:text-slate-300">
                     {bindings.insight_text}
                   </p>
                 </div>
@@ -316,30 +316,30 @@ export function LessonPresentation({
       case 'DATA_TABLE':
         return (
           <div className="w-full py-2 text-left">
-            <h2 className="mb-6 border-slate-800 border-b pb-3 font-extrabold text-slate-100 text-xl md:text-2xl">
+            <h2 className="mb-6 border-slate-200 border-b pb-3 font-extrabold text-slate-900 text-xl md:text-2xl dark:border-slate-800 dark:text-slate-100">
               {slideTitle}
             </h2>
-            <div className="overflow-x-auto rounded-xl border border-slate-800">
-              <table className="w-full border-collapse text-left text-slate-300 text-xs">
-                <thead className="bg-slate-950 font-bold text-[10px] text-slate-200 uppercase tracking-wider">
+            <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+              <table className="w-full border-collapse text-left text-slate-700 text-xs dark:text-slate-300">
+                <thead className="bg-slate-100 font-bold text-[10px] text-slate-800 uppercase tracking-wider dark:bg-slate-950 dark:text-slate-200">
                   <tr>
                     {Array.isArray(bindings.headers) &&
                       bindings.headers.map((h: string, idx: number) => (
                         <th
                           key={idx}
-                          className="border-slate-800 border-b px-4 py-2.5"
+                          className="border-slate-200 border-b px-4 py-2.5 dark:border-slate-800"
                         >
                           {h}
                         </th>
                       ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800 bg-slate-900/10">
+                <tbody className="divide-y divide-slate-200 bg-slate-50/50 dark:divide-slate-800 dark:bg-slate-900/10">
                   {Array.isArray(bindings.rows) &&
                     bindings.rows.map((row: string[], idx: number) => (
                       <tr
                         key={idx}
-                        className="transition-colors hover:bg-slate-800/20"
+                        className="transition-colors hover:bg-slate-100 dark:hover:bg-slate-800/20"
                       >
                         {row.map((cell: string, cellIdx: number) => (
                           <td key={cellIdx} className="px-4 py-2.5">
@@ -357,23 +357,23 @@ export function LessonPresentation({
       case 'MEDIA_TEXT':
         return (
           <div className="w-full py-2 text-left">
-            <h2 className="mb-6 border-slate-800 border-b pb-3 font-extrabold text-slate-100 text-xl md:text-2xl">
+            <h2 className="mb-6 border-slate-200 border-b pb-3 font-extrabold text-slate-900 text-xl md:text-2xl dark:border-slate-800 dark:text-slate-100">
               {slideTitle}
             </h2>
             <div className="grid grid-cols-1 items-center gap-6 md:grid-cols-2">
-              <div className="relative flex h-40 flex-col items-center justify-center overflow-hidden rounded-2xl border border-slate-800 border-dashed bg-slate-950/60 p-5 text-center">
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/50 to-transparent" />
+              <div className="relative flex h-40 flex-col items-center justify-center overflow-hidden rounded-2xl border border-slate-200 border-dashed bg-slate-50 p-5 text-center dark:border-slate-800 dark:bg-slate-950/60">
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-100/50 to-transparent dark:from-slate-950/50" />
                 <span className="z-10 mb-1 font-bold text-[10px] text-primary/80 uppercase tracking-widest">
                   Suggested Visual Asset
                 </span>
-                <p className="z-10 max-w-xs font-medium text-[10px] text-slate-400 leading-relaxed">
+                <p className="z-10 max-w-xs font-medium text-[10px] text-slate-650 leading-relaxed dark:text-slate-400">
                   "{bindings.image_prompt_description}"
                 </p>
-                <div className="z-10 mt-3 rounded-full border border-slate-800 bg-slate-900/80 px-3 py-0.5 font-semibold text-[9px] text-slate-500 uppercase tracking-wider">
+                <div className="z-10 mt-3 rounded-full border border-slate-200 bg-slate-100 px-3 py-0.5 font-semibold text-[9px] text-slate-600 uppercase tracking-wider dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-500">
                   AI Image Generator Prompt
                 </div>
               </div>
-              <div className="font-medium text-slate-300 text-xs leading-relaxed md:text-sm">
+              <div className="font-medium text-slate-705 text-xs leading-relaxed md:text-sm dark:text-slate-300">
                 {bindings.body_text}
               </div>
             </div>
@@ -383,19 +383,19 @@ export function LessonPresentation({
       case 'TIMELINE_MILESTONES':
         return (
           <div className="w-full py-2 text-left">
-            <h2 className="mb-6 border-slate-800 border-b pb-3 font-extrabold text-slate-100 text-xl md:text-2xl">
+            <h2 className="mb-6 border-slate-200 border-b pb-3 font-extrabold text-slate-900 text-xl md:text-2xl dark:border-slate-800 dark:text-slate-100">
               {slideTitle}
             </h2>
             <div className="relative ml-2 space-y-4 border-primary/20 border-l-2 pl-5">
               {Array.isArray(bindings.events) &&
                 bindings.events.map((event: any, index: number) => (
                   <div key={index} className="relative">
-                    <span className="absolute top-1.5 -left-[27px] flex h-3.5 w-3.5 items-center justify-center rounded-full border border-primary bg-slate-950 text-primary" />
+                    <span className="absolute top-1.5 -left-[27px] flex h-3.5 w-3.5 items-center justify-center rounded-full border border-primary bg-white text-primary dark:bg-slate-950" />
                     <div>
                       <span className="mb-0.5 inline-block rounded border border-primary/20 bg-primary/10 px-1.5 py-0.5 font-extrabold text-[9px] text-primary uppercase">
                         {event.date_or_step}
                       </span>
-                      <p className="font-semibold text-slate-200 text-xs leading-snug">
+                      <p className="font-semibold text-slate-800 text-xs leading-snug dark:text-slate-200">
                         {event.description}
                       </p>
                     </div>
@@ -408,7 +408,7 @@ export function LessonPresentation({
       case 'STEP_BY_STEP':
         return (
           <div className="w-full py-2 text-left">
-            <h2 className="mb-6 border-slate-800 border-b pb-3 font-extrabold text-slate-100 text-xl md:text-2xl">
+            <h2 className="mb-6 border-slate-200 border-b pb-3 font-extrabold text-slate-900 text-xl md:text-2xl dark:border-slate-800 dark:text-slate-100">
               {slideTitle}
             </h2>
             <div className="grid grid-cols-1 gap-2.5">
@@ -416,12 +416,12 @@ export function LessonPresentation({
                 bindings.steps.map((stepItem: string, index: number) => (
                   <div
                     key={index}
-                    className="flex items-center gap-3.5 rounded-xl border border-slate-800/80 bg-slate-950/45 p-3 transition-colors hover:border-slate-700"
+                    className="flex items-center gap-3.5 rounded-xl border border-slate-200 bg-slate-50/50 p-3 transition-colors hover:border-slate-300 dark:border-slate-800/80 dark:bg-slate-950/45 dark:hover:border-slate-700"
                   >
                     <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-primary/10 font-extrabold text-primary text-xs">
                       {index + 1}
                     </span>
-                    <span className="font-semibold text-slate-200 text-xs leading-snug">
+                    <span className="font-semibold text-slate-800 text-xs leading-snug dark:text-slate-200">
                       {stepItem}
                     </span>
                   </div>
@@ -433,7 +433,7 @@ export function LessonPresentation({
       case 'CONCLUSION_SUMMARY':
         return (
           <div className="w-full py-2 text-left">
-            <h2 className="mb-6 border-slate-800 border-b pb-3 font-extrabold text-slate-100 text-xl md:text-2xl">
+            <h2 className="mb-6 border-slate-200 border-b pb-3 font-extrabold text-slate-900 text-xl md:text-2xl dark:border-slate-800 dark:text-slate-100">
               {slideTitle}
             </h2>
             <div className="max-w-3xl space-y-3">
@@ -441,12 +441,12 @@ export function LessonPresentation({
                 bindings.summary_points.map((point: string, index: number) => (
                   <div
                     key={index}
-                    className="flex items-start gap-3 rounded-xl border border-slate-800 bg-slate-950/20 p-3.5"
+                    className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50/50 p-3.5 dark:border-slate-800 dark:bg-slate-950/20"
                   >
                     <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-emerald-500/20 bg-emerald-500/10 font-bold text-emerald-400 text-xs">
                       ✓
                     </span>
-                    <span className="font-semibold text-slate-300 text-sm leading-relaxed">
+                    <span className="font-semibold text-slate-705 text-sm leading-relaxed dark:text-slate-300">
                       {point}
                     </span>
                   </div>
@@ -458,11 +458,11 @@ export function LessonPresentation({
       case 'CALL_TO_ACTION':
         return (
           <div className="w-full py-2 text-left">
-            <h2 className="mb-6 border-slate-800 border-b pb-3 font-extrabold text-slate-100 text-xl md:text-2xl">
+            <h2 className="mb-6 border-slate-200 border-b pb-3 font-extrabold text-slate-900 text-xl md:text-2xl dark:border-slate-800 dark:text-slate-100">
               {slideTitle}
             </h2>
             <div className="rounded-2xl border border-amber-500/10 bg-amber-500/5 p-5 md:p-6">
-              <span className="mb-2.5 block font-extrabold text-[10px] text-amber-400 uppercase tracking-widest">
+              <span className="mb-2.5 block font-extrabold text-[10px] text-amber-500 uppercase tracking-widest dark:text-amber-400">
                 Assignment / Next Steps
               </span>
               <ul className="space-y-3">
@@ -470,9 +470,9 @@ export function LessonPresentation({
                   bindings.action_items.map((item: string, index: number) => (
                     <li
                       key={index}
-                      className="flex items-start gap-3 text-slate-300"
+                      className="flex items-start gap-3 text-slate-700 dark:text-slate-300"
                     >
-                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border border-slate-800 bg-slate-950 font-bold text-amber-400 text-xs">
+                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border border-slate-200 bg-slate-50 font-bold text-amber-500 text-xs dark:border-slate-800 dark:bg-slate-950 dark:text-amber-400">
                         [ ]
                       </span>
                       <span className="font-semibold text-sm leading-relaxed">
@@ -488,7 +488,7 @@ export function LessonPresentation({
       case 'REFERENCES_LIST':
         return (
           <div className="w-full py-2 text-left">
-            <h2 className="mb-6 border-slate-800 border-b pb-3 font-extrabold text-slate-100 text-xl md:text-2xl">
+            <h2 className="mb-6 border-slate-200 border-b pb-3 font-extrabold text-slate-900 text-xl md:text-2xl dark:border-slate-800 dark:text-slate-100">
               {slideTitle}
             </h2>
             <div className="grid max-h-[50vh] grid-cols-1 gap-4 overflow-y-auto pr-1 md:grid-cols-2">
@@ -503,22 +503,22 @@ export function LessonPresentation({
                       href={source.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="group flex flex-col gap-2 rounded-xl border border-slate-800 bg-slate-950/45 p-4 transition-all duration-200 hover:border-emerald-500/30 hover:bg-slate-900/50 hover:shadow-emerald-500/5 hover:shadow-lg"
+                      className="group flex flex-col gap-2 rounded-xl border border-slate-200 bg-slate-50/50 p-4 transition-all duration-200 hover:border-emerald-500/30 hover:bg-slate-100 hover:shadow-emerald-500/5 hover:shadow-lg dark:border-slate-800 dark:bg-slate-950/45 dark:hover:bg-slate-900/50"
                     >
                       <div className="flex items-center gap-2">
                         <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-emerald-500/20 bg-emerald-500/10 font-bold text-emerald-400 text-xs">
                           {index + 1}
                         </span>
-                        <span className="line-clamp-1 font-bold text-slate-200 text-sm leading-snug transition-colors group-hover:text-emerald-400">
+                        <span className="line-clamp-1 font-bold text-slate-800 text-sm leading-snug transition-colors group-hover:text-emerald-550 dark:text-slate-200 dark:group-hover:text-emerald-400">
                           {source.title || 'Untitled Reference'}
                         </span>
                       </div>
                       {source.summary && (
-                        <p className="line-clamp-2 pl-8 font-normal text-slate-400 text-xs leading-relaxed">
+                        <p className="line-clamp-2 pl-8 font-normal text-slate-650 text-xs leading-relaxed dark:text-slate-400">
                           {source.summary}
                         </p>
                       )}
-                      <span className="truncate pl-8 font-mono text-[10px] text-slate-500 transition-colors group-hover:text-slate-400">
+                      <span className="truncate pl-8 font-mono text-[10px] text-slate-450 transition-colors group-hover:text-slate-600 dark:text-slate-500 dark:group-hover:text-slate-400">
                         {source.url}
                       </span>
                     </a>
@@ -532,15 +532,15 @@ export function LessonPresentation({
         return (
           <div className="flex h-full min-h-[30vh] flex-col items-center justify-center py-8 text-center">
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.08),transparent_60%)]" />
-            <h1 className="mb-6 bg-gradient-to-r from-emerald-400 via-teal-200 to-blue-400 bg-clip-text font-extrabold text-3xl text-transparent tracking-tight md:text-4xl">
+            <h1 className="mb-6 bg-gradient-to-r from-emerald-600 via-teal-500 to-blue-600 bg-clip-text font-extrabold text-3xl text-transparent tracking-tight md:text-4xl dark:from-emerald-400 dark:via-teal-200 dark:to-blue-400">
               Questions & Answers
             </h1>
             {bindings.footer_note && (
-              <p className="mb-4 max-w-xl font-medium text-slate-300 text-sm italic leading-relaxed md:text-base">
+              <p className="mb-4 max-w-xl font-medium text-slate-700 text-sm italic leading-relaxed md:text-base dark:text-slate-300">
                 "{bindings.footer_note}"
               </p>
             )}
-            <div className="mt-4 flex items-center gap-2 rounded-full border border-slate-800 bg-slate-900 px-3 py-1 font-semibold text-[9px] text-slate-400 uppercase tracking-wider">
+            <div className="mt-4 flex items-center gap-2 rounded-full border border-slate-200 bg-slate-100 px-3 py-1 font-semibold text-[9px] text-slate-600 uppercase tracking-wider dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
               Thank you for participating!
             </div>
           </div>
@@ -1116,14 +1116,14 @@ export function LessonPresentation({
     <div
       ref={containerRef}
       className={cn(
-        'relative m-0 flex min-h-[75vh] w-full select-none flex-col justify-between overflow-hidden rounded-2xl border border-slate-800 bg-gradient-to-br from-zinc-950 via-slate-900 to-zinc-950 p-6 text-slate-100 shadow-xl md:p-10',
+        'relative m-0 flex min-h-[75vh] w-full select-none flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-slate-100 p-6 text-slate-900 shadow-xl md:p-10 dark:border-slate-800 dark:from-zinc-950 dark:via-slate-900 dark:to-zinc-950 dark:text-slate-100',
         isFullscreen &&
           'fixed inset-0 z-[9999] m-0 h-screen w-screen rounded-none border-none'
       )}
     >
       {/* Top progress bar */}
       {step === 'generated' && !deckUrl && (
-        <div className="absolute top-0 right-0 left-0 h-1 bg-slate-800/80">
+        <div className="absolute top-0 right-0 left-0 h-1 bg-slate-200/80 dark:bg-slate-800/80">
           <div
             className="h-full bg-primary transition-all duration-300 ease-out"
             style={{
@@ -1134,12 +1134,12 @@ export function LessonPresentation({
       )}
 
       {/* Header */}
-      <div className="flex shrink-0 items-center justify-between border-slate-800 border-b pb-4">
+      <div className="flex shrink-0 items-center justify-between border-slate-200 border-b pb-4 dark:border-slate-800">
         <div>
           <span className="rounded-md border border-primary/20 bg-primary/10 px-2.5 py-1 font-semibold text-primary text-xs uppercase tracking-wider">
             {t('title')}
           </span>
-          <h2 className="mt-2 max-w-md truncate font-bold text-lg text-slate-200 md:max-w-xl lg:max-w-2xl">
+          <h2 className="mt-2 max-w-md truncate font-bold text-lg text-slate-800 md:max-w-xl lg:max-w-2xl dark:text-slate-200">
             {title}
           </h2>
         </div>
@@ -1148,7 +1148,7 @@ export function LessonPresentation({
             <Button
               variant="outline"
               size="sm"
-              className="h-9 gap-1.5 rounded-lg border-slate-800 bg-slate-900/60 font-medium text-slate-300 hover:bg-slate-800 hover:text-slate-100"
+              className="h-9 gap-1.5 rounded-lg border-slate-200 bg-white font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
               onClick={startNewDeck}
             >
               <Sparkles className="h-4 w-4" />
@@ -1159,7 +1159,7 @@ export function LessonPresentation({
             <Button
               variant="ghost"
               size="icon"
-              className="h-9 w-9 rounded-lg text-slate-400 hover:bg-slate-800/60 hover:text-slate-100"
+              className="h-9 w-9 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-slate-100"
               onClick={toggleFullscreen}
               title={t('fullscreen')}
             >
@@ -1173,7 +1173,7 @@ export function LessonPresentation({
           <Button
             variant="ghost"
             size="icon"
-            className="h-9 w-9 rounded-lg text-slate-400 hover:bg-red-950/20 hover:text-red-400"
+            className="h-9 w-9 rounded-lg text-slate-500 hover:bg-red-55/20 hover:text-red-600 dark:text-slate-400 dark:hover:bg-red-950/20 dark:hover:text-red-400"
             onClick={onClose}
             title={t('close')}
           >
@@ -1185,12 +1185,12 @@ export function LessonPresentation({
       {/* Render Steps */}
       {step === 'input' && (
         <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col justify-center px-4 py-6">
-          <div className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-6 shadow-2xl backdrop-blur-md md:p-8">
-            <h3 className="mb-2 flex items-center gap-2 font-bold text-slate-100 text-xl">
+          <div className="rounded-2xl border border-slate-200/80 bg-white/70 p-6 shadow-2xl backdrop-blur-md md:p-8 dark:border-slate-800/80 dark:bg-slate-900/40">
+            <h3 className="mb-2 flex items-center gap-2 font-bold text-slate-800 text-xl dark:text-slate-100">
               <Sparkles className="h-5 w-5 text-primary" />
               {t('title')}
             </h3>
-            <p className="mb-6 text-slate-400 text-sm leading-relaxed">
+            <p className="mb-6 text-slate-600 text-sm leading-relaxed dark:text-slate-400">
               {t('inputDesc')}
             </p>
 
@@ -1201,22 +1201,22 @@ export function LessonPresentation({
                   onChange={(e) => setInstructions(e.target.value)}
                   maxLength={500}
                   placeholder={t('inputPlaceholder')}
-                  className="h-36 w-full resize-none rounded-xl border-slate-800 bg-slate-950 p-4 pb-8 font-sans text-slate-100 focus:border-primary focus:ring-1 focus:ring-primary"
+                  className="h-36 w-full resize-none rounded-xl border-slate-200 bg-slate-50 p-4 pb-8 font-sans text-slate-900 focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
                 />
-                <span className="absolute right-4 bottom-3 select-none font-medium text-slate-500 text-xs">
+                <span className="absolute right-4 bottom-3 select-none font-medium text-slate-400 text-xs dark:text-slate-500">
                   {instructions.length} / 500
                 </span>
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <span className="font-semibold text-slate-500 text-xs uppercase tracking-wider">
+                <span className="font-semibold text-slate-400 text-xs uppercase tracking-wider dark:text-slate-500">
                   {t('durationLabel')}
                 </span>
                 <Select value={duration} onValueChange={setDuration}>
-                  <SelectTrigger className="flex h-11 w-full justify-between rounded-xl border-slate-800 bg-slate-950 px-4 py-2.5 text-slate-100 text-sm">
+                  <SelectTrigger className="flex h-11 w-full justify-between rounded-xl border-slate-200 bg-slate-50 px-4 py-2.5 text-slate-900 text-sm dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100">
                     <SelectValue placeholder={t('duration15')} />
                   </SelectTrigger>
-                  <SelectContent className="border-slate-800 bg-slate-950 text-slate-100">
+                  <SelectContent className="border-slate-200 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100">
                     <SelectItem value="5">{t('duration5')}</SelectItem>
                     <SelectItem value="10">{t('duration10')}</SelectItem>
                     <SelectItem value="15">{t('duration15')}</SelectItem>
@@ -1230,28 +1230,28 @@ export function LessonPresentation({
               </div>
 
               <div>
-                <span className="mb-2 block font-semibold text-slate-500 text-xs uppercase tracking-wider">
+                <span className="mb-2 block font-semibold text-slate-400 text-xs uppercase tracking-wider dark:text-slate-500">
                   {t('suggestLabel')}
                 </span>
                 <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
                     onClick={() => setInstructions(t('suggest1'))}
-                    className="rounded-lg border border-slate-800 bg-slate-950 px-3 py-1.5 text-slate-300 text-xs transition-colors hover:border-slate-700 hover:bg-slate-900"
+                    className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-slate-700 text-xs transition-colors hover:border-slate-300 hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-slate-700 dark:hover:bg-slate-900"
                   >
                     {t('suggest1')}
                   </button>
                   <button
                     type="button"
                     onClick={() => setInstructions(t('suggest2'))}
-                    className="rounded-lg border border-slate-800 bg-slate-950 px-3 py-1.5 text-slate-300 text-xs transition-colors hover:border-slate-700 hover:bg-slate-900"
+                    className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-slate-700 text-xs transition-colors hover:border-slate-300 hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-slate-700 dark:hover:bg-slate-900"
                   >
                     {t('suggest2')}
                   </button>
                   <button
                     type="button"
                     onClick={() => setInstructions(t('suggest3'))}
-                    className="rounded-lg border border-slate-800 bg-slate-950 px-3 py-1.5 text-slate-300 text-xs transition-colors hover:border-slate-700 hover:bg-slate-900"
+                    className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-slate-700 text-xs transition-colors hover:border-slate-300 hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-slate-700 dark:hover:bg-slate-900"
                   >
                     {t('suggest3')}
                   </button>
@@ -1259,11 +1259,11 @@ export function LessonPresentation({
               </div>
             </div>
 
-            <div className="mt-8 flex items-center justify-end gap-3 border-slate-800 border-t pt-6">
+            <div className="mt-8 flex items-center justify-end gap-3 border-slate-200 border-t pt-6 dark:border-slate-800">
               <Button
                 variant="ghost"
                 onClick={onClose}
-                className="rounded-xl px-4 py-2 text-slate-400 hover:bg-slate-800 hover:text-slate-100"
+                className="rounded-xl px-4 py-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
               >
                 Cancel
               </Button>
@@ -1285,10 +1285,10 @@ export function LessonPresentation({
             <div className="absolute inset-0 animate-pulse rounded-full bg-primary/20 blur-md" />
             <Spinner className="h-12 w-12 text-primary" />
           </div>
-          <h3 className="mb-2 font-bold text-slate-100 text-xl">
+          <h3 className="mb-2 font-bold text-slate-800 text-xl dark:text-slate-100">
             {t('planningText')}
           </h3>
-          <p className="text-slate-405 text-sm">
+          <p className="text-slate-500 text-sm dark:text-slate-400">
             Please wait while the slide structures and layout content bindings
             are compiled.
           </p>
@@ -1297,19 +1297,21 @@ export function LessonPresentation({
 
       {step === 'planned' && (
         <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col overflow-hidden px-2 py-4">
-          <div className="mb-6 flex shrink-0 flex-col items-start justify-between gap-4 border-slate-800/80 border-b pb-4 md:flex-row md:items-center">
+          <div className="mb-6 flex shrink-0 flex-col items-start justify-between gap-4 border-slate-200 border-b pb-4 md:flex-row md:items-center dark:border-slate-800/80">
             <div>
-              <h3 className="font-bold text-slate-100 text-xl">
+              <h3 className="font-bold text-slate-900 text-xl dark:text-slate-100">
                 {t('plannedTitle')}
               </h3>
-              <p className="mt-1 text-slate-400 text-xs">{t('plannedDesc')}</p>
+              <p className="mt-1 text-slate-500 text-xs dark:text-slate-400">
+                {t('plannedDesc')}
+              </p>
             </div>
             <div className="flex shrink-0 gap-2">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setStep('input')}
-                className="h-9 rounded-lg border-slate-800 bg-slate-900/60 px-3 font-medium text-slate-300 hover:bg-slate-800"
+                className="h-9 rounded-lg border-slate-200 bg-white px-3 font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-800"
               >
                 {t('btnBack')}
               </Button>
@@ -1328,9 +1330,9 @@ export function LessonPresentation({
             {plannedSlides.map((slide, idx) => (
               <div
                 key={slide.id}
-                className="relative rounded-2xl border border-slate-800/80 bg-slate-900/40 p-5 shadow-lg backdrop-blur-md md:p-6"
+                className="relative rounded-2xl border border-slate-200 bg-white p-5 shadow-lg backdrop-blur-md md:p-6 dark:border-slate-800/80 dark:bg-slate-900/40"
               >
-                <div className="absolute top-4 right-6 select-none font-extrabold text-3xl text-slate-800/60">
+                <div className="absolute top-4 right-6 select-none font-extrabold text-3xl text-slate-200 dark:text-slate-800/60">
                   {(idx + 1).toString().padStart(2, '0')}
                 </div>
 
@@ -1354,10 +1356,10 @@ export function LessonPresentation({
                           )
                         }
                       >
-                        <SelectTrigger className="flex h-10 w-full justify-between rounded-xl border-slate-800 bg-slate-950 px-4 text-slate-100 text-sm">
+                        <SelectTrigger className="flex h-10 w-full justify-between rounded-xl border-slate-200 bg-slate-50 px-4 text-slate-900 text-sm dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100">
                           <SelectValue placeholder="Select Layout" />
                         </SelectTrigger>
-                        <SelectContent className="max-h-60 border-slate-800 bg-slate-950 text-slate-100">
+                        <SelectContent className="max-h-60 border-slate-200 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100">
                           <SelectItem value="TITLE_SLIDE">
                             Title Slide
                           </SelectItem>
@@ -1417,7 +1419,7 @@ export function LessonPresentation({
                         value={slide.slideTitle}
                         onChange={(e) => updateSlideTitle(idx, e.target.value)}
                         placeholder="Slide Title"
-                        className="h-10 rounded-xl border-slate-800 bg-slate-950 px-4 py-2 font-bold text-base text-slate-100 focus:border-primary focus:ring-1 focus:ring-primary"
+                        className="h-10 rounded-xl border-slate-200 bg-slate-50 px-4 py-2 font-bold text-base text-slate-900 focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
                       />
                     </div>
 
@@ -1425,12 +1427,12 @@ export function LessonPresentation({
                     {renderBindingsEditor(slide, idx)}
                   </div>
 
-                  <div className="mt-4 flex justify-end border-slate-900/40 border-t pt-2">
+                  <div className="mt-4 flex justify-end border-slate-200 border-t pt-2 dark:border-slate-900/40">
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => deleteSlide(idx)}
-                      className="h-8 rounded-lg px-2.5 text-red-400 transition-colors hover:bg-red-950/20 hover:text-red-300"
+                      className="h-8 rounded-lg px-2.5 text-red-650 transition-colors hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/20 dark:hover:text-red-300"
                     >
                       <Trash2 className="mr-1.5 h-4 w-4" />
                       Delete Slide
@@ -1443,7 +1445,7 @@ export function LessonPresentation({
             <Button
               variant="outline"
               onClick={addSlide}
-              className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl border-slate-800 border-dashed bg-slate-900/10 font-semibold text-slate-400 text-sm transition-all hover:border-slate-700 hover:bg-slate-900/40 hover:text-slate-200"
+              className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl border-slate-200 border-dashed bg-slate-50/50 font-semibold text-slate-500 text-sm transition-all hover:border-slate-350 hover:bg-slate-100 hover:text-slate-700 dark:border-slate-800 dark:border-dashed dark:bg-slate-900/10 dark:text-slate-400 dark:hover:border-slate-700 dark:hover:bg-slate-900/40 dark:hover:text-slate-200"
             >
               <Plus className="h-4 w-4" />
               Add Slide
@@ -1458,18 +1460,18 @@ export function LessonPresentation({
             <div className="absolute inset-0 animate-pulse rounded-full bg-primary/20 blur-md" />
             <Spinner className="h-12 w-12 animate-spin text-primary" />
           </div>
-          <h3 className="mb-2 font-bold text-slate-100 text-xl">
+          <h3 className="mb-2 font-bold text-slate-900 text-xl dark:text-slate-100">
             {t('generatingText')}
           </h3>
 
-          <div className="mt-6 w-full space-y-3 rounded-xl border border-slate-900/80 bg-slate-950/50 p-4 text-left">
+          <div className="mt-6 w-full space-y-3 rounded-xl border border-slate-200 bg-slate-50/50 p-4 text-left dark:border-slate-800/80 dark:bg-slate-950/50">
             <div className="flex items-center gap-3 text-sm">
               <span
                 className={cn(
                   'flex h-5 w-5 items-center justify-center rounded-full font-semibold text-xs',
                   loaderStep >= 1
-                    ? 'border border-emerald-500/20 bg-emerald-500/10 text-emerald-400'
-                    : 'border border-slate-800 bg-slate-905 text-slate-500'
+                    ? 'border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                    : 'border border-slate-200 bg-slate-100 text-slate-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-500'
                 )}
               >
                 {loaderStep >= 1 ? '✓' : '1'}
@@ -1477,8 +1479,8 @@ export function LessonPresentation({
               <span
                 className={
                   loaderStep >= 1
-                    ? 'font-medium text-slate-300'
-                    : 'text-slate-500'
+                    ? 'font-medium text-slate-700 dark:text-slate-300'
+                    : 'text-slate-400 dark:text-slate-500'
                 }
               >
                 Designing slide layouts...
@@ -1489,8 +1491,8 @@ export function LessonPresentation({
                 className={cn(
                   'flex h-5 w-5 items-center justify-center rounded-full font-semibold text-xs',
                   loaderStep >= 2
-                    ? 'border border-emerald-500/20 bg-emerald-500/10 text-emerald-400'
-                    : 'border border-slate-800 bg-slate-905 text-slate-500'
+                    ? 'border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                    : 'border border-slate-200 bg-slate-100 text-slate-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-550'
                 )}
               >
                 {loaderStep >= 2 ? '✓' : '2'}
@@ -1498,8 +1500,8 @@ export function LessonPresentation({
               <span
                 className={
                   loaderStep >= 2
-                    ? 'font-medium text-slate-300'
-                    : 'text-slate-500'
+                    ? 'font-medium text-slate-700 dark:text-slate-300'
+                    : 'text-slate-400 dark:text-slate-500'
                 }
               >
                 Injecting slide contents...
@@ -1517,7 +1519,7 @@ export function LessonPresentation({
               title={title}
               allow="fullscreen"
               className={cn(
-                'w-full rounded-2xl border border-slate-800/80 bg-slate-950 shadow-2xl transition-all duration-300',
+                'w-full rounded-2xl border border-slate-200 bg-white shadow-2xl transition-all duration-300 dark:border-slate-800/80 dark:bg-slate-950',
                 isFullscreen ? 'h-[82vh]' : 'h-[58vh]'
               )}
             />
@@ -1549,7 +1551,7 @@ export function LessonPresentation({
           <div className="mx-auto flex w-full max-w-4xl flex-1 items-center justify-center overflow-hidden px-4 py-8">
             <div
               className={cn(
-                'lesson-presentation-content w-full overflow-y-auto rounded-2xl border border-slate-800/80 bg-slate-900/40 p-8 shadow-2xl backdrop-blur-md transition-all duration-300 md:p-12',
+                'lesson-presentation-content w-full overflow-y-auto rounded-2xl border border-slate-200 bg-white p-8 shadow-2xl backdrop-blur-md transition-all duration-300 md:p-12 dark:border-slate-800/80 dark:bg-slate-900/40',
                 isFullscreen ? 'h-[65vh] max-h-[65vh]' : 'h-[45vh] max-h-[45vh]'
               )}
             >
@@ -1566,7 +1568,7 @@ export function LessonPresentation({
 
       {/* Footer / Navigation (fallback preview only) */}
       {step === 'generated' && !deckUrl && (
-        <div className="flex shrink-0 flex-col items-center justify-between gap-4 border-slate-800 border-t pt-4 md:flex-row">
+        <div className="flex shrink-0 flex-col items-center justify-between gap-4 border-slate-200 border-t pt-4 md:flex-row dark:border-slate-800">
           <p className="order-3 font-medium text-slate-500 text-xs md:order-1">
             {t('keyboardTip')}
           </p>
@@ -1575,7 +1577,7 @@ export function LessonPresentation({
             <Button
               variant="outline"
               size="sm"
-              className="border-slate-800 bg-slate-900/60 font-medium text-slate-300 hover:bg-slate-800 hover:text-slate-100 disabled:opacity-50"
+              className="border-slate-200 bg-white font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-50 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
               onClick={() =>
                 setCurrentSlideIndex((prev) => Math.max(prev - 1, 0))
               }
@@ -1585,7 +1587,7 @@ export function LessonPresentation({
               {t('previous')}
             </Button>
 
-            <span className="min-w-28 text-center font-semibold text-slate-400 text-sm">
+            <span className="min-w-28 text-center font-semibold text-slate-600 text-sm dark:text-slate-400">
               {t('slideProgress', {
                 current: currentSlideIndex + 1,
                 total: plannedSlides.length,
@@ -1595,7 +1597,7 @@ export function LessonPresentation({
             <Button
               variant="outline"
               size="sm"
-              className="border-slate-800 bg-slate-900/60 font-medium text-slate-300 hover:bg-slate-800 hover:text-slate-100 disabled:opacity-50"
+              className="border-slate-200 bg-white font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-50 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
               onClick={() =>
                 setCurrentSlideIndex((prev) =>
                   Math.min(prev + 1, plannedSlides.length - 1)
