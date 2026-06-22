@@ -1,9 +1,11 @@
 'use client';
 
-import { Languages, Sparkles } from 'lucide-react';
+import { BookMarked, Languages } from 'lucide-react';
+import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { WordDictionaryPopover } from '@/components/dictionary/word-dictionary-popover';
 import { GrammarAnalysisDialog } from '@/components/english/grammar-analysis-dialog';
+import { Button } from '@/components/ui/button';
 import { useEnglishAssistantController } from '../_hooks/use-english-assistant';
 import { GrammarAnalysisSection } from './grammar-analysis-section';
 import { TranslationPanel } from './translation-panel';
@@ -28,12 +30,24 @@ export function EnglishAssistantClient() {
             </span>
           </div>
         </div>
-        <div className="flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5">
-          <Sparkles className="size-4 text-primary" />
-          <span className="font-medium text-primary text-xs uppercase tracking-wide">
-            {t('aiAnalyticsActive')}
-          </span>
-        </div>
+        <Button
+          asChild
+          variant="outline"
+          className="h-10 rounded-full border-primary/30 bg-background/80 px-4 text-foreground shadow-sm hover:border-primary/50 hover:bg-primary/5 hover:text-foreground focus-visible:ring-primary/30"
+        >
+          <Link
+            href="/english/wordbank"
+            aria-label={t('wordbankLinkLabel', {
+              count: assistant.wordbank.total,
+            })}
+          >
+            <BookMarked data-icon="inline-start" strokeWidth={2.25} />
+            <span className="font-semibold text-base">{t('wordbank')}</span>
+            <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-primary px-2.5 text-primary-foreground text-sm leading-none">
+              {assistant.wordbank.total}
+            </span>
+          </Link>
+        </Button>
       </div>
 
       <TranslationPanel
@@ -63,6 +77,7 @@ export function EnglishAssistantClient() {
         hasAnalysisResult={assistant.hasVocabularyAnalysisResult}
         isAnalyzing={assistant.isAnalyzing}
         vocabularyList={assistant.vocabularyList}
+        wordbank={assistant.wordbank}
       />
 
       <GrammarAnalysisDialog

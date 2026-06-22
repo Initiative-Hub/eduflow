@@ -276,6 +276,7 @@ export function DictionaryEnabledEditor({
   );
 
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
       Document,
       Paragraph,

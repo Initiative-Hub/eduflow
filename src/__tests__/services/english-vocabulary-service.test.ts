@@ -106,4 +106,34 @@ describe('VocabularyService', () => {
 
     expect(result.sentences).toEqual(['I were ate.']);
   });
+
+  it('uses the full source sentence when the AI example is only a phrase', async () => {
+    generateText.mockResolvedValueOnce({
+      output: {
+        vocabulary: [
+          {
+            word: 'direct',
+            partOfSpeech: 'adjective',
+            ipa: '/dəˈrekt/',
+            englishDefinition: 'Straight or immediate.',
+            vietnameseTranslation: 'Trực tiếp; không vòng vo.',
+            exampleSentence: 'under direct attack',
+          },
+        ],
+        sentences: ['under direct attack'],
+      },
+    });
+
+    const { VocabularyService } = await import(
+      '@/services/english/VocabularyService'
+    );
+
+    const result = await VocabularyService.analyze(
+      'The king is under direct attack, so there is no escape.'
+    );
+
+    expect(result.vocabulary[0]?.exampleSentence).toBe(
+      'The king is under direct attack, so there is no escape.'
+    );
+  });
 });
