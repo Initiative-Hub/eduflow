@@ -308,14 +308,16 @@ model Enrollment {
 }
 
 model Module {
-  id         String   @id @default(uuid())
-  courseId   String   @map("course_id")
-  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  id         String    @id @default(uuid())
+  courseId   String    @map("course_id")
+  course     Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
   title      String
-  orderIndex Int      @default(0) @map("order_index")
-  itemLayout Json?    @map("item_layout")
+  orderIndex Int       @default(0) @map("order_index")
+  itemLayout Json?     @map("item_layout")
   lessons    Lesson[]
+  deletedAt  DateTime? @map("deleted_at")
 
+  @@index([courseId, deletedAt])
   @@map("module")
 }
 
@@ -329,7 +331,9 @@ model Lesson {
   contentChunks LessonContentChunk[]
   questions     Question[]
   lessonQuizzes LessonQuiz[]
+  deletedAt     DateTime?            @map("deleted_at")
 
+  @@index([moduleId, deletedAt])
   @@map("lesson")
 }
 

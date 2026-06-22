@@ -6,7 +6,11 @@ export class ModuleService {
   static async createModule(data: { courseId: string; title: string }) {
     // Auto increment orderIndex based on existing modules
     const lastModule = await prisma.module.findFirst({
-      where: { courseId: data.courseId },
+      where: {
+        courseId: data.courseId,
+        deletedAt: null,
+        course: { deletedAt: null },
+      },
       orderBy: { orderIndex: 'desc' },
     });
 
@@ -23,7 +27,11 @@ export class ModuleService {
 
   static async getModulesByCourse(courseId: string) {
     return await prisma.module.findMany({
-      where: { courseId },
+      where: {
+        courseId,
+        deletedAt: null,
+        course: { deletedAt: null },
+      },
       orderBy: { orderIndex: 'asc' },
       select: {
         id: true,
@@ -32,6 +40,7 @@ export class ModuleService {
         orderIndex: true,
         itemLayout: true,
         lessons: {
+          where: { deletedAt: null },
           orderBy: { orderIndex: 'asc' },
           select: {
             id: true,
@@ -45,8 +54,12 @@ export class ModuleService {
   }
 
   static async deleteModule(moduleId: string, userId: string) {
-    const moduleRecord = await prisma.module.findUnique({
-      where: { id: moduleId },
+    const moduleRecord = await prisma.module.findFirst({
+      where: {
+        id: moduleId,
+        deletedAt: null,
+        course: { deletedAt: null },
+      },
       select: {
         id: true,
         courseId: true,
@@ -64,8 +77,9 @@ export class ModuleService {
       throw new Error('Unauthorized: Missing COURSE_CONTENT_DELETE permission');
     }
 
-    return prisma.module.delete({
+    return prisma.module.update({
       where: { id: moduleId },
+      data: { deletedAt: new Date() },
       select: { id: true },
     });
   }

@@ -87,6 +87,8 @@ async function findSimilarChunks(
     JOIN course    c ON c.id = m.course_id
     WHERE c.id = ANY(${effectiveCourseIds}::text[])
       AND c.deleted_at IS NULL
+      AND m.deleted_at IS NULL
+      AND l.deleted_at IS NULL
       AND (1 - (lcc.embedding <=> ${vectorLiteral}::vector)) >= ${similarityThreshold}
     ORDER BY lcc.embedding <=> ${vectorLiteral}::vector
     LIMIT ${limit}

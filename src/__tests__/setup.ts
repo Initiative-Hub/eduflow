@@ -3,7 +3,7 @@
 // expect function, e.g.: expect(element).toBeInTheDocument()
 import '@testing-library/jest-dom';
 
-if (!document.elementFromPoint) {
+if (typeof document !== 'undefined' && !document.elementFromPoint) {
   Object.defineProperty(document, 'elementFromPoint', {
     configurable: true,
     value: () => document.body,

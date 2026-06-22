@@ -12,6 +12,7 @@ export async function seedLesson({
       title: lessonData.title,
       orderIndex: lessonData.orderIndex,
       content: lessonData.content,
+      deletedAt: null,
     },
     create: {
       id: lessonData.id,
