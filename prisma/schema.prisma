@@ -304,14 +304,16 @@ model Enrollment {
 }
 
 model Module {
-  id         String   @id @default(uuid())
-  courseId   String   @map("course_id")
-  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  id         String    @id @default(uuid())
+  courseId   String    @map("course_id")
+  course     Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
   title      String
-  orderIndex Int      @default(0) @map("order_index")
-  itemLayout Json?    @map("item_layout")
+  orderIndex Int       @default(0) @map("order_index")
+  itemLayout Json?     @map("item_layout")
   lessons    Lesson[]
+  deletedAt  DateTime? @map("deleted_at")
 
+  @@index([courseId, deletedAt])
   @@map("module")
 }
 
@@ -322,14 +324,14 @@ model Lesson {
   title               String
   content             Json?
   orderIndex          Int                  @default(0) @map("order_index")
-  // Most recently generated presentation deck (rendered by the external slide
-  // service and archived to object storage), so it can be re-opened later.
   presentationDeckId  String?              @map("presentation_deck_id")
   presentationDeckKey String?              @map("presentation_deck_key")
   contentChunks       LessonContentChunk[]
   questions           Question[]
   lessonQuizzes       LessonQuiz[]
+  deletedAt           DateTime?            @map("deleted_at")
 
+  @@index([moduleId, deletedAt])
   @@map("lesson")
 }
 

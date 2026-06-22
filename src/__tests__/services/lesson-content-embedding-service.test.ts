@@ -1,5 +1,5 @@
-import { embedMany } from 'ai';
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
+import { embedMany } from 'ai';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { prisma } from '@/lib/prisma';
 import { tiptapDocumentToMarkdown } from '@/lib/tiptap-markdown';
@@ -25,6 +25,7 @@ const mocks = vi.hoisted(() => {
     prisma: {
       $transaction: vi.fn((callback) => callback(transactionClient)),
       lesson: {
+        findFirst: vi.fn(),
         findUnique: vi.fn(),
       },
       lessonContentChunk: {
@@ -50,6 +51,7 @@ vi.mock('@/lib/prisma', () => ({
 }));
 
 const lesson = prisma.lesson as unknown as {
+  findFirst: ReturnType<typeof vi.fn>;
   findUnique: ReturnType<typeof vi.fn>;
 };
 const lessonContentChunk = prisma.lessonContentChunk as unknown as {
@@ -65,12 +67,39 @@ const mockCreateOpenRouter = createOpenRouter as unknown as ReturnType<
 describe('LessonContentEmbeddingService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    lesson.findFirst.mockImplementation((...args) =>
+      (lesson.findUnique as any)(...args)
+    );
     process.env.OPENROUTER_API_KEY = 'test-key';
     mocks.transactionClient.$executeRaw.mockResolvedValue(1);
     mocks.transactionClient.lessonContentChunk.deleteMany.mockResolvedValue({
       count: 1,
     });
     lessonContentChunk.deleteMany.mockResolvedValue({ count: 1 });
+  });
+
+  it('treats deleted lessons and lessons under deleted parents as missing', async () => {
+    lesson.findFirst.mockResolvedValue(null);
+    lesson.findUnique.mockResolvedValue({
+      content: { type: 'doc', content: [] },
+      id: 'lesson-1',
+    });
+
+    const result =
+      await LessonContentEmbeddingService.indexLessonContent('lesson-1');
+
+    expect(result).toEqual({ status: 'missing' });
+    expect(lesson.findFirst).toHaveBeenCalledWith({
+      where: {
+        id: 'lesson-1',
+        deletedAt: null,
+        module: {
+          deletedAt: null,
+          course: { deletedAt: null },
+        },
+      },
+      select: { id: true, content: true },
+    });
   });
 
   it('skips indexing when existing chunks match the current content hash', async () => {
