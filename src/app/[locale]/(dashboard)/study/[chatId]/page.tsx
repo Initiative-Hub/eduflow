@@ -54,6 +54,10 @@ export default async function StudySessionPage({
     chatType: AiChatType.STUDY_ASSISTANT,
   });
 
+  if (!studyData) {
+    notFound();
+  }
+
   return (
     <StudyClient
       chatId={chatId}
