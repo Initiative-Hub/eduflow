@@ -100,14 +100,15 @@ export function useMembers({
     placeholderData: keepPreviousData,
   });
 
+  const canSearchCandidates = debouncedCandidateSearch.length >= 2;
   const candidateQuery = useInfiniteQuery({
     queryKey: [...queryKey, 'candidates', debouncedCandidateSearch],
     initialPageParam: 0,
-    enabled: addDialogOpen,
+    enabled: addDialogOpen && canSearchCandidates,
     queryFn: ({ pageParam }) =>
       courseMembersService.listCandidates({
         courseId,
-        search: debouncedCandidateSearch || undefined,
+        search: debouncedCandidateSearch,
         limit: COURSE_MEMBER_CANDIDATE_PAGE_SIZE,
         offset: pageParam,
       }),
