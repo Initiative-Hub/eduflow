@@ -19,6 +19,7 @@ vi.mock('@/lib/prisma', () => ({
     },
     user: {
       count: vi.fn(),
+      findUnique: vi.fn(),
       findMany: vi.fn(),
     },
   },
@@ -39,6 +40,7 @@ const prismaMock = prisma as unknown as {
   };
   user: {
     count: ReturnType<typeof vi.fn>;
+    findUnique: ReturnType<typeof vi.fn>;
     findMany: ReturnType<typeof vi.fn>;
   };
 };
@@ -115,27 +117,20 @@ describe('CourseMemberService', () => {
     });
   });
 
-  it('paginates candidate users and marks users already enrolled in the course', async () => {
+  it('paginates eligible candidate users for the course', async () => {
     prismaMock.user.count.mockResolvedValue(2);
     prismaMock.user.findMany.mockResolvedValue([
-      {
-        id: 'user-1',
-        email: 'member@example.com',
-        image: null,
-        name: 'Existing Member',
-        enrollments: [
-          {
-            id: 'enrollment-1',
-            role: { name: CourseRoleName.STUDENT },
-          },
-        ],
-      },
       {
         id: 'user-2',
         email: 'candidate@example.com',
         image: null,
         name: 'Candidate User',
-        enrollments: [],
+      },
+      {
+        id: 'user-3',
+        email: 'teacher-user@example.com',
+        image: null,
+        name: 'Teacher User',
       },
     ]);
 
@@ -148,10 +143,18 @@ describe('CourseMemberService', () => {
 
     expect(prismaMock.user.count).toHaveBeenCalledWith({
       where: {
+        emailVerified: true,
+        role: {
+          is: {
+            name: { in: ['TEACHER', 'STUDENT'] },
+          },
+        },
+        enrollments: {
+          none: { courseId: 'course-1' },
+        },
         OR: [
           { name: { contains: 'user', mode: 'insensitive' } },
           { email: { contains: 'user', mode: 'insensitive' } },
-          { id: { contains: 'user', mode: 'insensitive' } },
         ],
       },
     });
@@ -163,19 +166,19 @@ describe('CourseMemberService', () => {
     );
     expect(result.data).toEqual([
       {
-        alreadyMember: true,
-        email: 'member@example.com',
-        id: 'user-1',
-        image: null,
-        name: 'Existing Member',
-        role: CourseRoleName.STUDENT,
-      },
-      {
         alreadyMember: false,
         email: 'candidate@example.com',
         id: 'user-2',
         image: null,
         name: 'Candidate User',
+        role: CourseRoleName.STUDENT,
+      },
+      {
+        alreadyMember: false,
+        email: 'teacher-user@example.com',
+        id: 'user-3',
+        image: null,
+        name: 'Teacher User',
         role: CourseRoleName.STUDENT,
       },
     ]);
@@ -191,6 +194,10 @@ describe('CourseMemberService', () => {
     ).rejects.toThrow('Cannot assign the course owner role');
 
     prismaMock.enrollment.findFirst.mockResolvedValue({ id: 'enrollment-1' });
+    prismaMock.user.findUnique.mockResolvedValue({
+      emailVerified: true,
+      role: { name: 'STUDENT' },
+    });
 
     await expect(
       CourseMemberService.addMember({
