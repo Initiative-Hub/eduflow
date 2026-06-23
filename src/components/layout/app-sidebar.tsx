@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import type * as React from 'react';
+import { useEffect, useState } from 'react';
 import { useCourses } from '@/app/[locale]/(dashboard)/courses/use-courses';
 import { Button } from '@/components/ui/button';
 import {
@@ -40,6 +41,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
   const { state, toggleSidebar } = useSidebar();
   const { data: sessionData, isPending } = useSession();
+  const [isMounted, setIsMounted] = useState(false);
 
   const assistants = getAssistantNavItems(t);
   const settingsItems = getSettingNavItems(t);
@@ -67,6 +69,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   } else if (courseId) {
     menuItems = courseItems;
   }
+
+  useEffect(() => {
+    if (isPending) return;
+
+    setIsMounted(true);
+  }, [isPending]);
 
   return (
     <Sidebar
@@ -176,7 +184,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 role={sessionData.user.role ?? undefined}
               />
             </div>
-          ) : isPending ? (
+          ) : !isMounted && isPending ? (
             <div className="block md:hidden">
               <Skeleton className="h-10 w-40" />
             </div>

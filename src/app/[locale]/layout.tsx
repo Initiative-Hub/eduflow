@@ -10,7 +10,7 @@ import type { ReactNode } from 'react';
 import { Toaster } from 'sonner';
 import Locator from '@/components/locator';
 import ReactScan from '@/components/react-scan';
-import { DEV_MODE } from '@/constants/common';
+import { DEV_MODE, PROD_MODE } from '@/constants/common';
 import { routing } from '@/i18n/routing';
 import Providers from '@/providers/providers';
 
@@ -99,11 +99,11 @@ export default async function RootLayout({
         className={`${inter.variable} ${lexend.variable} font-sans antialiased`}
       >
         <Providers>{children}</Providers>
-        <VercelAnalytics />
-        <VercelInsights />
         <Toaster />
         {DEV_MODE && <Locator />}
         {DEV_MODE && <ReactScan />}
+        {PROD_MODE && <VercelAnalytics />}
+        {PROD_MODE && <VercelInsights />}
       </body>
     </html>
   );
