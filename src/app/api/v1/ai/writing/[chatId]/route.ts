@@ -17,8 +17,6 @@ import {
   getWritingSystemPrompt,
 } from './writing.constants';
 
-export const maxDuration = 30;
-
 const writingRequestSchema = z.object({
   messages: z.array(z.custom<UIMessage>()).min(1),
   tool: writingToolSchema,

@@ -27,7 +27,6 @@ import {
   generateStudySuggestions,
   getStudySystemPrompt,
 } from './study.constants';
-export const maxDuration = 30;
 
 const studyRequestSchema = z.object({
   messages: z.array(z.custom<UIMessage>()).min(1),

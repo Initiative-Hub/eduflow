@@ -21,8 +21,6 @@ import {
   getAiChatSystemPrompt,
 } from './chat.constants';
 
-export const maxDuration = 30;
-
 const chatRequestSchema = z.object({
   messages: z.array(z.custom<UIMessage>()).min(1),
   provider: z.custom<ChatProvider>().optional(),
