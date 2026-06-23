@@ -151,7 +151,7 @@ export function ChatView({
                             <MessageResponse
                               caret="block"
                               className="text-[15px] leading-relaxed"
-                              controls={false}
+                              controls={true}
                               isAnimating={isTextStreaming}
                               mode="streaming"
                               skipHtml={false}

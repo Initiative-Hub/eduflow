@@ -244,15 +244,15 @@ export const createChatCitationComponents = (
 
       if (videoId) {
         return (
-          <div className="my-4 aspect-video w-full overflow-hidden rounded-xl border bg-muted shadow-sm">
+          <span className="my-4 block aspect-video rounded-xl">
             <iframe
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
-              className="h-full w-full border-0"
+              className="h-full w-full"
               src={`https://www.youtube.com/embed/${videoId}`}
               title="YouTube video player"
             />
-          </div>
+          </span>
         );
       }
     }
