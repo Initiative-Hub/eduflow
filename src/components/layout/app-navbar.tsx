@@ -9,6 +9,7 @@ import { NavbarAvatar } from '@/components/layout/navbar-avatar';
 import { GuestControls } from '@/components/layout/navbar-avatar/guest-controls';
 import { Button } from '@/components/ui/button';
 import { useSidebar } from '@/components/ui/sidebar';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useSession } from '@/lib/auth-client';
 import { cn } from '@/lib/utils';
 
@@ -16,17 +17,15 @@ export function AppNavbar() {
   const t = useTranslations();
   const pathname = usePathname();
   const { toggleSidebar } = useSidebar();
-  const { data: sessionData, refetch } = useSession();
+  const { data: sessionData, isPending } = useSession();
+
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    // Refetch session data on mount to ensure we have the latest auth state
-    refetch();
-  }, [refetch]);
+    if (isPending) return;
 
-  useEffect(() => {
     setIsMounted(true);
-  }, []);
+  }, [isPending]);
 
   return (
     <div className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between overflow-hidden border-border/40 border-b bg-background/95 px-3 shadow-sm backdrop-blur supports-backdrop-filter:bg-background/60 md:px-8">
@@ -102,7 +101,7 @@ export function AppNavbar() {
       </div>
       <div className="flex items-center gap-2">
         {/* Account Actions / Profile (Desktop Only) */}
-        {isMounted && sessionData ? (
+        {sessionData ? (
           <div className="hidden md:block">
             <NavbarAvatar
               name={sessionData.user.name}
@@ -110,6 +109,10 @@ export function AppNavbar() {
               image={sessionData.user.image}
               role={sessionData.user.role ?? undefined}
             />
+          </div>
+        ) : !isMounted && isPending ? (
+          <div className="hidden md:block">
+            <Skeleton className="h-10 w-40" />
           </div>
         ) : (
           <div className="flex items-center gap-1">

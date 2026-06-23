@@ -1,5 +1,5 @@
 import type { ChatFileUIPart } from '@/types/chat-attachments';
-import { inventoryService } from '../inventory/inventory.service';
+import { inventoryService } from './inventory/inventory.service';
 
 export async function uploadChatAttachments(
   files: File[],

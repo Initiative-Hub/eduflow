@@ -326,7 +326,8 @@
     "actions": {
       "backToForgot": "Quay lại yêu cầu đặt lại",
       "backToLogin": "Quay lại đăng nhập",
-      "reset": "Cập nhật mật khẩu"
+      "reset": "Cập nhật mật khẩu",
+      "resetting": "Đang cập nhật..."
     },
     "description": "Tạo một mật khẩu mới mạnh để bảo mật tài khoản của bạn.",
     "form": {

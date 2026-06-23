@@ -15,7 +15,7 @@ import type {
 } from '@/types/chat-attachments';
 import type { SocraticUIMessage } from '@/types/socratic-ui-message';
 import { hasReachedUserMessageLimit } from '@/utils/chat-limit';
-import { uploadChatAttachments } from '../(ai-chat)/chat-attachments.service';
+import { uploadChatAttachments } from '../chat-attachments.service';
 import { socraticService } from './socratic.service';
 
 const MAX_USER_MESSAGES = 5;
