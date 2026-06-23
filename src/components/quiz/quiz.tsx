@@ -12,7 +12,6 @@ import type {
   ScoreResult,
   StudentAnswer,
 } from '@/lib/quiz-template/types';
-import { cn } from '@/lib/utils';
 import { useInstantFeedback } from './hooks/use-instant-feedback';
 import { useQuizNavigation } from './hooks/use-quiz-navigation';
 import { useQuizReducer } from './hooks/use-quiz-reducer';
@@ -32,8 +31,11 @@ import { QuizResult } from './quiz-result';
 interface QuizProps {
   quiz: ClientQuizContent | QuizContent;
   quizId?: string;
+  submitUrl?: string;
   quizWithAnswers?: QuizContent;
   deliveryMode?: DeliveryMode;
+  instantFeedbackUrl?: string;
+  onStart?: () => void;
   onComplete?: (result: ScoreResult) => void;
   className?: string;
 }
@@ -41,8 +43,11 @@ interface QuizProps {
 export function Quiz({
   quiz,
   quizId,
+  submitUrl,
   quizWithAnswers,
   deliveryMode = 'POST_QUIZ_REVIEW',
+  instantFeedbackUrl,
+  onStart,
   onComplete,
   className,
 }: QuizProps) {
@@ -58,6 +63,7 @@ export function Quiz({
 
   const { submit, isSubmitting } = useQuizSubmission({
     quizId,
+    submitUrl,
     quizType: quiz.type,
     questionsForScoring,
     onSuccess: (scoreResult, reviewQs) => {
@@ -75,16 +81,26 @@ export function Quiz({
     checkAnswer,
     isRevealed: answerRevealed,
     instantResults,
+    instantReviewQuestions,
     setRevealed,
     resetRevealed,
-  } = useInstantFeedback({ quizType: quiz.type, questionsForScoring });
+    reset: resetInstantFeedback,
+  } = useInstantFeedback({
+    instantFeedbackUrl,
+    quizType: quiz.type,
+    questionsForScoring,
+  });
 
   const currentQuestion = quiz.questions[currentIndex];
+  const currentQuestionForDisplay =
+    (isInstantMode && instantReviewQuestions.get(currentIndex)) ||
+    currentQuestion;
   const currentAnswer = state.answers.get(currentIndex);
 
   const handleStart = useCallback(() => {
+    onStart?.();
     dispatch({ type: 'START' });
-  }, [dispatch]);
+  }, [dispatch, onStart]);
 
   const handleAnswer = useCallback(
     (answer: StudentAnswer) => {
@@ -117,7 +133,8 @@ export function Quiz({
 
   const handleRetry = useCallback(() => {
     dispatch({ type: 'RETRY' });
-  }, [dispatch]);
+    resetInstantFeedback();
+  }, [dispatch, resetInstantFeedback]);
 
   // ─── Idle State ────────────────────────────────────────────────────────────
 
@@ -166,32 +183,15 @@ export function Quiz({
         </QuizCardHeader>
 
         <QuizCardContent className="min-h-50">
-          {currentQuestion && (
+          {currentQuestionForDisplay && (
             <QuestionRenderer
-              question={currentQuestion}
+              question={currentQuestionForDisplay}
               answer={currentAnswer}
               onAnswer={handleAnswer}
               showResult={answerRevealed}
               disabled={answerRevealed}
             />
           )}
-
-          {isInstantMode &&
-            answerRevealed &&
-            instantResults.has(currentIndex) && (
-              <div
-                className={cn(
-                  'mt-4 flex items-center gap-2 rounded-lg border px-4 py-2.5 font-medium text-sm',
-                  instantResults.get(currentIndex)
-                    ? 'border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950/20 dark:text-green-400'
-                    : 'border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950/20 dark:text-red-400'
-                )}
-              >
-                {instantResults.get(currentIndex)
-                  ? t('correctAnswer')
-                  : t('incorrectAnswer')}
-              </div>
-            )}
         </QuizCardContent>
 
         <QuizCardFooter>

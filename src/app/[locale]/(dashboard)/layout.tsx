@@ -2,7 +2,6 @@ import type { ReactNode } from 'react';
 import { AppNavbar } from '@/components/layout/app-navbar';
 import { AppSidebar } from '@/components/layout/app-sidebar';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
-import UserLoader from '@/components/user-loader';
 
 export default async function DashboardLayout({
   children,
@@ -11,7 +10,6 @@ export default async function DashboardLayout({
 }) {
   return (
     <SidebarProvider>
-      <UserLoader />
       <AppSidebar />
       <SidebarInset className="h-screen">
         <AppNavbar />

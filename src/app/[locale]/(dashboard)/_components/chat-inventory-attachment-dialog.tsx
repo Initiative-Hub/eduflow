@@ -194,14 +194,16 @@ function CourseTile({
   return (
     <Button
       variant="ghost"
-      className="flex aspect-4/3 h-full w-full cursor-pointer flex-col items-start justify-between gap-3 bg-background p-3 text-left"
+      className="flex aspect-4/3 h-full w-full cursor-pointer flex-col items-start justify-start gap-1 bg-background p-3 text-left"
       onClick={() => onSelect(course)}
     >
       <div className="flex size-10 items-center justify-center rounded-lg bg-muted text-muted-foreground">
         <BookOpen />
       </div>
-      <div className="space-y-1">
-        <div className="truncate font-medium text-sm">{course.title}</div>
+      <div className="flex flex-1 flex-col justify-between gap-1">
+        <div className="line-clamp-2 whitespace-normal font-medium text-sm">
+          {course.title}
+        </div>
         {course.description ? (
           <div className="line-clamp-2 whitespace-normal text-muted-foreground text-xs">
             {course.description}

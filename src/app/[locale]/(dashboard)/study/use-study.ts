@@ -17,7 +17,7 @@ import type {
   ChatSubmitAttachments,
 } from '@/types/chat-attachments';
 import { hasReachedUserMessageLimit } from '@/utils/chat-limit';
-import { uploadChatAttachments } from '../(ai-chat)/chat-attachments.service';
+import { uploadChatAttachments } from '../chat-attachments.service';
 import { studyService } from './study.service';
 
 // TODO: do we need this because this is not allow the unauthorized user

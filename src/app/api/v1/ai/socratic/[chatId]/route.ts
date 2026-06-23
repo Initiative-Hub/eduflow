@@ -19,8 +19,6 @@ import {
   getSocraticSystemPrompt,
 } from './socratic.constants';
 
-export const maxDuration = 30;
-
 const socraticRequestSchema = z.object({
   messages: z.array(z.custom<SocraticUIMessage>()).min(1),
   guidanceDepth: socraticGuidanceDepthSchema.default('balanced'),

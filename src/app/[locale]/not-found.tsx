@@ -7,7 +7,7 @@ export default async function GlobalNotFoundPage() {
   const t = await getTranslations('NotFound');
 
   return (
-    <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-background px-4 text-center">
+    <div className="flex min-h-dvh flex-col items-center justify-center bg-background px-4 text-center">
       <div className="relative mb-8 h-64 w-64 md:h-80 md:w-80">
         <Image
           src="/images/not-found-robot.png"

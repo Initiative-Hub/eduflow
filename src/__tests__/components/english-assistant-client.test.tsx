@@ -4,6 +4,13 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EnglishAssistantClient } from '@/app/[locale]/(dashboard)/english/_components/english-assistant-client';
 
+const apiClient = vi.hoisted(() => ({
+  delete: vi.fn(),
+  get: vi.fn(),
+  patch: vi.fn(),
+  post: vi.fn(),
+}));
+
 const messages: Record<string, string> = {
   aiAnalyticsActive: 'AI Analytics Active',
   analyzing: 'Analyzing...',
@@ -34,6 +41,14 @@ const messages: Record<string, string> = {
   translationPlaceholder: 'Translation will appear here after analysis...',
   vietnamese: 'Vietnamese',
   words: 'words',
+  wordbank: 'Wordbank',
+  wordbankLinkLabel: 'Wordbank {count}',
+  wordbankCount: '{count} words',
+  saveAllToWordbank: 'Save all to Wordbank ({count})',
+  saveToWordbank: 'Save {word} to Wordbank',
+  removeFromWordbank: 'Remove {word} from Wordbank',
+  wordbankSavedToast: 'Saved to Wordbank',
+  wordbankRemovedToast: 'Removed from Wordbank',
   providerAmazon: 'Amazon Translate',
   providerAmazonBadge: '2M free/mo',
   providerAmazonInfo: 'Amazon info',
@@ -47,7 +62,14 @@ const messages: Record<string, string> = {
 };
 
 vi.mock('next-intl', () => ({
-  useTranslations: () => (key: string) => messages[key] ?? key,
+  useTranslations:
+    () => (key: string, values?: Record<string, string | number>) => {
+      let message = messages[key] ?? key;
+      for (const [name, value] of Object.entries(values ?? {})) {
+        message = message.replaceAll(`{${name}}`, String(value));
+      }
+      return message;
+    },
 }));
 
 vi.mock('sonner', () => ({
@@ -55,6 +77,10 @@ vi.mock('sonner', () => ({
     error: vi.fn(),
     success: vi.fn(),
   },
+}));
+
+vi.mock('@/lib/api/api-client', () => ({
+  apiClient,
 }));
 
 vi.mock('@/components/english/grammar-analysis-dialog', () => ({
@@ -140,15 +166,112 @@ describe('EnglishAssistantClient', () => {
 
   beforeEach(() => {
     clipboardWriteText.mockClear();
+    apiClient.delete.mockReset();
+    apiClient.get.mockReset();
+    apiClient.patch.mockReset();
+    apiClient.post.mockReset();
     Object.defineProperty(window.navigator, 'clipboard', {
       value: { writeText: clipboardWriteText },
       configurable: true,
     });
 
+    let savedWordbankWords: string[] = [];
+
+    apiClient.get.mockImplementation(async (url: string) => {
+      if (url === 'v1/english/wordbank') {
+        return {
+          items: [],
+          lists: [],
+          savedWords: savedWordbankWords,
+          stats: {
+            dueWords: 0,
+            familiarWords: 0,
+            masteredWords: 0,
+            newWords: 0,
+            savedToday: 0,
+            savedWords: savedWordbankWords.length,
+          },
+          total: savedWordbankWords.length,
+        };
+      }
+
+      return {};
+    });
+
+    apiClient.post.mockImplementation(async (url: string) => {
+      if (url === 'v1/english/wordbank') {
+        savedWordbankWords = ['hello'];
+        return {
+          savedCount: 1,
+          savedWords: savedWordbankWords,
+          total: savedWordbankWords.length,
+        };
+      }
+
+      return {};
+    });
+
+    apiClient.delete.mockImplementation(async (url: string) => {
+      if (url === 'v1/english/wordbank') {
+        savedWordbankWords = [];
+        return {
+          removedCount: 1,
+          savedWords: savedWordbankWords,
+          total: savedWordbankWords.length,
+        };
+      }
+
+      return {};
+    });
+
     vi.stubGlobal(
       'fetch',
-      vi.fn(async (input: RequestInfo | URL) => {
+      vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
         const url = String(input);
+
+        if (url.includes('/api/v1/english/wordbank')) {
+          if (init?.method === 'POST') {
+            savedWordbankWords = ['hello'];
+            return new Response(
+              JSON.stringify({
+                savedCount: 1,
+                total: savedWordbankWords.length,
+                savedWords: savedWordbankWords,
+              }),
+              {
+                status: 200,
+                headers: { 'Content-Type': 'application/json' },
+              }
+            );
+          }
+
+          if (init?.method === 'DELETE') {
+            savedWordbankWords = [];
+            return new Response(
+              JSON.stringify({
+                removedCount: 1,
+                total: savedWordbankWords.length,
+                savedWords: savedWordbankWords,
+              }),
+              {
+                status: 200,
+                headers: { 'Content-Type': 'application/json' },
+              }
+            );
+          }
+
+          return new Response(
+            JSON.stringify({
+              items: [],
+              total: savedWordbankWords.length,
+              savedWords: savedWordbankWords,
+            }),
+            {
+              status: 200,
+              headers: { 'Content-Type': 'application/json' },
+            }
+          );
+        }
 
         if (url.includes('/api/v1/english/translate')) {
           return new Response(JSON.stringify({ translatedText: 'Xin chào' }), {
@@ -358,5 +481,67 @@ describe('EnglishAssistantClient', () => {
 
     expect(writeText).toHaveBeenCalledWith('Xin chào');
     expect(screen.getByRole('button', { name: 'Copied' })).toBeInTheDocument();
+  });
+
+  it('saves analyzed vocabulary to the wordbank from the sticky action', async () => {
+    const user = userEvent.setup();
+
+    renderEnglishAssistantClient();
+
+    await user.type(
+      screen.getByRole('textbox', { name: 'Source Content' }),
+      'Hello there.'
+    );
+    await user.click(
+      screen.getByRole('button', { name: 'Translate & Analyze' })
+    );
+
+    await screen.findByText('hello');
+    await user.click(
+      screen.getByRole('button', { name: 'Save all to Wordbank (1)' })
+    );
+
+    await waitFor(() => {
+      expect(apiClient.post).toHaveBeenCalledWith('v1/english/wordbank', {
+        vocabulary: [expect.objectContaining({ word: 'hello' })],
+      });
+    });
+  });
+
+  it('centers vocabulary rows and keeps wordbank bookmark actions borderless', async () => {
+    const user = userEvent.setup();
+
+    renderEnglishAssistantClient();
+
+    await user.type(
+      screen.getByRole('textbox', { name: 'Source Content' }),
+      'Hello there.'
+    );
+    await user.click(
+      screen.getByRole('button', { name: 'Translate & Analyze' })
+    );
+
+    const vocabularyWord = await screen.findByText('hello');
+    let vocabularyRow: HTMLElement | null = vocabularyWord;
+    while (vocabularyRow && !vocabularyRow.className.includes('lg:grid-cols')) {
+      vocabularyRow = vocabularyRow.parentElement;
+    }
+
+    expect(vocabularyRow).toHaveClass('items-center', 'lg:items-center');
+    expect(vocabularyRow).not.toHaveClass('lg:items-start');
+
+    const saveButton = screen.getByRole('button', {
+      name: 'Save hello to Wordbank',
+    });
+    expect(saveButton).toHaveClass('hover:bg-primary/10', 'hover:text-primary');
+    expect(saveButton).not.toHaveClass('border', 'rounded-full');
+
+    await user.click(saveButton);
+
+    const removeButton = await screen.findByRole('button', {
+      name: 'Remove hello from Wordbank',
+    });
+    expect(removeButton).toHaveClass('text-destructive', 'hover:bg-muted/60');
+    expect(removeButton).not.toHaveClass('border', 'rounded-full');
   });
 });

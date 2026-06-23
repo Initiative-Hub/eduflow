@@ -2,7 +2,6 @@ import type { ToolSet, UIMessage } from 'ai'; // Add CoreTool here
 import type { AICourseGeneration } from '@/lib/validations/course.schema';
 
 export type ChatProvider = 'ai-gateway' | 'google' | 'openrouter';
-export type StreamChatPromptMode = 'append' | 'replace';
 
 export type StreamChatInput = {
   messages: UIMessage[];
@@ -13,7 +12,6 @@ export type StreamChatInput = {
 
 export type StreamChatInternalOptions = {
   prompt?: string;
-  mode?: StreamChatPromptMode;
   tools?: ToolSet;
   maxSteps?: number;
 };

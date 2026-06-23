@@ -13,6 +13,11 @@ import type {
   TranslationPanelLookupActions,
   TranslationPanelState,
 } from '../_types';
+import {
+  useRemoveVocabularyMutation,
+  useSaveVocabularyMutation,
+  useWordbankQuery,
+} from './use-wordbank';
 
 interface TranslateParams {
   text: string;
@@ -133,6 +138,9 @@ export function useEnglishAssistantController() {
   const analyzeEnglishMutation = useAnalyzeEnglishMutation();
   const grammarMutation = useGrammarAnalysisMutation();
   const ttsMutation = useTextToSpeechMutation();
+  const wordbankQuery = useWordbankQuery();
+  const saveVocabularyMutation = useSaveVocabularyMutation();
+  const removeVocabularyMutation = useRemoveVocabularyMutation();
 
   const isAnalyzing =
     translateMutation.isPending || analyzeEnglishMutation.isPending;
@@ -277,6 +285,59 @@ export function useEnglishAssistantController() {
     []
   );
 
+  const savedWordSet = useMemo(
+    () => new Set(wordbankQuery.data?.savedWords ?? []),
+    [wordbankQuery.data?.savedWords]
+  );
+
+  const currentVocabularyList = analyzeEnglishMutation.data?.vocabulary ?? [];
+  const unsavedVocabularyList = useMemo(
+    () =>
+      currentVocabularyList.filter(
+        (item) => !savedWordSet.has(item.word.trim().toLowerCase())
+      ),
+    [currentVocabularyList, savedWordSet]
+  );
+
+  const handleSaveVocabulary = useCallback(
+    async (items: VocabularyItem[]) => {
+      const unsavedItems = items.filter(
+        (item) => !savedWordSet.has(item.word.trim().toLowerCase())
+      );
+      if (unsavedItems.length === 0) return;
+
+      try {
+        await saveVocabularyMutation.mutateAsync(unsavedItems);
+        toast.success(t('wordbankSavedToast'));
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Wordbank save failed';
+        toast.error(t('wordbankSaveFailedToast'), { description: msg });
+      }
+    },
+    [saveVocabularyMutation, savedWordSet, t]
+  );
+
+  const handleToggleVocabulary = useCallback(
+    async (item: VocabularyItem) => {
+      const normalizedWord = item.word.trim().toLowerCase();
+
+      if (savedWordSet.has(normalizedWord)) {
+        try {
+          await removeVocabularyMutation.mutateAsync(normalizedWord);
+          toast.success(t('wordbankRemovedToast'));
+        } catch (err) {
+          const msg =
+            err instanceof Error ? err.message : 'Wordbank remove failed';
+          toast.error(t('wordbankRemoveFailedToast'), { description: msg });
+        }
+        return;
+      }
+
+      await handleSaveVocabulary([item]);
+    },
+    [handleSaveVocabulary, removeVocabularyMutation, savedWordSet, t]
+  );
+
   return {
     sourceLookup,
     closeSourceLookup: () => setSourceLookup(null),
@@ -297,8 +358,18 @@ export function useEnglishAssistantController() {
       actions: translationPanelActions,
       lookupActions: translationPanelLookupActions,
     },
-    vocabularyList: analyzeEnglishMutation.data?.vocabulary ?? [],
+    vocabularyList: currentVocabularyList,
     hasVocabularyAnalysisResult: Boolean(analyzeEnglishMutation.data),
+    wordbank: {
+      total: wordbankQuery.data?.total ?? 0,
+      savedWords: wordbankQuery.data?.savedWords ?? [],
+      unsavedCount: unsavedVocabularyList.length,
+      isLoading: wordbankQuery.isLoading,
+      isSaving: saveVocabularyMutation.isPending,
+      isRemoving: removeVocabularyMutation.isPending,
+      onSaveAll: () => handleSaveVocabulary(currentVocabularyList),
+      onToggleVocabulary: handleToggleVocabulary,
+    },
     isAnalyzing,
   };
 }

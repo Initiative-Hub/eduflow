@@ -27,7 +27,7 @@ export class AIGatewayService implements ChatProviderService {
     return streamText({
       experimental_transform: smoothStream(),
       model: provider(model),
-      system: resolveChatSystemPrompt(options),
+      system: resolveChatSystemPrompt(options?.prompt ?? ''),
       messages: await convertToModelMessages(input.messages),
       tools: options?.tools,
       stopWhen: options?.maxSteps ? stepCountIs(options.maxSteps) : undefined,

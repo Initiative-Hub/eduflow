@@ -1,11 +1,10 @@
-import { SYSTEM_PROMPT } from './chat-provider.constants';
-import type { StreamChatInternalOptions } from './chat-provider.types';
+import { GENERAL_AI_TOOL_SYSTEM_PROMPT } from './chat-provider.constants';
 
-export function resolveChatSystemPrompt(
-  options?: StreamChatInternalOptions
-): string {
-  if (!options?.prompt) return SYSTEM_PROMPT;
-  if (options.mode === 'replace') return options.prompt;
+export function resolveChatSystemPrompt(specificSystemPrompt: string): string {
+  const specificPrompt = specificSystemPrompt.trim();
+  const generalPrompt = GENERAL_AI_TOOL_SYSTEM_PROMPT.trim();
 
-  return `${SYSTEM_PROMPT}\n\n=== ADDITIONAL CONTEXT ===\n${options.prompt}`;
+  return specificPrompt
+    ? `${specificPrompt}\n\n${generalPrompt}`
+    : generalPrompt;
 }

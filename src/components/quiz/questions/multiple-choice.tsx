@@ -24,6 +24,11 @@ export function MultipleChoice({
   disabled = false,
 }: MultipleChoiceProps) {
   const t = useTranslations('Quiz');
+  const explanationLines =
+    question.explanation
+      ?.split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean) ?? [];
 
   return (
     <div className="space-y-4">
@@ -79,14 +84,21 @@ export function MultipleChoice({
         })}
       </div>
 
-      {showResult && question.explanation && (
+      {showResult && explanationLines.length > 0 && (
         <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm dark:border-blue-800 dark:bg-blue-950/20">
           <p className="font-medium text-blue-800 dark:text-blue-200">
             {t('explanation')}
           </p>
-          <p className="mt-1 text-blue-700 dark:text-blue-300">
-            {question.explanation}
-          </p>
+          <div className="mt-1 flex flex-col gap-1 text-blue-700 dark:text-blue-300">
+            {explanationLines.map((line, index) => (
+              <p
+                key={`${index}-${line}`}
+                className={cn(index === 0 && 'font-semibold')}
+              >
+                {line}
+              </p>
+            ))}
+          </div>
         </div>
       )}
     </div>

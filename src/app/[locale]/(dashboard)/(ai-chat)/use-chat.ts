@@ -16,8 +16,8 @@ import {
   getUserMessageCount,
   hasReachedUserMessageLimit,
 } from '@/utils/chat-limit';
+import { uploadChatAttachments } from '../chat-attachments.service';
 import { chatService } from './chat.service';
-import { uploadChatAttachments } from './chat-attachments.service';
 
 const MAX_USER_MESSAGES = 5;
 
