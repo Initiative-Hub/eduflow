@@ -10,7 +10,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import type * as React from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useCourses } from '@/app/[locale]/(dashboard)/courses/use-courses';
 import { Button } from '@/components/ui/button';
 import {
@@ -25,6 +25,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useSession } from '@/lib/auth-client';
 import { NavbarAvatar } from './navbar-avatar';
 import {
@@ -39,9 +40,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const tNavbarAvatar = useTranslations('NavbarAvatar');
   const pathname = usePathname();
 
-  const { data: sessionData, refetch } = useSession();
+  const { data: sessionData, isPending, isRefetching, refetch } = useSession();
   const { state, toggleSidebar } = useSidebar();
-  const [isMounted, setIsMounted] = useState(false);
 
   const assistants = getAssistantNavItems(t);
   const settingsItems = getSettingNavItems(t);
@@ -74,10 +74,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     // Refetch session data on mount to ensure we have the latest auth state
     refetch();
   }, [refetch]);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   return (
     <Sidebar
@@ -178,7 +174,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
       <SidebarFooter className="border-border/40 border-t p-4 group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:pb-3">
         <div className="flex w-full items-center justify-between md:justify-end md:group-data-[collapsible=icon]:justify-center">
-          {isMounted && sessionData ? (
+          {sessionData ? (
             <div className="block md:hidden">
               <NavbarAvatar
                 name={sessionData.user.name}
@@ -186,6 +182,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 image={sessionData.user.image}
                 role={sessionData.user.role ?? undefined}
               />
+            </div>
+          ) : isPending || isRefetching ? (
+            <div className="block md:hidden">
+              <Skeleton className="h-10 w-40" />
             </div>
           ) : (
             <div className="flex items-center gap-2 font-heading md:hidden">

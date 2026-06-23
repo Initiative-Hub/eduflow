@@ -8,7 +8,6 @@ import { hasLocale } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
 import type { ReactNode } from 'react';
 import { Toaster } from 'sonner';
-import { GlobalLoader } from '@/components/global-loader';
 import Locator from '@/components/locator';
 import ReactScan from '@/components/react-scan';
 import { DEV_MODE } from '@/constants/common';
@@ -99,10 +98,7 @@ export default async function RootLayout({
       <body
         className={`${inter.variable} ${lexend.variable} font-sans antialiased`}
       >
-        <Providers>
-          <GlobalLoader />
-          {children}
-        </Providers>
+        <Providers>{children}</Providers>
         <VercelAnalytics />
         <VercelInsights />
         <Toaster />

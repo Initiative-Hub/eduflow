@@ -326,7 +326,8 @@
     "actions": {
       "backToForgot": "Back to Reset Request",
       "backToLogin": "Back to Login",
-      "reset": "Update Password"
+      "reset": "Update Password",
+      "resetting": "Updating..."
     },
     "description": "Create a new strong password to secure your account.",
     "form": {
