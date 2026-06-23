@@ -1,9 +1,20 @@
 import {
   CourseRoleName,
   type CourseRoleName as CourseRoleNameType,
+  PlatformRoleName,
   type Prisma,
 } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
+
+const MIN_CANDIDATE_SEARCH_LENGTH = 2;
+const ELIGIBLE_COURSE_MEMBER_PLATFORM_ROLES = [
+  PlatformRoleName.TEACHER,
+  PlatformRoleName.STUDENT,
+] as const;
+
+function isEligibleCourseMemberPlatformRole(role?: PlatformRoleName | null) {
+  return role === PlatformRoleName.TEACHER || role === PlatformRoleName.STUDENT;
+}
 
 export const ASSIGNABLE_COURSE_MEMBER_ROLES = [
   CourseRoleName.TEACHER,
@@ -59,6 +70,35 @@ export type CourseMemberCandidateView = CourseMemberUserView & {
 function normalizeSearch(search?: string) {
   const trimmedSearch = search?.trim();
   return trimmedSearch ? trimmedSearch : undefined;
+}
+
+function buildCandidateUserUserWhere({
+  courseId,
+  search,
+}: Pick<CourseMemberCandidateListInput, 'courseId' | 'search'>) {
+  const normalizedSearch = normalizeSearch(search);
+
+  if (
+    !normalizedSearch ||
+    normalizedSearch.length < MIN_CANDIDATE_SEARCH_LENGTH
+  )
+    return null;
+
+  return {
+    emailVerified: true,
+    role: {
+      is: {
+        name: { in: [...ELIGIBLE_COURSE_MEMBER_PLATFORM_ROLES] },
+      },
+    },
+    enrollments: {
+      none: { courseId },
+    },
+    OR: [
+      { name: { contains: normalizedSearch, mode: 'insensitive' } },
+      { email: { contains: normalizedSearch, mode: 'insensitive' } },
+    ],
+  } satisfies Prisma.UserWhereInput;
 }
 
 function buildEnrollmentWhere({
@@ -176,29 +216,24 @@ export class CourseMemberService {
   }
 
   static async listCandidates(input: CourseMemberCandidateListInput) {
-    const where = buildUserWhere(input.search);
+    const where = buildCandidateUserUserWhere(input);
+
+    if (!where) {
+      return {
+        data: [],
+        pagination: {
+          total: 0,
+          limit: input.limit,
+          offset: input.offset,
+        },
+      };
+    }
+
     const [total, users] = await Promise.all([
       prisma.user.count({ where }),
       prisma.user.findMany({
         where,
-        select: {
-          id: true,
-          email: true,
-          image: true,
-          name: true,
-          enrollments: {
-            where: { courseId: input.courseId },
-            select: {
-              id: true,
-              role: {
-                select: {
-                  name: true,
-                },
-              },
-            },
-            take: 1,
-          },
-        },
+        select: { id: true, email: true, image: true, name: true },
         orderBy: [{ name: 'asc' }, { email: 'asc' }],
         skip: input.offset,
         take: input.limit,
@@ -206,18 +241,14 @@ export class CourseMemberService {
     ]);
 
     return {
-      data: users.map((user): CourseMemberCandidateView => {
-        const enrollment = user.enrollments[0];
-
-        return {
-          id: user.id,
-          alreadyMember: Boolean(enrollment),
-          email: user.email,
-          image: user.image,
-          name: user.name,
-          role: enrollment?.role.name ?? CourseRoleName.STUDENT,
-        };
-      }),
+      data: users.map((user) => ({
+        id: user.id,
+        alreadyMember: false,
+        email: user.email,
+        image: user.image,
+        name: user.name,
+        role: CourseRoleName.STUDENT,
+      })),
       pagination: {
         total,
         limit: input.limit,
