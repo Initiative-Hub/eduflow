@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import { WordbankClient } from './wordbank-client';
 
 export const metadata: Metadata = {
@@ -6,5 +7,9 @@ export const metadata: Metadata = {
 };
 
 export default async function WordbankPage() {
-  return <WordbankClient />;
+  return (
+    <Suspense>
+      <WordbankClient />
+    </Suspense>
+  );
 }
