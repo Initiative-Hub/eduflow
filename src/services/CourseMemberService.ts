@@ -1,9 +1,20 @@
 import {
   CourseRoleName,
   type CourseRoleName as CourseRoleNameType,
+  PlatformRoleName,
   type Prisma,
 } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
+
+const MIN_CANDIDATE_SEARCH_LENGTH = 2;
+const ELIGIBLE_COURSE_MEMBER_PLATFORM_ROLES = [
+  PlatformRoleName.TEACHER,
+  PlatformRoleName.STUDENT,
+] as const;
+
+function isEligibleCourseMemberPlatformRole(role?: PlatformRoleName | null) {
+  return role === PlatformRoleName.TEACHER || role === PlatformRoleName.STUDENT;
+}
 
 export const ASSIGNABLE_COURSE_MEMBER_ROLES = [
   CourseRoleName.TEACHER,
@@ -52,13 +63,46 @@ export type CourseMemberView = {
   user: CourseMemberUserView;
 };
 
-export type CourseMemberCandidateView = CourseMemberUserView & {
-  alreadyMember: boolean;
+export type CourseMemberCandidateView = {
+  id: string;
+  email: string;
+  image: string | null;
+  name: string;
+  role: PlatformRoleName;
 };
 
 function normalizeSearch(search?: string) {
   const trimmedSearch = search?.trim();
   return trimmedSearch ? trimmedSearch : undefined;
+}
+
+function buildCandidateUserUserWhere({
+  courseId,
+  search,
+}: Pick<CourseMemberCandidateListInput, 'courseId' | 'search'>) {
+  const normalizedSearch = normalizeSearch(search);
+
+  if (
+    !normalizedSearch ||
+    normalizedSearch.length < MIN_CANDIDATE_SEARCH_LENGTH
+  )
+    return null;
+
+  return {
+    emailVerified: true,
+    role: {
+      is: {
+        name: { in: [...ELIGIBLE_COURSE_MEMBER_PLATFORM_ROLES] },
+      },
+    },
+    enrollments: {
+      none: { courseId },
+    },
+    OR: [
+      { name: { contains: normalizedSearch, mode: 'insensitive' } },
+      { email: { contains: normalizedSearch, mode: 'insensitive' } },
+    ],
+  } satisfies Prisma.UserWhereInput;
 }
 
 function buildEnrollmentWhere({
@@ -88,21 +132,6 @@ function buildEnrollmentWhere({
       {
         memberId: { contains: normalizedSearch, mode: 'insensitive' },
       },
-    ];
-  }
-
-  return where;
-}
-
-function buildUserWhere(search?: string) {
-  const normalizedSearch = normalizeSearch(search);
-  const where: Prisma.UserWhereInput = {};
-
-  if (normalizedSearch) {
-    where.OR = [
-      { name: { contains: normalizedSearch, mode: 'insensitive' } },
-      { email: { contains: normalizedSearch, mode: 'insensitive' } },
-      { id: { contains: normalizedSearch, mode: 'insensitive' } },
     ];
   }
 
@@ -176,7 +205,19 @@ export class CourseMemberService {
   }
 
   static async listCandidates(input: CourseMemberCandidateListInput) {
-    const where = buildUserWhere(input.search);
+    const where = buildCandidateUserUserWhere(input);
+
+    if (!where) {
+      return {
+        data: [],
+        pagination: {
+          total: 0,
+          limit: input.limit,
+          offset: input.offset,
+        },
+      };
+    }
+
     const [total, users] = await Promise.all([
       prisma.user.count({ where }),
       prisma.user.findMany({
@@ -186,18 +227,7 @@ export class CourseMemberService {
           email: true,
           image: true,
           name: true,
-          enrollments: {
-            where: { courseId: input.courseId },
-            select: {
-              id: true,
-              role: {
-                select: {
-                  name: true,
-                },
-              },
-            },
-            take: 1,
-          },
+          role: { select: { name: true } },
         },
         orderBy: [{ name: 'asc' }, { email: 'asc' }],
         skip: input.offset,
@@ -206,16 +236,17 @@ export class CourseMemberService {
     ]);
 
     return {
-      data: users.map((user): CourseMemberCandidateView => {
-        const enrollment = user.enrollments[0];
+      data: users.map((user) => {
+        if (!user.role) {
+          throw new Error('Candidate user must have a platform role');
+        }
 
         return {
           id: user.id,
-          alreadyMember: Boolean(enrollment),
           email: user.email,
           image: user.image,
           name: user.name,
-          role: enrollment?.role.name ?? CourseRoleName.STUDENT,
+          role: user.role.name,
         };
       }),
       pagination: {
@@ -232,6 +263,20 @@ export class CourseMemberService {
     role: CourseRoleNameType;
   }): Promise<CourseMemberMutationResponse> {
     assertAssignableRole(input.role);
+
+    const targetUser = await prisma.user.findUnique({
+      where: { id: input.userId },
+      select: {
+        emailVerified: true,
+        role: { select: { name: true } },
+      },
+    });
+
+    if (
+      !targetUser?.emailVerified ||
+      !isEligibleCourseMemberPlatformRole(targetUser.role?.name)
+    )
+      throw Error('User cannot be added to courses');
 
     const existingEnrollment = await prisma.enrollment.findFirst({
       where: {

@@ -13,10 +13,10 @@ export type SeedUserDefinition = {
 export type SeedUser = {
   id: string;
   email: string;
-  name: string | null;
+  name: string;
 };
 
-export type SeededUsers = Record<SeedUserKey, SeedUser>;
+export type SeededUsers = Record<SeedUserKey, SeedUser[]>;
 
 export type SeedUsersInput = {
   prisma: PrismaClient;
