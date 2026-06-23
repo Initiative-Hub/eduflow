@@ -552,7 +552,6 @@
       "save": "Lưu"
     },
     "addDialog": {
-      "alreadyMember": "Đã là {role}",
       "description": "Chọn vai trò khóa học, sau đó thêm người dùng hiện có vào khóa học này.",
       "emptyDescription": "Hãy thử từ khóa tìm kiếm khác.",
       "emptyTitle": "Không tìm thấy người dùng",

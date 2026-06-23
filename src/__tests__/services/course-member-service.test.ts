@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { CourseRoleName } from '@/generated/prisma';
+import { CourseRoleName, PlatformRoleName } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
 import { CourseMemberService } from '@/services/CourseMemberService';
 
@@ -125,12 +125,14 @@ describe('CourseMemberService', () => {
         email: 'candidate@example.com',
         image: null,
         name: 'Candidate User',
+        role: { name: PlatformRoleName.STUDENT },
       },
       {
         id: 'user-3',
         email: 'teacher-user@example.com',
         image: null,
         name: 'Teacher User',
+        role: { name: PlatformRoleName.TEACHER },
       },
     ]);
 
@@ -160,26 +162,31 @@ describe('CourseMemberService', () => {
     });
     expect(prismaMock.user.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
+        select: {
+          id: true,
+          email: true,
+          image: true,
+          name: true,
+          role: { select: { name: true } },
+        },
         skip: 0,
         take: 20,
       })
     );
     expect(result.data).toEqual([
       {
-        alreadyMember: false,
         email: 'candidate@example.com',
         id: 'user-2',
         image: null,
         name: 'Candidate User',
-        role: CourseRoleName.STUDENT,
+        role: PlatformRoleName.STUDENT,
       },
       {
-        alreadyMember: false,
         email: 'teacher-user@example.com',
         id: 'user-3',
         image: null,
         name: 'Teacher User',
-        role: CourseRoleName.STUDENT,
+        role: PlatformRoleName.TEACHER,
       },
     ]);
   });

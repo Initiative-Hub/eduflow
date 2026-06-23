@@ -63,8 +63,12 @@ export type CourseMemberView = {
   user: CourseMemberUserView;
 };
 
-export type CourseMemberCandidateView = CourseMemberUserView & {
-  alreadyMember: boolean;
+export type CourseMemberCandidateView = {
+  id: string;
+  email: string;
+  image: string | null;
+  name: string;
+  role: PlatformRoleName;
 };
 
 function normalizeSearch(search?: string) {
@@ -218,7 +222,13 @@ export class CourseMemberService {
       prisma.user.count({ where }),
       prisma.user.findMany({
         where,
-        select: { id: true, email: true, image: true, name: true },
+        select: {
+          id: true,
+          email: true,
+          image: true,
+          name: true,
+          role: { select: { name: true } },
+        },
         orderBy: [{ name: 'asc' }, { email: 'asc' }],
         skip: input.offset,
         take: input.limit,
@@ -226,14 +236,19 @@ export class CourseMemberService {
     ]);
 
     return {
-      data: users.map((user) => ({
-        id: user.id,
-        alreadyMember: false,
-        email: user.email,
-        image: user.image,
-        name: user.name,
-        role: CourseRoleName.STUDENT,
-      })),
+      data: users.map((user) => {
+        if (!user.role) {
+          throw new Error('Candidate user must have a platform role');
+        }
+
+        return {
+          id: user.id,
+          email: user.email,
+          image: user.image,
+          name: user.name,
+          role: user.role.name,
+        };
+      }),
       pagination: {
         total,
         limit: input.limit,
