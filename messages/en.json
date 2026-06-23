@@ -553,7 +553,6 @@
       "save": "Save"
     },
     "addDialog": {
-      "alreadyMember": "Already {role}",
       "description": "Choose a course role, then add an existing user to this course.",
       "emptyDescription": "Try another search term.",
       "emptyTitle": "No users found",

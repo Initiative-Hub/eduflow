@@ -42,8 +42,8 @@ async function main() {
 
   const courseCount = await seedDemoCourses({
     prisma,
-    teacherUserId: users.teacher.id,
-    studentUserId: users.student.id,
+    teacherUserId: users.teacher[0].id,
+    studentUserId: users.student[0].id,
     courseOwnerRoleId: courseRoles.COURSE_OWNER.id,
     courseStudentRoleId: courseRoles.STUDENT.id,
   });
@@ -57,8 +57,8 @@ async function main() {
 
   const chatCount = await seedDemoChats({
     prisma,
-    teacherUserId: users.teacher.id,
-    studentUserId: users.student.id,
+    teacherUserId: users.teacher[0].id,
+    studentUserId: users.student[0].id,
   });
   console.log(`Seeded ${chatCount} AI chats`);
 

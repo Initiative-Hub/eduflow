@@ -1,3 +1,5 @@
+import type { PlatformRoleName } from '@/generated/prisma';
+
 export const COURSE_MEMBERS_QUERY_KEY = (courseId: string) =>
   ['course', courseId, 'members'] as const;
 
@@ -35,8 +37,12 @@ export type CourseMember = {
   user: CourseMemberUser;
 };
 
-export type CourseMemberCandidate = CourseMemberUser & {
-  alreadyMember: boolean;
+export type CourseMemberCandidate = {
+  id: string;
+  email: string;
+  image: string | null;
+  name: string;
+  role: PlatformRoleName;
 };
 
 export type PaginationMeta = {

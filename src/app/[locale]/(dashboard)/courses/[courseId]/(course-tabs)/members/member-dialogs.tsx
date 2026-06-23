@@ -14,7 +14,6 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Empty,
@@ -277,7 +276,6 @@ function AddMemberDialog({ membersState }: MemberDialogsProps) {
               <div
                 key={candidate.id}
                 className="flex items-center justify-between gap-3 rounded-lg border bg-background px-3 py-3"
-                data-disabled={candidate.alreadyMember}
               >
                 <div className="flex min-w-0 items-center gap-3">
                   <Avatar>
@@ -297,27 +295,19 @@ function AddMemberDialog({ membersState }: MemberDialogsProps) {
                     </div>
                   </div>
                 </div>
-                {candidate.alreadyMember ? (
-                  <Badge variant="outline" className="shrink-0">
-                    {t('addDialog.alreadyMember', {
-                      role: getRoleLabel(candidate.role),
-                    })}
-                  </Badge>
-                ) : (
-                  <Button
-                    type="button"
-                    size="sm"
-                    disabled={addPending}
-                    onClick={() => addMember(candidate.id)}
-                  >
-                    {addPending ? (
-                      <Spinner data-icon="inline-start" />
-                    ) : (
-                      <Plus data-icon="inline-start" />
-                    )}
-                    {t('actions.add')}
-                  </Button>
-                )}
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={addPending}
+                  onClick={() => addMember(candidate.id)}
+                >
+                  {addPending ? (
+                    <Spinner data-icon="inline-start" />
+                  ) : (
+                    <Plus data-icon="inline-start" />
+                  )}
+                  {t('actions.add')}
+                </Button>
               </div>
             ))
           )}

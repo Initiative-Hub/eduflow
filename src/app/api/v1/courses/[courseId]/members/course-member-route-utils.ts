@@ -14,6 +14,7 @@ export function mapCourseMemberError(error: unknown) {
     message === 'Course owner role cannot be changed' ||
     message === 'Invalid course member role' ||
     message === 'User is already a course member' ||
+    message === 'User cannot be added to courses' ||
     message === 'You cannot remove yourself from the course'
   ) {
     return NextResponse.json({ message }, { status: 400 });
