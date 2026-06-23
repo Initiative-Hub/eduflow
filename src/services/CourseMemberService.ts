@@ -264,6 +264,20 @@ export class CourseMemberService {
   }): Promise<CourseMemberMutationResponse> {
     assertAssignableRole(input.role);
 
+    const targetUser = await prisma.user.findUnique({
+      where: { id: input.userId },
+      select: {
+        emailVerified: true,
+        role: { select: { name: true } },
+      },
+    });
+
+    if (
+      !targetUser?.emailVerified ||
+      !isEligibleCourseMemberPlatformRole(targetUser.role?.name)
+    )
+      throw Error('User cannot be added to courses');
+
     const existingEnrollment = await prisma.enrollment.findFirst({
       where: {
         courseId: input.courseId,
