@@ -134,21 +134,6 @@ function buildEnrollmentWhere({
   return where;
 }
 
-function buildUserWhere(search?: string) {
-  const normalizedSearch = normalizeSearch(search);
-  const where: Prisma.UserWhereInput = {};
-
-  if (normalizedSearch) {
-    where.OR = [
-      { name: { contains: normalizedSearch, mode: 'insensitive' } },
-      { email: { contains: normalizedSearch, mode: 'insensitive' } },
-      { id: { contains: normalizedSearch, mode: 'insensitive' } },
-    ];
-  }
-
-  return where;
-}
-
 function assertAssignableRole(role: CourseRoleNameType) {
   if (role === CourseRoleName.COURSE_OWNER) {
     throw new Error('Cannot assign the course owner role');

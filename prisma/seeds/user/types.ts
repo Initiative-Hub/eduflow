@@ -1,20 +1,7 @@
 import type { PrismaClient } from '../../../src/generated/prisma';
 import type { PlatformRoleName, SeededPlatformRoles } from '../role/types';
 
-export type SeedUserKey =
-  | 'admin'
-  | 'teacher'
-  | 'teacher01'
-  | 'teacher02'
-  | 'teacher03'
-  | 'teacher04'
-  | 'teacher05'
-  | 'student'
-  | 'student01'
-  | 'student02'
-  | 'student03'
-  | 'student04'
-  | 'student05';
+export type SeedUserKey = 'admin' | 'teacher' | 'student';
 
 export type SeedUserDefinition = {
   email: string;
