@@ -10,7 +10,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import type * as React from 'react';
-import { useEffect } from 'react';
 import { useCourses } from '@/app/[locale]/(dashboard)/courses/use-courses';
 import { Button } from '@/components/ui/button';
 import {
@@ -39,9 +38,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const t = useTranslations('Layout');
   const tNavbarAvatar = useTranslations('NavbarAvatar');
   const pathname = usePathname();
-
-  const { data: sessionData, isPending, isRefetching, refetch } = useSession();
   const { state, toggleSidebar } = useSidebar();
+  const { data: sessionData, isPending } = useSession();
 
   const assistants = getAssistantNavItems(t);
   const settingsItems = getSettingNavItems(t);
@@ -69,11 +67,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   } else if (courseId) {
     menuItems = courseItems;
   }
-
-  useEffect(() => {
-    // Refetch session data on mount to ensure we have the latest auth state
-    refetch();
-  }, [refetch]);
 
   return (
     <Sidebar
@@ -183,7 +176,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 role={sessionData.user.role ?? undefined}
               />
             </div>
-          ) : isPending || isRefetching ? (
+          ) : isPending ? (
             <div className="block md:hidden">
               <Skeleton className="h-10 w-40" />
             </div>
