@@ -12,10 +12,6 @@ const ELIGIBLE_COURSE_MEMBER_PLATFORM_ROLES = [
   PlatformRoleName.STUDENT,
 ] as const;
 
-function isEligibleCourseMemberPlatformRole(role?: PlatformRoleName | null) {
-  return role === PlatformRoleName.TEACHER || role === PlatformRoleName.STUDENT;
-}
-
 export const ASSIGNABLE_COURSE_MEMBER_ROLES = [
   CourseRoleName.TEACHER,
   CourseRoleName.STUDENT,
@@ -57,7 +53,7 @@ export type CourseMemberUserView = {
 
 export type CourseMemberView = {
   enrollmentId: string;
-  enrolledAt: string;
+  enrolledAt: string | null;
   isCourseOwner: boolean;
   isCurrentUser: boolean;
   user: CourseMemberUserView;
@@ -184,7 +180,7 @@ export class CourseMemberService {
 
         return {
           enrollmentId: enrollment.id,
-          enrolledAt: enrollment.enrolledAt.toISOString(),
+          enrolledAt: enrollment.enrolledAt?.toISOString() ?? null,
           isCourseOwner: role === CourseRoleName.COURSE_OWNER,
           isCurrentUser: enrollment.member.id === input.currentUserId,
           user: {
@@ -274,7 +270,9 @@ export class CourseMemberService {
 
     if (
       !targetUser?.emailVerified ||
-      !isEligibleCourseMemberPlatformRole(targetUser.role?.name)
+      !ELIGIBLE_COURSE_MEMBER_PLATFORM_ROLES.includes(
+        targetUser.role?.name as any
+      )
     )
       throw Error('User cannot be added to courses');
 

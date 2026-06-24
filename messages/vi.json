@@ -576,6 +576,7 @@
       "title": "Thành viên không khả dụng"
     },
     "fallback": {
+      "noJoinDate": "Chưa tham gia",
       "noName": "Chưa có tên"
     },
     "filters": {

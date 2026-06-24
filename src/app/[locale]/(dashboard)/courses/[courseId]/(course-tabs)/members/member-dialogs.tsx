@@ -200,126 +200,131 @@ function AddMemberDialog({ membersState }: MemberDialogsProps) {
       description={t('addDialog.description')}
       className="sm:max-w-xl"
     >
-      <FieldGroup>
-        <Field>
-          <FieldLabel htmlFor="course-member-add-role">
-            {t('form.role')}
-          </FieldLabel>
-          <FieldContent>
-            <Select
-              value={addRole}
-              onValueChange={(value) =>
-                setAddRole(value as AssignableCourseMemberRole)
-              }
-            >
-              <SelectTrigger id="course-member-add-role">
-                <SelectValue placeholder={t('form.role')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  {assignableRoles.map((role) => (
-                    <SelectItem key={role} value={role}>
-                      {getRoleLabel(role)}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </FieldContent>
-        </Field>
-        <Field>
-          <FieldLabel htmlFor="course-member-candidate-search">
-            {t('searchLabel')}
-          </FieldLabel>
-          <FieldContent>
-            <InputGroup className="h-10">
-              <InputGroupAddon>
-                <Search />
-              </InputGroupAddon>
-              <InputGroupInput
-                id="course-member-candidate-search"
-                type="search"
-                value={candidateSearch}
-                placeholder={t('addDialog.searchPlaceholder')}
-                onChange={(event) => setCandidateSearch(event.target.value)}
-              />
-            </InputGroup>
-          </FieldContent>
-        </Field>
-      </FieldGroup>
-
-      <ScrollArea className="h-88 rounded-lg border">
-        <div className="flex flex-col gap-2 p-3">
-          {isCandidatesError ? (
-            <Alert variant="destructive">
-              <AlertTitle>{t('errors.candidatesTitle')}</AlertTitle>
-              <AlertDescription>
-                {t('errors.candidatesDescription')}
-              </AlertDescription>
-            </Alert>
-          ) : isCandidatesLoading ? (
-            <CandidateSkeleton />
-          ) : candidates.length === 0 ? (
-            <Empty>
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <UserRound />
-                </EmptyMedia>
-                <EmptyTitle>{t('addDialog.emptyTitle')}</EmptyTitle>
-                <EmptyDescription>
-                  {t('addDialog.emptyDescription')}
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
-          ) : (
-            candidates.map((candidate) => (
-              <div
-                key={candidate.id}
-                className="flex items-center justify-between gap-3 rounded-lg border bg-background px-3 py-3"
+      <div className="flex flex-col gap-4">
+        <FieldGroup>
+          <Field>
+            <FieldLabel htmlFor="course-member-add-role">
+              {t('form.role')}
+            </FieldLabel>
+            <FieldContent>
+              <Select
+                value={addRole}
+                onValueChange={(value) =>
+                  setAddRole(value as AssignableCourseMemberRole)
+                }
               >
-                <div className="flex min-w-0 items-center gap-3">
-                  <Avatar>
-                    {candidate.image ? (
-                      <AvatarImage src={candidate.image} alt={candidate.name} />
-                    ) : null}
-                    <AvatarFallback>
-                      {getInitials(candidate.name, candidate.email)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="min-w-0">
-                    <div className="truncate font-medium text-sm">
-                      {candidate.name || t('fallback.noName')}
-                    </div>
-                    <div className="truncate text-muted-foreground text-sm">
-                      {candidate.email}
+                <SelectTrigger id="course-member-add-role">
+                  <SelectValue placeholder={t('form.role')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {assignableRoles.map((role) => (
+                      <SelectItem key={role} value={role}>
+                        {getRoleLabel(role)}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </FieldContent>
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="course-member-candidate-search">
+              {t('searchLabel')}
+            </FieldLabel>
+            <FieldContent>
+              <InputGroup className="h-10">
+                <InputGroupAddon>
+                  <Search />
+                </InputGroupAddon>
+                <InputGroupInput
+                  id="course-member-candidate-search"
+                  type="search"
+                  value={candidateSearch}
+                  placeholder={t('addDialog.searchPlaceholder')}
+                  onChange={(event) => setCandidateSearch(event.target.value)}
+                />
+              </InputGroup>
+            </FieldContent>
+          </Field>
+        </FieldGroup>
+
+        <ScrollArea className="h-88 rounded-lg border">
+          <div className="flex flex-col gap-2 p-3">
+            {isCandidatesError ? (
+              <Alert variant="destructive">
+                <AlertTitle>{t('errors.candidatesTitle')}</AlertTitle>
+                <AlertDescription>
+                  {t('errors.candidatesDescription')}
+                </AlertDescription>
+              </Alert>
+            ) : isCandidatesLoading ? (
+              <CandidateSkeleton />
+            ) : candidates.length === 0 ? (
+              <Empty>
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <UserRound />
+                  </EmptyMedia>
+                  <EmptyTitle>{t('addDialog.emptyTitle')}</EmptyTitle>
+                  <EmptyDescription>
+                    {t('addDialog.emptyDescription')}
+                  </EmptyDescription>
+                </EmptyHeader>
+              </Empty>
+            ) : (
+              candidates.map((candidate) => (
+                <div
+                  key={candidate.id}
+                  className="flex items-center justify-between gap-3 rounded-lg border bg-background px-3 py-3"
+                >
+                  <div className="flex min-w-0 items-center gap-3">
+                    <Avatar>
+                      {candidate.image ? (
+                        <AvatarImage
+                          src={candidate.image}
+                          alt={candidate.name}
+                        />
+                      ) : null}
+                      <AvatarFallback>
+                        {getInitials(candidate.name, candidate.email)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0">
+                      <div className="truncate font-medium text-sm">
+                        {candidate.name || t('fallback.noName')}
+                      </div>
+                      <div className="truncate text-muted-foreground text-sm">
+                        {candidate.email}
+                      </div>
                     </div>
                   </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={addPending}
+                    onClick={() => addMember(candidate.id)}
+                  >
+                    {addPending ? (
+                      <Spinner data-icon="inline-start" />
+                    ) : (
+                      <Plus data-icon="inline-start" />
+                    )}
+                    {t('actions.add')}
+                  </Button>
                 </div>
-                <Button
-                  type="button"
-                  size="sm"
-                  disabled={addPending}
-                  onClick={() => addMember(candidate.id)}
-                >
-                  {addPending ? (
-                    <Spinner data-icon="inline-start" />
-                  ) : (
-                    <Plus data-icon="inline-start" />
-                  )}
-                  {t('actions.add')}
-                </Button>
+              ))
+            )}
+            <div ref={candidateSentinelRef} className="h-6" />
+            {isFetchingCandidatesNextPage ? (
+              <div className="flex justify-center py-2 text-muted-foreground text-sm">
+                <Spinner data-icon="inline-start" />
+                {t('addDialog.loadingMore')}
               </div>
-            ))
-          )}
-          <div ref={candidateSentinelRef} className="h-6" />
-          {isFetchingCandidatesNextPage ? (
-            <div className="flex justify-center py-2 text-muted-foreground text-sm">
-              <Spinner data-icon="inline-start" />
-              {t('addDialog.loadingMore')}
-            </div>
-          ) : null}
-        </div>
-      </ScrollArea>
+            ) : null}
+          </div>
+        </ScrollArea>
+      </div>
     </DialogTemplate>
   );
 }

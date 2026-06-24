@@ -31,7 +31,7 @@ export type CourseMemberUser = {
 
 export type CourseMember = {
   enrollmentId: string;
-  enrolledAt: string;
+  enrolledAt: string | null;
   isCourseOwner: boolean;
   isCurrentUser: boolean;
   user: CourseMemberUser;

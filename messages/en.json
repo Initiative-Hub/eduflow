@@ -576,6 +576,7 @@
       "title": "Members unavailable"
     },
     "fallback": {
+      "noJoinDate": "Not joined yet",
       "noName": "No name"
     },
     "filters": {

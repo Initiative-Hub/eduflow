@@ -297,7 +297,11 @@ export function useMembers({
     return getRoleBadge(role).label;
   };
 
-  const getJoinDate = (enrolledAt: string) => {
+  const getJoinDate = (enrolledAt: string | null) => {
+    if (!enrolledAt) {
+      return t('fallback.noJoinDate');
+    }
+
     return new Intl.DateTimeFormat(locale, {
       day: 'numeric',
       month: 'short',
