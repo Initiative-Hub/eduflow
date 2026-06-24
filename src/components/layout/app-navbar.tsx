@@ -22,10 +22,10 @@ export function AppNavbar() {
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    if (isPending) return;
+    if (isMounted || isPending) return;
 
     setIsMounted(true);
-  }, [isPending]);
+  }, [isMounted, isPending]);
 
   return (
     <div className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between overflow-hidden border-border/40 border-b bg-background/95 px-3 shadow-sm backdrop-blur supports-backdrop-filter:bg-background/60 md:px-8">
@@ -101,7 +101,11 @@ export function AppNavbar() {
       </div>
       <div className="flex items-center gap-2">
         {/* Account Actions / Profile (Desktop Only) */}
-        {sessionData ? (
+        {!isMounted && isPending ? (
+          <div className="hidden md:block">
+            <Skeleton className="h-10 w-40" />
+          </div>
+        ) : sessionData ? (
           <div className="hidden md:block">
             <NavbarAvatar
               name={sessionData.user.name}
@@ -109,10 +113,6 @@ export function AppNavbar() {
               image={sessionData.user.image}
               role={sessionData.user.role ?? undefined}
             />
-          </div>
-        ) : !isMounted && isPending ? (
-          <div className="hidden md:block">
-            <Skeleton className="h-10 w-40" />
           </div>
         ) : (
           <div className="flex items-center gap-1">
