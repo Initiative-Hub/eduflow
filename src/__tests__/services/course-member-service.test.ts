@@ -1,11 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { CourseRoleName, PlatformRoleName } from '@/generated/prisma';
+import {
+  CourseEnrollmentStatus,
+  CourseRoleName,
+  PlatformRoleName,
+} from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
 import { CourseMemberService } from '@/services/CourseMemberService';
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
     courseRole: {
+      findUnique: vi.fn(),
+    },
+    course: {
       findUnique: vi.fn(),
     },
     enrollment: {
@@ -27,6 +34,9 @@ vi.mock('@/lib/prisma', () => ({
 
 const prismaMock = prisma as unknown as {
   courseRole: {
+    findUnique: ReturnType<typeof vi.fn>;
+  };
+  course: {
     findUnique: ReturnType<typeof vi.fn>;
   };
   enrollment: {
@@ -200,7 +210,15 @@ describe('CourseMemberService', () => {
       })
     ).rejects.toThrow('Cannot assign the course owner role');
 
-    prismaMock.enrollment.findFirst.mockResolvedValue({ id: 'enrollment-1' });
+    prismaMock.course.findUnique.mockResolvedValue({
+      id: 'course-1',
+      title: 'Test Course',
+      deletedAt: null,
+    });
+    prismaMock.enrollment.findFirst.mockResolvedValue({
+      id: 'enrollment-1',
+      status: CourseEnrollmentStatus.ACTIVE,
+    });
     prismaMock.user.findUnique.mockResolvedValue({
       emailVerified: true,
       role: { name: 'STUDENT' },
