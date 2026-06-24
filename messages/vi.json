@@ -1,4 +1,27 @@
 {
+  "AcceptInvitationPage": {
+    "actions": {
+      "goHome": "Về trang chủ",
+      "goToCourse": "Đến khóa học"
+    },
+    "expired": {
+      "description": "Lời mời này đã hết hạn vào ngày {date}. Hãy nhờ giảng viên gửi lại lời mời mới cho bạn.",
+      "title": "Lời mời đã hết hạn"
+    },
+    "notPending": {
+      "acceptedDescription": "Bạn đã chấp nhận lời mời này và đã được ghi danh vào khóa học.",
+      "acceptedTitle": "Đã ghi danh",
+      "cancelledDescription": "Lời mời này đã bị hủy. Hãy nhờ giảng viên gửi lại lời mời mới cho bạn.",
+      "cancelledTitle": "Lời mời đã bị hủy",
+      "declinedDescription": "Bạn đã từ chối lời mời này trước đó. Hãy nhờ giảng viên gửi lại lời mời mới cho bạn.",
+      "declinedTitle": "Lời mời đã bị từ chối"
+    },
+    "wrongUser": {
+      "description": "Lời mời này được gửi đến một tài khoản khác. Hãy đăng nhập bằng email đúng hoặc nhờ giảng viên mời lại bạn.",
+      "switchAccount": "Đổi tài khoản",
+      "title": "Sai tài khoản"
+    }
+  },
   "AdminUsersPage": {
     "actions": {
       "addUser": "Thêm người dùng",
@@ -543,6 +566,21 @@
       "list": "Danh sách"
     }
   },
+  "CourseInvitePage": {
+    "description": "Xác nhận rằng bạn muốn tham gia {course}.",
+    "joinButton": "Tham gia khóa học",
+    "metadataTitle": "Lời mời khóa học",
+    "toast": {
+      "failed": "Không thể tham gia khóa học.",
+      "joined": "Đã tham gia khóa học."
+    },
+    "unavailable": {
+      "expired": "Liên kết mời này đã hết hạn.",
+      "limit": "Liên kết mời này đã đạt giới hạn lượt dùng.",
+      "revoked": "Liên kết mời này đã bị thu hồi.",
+      "title": "Lời mời không khả dụng"
+    }
+  },
   "CourseMembersPage": {
     "actions": {
       "add": "Thêm",
@@ -665,44 +703,6 @@
       "removeFailed": "Không thể xóa thành viên.",
       "updated": "Đã cập nhật vai trò thành viên.",
       "updateFailed": "Không thể cập nhật vai trò thành viên."
-    }
-  },
-  "CourseInvitePage": {
-    "description": "Xác nhận rằng bạn muốn tham gia {course}.",
-    "joinButton": "Tham gia khóa học",
-    "metadataTitle": "Lời mời khóa học",
-    "toast": {
-      "failed": "Không thể tham gia khóa học.",
-      "joined": "Đã tham gia khóa học."
-    },
-    "unavailable": {
-      "expired": "Liên kết mời này đã hết hạn.",
-      "limit": "Liên kết mời này đã đạt giới hạn lượt dùng.",
-      "revoked": "Liên kết mời này đã bị thu hồi.",
-      "title": "Lời mời không khả dụng"
-    }
-  },
-  "AcceptInvitationPage": {
-    "actions": {
-      "goHome": "Về trang chủ",
-      "goToCourse": "Đến khóa học"
-    },
-    "expired": {
-      "description": "Lời mời này đã hết hạn vào ngày {date}. Hãy nhờ giảng viên gửi lại lời mời mới cho bạn.",
-      "title": "Lời mời đã hết hạn"
-    },
-    "notPending": {
-      "acceptedDescription": "Bạn đã chấp nhận lời mời này và đã được ghi danh vào khóa học.",
-      "acceptedTitle": "Đã ghi danh",
-      "cancelledDescription": "Lời mời này đã bị hủy. Hãy nhờ giảng viên gửi lại lời mời mới cho bạn.",
-      "cancelledTitle": "Lời mời đã bị hủy",
-      "declinedDescription": "Bạn đã từ chối lời mời này trước đó. Hãy nhờ giảng viên gửi lại lời mời mới cho bạn.",
-      "declinedTitle": "Lời mời đã bị từ chối"
-    },
-    "wrongUser": {
-      "description": "Lời mời này được gửi đến một tài khoản khác. Hãy đăng nhập bằng email đúng hoặc nhờ giảng viên mời lại bạn.",
-      "switchAccount": "Đổi tài khoản",
-      "title": "Sai tài khoản"
     }
   },
   "Courses": {
