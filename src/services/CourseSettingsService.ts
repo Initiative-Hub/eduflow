@@ -1,4 +1,5 @@
 import {
+  CourseEnrollmentStatus,
   CourseRoleName,
   type CourseRoleName as CourseRoleNameType,
 } from '@/generated/prisma';
@@ -71,7 +72,11 @@ export class CourseSettingsService {
 
   private static async getCurrentEnrollment(courseId: string, userId: string) {
     return prisma.enrollment.findFirst({
-      where: { courseId, memberId: userId },
+      where: {
+        courseId,
+        memberId: userId,
+        status: CourseEnrollmentStatus.ACTIVE,
+      },
       select: {
         id: true,
         memberId: true,
@@ -121,6 +126,7 @@ export class CourseSettingsService {
           where: {
             courseId,
             memberId: { not: currentUserId },
+            status: CourseEnrollmentStatus.ACTIVE,
           },
           include: {
             member: {
@@ -228,6 +234,7 @@ export class CourseSettingsService {
         where: {
           courseId: input.courseId,
           memberId: { in: [input.currentUserId, input.newOwnerUserId] },
+          status: CourseEnrollmentStatus.ACTIVE,
         },
         select: {
           id: true,

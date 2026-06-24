@@ -1,10 +1,12 @@
 import { apiClient } from '@/lib/api';
 import type {
   AddCourseMemberInput,
+  CourseInviteLinksResponse,
   CourseMemberCandidatesResponse,
   CourseMemberMutationResponse,
   CourseMemberRoleFilter,
   CourseMembersResponse,
+  CreateCourseInviteLinkInput,
   UpdateCourseMemberInput,
 } from './members.config';
 
@@ -77,6 +79,13 @@ export const courseMembersService = {
     );
   },
 
+  inviteMember: async (courseId: string, input: AddCourseMemberInput) => {
+    return apiClient.post<CourseMemberMutationResponse>(
+      `v1/courses/${courseId}/members/invitations`,
+      input
+    );
+  },
+
   updateMember: async (courseId: string, input: UpdateCourseMemberInput) => {
     return apiClient.patch<CourseMemberMutationResponse>(
       `v1/courses/${courseId}/members/${input.memberId}`,
@@ -87,6 +96,26 @@ export const courseMembersService = {
   removeMember: async (courseId: string, memberId: string) => {
     return apiClient.delete<CourseMemberMutationResponse>(
       `v1/courses/${courseId}/members/${memberId}`
+    );
+  },
+
+  listInviteLinks: async (courseId: string) => {
+    return apiClient.get<CourseInviteLinksResponse>(
+      `v1/courses/${courseId}/invite-links`,
+      { headers: { 'Cache-Control': 'no-store' } }
+    );
+  },
+
+  createInviteLink: async (
+    courseId: string,
+    input: CreateCourseInviteLinkInput
+  ) => {
+    return apiClient.post(`v1/courses/${courseId}/invite-links`, input);
+  },
+
+  revokeInviteLink: async (courseId: string, inviteId: string) => {
+    return apiClient.delete<CourseMemberMutationResponse>(
+      `v1/courses/${courseId}/invite-links/${inviteId}`
     );
   },
 };

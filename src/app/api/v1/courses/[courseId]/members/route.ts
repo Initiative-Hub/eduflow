@@ -139,6 +139,7 @@ export const POST = withAuth(async (req, sessionData, { params }) => {
     }
 
     const result = await CourseMemberService.addMember({
+      addedById: sessionData.user.id,
       courseId: parsedParams.data.courseId,
       userId: parsedBody.data.userId,
       role: parsedBody.data.role,

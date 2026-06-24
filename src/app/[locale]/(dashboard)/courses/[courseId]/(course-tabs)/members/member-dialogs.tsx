@@ -1,6 +1,16 @@
 'use client';
 
-import { Plus, Search, Trash2, UserRound } from 'lucide-react';
+import { format, isValid, parseISO } from 'date-fns';
+import {
+  CalendarIcon,
+  Link,
+  Plus,
+  Search,
+  Send,
+  Trash2,
+  UserRound,
+  X,
+} from 'lucide-react';
 import { DialogTemplate } from '@/components/custom/dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
@@ -28,6 +38,13 @@ import {
   FieldGroup,
   FieldLabel,
 } from '@/components/ui/field';
+import { Calendar } from '@/components/ui/calendar';
+import { Input } from '@/components/ui/input';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import {
   InputGroup,
   InputGroupAddon,
@@ -57,6 +74,7 @@ export function MemberDialogs({ membersState }: MemberDialogsProps) {
       <EditMemberDialog membersState={membersState} />
       <RemoveMemberDialog membersState={membersState} />
       <AddMemberDialog membersState={membersState} />
+      <CreateInviteLinkDialog membersState={membersState} />
     </>
   );
 }
@@ -185,6 +203,8 @@ function AddMemberDialog({ membersState }: MemberDialogsProps) {
     getInitials,
     getRoleLabel,
     handleAddDialogOpenChange,
+    inviteMember,
+    invitePending,
     isCandidatesError,
     isCandidatesLoading,
     isFetchingCandidatesNextPage,
@@ -299,19 +319,35 @@ function AddMemberDialog({ membersState }: MemberDialogsProps) {
                       </div>
                     </div>
                   </div>
-                  <Button
-                    type="button"
-                    size="sm"
-                    disabled={addPending}
-                    onClick={() => addMember(candidate.id)}
-                  >
-                    {addPending ? (
-                      <Spinner data-icon="inline-start" />
-                    ) : (
-                      <Plus data-icon="inline-start" />
-                    )}
-                    {t('actions.add')}
-                  </Button>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      disabled={invitePending || addPending}
+                      onClick={() => inviteMember(candidate.id)}
+                    >
+                      {invitePending ? (
+                        <Spinner data-icon="inline-start" />
+                      ) : (
+                        <Send data-icon="inline-start" />
+                      )}
+                      {t('actions.invite')}
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      disabled={addPending || invitePending}
+                      onClick={() => addMember(candidate.id)}
+                    >
+                      {addPending ? (
+                        <Spinner data-icon="inline-start" />
+                      ) : (
+                        <Plus data-icon="inline-start" />
+                      )}
+                      {t('actions.add')}
+                    </Button>
+                  </div>
                 </div>
               ))
             )}
@@ -326,6 +362,204 @@ function AddMemberDialog({ membersState }: MemberDialogsProps) {
         </ScrollArea>
       </div>
     </DialogTemplate>
+  );
+}
+
+function CreateInviteLinkDialog({ membersState }: MemberDialogsProps) {
+  const {
+    t,
+    assignableRoles,
+    createInviteLink,
+    getRoleLabel,
+    inviteLinkDialogOpen,
+    inviteLinkForm,
+    isCreatingInviteLink,
+    setInviteLinkDialogOpen,
+    updateInviteLinkForm,
+  } = membersState;
+
+  return (
+    <DialogTemplate
+      isOpen={inviteLinkDialogOpen}
+      onOpenChange={setInviteLinkDialogOpen}
+      title={t('linkDialog.title')}
+      description={t('linkDialog.description')}
+      className="sm:max-w-md"
+      footer={
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={isCreatingInviteLink}
+            onClick={() => setInviteLinkDialogOpen(false)}
+          >
+            {t('actions.cancel')}
+          </Button>
+          <Button
+            type="button"
+            disabled={isCreatingInviteLink}
+            onClick={() => createInviteLink()}
+          >
+            {isCreatingInviteLink ? (
+              <Spinner data-icon="inline-start" />
+            ) : (
+              <Link data-icon="inline-start" />
+            )}
+            {t('actions.createLink')}
+          </Button>
+        </>
+      }
+    >
+      <FieldGroup>
+        <Field>
+          <FieldLabel htmlFor="course-invite-link-role">
+            {t('form.role')}
+          </FieldLabel>
+          <FieldContent>
+            <Select
+              value={inviteLinkForm.role}
+              onValueChange={(value) => updateInviteLinkForm('role', value)}
+              disabled={isCreatingInviteLink}
+            >
+              <SelectTrigger id="course-invite-link-role">
+                <SelectValue placeholder={t('form.role')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {assignableRoles.map((role) => (
+                    <SelectItem key={role} value={role}>
+                      {getRoleLabel(role)}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </FieldContent>
+        </Field>
+        <Field>
+          <FieldLabel htmlFor="course-invite-link-max-uses">
+            {t('linkDialog.maxUses')}
+          </FieldLabel>
+          <FieldContent>
+            <Input
+              id="course-invite-link-max-uses"
+              min={1}
+              type="number"
+              value={inviteLinkForm.maxUses}
+              disabled={isCreatingInviteLink}
+              onChange={(event) =>
+                updateInviteLinkForm('maxUses', event.target.value)
+              }
+            />
+          </FieldContent>
+        </Field>
+        <Field>
+          <FieldLabel htmlFor="course-invite-link-expires-at-time">
+            {t('linkDialog.expiresAt')}
+          </FieldLabel>
+          <FieldContent>
+            <InviteLinkDateTimePicker
+              value={inviteLinkForm.expiresAt}
+              disabled={isCreatingInviteLink}
+              onChange={(value) => updateInviteLinkForm('expiresAt', value)}
+            />
+          </FieldContent>
+        </Field>
+      </FieldGroup>
+    </DialogTemplate>
+  );
+}
+
+type InviteLinkDateTimePickerProps = {
+  value: string;
+  disabled?: boolean;
+  onChange: (value: string) => void;
+};
+
+function InviteLinkDateTimePicker({
+  value,
+  disabled,
+  onChange,
+}: InviteLinkDateTimePickerProps) {
+  // Parse the stored string value into a Date
+  const parsedDate = value ? parseISO(value) : undefined;
+  const selectedDate =
+    parsedDate && isValid(parsedDate) ? parsedDate : undefined;
+
+  // Time string derived from the value (HH:mm)
+  const timeValue = selectedDate ? format(selectedDate, 'HH:mm') : '';
+
+  const handleDateSelect = (day: Date | undefined) => {
+    if (!day) return;
+    // Preserve existing time or default to 00:00
+    const [hours, minutes] = timeValue ? timeValue.split(':') : ['00', '00'];
+    const merged = new Date(day);
+    merged.setHours(Number(hours), Number(minutes), 0, 0);
+    onChange(merged.toISOString());
+  };
+
+  const handleTimeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const time = event.target.value; // "HH:mm"
+    if (!time) return;
+    const base = selectedDate ?? new Date();
+    const [hours, minutes] = time.split(':');
+    const merged = new Date(base);
+    merged.setHours(Number(hours), Number(minutes), 0, 0);
+    onChange(merged.toISOString());
+  };
+
+  const handleClear = () => onChange('');
+
+  return (
+    <div className="flex items-center gap-2">
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            id="course-invite-link-expires-at-date"
+            type="button"
+            variant="outline"
+            disabled={disabled}
+            className="w-full justify-start font-normal"
+          >
+            <CalendarIcon data-icon="inline-start" />
+            {selectedDate ? (
+              format(selectedDate, 'MMM d, yyyy')
+            ) : (
+              <span className="text-muted-foreground">Pick a date</span>
+            )}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent align="start" className="w-auto p-0">
+          <Calendar
+            mode="single"
+            selected={selectedDate}
+            onSelect={handleDateSelect}
+            disabled={(day) => day < new Date(new Date().setHours(0, 0, 0, 0))}
+          />
+        </PopoverContent>
+      </Popover>
+
+      <Input
+        id="course-invite-link-expires-at-time"
+        type="time"
+        value={timeValue}
+        disabled={disabled || !selectedDate}
+        className="w-32 shrink-0"
+        onChange={handleTimeChange}
+      />
+
+      {selectedDate && !disabled ? (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="shrink-0"
+          onClick={handleClear}
+        >
+          <X />
+        </Button>
+      ) : null}
+    </div>
   );
 }
 
@@ -344,7 +578,10 @@ function CandidateSkeleton() {
               <Skeleton className="h-3 w-44" />
             </div>
           </div>
-          <Skeleton className="h-8 w-16" />
+          <div className="flex shrink-0 items-center gap-2">
+            <Skeleton className="h-8 w-16" />
+            <Skeleton className="h-8 w-16" />
+          </div>
         </div>
       ))}
     </div>

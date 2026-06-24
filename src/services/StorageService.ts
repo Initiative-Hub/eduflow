@@ -1,4 +1,8 @@
-import type { FileInventory, Prisma } from '@/generated/prisma';
+import {
+  CourseEnrollmentStatus,
+  type FileInventory,
+  type Prisma,
+} from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
 import {
   buildInventoryObjectKey,
@@ -667,6 +671,7 @@ export class StorageService {
                         enrollments: {
                           some: {
                             memberId: options.userId,
+                            status: CourseEnrollmentStatus.ACTIVE,
                           },
                         },
                       },
@@ -756,6 +761,7 @@ export class StorageService {
                         enrollments: {
                           some: {
                             memberId: options.userId,
+                            status: CourseEnrollmentStatus.ACTIVE,
                           },
                         },
                       },

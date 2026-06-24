@@ -43,7 +43,9 @@ export function CoursesPageClient() {
     isLoading,
     isError,
     isCreating,
+    handleAcceptInvitation,
     handleCreateCourse,
+    handleDeclineInvitation,
     handleTogglePublish,
   } = useCourses(undefined, {
     listParams: {
@@ -183,6 +185,10 @@ export function CoursesPageClient() {
                 isOwner={Boolean(course.isOwner)}
                 modulesCount={course._count?.modules || 0}
                 enrollmentsCount={course._count?.enrollments || 0}
+                membershipStatus={course.membershipStatus}
+                pendingInvitationId={course.pendingInvitationId}
+                onAcceptInvitation={handleAcceptInvitation}
+                onDeclineInvitation={handleDeclineInvitation}
                 onTogglePublish={handleTogglePublish}
               />
             ))}

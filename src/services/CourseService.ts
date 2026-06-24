@@ -1,5 +1,9 @@
 import { after } from 'next/server';
-import { CourseRoleName } from '@/generated/prisma';
+import {
+  CourseEnrollmentStatus,
+  CourseInvitationStatus,
+  CourseRoleName,
+} from '@/generated/prisma';
 import {
   COURSE_PERMISSION,
   COURSE_PERMISSION_KEYS,
@@ -169,21 +173,6 @@ export class CourseService {
     });
   }
 
-  static async getCoursesByOwner(ownerId: string) {
-    return await prisma.course.findMany({
-      where: { deletedAt: null, ownerId },
-      orderBy: { createdAt: 'desc' },
-      include: {
-        _count: {
-          select: {
-            modules: { where: { deletedAt: null } },
-            enrollments: true,
-          },
-        },
-      },
-    });
-  }
-
   static async getJoinedCourses(userId: string) {
     return await prisma.course.findMany({
       where: {
@@ -194,6 +183,7 @@ export class CourseService {
             enrollments: {
               some: {
                 memberId: userId,
+                status: CourseEnrollmentStatus.ACTIVE,
               },
             },
           },
@@ -204,7 +194,11 @@ export class CourseService {
         _count: {
           select: {
             modules: { where: { deletedAt: null } },
-            enrollments: true,
+            enrollments: {
+              where: {
+                status: CourseEnrollmentStatus.ACTIVE,
+              },
+            },
           },
         },
       },
@@ -224,6 +218,12 @@ export class CourseService {
               enrollments: {
                 some: {
                   memberId: userId,
+                  status: {
+                    in: [
+                      CourseEnrollmentStatus.ACTIVE,
+                      CourseEnrollmentStatus.PENDING_INVITE,
+                    ],
+                  },
                 },
               },
             },
@@ -280,8 +280,25 @@ export class CourseService {
           _count: {
             select: {
               modules: { where: { deletedAt: null } },
-              enrollments: true,
+              enrollments: {
+                where: {
+                  status: CourseEnrollmentStatus.ACTIVE,
+                },
+              },
             },
+          },
+          enrollments: {
+            where: { memberId: userId },
+            select: { status: true },
+            take: 1,
+          },
+          invitations: {
+            where: {
+              inviteeId: userId,
+              status: CourseInvitationStatus.PENDING,
+            },
+            select: { id: true },
+            take: 1,
           },
         },
       }),
@@ -289,8 +306,20 @@ export class CourseService {
 
     return {
       items: courses.map((course) => ({
-        ...course,
+        id: course.id,
+        ownerId: course.ownerId,
+        title: course.title,
+        description: course.description,
+        isPublished: course.isPublished,
+        createdAt: course.createdAt,
+        updatedAt: course.updatedAt,
+        _count: course._count,
         isOwner: course.ownerId === userId,
+        membershipStatus:
+          course.ownerId === userId
+            ? CourseEnrollmentStatus.ACTIVE
+            : (course.enrollments[0]?.status ?? null),
+        pendingInvitationId: course.invitations[0]?.id ?? null,
       })),
       page,
       pageSize,
@@ -312,6 +341,7 @@ export class CourseService {
       where: {
         courseId,
         memberId: userId,
+        status: CourseEnrollmentStatus.ACTIVE,
       },
     });
 
@@ -332,7 +362,11 @@ export class CourseService {
     if (course.ownerId === userId) return true;
 
     const enrollment = await prisma.enrollment.findFirst({
-      where: { courseId, memberId: userId },
+      where: {
+        courseId,
+        memberId: userId,
+        status: CourseEnrollmentStatus.ACTIVE,
+      },
     });
 
     return !!enrollment;

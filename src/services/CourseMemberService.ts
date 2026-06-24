@@ -1,9 +1,12 @@
 import {
+  CourseEnrollmentStatus,
+  CourseInvitationStatus,
   CourseRoleName,
   type CourseRoleName as CourseRoleNameType,
   PlatformRoleName,
   type Prisma,
 } from '@/generated/prisma';
+import { emailService } from '@/lib/email-service';
 import { prisma } from '@/lib/prisma';
 
 const MIN_CANDIDATE_SEARCH_LENGTH = 2;
@@ -54,6 +57,7 @@ export type CourseMemberUserView = {
 export type CourseMemberView = {
   enrollmentId: string;
   enrolledAt: string | null;
+  status: CourseEnrollmentStatus;
   isCourseOwner: boolean;
   isCurrentUser: boolean;
   user: CourseMemberUserView;
@@ -181,6 +185,7 @@ export class CourseMemberService {
         return {
           enrollmentId: enrollment.id,
           enrolledAt: enrollment.enrolledAt?.toISOString() ?? null,
+          status: enrollment.status,
           isCourseOwner: role === CourseRoleName.COURSE_OWNER,
           isCurrentUser: enrollment.member.id === input.currentUserId,
           user: {
@@ -257,16 +262,29 @@ export class CourseMemberService {
     courseId: string;
     userId: string;
     role: CourseRoleNameType;
+    addedById?: string;
   }): Promise<CourseMemberMutationResponse> {
     assertAssignableRole(input.role);
 
-    const targetUser = await prisma.user.findUnique({
-      where: { id: input.userId },
-      select: {
-        emailVerified: true,
-        role: { select: { name: true } },
-      },
-    });
+    const [course, targetUser] = await Promise.all([
+      prisma.course.findUnique({
+        where: { id: input.courseId },
+        select: { id: true, title: true, deletedAt: true },
+      }),
+      prisma.user.findUnique({
+        where: { id: input.userId },
+        select: {
+          email: true,
+          emailVerified: true,
+          name: true,
+          role: { select: { name: true } },
+        },
+      }),
+    ]);
+
+    if (!course || course.deletedAt) {
+      throw new Error('Course not found');
+    }
 
     if (
       !targetUser?.emailVerified ||
@@ -281,10 +299,10 @@ export class CourseMemberService {
         courseId: input.courseId,
         memberId: input.userId,
       },
-      select: { id: true },
+      select: { id: true, status: true },
     });
 
-    if (existingEnrollment) {
+    if (existingEnrollment?.status === CourseEnrollmentStatus.ACTIVE) {
       throw new Error('User is already a course member');
     }
 
@@ -297,13 +315,34 @@ export class CourseMemberService {
       throw new Error('Course role not found');
     }
 
-    const enrollment = await prisma.enrollment.create({
-      data: {
-        courseId: input.courseId,
-        memberId: input.userId,
-        roleId: courseRole.id,
+    const enrollment = existingEnrollment
+      ? await prisma.enrollment.update({
+          where: { id: existingEnrollment.id },
+          data: {
+            enrolledAt: new Date(),
+            invitedAt: null,
+            roleId: courseRole.id,
+            status: CourseEnrollmentStatus.ACTIVE,
+          },
+          select: { id: true },
+        })
+      : await prisma.enrollment.create({
+          data: {
+            courseId: input.courseId,
+            memberId: input.userId,
+            roleId: courseRole.id,
+            status: CourseEnrollmentStatus.ACTIVE,
+          },
+          select: { id: true },
+        });
+
+    await emailService.sendCourseAddedNotification({
+      courseName: course.title,
+      courseUrl: `/courses/${course.id}`,
+      user: {
+        email: targetUser.email,
+        name: targetUser.name,
       },
-      select: { id: true },
     });
 
     return { message: 'Member added', id: enrollment.id };
@@ -320,6 +359,7 @@ export class CourseMemberService {
       where: {
         courseId: input.courseId,
         memberId: input.memberId,
+        status: CourseEnrollmentStatus.ACTIVE,
       },
       select: {
         courseId: true,
@@ -393,9 +433,23 @@ export class CourseMemberService {
       throw new Error('You cannot remove yourself from the course');
     }
 
-    await prisma.enrollment.delete({
-      where: { id: enrollment.id },
-      select: { id: true },
+    await prisma.$transaction(async (tx) => {
+      await tx.courseInvitation.updateMany({
+        where: {
+          courseId: input.courseId,
+          inviteeId: input.memberId,
+          status: CourseInvitationStatus.PENDING,
+        },
+        data: {
+          cancelledAt: new Date(),
+          status: CourseInvitationStatus.CANCELLED,
+        },
+      });
+
+      await tx.enrollment.delete({
+        where: { id: enrollment.id },
+        select: { id: true },
+      });
     });
 
     return { message: 'Member removed', id: enrollment.id };

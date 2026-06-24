@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import type { ApiError } from '@/lib/api';
 import {
   type AssignableCourseMemberRole,
+  COURSE_INVITE_LINKS_QUERY_KEY,
   COURSE_MEMBER_CANDIDATE_PAGE_SIZE,
   COURSE_MEMBER_ROLE_OPTIONS,
   COURSE_MEMBER_SEARCH_DEBOUNCE_MS,
@@ -35,6 +36,12 @@ type EditDialogState = {
   role: AssignableCourseMemberRole;
 } | null;
 
+type InviteLinkDialogState = {
+  expiresAt: string;
+  maxUses: string;
+  role: AssignableCourseMemberRole;
+};
+
 function getErrorMessage(error: ApiError, fallback: string) {
   return error.message || fallback;
 }
@@ -50,6 +57,7 @@ export function useMembers({
   const locale = useLocale();
   const queryClient = useQueryClient();
   const queryKey = COURSE_MEMBERS_QUERY_KEY(courseId);
+  const inviteLinksQueryKey = COURSE_INVITE_LINKS_QUERY_KEY(courseId);
 
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -62,6 +70,12 @@ export function useMembers({
   const [debouncedCandidateSearch, setDebouncedCandidateSearch] = useState('');
   const [editDialog, setEditDialog] = useState<EditDialogState>(null);
   const [removeDialog, setRemoveDialog] = useState<CourseMember | null>(null);
+  const [inviteLinkDialogOpen, setInviteLinkDialogOpen] = useState(false);
+  const [inviteLinkForm, setInviteLinkForm] = useState<InviteLinkDialogState>({
+    expiresAt: '',
+    maxUses: '100',
+    role: 'STUDENT',
+  });
   const candidateSentinelRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -98,6 +112,12 @@ export function useMembers({
         offset: (currentPage - 1) * itemsPerPage,
       }),
     placeholderData: keepPreviousData,
+  });
+
+  const inviteLinksQuery = useQuery({
+    queryKey: inviteLinksQueryKey,
+    enabled: initialCanManageMembers,
+    queryFn: () => courseMembersService.listInviteLinks(courseId),
   });
 
   const canSearchCandidates = debouncedCandidateSearch.length >= 2;
@@ -160,6 +180,18 @@ export function useMembers({
     },
   });
 
+  const inviteMemberMutation = useMutation({
+    mutationFn: (userId: string) =>
+      courseMembersService.inviteMember(courseId, { userId, role: addRole }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey });
+      toast.success(t('toast.invited'));
+    },
+    onError: (error: ApiError) => {
+      toast.error(getErrorMessage(error, t('toast.inviteFailed')));
+    },
+  });
+
   const updateMemberMutation = useMutation({
     mutationFn: ({
       memberId,
@@ -191,6 +223,40 @@ export function useMembers({
     },
   });
 
+  const createInviteLinkMutation = useMutation({
+    mutationFn: () =>
+      courseMembersService.createInviteLink(courseId, {
+        expiresAt: inviteLinkForm.expiresAt
+          ? new Date(inviteLinkForm.expiresAt).toISOString()
+          : undefined,
+        maxUses: inviteLinkForm.maxUses
+          ? Number.parseInt(inviteLinkForm.maxUses, 10)
+          : undefined,
+        role: inviteLinkForm.role,
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: inviteLinksQueryKey });
+      setInviteLinkDialogOpen(false);
+      setInviteLinkForm({ expiresAt: '', maxUses: '100', role: 'STUDENT' });
+      toast.success(t('toast.linkCreated'));
+    },
+    onError: (error: ApiError) => {
+      toast.error(getErrorMessage(error, t('toast.linkCreateFailed')));
+    },
+  });
+
+  const revokeInviteLinkMutation = useMutation({
+    mutationFn: (inviteId: string) =>
+      courseMembersService.revokeInviteLink(courseId, inviteId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: inviteLinksQueryKey });
+      toast.success(t('toast.linkRevoked'));
+    },
+    onError: (error: ApiError) => {
+      toast.error(getErrorMessage(error, t('toast.linkRevokeFailed')));
+    },
+  });
+
   const members = membersQuery.data?.data ?? [];
   const pagination = membersQuery.data?.pagination;
   const totalMembers = pagination?.total ?? 0;
@@ -207,6 +273,7 @@ export function useMembers({
     () => candidateQuery.data?.pages.flatMap((page) => page.data) ?? [],
     [candidateQuery.data]
   );
+  const inviteLinks = inviteLinksQuery.data?.data ?? [];
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
@@ -277,6 +344,13 @@ export function useMembers({
     removeMemberMutation.mutate(removeDialog.user.id);
   };
 
+  const updateInviteLinkForm = (
+    key: keyof InviteLinkDialogState,
+    value: string
+  ) => {
+    setInviteLinkForm((current) => ({ ...current, [key]: value }));
+  };
+
   const getRoleBadge = (role: CourseMemberRole): RoleBadgeView => {
     if (role === 'COURSE_OWNER') {
       return { label: t('roles.courseOwner'), variant: 'default' };
@@ -295,6 +369,14 @@ export function useMembers({
     }
 
     return getRoleBadge(role).label;
+  };
+
+  const getStatusBadge = (status: CourseMember['status']): RoleBadgeView => {
+    if (status === 'PENDING_INVITE') {
+      return { label: t('status.pendingInvite'), variant: 'outline' };
+    }
+
+    return { label: t('status.active'), variant: 'secondary' };
   };
 
   const getJoinDate = (enrolledAt: string | null) => {
@@ -321,11 +403,18 @@ export function useMembers({
     candidateSentinelRef,
     candidates,
     confirmRemoveMember,
+    createInviteLink: createInviteLinkMutation.mutate,
     editDialog,
     getInitials: getCourseMemberInitials,
     getJoinDate,
     getRoleBadge,
     getRoleLabel,
+    getStatusBadge,
+    inviteLinks,
+    inviteLinkDialogOpen,
+    inviteLinkForm,
+    inviteMember: inviteMemberMutation.mutate,
+    invitePending: inviteMemberMutation.isPending,
     handleAddDialogOpenChange,
     handleItemsPerPageChange,
     handleNextPage,
@@ -334,16 +423,21 @@ export function useMembers({
     handleSearchChange,
     isCandidatesError: candidateQuery.isError,
     isCandidatesLoading: candidateQuery.isLoading,
+    isCreatingInviteLink: createInviteLinkMutation.isPending,
     isError: membersQuery.isError,
     isFetchingCandidatesNextPage: candidateQuery.isFetchingNextPage,
     isLoading: membersQuery.isLoading,
+    isInviteLinksError: inviteLinksQuery.isError,
+    isInviteLinksLoading: inviteLinksQuery.isLoading,
     isRemoving: removeMemberMutation.isPending,
+    isRevokingInviteLink: revokeInviteLinkMutation.isPending,
     isUpdating: updateMemberMutation.isPending,
     itemsPerPage,
     members,
     openEditDialog,
     pageSizeOptions: COURSE_MEMBERS_PAGE_SIZE_OPTIONS,
     removeDialog,
+    revokeInviteLink: revokeInviteLinkMutation.mutate,
     roleFilter,
     roleOptions: COURSE_MEMBER_ROLE_OPTIONS,
     safeCurrentPage,
@@ -353,10 +447,13 @@ export function useMembers({
     setAddRole,
     setCandidateSearch,
     setEditDialog,
+    setInviteLinkDialogOpen,
+    setInviteLinkForm,
     setRemoveDialog,
     t,
     totalMembers,
     totalPages,
+    updateInviteLinkForm,
     updateEditRole,
     visibleEnd,
     visibleStart,

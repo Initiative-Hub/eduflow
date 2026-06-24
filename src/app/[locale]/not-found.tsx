@@ -13,13 +13,9 @@ export default async function GlobalNotFoundPage() {
           src="/images/not-found-robot.png"
           alt="404 Robot"
           fill
-          className="animate-float object-contain"
+          className="object-contain"
           priority
         />
-        {/* Digital speech bubble overlay inspired by user image */}
-        <div className="absolute top-10 right-0 rotate-12 animate-pulse rounded-lg bg-primary px-3 py-1 font-mono text-primary-foreground text-sm shadow-xl md:px-4 md:py-2 md:text-base">
-          {t('robotSays')}
-        </div>
       </div>
 
       <div className="space-y-3">

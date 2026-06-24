@@ -1,7 +1,13 @@
-import type { PlatformRoleName } from '@/generated/prisma';
+import type {
+  CourseEnrollmentStatus,
+  PlatformRoleName,
+} from '@/generated/prisma';
 
 export const COURSE_MEMBERS_QUERY_KEY = (courseId: string) =>
   ['course', courseId, 'members'] as const;
+
+export const COURSE_INVITE_LINKS_QUERY_KEY = (courseId: string) =>
+  ['course', courseId, 'invite-links'] as const;
 
 export const COURSE_MEMBERS_PAGE_SIZE_OPTIONS = ['10', '20', '50'] as const;
 
@@ -32,6 +38,7 @@ export type CourseMemberUser = {
 export type CourseMember = {
   enrollmentId: string;
   enrolledAt: string | null;
+  status: CourseEnrollmentStatus;
   isCourseOwner: boolean;
   isCurrentUser: boolean;
   user: CourseMemberUser;
@@ -69,6 +76,28 @@ export type CourseMemberMutationResponse = {
   id: string;
 };
 
+export type CourseInviteLink = {
+  id: string;
+  courseId: string;
+  role: CourseMemberRole;
+  maxUses: number | null;
+  usedCount: number;
+  expiresAt: string | null;
+  revokedAt: string | null;
+  createdAt: string;
+  url: string;
+};
+
+export type CourseInviteLinksResponse = {
+  data: CourseInviteLink[];
+};
+
+export type CreateCourseInviteLinkInput = {
+  role: AssignableCourseMemberRole;
+  maxUses?: number | null;
+  expiresAt?: string | null;
+};
+
 export type AddCourseMemberInput = {
   userId: string;
   role: AssignableCourseMemberRole;
@@ -97,7 +126,7 @@ export function getCourseMemberInitials(
 }
 
 export function isCourseMemberRoleLocked(member: CourseMember) {
-  return member.isCourseOwner;
+  return member.isCourseOwner || member.status === 'PENDING_INVITE';
 }
 
 export function isCourseMemberRemovalLocked(member: CourseMember) {
