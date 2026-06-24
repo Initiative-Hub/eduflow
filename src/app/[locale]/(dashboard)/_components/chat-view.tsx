@@ -176,20 +176,6 @@ export function ChatView({
                         )}
                       </MessageContent>
                       {message.role === 'assistant' &&
-                        practiceQuizzes.map((practiceQuiz, index) => (
-                          <div
-                            key={`${message.id}-practice-quiz-${index}`}
-                            className="w-full max-w-3xl"
-                          >
-                            <Quiz
-                              quiz={practiceQuiz.quiz}
-                              quizWithAnswers={practiceQuiz.quiz}
-                              deliveryMode={practiceQuiz.deliveryMode}
-                            />
-                          </div>
-                        ))}
-
-                      {message.role === 'assistant' &&
                         interactiveContents.map((content, index) => (
                           <div
                             key={`${message.id}-interactive-content-${index}`}
@@ -199,6 +185,19 @@ export function ChatView({
                               title={content.title}
                               description={content.description}
                               html={content.html}
+                            />
+                          </div>
+                        ))}
+                      {message.role === 'assistant' &&
+                        practiceQuizzes.map((practiceQuiz, index) => (
+                          <div
+                            key={`${message.id}-practice-quiz-${index}`}
+                            className="w-full max-w-3xl"
+                          >
+                            <Quiz
+                              quiz={practiceQuiz.quiz}
+                              quizWithAnswers={practiceQuiz.quiz}
+                              deliveryMode={practiceQuiz.deliveryMode}
                             />
                           </div>
                         ))}

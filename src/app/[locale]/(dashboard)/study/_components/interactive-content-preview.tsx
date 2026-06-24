@@ -1,4 +1,4 @@
-'use-client';
+'use client';
 
 import { Download, Maximize2, RefreshCw } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -114,7 +114,7 @@ const InteractiveContentPreview = ({
   description,
   html,
 }: StudyInteractiveContentData) => {
-  const t = useTranslations('StudyPage.interactiveContent');
+  const t = useTranslations('StudyPage.features.interactiveContent');
   const containerRef = useRef<HTMLElement>(null);
   const [previewKey, setPreviewKey] = useState(0);
 
@@ -156,8 +156,8 @@ const InteractiveContentPreview = ({
       ref={containerRef}
       className="w-full overflow-hidden rounded-2xl border border-border bg-card shadow-sm"
     >
-      <header className="flex flex-col gap-4 border-border border-b p-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0">
+      <header className="flex flex-col gap-4 border-border border-b p-4">
+        <div className="w-full min-w-0">
           <h2 className="font-semibold text-foreground text-lg">{title}</h2>
           {description ? (
             <p className="mt-1 text-muted-foreground text-sm leading-relaxed">
@@ -166,10 +166,14 @@ const InteractiveContentPreview = ({
           ) : null}
         </div>
 
-        <div className="flex shrink-0 flex-wrap items-center gap-2">
+        <div
+          aria-label={t('actionsLabel')}
+          className="flex w-full flex-wrap items-center gap-2"
+          role="group"
+        >
           <button
             type="button"
-            className="inline-flex h-9 items-center gap-2 rounded-lg border border-border bg-background px-3 font-medium text-foreground text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="inline-flex h-9 min-w-36 flex-1 items-center justify-center gap-2 rounded-lg border border-border bg-background px-3 font-medium text-foreground text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             onClick={handleReset}
           >
             <RefreshCw className="size-4" />
@@ -178,7 +182,7 @@ const InteractiveContentPreview = ({
 
           <button
             type="button"
-            className="inline-flex h-9 items-center gap-2 rounded-lg border border-border bg-background px-3 font-medium text-foreground text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="inline-flex h-9 min-w-36 flex-1 items-center justify-center gap-2 rounded-lg border border-border bg-background px-3 font-medium text-foreground text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             onClick={handleFullscreen}
           >
             <Maximize2 className="size-4" />
@@ -187,7 +191,7 @@ const InteractiveContentPreview = ({
 
           <button
             type="button"
-            className="inline-flex h-9 items-center gap-2 rounded-lg border border-border bg-background px-3 font-medium text-foreground text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="inline-flex h-9 min-w-36 flex-1 items-center justify-center gap-2 rounded-lg border border-border bg-background px-3 font-medium text-foreground text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             onClick={handleDownload}
           >
             <Download className="size-4" />

@@ -1705,6 +1705,7 @@
     "aiActive": "AI Đang Hoạt Động",
     "features": {
       "interactiveContent": {
+        "actionsLabel": "Thao tác hoạt động tương tác",
         "description": "Tạo hoạt động trực quan tương tác để bạn khám phá và luyện tập trực tiếp.",
         "download": "Tải xuống HTML",
         "fullscreen": "Toàn màn hình",
