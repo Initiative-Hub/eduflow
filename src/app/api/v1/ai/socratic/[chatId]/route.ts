@@ -20,7 +20,7 @@ import {
 } from './socratic.constants';
 
 const socraticRequestSchema = z.object({
-  messages: z.array(z.custom<SocraticUIMessage>()).min(1),
+  message: z.custom<SocraticUIMessage>(),
   guidanceDepth: socraticGuidanceDepthSchema.default('balanced'),
   provider: z.custom<ChatProvider>().optional(),
   model: z.enum(CHAT_MODEL_IDS).optional(),
@@ -235,7 +235,11 @@ export async function POST(
       );
     }
 
-    const hasFileParts = hasChatFileParts(parsedBody.data.messages);
+    const messagesForRequest = [
+      ...(socraticData.messages as SocraticUIMessage[]),
+      parsedBody.data.message,
+    ];
+    const hasFileParts = hasChatFileParts(messagesForRequest);
     if (hasFileParts && !userId) {
       return new Response(
         JSON.stringify({ error: 'File attachments require sign-in' }),
@@ -243,13 +247,11 @@ export async function POST(
       );
     }
 
-    const providerName = parsedBody.data.provider ?? DEFAULT_PROVIDER;
-    const provider = ChatProviderFactory.create(providerName);
-    let messagesForModel: SocraticUIMessage[] = parsedBody.data.messages;
+    let messagesForModel = messagesForRequest;
     if (hasFileParts && userId) {
       try {
         messagesForModel = (await hydrateChatAttachmentDataUrls({
-          messages: parsedBody.data.messages,
+          messages: messagesForRequest,
           userId,
         })) as SocraticUIMessage[];
       } catch (error) {
@@ -262,6 +264,8 @@ export async function POST(
       }
     }
 
+    const providerName = parsedBody.data.provider ?? DEFAULT_PROVIDER;
+    const provider = ChatProviderFactory.create(providerName);
     const systemPrompt = getSocraticSystemPrompt(parsedBody.data.guidanceDepth);
 
     const result = await provider.streamChat(

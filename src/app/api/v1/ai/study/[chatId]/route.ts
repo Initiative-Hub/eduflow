@@ -29,7 +29,7 @@ import {
 } from './study.constants';
 
 const studyRequestSchema = z.object({
-  messages: z.array(z.custom<UIMessage>()).min(1),
+  message: z.custom<StudyUIMessage>(),
   mode: studyModeSchema.default('review'),
   quizOptions: studyQuizOptionsSchema.optional(),
   provider: z.custom<ChatProvider>().optional(),
@@ -247,7 +247,11 @@ export async function POST(
       );
     }
 
-    const hasFileParts = hasChatFileParts(parsedBody.data.messages);
+    const messagesForRequest = [
+      ...(studyData.messages as StudyUIMessage[]),
+      parsedBody.data.message,
+    ];
+    const hasFileParts = hasChatFileParts(messagesForRequest);
     if (hasFileParts && !userId) {
       return new Response(
         JSON.stringify({ error: 'File attachments require sign-in' }),
@@ -255,13 +259,13 @@ export async function POST(
       );
     }
 
-    let messagesForModel = parsedBody.data.messages;
+    let messagesForModel = messagesForRequest;
     if (hasFileParts && userId) {
       try {
-        messagesForModel = await hydrateChatAttachmentDataUrls({
-          messages: parsedBody.data.messages,
+        messagesForModel = (await hydrateChatAttachmentDataUrls({
+          messages: messagesForRequest,
           userId,
-        });
+        })) as StudyUIMessage[];
       } catch (error) {
         const message =
           error instanceof Error ? error.message : 'File attachment not found';
@@ -290,7 +294,7 @@ export async function POST(
     // TODO: Try to simpler and decouple these code
     if (parsedBody.data.mode === 'practiceTest') {
       const stream = createUIMessageStream<StudyUIMessage>({
-        originalMessages: messagesForModel as StudyUIMessage[],
+        originalMessages: messagesForModel,
         generateId: () => `${crypto.randomUUID()}`,
         execute: async ({ writer }) => {
           const quiz = await generatePracticeQuiz({

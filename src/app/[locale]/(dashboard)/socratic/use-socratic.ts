@@ -15,6 +15,7 @@ import type {
 } from '@/types/chat-attachments';
 import type { SocraticUIMessage } from '@/types/socratic-ui-message';
 import { hasReachedUserMessageLimit } from '@/utils/chat-limit';
+import { prepareLastMessageRequest } from '@/utils/chat-request';
 import { uploadChatAttachments } from '../chat-attachments.service';
 import { socraticService } from './socratic.service';
 
@@ -54,6 +55,7 @@ export const useSocratic = ({
       chatId
         ? new DefaultChatTransport({
             api: `/api/v1/ai/socratic/${chatId}`,
+            prepareSendMessagesRequest: prepareLastMessageRequest,
           })
         : undefined,
     [chatId]

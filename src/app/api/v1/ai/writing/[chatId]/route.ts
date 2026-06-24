@@ -18,7 +18,7 @@ import {
 } from './writing.constants';
 
 const writingRequestSchema = z.object({
-  messages: z.array(z.custom<UIMessage>()).min(1),
+  message: z.custom<UIMessage>(),
   tool: writingToolSchema,
   provider: z.custom<ChatProvider>().optional(),
   model: z.string().min(1).optional(),
@@ -195,15 +195,19 @@ export async function POST(
       );
     }
 
-    const writingTool = parsedBody.data.tool;
-    const systemPrompt = getWritingSystemPrompt(writingTool);
+    const messagesForRequest = [
+      ...writingData.messages,
+      parsedBody.data.message,
+    ];
 
     const providerName = parsedBody.data.provider ?? DEFAULT_PROVIDER;
     const provider = ChatProviderFactory.create(providerName);
+    const writingTool = parsedBody.data.tool;
+    const systemPrompt = getWritingSystemPrompt(writingTool);
 
     const result = await provider.streamChat(
       {
-        messages: parsedBody.data.messages,
+        messages: messagesForRequest,
         provider: parsedBody.data.provider,
         model: parsedBody.data.model,
         apiKey: parsedBody.data.apiKey,
@@ -212,7 +216,7 @@ export async function POST(
     );
 
     const stream = createUIMessageStream<UIMessage>({
-      originalMessages: parsedBody.data.messages,
+      originalMessages: messagesForRequest,
       generateId: () => `${crypto.randomUUID()}`,
       execute: async ({ writer }) => {
         let assistantText = '';
@@ -229,7 +233,7 @@ export async function POST(
 
         const suggestions = await generateWritingSuggestions({
           provider,
-          messages: parsedBody.data.messages,
+          messages: messagesForRequest,
           assistantText,
           providerName,
           model: parsedBody.data.model,

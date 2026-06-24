@@ -17,6 +17,7 @@ import type {
   ChatSubmitAttachments,
 } from '@/types/chat-attachments';
 import { hasReachedUserMessageLimit } from '@/utils/chat-limit';
+import { prepareLastMessageRequest } from '@/utils/chat-request';
 import { uploadChatAttachments } from '../chat-attachments.service';
 import { studyService } from './study.service';
 
@@ -79,6 +80,7 @@ export const useStudy = ({
       chatId
         ? new DefaultChatTransport({
             api: `/api/v1/ai/study/${chatId}`,
+            prepareSendMessagesRequest: prepareLastMessageRequest,
           })
         : undefined,
     [chatId]
