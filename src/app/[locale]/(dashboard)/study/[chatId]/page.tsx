@@ -16,10 +16,10 @@ interface StudySessionPageProps {
 }
 
 function getInitialStudyMode(metadata: unknown): StudyMode {
-  if (!metadata || typeof metadata !== 'object') return 'review';
+  if (!metadata || typeof metadata !== 'object') return 'interactiveContent';
   const value = (metadata as { studyMode?: unknown }).studyMode;
   const parsed = studyModeSchema.safeParse(value);
-  return parsed.success ? parsed.data : 'review';
+  return parsed.success ? parsed.data : 'interactiveContent';
 }
 
 function getInitialStudyQuizOptions(
