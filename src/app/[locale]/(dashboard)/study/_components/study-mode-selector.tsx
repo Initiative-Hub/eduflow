@@ -32,14 +32,6 @@ export function StudyModeSelector({
       activeAccent: 'bg-accent ring-2 ring-primary',
     },
     {
-      key: 'review' as StudyMode,
-      icon: BookMarked,
-      label: t('modes.review'),
-      accent:
-        'bg-violet-50 text-violet-600 border-violet-200 dark:bg-violet-950/30 dark:text-violet-400 dark:border-violet-900/40',
-      activeAccent: 'ring-2 ring-violet-400 bg-violet-50 dark:bg-violet-950/30',
-    },
-    {
       key: 'practiceTest' as StudyMode,
       icon: ClipboardList,
       label: t('modes.practiceTest'),

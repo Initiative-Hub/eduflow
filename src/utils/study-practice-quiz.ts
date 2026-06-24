@@ -1,6 +1,7 @@
 import type { UIMessage } from 'ai';
 import type { DeliveryMode } from '@/generated/prisma';
 import type { QuizContent } from '@/lib/quiz-template';
+import type { StudyInteractiveContentData } from './study-interactive-content';
 
 export interface StudyPracticeQuizData {
   quiz: QuizContent;
@@ -12,6 +13,7 @@ export type StudyUIMessage = UIMessage<
   {
     suggestions: { items: string[] };
     'practice-quiz': StudyPracticeQuizData;
+    'interactive-content': StudyInteractiveContentData;
   }
 >;
 
