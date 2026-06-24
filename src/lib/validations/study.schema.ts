@@ -1,10 +1,16 @@
 import { z } from 'zod';
 
-export const STUDY_MODES = ['review', 'practiceTest', 'research'] as const;
+export const STUDY_MODES = [
+  'interactiveContent',
+  'review',
+  'practiceTest',
+  'research',
+] as const;
 export const studyModeSchema = z.enum(STUDY_MODES);
 export type StudyMode = z.infer<typeof studyModeSchema>;
 
 export const STUDY_QUIZ_QUESTION_TYPES = [
+  'interactive_content',
   'multiple_choice',
   'true_false',
   'fill_in_the_blank',

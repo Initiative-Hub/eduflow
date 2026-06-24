@@ -1,6 +1,6 @@
 'use client';
 
-import { BookMarked, ClipboardList, Globe } from 'lucide-react';
+import { BookMarked, ClipboardList, Code2, Globe } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type {
   StudyMode,
@@ -24,6 +24,13 @@ export function StudyModeSelector({
   const t = useTranslations('StudyPage');
 
   const FEATURE_CARDS = [
+    {
+      key: 'interactiveContent' as StudyMode,
+      icon: Code2,
+      label: t('modes.interactiveContent'),
+      accent: 'border-border bg-accent text-accent-foreground',
+      activeAccent: 'bg-accent ring-2 ring-primary',
+    },
     {
       key: 'review' as StudyMode,
       icon: BookMarked,

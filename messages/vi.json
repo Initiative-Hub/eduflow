@@ -1704,6 +1704,9 @@
   "StudyPage": {
     "aiActive": "AI Đang Hoạt Động",
     "features": {
+      "interactiveContent": {
+        "description": "Tạo hoạt động trực quan tương tác để bạn khám phá và luyện tập trực tiếp."
+      },
       "practiceTest": {
         "description": "Thử thách bản thân với câu hỏi trắc nghiệm, câu ngắn và thẻ ghi nhớ do AI tạo ra."
       },
@@ -1720,6 +1723,7 @@
     },
     "limitReachedToast": "Bạn đã đạt giới hạn {count} tin nhắn. Hãy bắt đầu phiên mới để tiếp tục.",
     "modes": {
+      "interactiveContent": "Phòng Thực Hành Tương Tác",
       "practiceTest": "Bài Kiểm Tra Thực Hành",
       "research": "Nghiên cứu",
       "review": "Tài Liệu Ôn Tập"
