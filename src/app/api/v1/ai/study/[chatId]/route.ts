@@ -31,7 +31,7 @@ import {
 
 const studyRequestSchema = z.object({
   messages: z.array(z.custom<UIMessage>()).min(1),
-  mode: studyModeSchema.default('review'),
+  mode: studyModeSchema.default('interactiveContent'),
   quizOptions: studyQuizOptionsSchema.optional(),
   provider: z.custom<ChatProvider>().optional(),
   model: z.string().min(1).optional(),
