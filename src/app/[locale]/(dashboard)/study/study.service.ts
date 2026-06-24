@@ -1,5 +1,8 @@
 import { apiClient } from '@/lib/api';
-import type { StudyQuizOptions } from '@/lib/validations/study.schema';
+import type {
+  StudyMode,
+  StudyQuizOptions,
+} from '@/lib/validations/study.schema';
 import type {
   ChatListResponse,
   ChatUpdateResponse,
@@ -8,7 +11,7 @@ import type {
 export const studyService = {
   createChat: async (
     firstMessage: string,
-    mode: string,
+    mode: StudyMode,
     quizOptions?: StudyQuizOptions
   ) => {
     return apiClient.post<{ chatId: string }>('/v1/ai/study/create', {
