@@ -41,7 +41,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
   const { state, toggleSidebar } = useSidebar();
   const { data: sessionData, isPending } = useSession();
-  const [isMounted, setIsMounted] = useState(false);
+  const [hasHydrated, setHasHydrated] = useState(false);
+  const [hasResolvedSession, setHasResolvedSession] = useState(false);
 
   const assistants = getAssistantNavItems(t);
   const settingsItems = getSettingNavItems(t);
@@ -71,10 +72,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }
 
   useEffect(() => {
-    if (isMounted || isPending) return;
+    setHasHydrated(true);
+  }, []);
 
-    setIsMounted(true);
-  }, [isMounted, isPending]);
+  useEffect(() => {
+    if (isPending) return;
+
+    setHasResolvedSession(true);
+  }, [isPending]);
 
   return (
     <Sidebar
@@ -175,7 +180,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
       <SidebarFooter className="border-border/40 border-t p-4 group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:pb-3">
         <div className="flex w-full items-center justify-between md:justify-end md:group-data-[collapsible=icon]:justify-center">
-          {!isMounted && isPending ? (
+          {!hasHydrated || (!hasResolvedSession && isPending) ? (
             <div className="block md:hidden">
               <Skeleton className="h-10 w-40" />
             </div>

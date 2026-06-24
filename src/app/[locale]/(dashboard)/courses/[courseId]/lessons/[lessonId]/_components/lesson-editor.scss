@@ -1,4 +1,4 @@
-.lesson-toolbar-bar .tiptap-toolbar[data-variant='fixed'] {
+.lesson-toolbar-bar .tiptap-toolbar[data-variant="fixed"] {
   position: static;
   top: auto;
   z-index: auto;
@@ -14,7 +14,8 @@
   outline: none;
 }
 
-.lesson-editor-content .tiptap.ProseMirror.lesson-tiptap-editor[contenteditable='true'] {
+.lesson-editor-content
+  .tiptap.ProseMirror.lesson-tiptap-editor[contenteditable="true"] {
   margin-top: 1rem;
   padding: 1rem;
   border: 1px solid var(--border);
@@ -22,7 +23,9 @@
   background: var(--background);
 }
 
-.lesson-editor-content .tiptap.ProseMirror.lesson-tiptap-editor p.is-editor-empty:first-child::before {
+.lesson-editor-content
+  .tiptap.ProseMirror.lesson-tiptap-editor
+  p.is-editor-empty:first-child::before {
   color: var(--muted-foreground);
   content: attr(data-placeholder);
   float: left;
