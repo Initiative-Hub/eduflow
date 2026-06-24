@@ -1,16 +1,10 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import {
-  ArrowRight,
-  GraduationCap,
-  Presentation,
-  Sparkles,
-} from 'lucide-react';
+import { GraduationCap, Presentation, Sparkles } from 'lucide-react';
+import { motion } from 'motion/react';
 import { useTranslations } from 'next-intl';
 import { AllSetScreen } from '@/components/role-selection/all-set-screen';
 import { Button } from '@/components/ui/button';
-import { Link } from '@/i18n/navigation';
 import {
   ambientGlowVariants,
   containerVariants,
@@ -173,31 +167,6 @@ export function RoleClient() {
               )}
             </Button>
           </motion.div>
-        </motion.div>
-
-        {/* Footer Link */}
-        <motion.div
-          variants={itemVariants}
-          initial="hidden"
-          animate="visible"
-          className="mt-16 flex flex-col items-center gap-3 text-center"
-        >
-          <p className="font-bold text-muted-foreground/50 text-xs tracking-wide">
-            {t('partner.question')}
-          </p>
-          <Link
-            href="/register-university"
-            className="group relative flex cursor-pointer items-center gap-2 px-6 py-2 font-black text-primary tracking-tight transition-all"
-          >
-            {t('partner.action')}
-            <motion.div
-              animate={{ x: [0, 5, 0] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
-            >
-              <ArrowRight className="h-4 w-4" />
-            </motion.div>
-            <span className="absolute bottom-0 left-0 h-1 w-full origin-left scale-x-0 bg-primary/30 transition-transform duration-300 group-hover:scale-x-100" />
-          </Link>
         </motion.div>
       </div>
     </>
