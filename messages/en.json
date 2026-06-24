@@ -1705,7 +1705,11 @@
     "aiActive": "AI Processing Active",
     "features": {
       "interactiveContent": {
-        "description": "Create an interactive visual activity that you can explore and practise directly."
+        "description": "Create an interactive visual activity that you can explore and practice directly.",
+        "download": "Download HTML",
+        "fullscreen": "Full screen",
+        "previewTitle": "Interactive activity: {title}",
+        "reset": "Reset activity"
       },
       "practiceTest": {
         "description": "Challenge yourself with AI-generated multiple choice, short answer, and flashcard sets."

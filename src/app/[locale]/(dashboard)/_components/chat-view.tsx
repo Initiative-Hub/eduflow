@@ -26,7 +26,9 @@ import {
 } from '@/utils/chat-citations';
 import { getMessageReasoning, getMessageText } from '@/utils/chat-message';
 import { getChatSuggestionItems } from '@/utils/chat-suggestions';
+import { getStudyInteractiveContentParts } from '@/utils/study-interactive-content';
 import { getStudyPracticeQuizParts } from '@/utils/study-practice-quiz';
+import InteractiveContentPreview from '../study/_components/interactive-content-preview';
 import { createChatCitationComponents } from './chat-citations';
 import { ChatInputAttachments } from './chat-input-attachments';
 import { ChatToolInvocations } from './chat-tools';
@@ -71,6 +73,10 @@ export function ChatView({
               message.role === 'assistant'
                 ? getStudyPracticeQuizParts(message)
                 : [];
+            const interactiveContents =
+              message.role === 'assistant'
+                ? getStudyInteractiveContentParts(message)
+                : [];
             const attachments = message.parts.flatMap((part, index) =>
               part.type === 'file'
                 ? [{ ...part, id: `${message.id}-file-${index}` }]
@@ -81,7 +87,8 @@ export function ChatView({
               !text &&
               !reasoning &&
               attachments.length === 0 &&
-              practiceQuizzes.length === 0
+              practiceQuizzes.length === 0 &&
+              interactiveContents.length === 0
             )
               return null;
 
@@ -178,6 +185,20 @@ export function ChatView({
                               quiz={practiceQuiz.quiz}
                               quizWithAnswers={practiceQuiz.quiz}
                               deliveryMode={practiceQuiz.deliveryMode}
+                            />
+                          </div>
+                        ))}
+
+                      {message.role === 'assistant' &&
+                        interactiveContents.map((content, index) => (
+                          <div
+                            key={`${message.id}-interactive-content-${index}`}
+                            className="w-full max-w-3xl"
+                          >
+                            <InteractiveContentPreview
+                              title={content.title}
+                              description={content.description}
+                              html={content.html}
                             />
                           </div>
                         ))}

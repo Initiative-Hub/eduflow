@@ -1705,7 +1705,11 @@
     "aiActive": "AI Đang Hoạt Động",
     "features": {
       "interactiveContent": {
-        "description": "Tạo hoạt động trực quan tương tác để bạn khám phá và luyện tập trực tiếp."
+        "description": "Tạo hoạt động trực quan tương tác để bạn khám phá và luyện tập trực tiếp.",
+        "download": "Tải xuống HTML",
+        "fullscreen": "Toàn màn hình",
+        "previewTitle": "Hoạt động tương tác: {title}",
+        "reset": "Đặt lại hoạt động"
       },
       "practiceTest": {
         "description": "Thử thách bản thân với câu hỏi trắc nghiệm, câu ngắn và thẻ ghi nhớ do AI tạo ra."
