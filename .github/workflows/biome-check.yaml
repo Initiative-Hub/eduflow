@@ -27,7 +27,7 @@ jobs:
       - name: Setup Biome
         uses: biomejs/setup-biome@v2
         with:
-          version: 2.5.0
+          version: 2.5.1
 
       - name: Check Biome formatting
         id: format-check
