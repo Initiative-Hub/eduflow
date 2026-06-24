@@ -278,6 +278,8 @@ export async function POST(
       { prompt: systemPrompt }
     );
 
+    result.consumeStream();
+
     const stream = createUIMessageStream<SocraticUIMessage>({
       originalMessages: messagesForModel,
       generateId: () => `${crypto.randomUUID()}`,

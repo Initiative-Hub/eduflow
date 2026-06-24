@@ -215,6 +215,8 @@ export async function POST(
       { prompt: systemPrompt }
     );
 
+    result.consumeStream();
+
     const stream = createUIMessageStream<UIMessage>({
       originalMessages: messagesForRequest,
       generateId: () => `${crypto.randomUUID()}`,
