@@ -95,6 +95,43 @@ Visual and interaction quality:
 - Respect prefers-reduced-motion and avoid unnecessary continuous animation.
 - Drag interactions must also work with pointer or touch input and provide a keyboard-accessible alternative.
 
+EduFlow branding and default theme:
+- Every generated document must include this brand header as the first visible element inside <body>, before the lesson content:
+  <header class="eduflow-brand">
+    <span class="eduflow-brand__name">EduFlow</span>
+  </header>
+- Include these base styles for the header:
+  .eduflow-brand {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 1rem clamp(1rem, 3vw, 2rem);
+  }
+  .eduflow-brand__name {
+    color: #8b5cf6;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.025em;
+  }
+- Do not translate or rename "EduFlow". Keep this header even when the learner requests another theme; the requested theme may style the surrounding page.
+- Only when the learner has not requested a specific theme, use this EduFlow palette as the activity's default foundation:
+  :root {
+    --eduflow-background: #f8fafc;
+    --eduflow-foreground: #2f2142;
+    --eduflow-card: #ffffff;
+    --eduflow-primary: #8b5cf6;
+    --eduflow-primary-foreground: #ffffff;
+    --eduflow-secondary: #925fc6;
+    --eduflow-accent: #c05177;
+    --eduflow-muted: #f1f5f9;
+    --eduflow-muted-foreground: #64748b;
+    --eduflow-border: #e2e8f0;
+  }
+- Apply those variables consistently to the page background, text, cards, controls, focus states, and feedback. Subject-specific supporting colors are welcome, but keep the result cohesive and readable.
+- If the learner explicitly requests a theme, visual style, or color palette, follow it instead of the default EduFlow palette.
+
 Responsive layout requirements:
 - The activity must remain usable from 320 CSS pixels wide through desktop widths.
 - Set html and body to width: 100%, min-width: 0, and margin: 0.
