@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 810">
+  <rect width="1440" height="810" fill="#0A0E1A"/>
+  <line x1="80" y1="0" x2="80" y2="810" stroke="#00F0FF" stroke-width="3" stroke-opacity="0.3"/>
+
+  <!-- Heading -->
+  <text x="140" y="130" font-family="system-ui, -apple-system, sans-serif" font-size="50" font-weight="bold" fill="#FFFFFF">{{heading|24}}</text>
+  <rect x="140" y="155" width="220" height="4" fill="#00F0FF" rx="2"/>
+
+  <!-- Insight box on the left -->
+  <g transform="translate(140, 220)">
+    <rect width="500" height="480" fill="#111827" rx="16" stroke="#FF007F" stroke-width="1.5" stroke-opacity="0.3"/>
+    <text x="40" y="60" font-family="system-ui, -apple-system, sans-serif" font-size="30" font-weight="bold" fill="#FF007F">Strategic Insight</text>
+    <line x1="40" y1="90" x2="460" y2="90" stroke="#FF007F" stroke-opacity="0.2" stroke-width="1"/>
+    
+    <text x="40" y="160" font-family="system-ui, -apple-system, sans-serif" font-size="24" fill="#E2E8F0">{{insight_text.1|45}}</text>
+    <text x="40" y="220" font-family="system-ui, -apple-system, sans-serif" font-size="24" fill="#E2E8F0">{{insight_text.2|45}}</text>
+    <text x="40" y="280" font-family="system-ui, -apple-system, sans-serif" font-size="24" fill="#E2E8F0">{{insight_text.3|45}}</text>
+  </g>
+
+  <!-- Mockup Bar Chart on the right -->
+  <g transform="translate(700, 220)">
+    <rect width="600" height="480" fill="#111827" fill-opacity="0.5" rx="16" stroke="#00F0FF" stroke-width="1" stroke-opacity="0.2"/>
+    
+    <!-- Y Axis and Gridlines -->
+    <line x1="100" y1="80" x2="100" y2="400" stroke="#FFFFFF" stroke-opacity="0.2" stroke-width="2"/>
+    <line x1="100" y1="400" x2="540" y2="400" stroke="#FFFFFF" stroke-opacity="0.2" stroke-width="2"/>
+    
+    <!-- Bar 1 -->
+    <rect x="140" y="180" width="60" height="220" fill="#00F0FF" rx="4" fill-opacity="0.85"/>
+    <text x="170" y="430" font-family="system-ui, -apple-system, sans-serif" font-size="20" fill="#E2E8F0" text-anchor="middle">{{chart_label_1|12}}</text>
+    <text x="170" y="150" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="bold" fill="#00F0FF" text-anchor="middle">{{chart_value_1|8}}</text>
+
+    <!-- Bar 2 -->
+    <rect x="240" y="100" width="60" height="300" fill="#FF007F" rx="4" fill-opacity="0.85"/>
+    <text x="270" y="430" font-family="system-ui, -apple-system, sans-serif" font-size="20" fill="#E2E8F0" text-anchor="middle">{{chart_label_2|12}}</text>
+    <text x="270" y="70" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="bold" fill="#FF007F" text-anchor="middle">{{chart_value_2|8}}</text>
+
+    <!-- Bar 3 -->
+    <rect x="340" y="240" width="60" height="160" fill="#00F0FF" rx="4" fill-opacity="0.85"/>
+    <text x="370" y="430" font-family="system-ui, -apple-system, sans-serif" font-size="20" fill="#E2E8F0" text-anchor="middle">{{chart_label_3|12}}</text>
+    <text x="370" y="210" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="bold" fill="#00F0FF" text-anchor="middle">{{chart_value_3|8}}</text>
+
+    <!-- Bar 4 -->
+    <rect x="440" y="150" width="60" height="250" fill="#FF007F" rx="4" fill-opacity="0.85"/>
+    <text x="470" y="430" font-family="system-ui, -apple-system, sans-serif" font-size="20" fill="#E2E8F0" text-anchor="middle">{{chart_label_4|12}}</text>
+    <text x="470" y="120" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="bold" fill="#FF007F" text-anchor="middle">{{chart_value_4|8}}</text>
+  </g>
+</svg>

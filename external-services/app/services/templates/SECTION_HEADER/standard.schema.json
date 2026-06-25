@@ -1,0 +1,14 @@
+{
+  "fields": {
+    "sub_module_name": {
+      "type": "text",
+      "desc": "text content",
+      "max_chars": 40
+    },
+    "heading": {
+      "type": "title",
+      "desc": "heading / title",
+      "max_chars": 24
+    }
+  }
+}

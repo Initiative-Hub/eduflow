@@ -1,0 +1,53 @@
+{
+  "fields": {
+    "heading": {
+      "type": "title",
+      "desc": "heading / title",
+      "max_chars": 24
+    },
+    "date_1": {
+      "type": "caption",
+      "desc": "source, footnote, date, or small caption",
+      "max_chars": 15
+    },
+    "desc_1": {
+      "type": "text",
+      "desc": "First body point — concise",
+      "max_chars": 25,
+      "lines": 2
+    },
+    "date_2": {
+      "type": "caption",
+      "desc": "source, footnote, date, or small caption",
+      "max_chars": 15
+    },
+    "desc_2": {
+      "type": "text",
+      "desc": "Second body point — concise",
+      "max_chars": 25,
+      "lines": 2
+    },
+    "date_3": {
+      "type": "caption",
+      "desc": "source, footnote, date, or small caption",
+      "max_chars": 15
+    },
+    "desc_3": {
+      "type": "text",
+      "desc": "Third body point — concise",
+      "max_chars": 25,
+      "lines": 2
+    },
+    "date_4": {
+      "type": "caption",
+      "desc": "source, footnote, date, or small caption",
+      "max_chars": 15
+    },
+    "desc_4": {
+      "type": "text",
+      "desc": "Fourth body point — concise",
+      "max_chars": 25,
+      "lines": 2
+    }
+  }
+}

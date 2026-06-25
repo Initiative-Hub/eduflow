@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 810">
+  <!-- Background -->
+  <rect width="1440" height="810" fill="#0A0E1A"/>
+  
+  <line x1="80" y1="0" x2="80" y2="810" stroke="#00F0FF" stroke-width="3" stroke-opacity="0.3"/>
+  <circle cx="1300" cy="700" r="180" fill="#FF007F" fill-opacity="0.06"/>
+
+  <!-- Heading -->
+  <text x="140" y="150" font-family="system-ui, -apple-system, sans-serif" font-size="56" font-weight="bold" fill="#FFFFFF">{{heading|24}}</text>
+  <rect x="140" y="175" width="220" height="4" fill="#00F0FF" rx="2"/>
+
+  <!-- Agenda Items -->
+  <g>
+    <!-- Item 1 -->
+    <rect x="140" y="240" width="48" height="48" rx="8" fill="#FF007F" fill-opacity="0.2" stroke="#FF007F" stroke-width="2"/>
+    <text x="164" y="272" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="black" fill="#FFFFFF" text-anchor="middle">1</text>
+    <text x="220" y="274" font-family="system-ui, -apple-system, sans-serif" font-size="28" fill="#FFFFFF">{{item.1|52}}</text>
+  </g>
+  <g>
+    <!-- Item 2 -->
+    <rect x="140" y="350" width="48" height="48" rx="8" fill="#00F0FF" fill-opacity="0.2" stroke="#00F0FF" stroke-width="2"/>
+    <text x="164" y="382" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="black" fill="#FFFFFF" text-anchor="middle">2</text>
+    <text x="220" y="384" font-family="system-ui, -apple-system, sans-serif" font-size="28" fill="#FFFFFF">{{item.2|52}}</text>
+  </g>
+  <g>
+    <!-- Item 3 -->
+    <rect x="140" y="460" width="48" height="48" rx="8" fill="#FF007F" fill-opacity="0.2" stroke="#FF007F" stroke-width="2"/>
+    <text x="164" y="492" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="black" fill="#FFFFFF" text-anchor="middle">3</text>
+    <text x="220" y="494" font-family="system-ui, -apple-system, sans-serif" font-size="28" fill="#FFFFFF">{{item.3|52}}</text>
+  </g>
+  <g>
+    <!-- Item 4 -->
+    <rect x="140" y="570" width="48" height="48" rx="8" fill="#00F0FF" fill-opacity="0.2" stroke="#00F0FF" stroke-width="2"/>
+    <text x="164" y="602" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="black" fill="#FFFFFF" text-anchor="middle">4</text>
+    <text x="220" y="604" font-family="system-ui, -apple-system, sans-serif" font-size="28" fill="#FFFFFF">{{item.4|52}}</text>
+  </g>
+</svg>

@@ -1,0 +1,6 @@
+{
+  "description": "Typographic visual break slide used to delineate different modules or sections.",
+  "variants": {
+    "standard": "Standard neon-dark section header centered layout."
+  }
+}

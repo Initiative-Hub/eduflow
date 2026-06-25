@@ -1,0 +1,6 @@
+{
+  "description": "Sequence slide displaying a numbered process flow step by step.",
+  "variants": {
+    "standard": "Numbered column layout for multi-step processes or workflows."
+  }
+}

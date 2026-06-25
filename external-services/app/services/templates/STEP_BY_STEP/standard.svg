@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 810">
+  <rect width="1440" height="810" fill="#0A0E1A"/>
+  <line x1="80" y1="0" x2="80" y2="810" stroke="#00F0FF" stroke-width="3" stroke-opacity="0.3"/>
+
+  <!-- Heading -->
+  <text x="140" y="150" font-family="system-ui, -apple-system, sans-serif" font-size="56" font-weight="bold" fill="#FFFFFF">{{heading|24}}</text>
+  <rect x="140" y="175" width="220" height="4" fill="#00F0FF" rx="2"/>
+
+  <!-- Steps Blocks -->
+  <g transform="translate(140, 240)">
+    <!-- Step 1 -->
+    <rect x="0" y="0" width="260" height="360" fill="#111827" rx="16" stroke="#00F0FF" stroke-width="1.5" stroke-opacity="0.3"/>
+    <circle cx="130" cy="80" r="32" fill="#00F0FF"/>
+    <text x="130" y="90" font-family="system-ui, -apple-system, sans-serif" font-size="28" font-weight="bold" fill="#0A0E1A" text-anchor="middle">1</text>
+    <text x="130" y="170" font-family="system-ui, -apple-system, sans-serif" font-size="22" font-weight="bold" fill="#00F0FF" text-anchor="middle">Step One</text>
+    <text x="20" y="230" font-family="system-ui, -apple-system, sans-serif" font-size="18" fill="#E2E8F0">{{step_1|40}}</text>
+
+    <!-- Step 2 -->
+    <rect x="290" y="0" width="260" height="360" fill="#111827" rx="16" stroke="#FF007F" stroke-width="1.5" stroke-opacity="0.3"/>
+    <circle cx="420" cy="80" r="32" fill="#FF007F"/>
+    <text x="420" y="90" font-family="system-ui, -apple-system, sans-serif" font-size="28" font-weight="bold" fill="#0A0E1A" text-anchor="middle">2</text>
+    <text x="420" y="170" font-family="system-ui, -apple-system, sans-serif" font-size="22" font-weight="bold" fill="#FF007F" text-anchor="middle">Step Two</text>
+    <text x="310" y="230" font-family="system-ui, -apple-system, sans-serif" font-size="18" fill="#E2E8F0">{{step_2|40}}</text>
+
+    <!-- Step 3 -->
+    <rect x="580" y="0" width="260" height="360" fill="#111827" rx="16" stroke="#00F0FF" stroke-width="1.5" stroke-opacity="0.3"/>
+    <circle cx="710" cy="80" r="32" fill="#00F0FF"/>
+    <text x="710" y="90" font-family="system-ui, -apple-system, sans-serif" font-size="28" font-weight="bold" fill="#0A0E1A" text-anchor="middle">3</text>
+    <text x="710" y="170" font-family="system-ui, -apple-system, sans-serif" font-size="22" font-weight="bold" fill="#00F0FF" text-anchor="middle">Step Three</text>
+    <text x="600" y="230" font-family="system-ui, -apple-system, sans-serif" font-size="18" fill="#E2E8F0">{{step_3|40}}</text>
+
+    <!-- Step 4 -->
+    <rect x="870" y="0" width="260" height="360" fill="#111827" rx="16" stroke="#FF007F" stroke-width="1.5" stroke-opacity="0.3"/>
+    <circle cx="1000" cy="80" r="32" fill="#FF007F"/>
+    <text x="1000" y="90" font-family="system-ui, -apple-system, sans-serif" font-size="28" font-weight="bold" fill="#0A0E1A" text-anchor="middle">4</text>
+    <text x="1000" y="170" font-family="system-ui, -apple-system, sans-serif" font-size="22" font-weight="bold" fill="#FF007F" text-anchor="middle">Step Four</text>
+    <text x="890" y="230" font-family="system-ui, -apple-system, sans-serif" font-size="18" fill="#E2E8F0">{{step_4|40}}</text>
+  </g>
+</svg>
