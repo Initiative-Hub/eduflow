@@ -1,6 +1,6 @@
 'use client';
 
-import { BookMarked, ClipboardList, Code2, Globe } from 'lucide-react';
+import { ClipboardList, Code2, Globe } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type {
   StudyMode,
@@ -28,8 +28,8 @@ export function StudyModeSelector({
       key: 'interactiveContent' as StudyMode,
       icon: Code2,
       label: t('modes.interactiveContent'),
-      accent: 'border-border bg-accent text-accent-foreground',
-      activeAccent: 'bg-accent ring-2 ring-primary',
+      accent: 'border-primary/20 bg-primary/10 text-primary',
+      activeAccent: 'bg-primary/10 ring-2 ring-primary',
     },
     {
       key: 'practiceTest' as StudyMode,
