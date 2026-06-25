@@ -1,0 +1,6 @@
+{
+  "description": "Agenda or Table of Contents slide listing main topics of the presentation.",
+  "variants": {
+    "standard": "Standard neon-dark table of contents with glowing step indicators."
+  }
+}

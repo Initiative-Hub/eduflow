@@ -1,6 +1,5 @@
 // prisma/seed.ts
 import { PrismaPg } from '@prisma/adapter-pg';
-import { Pool } from 'pg';
 import { PrismaClient } from '../src/generated/prisma';
 import { seedDemoChats } from './seeds/chat';
 import { seedDemoCourses } from './seeds/course';
@@ -11,9 +10,8 @@ import {
 import { seedCourseRoles, seedPlatformRoles } from './seeds/role';
 import { seedUsers } from './seeds/user';
 
-const connectionString = process.env.DATABASE_URL;
-const pool = new Pool({ connectionString });
-const adapter = new PrismaPg(pool);
+const connectionString = process.env.DATABASE_URL!;
+const adapter = new PrismaPg({ connectionString });
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
@@ -70,11 +68,9 @@ async function main() {
 main()
   .then(async () => {
     await prisma.$disconnect();
-    await pool.end();
   })
   .catch(async (e) => {
     console.error(e);
     await prisma.$disconnect();
-    await pool.end();
     process.exit(1);
   });

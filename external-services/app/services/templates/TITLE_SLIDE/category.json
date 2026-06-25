@@ -1,0 +1,7 @@
+{
+  "description": "Opening slide with the deck title and presenter.",
+  "variants": {
+    "centered": "Centered title — formal, symmetric look.",
+    "left_aligned": "Left-aligned title with a side accent — modern, editorial look."
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "fields": {
+    "heading": {
+      "type": "title",
+      "desc": "heading / title",
+      "max_chars": 32
+    },
+    "stat_1": {
+      "type": "number",
+      "desc": "First key metric — an actual number, e.g. \"78%\", \"3x\"",
+      "max_chars": 7
+    },
+    "label_1": {
+      "type": "text",
+      "desc": "short label for the first metric",
+      "max_chars": 26,
+      "lines": 2
+    },
+    "stat_2": {
+      "type": "number",
+      "desc": "Second key metric — an actual number, e.g. \"78%\", \"3x\"",
+      "max_chars": 7
+    },
+    "label_2": {
+      "type": "text",
+      "desc": "short label for the second metric",
+      "max_chars": 26,
+      "lines": 2
+    },
+    "stat_3": {
+      "type": "number",
+      "desc": "Third key metric — an actual number, e.g. \"78%\", \"3x\"",
+      "max_chars": 7
+    },
+    "label_3": {
+      "type": "text",
+      "desc": "short label for the third metric",
+      "max_chars": 26,
+      "lines": 2
+    },
+    "source": {
+      "type": "caption",
+      "desc": "source, footnote, date, or small caption",
+      "max_chars": 70
+    }
+  }
+}

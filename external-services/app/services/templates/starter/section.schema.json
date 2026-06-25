@@ -1,0 +1,19 @@
+{
+  "fields": {
+    "kicker": {
+      "type": "text",
+      "desc": "text content",
+      "max_chars": 26
+    },
+    "heading": {
+      "type": "title",
+      "desc": "heading / title",
+      "max_chars": 26
+    },
+    "caption": {
+      "type": "caption",
+      "desc": "source, footnote, date, or small caption",
+      "max_chars": 64
+    }
+  }
+}

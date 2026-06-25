@@ -1,0 +1,15 @@
+{
+  "fields": {
+    "heading": {
+      "type": "title",
+      "desc": "heading / title",
+      "max_chars": 24
+    },
+    "bullets": {
+      "type": "text",
+      "desc": "text content",
+      "max_chars": 70,
+      "lines": 5
+    }
+  }
+}

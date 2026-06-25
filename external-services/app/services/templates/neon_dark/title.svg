@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 810">
+  <!-- Background -->
+  <rect width="1440" height="810" fill="#0A0E1A"/>
+  
+  <!-- Neon Tech Accents -->
+  <circle cx="1250" cy="220" r="240" fill="#00F0FF" fill-opacity="0.08"/>
+  <circle cx="1350" cy="420" r="140" fill="#FF007F" fill-opacity="0.08"/>
+  <circle cx="1120" cy="500" r="60" fill="#00F0FF" fill-opacity="0.05"/>
+  <line x1="80" y1="0" x2="80" y2="810" stroke="#FF007F" stroke-width="3" stroke-opacity="0.3"/>
+  <line x1="0" y1="730" x2="1440" y2="730" stroke="#00F0FF" stroke-width="1" stroke-opacity="0.2"/>
+
+  <!-- Metadata -->
+  <text x="140" y="190" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="bold" letter-spacing="8" fill="#00F0FF">{{kicker|28}}</text>
+  
+  <!-- Titles -->
+  <text x="135" y="340" font-family="system-ui, -apple-system, sans-serif" font-size="88" font-weight="900" fill="#FFFFFF">{{title.1|24}}</text>
+  <text x="135" y="450" font-family="system-ui, -apple-system, sans-serif" font-size="88" font-weight="900" fill="#FFFFFF">{{title.2|24}}</text>
+  
+  <!-- Subtitle -->
+  <text x="140" y="550" font-family="system-ui, -apple-system, sans-serif" font-size="28" fill="#E2E8F0">{{subtitle|62}}</text>
+  
+  <!-- Footer -->
+  <rect x="140" y="650" width="8" height="30" fill="#FF007F" rx="2"/>
+  <text x="165" y="672" font-family="system-ui, -apple-system, sans-serif" font-size="22" font-weight="bold" fill="#E2E8F0">{{presenter|40}}</text>
+</svg>

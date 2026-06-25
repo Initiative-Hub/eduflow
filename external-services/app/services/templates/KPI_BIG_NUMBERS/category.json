@@ -1,0 +1,7 @@
+{
+  "description": "Highlight key metrics and statistics with large, scannable numbers.",
+  "variants": {
+    "three_stats": "Three stat callouts side by side — use when the data has 2-3 key numbers.",
+    "list_style": "A vertical list of metrics with labels — use for 4+ numbers or ranked figures."
+  }
+}

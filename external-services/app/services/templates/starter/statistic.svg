@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 810">
+  <rect width="1440" height="810" fill="#1F2A44"/>
+  <circle cx="1340" cy="80" r="150" fill="#E4654F" fill-opacity="0.3"/>
+  <text x="110" y="150" font-family="Georgia, serif" font-size="56" font-weight="bold" fill="#F6F1E7">{{heading|32}}</text>
+  <g>
+    <rect x="100" y="250" width="380" height="330" rx="18" fill="#F6F1E7"/>
+    <text x="290" y="410" font-family="Georgia, serif" font-size="84" font-weight="bold" fill="#E4654F" text-anchor="middle">{{stat_1|7}}</text>
+    <text x="290" y="475" font-family="Helvetica, Arial, sans-serif" font-size="25" fill="#1F2A44" text-anchor="middle">{{label_1.1|26}}</text>
+    <text x="290" y="510" font-family="Helvetica, Arial, sans-serif" font-size="25" fill="#1F2A44" text-anchor="middle">{{label_1.2|26}}</text>
+  </g>
+  <g>
+    <rect x="530" y="250" width="380" height="330" rx="18" fill="#F6F1E7"/>
+    <text x="720" y="410" font-family="Georgia, serif" font-size="84" font-weight="bold" fill="#E4654F" text-anchor="middle">{{stat_2|7}}</text>
+    <text x="720" y="475" font-family="Helvetica, Arial, sans-serif" font-size="25" fill="#1F2A44" text-anchor="middle">{{label_2.1|26}}</text>
+    <text x="720" y="510" font-family="Helvetica, Arial, sans-serif" font-size="25" fill="#1F2A44" text-anchor="middle">{{label_2.2|26}}</text>
+  </g>
+  <g>
+    <rect x="960" y="250" width="380" height="330" rx="18" fill="#F6F1E7"/>
+    <text x="1150" y="410" font-family="Georgia, serif" font-size="84" font-weight="bold" fill="#E4654F" text-anchor="middle">{{stat_3|7}}</text>
+    <text x="1150" y="475" font-family="Helvetica, Arial, sans-serif" font-size="25" fill="#1F2A44" text-anchor="middle">{{label_3.1|26}}</text>
+    <text x="1150" y="510" font-family="Helvetica, Arial, sans-serif" font-size="25" fill="#1F2A44" text-anchor="middle">{{label_3.2|26}}</text>
+  </g>
+  <text x="110" y="680" font-family="Helvetica, Arial, sans-serif" font-size="22" fill="#F6F1E7" fill-opacity="0.7">{{source|70}}</text>
+</svg>

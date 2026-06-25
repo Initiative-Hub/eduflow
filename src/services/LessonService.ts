@@ -112,6 +112,49 @@ export class LessonService {
     });
   }
 
+  /**
+   * Persists a reference to the most recently generated presentation deck so it
+   * can be re-opened later without regenerating. `deckKey` is the object-storage
+   * key returned by the external slide service.
+   */
+  static async saveLessonPresentation(
+    lessonId: string,
+    userId: string,
+    data: { deckId: string; deckKey?: string }
+  ) {
+    const lesson = await prisma.lesson.findUnique({
+      where: { id: lessonId },
+      include: {
+        module: {
+          select: {
+            courseId: true,
+          },
+        },
+      },
+    });
+
+    if (!lesson) {
+      throw new Error('Lesson not found');
+    }
+
+    const { containPermission } = await getCoursePermissions(
+      userId,
+      lesson.module.courseId
+    );
+
+    if (!containPermission(COURSE_PERMISSION.COURSE_CONTENT_UPDATE)) {
+      throw new Error('Unauthorized: Missing COURSE_CONTENT_UPDATE permission');
+    }
+
+    return await prisma.lesson.update({
+      where: { id: lessonId },
+      data: {
+        presentationDeckId: data.deckId,
+        presentationDeckKey: data.deckKey ?? null,
+      },
+    });
+  }
+
   static async deleteLesson(lessonId: string, userId: string) {
     const lesson = await prisma.lesson.findFirst({
       where: {
