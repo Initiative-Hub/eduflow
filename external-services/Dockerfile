@@ -1,5 +1,12 @@
 FROM astral/uv:python3.12-bookworm-slim
 
+# Install system fonts and fontconfig for resvg text rendering
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    fontconfig \
+    fonts-dejavu-core \
+    fonts-liberation \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 COPY pyproject.toml uv.lock ./

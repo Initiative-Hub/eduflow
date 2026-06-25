@@ -8,8 +8,8 @@ import {
   ArrowRight,
   ChevronLeft,
   ChevronRight,
+  Download,
   Edit,
-  FileCode,
   Maximize2,
   Minimize2,
   Plus,
@@ -75,38 +75,40 @@ export function LessonPresentation({
     addSlide,
   } = usePresentation({ title, content, isOpen, onClose });
 
-  const [isHtmlEditorOpen, setIsHtmlEditorOpen] = useState(false);
-  const [htmlContent, setHtmlContent] = useState('');
+  const [isDownloadingPptx, setIsDownloadingPptx] = useState(false);
   const [iframeVersion, setIframeVersion] = useState(0);
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const deckId = deckUrl ? deckUrl.split('/').pop() : undefined;
 
-  const { data: fetchedHtml, isLoading: isFetchingHtml } = useSlideHtml(
-    deckId || '',
-    isHtmlEditorOpen
-  );
-
-  useEffect(() => {
-    if (fetchedHtml) {
-      setHtmlContent(fetchedHtml);
-    }
-  }, [fetchedHtml]);
-
   const updateSlideHtml = useUpdateSlideHtml();
 
-  const handleSaveHtml = () => {
+  const handleDownloadPptx = async () => {
     if (!deckId) return;
-    updateSlideHtml.mutate(
-      { deckId, html: htmlContent },
-      {
-        onSuccess: () => {
-          setIframeVersion((v) => v + 1);
-          setIsHtmlEditorOpen(false);
-          toast.success(t('visualSaveSuccess'));
-        },
+    setIsDownloadingPptx(true);
+    try {
+      const res = await fetch(`/api/v1/ai/slides/${deckId}/pptx`, {
+        cache: 'no-store',
+      });
+      if (!res.ok) {
+        throw new Error('Failed to download presentation file');
       }
-    );
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `presentation-${deckId}.pptx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success(t('pptxDownloadSuccess'));
+    } catch (err) {
+      console.error(err);
+      toast.error(t('pptxDownloadError'));
+    } finally {
+      setIsDownloadingPptx(false);
+    }
   };
 
   // Turn text-bearing nodes inside the generated iframe into editable elements.
@@ -1416,10 +1418,13 @@ export function LessonPresentation({
                 variant="outline"
                 size="sm"
                 className="h-9 gap-1.5 rounded-lg border-slate-200 bg-white font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
-                onClick={() => setIsHtmlEditorOpen(true)}
+                onClick={handleDownloadPptx}
+                disabled={isDownloadingPptx}
               >
-                <FileCode className="h-4 w-4" />
-                {t('btnEditHtml')}
+                <Download className="h-4 w-4" />
+                {isDownloadingPptx
+                  ? t('pptxDownloading')
+                  : t('btnDownloadPptx')}
               </Button>
               <Button
                 variant="outline"
@@ -1903,47 +1908,6 @@ export function LessonPresentation({
           <div className="order-2 w-9 md:order-3" />
         </div>
       )}
-      <DialogTemplate
-        isOpen={isHtmlEditorOpen}
-        onOpenChange={setIsHtmlEditorOpen}
-        title={t('editHtmlTitle')}
-        className="max-w-4xl"
-        footer={
-          <div className="flex justify-end gap-3 w-full">
-            <Button
-              variant="ghost"
-              onClick={() => setIsHtmlEditorOpen(false)}
-              disabled={updateSlideHtml.isPending}
-              className="rounded-xl px-4 py-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSaveHtml}
-              disabled={updateSlideHtml.isPending || isFetchingHtml}
-              className="bg-primary text-primary-foreground hover:bg-primary/90 px-5 py-2 rounded-xl font-semibold min-w-28 flex items-center justify-center"
-            >
-              {updateSlideHtml.isPending ? t('savingHtml') : t('btnSaveHtml')}
-            </Button>
-          </div>
-        }
-      >
-        {isFetchingHtml ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-3">
-            <Spinner className="h-10 w-10 text-primary animate-spin" />
-            <span className="text-sm text-slate-500">{t('fetchingHtml')}</span>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-2">
-            <textarea
-              value={htmlContent}
-              onChange={(e) => setHtmlContent(e.target.value)}
-              className="font-mono text-[11px] bg-zinc-950 text-emerald-450 p-4 border border-zinc-850 rounded-xl h-[60vh] w-full focus:outline-none focus:ring-1 focus:ring-primary overflow-y-auto resize-none"
-              spellCheck={false}
-            />
-          </div>
-        )}
-      </DialogTemplate>
     </div>
   );
 }
