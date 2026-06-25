@@ -166,11 +166,8 @@ const InteractiveContentPreview = ({
           ) : null}
         </div>
 
-        <div
-          aria-label={t('actionsLabel')}
-          className="flex w-full flex-wrap items-center gap-2"
-          role="group"
-        >
+        <fieldset className="m-0 flex w-full min-w-0 flex-wrap items-center gap-2 border-0 p-0">
+          <legend className="sr-only">{t('actionsLabel')}</legend>
           <button
             type="button"
             className="inline-flex h-9 min-w-36 flex-1 items-center justify-center gap-2 rounded-lg border border-border bg-background px-3 font-medium text-foreground text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -197,7 +194,7 @@ const InteractiveContentPreview = ({
             <Download className="size-4" />
             <span>{t('download')}</span>
           </button>
-        </div>
+        </fieldset>
       </header>
       <iframe
         key={previewKey}
