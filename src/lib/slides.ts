@@ -130,42 +130,21 @@ export async function generateDeckFromPlan(
   throw new Error('Slide generation timed out');
 }
 
+import { StorageService } from '@/services/StorageService';
+
 /**
- * Fetches the rendered HTML for a generated deck from the external service.
+ * Fetches the rendered HTML for a generated deck.
  */
 export async function getDeckHtml(deckId: string): Promise<string> {
-  const baseUrl = getBaseUrl();
-  const res = await fetch(`${baseUrl}/slides/decks/${deckId}`);
-
-  if (!res.ok) {
-    if (res.status === 404) {
-      throw new Error('Deck not found');
-    }
-    const errorText = await res.text();
-    console.error('Deck fetch error:', errorText);
-    throw new Error(`Failed to fetch deck: ${res.statusText}`);
-  }
-
-  return res.text();
+  return StorageService.getSlideDeck(deckId);
 }
 
 /**
- * Saves the edited HTML for a generated deck back to the external service.
+ * Saves the edited HTML for a generated deck directly.
  */
 export async function saveDeckHtml(
   deckId: string,
   html: string
 ): Promise<void> {
-  const baseUrl = getBaseUrl();
-  const res = await fetch(`${baseUrl}/slides/decks/${deckId}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ html }),
-  });
-
-  if (!res.ok) {
-    const errorText = await res.text();
-    console.error('Deck save error:', errorText);
-    throw new Error(`Failed to save deck: ${res.statusText}`);
-  }
+  await StorageService.saveSlideDeck(deckId, html);
 }

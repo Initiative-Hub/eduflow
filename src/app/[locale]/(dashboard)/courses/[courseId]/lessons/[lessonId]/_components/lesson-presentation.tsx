@@ -139,6 +139,7 @@ export function LessonPresentation({
         style.innerHTML = `
           text, tspan {
             transition: outline 0.15s ease-in-out;
+            pointer-events: auto !important;
           }
           text:hover, tspan:hover {
             outline: 1px dashed rgba(59, 130, 246, 0.8) !important;
