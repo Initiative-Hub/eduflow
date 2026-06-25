@@ -358,7 +358,6 @@ model CourseInvitation {
   createdAt   DateTime               @default(now()) @map("created_at")
   updatedAt   DateTime               @default(now()) @updatedAt @map("updated_at")
 
-  @@unique([courseId, inviteeId], map: "course_invitation_course_id_invitee_id_key")
   @@index([inviteeId, status], map: "course_invitation_invitee_id_status_idx")
   @@index([courseId, status], map: "course_invitation_course_id_status_idx")
   @@index([expiresAt], map: "course_invitation_expires_at_idx")

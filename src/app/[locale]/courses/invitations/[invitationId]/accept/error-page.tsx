@@ -14,6 +14,7 @@ import { Link } from '@/i18n/navigation';
 
 type InvitationErrorResult =
   | { ok: false; reason: 'wrong_user' }
+  | { ok: false; reason: 'already_joined'; courseId: string }
   | {
       ok: false;
       reason: 'not_pending';
@@ -41,6 +42,30 @@ export async function InvitationErrorPage({
           <>
             <Button asChild size="lg" className="w-full">
               <Link href="/login">{t('wrongUser.switchAccount')}</Link>
+            </Button>
+            <Button asChild variant="outline" size="lg" className="w-full">
+              <Link href="/">{t('actions.goHome')}</Link>
+            </Button>
+          </>
+        }
+      />
+    );
+  }
+
+  if (result.reason === 'already_joined') {
+    return (
+      <ErrorCard
+        icon={<CircleCheck className="size-7 text-primary" />}
+        iconBg="bg-primary/10"
+        title={t('alreadyJoined.title')}
+        description={t('alreadyJoined.description')}
+        actions={
+          <>
+            <Button asChild size="lg" className="w-full">
+              <Link href={`/courses/${result.courseId}`}>
+                <BookOpen data-icon="inline-start" />
+                {t('actions.goToCourse')}
+              </Link>
             </Button>
             <Button asChild variant="outline" size="lg" className="w-full">
               <Link href="/">{t('actions.goHome')}</Link>
@@ -90,47 +115,26 @@ export async function InvitationErrorPage({
   }
 
   // reason === 'not_pending'
-  const isAccepted = result.status === CourseInvitationStatus.ACCEPTED;
   const isDeclined = result.status === CourseInvitationStatus.DECLINED;
 
   return (
     <ErrorCard
-      icon={
-        isAccepted ? (
-          <CircleCheck className="size-7 text-primary" />
-        ) : (
-          <CircleX className="size-7 text-muted-foreground" />
-        )
-      }
-      iconBg={isAccepted ? 'bg-primary/10' : 'bg-muted/60'}
+      icon={<CircleX className="size-7 text-muted-foreground" />}
+      iconBg="bg-muted/60"
       title={
-        isAccepted
-          ? t('notPending.acceptedTitle')
-          : isDeclined
-            ? t('notPending.declinedTitle')
-            : t('notPending.cancelledTitle')
+        isDeclined
+          ? t('notPending.declinedTitle')
+          : t('notPending.cancelledTitle')
       }
       description={
-        isAccepted
-          ? t('notPending.acceptedDescription')
-          : isDeclined
-            ? t('notPending.declinedDescription')
-            : t('notPending.cancelledDescription')
+        isDeclined
+          ? t('notPending.declinedDescription')
+          : t('notPending.cancelledDescription')
       }
       actions={
-        <>
-          {isAccepted ? (
-            <Button asChild size="lg" className="w-full">
-              <Link href={`/courses/${result.courseId}`}>
-                <BookOpen data-icon="inline-start" />
-                {t('actions.goToCourse')}
-              </Link>
-            </Button>
-          ) : null}
-          <Button asChild variant="outline" size="lg" className="w-full">
-            <Link href="/">{t('actions.goHome')}</Link>
-          </Button>
-        </>
+        <Button asChild variant="outline" size="lg" className="w-full">
+          <Link href="/">{t('actions.goHome')}</Link>
+        </Button>
       }
     />
   );

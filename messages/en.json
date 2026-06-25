@@ -4,6 +4,10 @@
       "goHome": "Go home",
       "goToCourse": "Go to course"
     },
+    "alreadyJoined": {
+      "description": "You have already joined this course. You can continue from the course page.",
+      "title": "Already joined"
+    },
     "capacityFull": {
       "description": "This course is already at capacity. Ask the instructor to increase the limit or try again after a seat opens.",
       "title": "Course is full"

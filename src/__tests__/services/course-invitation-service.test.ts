@@ -96,6 +96,46 @@ describe('CourseInvitationService capacity checks', () => {
     expect(prismaMock.courseInvitation.update).not.toHaveBeenCalled();
   });
 
+  it('returns already_joined when accepting a direct invitation for an active course member', async () => {
+    prismaMock.courseInvitation.findUnique.mockResolvedValue({
+      course: { deletedAt: null, id: 'course-1' },
+      courseId: 'course-1',
+      expiresAt: null,
+      id: 'invitation-1',
+      inviteeId: 'user-1',
+      roleId: 'role-student',
+      status: CourseInvitationStatus.PENDING,
+    });
+    prismaMock.enrollment.findUnique.mockResolvedValue({
+      status: CourseEnrollmentStatus.ACTIVE,
+    });
+
+    const result = await CourseInvitationService.acceptDirectInvitation({
+      invitationId: 'invitation-1',
+      userId: 'user-1',
+    });
+
+    expect(result).toEqual({
+      ok: false,
+      reason: 'already_joined',
+      courseId: 'course-1',
+    });
+    expect(prismaMock.enrollment.findUnique).toHaveBeenCalledWith({
+      where: {
+        courseId_memberId: {
+          courseId: 'course-1',
+          memberId: 'user-1',
+        },
+      },
+      select: { status: true },
+    });
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+    expect(prismaMock.course.findUnique).not.toHaveBeenCalled();
+    expect(prismaMock.enrollment.count).not.toHaveBeenCalled();
+    expect(prismaMock.enrollment.upsert).not.toHaveBeenCalled();
+    expect(prismaMock.courseInvitation.update).not.toHaveBeenCalled();
+  });
+
   it('rejects public invite link joins after capacity is reached', async () => {
     prismaMock.$transaction.mockImplementation(async (callback) =>
       callback(prismaMock)

@@ -4,6 +4,10 @@
       "goHome": "Về trang chủ",
       "goToCourse": "Đến khóa học"
     },
+    "alreadyJoined": {
+      "description": "Bạn đã tham gia khóa học này. Bạn có thể tiếp tục từ trang khóa học.",
+      "title": "Đã tham gia"
+    },
     "capacityFull": {
       "description": "Khóa học này đã đạt giới hạn thành viên. Hãy nhờ giảng viên tăng giới hạn hoặc thử lại khi có chỗ trống.",
       "title": "Khóa học đã đầy"

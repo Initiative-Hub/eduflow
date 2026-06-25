@@ -194,27 +194,12 @@ export class CourseInvitationService {
         });
       }
 
-      return tx.courseInvitation.upsert({
-        where: {
-          courseId_inviteeId: {
-            courseId: input.courseId,
-            inviteeId: input.userId,
-          },
-        },
-        create: {
+      return tx.courseInvitation.create({
+        data: {
           courseId: input.courseId,
           expiresAt: addDays(DEFAULT_INVITATION_TTL_DAYS),
           invitedById: input.invitedById,
           inviteeId: input.userId,
-          roleId: role.id,
-          status: CourseInvitationStatus.PENDING,
-        },
-        update: {
-          acceptedAt: null,
-          cancelledAt: null,
-          declinedAt: null,
-          expiresAt: addDays(DEFAULT_INVITATION_TTL_DAYS),
-          invitedById: input.invitedById,
           roleId: role.id,
           status: CourseInvitationStatus.PENDING,
         },
@@ -245,6 +230,7 @@ export class CourseInvitationService {
   }): Promise<
     | { ok: true; courseId: string }
     | { ok: false; reason: 'wrong_user' }
+    | { ok: false; reason: 'already_joined'; courseId: string }
     | {
         ok: false;
         reason: 'not_pending';
@@ -267,6 +253,24 @@ export class CourseInvitationService {
       return { ok: false, reason: 'wrong_user' };
     }
 
+    const existingEnrollment = await prisma.enrollment.findUnique({
+      where: {
+        courseId_memberId: {
+          courseId: invitation.courseId,
+          memberId: input.userId,
+        },
+      },
+      select: { status: true },
+    });
+
+    if (existingEnrollment?.status === CourseEnrollmentStatus.ACTIVE) {
+      return {
+        ok: false,
+        reason: 'already_joined',
+        courseId: invitation.courseId,
+      };
+    }
+
     if (invitation.status !== CourseInvitationStatus.PENDING) {
       return {
         ok: false,
@@ -281,6 +285,7 @@ export class CourseInvitationService {
         where: { id: invitation.id },
         data: { status: CourseInvitationStatus.EXPIRED },
       });
+
       return {
         ok: false,
         reason: 'expired',
@@ -304,6 +309,7 @@ export class CourseInvitationService {
             status: CourseInvitationStatus.ACCEPTED,
           },
         });
+
         await tx.enrollment.upsert({
           where: {
             courseId_memberId: {
@@ -567,14 +573,21 @@ export class CourseInvitationService {
         throw new Error('Course capacity reached');
       }
 
-      await tx.enrollment.update({
+      await tx.enrollment.upsert({
         where: {
           courseId_memberId: {
             courseId: link.courseId,
             memberId: input.userId,
           },
         },
-        data: {
+        create: {
+          courseId: link.courseId,
+          enrolledAt: new Date(),
+          memberId: input.userId,
+          roleId: link.roleId,
+          status: CourseEnrollmentStatus.ACTIVE,
+        },
+        update: {
           enrolledAt: new Date(),
           invitedAt: null,
           roleId: link.roleId,
