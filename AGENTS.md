@@ -103,6 +103,7 @@ for any tasks.).
 - **Search Favicons**: Enable favicon metadata on web-search tools when citation UI depends on source identity, and provide a deterministic domain favicon fallback for older results without favicon metadata.
 - **Study Modes**: When adding or removing a Study mode, update the shared Zod mode schema, mode selector cards, mode-specific system prompts, and both locale files together so the UI, API validation, and prompt behavior stay synchronized.
 - **Interactive Content Prompts**: Keep generated activity instructions aligned with the structured output schema and sandbox CSP; do not advertise CDNs or external libraries unless the renderer, sanitizer, and CSP are deliberately updated together.
+- **Interactive Learning Scaffolding**: For broad learning requests, generated activities should progress from age-appropriate intuition and a concrete example to the core concept, guided manipulation, explanatory feedback, a misconception check, and a concise takeaway.
 
 ### 6.3 Security & Validation
 
