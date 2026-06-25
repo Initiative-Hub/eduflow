@@ -580,6 +580,7 @@
       "joined": "Joined course."
     },
     "unavailable": {
+      "alreadyJoined": "You have already joined this course.",
       "capacity": "This course has reached its capacity. Ask the course owner to increase the limit before joining.",
       "expired": "This invite link has expired.",
       "limit": "This invite link has reached its usage limit.",
@@ -654,6 +655,10 @@
       "emptyTitle": "No invite links",
       "error": "We could not load invite links right now.",
       "neverExpires": "Never",
+      "revokeDialog": {
+        "description": "This invite link will stop working for future joins. Existing course members will not be affected.",
+        "title": "Revoke invite link?"
+      },
       "status": {
         "active": "Active",
         "revoked": "Revoked"

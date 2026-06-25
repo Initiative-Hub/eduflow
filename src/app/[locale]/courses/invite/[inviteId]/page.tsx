@@ -1,9 +1,11 @@
 import { BookOpen } from 'lucide-react';
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent } from '@/components/ui/card';
+import { auth } from '@/lib/auth';
 import { CourseInvitationService } from '@/services/CourseInvitationService';
 import { JoinInviteButton } from './join-invite-button';
 
@@ -19,8 +21,10 @@ export default async function CourseInvitePage({
 }) {
   const { inviteId } = await params;
   const t = await getTranslations('CourseInvitePage');
+  const session = await auth.api.getSession({ headers: await headers() });
   const invite = await CourseInvitationService.getPublicInviteView(
-    inviteId
+    inviteId,
+    session?.user.id
   ).catch(() => null);
 
   if (!invite) {
@@ -28,6 +32,7 @@ export default async function CourseInvitePage({
   }
 
   const unavailable =
+    invite.isAlreadyJoined ||
     invite.isRevoked ||
     invite.isExpired ||
     invite.isUsageLimitReached ||
@@ -53,13 +58,15 @@ export default async function CourseInvitePage({
             <Alert variant="destructive" className="text-left">
               <AlertTitle>{t('unavailable.title')}</AlertTitle>
               <AlertDescription>
-                {invite.isRevoked
-                  ? t('unavailable.revoked')
-                  : invite.isCapacityFull
-                    ? t('unavailable.capacity')
-                    : invite.isUsageLimitReached
-                      ? t('unavailable.limit')
-                      : t('unavailable.expired')}
+                {invite.isAlreadyJoined
+                  ? t('unavailable.alreadyJoined')
+                  : invite.isRevoked
+                    ? t('unavailable.revoked')
+                    : invite.isCapacityFull
+                      ? t('unavailable.capacity')
+                      : invite.isUsageLimitReached
+                        ? t('unavailable.limit')
+                        : t('unavailable.expired')}
               </AlertDescription>
             </Alert>
           ) : null}

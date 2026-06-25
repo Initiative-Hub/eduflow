@@ -580,6 +580,7 @@
       "joined": "Đã tham gia khóa học."
     },
     "unavailable": {
+      "alreadyJoined": "Bạn đã tham gia khóa học này.",
       "capacity": "Khóa học này đã đạt giới hạn thành viên. Hãy nhờ chủ khóa học tăng giới hạn trước khi tham gia.",
       "expired": "Liên kết mời này đã hết hạn.",
       "limit": "Liên kết mời này đã đạt giới hạn lượt dùng.",
@@ -654,6 +655,10 @@
       "emptyTitle": "Chưa có liên kết mời",
       "error": "Hiện không thể tải liên kết mời.",
       "neverExpires": "Không bao giờ",
+      "revokeDialog": {
+        "description": "Liên kết mời này sẽ không còn dùng được cho các lượt tham gia sau. Thành viên hiện tại của khóa học sẽ không bị ảnh hưởng.",
+        "title": "Thu hồi liên kết mời?"
+      },
       "status": {
         "active": "Đang hoạt động",
         "revoked": "Đã thu hồi"

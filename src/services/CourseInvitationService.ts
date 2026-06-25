@@ -463,7 +463,7 @@ export class CourseInvitationService {
     return { id: link.id, message: 'Invite link revoked' };
   }
 
-  static async getPublicInviteView(inviteId: string) {
+  static async getPublicInviteView(inviteId: string, userId?: string | null) {
     const link = await prisma.courseInviteLink.findUnique({
       where: { id: inviteId },
       include: {
@@ -482,7 +482,20 @@ export class CourseInvitationService {
       throw new Error('Invite link not found');
     }
 
-    const capacityState = await getCourseCapacityUsage(link.course.id);
+    const [capacityState, existingEnrollment] = await Promise.all([
+      getCourseCapacityUsage(link.course.id),
+      userId
+        ? prisma.enrollment.findUnique({
+            where: {
+              courseId_memberId: {
+                courseId: link.course.id,
+                memberId: userId,
+              },
+            },
+            select: { status: true },
+          })
+        : null,
+    ]);
 
     return {
       course: {
@@ -492,6 +505,8 @@ export class CourseInvitationService {
       capacity: capacityState.capacity,
       activeMemberCount: capacityState.activeMemberCount,
       expiresAt: link.expiresAt?.toISOString() ?? null,
+      isAlreadyJoined:
+        existingEnrollment?.status === CourseEnrollmentStatus.ACTIVE,
       isCapacityFull: capacityState.isFull,
       isExpired: Boolean(link.expiresAt && link.expiresAt < new Date()),
       isRevoked: Boolean(link.revokedAt),
@@ -538,32 +553,28 @@ export class CourseInvitationService {
         },
         select: { status: true },
       });
+
       const alreadyActive =
         existingEnrollment?.status === CourseEnrollmentStatus.ACTIVE;
 
-      if (!alreadyActive) {
-        const usage = await getCourseCapacityUsage(link.courseId, tx);
-
-        if (usage.isFull) {
-          throw new Error('Course capacity reached');
-        }
+      if (alreadyActive) {
+        return { courseId: link.courseId, message: 'Already joined course' };
       }
 
-      await tx.enrollment.upsert({
+      const usage = await getCourseCapacityUsage(link.courseId, tx);
+
+      if (usage.isFull) {
+        throw new Error('Course capacity reached');
+      }
+
+      await tx.enrollment.update({
         where: {
           courseId_memberId: {
             courseId: link.courseId,
             memberId: input.userId,
           },
         },
-        create: {
-          courseId: link.courseId,
-          enrolledAt: new Date(),
-          memberId: input.userId,
-          roleId: link.roleId,
-          status: CourseEnrollmentStatus.ACTIVE,
-        },
-        update: {
+        data: {
           enrolledAt: new Date(),
           invitedAt: null,
           roleId: link.roleId,
@@ -571,12 +582,10 @@ export class CourseInvitationService {
         },
       });
 
-      if (!alreadyActive) {
-        await tx.courseInviteLink.update({
-          where: { id: link.id },
-          data: { lastUsedAt: new Date(), usedCount: { increment: 1 } },
-        });
-      }
+      await tx.courseInviteLink.update({
+        where: { id: link.id },
+        data: { lastUsedAt: new Date(), usedCount: { increment: 1 } },
+      });
 
       await tx.courseInvitation.updateMany({
         where: {

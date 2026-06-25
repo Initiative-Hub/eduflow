@@ -125,4 +125,75 @@ describe('CourseInvitationService capacity checks', () => {
     ).rejects.toThrow('Course capacity reached');
     expect(prismaMock.enrollment.upsert).not.toHaveBeenCalled();
   });
+
+  it('marks the public invite view unavailable for an active course member', async () => {
+    prismaMock.courseInviteLink.findUnique.mockResolvedValue({
+      course: {
+        capacity: null,
+        deletedAt: null,
+        id: 'course-1',
+        title: 'English 101',
+      },
+      expiresAt: null,
+      maxUses: 100,
+      revokedAt: null,
+      usedCount: 0,
+    });
+    prismaMock.course.findUnique.mockResolvedValue({ capacity: null });
+    prismaMock.enrollment.count.mockResolvedValue(12);
+    prismaMock.enrollment.findUnique.mockResolvedValue({
+      status: CourseEnrollmentStatus.ACTIVE,
+    });
+
+    const result = await CourseInvitationService.getPublicInviteView(
+      'link-1',
+      'user-1'
+    );
+
+    expect(result.isAlreadyJoined).toBe(true);
+    expect(prismaMock.enrollment.findUnique).toHaveBeenCalledWith({
+      where: {
+        courseId_memberId: {
+          courseId: 'course-1',
+          memberId: 'user-1',
+        },
+      },
+      select: { status: true },
+    });
+  });
+
+  it('does not overwrite enrollment when an active member joins through a public invite link', async () => {
+    prismaMock.$transaction.mockImplementation(async (callback) =>
+      callback(prismaMock)
+    );
+    prismaMock.courseInviteLink.findUnique.mockResolvedValue({
+      course: { deletedAt: null, id: 'course-1' },
+      courseId: 'course-1',
+      expiresAt: null,
+      id: 'link-1',
+      maxUses: 100,
+      revokedAt: null,
+      role: { id: 'role-student' },
+      roleId: 'role-student',
+      usedCount: 0,
+    });
+    prismaMock.enrollment.findUnique.mockResolvedValue({
+      status: CourseEnrollmentStatus.ACTIVE,
+    });
+
+    const result = await CourseInvitationService.joinByPublicInviteLink({
+      inviteId: 'link-1',
+      userId: 'user-1',
+    });
+
+    expect(result).toEqual({
+      courseId: 'course-1',
+      message: 'Already joined course',
+    });
+    expect(prismaMock.course.findUnique).not.toHaveBeenCalled();
+    expect(prismaMock.enrollment.count).not.toHaveBeenCalled();
+    expect(prismaMock.enrollment.upsert).not.toHaveBeenCalled();
+    expect(prismaMock.courseInviteLink.update).not.toHaveBeenCalled();
+    expect(prismaMock.courseInvitation.updateMany).not.toHaveBeenCalled();
+  });
 });
