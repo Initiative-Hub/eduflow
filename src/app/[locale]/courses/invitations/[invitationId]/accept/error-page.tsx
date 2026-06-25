@@ -1,4 +1,11 @@
-import { BookOpen, CircleCheck, CircleX, Clock, UserX } from 'lucide-react';
+import {
+  BookOpen,
+  CircleCheck,
+  CircleX,
+  Clock,
+  Users,
+  UserX,
+} from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -13,7 +20,8 @@ type InvitationErrorResult =
       status: CourseInvitationStatus;
       courseId: string;
     }
-  | { ok: false; reason: 'expired'; expiresAt: Date; courseId: string };
+  | { ok: false; reason: 'expired'; expiresAt: Date; courseId: string }
+  | { ok: false; reason: 'capacity_full'; courseId: string };
 
 export async function InvitationErrorPage({
   result,
@@ -56,6 +64,22 @@ export async function InvitationErrorPage({
             year: 'numeric',
           }),
         })}
+        actions={
+          <Button asChild variant="outline" size="lg" className="w-full">
+            <Link href="/">{t('actions.goHome')}</Link>
+          </Button>
+        }
+      />
+    );
+  }
+
+  if (result.reason === 'capacity_full') {
+    return (
+      <ErrorCard
+        icon={<Users className="size-7 text-destructive" />}
+        iconBg="bg-destructive/10"
+        title={t('capacityFull.title')}
+        description={t('capacityFull.description')}
         actions={
           <Button asChild variant="outline" size="lg" className="w-full">
             <Link href="/">{t('actions.goHome')}</Link>

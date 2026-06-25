@@ -8,6 +8,7 @@ import {
 } from '../course-route-utils';
 
 const updateCourseOverviewSchema = z.object({
+  capacity: z.number().int().min(1).nullable(),
   description: z
     .string()
     .trim()
@@ -83,6 +84,7 @@ export const PATCH = withAuth(async (req, sessionData, { params }) => {
 
     const updatedCourse = await CourseSettingsService.updateSettings({
       courseId: parsedParams.data.courseId,
+      capacity: parsedBody.data.capacity,
       currentUserId: sessionData.user.id,
       description: parsedBody.data.description,
       isPublished: parsedBody.data.isPublished,

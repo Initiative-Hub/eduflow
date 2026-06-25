@@ -59,6 +59,12 @@ export type PaginationMeta = {
 };
 
 export type CourseMembersResponse = {
+  capacity: {
+    activeMemberCount: number;
+    capacity: number | null;
+    isFull: boolean;
+    remaining: number | null;
+  };
   data: CourseMember[];
   pagination: PaginationMeta;
   permissions: {

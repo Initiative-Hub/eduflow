@@ -1,3 +1,4 @@
+import type { PrismaClient } from '@/generated/prisma';
 import {
   CourseEnrollmentStatus,
   CourseInvitationStatus,
@@ -15,6 +16,7 @@ import {
 const DEFAULT_INVITATION_TTL_DAYS = 14;
 const DEFAULT_LINK_TTL_DAYS = 30;
 const DEFAULT_LINK_MAX_USES = 100;
+
 const ELIGIBLE_COURSE_MEMBER_PLATFORM_ROLES = [
   PlatformRoleName.TEACHER,
   PlatformRoleName.STUDENT,
@@ -32,12 +34,42 @@ export type CourseInviteLinkView = {
   url: string;
 };
 
-function assertAssignableRole(role: CourseRoleNameType) {
-  if (
-    !ASSIGNABLE_COURSE_MEMBER_ROLES.includes(role as AssignableCourseMemberRole)
-  ) {
-    throw new Error('Invalid course member role');
+function isCourseCapacityReachedError(error: unknown) {
+  return error instanceof Error && error.message === 'Course capacity reached';
+}
+
+async function getCourseCapacityUsage(
+  courseId: string,
+  client: Omit<
+    PrismaClient,
+    '$connect' | '$disconnect' | '$on' | '$use' | '$extends'
+  > = prisma
+) {
+  const course = await client.course.findUnique({
+    where: { id: courseId },
+    select: { capacity: true },
+  });
+
+  if (!course) {
+    throw new Error('Course not found');
   }
+
+  const activeMemberCount = await client.enrollment.count({
+    where: {
+      courseId,
+      status: CourseEnrollmentStatus.ACTIVE,
+    },
+  });
+
+  return {
+    activeMemberCount,
+    capacity: course.capacity,
+    isFull: course.capacity !== null && activeMemberCount >= course.capacity,
+    remaining:
+      course.capacity === null
+        ? null
+        : Math.max(course.capacity - activeMemberCount, 0),
+  };
 }
 
 function addDays(days: number) {
@@ -84,7 +116,13 @@ export class CourseInvitationService {
     userId: string;
     role: CourseRoleNameType;
   }) {
-    assertAssignableRole(input.role);
+    if (
+      !ASSIGNABLE_COURSE_MEMBER_ROLES.includes(
+        input.role as AssignableCourseMemberRole
+      )
+    ) {
+      throw new Error('Invalid course member role');
+    }
 
     const [course, role, targetUser] = await Promise.all([
       prisma.course.findUnique({
@@ -214,6 +252,7 @@ export class CourseInvitationService {
         courseId: string;
       }
     | { ok: false; reason: 'expired'; expiresAt: Date; courseId: string }
+    | { ok: false; reason: 'capacity_full'; courseId: string }
   > {
     const invitation = await prisma.courseInvitation.findUnique({
       where: { id: input.invitationId },
@@ -250,36 +289,54 @@ export class CourseInvitationService {
       };
     }
 
-    await prisma.$transaction([
-      prisma.courseInvitation.update({
-        where: { id: invitation.id },
-        data: {
-          acceptedAt: new Date(),
-          status: CourseInvitationStatus.ACCEPTED,
-        },
-      }),
-      prisma.enrollment.upsert({
-        where: {
-          courseId_memberId: {
-            courseId: invitation.courseId,
-            memberId: invitation.inviteeId,
+    try {
+      await prisma.$transaction(async (tx) => {
+        const usage = await getCourseCapacityUsage(invitation.courseId, tx);
+
+        if (usage.isFull) {
+          throw new Error('Course capacity reached');
+        }
+
+        await tx.courseInvitation.update({
+          where: { id: invitation.id },
+          data: {
+            acceptedAt: new Date(),
+            status: CourseInvitationStatus.ACCEPTED,
           },
-        },
-        create: {
+        });
+        await tx.enrollment.upsert({
+          where: {
+            courseId_memberId: {
+              courseId: invitation.courseId,
+              memberId: invitation.inviteeId,
+            },
+          },
+          create: {
+            courseId: invitation.courseId,
+            enrolledAt: new Date(),
+            memberId: invitation.inviteeId,
+            roleId: invitation.roleId,
+            status: CourseEnrollmentStatus.ACTIVE,
+          },
+          update: {
+            enrolledAt: new Date(),
+            invitedAt: null,
+            roleId: invitation.roleId,
+            status: CourseEnrollmentStatus.ACTIVE,
+          },
+        });
+      });
+    } catch (error) {
+      if (isCourseCapacityReachedError(error)) {
+        return {
+          ok: false,
+          reason: 'capacity_full',
           courseId: invitation.courseId,
-          enrolledAt: new Date(),
-          memberId: invitation.inviteeId,
-          roleId: invitation.roleId,
-          status: CourseEnrollmentStatus.ACTIVE,
-        },
-        update: {
-          enrolledAt: new Date(),
-          invitedAt: null,
-          roleId: invitation.roleId,
-          status: CourseEnrollmentStatus.ACTIVE,
-        },
-      }),
-    ]);
+        };
+      }
+
+      throw error;
+    }
 
     return { ok: true, courseId: invitation.courseId };
   }
@@ -347,7 +404,13 @@ export class CourseInvitationService {
     maxUses?: number | null;
     expiresAt?: Date | null;
   }) {
-    assertAssignableRole(input.role);
+    if (
+      !ASSIGNABLE_COURSE_MEMBER_ROLES.includes(
+        input.role as AssignableCourseMemberRole
+      )
+    ) {
+      throw new Error('Invalid course member role');
+    }
 
     const [course, role] = await Promise.all([
       prisma.course.findUnique({
@@ -406,6 +469,7 @@ export class CourseInvitationService {
       include: {
         course: {
           select: {
+            capacity: true,
             deletedAt: true,
             id: true,
             title: true,
@@ -418,12 +482,17 @@ export class CourseInvitationService {
       throw new Error('Invite link not found');
     }
 
+    const capacityState = await getCourseCapacityUsage(link.course.id);
+
     return {
       course: {
         id: link.course.id,
         title: link.course.title,
       },
+      capacity: capacityState.capacity,
+      activeMemberCount: capacityState.activeMemberCount,
       expiresAt: link.expiresAt?.toISOString() ?? null,
+      isCapacityFull: capacityState.isFull,
       isExpired: Boolean(link.expiresAt && link.expiresAt < new Date()),
       isRevoked: Boolean(link.revokedAt),
       isUsageLimitReached:
@@ -471,6 +540,14 @@ export class CourseInvitationService {
       });
       const alreadyActive =
         existingEnrollment?.status === CourseEnrollmentStatus.ACTIVE;
+
+      if (!alreadyActive) {
+        const usage = await getCourseCapacityUsage(link.courseId, tx);
+
+        if (usage.isFull) {
+          throw new Error('Course capacity reached');
+        }
+      }
 
       await tx.enrollment.upsert({
         where: {

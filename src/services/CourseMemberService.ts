@@ -1,3 +1,4 @@
+import type { PrismaClient } from '@/generated/prisma';
 import {
   CourseEnrollmentStatus,
   CourseInvitationStatus,
@@ -76,7 +77,7 @@ function normalizeSearch(search?: string) {
   return trimmedSearch ? trimmedSearch : undefined;
 }
 
-function buildCandidateUserUserWhere({
+function buildCandidateUserWhere({
   courseId,
   search,
 }: Pick<CourseMemberCandidateListInput, 'courseId' | 'search'>) {
@@ -138,16 +139,38 @@ function buildEnrollmentWhere({
   return where;
 }
 
-function assertAssignableRole(role: CourseRoleNameType) {
-  if (role === CourseRoleName.COURSE_OWNER) {
-    throw new Error('Cannot assign the course owner role');
+async function getCourseCapacityUsage(
+  courseId: string,
+  client: Omit<
+    PrismaClient,
+    '$connect' | '$disconnect' | '$on' | '$use' | '$extends'
+  > = prisma
+) {
+  const course = await client.course.findUnique({
+    where: { id: courseId },
+    select: { capacity: true },
+  });
+
+  if (!course) {
+    throw new Error('Course not found');
   }
 
-  if (
-    !ASSIGNABLE_COURSE_MEMBER_ROLES.includes(role as AssignableCourseMemberRole)
-  ) {
-    throw new Error('Invalid course member role');
-  }
+  const activeMemberCount = await client.enrollment.count({
+    where: {
+      courseId,
+      status: CourseEnrollmentStatus.ACTIVE,
+    },
+  });
+
+  return {
+    activeMemberCount,
+    capacity: course.capacity,
+    isFull: course.capacity !== null && activeMemberCount >= course.capacity,
+    remaining:
+      course.capacity === null
+        ? null
+        : Math.max(course.capacity - activeMemberCount, 0),
+  };
 }
 
 export class CourseMemberService {
@@ -177,8 +200,10 @@ export class CourseMemberService {
         take: input.limit,
       }),
     ]);
+    const capacity = await getCourseCapacityUsage(input.courseId, prisma);
 
     return {
+      capacity,
       data: enrollments.map((enrollment): CourseMemberView => {
         const role = enrollment.role.name;
 
@@ -206,7 +231,7 @@ export class CourseMemberService {
   }
 
   static async listCandidates(input: CourseMemberCandidateListInput) {
-    const where = buildCandidateUserUserWhere(input);
+    const where = buildCandidateUserWhere(input);
 
     if (!where) {
       return {
@@ -264,7 +289,17 @@ export class CourseMemberService {
     role: CourseRoleNameType;
     addedById?: string;
   }): Promise<CourseMemberMutationResponse> {
-    assertAssignableRole(input.role);
+    if (input.role === CourseRoleName.COURSE_OWNER) {
+      throw new Error('Cannot assign the course owner role');
+    }
+
+    if (
+      !ASSIGNABLE_COURSE_MEMBER_ROLES.includes(
+        input.role as AssignableCourseMemberRole
+      )
+    ) {
+      throw new Error('Invalid course member role');
+    }
 
     const [course, targetUser] = await Promise.all([
       prisma.course.findUnique({
@@ -306,35 +341,43 @@ export class CourseMemberService {
       throw new Error('User is already a course member');
     }
 
-    const courseRole = await prisma.courseRole.findUnique({
-      where: { name: input.role },
-      select: { id: true },
+    const enrollment = await prisma.$transaction(async (tx) => {
+      const usage = await getCourseCapacityUsage(input.courseId, tx);
+
+      if (usage.isFull) {
+        throw new Error('Course capacity reached');
+      }
+
+      const courseRole = await tx.courseRole.findUnique({
+        where: { name: input.role },
+        select: { id: true },
+      });
+
+      if (!courseRole) {
+        throw new Error('Course role not found');
+      }
+
+      return existingEnrollment
+        ? tx.enrollment.update({
+            where: { id: existingEnrollment.id },
+            data: {
+              enrolledAt: new Date(),
+              invitedAt: null,
+              roleId: courseRole.id,
+              status: CourseEnrollmentStatus.ACTIVE,
+            },
+            select: { id: true },
+          })
+        : tx.enrollment.create({
+            data: {
+              courseId: input.courseId,
+              memberId: input.userId,
+              roleId: courseRole.id,
+              status: CourseEnrollmentStatus.ACTIVE,
+            },
+            select: { id: true },
+          });
     });
-
-    if (!courseRole) {
-      throw new Error('Course role not found');
-    }
-
-    const enrollment = existingEnrollment
-      ? await prisma.enrollment.update({
-          where: { id: existingEnrollment.id },
-          data: {
-            enrolledAt: new Date(),
-            invitedAt: null,
-            roleId: courseRole.id,
-            status: CourseEnrollmentStatus.ACTIVE,
-          },
-          select: { id: true },
-        })
-      : await prisma.enrollment.create({
-          data: {
-            courseId: input.courseId,
-            memberId: input.userId,
-            roleId: courseRole.id,
-            status: CourseEnrollmentStatus.ACTIVE,
-          },
-          select: { id: true },
-        });
 
     await emailService.sendCourseAddedNotification({
       courseName: course.title,
@@ -353,7 +396,17 @@ export class CourseMemberService {
     memberId: string;
     role: CourseRoleNameType;
   }): Promise<CourseMemberMutationResponse> {
-    assertAssignableRole(input.role);
+    if (input.role === CourseRoleName.COURSE_OWNER) {
+      throw new Error('Cannot assign the course owner role');
+    }
+
+    if (
+      !ASSIGNABLE_COURSE_MEMBER_ROLES.includes(
+        input.role as AssignableCourseMemberRole
+      )
+    ) {
+      throw new Error('Invalid course member role');
+    }
 
     const enrollment = await prisma.enrollment.findFirst({
       where: {

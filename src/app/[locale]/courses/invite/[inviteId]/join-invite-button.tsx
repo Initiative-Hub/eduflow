@@ -37,7 +37,11 @@ export function JoinInviteButton({
       router.refresh();
     },
     onError: (error: ApiError) => {
-      toast.error(error.message || t('toast.failed'));
+      toast.error(
+        error.message === 'Course capacity reached'
+          ? t('toast.capacityFull')
+          : error.message || t('toast.failed')
+      );
     },
   });
 

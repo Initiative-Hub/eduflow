@@ -25,6 +25,7 @@ export interface Course {
   ownerId?: string;
   title: string;
   description: string | null;
+  capacity: number | null;
   isPublished: boolean;
   createdAt: string;
   updatedAt?: string;
@@ -142,7 +143,12 @@ export function useCourses(
       toast.success(t('toast.invitationAccepted'));
     },
     onError: (err: any) => {
-      toast.error(err.message || t('toast.invitationAcceptFailed'));
+      toast.error(
+        err.message === 'capacity_full' ||
+          err.message === 'Course capacity reached'
+          ? t('toast.capacityFull')
+          : err.message || t('toast.invitationAcceptFailed')
+      );
     },
   });
 

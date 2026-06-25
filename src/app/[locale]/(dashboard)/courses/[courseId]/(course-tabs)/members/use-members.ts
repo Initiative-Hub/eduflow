@@ -274,6 +274,12 @@ export function useMembers({
     [candidateQuery.data]
   );
   const inviteLinks = inviteLinksQuery.data?.data ?? [];
+  const capacity = membersQuery.data?.capacity ?? {
+    activeMemberCount: totalMembers,
+    capacity: null,
+    isFull: false,
+    remaining: null,
+  };
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
@@ -399,6 +405,7 @@ export function useMembers({
     addRole,
     assignableRoles: ['TEACHER', 'STUDENT'] as AssignableCourseMemberRole[],
     canManageMembers,
+    capacity,
     candidateSearch,
     candidateSentinelRef,
     candidates,

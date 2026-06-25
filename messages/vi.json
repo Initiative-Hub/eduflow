@@ -4,6 +4,10 @@
       "goHome": "Về trang chủ",
       "goToCourse": "Đến khóa học"
     },
+    "capacityFull": {
+      "description": "Khóa học này đã đạt giới hạn thành viên. Hãy nhờ giảng viên tăng giới hạn hoặc thử lại khi có chỗ trống.",
+      "title": "Khóa học đã đầy"
+    },
     "expired": {
       "description": "Lời mời này đã hết hạn vào ngày {date}. Hãy nhờ giảng viên gửi lại lời mời mới cho bạn.",
       "title": "Lời mời đã hết hạn"
@@ -571,10 +575,12 @@
     "joinButton": "Tham gia khóa học",
     "metadataTitle": "Lời mời khóa học",
     "toast": {
+      "capacityFull": "Khóa học này đã đầy.",
       "failed": "Không thể tham gia khóa học.",
       "joined": "Đã tham gia khóa học."
     },
     "unavailable": {
+      "capacity": "Khóa học này đã đạt giới hạn thành viên. Hãy nhờ chủ khóa học tăng giới hạn trước khi tham gia.",
       "expired": "Liên kết mời này đã hết hạn.",
       "limit": "Liên kết mời này đã đạt giới hạn lượt dùng.",
       "revoked": "Liên kết mời này đã bị thu hồi.",
@@ -605,6 +611,13 @@
       "title": "Thêm thành viên khóa học"
     },
     "description": "Xem thành viên khóa học, vai trò và ngày tham gia.",
+    "capacity": {
+      "fullDescription": "Tạm dừng thêm trực tiếp và chấp nhận tham gia cho đến khi tăng giới hạn hoặc xóa bớt thành viên đang hoạt động.",
+      "fullTitle": "Khóa học đã đạt giới hạn",
+      "label": "Sức chứa",
+      "unlimited": "Không giới hạn",
+      "value": "{active}/{capacity}"
+    },
     "editDialog": {
       "description": "Thay đổi vai trò khóa học của {name}.",
       "title": "Chỉnh sửa vai trò thành viên"
@@ -733,6 +746,7 @@
       "decline": "Từ chối",
       "manage": "Quản lý",
       "memberLabel": "Thành viên",
+      "memberCapacityLimited": "/ {count}",
       "members": "{count, plural, =1 {1 Thành viên} other {# Thành viên}}",
       "moduleLabel": "Mô-đun",
       "modules": "{count, plural, =1 {1 Mô-đun} other {# Mô-đun}}",
@@ -1134,6 +1148,7 @@
     "toast": {
       "created": "Đã tạo khóa học.",
       "createFailed": "Không thể tạo khóa học.",
+      "capacityFull": "Khóa học này đã đầy.",
       "invitationAccepted": "Đã chấp nhận lời mời.",
       "invitationAcceptFailed": "Không thể chấp nhận lời mời.",
       "invitationDeclined": "Đã từ chối lời mời.",
@@ -1204,6 +1219,7 @@
       "noName": "Chưa có tên"
     },
     "fields": {
+      "capacity": "Sức chứa",
       "courseId": "ID khóa học",
       "description": "Mô tả",
       "role": "Vai trò",
@@ -1211,9 +1227,20 @@
       "visibility": "Hiển thị"
     },
     "form": {
+      "capacity": "Sức chứa",
       "description": "Mô tả",
       "title": "Tiêu đề",
       "visibility": "Hiển thị"
+    },
+    "capacity": {
+      "controlTitle": "Chỗ tham gia",
+      "limited": "Có giới hạn",
+      "limitedValue": "{count} chỗ",
+      "unlimited": "Không giới hạn",
+      "validation": {
+        "belowActive": "Sức chứa không thể thấp hơn {count} thành viên đang hoạt động hiện tại.",
+        "required": "Nhập sức chứa hợp lệ."
+      }
     },
     "leaveDialog": {
       "description": "Rời khóa học này? Bạn sẽ mất quyền truy cập trừ khi chủ khóa học hoặc giảng viên thêm lại bạn.",

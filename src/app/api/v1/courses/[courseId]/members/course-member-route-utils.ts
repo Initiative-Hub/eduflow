@@ -29,6 +29,10 @@ export function mapCourseMemberError(error: unknown) {
     return NextResponse.json({ message }, { status: 400 });
   }
 
+  if (message === 'Course capacity reached') {
+    return NextResponse.json({ message }, { status: 409 });
+  }
+
   if (
     message === 'Invitation belongs to another user' ||
     message === 'Invitation is not pending' ||

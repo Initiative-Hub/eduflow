@@ -23,6 +23,7 @@ export function mapCourseActionError(error: unknown) {
 
   if (
     message === 'Course ID confirmation does not match' ||
+    message === 'Course capacity cannot be below active member count' ||
     message === 'Course owner cannot leave the course' ||
     message === 'New owner must be another course member'
   ) {

@@ -28,7 +28,10 @@ export default async function CourseInvitePage({
   }
 
   const unavailable =
-    invite.isRevoked || invite.isExpired || invite.isUsageLimitReached;
+    invite.isRevoked ||
+    invite.isExpired ||
+    invite.isUsageLimitReached ||
+    invite.isCapacityFull;
 
   return (
     <div className="mx-auto flex min-h-[70vh] w-full max-w-xl items-center justify-center px-4 py-10">
@@ -52,9 +55,11 @@ export default async function CourseInvitePage({
               <AlertDescription>
                 {invite.isRevoked
                   ? t('unavailable.revoked')
-                  : invite.isUsageLimitReached
-                    ? t('unavailable.limit')
-                    : t('unavailable.expired')}
+                  : invite.isCapacityFull
+                    ? t('unavailable.capacity')
+                    : invite.isUsageLimitReached
+                      ? t('unavailable.limit')
+                      : t('unavailable.expired')}
               </AlertDescription>
             </Alert>
           ) : null}

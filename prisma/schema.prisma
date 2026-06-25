@@ -295,6 +295,7 @@ model Course {
   owner       User               @relation("OwnerCourses", fields: [ownerId], references: [id])
   title       String
   description String?
+  capacity    Int?               @map("capacity")
   isPublished Boolean            @default(false) @map("is_published")
   modules     Module[]
   enrollments Enrollment[]

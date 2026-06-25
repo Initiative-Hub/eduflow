@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus, Search } from 'lucide-react';
+import { Infinity as InfinityIcon, Plus, Search, Users } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -24,6 +24,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
+import { Progress } from '@/components/ui/progress';
 import {
   Select,
   SelectContent,
@@ -64,6 +65,7 @@ export function MembersClient({
     visibleEnd,
     isError,
     canManageMembers: canManage,
+    capacity,
     getRoleLabel,
     handleSearchChange,
     handleRoleFilterChange,
@@ -84,15 +86,57 @@ export function MembersClient({
               </CardTitle>
               <CardDescription>{t('description')}</CardDescription>
             </div>
-            {canManage && (
-              <Button onClick={() => setAddDialogOpen(true)}>
-                <Plus data-icon="inline-start" />
-                {t('actions.addMember')}
-              </Button>
-            )}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="min-w-44 rounded-lg border bg-background px-3 py-2">
+                <div className="flex items-center justify-between gap-3 text-xs">
+                  <span className="text-muted-foreground">
+                    {t('capacity.label')}
+                  </span>
+                  <Badge variant={capacity.isFull ? 'destructive' : 'outline'}>
+                    {capacity.capacity === null ? (
+                      <InfinityIcon data-icon="inline-start" />
+                    ) : (
+                      <Users data-icon="inline-start" />
+                    )}
+                    {capacity.capacity === null
+                      ? t('capacity.unlimited')
+                      : t('capacity.value', {
+                          active: capacity.activeMemberCount,
+                          capacity: capacity.capacity,
+                        })}
+                  </Badge>
+                </div>
+                {capacity.capacity !== null ? (
+                  <Progress
+                    className="mt-2"
+                    value={Math.min(
+                      100,
+                      Math.round(
+                        (capacity.activeMemberCount / capacity.capacity) * 100
+                      )
+                    )}
+                  />
+                ) : null}
+              </div>
+              {canManage && (
+                <Button onClick={() => setAddDialogOpen(true)}>
+                  <Plus data-icon="inline-start" />
+                  {t('actions.addMember')}
+                </Button>
+              )}
+            </div>
           </CardHeader>
 
           <CardContent className="flex flex-col gap-5 p-6">
+            {capacity.isFull ? (
+              <Alert variant="destructive">
+                <AlertTitle>{t('capacity.fullTitle')}</AlertTitle>
+                <AlertDescription>
+                  {t('capacity.fullDescription')}
+                </AlertDescription>
+              </Alert>
+            ) : null}
+
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <InputGroup className="h-10 w-full lg:max-w-md">
                 <InputGroupAddon>

@@ -181,6 +181,7 @@ export function CoursesPageClient() {
                 id={course.id}
                 title={course.title}
                 description={course.description}
+                capacity={course.capacity}
                 isPublished={course.isPublished}
                 isOwner={Boolean(course.isOwner)}
                 modulesCount={course._count?.modules || 0}

@@ -4,6 +4,10 @@
       "goHome": "Go home",
       "goToCourse": "Go to course"
     },
+    "capacityFull": {
+      "description": "This course is already at capacity. Ask the instructor to increase the limit or try again after a seat opens.",
+      "title": "Course is full"
+    },
     "expired": {
       "description": "This invitation expired on {date}. Ask the course instructor to send you a new one.",
       "title": "Invitation expired"
@@ -571,10 +575,12 @@
     "joinButton": "Join course",
     "metadataTitle": "Course invitation",
     "toast": {
+      "capacityFull": "This course is full.",
       "failed": "Failed to join course.",
       "joined": "Joined course."
     },
     "unavailable": {
+      "capacity": "This course has reached its capacity. Ask the course owner to increase the limit before joining.",
       "expired": "This invite link has expired.",
       "limit": "This invite link has reached its usage limit.",
       "revoked": "This invite link has been revoked.",
@@ -605,6 +611,13 @@
       "title": "Add course member"
     },
     "description": "View course members, roles, and enrollment dates.",
+    "capacity": {
+      "fullDescription": "Direct additions and accepted joins are paused until capacity is increased or active members are removed.",
+      "fullTitle": "Course capacity reached",
+      "label": "Capacity",
+      "unlimited": "Unlimited",
+      "value": "{active}/{capacity}"
+    },
     "editDialog": {
       "description": "Change {name}'s course role.",
       "title": "Edit member role"
@@ -733,6 +746,7 @@
       "decline": "Decline",
       "manage": "Manage",
       "memberLabel": "Members",
+      "memberCapacityLimited": "/ {count}",
       "members": "{count, plural, =1 {1 Member} other {# Members}}",
       "moduleLabel": "Modules",
       "modules": "{count, plural, =1 {1 Module} other {# Modules}}",
@@ -1134,6 +1148,7 @@
     "toast": {
       "created": "Course created.",
       "createFailed": "Failed to create course.",
+      "capacityFull": "This course is full.",
       "invitationAccepted": "Invitation accepted.",
       "invitationAcceptFailed": "Failed to accept invitation.",
       "invitationDeclined": "Invitation declined.",
@@ -1204,6 +1219,7 @@
       "noName": "No name"
     },
     "fields": {
+      "capacity": "Capacity",
       "courseId": "Course ID",
       "description": "Description",
       "role": "Role",
@@ -1211,9 +1227,20 @@
       "visibility": "Visibility"
     },
     "form": {
+      "capacity": "Capacity",
       "description": "Description",
       "title": "Title",
       "visibility": "Visibility"
+    },
+    "capacity": {
+      "controlTitle": "Seat availability",
+      "limited": "Limited",
+      "limitedValue": "{count} seats",
+      "unlimited": "Unlimited",
+      "validation": {
+        "belowActive": "Capacity cannot be below the current {count} active members.",
+        "required": "Enter a valid capacity."
+      }
     },
     "leaveDialog": {
       "description": "Leave this course? You will lose access unless another owner or teacher adds you again.",

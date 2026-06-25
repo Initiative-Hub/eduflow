@@ -12,6 +12,7 @@ interface CourseCardProps {
   id: string;
   title: string;
   description: string | null | undefined;
+  capacity: number | null;
   isPublished: boolean;
   isOwner: boolean;
   modulesCount: number;
@@ -27,6 +28,7 @@ export function CourseCard({
   id,
   title,
   description,
+  capacity,
   isPublished,
   isOwner,
   modulesCount,
@@ -124,7 +126,10 @@ export function CourseCard({
           <div className="h-1 w-1 rounded-full bg-muted-foreground/30" />
           <div className="flex items-center gap-1.5">
             <span className="font-semibold text-foreground text-sm tabular-nums">
-              {enrollmentsCount}
+              {enrollmentsCount}{' '}
+              {capacity !== null
+                ? t('memberCapacityLimited', { count: capacity })
+                : ''}
             </span>
             <span>{t('memberLabel')}</span>
           </div>
