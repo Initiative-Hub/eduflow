@@ -1,0 +1,6 @@
+{
+  "description": "Action-oriented layout highlighting specific action items or tasks for the audience.",
+  "variants": {
+    "standard": "Highlighted list items layout with an bold visual reminder box."
+  }
+}

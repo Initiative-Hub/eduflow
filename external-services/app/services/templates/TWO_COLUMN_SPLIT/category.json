@@ -1,0 +1,6 @@
+{
+  "description": "Comparative layout featuring two distinct content columns.",
+  "variants": {
+    "standard": "Symmetric side-by-side columns under highlighted headers."
+  }
+}

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 810">
+  <rect width="1440" height="810" fill="#F6F1E7"/>
+  <circle cx="1440" cy="405" r="330" fill="#E4654F" fill-opacity="0.9"/>
+  <circle cx="1245" cy="660" r="90" fill="#1F2A44"/>
+  <text x="110" y="330" font-family="Helvetica, Arial, sans-serif" font-size="28" letter-spacing="6" fill="#E4654F">{{kicker|26}}</text>
+  <text x="104" y="460" font-family="Georgia, serif" font-size="92" font-weight="bold" fill="#1F2A44">{{heading|26}}</text>
+  <text x="110" y="540" font-family="Helvetica, Arial, sans-serif" font-size="28" fill="#1F2A44">{{caption|64}}</text>
+</svg>

@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 810">
+  <rect width="1440" height="810" fill="#0A0E1A"/>
+  <line x1="80" y1="0" x2="80" y2="810" stroke="#00F0FF" stroke-width="3" stroke-opacity="0.3"/>
+
+  <!-- Heading -->
+  <text x="140" y="150" font-family="system-ui, -apple-system, sans-serif" font-size="56" font-weight="bold" fill="#FFFFFF">{{heading|24}}</text>
+  <rect x="140" y="175" width="220" height="4" fill="#00F0FF" rx="2"/>
+
+  <!-- Timeline Path -->
+  <line x1="140" y1="450" x2="1300" y2="450" stroke="#00F0FF" stroke-width="4" stroke-opacity="0.4" stroke-dasharray="10 5"/>
+
+  <!-- Milestone 1 -->
+  <g transform="translate(230, 450)">
+    <circle cx="0" cy="0" r="16" fill="#00F0FF"/>
+    <circle cx="0" cy="0" r="8" fill="#FFFFFF"/>
+    <text x="0" y="-120" font-family="system-ui, -apple-system, sans-serif" font-size="28" font-weight="bold" fill="#00F0FF" text-anchor="middle">{{date_1|15}}</text>
+    <text x="0" y="50" font-family="system-ui, -apple-system, sans-serif" font-size="20" fill="#E2E8F0" text-anchor="middle">{{desc_1.1|25}}</text>
+    <text x="0" y="80" font-family="system-ui, -apple-system, sans-serif" font-size="20" fill="#E2E8F0" text-anchor="middle">{{desc_1.2|25}}</text>
+  </g>
+
+  <!-- Milestone 2 -->
+  <g transform="translate(510, 450)">
+    <circle cx="0" cy="0" r="16" fill="#FF007F"/>
+    <circle cx="0" cy="0" r="8" fill="#FFFFFF"/>
+    <text x="0" y="110" font-family="system-ui, -apple-system, sans-serif" font-size="28" font-weight="bold" fill="#FF007F" text-anchor="middle">{{date_2|15}}</text>
+    <text x="0" y="-70" font-family="system-ui, -apple-system, sans-serif" font-size="20" fill="#E2E8F0" text-anchor="middle">{{desc_2.1|25}}</text>
+    <text x="0" y="-40" font-family="system-ui, -apple-system, sans-serif" font-size="20" fill="#E2E8F0" text-anchor="middle">{{desc_2.2|25}}</text>
+  </g>
+
+  <!-- Milestone 3 -->
+  <g transform="translate(790, 450)">
+    <circle cx="0" cy="0" r="16" fill="#00F0FF"/>
+    <circle cx="0" cy="0" r="8" fill="#FFFFFF"/>
+    <text x="0" y="-120" font-family="system-ui, -apple-system, sans-serif" font-size="28" font-weight="bold" fill="#00F0FF" text-anchor="middle">{{date_3|15}}</text>
+    <text x="0" y="50" font-family="system-ui, -apple-system, sans-serif" font-size="20" fill="#E2E8F0" text-anchor="middle">{{desc_3.1|25}}</text>
+    <text x="0" y="80" font-family="system-ui, -apple-system, sans-serif" font-size="20" fill="#E2E8F0" text-anchor="middle">{{desc_3.2|25}}</text>
+  </g>
+
+  <!-- Milestone 4 -->
+  <g transform="translate(1070, 450)">
+    <circle cx="0" cy="0" r="16" fill="#FF007F"/>
+    <circle cx="0" cy="0" r="8" fill="#FFFFFF"/>
+    <text x="0" y="110" font-family="system-ui, -apple-system, sans-serif" font-size="28" font-weight="bold" fill="#FF007F" text-anchor="middle">{{date_4|15}}</text>
+    <text x="0" y="-70" font-family="system-ui, -apple-system, sans-serif" font-size="20" fill="#E2E8F0" text-anchor="middle">{{desc_4.1|25}}</text>
+    <text x="0" y="-40" font-family="system-ui, -apple-system, sans-serif" font-size="20" fill="#E2E8F0" text-anchor="middle">{{desc_4.2|25}}</text>
+  </g>
+</svg>

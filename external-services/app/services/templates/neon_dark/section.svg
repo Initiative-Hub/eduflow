@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 810">
+  <!-- Background -->
+  <rect width="1440" height="810" fill="#0A0E1A"/>
+  
+  <line x1="80" y1="0" x2="80" y2="810" stroke="#00F0FF" stroke-width="3" stroke-opacity="0.3"/>
+  <circle cx="1440" cy="405" r="300" fill="#FF007F" fill-opacity="0.1"/>
+  <circle cx="1200" cy="650" r="80" fill="#00F0FF" fill-opacity="0.1"/>
+
+  <!-- Texts -->
+  <text x="140" y="320" font-family="system-ui, -apple-system, sans-serif" font-size="26" letter-spacing="8" fill="#FF007F" font-weight="bold">{{kicker|26}}</text>
+  <text x="135" y="450" font-family="system-ui, -apple-system, sans-serif" font-size="88" font-weight="900" fill="#FFFFFF">{{heading|26}}</text>
+  <text x="140" y="530" font-family="system-ui, -apple-system, sans-serif" font-size="28" fill="#E2E8F0">{{caption|64}}</text>
+</svg>

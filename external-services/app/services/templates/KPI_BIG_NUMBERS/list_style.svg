@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 810">
+  <rect width="1440" height="810" fill="#F6F1E7"/>
+  <circle cx="1230" cy="405" r="200" fill="none" stroke="#1F2A44" stroke-width="2"/>
+  <circle cx="1230" cy="405" r="150" fill="none" stroke="#E4654F" stroke-width="2"/>
+  <circle cx="1230" cy="405" r="100" fill="#E4654F" fill-opacity="0.18"/>
+  <circle cx="1230" cy="405" r="46" fill="#1F2A44"/>
+  <text x="110" y="150" font-family="Georgia, serif" font-size="58" font-weight="bold" fill="#1F2A44">{{heading|30}}</text>
+  <circle cx="124" cy="268" r="9" fill="#E4654F"/>
+  <text x="156" y="278" font-family="Helvetica, Arial, sans-serif" font-size="29" fill="#1F2A44">{{point.1|56}}</text>
+  <circle cx="124" cy="378" r="9" fill="#E4654F"/>
+  <text x="156" y="388" font-family="Helvetica, Arial, sans-serif" font-size="29" fill="#1F2A44">{{point.2|56}}</text>
+  <circle cx="124" cy="488" r="9" fill="#E4654F"/>
+  <text x="156" y="498" font-family="Helvetica, Arial, sans-serif" font-size="29" fill="#1F2A44">{{point.3|56}}</text>
+  <circle cx="124" cy="598" r="9" fill="#E4654F"/>
+  <text x="156" y="608" font-family="Helvetica, Arial, sans-serif" font-size="29" fill="#1F2A44">{{point.4|56}}</text>
+</svg>

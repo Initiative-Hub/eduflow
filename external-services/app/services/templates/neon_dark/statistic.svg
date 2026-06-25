@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 810">
+  <!-- Background -->
+  <rect width="1440" height="810" fill="#0A0E1A"/>
+  
+  <line x1="80" y1="0" x2="80" y2="810" stroke="#FF007F" stroke-width="3" stroke-opacity="0.3"/>
+  <circle cx="1340" cy="80" r="120" fill="#00F0FF" fill-opacity="0.08"/>
+
+  <!-- Heading -->
+  <text x="140" y="150" font-family="system-ui, -apple-system, sans-serif" font-size="56" font-weight="bold" fill="#FFFFFF">{{heading|32}}</text>
+  <rect x="140" y="175" width="220" height="4" fill="#FF007F" rx="2"/>
+
+  <!-- Card 1 -->
+  <g>
+    <rect x="100" y="250" width="380" height="330" rx="16" fill="#111827" stroke="#00F0FF" stroke-width="2"/>
+    <text x="290" y="390" font-family="system-ui, -apple-system, sans-serif" font-size="80" font-weight="900" fill="#00F0FF" text-anchor="middle">{{stat_1|7}}</text>
+    <text x="290" y="465" font-family="system-ui, -apple-system, sans-serif" font-size="24" fill="#E2E8F0" text-anchor="middle">{{label_1.1|26}}</text>
+    <text x="290" y="500" font-family="system-ui, -apple-system, sans-serif" font-size="24" fill="#E2E8F0" text-anchor="middle">{{label_1.2|26}}</text>
+  </g>
+
+  <!-- Card 2 -->
+  <g>
+    <rect x="530" y="250" width="380" height="330" rx="16" fill="#111827" stroke="#FF007F" stroke-width="2"/>
+    <text x="720" y="390" font-family="system-ui, -apple-system, sans-serif" font-size="80" font-weight="900" fill="#FF007F" text-anchor="middle">{{stat_2|7}}</text>
+    <text x="720" y="465" font-family="system-ui, -apple-system, sans-serif" font-size="24" fill="#E2E8F0" text-anchor="middle">{{label_2.1|26}}</text>
+    <text x="720" y="500" font-family="system-ui, -apple-system, sans-serif" font-size="24" fill="#E2E8F0" text-anchor="middle">{{label_2.2|26}}</text>
+  </g>
+
+  <!-- Card 3 -->
+  <g>
+    <rect x="960" y="250" width="380" height="330" rx="16" fill="#111827" stroke="#00F0FF" stroke-width="2"/>
+    <text x="1150" y="390" font-family="system-ui, -apple-system, sans-serif" font-size="80" font-weight="900" fill="#00F0FF" text-anchor="middle">{{stat_3|7}}</text>
+    <text x="1150" y="465" font-family="system-ui, -apple-system, sans-serif" font-size="24" fill="#E2E8F0" text-anchor="middle">{{label_3.1|26}}</text>
+    <text x="1150" y="500" font-family="system-ui, -apple-system, sans-serif" font-size="24" fill="#E2E8F0" text-anchor="middle">{{label_3.2|26}}</text>
+  </g>
+
+  <!-- Source -->
+  <text x="140" y="680" font-family="system-ui, -apple-system, sans-serif" font-size="20" fill="#E2E8F0" fill-opacity="0.6">{{source|70}}</text>
+</svg>

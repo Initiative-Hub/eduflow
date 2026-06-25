@@ -1,0 +1,25 @@
+{
+  "fields": {
+    "kicker": {
+      "type": "text",
+      "desc": "text content",
+      "max_chars": 28
+    },
+    "title": {
+      "type": "title",
+      "desc": "heading / title",
+      "max_chars": 24,
+      "lines": 2
+    },
+    "subtitle": {
+      "type": "text",
+      "desc": "subtitle or supporting line",
+      "max_chars": 62
+    },
+    "presenter": {
+      "type": "caption",
+      "desc": "attribution / name / role",
+      "max_chars": 40
+    }
+  }
+}

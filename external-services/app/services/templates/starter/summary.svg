@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 810">
+  <rect width="1440" height="810" fill="#F6F1E7"/>
+  <circle cx="180" cy="100" r="160" fill="#E4654F" fill-opacity="0.2"/>
+  <circle cx="1290" cy="700" r="130" fill="#1F2A44" fill-opacity="0.9"/>
+  <text x="110" y="170" font-family="Georgia, serif" font-size="62" font-weight="bold" fill="#1F2A44">{{heading|24}}</text>
+  <text x="124" y="300" font-family="Georgia, serif" font-size="34" font-weight="bold" fill="#E4654F">01</text>
+  <text x="200" y="300" font-family="Helvetica, Arial, sans-serif" font-size="29" fill="#1F2A44">{{takeaway.1|58}}</text>
+  <text x="124" y="410" font-family="Georgia, serif" font-size="34" font-weight="bold" fill="#E4654F">02</text>
+  <text x="200" y="410" font-family="Helvetica, Arial, sans-serif" font-size="29" fill="#1F2A44">{{takeaway.2|58}}</text>
+  <text x="124" y="520" font-family="Georgia, serif" font-size="34" font-weight="bold" fill="#E4654F">03</text>
+  <text x="200" y="520" font-family="Helvetica, Arial, sans-serif" font-size="29" fill="#1F2A44">{{takeaway.3|58}}</text>
+  <text x="110" y="660" font-family="Georgia, serif" font-size="36" font-style="italic" fill="#E4654F">{{closing|44}}</text>
+</svg>

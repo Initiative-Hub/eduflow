@@ -1,0 +1,55 @@
+{
+  "fields": {
+    "heading": {
+      "type": "title",
+      "desc": "heading / title",
+      "max_chars": 24
+    },
+    "insight_text": {
+      "type": "text",
+      "desc": "text content",
+      "max_chars": 45,
+      "lines": 3
+    },
+    "chart_label_1": {
+      "type": "text",
+      "desc": "First text content",
+      "max_chars": 12
+    },
+    "chart_value_1": {
+      "type": "text",
+      "desc": "First text content",
+      "max_chars": 8
+    },
+    "chart_label_2": {
+      "type": "text",
+      "desc": "Second text content",
+      "max_chars": 12
+    },
+    "chart_value_2": {
+      "type": "text",
+      "desc": "Second text content",
+      "max_chars": 8
+    },
+    "chart_label_3": {
+      "type": "text",
+      "desc": "Third text content",
+      "max_chars": 12
+    },
+    "chart_value_3": {
+      "type": "text",
+      "desc": "Third text content",
+      "max_chars": 8
+    },
+    "chart_label_4": {
+      "type": "text",
+      "desc": "Fourth text content",
+      "max_chars": 12
+    },
+    "chart_value_4": {
+      "type": "text",
+      "desc": "Fourth text content",
+      "max_chars": 8
+    }
+  }
+}

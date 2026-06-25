@@ -11,7 +11,7 @@ import { Youtube } from '@tiptap/extension-youtube';
 import { Selection } from '@tiptap/extensions';
 import { EditorContent, EditorContext, useEditor } from '@tiptap/react';
 import { StarterKit } from '@tiptap/starter-kit';
-import { Edit3, Save } from 'lucide-react';
+import { Edit3, Presentation, Save } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { type ReactNode, useEffect, useState } from 'react';
 import { HorizontalRule } from '@/components/tiptap-node/horizontal-rule-node/horizontal-rule-node-extension';
@@ -22,6 +22,7 @@ import {
   type TiptapDocument,
 } from '@/utils/lesson-content';
 import { LessonEditorToolbar } from './lesson-editor-toolbar';
+import { LessonPresentation } from './lesson-presentation';
 import '@/components/tiptap-node/blockquote-node/blockquote-node.scss';
 import '@/components/tiptap-node/code-block-node/code-block-node.scss';
 import '@/components/tiptap-node/heading-node/heading-node.scss';
@@ -59,6 +60,7 @@ export function LessonEditor({
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(title);
   const [editContent, setEditContent] = useState(content);
+  const [showPresentation, setShowPresentation] = useState(false);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -148,6 +150,17 @@ export function LessonEditor({
 
   const isEmptyContent = isTiptapDocumentEmpty(content);
 
+  if (showPresentation) {
+    return (
+      <LessonPresentation
+        isOpen={showPresentation}
+        onClose={() => setShowPresentation(false)}
+        title={title}
+        content={content}
+      />
+    );
+  }
+
   return (
     <EditorContext.Provider value={{ editor }}>
       <div className="sticky top-14 z-30 -mx-6 flex min-h-16 items-center justify-between gap-4 border-foreground/20 border-b bg-background/95 px-6 py-3 backdrop-blur-sm md:-mx-10 md:px-10 lg:-mx-12 lg:px-12">
@@ -192,16 +205,28 @@ export function LessonEditor({
             {actions}
 
             {canEdit ? (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleStartEditing}
-                disabled={!editor}
-                className="cursor-pointer"
-              >
-                <Edit3 data-icon="inline-start" />
-                {tHeader('edit')}
-              </Button>
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowPresentation(true)}
+                  disabled={!editor}
+                  className="cursor-pointer"
+                >
+                  <Presentation data-icon="inline-start" />
+                  {tHeader('presentation')}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleStartEditing}
+                  disabled={!editor}
+                  className="cursor-pointer"
+                >
+                  <Edit3 data-icon="inline-start" />
+                  {tHeader('edit')}
+                </Button>
+              </>
             ) : null}
           </div>
         ) : null}

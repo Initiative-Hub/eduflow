@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 810">
+  <rect width="1440" height="810" fill="#0A0E1A"/>
+  <line x1="80" y1="0" x2="80" y2="810" stroke="#00F0FF" stroke-width="3" stroke-opacity="0.3"/>
+
+  <!-- Quotation mark backdrop -->
+  <text x="140" y="320" font-family="system-ui, -apple-system, sans-serif" font-size="240" font-weight="bold" fill="#00F0FF" fill-opacity="0.1">“</text>
+
+  <!-- Quote block content -->
+  <g transform="translate(180, 260)">
+    <text x="40" y="60" font-family="system-ui, -apple-system, sans-serif" font-size="38" font-style="italic" fill="#FFFFFF">{{quote.1|60}}</text>
+    <text x="40" y="130" font-family="system-ui, -apple-system, sans-serif" font-size="38" font-style="italic" fill="#FFFFFF">{{quote.2|60}}</text>
+    <text x="40" y="200" font-family="system-ui, -apple-system, sans-serif" font-size="38" font-style="italic" fill="#FFFFFF">{{quote.3|60}}</text>
+    
+    <!-- Author / Source label -->
+    <rect x="40" y="270" width="80" height="4" fill="#FF007F" rx="2"/>
+    <text x="140" y="280" font-family="system-ui, -apple-system, sans-serif" font-size="26" font-weight="600" fill="#FF007F">— {{author_or_source|50}}</text>
+  </g>
+
+  <!-- Title / context at bottom left -->
+  <text x="140" y="720" font-family="system-ui, -apple-system, sans-serif" font-size="24" fill="#94A3B8">{{heading|24}}</text>
+</svg>

@@ -401,16 +401,18 @@ model Module {
 }
 
 model Lesson {
-  id            String               @id @default(uuid())
-  moduleId      String               @map("module_id")
-  module        Module               @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  title         String
-  content       Json?
-  orderIndex    Int                  @default(0) @map("order_index")
-  contentChunks LessonContentChunk[]
-  questions     Question[]
-  lessonQuizzes LessonQuiz[]
-  deletedAt     DateTime?            @map("deleted_at")
+  id                  String               @id @default(uuid())
+  moduleId            String               @map("module_id")
+  module              Module               @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  title               String
+  content             Json?
+  orderIndex          Int                  @default(0) @map("order_index")
+  presentationDeckId  String?              @map("presentation_deck_id")
+  presentationDeckKey String?              @map("presentation_deck_key")
+  contentChunks       LessonContentChunk[]
+  questions           Question[]
+  lessonQuizzes       LessonQuiz[]
+  deletedAt           DateTime?            @map("deleted_at")
 
   @@index([moduleId, deletedAt])
   @@map("lesson")
