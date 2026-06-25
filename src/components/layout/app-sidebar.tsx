@@ -41,7 +41,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
   const { state, toggleSidebar } = useSidebar();
   const { data: sessionData, isPending } = useSession();
-  const [isMounted, setIsMounted] = useState(false);
+  const [hasHydrated, setHasHydrated] = useState(false);
+  const [hasResolvedSession, setHasResolvedSession] = useState(false);
 
   const assistants = getAssistantNavItems(t);
   const settingsItems = getSettingNavItems(t);
@@ -71,9 +72,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }
 
   useEffect(() => {
+    setHasHydrated(true);
+  }, []);
+
+  useEffect(() => {
     if (isPending) return;
 
-    setIsMounted(true);
+    setHasResolvedSession(true);
   }, [isPending]);
 
   return (
@@ -175,7 +180,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
       <SidebarFooter className="border-border/40 border-t p-4 group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:pb-3">
         <div className="flex w-full items-center justify-between md:justify-end md:group-data-[collapsible=icon]:justify-center">
-          {sessionData ? (
+          {!hasHydrated || (!hasResolvedSession && isPending) ? (
+            <div className="block md:hidden">
+              <Skeleton className="h-10 w-40" />
+            </div>
+          ) : sessionData ? (
             <div className="block md:hidden">
               <NavbarAvatar
                 name={sessionData.user.name}
@@ -183,10 +192,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 image={sessionData.user.image}
                 role={sessionData.user.role ?? undefined}
               />
-            </div>
-          ) : !isMounted && isPending ? (
-            <div className="block md:hidden">
-              <Skeleton className="h-10 w-40" />
             </div>
           ) : (
             <div className="flex items-center gap-2 font-heading md:hidden">

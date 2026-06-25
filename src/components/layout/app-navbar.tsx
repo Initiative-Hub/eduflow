@@ -19,12 +19,17 @@ export function AppNavbar() {
   const { toggleSidebar } = useSidebar();
   const { data: sessionData, isPending } = useSession();
 
-  const [isMounted, setIsMounted] = useState(false);
+  const [hasHydrated, setHasHydrated] = useState(false);
+  const [hasResolvedSession, setHasResolvedSession] = useState(false);
+
+  useEffect(() => {
+    setHasHydrated(true);
+  }, []);
 
   useEffect(() => {
     if (isPending) return;
 
-    setIsMounted(true);
+    setHasResolvedSession(true);
   }, [isPending]);
 
   return (
@@ -101,7 +106,11 @@ export function AppNavbar() {
       </div>
       <div className="flex items-center gap-2">
         {/* Account Actions / Profile (Desktop Only) */}
-        {sessionData ? (
+        {!hasHydrated || (!hasResolvedSession && isPending) ? (
+          <div className="hidden md:block">
+            <Skeleton className="h-10 w-40" />
+          </div>
+        ) : sessionData ? (
           <div className="hidden md:block">
             <NavbarAvatar
               name={sessionData.user.name}
@@ -109,10 +118,6 @@ export function AppNavbar() {
               image={sessionData.user.image}
               role={sessionData.user.role ?? undefined}
             />
-          </div>
-        ) : !isMounted && isPending ? (
-          <div className="hidden md:block">
-            <Skeleton className="h-10 w-40" />
           </div>
         ) : (
           <div className="flex items-center gap-1">

@@ -16,6 +16,7 @@ import {
   getUserMessageCount,
   hasReachedUserMessageLimit,
 } from '@/utils/chat-limit';
+import { prepareLastMessageRequest } from '@/utils/chat-request';
 import { uploadChatAttachments } from '../chat-attachments.service';
 import { chatService } from './chat.service';
 
@@ -52,6 +53,7 @@ export const useChatController = ({
       initialChatId
         ? new DefaultChatTransport({
             api: `/api/v1/ai/chat/${initialChatId}`,
+            prepareSendMessagesRequest: prepareLastMessageRequest,
           })
         : undefined,
     [initialChatId]

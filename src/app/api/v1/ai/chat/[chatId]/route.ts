@@ -22,7 +22,7 @@ import {
 } from './chat.constants';
 
 const chatRequestSchema = z.object({
-  messages: z.array(z.custom<UIMessage>()).min(1),
+  message: z.custom<UIMessage>(),
   provider: z.custom<ChatProvider>().optional(),
   model: z.enum(CHAT_MODEL_IDS).optional(),
   apiKey: z.string().min(1).optional(),
@@ -296,7 +296,8 @@ export async function POST(
       });
     }
 
-    const hasFileParts = hasChatFileParts(parsedBody.data.messages);
+    const messagesForRequest = [...chatData.messages, parsedBody.data.message];
+    const hasFileParts = hasChatFileParts(messagesForRequest);
     if (hasFileParts && !userId) {
       return new Response(
         JSON.stringify({ error: 'File attachments require sign-in' }),
@@ -304,11 +305,11 @@ export async function POST(
       );
     }
 
-    let messagesForModel = parsedBody.data.messages;
+    let messagesForModel = messagesForRequest;
     if (hasFileParts && userId) {
       try {
         messagesForModel = await hydrateChatAttachmentDataUrls({
-          messages: parsedBody.data.messages,
+          messages: messagesForRequest,
           userId,
         });
       } catch (error) {
@@ -323,7 +324,7 @@ export async function POST(
 
     const providerName = parsedBody.data.provider ?? DEFAULT_PROVIDER;
     const provider = ChatProviderFactory.create(providerName);
-
+    const systemPrompt = getAiChatSystemPrompt();
     const chatTools = createChatTools(userId);
 
     const result = await provider.streamChat(
@@ -334,11 +335,13 @@ export async function POST(
         apiKey: parsedBody.data.apiKey,
       },
       {
-        prompt: getAiChatSystemPrompt(),
+        prompt: systemPrompt,
         tools: chatTools,
         maxSteps: 5,
       }
     );
+
+    result.consumeStream();
 
     const stream = createUIMessageStream<UIMessage>({
       originalMessages: messagesForModel,

@@ -11,6 +11,7 @@ import {
   getUserMessageCount,
   hasReachedUserMessageLimit,
 } from '@/utils/chat-limit';
+import { prepareLastMessageRequest } from '@/utils/chat-request';
 import { writingService } from './writing.service';
 
 const MAX_USER_MESSAGES = 5;
@@ -61,6 +62,7 @@ export const useWriting = ({
       chatId
         ? new DefaultChatTransport({
             api: `/api/v1/ai/writing/${chatId}`,
+            prepareSendMessagesRequest: prepareLastMessageRequest,
           })
         : undefined,
     [chatId]
