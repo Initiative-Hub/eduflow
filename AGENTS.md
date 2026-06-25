@@ -102,6 +102,7 @@ for any tasks.).
 - **Remote Favicons**: Render arbitrary citation favicons with `next/image` and `unoptimized` unless the remote domains are explicitly configured in `next.config`.
 - **Search Favicons**: Enable favicon metadata on web-search tools when citation UI depends on source identity, and provide a deterministic domain favicon fallback for older results without favicon metadata.
 - **Study Modes**: When adding or removing a Study mode, update the shared Zod mode schema, mode selector cards, mode-specific system prompts, and both locale files together so the UI, API validation, and prompt behavior stay synchronized.
+- **Interactive Content Prompts**: Keep generated activity instructions aligned with the structured output schema and sandbox CSP; do not advertise CDNs or external libraries unless the renderer, sanitizer, and CSP are deliberately updated together.
 
 ### 6.3 Security & Validation
 
