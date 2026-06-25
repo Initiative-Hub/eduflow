@@ -198,7 +198,7 @@ const InteractiveContentPreview = ({
       </header>
       <iframe
         key={previewKey}
-        className="h-160 min-h-120 w-full bg-background"
+        className="h-[clamp(45rem,85vh,60rem)] w-full bg-background"
         referrerPolicy="no-referrer"
         sandbox="allow-scripts"
         srcDoc={secureDocument}
