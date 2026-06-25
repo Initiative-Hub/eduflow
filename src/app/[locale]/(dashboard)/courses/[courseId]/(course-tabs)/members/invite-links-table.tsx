@@ -36,7 +36,6 @@ type InviteLinksTableProps = {
 export function InviteLinksTable({ membersState }: InviteLinksTableProps) {
   const {
     t,
-    canManageMembers,
     getJoinDate,
     getRoleBadge,
     inviteLinks,
@@ -46,8 +45,6 @@ export function InviteLinksTable({ membersState }: InviteLinksTableProps) {
     revokeInviteLink,
     setInviteLinkDialogOpen,
   } = membersState;
-
-  if (!canManageMembers) return null;
 
   return (
     <Card className="border-border/70 bg-card/90 p-0 shadow-sm">

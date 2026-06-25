@@ -84,12 +84,12 @@ export function MembersClient({
               </CardTitle>
               <CardDescription>{t('description')}</CardDescription>
             </div>
-            {canManage ? (
+            {canManage && (
               <Button onClick={() => setAddDialogOpen(true)}>
                 <Plus data-icon="inline-start" />
                 {t('actions.addMember')}
               </Button>
-            ) : null}
+            )}
           </CardHeader>
 
           <CardContent className="flex flex-col gap-5 p-6">
@@ -165,7 +165,7 @@ export function MembersClient({
                 total: totalMembers,
               })}
             </p>
-            {totalPages > 1 ? (
+            {totalPages > 1 && (
               <Pagination className="mx-0 w-fit">
                 <PaginationContent>
                   <PaginationItem>
@@ -198,11 +198,10 @@ export function MembersClient({
                   </PaginationItem>
                 </PaginationContent>
               </Pagination>
-            ) : null}
+            )}
           </CardFooter>
         </Card>
-
-        <InviteLinksTable membersState={membersState} />
+        {canManage && <InviteLinksTable membersState={membersState} />}
       </div>
       <MemberDialogs membersState={membersState} />
     </>
