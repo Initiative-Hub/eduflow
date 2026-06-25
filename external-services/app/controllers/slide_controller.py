@@ -133,6 +133,27 @@ async def get_deck(deck_id: str):
     return FileResponse(file_path, media_type="text/html")
 
 
+@router.put("/decks/{deck_id}")
+async def save_deck(deck_id: str, payload: dict):
+    html_content = payload.get("html")
+    if not html_content:
+        raise HTTPException(status_code=400, detail="Missing HTML content")
+    
+    file_path = STORAGE_DIR / f"{deck_id}.html"
+    try:
+        file_path.write_text(html_content, encoding="utf-8")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to write slide file: {str(e)}")
+        
+    s3_key = f"slides/{deck_id}.html"
+    try:
+        await upload_file_to_s3(file_path, s3_key)
+    except Exception as e:
+        print(f"Warning: S3 upload failed during save: {str(e)}")
+        
+    return {"status": "success"}
+
+
 @router.post("/templates/import")
 async def import_templates(file: UploadFile = File(...), name: str | None = None):
     filename = file.filename or ""

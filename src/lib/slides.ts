@@ -148,3 +148,24 @@ export async function getDeckHtml(deckId: string): Promise<string> {
 
   return res.text();
 }
+
+/**
+ * Saves the edited HTML for a generated deck back to the external service.
+ */
+export async function saveDeckHtml(
+  deckId: string,
+  html: string
+): Promise<void> {
+  const baseUrl = getBaseUrl();
+  const res = await fetch(`${baseUrl}/slides/decks/${deckId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ html }),
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.error('Deck save error:', errorText);
+    throw new Error(`Failed to save deck: ${res.statusText}`);
+  }
+}

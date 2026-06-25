@@ -133,3 +133,30 @@ export function useDeleteLesson(courseId: string) {
     handleDeleteLesson: mutation.mutate,
   };
 }
+
+export function useSlideHtml(deckId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ['slide-html', deckId],
+    queryFn: () =>
+      apiClient.get<string>(`/v1/ai/slides/${deckId}`, {
+        responseType: 'text',
+      }),
+    enabled: enabled && !!deckId,
+  });
+}
+
+export function useUpdateSlideHtml() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: { deckId: string; html: string }) =>
+      apiClient.put<{ status: string }>(`/v1/ai/slides/${data.deckId}`, {
+        html: data.html,
+      }),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['slide-html', variables.deckId],
+      });
+    },
+  });
+}

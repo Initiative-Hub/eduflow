@@ -527,6 +527,13 @@ export function usePresentation(options: {
     setStep('input');
   }, []);
 
+  // Return to the outline planner step to modify and regenerate the deck.
+  const editOutline = useCallback(() => {
+    setDeckUrl(null);
+    setDeckUsage(null);
+    setStep('planned');
+  }, []);
+
   // When the modal opens, surface a previously generated deck (if one is saved
   // on the lesson) instead of starting from scratch. Runs once per open, after
   // the lesson record has loaded.
@@ -616,6 +623,7 @@ export function usePresentation(options: {
     handleStartPlanning,
     handleStartGenerating,
     startNewDeck,
+    editOutline,
     updateSlideTitle,
     changeSlideLayout,
     deleteSlide,
