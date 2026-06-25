@@ -114,29 +114,15 @@ Available browser capabilities:
 - Do not use React, Vue, Tailwind CSS, D3, Matter.js, or other dependencies. Recreate only the small amount of behavior the activity needs with browser APIs.
 
 HTML requirements:
-- Return one complete HTML document.
-- The document must include <!doctype html>, <html>, <head>, and <body>.
-- Include <meta charset="utf-8"> and a responsive viewport meta tag.
-- Put all CSS inside a <style> element.
-- Put all JavaScript inside a <script> element.
-- Place the script at the end of body or initialize after DOMContentLoaded.
-- Do not use Markdown code fences.
-- Do not use fetch, XMLHttpRequest, WebSocket, EventSource, sendBeacon, or other network APIs.
-- Do not use iframe, object, embed, link, base, or external media.
-- Do not use cookies, localStorage, sessionStorage, IndexedDB, or browser storage.
-- Do not use alert(), confirm(), or prompt().
-- Do not open new windows.
-- Do not navigate the parent page.
-- Do not attempt to access window.parent, window.top, or window.opener.
-- Do not submit forms to a server.
+- Return one raw, complete HTML document without Markdown fences. Include <!doctype html>, html, head, body, UTF-8 charset, and a responsive viewport.
+- Keep all CSS in one inline <style> and all JavaScript in one inline <script> placed at the end of body or initialized after DOMContentLoaded.
+- Do not use network APIs, embedded browsing/plugin elements, external media, link, base, cookies, or browser storage.
+- Do not use browser dialogs, open windows, submit forms, navigate the parent page, or access window.parent, window.top, or window.opener.
 - Use addEventListener instead of inline event attributes.
-- Keep all mutable state in one clearly defined state object where practical.
-- Use explicit render or update functions so each interaction produces a consistent UI.
-- Reset must restore all state, controls, feedback, scores, animation timers, and visual positions.
-- Cancel or reuse requestAnimationFrame loops; never start duplicate animation loops.
-- Guard DOM lookups and numeric calculations against missing elements, NaN, division by zero, and invalid ranges.
-- Avoid unbounded loops, recursive animation setup, and excessive DOM creation.
-- Ensure the initial state is complete and useful before the learner interacts.
+- Keep mutable state centralized and use explicit render or update functions for consistent UI changes.
+- Reset must restore all state, controls, feedback, scores, timers, animation frames, and visual positions.
+- Reuse or cancel requestAnimationFrame loops; guard DOM lookups and calculations against missing values, NaN, division by zero, and invalid ranges.
+- Avoid unbounded work, recursive animation setup, and excessive DOM creation. Ensure the initial state is complete and useful.
 
 Final self-check before returning:
 - The activity directly teaches the requested concept.
