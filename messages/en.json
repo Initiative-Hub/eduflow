@@ -610,7 +610,6 @@
       "searchPlaceholder": "Search users by name, email, or ID...",
       "title": "Add course member"
     },
-    "description": "View course members, roles, and enrollment dates.",
     "capacity": {
       "fullDescription": "Direct additions and accepted joins are paused until capacity is increased or active members are removed.",
       "fullTitle": "Course capacity reached",
@@ -618,6 +617,7 @@
       "unlimited": "Unlimited",
       "value": "{active}/{capacity}"
     },
+    "description": "View course members, roles, and enrollment dates.",
     "editDialog": {
       "description": "Change {name}'s course role.",
       "title": "Edit member role"
@@ -745,8 +745,8 @@
       "accept": "Accept",
       "decline": "Decline",
       "manage": "Manage",
-      "memberLabel": "Members",
       "memberCapacityLimited": "/ {count}",
+      "memberLabel": "Members",
       "members": "{count, plural, =1 {1 Member} other {# Members}}",
       "moduleLabel": "Modules",
       "modules": "{count, plural, =1 {1 Module} other {# Modules}}",
@@ -1146,9 +1146,9 @@
     "SettingsPage": "Course Settings",
     "title": "Courses",
     "toast": {
+      "capacityFull": "This course is full.",
       "created": "Course created.",
       "createFailed": "Failed to create course.",
-      "capacityFull": "This course is full.",
       "invitationAccepted": "Invitation accepted.",
       "invitationAcceptFailed": "Failed to accept invitation.",
       "invitationDeclined": "Invitation declined.",
@@ -1176,6 +1176,16 @@
     "archivedNotice": {
       "description": "Members can still review the course, but owners should unarchive it before making it active again.",
       "title": "This course is archived"
+    },
+    "capacity": {
+      "controlTitle": "Seat availability",
+      "limited": "Limited",
+      "limitedValue": "{count} seats",
+      "unlimited": "Unlimited",
+      "validation": {
+        "belowActive": "Capacity cannot be below the current {count} active members.",
+        "required": "Enter a valid capacity."
+      }
     },
     "confirmation": {
       "description": "Type {courseId} to confirm this action.",
@@ -1231,16 +1241,6 @@
       "description": "Description",
       "title": "Title",
       "visibility": "Visibility"
-    },
-    "capacity": {
-      "controlTitle": "Seat availability",
-      "limited": "Limited",
-      "limitedValue": "{count} seats",
-      "unlimited": "Unlimited",
-      "validation": {
-        "belowActive": "Capacity cannot be below the current {count} active members.",
-        "required": "Enter a valid capacity."
-      }
     },
     "leaveDialog": {
       "description": "Leave this course? You will lose access unless another owner or teacher adds you again.",

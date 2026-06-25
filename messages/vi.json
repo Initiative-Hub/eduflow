@@ -610,7 +610,6 @@
       "searchPlaceholder": "Tìm người dùng theo tên, email hoặc ID...",
       "title": "Thêm thành viên khóa học"
     },
-    "description": "Xem thành viên khóa học, vai trò và ngày tham gia.",
     "capacity": {
       "fullDescription": "Tạm dừng thêm trực tiếp và chấp nhận tham gia cho đến khi tăng giới hạn hoặc xóa bớt thành viên đang hoạt động.",
       "fullTitle": "Khóa học đã đạt giới hạn",
@@ -618,6 +617,7 @@
       "unlimited": "Không giới hạn",
       "value": "{active}/{capacity}"
     },
+    "description": "Xem thành viên khóa học, vai trò và ngày tham gia.",
     "editDialog": {
       "description": "Thay đổi vai trò khóa học của {name}.",
       "title": "Chỉnh sửa vai trò thành viên"
@@ -745,8 +745,8 @@
       "accept": "Chấp nhận",
       "decline": "Từ chối",
       "manage": "Quản lý",
-      "memberLabel": "Thành viên",
       "memberCapacityLimited": "/ {count}",
+      "memberLabel": "Thành viên",
       "members": "{count, plural, =1 {1 Thành viên} other {# Thành viên}}",
       "moduleLabel": "Mô-đun",
       "modules": "{count, plural, =1 {1 Mô-đun} other {# Mô-đun}}",
@@ -1146,9 +1146,9 @@
     "SettingsPage": "Cài đặt khóa học",
     "title": "Các khóa học",
     "toast": {
+      "capacityFull": "Khóa học này đã đầy.",
       "created": "Đã tạo khóa học.",
       "createFailed": "Không thể tạo khóa học.",
-      "capacityFull": "Khóa học này đã đầy.",
       "invitationAccepted": "Đã chấp nhận lời mời.",
       "invitationAcceptFailed": "Không thể chấp nhận lời mời.",
       "invitationDeclined": "Đã từ chối lời mời.",
@@ -1176,6 +1176,16 @@
     "archivedNotice": {
       "description": "Thành viên vẫn có thể xem lại khóa học, nhưng chủ khóa học nên bỏ lưu trữ trước khi kích hoạt lại.",
       "title": "Khóa học này đang được lưu trữ"
+    },
+    "capacity": {
+      "controlTitle": "Chỗ tham gia",
+      "limited": "Có giới hạn",
+      "limitedValue": "{count} chỗ",
+      "unlimited": "Không giới hạn",
+      "validation": {
+        "belowActive": "Sức chứa không thể thấp hơn {count} thành viên đang hoạt động hiện tại.",
+        "required": "Nhập sức chứa hợp lệ."
+      }
     },
     "confirmation": {
       "description": "Nhập {courseId} để xác nhận thao tác này.",
@@ -1231,16 +1241,6 @@
       "description": "Mô tả",
       "title": "Tiêu đề",
       "visibility": "Hiển thị"
-    },
-    "capacity": {
-      "controlTitle": "Chỗ tham gia",
-      "limited": "Có giới hạn",
-      "limitedValue": "{count} chỗ",
-      "unlimited": "Không giới hạn",
-      "validation": {
-        "belowActive": "Sức chứa không thể thấp hơn {count} thành viên đang hoạt động hiện tại.",
-        "required": "Nhập sức chứa hợp lệ."
-      }
     },
     "leaveDialog": {
       "description": "Rời khóa học này? Bạn sẽ mất quyền truy cập trừ khi chủ khóa học hoặc giảng viên thêm lại bạn.",
