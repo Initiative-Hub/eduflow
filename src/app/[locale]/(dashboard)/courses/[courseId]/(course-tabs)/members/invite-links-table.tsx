@@ -1,7 +1,18 @@
 'use client';
 
-import { Copy, Link, Plus, Trash2 } from 'lucide-react';
+import { Copy, Link, Link2Off, Plus } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -147,18 +158,48 @@ export function InviteLinksTable({ membersState }: InviteLinksTableProps) {
                               {t('actions.copyLink')}
                             </span>
                           </Button>
-                          <Button
-                            type="button"
-                            size="icon-sm"
-                            variant="ghost"
-                            disabled={revoked || isRevokingInviteLink}
-                            onClick={() => revokeInviteLink(inviteLink.id)}
-                          >
-                            <Trash2 />
-                            <span className="sr-only">
-                              {t('actions.revokeLink')}
-                            </span>
-                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                type="button"
+                                size="icon-sm"
+                                variant="ghost"
+                                disabled={revoked || isRevokingInviteLink}
+                              >
+                                <Link2Off />
+                                <span className="sr-only">
+                                  {t('actions.revokeLink')}
+                                </span>
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                  {t('links.revokeDialog.title')}
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  {t('links.revokeDialog.description')}
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel
+                                  disabled={isRevokingInviteLink}
+                                >
+                                  {t('actions.cancel')}
+                                </AlertDialogCancel>
+                                <AlertDialogAction
+                                  variant="destructive"
+                                  disabled={isRevokingInviteLink}
+                                  onClick={() =>
+                                    revokeInviteLink(inviteLink.id)
+                                  }
+                                >
+                                  <Link2Off data-icon="inline-start" />
+                                  {t('actions.revokeLink')}
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </div>
                       </TableCell>
                     </TableRow>
