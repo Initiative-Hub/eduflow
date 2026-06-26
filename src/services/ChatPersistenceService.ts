@@ -11,6 +11,10 @@ import {
   hydrateChatAttachmentUrls,
   sanitizeChatAttachmentUrls,
 } from '@/utils/chat-attachments';
+import {
+  hydrateChatLessonReferenceSummaries,
+  sanitizeChatLessonReferenceParts,
+} from '@/utils/chat-lesson-references';
 import { getMessagePreview } from '@/utils/chat-message';
 import { buildNewChatData, type ChatCacheData } from '@/utils/chat-session';
 
@@ -177,8 +181,12 @@ export class ChatPersistenceService {
         role: message.role.toLowerCase(),
         parts: Array.isArray(message.parts) ? message.parts : [],
       })) as UIMessage[];
-      const hydratedMessages = await hydrateChatAttachmentUrls({
+      const fileHydratedMessages = await hydrateChatAttachmentUrls({
         messages,
+        userId,
+      });
+      const hydratedMessages = await hydrateChatLessonReferenceSummaries({
+        messages: fileHydratedMessages,
         userId,
       });
 
@@ -223,7 +231,9 @@ export class ChatPersistenceService {
     chatType = DEFAULT_CHAT_TYPE,
   }: SaveMessagesInput) {
     const updatedAt = new Date();
-    const sanitizedMessages = sanitizeChatAttachmentUrls(messages);
+    const sanitizedMessages = sanitizeChatLessonReferenceParts(
+      sanitizeChatAttachmentUrls(messages)
+    );
 
     if (userId) {
       const chat = await prisma.aiChat.findFirst({

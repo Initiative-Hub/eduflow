@@ -12,6 +12,7 @@ import type {
   ChatFileUIPart,
   ChatSubmitAttachments,
 } from '@/types/chat-attachments';
+import type { ChatLessonReferenceUIPart } from '@/types/chat-lesson-references';
 import {
   getUserMessageCount,
   hasReachedUserMessageLimit,
@@ -121,11 +122,12 @@ export const useChatController = ({
 
   const createUserMessage = (
     text: string,
-    files: ChatFileUIPart[] = []
+    files: ChatFileUIPart[] = [],
+    lessons: ChatLessonReferenceUIPart[] = []
   ): UIMessage => ({
     id: crypto.randomUUID(),
     role: 'user',
-    parts: [...files, { type: 'text', text }],
+    parts: [...files, ...lessons, { type: 'text', text }],
   });
 
   const startChat = async (
@@ -140,8 +142,11 @@ export const useChatController = ({
           newChatId
         );
         const messageFiles = [...uploadedFiles, ...attachments.referencedFiles];
+        const messageLessons = attachments.referencedLessons ?? [];
         await queryClient.invalidateQueries({ queryKey: ['chat-list'] });
-        setPendingMessage(createUserMessage(text, messageFiles));
+        setPendingMessage(
+          createUserMessage(text, messageFiles, messageLessons)
+        );
         setPendingChatId(newChatId);
         setPendingModel(pendingModel ?? DEFAULT_CHAT_MODEL);
         router.push(`/chat/${newChatId}`);
@@ -158,9 +163,14 @@ export const useChatController = ({
       initialChatId
     );
     const messageFiles = [...uploadedFiles, ...attachments.referencedFiles];
+    const messageLessons = attachments.referencedLessons ?? [];
+    const hasMessageAttachments =
+      messageFiles.length > 0 || messageLessons.length > 0;
 
     sendMessage(
-      messageFiles.length > 0 ? { text, files: messageFiles } : { text },
+      hasMessageAttachments
+        ? createUserMessage(text, messageFiles, messageLessons)
+        : { text },
       {
         body: {
           provider: 'openrouter',

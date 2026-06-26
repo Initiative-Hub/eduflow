@@ -114,7 +114,7 @@
     },
     "attachments": {
       "add": "Attach files",
-      "defaultMessage": "Please use the attached {count, plural, one {file} other {files}}.",
+      "defaultMessage": "Please use the attached {count, plural, one {reference} other {references}}.",
       "fileTooLarge": "{name} exceeds the maximum upload size.",
       "remove": "Remove {name}",
       "signInRequired": "Sign in to upload files to chat.",
@@ -145,6 +145,24 @@
     },
     "limitReachedHelper": "Limit reached: {used}/{count} messages. Start a new session to continue.",
     "limitReachedToast": "You've reached the {count}-message limit. Start a new session to continue.",
+    "lessonReferencePicker": {
+      "alreadyAttached": "Already attached",
+      "attach": "Attach {count, plural, one {# lesson} other {# lessons}}",
+      "backToCourses": "Courses",
+      "cancel": "Cancel",
+      "description": "Choose lessons from your joined courses to reference in this chat.",
+      "emptyCoursesDescription": "No joined courses are available.",
+      "emptyCoursesTitle": "No courses found",
+      "emptyLessonsDescription": "No lessons match this course or search.",
+      "emptyLessonsTitle": "No lessons found",
+      "open": "Reference lessons",
+      "searchPlaceholder": "Search lessons",
+      "selectLesson": "Select {name}",
+      "selectedCount": "{count}/{max} selected",
+      "title": "Lesson References",
+      "tooMany": "Attachment limit reached.",
+      "trigger": "Lessons"
+    },
     "modelSelector": {
       "empty": "No models found.",
       "heading": "Choose model",

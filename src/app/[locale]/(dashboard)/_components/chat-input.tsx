@@ -32,6 +32,7 @@ import type {
   ChatFileUIPart,
   ChatSubmitAttachments,
 } from '@/types/chat-attachments';
+import type { ChatLessonReferenceUIPart } from '@/types/chat-lesson-references';
 import {
   ChatInputAttachments,
   type SelectedChatFile,
@@ -41,6 +42,13 @@ import { ChatModelSelectControl } from './chat-model-select-control';
 import { useChatInputFiles } from './use-chat-input-files';
 
 const MAX_CHAT_ATTACHMENTS = 10;
+
+export type ChatInputToolsContext = {
+  disabled: boolean;
+  disabledLessonIds: string[];
+  maxSelectable: number;
+  onAttachLessonReferences: (lessons: ChatLessonReferenceUIPart[]) => void;
+};
 
 interface ChatInputProps {
   handleSubmit: (
@@ -59,7 +67,7 @@ interface ChatInputProps {
   selectedModel?: ChatModel;
   onModelChange?: (model: ChatModel) => void;
   placeholder?: string;
-  tools?: ReactNode;
+  tools?: ReactNode | ((context: ChatInputToolsContext) => ReactNode);
   footer?: ReactNode;
 }
 
@@ -87,6 +95,9 @@ export function ChatInput({
   const [selectedReferenceFiles, setSelectedReferenceFiles] = useState<
     SelectedChatFile[]
   >([]);
+  const [selectedReferenceLessons, setSelectedReferenceLessons] = useState<
+    SelectedChatFile[]
+  >([]);
   const {
     clearSelectedFiles,
     fileInputRef,
@@ -101,7 +112,11 @@ export function ChatInput({
     onTooMany: () =>
       toast.error(t('attachments.tooMany', { count: MAX_CHAT_ATTACHMENTS })),
   });
-  const selectedAttachments = [...selectedFiles, ...selectedReferenceFiles];
+  const selectedAttachments = [
+    ...selectedFiles,
+    ...selectedReferenceFiles,
+    ...selectedReferenceLessons,
+  ];
   const remainingAttachmentSlots = Math.max(
     0,
     MAX_CHAT_ATTACHMENTS - selectedAttachments.length
@@ -123,10 +138,14 @@ export function ChatInput({
         referencedFiles: selectedReferenceFiles.flatMap((item) =>
           item.filePart ? [item.filePart] : []
         ),
+        referencedLessons: selectedReferenceLessons.flatMap((item) =>
+          item.lessonPart ? [item.lessonPart] : []
+        ),
       });
       setInputValue('');
       clearSelectedFiles();
       setSelectedReferenceFiles([]);
+      setSelectedReferenceLessons([]);
     } catch {
       // Keep the draft and attachments so the user can retry.
     }
@@ -134,6 +153,9 @@ export function ChatInput({
   const removeSelectedAttachment = (fileId: string) => {
     removeSelectedFile(fileId);
     setSelectedReferenceFiles((current) =>
+      current.filter((item) => item.id !== fileId)
+    );
+    setSelectedReferenceLessons((current) =>
       current.filter((item) => item.id !== fileId)
     );
   };
@@ -147,7 +169,10 @@ export function ChatInput({
       ]);
       const capacity = Math.max(
         0,
-        MAX_CHAT_ATTACHMENTS - selectedFiles.length - current.length
+        MAX_CHAT_ATTACHMENTS -
+          selectedFiles.length -
+          selectedReferenceLessons.length -
+          current.length
       );
       const accepted = files
         .filter((file) => !existingIds.has(file.fileId))
@@ -167,6 +192,39 @@ export function ChatInput({
       return [...current, ...accepted];
     });
   };
+  const addReferenceLessons = (lessons: ChatLessonReferenceUIPart[]) => {
+    if (lessons.length === 0) return;
+
+    setSelectedReferenceLessons((current) => {
+      const existingIds = new Set([
+        ...current.map((item) => item.lessonPart?.data.lessonId ?? item.id),
+      ]);
+      const capacity = Math.max(
+        0,
+        MAX_CHAT_ATTACHMENTS -
+          selectedFiles.length -
+          selectedReferenceFiles.length -
+          current.length
+      );
+      const accepted = lessons
+        .filter((lesson) => !existingIds.has(lesson.data.lessonId))
+        .slice(0, capacity)
+        .map((lesson) => ({
+          filename: lesson.data.lessonTitle,
+          id: lesson.data.lessonId,
+          kind: 'lesson' as const,
+          lessonPart: lesson,
+          mediaType: 'application/x-eduflow-lesson-reference',
+          previewUrl: `lesson:${lesson.data.lessonId}`,
+        }));
+
+      if (lessons.length > accepted.length) {
+        toast.error(t('attachments.tooMany', { count: MAX_CHAT_ATTACHMENTS }));
+      }
+
+      return [...current, ...accepted];
+    });
+  };
   const openInventoryPicker = (source: 'personal' | 'course') => {
     if (remainingAttachmentSlots === 0) {
       toast.error(t('attachments.tooMany', { count: MAX_CHAT_ATTACHMENTS }));
@@ -178,6 +236,19 @@ export function ChatInput({
 
   const inputPlaceholder = placeholder ?? t('placeholder');
   const hasCompactActions = isAuthenticated;
+  const disabledLessonIds = selectedReferenceLessons.flatMap((item) =>
+    item.lessonPart ? [item.lessonPart.data.lessonId] : []
+  );
+  const renderedTools =
+    typeof tools === 'function'
+      ? tools({
+          disabled:
+            !isAuthenticated || isStreaming || isUploading || isLimitReached,
+          disabledLessonIds,
+          maxSelectable: remainingAttachmentSlots,
+          onAttachLessonReferences: addReferenceLessons,
+        })
+      : tools;
   const actionMenuItems: MenuItem[] = [
     {
       type: 'submenu',
@@ -291,9 +362,9 @@ export function ChatInput({
                   }
                 />
               ) : null}
-              {tools ? (
+              {renderedTools ? (
                 <PromptInputTools className="min-w-0 gap-1.5">
-                  {tools}
+                  {renderedTools}
                 </PromptInputTools>
               ) : null}
               {selectedModel && onModelChange ? (

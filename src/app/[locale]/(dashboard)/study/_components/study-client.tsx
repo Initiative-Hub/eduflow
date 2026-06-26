@@ -14,6 +14,7 @@ import {
 import { DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
 import type { ChatSubmitAttachments } from '@/types/chat-attachments';
 import { ChatInput } from '../../_components/chat-input';
+import { ChatLessonReferenceTool } from '../../_components/chat-lesson-reference-tool';
 import { ChatSidebar } from '../../_components/chat-sidebar';
 import { ChatWorkspaceShell } from '../../_components/chat-workspace-shell';
 import { studyService } from '../study.service';
@@ -97,9 +98,12 @@ export function StudyClient({
     const finalAttachments = {
       files: attachments.files,
       referencedFiles: attachments.referencedFiles,
+      referencedLessons: attachments.referencedLessons ?? [],
     };
     const attachmentCount =
-      finalAttachments.files.length + finalAttachments.referencedFiles.length;
+      finalAttachments.files.length +
+      finalAttachments.referencedFiles.length +
+      finalAttachments.referencedLessons.length;
     if (!text && attachmentCount === 0) return;
 
     if (isLimitReached) {
@@ -167,6 +171,14 @@ export function StudyClient({
       selectedModel={pendingModel ?? DEFAULT_CHAT_MODEL}
       onModelChange={setPendingModel}
       placeholder={t('input.placeholder')}
+      tools={(toolContext) => (
+        <ChatLessonReferenceTool
+          disabled={toolContext.disabled}
+          disabledLessonIds={toolContext.disabledLessonIds}
+          maxSelectable={toolContext.maxSelectable}
+          onAttach={toolContext.onAttachLessonReferences}
+        />
+      )}
     />
   );
 

@@ -16,6 +16,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
 import type { ChatSubmitAttachments } from '@/types/chat-attachments';
+import { ChatLessonReferenceTool } from '../../_components/chat-lesson-reference-tool';
 import { ChatSidebar } from '../../_components/chat-sidebar';
 import { ChatWorkspaceShell } from '../../_components/chat-workspace-shell';
 import { useChatController } from '../use-chat';
@@ -95,7 +96,9 @@ export function AIClient({
 
     const text = customValue?.trim() || '';
     const attachmentCount =
-      attachments.files.length + attachments.referencedFiles.length;
+      attachments.files.length +
+      attachments.referencedFiles.length +
+      (attachments.referencedLessons?.length ?? 0);
     if (!text && attachmentCount === 0) return;
 
     if (isLimitReached) {
@@ -207,6 +210,14 @@ export function AIClient({
       onStop={stop}
       selectedModel={pendingModel ?? DEFAULT_CHAT_MODEL}
       onModelChange={setPendingModel}
+      tools={(toolContext) => (
+        <ChatLessonReferenceTool
+          disabled={toolContext.disabled}
+          disabledLessonIds={toolContext.disabledLessonIds}
+          maxSelectable={toolContext.maxSelectable}
+          onAttach={toolContext.onAttachLessonReferences}
+        />
+      )}
     />
   );
 

@@ -16,6 +16,7 @@ import type {
   ChatFileUIPart,
   ChatSubmitAttachments,
 } from '@/types/chat-attachments';
+import type { ChatLessonReferenceUIPart } from '@/types/chat-lesson-references';
 import { hasReachedUserMessageLimit } from '@/utils/chat-limit';
 import { prepareLastMessageRequest } from '@/utils/chat-request';
 import { uploadChatAttachments } from '../chat-attachments.service';
@@ -68,11 +69,12 @@ export const useStudy = ({
 
   const createUserMessage = (
     text: string,
-    files: ChatFileUIPart[] = []
+    files: ChatFileUIPart[] = [],
+    lessons: ChatLessonReferenceUIPart[] = []
   ): UIMessage => ({
     id: crypto.randomUUID(),
     role: 'user',
-    parts: [...files, { type: 'text', text }],
+    parts: [...files, ...lessons, { type: 'text', text }],
   });
 
   const transport = useMemo(
@@ -158,11 +160,14 @@ export const useStudy = ({
           newChatId
         );
         const messageFiles = [...uploadedFiles, ...attachments.referencedFiles];
+        const messageLessons = attachments.referencedLessons ?? [];
 
         await queryClient.invalidateQueries({
           queryKey: ['study-chat-list'],
         });
-        setPendingMessage(createUserMessage(text, messageFiles));
+        setPendingMessage(
+          createUserMessage(text, messageFiles, messageLessons)
+        );
         setPendingChatId(newChatId);
         setPendingModel(pendingModel ?? DEFAULT_CHAT_MODEL);
 
@@ -182,9 +187,14 @@ export const useStudy = ({
       chatId
     );
     const messageFiles = [...uploadedFiles, ...attachments.referencedFiles];
+    const messageLessons = attachments.referencedLessons ?? [];
+    const hasMessageAttachments =
+      messageFiles.length > 0 || messageLessons.length > 0;
 
     sendMessage(
-      messageFiles.length > 0 ? { text, files: messageFiles } : { text },
+      hasMessageAttachments
+        ? createUserMessage(text, messageFiles, messageLessons)
+        : { text },
       {
         body: {
           mode,
