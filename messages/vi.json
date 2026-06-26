@@ -143,8 +143,6 @@
       "academicDraft": "Dự thảo học thuật Lexend",
       "responseDisclaimer": "Phản hồi của AI có thể thay đổi"
     },
-    "limitReachedHelper": "Đã chạm giới hạn: {used}/{count} tin nhắn. Hãy bắt đầu phiên mới để tiếp tục.",
-    "limitReachedToast": "Bạn đã đạt giới hạn {count} tin nhắn. Hãy bắt đầu phiên mới để tiếp tục.",
     "lessonReferencePicker": {
       "alreadyAttached": "Đã đính kèm",
       "attach": "Đính kèm {count, plural, one {# bài học} other {# bài học}}",
@@ -157,12 +155,14 @@
       "emptyLessonsTitle": "Không tìm thấy bài học",
       "open": "Tham chiếu bài học",
       "searchPlaceholder": "Tìm bài học",
-      "selectLesson": "Chọn {name}",
       "selectedCount": "Đã chọn {count}/{max}",
+      "selectLesson": "Chọn {name}",
       "title": "Tham chiếu bài học",
       "tooMany": "Đã đạt giới hạn đính kèm.",
       "trigger": "Bài học"
     },
+    "limitReachedHelper": "Đã chạm giới hạn: {used}/{count} tin nhắn. Hãy bắt đầu phiên mới để tiếp tục.",
+    "limitReachedToast": "Bạn đã đạt giới hạn {count} tin nhắn. Hãy bắt đầu phiên mới để tiếp tục.",
     "modelSelector": {
       "empty": "Không tìm thấy mô hình nào.",
       "heading": "Chọn mô hình",

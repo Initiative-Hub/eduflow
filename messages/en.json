@@ -143,8 +143,6 @@
       "academicDraft": "Lexend Academic Draft",
       "responseDisclaimer": "AI response may vary"
     },
-    "limitReachedHelper": "Limit reached: {used}/{count} messages. Start a new session to continue.",
-    "limitReachedToast": "You've reached the {count}-message limit. Start a new session to continue.",
     "lessonReferencePicker": {
       "alreadyAttached": "Already attached",
       "attach": "Attach {count, plural, one {# lesson} other {# lessons}}",
@@ -157,12 +155,14 @@
       "emptyLessonsTitle": "No lessons found",
       "open": "Reference lessons",
       "searchPlaceholder": "Search lessons",
-      "selectLesson": "Select {name}",
       "selectedCount": "{count}/{max} selected",
+      "selectLesson": "Select {name}",
       "title": "Lesson References",
       "tooMany": "Attachment limit reached.",
       "trigger": "Lessons"
     },
+    "limitReachedHelper": "Limit reached: {used}/{count} messages. Start a new session to continue.",
+    "limitReachedToast": "You've reached the {count}-message limit. Start a new session to continue.",
     "modelSelector": {
       "empty": "No models found.",
       "heading": "Choose model",
