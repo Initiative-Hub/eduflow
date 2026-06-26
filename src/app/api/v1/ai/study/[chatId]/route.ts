@@ -22,6 +22,7 @@ import {
   hydrateChatAttachmentDataUrls,
 } from '@/utils/chat-attachments';
 import type { StudyUIMessage } from '@/utils/study-practice-quiz';
+import { generateInteractiveContent } from './interactive-content';
 import { generatePracticeQuiz } from './practice-quiz';
 import {
   generateStudySuggestions,
@@ -30,7 +31,7 @@ import {
 
 const studyRequestSchema = z.object({
   message: z.custom<StudyUIMessage>(),
-  mode: studyModeSchema.default('review'),
+  mode: studyModeSchema.default('interactiveContent'),
   quizOptions: studyQuizOptionsSchema.optional(),
   provider: z.custom<ChatProvider>().optional(),
   model: z.string().min(1).optional(),
@@ -292,6 +293,82 @@ export async function POST(
     const maxSteps = 5;
 
     // TODO: Try to simpler and decouple these code
+    if (parsedBody.data.mode === 'interactiveContent') {
+      const stream = createUIMessageStream<StudyUIMessage>({
+        originalMessages: messagesForModel as StudyUIMessage[],
+        generateId: () => crypto.randomUUID(),
+
+        execute: async ({ writer }) => {
+          const generatedContent = await generateInteractiveContent({
+            messages: messagesForModel,
+            model: parsedBody.data.model,
+            apiKey: parsedBody.data.apiKey,
+            tools,
+            maxSteps,
+          });
+
+          const textId = `interactive-intro-${crypto.randomUUID()}`;
+
+          writer.write({
+            type: 'text-start',
+            id: textId,
+          });
+
+          writer.write({
+            type: 'text-delta',
+            id: textId,
+            delta: generatedContent.introduction,
+          });
+
+          writer.write({
+            type: 'data-interactive-content',
+            id: `interactive-content-${crypto.randomUUID()}`,
+            data: {
+              title: generatedContent.title,
+              description: generatedContent.description,
+              html: generatedContent.html,
+            },
+          });
+
+          const suggestions = await generateStudySuggestions({
+            provider,
+            messages: messagesForModel,
+            assistantText: generatedContent.introduction,
+            providerName,
+            model: parsedBody.data.model,
+            apiKey: parsedBody.data.apiKey,
+          });
+
+          writer.write({
+            type: 'data-suggestions',
+            id: `suggestions-${crypto.randomUUID()}`,
+            data: {
+              items: suggestions,
+            },
+          });
+
+          writer.write({
+            type: 'finish',
+            finishReason: 'stop',
+          });
+        },
+
+        onFinish: async ({ messages }) => {
+          await ChatPersistenceService.saveMessages({
+            chatId,
+            userId,
+            guestId,
+            messages,
+            provider: providerName,
+            model: parsedBody.data.model,
+            chatType: AiChatType.STUDY_ASSISTANT,
+          });
+        },
+      });
+
+      return createUIMessageStreamResponse({ stream });
+    }
+
     if (parsedBody.data.mode === 'practiceTest') {
       const stream = createUIMessageStream<StudyUIMessage>({
         originalMessages: messagesForModel,

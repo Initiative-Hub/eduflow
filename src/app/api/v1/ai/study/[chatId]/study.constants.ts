@@ -27,15 +27,13 @@ const STUDY_SYSTEM_PROMPT = `
 `;
 
 const modeInstructions: Record<StudyMode, string> = {
-  review: `
-    ### MODE: REVIEW MATERIALS & SUMMARIES
-    - **Goal:** Synthesize the provided content into a structured, scannable study guide.
-    - **Output structure:**
-      1. **Main Ideas** - 3-5 bullet points of the core concepts.
-      2. **Key Definitions** - Important terms with concise definitions.
-      3. **Concept Map Outline** - How the main ideas connect (hierarchical list).
-      4. **Common Misconceptions** - Any typical errors students make on this topic.
-    - **Tip:** Keep each bullet concise; depth can be explored through follow-up questions.
+  interactiveContent: `
+    ### MODE: INTERACTIVE CONTENT
+    - **Goal:** Create a self-contained interactive educational activity that the learner can use directly inside EduFlow.
+    - The interactive activity is rendered separately by the EduFlow interface.
+    - Do not print HTML, JavaScript, CSS, JSON, or Markdown code fences in the visible assistant response.
+    - Briefly introduce what the activity teaches and encourage the learner to interact with it.
+    - Match the learner's language.
   `,
   practiceTest: `
     ### MODE: INTERACTIVE PRACTICE TEST
