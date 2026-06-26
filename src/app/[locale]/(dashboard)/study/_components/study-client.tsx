@@ -36,7 +36,7 @@ interface StudyClientProps {
 export function StudyClient({
   chatId,
   initialMessages,
-  initialMode = 'review',
+  initialMode = 'interactiveContent',
   initialQuizOptions,
   isAuthenticated,
 }: StudyClientProps) {

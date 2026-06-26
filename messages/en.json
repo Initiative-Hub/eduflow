@@ -1876,6 +1876,14 @@
   "StudyPage": {
     "aiActive": "AI Processing Active",
     "features": {
+      "interactiveContent": {
+        "actionsLabel": "Interactive activity actions",
+        "description": "Create an interactive visual activity that you can explore and practice directly.",
+        "download": "Download HTML",
+        "fullscreen": "Full screen",
+        "previewTitle": "Interactive activity: {title}",
+        "reset": "Reset activity"
+      },
       "practiceTest": {
         "description": "Challenge yourself with AI-generated multiple choice, short answer, and flashcard sets."
       },
@@ -1892,6 +1900,7 @@
     },
     "limitReachedToast": "You've reached the {count}-message Study limit. Start a new session to continue.",
     "modes": {
+      "interactiveContent": "Interactive Lab",
       "practiceTest": "Practice Tests",
       "research": "Research Mode",
       "review": "Review Materials"

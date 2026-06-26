@@ -1,6 +1,10 @@
 import { z } from 'zod';
 
-export const STUDY_MODES = ['review', 'practiceTest', 'research'] as const;
+export const STUDY_MODES = [
+  'interactiveContent',
+  'practiceTest',
+  'research',
+] as const;
 export const studyModeSchema = z.enum(STUDY_MODES);
 export type StudyMode = z.infer<typeof studyModeSchema>;
 
