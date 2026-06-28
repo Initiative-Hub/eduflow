@@ -180,6 +180,7 @@ class SlideService:
         title: str | None = None,
         images: bool = True,
         image_source: str = "ai",
+        collection: str | None = None,
     ) -> Dict[str, Any]:
         slides_list = []
         if isinstance(plan, dict):
@@ -203,24 +204,108 @@ class SlideService:
 
             slide["bindings"] = bindings
 
-        # slide_skills fills the template's <image> slots itself when images=True.
-        # image_source "ai" = photo model (gpt-image-1/DALL-E), "svg" = cheaper
-        # GPT-4o vector illustrations. Both require OPENAI_API_KEY; failures per
-        # image are reported back in the result's "warnings".
-        actual_palette = None if palette == "auto" else palette
-        res = await run_in_threadpool(
-            slide_skills.generate_deck_from_plan,
-            plan,
-            SLIDE_TEMPLATES_DIR,
-            output_path,
-            palette=actual_palette,
-            language=language,
-            animation=animation,
-            images=images,
-            image_source=image_source,
-            title=title,
-            research=True,
-        )
+        library_dir = SLIDE_TEMPLATES_DIR
+        temp_dir_context = None
+
+        if collection and collection != "starter" and collection != "templates":
+            collection_path = Path(SLIDE_TEMPLATES_DIR) / collection
+            if collection_path.exists() and collection_path.is_dir():
+                import tempfile
+                import shutil
+                import json
+
+                temp_dir_context = tempfile.TemporaryDirectory()
+                temp_lib_dir = Path(temp_dir_context.name)
+
+                categories_to_map = [
+                    "TITLE_SLIDE", "AGENDA_OUTLINE", "SECTION_HEADER", "TITLE_BULLETS",
+                    "TWO_COLUMN_SPLIT", "BIG_QUOTE_TAKEAWAY", "KPI_BIG_NUMBER", "CHART_INSIGHT",
+                    "DATA_TABLE", "MEDIA_TEXT", "TIMELINE_MILESTONES", "STEP_BY_STEP",
+                    "CONCLUSION_SUMMARY", "CALL_TO_ACTION", "QA_CONTACT", "REFERENCES_LIST"
+                ]
+
+                patterns = {
+                    "TITLE_SLIDE": ["title", "slide_00", "slide_title"],
+                    "AGENDA_OUTLINE": ["agenda", "outline", "slide_01"],
+                    "SECTION_HEADER": ["section", "header", "divider"],
+                    "TITLE_BULLETS": ["bullets", "bullet", "list", "slide_02", "slide_03", "slide_04"],
+                    "TWO_COLUMN_SPLIT": ["two_column", "two_col", "split", "columns", "comparison"],
+                    "BIG_QUOTE_TAKEAWAY": ["quote", "takeaway", "saying", "citation"],
+                    "KPI_BIG_NUMBER": ["kpi", "statistic", "number", "metrics"],
+                    "CHART_INSIGHT": ["chart", "insight", "graph", "visualization"],
+                    "DATA_TABLE": ["table", "data", "grid"],
+                    "MEDIA_TEXT": ["media", "image", "photo", "picture"],
+                    "TIMELINE_MILESTONES": ["timeline", "milestones", "history"],
+                    "STEP_BY_STEP": ["step", "process", "flow", "stages"],
+                    "CONCLUSION_SUMMARY": ["conclusion", "summary", "closing"],
+                    "CALL_TO_ACTION": ["cta", "action", "signup"],
+                    "QA_CONTACT": ["qa", "contact", "questions", "social"],
+                    "REFERENCES_LIST": ["reference", "sources", "citations"],
+                }
+
+                svg_files = list(collection_path.glob("*.svg"))
+
+                for cat in categories_to_map:
+                    cat_dir = temp_lib_dir / cat
+                    cat_dir.mkdir(parents=True, exist_ok=True)
+
+                    matched_file = None
+                    candidates = patterns.get(cat, [])
+                    for svg_file in svg_files:
+                        stem_lower = svg_file.stem.lower()
+                        for cand in candidates:
+                            if cand in stem_lower:
+                                matched_file = svg_file
+                                break
+                        if matched_file:
+                            break
+
+                    if not matched_file:
+                        for svg_file in svg_files:
+                            stem_lower = svg_file.stem.lower()
+                            if cat.lower() in stem_lower or cat.replace("_", "").lower() in stem_lower:
+                                matched_file = svg_file
+                                break
+
+                    if matched_file:
+                        shutil.copy2(matched_file, cat_dir / "variant_a.svg")
+                        schema_json = matched_file.with_suffix(".schema.json")
+                        if schema_json.exists():
+                            shutil.copy2(schema_json, cat_dir / "variant_a.schema.json")
+                    else:
+                        default_cat_dir = Path(SLIDE_TEMPLATES_DIR) / cat
+                        if default_cat_dir.exists() and default_cat_dir.is_dir():
+                            default_files = list(default_cat_dir.glob("*.svg"))
+                            if default_files:
+                                shutil.copy2(default_files[0], cat_dir / "variant_a.svg")
+
+                    (cat_dir / "category.json").write_text(
+                        json.dumps({"description": f"{cat} category layout", "variants": {"variant_a": "Default design"}}, ensure_ascii=False)
+                    )
+
+                library_dir = str(temp_lib_dir)
+
+        try:
+            actual_palette = None if palette == "auto" else palette
+            res = await run_in_threadpool(
+                slide_skills.generate_deck_from_plan,
+                plan,
+                library_dir,
+                output_path,
+                palette=actual_palette,
+                language=language,
+                animation=animation,
+                images=images,
+                image_source=image_source,
+                title=title,
+                research=True,
+            )
+        finally:
+            if temp_dir_context:
+                try:
+                    temp_dir_context.cleanup()
+                except Exception:
+                    pass
 
         return res
 
@@ -242,15 +327,43 @@ class SlideService:
                 # If there is a nested folder, use it
                 subdirs = [x for x in extract_path.iterdir() if x.is_dir()]
                 src_path = subdirs[0] if len(subdirs) == 1 else extract_path
+            elif filename.lower().endswith(".pptx"):
+                pptx_path = temp_path / filename
+                pptx_path.write_bytes(file_bytes)
+                out_dir = temp_path / "converted"
+                out_dir.mkdir()
+                
+                await run_in_threadpool(
+                    slide_skills.make_svg_templates,
+                    str(pptx_path),
+                    str(out_dir),
+                )
+                src_path = out_dir
             else:
                 svg_path = temp_path / filename
                 svg_path.write_bytes(file_bytes)
                 src_path = svg_path
 
-            return await run_in_threadpool(
+            collection_name = name or Path(filename).stem
+            res = await run_in_threadpool(
                 slide_skills.import_collection,
                 src_path,
-                name,
+                collection_name,
                 base_dir=SLIDE_TEMPLATES_DIR,
                 overwrite=True,
             )
+
+            # Upload the imported templates to S3 bucket
+            from app.services.s3_service import upload_file_to_s3
+            dest_dir = Path(SLIDE_TEMPLATES_DIR) / collection_name
+            if dest_dir.exists() and dest_dir.is_dir():
+                async def upload_dir_to_s3(directory: Path, prefix: str):
+                    for child in directory.iterdir():
+                        if child.is_file():
+                            await upload_file_to_s3(child, f"{prefix}/{child.name}")
+                        elif child.is_dir():
+                            await upload_dir_to_s3(child, f"{prefix}/{child.name}")
+                
+                await upload_dir_to_s3(dest_dir, f"templates/{collection_name}")
+
+            return res

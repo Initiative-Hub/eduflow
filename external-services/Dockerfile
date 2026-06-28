@@ -5,6 +5,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     fontconfig \
     fonts-dejavu-core \
     fonts-liberation \
+    libreoffice-nogui \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

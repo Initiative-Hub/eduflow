@@ -1,9 +1,5 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { DialogTemplate } from '@/components/custom/dialog';
-import { useSlideHtml, useUpdateSlideHtml } from '../use-lesson';
-import { toast } from 'sonner';
 import {
   ArrowRight,
   ChevronLeft,
@@ -19,6 +15,9 @@ import {
   X,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
+import { DialogTemplate } from '@/components/custom/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -32,7 +31,9 @@ import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import type { TiptapDocument } from '@/utils/lesson-content';
+import { useSlideHtml, useUpdateSlideHtml } from '../use-lesson';
 import { type PlannedSlide, usePresentation } from '../use-presentation';
+import { TemplateUploadSheet } from './template-upload-sheet';
 
 interface LessonPresentationProps {
   isOpen: boolean;
@@ -73,6 +74,8 @@ export function LessonPresentation({
     changeSlideLayout,
     deleteSlide,
     addSlide,
+    selectedCollection,
+    setSelectedCollection,
   } = usePresentation({ title, content, isOpen, onClose });
 
   const [isDownloadingPptx, setIsDownloadingPptx] = useState(false);
@@ -82,6 +85,31 @@ export function LessonPresentation({
   const deckId = deckUrl ? deckUrl.split('/').pop() : undefined;
 
   const updateSlideHtml = useUpdateSlideHtml();
+
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [collections, setCollections] = useState<any[]>([]);
+  const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
+
+  const fetchCollections = async () => {
+    setIsLoadingTemplates(true);
+    try {
+      const res = await fetch('/api/v1/ai/templates');
+      if (res.ok) {
+        const data = await res.json();
+        setCollections(data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch templates:', err);
+    } finally {
+      setIsLoadingTemplates(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchCollections();
+    }
+  }, [isOpen]);
 
   const handleDownloadPptx = async () => {
     if (!deckId) return;
@@ -1430,15 +1458,6 @@ export function LessonPresentation({
                 variant="outline"
                 size="sm"
                 className="h-9 gap-1.5 rounded-lg border-slate-200 bg-white font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
-                onClick={editOutline}
-              >
-                <Edit className="h-4 w-4" />
-                {t('btnEditOutline')}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-9 gap-1.5 rounded-lg border-slate-200 bg-white font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
                 onClick={startNewDeck}
               >
                 <Sparkles className="h-4 w-4" />
@@ -1516,6 +1535,42 @@ export function LessonPresentation({
                     <SelectItem value="60">{t('duration60')}</SelectItem>
                     <SelectItem value="90">{t('duration90')}</SelectItem>
                     <SelectItem value="120">{t('duration120')}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-slate-400 text-xs uppercase tracking-wider dark:text-slate-500">
+                    Template Style
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setIsUploadOpen(true)}
+                    className="flex items-center gap-1 font-semibold text-primary text-xs hover:underline dark:text-primary-foreground/90"
+                  >
+                    <Plus className="h-3 w-3" />
+                    Manage Styles
+                  </button>
+                </div>
+                <Select
+                  value={selectedCollection}
+                  onValueChange={setSelectedCollection}
+                >
+                  <SelectTrigger className="flex h-11 w-full justify-between rounded-xl border-slate-200 bg-slate-50 px-4 py-2.5 text-slate-900 text-sm dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100">
+                    <SelectValue placeholder="System Default (Starter)" />
+                  </SelectTrigger>
+                  <SelectContent className="border-slate-200 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100">
+                    <SelectItem value="starter">
+                      System Default (Starter)
+                    </SelectItem>
+                    {collections
+                      .filter((c) => c.name !== 'starter')
+                      .map((c) => (
+                        <SelectItem key={c.name} value={c.name}>
+                          {c.name === 'neon_dark' ? 'Neon Dark Theme' : c.name}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -1598,6 +1653,15 @@ export function LessonPresentation({
               </p>
             </div>
             <div className="flex shrink-0 gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsUploadOpen(true)}
+                className="h-9 gap-1.5 rounded-lg border-slate-200 bg-white px-3 font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-800"
+              >
+                <Plus className="h-4 w-4" />
+                Choose Template style
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -1908,6 +1972,15 @@ export function LessonPresentation({
           <div className="order-2 w-9 md:order-3" />
         </div>
       )}
+      <TemplateUploadSheet
+        isOpen={isUploadOpen}
+        onOpenChange={setIsUploadOpen}
+        selectedCollection={selectedCollection}
+        onSelectCollection={setSelectedCollection}
+        collections={collections}
+        onUploadSuccess={fetchCollections}
+        isLoading={isLoadingTemplates}
+      />
     </div>
   );
 }

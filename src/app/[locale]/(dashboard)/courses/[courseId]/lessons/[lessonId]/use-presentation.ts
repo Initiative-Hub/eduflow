@@ -64,6 +64,7 @@ export function usePresentation(options: {
   const [deckUrl, setDeckUrl] = useState<string | null>(null);
   // Token/cost usage reported for the most recent generation.
   const [deckUsage, setDeckUsage] = useState<DeckUsage | null>(null);
+  const [selectedCollection, setSelectedCollection] = useState('starter');
 
   // Dynamic Outlines fallback generator
   const generateOutlines = useCallback(
@@ -495,6 +496,7 @@ export function usePresentation(options: {
         lessonId,
         title,
         palette: 'auto',
+        collection: selectedCollection,
         slides: plannedSlides.map((slide) => ({
           layoutType: slide.layoutType,
           slideTitle: slide.slideTitle,
@@ -628,5 +630,7 @@ export function usePresentation(options: {
     changeSlideLayout,
     deleteSlide,
     addSlide,
+    selectedCollection,
+    setSelectedCollection,
   };
 }

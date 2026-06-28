@@ -54,6 +54,7 @@ async def execute_plan_generation_job(job_id: str, req: PlanGenReq, out_path: Pa
             palette=req.palette,
             images=req.images,
             image_source=req.image_source,
+            collection=req.collection,
         )
         # Upload to S3
         s3_key = f"slides/{job_id}.html"
@@ -197,10 +198,14 @@ async def get_deck_pptx(deck_id: str):
 @router.post("/templates/import")
 async def import_templates(file: UploadFile = File(...), name: str | None = None):
     filename = file.filename or ""
-    if not (filename.lower().endswith(".zip") or filename.lower().endswith(".svg")):
+    if not (
+        filename.lower().endswith(".zip")
+        or filename.lower().endswith(".svg")
+        or filename.lower().endswith(".pptx")
+    ):
         raise HTTPException(
             status_code=400,
-            detail="Only ZIP archive files or SVG template files are supported",
+            detail="Only ZIP archive, SVG template, or PPTX files are supported",
         )
     try:
         file_bytes = await file.read()

@@ -85,6 +85,7 @@ class MarkItDownServiceTests(unittest.TestCase):
                 "slide-skills>=0.2.23",
                 "tavily-python>=0.7.26",
                 "boto3>=1.43.29",
+                "pymupdf>=1.27.2.3",
             ],
         )
 
