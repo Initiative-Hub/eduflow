@@ -1,4 +1,35 @@
 {
+  "AcceptInvitationPage": {
+    "actions": {
+      "goHome": "Go home",
+      "goToCourse": "Go to course"
+    },
+    "alreadyJoined": {
+      "description": "You have already joined this course. You can continue from the course page.",
+      "title": "Already joined"
+    },
+    "capacityFull": {
+      "description": "This course is already at capacity. Ask the instructor to increase the limit or try again after a seat opens.",
+      "title": "Course is full"
+    },
+    "expired": {
+      "description": "This invitation expired on {date}. Ask the course instructor to send you a new one.",
+      "title": "Invitation expired"
+    },
+    "notPending": {
+      "acceptedDescription": "You already accepted this invitation and are enrolled in the course.",
+      "acceptedTitle": "Already enrolled",
+      "cancelledDescription": "This invitation was cancelled. Ask the course instructor to send you a new one.",
+      "cancelledTitle": "Invitation cancelled",
+      "declinedDescription": "You previously declined this invitation. Ask the course instructor to send you a new one.",
+      "declinedTitle": "Invitation declined"
+    },
+    "wrongUser": {
+      "description": "This invitation was sent to a different account. Sign in with the correct email or ask the instructor to re-invite you.",
+      "switchAccount": "Switch account",
+      "title": "Wrong account"
+    }
+  },
   "AdminUsersPage": {
     "actions": {
       "addUser": "Add user",
@@ -543,13 +574,37 @@
       "list": "List"
     }
   },
+  "CourseInvitePage": {
+    "description": "Confirm that you want to join {course}.",
+    "joinButton": "Join course",
+    "metadataTitle": "Course invitation",
+    "toast": {
+      "capacityFull": "This course is full.",
+      "failed": "Failed to join course.",
+      "joined": "Joined course."
+    },
+    "unavailable": {
+      "alreadyJoined": "You have already joined this course.",
+      "capacity": "This course has reached its capacity. Ask the course owner to increase the limit before joining.",
+      "expired": "This invite link has expired.",
+      "limit": "This invite link has reached its usage limit.",
+      "revoked": "This invite link has been revoked.",
+      "title": "Invite unavailable"
+    }
+  },
   "CourseMembersPage": {
     "actions": {
       "add": "Add",
+      "addInviteLink": "Add invite link",
       "addMember": "Add member",
       "cancel": "Cancel",
+      "copyLink": "Copy link",
+      "createLink": "Create link",
       "edit": "Edit",
+      "invite": "Invite",
       "remove": "Remove",
+      "removeInvitation": "Remove invitation",
+      "revokeLink": "Revoke link",
       "save": "Save"
     },
     "addDialog": {
@@ -559,6 +614,13 @@
       "loadingMore": "Loading more users...",
       "searchPlaceholder": "Search users by name, email, or ID...",
       "title": "Add course member"
+    },
+    "capacity": {
+      "fullDescription": "Direct additions and accepted joins are paused until capacity is increased or active members are removed.",
+      "fullTitle": "Course capacity reached",
+      "label": "Capacity",
+      "unlimited": "Unlimited",
+      "value": "{active}/{capacity}"
     },
     "description": "View course members, roles, and enrollment dates.",
     "editDialog": {
@@ -576,6 +638,7 @@
       "title": "Members unavailable"
     },
     "fallback": {
+      "noJoinDate": "Not joined yet",
       "noName": "No name"
     },
     "filters": {
@@ -583,6 +646,37 @@
     },
     "form": {
       "role": "Role"
+    },
+    "linkDialog": {
+      "description": "Create a reusable invite link for registered users.",
+      "expiresAt": "Expires at",
+      "maxUses": "Maximum uses",
+      "title": "Create invite link"
+    },
+    "links": {
+      "description": "Track reusable public invite links for this course.",
+      "emptyDescription": "Create a link to let registered users request course access from a confirmation screen.",
+      "emptyTitle": "No invite links",
+      "error": "We could not load invite links right now.",
+      "neverExpires": "Never",
+      "revokeDialog": {
+        "description": "This invite link will stop working for future joins. Existing course members will not be affected.",
+        "title": "Revoke invite link?"
+      },
+      "status": {
+        "active": "Active",
+        "revoked": "Revoked"
+      },
+      "table": {
+        "expires": "Expires",
+        "link": "Link",
+        "role": "Role",
+        "status": "Status",
+        "usage": "Usage"
+      },
+      "title": "Invite links",
+      "usageUnlimited": "{used} used",
+      "usageWithLimit": "{used}/{max} used"
     },
     "pagination": {
       "itemsPerPage": "Items per page",
@@ -605,16 +699,28 @@
     },
     "searchLabel": "Search members",
     "searchPlaceholder": "Search members by name, email, or ID...",
+    "status": {
+      "active": "Active",
+      "pendingInvite": "Pending invite"
+    },
     "table": {
       "actions": "Actions",
       "joinDate": "Join date",
       "role": "Role",
+      "status": "Status",
       "user": "User"
     },
     "title": "Course Members",
     "toast": {
       "added": "Member added.",
       "addFailed": "Failed to add member.",
+      "invited": "Invitation sent.",
+      "inviteFailed": "Failed to send invitation.",
+      "linkCopied": "Invite link copied.",
+      "linkCreated": "Invite link created.",
+      "linkCreateFailed": "Failed to create invite link.",
+      "linkRevoked": "Invite link revoked.",
+      "linkRevokeFailed": "Failed to revoke invite link.",
       "removed": "Member removed.",
       "removeFailed": "Failed to remove member.",
       "updated": "Member role updated.",
@@ -645,13 +751,18 @@
     "AnalyticsPage": "Analytics",
     "AssessmentsPage": "Assessments",
     "Card": {
+      "accept": "Accept",
+      "decline": "Decline",
       "manage": "Manage",
+      "memberCapacityLimited": "/ {count}",
       "memberLabel": "Members",
       "members": "{count, plural, =1 {1 Member} other {# Members}}",
       "moduleLabel": "Modules",
       "modules": "{count, plural, =1 {1 Module} other {# Modules}}",
       "noDescription": "No description provided.",
       "open": "Open course",
+      "owned": "Owned",
+      "pendingInvite": "Pending invite",
       "togglePublish": "Toggle publish status"
     },
     "ChatPage": "Course AI Chat",
@@ -1051,8 +1162,13 @@
     "SettingsPage": "Course Settings",
     "title": "Courses",
     "toast": {
+      "capacityFull": "This course is full.",
       "created": "Course created.",
       "createFailed": "Failed to create course.",
+      "invitationAccepted": "Invitation accepted.",
+      "invitationAcceptFailed": "Failed to accept invitation.",
+      "invitationDeclined": "Invitation declined.",
+      "invitationDeclineFailed": "Failed to decline invitation.",
       "published": "Course published.",
       "unpublished": "Course unpublished.",
       "updateFailed": "Failed to update course status."
@@ -1076,6 +1192,16 @@
     "archivedNotice": {
       "description": "Members can still review the course, but owners should unarchive it before making it active again.",
       "title": "This course is archived"
+    },
+    "capacity": {
+      "controlTitle": "Seat availability",
+      "limited": "Limited",
+      "limitedValue": "{count} seats",
+      "unlimited": "Unlimited",
+      "validation": {
+        "belowActive": "Capacity cannot be below the current {count} active members.",
+        "required": "Enter a valid capacity."
+      }
     },
     "confirmation": {
       "description": "Type {courseId} to confirm this action.",
@@ -1119,6 +1245,7 @@
       "noName": "No name"
     },
     "fields": {
+      "capacity": "Capacity",
       "courseId": "Course ID",
       "description": "Description",
       "role": "Role",
@@ -1126,6 +1253,7 @@
       "visibility": "Visibility"
     },
     "form": {
+      "capacity": "Capacity",
       "description": "Description",
       "title": "Title",
       "visibility": "Visibility"
@@ -1432,7 +1560,6 @@
   "NotFound": {
     "description": "It seems this page has vanished. Even our most advanced AI couldn't find it.",
     "goBack": "Go Back Home",
-    "robotSays": "OOPS... 404",
     "title": "Lost in the Digital Void"
   },
   "ProfilePage": {
@@ -1756,6 +1883,14 @@
   "StudyPage": {
     "aiActive": "AI Processing Active",
     "features": {
+      "interactiveContent": {
+        "actionsLabel": "Interactive activity actions",
+        "description": "Create an interactive visual activity that you can explore and practice directly.",
+        "download": "Download HTML",
+        "fullscreen": "Full screen",
+        "previewTitle": "Interactive activity: {title}",
+        "reset": "Reset activity"
+      },
       "practiceTest": {
         "description": "Challenge yourself with AI-generated multiple choice, short answer, and flashcard sets."
       },
@@ -1772,6 +1907,7 @@
     },
     "limitReachedToast": "You've reached the {count}-message Study limit. Start a new session to continue.",
     "modes": {
+      "interactiveContent": "Interactive Lab",
       "practiceTest": "Practice Tests",
       "research": "Research Mode",
       "review": "Review Materials"

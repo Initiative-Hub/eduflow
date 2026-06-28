@@ -1,4 +1,5 @@
 import {
+  CourseEnrollmentStatus,
   CourseRoleName,
   type CourseRoleName as CourseRoleNameType,
 } from '@/generated/prisma';
@@ -18,6 +19,7 @@ type CourseSettingsMutationResponse = {
 };
 
 type CourseSettingsUpdateInput = {
+  capacity: number | null;
   courseId: string;
   currentUserId: string;
   description: string | null;
@@ -31,18 +33,32 @@ type ConfirmedCourseMutationInput = {
   currentUserId: string;
 };
 
-type CourseSettingsTransaction = Omit<
-  typeof prisma,
-  '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
->;
+async function getCourseCapacityUsage(courseId: string) {
+  const course = await prisma.course.findUnique({
+    where: { id: courseId },
+    select: { capacity: true },
+  });
 
-function assertConfirmationMatches(
-  courseId: string,
-  confirmationCourseId: string
-) {
-  if (courseId !== confirmationCourseId) {
-    throw new Error('Course ID confirmation does not match');
+  if (!course) {
+    throw new Error('Course not found');
   }
+
+  const activeMemberCount = await prisma.enrollment.count({
+    where: {
+      courseId,
+      status: CourseEnrollmentStatus.ACTIVE,
+    },
+  });
+
+  return {
+    activeMemberCount,
+    capacity: course.capacity,
+    isFull: course.capacity !== null && activeMemberCount >= course.capacity,
+    remaining:
+      course.capacity === null
+        ? null
+        : Math.max(course.capacity - activeMemberCount, 0),
+  };
 }
 
 export class CourseSettingsService {
@@ -51,6 +67,7 @@ export class CourseSettingsService {
       where: { id: courseId },
       select: {
         archivedAt: true,
+        capacity: true,
         createdAt: true,
         deletedAt: true,
         description: true,
@@ -71,7 +88,11 @@ export class CourseSettingsService {
 
   private static async getCurrentEnrollment(courseId: string, userId: string) {
     return prisma.enrollment.findFirst({
-      where: { courseId, memberId: userId },
+      where: {
+        courseId,
+        memberId: userId,
+        status: CourseEnrollmentStatus.ACTIVE,
+      },
       select: {
         id: true,
         memberId: true,
@@ -115,12 +136,14 @@ export class CourseSettingsService {
       await CourseSettingsService.assertCourseMember(courseId, currentUserId);
     const currentRole = enrollment?.role.name ?? CourseRoleName.STUDENT;
     const isOwner = enrollment?.role.name === CourseRoleName.COURSE_OWNER;
+    const capacityState = await getCourseCapacityUsage(courseId);
 
     const transferMembers = isOwner
       ? await prisma.enrollment.findMany({
           where: {
             courseId,
             memberId: { not: currentUserId },
+            status: CourseEnrollmentStatus.ACTIVE,
           },
           include: {
             member: {
@@ -144,6 +167,8 @@ export class CourseSettingsService {
     return {
       course: {
         archivedAt: course.archivedAt?.toISOString() ?? null,
+        activeMemberCount: capacityState.activeMemberCount,
+        capacity: course.capacity,
         createdAt: course.createdAt.toISOString(),
         description: course.description,
         id: course.id,
@@ -173,10 +198,19 @@ export class CourseSettingsService {
       input.courseId,
       input.currentUserId
     );
+    const capacityState = await getCourseCapacityUsage(input.courseId);
+
+    if (
+      input.capacity !== null &&
+      input.capacity < capacityState.activeMemberCount
+    ) {
+      throw new Error('Course capacity cannot be below active member count');
+    }
 
     return prisma.course.update({
       where: { id: input.courseId },
       data: {
+        capacity: input.capacity,
         description: input.description,
         isPublished: input.isPublished,
         title: input.title,
@@ -223,11 +257,12 @@ export class CourseSettingsService {
       throw new Error('New owner must be another course member');
     }
 
-    return prisma.$transaction(async (tx: CourseSettingsTransaction) => {
+    return prisma.$transaction(async (tx) => {
       const enrollments = await tx.enrollment.findMany({
         where: {
           courseId: input.courseId,
           memberId: { in: [input.currentUserId, input.newOwnerUserId] },
+          status: CourseEnrollmentStatus.ACTIVE,
         },
         select: {
           id: true,
@@ -288,7 +323,10 @@ export class CourseSettingsService {
   static async archiveCourse(
     input: ConfirmedCourseMutationInput
   ): Promise<CourseSettingsMutationResponse> {
-    assertConfirmationMatches(input.courseId, input.confirmationCourseId);
+    if (input.courseId !== input.confirmationCourseId) {
+      throw new Error('Course ID confirmation does not match');
+    }
+
     await CourseSettingsService.assertCourseOwnerRole(
       input.courseId,
       input.currentUserId
@@ -324,7 +362,10 @@ export class CourseSettingsService {
   static async deleteCourse(
     input: ConfirmedCourseMutationInput
   ): Promise<CourseSettingsMutationResponse> {
-    assertConfirmationMatches(input.courseId, input.confirmationCourseId);
+    if (input.courseId !== input.confirmationCourseId) {
+      throw new Error('Course ID confirmation does not match');
+    }
+
     await CourseSettingsService.assertCourseOwnerRole(
       input.courseId,
       input.currentUserId

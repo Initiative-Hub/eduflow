@@ -1,6 +1,6 @@
 'use client';
 
-import { BookMarked, ClipboardList, Globe } from 'lucide-react';
+import { ClipboardList, Code2, Globe } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type {
   StudyMode,
@@ -25,12 +25,11 @@ export function StudyModeSelector({
 
   const FEATURE_CARDS = [
     {
-      key: 'review' as StudyMode,
-      icon: BookMarked,
-      label: t('modes.review'),
-      accent:
-        'bg-violet-50 text-violet-600 border-violet-200 dark:bg-violet-950/30 dark:text-violet-400 dark:border-violet-900/40',
-      activeAccent: 'ring-2 ring-violet-400 bg-violet-50 dark:bg-violet-950/30',
+      key: 'interactiveContent' as StudyMode,
+      icon: Code2,
+      label: t('modes.interactiveContent'),
+      accent: 'border-primary/20 bg-primary/10 text-primary',
+      activeAccent: 'bg-primary/10 ring-2 ring-primary',
     },
     {
       key: 'practiceTest' as StudyMode,
