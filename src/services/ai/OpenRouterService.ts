@@ -34,6 +34,7 @@ import type {
 } from '@/services/ai/chat-provider.types';
 import { generateSupplementarySearchContexts } from '@/services/ai/course-web-search';
 import type { CourseStreamEvent } from '@/types/course-stream-event';
+import { convertLessonReferenceDataPart } from '@/utils/chat-lesson-references';
 import { StorageService } from '../StorageService';
 import type { ChatProviderService } from './ChatProviderService';
 import { resolveChatSystemPrompt } from './chat-system-prompt';
@@ -53,7 +54,9 @@ export class OpenRouterService implements ChatProviderService {
       experimental_transform: smoothStream(),
       model: provider(model),
       system: resolveChatSystemPrompt(options?.prompt ?? ''),
-      messages: await convertToModelMessages(input.messages),
+      messages: await convertToModelMessages(input.messages, {
+        convertDataPart: convertLessonReferenceDataPart,
+      }),
       tools: options?.tools,
       stopWhen: options?.maxSteps ? stepCountIs(options.maxSteps) : undefined,
     });

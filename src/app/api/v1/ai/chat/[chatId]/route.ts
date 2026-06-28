@@ -17,6 +17,10 @@ import {
   hydrateChatAttachmentDataUrls,
 } from '@/utils/chat-attachments';
 import {
+  hasChatLessonReferenceParts,
+  hydrateChatLessonReferenceContent,
+} from '@/utils/chat-lesson-references';
+import {
   generateAiChatSuggestions,
   getAiChatSystemPrompt,
 } from './chat.constants';
@@ -298,9 +302,16 @@ export async function POST(
 
     const messagesForRequest = [...chatData.messages, parsedBody.data.message];
     const hasFileParts = hasChatFileParts(messagesForRequest);
+    const hasLessonReferences = hasChatLessonReferenceParts(messagesForRequest);
     if (hasFileParts && !userId) {
       return new Response(
         JSON.stringify({ error: 'File attachments require sign-in' }),
+        { status: 403, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+    if (hasLessonReferences && !userId) {
+      return new Response(
+        JSON.stringify({ error: 'Lesson references require sign-in' }),
         { status: 403, headers: { 'Content-Type': 'application/json' } }
       );
     }
@@ -309,12 +320,27 @@ export async function POST(
     if (hasFileParts && userId) {
       try {
         messagesForModel = await hydrateChatAttachmentDataUrls({
-          messages: messagesForRequest,
+          messages: messagesForModel,
           userId,
         });
       } catch (error) {
         const message =
           error instanceof Error ? error.message : 'File attachment not found';
+        return new Response(JSON.stringify({ error: message }), {
+          status: 404,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+    }
+    if (hasLessonReferences && userId) {
+      try {
+        messagesForModel = await hydrateChatLessonReferenceContent({
+          messages: messagesForModel,
+          userId,
+        });
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : 'Lesson reference not found';
         return new Response(JSON.stringify({ error: message }), {
           status: 404,
           headers: { 'Content-Type': 'application/json' },

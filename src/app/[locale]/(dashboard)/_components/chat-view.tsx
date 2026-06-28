@@ -20,6 +20,7 @@ import {
   ReasoningTrigger,
 } from '@/components/ai-elements/reasoning';
 import { Suggestion } from '@/components/ai-elements/suggestion';
+import type { ChatLessonReferenceUIPart } from '@/types/chat-lesson-references';
 import {
   buildInlineCitationMarkdown,
   getCitationSources,
@@ -82,11 +83,19 @@ export function ChatView({
                 ? [{ ...part, id: `${message.id}-file-${index}` }]
                 : []
             );
+            const lessonReferences = message.parts.flatMap((part) =>
+              part.type === 'data-lesson-reference' &&
+              typeof (part as ChatLessonReferenceUIPart).data?.lessonId ===
+                'string'
+                ? [part as ChatLessonReferenceUIPart]
+                : []
+            );
 
             if (
               !text &&
               !reasoning &&
               attachments.length === 0 &&
+              lessonReferences.length === 0 &&
               practiceQuizzes.length === 0 &&
               interactiveContents.length === 0
             )
@@ -128,16 +137,29 @@ export function ChatView({
                         message.role === 'user' ? 'items-end' : 'items-start'
                       }`}
                     >
-                      {message.role === 'user' && attachments.length > 0 && (
-                        <ChatInputAttachments
-                          files={attachments.map((attachment) => ({
-                            filename: attachment.filename ?? attachment.id,
-                            id: attachment.id,
-                            mediaType: attachment.mediaType,
-                            previewUrl: attachment.url,
-                          }))}
-                        />
-                      )}
+                      {message.role === 'user' &&
+                        (attachments.length > 0 ||
+                          lessonReferences.length > 0) && (
+                          <ChatInputAttachments
+                            files={[
+                              ...attachments.map((attachment) => ({
+                                filename: attachment.filename ?? attachment.id,
+                                id: attachment.id,
+                                mediaType: attachment.mediaType,
+                                previewUrl: attachment.url,
+                              })),
+                              ...lessonReferences.map((lesson) => ({
+                                filename: lesson.data.lessonTitle,
+                                id: lesson.data.lessonId,
+                                kind: 'lesson' as const,
+                                lessonPart: lesson,
+                                mediaType:
+                                  'application/x-eduflow-lesson-reference',
+                                previewUrl: `lesson:${lesson.data.lessonId}`,
+                              })),
+                            ]}
+                          />
+                        )}
                       <MessageContent
                         className={`max-w-[80%] px-5 py-3 ${
                           message.role === 'user' &&

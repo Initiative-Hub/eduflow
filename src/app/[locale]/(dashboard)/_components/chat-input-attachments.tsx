@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  BookOpenIcon,
   FileTextIcon,
   GlobeIcon,
   ImageIcon,
@@ -21,12 +22,15 @@ import {
   getMediaCategory,
 } from '@/components/ai-elements/attachments';
 import type { ChatFileUIPart } from '@/types/chat-attachments';
+import type { ChatLessonReferenceUIPart } from '@/types/chat-lesson-references';
 
 export interface SelectedChatFile {
   file?: File;
   filePart?: ChatFileUIPart;
   filename: string;
   id: string;
+  kind?: 'file' | 'lesson';
+  lessonPart?: ChatLessonReferenceUIPart;
   mediaType: string;
   previewUrl: string;
 }
@@ -47,13 +51,15 @@ const mediaCategoryIcons: Record<AttachmentMediaCategory, typeof ImageIcon> = {
 };
 
 function AttachmentFallback({
+  customIcon: CustomIcon,
   mediaCategory,
   label,
 }: {
+  customIcon?: typeof ImageIcon;
   mediaCategory: AttachmentMediaCategory;
   label: string;
 }) {
-  const Icon = mediaCategoryIcons[mediaCategory];
+  const Icon = CustomIcon ?? mediaCategoryIcons[mediaCategory];
 
   return (
     <div className="flex size-full flex-col items-center justify-center gap-1 px-2 text-center">
@@ -92,6 +98,7 @@ export function ChatInputAttachments({
   return (
     <Attachments className="m-0" variant="grid">
       {files.map((item) => {
+        const isLesson = item.kind === 'lesson' || Boolean(item.lessonPart);
         const attachment = {
           filename: item.filename,
           id: item.id,
@@ -101,6 +108,7 @@ export function ChatInputAttachments({
         };
         const label = getAttachmentLabel(attachment);
         const mediaCategory = getMediaCategory(attachment);
+        const displayLabel = isLesson ? item.filename : label;
 
         return (
           <AttachmentHoverCard key={item.id}>
@@ -112,8 +120,9 @@ export function ChatInputAttachments({
                 <AttachmentPreview
                   fallbackIcon={
                     <AttachmentFallback
+                      customIcon={isLesson ? BookOpenIcon : undefined}
                       mediaCategory={mediaCategory}
-                      label={label}
+                      label={displayLabel}
                     />
                   }
                 />
@@ -124,7 +133,7 @@ export function ChatInputAttachments({
             </AttachmentHoverCardTrigger>
             <AttachmentHoverCardContent>
               <AttachmentMetadata
-                label={label}
+                label={displayLabel}
                 mediaType={attachment.mediaType}
               />
             </AttachmentHoverCardContent>
