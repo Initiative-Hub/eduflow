@@ -13,8 +13,8 @@ export interface SlidePlanItem {
 export interface DeckPlan {
   title: string;
   slides: SlidePlanItem[];
-  /** Palette selection: "auto", "corporate", "modern", etc. */
   palette?: string;
+  collection?: string;
 }
 
 /** Token/cost usage for a generation job, as reported by slide_skills. */
@@ -74,6 +74,7 @@ export async function generateDeckFromPlan(
   const payload = {
     title: plan.title,
     palette: plan.palette ?? 'auto',
+    collection: plan.collection ?? 'starter',
     slides: plan.slides.map((slide) => ({
       category: slide.layoutType,
       slideTitle: slide.slideTitle,

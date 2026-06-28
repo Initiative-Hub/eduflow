@@ -1652,7 +1652,28 @@ export function LessonPresentation({
                 {t('plannedDesc')}
               </p>
             </div>
-            <div className="flex shrink-0 gap-2">
+            <div className="flex shrink-0 items-center gap-2">
+              <div className="flex items-center gap-1.5 rounded-lg bg-slate-100/90 border border-slate-200/60 px-3 py-1.5 dark:bg-slate-900/80 dark:border-slate-800/80">
+                <span className="text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                  Style:
+                </span>
+                <span
+                  className="text-slate-800 dark:text-slate-200 text-xs font-bold max-w-[150px] truncate block"
+                  title={
+                    selectedCollection === 'starter'
+                      ? 'Default Starter'
+                      : selectedCollection === 'neon_dark'
+                        ? 'Neon Dark'
+                        : selectedCollection
+                  }
+                >
+                  {selectedCollection === 'starter'
+                    ? 'Default Starter'
+                    : selectedCollection === 'neon_dark'
+                      ? 'Neon Dark'
+                      : selectedCollection}
+                </span>
+              </div>
               <Button
                 variant="outline"
                 size="sm"

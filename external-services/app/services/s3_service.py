@@ -94,3 +94,21 @@ async def download_file_from_s3(object_key: str, local_path: Path) -> bool:
     except Exception as e:
         logger.error(f"Failed to download key {object_key} from S3: {e}")
         return False
+
+
+async def list_files_in_s3_prefix(prefix: str) -> list[str]:
+    try:
+        s3 = get_s3_client()
+        if not s3:
+            return []
+
+        def list_keys():
+            response = s3.list_objects_v2(Bucket=AWS_S3_BUCKET, Prefix=prefix)
+            if "Contents" not in response:
+                return []
+            return [item["Key"] for item in response["Contents"]]
+
+        return await run_in_threadpool(list_keys)
+    except Exception as e:
+        logger.error(f"Failed to list S3 prefix {prefix}: {e}")
+        return []

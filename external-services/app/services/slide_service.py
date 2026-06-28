@@ -146,9 +146,17 @@ class SlideService:
         return library.category_map()
 
     async def get_collections(self) -> List[Dict[str, Any]]:
-        return await run_in_threadpool(
+        collections = await run_in_threadpool(
             slide_skills.list_collections, SLIDE_TEMPLATES_DIR
         )
+        categories = {
+            "title_slide", "agenda_outline", "section_header", "title_bullets",
+            "two_column_split", "big_quote_takeaway", "kpi_big_number", "chart_insight",
+            "data_table", "media_text", "timeline_milestones", "step_by_step",
+            "conclusion_summary", "call_to_action", "qa_contact", "references_list",
+            "image_gallery", "kpi_big_numbers"
+        }
+        return [c for c in collections if c["name"].lower() not in categories]
 
     async def generate_deck(
         self,
@@ -207,7 +215,19 @@ class SlideService:
         library_dir = SLIDE_TEMPLATES_DIR
         temp_dir_context = None
 
-        if collection and collection != "starter" and collection != "templates":
+        if collection and collection != "starter" and collection != "neon_dark" and collection != "templates":
+            from app.services.s3_service import list_files_in_s3_prefix, download_file_from_s3
+            s3_prefix = f"templates/{collection}/"
+            s3_keys = await list_files_in_s3_prefix(s3_prefix)
+            if s3_keys:
+                logger.info(f"Downloading custom template collection '{collection}' from S3...")
+                col_path = Path(SLIDE_TEMPLATES_DIR) / collection
+                col_path.mkdir(parents=True, exist_ok=True)
+                for key in s3_keys:
+                    filename = key.split("/")[-1]
+                    if filename:
+                        await download_file_from_s3(key, col_path / filename)
+
             collection_path = Path(SLIDE_TEMPLATES_DIR) / collection
             if collection_path.exists() and collection_path.is_dir():
                 import tempfile
