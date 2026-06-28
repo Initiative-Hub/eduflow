@@ -33,6 +33,9 @@ model User {
   files                  FileInventory[]
   coursesOwned           Course[]                @relation("OwnerCourses")
   enrollments            Enrollment[]
+  courseInvitesReceived  CourseInvitation[]      @relation("CourseInvitationInvitee")
+  courseInvitesSent      CourseInvitation[]      @relation("CourseInvitationInviter")
+  courseInviteLinks      CourseInviteLink[]      @relation("CourseInviteLinkCreator")
   aiChats                AiChat[]
   aiMessages             AiChatMessage[]
   quizAttempts           QuizAttempt[]
@@ -118,6 +121,8 @@ model CourseRole {
   id          String             @id @default(uuid())
   name        CourseRoleName     @unique
   enrollments Enrollment[]
+  invitations CourseInvitation[]
+  inviteLinks CourseInviteLink[]
   permissions CoursePermission[]
 
   @@map("course_role")
@@ -179,6 +184,23 @@ enum AiChatType {
   ENGLISH_ASSISTANT
   WRITING_ASSISTANT
   STUDY_ASSISTANT
+}
+
+enum CourseEnrollmentStatus {
+  ACTIVE         @map("active")
+  PENDING_INVITE @map("pending_invite")
+
+  @@map("course_enrollment_status")
+}
+
+enum CourseInvitationStatus {
+  PENDING   @map("pending")
+  ACCEPTED  @map("accepted")
+  DECLINED  @map("declined")
+  CANCELLED @map("cancelled")
+  EXPIRED   @map("expired")
+
+  @@map("course_invitation_status")
 }
 
 model FileInventory {
@@ -273,10 +295,13 @@ model Course {
   owner       User               @relation("OwnerCourses", fields: [ownerId], references: [id])
   title       String
   description String?
+  capacity    Int?               @map("capacity")
   isPublished Boolean            @default(false) @map("is_published")
   modules     Module[]
   enrollments Enrollment[]
   permissions CoursePermission[]
+  invitations CourseInvitation[]
+  inviteLinks CourseInviteLink[]
   files       FileInventory[]
   createdAt   DateTime           @default(now()) @map("created_at")
   updatedAt   DateTime           @updatedAt @map("updated_at")
@@ -291,20 +316,74 @@ model Course {
 }
 
 model Enrollment {
-  id         String     @id @default(uuid())
-  memberId   String     @map("member_id")
-  member     User       @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  roleId     String     @map("role_id")
-  role       CourseRole @relation(fields: [roleId], references: [id], onDelete: Restrict)
-  courseId   String     @map("course_id")
-  course     Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  enrolledAt DateTime   @default(now()) @map("enrolled_at")
+  id         String                 @id @default(uuid())
+  memberId   String                 @map("member_id")
+  member     User                   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  roleId     String                 @map("role_id")
+  role       CourseRole             @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  courseId   String                 @map("course_id")
+  course     Course                 @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  status     CourseEnrollmentStatus @default(ACTIVE)
+  enrolledAt DateTime?              @default(now()) @map("enrolled_at")
+  invitedAt  DateTime?              @map("invited_at")
+  createdAt  DateTime               @default(now()) @map("created_at")
+  updatedAt  DateTime               @default(now()) @updatedAt @map("updated_at")
 
-  @@index([memberId])
-  @@index([roleId])
-  @@index([courseId, roleId])
-  @@index([courseId])
+  @@unique([courseId, memberId], map: "enrollment_course_id_member_id_key")
+  @@index([memberId], map: "enrollment_member_id_idx")
+  @@index([roleId], map: "enrollment_role_id_idx")
+  @@index([courseId, roleId], map: "enrollment_course_id_role_id_idx")
+  @@index([courseId], map: "enrollment_course_id_idx")
+  @@index([courseId, status, roleId], map: "enrollment_course_id_status_role_id_idx")
+  @@index([memberId, status], map: "enrollment_member_id_status_idx")
   @@map("enrollment")
+}
+
+model CourseInvitation {
+  id          String                 @id @default(uuid())
+  courseId    String                 @map("course_id")
+  course      Course                 @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  inviteeId   String                 @map("invitee_id")
+  invitee     User                   @relation("CourseInvitationInvitee", fields: [inviteeId], references: [id], onDelete: Cascade)
+  invitedById String                 @map("invited_by_id")
+  invitedBy   User                   @relation("CourseInvitationInviter", fields: [invitedById], references: [id], onDelete: Restrict)
+  roleId      String                 @map("role_id")
+  role        CourseRole             @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  status      CourseInvitationStatus @default(PENDING)
+  expiresAt   DateTime?              @map("expires_at")
+  sentAt      DateTime?              @map("sent_at")
+  acceptedAt  DateTime?              @map("accepted_at")
+  declinedAt  DateTime?              @map("declined_at")
+  cancelledAt DateTime?              @map("cancelled_at")
+  createdAt   DateTime               @default(now()) @map("created_at")
+  updatedAt   DateTime               @default(now()) @updatedAt @map("updated_at")
+
+  @@index([inviteeId, status], map: "course_invitation_invitee_id_status_idx")
+  @@index([courseId, status], map: "course_invitation_course_id_status_idx")
+  @@index([expiresAt], map: "course_invitation_expires_at_idx")
+  @@map("course_invitation")
+}
+
+model CourseInviteLink {
+  id          String     @id @default(uuid())
+  courseId    String     @map("course_id")
+  course      Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  createdById String     @map("created_by_id")
+  createdBy   User       @relation("CourseInviteLinkCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  roleId      String     @map("role_id")
+  role        CourseRole @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  maxUses     Int?       @map("max_uses")
+  usedCount   Int        @default(0) @map("used_count")
+  expiresAt   DateTime?  @map("expires_at")
+  lastUsedAt  DateTime?  @map("last_used_at")
+  revokedAt   DateTime?  @map("revoked_at")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @default(now()) @updatedAt @map("updated_at")
+
+  @@index([courseId, revokedAt], map: "course_invite_link_course_id_revoked_at_idx")
+  @@index([expiresAt], map: "course_invite_link_expires_at_idx")
+  @@index([createdById], map: "course_invite_link_created_by_id_idx")
+  @@map("course_invite_link")
 }
 
 model Module {

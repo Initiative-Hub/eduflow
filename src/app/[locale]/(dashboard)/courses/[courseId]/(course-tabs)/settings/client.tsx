@@ -1,6 +1,15 @@
 'use client';
 
-import { Archive, Eye, EyeOff, Pencil, Save, X } from 'lucide-react';
+import {
+  Archive,
+  Eye,
+  EyeOff,
+  Infinity as InfinityIcon,
+  Pencil,
+  Save,
+  Users,
+  X,
+} from 'lucide-react';
 import type { FormEvent, ReactNode } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -16,6 +25,7 @@ import {
 import {
   Field,
   FieldContent,
+  FieldError,
   FieldGroup,
   FieldLabel,
 } from '@/components/ui/field';
@@ -30,6 +40,7 @@ import {
 } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import {
   COURSE_VISIBILITY_OPTIONS,
   type CourseSettingsResponse,
@@ -51,7 +62,9 @@ export function CourseSettingsClient({
   const {
     canSaveOverview,
     cancelEditing,
+    capacityValidationMessage,
     draft,
+    getCapacityLabel,
     getRoleLabel,
     getVisibilityLabel,
     isEditing,
@@ -64,6 +77,7 @@ export function CourseSettingsClient({
     updateDraft,
   } = settingsState;
   const visibility = settings.course.isPublished ? 'public' : 'private';
+  const capacityLabel = getCapacityLabel(settings.course.capacity);
   const courseDescription =
     settings.course.description || t('fallback.noDescription');
 
@@ -184,6 +198,55 @@ export function CourseSettingsClient({
                     </Select>
                   </FieldContent>
                 </Field>
+                <Field>
+                  <FieldLabel htmlFor="course-settings-capacity-mode">
+                    {t('form.capacity')}
+                  </FieldLabel>
+                  <FieldContent>
+                    <div className="flex flex-col gap-3">
+                      <ToggleGroup
+                        id="course-settings-capacity-mode"
+                        type="single"
+                        value={draft.capacityMode}
+                        variant="outline"
+                        onValueChange={(value) => {
+                          if (!value) return;
+                          updateDraft({
+                            capacityMode: value as 'limited' | 'unlimited',
+                          });
+                        }}
+                      >
+                        <ToggleGroupItem value="unlimited">
+                          <InfinityIcon data-icon="inline-start" />
+                          {t('capacity.unlimited')}
+                        </ToggleGroupItem>
+                        <ToggleGroupItem value="limited">
+                          <Users data-icon="inline-start" />
+                          {t('capacity.limited')}
+                        </ToggleGroupItem>
+                      </ToggleGroup>
+                      <div className="flex flex-col gap-1">
+                        {draft.capacityMode === 'limited' ? (
+                          <div className="max-w-48">
+                            <Input
+                              id="course-settings-capacity"
+                              type="number"
+                              min={settings.course.activeMemberCount}
+                              step={1}
+                              value={draft.capacity}
+                              disabled={isSavingOverview}
+                              aria-invalid={Boolean(capacityValidationMessage)}
+                              onChange={(event) =>
+                                updateDraft({ capacity: event.target.value })
+                              }
+                            />
+                          </div>
+                        ) : null}
+                        <FieldError>{capacityValidationMessage}</FieldError>
+                      </div>
+                    </div>
+                  </FieldContent>
+                </Field>
               </FieldGroup>
               <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                 <Button
@@ -242,6 +305,16 @@ export function CourseSettingsClient({
                 <MetadataRow label={t('fields.role')}>
                   <Badge variant="outline">
                     {getRoleLabel(settings.currentUser.role)}
+                  </Badge>
+                </MetadataRow>
+                <MetadataRow label={t('fields.capacity')}>
+                  <Badge variant="secondary">
+                    {settings.course.capacity === null ? (
+                      <InfinityIcon data-icon="inline-start" />
+                    ) : (
+                      <Users data-icon="inline-start" />
+                    )}
+                    {capacityLabel}
                   </Badge>
                 </MetadataRow>
                 <MetadataRow label={t('fields.courseId')}>

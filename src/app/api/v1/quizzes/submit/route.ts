@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { CourseEnrollmentStatus } from '@/generated/prisma';
 import { errorResponse } from '@/lib/api/error-response';
 import { type AuthHandler, withAuth } from '@/lib/api/middlewares';
 import { prisma } from '@/lib/prisma';
@@ -159,6 +160,7 @@ const handler: AuthHandler = async (req, sessionData) => {
       where: {
         memberId: userId,
         courseId: quiz.courseId,
+        status: CourseEnrollmentStatus.ACTIVE,
       },
     });
 

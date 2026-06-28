@@ -9,6 +9,8 @@ export type CourseVisibility = (typeof COURSE_VISIBILITY_OPTIONS)[number];
 
 export type CourseSettingsCourse = {
   archivedAt: string | null;
+  activeMemberCount: number;
+  capacity: number | null;
   createdAt: string;
   description: string | null;
   id: string;
@@ -36,12 +38,15 @@ export type CourseSettingsResponse = {
 };
 
 export type CourseSettingsDraft = {
+  capacity: string;
+  capacityMode: 'limited' | 'unlimited';
   description: string;
   title: string;
   visibility: CourseVisibility;
 };
 
 export type CourseSettingsUpdateInput = {
+  capacity: number | null;
   description: string | null;
   isPublished: boolean;
   title: string;
@@ -73,6 +78,8 @@ export function getCourseSettingsDraft(
   settings: CourseSettingsResponse
 ): CourseSettingsDraft {
   return {
+    capacity: settings.course.capacity?.toString() ?? '',
+    capacityMode: settings.course.capacity === null ? 'unlimited' : 'limited',
     description: settings.course.description ?? '',
     title: settings.course.title,
     visibility: settings.course.isPublished ? 'public' : 'private',

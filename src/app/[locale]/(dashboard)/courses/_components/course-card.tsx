@@ -1,7 +1,8 @@
-import { BookOpen, Globe } from 'lucide-react';
+import { BookOpen, Check, Globe, X } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
@@ -11,10 +12,15 @@ interface CourseCardProps {
   id: string;
   title: string;
   description: string | null | undefined;
+  capacity: number | null;
   isPublished: boolean;
   isOwner: boolean;
   modulesCount: number;
   enrollmentsCount: number;
+  membershipStatus?: 'ACTIVE' | 'PENDING_INVITE' | null;
+  pendingInvitationId?: string | null;
+  onAcceptInvitation: (invitationId: string) => void;
+  onDeclineInvitation: (invitationId: string) => void;
   onTogglePublish: (id: string, isPublished: boolean) => void;
 }
 
@@ -22,13 +28,19 @@ export function CourseCard({
   id,
   title,
   description,
+  capacity,
   isPublished,
   isOwner,
   modulesCount,
   enrollmentsCount,
+  membershipStatus,
+  pendingInvitationId,
+  onAcceptInvitation,
+  onDeclineInvitation,
   onTogglePublish,
 }: CourseCardProps) {
   const t = useTranslations('Courses.Card');
+  const isPendingInvite = membershipStatus === 'PENDING_INVITE';
 
   return (
     <Card
@@ -46,11 +58,8 @@ export function CourseCard({
         {/* Badge & Publish switch overlay */}
         {isOwner && (
           <div className="absolute top-3 right-3 z-20 flex items-center gap-2">
-            <Badge
-              variant="secondary"
-              className="pointer-events-none rounded-full bg-background/90 px-2 py-0.5 font-medium text-[10px] text-foreground uppercase tracking-wider shadow-sm"
-            >
-              Owned
+            <Badge variant="secondary" className="pointer-events-none">
+              {t('owned')}
             </Badge>
             <div className="flex items-center gap-1.5 rounded-full border bg-background/90 py-0.5 pr-1 pl-2 shadow-sm">
               <Globe className="h-3.5 w-3.5 text-muted-foreground" />
@@ -64,22 +73,44 @@ export function CourseCard({
             </div>
           </div>
         )}
+        {isPendingInvite ? (
+          <div className="absolute top-3 right-3 z-20">
+            <Badge variant="outline" className="bg-background/90">
+              {t('pendingInvite')}
+            </Badge>
+          </div>
+        ) : null}
       </div>
 
       {/* Course Info Section */}
       <div className="flex flex-1 flex-col p-5">
-        <Link href={`/courses/${id}`} className="min-w-0 flex-1 outline-none">
-          <h3 className="line-clamp-2 font-semibold text-foreground text-lg leading-snug transition-colors group-hover/card:text-primary">
-            {title}
-          </h3>
-          <p className="mt-2 line-clamp-2 min-h-10 text-muted-foreground text-sm leading-relaxed">
-            {description || (
-              <span className="text-muted-foreground/70 italic">
-                {t('noDescription')}
-              </span>
-            )}
-          </p>
-        </Link>
+        {isPendingInvite ? (
+          <div className="min-w-0 flex-1">
+            <h3 className="line-clamp-2 font-semibold text-foreground text-lg leading-snug">
+              {title}
+            </h3>
+            <p className="mt-2 line-clamp-2 min-h-10 text-muted-foreground text-sm leading-relaxed">
+              {description || (
+                <span className="text-muted-foreground/70 italic">
+                  {t('noDescription')}
+                </span>
+              )}
+            </p>
+          </div>
+        ) : (
+          <Link href={`/courses/${id}`} className="min-w-0 flex-1 outline-none">
+            <h3 className="line-clamp-2 font-semibold text-foreground text-lg leading-snug transition-colors group-hover/card:text-primary">
+              {title}
+            </h3>
+            <p className="mt-2 line-clamp-2 min-h-10 text-muted-foreground text-sm leading-relaxed">
+              {description || (
+                <span className="text-muted-foreground/70 italic">
+                  {t('noDescription')}
+                </span>
+              )}
+            </p>
+          </Link>
+        )}
 
         {/* Divider */}
         <Separator className="my-4" />
@@ -95,11 +126,35 @@ export function CourseCard({
           <div className="h-1 w-1 rounded-full bg-muted-foreground/30" />
           <div className="flex items-center gap-1.5">
             <span className="font-semibold text-foreground text-sm tabular-nums">
-              {enrollmentsCount}
+              {enrollmentsCount}{' '}
+              {capacity !== null
+                ? t('memberCapacityLimited', { count: capacity })
+                : ''}
             </span>
             <span>{t('memberLabel')}</span>
           </div>
         </div>
+        {isPendingInvite && pendingInvitationId ? (
+          <div className="mt-4 flex gap-2">
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => onAcceptInvitation(pendingInvitationId)}
+            >
+              <Check data-icon="inline-start" />
+              {t('accept')}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => onDeclineInvitation(pendingInvitationId)}
+            >
+              <X data-icon="inline-start" />
+              {t('decline')}
+            </Button>
+          </div>
+        ) : null}
       </div>
     </Card>
   );
