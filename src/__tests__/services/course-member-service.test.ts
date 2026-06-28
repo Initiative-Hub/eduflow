@@ -1,11 +1,25 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { CourseRoleName, PlatformRoleName } from '@/generated/prisma';
+import {
+  CourseEnrollmentStatus,
+  CourseRoleName,
+  PlatformRoleName,
+} from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
 import { CourseMemberService } from '@/services/CourseMemberService';
 
+vi.mock('@/lib/email-service', () => ({
+  emailService: {
+    sendCourseAddedNotification: vi.fn(),
+  },
+}));
+
 vi.mock('@/lib/prisma', () => ({
   prisma: {
+    $transaction: vi.fn(),
     courseRole: {
+      findUnique: vi.fn(),
+    },
+    course: {
       findUnique: vi.fn(),
     },
     enrollment: {
@@ -26,7 +40,11 @@ vi.mock('@/lib/prisma', () => ({
 }));
 
 const prismaMock = prisma as unknown as {
+  $transaction: ReturnType<typeof vi.fn>;
   courseRole: {
+    findUnique: ReturnType<typeof vi.fn>;
+  };
+  course: {
     findUnique: ReturnType<typeof vi.fn>;
   };
   enrollment: {
@@ -48,11 +66,15 @@ const prismaMock = prisma as unknown as {
 describe('CourseMemberService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    prismaMock.$transaction.mockImplementation((callback) =>
+      callback(prismaMock)
+    );
   });
 
   it('lists members with server-side search, role filter, limit, and offset', async () => {
     const enrolledAt = new Date('2026-01-01T00:00:00.000Z');
     prismaMock.enrollment.count.mockResolvedValue(1);
+    prismaMock.course.findUnique.mockResolvedValue({ capacity: null });
     prismaMock.enrollment.findMany.mockResolvedValue([
       {
         id: 'enrollment-1',
@@ -64,6 +86,7 @@ describe('CourseMemberService', () => {
           name: 'Teacher One',
         },
         role: { name: CourseRoleName.TEACHER },
+        status: CourseEnrollmentStatus.ACTIVE,
       },
     ]);
 
@@ -94,10 +117,17 @@ describe('CourseMemberService', () => {
       })
     );
     expect(result).toEqual({
+      capacity: {
+        activeMemberCount: 1,
+        capacity: null,
+        isFull: false,
+        remaining: null,
+      },
       data: [
         {
           enrollmentId: 'enrollment-1',
           enrolledAt: enrolledAt.toISOString(),
+          status: CourseEnrollmentStatus.ACTIVE,
           isCourseOwner: false,
           isCurrentUser: false,
           user: {
@@ -200,7 +230,15 @@ describe('CourseMemberService', () => {
       })
     ).rejects.toThrow('Cannot assign the course owner role');
 
-    prismaMock.enrollment.findFirst.mockResolvedValue({ id: 'enrollment-1' });
+    prismaMock.course.findUnique.mockResolvedValue({
+      id: 'course-1',
+      title: 'Test Course',
+      deletedAt: null,
+    });
+    prismaMock.enrollment.findFirst.mockResolvedValue({
+      id: 'enrollment-1',
+      status: CourseEnrollmentStatus.ACTIVE,
+    });
     prismaMock.user.findUnique.mockResolvedValue({
       emailVerified: true,
       role: { name: 'STUDENT' },
@@ -213,6 +251,34 @@ describe('CourseMemberService', () => {
         role: CourseRoleName.STUDENT,
       })
     ).rejects.toThrow('User is already a course member');
+  });
+
+  it('rejects direct member addition when active members have reached capacity', async () => {
+    prismaMock.course.findUnique.mockResolvedValue({
+      id: 'course-1',
+      title: 'Full Course',
+      capacity: 50,
+      deletedAt: null,
+    });
+    prismaMock.user.findUnique.mockResolvedValue({
+      email: 'student@example.com',
+      emailVerified: true,
+      name: 'Student One',
+      role: { name: PlatformRoleName.STUDENT },
+    });
+    prismaMock.enrollment.findFirst.mockResolvedValue(null);
+    prismaMock.enrollment.count.mockResolvedValue(50);
+    prismaMock.courseRole.findUnique.mockResolvedValue({ id: 'role-student' });
+    prismaMock.enrollment.create.mockResolvedValue({ id: 'enrollment-1' });
+
+    await expect(
+      CourseMemberService.addMember({
+        courseId: 'course-1',
+        userId: 'user-1',
+        role: CourseRoleName.STUDENT,
+      })
+    ).rejects.toThrow('Course capacity reached');
+    expect(prismaMock.enrollment.create).not.toHaveBeenCalled();
   });
 
   it('rejects editing course owner enrollment role', async () => {

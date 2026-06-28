@@ -25,10 +25,13 @@ export interface Course {
   ownerId?: string;
   title: string;
   description: string | null;
+  capacity: number | null;
   isPublished: boolean;
   createdAt: string;
   updatedAt?: string;
   isOwner?: boolean;
+  membershipStatus?: 'ACTIVE' | 'PENDING_INVITE' | null;
+  pendingInvitationId?: string | null;
   _count?: {
     modules: number;
     enrollments: number;
@@ -129,6 +132,41 @@ export function useCourses(
     },
   });
 
+  const acceptInvitationMutation = useMutation({
+    mutationFn: (invitationId: string) =>
+      apiClient.post<{ courseId: string; message: string }>(
+        `v1/course-invitations/${invitationId}/accept`,
+        {}
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['courses'] });
+      toast.success(t('toast.invitationAccepted'));
+    },
+    onError: (err: any) => {
+      toast.error(
+        err.message === 'capacity_full' ||
+          err.message === 'Course capacity reached'
+          ? t('toast.capacityFull')
+          : err.message || t('toast.invitationAcceptFailed')
+      );
+    },
+  });
+
+  const declineInvitationMutation = useMutation({
+    mutationFn: (invitationId: string) =>
+      apiClient.post<{ id: string; message: string }>(
+        `v1/course-invitations/${invitationId}/decline`,
+        {}
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['courses'] });
+      toast.success(t('toast.invitationDeclined'));
+    },
+    onError: (err: any) => {
+      toast.error(err.message || t('toast.invitationDeclineFailed'));
+    },
+  });
+
   const handleCreateCourse = useCallback(
     (
       data: { title: string; description?: string },
@@ -141,6 +179,16 @@ export function useCourses(
     (id: string, isPublished: boolean) =>
       togglePublishMutation.mutate({ courseId: id, isPublished }),
     [togglePublishMutation]
+  );
+
+  const handleAcceptInvitation = useCallback(
+    (invitationId: string) => acceptInvitationMutation.mutate(invitationId),
+    [acceptInvitationMutation]
+  );
+
+  const handleDeclineInvitation = useCallback(
+    (invitationId: string) => declineInvitationMutation.mutate(invitationId),
+    [declineInvitationMutation]
   );
 
   return {
@@ -160,5 +208,9 @@ export function useCourses(
     isCreating: createCourseMutation.isPending,
     handleCreateCourse,
     handleTogglePublish,
+    handleAcceptInvitation,
+    handleDeclineInvitation,
+    isAcceptingInvitation: acceptInvitationMutation.isPending,
+    isDecliningInvitation: declineInvitationMutation.isPending,
   };
 }

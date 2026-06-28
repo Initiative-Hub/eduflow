@@ -4,8 +4,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { useState, useTransition } from 'react';
 import { toast } from 'sonner';
-import type { ApiError } from '@/lib/api';
 import { useRouter } from '@/i18n/navigation';
+import type { ApiError } from '@/lib/api';
 import {
   COURSE_SETTINGS_QUERY_KEY,
   type CourseSettingsDraft,
@@ -56,6 +56,10 @@ export function useCourseSettings({
   const updateOverviewMutation = useMutation({
     mutationFn: () =>
       courseSettingsService.updateOverview(courseId, {
+        capacity:
+          draft.capacityMode === 'unlimited'
+            ? null
+            : Number.parseInt(draft.capacity, 10),
         description: draft.description.trim() || null,
         isPublished: draft.visibility === 'public',
         title: draft.title.trim(),
@@ -156,7 +160,11 @@ export function useCourseSettings({
   };
 
   const saveOverview = () => {
-    if (!settings.currentUser.isOwner || draft.title.trim().length === 0) {
+    if (
+      !settings.currentUser.isOwner ||
+      draft.title.trim().length === 0 ||
+      capacityValidationMessage
+    ) {
       return;
     }
 
@@ -191,6 +199,29 @@ export function useCourseSettings({
       : t('visibility.private');
   };
 
+  const getCapacityLabel = (capacity: number | null) => {
+    return capacity === null
+      ? t('capacity.unlimited')
+      : t('capacity.limitedValue', { count: capacity });
+  };
+
+  const parsedCapacity =
+    draft.capacityMode === 'limited'
+      ? Number.parseInt(draft.capacity, 10)
+      : null;
+  const capacityValidationMessage =
+    draft.capacityMode === 'limited' &&
+    (!Number.isFinite(parsedCapacity) ||
+      parsedCapacity === null ||
+      parsedCapacity < 1)
+      ? t('capacity.validation.required')
+      : draft.capacityMode === 'limited' &&
+          parsedCapacity !== null &&
+          parsedCapacity < settings.course.activeMemberCount
+        ? t('capacity.validation.belowActive', {
+            count: settings.course.activeMemberCount,
+          })
+        : null;
   const selectedTransferMember = settings.transferMembers.find(
     (member) => member.id === transferMemberId
   );
@@ -203,13 +234,16 @@ export function useCourseSettings({
     canSaveOverview:
       settings.currentUser.isOwner &&
       draft.title.trim().length > 0 &&
+      !capacityValidationMessage &&
       !updateOverviewMutation.isPending,
     cancelEditing,
     deleteConfirmation,
     deleteDialogOpen,
     draft,
     getRoleLabel,
+    getCapacityLabel,
     getVisibilityLabel,
+    capacityValidationMessage,
     isArchiving: archiveCourseMutation.isPending,
     isDeleting: deleteCourseMutation.isPending || isNavigating,
     isEditing,

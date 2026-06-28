@@ -1,3 +1,4 @@
+import { CourseEnrollmentStatus } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
 
 export async function getCoursePermissions(userId: string, courseId: string) {
@@ -6,6 +7,7 @@ export async function getCoursePermissions(userId: string, courseId: string) {
       memberId: userId,
       courseId,
       course: { deletedAt: null },
+      status: CourseEnrollmentStatus.ACTIVE,
     },
     select: {
       role: {

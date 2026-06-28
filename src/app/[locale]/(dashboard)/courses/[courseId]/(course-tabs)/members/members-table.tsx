@@ -45,6 +45,7 @@ export function MembersTable({ membersState }: MembersTableProps) {
     getInitials,
     getJoinDate,
     getRoleBadge,
+    getStatusBadge,
     isLoading,
     members: memberRows,
   } = membersState;
@@ -74,6 +75,7 @@ export function MembersTable({ membersState }: MembersTableProps) {
           <TableRow className="bg-muted/30">
             <TableHead>{t('table.user')}</TableHead>
             <TableHead>{t('table.role')}</TableHead>
+            <TableHead>{t('table.status')}</TableHead>
             <TableHead>{t('table.joinDate')}</TableHead>
             {canManageMembers ? (
               <TableHead className="text-right">
@@ -85,6 +87,7 @@ export function MembersTable({ membersState }: MembersTableProps) {
         <TableBody>
           {memberRows.map((member) => {
             const roleBadge = getRoleBadge(member.user.role);
+            const statusBadge = getStatusBadge(member.status);
 
             return (
               <TableRow key={member.enrollmentId}>
@@ -113,6 +116,11 @@ export function MembersTable({ membersState }: MembersTableProps) {
                 </TableCell>
                 <TableCell>
                   <Badge variant={roleBadge.variant}>{roleBadge.label}</Badge>
+                </TableCell>
+                <TableCell>
+                  <Badge variant={statusBadge.variant}>
+                    {statusBadge.label}
+                  </Badge>
                 </TableCell>
                 <TableCell className="text-muted-foreground">
                   {getJoinDate(member.enrolledAt)}
@@ -168,7 +176,9 @@ function MemberActions({
             onSelect={() => setRemoveDialog(member)}
           >
             <Trash2 />
-            {t('actions.remove')}
+            {member.status === 'PENDING_INVITE'
+              ? t('actions.removeInvitation')
+              : t('actions.remove')}
           </DropdownMenuItem>
         </DropdownMenuGroup>
       </DropdownMenuContent>
@@ -195,6 +205,9 @@ function MembersTableSkeleton({
             <TableHead>
               <Skeleton className="h-4 w-20" />
             </TableHead>
+            <TableHead>
+              <Skeleton className="h-4 w-20" />
+            </TableHead>
             {canManageMembers ? <TableHead /> : null}
           </TableRow>
         </TableHeader>
@@ -209,6 +222,9 @@ function MembersTableSkeleton({
                     <Skeleton className="h-3 w-48" />
                   </div>
                 </div>
+              </TableCell>
+              <TableCell>
+                <Skeleton className="h-6 w-24" />
               </TableCell>
               <TableCell>
                 <Skeleton className="h-6 w-24" />
