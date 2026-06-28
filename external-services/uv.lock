@@ -399,7 +399,7 @@ requires-dist = [
     { name = "markitdown", extras = ["pdf"], specifier = "==0.1.6" },
     { name = "modal", specifier = "==1.4.3" },
     { name = "python-multipart", specifier = "==0.0.30" },
-    { name = "slide-skills", specifier = ">=0.2.22" },
+    { name = "slide-skills", specifier = ">=0.2.23" },
     { name = "tavily-python", specifier = ">=0.7.26" },
     { name = "youtube-transcript-api", specifier = ">=1.2.4" },
 ]
@@ -1574,7 +1574,7 @@ wheels = [
 
 [[package]]
 name = "slide-skills"
-version = "0.2.22"
+version = "0.2.23"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "lxml" },
@@ -1584,9 +1584,9 @@ dependencies = [
     { name = "python-pptx" },
     { name = "resvg-py" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ee/31/40fb16b17c7ae637dca8c1a214e09ed8b33b35736f7ae0332c9d4a0ff5f9/slide_skills-0.2.22.tar.gz", hash = "sha256:f882da92ce8ac7441892ffab1670c521fb8704e520843fe32db854d267035964", size = 78161, upload-time = "2026-06-22T14:47:36.395Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/75/c4/ed00daf5c1cb6cf0cdf9146024eced7dc2ddf65aef588231204f7534d11c/slide_skills-0.2.23.tar.gz", hash = "sha256:92f75ab9321ec22a37127e3d3f7230cab9078da704cecef718856605e78144c6", size = 78558, upload-time = "2026-06-28T12:37:07.634Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/cf/b0/35a58adcf8848e70fa1fdb9f2177ffd4eaf367b15e66c043059c0d1354dd/slide_skills-0.2.22-py3-none-any.whl", hash = "sha256:f4b5e838aa1344275066c7a5921735e9a7f0d14bea00ca3e1b4e433a43b445b7", size = 80987, upload-time = "2026-06-22T14:47:34.851Z" },
+    { url = "https://files.pythonhosted.org/packages/63/d5/ba33f4afb0f43980d9c34a289406430391c857f16b010bf3e330f3a5bc64/slide_skills-0.2.23-py3-none-any.whl", hash = "sha256:10d3e3db6aa97385f6dd3ee4871eaad60fde0fd9b2860f0a74d75b41dc0efd23", size = 81445, upload-time = "2026-06-28T12:37:05.998Z" },
 ]
 
 [[package]]

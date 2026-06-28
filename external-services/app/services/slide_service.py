@@ -6,9 +6,32 @@ from pathlib import Path
 from typing import Any, Dict, List, Union
 from fastapi.concurrency import run_in_threadpool
 import slide_skills  # type: ignore
+import slide_skills.svg_categories
 from app.deps import SLIDE_TEMPLATES_DIR
 
 logger = logging.getLogger(__name__)
+
+# Monkeypatch select_and_fill_slide to enforce outline bindings
+_orig_select_and_fill_slide = slide_skills.svg_categories.select_and_fill_slide
+
+def custom_select_and_fill_slide(variants, slide_content, **kwargs):
+    res = _orig_select_and_fill_slide(variants, slide_content, **kwargs)
+    if not res:
+        return res
+    
+    variant = res.get("variant")
+    texts = res.get("texts") or {}
+    
+    # Overwrite LLM-generated values with input bindings if they exist
+    input_bindings = slide_content.get("bindings") or {}
+    for key in variant.placeholders:
+        if key in input_bindings:
+            texts[key] = input_bindings[key]
+            
+    res["texts"] = texts
+    return res
+
+slide_skills.svg_categories.select_and_fill_slide = custom_select_and_fill_slide
 
 
 def flatten_slide_bindings(category: str, slide_title: str, bindings: dict) -> dict:
@@ -196,6 +219,7 @@ class SlideService:
             images=images,
             image_source=image_source,
             title=title,
+            research=True,
         )
 
         return res
