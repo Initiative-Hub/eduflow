@@ -136,68 +136,20 @@ async def get_deck(deck_id: str):
 
 @router.get("/decks/{deck_id}/pptx")
 async def get_deck_pptx(deck_id: str):
-    import io
-    import re
-    import traceback
-    from pptx import Presentation
-    from pptx.util import Emu
-    import resvg_py
-
-    # Always fetch latest HTML from S3 to make sure we have visual edits
-    s3_key = f"slides/{deck_id}.html"
-    local_html_path = STORAGE_DIR / f"{deck_id}_latest.html"
-
-    # Try downloading from S3
-    downloaded = await download_file_from_s3(s3_key, local_html_path)
-    if not downloaded:
-        # Fallback: check if we have the original HTML locally
-        local_html_path = STORAGE_DIR / f"{deck_id}.html"
-        if not local_html_path.exists():
-            raise HTTPException(status_code=404, detail="Deck file not found")
-
     try:
-        html_content = local_html_path.read_text(encoding="utf-8")
+        pptx_path = await slide_service.generate_pptx(deck_id)
+        return FileResponse(
+            pptx_path,
+            media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            filename=f"deck-{deck_id}.pptx",
+        )
+    except ValueError as val_err:
+        raise HTTPException(
+            status_code=404 if "not found" in str(val_err).lower() else 400,
+            detail=str(val_err),
+        )
     except Exception as e:
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Failed to read deck HTML: {str(e)}")
-
-    # Extract all SVG markup
-    svgs = re.findall(r"(<svg[^>]*>.*?</svg>)", html_content, re.DOTALL)
-    if not svgs:
-        raise HTTPException(status_code=400, detail="No SVG slides found in deck")
-
-    # Generate PPTX in a specific output path
-    pptx_path = STORAGE_DIR / f"{deck_id}.pptx"
-    try:
-        prs = Presentation()
-        # Set 16:9 aspect ratio
-        prs.slide_width = Emu(int(12192000)) # 13.33 in
-        prs.slide_height = Emu(int(12192000 * 9 / 16)) # 7.5 in
-        blank_layout = prs.slide_layouts[6] # Blank slide layout
-
-        for idx, svg_markup in enumerate(svgs):
-            # Escape bare ampersands to prevent XML parsing errors in resvg-py
-            clean_svg = re.sub(r"&(?!(?:[a-zA-Z0-9]+|#[0-9]+|#x[0-9a-fA-F]+);)", "&amp;", svg_markup)
-            png_bytes = bytes(resvg_py.svg_to_bytes(svg_string=clean_svg, width=1920))
-            slide = prs.slides.add_slide(blank_layout)
-            slide.shapes.add_picture(
-                io.BytesIO(png_bytes), 
-                0, 0, 
-                prs.slide_width, 
-                prs.slide_height
-            )
-
-        prs.save(str(pptx_path))
-    except Exception as e:
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Failed to assemble PPTX: {str(e)}")
-
-    return FileResponse(
-        pptx_path, 
-        media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
-        filename=f"deck-{deck_id}.pptx"
-    )
-
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/templates/import")

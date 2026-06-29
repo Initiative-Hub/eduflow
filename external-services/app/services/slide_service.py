@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Union
 from fastapi.concurrency import run_in_threadpool
 import slide_skills  # type: ignore
-import slide_skills.svg_categories
+import slide_skills.svg_categories  # type: ignore
 from app.deps import SLIDE_TEMPLATES_DIR
 
 logger = logging.getLogger(__name__)
@@ -14,22 +14,24 @@ logger = logging.getLogger(__name__)
 # Monkeypatch select_and_fill_slide to enforce outline bindings
 _orig_select_and_fill_slide = slide_skills.svg_categories.select_and_fill_slide
 
+
 def custom_select_and_fill_slide(variants, slide_content, **kwargs):
     res = _orig_select_and_fill_slide(variants, slide_content, **kwargs)
     if not res:
         return res
-    
+
     variant = res.get("variant")
     texts = res.get("texts") or {}
-    
+
     # Overwrite LLM-generated values with input bindings if they exist
     input_bindings = slide_content.get("bindings") or {}
     for key in variant.placeholders:
         if key in input_bindings:
             texts[key] = input_bindings[key]
-            
+
     res["texts"] = texts
     return res
+
 
 slide_skills.svg_categories.select_and_fill_slide = custom_select_and_fill_slide
 
@@ -150,11 +152,24 @@ class SlideService:
             slide_skills.list_collections, SLIDE_TEMPLATES_DIR
         )
         categories = {
-            "title_slide", "agenda_outline", "section_header", "title_bullets",
-            "two_column_split", "big_quote_takeaway", "kpi_big_number", "chart_insight",
-            "data_table", "media_text", "timeline_milestones", "step_by_step",
-            "conclusion_summary", "call_to_action", "qa_contact", "references_list",
-            "image_gallery", "kpi_big_numbers"
+            "title_slide",
+            "agenda_outline",
+            "section_header",
+            "title_bullets",
+            "two_column_split",
+            "big_quote_takeaway",
+            "kpi_big_number",
+            "chart_insight",
+            "data_table",
+            "media_text",
+            "timeline_milestones",
+            "step_by_step",
+            "conclusion_summary",
+            "call_to_action",
+            "qa_contact",
+            "references_list",
+            "image_gallery",
+            "kpi_big_numbers",
         }
         return [c for c in collections if c["name"].lower() not in categories]
 
@@ -215,12 +230,23 @@ class SlideService:
         library_dir = SLIDE_TEMPLATES_DIR
         temp_dir_context = None
 
-        if collection and collection != "starter" and collection != "neon_dark" and collection != "templates":
-            from app.services.s3_service import list_files_in_s3_prefix, download_file_from_s3
+        if (
+            collection
+            and collection != "starter"
+            and collection != "neon_dark"
+            and collection != "templates"
+        ):
+            from app.services.s3_service import (
+                list_files_in_s3_prefix,
+                download_file_from_s3,
+            )
+
             s3_prefix = f"templates/{collection}/"
             s3_keys = await list_files_in_s3_prefix(s3_prefix)
             if s3_keys:
-                logger.info(f"Downloading custom template collection '{collection}' from S3...")
+                logger.info(
+                    f"Downloading custom template collection '{collection}' from S3..."
+                )
                 col_path = Path(SLIDE_TEMPLATES_DIR) / collection
                 col_path.mkdir(parents=True, exist_ok=True)
                 for key in s3_keys:
@@ -238,18 +264,43 @@ class SlideService:
                 temp_lib_dir = Path(temp_dir_context.name)
 
                 categories_to_map = [
-                    "TITLE_SLIDE", "AGENDA_OUTLINE", "SECTION_HEADER", "TITLE_BULLETS",
-                    "TWO_COLUMN_SPLIT", "BIG_QUOTE_TAKEAWAY", "KPI_BIG_NUMBER", "CHART_INSIGHT",
-                    "DATA_TABLE", "MEDIA_TEXT", "TIMELINE_MILESTONES", "STEP_BY_STEP",
-                    "CONCLUSION_SUMMARY", "CALL_TO_ACTION", "QA_CONTACT", "REFERENCES_LIST"
+                    "TITLE_SLIDE",
+                    "AGENDA_OUTLINE",
+                    "SECTION_HEADER",
+                    "TITLE_BULLETS",
+                    "TWO_COLUMN_SPLIT",
+                    "BIG_QUOTE_TAKEAWAY",
+                    "KPI_BIG_NUMBER",
+                    "CHART_INSIGHT",
+                    "DATA_TABLE",
+                    "MEDIA_TEXT",
+                    "TIMELINE_MILESTONES",
+                    "STEP_BY_STEP",
+                    "CONCLUSION_SUMMARY",
+                    "CALL_TO_ACTION",
+                    "QA_CONTACT",
+                    "REFERENCES_LIST",
                 ]
 
                 patterns = {
                     "TITLE_SLIDE": ["title", "slide_00", "slide_title"],
                     "AGENDA_OUTLINE": ["agenda", "outline", "slide_01"],
                     "SECTION_HEADER": ["section", "header", "divider"],
-                    "TITLE_BULLETS": ["bullets", "bullet", "list", "slide_02", "slide_03", "slide_04"],
-                    "TWO_COLUMN_SPLIT": ["two_column", "two_col", "split", "columns", "comparison"],
+                    "TITLE_BULLETS": [
+                        "bullets",
+                        "bullet",
+                        "list",
+                        "slide_02",
+                        "slide_03",
+                        "slide_04",
+                    ],
+                    "TWO_COLUMN_SPLIT": [
+                        "two_column",
+                        "two_col",
+                        "split",
+                        "columns",
+                        "comparison",
+                    ],
                     "BIG_QUOTE_TAKEAWAY": ["quote", "takeaway", "saying", "citation"],
                     "KPI_BIG_NUMBER": ["kpi", "statistic", "number", "metrics"],
                     "CHART_INSIGHT": ["chart", "insight", "graph", "visualization"],
@@ -283,7 +334,10 @@ class SlideService:
                     if not matched_file:
                         for svg_file in svg_files:
                             stem_lower = svg_file.stem.lower()
-                            if cat.lower() in stem_lower or cat.replace("_", "").lower() in stem_lower:
+                            if (
+                                cat.lower() in stem_lower
+                                or cat.replace("_", "").lower() in stem_lower
+                            ):
                                 matched_file = svg_file
                                 break
 
@@ -297,10 +351,18 @@ class SlideService:
                         if default_cat_dir.exists() and default_cat_dir.is_dir():
                             default_files = list(default_cat_dir.glob("*.svg"))
                             if default_files:
-                                shutil.copy2(default_files[0], cat_dir / "variant_a.svg")
+                                shutil.copy2(
+                                    default_files[0], cat_dir / "variant_a.svg"
+                                )
 
                     (cat_dir / "category.json").write_text(
-                        json.dumps({"description": f"{cat} category layout", "variants": {"variant_a": "Default design"}}, ensure_ascii=False)
+                        json.dumps(
+                            {
+                                "description": f"{cat} category layout",
+                                "variants": {"variant_a": "Default design"},
+                            },
+                            ensure_ascii=False,
+                        )
                     )
 
                 library_dir = str(temp_lib_dir)
@@ -352,7 +414,7 @@ class SlideService:
                 pptx_path.write_bytes(file_bytes)
                 out_dir = temp_path / "converted"
                 out_dir.mkdir()
-                
+
                 await run_in_threadpool(
                     slide_skills.make_svg_templates,
                     str(pptx_path),
@@ -375,15 +437,81 @@ class SlideService:
 
             # Upload the imported templates to S3 bucket
             from app.services.s3_service import upload_file_to_s3
+
             dest_dir = Path(SLIDE_TEMPLATES_DIR) / collection_name
             if dest_dir.exists() and dest_dir.is_dir():
+
                 async def upload_dir_to_s3(directory: Path, prefix: str):
                     for child in directory.iterdir():
                         if child.is_file():
                             await upload_file_to_s3(child, f"{prefix}/{child.name}")
                         elif child.is_dir():
                             await upload_dir_to_s3(child, f"{prefix}/{child.name}")
-                
+
                 await upload_dir_to_s3(dest_dir, f"templates/{collection_name}")
 
             return res
+
+    async def generate_pptx(self, deck_id: str) -> Path:
+        import io
+        import re
+        import traceback
+        from pptx import Presentation
+        from pptx.util import Emu
+        import resvg_py
+        from app.deps import STORAGE_DIR
+        from app.services.s3_service import download_file_from_s3
+
+        # Always fetch latest HTML from S3 to make sure we have visual edits
+        s3_key = f"slides/{deck_id}.html"
+        local_html_path = STORAGE_DIR / f"{deck_id}_latest.html"
+
+        # Try downloading from S3
+        downloaded = await download_file_from_s3(s3_key, local_html_path)
+        if not downloaded:
+            # Fallback: check if we have the original HTML locally
+            local_html_path = STORAGE_DIR / f"{deck_id}.html"
+            if not local_html_path.exists():
+                raise ValueError("Deck file not found")
+
+        try:
+            html_content = local_html_path.read_text(encoding="utf-8")
+        except Exception as e:
+            traceback.print_exc()
+            raise RuntimeError(f"Failed to read deck HTML: {str(e)}")
+
+        # Extract all SVG markup
+        svgs = re.findall(r"(<svg[^>]*>.*?</svg>)", html_content, re.DOTALL)
+        if not svgs:
+            raise ValueError("No SVG slides found in deck")
+
+        # Generate PPTX in a specific output path
+        pptx_path = STORAGE_DIR / f"{deck_id}.pptx"
+        try:
+            prs = Presentation()
+            # Set 16:9 aspect ratio
+            prs.slide_width = Emu(int(12192000))  # 13.33 in
+            prs.slide_height = Emu(int(12192000 * 9 / 16))  # 7.5 in
+            blank_layout = prs.slide_layouts[6]  # Blank slide layout
+
+            for idx, svg_markup in enumerate(svgs):
+                # Escape bare ampersands to prevent XML parsing errors in resvg-py
+                clean_svg = re.sub(
+                    r"&(?!(?:[a-zA-Z0-9]+|#[0-9]+|#x[0-9a-fA-F]+);)",
+                    "&amp;",
+                    svg_markup,
+                )
+                png_bytes = bytes(
+                    resvg_py.svg_to_bytes(svg_string=clean_svg, width=1920)
+                )
+                slide = prs.slides.add_slide(blank_layout)
+                slide.shapes.add_picture(
+                    io.BytesIO(png_bytes), 0, 0, prs.slide_width, prs.slide_height
+                )
+
+            prs.save(str(pptx_path))
+        except Exception as e:
+            traceback.print_exc()
+            raise RuntimeError(f"Failed to assemble PPTX: {str(e)}")
+
+        return pptx_path
