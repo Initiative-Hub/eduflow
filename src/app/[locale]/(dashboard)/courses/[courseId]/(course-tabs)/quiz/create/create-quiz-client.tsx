@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { QuizForm, type QuizFormSubmitData } from '@/components/quiz/quiz-form';
 import { Button } from '@/components/ui/button';
-import type { QuestionSubType, QuizCategory } from '@/lib/quiz-template';
 import { useModules } from '../../../use-modules';
 import { useQuestionBank } from '../../../use-question-bank';
 
@@ -26,11 +25,9 @@ export function CreateQuizClient({
   const router = useRouter();
   const { modules } = useModules(courseId);
   const {
-    createQuiz,
-    isCreatingQuiz,
-    generateQuestions,
-    isGeneratingQuestions,
-    generateQuestionsError,
+    createGeneratedQuiz,
+    isCreatingGeneratedQuiz,
+    createGeneratedQuizError,
   } = useQuestionBank({ courseId });
 
   // Get lessons from the preselected module or all modules
@@ -44,7 +41,7 @@ export function CreateQuizClient({
         ? availableLessons.map((l) => l.id)
         : data.selectedLessonIds;
 
-    createQuiz(
+    createGeneratedQuiz(
       {
         lessonIds,
         title: data.title,
@@ -52,32 +49,14 @@ export function CreateQuizClient({
         category: data.category,
         subType: data.subType,
         deliveryMode: data.deliveryMode,
-        selectionMethod: 'HAND_PICK',
+        selectionMethod: 'MANUAL_CREATE',
         questionCount: data.questionCount,
       },
       {
-        onSuccess: () => router.push(`/courses/${courseId}`),
+        onSuccess: (generatedQuiz) =>
+          router.push(`/courses/${courseId}/quiz/${generatedQuiz.id}?tab=edit`),
       }
     );
-  };
-
-  const handleGenerateWithAI = async (params: {
-    lessonIds: string[];
-    category: QuizCategory;
-    subType: QuestionSubType;
-    count: number;
-  }) => {
-    if (params.lessonIds.length === 0) return;
-    try {
-      await generateQuestions({
-        lessonId: params.lessonIds[0],
-        category: params.category,
-        subType: params.subType,
-        count: params.count,
-      });
-    } catch {
-      // handled by mutation
-    }
   };
 
   return (
@@ -102,35 +81,22 @@ export function CreateQuizClient({
         modules={modules}
         availableLessons={availableLessons}
         onSubmit={handleSubmit}
-        isSubmitting={isCreatingQuiz}
-        isGeneratingQuestions={isGeneratingQuestions}
-        generateQuestionsError={generateQuestionsError}
-        onGenerateWithAI={handleGenerateWithAI}
+        isSubmitting={isCreatingGeneratedQuiz}
+        generateQuestionsError={createGeneratedQuizError}
+        showAIGenerationNotice
         hideLessonSelector={!!lessonId}
         preselectedLessonId={lessonId}
-        renderFooter={(submitForm, generateWithAI) => (
-          <div className="flex items-center justify-between border-t pt-6">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={generateWithAI}
-              disabled={isGeneratingQuestions}
-            >
-              {isGeneratingQuestions ? (
-                <Sparkles className="mr-1.5 h-3.5 w-3.5 animate-pulse" />
-              ) : (
-                <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-              )}
-              {isGeneratingQuestions
-                ? t('generatingQuestions')
-                : t('aiGenerate')}
-            </Button>
+        renderFooter={(submitForm) => (
+          <div className="flex items-center justify-end border-t pt-6">
             <div className="flex items-center gap-3">
               <Link href={`/courses/${courseId}`}>
                 <Button variant="ghost">{t('cancel')}</Button>
               </Link>
-              <Button onClick={submitForm} disabled={isCreatingQuiz}>
-                {isCreatingQuiz ? t('creating') : t('generateQuiz')}
+              <Button onClick={submitForm} disabled={isCreatingGeneratedQuiz}>
+                <Sparkles className="mr-2 h-4 w-4" />
+                {isCreatingGeneratedQuiz
+                  ? t('creatingWithAI')
+                  : t('createWithAI')}
               </Button>
             </div>
           </div>

@@ -9,7 +9,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -71,13 +71,14 @@ interface QuizPlayerClientProps {
 export function QuizPlayerClient({ courseId, quizId }: QuizPlayerClientProps) {
   const t = useTranslations('Courses.QuizPlayer');
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { quizzes, isLoadingQuizzes, isQuizzesError, refetchQuizzes } =
     useQuestionBank({ courseId });
   const { modules, isLoading: isModulesLoading } = useModules(courseId);
   const [showOutline, setShowOutline] = useState(false);
   const [isRetaking, setIsRetaking] = useState(false);
-  const [activeTab, setActiveTab] = useState<'take' | 'edit'>('take');
   const [isAiDialogOpen, setIsAiDialogOpen] = useState(false);
+  const activeTab = searchParams.get('tab') === 'edit' ? 'edit' : 'take';
 
   const { data: sessionData } = useSession();
 
@@ -177,6 +178,24 @@ export function QuizPlayerClient({ courseId, quizId }: QuizPlayerClientProps) {
   const handleOpenAiDialog = useCallback(() => {
     setIsAiDialogOpen(true);
   }, []);
+
+  const handleTabChange = useCallback(
+    (nextTab: 'take' | 'edit') => {
+      const nextParams = new URLSearchParams(searchParams.toString());
+      if (nextTab === 'edit') {
+        nextParams.set('tab', 'edit');
+      } else {
+        nextParams.delete('tab');
+      }
+
+      const queryString = nextParams.toString();
+      router.replace(
+        `/courses/${courseId}/quiz/${quizId}${queryString ? `?${queryString}` : ''}`,
+        { scroll: false }
+      );
+    },
+    [courseId, quizId, router, searchParams]
+  );
 
   const handleGenerateWithContext = useCallback(
     (context: string) => {
@@ -288,7 +307,7 @@ export function QuizPlayerClient({ courseId, quizId }: QuizPlayerClientProps) {
             <Button
               variant={activeTab === 'take' ? 'secondary' : 'ghost'}
               size="xs"
-              onClick={() => setActiveTab('take')}
+              onClick={() => handleTabChange('take')}
               className="h-7 cursor-pointer px-3 font-semibold text-xs"
             >
               {t('studentView')}
@@ -296,7 +315,7 @@ export function QuizPlayerClient({ courseId, quizId }: QuizPlayerClientProps) {
             <Button
               variant={activeTab === 'edit' ? 'secondary' : 'ghost'}
               size="xs"
-              onClick={() => setActiveTab('edit')}
+              onClick={() => handleTabChange('edit')}
               className="h-7 cursor-pointer px-3 font-semibold text-xs"
             >
               {t('editQuestions')}

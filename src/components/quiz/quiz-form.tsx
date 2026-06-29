@@ -38,6 +38,8 @@ export interface QuizFormProps {
   isSubmitting: boolean;
   /** Whether AI generation is in progress */
   isGeneratingQuestions?: boolean;
+  /** Show the AI generation notice even when generation is handled by submit */
+  showAIGenerationNotice?: boolean;
   /** Error from AI question generation */
   generateQuestionsError?: Error | null;
   /** Called when user clicks "Generate with AI" */
@@ -81,6 +83,7 @@ export function QuizForm({
   onSubmit,
   isSubmitting,
   generateQuestionsError,
+  showAIGenerationNotice = false,
   onGenerateWithAI,
   compact = false,
   hideLessonSelector = false,
@@ -152,7 +155,7 @@ export function QuizForm({
   return (
     <div className={spacing}>
       {/* AI Question Generation Card */}
-      {onGenerateWithAI && (
+      {(onGenerateWithAI || showAIGenerationNotice) && (
         <div className="rounded-lg border border-dashed bg-muted/20 p-4">
           <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />

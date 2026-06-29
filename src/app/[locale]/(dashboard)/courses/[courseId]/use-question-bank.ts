@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/api/api-client';
@@ -10,6 +11,7 @@ import type {
   QuizDefinition,
 } from '@/lib/quiz-template';
 import { generateQuestionsFromLesson } from '@/lib/quiz-template';
+import { quizService } from './(course-tabs)/quiz/quiz.service';
 
 // ─── Question Bank Hook ──────────────────────────────────────────────────────
 
@@ -19,6 +21,7 @@ interface UseQuestionBankOptions {
 
 export function useQuestionBank({ courseId }: UseQuestionBankOptions) {
   const queryClient = useQueryClient();
+  const t = useTranslations('Courses.CreateQuiz');
 
   // Fetch all questions for the course via real API
   const questionsQuery = useQuery({
@@ -117,6 +120,37 @@ export function useQuestionBank({ courseId }: UseQuestionBankOptions) {
     },
   });
 
+  const createGeneratedQuizMutation = useMutation({
+    mutationFn: async (config: QuizConfiguration & { lessonIds: string[] }) => {
+      return quizService.createGeneratedQuiz(courseId, config);
+    },
+    onSuccess: (generatedQuiz) => {
+      queryClient.setQueryData<QuizDefinition[]>(
+        ['quizzes', courseId],
+        (oldQuizzes = []) => {
+          const existingIndex = oldQuizzes.findIndex(
+            (quiz) => quiz.id === generatedQuiz.id
+          );
+
+          if (existingIndex === -1) {
+            return [generatedQuiz, ...oldQuizzes];
+          }
+
+          return oldQuizzes.map((quiz) =>
+            quiz.id === generatedQuiz.id ? { ...quiz, ...generatedQuiz } : quiz
+          );
+        }
+      );
+
+      queryClient.invalidateQueries({ queryKey: ['quizzes', courseId] });
+      queryClient.invalidateQueries({ queryKey: ['modules', courseId] });
+      toast.success(t('createWithAISuccess'));
+    },
+    onError: () => {
+      toast.error(t('createWithAIError'));
+    },
+  });
+
   // AI question generation (still uses the placeholder function)
   const generateQuestionsMutation = useMutation({
     mutationFn: async (params: {
@@ -151,6 +185,10 @@ export function useQuestionBank({ courseId }: UseQuestionBankOptions) {
 
     createQuiz: createQuizMutation.mutate,
     isCreatingQuiz: createQuizMutation.isPending,
+
+    createGeneratedQuiz: createGeneratedQuizMutation.mutate,
+    isCreatingGeneratedQuiz: createGeneratedQuizMutation.isPending,
+    createGeneratedQuizError: createGeneratedQuizMutation.error,
 
     generateQuestions: generateQuestionsMutation.mutateAsync,
     isGeneratingQuestions: generateQuestionsMutation.isPending,

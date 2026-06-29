@@ -58,7 +58,7 @@ const generateQuizInputSchema = z.object({
  *         description: Internal server error
  */
 export const POST = withRoles(
-  ['TEACHER'],
+  ['TEACHER', 'ADMIN'],
   async (req: Request, sessionData) => {
     try {
       const body = await req.json();
