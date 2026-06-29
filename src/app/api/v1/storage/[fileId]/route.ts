@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { withAuth } from '@/lib/api/middlewares';
+import { withPermissions } from '@/lib/api/middlewares';
+import { PLATFORM_PERMISSION } from '@/lib/permissions/permission-keys';
 import { StorageService } from '@/services/StorageService';
 
 const routeParamsSchema = z.object({
@@ -60,48 +61,57 @@ const updateSchema = z
  *         description: Internal server error
  *
  */
-export const PATCH = withAuth(async (req, session, context) => {
-  try {
-    const params = routeParamsSchema.safeParse(await context.params);
-    if (!params.success) {
-      return NextResponse.json({ message: 'Invalid file id' }, { status: 400 });
-    }
+export const PATCH = withPermissions(
+  [PLATFORM_PERMISSION.PERSONAL_FILES_MANAGE],
+  async (req, session, context) => {
+    try {
+      const params = routeParamsSchema.safeParse(await context.params);
+      if (!params.success) {
+        return NextResponse.json(
+          { message: 'Invalid file id' },
+          { status: 400 }
+        );
+      }
 
-    const body = await req.json();
-    const parsed = updateSchema.safeParse(body);
-    if (!parsed.success) {
+      const body = await req.json();
+      const parsed = updateSchema.safeParse(body);
+      if (!parsed.success) {
+        return NextResponse.json(
+          {
+            message: 'Invalid request payload',
+            details: parsed.error.flatten(),
+          },
+          { status: 400 }
+        );
+      }
+
+      const updated = await StorageService.updateEntry({
+        userId: session.user.id,
+        fileId: params.data.fileId,
+        name: parsed.data.name,
+        parentId: parsed.data.parentId,
+      });
+
+      return NextResponse.json({ data: updated });
+    } catch (error: any) {
+      if (
+        error?.message === 'File not found' ||
+        error?.message === 'Parent folder not found'
+      ) {
+        return NextResponse.json({ message: error.message }, { status: 404 });
+      }
+
+      if (
+        error?.message === 'An item with this name already exists' ||
+        error?.message === 'Cannot move a folder inside itself'
+      ) {
+        return NextResponse.json({ message: error.message }, { status: 409 });
+      }
+
       return NextResponse.json(
-        { message: 'Invalid request payload', details: parsed.error.flatten() },
-        { status: 400 }
+        { message: error?.message || 'Internal Server Error' },
+        { status: 500 }
       );
     }
-
-    const updated = await StorageService.updateEntry({
-      userId: session.user.id,
-      fileId: params.data.fileId,
-      name: parsed.data.name,
-      parentId: parsed.data.parentId,
-    });
-
-    return NextResponse.json({ data: updated });
-  } catch (error: any) {
-    if (
-      error?.message === 'File not found' ||
-      error?.message === 'Parent folder not found'
-    ) {
-      return NextResponse.json({ message: error.message }, { status: 404 });
-    }
-
-    if (
-      error?.message === 'An item with this name already exists' ||
-      error?.message === 'Cannot move a folder inside itself'
-    ) {
-      return NextResponse.json({ message: error.message }, { status: 409 });
-    }
-
-    return NextResponse.json(
-      { message: error?.message || 'Internal Server Error' },
-      { status: 500 }
-    );
   }
-});
+);

@@ -56,7 +56,7 @@ export const GET = withAuth(async (_req, session) => {
  *         description: Forbidden
  */
 export const POST = withPermissions(
-  [PLATFORM_PERMISSION.USERS_CREATE],
+  [PLATFORM_PERMISSION.USERS_MANAGE],
   async (_req) => {
     try {
       return NextResponse.json({

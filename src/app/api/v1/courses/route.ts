@@ -106,7 +106,7 @@ export const GET = withAuth(async (req, sessionData) => {
  *
  */
 export const POST = withPermissions(
-  [PLATFORM_PERMISSION.COURSES_CREATE],
+  [PLATFORM_PERMISSION.COURSES_MANAGE],
   async (req, sessionData) => {
     try {
       const userId = sessionData.user.id;

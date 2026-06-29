@@ -98,7 +98,7 @@ export const GET = withAuth(async (_req, sessionData, { params }) => {
  *
  */
 export const PATCH = withPermissions(
-  [PLATFORM_PERMISSION.COURSES_MODERATE],
+  [PLATFORM_PERMISSION.COURSES_MANAGE],
   async (req, sessionData, { params }) => {
     try {
       const userId = sessionData.user.id;

@@ -81,7 +81,7 @@ export const GET = withPermissions(
  *
  */
 export const POST = withPermissions(
-  [PLATFORM_PERMISSION.USERS_CREATE],
+  [PLATFORM_PERMISSION.USERS_MANAGE],
   async (req, _sessionData) => {
     try {
       const { email, name, password, role } = await req.json();
@@ -151,7 +151,7 @@ export const POST = withPermissions(
  *         description: Forbidden
  */
 export const PUT = withPermissions(
-  [PLATFORM_PERMISSION.USERS_UPDATE],
+  [PLATFORM_PERMISSION.USERS_MANAGE],
   async (req, _sessionData) => {
     try {
       const { id, name, email, role } = await req.json();
