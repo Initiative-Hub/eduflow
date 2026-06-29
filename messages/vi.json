@@ -993,16 +993,12 @@
     "LessonPresentation": {
       "addReference": "Thêm nguồn tham khảo",
       "btnBack": "Sửa yêu cầu",
+      "btnDownloadPptx": "Tải file PPTX",
+      "btnEditOutline": "Sửa dàn ý",
       "btnGenerate": "Tạo bộ Slide",
       "btnNewDeck": "Tạo bản mới",
-      "btnEditOutline": "Sửa dàn ý",
-      "btnDownloadPptx": "Tải file PPTX",
-      "pptxDownloading": "Đang xuất file PowerPoint...",
-      "pptxDownloadSuccess": "Xuất bài thuyết trình PowerPoint thành công.",
-      "pptxDownloadError": "Không thể xuất bài thuyết trình PowerPoint.",
-      "btnSaveVisual": "Lưu thay đổi",
-      "visualSaveSuccess": "Lưu các thay đổi trên slide thành công.",
       "btnPlan": "Tạo kế hoạch slide trình chiếu",
+      "btnSaveVisual": "Lưu thay đổi",
       "close": "Thoát lập kế hoạch",
       "duration10": "10 phút (Sơ lược nhanh)",
       "duration120": "120 phút (Lớp học chuyên đề 2 giờ)",
@@ -1023,6 +1019,9 @@
       "plannedDesc": "Xem lại và tinh chỉnh các slide. Bạn có thể nhấn vào tiêu đề hoặc nội dung dàn ý để chỉnh sửa trước khi tạo slide.",
       "plannedTitle": "Dàn ý Slide thuyết trình từ AI",
       "planningText": "Đang biên soạn bài thuyết trình từ nội dung bài học...",
+      "pptxDownloadError": "Không thể xuất bài thuyết trình PowerPoint.",
+      "pptxDownloading": "Đang xuất file PowerPoint...",
+      "pptxDownloadSuccess": "Xuất bài thuyết trình PowerPoint thành công.",
       "previous": "Trang trước",
       "referencesLayout": "Tài liệu tham khảo",
       "referenceSources": "Nguồn tham khảo",
@@ -1038,7 +1037,8 @@
       "urlPlaceholder": "Đường dẫn (URL)",
       "usageCost": "~${cost}",
       "usageRequests": "{requests} lượt gọi AI",
-      "usageTokens": "Đã dùng {tokens} token"
+      "usageTokens": "Đã dùng {tokens} token",
+      "visualSaveSuccess": "Lưu các thay đổi trên slide thành công."
     },
     "LessonView": {
       "empty": "Nội dung bài học trống."
