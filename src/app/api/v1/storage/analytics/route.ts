@@ -23,7 +23,7 @@ import { StorageService } from '@/services/StorageService';
  */
 export const GET = withPermissions(
   [PLATFORM_PERMISSION.PERSONAL_FILES_MANAGE],
-  async (req, session) => {
+  async (_req, session) => {
     try {
       const analytics = await StorageService.getAnalytics({
         userId: session.user.id,
