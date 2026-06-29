@@ -138,6 +138,7 @@ async def get_deck(deck_id: str):
 async def get_deck_pptx(deck_id: str):
     import io
     import re
+    import traceback
     from pptx import Presentation
     from pptx.util import Emu
     import resvg_py
@@ -157,6 +158,7 @@ async def get_deck_pptx(deck_id: str):
     try:
         html_content = local_html_path.read_text(encoding="utf-8")
     except Exception as e:
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Failed to read deck HTML: {str(e)}")
 
     # Extract all SVG markup
@@ -174,7 +176,9 @@ async def get_deck_pptx(deck_id: str):
         blank_layout = prs.slide_layouts[6] # Blank slide layout
 
         for idx, svg_markup in enumerate(svgs):
-            png_bytes = bytes(resvg_py.svg_to_bytes(svg_string=svg_markup, width=1920))
+            # Escape bare ampersands to prevent XML parsing errors in resvg-py
+            clean_svg = re.sub(r"&(?!(?:[a-zA-Z0-9]+|#[0-9]+|#x[0-9a-fA-F]+);)", "&amp;", svg_markup)
+            png_bytes = bytes(resvg_py.svg_to_bytes(svg_string=clean_svg, width=1920))
             slide = prs.slides.add_slide(blank_layout)
             slide.shapes.add_picture(
                 io.BytesIO(png_bytes), 
@@ -185,6 +189,7 @@ async def get_deck_pptx(deck_id: str):
 
         prs.save(str(pptx_path))
     except Exception as e:
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Failed to assemble PPTX: {str(e)}")
 
     return FileResponse(
