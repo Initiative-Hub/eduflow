@@ -31,7 +31,6 @@ import { PLATFORM_PERMISSION } from '@/lib/permissions/permission-keys';
 import { NavbarAvatar } from './navbar-avatar';
 import {
   filterAdminNavItems,
-  filterAssistantNavItems,
   getAdminNavItems,
   getAssistantNavItems,
   getCourseNavItems,
@@ -49,11 +48,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [hasHydrated, setHasHydrated] = useState(false);
   const [hasResolvedSession, setHasResolvedSession] = useState(false);
 
-  const assistants = filterAssistantNavItems(
-    getAssistantNavItems(t),
-    userPermissions,
-    { isAuthenticated }
-  );
+  const assistants = getAssistantNavItems(t);
   const settingsItems = getSettingNavItems(t);
   const adminItems = filterAdminNavItems(getAdminNavItems(t), userPermissions);
   const canStartChat =

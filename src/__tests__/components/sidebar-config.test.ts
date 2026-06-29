@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   filterAdminNavItems,
-  filterAssistantNavItems,
   getAdminNavItems,
   getAssistantNavItems,
   getCourseNavItems,
@@ -33,22 +32,6 @@ describe('sidebar-config', () => {
 
     expect(courseItems[0].isActive('/courses/course-123')).toBe(true);
     expect(courseItems[0].isActive('/courses/course-123/chat')).toBe(false);
-  });
-
-  it('filters assistant nav items by platform permissions', () => {
-    const assistantItems = getAssistantNavItems(t as never);
-    const filteredItems = filterAssistantNavItems(assistantItems, [
-      PLATFORM_PERMISSION.AI_USE_CHAT,
-      PLATFORM_PERMISSION.AI_USE_STUDY,
-      PLATFORM_PERMISSION.PERSONAL_FILES_MANAGE,
-    ]);
-
-    expect(filteredItems.map((item) => item.url)).toEqual([
-      '/',
-      '/inventory',
-      '/english',
-      '/study',
-    ]);
   });
 
   it('filters admin nav items by view or manage platform permissions', () => {

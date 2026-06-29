@@ -33,15 +33,6 @@ export type SidebarItem = {
   isActive: (pathname: string) => boolean;
 };
 
-const assistantPermissionByUrl: Partial<Record<string, PlatformPermissionKey>> =
-  {
-    '/': PLATFORM_PERMISSION.AI_USE_CHAT,
-    '/inventory': PLATFORM_PERMISSION.PERSONAL_FILES_MANAGE,
-    '/socratic': PLATFORM_PERMISSION.AI_USE_SOCRATIC,
-    '/writing': PLATFORM_PERMISSION.AI_USE_WRITING,
-    '/study': PLATFORM_PERMISSION.AI_USE_STUDY,
-  };
-
 const adminPermissionsByUrl: Record<string, PlatformPermissionKey[]> = {
   '/admin/users': [
     PLATFORM_PERMISSION.USERS_VIEW,
@@ -67,22 +58,6 @@ function hasAnyPermission(
   return requiredPermissions.some((permission) =>
     userPermissions.includes(permission)
   );
-}
-
-export function filterAssistantNavItems(
-  items: SidebarItem[],
-  userPermissions: readonly string[],
-  options: { isAuthenticated?: boolean } = { isAuthenticated: true }
-) {
-  if (!options.isAuthenticated) {
-    return items.filter((item) => item.url !== '/inventory');
-  }
-
-  return items.filter((item) => {
-    const requiredPermission = assistantPermissionByUrl[item.url];
-
-    return !requiredPermission || userPermissions.includes(requiredPermission);
-  });
 }
 
 export function filterAdminNavItems(
