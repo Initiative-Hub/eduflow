@@ -2,8 +2,6 @@ import { cookies, headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { AiChatType } from '@/generated/prisma';
 import { auth } from '@/lib/auth';
-import { PLATFORM_PERMISSION } from '@/lib/permissions/permission-keys';
-import { getPlatformPermissions } from '@/lib/permissions/platform-permission';
 import {
   type StudyMode,
   type StudyQuizOptions,
@@ -38,26 +36,20 @@ function getInitialStudyQuizOptions(
 export default async function StudySessionPage({
   params,
 }: StudySessionPageProps) {
-  const [session, { chatId }, cookieStore] = await Promise.all([
+  const [sessionData, { chatId }, cookieStore] = await Promise.all([
     auth.api.getSession({ headers: await headers() }),
     params,
     cookies(),
   ]);
-  if (session?.user?.id) {
-    const permissions = await getPlatformPermissions(session.user.id);
-    if (permissions.withoutPermission(PLATFORM_PERMISSION.AI_USE_STUDY)) {
-      notFound();
-    }
-  }
 
   const guestId = cookieStore.get('guest_session')?.value;
-  if (!session?.user?.id && !guestId) {
+  if (!sessionData && !guestId) {
     notFound();
   }
 
   const studyData = await ChatPersistenceService.getChat({
     chatId,
-    userId: session?.user?.id,
+    userId: sessionData?.user?.id,
     guestId,
     chatType: AiChatType.STUDY_ASSISTANT,
   });
@@ -72,7 +64,7 @@ export default async function StudySessionPage({
       initialMode={getInitialStudyMode(studyData?.metadata)}
       initialQuizOptions={getInitialStudyQuizOptions(studyData?.metadata)}
       initialMessages={studyData?.messages ?? []}
-      isAuthenticated={!!session?.user}
+      isAuthenticated={Boolean(sessionData)}
     />
   );
 }

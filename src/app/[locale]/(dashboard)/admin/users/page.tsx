@@ -4,7 +4,6 @@ import { notFound, redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { auth } from '@/lib/auth';
 import { PLATFORM_PERMISSION } from '@/lib/permissions/permission-keys';
-import { getPlatformPermissions } from '@/lib/permissions/platform-permission';
 import AdminUsersClient from './client';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -13,19 +12,18 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function AdminUsersPage() {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user?.id) {
+  const sessionData = await auth.api.getSession({ headers: await headers() });
+  if (!sessionData) {
     redirect('/login');
   }
 
-  const permissions = await getPlatformPermissions(session.user.id);
-  if (permissions.withoutPermission(PLATFORM_PERMISSION.USERS_VIEW)) {
+  if (!sessionData.user.permissions.includes(PLATFORM_PERMISSION.USERS_VIEW)) {
     notFound();
   }
 
   return (
     <AdminUsersClient
-      canManageUsers={permissions.containPermission(
+      canManageUsers={sessionData.user.permissions.includes(
         PLATFORM_PERMISSION.USERS_MANAGE
       )}
     />

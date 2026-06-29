@@ -3,7 +3,6 @@ import { headers } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { PLATFORM_PERMISSION } from '@/lib/permissions/permission-keys';
-import { getPlatformPermissions } from '@/lib/permissions/platform-permission';
 import { RolesClient } from './client';
 
 export const metadata: Metadata = {
@@ -11,19 +10,18 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminRolesPage() {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user?.id) {
+  const sessionData = await auth.api.getSession({ headers: await headers() });
+  if (!sessionData) {
     redirect('/login');
   }
 
-  const permissions = await getPlatformPermissions(session.user.id);
-  if (permissions.withoutPermission(PLATFORM_PERMISSION.ROLES_VIEW)) {
+  if (!sessionData.user.permissions.includes(PLATFORM_PERMISSION.ROLES_VIEW)) {
     notFound();
   }
 
   return (
     <RolesClient
-      canManageRoles={permissions.containPermission(
+      canManageRoles={sessionData.user.permissions.includes(
         PLATFORM_PERMISSION.ROLES_MANAGE
       )}
     />

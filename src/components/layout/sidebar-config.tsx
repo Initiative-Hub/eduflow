@@ -25,7 +25,6 @@ import {
   PLATFORM_PERMISSION,
   type PlatformPermissionKey,
 } from '@/lib/permissions/permission-keys';
-import type { PlatformPermissionState } from '@/lib/permissions/platform-permission-state';
 
 export type SidebarItem = {
   name: string;
@@ -62,7 +61,7 @@ function isExactMatch(pathname: string, url: string) {
 }
 
 function hasAnyPermission(
-  userPermissions: readonly PlatformPermissionKey[],
+  userPermissions: readonly string[],
   requiredPermissions: readonly PlatformPermissionKey[]
 ) {
   return requiredPermissions.some((permission) =>
@@ -72,7 +71,7 @@ function hasAnyPermission(
 
 export function filterAssistantNavItems(
   items: SidebarItem[],
-  userPermissions: readonly PlatformPermissionKey[],
+  userPermissions: readonly string[],
   options: { isAuthenticated?: boolean } = { isAuthenticated: true }
 ) {
   if (!options.isAuthenticated) {
@@ -88,7 +87,7 @@ export function filterAssistantNavItems(
 
 export function filterAdminNavItems(
   items: SidebarItem[],
-  userPermissions: readonly PlatformPermissionKey[]
+  userPermissions: readonly string[]
 ) {
   return items.filter((item) => {
     const requiredPermissions = adminPermissionsByUrl[item.url];
@@ -97,15 +96,6 @@ export function filterAdminNavItems(
       requiredPermissions &&
       hasAnyPermission(userPermissions, requiredPermissions)
     );
-  });
-}
-
-export function filterAssistantNavItemsForState(
-  items: SidebarItem[],
-  state: PlatformPermissionState
-) {
-  return filterAssistantNavItems(items, state.permissions, {
-    isAuthenticated: state.isAuthenticated,
   });
 }
 

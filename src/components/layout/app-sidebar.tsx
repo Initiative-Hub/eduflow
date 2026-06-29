@@ -12,7 +12,6 @@ import { useTranslations } from 'next-intl';
 import type * as React from 'react';
 import { useEffect, useState } from 'react';
 import { useCourses } from '@/app/[locale]/(dashboard)/courses/use-courses';
-import { usePlatformPermissions } from '@/components/permissions/platform-permission-provider';
 import { Button } from '@/components/ui/button';
 import {
   Sidebar,
@@ -45,23 +44,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
   const { state, toggleSidebar } = useSidebar();
   const { data: sessionData, isPending } = useSession();
-  const platformPermissions = usePlatformPermissions();
+  const userPermissions = sessionData?.user.permissions ?? [];
+  const isAuthenticated = Boolean(sessionData?.user);
   const [hasHydrated, setHasHydrated] = useState(false);
   const [hasResolvedSession, setHasResolvedSession] = useState(false);
 
   const assistants = filterAssistantNavItems(
     getAssistantNavItems(t),
-    platformPermissions.permissions,
-    { isAuthenticated: platformPermissions.isAuthenticated }
+    userPermissions,
+    { isAuthenticated }
   );
   const settingsItems = getSettingNavItems(t);
-  const adminItems = filterAdminNavItems(
-    getAdminNavItems(t),
-    platformPermissions.permissions
-  );
+  const adminItems = filterAdminNavItems(getAdminNavItems(t), userPermissions);
   const canStartChat =
-    !platformPermissions.isAuthenticated ||
-    platformPermissions.has(PLATFORM_PERMISSION.AI_USE_CHAT);
+    !isAuthenticated ||
+    userPermissions.includes(PLATFORM_PERMISSION.AI_USE_CHAT);
 
   const match = pathname.match(/\/courses\/([^/]+)/);
   const courseId = match ? match[1] : null;
