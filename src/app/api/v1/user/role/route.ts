@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { withAuth, withValidation } from '@/lib/api/middlewares';
+import { withAuth } from '@/lib/api/middlewares';
 import { UserService } from '@/services/UserService';
 
 const updateRoleSchema = z.object({
@@ -35,29 +35,36 @@ const updateRoleSchema = z.object({
  *         description: Unauthorized
  *
  */
-export const PUT = withAuth(
-  withValidation(updateRoleSchema, async (_req, parsedBody, { user }) => {
-    try {
-      const updatedUser = await UserService.updateRole(
-        user.id,
-        parsedBody.role
-      );
+export const PUT = withAuth(async (req, { user }) => {
+  const body = await req.json();
+  const parsedBody = updateRoleSchema.safeParse(body);
 
-      return NextResponse.json({
-        message: 'Role updated successfully',
-        user: {
-          id: updatedUser.id,
-          name: updatedUser.name,
-          email: updatedUser.email,
-          role: updatedUser.role?.name,
-        },
-      });
-    } catch (error: any) {
-      console.error('Role Update Error:', error);
-      return NextResponse.json(
-        { message: error.message || 'Failed to update role' },
-        { status: 500 }
-      );
-    }
-  })
-);
+  if (!parsedBody.success) {
+    return NextResponse.json(
+      { message: 'Invalid request', errors: parsedBody.error.flatten() },
+      { status: 400 }
+    );
+  }
+
+  const { role } = parsedBody.data;
+
+  try {
+    const updatedUser = await UserService.updateRole(user.id, role);
+
+    return NextResponse.json({
+      message: 'Role updated successfully',
+      user: {
+        id: updatedUser.id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        role: updatedUser.role?.name,
+      },
+    });
+  } catch (error: any) {
+    console.error('Role Update Error:', error);
+    return NextResponse.json(
+      { message: error.message || 'Failed to update role' },
+      { status: 500 }
+    );
+  }
+});

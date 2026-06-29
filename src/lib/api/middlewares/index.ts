@@ -1,6 +1,5 @@
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
-import type { z } from 'zod';
 import { auth, type Session } from '@/lib/auth';
 import { getPlatformPermissions } from '@/lib/permissions/platform-permission';
 
@@ -140,33 +139,6 @@ export function withPermissions(
       return NextResponse.json(
         { message: 'Internal Server Error' },
         { status: 500 }
-      );
-    }
-  };
-}
-
-export function withValidation<T extends z.ZodRawShape>(
-  schema: z.ZodObject<T>,
-  handler: (
-    req: Request,
-    parsedBody: z.infer<typeof schema>,
-    ...args: any[]
-  ) => Promise<Response> | Response
-) {
-  return async (req: Request, ...args: any[]) => {
-    try {
-      const body = await req.json();
-      const parsedBody = schema.safeParse(body);
-
-      if (!parsedBody.success) {
-        throw parsedBody.error;
-      }
-
-      return await handler(req, parsedBody.data, ...args);
-    } catch (error: any) {
-      return NextResponse.json(
-        { message: 'Invalid payload', errors: error.errors },
-        { status: 400 }
       );
     }
   };
