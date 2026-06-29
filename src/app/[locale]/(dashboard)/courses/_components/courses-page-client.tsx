@@ -14,7 +14,6 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty';
-import { useSession } from '@/lib/auth-client';
 import type { CourseListSort } from '../use-courses';
 import { useCourses } from '../use-courses';
 import { CourseCard } from './course-card';
@@ -26,9 +25,14 @@ import { CreateCourseDialog } from './create-course-dialog';
 const PAGE_SIZE = 12;
 const SEARCH_DEBOUNCE_MS = 300;
 
-export function CoursesPageClient() {
+type CoursesPageClientProps = {
+  canCreateCourses: boolean;
+};
+
+export function CoursesPageClient({
+  canCreateCourses,
+}: CoursesPageClientProps) {
   const t = useTranslations('Courses');
-  const { data: sessionData } = useSession();
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [ownedOnly, setOwnedOnly] = useState(false);
@@ -59,8 +63,6 @@ export function CoursesPageClient() {
   });
   const dialog = useDialog();
 
-  const canCreateCourses =
-    sessionData?.user.role === 'ADMIN' || sessionData?.user.role === 'TEACHER';
   const total = courseList?.total ?? 0;
   const totalPages = Math.max(1, courseList?.totalPages ?? 1);
   const visibleStart = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;

@@ -34,10 +34,10 @@ const initUploadSchema = z.object({
  *                 type: string
  *                 format: uuid
  *                 nullable: true
- *              folderPath:
- *                type: array
- *                items:
- *                 type: string
+ *               folderPath:
+ *                 type: array
+ *                 items:
+ *                   type: string
  *               fileName:
  *                 type: string
  *               contentType:

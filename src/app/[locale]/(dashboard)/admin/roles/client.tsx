@@ -29,7 +29,11 @@ import {
 } from './roles.config';
 import { useRoles } from './use-roles';
 
-export function RolesClient() {
+type RolesClientProps = {
+  canManageRoles: boolean;
+};
+
+export function RolesClient({ canManageRoles }: RolesClientProps) {
   const [activeRole, setActiveRole] = useState<PlatformRoleName>('ADMIN');
   const [searchQuery, setSearchQuery] = useState('');
   const [draftRoleState, setDraftRoleState] = useState<RolePermissionState[]>(
@@ -87,6 +91,10 @@ export function RolesClient() {
     permission: PlatformPermissionDefinition,
     enabled: boolean
   ) => {
+    if (!canManageRoles) {
+      return;
+    }
+
     setDraftRoleState((currentStates) =>
       currentStates.map((roleState) => {
         if (roleState.role !== activeRole) {
@@ -106,7 +114,7 @@ export function RolesClient() {
   };
 
   const handleSaveRolePermissions = async () => {
-    if (!activeDraftRoleState) {
+    if (!activeDraftRoleState || !canManageRoles) {
       return;
     }
 
@@ -245,6 +253,7 @@ export function RolesClient() {
                                 key={permission.key}
                                 permission={permission}
                                 isUpdating={isUpdating}
+                                canManageRoles={canManageRoles}
                                 onCheckedChange={(enabled) =>
                                   handlePermissionChange(permission, enabled)
                                 }
@@ -260,7 +269,9 @@ export function RolesClient() {
                 <div className="flex justify-end border-t pt-4">
                   <Button
                     type="button"
-                    disabled={!hasUnsavedChanges || isUpdating}
+                    disabled={
+                      !canManageRoles || !hasUnsavedChanges || isUpdating
+                    }
                     onClick={handleSaveRolePermissions}
                   >
                     Save changes
@@ -278,12 +289,14 @@ export function RolesClient() {
 type PermissionRowProps = {
   permission: PlatformPermissionDefinition;
   isUpdating: boolean;
+  canManageRoles: boolean;
   onCheckedChange: (enabled: boolean) => void;
 };
 
 function PermissionRow({
   permission,
   isUpdating,
+  canManageRoles,
   onCheckedChange,
 }: PermissionRowProps) {
   const PermissionIcon = permission.icon;
@@ -302,7 +315,7 @@ function PermissionRow({
 
       <Switch
         checked={permission.enabled}
-        disabled={isUpdating}
+        disabled={isUpdating || !canManageRoles}
         aria-label={`Toggle ${permission.title}`}
         onCheckedChange={onCheckedChange}
       />

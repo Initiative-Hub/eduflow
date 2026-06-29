@@ -2,6 +2,8 @@ import { cookies, headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { AiChatType } from '@/generated/prisma';
 import { auth } from '@/lib/auth';
+import { PLATFORM_PERMISSION } from '@/lib/permissions/permission-keys';
+import { getPlatformPermissions } from '@/lib/permissions/platform-permission';
 import {
   type StudyMode,
   type StudyQuizOptions,
@@ -41,6 +43,12 @@ export default async function StudySessionPage({
     params,
     cookies(),
   ]);
+  if (session?.user?.id) {
+    const permissions = await getPlatformPermissions(session.user.id);
+    if (permissions.withoutPermission(PLATFORM_PERMISSION.AI_USE_STUDY)) {
+      notFound();
+    }
+  }
 
   const guestId = cookieStore.get('guest_session')?.value;
   if (!session?.user?.id && !guestId) {

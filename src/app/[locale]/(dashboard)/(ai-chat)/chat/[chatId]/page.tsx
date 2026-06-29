@@ -1,6 +1,8 @@
 import { cookies, headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { auth } from '@/lib/auth';
+import { PLATFORM_PERMISSION } from '@/lib/permissions/permission-keys';
+import { getPlatformPermissions } from '@/lib/permissions/platform-permission';
 import { ChatPersistenceService } from '@/services/ChatPersistenceService';
 import { AIClient } from '../../_components/ai-client';
 
@@ -14,6 +16,12 @@ export default async function ChatPage({ params }: ChatPageProps) {
     params,
     cookies(),
   ]);
+  if (session?.user?.id) {
+    const permissions = await getPlatformPermissions(session.user.id);
+    if (permissions.withoutPermission(PLATFORM_PERMISSION.AI_USE_CHAT)) {
+      notFound();
+    }
+  }
 
   const guestId = cookieStore.get('guest_session')?.value;
   if (!session?.user?.id && !guestId) {

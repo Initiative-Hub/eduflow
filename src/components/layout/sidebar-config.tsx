@@ -21,6 +21,11 @@ import {
 } from 'lucide-react';
 import type { useTranslations } from 'next-intl';
 import type { ReactElement } from 'react';
+import {
+  PLATFORM_PERMISSION,
+  type PlatformPermissionKey,
+} from '@/lib/permissions/permission-keys';
+import type { PlatformPermissionState } from '@/lib/permissions/platform-permission-state';
 
 export type SidebarItem = {
   name: string;
@@ -29,11 +34,79 @@ export type SidebarItem = {
   isActive: (pathname: string) => boolean;
 };
 
+const assistantPermissionByUrl: Partial<Record<string, PlatformPermissionKey>> =
+  {
+    '/': PLATFORM_PERMISSION.AI_USE_CHAT,
+    '/inventory': PLATFORM_PERMISSION.PERSONAL_FILES_MANAGE,
+    '/socratic': PLATFORM_PERMISSION.AI_USE_SOCRATIC,
+    '/writing': PLATFORM_PERMISSION.AI_USE_WRITING,
+    '/study': PLATFORM_PERMISSION.AI_USE_STUDY,
+  };
+
+const adminPermissionsByUrl: Record<string, PlatformPermissionKey[]> = {
+  '/admin/users': [
+    PLATFORM_PERMISSION.USERS_VIEW,
+    PLATFORM_PERMISSION.USERS_MANAGE,
+  ],
+  '/admin/roles': [
+    PLATFORM_PERMISSION.ROLES_VIEW,
+    PLATFORM_PERMISSION.ROLES_MANAGE,
+  ],
+};
+
 export const sidebarIconClassName =
   'size-5 text-primary/80 transition-colors group-data-[active=true]/menu-button:text-primary group-hover/menu-button:text-primary ';
 
 function isExactMatch(pathname: string, url: string) {
   return pathname === url;
+}
+
+function hasAnyPermission(
+  userPermissions: readonly PlatformPermissionKey[],
+  requiredPermissions: readonly PlatformPermissionKey[]
+) {
+  return requiredPermissions.some((permission) =>
+    userPermissions.includes(permission)
+  );
+}
+
+export function filterAssistantNavItems(
+  items: SidebarItem[],
+  userPermissions: readonly PlatformPermissionKey[],
+  options: { isAuthenticated?: boolean } = { isAuthenticated: true }
+) {
+  if (!options.isAuthenticated) {
+    return items.filter((item) => item.url !== '/inventory');
+  }
+
+  return items.filter((item) => {
+    const requiredPermission = assistantPermissionByUrl[item.url];
+
+    return !requiredPermission || userPermissions.includes(requiredPermission);
+  });
+}
+
+export function filterAdminNavItems(
+  items: SidebarItem[],
+  userPermissions: readonly PlatformPermissionKey[]
+) {
+  return items.filter((item) => {
+    const requiredPermissions = adminPermissionsByUrl[item.url];
+
+    return (
+      requiredPermissions &&
+      hasAnyPermission(userPermissions, requiredPermissions)
+    );
+  });
+}
+
+export function filterAssistantNavItemsForState(
+  items: SidebarItem[],
+  state: PlatformPermissionState
+) {
+  return filterAssistantNavItems(items, state.permissions, {
+    isAuthenticated: state.isAuthenticated,
+  });
 }
 
 export function getAssistantNavItems(

@@ -1,7 +1,9 @@
-import type { Metadata } from 'next';
 import { headers } from 'next/headers';
-import { redirect } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
+import type { Metadata } from 'next';
+import { PLATFORM_PERMISSION } from '@/lib/permissions/permission-keys';
+import { getPlatformPermissions } from '@/lib/permissions/platform-permission';
 import { StudyClient } from './_components/study-client';
 
 export const metadata: Metadata = {
@@ -10,9 +12,14 @@ export const metadata: Metadata = {
 
 export default async function StudyAssistantPage() {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user) {
+  if (!session?.user?.id) {
     redirect('/login');
   }
 
-  return <StudyClient isAuthenticated={!!session.user} />;
+  const permissions = await getPlatformPermissions(session.user.id);
+  if (permissions.withoutPermission(PLATFORM_PERMISSION.AI_USE_STUDY)) {
+    notFound();
+  }
+
+  return <StudyClient isAuthenticated />;
 }

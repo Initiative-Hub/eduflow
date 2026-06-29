@@ -12,6 +12,7 @@ import { useTranslations } from 'next-intl';
 import type * as React from 'react';
 import { useEffect, useState } from 'react';
 import { useCourses } from '@/app/[locale]/(dashboard)/courses/use-courses';
+import { usePlatformPermissions } from '@/components/permissions/platform-permission-provider';
 import { Button } from '@/components/ui/button';
 import {
   Sidebar,
@@ -27,8 +28,11 @@ import {
 } from '@/components/ui/sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useSession } from '@/lib/auth-client';
+import { PLATFORM_PERMISSION } from '@/lib/permissions/permission-keys';
 import { NavbarAvatar } from './navbar-avatar';
 import {
+  filterAdminNavItems,
+  filterAssistantNavItems,
   getAdminNavItems,
   getAssistantNavItems,
   getCourseNavItems,
@@ -41,12 +45,23 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
   const { state, toggleSidebar } = useSidebar();
   const { data: sessionData, isPending } = useSession();
+  const platformPermissions = usePlatformPermissions();
   const [hasHydrated, setHasHydrated] = useState(false);
   const [hasResolvedSession, setHasResolvedSession] = useState(false);
 
-  const assistants = getAssistantNavItems(t);
+  const assistants = filterAssistantNavItems(
+    getAssistantNavItems(t),
+    platformPermissions.permissions,
+    { isAuthenticated: platformPermissions.isAuthenticated }
+  );
   const settingsItems = getSettingNavItems(t);
-  const adminItems = getAdminNavItems(t);
+  const adminItems = filterAdminNavItems(
+    getAdminNavItems(t),
+    platformPermissions.permissions
+  );
+  const canStartChat =
+    !platformPermissions.isAuthenticated ||
+    platformPermissions.has(PLATFORM_PERMISSION.AI_USE_CHAT);
 
   const match = pathname.match(/\/courses\/([^/]+)/);
   const courseId = match ? match[1] : null;
@@ -105,7 +120,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </div>
         </Link>
 
-        {!pathname.includes('/courses/') ? (
+        {!pathname.includes('/courses/') && canStartChat ? (
           <Button
             className="group-data-[collapsible=icon]:justify-center! relative w-full justify-start rounded-xl bg-linear-to-br from-primary to-primary/80 px-4 py-6 font-semibold text-primary-foreground shadow-md transition-all hover:from-primary/90 hover:to-primary/70 hover:shadow-lg group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:h-12 group-data-[collapsible=icon]:w-12 group-data-[collapsible=icon]:p-0!"
             size="lg"
