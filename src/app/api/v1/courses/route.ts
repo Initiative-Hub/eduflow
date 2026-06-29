@@ -104,8 +104,9 @@ export const GET = withAuth(async (req, sessionData) => {
  *         description: Internal server error
  *
  */
-export const POST = withAuth(
-  withRoles(['TEACHER', 'ADMIN'], async (req, sessionData) => {
+export const POST = withRoles(
+  ['TEACHER', 'ADMIN'],
+  async (req, sessionData) => {
     try {
       const userId = sessionData.user.id;
 
@@ -133,5 +134,5 @@ export const POST = withAuth(
         { status: 500 }
       );
     }
-  })
+  }
 );

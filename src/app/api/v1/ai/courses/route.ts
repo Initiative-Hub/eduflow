@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { withAuth, withRoles } from '@/lib/api/middlewares';
+import { withRoles } from '@/lib/api/middlewares';
 import { CourseService } from '@/services/CourseService';
 
 /**
@@ -40,18 +40,16 @@ const courseGenerationInputSchema = z
  *       500:
  *         description: Internal server error
  */
-export const GET = withAuth(
-  withRoles(['TEACHER'], async (_request: Request) => {
-    try {
-      return NextResponse.json({});
-    } catch (error) {
-      return NextResponse.json(
-        { error: 'Internal Server Error', message: (error as Error).message },
-        { status: 500 }
-      );
-    }
-  })
-);
+export const GET = withRoles(['TEACHER'], async (_request: Request) => {
+  try {
+    return NextResponse.json({});
+  } catch (error) {
+    return NextResponse.json(
+      { error: 'Internal Server Error', message: (error as Error).message },
+      { status: 500 }
+    );
+  }
+});
 
 /**
  * @swagger
@@ -91,8 +89,9 @@ export const GET = withAuth(
  *       500:
  *         description: Internal server error
  */
-export const POST = withAuth(
-  withRoles(['TEACHER'], async (request: Request, sessionData) => {
+export const POST = withRoles(
+  ['TEACHER'],
+  async (request: Request, sessionData) => {
     try {
       const userId = sessionData.user.id;
 
@@ -173,5 +172,5 @@ export const POST = withAuth(
         { status: 500 }
       );
     }
-  })
+  }
 );
