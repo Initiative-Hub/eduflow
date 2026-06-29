@@ -16,7 +16,12 @@ export const GET = withAuth(
       try {
         const { collectionName } = await params;
         const svgs = await SlideService.getTemplatePreviews(collectionName);
-        return NextResponse.json(svgs, { status: 200 });
+        return NextResponse.json(svgs, {
+          status: 200,
+          headers: {
+            'Cache-Control': 'public, max-age=300, stale-while-revalidate=3600',
+          },
+        });
       } catch (error) {
         console.error('Fetch template previews error:', error);
         return errorResponse(

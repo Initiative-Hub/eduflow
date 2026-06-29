@@ -2,7 +2,21 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { StorageService } from './StorageService';
 
+// In-memory cache for slide template previews
+const previewsCache = new Map<string, Record<string, string>>();
+
 export class SlideService {
+  /**
+   * Clears the cached template previews (all or a specific collection).
+   */
+  static clearCache(collectionName?: string) {
+    if (collectionName) {
+      previewsCache.delete(collectionName);
+    } else {
+      previewsCache.clear();
+    }
+  }
+
   /**
    * Retrieves SVG slide previews for a given template collection.
    * Checks the local filesystem templates first (for development/default templates),
@@ -11,9 +25,15 @@ export class SlideService {
   static async getTemplatePreviews(
     collectionName: string
   ): Promise<Record<string, string>> {
+    // 1. Check in-memory cache first
+    const cached = previewsCache.get(collectionName);
+    if (cached) {
+      return cached;
+    }
+
     const svgs: Record<string, string> = {};
 
-    // 1. Try local filesystem fallback first (helpful in local dev)
+    // 2. Try local filesystem fallback first (helpful in local dev)
     const localDir = path.join(
       process.cwd(),
       'external-services',
@@ -41,19 +61,26 @@ export class SlideService {
       }
     }
 
-    // 2. If no local templates found, try fetching from S3 via StorageService
+    // 3. If no local templates found, try fetching from S3 via StorageService
     if (Object.keys(svgs).length === 0) {
       try {
         const prefix = `templates/${collectionName}/`;
         const keys = await StorageService.listPrefixKeys(prefix);
 
-        for (const key of keys) {
-          if (key.endsWith('.svg')) {
-            const body = await StorageService.getObjectString(key);
-            if (body) {
-              const name = path.parse(key).name;
-              svgs[name] = body;
-            }
+        const svgKeys = keys.filter((key) => key.endsWith('.svg'));
+        const downloadPromises = svgKeys.map(async (key) => {
+          const body = await StorageService.getObjectString(key);
+          if (body) {
+            const name = path.parse(key).name;
+            return { name, body };
+          }
+          return null;
+        });
+
+        const results = await Promise.all(downloadPromises);
+        for (const res of results) {
+          if (res) {
+            svgs[res.name] = res.body;
           }
         }
       } catch (err) {
@@ -62,6 +89,11 @@ export class SlideService {
           err
         );
       }
+    }
+
+    // Cache the retrieved previews if we found any
+    if (Object.keys(svgs).length > 0) {
+      previewsCache.set(collectionName, svgs);
     }
 
     return svgs;

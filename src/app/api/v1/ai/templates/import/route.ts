@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { errorResponse } from '@/lib/api/error-response';
 import { withAuth, withRoles } from '@/lib/api/middlewares';
+import { SlideService } from '@/services/SlideService';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
@@ -104,6 +105,8 @@ export const POST = withAuth(
       }
 
       const result = await response.json();
+      // Clear template previews cache so imports render immediately
+      SlideService.clearCache();
       return NextResponse.json(result, { status: 200 });
     } catch (error) {
       console.error('Template import error:', error);
