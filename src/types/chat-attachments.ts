@@ -1,4 +1,5 @@
 import type { FileUIPart } from 'ai';
+import type { ChatLessonReferenceUIPart } from '@/types/chat-lesson-references';
 
 export type ChatFileUIPart = FileUIPart & {
   bucket: string | null;
@@ -11,5 +12,6 @@ export type ChatFileUIPart = FileUIPart & {
 
 export type ChatSubmitAttachments = {
   files: File[];
+  referencedLessons?: ChatLessonReferenceUIPart[];
   referencedFiles: ChatFileUIPart[];
 };

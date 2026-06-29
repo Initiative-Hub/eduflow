@@ -95,8 +95,9 @@ export const GET = withAuth(async (_req, sessionData, { params }) => {
  *         description: Internal server error
  *
  */
-export const PATCH = withAuth(
-  withRoles(['TEACHER'], async (req, sessionData, { params }) => {
+export const PATCH = withRoles(
+  ['TEACHER'],
+  async (req, sessionData, { params }) => {
     try {
       const userId = sessionData.user.id;
       const { courseId } = await params;
@@ -125,5 +126,5 @@ export const PATCH = withAuth(
         { status: 500 }
       );
     }
-  })
+  }
 );

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { withAuth, withRoles } from '@/lib/api/middlewares';
+import { withRoles } from '@/lib/api/middlewares';
 import { QuizService } from '@/services/QuizService';
 
 const saveQuestionsSchema = z.object({
@@ -48,8 +48,9 @@ const saveQuestionsSchema = z.object({
  *       500:
  *         description: Internal server error
  */
-export const POST = withAuth(
-  withRoles(['TEACHER', 'ADMIN'], async (req, _sessionData, { params }) => {
+export const POST = withRoles(
+  ['TEACHER', 'ADMIN'],
+  async (req, _sessionData, { params }) => {
     try {
       const { quizId } = await params;
       const body = await req.json();
@@ -81,7 +82,7 @@ export const POST = withAuth(
         { status: 500 }
       );
     }
-  })
+  }
 );
 
 /**
@@ -125,8 +126,9 @@ export const POST = withAuth(
  *       500:
  *         description: Internal server error
  */
-export const PUT = withAuth(
-  withRoles(['TEACHER', 'ADMIN'], async (req, _sessionData, { params }) => {
+export const PUT = withRoles(
+  ['TEACHER', 'ADMIN'],
+  async (req, _sessionData, { params }) => {
     try {
       const { quizId } = await params;
       const body = await req.json();
@@ -158,5 +160,5 @@ export const PUT = withAuth(
         { status: 500 }
       );
     }
-  })
+  }
 );

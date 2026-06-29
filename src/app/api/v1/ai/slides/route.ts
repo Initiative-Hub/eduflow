@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { errorResponse } from '@/lib/api/error-response';
-import { withAuth, withRoles } from '@/lib/api/middlewares';
+import { withRoles } from '@/lib/api/middlewares';
 import { generateDeckFromPlan } from '@/lib/slides';
 import { LessonService } from '@/services/LessonService';
 import { presentationPlanSchema } from '@/services/PresentationService';
@@ -69,8 +69,9 @@ const generateDeckSchema = presentationPlanSchema.extend({
  *       500:
  *         description: Internal server error
  */
-export const POST = withAuth(
-  withRoles(['TEACHER'], async (req: Request, sessionData) => {
+export const POST = withRoles(
+  ['TEACHER'],
+  async (req: Request, sessionData) => {
     try {
       const body = await req.json();
       const parsed = generateDeckSchema.safeParse(body);
@@ -129,5 +130,5 @@ export const POST = withAuth(
         500
       );
     }
-  })
+  }
 );

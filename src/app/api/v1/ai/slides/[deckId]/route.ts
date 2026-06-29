@@ -33,38 +33,32 @@ export const dynamic = 'force-dynamic';
  *       500:
  *         description: Internal server error
  */
-export const GET = withAuth(
-  withRoles(
-    ['TEACHER'],
-    async (
-      _req: Request,
-      _sessionData,
-      { params }: { params: Promise<{ deckId: string }> }
-    ) => {
-      try {
-        const { deckId } = await params;
-        const html = await getDeckHtml(deckId);
+export const GET = withRoles(
+  ['TEACHER'],
+  async (
+    _req: Request,
+    _sessionData,
+    { params }: { params: Promise<{ deckId: string }> }
+  ) => {
+    try {
+      const { deckId } = await params;
+      const html = await getDeckHtml(deckId);
 
-        return new Response(html, {
-          status: 200,
-          headers: {
-            'Content-Type': 'text/html; charset=utf-8',
-            'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
-          },
-        });
-      } catch (error) {
-        console.error('AI Slide Deck Fetch Error:', error);
-        if (error instanceof Error && error.message === 'Deck not found') {
-          return errorResponse('NOT_FOUND', 'Deck not found', 404);
-        }
-        return errorResponse(
-          'INTERNAL_ERROR',
-          'Failed to fetch slide deck',
-          500
-        );
+      return new Response(html, {
+        status: 200,
+        headers: {
+          'Content-Type': 'text/html; charset=utf-8',
+          'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+        },
+      });
+    } catch (error) {
+      console.error('AI Slide Deck Fetch Error:', error);
+      if (error instanceof Error && error.message === 'Deck not found') {
+        return errorResponse('NOT_FOUND', 'Deck not found', 404);
       }
+      return errorResponse('INTERNAL_ERROR', 'Failed to fetch slide deck', 500);
     }
-  )
+  }
 );
 
 export const PUT = withAuth(

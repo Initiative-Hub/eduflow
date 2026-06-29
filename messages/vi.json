@@ -145,7 +145,7 @@
     },
     "attachments": {
       "add": "Đính kèm tệp",
-      "defaultMessage": "Vui lòng sử dụng {count, plural, one {tệp đính kèm} other {các tệp đính kèm}}.",
+      "defaultMessage": "Vui lòng sử dụng {count, plural, one {tham chiếu đính kèm} other {các tham chiếu đính kèm}}.",
       "fileTooLarge": "{name} vượt quá dung lượng tải lên tối đa.",
       "remove": "Gỡ {name}",
       "signInRequired": "Hãy đăng nhập để tải tệp lên trò chuyện.",
@@ -173,6 +173,24 @@
     "footer": {
       "academicDraft": "Dự thảo học thuật Lexend",
       "responseDisclaimer": "Phản hồi của AI có thể thay đổi"
+    },
+    "lessonReferencePicker": {
+      "alreadyAttached": "Đã đính kèm",
+      "attach": "Đính kèm {count, plural, one {# bài học} other {# bài học}}",
+      "backToCourses": "Khóa học",
+      "cancel": "Hủy",
+      "description": "Chọn bài học từ các khóa học bạn đã tham gia để tham chiếu trong cuộc trò chuyện này.",
+      "emptyCoursesDescription": "Không có khóa học đã tham gia.",
+      "emptyCoursesTitle": "Không tìm thấy khóa học",
+      "emptyLessonsDescription": "Không có bài học nào khớp với khóa học hoặc tìm kiếm này.",
+      "emptyLessonsTitle": "Không tìm thấy bài học",
+      "open": "Tham chiếu bài học",
+      "searchPlaceholder": "Tìm bài học",
+      "selectedCount": "Đã chọn {count}/{max}",
+      "selectLesson": "Chọn {name}",
+      "title": "Tham chiếu bài học",
+      "tooMany": "Đã đạt giới hạn đính kèm.",
+      "trigger": "Bài học"
     },
     "limitReachedHelper": "Đã chạm giới hạn: {used}/{count} tin nhắn. Hãy bắt đầu phiên mới để tiếp tục.",
     "limitReachedToast": "Bạn đã đạt giới hạn {count} tin nhắn. Hãy bắt đầu phiên mới để tiếp tục.",
