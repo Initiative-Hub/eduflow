@@ -11,6 +11,7 @@ const DEFAULT_READ_EXPIRES_SECONDS = 30 * 60;
 export const STORAGE_MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024;
 
 export const FILE_INVENTORY_BUCKET_NAME = 'eduflow-inventory';
+export const FILE_TEMPLATES_BUCKET_NAME = 'eduflow-template';
 
 function sanitizeSegment(value: string) {
   return value

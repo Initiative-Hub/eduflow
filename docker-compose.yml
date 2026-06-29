@@ -66,6 +66,8 @@ services:
       mc anonymous set none local/eduflow-avatars;
       mc mb --ignore-existing local/eduflow-inventory;
       mc anonymous set none local/eduflow-inventory;
+      mc mb --ignore-existing local/eduflow-template;
+      mc anonymous set none local/eduflow-template;
       "
     networks:
       - storage-network
@@ -87,6 +89,9 @@ services:
       mc rm --force --recursive local/eduflow-inventory;
       mc mb --ignore-existing local/eduflow-inventory;
       mc anonymous set none local/eduflow-inventory;
+      mc rm --force --recursive local/eduflow-template;
+      mc mb --ignore-existing local/eduflow-template;
+      mc anonymous set none local/eduflow-template;
       "
     networks:
       - storage-network

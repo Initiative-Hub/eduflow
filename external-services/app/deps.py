@@ -21,6 +21,7 @@ AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "")
 AWS_REGION = os.getenv("AWS_REGION", "local")
 AWS_S3_ENDPOINT = os.getenv("AWS_S3_ENDPOINT", "")
 AWS_S3_BUCKET = os.getenv("AWS_S3_BUCKET", "eduflow-inventory")
+AWS_S3_TEMPLATES_BUCKET = os.getenv("AWS_S3_TEMPLATES_BUCKET", "eduflow-template")
 
 # Handle Docker environment resolving localhost to minio container name
 if os.path.exists("/.dockerenv") and AWS_S3_ENDPOINT:

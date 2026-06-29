@@ -1149,10 +1149,13 @@ export class StorageService {
   /**
    * Lists object keys in S3 under a prefix.
    */
-  static async listPrefixKeys(prefix: string): Promise<string[]> {
+  static async listPrefixKeys(
+    prefix: string,
+    bucketName: string = FILE_INVENTORY_BUCKET_NAME
+  ): Promise<string[]> {
     const s3 = createS3Client();
     const command = new ListObjectsV2Command({
-      Bucket: FILE_INVENTORY_BUCKET_NAME,
+      Bucket: bucketName,
       Prefix: prefix,
     });
     const response = await s3.send(command);
@@ -1164,10 +1167,13 @@ export class StorageService {
   /**
    * Downloads an S3 object and returns it as a string.
    */
-  static async getObjectString(objectKey: string): Promise<string | undefined> {
+  static async getObjectString(
+    objectKey: string,
+    bucketName: string = FILE_INVENTORY_BUCKET_NAME
+  ): Promise<string | undefined> {
     const s3 = createS3Client();
     const command = new GetObjectCommand({
-      Bucket: FILE_INVENTORY_BUCKET_NAME,
+      Bucket: bucketName,
       Key: objectKey,
     });
     const response = await s3.send(command);

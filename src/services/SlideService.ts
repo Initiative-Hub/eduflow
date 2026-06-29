@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { FILE_TEMPLATES_BUCKET_NAME } from '@/lib/storage/file-storage';
 import { StorageService } from './StorageService';
 
 // In-memory cache for slide template previews
@@ -65,11 +66,17 @@ export class SlideService {
     if (Object.keys(svgs).length === 0) {
       try {
         const prefix = `templates/${collectionName}/`;
-        const keys = await StorageService.listPrefixKeys(prefix);
+        const keys = await StorageService.listPrefixKeys(
+          prefix,
+          FILE_TEMPLATES_BUCKET_NAME
+        );
 
         const svgKeys = keys.filter((key) => key.endsWith('.svg'));
         const downloadPromises = svgKeys.map(async (key) => {
-          const body = await StorageService.getObjectString(key);
+          const body = await StorageService.getObjectString(
+            key,
+            FILE_TEMPLATES_BUCKET_NAME
+          );
           if (body) {
             const name = path.parse(key).name;
             return { name, body };
