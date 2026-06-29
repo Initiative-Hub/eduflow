@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { withRoles } from '@/lib/api/middlewares';
+import { withPermissions } from '@/lib/api/middlewares';
 import {
   isPlatformPermissionKey,
+  PLATFORM_PERMISSION,
   type PlatformPermissionKey,
 } from '@/lib/permissions/permission-keys';
 import { PlatformRolePermissionService } from '@/services/PlatformRolePermissionService';
@@ -41,17 +42,20 @@ const updatePermissionSchema = z.object({
  *       403:
  *         description: Forbidden
  */
-export const GET = withRoles(['ADMIN'], async () => {
-  try {
-    const roles =
-      await PlatformRolePermissionService.getPlatformRolePermissionStates();
+export const GET = withPermissions(
+  [PLATFORM_PERMISSION.ROLES_VIEW],
+  async () => {
+    try {
+      const roles =
+        await PlatformRolePermissionService.getPlatformRolePermissionStates();
 
-    return NextResponse.json({ roles });
-  } catch (error) {
-    console.error('List role permissions error:', error);
-    return NextResponse.json({ message: 'Server error' }, { status: 500 });
+      return NextResponse.json({ roles });
+    } catch (error) {
+      console.error('List role permissions error:', error);
+      return NextResponse.json({ message: 'Server error' }, { status: 500 });
+    }
   }
-});
+);
 
 /**
  * @swagger
@@ -72,31 +76,34 @@ export const GET = withRoles(['ADMIN'], async () => {
  *       403:
  *         description: Forbidden
  */
-export const PATCH = withRoles(['ADMIN'], async (req) => {
-  try {
-    const parsed = updatePermissionSchema.safeParse(await req.json());
+export const PATCH = withPermissions(
+  [PLATFORM_PERMISSION.ROLES_MANAGE],
+  async (req) => {
+    try {
+      const parsed = updatePermissionSchema.safeParse(await req.json());
 
-    if (!parsed.success) {
-      return NextResponse.json(
-        { message: 'Invalid payload', errors: parsed.error.issues },
-        { status: 400 }
-      );
+      if (!parsed.success) {
+        return NextResponse.json(
+          { message: 'Invalid payload', errors: parsed.error.issues },
+          { status: 400 }
+        );
+      }
+
+      const permissions =
+        await PlatformRolePermissionService.updatePlatformRolePermissions(
+          parsed.data
+        );
+
+      return NextResponse.json({
+        role: parsed.data.role,
+        permissions: permissions.map((permission) => ({
+          permission: permission.permission,
+          enabled: permission.enabled,
+        })),
+      });
+    } catch (error) {
+      console.error('Update role permission error:', error);
+      return NextResponse.json({ message: 'Server error' }, { status: 500 });
     }
-
-    const permissions =
-      await PlatformRolePermissionService.updatePlatformRolePermissions(
-        parsed.data
-      );
-
-    return NextResponse.json({
-      role: parsed.data.role,
-      permissions: permissions.map((permission) => ({
-        permission: permission.permission,
-        enabled: permission.enabled,
-      })),
-    });
-  } catch (error) {
-    console.error('Update role permission error:', error);
-    return NextResponse.json({ message: 'Server error' }, { status: 500 });
   }
-});
+);

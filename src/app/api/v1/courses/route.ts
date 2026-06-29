@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { withAuth, withRoles } from '@/lib/api/middlewares';
+import { withAuth, withPermissions } from '@/lib/api/middlewares';
+import { PLATFORM_PERMISSION } from '@/lib/permissions/permission-keys';
 import { CourseService } from '@/services/CourseService';
 
 const createCourseSchema = z.object({
@@ -104,8 +105,8 @@ export const GET = withAuth(async (req, sessionData) => {
  *         description: Internal server error
  *
  */
-export const POST = withRoles(
-  ['TEACHER', 'ADMIN'],
+export const POST = withPermissions(
+  [PLATFORM_PERMISSION.COURSES_CREATE],
   async (req, sessionData) => {
     try {
       const userId = sessionData.user.id;
