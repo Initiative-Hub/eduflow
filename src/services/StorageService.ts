@@ -1,8 +1,10 @@
+import { GetObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
 import {
   CourseEnrollmentStatus,
   type FileInventory,
   type Prisma,
 } from '@/generated/prisma';
+import { createS3Client } from '@/lib/aws/s3-client';
 import { prisma } from '@/lib/prisma';
 import {
   buildInventoryObjectKey,
@@ -1142,5 +1144,33 @@ export class StorageService {
 
       return res.text();
     }
+  }
+
+  /**
+   * Lists object keys in S3 under a prefix.
+   */
+  static async listPrefixKeys(prefix: string): Promise<string[]> {
+    const s3 = createS3Client();
+    const command = new ListObjectsV2Command({
+      Bucket: FILE_INVENTORY_BUCKET_NAME,
+      Prefix: prefix,
+    });
+    const response = await s3.send(command);
+    return (response.Contents || [])
+      .map((item) => item.Key)
+      .filter((key): key is string => Boolean(key));
+  }
+
+  /**
+   * Downloads an S3 object and returns it as a string.
+   */
+  static async getObjectString(objectKey: string): Promise<string | undefined> {
+    const s3 = createS3Client();
+    const command = new GetObjectCommand({
+      Bucket: FILE_INVENTORY_BUCKET_NAME,
+      Key: objectKey,
+    });
+    const response = await s3.send(command);
+    return response.Body?.transformToString();
   }
 }

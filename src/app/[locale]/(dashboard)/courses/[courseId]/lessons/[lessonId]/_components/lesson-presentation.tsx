@@ -31,7 +31,12 @@ import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import type { TiptapDocument } from '@/utils/lesson-content';
-import { useSlideHtml, useUpdateSlideHtml } from '../use-lesson';
+import {
+  useDownloadPptx,
+  useSlideHtml,
+  useSlideTemplates,
+  useUpdateSlideHtml,
+} from '../use-lesson';
 import { type PlannedSlide, usePresentation } from '../use-presentation';
 import { TemplateUploadSheet } from './template-upload-sheet';
 
@@ -87,56 +92,37 @@ export function LessonPresentation({
   const updateSlideHtml = useUpdateSlideHtml();
 
   const [isUploadOpen, setIsUploadOpen] = useState(false);
-  const [collections, setCollections] = useState<any[]>([]);
-  const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
 
-  const fetchCollections = async () => {
-    setIsLoadingTemplates(true);
-    try {
-      const res = await fetch('/api/v1/ai/templates');
-      if (res.ok) {
-        const data = await res.json();
-        setCollections(data);
-      }
-    } catch (err) {
-      console.error('Failed to fetch templates:', err);
-    } finally {
-      setIsLoadingTemplates(false);
-    }
-  };
+  // TanStack Query for slide templates
+  const { data: collectionsData, isLoading: isLoadingTemplates } =
+    useSlideTemplates();
+  const collections = collectionsData || [];
 
-  useEffect(() => {
-    if (isOpen) {
-      fetchCollections();
-    }
-  }, [isOpen]);
+  // TanStack Mutation for downloading PPTX
+  const downloadPptx = useDownloadPptx();
 
   const handleDownloadPptx = async () => {
     if (!deckId) return;
     setIsDownloadingPptx(true);
-    try {
-      const res = await fetch(`/api/v1/ai/slides/${deckId}/pptx`, {
-        cache: 'no-store',
-      });
-      if (!res.ok) {
-        throw new Error('Failed to download presentation file');
-      }
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `presentation-${deckId}.pptx`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
-      toast.success(t('pptxDownloadSuccess'));
-    } catch (err) {
-      console.error(err);
-      toast.error(t('pptxDownloadError'));
-    } finally {
-      setIsDownloadingPptx(false);
-    }
+    downloadPptx.mutate(deckId, {
+      onSuccess: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `presentation-${deckId}.pptx`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        toast.success(t('pptxDownloadSuccess'));
+        setIsDownloadingPptx(false);
+      },
+      onError: (err: any) => {
+        console.error(err);
+        toast.error(t('pptxDownloadError'));
+        setIsDownloadingPptx(false);
+      },
+    });
   };
 
   // Turn text-bearing nodes inside the generated iframe into editable elements.
@@ -1653,24 +1639,24 @@ export function LessonPresentation({
               </p>
             </div>
             <div className="flex shrink-0 items-center gap-2">
-              <div className="flex items-center gap-1.5 rounded-lg bg-slate-100/90 border border-slate-200/60 px-3 py-1.5 dark:bg-slate-900/80 dark:border-slate-800/80">
-                <span className="text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+              <div className="flex items-center gap-1.5 rounded-lg border border-slate-200/60 bg-slate-100/90 px-3 py-1.5 dark:border-slate-800/80 dark:bg-slate-900/80">
+                <span className="font-bold text-[10px] text-slate-500 uppercase tracking-wider dark:text-slate-400">
                   Style:
                 </span>
                 <span
-                  className="text-slate-800 dark:text-slate-200 text-xs font-bold max-w-[150px] truncate block"
+                  className="block max-w-[150px] truncate font-bold text-slate-800 text-xs dark:text-slate-200"
                   title={
                     selectedCollection === 'starter'
                       ? 'Default Starter'
                       : selectedCollection === 'neon_dark'
-                        ? 'Neon Dark'
+                        ? 'Neon Dark Theme'
                         : selectedCollection
                   }
                 >
                   {selectedCollection === 'starter'
                     ? 'Default Starter'
                     : selectedCollection === 'neon_dark'
-                      ? 'Neon Dark'
+                      ? 'Neon Dark Theme'
                       : selectedCollection}
                 </span>
               </div>
@@ -1999,7 +1985,6 @@ export function LessonPresentation({
         selectedCollection={selectedCollection}
         onSelectCollection={setSelectedCollection}
         collections={collections}
-        onUploadSuccess={fetchCollections}
         isLoading={isLoadingTemplates}
       />
     </div>

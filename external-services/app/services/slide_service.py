@@ -515,3 +515,4 @@ class SlideService:
             raise RuntimeError(f"Failed to assemble PPTX: {str(e)}")
 
         return pptx_path
+
