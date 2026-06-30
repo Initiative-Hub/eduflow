@@ -44,36 +44,6 @@ async def execute_generation_job(job_id: str, req: GenReq, out_path: Path):
         jobs[job_id]["message"] = str(e)
 
 
-async def execute_plan_generation_job(job_id: str, req: PlanGenReq, out_path: Path):
-    try:
-        jobs[job_id]["status"] = "running"
-        plan_dict = {"title": req.title, "slides": [s.model_dump() for s in req.slides]}
-        result = await slide_service.generate_deck_from_plan(
-            plan=plan_dict,
-            output_path=out_path,
-            palette=req.palette,
-            images=req.images,
-            image_source=req.image_source,
-            collection=req.collection,
-        )
-        # Upload to S3
-        s3_key = f"slides/{job_id}.html"
-        uploaded = await upload_file_to_s3(out_path, s3_key)
-
-        jobs[job_id]["status"] = "done"
-        jobs[job_id]["result"] = {
-            "deck_id": job_id,
-            "slides": result.get("slides", []),
-            "usage": result.get("usage", {}),
-            "warnings": result.get("warnings", []),
-        }
-        if uploaded:
-            jobs[job_id]["result"]["s3_key"] = s3_key
-    except Exception as e:
-        jobs[job_id]["status"] = "error"
-        jobs[job_id]["message"] = str(e)
-
-
 @router.get("/templates/categories")
 async def get_categories():
     try:
@@ -104,16 +74,34 @@ async def generate(req: GenReq, background_tasks: BackgroundTasks):
 
 
 @router.post("/generate-from-plan")
-async def generate_from_plan(req: PlanGenReq, background_tasks: BackgroundTasks):
+async def generate_from_plan(req: PlanGenReq):
     job_id = uuid.uuid4().hex[:12]
     out_path = STORAGE_DIR / f"{job_id}.html"
-    jobs[job_id] = {
-        "status": "queued",
-        "result": None,
-        "message": None,
-    }
-    background_tasks.add_task(execute_plan_generation_job, job_id, req, out_path)
-    return {"job_id": job_id, "status": "queued"}
+    try:
+        plan_dict = {"title": req.title, "slides": [s.model_dump() for s in req.slides]}
+        result = await slide_service.generate_deck_from_plan(
+            plan=plan_dict,
+            output_path=out_path,
+            palette=req.palette,
+            images=req.images,
+            image_source=req.image_source,
+            collection=req.collection,
+        )
+        # Upload to S3
+        s3_key = f"slides/{job_id}.html"
+        uploaded = await upload_file_to_s3(out_path, s3_key)
+
+        res = {
+            "deck_id": job_id,
+            "slides": result.get("slides", []),
+            "usage": result.get("usage", {}),
+            "warnings": result.get("warnings", []),
+        }
+        if uploaded:
+            res["s3_key"] = s3_key
+        return {"status": "done", "result": res}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 
 @router.get("/jobs/{job_id}")
