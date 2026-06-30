@@ -1907,7 +1907,11 @@
         "download": "Tải xuống HTML",
         "fullscreen": "Toàn màn hình",
         "previewTitle": "Hoạt động tương tác: {title}",
-        "reset": "Đặt lại hoạt động"
+        "reset": "Đặt lại hoạt động",
+        "saveError": "Could not save this activity to inventory.",
+        "saveSuccess": "Activity saved to inventory.",
+        "saveToInventory": "Save to Inventory",
+        "savingToInventory": "Saving..."
       },
       "practiceTest": {
         "description": "Thử thách bản thân với câu hỏi trắc nghiệm, câu ngắn và thẻ ghi nhớ do AI tạo ra."
