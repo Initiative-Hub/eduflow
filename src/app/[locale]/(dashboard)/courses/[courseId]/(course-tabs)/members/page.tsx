@@ -18,13 +18,13 @@ export default async function MembersPage({
   params: Promise<{ courseId: string }>;
 }) {
   const { courseId } = await params;
-  const session = await auth.api.getSession({ headers: await headers() });
+  const sessionData = await auth.api.getSession({ headers: await headers() });
 
-  if (!session) {
+  if (!sessionData) {
     redirect('/login');
   }
 
-  const permissions = await getCoursePermissions(session.user.id, courseId);
+  const permissions = await getCoursePermissions(sessionData.user.id, courseId);
 
   if (permissions.withoutPermission(COURSE_PERMISSION.COURSE_MEMBERS_VIEW)) {
     notFound();

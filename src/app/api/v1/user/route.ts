@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { withAuth, withRoles } from '@/lib/api/middlewares';
+import { withAuth, withPermissions } from '@/lib/api/middlewares';
+import { PLATFORM_PERMISSION } from '@/lib/permissions/permission-keys';
 import { UserService } from '@/services/UserService';
 
 /**
@@ -54,19 +55,22 @@ export const GET = withAuth(async (_req, session) => {
  *       403:
  *         description: Forbidden
  */
-export const POST = withRoles(['ADMIN'], async (_req) => {
-  try {
-    return NextResponse.json({
-      message: 'Create user stub',
-      data: null,
-    });
-  } catch (error: any) {
-    return NextResponse.json(
-      { message: error.message || 'Internal Server Error' },
-      { status: 500 }
-    );
+export const POST = withPermissions(
+  [PLATFORM_PERMISSION.USERS_MANAGE],
+  async (_req) => {
+    try {
+      return NextResponse.json({
+        message: 'Create user stub',
+        data: null,
+      });
+    } catch (error: any) {
+      return NextResponse.json(
+        { message: error.message || 'Internal Server Error' },
+        { status: 500 }
+      );
+    }
   }
-});
+);
 
 /**
  * @swagger

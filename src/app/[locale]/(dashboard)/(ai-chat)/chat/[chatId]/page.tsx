@@ -9,20 +9,20 @@ interface ChatPageProps {
 }
 
 export default async function ChatPage({ params }: ChatPageProps) {
-  const [session, { chatId }, cookieStore] = await Promise.all([
+  const [sessionData, { chatId }, cookieStore] = await Promise.all([
     auth.api.getSession({ headers: await headers() }),
     params,
     cookies(),
   ]);
 
   const guestId = cookieStore.get('guest_session')?.value;
-  if (!session?.user?.id && !guestId) {
+  if (!sessionData && !guestId) {
     notFound();
   }
 
   const chatData = await ChatPersistenceService.getChat({
     chatId,
-    userId: session?.user?.id,
+    userId: sessionData?.user.id,
     guestId,
   });
 
@@ -32,8 +32,8 @@ export default async function ChatPage({ params }: ChatPageProps) {
 
   return (
     <AIClient
-      userName={session?.user?.name}
-      isAuthenticated={Boolean(session?.user?.id)}
+      userName={sessionData?.user?.name}
+      isAuthenticated={Boolean(sessionData)}
       chatId={chatId}
       initialMessages={chatData.messages ?? []}
     />

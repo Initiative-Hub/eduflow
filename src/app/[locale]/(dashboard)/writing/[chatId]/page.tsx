@@ -2,6 +2,7 @@ import { cookies, headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { AiChatType } from '@/generated/prisma';
 import { auth } from '@/lib/auth';
+import { PLATFORM_PERMISSION } from '@/lib/permissions/permission-keys';
 import {
   type WritingTool,
   writingToolSchema,
@@ -25,20 +26,26 @@ function getInitialWritingTool(metadata: unknown): WritingTool {
 export default async function WritingSessionPage({
   params,
 }: WritingSessionPageProps) {
-  const [session, { chatId }, cookieStore] = await Promise.all([
+  const [sessionData, { chatId }, cookieStore] = await Promise.all([
     auth.api.getSession({ headers: await headers() }),
     params,
     cookies(),
   ]);
 
+  if (
+    !sessionData?.user.permissions.includes(PLATFORM_PERMISSION.AI_USE_WRITING)
+  ) {
+    notFound();
+  }
+
   const guestId = cookieStore.get('guest_session')?.value;
-  if (!session?.user?.id && !guestId) {
+  if (!sessionData && !guestId) {
     notFound();
   }
 
   const writingData = await ChatPersistenceService.getChat({
     chatId,
-    userId: session?.user?.id,
+    userId: sessionData?.user?.id,
     guestId,
     chatType: AiChatType.WRITING_ASSISTANT,
   });

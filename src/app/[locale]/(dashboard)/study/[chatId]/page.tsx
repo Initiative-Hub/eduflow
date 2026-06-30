@@ -36,20 +36,20 @@ function getInitialStudyQuizOptions(
 export default async function StudySessionPage({
   params,
 }: StudySessionPageProps) {
-  const [session, { chatId }, cookieStore] = await Promise.all([
+  const [sessionData, { chatId }, cookieStore] = await Promise.all([
     auth.api.getSession({ headers: await headers() }),
     params,
     cookies(),
   ]);
 
   const guestId = cookieStore.get('guest_session')?.value;
-  if (!session?.user?.id && !guestId) {
+  if (!sessionData && !guestId) {
     notFound();
   }
 
   const studyData = await ChatPersistenceService.getChat({
     chatId,
-    userId: session?.user?.id,
+    userId: sessionData?.user?.id,
     guestId,
     chatType: AiChatType.STUDY_ASSISTANT,
   });
@@ -64,7 +64,7 @@ export default async function StudySessionPage({
       initialMode={getInitialStudyMode(studyData?.metadata)}
       initialQuizOptions={getInitialStudyQuizOptions(studyData?.metadata)}
       initialMessages={studyData?.messages ?? []}
-      isAuthenticated={!!session?.user}
+      isAuthenticated={Boolean(sessionData)}
     />
   );
 }

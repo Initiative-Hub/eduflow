@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { withAuth } from '@/lib/api/middlewares';
+import { withPermissions } from '@/lib/api/middlewares';
+import { PLATFORM_PERMISSION } from '@/lib/permissions/permission-keys';
 import { STORAGE_MAX_FILE_SIZE_BYTES } from '@/lib/storage/file-storage';
 import { StorageService } from '@/services/StorageService';
 
@@ -33,10 +34,10 @@ const initUploadSchema = z.object({
  *                 type: string
  *                 format: uuid
  *                 nullable: true
- *              folderPath:
- *                type: array
- *                items:
- *                 type: string
+ *               folderPath:
+ *                 type: array
+ *                 items:
+ *                   type: string
  *               fileName:
  *                 type: string
  *               contentType:
@@ -56,49 +57,55 @@ const initUploadSchema = z.object({
  *         description: Internal server error
  *
  */
-export const POST = withAuth(async (req, session) => {
-  try {
-    const body = await req.json();
-    const parsed = initUploadSchema.safeParse(body);
+export const POST = withPermissions(
+  [PLATFORM_PERMISSION.PERSONAL_FILES_MANAGE],
+  async (req, session) => {
+    try {
+      const body = await req.json();
+      const parsed = initUploadSchema.safeParse(body);
 
-    if (!parsed.success) {
+      if (!parsed.success) {
+        return NextResponse.json(
+          {
+            message: 'Invalid request payload',
+            details: parsed.error.flatten(),
+          },
+          { status: 400 }
+        );
+      }
+
+      const upload = await StorageService.initializeUpload({
+        userId: session.user.id,
+        parentId: parsed.data.parentId ?? null,
+        folderPath: parsed.data.folderPath,
+        fileName: parsed.data.fileName,
+        contentType: parsed.data.contentType,
+        fileSize: parsed.data.size,
+      });
+
+      return NextResponse.json({
+        data: {
+          fileId: upload.id,
+          path: upload.objectKey,
+          bucket: upload.bucket,
+          status: upload.status,
+          uploadUrl: upload.uploadUrl,
+          uploadHeaders: upload.uploadHeaders,
+        },
+      });
+    } catch (error: any) {
+      if (error?.message === 'Parent folder not found') {
+        return NextResponse.json({ message: error.message }, { status: 404 });
+      }
+
+      if (error?.message === 'File size exceeds inventory upload limit') {
+        return NextResponse.json({ message: error.message }, { status: 413 });
+      }
+
       return NextResponse.json(
-        { message: 'Invalid request payload', details: parsed.error.flatten() },
-        { status: 400 }
+        { message: error?.message || 'Internal Server Error' },
+        { status: 500 }
       );
     }
-
-    const upload = await StorageService.initializeUpload({
-      userId: session.user.id,
-      parentId: parsed.data.parentId ?? null,
-      folderPath: parsed.data.folderPath,
-      fileName: parsed.data.fileName,
-      contentType: parsed.data.contentType,
-      fileSize: parsed.data.size,
-    });
-
-    return NextResponse.json({
-      data: {
-        fileId: upload.id,
-        path: upload.objectKey,
-        bucket: upload.bucket,
-        status: upload.status,
-        uploadUrl: upload.uploadUrl,
-        uploadHeaders: upload.uploadHeaders,
-      },
-    });
-  } catch (error: any) {
-    if (error?.message === 'Parent folder not found') {
-      return NextResponse.json({ message: error.message }, { status: 404 });
-    }
-
-    if (error?.message === 'File size exceeds inventory upload limit') {
-      return NextResponse.json({ message: error.message }, { status: 413 });
-    }
-
-    return NextResponse.json(
-      { message: error?.message || 'Internal Server Error' },
-      { status: 500 }
-    );
   }
-});
+);

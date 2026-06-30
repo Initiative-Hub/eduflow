@@ -13,20 +13,20 @@ interface SocraticSessionPageProps {
 export default async function SocraticSessionPage({
   params,
 }: SocraticSessionPageProps) {
-  const [session, { chatId }, cookieStore] = await Promise.all([
+  const [sessionData, { chatId }, cookieStore] = await Promise.all([
     auth.api.getSession({ headers: await headers() }),
     params,
     cookies(),
   ]);
 
   const guestId = cookieStore.get('guest_session')?.value;
-  if (!session?.user?.id && !guestId) {
+  if (!sessionData && !guestId) {
     notFound();
   }
 
   const socraticData = await ChatPersistenceService.getChat({
     chatId,
-    userId: session?.user?.id,
+    userId: sessionData?.user?.id,
     guestId,
     chatType: AiChatType.SOCRATIC_TUTOR,
   });
@@ -39,7 +39,7 @@ export default async function SocraticSessionPage({
     <SocraticClient
       chatId={chatId}
       initialMessages={socraticData.messages as SocraticUIMessage[]}
-      isAuthenticated={Boolean(session?.user?.id)}
+      isAuthenticated={Boolean(sessionData)}
     />
   );
 }

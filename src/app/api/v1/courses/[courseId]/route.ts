@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { withAuth, withRoles } from '@/lib/api/middlewares';
+import { withAuth, withPermissions } from '@/lib/api/middlewares';
+import { PLATFORM_PERMISSION } from '@/lib/permissions/permission-keys';
 import { CourseService } from '@/services/CourseService';
 
 const patchCourseSchema = z.object({
@@ -57,6 +58,7 @@ export const GET = withAuth(async (_req, sessionData, { params }) => {
     );
   }
 });
+
 /**
  * @swagger
  * /api/v1/courses/{courseId}:
@@ -95,8 +97,8 @@ export const GET = withAuth(async (_req, sessionData, { params }) => {
  *         description: Internal server error
  *
  */
-export const PATCH = withRoles(
-  ['TEACHER'],
+export const PATCH = withPermissions(
+  [PLATFORM_PERMISSION.COURSES_MANAGE],
   async (req, sessionData, { params }) => {
     try {
       const userId = sessionData.user.id;

@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { NextResponse } from 'next/server';
-import { withRoles } from '@/lib/api/middlewares';
+import { withPermissions } from '@/lib/api/middlewares';
+import { PLATFORM_PERMISSION } from '@/lib/permissions/permission-keys';
 import { prisma } from '@/lib/prisma';
 
 /**
@@ -20,26 +21,29 @@ import { prisma } from '@/lib/prisma';
  *       403:
  *         description: Forbidden
  */
-export const GET = withRoles(['ADMIN'], async (_req, _sessionData) => {
-  try {
-    const users = await prisma.user.findMany({
-      include: { role: true },
-    });
+export const GET = withPermissions(
+  [PLATFORM_PERMISSION.USERS_VIEW],
+  async (_req, _sessionData) => {
+    try {
+      const users = await prisma.user.findMany({
+        include: { role: true },
+      });
 
-    const out = users.map((u) => ({
-      id: u.id,
-      email: u.email,
-      emailVerified: u.emailVerified,
-      name: u.name,
-      role: u.role?.name,
-      createdAt: u.createdAt,
-    }));
-    return NextResponse.json(out);
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json({ message: 'Server error' }, { status: 500 });
+      const out = users.map((u) => ({
+        id: u.id,
+        email: u.email,
+        emailVerified: u.emailVerified,
+        name: u.name,
+        role: u.role?.name,
+        createdAt: u.createdAt,
+      }));
+      return NextResponse.json(out);
+    } catch (error) {
+      console.error(error);
+      return NextResponse.json({ message: 'Server error' }, { status: 500 });
+    }
   }
-});
+);
 
 /**
  * @swagger
@@ -76,38 +80,41 @@ export const GET = withRoles(['ADMIN'], async (_req, _sessionData) => {
  *         description: Forbidden
  *
  */
-export const POST = withRoles(['ADMIN'], async (req, _sessionData) => {
-  try {
-    const { email, name, password, role } = await req.json();
-    if (!email || !password) {
+export const POST = withPermissions(
+  [PLATFORM_PERMISSION.USERS_MANAGE],
+  async (req, _sessionData) => {
+    try {
+      const { email, name, password, role } = await req.json();
+      if (!email || !password) {
+        return NextResponse.json(
+          { message: 'Email and password required' },
+          { status: 400 }
+        );
+      }
+
+      const exists = await prisma.user.findUnique({ where: { email } });
+      if (exists) {
+        return NextResponse.json(
+          { message: 'Email already exists' },
+          { status: 400 }
+        );
+      }
+
+      const hashed = await bcrypt.hash(password, 10);
+      const data: any = { email, name, password: hashed };
+      if (role) data.role = { connect: { name: role } };
+
+      const created = await prisma.user.create({ data });
       return NextResponse.json(
-        { message: 'Email and password required' },
-        { status: 400 }
+        { message: 'Created', id: created.id },
+        { status: 201 }
       );
+    } catch (error) {
+      console.error(error);
+      return NextResponse.json({ message: 'Server error' }, { status: 500 });
     }
-
-    const exists = await prisma.user.findUnique({ where: { email } });
-    if (exists) {
-      return NextResponse.json(
-        { message: 'Email already exists' },
-        { status: 400 }
-      );
-    }
-
-    const hashed = await bcrypt.hash(password, 10);
-    const data: any = { email, name, password: hashed };
-    if (role) data.role = { connect: { name: role } };
-
-    const created = await prisma.user.create({ data });
-    return NextResponse.json(
-      { message: 'Created', id: created.id },
-      { status: 201 }
-    );
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json({ message: 'Server error' }, { status: 500 });
   }
-});
+);
 
 /**
  * @swagger
@@ -143,22 +150,25 @@ export const POST = withRoles(['ADMIN'], async (req, _sessionData) => {
  *       403:
  *         description: Forbidden
  */
-export const PUT = withRoles(['ADMIN'], async (req, _sessionData) => {
-  try {
-    const { id, name, email, role } = await req.json();
-    if (!id) {
-      return NextResponse.json({ message: 'Missing id' }, { status: 400 });
+export const PUT = withPermissions(
+  [PLATFORM_PERMISSION.USERS_MANAGE],
+  async (req, _sessionData) => {
+    try {
+      const { id, name, email, role } = await req.json();
+      if (!id) {
+        return NextResponse.json({ message: 'Missing id' }, { status: 400 });
+      }
+
+      const data: any = {};
+      if (name !== undefined) data.name = name;
+      if (email !== undefined) data.email = email;
+      if (role !== undefined) data.role = { connect: { name: role } };
+
+      const updated = await prisma.user.update({ where: { id }, data });
+      return NextResponse.json({ message: 'Updated', id: updated.id });
+    } catch (error) {
+      console.error(error);
+      return NextResponse.json({ message: 'Server error' }, { status: 500 });
     }
-
-    const data: any = {};
-    if (name !== undefined) data.name = name;
-    if (email !== undefined) data.email = email;
-    if (role !== undefined) data.role = { connect: { name: role } };
-
-    const updated = await prisma.user.update({ where: { id }, data });
-    return NextResponse.json({ message: 'Updated', id: updated.id });
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json({ message: 'Server error' }, { status: 500 });
   }
-});
+);
