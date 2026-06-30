@@ -109,6 +109,18 @@ function createDownloadFilename(title: string): string {
   return `${normalizedTitle || 'interactive-study-activity'}.html`;
 }
 
+export function createInteractiveContentInventoryFile({
+  html,
+  title,
+}: {
+  html: string;
+  title: string;
+}) {
+  return new File([html], createDownloadFilename(title), {
+    type: 'text/html;charset=utf-8',
+  });
+}
+
 const InteractiveContentPreview = ({
   title,
   description,
