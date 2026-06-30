@@ -13,8 +13,8 @@ export interface SlidePlanItem {
 export interface DeckPlan {
   title: string;
   slides: SlidePlanItem[];
-  /** Palette selection: "auto", "corporate", "modern", etc. */
   palette?: string;
+  collection?: string;
 }
 
 /** Token/cost usage for a generation job, as reported by slide_skills. */
@@ -74,6 +74,7 @@ export async function generateDeckFromPlan(
   const payload = {
     title: plan.title,
     palette: plan.palette ?? 'auto',
+    collection: plan.collection ?? 'starter',
     slides: plan.slides.map((slide) => ({
       category: slide.layoutType,
       slideTitle: slide.slideTitle,
@@ -130,21 +131,21 @@ export async function generateDeckFromPlan(
   throw new Error('Slide generation timed out');
 }
 
+import { StorageService } from '@/services/StorageService';
+
 /**
- * Fetches the rendered HTML for a generated deck from the external service.
+ * Fetches the rendered HTML for a generated deck.
  */
 export async function getDeckHtml(deckId: string): Promise<string> {
-  const baseUrl = getBaseUrl();
-  const res = await fetch(`${baseUrl}/slides/decks/${deckId}`);
+  return StorageService.getSlideDeck(deckId);
+}
 
-  if (!res.ok) {
-    if (res.status === 404) {
-      throw new Error('Deck not found');
-    }
-    const errorText = await res.text();
-    console.error('Deck fetch error:', errorText);
-    throw new Error(`Failed to fetch deck: ${res.statusText}`);
-  }
-
-  return res.text();
+/**
+ * Saves the edited HTML for a generated deck directly.
+ */
+export async function saveDeckHtml(
+  deckId: string,
+  html: string
+): Promise<void> {
+  await StorageService.saveSlideDeck(deckId, html);
 }

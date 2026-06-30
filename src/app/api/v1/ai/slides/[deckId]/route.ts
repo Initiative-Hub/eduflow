@@ -1,6 +1,6 @@
 import { errorResponse } from '@/lib/api/error-response';
-import { withRoles } from '@/lib/api/middlewares';
-import { getDeckHtml } from '@/lib/slides';
+import { withAuth, withRoles } from '@/lib/api/middlewares';
+import { getDeckHtml, saveDeckHtml } from '@/lib/slides';
 
 export const dynamic = 'force-dynamic';
 
@@ -48,7 +48,7 @@ export const GET = withRoles(
         status: 200,
         headers: {
           'Content-Type': 'text/html; charset=utf-8',
-          'Cache-Control': 'private, max-age=3600',
+          'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
         },
       });
     } catch (error) {
@@ -59,4 +59,41 @@ export const GET = withRoles(
       return errorResponse('INTERNAL_ERROR', 'Failed to fetch slide deck', 500);
     }
   }
+);
+
+export const PUT = withAuth(
+  withRoles(
+    ['TEACHER'],
+    async (
+      req: Request,
+      _sessionData,
+      { params }: { params: Promise<{ deckId: string }> }
+    ) => {
+      try {
+        const { deckId } = await params;
+        const body = await req.json();
+        const { html } = body;
+
+        if (!html) {
+          return errorResponse('VALIDATION_ERROR', 'Missing HTML content', 400);
+        }
+
+        await saveDeckHtml(deckId, html);
+
+        return new Response(JSON.stringify({ status: 'success' }), {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+      } catch (error) {
+        console.error('AI Slide Deck Save Error:', error);
+        return errorResponse(
+          'INTERNAL_ERROR',
+          'Failed to save slide deck',
+          500
+        );
+      }
+    }
+  )
 );

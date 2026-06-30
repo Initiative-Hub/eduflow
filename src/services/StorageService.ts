@@ -1,8 +1,10 @@
+import { GetObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
 import {
   CourseEnrollmentStatus,
   type FileInventory,
   type Prisma,
 } from '@/generated/prisma';
+import { createS3Client } from '@/lib/aws/s3-client';
 import { prisma } from '@/lib/prisma';
 import {
   buildInventoryObjectKey,
@@ -13,6 +15,7 @@ import {
   FILE_INVENTORY_BUCKET_NAME,
   getInventoryObjectMetadata,
   STORAGE_MAX_FILE_SIZE_BYTES,
+  uploadInventoryObject,
 } from '@/lib/storage/file-storage';
 
 /**
@@ -1093,5 +1096,87 @@ export class StorageService {
       folderCount,
       totalSizeBytes: Number(sizeAggregate._sum.fileSize ?? BigInt(0)),
     };
+  }
+
+  /**
+   * Saves slide HTML content directly to S3 under slides/{deckId}.html.
+   */
+  static async saveSlideDeck(deckId: string, html: string): Promise<void> {
+    const encoder = new TextEncoder();
+    const body = encoder.encode(html);
+
+    await uploadInventoryObject({
+      objectKey: `slides/${deckId}.html`,
+      contentType: 'text/html; charset=utf-8',
+      body,
+    });
+  }
+
+  /**
+   * Fetches slide HTML content directly from S3 slides/{deckId}.html,
+   * falling back to the external slide service if not yet in storage.
+   */
+  static async getSlideDeck(deckId: string): Promise<string> {
+    try {
+      const { bytes } = await downloadInventoryObject({
+        objectKey: `slides/${deckId}.html`,
+      });
+      const decoder = new TextDecoder('utf-8');
+      return decoder.decode(bytes);
+    } catch (error) {
+      console.warn(
+        `[StorageService] Failed to download slides/${deckId}.html from S3, falling back to external service:`,
+        error
+      );
+      const externalServiceUrl = (
+        process.env.EXTERNAL_SERVICE_URL || 'http://localhost:8000'
+      ).replace(/\/$/, '');
+      const res = await fetch(`${externalServiceUrl}/slides/decks/${deckId}`);
+
+      if (!res.ok) {
+        if (res.status === 404) {
+          throw new Error('Deck not found');
+        }
+        throw new Error(
+          `Failed to fetch deck from external service: ${res.statusText}`
+        );
+      }
+
+      return res.text();
+    }
+  }
+
+  /**
+   * Lists object keys in S3 under a prefix.
+   */
+  static async listPrefixKeys(
+    prefix: string,
+    bucketName: string = FILE_INVENTORY_BUCKET_NAME
+  ): Promise<string[]> {
+    const s3 = createS3Client();
+    const command = new ListObjectsV2Command({
+      Bucket: bucketName,
+      Prefix: prefix,
+    });
+    const response = await s3.send(command);
+    return (response.Contents || [])
+      .map((item) => item.Key)
+      .filter((key): key is string => Boolean(key));
+  }
+
+  /**
+   * Downloads an S3 object and returns it as a string.
+   */
+  static async getObjectString(
+    objectKey: string,
+    bucketName: string = FILE_INVENTORY_BUCKET_NAME
+  ): Promise<string | undefined> {
+    const s3 = createS3Client();
+    const command = new GetObjectCommand({
+      Bucket: bucketName,
+      Key: objectKey,
+    });
+    const response = await s3.send(command);
+    return response.Body?.transformToString();
   }
 }

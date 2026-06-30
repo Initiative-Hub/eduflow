@@ -103,7 +103,6 @@ NARRATIVE & STRUCTURE
 - Slide 1 MUST be 'TITLE_SLIDE'. Slide 2 SHOULD be 'AGENDA_OUTLINE' summarizing what the deck covers (unless the deck is very short, ≤3 slides).
 - Use 'SECTION_HEADER' to transition between major parts of longer decks.
 - End the deck with a wrap-up: a 'CONCLUSION_SUMMARY' of key takeaways, and where it fits a 'CALL_TO_ACTION', 'QA_CONTACT', or 'REFERENCES_LIST'.
-
 CHOOSE THE BEST LAYOUT FOR EACH IDEA (do not default everything to TITLE_BULLETS — aim for variety):
 - Hard numbers, stats, metrics, KPIs → 'KPI_BIG_NUMBER' (2–4 metrics with real values + labels).
 - Numeric data worth comparing across categories → 'CHART_INSIGHT' (pick bar/line/pie, 3–5 data points, plus a one-sentence insight).

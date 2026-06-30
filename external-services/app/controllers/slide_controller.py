@@ -54,6 +54,7 @@ async def execute_plan_generation_job(job_id: str, req: PlanGenReq, out_path: Pa
             palette=req.palette,
             images=req.images,
             image_source=req.image_source,
+            collection=req.collection,
         )
         # Upload to S3
         s3_key = f"slides/{job_id}.html"
@@ -133,13 +134,35 @@ async def get_deck(deck_id: str):
     return FileResponse(file_path, media_type="text/html")
 
 
+@router.get("/decks/{deck_id}/pptx")
+async def get_deck_pptx(deck_id: str):
+    try:
+        pptx_path = await slide_service.generate_pptx(deck_id)
+        return FileResponse(
+            pptx_path,
+            media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            filename=f"deck-{deck_id}.pptx",
+        )
+    except ValueError as val_err:
+        raise HTTPException(
+            status_code=404 if "not found" in str(val_err).lower() else 400,
+            detail=str(val_err),
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.post("/templates/import")
 async def import_templates(file: UploadFile = File(...), name: str | None = None):
     filename = file.filename or ""
-    if not (filename.lower().endswith(".zip") or filename.lower().endswith(".svg")):
+    if not (
+        filename.lower().endswith(".zip")
+        or filename.lower().endswith(".svg")
+        or filename.lower().endswith(".pptx")
+    ):
         raise HTTPException(
             status_code=400,
-            detail="Only ZIP archive files or SVG template files are supported",
+            detail="Only ZIP archive, SVG template, or PPTX files are supported",
         )
     try:
         file_bytes = await file.read()
