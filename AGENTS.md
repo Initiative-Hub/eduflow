@@ -140,6 +140,7 @@ for any tasks.).
 - **Bucket Initialization**: When adding new buckets to the storage config, ensure they are also added to `docker-compose.yml` initialization scripts (`minio-init` and `minio-reset`).
 - **Preview Delivery**: For inventory previews, prefer signed URLs over fetching full blobs into browser memory, and provide UI fallbacks when inline rendering fails.
 - **Resilient S3 Client Initializers**: Always provide fallback checks to standard AWS environment variables (`AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`) when namespaced variables (e.g. `AWS_S3_REGION`) are missing to prevent startup failures on custom local dev configurations.
+- **Modal Deployment Packaging**: When configuring Modal functions in `modal_deployment.py`, make sure to explicitly copy generic entry-point files like `main.py` using `.add_local_file("main.py", ...)` rather than `.add_local_python_source("main")` (which might resolve to system packages instead). Also, make sure all non-package resource folders (like raw `templates/` folders) are explicitly copied to the remote workspace path using `.add_local_dir` so they are available in the container.
 
 ## 7. Continuous Improvement (Session Retrospective)
 
