@@ -1904,10 +1904,14 @@
       "interactiveContent": {
         "actionsLabel": "Interactive activity actions",
         "description": "Create an interactive visual activity that you can explore and practice directly.",
-        "download": "Download HTML",
+        "download": "Download",
         "fullscreen": "Full screen",
         "previewTitle": "Interactive activity: {title}",
-        "reset": "Reset activity"
+        "reset": "Reset activity",
+        "saveError": "Could not save this activity to inventory.",
+        "saveSuccess": "Activity saved to inventory.",
+        "saveToInventory": "Save to Inventory",
+        "savingToInventory": "Saving..."
       },
       "practiceTest": {
         "description": "Challenge yourself with AI-generated multiple choice, short answer, and flashcard sets."

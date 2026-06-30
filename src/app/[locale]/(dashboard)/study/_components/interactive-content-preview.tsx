@@ -1,9 +1,12 @@
 'use client';
 
-import { Download, Maximize2, RefreshCw } from 'lucide-react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Download, Loader2, Maximize2, RefreshCw, Save } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import type { StudyInteractiveContentData } from '@/utils/study-interactive-content';
+import { inventoryService } from '../../inventory/inventory.service';
 
 const SANDBOX_CSP = [
   "default-src 'none'",
@@ -109,6 +112,18 @@ function createDownloadFilename(title: string): string {
   return `${normalizedTitle || 'interactive-study-activity'}.html`;
 }
 
+export function createInteractiveContentInventoryFile({
+  html,
+  title,
+}: {
+  html: string;
+  title: string;
+}) {
+  return new File([html], createDownloadFilename(title), {
+    type: 'text/html;charset=utf-8',
+  });
+}
+
 const InteractiveContentPreview = ({
   title,
   description,
@@ -117,11 +132,37 @@ const InteractiveContentPreview = ({
   const t = useTranslations('StudyPage.features.interactiveContent');
   const containerRef = useRef<HTMLElement>(null);
   const [previewKey, setPreviewKey] = useState(0);
-
   const secureDocument = useMemo(() => createSecureDocument(html), [html]);
+
+  const queryClient = useQueryClient();
+
+  const saveToInventoryMutation = useMutation({
+    mutationFn: async () => {
+      const file = createInteractiveContentInventoryFile({
+        html: secureDocument,
+        title,
+      });
+
+      return inventoryService.upload({ file });
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['inventory'],
+      });
+
+      toast.success(t('saveSuccess'));
+    },
+    onError: () => {
+      toast.error(t('saveError'));
+    },
+  });
 
   const handleReset = () => {
     setPreviewKey((currentKey) => currentKey + 1);
+  };
+
+  const handleSaveToInventory = () => {
+    saveToInventoryMutation.mutate();
   };
 
   const handleFullscreen = () => {
@@ -193,6 +234,23 @@ const InteractiveContentPreview = ({
           >
             <Download className="size-4" />
             <span>{t('download')}</span>
+          </button>
+          <button
+            type="button"
+            className="inline-flex h-9 min-w-36 flex-1 items-center justify-center gap-2 rounded-lg border border-border bg-background px-3 font-medium text-foreground text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+            onClick={handleSaveToInventory}
+            disabled={saveToInventoryMutation.isPending}
+          >
+            {saveToInventoryMutation.isPending ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Save className="size-4" />
+            )}
+            <span>
+              {saveToInventoryMutation.isPending
+                ? t('savingToInventory')
+                : t('saveToInventory')}
+            </span>
           </button>
         </fieldset>
       </header>
