@@ -1011,9 +1011,12 @@
     "LessonPresentation": {
       "addReference": "Add Reference",
       "btnBack": "Modify Prompt",
+      "btnDownloadPptx": "Download PPTX",
+      "btnEditOutline": "Edit Outline",
       "btnGenerate": "Generate Slide Deck",
       "btnNewDeck": "New Deck",
       "btnPlan": "Generate Presentation Plan",
+      "btnSaveVisual": "Save Changes",
       "close": "Exit Planner",
       "duration10": "10 minutes (Brief overview)",
       "duration120": "120 minutes (2-hour masterclass)",
@@ -1034,6 +1037,9 @@
       "plannedDesc": "Review and refine the planned slides. Click on titles or bullets to customize them before generation.",
       "plannedTitle": "AI Presentation Slide Outline",
       "planningText": "Compiling presentation from lesson material...",
+      "pptxDownloadError": "Failed to export PowerPoint presentation.",
+      "pptxDownloading": "Exporting PowerPoint...",
+      "pptxDownloadSuccess": "PowerPoint presentation exported successfully.",
       "previous": "PreviousSlide",
       "referencesLayout": "References & Sources",
       "referenceSources": "Reference Sources",
@@ -1049,7 +1055,8 @@
       "urlPlaceholder": "URL",
       "usageCost": "~${cost}",
       "usageRequests": "{requests} AI calls",
-      "usageTokens": "{tokens} tokens used"
+      "usageTokens": "{tokens} tokens used",
+      "visualSaveSuccess": "Slide changes saved successfully."
     },
     "LessonView": {
       "empty": "Lesson content is empty."

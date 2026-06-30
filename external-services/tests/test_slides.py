@@ -105,3 +105,30 @@ class SlideServiceTests(unittest.TestCase):
             mock_file_response.assert_called_once_with(
                 mock_path, media_type="text/html"
             )
+
+    @patch("app.controllers.slide_controller.slide_service.generate_pptx")
+    def test_get_deck_pptx_success(self, mock_generate_pptx) -> None:
+        from pathlib import Path
+
+        mock_generate_pptx.return_value = Path("/tmp/dummy.pptx")
+
+        with patch(
+            "app.controllers.slide_controller.FileResponse"
+        ) as mock_file_response:
+            from fastapi.responses import Response
+
+            mock_file_response.return_value = Response(
+                content=b"fake_pptx",
+                media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            )
+            response = self.client.get("/slides/decks/testdeck/pptx")
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.content, b"fake_pptx")
+            mock_generate_pptx.assert_called_once_with("testdeck")
+
+    @patch("app.controllers.slide_controller.slide_service.generate_pptx")
+    def test_get_deck_pptx_not_found(self, mock_generate_pptx) -> None:
+        mock_generate_pptx.side_effect = ValueError("Deck file not found")
+        response = self.client.get("/slides/decks/testdeck/pptx")
+        self.assertEqual(response.status_code, 404)
+        self.assertIn("Deck file not found", response.json()["detail"])

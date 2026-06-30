@@ -11,6 +11,7 @@ from app.deps import (
     AWS_REGION,
     AWS_S3_ENDPOINT,
     AWS_S3_BUCKET,
+    AWS_S3_TEMPLATES_BUCKET,
 )
 
 logger = logging.getLogger(__name__)
@@ -38,7 +39,7 @@ def get_s3_client():
     return boto3.client("s3", **kwargs)
 
 
-async def upload_file_to_s3(local_path: Path, object_key: str) -> bool:
+async def upload_file_to_s3(local_path: Path, object_key: str, bucket_name: str | None = None) -> bool:
     try:
         s3 = get_s3_client()
         if not s3:
@@ -54,17 +55,18 @@ async def upload_file_to_s3(local_path: Path, object_key: str) -> bool:
             )
 
         extra_args = {"ContentType": content_type}
+        bucket = bucket_name or AWS_S3_BUCKET
 
         # Upload in threadpool since boto3 is synchronous and blocks
         await run_in_threadpool(
             s3.upload_file,
             Filename=str(local_path),
-            Bucket=AWS_S3_BUCKET,
+            Bucket=bucket,
             Key=object_key,
             ExtraArgs=extra_args,
         )
         logger.info(
-            f"Successfully uploaded {local_path} to S3 bucket {AWS_S3_BUCKET} as key {object_key}"
+            f"Successfully uploaded {local_path} to S3 bucket {bucket} as key {object_key}"
         )
         return True
     except Exception as e:
@@ -72,25 +74,46 @@ async def upload_file_to_s3(local_path: Path, object_key: str) -> bool:
         return False
 
 
-async def download_file_from_s3(object_key: str, local_path: Path) -> bool:
+async def download_file_from_s3(object_key: str, local_path: Path, bucket_name: str | None = None) -> bool:
     try:
         s3 = get_s3_client()
         if not s3:
             return False
 
         local_path.parent.mkdir(parents=True, exist_ok=True)
+        bucket = bucket_name or AWS_S3_BUCKET
 
         # Download in threadpool
         await run_in_threadpool(
             s3.download_file,
-            Bucket=AWS_S3_BUCKET,
+            Bucket=bucket,
             Key=object_key,
             Filename=str(local_path),
         )
         logger.info(
-            f"Successfully downloaded key {object_key} from S3 bucket {AWS_S3_BUCKET} to {local_path}"
+            f"Successfully downloaded key {object_key} from S3 bucket {bucket} to {local_path}"
         )
         return True
     except Exception as e:
         logger.error(f"Failed to download key {object_key} from S3: {e}")
         return False
+
+
+async def list_files_in_s3_prefix(prefix: str, bucket_name: str | None = None) -> list[str]:
+    try:
+        s3 = get_s3_client()
+        if not s3:
+            return []
+
+        bucket = bucket_name or AWS_S3_BUCKET
+
+        def list_keys():
+            response = s3.list_objects_v2(Bucket=bucket, Prefix=prefix)
+            if "Contents" not in response:
+                return []
+            return [item["Key"] for item in response["Contents"]]
+
+        return await run_in_threadpool(list_keys)
+    except Exception as e:
+        logger.error(f"Failed to list S3 prefix {prefix}: {e}")
+        return []
