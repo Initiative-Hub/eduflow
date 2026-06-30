@@ -1904,7 +1904,7 @@
       "interactiveContent": {
         "actionsLabel": "Interactive activity actions",
         "description": "Create an interactive visual activity that you can explore and practice directly.",
-        "download": "Download HTML",
+        "download": "Download",
         "fullscreen": "Full screen",
         "previewTitle": "Interactive activity: {title}",
         "reset": "Reset activity",

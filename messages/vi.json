@@ -1904,13 +1904,13 @@
       "interactiveContent": {
         "actionsLabel": "Thao tác hoạt động tương tác",
         "description": "Tạo hoạt động trực quan tương tác để bạn khám phá và luyện tập trực tiếp.",
-        "download": "Tải xuống HTML",
+        "download": "Tải xuống",
         "fullscreen": "Toàn màn hình",
         "previewTitle": "Hoạt động tương tác: {title}",
         "reset": "Đặt lại hoạt động",
         "saveError": "Không thể lưu hoạt động này vào kho tài liệu.",
         "saveSuccess": "Đã lưu hoạt động vào kho tài liệu.",
-        "saveToInventory": "Lưu vào kho tài liệu",
+        "saveToInventory": "Lưu vào tài liệu",
         "savingToInventory": "Đang lưu..."
       },
       "practiceTest": {
