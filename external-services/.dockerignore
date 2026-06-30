@@ -1,7 +1,13 @@
 .venv
+.git
 __pycache__
 *.pyc
 .pytest_cache
 .mypy_cache
 tests
+.dockerignore
+.env.*
+.env
+Dockerfile
+modal_deployment.py
 README.md

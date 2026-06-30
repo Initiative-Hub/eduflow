@@ -121,11 +121,11 @@ services:
     networks:
       - cache-network
 
-  markitdown:
+  external-services:
     build:
       context: ./external-services
       dockerfile: Dockerfile
-    container_name: eduflow_markitdown
+    container_name: eduflow_external_services
     restart: unless-stopped
     ports:
       - "8000:8000"
@@ -133,6 +133,9 @@ services:
       - storage-network
     env_file:
       - ./external-services/.env
+    volumes:
+      - ./external-services/storage:/app/storage
+      - ./external-services/templates:/app/templates
 
 
 networks: 

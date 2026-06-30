@@ -11,7 +11,6 @@ from app.deps import (
     AWS_REGION,
     AWS_S3_ENDPOINT,
     AWS_S3_BUCKET,
-    AWS_S3_TEMPLATES_BUCKET,
 )
 
 logger = logging.getLogger(__name__)
