@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withAuth } from '@/lib/api/middlewares';
+import { buildStorageErrorResponse } from '@/lib/storage/storage-error-response';
 import { CourseService } from '@/services/CourseService';
 
 const initUploadSchema = z.object({
@@ -34,6 +35,7 @@ export const POST = withAuth(async (req, session, { params }) => {
     return NextResponse.json({
       data: {
         fileId: upload.id,
+        name: upload.name,
         path: upload.objectKey,
         bucket: upload.bucket,
         status: upload.status,
@@ -41,10 +43,7 @@ export const POST = withAuth(async (req, session, { params }) => {
         uploadHeaders: upload.uploadHeaders,
       },
     });
-  } catch (error: any) {
-    return NextResponse.json(
-      { message: error?.message || 'Internal Server Error' },
-      { status: 500 }
-    );
+  } catch (error) {
+    return buildStorageErrorResponse(error);
   }
 });

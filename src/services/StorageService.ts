@@ -17,14 +17,11 @@ import {
   STORAGE_MAX_FILE_SIZE_BYTES,
   uploadInventoryObject,
 } from '@/lib/storage/file-storage';
-
-/**
- * Normalizes a file or folder name by trimming, collapsing whitespace,
- * and capping the length to a safe storage-friendly value.
- */
-function normalizeName(name: string) {
-  return name.trim().replace(/\s+/g, ' ').slice(0, 180);
-}
+import {
+  createStorageInvalidMoveError,
+  createStorageNameConflictError,
+  isPrismaUniqueConstraintError,
+} from '@/lib/storage/inventory-errors';
 
 type SerializedFileInventory = Omit<FileInventory, 'fileSize'> & {
   fileSize: number | null;
@@ -34,6 +31,29 @@ type ChatAttachmentFileRef = {
   courseId?: string | null;
   fileId: string;
 };
+
+type InventorySibling = Pick<FileInventory, 'id' | 'isFolder' | 'name'>;
+type StorageScope = {
+  userId: string;
+  courseId?: string | null;
+};
+type StorageConflictEntryType = 'file' | 'folder';
+type StorageConflictOperation =
+  | 'create_folder'
+  | 'ensure_folder_path'
+  | 'move'
+  | 'rename';
+
+const WINDOWS_NAME_SUFFIX_PATTERN = /^(.*) \((\d+)\)$/;
+const MAX_UPLOAD_NAME_ATTEMPTS = 100;
+
+/**
+ * Normalizes a file or folder name by trimming, collapsing whitespace,
+ * and capping the length to a safe storage-friendly value.
+ */
+function normalizeName(name: string) {
+  return name.trim().replace(/\s+/g, ' ').slice(0, 180);
+}
 
 function buildInventoryScope(options: {
   userId: string;
@@ -58,6 +78,230 @@ function serializeFileInventory(
     ...record,
     fileSize: record.fileSize === null ? null : Number(record.fileSize),
   };
+}
+
+async function findActiveSiblingByName(options: {
+  userId: string;
+  courseId?: string | null;
+  parentId: string | null;
+  name: string;
+  excludeId?: string;
+}): Promise<InventorySibling | null> {
+  return prisma.fileInventory.findFirst({
+    where: {
+      ...buildInventoryScope({
+        userId: options.userId,
+        courseId: options.courseId,
+      }),
+      parentId: options.parentId,
+      deletedAt: null,
+      ...(options.excludeId
+        ? {
+            id: {
+              not: options.excludeId,
+            },
+          }
+        : {}),
+      name: {
+        equals: options.name,
+        mode: 'insensitive',
+      },
+    },
+    select: {
+      id: true,
+      isFolder: true,
+      name: true,
+    },
+  });
+}
+
+async function assertNoSiblingConflict(options: {
+  userId: string;
+  courseId?: string | null;
+  parentId: string | null;
+  name: string;
+  excludeId?: string;
+  entryType: StorageConflictEntryType;
+  operation: StorageConflictOperation;
+}) {
+  const duplicate = await findActiveSiblingByName(options);
+
+  if (duplicate) {
+    throw createStorageNameConflictError({
+      attemptedName: options.name,
+      conflictingName: duplicate.name,
+      entryType: options.entryType,
+      operation: options.operation,
+      targetParentId: options.parentId,
+    });
+  }
+}
+
+function getFileNameParts(name: string) {
+  const lastDotIndex = name.lastIndexOf('.');
+  if (lastDotIndex <= 0) {
+    return {
+      extension: '',
+      stem: name,
+    };
+  }
+
+  return {
+    extension: name.slice(lastDotIndex),
+    stem: name.slice(0, lastDotIndex),
+  };
+}
+
+function getNextUploadNameCandidate(name: string) {
+  const { extension, stem } = getFileNameParts(name);
+  const suffixMatch = stem.match(WINDOWS_NAME_SUFFIX_PATTERN);
+  const baseStem = suffixMatch?.[1] ?? stem;
+  const nextSuffix = suffixMatch ? Number(suffixMatch[2]) + 1 : 1;
+  const suffixLabel = ` (${nextSuffix})`;
+  const maxStemLength = Math.max(
+    1,
+    180 - extension.length - suffixLabel.length
+  );
+  const truncatedStem = baseStem.slice(0, maxStemLength).trimEnd() || 'file';
+
+  return `${truncatedStem}${suffixLabel}${extension}`;
+}
+
+async function resolveAvailableUploadName(
+  options: StorageScope & {
+    parentId: string | null;
+    fileName: string;
+  }
+) {
+  let candidate = options.fileName;
+
+  for (let attempts = 0; attempts < MAX_UPLOAD_NAME_ATTEMPTS; attempts += 1) {
+    const existing = await findActiveSiblingByName({
+      userId: options.userId,
+      courseId: options.courseId,
+      parentId: options.parentId,
+      name: candidate,
+    });
+
+    if (!existing) {
+      return candidate;
+    }
+
+    candidate = getNextUploadNameCandidate(candidate);
+  }
+
+  throw new Error('Unable to resolve a unique upload file name.');
+}
+
+async function createFolderEntryWithConflictHandling(options: {
+  userId: string;
+  courseId?: string | null;
+  parentId: string | null;
+  name: string;
+  operation: 'create_folder' | 'ensure_folder_path';
+  reuseExistingFolderOnConflict?: boolean;
+}): Promise<FileInventory> {
+  try {
+    return await prisma.fileInventory.create({
+      data: {
+        userId: options.userId,
+        courseId: options.courseId ?? null,
+        parentId: options.parentId,
+        name: options.name,
+        isFolder: true,
+        status: 'READY',
+      },
+    });
+  } catch (error) {
+    if (!isPrismaUniqueConstraintError(error)) {
+      throw error;
+    }
+
+    const concurrentSibling = await findActiveSiblingByName({
+      userId: options.userId,
+      courseId: options.courseId,
+      parentId: options.parentId,
+      name: options.name,
+    });
+
+    if (options.reuseExistingFolderOnConflict && concurrentSibling?.isFolder) {
+      const existingFolder = await prisma.fileInventory.findFirst({
+        where: {
+          id: concurrentSibling.id,
+          ...buildInventoryScope({
+            userId: options.userId,
+            courseId: options.courseId,
+          }),
+          deletedAt: null,
+        },
+      });
+
+      if (existingFolder) {
+        return existingFolder;
+      }
+    }
+
+    throw createStorageNameConflictError({
+      attemptedName: options.name,
+      conflictingName: concurrentSibling?.name ?? options.name,
+      entryType: 'folder',
+      operation: options.operation,
+      targetParentId: options.parentId,
+    });
+  }
+}
+
+async function createUploadEntryWithAutoRename(
+  options: StorageScope & {
+    parentId: string | null;
+    fileName: string;
+    contentType: string;
+    fileSize: number;
+  }
+) {
+  let resolvedName = options.fileName;
+
+  for (let attempts = 0; attempts < MAX_UPLOAD_NAME_ATTEMPTS; attempts += 1) {
+    resolvedName = await resolveAvailableUploadName({
+      userId: options.userId,
+      courseId: options.courseId,
+      parentId: options.parentId,
+      fileName: resolvedName,
+    });
+
+    const { extension } = getFileNameParts(resolvedName);
+    const objectKey = buildInventoryObjectKey(options.userId, resolvedName, {
+      courseId: options.courseId ?? undefined,
+    });
+
+    try {
+      const file = await prisma.fileInventory.create({
+        data: {
+          userId: options.userId,
+          courseId: options.courseId ?? null,
+          parentId: options.parentId,
+          name: resolvedName,
+          isFolder: false,
+          status: 'UPLOADING',
+          fileSize: BigInt(options.fileSize),
+          mimeType: options.contentType,
+          extension: extension ? extension.slice(1).toLowerCase() : null,
+          bucket: FILE_INVENTORY_BUCKET_NAME,
+          objectKey,
+        },
+      });
+
+      return { file, objectKey, resolvedName };
+    } catch (error) {
+      if (!isPrismaUniqueConstraintError(error)) {
+        throw error;
+      }
+
+      resolvedName = getNextUploadNameCandidate(resolvedName);
+    }
+  }
+
+  throw new Error('Unable to reserve a unique upload file name.');
 }
 
 /**
@@ -107,44 +351,35 @@ async function ensureFolderPath(options: {
       throw new Error('Folder name is required');
     }
 
-    const existing: Pick<FileInventory, 'id' | 'isFolder'> | null =
-      await prisma.fileInventory.findFirst({
-        where: {
-          ...buildInventoryScope({
-            userId: options.userId,
-            courseId: options.courseId,
-          }),
-          parentId,
-          deletedAt: null,
-          name: {
-            equals: normalizedName,
-            mode: 'insensitive',
-          },
-        },
-        select: {
-          id: true,
-          isFolder: true,
-        },
-      });
+    const existing = await findActiveSiblingByName({
+      userId: options.userId,
+      courseId: options.courseId,
+      parentId,
+      name: normalizedName,
+    });
 
     if (existing) {
       if (!existing.isFolder) {
-        throw new Error('An item with this name already exists');
+        throw createStorageNameConflictError({
+          attemptedName: normalizedName,
+          conflictingName: existing.name,
+          entryType: 'folder',
+          operation: 'ensure_folder_path',
+          targetParentId: parentId,
+        });
       }
 
       parentId = existing.id;
       continue;
     }
 
-    const folder: FileInventory = await prisma.fileInventory.create({
-      data: {
-        userId: options.userId,
-        courseId: options.courseId ?? null,
-        parentId,
-        name: normalizedName,
-        isFolder: true,
-        status: 'READY',
-      },
+    const folder = await createFolderEntryWithConflictHandling({
+      userId: options.userId,
+      courseId: options.courseId,
+      parentId,
+      name: normalizedName,
+      operation: 'ensure_folder_path',
+      reuseExistingFolderOnConflict: true,
     });
 
     parentId = folder.id;
@@ -365,37 +600,22 @@ export class StorageService {
       throw new Error('Folder name is required');
     }
 
-    const duplicate = await prisma.fileInventory.findFirst({
-      where: {
-        ...buildInventoryScope({
-          userId: options.userId,
-          courseId: options.courseId,
-        }),
-        parentId: options.parentId ?? null,
-        deletedAt: null,
-        name: {
-          equals: normalizedName,
-          mode: 'insensitive',
-        },
-      },
-      select: {
-        id: true,
-      },
+    const targetParentId = options.parentId ?? null;
+    await assertNoSiblingConflict({
+      userId: options.userId,
+      courseId: options.courseId,
+      parentId: targetParentId,
+      name: normalizedName,
+      entryType: 'folder',
+      operation: 'create_folder',
     });
 
-    if (duplicate) {
-      throw new Error('An item with this name already exists');
-    }
-
-    const folder = await prisma.fileInventory.create({
-      data: {
-        userId: options.userId,
-        courseId: options.courseId ?? null,
-        parentId: options.parentId ?? null,
-        name: normalizedName,
-        isFolder: true,
-        status: 'READY',
-      },
+    const folder = await createFolderEntryWithConflictHandling({
+      userId: options.userId,
+      courseId: options.courseId,
+      parentId: targetParentId,
+      name: normalizedName,
+      operation: 'create_folder',
     });
 
     return serializeFileInventory(folder);
@@ -435,28 +655,15 @@ export class StorageService {
       throw new Error('File size exceeds storage upload limit');
     }
 
-    const objectKey = buildInventoryObjectKey(options.userId, normalizedName, {
-      courseId: options.courseId ?? undefined,
-    });
-    const extension = normalizedName.includes('.')
-      ? (normalizedName.split('.').pop()?.toLowerCase() ?? null)
-      : null;
-
-    const file = await prisma.fileInventory.create({
-      data: {
+    const { file, objectKey, resolvedName } =
+      await createUploadEntryWithAutoRename({
         userId: options.userId,
-        courseId: options.courseId ?? null,
+        courseId: options.courseId,
         parentId,
-        name: normalizedName,
-        isFolder: false,
-        status: 'UPLOADING',
-        fileSize: BigInt(options.fileSize),
-        mimeType: options.contentType,
-        extension,
-        bucket: FILE_INVENTORY_BUCKET_NAME,
-        objectKey,
-      },
-    });
+        fileName: normalizedName,
+        contentType: options.contentType,
+        fileSize: options.fileSize,
+      });
 
     const uploadUrl = await createInventoryWriteSignedUrl({
       objectKey,
@@ -468,6 +675,7 @@ export class StorageService {
       status: file.status,
       objectKey,
       bucket: FILE_INVENTORY_BUCKET_NAME,
+      name: resolvedName,
       uploadUrl,
       uploadHeaders: {
         'Content-Type': options.contentType,
@@ -883,7 +1091,7 @@ export class StorageService {
       });
 
       if (cycle) {
-        throw new Error('Cannot move a folder inside itself');
+        throw createStorageInvalidMoveError();
       }
     }
 
@@ -893,40 +1101,52 @@ export class StorageService {
       throw new Error('Name is required');
     }
 
-    const duplicate = await prisma.fileInventory.findFirst({
-      where: {
-        ...buildInventoryScope({
-          userId: options.userId,
-          courseId: current.courseId,
-        }),
-        parentId: nextParentId ?? null,
-        deletedAt: null,
-        id: {
-          not: current.id,
-        },
-        name: {
-          equals: nextName,
-          mode: 'insensitive',
-        },
-      },
-      select: {
-        id: true,
-      },
+    const targetParentId = nextParentId ?? null;
+    const operation =
+      targetParentId !== (current.parentId ?? null) ? 'move' : 'rename';
+    await assertNoSiblingConflict({
+      userId: options.userId,
+      courseId: current.courseId,
+      parentId: targetParentId,
+      name: nextName,
+      excludeId: current.id,
+      entryType: current.isFolder ? 'folder' : 'file',
+      operation,
     });
 
-    if (duplicate) {
-      throw new Error('An item with this name already exists');
-    }
+    let updated: FileInventory;
 
-    const updated = await prisma.fileInventory.update({
-      where: {
-        id: current.id,
-      },
-      data: {
+    try {
+      updated = await prisma.fileInventory.update({
+        where: {
+          id: current.id,
+        },
+        data: {
+          name: nextName,
+          parentId: targetParentId,
+        },
+      });
+    } catch (error) {
+      if (!isPrismaUniqueConstraintError(error)) {
+        throw error;
+      }
+
+      const concurrentDuplicate = await findActiveSiblingByName({
+        userId: options.userId,
+        courseId: current.courseId,
+        parentId: targetParentId,
         name: nextName,
-        parentId: nextParentId ?? null,
-      },
-    });
+        excludeId: current.id,
+      });
+
+      throw createStorageNameConflictError({
+        attemptedName: nextName,
+        conflictingName: concurrentDuplicate?.name ?? nextName,
+        entryType: current.isFolder ? 'folder' : 'file',
+        operation,
+        targetParentId,
+      });
+    }
 
     return serializeFileInventory(updated);
   }

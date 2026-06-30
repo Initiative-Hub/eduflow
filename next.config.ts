@@ -18,7 +18,7 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   experimental: {
-    middlewareClientMaxBodySize: 100 * 1024 * 1024, // 100MB
+    proxyClientMaxBodySize: 100 * 1024 * 1024, // 100MB
   },
 };
 
