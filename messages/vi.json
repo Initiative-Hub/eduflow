@@ -1908,10 +1908,10 @@
         "fullscreen": "Toàn màn hình",
         "previewTitle": "Hoạt động tương tác: {title}",
         "reset": "Đặt lại hoạt động",
-        "saveError": "Could not save this activity to inventory.",
-        "saveSuccess": "Activity saved to inventory.",
-        "saveToInventory": "Save to Inventory",
-        "savingToInventory": "Saving..."
+        "saveError": "Không thể lưu hoạt động này vào kho tài liệu.",
+        "saveSuccess": "Đã lưu hoạt động vào kho tài liệu.",
+        "saveToInventory": "Lưu vào kho tài liệu",
+        "savingToInventory": "Đang lưu..."
       },
       "practiceTest": {
         "description": "Thử thách bản thân với câu hỏi trắc nghiệm, câu ngắn và thẻ ghi nhớ do AI tạo ra."
