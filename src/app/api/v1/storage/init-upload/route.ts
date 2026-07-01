@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { withPermissions } from '@/lib/api/middlewares';
 import { PLATFORM_PERMISSION } from '@/lib/permissions/permission-keys';
 import { STORAGE_MAX_FILE_SIZE_BYTES } from '@/lib/storage/file-storage';
+import { buildStorageErrorResponse } from '@/lib/storage/storage-error-response';
 import { StorageService } from '@/services/StorageService';
 
 const initUploadSchema = z.object({
@@ -86,6 +87,7 @@ export const POST = withPermissions(
       return NextResponse.json({
         data: {
           fileId: upload.id,
+          name: upload.name,
           path: upload.objectKey,
           bucket: upload.bucket,
           status: upload.status,
@@ -93,19 +95,8 @@ export const POST = withPermissions(
           uploadHeaders: upload.uploadHeaders,
         },
       });
-    } catch (error: any) {
-      if (error?.message === 'Parent folder not found') {
-        return NextResponse.json({ message: error.message }, { status: 404 });
-      }
-
-      if (error?.message === 'File size exceeds inventory upload limit') {
-        return NextResponse.json({ message: error.message }, { status: 413 });
-      }
-
-      return NextResponse.json(
-        { message: error?.message || 'Internal Server Error' },
-        { status: 500 }
-      );
+    } catch (error) {
+      return buildStorageErrorResponse(error);
     }
   }
 );

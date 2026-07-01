@@ -7,8 +7,6 @@ import {
 import { useTranslations } from 'next-intl';
 import { useDeferredValue, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import type { ApiError } from '@/lib/api/types';
-import { courseFilesService } from './course-files.service';
 import {
   type InventoryBreadcrumb,
   type InventoryEntry,
@@ -17,21 +15,11 @@ import {
   STORAGE_PAGE_SIZE,
 } from '@/app/[locale]/(dashboard)/inventory/inventory.types';
 import { formatFileSize } from '@/app/[locale]/(dashboard)/inventory/inventory.utils';
+import { getInventoryErrorMessage } from '@/app/[locale]/(dashboard)/inventory/inventory-error-message';
+import type { ApiError } from '@/lib/api/types';
+import { courseFilesService } from './course-files.service';
 
 const COURSE_FILES_QUERY_KEY = ['course-files'] as const;
-
-function getErrorMessage(error: unknown, fallback: string) {
-  if (
-    error &&
-    typeof error === 'object' &&
-    'message' in error &&
-    typeof error.message === 'string'
-  ) {
-    return error.message;
-  }
-
-  return fallback;
-}
 
 async function copyToClipboard(value: string) {
   if (!navigator.clipboard?.writeText) {
@@ -203,7 +191,7 @@ export function useFiles({
       });
     },
     onError: (error: ApiError) => {
-      toast.error(getErrorMessage(error, t('toast.genericError')));
+      toast.error(getInventoryErrorMessage(error, t));
     },
   });
 
@@ -270,7 +258,7 @@ export function useFiles({
       });
     },
     onError: (error: ApiError) => {
-      toast.error(getErrorMessage(error, t('toast.genericError')));
+      toast.error(getInventoryErrorMessage(error, t));
     },
   });
 
@@ -290,7 +278,7 @@ export function useFiles({
       });
     },
     onError: (error: ApiError) => {
-      toast.error(getErrorMessage(error, t('toast.genericError')));
+      toast.error(getInventoryErrorMessage(error, t));
     },
   });
 
@@ -316,7 +304,7 @@ export function useFiles({
       });
     },
     onError: (error: ApiError) => {
-      toast.error(getErrorMessage(error, t('toast.genericError')));
+      toast.error(getInventoryErrorMessage(error, t));
     },
   });
 
@@ -335,7 +323,7 @@ export function useFiles({
       toast.success(t('toast.deleted', { count: result.deletedCount }));
     },
     onError: (error: ApiError) => {
-      toast.error(getErrorMessage(error, t('toast.genericError')));
+      toast.error(getInventoryErrorMessage(error, t));
     },
   });
 
@@ -470,7 +458,9 @@ export function useFiles({
         mimeType: entry.mimeType,
       });
     } catch (error) {
-      toast.error(getErrorMessage(error, t('toast.previewUnavailable')));
+      toast.error(
+        getInventoryErrorMessage(error, t, t('toast.previewUnavailable'))
+      );
     }
   };
 
@@ -500,7 +490,7 @@ export function useFiles({
         description: entry.name,
       });
     } catch (error) {
-      toast.error(getErrorMessage(error, t('toast.genericError')));
+      toast.error(getInventoryErrorMessage(error, t));
     }
   };
 
@@ -525,7 +515,7 @@ export function useFiles({
         }),
       });
     } catch (error) {
-      toast.error(getErrorMessage(error, t('toast.genericError')));
+      toast.error(getInventoryErrorMessage(error, t));
     }
   };
 

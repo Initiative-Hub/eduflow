@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withPermissions } from '@/lib/api/middlewares';
 import { PLATFORM_PERMISSION } from '@/lib/permissions/permission-keys';
+import { buildStorageErrorResponse } from '@/lib/storage/storage-error-response';
 import { StorageService } from '@/services/StorageService';
 
 const routeParamsSchema = z.object({
@@ -93,25 +94,8 @@ export const PATCH = withPermissions(
       });
 
       return NextResponse.json({ data: updated });
-    } catch (error: any) {
-      if (
-        error?.message === 'File not found' ||
-        error?.message === 'Parent folder not found'
-      ) {
-        return NextResponse.json({ message: error.message }, { status: 404 });
-      }
-
-      if (
-        error?.message === 'An item with this name already exists' ||
-        error?.message === 'Cannot move a folder inside itself'
-      ) {
-        return NextResponse.json({ message: error.message }, { status: 409 });
-      }
-
-      return NextResponse.json(
-        { message: error?.message || 'Internal Server Error' },
-        { status: 500 }
-      );
+    } catch (error) {
+      return buildStorageErrorResponse(error);
     }
   }
 );

@@ -46,6 +46,7 @@ export interface InventoryResponse<T> {
 
 export interface InventoryUploadSession {
   fileId: string;
+  name: string;
   path: string;
   bucket: string;
   status: string;
