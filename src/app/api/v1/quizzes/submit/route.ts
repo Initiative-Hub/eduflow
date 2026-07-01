@@ -10,6 +10,7 @@ import type {
   QuizSchema,
   StudentAnswers,
 } from '@/lib/quiz-template/types';
+import { resolveReferencedQuestions } from '@/services/quiz-question-references';
 
 // ─── Request Validation Schemas ──────────────────────────────────────────────
 
@@ -148,6 +149,14 @@ const handler: AuthHandler = async (req, sessionData) => {
         questions: true,
         subType: true,
         questionCount: true,
+        quizQuestions: {
+          orderBy: { orderIndex: 'asc' },
+          select: {
+            questionId: true,
+            orderIndex: true,
+            question: { select: { answerData: true, explanation: true } },
+          },
+        },
       },
     });
 
@@ -178,8 +187,10 @@ const handler: AuthHandler = async (req, sessionData) => {
       );
     }
 
-    // Get questions from the quiz's stored JSON
-    const questions = (quiz.questions as unknown as QuestionBlock[]) ?? [];
+    const questions = resolveReferencedQuestions(
+      quiz.quizQuestions,
+      quiz.questions
+    ).questions as QuestionBlock[];
 
     // Convert the answers record (string keys) to a Map (number keys)
     const studentAnswers: StudentAnswers = new Map();

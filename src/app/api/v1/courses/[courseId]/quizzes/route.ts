@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import type { Prisma } from '@/generated/prisma';
 import { errorResponse } from '@/lib/api/error-response';
 import { withAuth } from '@/lib/api/middlewares';
 import { prisma } from '@/lib/prisma';
 import { QuizService } from '@/services/QuizService';
+import { resolveReferencedQuestions } from '@/services/quiz-question-references';
 
 // ─── Validation Schemas ──────────────────────────────────────────────────────
 
@@ -67,68 +67,30 @@ export const GET = withAuth(async (_req, _sessionData, { params }) => {
             lesson: { select: { id: true } },
           },
         },
+        quizQuestions: {
+          orderBy: { orderIndex: 'asc' },
+          select: {
+            questionId: true,
+            orderIndex: true,
+            question: { select: { answerData: true, explanation: true } },
+          },
+        },
       },
       orderBy: { createdAt: 'desc' },
     });
 
-    // For quizzes with empty questions, populate from the question bank
-    const populatedQuizzes = await Promise.all(
-      quizzes.map(async (quiz) => {
-        const { lessonQuizzes, ...quizData } = quiz;
-        const questions = quiz.questions as unknown[];
-        const lessonIds = lessonQuizzes.map(({ lesson }) => lesson.id);
-
-        if (questions && Array.isArray(questions) && questions.length > 0) {
-          return { ...quizData, lessonIds };
-        }
-
-        if (quiz.selectionMethod === 'MANUAL_CREATE') {
-          return { ...quizData, lessonIds };
-        }
-
-        // Fetch matching questions from the bank
-        const bankQuestions = await prisma.question.findMany({
-          where: {
-            courseId,
-            category: quiz.category,
-            subType: quiz.subType,
-          },
-          orderBy: { createdAt: 'desc' },
-        });
-
-        if (bankQuestions.length === 0) return { ...quizData, lessonIds };
-
-        // Select questions based on method
-        let selectedQuestions = bankQuestions;
-        if (quiz.selectionMethod === 'RANDOM') {
-          const shuffled = [...bankQuestions].sort(() => Math.random() - 0.5);
-          selectedQuestions = shuffled.slice(0, quiz.questionCount);
-        } else {
-          selectedQuestions = bankQuestions.slice(0, quiz.questionCount);
-        }
-
-        // Convert to QuestionBlock format
-        const resolvedQuestions = selectedQuestions.map((q) => {
-          const answerData = q.answerData as Record<string, unknown>;
-          if (q.explanation && !answerData.explanation) {
-            return { ...answerData, explanation: q.explanation };
-          }
-          return answerData;
-        });
-
-        // Persist the populated questions so this only happens once
-        if (resolvedQuestions.length > 0) {
-          await prisma.quiz.update({
-            where: { id: quiz.id },
-            data: {
-              questions: resolvedQuestions as unknown as Prisma.InputJsonValue,
-            },
-          });
-        }
-
-        return { ...quizData, lessonIds, questions: resolvedQuestions };
-      })
-    );
+    const populatedQuizzes = quizzes.map((quiz) => {
+      const { lessonQuizzes, quizQuestions, ...quizData } = quiz;
+      const resolved = resolveReferencedQuestions(
+        quizQuestions,
+        quiz.questions
+      );
+      return {
+        ...quizData,
+        lessonIds: lessonQuizzes.map(({ lesson }) => lesson.id),
+        ...resolved,
+      };
+    });
 
     return NextResponse.json(populatedQuizzes);
   } catch (error: unknown) {

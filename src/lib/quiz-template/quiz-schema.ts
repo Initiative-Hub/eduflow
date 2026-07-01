@@ -60,6 +60,7 @@ export interface QuizDefinition {
   selectionMethod: SelectionMethod;
   questionCount: number;
   questions: QuestionBlock[];
+  questionIds?: string[];
   createdAt: string;
   updatedAt: string;
 }

@@ -29,10 +29,19 @@ export const quizService = {
     });
   },
 
-  saveQuestions: async (quizId: string, questions: QuestionBlock[]) => {
+  saveQuestions: async (
+    quizId: string,
+    questions: QuestionBlock[],
+    questionIds: Array<string | null>
+  ) => {
     return apiClient.put<any>(`v1/quizzes/${quizId}/questions`, {
       questions,
+      questionIds,
     });
+  },
+
+  deleteQuiz: async (quizId: string) => {
+    return apiClient.delete(`v1/quizzes/${quizId}`);
   },
 
   generateQuestions: async (quizId: string, context?: string) => {

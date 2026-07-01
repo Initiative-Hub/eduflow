@@ -6,6 +6,7 @@ vi.mock('@/lib/api', () => ({
   apiClient: {
     post: vi.fn(),
     put: vi.fn(),
+    delete: vi.fn(),
   },
 }));
 
@@ -70,5 +71,30 @@ describe('quizService', () => {
       quizId: 'quiz-1',
     });
     expect(result).toBe(generatedQuiz);
+  });
+
+  it('saves ordered question-bank references alongside edited questions', async () => {
+    vi.mocked(apiClient.put).mockResolvedValue({ id: 'quiz-1' });
+
+    await quizService.saveQuestions(
+      'quiz-1',
+      [{ type: 'true_false', prompt: 'The sky is blue', correctAnswer: true }],
+      ['question-1']
+    );
+
+    expect(apiClient.put).toHaveBeenCalledWith('v1/quizzes/quiz-1/questions', {
+      questionIds: ['question-1'],
+      questions: [
+        { type: 'true_false', prompt: 'The sky is blue', correctAnswer: true },
+      ],
+    });
+  });
+
+  it('deletes a quiz through its resource endpoint', async () => {
+    vi.mocked(apiClient.delete).mockResolvedValue(undefined);
+
+    await quizService.deleteQuiz('quiz-1');
+
+    expect(apiClient.delete).toHaveBeenCalledWith('v1/quizzes/quiz-1');
   });
 });

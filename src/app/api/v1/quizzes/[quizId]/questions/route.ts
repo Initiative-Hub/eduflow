@@ -3,9 +3,14 @@ import { z } from 'zod';
 import { withRoles } from '@/lib/api/middlewares';
 import { QuizService } from '@/services/QuizService';
 
-const saveQuestionsSchema = z.object({
-  questions: z.array(z.record(z.string(), z.unknown())),
-});
+const saveQuestionsSchema = z
+  .object({
+    questions: z.array(z.record(z.string(), z.unknown())),
+    questionIds: z.array(z.string().uuid().nullable()),
+  })
+  .refine((data) => data.questions.length === data.questionIds.length, {
+    message: 'questions and questionIds must have the same length',
+  });
 
 /**
  * @swagger
@@ -65,7 +70,9 @@ export const POST = withRoles(
 
       const updatedQuiz = await QuizService.updateQuestions(
         quizId,
-        parsed.data.questions
+        _sessionData.user.id,
+        parsed.data.questions,
+        parsed.data.questionIds
       );
 
       return NextResponse.json(updatedQuiz);
@@ -75,6 +82,9 @@ export const POST = withRoles(
           { message: 'Quiz not found' },
           { status: 404 }
         );
+      }
+      if (error.message === 'Forbidden') {
+        return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
       }
       console.error('Error saving quiz questions:', error);
       return NextResponse.json(
@@ -143,7 +153,9 @@ export const PUT = withRoles(
 
       const updatedQuiz = await QuizService.updateQuestions(
         quizId,
-        parsed.data.questions
+        _sessionData.user.id,
+        parsed.data.questions,
+        parsed.data.questionIds
       );
 
       return NextResponse.json(updatedQuiz);
@@ -153,6 +165,9 @@ export const PUT = withRoles(
           { message: 'Quiz not found' },
           { status: 404 }
         );
+      }
+      if (error.message === 'Forbidden') {
+        return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
       }
       console.error('Error saving quiz questions:', error);
       return NextResponse.json(
