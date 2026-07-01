@@ -271,6 +271,7 @@ export function usePresentation(options: {
           lessonId,
           duration,
           context: instructions,
+          collection: selectedCollection,
         }),
       });
 

@@ -4,7 +4,7 @@ import { withAuth, withRoles } from '@/lib/api/middlewares';
 import { SlideService } from '@/services/SlideService';
 
 export const dynamic = 'force-dynamic';
-export const maxDuration = 300;
+export const maxDuration = 630; // 10.5 min — covers AI-based PPTX extraction (~10 min)
 
 function getExternalServiceUrl(): string {
   return (process.env.EXTERNAL_SERVICE_URL || 'http://localhost:8000').replace(
@@ -104,10 +104,56 @@ export const POST = withAuth(
         );
       }
 
-      const result = await response.json();
-      // Clear template previews cache so imports render immediately
-      SlideService.clearCache();
-      return NextResponse.json(result, { status: 200 });
+      const queued = await response.json();
+      const jobId: string = queued.job_id;
+
+      // Poll the job status until done or error (AI processing can take minutes)
+      const POLL_INTERVAL_MS = 3000;
+      const MAX_POLLS = 200; // up to ~10 minutes for large PPTX with AI classification
+      for (let i = 0; i < MAX_POLLS; i++) {
+        await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+
+        const statusRes = await fetch(
+          `${baseUrl}/slides/templates/import/${jobId}`
+        );
+        if (!statusRes.ok) {
+          if (statusRes.status === 404) {
+            // Service restarted and lost the in-memory job state
+            return errorResponse(
+              'INTERNAL_ERROR',
+              'Import job was lost (service restarted). Please try again.',
+              500
+            );
+          }
+          return errorResponse(
+            'INTERNAL_ERROR',
+            'Failed to poll import job',
+            500
+          );
+        }
+
+        const job = await statusRes.json();
+
+        if (job.status === 'done') {
+          SlideService.clearCache();
+          return NextResponse.json(
+            { status: 'success', imported: job.result },
+            { status: 200 }
+          );
+        }
+
+        if (job.status === 'error') {
+          console.error('Template import job error:', job.message);
+          return errorResponse(
+            'INTERNAL_ERROR',
+            job.message || 'Import job failed',
+            500
+          );
+        }
+        // status is 'queued' or 'running' — keep polling
+      }
+
+      return errorResponse('INTERNAL_ERROR', 'Import job timed out', 504);
     } catch (error) {
       console.error('Template import error:', error);
       return errorResponse('INTERNAL_ERROR', 'Failed to import templates', 500);

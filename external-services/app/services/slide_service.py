@@ -281,122 +281,141 @@ class SlideService:
                 col_path = Path(SLIDE_TEMPLATES_DIR) / collection
                 col_path.mkdir(parents=True, exist_ok=True)
                 for key in s3_keys:
-                    filename = key.split("/")[-1]
-                    if filename:
-                        await download_file_from_s3(
-                            key,
-                            col_path / filename,
-                            bucket_name=AWS_S3_TEMPLATES_BUCKET,
-                        )
+                    # key looks like "templates/<collection>/[SUBDIR/]filename"
+                    # Preserve the subdirectory structure relative to the collection root
+                    relative = key[len(s3_prefix):]  # e.g. "TITLE_SLIDE/standard.svg"
+                    if not relative:
+                        continue
+                    dest = col_path / relative
+                    dest.parent.mkdir(parents=True, exist_ok=True)
+                    await download_file_from_s3(
+                        key,
+                        dest,
+                        bucket_name=AWS_S3_TEMPLATES_BUCKET,
+                    )
 
             collection_path = Path(SLIDE_TEMPLATES_DIR) / collection
             if collection_path.exists() and collection_path.is_dir():
-                import json
+                # Detect format: new extract_template_smart collections have
+                # category subdirectories (TITLE_SLIDE/, AGENDA_OUTLINE/, etc.)
+                # while legacy imports store flat SVG files at the root.
+                has_category_subdirs = any(
+                    child.is_dir() for child in collection_path.iterdir()
+                )
 
-                temp_dir_context = tempfile.TemporaryDirectory()
-                temp_lib_dir = Path(temp_dir_context.name)
+                if has_category_subdirs:
+                    # New format — the collection dir IS a valid library_dir,
+                    # so pass it directly without any manual remapping.
+                    library_dir = str(collection_path)
+                    logger.info(
+                        f"Using new-format collection '{collection}' directly as library_dir"
+                    )
+                else:
+                    # Legacy flat SVG format — map files to category dirs manually
+                    import json
 
-                categories_to_map = [
-                    "TITLE_SLIDE",
-                    "AGENDA_OUTLINE",
-                    "SECTION_HEADER",
-                    "TITLE_BULLETS",
-                    "TWO_COLUMN_SPLIT",
-                    "BIG_QUOTE_TAKEAWAY",
-                    "KPI_BIG_NUMBER",
-                    "CHART_INSIGHT",
-                    "DATA_TABLE",
-                    "MEDIA_TEXT",
-                    "TIMELINE_MILESTONES",
-                    "STEP_BY_STEP",
-                    "CONCLUSION_SUMMARY",
-                    "CALL_TO_ACTION",
-                    "QA_CONTACT",
-                    "REFERENCES_LIST",
-                ]
+                    temp_dir_context = tempfile.TemporaryDirectory()
+                    temp_lib_dir = Path(temp_dir_context.name)
 
-                patterns = {
-                    "TITLE_SLIDE": ["title", "slide_00", "slide_title"],
-                    "AGENDA_OUTLINE": ["agenda", "outline", "slide_01"],
-                    "SECTION_HEADER": ["section", "header", "divider"],
-                    "TITLE_BULLETS": [
-                        "bullets",
-                        "bullet",
-                        "list",
-                        "slide_02",
-                        "slide_03",
-                        "slide_04",
-                    ],
-                    "TWO_COLUMN_SPLIT": [
-                        "two_column",
-                        "two_col",
-                        "split",
-                        "columns",
-                        "comparison",
-                    ],
-                    "BIG_QUOTE_TAKEAWAY": ["quote", "takeaway", "saying", "citation"],
-                    "KPI_BIG_NUMBER": ["kpi", "statistic", "number", "metrics"],
-                    "CHART_INSIGHT": ["chart", "insight", "graph", "visualization"],
-                    "DATA_TABLE": ["table", "data", "grid"],
-                    "MEDIA_TEXT": ["media", "image", "photo", "picture"],
-                    "TIMELINE_MILESTONES": ["timeline", "milestones", "history"],
-                    "STEP_BY_STEP": ["step", "process", "flow", "stages"],
-                    "CONCLUSION_SUMMARY": ["conclusion", "summary", "closing"],
-                    "CALL_TO_ACTION": ["cta", "action", "signup"],
-                    "QA_CONTACT": ["qa", "contact", "questions", "social"],
-                    "REFERENCES_LIST": ["reference", "sources", "citations"],
-                }
+                    categories_to_map = [
+                        "TITLE_SLIDE",
+                        "AGENDA_OUTLINE",
+                        "SECTION_HEADER",
+                        "TITLE_BULLETS",
+                        "TWO_COLUMN_SPLIT",
+                        "BIG_QUOTE_TAKEAWAY",
+                        "KPI_BIG_NUMBER",
+                        "CHART_INSIGHT",
+                        "DATA_TABLE",
+                        "MEDIA_TEXT",
+                        "TIMELINE_MILESTONES",
+                        "STEP_BY_STEP",
+                        "CONCLUSION_SUMMARY",
+                        "CALL_TO_ACTION",
+                        "QA_CONTACT",
+                        "REFERENCES_LIST",
+                    ]
 
-                svg_files = list(collection_path.glob("*.svg"))
+                    patterns = {
+                        "TITLE_SLIDE": ["title", "slide_00", "slide_title"],
+                        "AGENDA_OUTLINE": ["agenda", "outline", "slide_01"],
+                        "SECTION_HEADER": ["section", "header", "divider"],
+                        "TITLE_BULLETS": [
+                            "bullets",
+                            "bullet",
+                            "list",
+                            "slide_02",
+                            "slide_03",
+                            "slide_04",
+                        ],
+                        "TWO_COLUMN_SPLIT": [
+                            "two_column",
+                            "two_col",
+                            "split",
+                            "columns",
+                            "comparison",
+                        ],
+                        "BIG_QUOTE_TAKEAWAY": ["quote", "takeaway", "saying", "citation"],
+                        "KPI_BIG_NUMBER": ["kpi", "statistic", "number", "metrics"],
+                        "CHART_INSIGHT": ["chart", "insight", "graph", "visualization"],
+                        "DATA_TABLE": ["table", "data", "grid"],
+                        "MEDIA_TEXT": ["media", "image", "photo", "picture"],
+                        "TIMELINE_MILESTONES": ["timeline", "milestones", "history"],
+                        "STEP_BY_STEP": ["step", "process", "flow", "stages"],
+                        "CONCLUSION_SUMMARY": ["conclusion", "summary", "closing"],
+                        "CALL_TO_ACTION": ["cta", "action", "signup"],
+                        "QA_CONTACT": ["qa", "contact", "questions", "social"],
+                        "REFERENCES_LIST": ["reference", "sources", "citations"],
+                    }
 
-                for idx, cat in enumerate(categories_to_map):
-                    cat_dir = temp_lib_dir / cat
-                    cat_dir.mkdir(parents=True, exist_ok=True)
+                    svg_files = list(collection_path.glob("*.svg"))
 
-                    matched_file = None
-                    candidates = patterns.get(cat, [])
-                    for svg_file in svg_files:
-                        stem_lower = svg_file.stem.lower()
-                        for cand in candidates:
-                            if cand in stem_lower:
-                                matched_file = svg_file
-                                break
-                        if matched_file:
-                            break
+                    for idx, cat in enumerate(categories_to_map):
+                        cat_dir = temp_lib_dir / cat
+                        cat_dir.mkdir(parents=True, exist_ok=True)
 
-                    if not matched_file:
+                        matched_file = None
+                        candidates = patterns.get(cat, [])
                         for svg_file in svg_files:
                             stem_lower = svg_file.stem.lower()
-                            if (
-                                cat.lower() in stem_lower
-                                or cat.replace("_", "").lower() in stem_lower
-                            ):
-                                matched_file = svg_file
+                            for cand in candidates:
+                                if cand in stem_lower:
+                                    matched_file = svg_file
+                                    break
+                            if matched_file:
                                 break
 
-                    # If still no match, cycle through the custom collection's
-                    # own SVGs rather than falling back to the default library,
-                    # so the visual style stays consistent.
-                    if not matched_file and svg_files:
-                        matched_file = svg_files[idx % len(svg_files)]
+                        if not matched_file:
+                            for svg_file in svg_files:
+                                stem_lower = svg_file.stem.lower()
+                                if (
+                                    cat.lower() in stem_lower
+                                    or cat.replace("_", "").lower() in stem_lower
+                                ):
+                                    matched_file = svg_file
+                                    break
 
-                    if matched_file:
-                        shutil.copy2(matched_file, cat_dir / "variant_a.svg")
-                        schema_json = matched_file.with_suffix(".schema.json")
-                        if schema_json.exists():
-                            shutil.copy2(schema_json, cat_dir / "variant_a.schema.json")
+                        # Cycle through custom SVGs so style stays consistent
+                        if not matched_file and svg_files:
+                            matched_file = svg_files[idx % len(svg_files)]
 
-                    (cat_dir / "category.json").write_text(
-                        json.dumps(
-                            {
-                                "description": f"{cat} category layout",
-                                "variants": {"variant_a": "Default design"},
-                            },
-                            ensure_ascii=False,
+                        if matched_file:
+                            shutil.copy2(matched_file, cat_dir / "variant_a.svg")
+                            schema_json = matched_file.with_suffix(".schema.json")
+                            if schema_json.exists():
+                                shutil.copy2(schema_json, cat_dir / "variant_a.schema.json")
+
+                        (cat_dir / "category.json").write_text(
+                            json.dumps(
+                                {
+                                    "description": f"{cat} category layout",
+                                    "variants": {"variant_a": "Default design"},
+                                },
+                                ensure_ascii=False,
+                            )
                         )
-                    )
 
-                library_dir = str(temp_lib_dir)
+                    library_dir = str(temp_lib_dir)
 
         try:
             actual_palette = None if palette == "auto" else palette
@@ -438,7 +457,24 @@ class SlideService:
     ) -> Dict[str, Any]:
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
-            if filename.lower().endswith(".zip"):
+            collection_name = name or Path(filename).stem
+
+            if filename.lower().endswith(".pptx"):
+                # Use the new 0.2.27 extract_template_smart for PPTX files —
+                # it maps slides to categories via AI and writes proper
+                # CATEGORY/standard.svg structure directly into library_dir.
+                pptx_path = temp_path / filename
+                pptx_path.write_bytes(file_bytes)
+
+                res = await run_in_threadpool(
+                    slide_skills.extract_template_smart,
+                    str(pptx_path),
+                    collection_name,
+                    library_dir=SLIDE_TEMPLATES_DIR,
+                    use_ai=True,
+                )
+
+            elif filename.lower().endswith(".zip"):
                 zip_path = temp_path / "upload.zip"
                 zip_path.write_bytes(file_bytes)
 
@@ -451,37 +487,39 @@ class SlideService:
                 # If there is a nested folder, use it
                 subdirs = [x for x in extract_path.iterdir() if x.is_dir()]
                 src_path = subdirs[0] if len(subdirs) == 1 else extract_path
-            elif filename.lower().endswith(".pptx"):
-                pptx_path = temp_path / filename
-                pptx_path.write_bytes(file_bytes)
-                out_dir = temp_path / "converted"
-                out_dir.mkdir()
 
-                await run_in_threadpool(
-                    slide_skills.make_svg_templates,
-                    str(pptx_path),
-                    str(out_dir),
+                res = await run_in_threadpool(
+                    slide_skills.import_collection,
+                    src_path,
+                    collection_name,
+                    base_dir=SLIDE_TEMPLATES_DIR,
+                    overwrite=True,
                 )
-                src_path = out_dir
+
             else:
                 svg_path = temp_path / filename
                 svg_path.write_bytes(file_bytes)
-                src_path = svg_path
 
-            collection_name = name or Path(filename).stem
-            res = await run_in_threadpool(
-                slide_skills.import_collection,
-                src_path,
-                collection_name,
-                base_dir=SLIDE_TEMPLATES_DIR,
-                overwrite=True,
-            )
+                res = await run_in_threadpool(
+                    slide_skills.import_collection,
+                    svg_path,
+                    collection_name,
+                    base_dir=SLIDE_TEMPLATES_DIR,
+                    overwrite=True,
+                )
 
-            # Upload the imported templates to S3 bucket
+            # Upload the imported templates to S3 bucket then remove local copy.
+            # extract_template_smart writes to <collection_name>_template/ while
+            # import_collection writes to <collection_name>/. Detect which was used.
             from app.deps import AWS_S3_TEMPLATES_BUCKET
             from app.services.s3_service import upload_file_to_s3
 
             dest_dir = Path(SLIDE_TEMPLATES_DIR) / collection_name
+            # Check for the _template suffix variant produced by extract_template_smart
+            dest_dir_with_suffix = Path(SLIDE_TEMPLATES_DIR) / f"{collection_name}_template"
+            if not dest_dir.exists() and dest_dir_with_suffix.exists():
+                dest_dir = dest_dir_with_suffix
+
             if dest_dir.exists() and dest_dir.is_dir():
 
                 async def upload_dir_to_s3(directory: Path, prefix: str):
@@ -495,12 +533,14 @@ class SlideService:
                         elif child.is_dir():
                             await upload_dir_to_s3(child, f"{prefix}/{child.name}")
 
+                # Always use collection_name (without _template) as the S3 prefix
+                # so get_collections and generate_deck_from_plan can find it consistently
                 await upload_dir_to_s3(dest_dir, f"templates/{collection_name}")
 
                 # Remove local files after successful S3 upload
                 shutil.rmtree(dest_dir, ignore_errors=True)
                 logger.info(
-                    f"Removed local template collection '{collection_name}' after S3 upload"
+                    f"Removed local template collection '{dest_dir.name}' after S3 upload"
                 )
 
             return res

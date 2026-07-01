@@ -19,7 +19,30 @@ const planPresentationSchema = z.object({
     .max(500, 'Context guidelines cannot exceed 500 characters')
     .optional()
     .default(''),
+  collection: z.string().optional(),
 });
+
+const EXTERNAL_SERVICE_URL = (
+  process.env.EXTERNAL_SERVICE_URL || 'http://localhost:8000'
+).replace(/\/$/, '');
+
+async function fetchTemplateCategories(
+  collection: string
+): Promise<string[] | null> {
+  try {
+    const res = await fetch(
+      `${EXTERNAL_SERVICE_URL}/slides/templates/${encodeURIComponent(collection)}/categories`,
+      { cache: 'no-store' }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    // Only return categories for custom templates
+    if (!data.is_custom) return null;
+    return data.categories as string[];
+  } catch {
+    return null;
+  }
+}
 
 /**
  * @swagger
@@ -78,13 +101,22 @@ export const POST = withAuth(async (req, sessionData) => {
       );
     }
 
-    const { lessonId, duration, context } = parsed.data;
+    const { lessonId, duration, context, collection } = parsed.data;
+
+    // Fetch template categories for custom collections so the AI can use
+    // the template's own layout type names instead of the standard 16.
+    let templateCategories: string[] | undefined;
+    if (collection) {
+      const cats = await fetchTemplateCategories(collection);
+      if (cats) templateCategories = cats;
+    }
 
     const stream = PresentationService.planPresentationStream({
       lessonId,
       userId,
       duration,
       context,
+      templateCategories,
     });
 
     return new Response(stream as unknown as ReadableStream<Uint8Array>, {

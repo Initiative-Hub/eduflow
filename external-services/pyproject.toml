@@ -10,7 +10,7 @@ dependencies = [
     "markitdown[pdf]==0.1.6",
     "modal==1.4.3",
     "youtube-transcript-api>=1.2.4",
-    "slide-skills>=0.2.26",
+    "slide-skills>=0.2.27",
     "tavily-python>=0.7.26",
     "boto3>=1.43.29",
     "pymupdf>=1.24.0",
@@ -39,3 +39,9 @@ lint = "ruff lint --check ."
 lint-fix = "ruff lint ."
 serve = "modal serve modal_deployment.py"
 deploy = "modal deploy modal_deployment.py"
+
+[tool.uv]
+environments = [
+    "sys_platform == 'linux'",
+    "sys_platform == 'darwin'",
+]

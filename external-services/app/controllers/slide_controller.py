@@ -46,10 +46,63 @@ async def execute_generation_job(job_id: str, req: GenReq, out_path: Path):
         jobs[job_id]["message"] = str(e)
 
 
+async def execute_import_job(job_id: str, file_bytes: bytes, filename: str, name: str | None):
+    try:
+        jobs[job_id]["status"] = "running"
+        res = await slide_service.import_template_collection(file_bytes, filename, name)
+        jobs[job_id]["status"] = "done"
+        jobs[job_id]["result"] = res
+    except Exception as e:
+        jobs[job_id]["status"] = "error"
+        jobs[job_id]["message"] = str(e)
+
+
 @router.get("/templates/categories")
 async def get_categories():
     try:
         return await slide_service.get_categories()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+STANDARD_LAYOUT_TYPES = [
+    "TITLE_SLIDE", "AGENDA_OUTLINE", "SECTION_HEADER", "TITLE_BULLETS",
+    "TWO_COLUMN_SPLIT", "BIG_QUOTE_TAKEAWAY", "KPI_BIG_NUMBER", "CHART_INSIGHT",
+    "DATA_TABLE", "MEDIA_TEXT", "TIMELINE_MILESTONES", "STEP_BY_STEP",
+    "CONCLUSION_SUMMARY", "CALL_TO_ACTION", "QA_CONTACT", "REFERENCES_LIST",
+]
+
+
+@router.get("/templates/{collection}/categories")
+async def get_collection_categories(collection: str):
+    """Return the category (layout type) names available in a template collection.
+    For built-in collections (starter, neon_dark) returns the 16 standard types.
+    For custom collections reads subdirectory names from S3.
+    """
+    if collection in ("starter", "neon_dark"):
+        return {"categories": STANDARD_LAYOUT_TYPES, "is_custom": False}
+
+    try:
+        from app.deps import AWS_S3_TEMPLATES_BUCKET
+        from app.services.s3_service import list_files_in_s3_prefix
+
+        s3_prefix = f"templates/{collection}/"
+        s3_keys = await list_files_in_s3_prefix(
+            s3_prefix, bucket_name=AWS_S3_TEMPLATES_BUCKET
+        )
+
+        categories: set[str] = set()
+        for key in s3_keys:
+            relative = key[len(s3_prefix):]
+            parts = relative.split("/")
+            if len(parts) > 1 and parts[0]:
+                categories.add(parts[0])
+
+        if not categories:
+            # Fall back to standard types if collection is empty / not found
+            return {"categories": STANDARD_LAYOUT_TYPES, "is_custom": False}
+
+        return {"categories": sorted(categories), "is_custom": True}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -145,7 +198,14 @@ async def get_deck_pptx(deck_id: str):
 
 
 @router.post("/templates/import")
-async def import_templates(file: UploadFile = File(...), name: str | None = None):
+async def import_templates(
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...),
+    name: str | None = None,
+):
+    """Queue a template import job and return a job_id immediately.
+    Poll GET /slides/templates/import/{job_id} for status.
+    """
     filename = file.filename or ""
     if not (
         filename.lower().endswith(".zip")
@@ -158,11 +218,18 @@ async def import_templates(file: UploadFile = File(...), name: str | None = None
         )
     try:
         file_bytes = await file.read()
-        res = await slide_service.import_template_collection(file_bytes, filename, name)
-        return {"status": "success", "imported": res}
-    except ValueError as val_err:
-        raise HTTPException(status_code=400, detail=str(val_err))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Import failed: {str(e)}")
     finally:
         await file.close()
+
+    job_id = uuid.uuid4().hex[:12]
+    jobs[job_id] = {"status": "queued", "result": None, "message": None}
+    background_tasks.add_task(execute_import_job, job_id, file_bytes, filename, name)
+    return {"job_id": job_id, "status": "queued"}
+
+
+@router.get("/templates/import/{job_id}")
+async def get_import_job_status(job_id: str):
+    """Poll the status of a template import job."""
+    if job_id not in jobs:
+        raise HTTPException(status_code=404, detail="Import job not found")
+    return jobs[job_id]

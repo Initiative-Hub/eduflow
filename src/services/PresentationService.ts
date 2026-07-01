@@ -3,27 +3,30 @@ import { generateText, Output } from 'ai';
 import { z } from 'zod';
 import { DEFAULT_MODELS } from '@/services/ai/chat-provider.constants';
 import { LessonService } from '@/services/LessonService';
+
+const STANDARD_LAYOUT_TYPES = [
+  'TITLE_SLIDE',
+  'AGENDA_OUTLINE',
+  'SECTION_HEADER',
+  'TITLE_BULLETS',
+  'TWO_COLUMN_SPLIT',
+  'BIG_QUOTE_TAKEAWAY',
+  'KPI_BIG_NUMBER',
+  'CHART_INSIGHT',
+  'DATA_TABLE',
+  'MEDIA_TEXT',
+  'TIMELINE_MILESTONES',
+  'STEP_BY_STEP',
+  'CONCLUSION_SUMMARY',
+  'CALL_TO_ACTION',
+  'QA_CONTACT',
+  'REFERENCES_LIST',
+] as const;
+
 export const presentationPlanSchema = z.object({
   slides: z.array(
     z.object({
-      layoutType: z.enum([
-        'TITLE_SLIDE',
-        'AGENDA_OUTLINE',
-        'SECTION_HEADER',
-        'TITLE_BULLETS',
-        'TWO_COLUMN_SPLIT',
-        'BIG_QUOTE_TAKEAWAY',
-        'KPI_BIG_NUMBER',
-        'CHART_INSIGHT',
-        'DATA_TABLE',
-        'MEDIA_TEXT',
-        'TIMELINE_MILESTONES',
-        'STEP_BY_STEP',
-        'CONCLUSION_SUMMARY',
-        'CALL_TO_ACTION',
-        'QA_CONTACT',
-        'REFERENCES_LIST',
-      ]),
+      layoutType: z.string(),
       slideTitle: z.string(),
       bindings: z.record(z.string(), z.any()),
     })
@@ -147,12 +150,73 @@ HARD CONSTRAINTS:
     `.trim();
   }
 
+  /**
+   * Builds a planning prompt tailored to a custom template's own category names.
+   * Instead of fixed binding specs, the AI fills in generic content keys that
+   * the SVG renderer can map to text regions.
+   */
+  private static buildCustomTemplatePrompt(opts: {
+    lessonTitle: string;
+    contentSnippet: string;
+    targetSlideCount: number;
+    templateCategories: string[];
+    context?: string;
+  }): string {
+    const {
+      lessonTitle,
+      contentSnippet,
+      targetSlideCount,
+      templateCategories,
+      context,
+    } = opts;
+    const categoryList = templateCategories.map((c) => `'${c}'`).join(', ');
+
+    return `
+You are compiling a professional slide deck from the lesson below using a custom template.
+
+Lesson Title: "${lessonTitle}"
+Core Lesson Content:
+${contentSnippet}
+
+Target Slide Count: EXACTLY ${targetSlideCount} slides.
+${context ? `\nUser Guidelines:\n"${context}"\n` : ''}
+AVAILABLE LAYOUT TYPES (from the selected template — use ONLY these):
+${categoryList}
+
+INSTRUCTIONS:
+- Choose the most appropriate layout type for each slide based on its name (e.g. TEAM → team members, MISSION → company mission, TITLE_SLIDE → title slide).
+- Distribute content naturally across the available types. Use each type that makes sense for the lesson.
+- For each slide, produce a specific, descriptive slideTitle and meaningful bindings.
+- Bindings should use these generic keys (fill whichever apply): {
+    "title": string,
+    "subtitle": string,
+    "body": string,
+    "bullets": string[],
+    "items": string[],
+    "author": string,
+    "quote": string,
+    "metrics": Array<{ "value": string, "label": string }>,
+    "steps": string[],
+    "events": Array<{ "date_or_step": string, "description": string }>,
+    "summary_points": string[]
+  }
+- Write complete, audience-facing copy — no placeholders, no "TODO".
+- Match the lesson's language (write in Vietnamese if the lesson is in Vietnamese).
+
+HARD CONSTRAINTS:
+1. Output EXACTLY ${targetSlideCount} slides.
+2. Use ONLY the layout types listed above — do NOT invent new ones.
+3. Every slide must have real content drawn from the lesson.
+    `.trim();
+  }
+
   /** Runs the planning model and returns the validated slide plan. */
   private static async generatePlan(opts: {
     lessonTitle: string;
     lessonContent: unknown;
     duration: string;
     context?: string;
+    templateCategories?: string[];
   }): Promise<PresentationPlan> {
     const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) {
@@ -169,12 +233,23 @@ HARD CONSTRAINTS:
       opts.lessonContent
     );
 
-    const masterPrompt = PresentationService.buildMasterPrompt({
-      lessonTitle: opts.lessonTitle,
-      contentSnippet,
-      targetSlideCount,
-      context: opts.context,
-    });
+    const isCustomTemplate =
+      opts.templateCategories && opts.templateCategories.length > 0;
+
+    const masterPrompt = isCustomTemplate
+      ? PresentationService.buildCustomTemplatePrompt({
+          lessonTitle: opts.lessonTitle,
+          contentSnippet,
+          targetSlideCount,
+          templateCategories: opts.templateCategories!,
+          context: opts.context,
+        })
+      : PresentationService.buildMasterPrompt({
+          lessonTitle: opts.lessonTitle,
+          contentSnippet,
+          targetSlideCount,
+          context: opts.context,
+        });
 
     const finalResponse = await generateText({
       model: provider(model),
@@ -215,8 +290,9 @@ HARD CONSTRAINTS:
     userId: string;
     duration: string;
     context?: string;
+    templateCategories?: string[];
   }): ReadableStream<string> {
-    const { lessonId, userId, duration, context } = options;
+    const { lessonId, userId, duration, context, templateCategories } = options;
     const { readable, writable } = new TransformStream<string, string>();
     const writer = writable.getWriter();
 
@@ -234,6 +310,7 @@ HARD CONSTRAINTS:
           lessonContent: lesson.content,
           duration,
           context,
+          templateCategories,
         });
 
         await writer.write(
