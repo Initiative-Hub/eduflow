@@ -5,6 +5,7 @@ import {
   ArrowDown,
   ArrowUp,
   Edit,
+  Library,
   Loader2,
   Plus,
   Save,
@@ -12,17 +13,25 @@ import {
   Trash2,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
+import { InlineConfirm } from '@/components/custom/inline-confirm';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import type { QuestionBankEntry } from '@/lib/quiz-template';
 import type { QuestionBlock } from '@/lib/quiz-template/types';
+import { QuestionBankPickerDialog } from './question-bank-picker-dialog';
 import { QuestionEditorDialog } from './question-editor-dialog';
 
 interface QuizQuestionsEditorProps {
   initialQuestions: QuestionBlock[];
-  onSave?: (questions: QuestionBlock[]) => void;
+  initialQuestionIds?: string[];
+  questionBank?: QuestionBankEntry[];
+  onSave?: (
+    questions: QuestionBlock[],
+    questionIds: Array<string | null>
+  ) => void;
   isSaving?: boolean;
   onGenerateAI?: () => void;
   isGeneratingAI?: boolean;
@@ -31,6 +40,8 @@ interface QuizQuestionsEditorProps {
 
 export function QuizQuestionsEditor({
   initialQuestions,
+  initialQuestionIds = [],
+  questionBank = [],
   onSave,
   isSaving = false,
   onGenerateAI,
@@ -39,16 +50,15 @@ export function QuizQuestionsEditor({
 }: QuizQuestionsEditorProps) {
   const t = useTranslations('Courses.QuizPlayer');
   const [questions, setQuestions] = useState<QuestionBlock[]>(initialQuestions);
+  const [questionIds, setQuestionIds] = useState<Array<string | null>>(() =>
+    initialQuestions.map((_, index) => initialQuestionIds[index] ?? null)
+  );
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isBankPickerOpen, setIsBankPickerOpen] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<QuestionBlock | null>(
     null
   );
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
-
-  // Sync state when initialQuestions changes (e.g. after AI generation)
-  useEffect(() => {
-    setQuestions(initialQuestions);
-  }, [initialQuestions]);
 
   // Open dialog to add new question
   const handleAddClick = () => {
@@ -64,13 +74,10 @@ export function QuizQuestionsEditor({
     setIsDialogOpen(true);
   };
 
-  // Delete question
   const handleDeleteClick = (index: number) => {
-    if (confirm(t('confirmDelete'))) {
-      const updated = questions.filter((_, idx) => idx !== index);
-      setQuestions(updated);
-      toast.success(`${t('deleteQuestion')} successful`);
-    }
+    setQuestions((current) => current.filter((_, idx) => idx !== index));
+    setQuestionIds((current) => current.filter((_, idx) => idx !== index));
+    toast.success(t('questionRemoved'));
   };
 
   // Move question up
@@ -81,6 +88,11 @@ export function QuizQuestionsEditor({
     updated[index] = updated[index - 1];
     updated[index - 1] = temp;
     setQuestions(updated);
+    setQuestionIds((current) => {
+      const next = [...current];
+      [next[index - 1], next[index]] = [next[index], next[index - 1]];
+      return next;
+    });
   };
 
   // Move question down
@@ -91,6 +103,11 @@ export function QuizQuestionsEditor({
     updated[index] = updated[index + 1];
     updated[index + 1] = temp;
     setQuestions(updated);
+    setQuestionIds((current) => {
+      const next = [...current];
+      [next[index], next[index + 1]] = [next[index + 1], next[index]];
+      return next;
+    });
   };
 
   // Save changes from dialog
@@ -101,18 +118,35 @@ export function QuizQuestionsEditor({
         idx === editingIndex ? savedQuestion : q
       );
       setQuestions(updated);
-      toast.success('Question updated locally');
+      toast.success(t('questionUpdated'));
     } else {
       // Adding new
-      setQuestions([...questions, savedQuestion]);
-      toast.success('Question added locally');
+      setQuestions((current) => [...current, savedQuestion]);
+      setQuestionIds((current) => [...current, null]);
+      toast.success(t('questionAdded'));
     }
+  };
+
+  const handleAddFromBank = (bankQuestions: QuestionBankEntry[]) => {
+    setQuestions((current) => [
+      ...current,
+      ...bankQuestions.map((question) => ({
+        ...question.answerData,
+        ...(question.explanation && !question.answerData.explanation
+          ? { explanation: question.explanation }
+          : {}),
+      })),
+    ]);
+    setQuestionIds((current) => [
+      ...current,
+      ...bankQuestions.map((question) => question.id),
+    ]);
   };
 
   // Handle saving questions via parent callback
   const handleSaveAll = () => {
     if (onSave) {
-      onSave(questions);
+      onSave(questions, questionIds);
     }
   };
 
@@ -184,8 +218,7 @@ export function QuizQuestionsEditor({
             {t('teacherView')}
           </Badge>
           <span className="text-muted-foreground text-sm">
-            {questions.length}{' '}
-            {questions.length === 1 ? 'question' : 'questions'} total
+            {t('questionTotal', { count: questions.length })}
           </span>
         </div>
 
@@ -229,6 +262,17 @@ export function QuizQuestionsEditor({
 
           <Button
             type="button"
+            variant="outline"
+            onClick={() => setIsBankPickerOpen(true)}
+            disabled={isGeneratingAI}
+            className="cursor-pointer"
+          >
+            <Library className="mr-1.5 h-4 w-4" />
+            {t('addFromQuestionBank')}
+          </Button>
+
+          <Button
+            type="button"
             onClick={handleSaveAll}
             disabled={isSaving || isGeneratingAI}
             className="cursor-pointer gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
@@ -238,7 +282,7 @@ export function QuizQuestionsEditor({
             ) : (
               <Save className="h-4 w-4" />
             )}
-            {isSaving ? 'Saving...' : t('saveChanges')}
+            {isSaving ? t('saving') : t('saveChanges')}
           </Button>
         </div>
       </div>
@@ -266,7 +310,7 @@ export function QuizQuestionsEditor({
                 onClick={handleAddClick}
                 className="mt-1"
               >
-                Add the first question
+                {t('addFirstQuestion')}
               </Button>
             </CardContent>
           </Card>
@@ -337,15 +381,21 @@ export function QuizQuestionsEditor({
                   >
                     <Edit className="h-4 w-4" />
                   </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDeleteClick(idx)}
-                    className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <InlineConfirm
+                    trigger={
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    }
+                    confirmLabel={t('removeQuestion')}
+                    cancelLabel={t('cancel')}
+                    onConfirm={() => handleDeleteClick(idx)}
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -359,6 +409,13 @@ export function QuizQuestionsEditor({
         onOpenChange={setIsDialogOpen}
         question={editingQuestion}
         onSave={handleDialogSave}
+      />
+      <QuestionBankPickerDialog
+        open={isBankPickerOpen}
+        onOpenChange={setIsBankPickerOpen}
+        questions={questionBank}
+        selectedQuestionIds={questionIds}
+        onAdd={handleAddFromBank}
       />
     </div>
   );

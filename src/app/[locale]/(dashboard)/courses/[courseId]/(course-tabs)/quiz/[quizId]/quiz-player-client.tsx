@@ -72,8 +72,13 @@ export function QuizPlayerClient({ courseId, quizId }: QuizPlayerClientProps) {
   const t = useTranslations('Courses.QuizPlayer');
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { quizzes, isLoadingQuizzes, isQuizzesError, refetchQuizzes } =
-    useQuestionBank({ courseId });
+  const {
+    quizzes,
+    questions: questionBank,
+    isLoadingQuizzes,
+    isQuizzesError,
+    refetchQuizzes,
+  } = useQuestionBank({ courseId });
   const { modules, isLoading: isModulesLoading } = useModules(courseId);
   const [showOutline, setShowOutline] = useState(false);
   const [isRetaking, setIsRetaking] = useState(false);
@@ -345,7 +350,14 @@ export function QuizPlayerClient({ courseId, quizId }: QuizPlayerClientProps) {
       <div className="mx-auto mt-6 max-w-2xl">
         {activeTab === 'edit' ? (
           <QuizQuestionsEditor
+            key={`${quiz.updatedAt}:${quiz.questionIds?.join(',') ?? ''}`}
             initialQuestions={quiz.questions ?? []}
+            initialQuestionIds={quiz.questionIds ?? []}
+            questionBank={questionBank.filter(
+              (question) =>
+                question.category === quiz.category &&
+                question.subType === quiz.subType
+            )}
             onSave={saveQuestions}
             isSaving={isSavingQuestions}
             onGenerateAI={handleOpenAiDialog}

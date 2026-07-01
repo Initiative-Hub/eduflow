@@ -14,10 +14,16 @@ export function useQuiz({ courseId, quizId }: UseQuizOptions) {
   const t = useTranslations('Courses.QuizPlayer');
 
   const saveQuestionsMutation = useMutation({
-    mutationFn: async (updatedQuestions: QuestionBlock[]) => {
-      return quizService.saveQuestions(quizId, updatedQuestions);
+    mutationFn: async ({
+      questions,
+      questionIds,
+    }: {
+      questions: QuestionBlock[];
+      questionIds: Array<string | null>;
+    }) => {
+      return quizService.saveQuestions(quizId, questions, questionIds);
     },
-    onSuccess: (_data, updatedQuestions) => {
+    onSuccess: (updatedQuiz) => {
       queryClient.setQueryData(
         ['quizzes', courseId],
         (oldQuizzes: any[] | undefined) => {
@@ -26,8 +32,7 @@ export function useQuiz({ courseId, quizId }: UseQuizOptions) {
             q.id === quizId
               ? {
                   ...q,
-                  questions: updatedQuestions,
-                  questionCount: updatedQuestions.length,
+                  ...updatedQuiz,
                 }
               : q
           );
@@ -67,7 +72,10 @@ export function useQuiz({ courseId, quizId }: UseQuizOptions) {
   });
 
   return {
-    saveQuestions: saveQuestionsMutation.mutate,
+    saveQuestions: (
+      questions: QuestionBlock[],
+      questionIds: Array<string | null>
+    ) => saveQuestionsMutation.mutate({ questions, questionIds }),
     isSavingQuestions: saveQuestionsMutation.isPending,
     generateQuestions: generateQuestionsMutation.mutate,
     isGeneratingQuestions: generateQuestionsMutation.isPending,

@@ -39,6 +39,7 @@ import { cn } from '@/lib/utils';
 import DeleteLessonDialog from '../lessons/[lessonId]/_components/delete-lesson-dialog';
 import type { Module } from '../use-modules';
 import { DeleteModuleDialog } from './delete-module-dialog';
+import { DeleteQuizDialog } from './delete-quiz-dialog';
 import { useModuleOrderMutations } from './use-module-order-mutations';
 
 // Unified item type for flat list rendering
@@ -453,6 +454,13 @@ function SortableAccordionRow({
         </div>
       </Link>
       <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+        {canDeleteContent ? (
+          <DeleteQuizDialog
+            courseId={courseId}
+            quizId={item.id}
+            quizTitle={item.title}
+          />
+        ) : null}
         <button
           type="button"
           className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30"

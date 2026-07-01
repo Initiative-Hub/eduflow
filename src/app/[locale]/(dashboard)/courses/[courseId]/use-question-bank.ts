@@ -11,6 +11,8 @@ import type {
   QuizDefinition,
 } from '@/lib/quiz-template';
 import { generateQuestionsFromLesson } from '@/lib/quiz-template';
+import type { QuestionBlock } from '@/lib/quiz-template/types';
+import { getQuestionPrompt } from '@/services/quiz-question-references';
 import { quizService } from './(course-tabs)/quiz/quiz.service';
 
 // ─── Question Bank Hook ──────────────────────────────────────────────────────
@@ -22,6 +24,7 @@ interface UseQuestionBankOptions {
 export function useQuestionBank({ courseId }: UseQuestionBankOptions) {
   const queryClient = useQueryClient();
   const t = useTranslations('Courses.CreateQuiz');
+  const tQuestionBank = useTranslations('Courses.QuestionBank');
 
   // Fetch all questions for the course via real API
   const questionsQuery = useQuery({
@@ -82,6 +85,27 @@ export function useQuestionBank({ courseId }: UseQuestionBankOptions) {
     onError: () => {
       toast.error('Failed to delete question');
     },
+  });
+
+  const updateQuestionMutation = useMutation({
+    mutationFn: async ({
+      questionId,
+      question,
+    }: {
+      questionId: string;
+      question: QuestionBlock;
+    }) =>
+      apiClient.put<QuestionBankEntry>(`v1/questions/${questionId}`, {
+        prompt: getQuestionPrompt(question),
+        answerData: question,
+        explanation: question.explanation ?? null,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['question-bank', courseId] });
+      queryClient.invalidateQueries({ queryKey: ['quizzes', courseId] });
+      toast.success(tQuestionBank('questionUpdateSuccess'));
+    },
+    onError: () => toast.error(tQuestionBank('questionUpdateError')),
   });
 
   // Create quiz via real API
@@ -182,6 +206,9 @@ export function useQuestionBank({ courseId }: UseQuestionBankOptions) {
 
     deleteQuestion: deleteQuestionMutation.mutate,
     isDeletingQuestion: deleteQuestionMutation.isPending,
+
+    updateQuestion: updateQuestionMutation.mutate,
+    isUpdatingQuestion: updateQuestionMutation.isPending,
 
     createQuiz: createQuizMutation.mutate,
     isCreatingQuiz: createQuizMutation.isPending,

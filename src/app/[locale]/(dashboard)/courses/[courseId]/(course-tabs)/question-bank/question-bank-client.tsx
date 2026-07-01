@@ -4,6 +4,7 @@ import { BookOpen, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
+import { QuestionEditorDialog } from '@/components/quiz/editors';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -34,13 +35,20 @@ interface QuestionBankClientProps {
 export function QuestionBankClient({ courseId }: QuestionBankClientProps) {
   const t = useTranslations('Courses.QuestionBank');
   const { modules } = useModules(courseId);
-  const { questions, isLoadingQuestions, deleteQuestion, isDeletingQuestion } =
-    useQuestionBank({ courseId });
+  const {
+    questions,
+    isLoadingQuestions,
+    deleteQuestion,
+    isDeletingQuestion,
+    updateQuestion,
+  } = useQuestionBank({ courseId });
   const filters = useQuestionBankFilters(questions);
 
   const [previewQuestion, setPreviewQuestion] =
     useState<QuestionBankEntry | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [editingQuestion, setEditingQuestion] =
+    useState<QuestionBankEntry | null>(null);
 
   const allLessons = modules.flatMap((m) => m.lessons);
 
@@ -101,6 +109,7 @@ export function QuestionBankClient({ courseId }: QuestionBankClientProps) {
         isDeletingQuestion={isDeletingQuestion}
         onDelete={deleteQuestion}
         onPreview={setPreviewQuestion}
+        onEdit={setEditingQuestion}
       />
 
       {/* Question Preview Dialog */}
@@ -135,6 +144,18 @@ export function QuestionBankClient({ courseId }: QuestionBankClientProps) {
           </div>
         </DialogContent>
       </Dialog>
+      <QuestionEditorDialog
+        isOpen={!!editingQuestion}
+        onOpenChange={(open) => !open && setEditingQuestion(null)}
+        question={editingQuestion?.answerData ?? null}
+        onSave={(question) => {
+          if (!editingQuestion) return;
+          updateQuestion(
+            { questionId: editingQuestion.id, question },
+            { onSuccess: () => setEditingQuestion(null) }
+          );
+        }}
+      />
     </div>
   );
 }
