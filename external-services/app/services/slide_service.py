@@ -243,7 +243,9 @@ class SlideService:
             )
 
             s3_prefix = f"templates/{collection}/"
-            s3_keys = await list_files_in_s3_prefix(s3_prefix, bucket_name=AWS_S3_TEMPLATES_BUCKET)
+            s3_keys = await list_files_in_s3_prefix(
+                s3_prefix, bucket_name=AWS_S3_TEMPLATES_BUCKET
+            )
             if s3_keys:
                 logger.info(
                     f"Downloading custom template collection '{collection}' from S3..."
@@ -253,7 +255,11 @@ class SlideService:
                 for key in s3_keys:
                     filename = key.split("/")[-1]
                     if filename:
-                        await download_file_from_s3(key, col_path / filename, bucket_name=AWS_S3_TEMPLATES_BUCKET)
+                        await download_file_from_s3(
+                            key,
+                            col_path / filename,
+                            bucket_name=AWS_S3_TEMPLATES_BUCKET,
+                        )
 
             collection_path = Path(SLIDE_TEMPLATES_DIR) / collection
             if collection_path.exists() and collection_path.is_dir():
@@ -446,7 +452,11 @@ class SlideService:
                 async def upload_dir_to_s3(directory: Path, prefix: str):
                     for child in directory.iterdir():
                         if child.is_file():
-                            await upload_file_to_s3(child, f"{prefix}/{child.name}", bucket_name=AWS_S3_TEMPLATES_BUCKET)
+                            await upload_file_to_s3(
+                                child,
+                                f"{prefix}/{child.name}",
+                                bucket_name=AWS_S3_TEMPLATES_BUCKET,
+                            )
                         elif child.is_dir():
                             await upload_dir_to_s3(child, f"{prefix}/{child.name}")
 
@@ -517,4 +527,3 @@ class SlideService:
             raise RuntimeError(f"Failed to assemble PPTX: {str(e)}")
 
         return pptx_path
-

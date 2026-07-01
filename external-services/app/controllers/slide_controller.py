@@ -27,9 +27,11 @@ async def execute_generation_job(job_id: str, req: GenReq, out_path: Path):
             language=req.language,
             animation=req.animation,
         )
-        # Upload to S3
+        # Upload to S3 then remove the local file to save disk space
         s3_key = f"slides/{job_id}.html"
         uploaded = await upload_file_to_s3(out_path, s3_key)
+        if uploaded and out_path.exists():
+            out_path.unlink()
 
         jobs[job_id]["status"] = "done"
         jobs[job_id]["result"] = {
@@ -87,9 +89,11 @@ async def generate_from_plan(req: PlanGenReq):
             image_source=req.image_source,
             collection=req.collection,
         )
-        # Upload to S3
+        # Upload to S3 then remove the local file to save disk space
         s3_key = f"slides/{job_id}.html"
         uploaded = await upload_file_to_s3(out_path, s3_key)
+        if uploaded and out_path.exists():
+            out_path.unlink()
 
         res = {
             "deck_id": job_id,
