@@ -1,4 +1,5 @@
 import logging
+import shutil
 import tempfile
 import textwrap
 import zipfile
@@ -171,7 +172,34 @@ class SlideService:
             "image_gallery",
             "kpi_big_numbers",
         }
-        return [c for c in collections if c["name"].lower() not in categories]
+        local_collections = [c for c in collections if c["name"].lower() not in categories]
+        seen_names = {c["name"].lower() for c in local_collections}
+
+        # Also discover custom collections uploaded to S3
+        try:
+            from app.deps import AWS_S3_TEMPLATES_BUCKET
+            from app.services.s3_service import list_files_in_s3_prefix
+
+            s3_keys = await list_files_in_s3_prefix(
+                "templates/", bucket_name=AWS_S3_TEMPLATES_BUCKET
+            )
+            # Keys look like "templates/<collection>/<file>.svg"
+            s3_collection_names: set[str] = set()
+            for key in s3_keys:
+                parts = key.split("/")
+                if len(parts) >= 3 and parts[0] == "templates" and parts[1]:
+                    s3_collection_names.add(parts[1])
+
+            for name in sorted(s3_collection_names):
+                if name.lower() not in seen_names and name.lower() not in categories:
+                    local_collections.append(
+                        {"name": name, "description": f"Custom collection (stored in S3)"}
+                    )
+                    seen_names.add(name.lower())
+        except Exception as e:
+            logger.warning(f"Could not list S3 template collections: {e}")
+
+        return local_collections
 
     async def generate_deck(
         self,
@@ -263,8 +291,6 @@ class SlideService:
 
             collection_path = Path(SLIDE_TEMPLATES_DIR) / collection
             if collection_path.exists() and collection_path.is_dir():
-                import tempfile
-                import shutil
                 import json
 
                 temp_dir_context = tempfile.TemporaryDirectory()
@@ -395,6 +421,17 @@ class SlideService:
                     temp_dir_context.cleanup()
                 except Exception:
                     pass
+            # Remove the S3-downloaded collection from local disk after use
+            if (
+                collection
+                and collection not in ("starter", "neon_dark", "templates")
+            ):
+                col_path = Path(SLIDE_TEMPLATES_DIR) / collection
+                if col_path.exists() and col_path.is_dir():
+                    shutil.rmtree(col_path, ignore_errors=True)
+                    logger.info(
+                        f"Cleaned up downloaded S3 collection '{collection}' after generation"
+                    )
 
         return res
 
@@ -461,6 +498,12 @@ class SlideService:
                             await upload_dir_to_s3(child, f"{prefix}/{child.name}")
 
                 await upload_dir_to_s3(dest_dir, f"templates/{collection_name}")
+
+                # Remove local files after successful S3 upload
+                shutil.rmtree(dest_dir, ignore_errors=True)
+                logger.info(
+                    f"Removed local template collection '{collection_name}' after S3 upload"
+                )
 
             return res
 
