@@ -349,7 +349,7 @@ class SlideService:
 
                 svg_files = list(collection_path.glob("*.svg"))
 
-                for cat in categories_to_map:
+                for idx, cat in enumerate(categories_to_map):
                     cat_dir = temp_lib_dir / cat
                     cat_dir.mkdir(parents=True, exist_ok=True)
 
@@ -374,19 +374,17 @@ class SlideService:
                                 matched_file = svg_file
                                 break
 
+                    # If still no match, cycle through the custom collection's
+                    # own SVGs rather than falling back to the default library,
+                    # so the visual style stays consistent.
+                    if not matched_file and svg_files:
+                        matched_file = svg_files[idx % len(svg_files)]
+
                     if matched_file:
                         shutil.copy2(matched_file, cat_dir / "variant_a.svg")
                         schema_json = matched_file.with_suffix(".schema.json")
                         if schema_json.exists():
                             shutil.copy2(schema_json, cat_dir / "variant_a.schema.json")
-                    else:
-                        default_cat_dir = Path(SLIDE_TEMPLATES_DIR) / cat
-                        if default_cat_dir.exists() and default_cat_dir.is_dir():
-                            default_files = list(default_cat_dir.glob("*.svg"))
-                            if default_files:
-                                shutil.copy2(
-                                    default_files[0], cat_dir / "variant_a.svg"
-                                )
 
                     (cat_dir / "category.json").write_text(
                         json.dumps(
