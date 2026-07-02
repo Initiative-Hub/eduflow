@@ -209,6 +209,41 @@ class SlideService:
         local_collections = [c for c in collections if c["name"].lower() not in categories]
         seen_names = {c["name"].lower() for c in local_collections}
 
+        # Also discover local category-format collections (style banks like
+        # templates/vintage/TITLE_SLIDE/*.svg): list_collections only sees
+        # flat folders with root-level SVGs, so nested ones are added here.
+        import json as _json
+        from pathlib import Path as _Path
+
+        templates_root = _Path(SLIDE_TEMPLATES_DIR)
+        if templates_root.is_dir():
+            for child in sorted(templates_root.iterdir()):
+                if (
+                    not child.is_dir()
+                    or child.name.lower() in categories
+                    or child.name.lower() in seen_names
+                ):
+                    continue
+                has_nested_svgs = any(
+                    sub.is_dir() and any(sub.glob("*.svg"))
+                    for sub in child.iterdir()
+                )
+                if not has_nested_svgs:
+                    continue
+                description = f"Style collection '{child.name}'"
+                meta_file = child / "collection.json"
+                if meta_file.exists():
+                    try:
+                        description = _json.loads(
+                            meta_file.read_text(encoding="utf-8")
+                        ).get("description", description)
+                    except (ValueError, OSError):
+                        pass
+                local_collections.append(
+                    {"name": child.name, "description": description}
+                )
+                seen_names.add(child.name.lower())
+
         # Also discover custom collections uploaded to S3
         try:
             from app.deps import AWS_S3_TEMPLATES_BUCKET

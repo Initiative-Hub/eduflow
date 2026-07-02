@@ -1,0 +1,29 @@
+{
+  "fields": {
+    "heading": {
+      "type": "title",
+      "desc": "process heading",
+      "max_chars": 24
+    },
+    "step_1": {
+      "type": "text",
+      "desc": "step 1",
+      "max_chars": 40
+    },
+    "step_2": {
+      "type": "text",
+      "desc": "step 2",
+      "max_chars": 40
+    },
+    "step_3": {
+      "type": "text",
+      "desc": "step 3",
+      "max_chars": 40
+    },
+    "step_4": {
+      "type": "text",
+      "desc": "step 4",
+      "max_chars": 40
+    }
+  }
+}

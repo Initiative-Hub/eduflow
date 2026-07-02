@@ -1,0 +1,7 @@
+{
+  "description": "Standard bullet points slide for detailing subtopics, arguments or lists.",
+  "variants": {
+    "standard": "clean_light style — Sleek bullet point list with custom glowing indicators.",
+    "split_panel": "clean_light style — Dark side panel holding the heading, bullets on the right — strong vertical split."
+  }
+}

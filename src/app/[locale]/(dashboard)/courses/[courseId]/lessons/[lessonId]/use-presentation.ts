@@ -68,7 +68,11 @@ export function usePresentation(options: {
   const [deckUrl, setDeckUrl] = useState<string | null>(null);
   // Token/cost usage reported for the most recent generation.
   const [deckUsage, setDeckUsage] = useState<DeckUsage | null>(null);
-  const [selectedCollection, setSelectedCollection] = useState('starter');
+  const [selectedCollection, setSelectedCollection] = useState('auto');
+  // Style the planner AI judged best for the lesson (used when 'auto').
+  const [recommendedCollection, setRecommendedCollection] = useState<
+    string | null
+  >(null);
 
   // Dynamic Outlines fallback generator
   const generateOutlines = useCallback(
@@ -321,6 +325,9 @@ export function usePresentation(options: {
                 })
               );
               setPlannedSlides(slidesWithIds);
+              if (event.recommendedCollection) {
+                setRecommendedCollection(event.recommendedCollection);
+              }
               setStep('planned');
               break;
             }
@@ -538,7 +545,11 @@ export function usePresentation(options: {
         lessonId,
         title,
         palette: 'auto',
-        collection: selectedCollection,
+        // 'auto' = use the style the planner AI recommended for this lesson
+        collection:
+          selectedCollection === 'auto'
+            ? (recommendedCollection ?? 'starter')
+            : selectedCollection,
         slides: plannedSlides.map((slide) => ({
           layoutType: slide.layoutType,
           slideTitle: slide.slideTitle,
@@ -674,5 +685,6 @@ export function usePresentation(options: {
     addSlide,
     selectedCollection,
     setSelectedCollection,
+    recommendedCollection,
   };
 }

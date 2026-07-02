@@ -1,0 +1,7 @@
+{
+  "description": "Slide listing citations, links, reference items or academic sources.",
+  "variants": {
+    "standard": "pastel_pop style — Sleek list of reference cards with distinct highlight lines.",
+    "two_column": "pastel_pop style — Reference source cards in a two-column grid (up to 4 sources) with numbered badges."
+  }
+}

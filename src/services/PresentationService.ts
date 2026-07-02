@@ -27,6 +27,23 @@ const STANDARD_LAYOUT_TYPES = [
   'CIRCLE_CYCLE',
 ] as const;
 
+/**
+ * Built-in style collections the planner may recommend based on the lesson's
+ * subject and tone. Must match folder names under external-services/templates.
+ */
+const STYLE_COLLECTIONS: Record<string, string> = {
+  starter:
+    'Neutral, professional default — safe for any subject or audience.',
+  neon_dark:
+    'Dark background with vivid cyan/pink neon accents — tech, coding, gaming, modern engineering topics.',
+  vintage:
+    'Aged cream paper, rust red and sage green, classic serif type — history, literature, arts, humanities, traditional culture.',
+  clean_light:
+    'White, minimal, one strong blue accent — business, science, data-heavy or formal academic material.',
+  pastel_pop:
+    'Soft blush background, rose pink and mint accents, friendly rounded feel — younger audiences, wellbeing, creative or community topics.',
+};
+
 export const presentationPlanSchema = z.object({
   slides: z.array(
     z.object({
@@ -35,6 +52,8 @@ export const presentationPlanSchema = z.object({
       bindings: z.record(z.string(), z.any()),
     })
   ),
+  // Style collection the AI judged best-fitting for the lesson (optional).
+  recommendedCollection: z.string().optional(),
 });
 
 export type PresentationPlan = z.infer<typeof presentationPlanSchema>;
@@ -155,10 +174,17 @@ Layout Binding Specifications (use these EXACT keys in each slide's 'bindings' o
 - 'PROCESS_ARROWS': { "process_steps": Array<{ "title": string, "description": string }>, "footer_note"?: string } (3–5 steps, titles ≤3 words, descriptions ≤10 words)
 - 'CIRCLE_CYCLE': { "phases": Array<{ "title": string, "description": string }>, "footer_note"?: string } (4–6 phases, clockwise from top)
 
+STYLE SELECTION:
+Pick the ONE visual style that best matches this lesson's subject and tone, and return its name as 'recommendedCollection':
+${Object.entries(STYLE_COLLECTIONS)
+  .map(([name, desc]) => `- '${name}': ${desc}`)
+  .join('\n')}
+
 HARD CONSTRAINTS:
 1. Output EXACTLY ${targetSlideCount} slides — no more, no fewer.
 2. Use only the allowed layoutType values, and only the binding keys listed for that layout.
 3. Populate every required field with real, complete content drawn from the lesson.
+4. Set 'recommendedCollection' to exactly one of the style names listed above.
     `.trim();
   }
 
@@ -326,7 +352,15 @@ HARD CONSTRAINTS:
         });
 
         await writer.write(
-          `${JSON.stringify({ type: 'done', slides: plan.slides })}\n`
+          `${JSON.stringify({
+            type: 'done',
+            slides: plan.slides,
+            recommendedCollection:
+              plan.recommendedCollection &&
+              plan.recommendedCollection in STYLE_COLLECTIONS
+                ? plan.recommendedCollection
+                : undefined,
+          })}\n`
         );
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Unknown error';

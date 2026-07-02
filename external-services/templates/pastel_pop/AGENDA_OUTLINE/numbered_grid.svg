@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 810">
+  <rect width="1440" height="810" fill="#FDF6F9"/>
+  <circle cx="1320" cy="90" r="180" fill="#4E9B82" fill-opacity="0.18"/>
+  <circle cx="120" cy="760" r="140" fill="#D26A92" fill-opacity="0.18"/>
+
+  <!-- Heading -->
+  <text x="140" y="150" font-family="'Avenir Next', 'Trebuchet MS', Verdana, sans-serif" font-size="56" font-weight="bold" fill="#4A3B50">{{heading|24}}</text>
+  <rect x="140" y="175" width="220" height="4" fill="#D26A92" rx="2"/>
+
+  <!-- Numbered agenda cards, two columns -->
+  <g transform="translate(140, 240)">
+    <!-- Item 1 -->
+    <g>
+      <rect width="560" height="140" fill="#FFFFFF" rx="16" stroke="#4E9B82" stroke-width="1.5" stroke-opacity="0.55"/>
+      <text x="42" y="90" font-family="'Avenir Next', 'Trebuchet MS', Verdana, sans-serif" font-size="56" font-weight="bold" fill="#4E9B82">01</text>
+      <text x="140" y="82" font-family="'Avenir Next', 'Trebuchet MS', Verdana, sans-serif" font-size="26" fill="#6E5A77">{{items.1|60}}</text>
+    </g>
+    <!-- Item 2 -->
+    <g transform="translate(620, 0)">
+      <rect width="560" height="140" fill="#FFFFFF" rx="16" stroke="#D26A92" stroke-width="1.5" stroke-opacity="0.55"/>
+      <text x="42" y="90" font-family="'Avenir Next', 'Trebuchet MS', Verdana, sans-serif" font-size="56" font-weight="bold" fill="#D26A92">02</text>
+      <text x="140" y="82" font-family="'Avenir Next', 'Trebuchet MS', Verdana, sans-serif" font-size="26" fill="#6E5A77">{{items.2|60}}</text>
+    </g>
+    <!-- Item 3 -->
+    <g transform="translate(0, 175)">
+      <rect width="560" height="140" fill="#FFFFFF" rx="16" stroke="#D26A92" stroke-width="1.5" stroke-opacity="0.55"/>
+      <text x="42" y="90" font-family="'Avenir Next', 'Trebuchet MS', Verdana, sans-serif" font-size="56" font-weight="bold" fill="#D26A92">03</text>
+      <text x="140" y="82" font-family="'Avenir Next', 'Trebuchet MS', Verdana, sans-serif" font-size="26" fill="#6E5A77">{{items.3|60}}</text>
+    </g>
+    <!-- Item 4 -->
+    <g transform="translate(620, 175)">
+      <rect width="560" height="140" fill="#FFFFFF" rx="16" stroke="#4E9B82" stroke-width="1.5" stroke-opacity="0.55"/>
+      <text x="42" y="90" font-family="'Avenir Next', 'Trebuchet MS', Verdana, sans-serif" font-size="56" font-weight="bold" fill="#4E9B82">04</text>
+      <text x="140" y="82" font-family="'Avenir Next', 'Trebuchet MS', Verdana, sans-serif" font-size="26" fill="#6E5A77">{{items.4|60}}</text>
+    </g>
+    <!-- Item 5 -->
+    <g transform="translate(0, 350)">
+      <rect width="560" height="140" fill="#FFFFFF" rx="16" stroke="#4E9B82" stroke-width="1.5" stroke-opacity="0.55"/>
+      <text x="42" y="90" font-family="'Avenir Next', 'Trebuchet MS', Verdana, sans-serif" font-size="56" font-weight="bold" fill="#4E9B82">05</text>
+      <text x="140" y="82" font-family="'Avenir Next', 'Trebuchet MS', Verdana, sans-serif" font-size="26" fill="#6E5A77">{{items.5|60}}</text>
+    </g>
+  </g>
+</svg>

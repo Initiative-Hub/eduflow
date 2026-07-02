@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 810">
+  <rect width="1440" height="810" fill="#FFFFFF"/>
+  <line x1="80" y1="0" x2="80" y2="810" stroke="#0F62FE" stroke-width="3" stroke-opacity="0.3"/>
+
+  <!-- Heading -->
+  <text x="140" y="150" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="56" font-weight="bold" fill="#111111">{{heading|24}}</text>
+  <rect x="140" y="175" width="220" height="4" fill="#0F62FE" rx="2"/>
+
+  <!-- Source cards, two columns -->
+  <g transform="translate(140, 250)">
+    <!-- Source 1 -->
+    <g>
+      <rect width="570" height="200" fill="#F4F6F8" rx="16" stroke="#0F62FE" stroke-width="1.5" stroke-opacity="0.55"/>
+      <rect x="30" y="30" width="44" height="44" fill="#0F62FE" fill-opacity="0.18" rx="10"/>
+      <text x="52" y="61" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="24" font-weight="bold" fill="#0F62FE" text-anchor="middle">1</text>
+      <text x="100" y="62" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="24" fill="#111111">{{source_title_1|70}}</text>
+      <text x="30" y="130" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="19" fill="#0F62FE" fill-opacity="0.85">{{source_url_1|80}}</text>
+    </g>
+    <!-- Source 2 -->
+    <g transform="translate(610, 0)">
+      <rect width="570" height="200" fill="#F4F6F8" rx="16" stroke="#111111" stroke-width="1.5" stroke-opacity="0.55"/>
+      <rect x="30" y="30" width="44" height="44" fill="#111111" fill-opacity="0.18" rx="10"/>
+      <text x="52" y="61" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="24" font-weight="bold" fill="#111111" text-anchor="middle">2</text>
+      <text x="100" y="62" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="24" fill="#111111">{{source_title_2|70}}</text>
+      <text x="30" y="130" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="19" fill="#111111" fill-opacity="0.85">{{source_url_2|80}}</text>
+    </g>
+    <!-- Source 3 -->
+    <g transform="translate(0, 240)">
+      <rect width="570" height="200" fill="#F4F6F8" rx="16" stroke="#111111" stroke-width="1.5" stroke-opacity="0.55"/>
+      <rect x="30" y="30" width="44" height="44" fill="#111111" fill-opacity="0.18" rx="10"/>
+      <text x="52" y="61" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="24" font-weight="bold" fill="#111111" text-anchor="middle">3</text>
+      <text x="100" y="62" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="24" fill="#111111">{{source_title_3|70}}</text>
+      <text x="30" y="130" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="19" fill="#111111" fill-opacity="0.85">{{source_url_3|80}}</text>
+    </g>
+    <!-- Source 4 -->
+    <g transform="translate(610, 240)">
+      <rect width="570" height="200" fill="#F4F6F8" rx="16" stroke="#0F62FE" stroke-width="1.5" stroke-opacity="0.55"/>
+      <rect x="30" y="30" width="44" height="44" fill="#0F62FE" fill-opacity="0.18" rx="10"/>
+      <text x="52" y="61" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="24" font-weight="bold" fill="#0F62FE" text-anchor="middle">4</text>
+      <text x="100" y="62" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="24" fill="#111111">{{source_title_4|70}}</text>
+      <text x="30" y="130" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="19" fill="#0F62FE" fill-opacity="0.85">{{source_url_4|80}}</text>
+    </g>
+  </g>
+</svg>

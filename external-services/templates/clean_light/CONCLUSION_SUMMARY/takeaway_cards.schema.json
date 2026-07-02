@@ -1,0 +1,15 @@
+{
+  "fields": {
+    "heading": {
+      "type": "title",
+      "desc": "summary heading",
+      "max_chars": 24
+    },
+    "summary_points": {
+      "type": "text",
+      "desc": "key takeaways, one per card",
+      "max_chars": 35,
+      "lines": 4
+    }
+  }
+}

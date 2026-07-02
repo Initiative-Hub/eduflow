@@ -1,0 +1,29 @@
+{
+  "fields": {
+    "heading": {
+      "type": "title",
+      "desc": "heading / title",
+      "max_chars": 24
+    },
+    "step_1": {
+      "type": "text",
+      "desc": "First body point — concise",
+      "max_chars": 40
+    },
+    "step_2": {
+      "type": "text",
+      "desc": "Second body point — concise",
+      "max_chars": 40
+    },
+    "step_3": {
+      "type": "text",
+      "desc": "Third body point — concise",
+      "max_chars": 40
+    },
+    "step_4": {
+      "type": "text",
+      "desc": "Fourth body point — concise",
+      "max_chars": 40
+    }
+  }
+}

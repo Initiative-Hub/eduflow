@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 810">
+  <rect width="1440" height="810" fill="#FFFFFF"/>
+  <circle cx="1310" cy="110" r="130" fill="#111111" fill-opacity="0.18"/>
+
+  <!-- Heading -->
+  <text x="140" y="140" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="56" font-weight="bold" fill="#111111">{{heading|24}}</text>
+  <rect x="140" y="165" width="220" height="4" fill="#111111" rx="2"/>
+
+  <!-- Central horizontal track, cards alternating above/below -->
+  <g transform="translate(0, 470)">
+    <line x1="120" y1="0" x2="1320" y2="0" stroke="#0F62FE" stroke-width="4" stroke-opacity="0.55"/>
+
+    <!-- Milestone 1 (above) -->
+    <g>
+      <circle cx="240" cy="0" r="16" fill="#0F62FE"/>
+      <line x1="240" y1="-16" x2="240" y2="-60" stroke="#0F62FE" stroke-width="2" stroke-opacity="0.6"/>
+      <rect x="130" y="-210" width="240" height="150" fill="#F4F6F8" rx="14" stroke="#0F62FE" stroke-width="1.5" stroke-opacity="0.3"/>
+      <text x="250" y="-165" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="26" font-weight="bold" fill="#0F62FE" text-anchor="middle">{{date_1|15}}</text>
+      <text x="250" y="-125" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="21" fill="#4B5563" text-anchor="middle">{{desc_1.1|25}}</text>
+      <text x="250" y="-95" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="21" fill="#4B5563" text-anchor="middle">{{desc_1.2|25}}</text>
+    </g>
+    <!-- Milestone 2 (below) -->
+    <g>
+      <circle cx="560" cy="0" r="16" fill="#111111"/>
+      <line x1="560" y1="16" x2="560" y2="60" stroke="#111111" stroke-width="2" stroke-opacity="0.6"/>
+      <rect x="450" y="60" width="240" height="150" fill="#F4F6F8" rx="14" stroke="#111111" stroke-width="1.5" stroke-opacity="0.3"/>
+      <text x="570" y="105" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="26" font-weight="bold" fill="#111111" text-anchor="middle">{{date_2|15}}</text>
+      <text x="570" y="145" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="21" fill="#4B5563" text-anchor="middle">{{desc_2.1|25}}</text>
+      <text x="570" y="175" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="21" fill="#4B5563" text-anchor="middle">{{desc_2.2|25}}</text>
+    </g>
+    <!-- Milestone 3 (above) -->
+    <g>
+      <circle cx="880" cy="0" r="16" fill="#0F62FE"/>
+      <line x1="880" y1="-16" x2="880" y2="-60" stroke="#0F62FE" stroke-width="2" stroke-opacity="0.6"/>
+      <rect x="770" y="-210" width="240" height="150" fill="#F4F6F8" rx="14" stroke="#0F62FE" stroke-width="1.5" stroke-opacity="0.3"/>
+      <text x="890" y="-165" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="26" font-weight="bold" fill="#0F62FE" text-anchor="middle">{{date_3|15}}</text>
+      <text x="890" y="-125" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="21" fill="#4B5563" text-anchor="middle">{{desc_3.1|25}}</text>
+      <text x="890" y="-95" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="21" fill="#4B5563" text-anchor="middle">{{desc_3.2|25}}</text>
+    </g>
+    <!-- Milestone 4 (below) -->
+    <g>
+      <circle cx="1200" cy="0" r="16" fill="#111111"/>
+      <line x1="1200" y1="16" x2="1200" y2="60" stroke="#111111" stroke-width="2" stroke-opacity="0.6"/>
+      <rect x="1090" y="60" width="240" height="150" fill="#F4F6F8" rx="14" stroke="#111111" stroke-width="1.5" stroke-opacity="0.3"/>
+      <text x="1210" y="105" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="26" font-weight="bold" fill="#111111" text-anchor="middle">{{date_4|15}}</text>
+      <text x="1210" y="145" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="21" fill="#4B5563" text-anchor="middle">{{desc_4.1|25}}</text>
+      <text x="1210" y="175" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="21" fill="#4B5563" text-anchor="middle">{{desc_4.2|25}}</text>
+    </g>
+  </g>
+</svg>

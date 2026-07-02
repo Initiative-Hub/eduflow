@@ -1,0 +1,7 @@
+{
+  "description": "Concluding slide summarizing main learnings, takeaways or summary points.",
+  "variants": {
+    "standard": "pastel_pop style — Four checkmark highlights cards summarizing the session.",
+    "takeaway_cards": "pastel_pop style — Four takeaway cards with check badges in a 2x2 grid — scannable wrap-up."
+  }
+}

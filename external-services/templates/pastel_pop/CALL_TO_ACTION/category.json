@@ -1,0 +1,7 @@
+{
+  "description": "Action-oriented layout highlighting specific action items or tasks for the audience.",
+  "variants": {
+    "standard": "pastel_pop style — Highlighted list items layout with an bold visual reminder box.",
+    "action_cards": "pastel_pop style — Centered heading with four arrow action cards in a 2x2 grid — punchy next-steps."
+  }
+}

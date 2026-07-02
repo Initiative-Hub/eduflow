@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 810">
+  <rect width="1440" height="810" fill="#FDF6F9"/>
+  <circle cx="1320" cy="110" r="130" fill="#4E9B82" fill-opacity="0.18"/>
+  <text x="100" y="120" font-family="'Avenir Next', 'Trebuchet MS', Verdana, sans-serif" font-size="52" font-weight="bold" fill="#4A3B50">{{heading|24}}</text>
+  <rect x="100" y="145" width="220" height="4" fill="#D26A92" rx="2"/>
+  <g>
+    <polygon points="430,190 540,363 320,363" fill="#4E9B82" fill-opacity="0.18" stroke="#4E9B82" stroke-width="2" stroke-opacity="0.7"/>
+    <text x="430" y="289" font-family="'Avenir Next', 'Trebuchet MS', Verdana, sans-serif" font-size="34" font-weight="bold" fill="#4A3B50" text-anchor="middle">1</text>
+    <line x1="580" y1="363" x2="1340" y2="363" stroke="#6E5A77" stroke-opacity="0.12" stroke-width="1.5"/>
+    <text x="600" y="271" font-family="'Avenir Next', 'Trebuchet MS', Verdana, sans-serif" font-size="30" font-weight="bold" fill="#4E9B82">{{title_1|30}}</text>
+    <text x="600" y="309" font-family="'Avenir Next', 'Trebuchet MS', Verdana, sans-serif" font-size="22" fill="#6E5A77">{{desc_1|70}}</text>
+  </g>
+  <g>
+    <polygon points="320,363 540,363 650,537 210,537" fill="#D26A92" fill-opacity="0.18" stroke="#D26A92" stroke-width="2" stroke-opacity="0.7"/>
+    <text x="430" y="462" font-family="'Avenir Next', 'Trebuchet MS', Verdana, sans-serif" font-size="34" font-weight="bold" fill="#4A3B50" text-anchor="middle">2</text>
+    <line x1="690" y1="537" x2="1340" y2="537" stroke="#6E5A77" stroke-opacity="0.12" stroke-width="1.5"/>
+    <text x="710" y="444" font-family="'Avenir Next', 'Trebuchet MS', Verdana, sans-serif" font-size="30" font-weight="bold" fill="#D26A92">{{title_2|30}}</text>
+    <text x="710" y="482" font-family="'Avenir Next', 'Trebuchet MS', Verdana, sans-serif" font-size="22" fill="#6E5A77">{{desc_2|70}}</text>
+  </g>
+  <g>
+    <polygon points="210,537 650,537 760,710 100,710" fill="#4E9B82" fill-opacity="0.18" stroke="#4E9B82" stroke-width="2" stroke-opacity="0.7"/>
+    <text x="430" y="635" font-family="'Avenir Next', 'Trebuchet MS', Verdana, sans-serif" font-size="34" font-weight="bold" fill="#4A3B50" text-anchor="middle">3</text>
+    <line x1="800" y1="710" x2="1340" y2="710" stroke="#6E5A77" stroke-opacity="0.12" stroke-width="1.5"/>
+    <text x="820" y="617" font-family="'Avenir Next', 'Trebuchet MS', Verdana, sans-serif" font-size="30" font-weight="bold" fill="#4E9B82">{{title_3|30}}</text>
+    <text x="820" y="655" font-family="'Avenir Next', 'Trebuchet MS', Verdana, sans-serif" font-size="22" fill="#6E5A77">{{desc_3|70}}</text>
+  </g>
+  <text x="100" y="780" font-family="'Avenir Next', 'Trebuchet MS', Verdana, sans-serif" font-size="22" fill="#6E5A77" fill-opacity="0.8">{{footer_note|90}}</text>
+</svg>

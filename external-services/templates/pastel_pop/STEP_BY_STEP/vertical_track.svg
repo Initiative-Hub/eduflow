@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 810">
+  <rect width="1440" height="810" fill="#FDF6F9"/>
+  <circle cx="1300" cy="140" r="150" fill="#4E9B82" fill-opacity="0.18"/>
+
+  <!-- Heading -->
+  <text x="140" y="140" font-family="'Avenir Next', 'Trebuchet MS', Verdana, sans-serif" font-size="56" font-weight="bold" fill="#4A3B50">{{heading|24}}</text>
+  <rect x="140" y="165" width="220" height="4" fill="#4E9B82" rx="2"/>
+
+  <!-- Vertical progress track -->
+  <g transform="translate(220, 230)">
+    <line x1="0" y1="20" x2="0" y2="500" stroke="#4E9B82" stroke-width="4" stroke-opacity="0.55"/>
+
+    <!-- Step 1 -->
+    <g>
+      <circle cx="0" cy="40" r="26" fill="#FDF6F9" stroke="#4E9B82" stroke-width="4"/>
+      <text x="0" y="49" font-family="'Avenir Next', 'Trebuchet MS', Verdana, sans-serif" font-size="24" font-weight="bold" fill="#4E9B82" text-anchor="middle">1</text>
+      <rect x="60" y="0" width="900" height="82" fill="#FFFFFF" rx="14" stroke="#4E9B82" stroke-width="1" stroke-opacity="0.55"/>
+      <text x="95" y="51" font-family="'Avenir Next', 'Trebuchet MS', Verdana, sans-serif" font-size="27" fill="#6E5A77">{{step_1|40}}</text>
+    </g>
+    <!-- Step 2 -->
+    <g transform="translate(0, 140)">
+      <circle cx="0" cy="40" r="26" fill="#FDF6F9" stroke="#D26A92" stroke-width="4"/>
+      <text x="0" y="49" font-family="'Avenir Next', 'Trebuchet MS', Verdana, sans-serif" font-size="24" font-weight="bold" fill="#D26A92" text-anchor="middle">2</text>
+      <rect x="60" y="0" width="900" height="82" fill="#FFFFFF" rx="14" stroke="#D26A92" stroke-width="1" stroke-opacity="0.55"/>
+      <text x="95" y="51" font-family="'Avenir Next', 'Trebuchet MS', Verdana, sans-serif" font-size="27" fill="#6E5A77">{{step_2|40}}</text>
+    </g>
+    <!-- Step 3 -->
+    <g transform="translate(0, 280)">
+      <circle cx="0" cy="40" r="26" fill="#FDF6F9" stroke="#4E9B82" stroke-width="4"/>
+      <text x="0" y="49" font-family="'Avenir Next', 'Trebuchet MS', Verdana, sans-serif" font-size="24" font-weight="bold" fill="#4E9B82" text-anchor="middle">3</text>
+      <rect x="60" y="0" width="900" height="82" fill="#FFFFFF" rx="14" stroke="#4E9B82" stroke-width="1" stroke-opacity="0.55"/>
+      <text x="95" y="51" font-family="'Avenir Next', 'Trebuchet MS', Verdana, sans-serif" font-size="27" fill="#6E5A77">{{step_3|40}}</text>
+    </g>
+    <!-- Step 4 -->
+    <g transform="translate(0, 420)">
+      <circle cx="0" cy="40" r="26" fill="#FDF6F9" stroke="#D26A92" stroke-width="4"/>
+      <text x="0" y="49" font-family="'Avenir Next', 'Trebuchet MS', Verdana, sans-serif" font-size="24" font-weight="bold" fill="#D26A92" text-anchor="middle">4</text>
+      <rect x="60" y="0" width="900" height="82" fill="#FFFFFF" rx="14" stroke="#D26A92" stroke-width="1" stroke-opacity="0.55"/>
+      <text x="95" y="51" font-family="'Avenir Next', 'Trebuchet MS', Verdana, sans-serif" font-size="27" fill="#6E5A77">{{step_4|40}}</text>
+    </g>
+  </g>
+</svg>

@@ -112,6 +112,7 @@ export function LessonPresentation({
     addSlide,
     selectedCollection,
     setSelectedCollection,
+    recommendedCollection,
   } = usePresentation({ title, content, isOpen, onClose });
 
   const [isDownloadingPptx, setIsDownloadingPptx] = useState(false);
@@ -1585,6 +1586,9 @@ export function LessonPresentation({
                     <SelectValue placeholder="System Default (Starter)" />
                   </SelectTrigger>
                   <SelectContent className="border-slate-200 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100">
+                    <SelectItem value="auto">
+                      ✨ Auto — AI picks from content
+                    </SelectItem>
                     <SelectItem value="starter">
                       System Default (Starter)
                     </SelectItem>
@@ -1684,18 +1688,22 @@ export function LessonPresentation({
                 <span
                   className="block max-w-[150px] truncate font-bold text-slate-800 text-xs dark:text-slate-200"
                   title={
-                    selectedCollection === 'starter'
+                    selectedCollection === 'auto'
+                      ? `Auto — AI picked${recommendedCollection ? `: ${recommendedCollection}` : ' (decided at planning)'}`
+                      : selectedCollection === 'starter'
+                        ? 'Default Starter'
+                        : selectedCollection === 'neon_dark'
+                          ? 'Neon Dark Theme'
+                          : selectedCollection
+                  }
+                >
+                  {selectedCollection === 'auto'
+                    ? `✨ Auto${recommendedCollection ? ` → ${recommendedCollection}` : ''}`
+                    : selectedCollection === 'starter'
                       ? 'Default Starter'
                       : selectedCollection === 'neon_dark'
                         ? 'Neon Dark Theme'
-                        : selectedCollection
-                  }
-                >
-                  {selectedCollection === 'starter'
-                    ? 'Default Starter'
-                    : selectedCollection === 'neon_dark'
-                      ? 'Neon Dark Theme'
-                      : selectedCollection}
+                        : selectedCollection}
                 </span>
               </div>
               <Button

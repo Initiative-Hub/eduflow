@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 810">
+  <rect width="1440" height="810" fill="#FFFFFF"/>
+  <circle cx="1320" cy="110" r="130" fill="#0F62FE" fill-opacity="0.18"/>
+  <text x="100" y="120" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="52" font-weight="bold" fill="#111111">{{heading|24}}</text>
+  <rect x="100" y="145" width="220" height="4" fill="#111111" rx="2"/>
+  <g>
+    <polygon points="100,300 458,300 504,385 458,470 100,470" fill="#0F62FE" fill-opacity="0.18" stroke="#0F62FE" stroke-width="2" stroke-opacity="0.7"/>
+    <text x="302" y="398" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="36" font-weight="bold" fill="#111111" text-anchor="middle">1</text>
+    <text x="302" y="540" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="26" font-weight="bold" fill="#0F62FE" text-anchor="middle">{{title_1|24}}</text>
+    <text x="302" y="578" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="18" fill="#4B5563" text-anchor="middle">{{desc_1.1|34}}</text>
+    <text x="302" y="606" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="18" fill="#4B5563" text-anchor="middle">{{desc_1.2|34}}</text>
+  </g>
+  <g>
+    <polygon points="518,300 876,300 922,385 876,470 518,470 564,385" fill="#111111" fill-opacity="0.18" stroke="#111111" stroke-width="2" stroke-opacity="0.7"/>
+    <text x="720" y="398" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="36" font-weight="bold" fill="#111111" text-anchor="middle">2</text>
+    <text x="720" y="540" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="26" font-weight="bold" fill="#111111" text-anchor="middle">{{title_2|24}}</text>
+    <text x="720" y="578" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="18" fill="#4B5563" text-anchor="middle">{{desc_2.1|34}}</text>
+    <text x="720" y="606" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="18" fill="#4B5563" text-anchor="middle">{{desc_2.2|34}}</text>
+  </g>
+  <g>
+    <polygon points="936,300 1294,300 1340,385 1294,470 936,470 982,385" fill="#0F62FE" fill-opacity="0.18" stroke="#0F62FE" stroke-width="2" stroke-opacity="0.7"/>
+    <text x="1138" y="398" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="36" font-weight="bold" fill="#111111" text-anchor="middle">3</text>
+    <text x="1138" y="540" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="26" font-weight="bold" fill="#0F62FE" text-anchor="middle">{{title_3|24}}</text>
+    <text x="1138" y="578" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="18" fill="#4B5563" text-anchor="middle">{{desc_3.1|34}}</text>
+    <text x="1138" y="606" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="18" fill="#4B5563" text-anchor="middle">{{desc_3.2|34}}</text>
+  </g>
+  <text x="100" y="780" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="22" fill="#4B5563" fill-opacity="0.8">{{footer_note|90}}</text>
+</svg>

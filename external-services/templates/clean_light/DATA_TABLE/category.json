@@ -1,0 +1,7 @@
+{
+  "description": "Structured grid presenting data in rows and columns.",
+  "variants": {
+    "standard": "clean_light style — Sleek glowing tech table with clear headers and row dividers.",
+    "striped_rows": "clean_light style — Zebra-striped table with a cyan header band — softer, modern alternative to grid lines."
+  }
+}
