@@ -181,6 +181,17 @@ export function useSlideTemplatePreviews(
   });
 }
 
+export function useSlideTemplateCategories(
+  collectionName: string | null,
+  enabled: boolean
+) {
+  return useQuery({
+    queryKey: ['slide-template-categories', collectionName],
+    queryFn: () => slideService.getTemplateCategories(collectionName!),
+    enabled: enabled && !!collectionName,
+  });
+}
+
 export function useImportSlideTemplate() {
   const queryClient = useQueryClient();
   return useMutation({

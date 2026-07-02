@@ -34,11 +34,38 @@ import type { TiptapDocument } from '@/utils/lesson-content';
 import {
   useDownloadPptx,
   useSlideHtml,
+  useSlideTemplateCategories,
   useSlideTemplates,
   useUpdateSlideHtml,
 } from '../use-lesson';
 import { type PlannedSlide, usePresentation } from '../use-presentation';
 import { TemplateUploadSheet } from './template-upload-sheet';
+
+const formatLayoutName = (layout: string, t: any) => {
+  const map: Record<string, string> = {
+    TITLE_SLIDE: 'Title Slide',
+    AGENDA_OUTLINE: 'Agenda & Outline',
+    SECTION_HEADER: 'Section Header',
+    TITLE_BULLETS: 'Title & Bullets',
+    TWO_COLUMN_SPLIT: 'Two Column Split',
+    BIG_QUOTE_TAKEAWAY: 'Big Quote Takeaway',
+    KPI_BIG_NUMBER: 'KPI & Big Numbers',
+    CHART_INSIGHT: 'Chart & Insight',
+    DATA_TABLE: 'Data Table',
+    MEDIA_TEXT: 'Media & Text',
+    TIMELINE_MILESTONES: 'Timeline & Milestones',
+    STEP_BY_STEP: 'Step By Step Process',
+    CONCLUSION_SUMMARY: 'Conclusion & Summary',
+    CALL_TO_ACTION: 'Call To Action / Homework',
+    QA_CONTACT: 'Q&A Closing Slide',
+    REFERENCES_LIST: t('referencesLayout') || 'References List',
+  };
+  if (map[layout]) return map[layout];
+  return layout
+    .split(/[_-]/)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(' ');
+};
 
 interface LessonPresentationProps {
   isOpen: boolean;
@@ -97,6 +124,13 @@ export function LessonPresentation({
   const { data: collectionsData, isLoading: isLoadingTemplates } =
     useSlideTemplates();
   const collections = collectionsData || [];
+
+  // Fetch active categories for the selected template collection
+  const { data: categoriesData } = useSlideTemplateCategories(
+    selectedCollection,
+    isOpen && !!selectedCollection
+  );
+  const activeCategories = categoriesData?.categories || [];
 
   // TanStack Mutation for downloading PPTX
   const downloadPptx = useDownloadPptx();
@@ -1722,52 +1756,31 @@ export function LessonPresentation({
                           <SelectValue placeholder="Select Layout" />
                         </SelectTrigger>
                         <SelectContent className="max-h-60 border-slate-200 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100">
-                          <SelectItem value="TITLE_SLIDE">
-                            Title Slide
-                          </SelectItem>
-                          <SelectItem value="AGENDA_OUTLINE">
-                            Agenda & Outline
-                          </SelectItem>
-                          <SelectItem value="SECTION_HEADER">
-                            Section Header
-                          </SelectItem>
-                          <SelectItem value="TITLE_BULLETS">
-                            Title & Bullets
-                          </SelectItem>
-                          <SelectItem value="TWO_COLUMN_SPLIT">
-                            Two Column Split
-                          </SelectItem>
-                          <SelectItem value="BIG_QUOTE_TAKEAWAY">
-                            Big Quote Takeaway
-                          </SelectItem>
-                          <SelectItem value="KPI_BIG_NUMBER">
-                            KPI & Big Numbers
-                          </SelectItem>
-                          <SelectItem value="CHART_INSIGHT">
-                            Chart & Insight
-                          </SelectItem>
-                          <SelectItem value="DATA_TABLE">Data Table</SelectItem>
-                          <SelectItem value="MEDIA_TEXT">
-                            Media & Text
-                          </SelectItem>
-                          <SelectItem value="TIMELINE_MILESTONES">
-                            Timeline & Milestones
-                          </SelectItem>
-                          <SelectItem value="STEP_BY_STEP">
-                            Step By Step Process
-                          </SelectItem>
-                          <SelectItem value="CONCLUSION_SUMMARY">
-                            Conclusion & Summary
-                          </SelectItem>
-                          <SelectItem value="CALL_TO_ACTION">
-                            Call To Action / Homework
-                          </SelectItem>
-                          <SelectItem value="QA_CONTACT">
-                            Q&A Closing Slide
-                          </SelectItem>
-                          <SelectItem value="REFERENCES_LIST">
-                            {t('referencesLayout')}
-                          </SelectItem>
+                          {(activeCategories.length > 0
+                            ? activeCategories
+                            : [
+                                'TITLE_SLIDE',
+                                'AGENDA_OUTLINE',
+                                'SECTION_HEADER',
+                                'TITLE_BULLETS',
+                                'TWO_COLUMN_SPLIT',
+                                'BIG_QUOTE_TAKEAWAY',
+                                'KPI_BIG_NUMBER',
+                                'CHART_INSIGHT',
+                                'DATA_TABLE',
+                                'MEDIA_TEXT',
+                                'TIMELINE_MILESTONES',
+                                'STEP_BY_STEP',
+                                'CONCLUSION_SUMMARY',
+                                'CALL_TO_ACTION',
+                                'QA_CONTACT',
+                                'REFERENCES_LIST',
+                              ]
+                          ).map((layout) => (
+                            <SelectItem key={layout} value={layout}>
+                              {formatLayoutName(layout, t)}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
