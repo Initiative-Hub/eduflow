@@ -24,7 +24,11 @@ export interface PlannedSlide {
     | 'CONCLUSION_SUMMARY'
     | 'CALL_TO_ACTION'
     | 'QA_CONTACT'
-    | 'REFERENCES_LIST';
+    | 'REFERENCES_LIST'
+    | 'PYRAMID_LEVELS'
+    | 'FUNNEL_STAGES'
+    | 'PROCESS_ARROWS'
+    | 'CIRCLE_CYCLE';
   slideTitle: string;
   bindings: Record<string, any>;
 }
@@ -447,6 +451,43 @@ export function usePresentation(options: {
     } else if (newLayout === 'REFERENCES_LIST') {
       defaultBindings = {
         sources: [{ title: 'Reference Source 1', url: 'https://example.com' }],
+      };
+    } else if (newLayout === 'PYRAMID_LEVELS') {
+      defaultBindings = {
+        levels: [
+          { title: 'Vision', description: 'The overarching goal at the top' },
+          { title: 'Strategy', description: 'How we plan to get there' },
+          { title: 'Execution', description: 'Daily work that delivers results' },
+        ],
+        footer_note: 'Each level builds on the one below it.',
+      };
+    } else if (newLayout === 'FUNNEL_STAGES') {
+      defaultBindings = {
+        stages: [
+          { title: 'Awareness', description: 'Visitors discover the product' },
+          { title: 'Consideration', description: 'They compare and evaluate' },
+          { title: 'Conversion', description: 'They sign up and pay' },
+        ],
+        footer_note: 'Each stage narrows toward committed users.',
+      };
+    } else if (newLayout === 'PROCESS_ARROWS') {
+      defaultBindings = {
+        process_steps: [
+          { title: 'Plan', description: 'Define scope and goals' },
+          { title: 'Build', description: 'Implement the solution' },
+          { title: 'Review', description: 'Test and gather feedback' },
+        ],
+        footer_note: 'A simple flow from idea to delivery.',
+      };
+    } else if (newLayout === 'CIRCLE_CYCLE') {
+      defaultBindings = {
+        phases: [
+          { title: 'Plan', description: 'Set the goals for this iteration' },
+          { title: 'Do', description: 'Carry out the plan' },
+          { title: 'Check', description: 'Measure the results' },
+          { title: 'Act', description: 'Adjust and start again' },
+        ],
+        footer_note: 'A continuous improvement loop.',
       };
     }
 

@@ -21,6 +21,10 @@ const STANDARD_LAYOUT_TYPES = [
   'CALL_TO_ACTION',
   'QA_CONTACT',
   'REFERENCES_LIST',
+  'PYRAMID_LEVELS',
+  'FUNNEL_STAGES',
+  'PROCESS_ARROWS',
+  'CIRCLE_CYCLE',
 ] as const;
 
 export const presentationPlanSchema = z.object({
@@ -116,6 +120,10 @@ CHOOSE THE BEST LAYOUT FOR EACH IDEA (do not default everything to TITLE_BULLETS
 - Structured rows/columns of facts → 'DATA_TABLE' (clear headers + at least 3 rows).
 - A point best paired with a visual, demo, screenshot, or diagram → 'MEDIA_TEXT' (write a vivid image_prompt_description).
 - A set of related points or features with no stronger structure → 'TITLE_BULLETS' (3–5 substantive bullets).
+- Ranked levels, priorities, maturity models, value hierarchies → 'PYRAMID_LEVELS' (3–5 levels, most important at the apex).
+- Conversion funnels, filtering/narrowing pipelines → 'FUNNEL_STAGES' (3–5 stages, widest first).
+- A left-to-right visual flow where each step deserves a short description → 'PROCESS_ARROWS' (3–5 chevron steps; prefer over STEP_BY_STEP when each step needs explanation).
+- Recurring cycles, iterative loops, continuous processes → 'CIRCLE_CYCLE' (4–6 phases).
 - External sources, links, citations → 'REFERENCES_LIST'.
 
 CONTENT DEPTH (this is what "detailed" means):
@@ -142,6 +150,10 @@ Layout Binding Specifications (use these EXACT keys in each slide's 'bindings' o
 - 'CALL_TO_ACTION': { "action_items": string[] }
 - 'QA_CONTACT': { "footer_note": string }
 - 'REFERENCES_LIST': { "sources": Array<{ "title": string, "url": string, "summary"?: string }> }
+- 'PYRAMID_LEVELS': { "levels": Array<{ "title": string, "description": string }>, "footer_note"?: string } (3–5 levels, apex first)
+- 'FUNNEL_STAGES': { "stages": Array<{ "title": string, "description": string }>, "footer_note"?: string } (3–5 stages, widest first)
+- 'PROCESS_ARROWS': { "process_steps": Array<{ "title": string, "description": string }>, "footer_note"?: string } (3–5 steps, titles ≤3 words, descriptions ≤10 words)
+- 'CIRCLE_CYCLE': { "phases": Array<{ "title": string, "description": string }>, "footer_note"?: string } (4–6 phases, clockwise from top)
 
 HARD CONSTRAINTS:
 1. Output EXACTLY ${targetSlideCount} slides — no more, no fewer.

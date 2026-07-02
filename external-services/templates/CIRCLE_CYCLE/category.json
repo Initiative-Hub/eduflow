@@ -1,0 +1,8 @@
+{
+  "description": "Circular cycle diagram: numbered nodes around a ring with a legend of titles and descriptions. Use for recurring cycles, iterative loops, continuous processes. Pick the variant matching the number of phases.",
+  "variants": {
+    "phases_4": "Circle Cycle with exactly 4 phases — use when the content has 4 items.",
+    "phases_5": "Circle Cycle with exactly 5 phases — use when the content has 5 items.",
+    "phases_6": "Circle Cycle with exactly 6 phases — use when the content has 6 items."
+  }
+}

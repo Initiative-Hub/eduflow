@@ -43,6 +43,18 @@ def flatten_slide_bindings(category: str, slide_title: str, bindings: dict) -> d
     # Always ensure slide title is mapped to heading for SVG template consistency
     if slide_title:
         flat["heading"] = slide_title
+        # Multi-line heading for templates with a narrow heading panel
+        # (e.g. TITLE_BULLETS/split_panel uses {{heading.1..3}}). Wrap so a
+        # long title breaks across lines instead of overflowing. Widen until
+        # the whole title fits in 3 lines (never drop words); fit_text_to_boxes
+        # then shrinks any line still wider than the panel.
+        wrap_width = max(16, -(-len(slide_title) // 3))  # ceil(len/3), min 16
+        lines = textwrap.wrap(slide_title, width=wrap_width)
+        while len(lines) > 3:
+            wrap_width += 2
+            lines = textwrap.wrap(slide_title, width=wrap_width)
+        for idx, line in enumerate(lines, 1):
+            flat[f"heading.{idx}"] = line
 
     # 1. Flatten AGENDA_OUTLINE: items -> items.1, items.2, etc.
     if "items" in bindings and isinstance(bindings["items"], list):
@@ -133,10 +145,28 @@ def flatten_slide_bindings(category: str, slide_title: str, bindings: dict) -> d
 
     # 13. Flatten REFERENCES_LIST: sources -> source_title_1, source_url_1
     if "sources" in bindings and isinstance(bindings["sources"], list):
-        for idx, src in enumerate(bindings["sources"][:3], 1):
+        for idx, src in enumerate(bindings["sources"][:4], 1):
             if isinstance(src, dict):
                 flat[f"source_title_{idx}"] = str(src.get("title", ""))
                 flat[f"source_url_{idx}"] = str(src.get("url", ""))
+
+    # 14. Flatten diagram families (PYRAMID_LEVELS / FUNNEL_STAGES /
+    #     PROCESS_ARROWS / CIRCLE_CYCLE): Array<{title, description}>
+    #     -> title_1/desc_1 ... The per-count variants (tiers_3..5, stages_3..5,
+    #     steps_3..5, phases_4..6) all use these same placeholder names, so one
+    #     flattener covers every size.
+    for diagram_key in ("levels", "stages", "process_steps", "phases"):
+        if diagram_key in bindings and isinstance(bindings[diagram_key], list):
+            for idx, item in enumerate(bindings[diagram_key][:6], 1):
+                if isinstance(item, dict):
+                    flat[f"title_{idx}"] = str(item.get("title", ""))
+                    desc = str(item.get("description", ""))
+                    flat[f"desc_{idx}"] = desc
+                    # PROCESS_ARROWS descriptions are 2 short centered lines
+                    wrapped = textwrap.wrap(desc, width=26)
+                    for line_idx, line in enumerate(wrapped[:2], 1):
+                        flat[f"desc_{idx}.{line_idx}"] = line
+            break
 
     return flat
 
@@ -171,6 +201,10 @@ class SlideService:
             "references_list",
             "image_gallery",
             "kpi_big_numbers",
+            "pyramid_levels",
+            "funnel_stages",
+            "process_arrows",
+            "circle_cycle",
         }
         local_collections = [c for c in collections if c["name"].lower() not in categories]
         seen_names = {c["name"].lower() for c in local_collections}
@@ -246,6 +280,19 @@ class SlideService:
 
             # Ensure category field is populated for slide_skills resolver
             slide["category"] = category
+
+            # Diagram families come in per-count variants (tiers_3..5,
+            # stages_3..5, steps_3..5, phases_4..6). Expose the item count as
+            # talking_points so slide_skills' capacity shortlist picks the
+            # variant whose level count matches the content exactly.
+            for diagram_key in ("levels", "stages", "process_steps", "phases"):
+                items = bindings.get(diagram_key)
+                if isinstance(items, list) and items:
+                    slide["talking_points"] = [
+                        str(it.get("title", "")) if isinstance(it, dict) else str(it)
+                        for it in items
+                    ]
+                    break
 
             # Flatten bindings to map to flat SVG placeholders
             bindings = flatten_slide_bindings(category, slide_title, bindings)

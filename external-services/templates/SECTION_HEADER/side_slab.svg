@@ -14,6 +14,6 @@
   </g>
 
   <!-- Big section title -->
-  <text x="500" y="470" font-family="system-ui, -apple-system, sans-serif" font-size="88" font-weight="900" fill="#FFFFFF">{{heading|24}}</text>
+  <text x="500" y="470" data-w="840" font-family="system-ui, -apple-system, sans-serif" font-size="88" font-weight="900" fill="#FFFFFF">{{heading|24}}</text>
   <rect x="504" y="510" width="320" height="6" fill="#00F0FF" rx="3"/>
 </svg>

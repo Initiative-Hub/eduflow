@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 810">
+  <rect width="1440" height="810" fill="#0A0E1A"/>
+  <circle cx="1320" cy="110" r="130" fill="#00F0FF" fill-opacity="0.05"/>
+  <text x="100" y="120" font-family="system-ui, -apple-system, sans-serif" font-size="52" font-weight="bold" fill="#FFFFFF">{{heading|24}}</text>
+  <rect x="100" y="145" width="220" height="4" fill="#FF007F" rx="2"/>
+  <g>
+    <polygon points="430,190 512,320 348,320" fill="#00F0FF" fill-opacity="0.16" stroke="#00F0FF" stroke-width="2" stroke-opacity="0.7"/>
+    <text x="430" y="267" font-family="system-ui, -apple-system, sans-serif" font-size="34" font-weight="bold" fill="#FFFFFF" text-anchor="middle">1</text>
+    <line x1="552" y1="320" x2="1340" y2="320" stroke="#E2E8F0" stroke-opacity="0.12" stroke-width="1.5"/>
+    <text x="572" y="249" font-family="system-ui, -apple-system, sans-serif" font-size="30" font-weight="bold" fill="#00F0FF">{{title_1|30}}</text>
+    <text x="572" y="287" font-family="system-ui, -apple-system, sans-serif" font-size="22" fill="#E2E8F0">{{desc_1|70}}</text>
+  </g>
+  <g>
+    <polygon points="348,320 512,320 595,450 265,450" fill="#FF007F" fill-opacity="0.16" stroke="#FF007F" stroke-width="2" stroke-opacity="0.7"/>
+    <text x="430" y="397" font-family="system-ui, -apple-system, sans-serif" font-size="34" font-weight="bold" fill="#FFFFFF" text-anchor="middle">2</text>
+    <line x1="635" y1="450" x2="1340" y2="450" stroke="#E2E8F0" stroke-opacity="0.12" stroke-width="1.5"/>
+    <text x="655" y="379" font-family="system-ui, -apple-system, sans-serif" font-size="30" font-weight="bold" fill="#FF007F">{{title_2|30}}</text>
+    <text x="655" y="417" font-family="system-ui, -apple-system, sans-serif" font-size="22" fill="#E2E8F0">{{desc_2|70}}</text>
+  </g>
+  <g>
+    <polygon points="265,450 595,450 678,580 182,580" fill="#00F0FF" fill-opacity="0.16" stroke="#00F0FF" stroke-width="2" stroke-opacity="0.7"/>
+    <text x="430" y="527" font-family="system-ui, -apple-system, sans-serif" font-size="34" font-weight="bold" fill="#FFFFFF" text-anchor="middle">3</text>
+    <line x1="718" y1="580" x2="1340" y2="580" stroke="#E2E8F0" stroke-opacity="0.12" stroke-width="1.5"/>
+    <text x="738" y="509" font-family="system-ui, -apple-system, sans-serif" font-size="30" font-weight="bold" fill="#00F0FF">{{title_3|30}}</text>
+    <text x="738" y="547" font-family="system-ui, -apple-system, sans-serif" font-size="22" fill="#E2E8F0">{{desc_3|70}}</text>
+  </g>
+  <g>
+    <polygon points="182,580 678,580 760,710 100,710" fill="#FF007F" fill-opacity="0.16" stroke="#FF007F" stroke-width="2" stroke-opacity="0.7"/>
+    <text x="430" y="657" font-family="system-ui, -apple-system, sans-serif" font-size="34" font-weight="bold" fill="#FFFFFF" text-anchor="middle">4</text>
+    <line x1="800" y1="710" x2="1340" y2="710" stroke="#E2E8F0" stroke-opacity="0.12" stroke-width="1.5"/>
+    <text x="820" y="639" font-family="system-ui, -apple-system, sans-serif" font-size="30" font-weight="bold" fill="#FF007F">{{title_4|30}}</text>
+    <text x="820" y="677" font-family="system-ui, -apple-system, sans-serif" font-size="22" fill="#E2E8F0">{{desc_4|70}}</text>
+  </g>
+  <text x="100" y="780" font-family="system-ui, -apple-system, sans-serif" font-size="22" fill="#E2E8F0" fill-opacity="0.8">{{footer_note|90}}</text>
+</svg>

@@ -59,6 +59,10 @@ const formatLayoutName = (layout: string, t: any) => {
     CALL_TO_ACTION: 'Call To Action / Homework',
     QA_CONTACT: 'Q&A Closing Slide',
     REFERENCES_LIST: t('referencesLayout') || 'References List',
+    PYRAMID_LEVELS: 'Pyramid / Hierarchy',
+    FUNNEL_STAGES: 'Funnel Stages',
+    PROCESS_ARROWS: 'Process Arrows',
+    CIRCLE_CYCLE: 'Circular Cycle',
   };
   if (map[layout]) return map[layout];
   return layout
@@ -1775,6 +1779,10 @@ export function LessonPresentation({
                                 'CALL_TO_ACTION',
                                 'QA_CONTACT',
                                 'REFERENCES_LIST',
+                                'PYRAMID_LEVELS',
+                                'FUNNEL_STAGES',
+                                'PROCESS_ARROWS',
+                                'CIRCLE_CYCLE',
                               ]
                           ).map((layout) => (
                             <SelectItem key={layout} value={layout}>

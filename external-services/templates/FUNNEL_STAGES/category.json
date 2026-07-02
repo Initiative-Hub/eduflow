@@ -1,0 +1,8 @@
+{
+  "description": "Narrowing funnel diagram: sequential stages from widest (top) to narrowest (bottom). Use for conversion funnels, filtering processes, recruitment pipelines. Pick the variant matching the number of stages.",
+  "variants": {
+    "stages_3": "Funnel Stages with exactly 3 stages — use when the content has 3 items.",
+    "stages_4": "Funnel Stages with exactly 4 stages — use when the content has 4 items.",
+    "stages_5": "Funnel Stages with exactly 5 stages — use when the content has 5 items."
+  }
+}
