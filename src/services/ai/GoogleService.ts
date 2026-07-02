@@ -10,7 +10,6 @@ import type {
   StreamChatInput,
   StreamChatInternalOptions,
 } from '@/services/ai/chat-provider.types';
-import { convertLessonReferenceDataPart } from '@/utils/chat-lesson-references';
 import type { ChatProviderService } from './ChatProviderService';
 import { resolveChatSystemPrompt } from './chat-system-prompt';
 
@@ -32,9 +31,7 @@ export class GoogleService implements ChatProviderService {
       experimental_transform: smoothStream(),
       model: provider(model),
       system: resolveChatSystemPrompt(options?.prompt ?? ''),
-      messages: await convertToModelMessages(input.messages, {
-        convertDataPart: convertLessonReferenceDataPart,
-      }),
+      messages: await convertToModelMessages(input.messages),
       tools: options?.tools,
       stopWhen: options?.maxSteps ? stepCountIs(options.maxSteps) : undefined,
     });

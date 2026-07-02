@@ -21,7 +21,6 @@ import {
   studyQuizQuestionTypeSchema,
 } from '@/lib/validations/study.schema';
 import { DEFAULT_MODELS } from '@/services/ai/chat-provider.constants';
-import { convertLessonReferenceDataPart } from '@/utils/chat-lesson-references';
 
 const DEFAULT_PRACTICE_QUIZ_COUNTS: Record<StudyQuizQuestionType, number> = {
   multiple_choice: 5,
@@ -296,9 +295,7 @@ export async function generatePracticeQuiz({
     After collecting any needed context via tools, do NOT produce the quiz yet — that will happen in the next step.
   `;
 
-  const modelMessages = await convertToModelMessages(messages, {
-    convertDataPart: convertLessonReferenceDataPart,
-  });
+  const modelMessages = await convertToModelMessages(messages);
 
   // Phase 1: run any tool calls to collect RAG context.
   // Output.object and tools are incompatible in a single generateText call —

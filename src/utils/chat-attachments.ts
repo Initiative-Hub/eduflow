@@ -1,6 +1,10 @@
-import type { UIMessage } from 'ai';
+import type { FileUIPart, UIMessage } from 'ai';
 import { StorageService } from '@/services/StorageService';
-import type { ChatFileUIPart } from '@/types/chat-attachments';
+import {
+  getFileMetadata,
+  isStoredFilePart,
+  withChatMetadata,
+} from '@/utils/chat-part-metadata';
 
 type ChatAttachmentUrl = Awaited<
   ReturnType<typeof StorageService.createChatAttachmentUrls>
@@ -12,14 +16,14 @@ type ChatAttachmentPayload = Awaited<
 
 export const isChatFilePart = (
   part: UIMessage['parts'][number]
-): part is ChatFileUIPart => part.type === 'file';
+): part is FileUIPart => part.type === 'file';
 
 export const hasChatFileParts = (messages: UIMessage[]) =>
   messages.some((message) => message.parts.some(isChatFilePart));
 
-const getStableObjectKey = (part: ChatFileUIPart) => {
-  const objectKey = part.objectKey;
-  if (objectKey) return objectKey;
+const getStableObjectKey = (part: FileUIPart) => {
+  const metadata = getFileMetadata(part);
+  if (metadata.objectKey) return metadata.objectKey;
 
   if (part.url.startsWith('data:') || /^https?:\/\//i.test(part.url)) {
     return undefined;
@@ -35,11 +39,16 @@ export const sanitizeChatAttachmentUrls = (messages: UIMessage[]) =>
       if (!isChatFilePart(part)) return part;
 
       const objectKey = getStableObjectKey(part);
-      return {
-        ...part,
-        ...(objectKey ? { objectKey } : {}),
-        url: objectKey ?? '',
-      };
+      return withChatMetadata(
+        {
+          ...part,
+          url: objectKey ?? '',
+        },
+        {
+          ...getFileMetadata(part),
+          ...(objectKey ? { objectKey } : {}),
+        }
+      );
     }),
   })) as UIMessage[];
 
@@ -69,7 +78,7 @@ const getFileIds = (messages: UIMessage[]) =>
       messages.flatMap((message) =>
         message.parts.flatMap((part) => {
           if (!isChatFilePart(part)) return [];
-          const fileId = part.fileId;
+          const fileId = getFileMetadata(part).fileId;
           return fileId ? [fileId] : [];
         })
       )
@@ -81,13 +90,17 @@ const getFileRefs = (messages: UIMessage[]) =>
     new Map(
       messages.flatMap((message) =>
         message.parts.flatMap((part) => {
-          if (!isChatFilePart(part) || !part.fileId) return [];
+          if (!isChatFilePart(part)) return [];
+
+          const metadata = getFileMetadata(part);
+          if (!metadata.fileId) return [];
+
           return [
             [
-              part.fileId,
+              metadata.fileId,
               {
-                courseId: part.courseId,
-                fileId: part.fileId,
+                courseId: metadata.courseId,
+                fileId: metadata.fileId,
               },
             ],
           ];
@@ -110,7 +123,13 @@ export async function hydrateChatAttachmentUrls({
   const fileRefs = getFileRefs(messages);
 
   if (fileIds.length === 0) {
-    if (hasChatFileParts(messages)) {
+    if (
+      messages.some((message) =>
+        message.parts.some(
+          (part) => isChatFilePart(part) && isStoredFilePart(part)
+        )
+      )
+    ) {
       throw new Error('File attachment not found');
     }
 
@@ -129,21 +148,28 @@ export async function hydrateChatAttachmentUrls({
     parts: message.parts.map((part) => {
       if (!isChatFilePart(part)) return part;
 
-      const fileId = part.fileId;
-      const attachment = fileId ? attachmentsByFileId.get(fileId) : undefined;
+      const metadata = getFileMetadata(part);
+      const attachment = metadata.fileId
+        ? attachmentsByFileId.get(metadata.fileId)
+        : undefined;
       if (!attachment) {
         throw new Error('File attachment not found');
       }
 
-      return {
-        ...part,
-        bucket: attachment.bucket,
-        fileId: attachment.fileId,
-        filename: attachment.name,
-        mediaType: attachment.mimeType ?? part.mediaType,
-        objectKey: attachment.objectKey,
-        url: attachment.signedUrl,
-      };
+      return withChatMetadata(
+        {
+          ...part,
+          filename: attachment.name,
+          mediaType: attachment.mimeType ?? part.mediaType,
+          url: attachment.signedUrl,
+        },
+        {
+          ...metadata,
+          bucket: attachment.bucket,
+          fileId: attachment.fileId,
+          objectKey: attachment.objectKey,
+        }
+      );
     }),
   })) as UIMessage[];
 }
@@ -158,7 +184,13 @@ export async function hydrateChatAttachmentDataUrls({
   const fileIds = getFileIds(messages);
   const fileRefs = getFileRefs(messages);
   if (fileIds.length === 0) {
-    if (hasChatFileParts(messages)) {
+    if (
+      messages.some((message) =>
+        message.parts.some(
+          (part) => isChatFilePart(part) && isStoredFilePart(part)
+        )
+      )
+    ) {
       throw new Error('File attachment not found');
     }
 
@@ -177,21 +209,28 @@ export async function hydrateChatAttachmentDataUrls({
     parts: message.parts.map((part) => {
       if (!isChatFilePart(part)) return part;
 
-      const fileId = part.fileId;
-      const payload = fileId ? payloadsByFileId.get(fileId) : undefined;
+      const metadata = getFileMetadata(part);
+      const payload = metadata.fileId
+        ? payloadsByFileId.get(metadata.fileId)
+        : undefined;
       if (!payload) {
         throw new Error('File attachment not found');
       }
 
       const mediaType = payload.mimeType ?? part.mediaType;
-      return {
-        ...part,
-        fileId: payload.fileId,
-        filename: payload.name || part.filename,
-        mediaType,
-        objectKey: payload.objectKey,
-        url: toDataUrl(payload.bytes, mediaType),
-      };
+      return withChatMetadata(
+        {
+          ...part,
+          filename: payload.name || part.filename,
+          mediaType,
+          url: toDataUrl(payload.bytes, mediaType),
+        },
+        {
+          ...metadata,
+          fileId: payload.fileId,
+          objectKey: payload.objectKey,
+        }
+      );
     }),
   })) as UIMessage[];
 }

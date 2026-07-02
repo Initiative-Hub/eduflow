@@ -2,22 +2,22 @@
 
 import { useChat } from '@ai-sdk/react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import type { FileUIPart, SourceDocumentUIPart } from 'ai';
 import { DefaultChatTransport, type UIMessage } from 'ai';
 import { useEffect, useMemo, useRef } from 'react';
 import { toast } from 'sonner';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
 import { useChatSessionStore } from '@/stores/useChatSessionStore';
-import type {
-  ChatFileUIPart,
-  ChatSubmitAttachments,
-} from '@/types/chat-attachments';
-import type { ChatLessonReferenceUIPart } from '@/types/chat-lesson-references';
 import {
   getUserMessageCount,
   hasReachedUserMessageLimit,
 } from '@/utils/chat-limit';
 import { prepareLastMessageRequest } from '@/utils/chat-request';
+import {
+  type ChatSubmitAttachments,
+  EMPTY_CHAT_SUBMIT_ATTACHMENTS,
+} from '@/utils/chat-submit-attachments';
 import { uploadChatAttachments } from '../chat-attachments.service';
 import { chatService } from './chat.service';
 
@@ -122,17 +122,17 @@ export const useChatController = ({
 
   const createUserMessage = (
     text: string,
-    files: ChatFileUIPart[] = [],
-    lessons: ChatLessonReferenceUIPart[] = []
+    files: FileUIPart[] = [],
+    sources: SourceDocumentUIPart[] = []
   ): UIMessage => ({
     id: crypto.randomUUID(),
     role: 'user',
-    parts: [...files, ...lessons, { type: 'text', text }],
+    parts: [...files, ...sources, { type: 'text', text }],
   });
 
   const startChat = async (
     text: string,
-    attachments: ChatSubmitAttachments = { files: [], referencedFiles: [] }
+    attachments: ChatSubmitAttachments = EMPTY_CHAT_SUBMIT_ATTACHMENTS
   ) => {
     if (!initialChatId) {
       try {
@@ -141,11 +141,11 @@ export const useChatController = ({
           attachments.files,
           newChatId
         );
-        const messageFiles = [...uploadedFiles, ...attachments.referencedFiles];
-        const messageLessons = attachments.referencedLessons ?? [];
+        const messageFiles = uploadedFiles;
+        const messageSources = attachments.sources;
         await queryClient.invalidateQueries({ queryKey: ['chat-list'] });
         setPendingMessage(
-          createUserMessage(text, messageFiles, messageLessons)
+          createUserMessage(text, messageFiles, messageSources)
         );
         setPendingChatId(newChatId);
         setPendingModel(pendingModel ?? DEFAULT_CHAT_MODEL);
@@ -162,14 +162,14 @@ export const useChatController = ({
       attachments.files,
       initialChatId
     );
-    const messageFiles = [...uploadedFiles, ...attachments.referencedFiles];
-    const messageLessons = attachments.referencedLessons ?? [];
+    const messageFiles = uploadedFiles;
+    const messageSources = attachments.sources;
     const hasMessageAttachments =
-      messageFiles.length > 0 || messageLessons.length > 0;
+      messageFiles.length > 0 || messageSources.length > 0;
 
     sendMessage(
       hasMessageAttachments
-        ? createUserMessage(text, messageFiles, messageLessons)
+        ? createUserMessage(text, messageFiles, messageSources)
         : { text },
       {
         body: {

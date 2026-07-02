@@ -12,7 +12,10 @@ import {
   type StudyQuizOptions,
 } from '@/lib/validations/study.schema';
 import { DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
-import type { ChatSubmitAttachments } from '@/types/chat-attachments';
+import {
+  EMPTY_CHAT_SUBMIT_ATTACHMENTS,
+  type ChatSubmitAttachments,
+} from '@/utils/chat-submit-attachments';
 import { ChatInput } from '../../_components/chat-input';
 import { ChatLessonReferenceTool } from '../../_components/chat-lesson-reference-tool';
 import { ChatSidebar } from '../../_components/chat-sidebar';
@@ -90,20 +93,17 @@ export function StudyClient({
   const handleSubmit = async (
     e?: React.SyntheticEvent,
     customValue?: string,
-    attachments: ChatSubmitAttachments = { files: [], referencedFiles: [] }
+    attachments: ChatSubmitAttachments = EMPTY_CHAT_SUBMIT_ATTACHMENTS
   ) => {
     e?.preventDefault();
 
     const text = customValue?.trim() || '';
     const finalAttachments = {
       files: attachments.files,
-      referencedFiles: attachments.referencedFiles,
-      referencedLessons: attachments.referencedLessons ?? [],
+      sources: attachments.sources,
     };
     const attachmentCount =
-      finalAttachments.files.length +
-      finalAttachments.referencedFiles.length +
-      finalAttachments.referencedLessons.length;
+      finalAttachments.files.length + finalAttachments.sources.length;
     if (!text && attachmentCount === 0) return;
 
     if (isLimitReached) {

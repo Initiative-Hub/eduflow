@@ -17,6 +17,7 @@ import {
   hydrateChatAttachmentDataUrls,
 } from '@/utils/chat-attachments';
 import {
+  convertLessonSourcesToTextParts,
   hasChatLessonReferenceParts,
   hydrateChatLessonReferenceContent,
 } from '@/utils/chat-lesson-references';
@@ -334,10 +335,12 @@ export async function POST(
     }
     if (hasLessonReferences && userId) {
       try {
-        messagesForModel = await hydrateChatLessonReferenceContent({
-          messages: messagesForModel,
-          userId,
-        });
+        messagesForModel = convertLessonSourcesToTextParts(
+          await hydrateChatLessonReferenceContent({
+            messages: messagesForModel,
+            userId,
+          })
+        );
       } catch (error) {
         const message =
           error instanceof Error ? error.message : 'Lesson reference not found';

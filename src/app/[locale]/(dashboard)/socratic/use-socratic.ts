@@ -2,20 +2,20 @@
 
 import { useChat } from '@ai-sdk/react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { DefaultChatTransport } from 'ai';
+import { DefaultChatTransport, type FileUIPart } from 'ai';
 import { useEffect, useMemo, useRef } from 'react';
 import { toast } from 'sonner';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { DEFAULT_SOCRATIC_GUIDANCE_DEPTH } from '@/lib/validations/socratic.schema';
 import { DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
 import { useChatSessionStore } from '@/stores/useChatSessionStore';
-import type {
-  ChatFileUIPart,
-  ChatSubmitAttachments,
-} from '@/types/chat-attachments';
 import type { SocraticUIMessage } from '@/types/socratic-ui-message';
 import { hasReachedUserMessageLimit } from '@/utils/chat-limit';
 import { prepareLastMessageRequest } from '@/utils/chat-request';
+import {
+  EMPTY_CHAT_SUBMIT_ATTACHMENTS,
+  type ChatSubmitAttachments,
+} from '@/utils/chat-submit-attachments';
 import { uploadChatAttachments } from '../chat-attachments.service';
 import { socraticService } from './socratic.service';
 
@@ -83,7 +83,7 @@ export const useSocratic = ({
 
   const createUserMessage = (
     text: string,
-    files: ChatFileUIPart[] = []
+    files: FileUIPart[] = []
   ): SocraticUIMessage => ({
     id: crypto.randomUUID(),
     role: 'user',
@@ -138,7 +138,7 @@ export const useSocratic = ({
 
   const startChat = async (
     text: string,
-    attachments: ChatSubmitAttachments = { files: [], referencedFiles: [] }
+    attachments: ChatSubmitAttachments = EMPTY_CHAT_SUBMIT_ATTACHMENTS
   ) => {
     if (!chatId) {
       try {
@@ -147,7 +147,7 @@ export const useSocratic = ({
           attachments.files,
           newChatId
         );
-        const messageFiles = [...uploadedFiles, ...attachments.referencedFiles];
+        const messageFiles = uploadedFiles;
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: ['socratic-chat-list'] }),
           queryClient.invalidateQueries({
@@ -176,7 +176,7 @@ export const useSocratic = ({
       attachments.files,
       chatId
     );
-    const messageFiles = [...uploadedFiles, ...attachments.referencedFiles];
+    const messageFiles = uploadedFiles;
 
     sendMessage(
       messageFiles.length > 0 ? { text, files: messageFiles } : { text },

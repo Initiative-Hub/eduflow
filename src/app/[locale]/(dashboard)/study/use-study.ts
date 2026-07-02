@@ -2,7 +2,12 @@
 
 import { useChat } from '@ai-sdk/react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { DefaultChatTransport, type UIMessage } from 'ai';
+import {
+  DefaultChatTransport,
+  type FileUIPart,
+  type SourceDocumentUIPart,
+  type UIMessage,
+} from 'ai';
 import { useEffect, useMemo, useRef } from 'react';
 import { toast } from 'sonner';
 import { usePathname, useRouter } from '@/i18n/navigation';
@@ -12,13 +17,12 @@ import type {
 } from '@/lib/validations/study.schema';
 import { DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
 import { useChatSessionStore } from '@/stores/useChatSessionStore';
-import type {
-  ChatFileUIPart,
-  ChatSubmitAttachments,
-} from '@/types/chat-attachments';
-import type { ChatLessonReferenceUIPart } from '@/types/chat-lesson-references';
 import { hasReachedUserMessageLimit } from '@/utils/chat-limit';
 import { prepareLastMessageRequest } from '@/utils/chat-request';
+import {
+  EMPTY_CHAT_SUBMIT_ATTACHMENTS,
+  type ChatSubmitAttachments,
+} from '@/utils/chat-submit-attachments';
 import { uploadChatAttachments } from '../chat-attachments.service';
 import { studyService } from './study.service';
 
@@ -69,12 +73,12 @@ export const useStudy = ({
 
   const createUserMessage = (
     text: string,
-    files: ChatFileUIPart[] = [],
-    lessons: ChatLessonReferenceUIPart[] = []
+    files: FileUIPart[] = [],
+    sources: SourceDocumentUIPart[] = []
   ): UIMessage => ({
     id: crypto.randomUUID(),
     role: 'user',
-    parts: [...files, ...lessons, { type: 'text', text }],
+    parts: [...files, ...sources, { type: 'text', text }],
   });
 
   const transport = useMemo(
@@ -149,7 +153,7 @@ export const useStudy = ({
 
   const startChat = async (
     text: string,
-    attachments: ChatSubmitAttachments = { files: [], referencedFiles: [] }
+    attachments: ChatSubmitAttachments = EMPTY_CHAT_SUBMIT_ATTACHMENTS
   ) => {
     if (!chatId) {
       try {
@@ -159,14 +163,14 @@ export const useStudy = ({
           attachments.files,
           newChatId
         );
-        const messageFiles = [...uploadedFiles, ...attachments.referencedFiles];
-        const messageLessons = attachments.referencedLessons ?? [];
+        const messageFiles = uploadedFiles;
+        const messageSources = attachments.sources;
 
         await queryClient.invalidateQueries({
           queryKey: ['study-chat-list'],
         });
         setPendingMessage(
-          createUserMessage(text, messageFiles, messageLessons)
+          createUserMessage(text, messageFiles, messageSources)
         );
         setPendingChatId(newChatId);
         setPendingModel(pendingModel ?? DEFAULT_CHAT_MODEL);
@@ -186,14 +190,14 @@ export const useStudy = ({
       attachments.files,
       chatId
     );
-    const messageFiles = [...uploadedFiles, ...attachments.referencedFiles];
-    const messageLessons = attachments.referencedLessons ?? [];
+    const messageFiles = uploadedFiles;
+    const messageSources = attachments.sources;
     const hasMessageAttachments =
-      messageFiles.length > 0 || messageLessons.length > 0;
+      messageFiles.length > 0 || messageSources.length > 0;
 
     sendMessage(
       hasMessageAttachments
-        ? createUserMessage(text, messageFiles, messageLessons)
+        ? createUserMessage(text, messageFiles, messageSources)
         : { text },
       {
         body: {

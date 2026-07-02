@@ -21,22 +21,21 @@ import {
   getAttachmentLabel,
   getMediaCategory,
 } from '@/components/ai-elements/attachments';
-import type { ChatFileUIPart } from '@/types/chat-attachments';
-import type { ChatLessonReferenceUIPart } from '@/types/chat-lesson-references';
+import {
+  usePromptInputController,
+  usePromptInputReferencedSources,
+} from '@/components/ai-elements/prompt-input';
 
-export interface SelectedChatFile {
-  file?: File;
-  filePart?: ChatFileUIPart;
+export interface ChatAttachmentItem {
   filename: string;
   id: string;
   kind?: 'file' | 'lesson';
-  lessonPart?: ChatLessonReferenceUIPart;
   mediaType: string;
   previewUrl: string;
 }
 
-interface ChatInputAttachmentsProps {
-  files: SelectedChatFile[];
+interface AttachmentGridProps {
+  files: ChatAttachmentItem[];
   getRemoveLabel?: (fileName: string) => string;
   onRemove?: (fileId: string) => void;
 }
@@ -86,11 +85,11 @@ function AttachmentMetadata({
   );
 }
 
-export function ChatInputAttachments({
+function AttachmentGrid({
   files,
   getRemoveLabel,
   onRemove,
-}: ChatInputAttachmentsProps) {
+}: AttachmentGridProps) {
   if (files.length === 0) {
     return null;
   }
@@ -98,7 +97,7 @@ export function ChatInputAttachments({
   return (
     <Attachments className="m-0" variant="grid">
       {files.map((item) => {
-        const isLesson = item.kind === 'lesson' || Boolean(item.lessonPart);
+        const isLesson = item.kind === 'lesson';
         const attachment = {
           filename: item.filename,
           id: item.id,
@@ -142,4 +141,57 @@ export function ChatInputAttachments({
       })}
     </Attachments>
   );
+}
+
+interface ComposerAttachmentProps {
+  getRemoveLabel?: (fileName: string) => string;
+}
+
+export function ChatInputAttachments({
+  getRemoveLabel,
+}: ComposerAttachmentProps) {
+  const controller = usePromptInputController();
+  const files = controller.attachments.files.map((item) => ({
+    filename: item.filename ?? item.id,
+    id: item.id,
+    mediaType: item.mediaType,
+    previewUrl: item.url,
+  }));
+
+  return (
+    <AttachmentGrid
+      files={files}
+      getRemoveLabel={getRemoveLabel}
+      onRemove={controller.attachments.remove}
+    />
+  );
+}
+
+export function ChatInputReferencedSources({
+  getRemoveLabel,
+}: ComposerAttachmentProps) {
+  const referencedSources = usePromptInputReferencedSources();
+  const files = referencedSources.sources.map((item) => ({
+    filename: item.title,
+    id: item.id,
+    kind: 'lesson' as const,
+    mediaType: item.mediaType,
+    previewUrl: `source:${item.sourceId}`,
+  }));
+
+  return (
+    <AttachmentGrid
+      files={files}
+      getRemoveLabel={getRemoveLabel}
+      onRemove={referencedSources.remove}
+    />
+  );
+}
+
+export function ChatInventoryReferenceAttachments(props: AttachmentGridProps) {
+  return <AttachmentGrid {...props} />;
+}
+
+export function ChatMessageAttachments(props: AttachmentGridProps) {
+  return <AttachmentGrid {...props} />;
 }

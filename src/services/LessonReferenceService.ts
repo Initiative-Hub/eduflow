@@ -2,8 +2,16 @@ import { getCoursePermissions } from '@/lib/permissions/course-permission';
 import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
 import { prisma } from '@/lib/prisma';
 import { tiptapDocumentToMarkdown } from '@/lib/tiptap-markdown';
-import type { ChatLessonReferenceData } from '@/types/chat-lesson-references';
 import { isTiptapDocument } from '@/utils/lesson-content';
+
+export type LessonReferenceData = {
+  courseId: string;
+  courseTitle: string;
+  lessonId: string;
+  lessonTitle: string;
+  markdown?: string;
+  moduleTitle?: string | null;
+};
 
 export type LessonReferenceModule = {
   id: string;
@@ -29,7 +37,7 @@ type LessonReferenceRecord = {
 
 function toLessonReferenceSummary(
   lesson: LessonReferenceRecord
-): ChatLessonReferenceData {
+): LessonReferenceData {
   return {
     courseId: lesson.module.course.id,
     courseTitle: lesson.module.course.title,
@@ -81,7 +89,7 @@ export class LessonReferenceService {
   }: {
     lessonIds: string[];
     userId: string;
-  }): Promise<ChatLessonReferenceData[]> {
+  }): Promise<LessonReferenceData[]> {
     const uniqueLessonIds = Array.from(new Set(lessonIds));
     if (uniqueLessonIds.length === 0) return [];
 
@@ -137,7 +145,7 @@ export class LessonReferenceService {
   }: {
     lessonIds: string[];
     userId: string;
-  }): Promise<ChatLessonReferenceData[]> {
+  }): Promise<LessonReferenceData[]> {
     const uniqueLessonIds = Array.from(new Set(lessonIds));
     if (uniqueLessonIds.length === 0) return [];
 

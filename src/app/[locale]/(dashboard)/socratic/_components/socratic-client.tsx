@@ -9,8 +9,11 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { DEFAULT_SOCRATIC_GUIDANCE_DEPTH } from '@/lib/validations/socratic.schema';
 import { DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
-import type { ChatSubmitAttachments } from '@/types/chat-attachments';
 import type { SocraticUIMessage } from '@/types/socratic-ui-message';
+import {
+  EMPTY_CHAT_SUBMIT_ATTACHMENTS,
+  type ChatSubmitAttachments,
+} from '@/utils/chat-submit-attachments';
 import { ChatInput } from '../../_components/chat-input';
 import { ChatSidebar } from '../../_components/chat-sidebar';
 import { ChatWorkspaceShell } from '../../_components/chat-workspace-shell';
@@ -78,11 +81,11 @@ export function SocraticClient({
 
   const submitText = async (
     text: string,
-    attachments: ChatSubmitAttachments = { files: [], referencedFiles: [] }
+    attachments: ChatSubmitAttachments = EMPTY_CHAT_SUBMIT_ATTACHMENTS
   ) => {
     const trimmed = text.trim();
     const attachmentCount =
-      attachments.files.length + attachments.referencedFiles.length;
+      attachments.files.length + attachments.sources.length;
     if (!trimmed && attachmentCount === 0) return;
 
     if (isLimitReached) {
@@ -116,7 +119,7 @@ export function SocraticClient({
   const handleSubmit = (
     e?: React.SyntheticEvent,
     customValue?: string,
-    attachments: ChatSubmitAttachments = { files: [], referencedFiles: [] }
+    attachments: ChatSubmitAttachments = EMPTY_CHAT_SUBMIT_ATTACHMENTS
   ) => {
     e?.preventDefault();
     return submitText(customValue || '', attachments);

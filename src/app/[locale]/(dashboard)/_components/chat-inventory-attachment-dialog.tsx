@@ -1,6 +1,7 @@
 'use client';
 
 import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query';
+import type { FileUIPart } from 'ai';
 import {
   ArrowLeft,
   BookOpen,
@@ -34,7 +35,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { apiClient } from '@/lib/api';
 import { cn } from '@/lib/utils';
-import type { ChatFileUIPart } from '@/types/chat-attachments';
+import { withChatMetadata } from '@/utils/chat-part-metadata';
 import { courseFilesService } from '../courses/[courseId]/(course-tabs)/files/course-files.service';
 import { inventoryService } from '../inventory/inventory.service';
 import {
@@ -66,7 +67,7 @@ type BreadcrumbItem = {
 type ChatInventoryAttachmentDialogProps = {
   disabledFileIds?: string[];
   maxSelectable: number;
-  onAttach: (files: ChatFileUIPart[]) => void;
+  onAttach: (files: FileUIPart[]) => void;
   onOpenChange: (open: boolean) => void;
   open: boolean;
   source: AttachmentSource;
@@ -84,19 +85,23 @@ function toChatFilePart({
   entry: InventoryEntry;
   signedUrl?: string;
   source: AttachmentSource;
-}): ChatFileUIPart {
-  return {
-    bucket: entry.bucket,
-    courseId: courseId ?? null,
-    fileId: entry.id,
-    fileSize: entry.fileSize,
-    filename: entry.name,
-    mediaType: entry.mimeType ?? DEFAULT_MEDIA_TYPE,
-    objectKey: entry.objectKey,
-    source,
-    type: 'file',
-    url: signedUrl ?? entry.objectKey ?? '',
-  };
+}): FileUIPart {
+  return withChatMetadata(
+    {
+      type: 'file',
+      mediaType: entry.mimeType ?? DEFAULT_MEDIA_TYPE,
+      filename: entry.name,
+      url: signedUrl ?? entry.objectKey ?? '',
+    },
+    {
+      bucket: entry.bucket,
+      courseId: courseId ?? null,
+      fileId: entry.id,
+      fileSize: entry.fileSize,
+      objectKey: entry.objectKey,
+      source,
+    }
+  );
 }
 
 function GridSkeleton() {

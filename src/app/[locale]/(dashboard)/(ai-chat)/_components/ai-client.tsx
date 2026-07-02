@@ -15,7 +15,10 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
-import type { ChatSubmitAttachments } from '@/types/chat-attachments';
+import {
+  type ChatSubmitAttachments,
+  EMPTY_CHAT_SUBMIT_ATTACHMENTS,
+} from '@/utils/chat-submit-attachments';
 import { ChatLessonReferenceTool } from '../../_components/chat-lesson-reference-tool';
 import { ChatSidebar } from '../../_components/chat-sidebar';
 import { ChatWorkspaceShell } from '../../_components/chat-workspace-shell';
@@ -90,15 +93,13 @@ export function AIClient({
   const handleSubmit = async (
     e?: React.FormEvent,
     customValue?: string,
-    attachments: ChatSubmitAttachments = { files: [], referencedFiles: [] }
+    attachments: ChatSubmitAttachments = EMPTY_CHAT_SUBMIT_ATTACHMENTS
   ) => {
     e?.preventDefault();
 
     const text = customValue?.trim() || '';
     const attachmentCount =
-      attachments.files.length +
-      attachments.referencedFiles.length +
-      (attachments.referencedLessons?.length ?? 0);
+      attachments.files.length + attachments.sources.length;
     if (!text && attachmentCount === 0) return;
 
     if (isLimitReached) {

@@ -1,6 +1,7 @@
 'use client';
 
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import type { SourceDocumentUIPart } from 'ai';
 import { BookOpen, ChevronLeft, Loader2, Search } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useDeferredValue, useMemo, useState } from 'react';
@@ -32,7 +33,10 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { apiClient } from '@/lib/api';
-import type { ChatLessonReferenceUIPart } from '@/types/chat-lesson-references';
+import {
+  LESSON_REFERENCE_MEDIA_TYPE,
+  withChatMetadata,
+} from '@/utils/chat-part-metadata';
 
 type PickerCourse = {
   id: string;
@@ -53,7 +57,7 @@ export type ChatLessonReferenceToolProps = {
   disabled: boolean;
   disabledLessonIds: string[];
   maxSelectable: number;
-  onAttach: (lessons: ChatLessonReferenceUIPart[]) => void;
+  onAttach: (lessons: SourceDocumentUIPart[]) => void;
 };
 
 function GridSkeleton() {
@@ -106,7 +110,7 @@ export function ChatLessonReferenceTool({
   );
   const [search, setSearch] = useState('');
   const [selectedLessons, setSelectedLessons] = useState<
-    Record<string, ChatLessonReferenceUIPart>
+    Record<string, SourceDocumentUIPart>
   >({});
   const deferredSearch = useDeferredValue(search.trim().toLowerCase());
   const disabledLessonIdSet = useMemo(
@@ -176,17 +180,22 @@ export function ChatLessonReferenceTool({
 
       return {
         ...current,
-        [lesson.id]: {
-          type: 'data-lesson-reference',
-          id: lesson.id,
-          data: {
+        [lesson.id]: withChatMetadata(
+          {
+            type: 'source-document',
+            sourceId: lesson.id,
+            mediaType: LESSON_REFERENCE_MEDIA_TYPE,
+            title: lesson.title,
+            filename: lesson.title,
+          },
+          {
             courseId: selectedCourse.id,
             courseTitle: selectedCourse.title,
             lessonId: lesson.id,
             lessonTitle: lesson.title,
             moduleTitle: moduleItem.title,
-          },
-        },
+          }
+        ),
       };
     });
   };

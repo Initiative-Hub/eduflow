@@ -1,12 +1,12 @@
-import type { UIMessage } from 'ai';
+import type { FileUIPart, UIMessage } from 'ai';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { StorageService } from '@/services/StorageService';
-import type { ChatFileUIPart } from '@/types/chat-attachments';
 import {
   hydrateChatAttachmentDataUrls,
   hydrateChatAttachmentUrls,
   sanitizeChatAttachmentUrls,
 } from '@/utils/chat-attachments';
+import { getFileMetadata, withChatMetadata } from '@/utils/chat-part-metadata';
 
 vi.mock('@/services/StorageService', () => ({
   StorageService: {
@@ -20,21 +20,25 @@ const storageMock = StorageService as unknown as {
   getChatAttachmentPayloads: ReturnType<typeof vi.fn>;
 };
 
-const messageWithSignedFile = (): UIMessage => ({
-  id: 'msg-1',
-  role: 'user',
-  parts: [
+const signedFilePart = (): FileUIPart =>
+  withChatMetadata(
+    {
+      filename: 'notes.pdf',
+      mediaType: 'application/pdf',
+      type: 'file',
+      url: 'https://s3.local/eduflow-inventory/users/user-1/file.pdf?X-Amz-Signature=secret',
+    },
     {
       bucket: 'eduflow-inventory',
       fileId: 'file-1',
-      filename: 'notes.pdf',
-      mediaType: 'application/pdf',
       objectKey: 'users/user-1/file.pdf',
-      type: 'file',
-      url: 'https://s3.local/eduflow-inventory/users/user-1/file.pdf?X-Amz-Signature=secret',
-    } as ChatFileUIPart,
-    { type: 'text', text: 'Summarize this.' },
-  ],
+    }
+  );
+
+const messageWithSignedFile = (): UIMessage => ({
+  id: 'msg-1',
+  role: 'user',
+  parts: [signedFilePart(), { type: 'text', text: 'Summarize this.' }],
 });
 
 describe('chat attachment helpers', () => {
@@ -45,13 +49,16 @@ describe('chat attachment helpers', () => {
   it('replaces temporary signed URLs with stable object keys before persistence', () => {
     const sanitized = sanitizeChatAttachmentUrls([messageWithSignedFile()]);
     const serialized = JSON.stringify(sanitized);
+    const part = sanitized[0].parts[0] as FileUIPart;
 
-    expect(sanitized[0].parts[0]).toMatchObject({
+    expect(part).toMatchObject({
+      type: 'file',
+      url: 'users/user-1/file.pdf',
+    });
+    expect(getFileMetadata(part)).toMatchObject({
       bucket: 'eduflow-inventory',
       fileId: 'file-1',
       objectKey: 'users/user-1/file.pdf',
-      type: 'file',
-      url: 'users/user-1/file.pdf',
     });
     expect(serialized).not.toContain('X-Amz-Signature');
     expect(serialized).not.toContain('data:');
@@ -73,20 +80,23 @@ describe('chat attachment helpers', () => {
       messages: [messageWithSignedFile()],
       userId: 'user-1',
     });
+    const part = hydrated[0].parts[0] as FileUIPart;
 
     expect(storageMock.createChatAttachmentUrls).toHaveBeenCalledWith({
       fileIds: ['file-1'],
       fileRefs: [{ courseId: undefined, fileId: 'file-1' }],
       userId: 'user-1',
     });
-    expect(hydrated[0].parts[0]).toMatchObject({
-      bucket: 'eduflow-inventory',
-      fileId: 'file-1',
+    expect(part).toMatchObject({
       filename: 'notes.pdf',
       mediaType: 'application/pdf',
-      objectKey: 'users/user-1/file.pdf',
       type: 'file',
       url: 'https://s3.local/signed/file-1?X-Amz-Signature=fresh',
+    });
+    expect(getFileMetadata(part)).toMatchObject({
+      bucket: 'eduflow-inventory',
+      fileId: 'file-1',
+      objectKey: 'users/user-1/file.pdf',
     });
   });
 
@@ -117,25 +127,29 @@ describe('chat attachment helpers', () => {
       messages: [messageWithSignedFile()],
       userId: 'user-1',
     });
+    const part = dataUrlMessages[0].parts[0] as FileUIPart;
 
     expect(storageMock.getChatAttachmentPayloads).toHaveBeenCalledWith({
       fileIds: ['file-1'],
       fileRefs: [{ courseId: undefined, fileId: 'file-1' }],
       userId: 'user-1',
     });
-    expect(dataUrlMessages[0].parts[0]).toMatchObject({
-      fileId: 'file-1',
+    expect(part).toMatchObject({
       filename: 'notes.pdf',
       mediaType: 'application/pdf',
-      objectKey: 'users/user-1/file.pdf',
       type: 'file',
       url: 'data:application/pdf;base64,AQID',
     });
+    expect(getFileMetadata(part)).toMatchObject({
+      fileId: 'file-1',
+      objectKey: 'users/user-1/file.pdf',
+    });
 
     const sanitized = sanitizeChatAttachmentUrls(dataUrlMessages);
-    expect(sanitized[0].parts[0]).toMatchObject({
+    const sanitizedPart = sanitized[0].parts[0] as FileUIPart;
+    expect(sanitizedPart.url).toBe('users/user-1/file.pdf');
+    expect(getFileMetadata(sanitizedPart)).toMatchObject({
       objectKey: 'users/user-1/file.pdf',
-      url: 'users/user-1/file.pdf',
     });
   });
 });

@@ -1,34 +1,31 @@
-import type { DataUIPart, TextPart, UIMessage } from 'ai';
-import { LessonReferenceService } from '@/services/LessonReferenceService';
-import type {
-  ChatLessonReferenceData,
-  ChatLessonReferenceUIPart,
-} from '@/types/chat-lesson-references';
-
-export const isChatLessonReferencePart = (
-  part: UIMessage['parts'][number]
-): part is ChatLessonReferenceUIPart =>
-  part.type === 'data-lesson-reference' &&
-  typeof (part as ChatLessonReferenceUIPart).data?.lessonId === 'string';
+import type { SourceDocumentUIPart, TextUIPart, UIMessage } from 'ai';
+import {
+  type LessonReferenceData,
+  LessonReferenceService,
+} from '@/services/LessonReferenceService';
+import {
+  getLessonMetadata,
+  isLessonSourcePart,
+  LESSON_REFERENCE_MEDIA_TYPE,
+  withChatMetadata,
+} from '@/utils/chat-part-metadata';
 
 export const hasChatLessonReferenceParts = (messages: UIMessage[]) =>
-  messages.some((message) =>
-    message.parts.some((part) => isChatLessonReferencePart(part))
-  );
+  messages.some((message) => message.parts.some(isLessonSourcePart));
 
 const getLessonIds = (messages: UIMessage[]) =>
   Array.from(
     new Set(
       messages.flatMap((message) =>
         message.parts.flatMap((part) =>
-          isChatLessonReferencePart(part) ? [part.data.lessonId] : []
+          isLessonSourcePart(part) ? [part.sourceId] : []
         )
       )
     )
   );
 
-const getLessonDataById = (items: ChatLessonReferenceData[]) => {
-  const byLessonId = new Map<string, ChatLessonReferenceData>();
+const getLessonDataById = (items: LessonReferenceData[]) => {
+  const byLessonId = new Map<string, LessonReferenceData>();
 
   for (const item of items) {
     byLessonId.set(item.lessonId, item);
@@ -37,7 +34,7 @@ const getLessonDataById = (items: ChatLessonReferenceData[]) => {
   return byLessonId;
 };
 
-const formatLessonReferenceForModel = (data: ChatLessonReferenceData) =>
+const formatLessonReferenceForModel = (data: LessonReferenceData) =>
   [
     '<lesson-reference>',
     `Course: ${data.courseTitle}`,
@@ -50,45 +47,63 @@ const formatLessonReferenceForModel = (data: ChatLessonReferenceData) =>
     .filter((line): line is string => line !== null)
     .join('\n');
 
-// Since AI SDK on server can not handle custom data parts,
-// we need to convert lesson reference parts into text parts for the model.
-export const convertLessonReferenceDataPart = (
-  part: DataUIPart<Record<string, unknown>>
-): TextPart | undefined => {
-  const lessonPart = part as UIMessage['parts'][number];
-  if (!isChatLessonReferencePart(lessonPart)) {
-    return undefined;
-  }
-
-  return {
-    type: 'text',
-    text: formatLessonReferenceForModel(lessonPart.data),
-  };
-};
+export function toLessonSourceDocument(
+  data: LessonReferenceData
+): SourceDocumentUIPart {
+  return withChatMetadata(
+    {
+      type: 'source-document',
+      sourceId: data.lessonId,
+      mediaType: LESSON_REFERENCE_MEDIA_TYPE,
+      title: data.lessonTitle,
+      filename: data.lessonTitle,
+    },
+    {
+      courseId: data.courseId,
+      courseTitle: data.courseTitle,
+      lessonId: data.lessonId,
+      lessonTitle: data.lessonTitle,
+      markdown: data.markdown,
+      moduleTitle: data.moduleTitle,
+    }
+  );
+}
 
 function mergeLessonReferenceData({
   messages,
   references,
 }: {
   messages: UIMessage[];
-  references: ChatLessonReferenceData[];
+  references: LessonReferenceData[];
 }) {
   const lessonDataById = getLessonDataById(references);
 
   return messages.map((message) => ({
     ...message,
     parts: message.parts.map((part) => {
-      if (!isChatLessonReferencePart(part)) return part;
+      if (!isLessonSourcePart(part)) return part;
 
-      const lesson = lessonDataById.get(part.data.lessonId);
+      const lesson = lessonDataById.get(part.sourceId);
       if (!lesson) {
         throw new Error('Lesson reference not found');
       }
 
-      return {
-        ...part,
-        data: lesson,
-      };
+      return withChatMetadata(
+        {
+          ...part,
+          title: lesson.lessonTitle,
+          filename: lesson.lessonTitle,
+          mediaType: LESSON_REFERENCE_MEDIA_TYPE,
+        },
+        {
+          courseId: lesson.courseId,
+          courseTitle: lesson.courseTitle,
+          lessonId: lesson.lessonId,
+          lessonTitle: lesson.lessonTitle,
+          markdown: lesson.markdown,
+          moduleTitle: lesson.moduleTitle,
+        }
+      );
     }),
   })) as UIMessage[];
 }
@@ -97,16 +112,47 @@ export const sanitizeChatLessonReferenceParts = (messages: UIMessage[]) =>
   messages.map((message) => ({
     ...message,
     parts: message.parts.map((part) => {
-      if (!isChatLessonReferencePart(part)) return part;
+      if (!isLessonSourcePart(part)) return part;
 
-      const { markdown: _markdown, ...data } = part.data;
+      const metadata = getLessonMetadata(part);
+      if (!metadata) return part;
 
+      const { markdown: _markdown, ...safeMetadata } = metadata;
       return {
         ...part,
-        data,
+        providerMetadata: {
+          ...part.providerMetadata,
+          eduflow: safeMetadata,
+        },
       };
     }),
-  }));
+  })) as UIMessage[];
+
+export function convertLessonSourcesToTextParts(messages: UIMessage[]) {
+  return messages.map((message) => ({
+    ...message,
+    parts: message.parts.flatMap((part) => {
+      if (!isLessonSourcePart(part)) return [part];
+
+      const metadata = getLessonMetadata(part);
+      if (!metadata?.lessonId) return [];
+
+      const textPart: TextUIPart = {
+        type: 'text',
+        text: formatLessonReferenceForModel({
+          courseId: metadata.courseId ?? '',
+          courseTitle: metadata.courseTitle ?? 'Unknown course',
+          lessonId: metadata.lessonId,
+          lessonTitle: metadata.lessonTitle ?? part.title,
+          markdown: metadata.markdown,
+          moduleTitle: metadata.moduleTitle,
+        }),
+      };
+
+      return [textPart];
+    }),
+  })) as UIMessage[];
+}
 
 export async function hydrateChatLessonReferenceSummaries({
   messages,

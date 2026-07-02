@@ -9,7 +9,6 @@ import {
 } from 'ai';
 import { z } from 'zod';
 import { DEFAULT_MODELS } from '@/services/ai/chat-provider.constants';
-import { convertLessonReferenceDataPart } from '@/utils/chat-lesson-references';
 import { studyInteractiveContentSchema } from '@/utils/study-interactive-content';
 
 const generatedInteractiveContentSchema = studyInteractiveContentSchema.extend({
@@ -216,9 +215,7 @@ export async function generateInteractiveContent({
   }
 
   const provider = createOpenRouter({ apiKey: resolvedApiKey });
-  const modelMessages = await convertToModelMessages(messages, {
-    convertDataPart: convertLessonReferenceDataPart,
-  });
+  const modelMessages = await convertToModelMessages(messages);
 
   const contextResult = await generateText({
     model: provider(model ?? DEFAULT_MODELS.openrouter),

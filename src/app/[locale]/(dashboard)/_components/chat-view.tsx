@@ -20,18 +20,18 @@ import {
   ReasoningTrigger,
 } from '@/components/ai-elements/reasoning';
 import { Suggestion } from '@/components/ai-elements/suggestion';
-import type { ChatLessonReferenceUIPart } from '@/types/chat-lesson-references';
 import {
   buildInlineCitationMarkdown,
   getCitationSources,
 } from '@/utils/chat-citations';
 import { getMessageReasoning, getMessageText } from '@/utils/chat-message';
+import { isLessonSourcePart } from '@/utils/chat-part-metadata';
 import { getChatSuggestionItems } from '@/utils/chat-suggestions';
 import { getStudyInteractiveContentParts } from '@/utils/study-interactive-content';
 import { getStudyPracticeQuizParts } from '@/utils/study-practice-quiz';
 import InteractiveContentPreview from '../study/_components/interactive-content-preview';
 import { createChatCitationComponents } from './chat-citations';
-import { ChatInputAttachments } from './chat-input-attachments';
+import { ChatMessageAttachments } from './chat-input-attachments';
 import { ChatToolInvocations } from './chat-tools';
 
 interface ChatViewProps {
@@ -83,13 +83,7 @@ export function ChatView({
                 ? [{ ...part, id: `${message.id}-file-${index}` }]
                 : []
             );
-            const lessonReferences = message.parts.flatMap((part) =>
-              part.type === 'data-lesson-reference' &&
-              typeof (part as ChatLessonReferenceUIPart).data?.lessonId ===
-                'string'
-                ? [part as ChatLessonReferenceUIPart]
-                : []
-            );
+            const lessonReferences = message.parts.filter(isLessonSourcePart);
 
             if (
               !text &&
@@ -140,7 +134,7 @@ export function ChatView({
                       {message.role === 'user' &&
                         (attachments.length > 0 ||
                           lessonReferences.length > 0) && (
-                          <ChatInputAttachments
+                          <ChatMessageAttachments
                             files={[
                               ...attachments.map((attachment) => ({
                                 filename: attachment.filename ?? attachment.id,
@@ -149,13 +143,11 @@ export function ChatView({
                                 previewUrl: attachment.url,
                               })),
                               ...lessonReferences.map((lesson) => ({
-                                filename: lesson.data.lessonTitle,
-                                id: lesson.data.lessonId,
+                                filename: lesson.title,
+                                id: lesson.sourceId,
                                 kind: 'lesson' as const,
-                                lessonPart: lesson,
-                                mediaType:
-                                  'application/x-eduflow-lesson-reference',
-                                previewUrl: `lesson:${lesson.data.lessonId}`,
+                                mediaType: lesson.mediaType,
+                                previewUrl: `lesson:${lesson.sourceId}`,
                               })),
                             ]}
                           />
