@@ -1,0 +1,15 @@
+{
+  "fields": {
+    "heading": {
+      "type": "title",
+      "desc": "agenda heading",
+      "max_chars": 24
+    },
+    "items": {
+      "type": "text",
+      "desc": "agenda items, one per card",
+      "max_chars": 60,
+      "lines": 5
+    }
+  }
+}

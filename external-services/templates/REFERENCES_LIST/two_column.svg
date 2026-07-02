@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 810">
+  <rect width="1440" height="810" fill="#0A0E1A"/>
+  <line x1="80" y1="0" x2="80" y2="810" stroke="#00F0FF" stroke-width="3" stroke-opacity="0.3"/>
+
+  <!-- Heading -->
+  <text x="140" y="150" font-family="system-ui, -apple-system, sans-serif" font-size="56" font-weight="bold" fill="#FFFFFF">{{heading|24}}</text>
+  <rect x="140" y="175" width="220" height="4" fill="#00F0FF" rx="2"/>
+
+  <!-- Source cards, two columns -->
+  <g transform="translate(140, 250)">
+    <!-- Source 1 -->
+    <g>
+      <rect width="570" height="200" fill="#111827" rx="16" stroke="#00F0FF" stroke-width="1.5" stroke-opacity="0.25"/>
+      <rect x="30" y="30" width="44" height="44" fill="#00F0FF" fill-opacity="0.15" rx="10"/>
+      <text x="52" y="61" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="bold" fill="#00F0FF" text-anchor="middle">1</text>
+      <text x="100" y="62" font-family="system-ui, -apple-system, sans-serif" font-size="24" fill="#FFFFFF">{{source_title_1|70}}</text>
+      <text x="30" y="130" font-family="system-ui, -apple-system, sans-serif" font-size="19" fill="#00F0FF" fill-opacity="0.85">{{source_url_1|80}}</text>
+    </g>
+    <!-- Source 2 -->
+    <g transform="translate(610, 0)">
+      <rect width="570" height="200" fill="#111827" rx="16" stroke="#FF007F" stroke-width="1.5" stroke-opacity="0.25"/>
+      <rect x="30" y="30" width="44" height="44" fill="#FF007F" fill-opacity="0.15" rx="10"/>
+      <text x="52" y="61" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="bold" fill="#FF007F" text-anchor="middle">2</text>
+      <text x="100" y="62" font-family="system-ui, -apple-system, sans-serif" font-size="24" fill="#FFFFFF">{{source_title_2|70}}</text>
+      <text x="30" y="130" font-family="system-ui, -apple-system, sans-serif" font-size="19" fill="#FF007F" fill-opacity="0.85">{{source_url_2|80}}</text>
+    </g>
+    <!-- Source 3 -->
+    <g transform="translate(0, 240)">
+      <rect width="570" height="200" fill="#111827" rx="16" stroke="#FF007F" stroke-width="1.5" stroke-opacity="0.25"/>
+      <rect x="30" y="30" width="44" height="44" fill="#FF007F" fill-opacity="0.15" rx="10"/>
+      <text x="52" y="61" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="bold" fill="#FF007F" text-anchor="middle">3</text>
+      <text x="100" y="62" font-family="system-ui, -apple-system, sans-serif" font-size="24" fill="#FFFFFF">{{source_title_3|70}}</text>
+      <text x="30" y="130" font-family="system-ui, -apple-system, sans-serif" font-size="19" fill="#FF007F" fill-opacity="0.85">{{source_url_3|80}}</text>
+    </g>
+    <!-- Source 4 -->
+    <g transform="translate(610, 240)">
+      <rect width="570" height="200" fill="#111827" rx="16" stroke="#00F0FF" stroke-width="1.5" stroke-opacity="0.25"/>
+      <rect x="30" y="30" width="44" height="44" fill="#00F0FF" fill-opacity="0.15" rx="10"/>
+      <text x="52" y="61" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="bold" fill="#00F0FF" text-anchor="middle">4</text>
+      <text x="100" y="62" font-family="system-ui, -apple-system, sans-serif" font-size="24" fill="#FFFFFF">{{source_title_4|70}}</text>
+      <text x="30" y="130" font-family="system-ui, -apple-system, sans-serif" font-size="19" fill="#00F0FF" fill-opacity="0.85">{{source_url_4|80}}</text>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 810">
+  <rect width="1440" height="810" fill="#0A0E1A"/>
+  <rect x="0" y="0" width="1440" height="8" fill="#FF007F"/>
+  <circle cx="1300" cy="720" r="200" fill="#00F0FF" fill-opacity="0.04"/>
+
+  <!-- Heading, centered -->
+  <text x="720" y="170" font-family="system-ui, -apple-system, sans-serif" font-size="60" font-weight="bold" fill="#FFFFFF" text-anchor="middle">{{heading|24}}</text>
+  <rect x="600" y="200" width="240" height="4" fill="#00F0FF" rx="2"/>
+
+  <!-- Action cards, 2 x 2 -->
+  <g transform="translate(130, 280)">
+    <!-- Action 1 -->
+    <g>
+      <rect width="570" height="170" fill="#111827" rx="18" stroke="#00F0FF" stroke-width="1.5" stroke-opacity="0.35"/>
+      <path d="M 48 70 L 78 85 L 48 100 Z" fill="#00F0FF"/>
+      <text x="120" y="95" font-family="system-ui, -apple-system, sans-serif" font-size="27" fill="#E2E8F0">{{action_items.1|50}}</text>
+    </g>
+    <!-- Action 2 -->
+    <g transform="translate(610, 0)">
+      <rect width="570" height="170" fill="#111827" rx="18" stroke="#FF007F" stroke-width="1.5" stroke-opacity="0.35"/>
+      <path d="M 48 70 L 78 85 L 48 100 Z" fill="#FF007F"/>
+      <text x="120" y="95" font-family="system-ui, -apple-system, sans-serif" font-size="27" fill="#E2E8F0">{{action_items.2|50}}</text>
+    </g>
+    <!-- Action 3 -->
+    <g transform="translate(0, 210)">
+      <rect width="570" height="170" fill="#111827" rx="18" stroke="#FF007F" stroke-width="1.5" stroke-opacity="0.35"/>
+      <path d="M 48 70 L 78 85 L 48 100 Z" fill="#FF007F"/>
+      <text x="120" y="95" font-family="system-ui, -apple-system, sans-serif" font-size="27" fill="#E2E8F0">{{action_items.3|50}}</text>
+    </g>
+    <!-- Action 4 -->
+    <g transform="translate(610, 210)">
+      <rect width="570" height="170" fill="#111827" rx="18" stroke="#00F0FF" stroke-width="1.5" stroke-opacity="0.35"/>
+      <path d="M 48 70 L 78 85 L 48 100 Z" fill="#00F0FF"/>
+      <text x="120" y="95" font-family="system-ui, -apple-system, sans-serif" font-size="27" fill="#E2E8F0">{{action_items.4|50}}</text>
+    </g>
+  </g>
+</svg>

@@ -1,6 +1,7 @@
 {
   "description": "Sequence slide displaying a numbered process flow step by step.",
   "variants": {
-    "standard": "Numbered column layout for multi-step processes or workflows."
+    "standard": "Numbered column layout for multi-step processes or workflows.",
+    "vertical_track": "Vertical numbered progress track with one card per step — top-to-bottom flow."
   }
 }

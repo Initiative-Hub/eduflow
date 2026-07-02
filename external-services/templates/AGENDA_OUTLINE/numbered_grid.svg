@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 810">
+  <rect width="1440" height="810" fill="#0A0E1A"/>
+  <circle cx="1320" cy="90" r="180" fill="#00F0FF" fill-opacity="0.05"/>
+  <circle cx="120" cy="760" r="140" fill="#FF007F" fill-opacity="0.05"/>
+
+  <!-- Heading -->
+  <text x="140" y="150" font-family="system-ui, -apple-system, sans-serif" font-size="56" font-weight="bold" fill="#FFFFFF">{{heading|24}}</text>
+  <rect x="140" y="175" width="220" height="4" fill="#FF007F" rx="2"/>
+
+  <!-- Numbered agenda cards, two columns -->
+  <g transform="translate(140, 240)">
+    <!-- Item 1 -->
+    <g>
+      <rect width="560" height="140" fill="#111827" rx="16" stroke="#00F0FF" stroke-width="1.5" stroke-opacity="0.25"/>
+      <text x="42" y="90" font-family="system-ui, -apple-system, sans-serif" font-size="56" font-weight="bold" fill="#00F0FF">01</text>
+      <text x="140" y="82" font-family="system-ui, -apple-system, sans-serif" font-size="26" fill="#E2E8F0">{{items.1|60}}</text>
+    </g>
+    <!-- Item 2 -->
+    <g transform="translate(620, 0)">
+      <rect width="560" height="140" fill="#111827" rx="16" stroke="#FF007F" stroke-width="1.5" stroke-opacity="0.25"/>
+      <text x="42" y="90" font-family="system-ui, -apple-system, sans-serif" font-size="56" font-weight="bold" fill="#FF007F">02</text>
+      <text x="140" y="82" font-family="system-ui, -apple-system, sans-serif" font-size="26" fill="#E2E8F0">{{items.2|60}}</text>
+    </g>
+    <!-- Item 3 -->
+    <g transform="translate(0, 175)">
+      <rect width="560" height="140" fill="#111827" rx="16" stroke="#FF007F" stroke-width="1.5" stroke-opacity="0.25"/>
+      <text x="42" y="90" font-family="system-ui, -apple-system, sans-serif" font-size="56" font-weight="bold" fill="#FF007F">03</text>
+      <text x="140" y="82" font-family="system-ui, -apple-system, sans-serif" font-size="26" fill="#E2E8F0">{{items.3|60}}</text>
+    </g>
+    <!-- Item 4 -->
+    <g transform="translate(620, 175)">
+      <rect width="560" height="140" fill="#111827" rx="16" stroke="#00F0FF" stroke-width="1.5" stroke-opacity="0.25"/>
+      <text x="42" y="90" font-family="system-ui, -apple-system, sans-serif" font-size="56" font-weight="bold" fill="#00F0FF">04</text>
+      <text x="140" y="82" font-family="system-ui, -apple-system, sans-serif" font-size="26" fill="#E2E8F0">{{items.4|60}}</text>
+    </g>
+    <!-- Item 5 -->
+    <g transform="translate(0, 350)">
+      <rect width="560" height="140" fill="#111827" rx="16" stroke="#00F0FF" stroke-width="1.5" stroke-opacity="0.25"/>
+      <text x="42" y="90" font-family="system-ui, -apple-system, sans-serif" font-size="56" font-weight="bold" fill="#00F0FF">05</text>
+      <text x="140" y="82" font-family="system-ui, -apple-system, sans-serif" font-size="26" fill="#E2E8F0">{{items.5|60}}</text>
+    </g>
+  </g>
+</svg>

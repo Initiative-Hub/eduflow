@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 810">
+  <rect width="1440" height="810" fill="#0A0E1A"/>
+  <line x1="80" y1="0" x2="80" y2="810" stroke="#00F0FF" stroke-width="3" stroke-opacity="0.3"/>
+
+  <!-- Heading -->
+  <text x="140" y="130" font-family="system-ui, -apple-system, sans-serif" font-size="56" font-weight="bold" fill="#FFFFFF">{{heading|24}}</text>
+  <rect x="140" y="155" width="220" height="4" fill="#00F0FF" rx="2"/>
+
+  <!-- Featured image, left -->
+  <g transform="translate(140, 210)">
+    <rect x="-6" y="-6" width="652" height="472" fill="none" stroke="#00F0FF" stroke-width="2" stroke-opacity="0.4" rx="20"/>
+    <clipPath id="feat_clip"><rect width="640" height="460" rx="16"/></clipPath>
+    <image width="640" height="460" href="{{image_1}}" clip-path="url(#feat_clip)" preserveAspectRatio="xMidYMid slice"/>
+    <text x="0" y="510" font-family="system-ui, -apple-system, sans-serif" font-size="28" font-weight="bold" fill="#00F0FF">{{label_1|26}}</text>
+    <text x="0" y="548" font-family="system-ui, -apple-system, sans-serif" font-size="22" fill="#E2E8F0">{{caption_1|34}}</text>
+  </g>
+
+  <!-- Stacked images, right -->
+  <g transform="translate(850, 210)">
+    <clipPath id="stack_clip_a"><rect width="450" height="215" rx="14"/></clipPath>
+    <image width="450" height="215" href="{{image_2}}" clip-path="url(#stack_clip_a)" preserveAspectRatio="xMidYMid slice"/>
+    <text x="0" y="252" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="bold" fill="#FF007F">{{label_2|26}}</text>
+    <text x="0" y="284" font-family="system-ui, -apple-system, sans-serif" font-size="20" fill="#E2E8F0">{{caption_2|34}}</text>
+  </g>
+  <g transform="translate(850, 520)">
+    <clipPath id="stack_clip_b"><rect width="450" height="215" rx="14"/></clipPath>
+    <image width="450" height="215" href="{{image_3}}" clip-path="url(#stack_clip_b)" preserveAspectRatio="xMidYMid slice"/>
+    <text x="0" y="252" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="bold" fill="#FF007F">{{label_3|26}}</text>
+    <text x="0" y="284" font-family="system-ui, -apple-system, sans-serif" font-size="20" fill="#E2E8F0">{{caption_3|34}}</text>
+  </g>
+</svg>
