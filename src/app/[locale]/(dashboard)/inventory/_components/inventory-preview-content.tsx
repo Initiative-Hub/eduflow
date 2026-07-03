@@ -74,6 +74,7 @@ export function InventoryPreviewContent({
 }: InventoryPreviewContentProps) {
   const [previewRenderFailed, setPreviewRenderFailed] = useState(false);
   const previewKind = getInventoryPreviewKind(preview.entry);
+  const sourceType = preview.mimeType ?? undefined;
 
   if (!preview.url || previewRenderFailed || !previewKind) {
     return (
@@ -119,6 +120,35 @@ export function InventoryPreviewContent({
         onError={() => setPreviewRenderFailed(true)}
         className="h-[70vh] w-full rounded-xl border border-border/60 bg-background"
       />
+    );
+  }
+
+  if (previewKind === 'audio') {
+    return (
+      <div className="flex min-h-[30vh] items-center justify-center rounded-xl bg-background p-6">
+        <audio
+          controls
+          preload="metadata"
+          onError={() => setPreviewRenderFailed(true)}
+          className="w-full"
+        >
+          <source src={preview.url} type={sourceType} />
+        </audio>
+      </div>
+    );
+  }
+
+  if (previewKind === 'video') {
+    return (
+      <video
+        controls
+        preload="metadata"
+        playsInline
+        onError={() => setPreviewRenderFailed(true)}
+        className="max-h-[70vh] w-full rounded-xl bg-background"
+      >
+        <source src={preview.url} type={sourceType} />
+      </video>
     );
   }
 

@@ -1,6 +1,6 @@
 import type { InventoryEntry } from './inventory.types';
 
-export type InventoryPreviewKind = 'image' | 'pdf' | 'text';
+export type InventoryPreviewKind = 'image' | 'pdf' | 'text' | 'audio' | 'video';
 
 const TEXT_PREVIEW_EXTENSIONS = new Set([
   'txt',
@@ -21,6 +21,19 @@ const TEXT_PREVIEW_EXTENSIONS = new Set([
   'sql',
   'log',
 ]);
+
+const AUDIO_PREVIEW_EXTENSIONS = new Set([
+  'mp3',
+  'mpeg',
+  'm4a',
+  'aac',
+  'wav',
+  'ogg',
+  'oga',
+  'webm',
+]);
+
+const VIDEO_PREVIEW_EXTENSIONS = new Set(['mp4', 'm4v', 'mov', 'webm', 'ogv']);
 
 export const formatFileSize = (bytes: number | null) => {
   if (bytes === null) return '—';
@@ -66,6 +79,21 @@ export const getInventoryPreviewKind = (
 
   if (mimeType.startsWith('image/')) return 'image';
   if (mimeType === 'application/pdf' || extension === 'pdf') return 'pdf';
+
+  if (
+    mimeType.startsWith('audio/') ||
+    AUDIO_PREVIEW_EXTENSIONS.has(extension)
+  ) {
+    return 'audio';
+  }
+
+  if (
+    mimeType.startsWith('video/') ||
+    mimeType === 'application/mp4' ||
+    VIDEO_PREVIEW_EXTENSIONS.has(extension)
+  ) {
+    return 'video';
+  }
 
   if (
     mimeType.startsWith('text/') ||
