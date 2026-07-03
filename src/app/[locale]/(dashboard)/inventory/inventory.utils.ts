@@ -1,39 +1,11 @@
 import type { InventoryEntry } from './inventory.types';
+import {
+  AUDIO_PREVIEW_EXTENSIONS,
+  TEXT_PREVIEW_EXTENSIONS,
+  VIDEO_PREVIEW_EXTENSIONS,
+} from './inventory-file.constant';
 
 export type InventoryPreviewKind = 'image' | 'pdf' | 'text' | 'audio' | 'video';
-
-const TEXT_PREVIEW_EXTENSIONS = new Set([
-  'txt',
-  'md',
-  'markdown',
-  'json',
-  'csv',
-  'tsv',
-  'xml',
-  'yaml',
-  'yml',
-  'html',
-  'css',
-  'js',
-  'jsx',
-  'ts',
-  'tsx',
-  'sql',
-  'log',
-]);
-
-const AUDIO_PREVIEW_EXTENSIONS = new Set([
-  'mp3',
-  'mpeg',
-  'm4a',
-  'aac',
-  'wav',
-  'ogg',
-  'oga',
-  'webm',
-]);
-
-const VIDEO_PREVIEW_EXTENSIONS = new Set(['mp4', 'm4v', 'mov', 'webm', 'ogv']);
 
 export const formatFileSize = (bytes: number | null) => {
   if (bytes === null) return '—';

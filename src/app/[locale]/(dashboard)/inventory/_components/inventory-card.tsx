@@ -48,6 +48,11 @@ import {
   getEntryTypeLabel,
   getInventoryPreviewKind,
 } from '../inventory.utils';
+import {
+  ARCHIVE_FILE_EXTENSIONS,
+  CODE_FILE_EXTENSIONS,
+  SPREADSHEET_FILE_EXTENSIONS,
+} from '../inventory-file.constant';
 
 interface FileCardProps {
   entry: InventoryEntry;
@@ -74,21 +79,20 @@ function getInventoryCardIcon(entry: InventoryEntry) {
   if (previewKind === 'image') return FileImage;
   if (previewKind === 'audio') return FileAudio;
   if (previewKind === 'video') return FileVideo;
-  if (previewKind === 'text') return FileText;
 
-  if (
-    ['js', 'jsx', 'ts', 'tsx', 'html', 'css', 'json', 'xml'].includes(extension)
-  ) {
+  if (CODE_FILE_EXTENSIONS.has(extension)) {
     return FileCode;
   }
 
-  if (['csv', 'tsv', 'xls', 'xlsx'].includes(extension)) {
+  if (SPREADSHEET_FILE_EXTENSIONS.has(extension)) {
     return FileSpreadsheet;
   }
 
-  if (['zip', 'rar', '7z', 'tar', 'gz'].includes(extension)) {
+  if (ARCHIVE_FILE_EXTENSIONS.has(extension)) {
     return FileArchive;
   }
+
+  if (previewKind === 'text') return FileText;
 
   return FileIcon;
 }
