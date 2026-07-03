@@ -72,6 +72,18 @@ export function InventoryCard({
   const [previewImageFailed, setPreviewImageFailed] = useState(false);
   const isImagePreview =
     !entry.isFolder && Boolean(entry.mimeType?.startsWith('image/'));
+  const canOpenFromCard = entry.isFolder || canPreviewInventoryEntry(entry);
+
+  const handleCardDoubleClick = () => {
+    if (entry.isFolder) {
+      onNavigateIntoFolder?.(entry);
+      return;
+    }
+
+    if (canPreviewInventoryEntry(entry)) {
+      onPreview?.(entry);
+    }
+  };
 
   const previewUrlQuery = useQuery({
     queryKey: ['inventory', 'preview-url', entry.id],
@@ -85,24 +97,22 @@ export function InventoryCard({
   });
 
   return (
-    <Card className="group/card h-fit border-border/70 bg-card/90 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg">
+    <Card
+      className={`h-fit border-border/70 bg-card/90 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg ${
+        canOpenFromCard ? 'cursor-pointer' : ''
+      }`}
+      onDoubleClick={handleCardDoubleClick}
+    >
       <CardHeader className="gap-3">
         <div className="flex items-start justify-between gap-3 overflow-hidden">
           <button
             type="button"
-            className="flex flex-1 gap-3 overflow-hidden text-left"
+            className={cn(
+              'flex flex-1 gap-3 overflow-hidden text-left',
+              canOpenFromCard && 'cursor-pointer'
+            )}
             onClick={() => {
               if (entry.isFolder) onOpen?.(entry);
-            }}
-            onDoubleClick={() => {
-              if (entry.isFolder) {
-                onNavigateIntoFolder?.(entry);
-                return;
-              }
-
-              if (canPreviewInventoryEntry(entry)) {
-                onPreview?.(entry);
-              }
             }}
           >
             <div
@@ -140,7 +150,12 @@ export function InventoryCard({
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon-sm" className="shrink-0">
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="shrink-0"
+                onDoubleClick={(event) => event.stopPropagation()}
+              >
                 <MoreVertical />
               </Button>
             </DropdownMenuTrigger>
