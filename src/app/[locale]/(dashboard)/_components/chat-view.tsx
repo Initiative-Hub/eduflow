@@ -5,7 +5,7 @@ import { Bot, Loader2, User } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import type { RefObject } from 'react';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Conversation,
   ConversationContent,
@@ -64,7 +64,30 @@ export function ChatView({
   const previousScrollHeightRef = useRef<number | null>(null);
   const shouldRestoreScrollRef = useRef(false);
   const hasInitialScrollRef = useRef(false);
+  const bottomMarkerRef = useRef<HTMLDivElement | null>(null);
   const prevMessagesLengthRef = useRef(messages.length);
+
+  const [isAtBottom, setIsAtBottom] = useState(true);
+
+  // Monitor scroll position to see if user is scrolled to bottom
+  useEffect(() => {
+    const root = scrollContainerRef?.current;
+    if (!root) return;
+
+    const handleScroll = () => {
+      const threshold = 50; // buffer in px
+      const isAtBottom =
+        root.scrollHeight - root.scrollTop - root.clientHeight <= threshold;
+      setIsAtBottom(isAtBottom);
+    };
+
+    root.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+
+    return () => {
+      root.removeEventListener('scroll', handleScroll);
+    };
+  }, [scrollContainerRef]);
 
   useEffect(() => {
     const sentinel = topSentinelRef.current;
@@ -125,7 +148,7 @@ export function ChatView({
         const el = document.getElementById(`message-${lastUserMessage.id}`);
         if (el) {
           el.scrollIntoView({
-            behavior: 'auto',
+            behavior: 'instant',
             block: 'nearest',
             inline: 'nearest',
           });
@@ -143,8 +166,7 @@ export function ChatView({
     const prevLength = prevMessagesLengthRef.current;
     prevMessagesLengthRef.current = messages.length;
 
-    // Only scroll if we have already done the initial scroll and a new message is appended
-    if (hasInitialScrollRef.current && messages.length > prevLength) {
+    if (messages.length > prevLength) {
       const lastMessage = messages[messages.length - 1];
       const prevLastMessage = prevLength > 0 ? messages[prevLength - 1] : null;
 
@@ -153,12 +175,31 @@ export function ChatView({
         (!prevLastMessage || lastMessage.id !== prevLastMessage.id) &&
         lastMessage.role === 'user'
       ) {
+        setIsAtBottom(true);
         requestAnimationFrame(() => {
-          root.scrollTo({ top: root.scrollHeight, behavior: 'smooth' });
+          bottomMarkerRef.current?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest',
+            inline: 'nearest',
+          });
         });
       }
     }
   }, [messages, scrollContainerRef]);
+
+  // Continuous scroll during streaming (only if user is already at the bottom)
+  useEffect(() => {
+    const root = scrollContainerRef?.current;
+    if (!root || !isAtBottom || !isStreaming || messages.length === 0) return;
+
+    requestAnimationFrame(() => {
+      bottomMarkerRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'nearest',
+      });
+    });
+  }, [isAtBottom, isStreaming, messages, scrollContainerRef]);
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -393,6 +434,8 @@ export function ChatView({
               </div>
             </div>
           )}
+
+          <div ref={bottomMarkerRef} />
         </ConversationContent>
         <ConversationScrollButton className="bottom-2 shadow-sm" />
       </Conversation>
