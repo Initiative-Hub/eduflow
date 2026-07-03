@@ -5,7 +5,14 @@ import {
   Download,
   Edit2,
   Eye,
+  FileArchive,
+  FileAudio,
+  FileCode,
   FileIcon,
+  FileImage,
+  FileSpreadsheet,
+  FileText,
+  FileVideo,
   FolderOpen,
   MoreVertical,
   Move,
@@ -39,6 +46,7 @@ import {
   formatDate,
   formatFileSize,
   getEntryTypeLabel,
+  getInventoryPreviewKind,
 } from '../inventory.utils';
 
 interface FileCardProps {
@@ -57,6 +65,39 @@ interface FileCardProps {
   uploadProgress?: number;
 }
 
+function getInventoryCardIcon(entry: InventoryEntry) {
+  if (entry.isFolder) return FolderOpen;
+
+  const previewKind = getInventoryPreviewKind(entry);
+  const extension = entry.extension?.toLowerCase() ?? '';
+
+  if (previewKind === 'image') return FileImage;
+  if (previewKind === 'audio') return FileAudio;
+  if (previewKind === 'video') return FileVideo;
+  if (previewKind === 'text') return FileText;
+
+  if (
+    ['js', 'jsx', 'ts', 'tsx', 'html', 'css', 'json', 'xml'].includes(extension)
+  ) {
+    return FileCode;
+  }
+
+  if (['csv', 'tsv', 'xls', 'xlsx'].includes(extension)) {
+    return FileSpreadsheet;
+  }
+
+  if (['zip', 'rar', '7z', 'tar', 'gz'].includes(extension)) {
+    return FileArchive;
+  }
+
+  return FileIcon;
+}
+
+function canShowCardBodyPreview(entry: InventoryEntry) {
+  const previewKind = getInventoryPreviewKind(entry);
+  return previewKind === 'image' || previewKind === 'pdf';
+}
+
 export function InventoryCard({
   entry,
   isSelected = false,
@@ -73,9 +114,12 @@ export function InventoryCard({
   uploadProgress,
 }: FileCardProps) {
   const t = useTranslations('InventoryPage');
-  const [previewImageFailed, setPreviewImageFailed] = useState(false);
-  const isImagePreview =
-    !entry.isFolder && Boolean(entry.mimeType?.startsWith('image/'));
+
+  const [cardBodyPreviewFailed, setCardBodyPreviewFailed] = useState(false);
+  const previewKind = getInventoryPreviewKind(entry);
+  const canShowBodyPreview = canShowCardBodyPreview(entry);
+  const FileTypeIcon = getInventoryCardIcon(entry);
+
   const canOpenFromCard = entry.isFolder || canPreviewInventoryEntry(entry);
   const hasCardInteraction = canOpenFromCard || Boolean(onSelectEntry);
 
@@ -100,7 +144,7 @@ export function InventoryCard({
       const response = await inventoryService.shareEntry(entry.id);
       return response.data.signedUrl;
     },
-    enabled: isImagePreview,
+    enabled: canShowBodyPreview && canPreviewInventoryEntry(entry),
     staleTime: 5 * 60 * 1000,
     retry: 1,
   });
@@ -142,14 +186,10 @@ export function InventoryCard({
                   : 'border-border bg-muted'
               )}
             >
-              {entry.isFolder ? (
-                <FolderOpen
-                  data-icon="inline-start"
-                  className="size-5 text-secondary"
-                />
-              ) : (
-                <FileIcon data-icon="inline-start" className="size-5" />
-              )}
+              <FileTypeIcon
+                data-icon="inline-start"
+                className={cn('size-5', entry.isFolder && 'text-secondary')}
+              />
             </div>
             <div
               className="flex flex-1 flex-col gap-1 overflow-hidden"
@@ -244,19 +284,30 @@ export function InventoryCard({
 
       {!entry.isFolder && (
         <CardContent className="p-0">
-          {isImagePreview && previewUrlQuery.data && !previewImageFailed ? (
-            <Image
-              src={previewUrlQuery.data}
-              alt={entry.name}
-              width={640}
-              height={360}
-              unoptimized
-              onError={() => setPreviewImageFailed(true)}
-              className="h-36 object-cover"
-            />
+          {canShowBodyPreview &&
+          previewUrlQuery.data &&
+          !cardBodyPreviewFailed ? (
+            previewKind === 'image' ? (
+              <Image
+                src={previewUrlQuery.data}
+                alt={entry.name}
+                width={640}
+                height={360}
+                unoptimized
+                onError={() => setCardBodyPreviewFailed(true)}
+                className="h-36 w-full object-cover"
+              />
+            ) : (
+              <iframe
+                src={`${previewUrlQuery.data}#toolbar=0&navpanes=0&scrollbar=0&page=1&view=FitH`}
+                title={entry.name}
+                onError={() => setCardBodyPreviewFailed(true)}
+                className="h-36 w-full border-0 bg-background"
+              />
+            )
           ) : (
             <div className="flex h-36 w-full items-center justify-center border border-border/60 bg-muted text-muted-foreground">
-              <FileIcon className="size-6" />
+              <FileTypeIcon className="size-7" />
             </div>
           )}
         </CardContent>
