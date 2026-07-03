@@ -53,7 +53,7 @@ interface FileCardProps {
   onDownload?: (entry: InventoryEntry) => void;
   onDelete: (entry: InventoryEntry) => void;
   onNavigateIntoFolder?: (entry: InventoryEntry) => void;
-  onSelectEntry?: (entryId: string, checked: boolean) => void;
+  onSelectEntry?: (entryId: string) => void;
   uploadProgress?: number;
 }
 
@@ -80,7 +80,7 @@ export function InventoryCard({
   const hasCardInteraction = canOpenFromCard || Boolean(onSelectEntry);
 
   const handleCardClick = () => {
-    onSelectEntry?.(entry.id, true);
+    onSelectEntry?.(entry.id);
   };
 
   const handleCardDoubleClick = () => {

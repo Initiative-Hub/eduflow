@@ -74,6 +74,7 @@ export function InventoryClient() {
     handleSearchChange,
     handleSelectAll,
     handleSelectEntry,
+    handleSelectSingleEntry,
     handleShareEntry,
     handleShareSelected,
     handleUploadFiles,
@@ -214,6 +215,7 @@ export function InventoryClient() {
         onRename={handleOpenRenameDialog}
         onSelectAll={handleSelectAll}
         onSelectEntry={handleSelectEntry}
+        onSelectSingleEntry={handleSelectSingleEntry}
         onShare={handleShareEntry}
         onUploadOpen={() => setUploadOpen(true)}
         getUploadProgress={getUploadProgress}
