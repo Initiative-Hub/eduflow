@@ -130,12 +130,14 @@ export function InventoryBrowser({
                   <InventoryCard
                     key={entry.id}
                     entry={entry}
+                    isSelected={selectedIds.includes(entry.id)}
                     locale={locale}
                     onOpen={onOpen}
                     onRename={onRename}
                     onMove={onMove}
                     onDelete={onDeleteEntry}
                     onNavigateIntoFolder={onNavigateIntoFolder}
+                    onSelectEntry={onSelectEntry}
                   />
                 ))}
               </div>
@@ -146,6 +148,7 @@ export function InventoryBrowser({
                   <InventoryCard
                     key={entry.id}
                     entry={entry}
+                    isSelected={selectedIds.includes(entry.id)}
                     locale={locale}
                     onRename={onRename}
                     onMove={onMove}
@@ -153,6 +156,7 @@ export function InventoryBrowser({
                     onPreview={onPreview}
                     onDownload={onDownload}
                     onDelete={onDeleteEntry}
+                    onSelectEntry={onSelectEntry}
                     uploadProgress={getUploadProgress(entry.id)}
                   />
                 ))}

@@ -43,6 +43,7 @@ import {
 
 interface FileCardProps {
   entry: InventoryEntry;
+  isSelected?: boolean;
   locale: string;
   onOpen?: (entry: InventoryEntry) => void;
   onRename: (entry: InventoryEntry) => void;
@@ -52,11 +53,13 @@ interface FileCardProps {
   onDownload?: (entry: InventoryEntry) => void;
   onDelete: (entry: InventoryEntry) => void;
   onNavigateIntoFolder?: (entry: InventoryEntry) => void;
+  onSelectEntry?: (entryId: string, checked: boolean) => void;
   uploadProgress?: number;
 }
 
 export function InventoryCard({
   entry,
+  isSelected = false,
   locale,
   onOpen,
   onRename,
@@ -66,6 +69,7 @@ export function InventoryCard({
   onDownload,
   onDelete,
   onNavigateIntoFolder,
+  onSelectEntry,
   uploadProgress,
 }: FileCardProps) {
   const t = useTranslations('InventoryPage');
@@ -73,6 +77,11 @@ export function InventoryCard({
   const isImagePreview =
     !entry.isFolder && Boolean(entry.mimeType?.startsWith('image/'));
   const canOpenFromCard = entry.isFolder || canPreviewInventoryEntry(entry);
+  const hasCardInteraction = canOpenFromCard || Boolean(onSelectEntry);
+
+  const handleCardClick = () => {
+    onSelectEntry?.(entry.id, true);
+  };
 
   const handleCardDoubleClick = () => {
     if (entry.isFolder) {
@@ -98,9 +107,16 @@ export function InventoryCard({
 
   return (
     <Card
+      aria-selected={isSelected}
       className={`h-fit border-border/70 bg-card/90 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg ${
-        canOpenFromCard ? 'cursor-pointer' : ''
+        hasCardInteraction ? 'cursor-pointer' : ''
+      } ${
+        isSelected
+          ? 'border-primary/60 bg-primary/5 shadow-md ring-2 ring-primary/30'
+          : ''
       }`}
+      data-selected={isSelected}
+      onClick={handleCardClick}
       onDoubleClick={handleCardDoubleClick}
     >
       <CardHeader className="gap-3">
@@ -109,10 +125,13 @@ export function InventoryCard({
             type="button"
             className={cn(
               'flex flex-1 gap-3 overflow-hidden text-left',
-              canOpenFromCard && 'cursor-pointer'
+              hasCardInteraction && 'cursor-pointer'
             )}
-            onClick={() => {
-              if (entry.isFolder) onOpen?.(entry);
+            onClick={(event) => {
+              if (!entry.isFolder) return;
+
+              event.stopPropagation();
+              onOpen?.(entry);
             }}
           >
             <div
@@ -154,6 +173,7 @@ export function InventoryCard({
                 variant="ghost"
                 size="icon-sm"
                 className="shrink-0"
+                onClick={(event) => event.stopPropagation()}
                 onDoubleClick={(event) => event.stopPropagation()}
               >
                 <MoreVertical />
