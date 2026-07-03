@@ -63,6 +63,7 @@ export function ChatView({
   const topSentinelRef = useRef<HTMLDivElement | null>(null);
   const previousScrollHeightRef = useRef<number | null>(null);
   const shouldRestoreScrollRef = useRef(false);
+  const hasInitialScrollRef = useRef(false);
   const prevMessagesLengthRef = useRef(messages.length);
 
   useEffect(() => {
@@ -111,38 +112,52 @@ export function ChatView({
     shouldRestoreScrollRef.current = false;
   }, [isLoadingOlderMessages, scrollContainerRef]);
 
+  // Initial scroll to the last user message on mount or initial data load
+  useEffect(() => {
+    const root = scrollContainerRef?.current;
+    if (!root || hasInitialScrollRef.current || messages.length === 0) return;
+
+    const lastUserMessage = [...messages]
+      .reverse()
+      .find((m) => m.role === 'user');
+    if (lastUserMessage) {
+      requestAnimationFrame(() => {
+        const el = document.getElementById(`message-${lastUserMessage.id}`);
+        if (el) {
+          el.scrollIntoView({
+            behavior: 'auto',
+            block: 'nearest',
+            inline: 'nearest',
+          });
+        }
+      });
+    }
+    hasInitialScrollRef.current = true;
+  }, [messages, scrollContainerRef]);
+
+  // Scroll to bottom when user sends a new message
   useEffect(() => {
     const root = scrollContainerRef?.current;
     if (!root) return;
 
-    // If there are messages, scroll to the last user message
-    if (messages.length > 0) {
-      const lastUserMessage = [...messages]
-        .reverse()
-        .find((m) => m.role === 'user');
-      if (lastUserMessage) {
-        requestAnimationFrame(() => {
-          const el = document.getElementById(`message-${lastUserMessage.id}`);
-          if (el) {
-            el.scrollIntoView({ behavior: 'auto' });
-          }
-        });
-      }
-      prevMessagesLengthRef.current = messages.length;
-      return;
-    }
+    const prevLength = prevMessagesLengthRef.current;
+    prevMessagesLengthRef.current = messages.length;
 
-    // If user sends a new message, scroll to the bottom
-    if (messages.length > prevMessagesLengthRef.current) {
+    // Only scroll if we have already done the initial scroll and a new message is appended
+    if (hasInitialScrollRef.current && messages.length > prevLength) {
       const lastMessage = messages[messages.length - 1];
-      if (lastMessage?.role === 'user') {
+      const prevLastMessage = prevLength > 0 ? messages[prevLength - 1] : null;
+
+      if (
+        lastMessage &&
+        (!prevLastMessage || lastMessage.id !== prevLastMessage.id) &&
+        lastMessage.role === 'user'
+      ) {
         requestAnimationFrame(() => {
           root.scrollTo({ top: root.scrollHeight, behavior: 'smooth' });
         });
       }
     }
-
-    prevMessagesLengthRef.current = messages.length;
   }, [messages, scrollContainerRef]);
 
   return (
