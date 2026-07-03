@@ -63,6 +63,7 @@ export function ChatView({
   const topSentinelRef = useRef<HTMLDivElement | null>(null);
   const previousScrollHeightRef = useRef<number | null>(null);
   const shouldRestoreScrollRef = useRef(false);
+  const prevMessagesLengthRef = useRef(messages.length);
 
   useEffect(() => {
     const sentinel = topSentinelRef.current;
@@ -109,6 +110,40 @@ export function ChatView({
     previousScrollHeightRef.current = null;
     shouldRestoreScrollRef.current = false;
   }, [isLoadingOlderMessages, scrollContainerRef]);
+
+  useEffect(() => {
+    const root = scrollContainerRef?.current;
+    if (!root) return;
+
+    // If there are messages, scroll to the last user message
+    if (messages.length > 0) {
+      const lastUserMessage = [...messages]
+        .reverse()
+        .find((m) => m.role === 'user');
+      if (lastUserMessage) {
+        requestAnimationFrame(() => {
+          const el = document.getElementById(`message-${lastUserMessage.id}`);
+          if (el) {
+            el.scrollIntoView({ behavior: 'auto' });
+          }
+        });
+      }
+      prevMessagesLengthRef.current = messages.length;
+      return;
+    }
+
+    // If user sends a new message, scroll to the bottom
+    if (messages.length > prevMessagesLengthRef.current) {
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage?.role === 'user') {
+        requestAnimationFrame(() => {
+          root.scrollTo({ top: root.scrollHeight, behavior: 'smooth' });
+        });
+      }
+    }
+
+    prevMessagesLengthRef.current = messages.length;
+  }, [messages, scrollContainerRef]);
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -184,9 +219,10 @@ export function ChatView({
 
             return (
               <Message
-                from={message.role}
-                key={message.id}
                 className="max-w-full"
+                from={message.role}
+                id={`message-${message.id}`}
+                key={message.id}
               >
                 <div className="flex flex-col gap-3">
                   <div
