@@ -6,10 +6,7 @@ import {
   useMutation,
   useQueryClient,
 } from '@tanstack/react-query';
-import {
-  DefaultChatTransport,
-  type UIMessage,
-} from 'ai';
+import { DefaultChatTransport, type UIMessage } from 'ai';
 import { useEffect, useMemo, useRef } from 'react';
 import { toast } from 'sonner';
 import { usePathname, useRouter } from '@/i18n/navigation';
