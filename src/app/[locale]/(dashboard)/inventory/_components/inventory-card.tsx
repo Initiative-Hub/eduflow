@@ -35,6 +35,7 @@ import { cn } from '@/lib/utils';
 import { inventoryService } from '../inventory.service';
 import type { InventoryEntry } from '../inventory.types';
 import {
+  canPreviewInventoryEntry,
   formatDate,
   formatFileSize,
   getEntryTypeLabel,
@@ -90,7 +91,19 @@ export function InventoryCard({
           <button
             type="button"
             className="flex flex-1 gap-3 overflow-hidden text-left"
-            onClick={() => onOpen?.(entry)}
+            onClick={() => {
+              if (entry.isFolder) onOpen?.(entry);
+            }}
+            onDoubleClick={() => {
+              if (entry.isFolder) {
+                onNavigateIntoFolder?.(entry);
+                return;
+              }
+
+              if (canPreviewInventoryEntry(entry)) {
+                onPreview?.(entry);
+              }
+            }}
           >
             <div
               className={cn(
@@ -155,7 +168,7 @@ export function InventoryCard({
                   {t('actions.open')}
                 </DropdownMenuItem>
               ) : (
-                entry.status === 'READY' && (
+                canPreviewInventoryEntry(entry) && (
                   <>
                     <DropdownMenuItem
                       onClick={() => onPreview?.(entry)}
