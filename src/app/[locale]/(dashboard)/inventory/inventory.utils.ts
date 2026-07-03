@@ -1,5 +1,27 @@
 import type { InventoryEntry } from './inventory.types';
 
+export type InventoryPreviewKind = 'image' | 'pdf' | 'text';
+
+const TEXT_PREVIEW_EXTENSIONS = new Set([
+  'txt',
+  'md',
+  'markdown',
+  'json',
+  'csv',
+  'tsv',
+  'xml',
+  'yaml',
+  'yml',
+  'html',
+  'css',
+  'js',
+  'jsx',
+  'ts',
+  'tsx',
+  'sql',
+  'log',
+]);
+
 export const formatFileSize = (bytes: number | null) => {
   if (bytes === null) return '—';
   if (bytes === 0) return '0 Bytes';
@@ -32,4 +54,29 @@ export const getEntryTypeLabel = (entry: InventoryEntry) => {
   if (entry.isFolder) return 'Folder';
   if (!entry.extension) return 'File';
   return entry.extension.toUpperCase();
+};
+
+export const getInventoryPreviewKind = (
+  entry: InventoryEntry
+): InventoryPreviewKind | null => {
+  if (entry.isFolder) return null;
+
+  const mimeType = entry.mimeType?.toLowerCase() ?? '';
+  const extension = entry.extension?.toLowerCase() ?? '';
+
+  if (mimeType.startsWith('image/')) return 'image';
+  if (mimeType === 'application/pdf' || extension === 'pdf') return 'pdf';
+
+  if (
+    mimeType.startsWith('text/') ||
+    mimeType === 'application/json' ||
+    mimeType === 'application/xml' ||
+    mimeType === 'application/javascript' ||
+    mimeType === 'application/typescript' ||
+    TEXT_PREVIEW_EXTENSIONS.has(extension)
+  ) {
+    return 'text';
+  }
+
+  return null;
 };
