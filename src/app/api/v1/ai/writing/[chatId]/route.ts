@@ -34,6 +34,87 @@ const writingUpdateSchema = z
     message: 'Provide title or deleted_at',
   });
 
+const writingHistoryQuerySchema = z.object({
+  before: z.string().trim().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(20).default(5),
+});
+
+/**
+ * @swagger
+ * /api/v1/ai/writing/{chatId}:
+ *   get:
+ *     tags:
+ *       - Writing
+ *     summary: Get writing session metadata and messages
+ *     responses:
+ *       200:
+ *         description: Writing session data
+ *       400:
+ *         description: Invalid request query
+ *       401:
+ *         description: Missing guest session
+ *       404:
+ *         description: Session not found
+ */
+export async function GET(
+  req: Request,
+  { params }: { params: Promise<{ chatId: string }> }
+) {
+  try {
+    const { chatId } = await params;
+    const parsedQuery = writingHistoryQuerySchema.safeParse(
+      Object.fromEntries(new URL(req.url).searchParams.entries())
+    );
+
+    if (!parsedQuery.success) {
+      return new Response(
+        JSON.stringify({
+          error: 'Invalid request query',
+          details: parsedQuery.error.flatten(),
+        }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { userId, guestId } = await getChatOwner();
+
+    if (!userId && !guestId) {
+      return new Response(JSON.stringify({ error: 'Missing guest session' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const writingData = await ChatPersistenceService.getChatMessagesPage({
+      chatId,
+      userId,
+      guestId,
+      chatType: AiChatType.WRITING_ASSISTANT,
+      limit: parsedQuery.data.limit,
+      beforeMessageId: parsedQuery.data.before,
+    });
+
+    if (!writingData) {
+      return new Response(
+        JSON.stringify({ error: 'Session not found or access denied' }),
+        { status: 404, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    return new Response(JSON.stringify(writingData), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  } catch (error: unknown) {
+    const message =
+      error instanceof Error ? error.message : 'Unknown error occurred';
+    return new Response(JSON.stringify({ error: message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+}
+
 /**
  * @swagger
  * /api/v1/ai/writing/{chatId}:

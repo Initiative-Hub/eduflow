@@ -43,11 +43,12 @@ export default async function WritingSessionPage({
     notFound();
   }
 
-  const writingData = await ChatPersistenceService.getChat({
+  const writingData = await ChatPersistenceService.getChatMessagesPage({
     chatId,
     userId: sessionData?.user?.id,
     guestId,
     chatType: AiChatType.WRITING_ASSISTANT,
+    limit: 5,
   });
 
   if (!writingData) {
@@ -59,6 +60,7 @@ export default async function WritingSessionPage({
       chatId={chatId}
       initialTool={getInitialWritingTool(writingData.metadata)}
       initialMessages={writingData.messages ?? []}
+      initialMessagesPagination={writingData.pagination}
     />
   );
 }

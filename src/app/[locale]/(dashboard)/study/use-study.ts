@@ -1,8 +1,15 @@
 'use client';
 
 import { useChat } from '@ai-sdk/react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { DefaultChatTransport, type UIMessage } from 'ai';
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query';
+import {
+  DefaultChatTransport,
+  type UIMessage,
+} from 'ai';
 import { useEffect, useMemo, useRef } from 'react';
 import { toast } from 'sonner';
 import { usePathname, useRouter } from '@/i18n/navigation';
@@ -20,6 +27,10 @@ import type { ChatLessonReferenceUIPart } from '@/types/chat-lesson-references';
 import { hasReachedUserMessageLimit } from '@/utils/chat-limit';
 import { prepareLastMessageRequest } from '@/utils/chat-request';
 import { uploadChatAttachments } from '../chat-attachments.service';
+import {
+  createInitialChatHistoryData,
+  mergeChatMessages,
+} from '../(ai-chat)/chat-history';
 import { studyService } from './study.service';
 
 // TODO: do we need this because this is not allow the unauthorized user
@@ -30,6 +41,11 @@ type UseStudyOptions = {
   quizOptions: StudyQuizOptions;
   chatId?: string;
   initialMessages?: UIMessage[];
+  initialMessagesPagination?: {
+    hasMore: boolean;
+    limit: number;
+    nextCursor: string | null;
+  };
   isAuthenticated: boolean;
 };
 
@@ -38,6 +54,7 @@ export const useStudy = ({
   quizOptions,
   chatId,
   initialMessages = [],
+  initialMessagesPagination,
   isAuthenticated,
 }: UseStudyOptions) => {
   const router = useRouter();
@@ -88,6 +105,39 @@ export const useStudy = ({
     [chatId]
   );
 
+  const initialHistoryPage = useMemo(
+    () =>
+      chatId
+        ? {
+            title: '',
+            messageCount: initialMessages.length,
+            messages: initialMessages,
+            pagination: initialMessagesPagination ?? {
+              hasMore: false,
+              limit: initialMessages.length,
+              nextCursor: null,
+            },
+          }
+        : null,
+    [chatId, initialMessages, initialMessagesPagination]
+  );
+
+  const historyQuery = useInfiniteQuery({
+    queryKey: ['study-chat-messages', chatId],
+    initialPageParam: undefined as string | undefined,
+    enabled: Boolean(chatId),
+    initialData: initialHistoryPage
+      ? createInitialChatHistoryData(initialHistoryPage)
+      : undefined,
+    queryFn: ({ pageParam }) =>
+      studyService.getChat(chatId as string, {
+        limit: initialMessagesPagination?.limit ?? 5,
+        before: pageParam,
+      }),
+    getNextPageParam: (lastPage) =>
+      lastPage.pagination.hasMore ? lastPage.pagination.nextCursor : undefined,
+  });
+
   const { messages, status, sendMessage, stop } = useChat({
     id: chatId,
     messages: initialMessages,
@@ -104,7 +154,10 @@ export const useStudy = ({
       ? [pendingMessage]
       : [];
 
-  const displayMessages = messages.length > 0 ? messages : pendingForChat;
+  const liveMessages = messages.length > 0 ? messages : pendingForChat;
+  const displayMessages = chatId
+    ? mergeChatMessages(historyQuery.data?.pages, liveMessages)
+    : liveMessages;
 
   useEffect(() => {
     if (!pendingMessage || !pendingChatId || !chatId) return;
@@ -208,6 +261,9 @@ export const useStudy = ({
 
   return {
     messages: displayMessages,
+    hasOlderMessages: historyQuery.hasNextPage,
+    isLoadingOlderMessages: historyQuery.isFetchingNextPage,
+    loadOlderMessages: historyQuery.fetchNextPage,
     maxMessages: MAX_USER_MESSAGES,
     userMessageCount: displayMessages.filter((m) => m.role === 'user').length,
     hasOutput: displayMessages.length > 0,

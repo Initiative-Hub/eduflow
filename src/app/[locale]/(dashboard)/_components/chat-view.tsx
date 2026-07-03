@@ -4,6 +4,8 @@ import type { UIMessage } from 'ai';
 import { Bot, Loader2, User } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
+import type { RefObject } from 'react';
+import { useEffect, useRef } from 'react';
 import {
   Conversation,
   ConversationContent,
@@ -36,8 +38,12 @@ import { ChatToolInvocations } from './chat-tools';
 
 interface ChatViewProps {
   messages: UIMessage[];
+  hasOlderMessages?: boolean;
+  isLoadingOlderMessages?: boolean;
   isStreaming: boolean;
+  loadOlderMessages?: () => void;
   onSuggestionSelect?: (suggestion: string) => void;
+  scrollContainerRef?: RefObject<HTMLDivElement | null>;
   suggestionsDisabled?: boolean;
 }
 
@@ -45,16 +51,79 @@ const Quiz = dynamic(() => import('@/components/quiz').then((mod) => mod.Quiz));
 
 export function ChatView({
   messages,
+  hasOlderMessages = false,
+  isLoadingOlderMessages = false,
   isStreaming,
+  loadOlderMessages,
   onSuggestionSelect,
+  scrollContainerRef,
   suggestionsDisabled = false,
 }: ChatViewProps) {
   const t = useTranslations('AIChat');
+  const topSentinelRef = useRef<HTMLDivElement | null>(null);
+  const previousScrollHeightRef = useRef<number | null>(null);
+  const shouldRestoreScrollRef = useRef(false);
+
+  useEffect(() => {
+    const sentinel = topSentinelRef.current;
+    const root = scrollContainerRef?.current;
+    if (!sentinel || !root || !loadOlderMessages || !hasOlderMessages) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry?.isIntersecting && !isLoadingOlderMessages) {
+          previousScrollHeightRef.current = root.scrollHeight;
+          shouldRestoreScrollRef.current = true;
+          loadOlderMessages();
+        }
+      },
+      {
+        root,
+        rootMargin: '120px 0px 0px 0px',
+      }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [
+    hasOlderMessages,
+    isLoadingOlderMessages,
+    loadOlderMessages,
+    scrollContainerRef,
+  ]);
+
+  useEffect(() => {
+    const root = scrollContainerRef?.current;
+    const previousScrollHeight = previousScrollHeightRef.current;
+    if (
+      !root ||
+      isLoadingOlderMessages ||
+      !shouldRestoreScrollRef.current ||
+      previousScrollHeight === null
+    ) {
+      return;
+    }
+
+    root.scrollTop += root.scrollHeight - previousScrollHeight;
+    previousScrollHeightRef.current = null;
+    shouldRestoreScrollRef.current = false;
+  }, [isLoadingOlderMessages, scrollContainerRef]);
 
   return (
     <div className="mx-auto max-w-4xl">
       <Conversation>
         <ConversationContent className="gap-6 py-8">
+          {hasOlderMessages || isLoadingOlderMessages ? (
+            <div
+              ref={topSentinelRef}
+              className="flex min-h-8 items-center justify-center"
+            >
+              {isLoadingOlderMessages ? (
+                <Loader2 className="size-4 animate-spin text-muted-foreground" />
+              ) : null}
+            </div>
+          ) : null}
           {messages.map((message) => {
             const text = getMessageText(message);
             const reasoning = getMessageReasoning(message);

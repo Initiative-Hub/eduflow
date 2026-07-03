@@ -4,7 +4,7 @@ import { GraduationCap, LockKeyhole } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import type React from 'react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { DEFAULT_SOCRATIC_GUIDANCE_DEPTH } from '@/lib/validations/socratic.schema';
@@ -22,6 +22,11 @@ import { SocraticGuidanceDepthControl } from './socratic-guidance-depth-control'
 interface SocraticClientProps {
   chatId?: string;
   initialMessages?: SocraticUIMessage[];
+  initialMessagesPagination?: {
+    hasMore: boolean;
+    limit: number;
+    nextCursor: string | null;
+  };
   isAuthenticated: boolean;
 }
 
@@ -32,15 +37,20 @@ const ChatView = dynamic(() =>
 export function SocraticClient({
   chatId,
   initialMessages,
+  initialMessagesPagination,
   isAuthenticated,
 }: SocraticClientProps) {
   const t = useTranslations('SocraticPage');
   const tChat = useTranslations('AIChat');
 
   const [isUploadingAttachments, setIsUploadingAttachments] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
   const {
     messages,
+    hasOlderMessages,
+    isLoadingOlderMessages,
+    loadOlderMessages,
     maxMessages,
     userMessageCount,
     hasOutput,
@@ -55,6 +65,7 @@ export function SocraticClient({
   } = useSocratic({
     chatId,
     initialMessages,
+    initialMessagesPagination,
     isAuthenticated,
   });
 
@@ -127,8 +138,12 @@ export function SocraticClient({
   ) : (
     <ChatView
       messages={messages}
+      hasOlderMessages={hasOlderMessages}
+      isLoadingOlderMessages={isLoadingOlderMessages}
       isStreaming={isStreaming}
+      loadOlderMessages={() => void loadOlderMessages()}
       onSuggestionSelect={(suggestion) => void submitText(suggestion)}
+      scrollContainerRef={scrollContainerRef}
       suggestionsDisabled={isStreaming || isLimitReached}
     />
   );
@@ -171,7 +186,11 @@ export function SocraticClient({
 
   return (
     <>
-      <ChatWorkspaceShell composer={composer} viewport={viewport} />
+      <ChatWorkspaceShell
+        composer={composer}
+        scrollContainerRef={scrollContainerRef}
+        viewport={viewport}
+      />
       <ChatSidebar
         currentChatId={chatId}
         emptyIcon={GraduationCap}
