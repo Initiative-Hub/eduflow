@@ -552,6 +552,8 @@ model QuizAttempt {
   userId           String   @map("user_id")
   user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   answers          Json
+  quizSnapshot     Json?    @map("quiz_snapshot")
+  answeredCount    Int      @default(0) @map("answered_count")
   score            Float
   maxScore         Float    @map("max_score")
   percentage       Float

@@ -1084,6 +1084,40 @@
       "previous": "Previous",
       "range": "Showing {start}-{end} of {total} courses"
     },
+    "Grades": {
+      "answered": "Answered",
+      "averageScore": "Average score",
+      "bestScore": "Best score",
+      "correct": "Correct",
+      "deliveryMode": {
+        "INSTANT_FEEDBACK": "Instant feedback",
+        "POST_QUIZ_REVIEW": "Post-quiz review"
+      },
+      "description": "Review your quiz submissions, scores, and answer history for this course.",
+      "emptyDescription": "Complete a quiz in this course and your submission will appear here.",
+      "emptyTitle": "No submissions yet",
+      "historyDescription": "Open a submission to review every answer, including unanswered questions.",
+      "historyTitle": "Submission history",
+      "legacyAttempt": "Legacy result",
+      "loadError": "Unable to load grades",
+      "loadErrorDescription": "Your submissions could not be loaded. Please try again.",
+      "overview": "Grade overview",
+      "pendingReview": "One or more answers are still waiting for review.",
+      "percentage": "Percentage",
+      "points": "Points",
+      "questionNumber": "Question {number}",
+      "retry": "Try again",
+      "reviewAnswers": "Review answers",
+      "status": {
+        "correct": "Correct",
+        "incorrect": "Incorrect",
+        "pending": "Pending review",
+        "unanswered": "Unanswered"
+      },
+      "submissions": "Submissions",
+      "title": "Grades",
+      "unansweredDescription": "No answer was submitted for this question."
+    },
     "QuestionBank": {
       "allCategories": "All Categories",
       "allLessons": "All Lessons",
@@ -1560,6 +1594,14 @@
     "aiChat": "AI Chat",
     "aiTools": "AI Tools",
     "courses": "Courses",
+    "courseAnalytics": "Analytics",
+    "courseFiles": "Files",
+    "courseGrades": "Grades",
+    "courseMembers": "Members",
+    "courseModules": "Modules",
+    "courseQuestionBank": "Question Bank",
+    "courseRoles": "Roles",
+    "courseSettings": "Settings",
     "englishAssistant": "English Assistant",
     "newSession": "New Session",
     "settingsAcademicContext": "Academic Context",
@@ -1797,6 +1839,12 @@
     "submitError": "Failed to submit quiz. Please try again.",
     "submitQuiz": "Submit",
     "submitting": "Submitting...",
+    "status": {
+      "correct": "Correct",
+      "incorrect": "Incorrect",
+      "pending": "Pending review",
+      "unanswered": "Unanswered"
+    },
     "true": "True",
     "type": {
       "drag_and_drop": "Drag & Drop",

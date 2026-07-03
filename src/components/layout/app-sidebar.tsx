@@ -56,7 +56,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     ? courses.find((c) => c.id === courseId)
     : null;
 
-  const courseItems = courseId ? getCourseNavItems(courseId) : [];
+  const courseItems = courseId ? getCourseNavItems(courseId, t) : [];
 
   const isSettingsContext =
     pathname === '/profile' || pathname.startsWith('/settings');

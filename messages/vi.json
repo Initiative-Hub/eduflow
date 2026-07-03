@@ -1084,6 +1084,40 @@
       "previous": "Trước",
       "range": "Đang hiển thị {start}-{end} trong {total} khóa học"
     },
+    "Grades": {
+      "answered": "Đã trả lời",
+      "averageScore": "Điểm trung bình",
+      "bestScore": "Điểm cao nhất",
+      "correct": "Đúng",
+      "deliveryMode": {
+        "INSTANT_FEEDBACK": "Phản hồi tức thì",
+        "POST_QUIZ_REVIEW": "Xem lại sau bài kiểm tra"
+      },
+      "description": "Xem lại các bài đã nộp, điểm số và lịch sử câu trả lời trong khóa học này.",
+      "emptyDescription": "Hoàn thành một bài kiểm tra trong khóa học và bài nộp sẽ xuất hiện tại đây.",
+      "emptyTitle": "Chưa có bài nộp",
+      "historyDescription": "Mở một bài nộp để xem lại mọi câu trả lời, kể cả câu chưa trả lời.",
+      "historyTitle": "Lịch sử bài nộp",
+      "legacyAttempt": "Kết quả cũ",
+      "loadError": "Không thể tải điểm",
+      "loadErrorDescription": "Không thể tải các bài đã nộp. Vui lòng thử lại.",
+      "overview": "Tổng quan điểm",
+      "pendingReview": "Một hoặc nhiều câu trả lời vẫn đang chờ chấm.",
+      "percentage": "Phần trăm",
+      "points": "Điểm",
+      "questionNumber": "Câu {number}",
+      "retry": "Thử lại",
+      "reviewAnswers": "Xem câu trả lời",
+      "status": {
+        "correct": "Đúng",
+        "incorrect": "Sai",
+        "pending": "Đang chờ chấm",
+        "unanswered": "Chưa trả lời"
+      },
+      "submissions": "Bài đã nộp",
+      "title": "Điểm",
+      "unansweredDescription": "Không có câu trả lời nào được nộp cho câu hỏi này."
+    },
     "QuestionBank": {
       "allCategories": "Tất cả danh mục",
       "allLessons": "Tất cả bài học",
@@ -1560,6 +1594,14 @@
     "aiChat": "Trò chuyện AI",
     "aiTools": "Công cụ AI",
     "courses": "Khóa học",
+    "courseAnalytics": "Phân tích",
+    "courseFiles": "Tệp",
+    "courseGrades": "Điểm",
+    "courseMembers": "Thành viên",
+    "courseModules": "Mô-đun",
+    "courseQuestionBank": "Ngân hàng câu hỏi",
+    "courseRoles": "Vai trò",
+    "courseSettings": "Cài đặt",
     "englishAssistant": "Trợ lý Tiếng Anh",
     "newSession": "Phiên mới",
     "settingsAcademicContext": "Bối cảnh học tập",
@@ -1797,6 +1839,12 @@
     "submitError": "Nộp bài thất bại. Vui lòng thử lại.",
     "submitQuiz": "Nộp bài",
     "submitting": "Đang nộp...",
+    "status": {
+      "correct": "Đúng",
+      "incorrect": "Sai",
+      "pending": "Đang chờ chấm",
+      "unanswered": "Chưa trả lời"
+    },
     "true": "Đúng",
     "type": {
       "drag_and_drop": "Kéo và thả",

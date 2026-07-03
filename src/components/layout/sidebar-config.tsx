@@ -2,6 +2,7 @@
 
 import {
   Archive,
+  Award,
   BookOpen,
   ClipboardList,
   Cloud,
@@ -137,51 +138,61 @@ export function getAdminNavItems(
   ];
 }
 
-export function getCourseNavItems(courseId: string): SidebarItem[] {
+export function getCourseNavItems(
+  courseId: string,
+  t: ReturnType<typeof useTranslations>
+): SidebarItem[] {
   return [
     {
-      name: 'Modules',
+      name: t('courseModules'),
       url: `/courses/${courseId}`,
       icon: <BookOpen className={sidebarIconClassName} />,
       isActive: (pathname) => isExactMatch(pathname, `/courses/${courseId}`),
     },
     {
-      name: 'Question Bank',
+      name: t('courseQuestionBank'),
       url: `/courses/${courseId}/question-bank`,
       icon: <ClipboardList className={sidebarIconClassName} />,
       isActive: (pathname) =>
         isExactMatch(pathname, `/courses/${courseId}/question-bank`),
     },
     {
-      name: 'Files',
+      name: t('courseGrades'),
+      url: `/courses/${courseId}/grades`,
+      icon: <Award className={sidebarIconClassName} />,
+      isActive: (pathname) =>
+        isExactMatch(pathname, `/courses/${courseId}/grades`),
+    },
+    {
+      name: t('courseFiles'),
       url: `/courses/${courseId}/files`,
       icon: <Files className={sidebarIconClassName} />,
       isActive: (pathname) =>
         isExactMatch(pathname, `/courses/${courseId}/files`),
     },
     {
-      name: 'Members',
+      name: t('courseMembers'),
       url: `/courses/${courseId}/members`,
       icon: <Users className={sidebarIconClassName} />,
       isActive: (pathname) =>
         isExactMatch(pathname, `/courses/${courseId}/members`),
     },
     {
-      name: 'Roles',
+      name: t('courseRoles'),
       url: `/courses/${courseId}/roles`,
       icon: <ShieldCheck className={sidebarIconClassName} />,
       isActive: (pathname) =>
         isExactMatch(pathname, `/courses/${courseId}/roles`),
     },
     {
-      name: 'Analytics',
+      name: t('courseAnalytics'),
       url: `/courses/${courseId}/analytics`,
       icon: <LineChart className={sidebarIconClassName} />,
       isActive: (pathname) =>
         isExactMatch(pathname, `/courses/${courseId}/analytics`),
     },
     {
-      name: 'Settings',
+      name: t('courseSettings'),
       url: `/courses/${courseId}/settings`,
       icon: <Settings className={sidebarIconClassName} />,
       isActive: (pathname) =>

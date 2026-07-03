@@ -35,6 +35,7 @@ import {
   type StudentAnswers,
   SUB_TYPE_TO_QUESTION_TYPE,
 } from '@/lib/quiz-template';
+import type { QuizAttemptSnapshot } from '@/services/quiz-attempt-snapshot';
 import { LessonOutline } from '../../../lessons/[lessonId]/_components/lesson-outline';
 import { useModules } from '../../../use-modules';
 import { useQuestionBank } from '../../../use-question-bank';
@@ -48,6 +49,8 @@ interface QuizAttemptResponse {
   quizId: string;
   userId: string;
   answers: Record<string, StudentAnswer>;
+  quizSnapshot: QuizAttemptSnapshot | null;
+  answeredCount: number;
   score: number;
   maxScore: number;
   percentage: number;
@@ -150,6 +153,18 @@ export function QuizPlayerClient({ courseId, quizId }: QuizPlayerClientProps) {
     }
     return map;
   }, [mostRecentAttempt]);
+
+  const previousQuizContent = useMemo<QuizContent | null>(() => {
+    if (mostRecentAttempt?.quizSnapshot) {
+      return {
+        title: mostRecentAttempt.quizSnapshot.title,
+        description: mostRecentAttempt.quizSnapshot.description,
+        type: mostRecentAttempt.quizSnapshot.type,
+        questions: mostRecentAttempt.quizSnapshot.questions,
+      };
+    }
+    return quizContent;
+  }, [mostRecentAttempt, quizContent]);
 
   // Find the module title for breadcrumb
   const currentModule = useMemo(() => {
@@ -364,10 +379,10 @@ export function QuizPlayerClient({ courseId, quizId }: QuizPlayerClientProps) {
             isGeneratingAI={isGeneratingQuestions}
             questionCount={quiz.questionCount}
           />
-        ) : showPreviousResult ? (
+        ) : showPreviousResult && previousQuizContent ? (
           <QuizResult
             result={previousResult}
-            quiz={quizContent}
+            quiz={previousQuizContent}
             answers={previousAnswers}
             onRetry={handleRetake}
           />

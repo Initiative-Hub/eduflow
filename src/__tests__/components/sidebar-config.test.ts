@@ -25,9 +25,19 @@ describe('sidebar-config', () => {
   });
 
   it('supports course items that only match the course root route', () => {
-    const courseItems = getCourseNavItems('course-123');
+    const courseItems = getCourseNavItems('course-123', t as never);
 
     expect(courseItems[0].isActive('/courses/course-123')).toBe(true);
     expect(courseItems[0].isActive('/courses/course-123/chat')).toBe(false);
+  });
+
+  it('places Grades immediately below Question Bank', () => {
+    const courseItems = getCourseNavItems('course-123', t as never);
+
+    expect(courseItems.slice(1, 3).map((item) => item.name)).toEqual([
+      'courseQuestionBank',
+      'courseGrades',
+    ]);
+    expect(courseItems[2].url).toBe('/courses/course-123/grades');
   });
 });

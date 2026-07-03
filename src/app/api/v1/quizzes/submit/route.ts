@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { CourseEnrollmentStatus } from '@/generated/prisma';
+import { CourseEnrollmentStatus, type Prisma } from '@/generated/prisma';
 import { errorResponse } from '@/lib/api/error-response';
 import { type AuthHandler, withAuth } from '@/lib/api/middlewares';
 import { prisma } from '@/lib/prisma';
@@ -10,6 +10,10 @@ import type {
   QuizSchema,
   StudentAnswers,
 } from '@/lib/quiz-template/types';
+import {
+  countAnsweredQuestions,
+  createQuizAttemptSnapshot,
+} from '@/services/quiz-attempt-snapshot';
 import { resolveReferencedQuestions } from '@/services/quiz-question-references';
 
 // ─── Request Validation Schemas ──────────────────────────────────────────────
@@ -146,8 +150,11 @@ const handler: AuthHandler = async (req, sessionData) => {
       select: {
         id: true,
         courseId: true,
+        title: true,
+        description: true,
         questions: true,
         subType: true,
+        deliveryMode: true,
         questionCount: true,
         quizQuestions: {
           orderBy: { orderIndex: 'asc' },
@@ -211,6 +218,8 @@ const handler: AuthHandler = async (req, sessionData) => {
 
     // Score on the server using the authoritative question data
     const scoreResult = calculateScore(studentAnswers, schema);
+    const quizSnapshot = createQuizAttemptSnapshot(quiz, questions);
+    const answeredCount = countAnsweredQuestions(answers, questions.length);
 
     // Persist the quiz attempt
     await prisma.quizAttempt.create({
@@ -218,6 +227,8 @@ const handler: AuthHandler = async (req, sessionData) => {
         quizId,
         userId,
         answers: JSON.parse(JSON.stringify(answers)),
+        quizSnapshot: quizSnapshot as unknown as Prisma.InputJsonValue,
+        answeredCount,
         score: scoreResult.earnedPoints,
         maxScore: scoreResult.totalPoints,
         percentage: scoreResult.percentage,
