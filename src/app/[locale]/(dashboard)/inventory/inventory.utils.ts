@@ -80,3 +80,7 @@ export const getInventoryPreviewKind = (
 
   return null;
 };
+
+export const canPreviewInventoryEntry = (entry: InventoryEntry) => {
+  return entry.status === 'READY' && getInventoryPreviewKind(entry) !== null;
+};
