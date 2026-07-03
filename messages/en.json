@@ -529,7 +529,9 @@
     },
     "previewDialog": {
       "description": "Previewing {type}",
+      "loading": "Loading preview...",
       "placeholder": "Preview",
+      "textError": "We could not load this text preview.",
       "title": "File preview",
       "unsupported": "This file type cannot be previewed inline."
     },

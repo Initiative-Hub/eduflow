@@ -34,7 +34,9 @@ const entry = (overrides: Partial<InventoryEntry>): InventoryEntry => ({
 describe('inventory preview helpers', () => {
   it('classifies images, PDFs, and text documents for inline preview', () => {
     expect(
-      getInventoryPreviewKind(entry({ mimeType: 'image/png', extension: 'png' }))
+      getInventoryPreviewKind(
+        entry({ mimeType: 'image/png', extension: 'png' })
+      )
     ).toBe('image');
     expect(
       getInventoryPreviewKind(
@@ -42,7 +44,9 @@ describe('inventory preview helpers', () => {
       )
     ).toBe('pdf');
     expect(
-      getInventoryPreviewKind(entry({ mimeType: 'text/markdown', extension: 'md' }))
+      getInventoryPreviewKind(
+        entry({ mimeType: 'text/markdown', extension: 'md' })
+      )
     ).toBe('text');
   });
 
@@ -66,7 +70,9 @@ describe('inventory preview helpers', () => {
   it('only previews ready files with a supported inline preview kind', () => {
     expect(canPreviewInventoryEntry(baseEntry)).toBe(true);
     expect(canPreviewInventoryEntry(entry({ isFolder: true }))).toBe(false);
-    expect(canPreviewInventoryEntry(entry({ status: 'UPLOADING' }))).toBe(false);
+    expect(canPreviewInventoryEntry(entry({ status: 'UPLOADING' }))).toBe(
+      false
+    );
     expect(
       canPreviewInventoryEntry(
         entry({ mimeType: 'application/zip', extension: 'zip' })

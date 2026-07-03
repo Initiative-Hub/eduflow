@@ -529,7 +529,9 @@
     },
     "previewDialog": {
       "description": "Đang xem trước {type}",
+      "loading": "Đang tải bản xem trước...",
       "placeholder": "Xem trước",
+      "textError": "Không thể tải bản xem trước văn bản.",
       "title": "Xem trước tệp",
       "unsupported": "Loại tệp này chưa thể xem trước trực tiếp."
     },
