@@ -24,6 +24,8 @@ const baseEntry: InventoryEntry = {
   updatedAt: '2026-07-03T00:00:00.000Z',
   uploadedAt: '2026-07-03T00:00:00.000Z',
   deletedAt: null,
+  thumbnailObjectKey: null,
+  thumbnailMimeType: null,
 };
 
 const entry = (overrides: Partial<InventoryEntry>): InventoryEntry => ({

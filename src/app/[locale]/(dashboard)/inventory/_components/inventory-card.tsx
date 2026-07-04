@@ -99,7 +99,11 @@ function getInventoryCardIcon(entry: InventoryEntry) {
 
 function canShowCardBodyPreview(entry: InventoryEntry) {
   const previewKind = getInventoryPreviewKind(entry);
-  return previewKind === 'image' || previewKind === 'video';
+  return (
+    previewKind === 'image' ||
+    previewKind === 'video' ||
+    Boolean(entry.thumbnailUrl)
+  );
 }
 
 export function InventoryCard({
@@ -148,10 +152,15 @@ export function InventoryCard({
       const response = await inventoryService.shareEntry(entry.id);
       return response.data.signedUrl;
     },
-    enabled: canShowBodyPreview && canPreviewInventoryEntry(entry),
+    enabled:
+      canShowBodyPreview &&
+      !entry.thumbnailUrl &&
+      canPreviewInventoryEntry(entry),
     staleTime: 5 * 60 * 1000,
     retry: 1,
   });
+
+  const cardBodyPreviewUrl = entry.thumbnailUrl ?? previewUrlQuery.data;
 
   return (
     <Card
@@ -289,11 +298,11 @@ export function InventoryCard({
       {!entry.isFolder && (
         <CardContent className="p-0">
           {canShowBodyPreview &&
-          previewUrlQuery.data &&
+          cardBodyPreviewUrl &&
           !cardBodyPreviewFailed ? (
-            previewKind === 'image' ? (
+            entry.thumbnailUrl || previewKind === 'image' ? (
               <Image
-                src={previewUrlQuery.data}
+                src={cardBodyPreviewUrl}
                 alt={entry.name}
                 width={640}
                 height={360}
@@ -310,7 +319,7 @@ export function InventoryCard({
                 className="h-36 w-full bg-background object-cover"
               >
                 <source
-                  src={previewUrlQuery.data}
+                  src={cardBodyPreviewUrl}
                   type={entry.mimeType ?? undefined}
                 />
               </video>
