@@ -176,12 +176,10 @@ export function ChatView({
         lastMessage.role === 'user'
       ) {
         setIsAtBottom(true);
-        requestAnimationFrame(() => {
-          bottomMarkerRef.current?.scrollIntoView({
-            behavior: 'smooth',
-            block: 'nearest',
-            inline: 'nearest',
-          });
+        bottomMarkerRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+          inline: 'nearest',
         });
       }
     }
@@ -192,12 +190,10 @@ export function ChatView({
     const root = scrollContainerRef?.current;
     if (!root || !isAtBottom || !isStreaming || messages.length === 0) return;
 
-    requestAnimationFrame(() => {
-      bottomMarkerRef.current?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest',
-        inline: 'nearest',
-      });
+    bottomMarkerRef.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'nearest',
+      inline: 'nearest',
     });
   }, [isAtBottom, isStreaming, messages, scrollContainerRef]);
 
@@ -435,6 +431,7 @@ export function ChatView({
             </div>
           )}
 
+          {/* Bottom marker for scrolling to the latest message */}
           <div ref={bottomMarkerRef} />
         </ConversationContent>
         <ConversationScrollButton className="bottom-2 shadow-sm" />
