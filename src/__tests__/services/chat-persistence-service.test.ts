@@ -14,6 +14,7 @@ vi.mock('@/lib/prisma', () => ({
       update: vi.fn(),
     },
     aiChatMessage: {
+      findFirst: vi.fn(),
       findMany: vi.fn(),
       deleteMany: vi.fn(),
       createMany: vi.fn(),
@@ -38,6 +39,7 @@ const prismaMock = prisma as unknown as {
     update: ReturnType<typeof vi.fn>;
   };
   aiChatMessage: {
+    findFirst: ReturnType<typeof vi.fn>;
     findMany: ReturnType<typeof vi.fn>;
     deleteMany: ReturnType<typeof vi.fn>;
     createMany: ReturnType<typeof vi.fn>;
@@ -227,6 +229,139 @@ describe('ChatPersistenceService', () => {
         }),
       })
     );
+  });
+
+  it('returns the latest 5 logged-in chat messages with pagination metadata', async () => {
+    const updatedAt = new Date('2026-01-05T00:00:00.000Z');
+    const dbMessages = Array.from({ length: 6 }, (_, index) => ({
+      id: `msg-${12 - index}`,
+      role: index % 2 === 0 ? 'USER' : 'ASSISTANT',
+      parts: [{ type: 'text', text: `Message ${12 - index}` }],
+      createdAt: new Date(2026, 0, 5, 0, 0, 12 - index),
+    }));
+
+    prismaMock.aiChat.findFirst.mockResolvedValueOnce({
+      id: 'chat-db-1',
+      title: 'Explain gravity',
+      metadata: null,
+      updatedAt,
+      _count: { messages: 12 },
+      messages: dbMessages,
+    });
+
+    const result = await ChatPersistenceService.getChatMessagesPage({
+      chatId: 'chat-db-1',
+      userId: 'user-1',
+      limit: 5,
+    });
+
+    expect(prismaMock.aiChat.findFirst).toHaveBeenCalledWith({
+      where: {
+        id: 'chat-db-1',
+        userId: 'user-1',
+        type: 'CHAT_ASSISTANT',
+        status: 'ACTIVE',
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        title: true,
+        metadata: true,
+        updatedAt: true,
+        _count: { select: { messages: true } },
+        messages: {
+          orderBy: { createdAt: 'desc' },
+          take: 6,
+          select: {
+            id: true,
+            role: true,
+            parts: true,
+            createdAt: true,
+          },
+        },
+      },
+    });
+    expect(result).toEqual({
+      title: 'Explain gravity',
+      metadata: null,
+      messageCount: 12,
+      messages: [
+        {
+          id: 'msg-8',
+          role: 'user',
+          parts: [{ type: 'text', text: 'Message 8' }],
+        },
+        {
+          id: 'msg-9',
+          role: 'assistant',
+          parts: [{ type: 'text', text: 'Message 9' }],
+        },
+        {
+          id: 'msg-10',
+          role: 'user',
+          parts: [{ type: 'text', text: 'Message 10' }],
+        },
+        {
+          id: 'msg-11',
+          role: 'assistant',
+          parts: [{ type: 'text', text: 'Message 11' }],
+        },
+        {
+          id: 'msg-12',
+          role: 'user',
+          parts: [{ type: 'text', text: 'Message 12' }],
+        },
+      ],
+      updatedAt: updatedAt.toISOString(),
+      pagination: {
+        hasMore: true,
+        limit: 5,
+        nextCursor: 'msg-8',
+      },
+    });
+  });
+
+  it('returns the next older logged-in chat page before a message cursor', async () => {
+    const updatedAt = new Date('2026-01-05T00:00:00.000Z');
+    const cursorMessageCreatedAt = new Date('2026-01-05T00:00:10.000Z');
+
+    prismaMock.aiChatMessage.findFirst.mockResolvedValueOnce({
+      id: 'msg-6',
+      createdAt: cursorMessageCreatedAt,
+    });
+    prismaMock.aiChat.findFirst.mockResolvedValueOnce({
+      id: 'chat-db-1',
+      title: 'Explain gravity',
+      metadata: null,
+      updatedAt,
+      _count: { messages: 12 },
+      messages: Array.from({ length: 6 }, (_, index) => ({
+        id: `msg-${6 - index}`,
+        role: index % 2 === 0 ? 'USER' : 'ASSISTANT',
+        parts: [{ type: 'text', text: `Message ${6 - index}` }],
+        createdAt: new Date(2026, 0, 5, 0, 0, 6 - index),
+      })),
+    });
+
+    const result = await ChatPersistenceService.getChatMessagesPage({
+      chatId: 'chat-db-1',
+      userId: 'user-1',
+      limit: 5,
+      beforeMessageId: 'msg-6',
+    });
+
+    expect(result?.messages.map((message) => message.id)).toEqual([
+      'msg-2',
+      'msg-3',
+      'msg-4',
+      'msg-5',
+      'msg-6',
+    ]);
+    expect(result?.pagination).toEqual({
+      hasMore: true,
+      limit: 5,
+      nextCursor: 'msg-2',
+    });
   });
 
   it('does not persist guest messages or re-index deleted cached chats', async () => {

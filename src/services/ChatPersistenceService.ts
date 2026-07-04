@@ -47,6 +47,28 @@ interface SaveMessagesInput extends ChatOwner {
   model?: string;
 }
 
+interface GetChatMessagesPageInput extends ChatOwner {
+  chatId: string;
+  limit: number;
+  beforeMessageId?: string;
+}
+
+interface ChatMessagesPagePagination {
+  hasMore: boolean;
+  limit: number;
+  nextCursor: string | null;
+}
+
+export interface ChatMessagesPage {
+  guestId?: string;
+  title: string;
+  metadata?: Prisma.JsonValue;
+  messageCount: number;
+  messages: UIMessage[];
+  updatedAt?: string;
+  pagination: ChatMessagesPagePagination;
+}
+
 interface UpdateChatInput extends ChatOwner {
   chatId: string;
   title?: string;
@@ -218,6 +240,157 @@ export class ChatPersistenceService {
       messageCount: chatData.messageCount ?? 0,
       messages: chatData.messages ?? [],
       updatedAt: chatData.updatedAt,
+    };
+  }
+
+  static async getChatMessagesPage({
+    chatId,
+    userId,
+    guestId,
+    limit,
+    beforeMessageId,
+    chatType = DEFAULT_CHAT_TYPE,
+  }: GetChatMessagesPageInput): Promise<ChatMessagesPage | null> {
+    if (userId) {
+      let cursorCreatedAt: Date | undefined;
+      let cursorId: string | undefined;
+
+      if (beforeMessageId) {
+        const cursorMessage = await prisma.aiChatMessage.findFirst({
+          where: {
+            id: beforeMessageId,
+            chatId,
+            chat: {
+              userId,
+              type: chatType,
+              status: AiChatStatus.ACTIVE,
+              deletedAt: null,
+            },
+          },
+          select: {
+            id: true,
+            createdAt: true,
+          },
+        });
+
+        if (!cursorMessage) return null;
+
+        cursorCreatedAt = cursorMessage.createdAt;
+        cursorId = cursorMessage.id;
+      }
+
+      const chat = await prisma.aiChat.findFirst({
+        where: {
+          id: chatId,
+          userId,
+          type: chatType,
+          status: AiChatStatus.ACTIVE,
+          deletedAt: null,
+        },
+        select: {
+          id: true,
+          title: true,
+          metadata: true,
+          updatedAt: true,
+          _count: { select: { messages: true } },
+          messages: {
+            ...(cursorCreatedAt && cursorId
+              ? {
+                  where: {
+                    OR: [
+                      { createdAt: { lt: cursorCreatedAt } },
+                      {
+                        createdAt: cursorCreatedAt,
+                        id: { lt: cursorId },
+                      },
+                    ],
+                  },
+                }
+              : {}),
+            orderBy: { createdAt: 'desc' },
+            take: limit + 1,
+            select: {
+              id: true,
+              role: true,
+              parts: true,
+              createdAt: true,
+            },
+          },
+        },
+      });
+
+      if (!chat) return null;
+
+      const pageMessages = chat.messages.slice(0, limit);
+      const messages = pageMessages.toReversed().map((message) => ({
+        id: message.id,
+        role: message.role.toLowerCase(),
+        parts: Array.isArray(message.parts) ? message.parts : [],
+      })) as UIMessage[];
+
+      const fileHydratedMessages = await hydrateChatAttachmentUrls({
+        messages,
+        userId,
+      });
+      const hydratedMessages = await hydrateChatLessonReferenceSummaries({
+        messages: fileHydratedMessages,
+        userId,
+      });
+
+      const hasMore = chat.messages.length > limit;
+      const oldestMessageId = hydratedMessages[0]?.id ?? null;
+
+      return {
+        title: chat.title,
+        metadata: chat.metadata,
+        messageCount: chat._count.messages,
+        messages: hydratedMessages,
+        updatedAt: chat.updatedAt.toISOString(),
+        pagination: {
+          hasMore,
+          limit,
+          nextCursor: hasMore ? oldestMessageId : null,
+        },
+      };
+    }
+
+    if (!guestId) return null;
+
+    const chatData = await CacheService.getCache<CachedChat>(chatId);
+    if (
+      !chatData ||
+      chatData.guestId !== guestId ||
+      chatData.deletedAt ||
+      (chatData.type ?? DEFAULT_CHAT_TYPE) !== chatType
+    ) {
+      return null;
+    }
+
+    const cachedMessages = chatData.messages ?? [];
+    const beforeIndex = beforeMessageId
+      ? cachedMessages.findIndex((message) => message.id === beforeMessageId)
+      : cachedMessages.length;
+
+    if (beforeMessageId && beforeIndex === -1) {
+      return null;
+    }
+
+    const startIndex = Math.max(beforeIndex - limit, 0);
+    const pagedMessages = cachedMessages.slice(startIndex, beforeIndex);
+    const hasMore = startIndex > 0;
+
+    return {
+      guestId: chatData.guestId,
+      title: chatData.title,
+      metadata: chatData.metadata,
+      messageCount: chatData.messageCount ?? cachedMessages.length,
+      messages: pagedMessages,
+      updatedAt: chatData.updatedAt,
+      pagination: {
+        hasMore,
+        limit,
+        nextCursor: hasMore ? (pagedMessages[0]?.id ?? null) : null,
+      },
     };
   }
 

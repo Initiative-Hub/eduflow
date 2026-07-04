@@ -20,13 +20,14 @@ export default async function ChatPage({ params }: ChatPageProps) {
     notFound();
   }
 
-  const chatData = await ChatPersistenceService.getChat({
+  const chatHistoryPage = await ChatPersistenceService.getChatMessagesPage({
     chatId,
     userId: sessionData?.user.id,
     guestId,
+    limit: 5,
   });
 
-  if (!chatData) {
+  if (!chatHistoryPage) {
     notFound();
   }
 
@@ -35,7 +36,8 @@ export default async function ChatPage({ params }: ChatPageProps) {
       userName={sessionData?.user?.name}
       isAuthenticated={Boolean(sessionData)}
       chatId={chatId}
-      initialMessages={chatData.messages ?? []}
+      initialMessages={chatHistoryPage.messages ?? []}
+      initialMessagesPagination={chatHistoryPage.pagination}
     />
   );
 }
