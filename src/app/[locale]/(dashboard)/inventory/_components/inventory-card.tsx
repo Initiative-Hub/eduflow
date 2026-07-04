@@ -99,7 +99,7 @@ function getInventoryCardIcon(entry: InventoryEntry) {
 
 function canShowCardBodyPreview(entry: InventoryEntry) {
   const previewKind = getInventoryPreviewKind(entry);
-  return previewKind === 'image' || previewKind === 'pdf';
+  return previewKind === 'image' || previewKind === 'video';
 }
 
 export function InventoryCard({
@@ -302,12 +302,18 @@ export function InventoryCard({
                 className="h-36 w-full object-cover"
               />
             ) : (
-              <iframe
-                src={`${previewUrlQuery.data}#toolbar=0&navpanes=0&scrollbar=0&page=1&view=FitH`}
-                title={entry.name}
+              <video
+                muted
+                playsInline
+                preload="metadata"
                 onError={() => setCardBodyPreviewFailed(true)}
-                className="h-36 w-full border-0 bg-background"
-              />
+                className="h-36 w-full bg-background object-cover"
+              >
+                <source
+                  src={previewUrlQuery.data}
+                  type={entry.mimeType ?? undefined}
+                />
+              </video>
             )
           ) : (
             <div className="flex h-36 w-full items-center justify-center border border-border/60 bg-muted text-muted-foreground">
