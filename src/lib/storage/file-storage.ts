@@ -30,7 +30,7 @@ export function buildInventoryThumbnailObjectKey(options: {
   const scope = options.courseId
     ? `courses/${options.courseId}`
     : `users/${options.userId}`;
-    
+
   return `${scope}/thumbnails/${options.fileId}.jpg`;
 }
 
