@@ -4,6 +4,8 @@ import type { UIMessage } from 'ai';
 import { Bot, Loader2, User } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
+import type { RefObject } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Conversation,
   ConversationContent,
@@ -36,8 +38,12 @@ import { ChatToolInvocations } from './chat-tools';
 
 interface ChatViewProps {
   messages: UIMessage[];
+  hasOlderMessages?: boolean;
+  isLoadingOlderMessages?: boolean;
   isStreaming: boolean;
+  loadOlderMessages?: () => void;
   onSuggestionSelect?: (suggestion: string) => void;
+  scrollContainerRef?: RefObject<HTMLDivElement | null>;
   suggestionsDisabled?: boolean;
 }
 
@@ -45,16 +51,166 @@ const Quiz = dynamic(() => import('@/components/quiz').then((mod) => mod.Quiz));
 
 export function ChatView({
   messages,
+  hasOlderMessages = false,
+  isLoadingOlderMessages = false,
   isStreaming,
+  loadOlderMessages,
   onSuggestionSelect,
+  scrollContainerRef,
   suggestionsDisabled = false,
 }: ChatViewProps) {
   const t = useTranslations('AIChat');
+  const topSentinelRef = useRef<HTMLDivElement | null>(null);
+  const previousScrollHeightRef = useRef<number | null>(null);
+  const shouldRestoreScrollRef = useRef(false);
+  const hasInitialScrollRef = useRef(false);
+  const bottomMarkerRef = useRef<HTMLDivElement | null>(null);
+  const prevMessagesLengthRef = useRef(messages.length);
+
+  const [isAtBottom, setIsAtBottom] = useState(true);
+
+  // Monitor scroll position to see if user is scrolled to bottom
+  useEffect(() => {
+    const root = scrollContainerRef?.current;
+    if (!root) return;
+
+    const handleScroll = () => {
+      const threshold = 50; // buffer in px
+      const isAtBottom =
+        root.scrollHeight - root.scrollTop - root.clientHeight <= threshold;
+      setIsAtBottom(isAtBottom);
+    };
+
+    root.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+
+    return () => {
+      root.removeEventListener('scroll', handleScroll);
+    };
+  }, [scrollContainerRef]);
+
+  useEffect(() => {
+    const sentinel = topSentinelRef.current;
+    const root = scrollContainerRef?.current;
+    if (!sentinel || !root || !loadOlderMessages || !hasOlderMessages) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry?.isIntersecting && !isLoadingOlderMessages) {
+          previousScrollHeightRef.current = root.scrollHeight;
+          shouldRestoreScrollRef.current = true;
+          loadOlderMessages();
+        }
+      },
+      {
+        root,
+        rootMargin: '120px 0px 0px 0px',
+      }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [
+    hasOlderMessages,
+    isLoadingOlderMessages,
+    loadOlderMessages,
+    scrollContainerRef,
+  ]);
+
+  useEffect(() => {
+    const root = scrollContainerRef?.current;
+    const previousScrollHeight = previousScrollHeightRef.current;
+    if (
+      !root ||
+      isLoadingOlderMessages ||
+      !shouldRestoreScrollRef.current ||
+      previousScrollHeight === null
+    ) {
+      return;
+    }
+
+    root.scrollTop += root.scrollHeight - previousScrollHeight;
+    previousScrollHeightRef.current = null;
+    shouldRestoreScrollRef.current = false;
+  }, [isLoadingOlderMessages, scrollContainerRef]);
+
+  // Initial scroll to the last user message on mount or initial data load
+  useEffect(() => {
+    const root = scrollContainerRef?.current;
+    if (!root || hasInitialScrollRef.current || messages.length === 0) return;
+
+    const lastUserMessage = [...messages]
+      .reverse()
+      .find((m) => m.role === 'user');
+    if (lastUserMessage) {
+      requestAnimationFrame(() => {
+        const el = document.getElementById(`message-${lastUserMessage.id}`);
+        if (el) {
+          el.scrollIntoView({
+            behavior: 'instant',
+            block: 'nearest',
+            inline: 'nearest',
+          });
+        }
+      });
+    }
+    hasInitialScrollRef.current = true;
+  }, [messages, scrollContainerRef]);
+
+  // Scroll to bottom when user sends a new message
+  useEffect(() => {
+    const root = scrollContainerRef?.current;
+    if (!root) return;
+
+    const prevLength = prevMessagesLengthRef.current;
+    prevMessagesLengthRef.current = messages.length;
+
+    if (messages.length > prevLength) {
+      const lastMessage = messages[messages.length - 1];
+      const prevLastMessage = prevLength > 0 ? messages[prevLength - 1] : null;
+
+      if (
+        lastMessage &&
+        (!prevLastMessage || lastMessage.id !== prevLastMessage.id) &&
+        lastMessage.role === 'user'
+      ) {
+        setIsAtBottom(true);
+        bottomMarkerRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+          inline: 'nearest',
+        });
+      }
+    }
+  }, [messages, scrollContainerRef]);
+
+  // Continuous scroll during streaming (only if user is already at the bottom)
+  useEffect(() => {
+    const root = scrollContainerRef?.current;
+    if (!root || !isAtBottom || !isStreaming || messages.length === 0) return;
+
+    bottomMarkerRef.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'nearest',
+      inline: 'nearest',
+    });
+  }, [isAtBottom, isStreaming, messages, scrollContainerRef]);
 
   return (
     <div className="mx-auto max-w-4xl">
       <Conversation>
         <ConversationContent className="gap-6 py-8">
+          {hasOlderMessages || isLoadingOlderMessages ? (
+            <div
+              ref={topSentinelRef}
+              className="flex min-h-8 items-center justify-center"
+            >
+              {isLoadingOlderMessages ? (
+                <Loader2 className="size-4 animate-spin text-muted-foreground" />
+              ) : null}
+            </div>
+          ) : null}
           {messages.map((message) => {
             const text = getMessageText(message);
             const reasoning = getMessageReasoning(message);
@@ -109,9 +265,10 @@ export function ChatView({
 
             return (
               <Message
-                from={message.role}
-                key={message.id}
                 className="max-w-full"
+                from={message.role}
+                id={`message-${message.id}`}
+                key={message.id}
               >
                 <div className="flex flex-col gap-3">
                   <div
@@ -265,6 +422,9 @@ export function ChatView({
               </div>
             </div>
           )}
+
+          {/* Bottom marker for scrolling to the latest message */}
+          <div ref={bottomMarkerRef} />
         </ConversationContent>
         <ConversationScrollButton className="bottom-2 shadow-sm" />
       </Conversation>

@@ -42,6 +42,11 @@ const chatUpdateSchema = z
     message: 'Provide title or deleted_at',
   });
 
+const chatHistoryQuerySchema = z.object({
+  before: z.string().trim().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(20).default(5),
+});
+
 /**
  * @swagger
  * /api/v1/ai/chat/{chatId}:
@@ -66,11 +71,24 @@ const chatUpdateSchema = z
  *         description: Chat not found
  */
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ chatId: string }> }
 ) {
   try {
     const { chatId } = await params;
+    const parsedQuery = chatHistoryQuerySchema.safeParse(
+      Object.fromEntries(new URL(req.url).searchParams.entries())
+    );
+
+    if (!parsedQuery.success) {
+      return new Response(
+        JSON.stringify({
+          error: 'Invalid request query',
+          details: parsedQuery.error.flatten(),
+        }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
 
     const { userId, guestId } = await getChatOwner();
 
@@ -81,10 +99,12 @@ export async function GET(
       });
     }
 
-    const chatData = await ChatPersistenceService.getChat({
+    const chatData = await ChatPersistenceService.getChatMessagesPage({
       chatId,
       userId,
       guestId,
+      limit: parsedQuery.data.limit,
+      beforeMessageId: parsedQuery.data.before,
     });
 
     if (!chatData) {

@@ -52,6 +52,11 @@ const studyUpdateSchema = z
     message: 'Provide title or deleted_at',
   });
 
+const studyHistoryQuerySchema = z.object({
+  before: z.string().trim().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(20).default(5),
+});
+
 /**
  * @swagger
  * /api/v1/ai/study/{chatId}:
@@ -66,11 +71,25 @@ const studyUpdateSchema = z
  *         description: Session not found
  */
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ chatId: string }> }
 ) {
   try {
     const { chatId } = await params;
+    const parsedQuery = studyHistoryQuerySchema.safeParse(
+      Object.fromEntries(new URL(req.url).searchParams.entries())
+    );
+
+    if (!parsedQuery.success) {
+      return new Response(
+        JSON.stringify({
+          error: 'Invalid request query',
+          details: parsedQuery.error.flatten(),
+        }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
     const { userId, guestId } = await getChatOwner();
 
     if (!userId && !guestId) {
@@ -80,11 +99,13 @@ export async function GET(
       });
     }
 
-    const studyData = await ChatPersistenceService.getChat({
+    const studyData = await ChatPersistenceService.getChatMessagesPage({
       chatId,
       userId,
       guestId,
       chatType: AiChatType.STUDY_ASSISTANT,
+      limit: parsedQuery.data.limit,
+      beforeMessageId: parsedQuery.data.before,
     });
 
     if (!studyData) {

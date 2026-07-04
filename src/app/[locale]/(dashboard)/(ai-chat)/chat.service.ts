@@ -1,12 +1,31 @@
 import type { UIMessage } from 'ai';
 import { apiClient } from '@/lib/api';
 
+export interface ChatHistoryPagination {
+  hasMore: boolean;
+  limit: number;
+  nextCursor: string | null;
+}
+
+export interface ChatHistoryPageResponse<
+  TMessage extends UIMessage = UIMessage,
+> {
+  guestId?: string;
+  title: string;
+  metadata?: unknown;
+  messageCount: number;
+  messages: TMessage[];
+  pagination: ChatHistoryPagination;
+  updatedAt?: string;
+}
+
 export interface ChatDetailsResponse {
   guestId?: string;
   title: string;
   metadata?: unknown;
   messageCount: number;
   messages: UIMessage[];
+  pagination?: ChatHistoryPagination;
 }
 
 export interface ChatListItemResponse {
@@ -38,8 +57,16 @@ export const chatService = {
       firstMessage,
     });
   },
-  getChat: async (chatId: string) => {
-    return apiClient.get<ChatDetailsResponse>(`/v1/ai/chat/${chatId}`);
+  getChat: async (
+    chatId: string,
+    params?: {
+      limit?: number;
+      before?: string;
+    }
+  ) => {
+    return apiClient.get<ChatHistoryPageResponse>(`/v1/ai/chat/${chatId}`, {
+      params,
+    });
   },
   updateChat: async (
     chatId: string,

@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
 import {
@@ -39,6 +39,11 @@ interface AIClientProps {
   userName?: string;
   chatId?: string;
   initialMessages?: UIMessage[];
+  initialMessagesPagination?: {
+    hasMore: boolean;
+    limit: number;
+    nextCursor: string | null;
+  };
   isAuthenticated: boolean;
 }
 
@@ -48,15 +53,20 @@ export function AIClient({
   userName,
   chatId,
   initialMessages,
+  initialMessagesPagination,
   isAuthenticated,
 }: AIClientProps) {
   const t = useTranslations('AIChat');
 
   const [view, setView] = useState<ViewState>('home');
   const [isUploadingAttachments, setIsUploadingAttachments] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
   const {
     messages,
+    hasOlderMessages,
+    isLoadingOlderMessages,
+    loadOlderMessages,
     maxMessages,
     userMessageCount,
     hasOutput,
@@ -69,6 +79,7 @@ export function AIClient({
   } = useChatController({
     chatId,
     initialMessages,
+    initialMessagesPagination,
     isAuthenticated,
   });
 
@@ -190,10 +201,14 @@ export function AIClient({
   ) : (
     <ChatView
       messages={messages}
+      hasOlderMessages={hasOlderMessages}
+      isLoadingOlderMessages={isLoadingOlderMessages}
       isStreaming={isStreaming}
+      loadOlderMessages={() => void loadOlderMessages()}
       onSuggestionSelect={(suggestion) =>
         void handleSubmit(undefined, suggestion)
       }
+      scrollContainerRef={scrollContainerRef}
       suggestionsDisabled={isStreaming || isLimitReached}
     />
   );
@@ -224,7 +239,11 @@ export function AIClient({
 
   return (
     <>
-      <ChatWorkspaceShell composer={composer} viewport={viewport} />
+      <ChatWorkspaceShell
+        composer={composer}
+        scrollContainerRef={scrollContainerRef}
+        viewport={viewport}
+      />
       <ChatSidebar currentChatId={chatId} />
     </>
   );

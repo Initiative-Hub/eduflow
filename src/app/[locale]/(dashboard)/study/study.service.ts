@@ -4,6 +4,7 @@ import type {
   StudyQuizOptions,
 } from '@/lib/validations/study.schema';
 import type {
+  ChatHistoryPageResponse,
   ChatListResponse,
   ChatUpdateResponse,
 } from '../(ai-chat)/chat.service';
@@ -18,6 +19,18 @@ export const studyService = {
       firstMessage,
       mode,
       quizOptions,
+    });
+  },
+
+  getChat: async (
+    chatId: string,
+    params?: {
+      limit?: number;
+      before?: string;
+    }
+  ) => {
+    return apiClient.get<ChatHistoryPageResponse>(`/v1/ai/study/${chatId}`, {
+      params,
     });
   },
 

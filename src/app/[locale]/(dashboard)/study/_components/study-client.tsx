@@ -4,7 +4,7 @@ import type { UIMessage } from 'ai';
 import { GraduationCap } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import {
   DEFAULT_STUDY_QUIZ_OPTIONS,
@@ -32,6 +32,11 @@ const ChatView = dynamic(() =>
 interface StudyClientProps {
   chatId?: string;
   initialMessages?: UIMessage[];
+  initialMessagesPagination?: {
+    hasMore: boolean;
+    limit: number;
+    nextCursor: string | null;
+  };
   initialMode?: StudyMode;
   initialQuizOptions?: StudyQuizOptions;
   isAuthenticated: boolean;
@@ -40,6 +45,7 @@ interface StudyClientProps {
 export function StudyClient({
   chatId,
   initialMessages,
+  initialMessagesPagination,
   initialMode = 'interactiveContent',
   initialQuizOptions,
   isAuthenticated,
@@ -52,9 +58,13 @@ export function StudyClient({
     initialQuizOptions ?? DEFAULT_STUDY_QUIZ_OPTIONS
   );
   const [isUploadingAttachments, setIsUploadingAttachments] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
   const {
     messages,
+    hasOlderMessages,
+    isLoadingOlderMessages,
+    loadOlderMessages,
     maxMessages,
     userMessageCount,
     hasOutput,
@@ -69,6 +79,7 @@ export function StudyClient({
     quizOptions,
     chatId,
     initialMessages,
+    initialMessagesPagination,
     isAuthenticated,
   });
 
@@ -149,10 +160,14 @@ export function StudyClient({
   ) : (
     <ChatView
       messages={messages}
+      hasOlderMessages={hasOlderMessages}
+      isLoadingOlderMessages={isLoadingOlderMessages}
       isStreaming={isStreaming}
+      loadOlderMessages={() => void loadOlderMessages()}
       onSuggestionSelect={(suggestion) =>
         void handleSubmit(undefined, suggestion)
       }
+      scrollContainerRef={scrollContainerRef}
       suggestionsDisabled={isStreaming || isLimitReached}
     />
   );
@@ -184,7 +199,11 @@ export function StudyClient({
 
   return (
     <>
-      <ChatWorkspaceShell composer={composer} viewport={viewport} />
+      <ChatWorkspaceShell
+        composer={composer}
+        scrollContainerRef={scrollContainerRef}
+        viewport={viewport}
+      />
       <ChatSidebar
         currentChatId={chatId}
         emptyIcon={GraduationCap}
