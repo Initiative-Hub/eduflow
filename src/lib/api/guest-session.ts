@@ -8,12 +8,12 @@ interface ChatOwnerOptions {
 export async function getChatOwner({
   createGuest = false,
 }: ChatOwnerOptions = {}) {
-  const [cookieStore, session] = await Promise.all([
-    cookies(),
+  const [sessionData, cookieStore] = await Promise.all([
     auth.api.getSession({ headers: await headers() }),
+    cookies(),
   ]);
 
-  const userId = session?.user?.id;
+  const userId = sessionData?.user?.id;
   let guestId = cookieStore.get('guest_session')?.value;
 
   if (!(userId || guestId) && createGuest) {
@@ -27,7 +27,7 @@ export async function getChatOwner({
   }
 
   return {
-    session,
+    session: sessionData,
     userId,
     guestId: userId ? undefined : guestId,
   };

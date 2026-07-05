@@ -30,6 +30,7 @@ export const lessonService = {
     lessonId: string;
     title: string;
     palette?: string;
+    collection?: string;
     slides: Array<{
       layoutType: string;
       slideTitle: string;

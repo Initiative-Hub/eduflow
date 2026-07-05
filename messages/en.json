@@ -566,7 +566,11 @@
       "fileTooLarge": "File exceeds the maximum upload size of {size}.",
       "folderCreated": "Folder created.",
       "genericError": "Something went wrong. Try again.",
+      "invalidMove": "You cannot move a folder into itself.",
       "moved": "Item moved.",
+      "nameConflictCreateFolder": "A file or folder with this name already exists here.",
+      "nameConflictMove": "This destination already contains a file or folder with the same name.",
+      "nameConflictRename": "Choose a different name. Another file or folder already uses it here.",
       "previewUnavailable": "This file cannot be previewed right now.",
       "renamed": "Item renamed.",
       "shareBatchDescription": "Copied {count} share links to your clipboard.",
@@ -1015,9 +1019,12 @@
     "LessonPresentation": {
       "addReference": "Add Reference",
       "btnBack": "Modify Prompt",
+      "btnDownloadPptx": "Download PPTX",
+      "btnEditOutline": "Edit Outline",
       "btnGenerate": "Generate Slide Deck",
       "btnNewDeck": "New Deck",
       "btnPlan": "Generate Presentation Plan",
+      "btnSaveVisual": "Save Changes",
       "close": "Exit Planner",
       "duration10": "10 minutes (Brief overview)",
       "duration120": "120 minutes (2-hour masterclass)",
@@ -1038,6 +1045,9 @@
       "plannedDesc": "Review and refine the planned slides. Click on titles or bullets to customize them before generation.",
       "plannedTitle": "AI Presentation Slide Outline",
       "planningText": "Compiling presentation from lesson material...",
+      "pptxDownloadError": "Failed to export PowerPoint presentation.",
+      "pptxDownloading": "Exporting PowerPoint...",
+      "pptxDownloadSuccess": "PowerPoint presentation exported successfully.",
       "previous": "PreviousSlide",
       "referencesLayout": "References & Sources",
       "referenceSources": "Reference Sources",
@@ -1053,7 +1063,8 @@
       "urlPlaceholder": "URL",
       "usageCost": "~${cost}",
       "usageRequests": "{requests} AI calls",
-      "usageTokens": "{tokens} tokens used"
+      "usageTokens": "{tokens} tokens used",
+      "visualSaveSuccess": "Slide changes saved successfully."
     },
     "LessonView": {
       "empty": "Lesson content is empty."
@@ -1556,7 +1567,11 @@
       "fileTooLarge": "File exceeds the maximum upload size of {size}.",
       "folderCreated": "Folder created.",
       "genericError": "Something went wrong. Try again.",
+      "invalidMove": "You cannot move a folder into itself.",
       "moved": "Item moved.",
+      "nameConflictCreateFolder": "A file or folder with this name already exists here.",
+      "nameConflictMove": "This destination already contains a file or folder with the same name.",
+      "nameConflictRename": "Choose a different name. Another file or folder already uses it here.",
       "previewUnavailable": "This file cannot be previewed right now.",
       "renamed": "Item renamed.",
       "shareBatchDescription": "Copied {count} share links to your clipboard.",
@@ -1976,10 +1991,14 @@
       "interactiveContent": {
         "actionsLabel": "Interactive activity actions",
         "description": "Create an interactive visual activity that you can explore and practice directly.",
-        "download": "Download HTML",
+        "download": "Download",
         "fullscreen": "Full screen",
         "previewTitle": "Interactive activity: {title}",
-        "reset": "Reset activity"
+        "reset": "Reset activity",
+        "saveError": "Could not save this activity to inventory.",
+        "saveSuccess": "Activity saved to inventory.",
+        "saveToInventory": "Save to Inventory",
+        "savingToInventory": "Saving..."
       },
       "practiceTest": {
         "description": "Challenge yourself with AI-generated multiple choice, short answer, and flashcard sets."

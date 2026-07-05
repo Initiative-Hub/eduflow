@@ -150,7 +150,7 @@ export function toggleHeading(
     const blocks = getSelectedBlockNodes(editor);
 
     // In case a selection contains multiple blocks, we only allow
-    // toggling to nide if there's exactly one block selected
+    // toggling to node if there's exactly one block selected
     // we also dont block the canToggle since it will fall back to the bottom logic
     const isPossibleToTurnInto =
       selectionWithinConvertibleTypes(editor, [

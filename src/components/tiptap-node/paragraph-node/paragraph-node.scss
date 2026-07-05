@@ -164,7 +164,9 @@
 .tiptap.ProseMirror {
   // Base styles for inline threads
   .tiptap-thread.tiptap-thread--unresolved.tiptap-thread--inline {
-    transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out;
+    transition:
+      color 0.2s ease-in-out,
+      background-color 0.2s ease-in-out;
     color: var(--thread-text);
     border-bottom: 2px dashed var(--tt-color-yellow-base);
     font-weight: 600;
@@ -228,21 +230,21 @@
      PLACEHOLDER
      ===================== */
 .is-empty:not(.with-slash)[data-placeholder]:has(
-  > .ProseMirror-trailingBreak:only-child
-)::before {
+    > .ProseMirror-trailingBreak:only-child
+  )::before {
   content: attr(data-placeholder);
 }
 
 .is-empty.with-slash[data-placeholder]:has(
-  > .ProseMirror-trailingBreak:only-child
-)::before {
+    > .ProseMirror-trailingBreak:only-child
+  )::before {
   content: "Write, type '/' for commands…";
   font-style: italic;
 }
 
 .is-empty[data-placeholder]:has(
-  > .ProseMirror-trailingBreak:only-child
-):before {
+    > .ProseMirror-trailingBreak:only-child
+  ):before {
   pointer-events: none;
   height: 0;
   position: absolute;

@@ -14,13 +14,13 @@ export default async function CourseModulesPage({
 }: CourseModulesPageProps) {
   const [{ courseId }, requestHeaders] = await Promise.all([params, headers()]);
 
-  const session = await auth.api.getSession({ headers: requestHeaders });
+  const sessionData = await auth.api.getSession({ headers: requestHeaders });
 
-  if (!session) {
+  if (!sessionData) {
     redirect('/login');
   }
 
-  const permissions = await getCoursePermissions(session.user.id, courseId);
+  const permissions = await getCoursePermissions(sessionData.user.id, courseId);
 
   return (
     <CourseModulesClient

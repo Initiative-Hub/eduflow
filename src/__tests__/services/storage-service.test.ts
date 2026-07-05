@@ -59,7 +59,15 @@ const mockDownloadInventoryObject = downloadInventoryObject as ReturnType<
 
 describe('StorageService', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    Object.values(fileInventory).forEach((mockFn) => {
+      mockFn.mockReset();
+    });
+    mockBuildInventoryObjectKey.mockReset();
+    mockGetInventoryObjectMetadata.mockReset();
+    mockCreateInventoryReadSignedUrl.mockReset();
+    mockCreateInventoryWriteSignedUrl.mockReset();
+    mockDeleteInventoryObject.mockReset();
+    mockDownloadInventoryObject.mockReset();
   });
 
   describe('listDirectory', () => {
@@ -157,7 +165,11 @@ describe('StorageService', () => {
     });
 
     it('throws when duplicate name exists', async () => {
-      fileInventory.findFirst.mockResolvedValueOnce({ id: 'dup' });
+      fileInventory.findFirst.mockResolvedValueOnce({
+        id: 'dup',
+        isFolder: false,
+        name: 'Docs',
+      });
 
       await expect(
         StorageService.createFolder({
@@ -165,7 +177,16 @@ describe('StorageService', () => {
           parentId: null,
           name: 'Docs',
         })
-      ).rejects.toThrow('An item with this name already exists');
+      ).rejects.toMatchObject({
+        code: 'STORAGE_NAME_CONFLICT',
+        details: {
+          attemptedName: 'Docs',
+          conflictingName: 'Docs',
+          entryType: 'folder',
+          operation: 'create_folder',
+          targetParentId: null,
+        },
+      });
     });
 
     it('allows creating a folder inside a course parent owned by another member', async () => {
@@ -210,6 +231,8 @@ describe('StorageService', () => {
         },
         select: {
           id: true,
+          isFolder: true,
+          name: true,
         },
       });
     });
@@ -220,6 +243,7 @@ describe('StorageService', () => {
       mockBuildInventoryObjectKey.mockReturnValue('inventories/u1/readme.pdf');
       fileInventory.create.mockResolvedValue({ id: 'f1', status: 'UPLOADING' });
       mockCreateInventoryWriteSignedUrl.mockResolvedValue('https://upload');
+      fileInventory.findFirst.mockResolvedValue(null);
 
       const result = await StorageService.initializeUpload({
         userId: 'u1',
@@ -231,6 +255,7 @@ describe('StorageService', () => {
 
       expect(result).toEqual({
         id: 'f1',
+        name: 'readme.pdf',
         status: 'UPLOADING',
         objectKey: 'inventories/u1/readme.pdf',
         bucket: 'eduflow-inventory',
@@ -245,6 +270,106 @@ describe('StorageService', () => {
       expect(mockBuildInventoryObjectKey.mock.calls[0]?.[2]).not.toHaveProperty(
         'relativePath'
       );
+    });
+
+    it('renames uploads with a windows-style suffix when the target name already exists', async () => {
+      mockBuildInventoryObjectKey.mockReturnValue(
+        'inventories/u1/readme-(1).pdf'
+      );
+      fileInventory.findFirst
+        .mockResolvedValueOnce({
+          id: 'dup',
+          isFolder: false,
+          name: 'readme.pdf',
+        })
+        .mockResolvedValueOnce(null);
+      fileInventory.create.mockResolvedValue({ id: 'f1', status: 'UPLOADING' });
+      mockCreateInventoryWriteSignedUrl.mockResolvedValue('https://upload');
+
+      await StorageService.initializeUpload({
+        userId: 'u1',
+        parentId: null,
+        fileName: 'readme.pdf',
+        contentType: 'application/pdf',
+        fileSize: 42,
+      });
+
+      expect(mockBuildInventoryObjectKey).toHaveBeenCalledWith(
+        'u1',
+        'readme (1).pdf',
+        { courseId: undefined }
+      );
+      expect(fileInventory.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          extension: 'pdf',
+          isFolder: false,
+          name: 'readme (1).pdf',
+        }),
+      });
+    });
+
+    it('continues numeric suffixes already present in the incoming filename', async () => {
+      mockBuildInventoryObjectKey.mockReturnValue(
+        'inventories/u1/report-(2).pdf'
+      );
+      fileInventory.findFirst
+        .mockResolvedValueOnce({
+          id: 'dup',
+          isFolder: false,
+          name: 'Report (1).pdf',
+        })
+        .mockResolvedValueOnce(null);
+      fileInventory.create.mockResolvedValue({ id: 'f1', status: 'UPLOADING' });
+      mockCreateInventoryWriteSignedUrl.mockResolvedValue('https://upload');
+
+      await StorageService.initializeUpload({
+        userId: 'u1',
+        parentId: null,
+        fileName: 'Report (1).pdf',
+        contentType: 'application/pdf',
+        fileSize: 42,
+      });
+
+      expect(fileInventory.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          name: 'Report (2).pdf',
+        }),
+      });
+    });
+
+    it('retries with the next suffix when a unique race occurs during upload creation', async () => {
+      mockBuildInventoryObjectKey
+        .mockReturnValueOnce('inventories/u1/readme-(1).pdf')
+        .mockReturnValueOnce('inventories/u1/readme-(2).pdf');
+      fileInventory.findFirst
+        .mockResolvedValueOnce({
+          id: 'dup',
+          isFolder: false,
+          name: 'readme.pdf',
+        })
+        .mockResolvedValueOnce(null);
+      fileInventory.create
+        .mockRejectedValueOnce(
+          Object.assign(new Error('Unique constraint failed'), {
+            code: 'P2002',
+          })
+        )
+        .mockResolvedValueOnce({ id: 'f1', status: 'UPLOADING' });
+      mockCreateInventoryWriteSignedUrl.mockResolvedValue('https://upload');
+
+      await StorageService.initializeUpload({
+        userId: 'u1',
+        parentId: null,
+        fileName: 'readme.pdf',
+        contentType: 'application/pdf',
+        fileSize: 42,
+      });
+
+      expect(fileInventory.create).toHaveBeenLastCalledWith({
+        data: expect.objectContaining({
+          name: 'readme (2).pdf',
+        }),
+      });
     });
 
     it('creates missing folder path before creating the pending file', async () => {
@@ -611,11 +736,20 @@ describe('StorageService', () => {
           isFolder: false,
           name: 'A',
         })
-        .mockResolvedValueOnce({ id: 'dup' });
+        .mockResolvedValueOnce({ id: 'dup', isFolder: true, name: 'A' });
 
       await expect(
         StorageService.updateEntry({ userId: 'u1', fileId: 'f1', name: 'A' })
-      ).rejects.toThrow('An item with this name already exists');
+      ).rejects.toMatchObject({
+        code: 'STORAGE_NAME_CONFLICT',
+        details: {
+          attemptedName: 'A',
+          conflictingName: 'A',
+          entryType: 'file',
+          operation: 'rename',
+          targetParentId: null,
+        },
+      });
     });
 
     it('checks course-scoped duplicates when renaming a course entry', async () => {
@@ -630,7 +764,7 @@ describe('StorageService', () => {
           parentId: null,
           userId: 'u2',
         })
-        .mockResolvedValueOnce({ id: 'dup' });
+        .mockResolvedValueOnce({ id: 'dup', isFolder: false, name: 'Shared' });
 
       await expect(
         StorageService.updateEntry({
@@ -639,7 +773,16 @@ describe('StorageService', () => {
           fileId: 'f1',
           name: 'Shared',
         })
-      ).rejects.toThrow('An item with this name already exists');
+      ).rejects.toMatchObject({
+        code: 'STORAGE_NAME_CONFLICT',
+        details: {
+          attemptedName: 'Shared',
+          conflictingName: 'Shared',
+          entryType: 'file',
+          operation: 'rename',
+          targetParentId: null,
+        },
+      });
 
       expect(fileInventory.findFirst).toHaveBeenNthCalledWith(2, {
         where: {
@@ -656,6 +799,52 @@ describe('StorageService', () => {
         },
         select: {
           id: true,
+          isFolder: true,
+          name: true,
+        },
+      });
+    });
+
+    it('returns a move conflict when the destination already has a peer with the same name', async () => {
+      fileInventory.findFirst
+        .mockResolvedValueOnce({
+          id: 'f1',
+          parentId: null,
+          isFolder: true,
+          name: 'Docs',
+          courseId: null,
+        })
+        .mockResolvedValueOnce({
+          id: 'parent-2',
+          parentId: null,
+          isFolder: true,
+          name: 'Target',
+          courseId: null,
+          userId: 'u1',
+        })
+        .mockResolvedValueOnce({
+          parentId: null,
+        })
+        .mockResolvedValueOnce({
+          id: 'dup',
+          isFolder: false,
+          name: 'Docs',
+        });
+
+      await expect(
+        StorageService.updateEntry({
+          userId: 'u1',
+          fileId: 'f1',
+          parentId: 'parent-2',
+        })
+      ).rejects.toMatchObject({
+        code: 'STORAGE_NAME_CONFLICT',
+        details: {
+          attemptedName: 'Docs',
+          conflictingName: 'Docs',
+          entryType: 'folder',
+          operation: 'move',
+          targetParentId: 'parent-2',
         },
       });
     });

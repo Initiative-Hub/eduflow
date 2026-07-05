@@ -22,6 +22,10 @@ import {
 } from 'lucide-react';
 import type { useTranslations } from 'next-intl';
 import type { ReactElement } from 'react';
+import {
+  PLATFORM_PERMISSION,
+  type PlatformPermissionKey,
+} from '@/lib/permissions/permission-keys';
 
 export type SidebarItem = {
   name: string;
@@ -30,11 +34,45 @@ export type SidebarItem = {
   isActive: (pathname: string) => boolean;
 };
 
+const adminPermissionsByUrl: Record<string, PlatformPermissionKey[]> = {
+  '/admin/users': [
+    PLATFORM_PERMISSION.USERS_VIEW,
+    PLATFORM_PERMISSION.USERS_MANAGE,
+  ],
+  '/admin/roles': [
+    PLATFORM_PERMISSION.ROLES_VIEW,
+    PLATFORM_PERMISSION.ROLES_MANAGE,
+  ],
+};
+
 export const sidebarIconClassName =
   'size-5 text-primary/80 transition-colors group-data-[active=true]/menu-button:text-primary group-hover/menu-button:text-primary ';
 
 function isExactMatch(pathname: string, url: string) {
   return pathname === url;
+}
+
+function hasAnyPermission(
+  userPermissions: readonly string[],
+  requiredPermissions: readonly PlatformPermissionKey[]
+) {
+  return requiredPermissions.some((permission) =>
+    userPermissions.includes(permission)
+  );
+}
+
+export function filterAdminNavItems(
+  items: SidebarItem[],
+  userPermissions: readonly string[]
+) {
+  return items.filter((item) => {
+    const requiredPermissions = adminPermissionsByUrl[item.url];
+
+    return (
+      requiredPermissions &&
+      hasAnyPermission(userPermissions, requiredPermissions)
+    );
+  });
 }
 
 export function getAssistantNavItems(

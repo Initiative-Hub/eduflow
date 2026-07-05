@@ -11,8 +11,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function ProfilePage() {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user) {
+  const sessionData = await auth.api.getSession({ headers: await headers() });
+  if (!sessionData) {
     redirect('/login');
   }
 

@@ -70,7 +70,13 @@ import {
 } from '@/components/ui/table';
 import { useUsers } from './use-users';
 
-export default function AdminUsersClient() {
+type AdminUsersClientProps = {
+  canManageUsers: boolean;
+};
+
+export default function AdminUsersClient({
+  canManageUsers,
+}: AdminUsersClientProps) {
   const {
     t,
     roleOptions,
@@ -120,10 +126,12 @@ export default function AdminUsersClient() {
             <CardTitle className="font-heading text-xl">{t('title')}</CardTitle>
             <CardDescription>{t('description')}</CardDescription>
           </div>
-          <Button onClick={openAddDialog}>
-            <Plus data-icon="inline-start" />
-            {t('actions.addUser')}
-          </Button>
+          {canManageUsers ? (
+            <Button onClick={openAddDialog}>
+              <Plus data-icon="inline-start" />
+              {t('actions.addUser')}
+            </Button>
+          ) : null}
         </CardHeader>
 
         <CardContent className="flex flex-col gap-5 p-6">
@@ -283,7 +291,7 @@ export default function AdminUsersClient() {
                               <Button
                                 size="sm"
                                 onClick={saveEdit}
-                                disabled={isUpdating}
+                                disabled={isUpdating || !canManageUsers}
                               >
                                 {t('actions.save')}
                               </Button>
@@ -296,7 +304,7 @@ export default function AdminUsersClient() {
                                 {t('actions.cancel')}
                               </Button>
                             </div>
-                          ) : (
+                          ) : canManageUsers ? (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="icon-sm">
@@ -318,6 +326,10 @@ export default function AdminUsersClient() {
                                 </DropdownMenuGroup>
                               </DropdownMenuContent>
                             </DropdownMenu>
+                          ) : (
+                            <span className="text-muted-foreground text-sm">
+                              -
+                            </span>
                           )}
                         </TableCell>
                       </TableRow>
@@ -374,106 +386,110 @@ export default function AdminUsersClient() {
         </CardFooter>
       </Card>
 
-      <Dialog open={addDialogOpen} onOpenChange={handleAddDialogOpenChange}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>{t('addDialog.title')}</DialogTitle>
-            <DialogDescription>{t('addDialog.description')}</DialogDescription>
-          </DialogHeader>
+      {canManageUsers ? (
+        <Dialog open={addDialogOpen} onOpenChange={handleAddDialogOpenChange}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>{t('addDialog.title')}</DialogTitle>
+              <DialogDescription>
+                {t('addDialog.description')}
+              </DialogDescription>
+            </DialogHeader>
 
-          <FieldGroup>
-            {addError && (
-              <Field data-invalid>
-                <FieldError>{addError}</FieldError>
+            <FieldGroup>
+              {addError && (
+                <Field data-invalid>
+                  <FieldError>{addError}</FieldError>
+                </Field>
+              )}
+              <Field>
+                <FieldLabel htmlFor="admin-user-email">
+                  {t('form.email')}
+                </FieldLabel>
+                <FieldContent>
+                  <Input
+                    id="admin-user-email"
+                    type="email"
+                    value={newUserForm.email}
+                    onChange={(event) =>
+                      updateNewUserForm('email', event.target.value)
+                    }
+                    placeholder={t('form.emailPlaceholder')}
+                    aria-invalid={Boolean(addError && !newUserForm.email)}
+                  />
+                </FieldContent>
               </Field>
-            )}
-            <Field>
-              <FieldLabel htmlFor="admin-user-email">
-                {t('form.email')}
-              </FieldLabel>
-              <FieldContent>
-                <Input
-                  id="admin-user-email"
-                  type="email"
-                  value={newUserForm.email}
-                  onChange={(event) =>
-                    updateNewUserForm('email', event.target.value)
-                  }
-                  placeholder={t('form.emailPlaceholder')}
-                  aria-invalid={Boolean(addError && !newUserForm.email)}
-                />
-              </FieldContent>
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="admin-user-password">
-                {t('form.password')}
-              </FieldLabel>
-              <FieldContent>
-                <Input
-                  id="admin-user-password"
-                  type="password"
-                  value={newUserForm.password}
-                  onChange={(event) =>
-                    updateNewUserForm('password', event.target.value)
-                  }
-                  placeholder={t('form.passwordPlaceholder')}
-                  aria-invalid={Boolean(addError && !newUserForm.password)}
-                />
-              </FieldContent>
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="admin-user-name">
-                {t('form.nameOptional')}
-              </FieldLabel>
-              <FieldContent>
-                <Input
-                  id="admin-user-name"
-                  value={newUserForm.name}
-                  onChange={(event) =>
-                    updateNewUserForm('name', event.target.value)
-                  }
-                  placeholder={t('form.namePlaceholder')}
-                />
-              </FieldContent>
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="admin-user-role">
-                {t('form.role')}
-              </FieldLabel>
-              <FieldContent>
-                <Select
-                  value={newUserForm.role}
-                  onValueChange={(value) => updateNewUserForm('role', value)}
-                >
-                  <SelectTrigger id="admin-user-role">
-                    <SelectValue placeholder={t('form.role')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      {roleOptions.map((role) => (
-                        <SelectItem key={role} value={role}>
-                          {t(`roles.${role.toLowerCase()}`)}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </FieldContent>
-            </Field>
-          </FieldGroup>
+              <Field>
+                <FieldLabel htmlFor="admin-user-password">
+                  {t('form.password')}
+                </FieldLabel>
+                <FieldContent>
+                  <Input
+                    id="admin-user-password"
+                    type="password"
+                    value={newUserForm.password}
+                    onChange={(event) =>
+                      updateNewUserForm('password', event.target.value)
+                    }
+                    placeholder={t('form.passwordPlaceholder')}
+                    aria-invalid={Boolean(addError && !newUserForm.password)}
+                  />
+                </FieldContent>
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="admin-user-name">
+                  {t('form.nameOptional')}
+                </FieldLabel>
+                <FieldContent>
+                  <Input
+                    id="admin-user-name"
+                    value={newUserForm.name}
+                    onChange={(event) =>
+                      updateNewUserForm('name', event.target.value)
+                    }
+                    placeholder={t('form.namePlaceholder')}
+                  />
+                </FieldContent>
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="admin-user-role">
+                  {t('form.role')}
+                </FieldLabel>
+                <FieldContent>
+                  <Select
+                    value={newUserForm.role}
+                    onValueChange={(value) => updateNewUserForm('role', value)}
+                  >
+                    <SelectTrigger id="admin-user-role">
+                      <SelectValue placeholder={t('form.role')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {roleOptions.map((role) => (
+                          <SelectItem key={role} value={role}>
+                            {t(`roles.${role.toLowerCase()}`)}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </FieldContent>
+              </Field>
+            </FieldGroup>
 
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="outline" disabled={isCreating}>
-                {t('actions.cancel')}
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button variant="outline" disabled={isCreating}>
+                  {t('actions.cancel')}
+                </Button>
+              </DialogClose>
+              <Button onClick={createUser} disabled={isCreating}>
+                {isCreating ? t('actions.creating') : t('actions.create')}
               </Button>
-            </DialogClose>
-            <Button onClick={createUser} disabled={isCreating}>
-              {isCreating ? t('actions.creating') : t('actions.create')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      ) : null}
     </>
   );
 }

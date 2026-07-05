@@ -64,6 +64,7 @@ export function usePresentation(options: {
   const [deckUrl, setDeckUrl] = useState<string | null>(null);
   // Token/cost usage reported for the most recent generation.
   const [deckUsage, setDeckUsage] = useState<DeckUsage | null>(null);
+  const [selectedCollection, setSelectedCollection] = useState('starter');
 
   // Dynamic Outlines fallback generator
   const generateOutlines = useCallback(
@@ -495,6 +496,7 @@ export function usePresentation(options: {
         lessonId,
         title,
         palette: 'auto',
+        collection: selectedCollection,
         slides: plannedSlides.map((slide) => ({
           layoutType: slide.layoutType,
           slideTitle: slide.slideTitle,
@@ -525,6 +527,13 @@ export function usePresentation(options: {
     setDeckUrl(null);
     setDeckUsage(null);
     setStep('input');
+  }, []);
+
+  // Return to the outline planner step to modify and regenerate the deck.
+  const editOutline = useCallback(() => {
+    setDeckUrl(null);
+    setDeckUsage(null);
+    setStep('planned');
   }, []);
 
   // When the modal opens, surface a previously generated deck (if one is saved
@@ -616,9 +625,12 @@ export function usePresentation(options: {
     handleStartPlanning,
     handleStartGenerating,
     startNewDeck,
+    editOutline,
     updateSlideTitle,
     changeSlideLayout,
     deleteSlide,
     addSlide,
+    selectedCollection,
+    setSelectedCollection,
   };
 }

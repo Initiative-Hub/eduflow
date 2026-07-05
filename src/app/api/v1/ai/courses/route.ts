@@ -24,36 +24,6 @@ const courseGenerationInputSchema = z
 /**
  * @swagger
  * /api/v1/ai/courses:
- *   get:
- *     tags:
- *       - AI Courses
- *     summary: Get AI course generation
- *     security:
- *       - SessionCookie: []
- *     responses:
- *       200:
- *         description: AI course generation
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden
- *       500:
- *         description: Internal server error
- */
-export const GET = withRoles(['TEACHER'], async (_request: Request) => {
-  try {
-    return NextResponse.json({});
-  } catch (error) {
-    return NextResponse.json(
-      { error: 'Internal Server Error', message: (error as Error).message },
-      { status: 500 }
-    );
-  }
-});
-
-/**
- * @swagger
- * /api/v1/ai/courses:
  *   post:
  *     tags:
  *       - AI Courses

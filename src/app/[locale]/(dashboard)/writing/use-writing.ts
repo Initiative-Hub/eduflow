@@ -1,5 +1,9 @@
 import { useChat } from '@ai-sdk/react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { DefaultChatTransport, type UIMessage } from 'ai';
 import { useEffect, useMemo, useRef } from 'react';
 import { toast } from 'sonner';
@@ -12,6 +16,10 @@ import {
   hasReachedUserMessageLimit,
 } from '@/utils/chat-limit';
 import { prepareLastMessageRequest } from '@/utils/chat-request';
+import {
+  createInitialChatHistoryData,
+  mergeChatMessages,
+} from '../(ai-chat)/chat-history';
 import { writingService } from './writing.service';
 
 const MAX_USER_MESSAGES = 5;
@@ -20,12 +28,18 @@ interface UseWritingOptions {
   tool: WritingTool;
   chatId?: string;
   initialMessages?: UIMessage[];
+  initialMessagesPagination?: {
+    hasMore: boolean;
+    limit: number;
+    nextCursor: string | null;
+  };
 }
 
 export const useWriting = ({
   tool,
   chatId,
   initialMessages = [],
+  initialMessagesPagination,
 }: UseWritingOptions) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -68,6 +82,39 @@ export const useWriting = ({
     [chatId]
   );
 
+  const initialHistoryPage = useMemo(
+    () =>
+      chatId
+        ? {
+            title: '',
+            messageCount: initialMessages.length,
+            messages: initialMessages,
+            pagination: initialMessagesPagination ?? {
+              hasMore: false,
+              limit: initialMessages.length,
+              nextCursor: null,
+            },
+          }
+        : null,
+    [chatId, initialMessages, initialMessagesPagination]
+  );
+
+  const historyQuery = useInfiniteQuery({
+    queryKey: ['writing-chat-messages', chatId],
+    initialPageParam: undefined as string | undefined,
+    enabled: Boolean(chatId),
+    initialData: initialHistoryPage
+      ? createInitialChatHistoryData(initialHistoryPage)
+      : undefined,
+    queryFn: ({ pageParam }) =>
+      writingService.getChat(chatId as string, {
+        limit: initialMessagesPagination?.limit ?? 5,
+        before: pageParam,
+      }),
+    getNextPageParam: (lastPage) =>
+      lastPage.pagination.hasMore ? lastPage.pagination.nextCursor : undefined,
+  });
+
   const { messages, status, sendMessage, stop } = useChat({
     id: chatId,
     messages: initialMessages,
@@ -85,7 +132,10 @@ export const useWriting = ({
     pendingChatId && pendingChatId === chatId && pendingMessage
       ? [pendingMessage]
       : [];
-  const displayMessages = messages.length > 0 ? messages : pendingForChat;
+  const liveMessages = messages.length > 0 ? messages : pendingForChat;
+  const displayMessages = chatId
+    ? mergeChatMessages(historyQuery.data?.pages, liveMessages)
+    : liveMessages;
   const userMessageCount = getUserMessageCount(displayMessages);
 
   useEffect(() => {
@@ -164,6 +214,9 @@ export const useWriting = ({
 
   return {
     messages: displayMessages,
+    hasOlderMessages: historyQuery.hasNextPage,
+    isLoadingOlderMessages: historyQuery.isFetchingNextPage,
+    loadOlderMessages: historyQuery.fetchNextPage,
     userMessageCount,
     maxMessages: MAX_USER_MESSAGES,
     hasOutput: displayMessages.length > 0,

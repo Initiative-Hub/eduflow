@@ -61,16 +61,10 @@ export const PLATFORM_PERMISSION_CATEGORIES: PermissionCategory[] = [
         description: 'View platform user accounts.',
       },
       {
-        key: PLATFORM_PERMISSION.USERS_CREATE,
-        icon: UserPlus,
-        title: 'Create users',
-        description: 'Create new platform users.',
-      },
-      {
-        key: PLATFORM_PERMISSION.USERS_UPDATE,
+        key: PLATFORM_PERMISSION.USERS_MANAGE,
         icon: UserCog,
-        title: 'Update users',
-        description: 'Edit user details and assigned roles.',
+        title: 'Manage users',
+        description: 'Create and edit user details and assigned roles.',
       },
       {
         key: PLATFORM_PERMISSION.ROLES_VIEW,
@@ -89,24 +83,18 @@ export const PLATFORM_PERMISSION_CATEGORIES: PermissionCategory[] = [
   {
     icon: BookOpen,
     title: 'Courses',
-    description: 'Create and moderate courses at the platform level.',
+    description: 'Create and manage courses at the platform level.',
     permissions: [
       {
-        key: PLATFORM_PERMISSION.COURSES_CREATE,
-        icon: Plus,
-        title: 'Create courses',
-        description: 'Create new courses.',
-      },
-      {
-        key: PLATFORM_PERMISSION.COURSES_VIEW_ALL,
+        key: PLATFORM_PERMISSION.COURSES_VIEW,
         icon: Eye,
         title: 'View all courses',
         description: 'View courses across the platform.',
       },
       {
-        key: PLATFORM_PERMISSION.COURSES_MODERATE,
+        key: PLATFORM_PERMISSION.COURSES_MANAGE,
         icon: ToggleLeft,
-        title: 'Moderate courses',
+        title: 'Manage courses',
         description: 'Enable, disable, publish, or unpublish courses.',
       },
     ],

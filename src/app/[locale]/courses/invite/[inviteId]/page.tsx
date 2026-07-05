@@ -21,10 +21,10 @@ export default async function CourseInvitePage({
 }) {
   const { inviteId } = await params;
   const t = await getTranslations('CourseInvitePage');
-  const session = await auth.api.getSession({ headers: await headers() });
+  const sessionData = await auth.api.getSession({ headers: await headers() });
   const invite = await CourseInvitationService.getPublicInviteView(
     inviteId,
-    session?.user.id
+    sessionData?.user?.id
   ).catch(() => null);
 
   if (!invite) {

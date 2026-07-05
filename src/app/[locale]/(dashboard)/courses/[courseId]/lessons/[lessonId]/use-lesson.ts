@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { apiClient } from '@/lib/api/api-client';
 import type { TiptapDocument } from '@/utils/lesson-content';
 import { lessonService } from './lesson.service';
+import { slideService } from './slide.service';
 
 /**
  * Fetches the full lesson record (including content) for a given lessonId.
@@ -88,6 +89,7 @@ export function useGenerateSlideDeck() {
       lessonId: string;
       title: string;
       palette?: string;
+      collection?: string;
       slides: Array<{
         layoutType: string;
         slideTitle: string;
@@ -132,4 +134,66 @@ export function useDeleteLesson(courseId: string) {
     isDeletingLesson: mutation.isPending,
     handleDeleteLesson: mutation.mutate,
   };
+}
+
+export function useSlideHtml(deckId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ['slide-html', deckId],
+    queryFn: () =>
+      apiClient.get<string>(`/v1/ai/slides/${deckId}`, {
+        responseType: 'text',
+      }),
+    enabled: enabled && !!deckId,
+  });
+}
+
+export function useUpdateSlideHtml() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: { deckId: string; html: string }) =>
+      apiClient.put<{ status: string }>(`/v1/ai/slides/${data.deckId}`, {
+        html: data.html,
+      }),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['slide-html', variables.deckId],
+      });
+    },
+  });
+}
+
+export function useSlideTemplates() {
+  return useQuery({
+    queryKey: ['slide-templates'],
+    queryFn: () => slideService.getTemplates(),
+  });
+}
+
+export function useSlideTemplatePreviews(
+  collectionName: string | null,
+  enabled: boolean
+) {
+  return useQuery({
+    queryKey: ['slide-template-previews', collectionName],
+    queryFn: () => slideService.getTemplatePreviews(collectionName!),
+    enabled: enabled && !!collectionName,
+  });
+}
+
+export function useImportSlideTemplate() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { file: File; name?: string }) =>
+      slideService.importTemplate(data.file, data.name),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['slide-templates'] });
+    },
+  });
+}
+
+export function useDownloadPptx() {
+  return useMutation({
+    mutationFn: (deckId: string) => slideService.downloadPptxBlob(deckId),
+  });
 }

@@ -8,6 +8,7 @@ export const metadata: Metadata = {
 };
 
 export default async function SocraticTutorPage() {
-  const session = await auth.api.getSession({ headers: await headers() });
-  return <SocraticClient isAuthenticated={Boolean(session)} />;
+  const sessionData = await auth.api.getSession({ headers: await headers() });
+
+  return <SocraticClient isAuthenticated={Boolean(sessionData)} />;
 }

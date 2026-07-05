@@ -66,6 +66,8 @@ services:
       mc anonymous set none local/eduflow-avatars;
       mc mb --ignore-existing local/eduflow-inventory;
       mc anonymous set none local/eduflow-inventory;
+      mc mb --ignore-existing local/eduflow-template;
+      mc anonymous set none local/eduflow-template;
       "
     networks:
       - storage-network
@@ -87,6 +89,9 @@ services:
       mc rm --force --recursive local/eduflow-inventory;
       mc mb --ignore-existing local/eduflow-inventory;
       mc anonymous set none local/eduflow-inventory;
+      mc rm --force --recursive local/eduflow-template;
+      mc mb --ignore-existing local/eduflow-template;
+      mc anonymous set none local/eduflow-template;
       "
     networks:
       - storage-network
@@ -116,11 +121,11 @@ services:
     networks:
       - cache-network
 
-  markitdown:
+  external-services:
     build:
       context: ./external-services
       dockerfile: Dockerfile
-    container_name: eduflow_markitdown
+    container_name: eduflow_external_services
     restart: unless-stopped
     ports:
       - "8000:8000"
@@ -128,6 +133,9 @@ services:
       - storage-network
     env_file:
       - ./external-services/.env
+    volumes:
+      - ./external-services/storage:/app/storage
+      - ./external-services/templates:/app/templates
 
 
 networks: 

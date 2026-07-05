@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withAuth } from '@/lib/api/middlewares';
+import { buildStorageErrorResponse } from '@/lib/storage/storage-error-response';
 import { CourseService } from '@/services/CourseService';
-import { StorageService } from '@/services/StorageService';
 
 const createFolderSchema = z.object({
   parentId: z.string().uuid().nullable().optional(),
@@ -29,10 +29,7 @@ export const POST = withAuth(async (req, session, { params }) => {
     });
 
     return NextResponse.json({ data: folder });
-  } catch (error: any) {
-    return NextResponse.json(
-      { message: error?.message || 'Internal Server Error' },
-      { status: 500 }
-    );
+  } catch (error) {
+    return buildStorageErrorResponse(error);
   }
 });

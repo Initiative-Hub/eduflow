@@ -566,7 +566,11 @@
       "fileTooLarge": "Tệp vượt quá kích thước tải lên tối đa {size}.",
       "folderCreated": "Đã tạo thư mục.",
       "genericError": "Đã xảy ra lỗi. Vui lòng thử lại.",
+      "invalidMove": "Bạn không thể di chuyển một thư mục vào chính nó.",
       "moved": "Đã di chuyển mục.",
+      "nameConflictCreateFolder": "Đã có tệp hoặc thư mục khác dùng tên này tại đây.",
+      "nameConflictMove": "Thư mục đích đã có tệp hoặc thư mục trùng tên.",
+      "nameConflictRename": "Hãy chọn tên khác. Đã có tệp hoặc thư mục khác dùng tên này tại đây.",
       "previewUnavailable": "Hiện tại không thể xem trước tệp này.",
       "renamed": "Đã đổi tên mục.",
       "shareBatchDescription": "Đã sao chép {count} liên kết chia sẻ vào clipboard.",
@@ -1015,9 +1019,12 @@
     "LessonPresentation": {
       "addReference": "Thêm nguồn tham khảo",
       "btnBack": "Sửa yêu cầu",
+      "btnDownloadPptx": "Tải file PPTX",
+      "btnEditOutline": "Sửa dàn ý",
       "btnGenerate": "Tạo bộ Slide",
       "btnNewDeck": "Tạo bản mới",
       "btnPlan": "Tạo kế hoạch slide trình chiếu",
+      "btnSaveVisual": "Lưu thay đổi",
       "close": "Thoát lập kế hoạch",
       "duration10": "10 phút (Sơ lược nhanh)",
       "duration120": "120 phút (Lớp học chuyên đề 2 giờ)",
@@ -1038,6 +1045,9 @@
       "plannedDesc": "Xem lại và tinh chỉnh các slide. Bạn có thể nhấn vào tiêu đề hoặc nội dung dàn ý để chỉnh sửa trước khi tạo slide.",
       "plannedTitle": "Dàn ý Slide thuyết trình từ AI",
       "planningText": "Đang biên soạn bài thuyết trình từ nội dung bài học...",
+      "pptxDownloadError": "Không thể xuất bài thuyết trình PowerPoint.",
+      "pptxDownloading": "Đang xuất file PowerPoint...",
+      "pptxDownloadSuccess": "Xuất bài thuyết trình PowerPoint thành công.",
       "previous": "Trang trước",
       "referencesLayout": "Tài liệu tham khảo",
       "referenceSources": "Nguồn tham khảo",
@@ -1053,7 +1063,8 @@
       "urlPlaceholder": "Đường dẫn (URL)",
       "usageCost": "~${cost}",
       "usageRequests": "{requests} lượt gọi AI",
-      "usageTokens": "Đã dùng {tokens} token"
+      "usageTokens": "Đã dùng {tokens} token",
+      "visualSaveSuccess": "Lưu các thay đổi trên slide thành công."
     },
     "LessonView": {
       "empty": "Nội dung bài học trống."
@@ -1556,7 +1567,11 @@
       "fileTooLarge": "Tệp vượt quá kích thước tải lên tối đa {size}.",
       "folderCreated": "Đã tạo thư mục.",
       "genericError": "Đã xảy ra lỗi. Vui lòng thử lại.",
+      "invalidMove": "Bạn không thể di chuyển một thư mục vào chính nó.",
       "moved": "Đã di chuyển mục.",
+      "nameConflictCreateFolder": "Đã có tệp hoặc thư mục khác dùng tên này tại đây.",
+      "nameConflictMove": "Thư mục đích đã có tệp hoặc thư mục trùng tên.",
+      "nameConflictRename": "Hãy chọn tên khác. Đã có tệp hoặc thư mục khác dùng tên này tại đây.",
       "previewUnavailable": "Hiện tại không thể xem trước tệp này.",
       "renamed": "Đã đổi tên mục.",
       "shareBatchDescription": "Đã sao chép {count} liên kết chia sẻ vào clipboard.",
@@ -1976,10 +1991,14 @@
       "interactiveContent": {
         "actionsLabel": "Thao tác hoạt động tương tác",
         "description": "Tạo hoạt động trực quan tương tác để bạn khám phá và luyện tập trực tiếp.",
-        "download": "Tải xuống HTML",
+        "download": "Tải xuống",
         "fullscreen": "Toàn màn hình",
         "previewTitle": "Hoạt động tương tác: {title}",
-        "reset": "Đặt lại hoạt động"
+        "reset": "Đặt lại hoạt động",
+        "saveError": "Không thể lưu hoạt động này vào kho tài liệu.",
+        "saveSuccess": "Đã lưu hoạt động vào kho tài liệu.",
+        "saveToInventory": "Lưu vào tài liệu",
+        "savingToInventory": "Đang lưu..."
       },
       "practiceTest": {
         "description": "Thử thách bản thân với câu hỏi trắc nghiệm, câu ngắn và thẻ ghi nhớ do AI tạo ra."

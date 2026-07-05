@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { forwardRef, useCallback, useState, type ForwardedRef } from 'react';
 import { type Editor } from '@tiptap/react';
 
 // --- Hooks ---
@@ -49,14 +49,17 @@ export interface ListDropdownMenuProps extends Omit<ButtonProps, 'type'> {
   modal?: boolean;
 }
 
-export function ListDropdownMenu({
-  editor: providedEditor,
-  types = ['bulletList', 'orderedList', 'taskList'],
-  hideWhenUnavailable = false,
-  onOpenChange,
-  modal = true,
-  ...props
-}: ListDropdownMenuProps) {
+function ListDropdownMenuImpl(
+  {
+    editor: providedEditor,
+    types = ['bulletList', 'orderedList', 'taskList'],
+    hideWhenUnavailable = false,
+    onOpenChange,
+    modal = true,
+    ...props
+  }: ListDropdownMenuProps,
+  ref: ForwardedRef<HTMLButtonElement>
+) {
   const { editor } = useTiptapEditor(providedEditor);
   const [isOpen, setIsOpen] = useState(false);
 
@@ -93,6 +96,7 @@ export function ListDropdownMenu({
           aria-label="List options"
           tooltip="List"
           {...props}
+          ref={ref}
         >
           <Icon className="tiptap-button-icon" />
           <ChevronDownIcon className="tiptap-button-dropdown-small" />
@@ -116,5 +120,9 @@ export function ListDropdownMenu({
     </DropdownMenu>
   );
 }
+
+export const ListDropdownMenu = forwardRef(ListDropdownMenuImpl);
+
+ListDropdownMenu.displayName = 'ListDropdownMenu';
 
 export default ListDropdownMenu;
