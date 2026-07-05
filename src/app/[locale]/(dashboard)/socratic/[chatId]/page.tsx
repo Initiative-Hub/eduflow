@@ -24,11 +24,12 @@ export default async function SocraticSessionPage({
     notFound();
   }
 
-  const socraticData = await ChatPersistenceService.getChat({
+  const socraticData = await ChatPersistenceService.getChatMessagesPage({
     chatId,
     userId: sessionData?.user?.id,
     guestId,
     chatType: AiChatType.SOCRATIC_TUTOR,
+    limit: 5,
   });
 
   if (!socraticData) {
@@ -39,6 +40,7 @@ export default async function SocraticSessionPage({
     <SocraticClient
       chatId={chatId}
       initialMessages={socraticData.messages as SocraticUIMessage[]}
+      initialMessagesPagination={socraticData.pagination}
       isAuthenticated={Boolean(sessionData)}
     />
   );

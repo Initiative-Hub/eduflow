@@ -1,7 +1,11 @@
 'use client';
 
 import { useChat } from '@ai-sdk/react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { DefaultChatTransport, type UIMessage } from 'ai';
 import { useEffect, useMemo, useRef } from 'react';
 import { toast } from 'sonner';
@@ -20,18 +24,28 @@ import {
 import { prepareLastMessageRequest } from '@/utils/chat-request';
 import { uploadChatAttachments } from '../chat-attachments.service';
 import { chatService } from './chat.service';
+import {
+  createInitialChatHistoryData,
+  mergeChatMessages,
+} from './chat-history';
 
 const MAX_USER_MESSAGES = 5;
 
 interface UseChatControllerOptions {
   chatId?: string;
   initialMessages?: UIMessage[];
+  initialMessagesPagination?: {
+    hasMore: boolean;
+    limit: number;
+    nextCursor: string | null;
+  };
   isAuthenticated: boolean;
 }
 
 export const useChatController = ({
   chatId: initialChatId,
   initialMessages = [],
+  initialMessagesPagination,
   isAuthenticated,
 }: UseChatControllerOptions) => {
   const router = useRouter();
@@ -60,6 +74,39 @@ export const useChatController = ({
     [initialChatId]
   );
 
+  const initialHistoryPage = useMemo(
+    () =>
+      initialChatId
+        ? {
+            title: '',
+            messageCount: initialMessages.length,
+            messages: initialMessages,
+            pagination: initialMessagesPagination ?? {
+              hasMore: false,
+              limit: initialMessages.length,
+              nextCursor: null,
+            },
+          }
+        : null,
+    [initialChatId, initialMessages, initialMessagesPagination]
+  );
+
+  const historyQuery = useInfiniteQuery({
+    queryKey: ['chat-messages', initialChatId],
+    initialPageParam: undefined as string | undefined,
+    enabled: Boolean(initialChatId),
+    initialData: initialHistoryPage
+      ? createInitialChatHistoryData(initialHistoryPage)
+      : undefined,
+    queryFn: ({ pageParam }) =>
+      chatService.getChat(initialChatId as string, {
+        limit: initialMessagesPagination?.limit ?? 5,
+        before: pageParam,
+      }),
+    getNextPageParam: (lastPage) =>
+      lastPage.pagination.hasMore ? lastPage.pagination.nextCursor : undefined,
+  });
+
   const { messages, status, sendMessage, stop } = useChat({
     id: initialChatId,
     messages: initialMessages,
@@ -77,7 +124,10 @@ export const useChatController = ({
     pendingChatId && pendingChatId === initialChatId && pendingMessage
       ? [pendingMessage]
       : [];
-  const displayMessages = messages.length > 0 ? messages : pendingForChat;
+  const liveMessages = messages.length > 0 ? messages : pendingForChat;
+  const displayMessages = initialChatId
+    ? mergeChatMessages(historyQuery.data?.pages, liveMessages)
+    : liveMessages;
   const userMessageCount = getUserMessageCount(displayMessages);
   const isLimitReached = isAuthenticated
     ? false
@@ -182,6 +232,9 @@ export const useChatController = ({
 
   return {
     messages: displayMessages,
+    hasOlderMessages: historyQuery.hasNextPage,
+    isLoadingOlderMessages: historyQuery.isFetchingNextPage,
+    loadOlderMessages: historyQuery.fetchNextPage,
     userMessageCount,
     maxMessages: MAX_USER_MESSAGES,
     hasOutput: displayMessages.length > 0,

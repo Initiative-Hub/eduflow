@@ -1,9 +1,10 @@
 import { apiClient } from '@/lib/api';
 import type {
-  ChatDetailsResponse,
+  ChatHistoryPageResponse,
   ChatListResponse,
   ChatUpdateResponse,
 } from '../(ai-chat)/chat.service';
+import type { SocraticUIMessage } from '@/types/socratic-ui-message';
 
 export const socraticService = {
   createChat: async (firstMessage: string) => {
@@ -11,8 +12,19 @@ export const socraticService = {
       firstMessage,
     });
   },
-  getChat: async (chatId: string) => {
-    return apiClient.get<ChatDetailsResponse>(`/v1/ai/socratic/${chatId}`);
+  getChat: async (
+    chatId: string,
+    params?: {
+      limit?: number;
+      before?: string;
+    }
+  ) => {
+    return apiClient.get<ChatHistoryPageResponse<SocraticUIMessage>>(
+      `/v1/ai/socratic/${chatId}`,
+      {
+        params,
+      }
+    );
   },
   updateChat: async (
     chatId: string,

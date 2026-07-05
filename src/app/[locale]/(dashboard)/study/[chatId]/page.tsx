@@ -47,11 +47,12 @@ export default async function StudySessionPage({
     notFound();
   }
 
-  const studyData = await ChatPersistenceService.getChat({
+  const studyData = await ChatPersistenceService.getChatMessagesPage({
     chatId,
     userId: sessionData?.user?.id,
     guestId,
     chatType: AiChatType.STUDY_ASSISTANT,
+    limit: 5,
   });
 
   if (!studyData) {
@@ -64,6 +65,7 @@ export default async function StudySessionPage({
       initialMode={getInitialStudyMode(studyData?.metadata)}
       initialQuizOptions={getInitialStudyQuizOptions(studyData?.metadata)}
       initialMessages={studyData?.messages ?? []}
+      initialMessagesPagination={studyData.pagination}
       isAuthenticated={Boolean(sessionData)}
     />
   );
