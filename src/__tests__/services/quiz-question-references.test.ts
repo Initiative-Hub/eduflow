@@ -57,7 +57,8 @@ describe('quiz question references', () => {
         promptTemplate: 'Water freezes at {{temperature}}.',
       })
     ).toBe('Water freezes at {{temperature}}.');
-    expect(getQuestionPrompt({ type: 'true_false', prompt: 'The sky is blue' }))
-      .toBe('The sky is blue');
+    expect(
+      getQuestionPrompt({ type: 'true_false', prompt: 'The sky is blue' })
+    ).toBe('The sky is blue');
   });
 });
