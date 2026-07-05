@@ -179,10 +179,24 @@ async def get_deck(deck_id: str):
     return FileResponse(file_path, media_type="text/html")
 
 
+def cleanup_temp_files(*paths: Path):
+    import logging
+    logger = logging.getLogger(__name__)
+    for path in paths:
+        try:
+            if path.exists():
+                path.unlink()
+                logger.info(f"Cleaned up temporary file: {path}")
+        except Exception as e:
+            logger.error(f"Failed to delete temporary file {path}: {e}")
+
+
 @router.get("/decks/{deck_id}/pptx")
-async def get_deck_pptx(deck_id: str):
+async def get_deck_pptx(deck_id: str, background_tasks: BackgroundTasks):
     try:
         pptx_path = await slide_service.generate_pptx(deck_id)
+        latest_html = STORAGE_DIR / f"{deck_id}_latest.html"
+        background_tasks.add_task(cleanup_temp_files, pptx_path, latest_html)
         return FileResponse(
             pptx_path,
             media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
