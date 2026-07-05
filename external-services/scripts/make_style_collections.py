@@ -22,12 +22,12 @@ TEMPLATES = Path(__file__).resolve().parents[1] / "templates"
 STYLES = {
     "vintage": {
         "colors": {
-            "#0A0E1A": "#F5EEDC",   # aged cream paper
-            "#111827": "#EDE2C4",   # parchment card
-            "#00F0FF": "#4E6E58",   # sage green
-            "#FF007F": "#8C3B2E",   # rust red
-            "#FFFFFF": "#3E2C1C",   # dark brown ink
-            "#E2E8F0": "#5C4A36",   # warm brown body
+            "#0A0E1A": "#F5EEDC",  # aged cream paper
+            "#111827": "#EDE2C4",  # parchment card
+            "#00F0FF": "#4E6E58",  # sage green
+            "#FF007F": "#8C3B2E",  # rust red
+            "#FFFFFF": "#3E2C1C",  # dark brown ink
+            "#E2E8F0": "#5C4A36",  # warm brown body
         },
         "font": "Georgia, 'Times New Roman', serif",
         "frame": (
@@ -43,8 +43,8 @@ STYLES = {
         "colors": {
             "#0A0E1A": "#FFFFFF",
             "#111827": "#F4F6F8",
-            "#00F0FF": "#0F62FE",   # single strong blue
-            "#FF007F": "#111111",   # near-black secondary
+            "#00F0FF": "#0F62FE",  # single strong blue
+            "#FF007F": "#111111",  # near-black secondary
             "#FFFFFF": "#111111",
             "#E2E8F0": "#4B5563",
         },
@@ -55,12 +55,12 @@ STYLES = {
     },
     "pastel_pop": {
         "colors": {
-            "#0A0E1A": "#FDF6F9",   # soft blush
-            "#111827": "#FFFFFF",   # white cards
-            "#00F0FF": "#4E9B82",   # deep mint
-            "#FF007F": "#D26A92",   # rose pink
-            "#FFFFFF": "#4A3B50",   # plum ink
-            "#E2E8F0": "#6E5A77",   # muted plum body
+            "#0A0E1A": "#FDF6F9",  # soft blush
+            "#111827": "#FFFFFF",  # white cards
+            "#00F0FF": "#4E9B82",  # deep mint
+            "#FF007F": "#D26A92",  # rose pink
+            "#FFFFFF": "#4A3B50",  # plum ink
+            "#E2E8F0": "#6E5A77",  # muted plum body
         },
         "font": "'Avenir Next', 'Trebuchet MS', Verdana, sans-serif",
         "frame": "",
@@ -91,14 +91,19 @@ def restyle(svg: str, style: dict) -> str:
         svg = _STROKE_OP.sub('stroke-opacity="0.55"', svg)
     if style["frame"]:
         # inject the frame right after the background rect
-        svg = re.sub(r'(<rect width="1440" height="810"[^/]*/>)',
-                     r"\1" + style["frame"], svg, count=1)
+        svg = re.sub(
+            r'(<rect width="1440" height="810"[^/]*/>)',
+            r"\1" + style["frame"],
+            svg,
+            count=1,
+        )
     return svg
 
 
 def main() -> None:
-    categories = [d for d in sorted(TEMPLATES.iterdir())
-                  if d.is_dir() and d.name.isupper()]  # skip starter/neon_dark/styles
+    categories = [
+        d for d in sorted(TEMPLATES.iterdir()) if d.is_dir() and d.name.isupper()
+    ]  # skip starter/neon_dark/styles
     for style_name, style in STYLES.items():
         out_root = TEMPLATES / style_name
         if out_root.exists():
@@ -109,22 +114,28 @@ def main() -> None:
             for f in sorted(cat.iterdir()):
                 if f.suffix == ".svg":
                     (out_cat / f.name).write_text(
-                        restyle(f.read_text(encoding="utf-8"), style),
-                        encoding="utf-8")
+                        restyle(f.read_text(encoding="utf-8"), style), encoding="utf-8"
+                    )
                 elif f.name.endswith("schema.json"):
-                    shutil.copyfile(f, out_cat / f.name)   # same placeholders
+                    shutil.copyfile(f, out_cat / f.name)  # same placeholders
                 elif f.name == "category.json":
                     meta = json.loads(f.read_text(encoding="utf-8"))
                     meta["variants"] = {
                         k: f"{style_name} style — {v}"
-                        for k, v in (meta.get("variants") or {}).items()}
+                        for k, v in (meta.get("variants") or {}).items()
+                    }
                     (out_cat / f.name).write_text(
-                        json.dumps(meta, ensure_ascii=False, indent=2),
-                        encoding="utf-8")
+                        json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8"
+                    )
         # collection-level manifest so pickers can describe the style
-        (out_root / "collection.json").write_text(json.dumps(
-            {"name": style_name, "description": style["description"]},
-            ensure_ascii=False, indent=2), encoding="utf-8")
+        (out_root / "collection.json").write_text(
+            json.dumps(
+                {"name": style_name, "description": style["description"]},
+                ensure_ascii=False,
+                indent=2,
+            ),
+            encoding="utf-8",
+        )
         n = sum(1 for _ in out_root.rglob("*.svg"))
         print(f"{style_name}: {len(categories)} categories, {n} SVGs")
 

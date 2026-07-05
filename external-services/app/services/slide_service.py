@@ -206,7 +206,9 @@ class SlideService:
             "process_arrows",
             "circle_cycle",
         }
-        local_collections = [c for c in collections if c["name"].lower() not in categories]
+        local_collections = [
+            c for c in collections if c["name"].lower() not in categories
+        ]
         seen_names = {c["name"].lower() for c in local_collections}
 
         # Also discover local category-format collections (style banks like
@@ -225,8 +227,7 @@ class SlideService:
                 ):
                     continue
                 has_nested_svgs = any(
-                    sub.is_dir() and any(sub.glob("*.svg"))
-                    for sub in child.iterdir()
+                    sub.is_dir() and any(sub.glob("*.svg")) for sub in child.iterdir()
                 )
                 if not has_nested_svgs:
                     continue
@@ -262,7 +263,10 @@ class SlideService:
             for name in sorted(s3_collection_names):
                 if name.lower() not in seen_names and name.lower() not in categories:
                     local_collections.append(
-                        {"name": name, "description": f"Custom collection (stored in S3)"}
+                        {
+                            "name": name,
+                            "description": "Custom collection (stored in S3)",
+                        }
                     )
                     seen_names.add(name.lower())
         except Exception as e:
@@ -365,7 +369,7 @@ class SlideService:
                 for key in s3_keys:
                     # key looks like "templates/<collection>/[SUBDIR/]filename"
                     # Preserve the subdirectory structure relative to the collection root
-                    relative = key[len(s3_prefix):]  # e.g. "TITLE_SLIDE/standard.svg"
+                    relative = key[len(s3_prefix) :]  # e.g. "TITLE_SLIDE/standard.svg"
                     if not relative:
                         continue
                     dest = col_path / relative
@@ -437,7 +441,12 @@ class SlideService:
                             "columns",
                             "comparison",
                         ],
-                        "BIG_QUOTE_TAKEAWAY": ["quote", "takeaway", "saying", "citation"],
+                        "BIG_QUOTE_TAKEAWAY": [
+                            "quote",
+                            "takeaway",
+                            "saying",
+                            "citation",
+                        ],
                         "KPI_BIG_NUMBER": ["kpi", "statistic", "number", "metrics"],
                         "CHART_INSIGHT": ["chart", "insight", "graph", "visualization"],
                         "DATA_TABLE": ["table", "data", "grid"],
@@ -485,7 +494,9 @@ class SlideService:
                             shutil.copy2(matched_file, cat_dir / "variant_a.svg")
                             schema_json = matched_file.with_suffix(".schema.json")
                             if schema_json.exists():
-                                shutil.copy2(schema_json, cat_dir / "variant_a.schema.json")
+                                shutil.copy2(
+                                    schema_json, cat_dir / "variant_a.schema.json"
+                                )
 
                         (cat_dir / "category.json").write_text(
                             json.dumps(
@@ -521,10 +532,7 @@ class SlideService:
                 except Exception:
                     pass
             # Remove the S3-downloaded collection from local disk after use
-            if (
-                collection
-                and collection not in ("starter", "neon_dark", "templates")
-            ):
+            if collection and collection not in ("starter", "neon_dark", "templates"):
                 col_path = Path(SLIDE_TEMPLATES_DIR) / collection
                 if col_path.exists() and col_path.is_dir():
                     shutil.rmtree(col_path, ignore_errors=True)
@@ -598,7 +606,9 @@ class SlideService:
 
             dest_dir = Path(SLIDE_TEMPLATES_DIR) / collection_name
             # Check for the _template suffix variant produced by extract_template_smart
-            dest_dir_with_suffix = Path(SLIDE_TEMPLATES_DIR) / f"{collection_name}_template"
+            dest_dir_with_suffix = (
+                Path(SLIDE_TEMPLATES_DIR) / f"{collection_name}_template"
+            )
             if not dest_dir.exists() and dest_dir_with_suffix.exists():
                 dest_dir = dest_dir_with_suffix
 

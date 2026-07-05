@@ -46,7 +46,9 @@ async def execute_generation_job(job_id: str, req: GenReq, out_path: Path):
         jobs[job_id]["message"] = str(e)
 
 
-async def execute_import_job(job_id: str, file_bytes: bytes, filename: str, name: str | None):
+async def execute_import_job(
+    job_id: str, file_bytes: bytes, filename: str, name: str | None
+):
     try:
         jobs[job_id]["status"] = "running"
         res = await slide_service.import_template_collection(file_bytes, filename, name)
@@ -66,10 +68,22 @@ async def get_categories():
 
 
 STANDARD_LAYOUT_TYPES = [
-    "TITLE_SLIDE", "AGENDA_OUTLINE", "SECTION_HEADER", "TITLE_BULLETS",
-    "TWO_COLUMN_SPLIT", "BIG_QUOTE_TAKEAWAY", "KPI_BIG_NUMBER", "CHART_INSIGHT",
-    "DATA_TABLE", "MEDIA_TEXT", "TIMELINE_MILESTONES", "STEP_BY_STEP",
-    "CONCLUSION_SUMMARY", "CALL_TO_ACTION", "QA_CONTACT", "REFERENCES_LIST",
+    "TITLE_SLIDE",
+    "AGENDA_OUTLINE",
+    "SECTION_HEADER",
+    "TITLE_BULLETS",
+    "TWO_COLUMN_SPLIT",
+    "BIG_QUOTE_TAKEAWAY",
+    "KPI_BIG_NUMBER",
+    "CHART_INSIGHT",
+    "DATA_TABLE",
+    "MEDIA_TEXT",
+    "TIMELINE_MILESTONES",
+    "STEP_BY_STEP",
+    "CONCLUSION_SUMMARY",
+    "CALL_TO_ACTION",
+    "QA_CONTACT",
+    "REFERENCES_LIST",
 ]
 
 
@@ -93,7 +107,7 @@ async def get_collection_categories(collection: str):
 
         categories: set[str] = set()
         for key in s3_keys:
-            relative = key[len(s3_prefix):]
+            relative = key[len(s3_prefix) :]
             parts = relative.split("/")
             if len(parts) > 1 and parts[0]:
                 categories.add(parts[0])
@@ -181,6 +195,7 @@ async def get_deck(deck_id: str):
 
 def cleanup_temp_files(*paths: Path):
     import logging
+
     logger = logging.getLogger(__name__)
     for path in paths:
         try:
