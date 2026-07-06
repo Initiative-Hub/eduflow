@@ -134,6 +134,11 @@ for any tasks.).
   - System default collections (e.g., `vintage`, `clean_light`, `pastel_pop`, `starter`, `neon_dark` and the base `templates` layout categories) belong in the system default templates bucket (`AWS_S3_DEFAULT_TEMPLATES_BUCKET`, i.e., `eduflow-default-template`).
   - User-uploaded custom templates must remain isolated and persist inside the custom templates bucket (`AWS_S3_TEMPLATES_BUCKET`, i.e., `eduflow-template`).
   - The backend slide service lists collections and downloads layouts dynamically from these buckets on demand, caching them locally under `SLIDE_TEMPLATES_DIR`. Local static layout files in `external-services/templates` are no longer required and can be deleted safely after they are uploaded to S3.
+  - **System Template Style Registration**: When adding a new system-wide default style collection (e.g. `illustrative_culture`, `minimalist_gradient`), register it in the following places so that S3 requests are routed to the default templates bucket:
+    1. **`slide_service.py`**: Add it to `default_collections` set (in `_ensure_collection_downloaded`), the fallback descriptions dictionary, and the directory cleanup exemption whitelist.
+    2. **`slide_controller.py`**: Add it to `default_collections` set in the categories lookup controller.
+    3. **`SlideService.ts`**: Add it to `defaultCollections` Set in the template previews resolver.
+    4. **`PresentationService.ts`**: Register it in the `STYLE_COLLECTIONS` record with its prompt-optimized styling description so the AI planner can recommend it.
 
 ## 7. Continuous Improvement (Session Retrospective)
 

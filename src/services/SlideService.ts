@@ -76,6 +76,8 @@ export class SlideService {
           'vintage',
           'clean_light',
           'pastel_pop',
+          'illustrative_culture',
+          'minimalist_gradient',
         ]);
         const bucketName = defaultCollections.has(collectionName.toLowerCase())
           ? FILE_DEFAULT_TEMPLATES_BUCKET_NAME

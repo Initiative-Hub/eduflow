@@ -96,7 +96,7 @@ async def get_collection_categories(collection: str):
         from app.deps import AWS_S3_TEMPLATES_BUCKET, AWS_S3_DEFAULT_TEMPLATES_BUCKET
         from app.services.s3_service import list_files_in_s3_prefix
 
-        default_collections = {"templates", "default", "starter", "neon_dark", "vintage", "clean_light", "pastel_pop"}
+        default_collections = {"templates", "default", "starter", "neon_dark", "vintage", "clean_light", "pastel_pop", "illustrative_culture", "minimalist_gradient"}
         if collection.lower() in default_collections:
             bucket_name = AWS_S3_DEFAULT_TEMPLATES_BUCKET
         else:

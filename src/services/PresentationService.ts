@@ -41,6 +41,10 @@ const STYLE_COLLECTIONS: Record<string, string> = {
     'White, minimal, one strong blue accent — business, science, data-heavy or formal academic material.',
   pastel_pop:
     'Soft blush background, rose pink and mint accents, friendly rounded feel — younger audiences, wellbeing, creative or community topics.',
+  illustrative_culture:
+    'Warm cream background, hand-drawn vector buildings & clouds, Yogyakarta street aesthetic, sage green, sky blue, and gold accents — culture, art, architecture, geography, and storytelling.',
+  minimalist_gradient:
+    'Sleek dark theme with electric royal blue and violet gradient glows, crisp modern typography, and ambient grid lines — technology, start-ups, product design, business pitches, and modern tech topics.',
 };
 
 export const presentationPlanSchema = z.object({
