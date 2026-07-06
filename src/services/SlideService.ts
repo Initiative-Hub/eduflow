@@ -78,6 +78,7 @@ export class SlideService {
           'pastel_pop',
           'illustrative_culture',
           'minimalist_gradient',
+          'cultural_folk',
         ]);
         const bucketName = defaultCollections.has(collectionName.toLowerCase())
           ? FILE_DEFAULT_TEMPLATES_BUCKET_NAME

@@ -181,7 +181,7 @@ class SlideService:
         if col_path.exists() and any(col_path.glob("**/*.svg")):
             return col_path
             
-        default_collections = {"templates", "default", "starter", "neon_dark", "vintage", "clean_light", "pastel_pop", "illustrative_culture", "minimalist_gradient"}
+        default_collections = {"templates", "default", "starter", "neon_dark", "vintage", "clean_light", "pastel_pop", "illustrative_culture", "minimalist_gradient", "cultural_folk"}
         if collection.lower() in default_collections:
             from app.deps import AWS_S3_DEFAULT_TEMPLATES_BUCKET as BUCKET_NAME
         else:
@@ -295,7 +295,8 @@ class SlideService:
                         "starter": "Standard starter templates for clean presentation designs.",
                         "neon_dark": "A modern, high-contrast dark theme with glowing neon accents.",
                         "illustrative_culture": "Warm cream paper, hand-drawn buildings & clouds, Yogyakarta street aesthetic, sage green accents.",
-                        "minimalist_gradient": "Sleek dark theme with electric royal blue and violet gradient glows, crisp geometric typography, and ambient grid lines."
+                        "minimalist_gradient": "Sleek dark theme with electric royal blue and violet gradient glows, crisp geometric typography, and ambient grid lines.",
+                        "cultural_folk": "Rich cultural folk style: warm plum night sky over a sand earth strip, arch and temple shapes, radiant sun badges, festival bunting and stitched lines in terracotta, gold, dusty blue and rose."
                     }
                     return well_known.get(name.lower(), default_desc)
                     
@@ -558,7 +559,7 @@ class SlideService:
                 except Exception:
                     pass
             # Remove the S3-downloaded collection from local disk after use
-            if col_name and col_name not in ("starter", "neon_dark", "templates", "default", "vintage", "clean_light", "pastel_pop", "illustrative_culture", "minimalist_gradient"):
+            if col_name and col_name not in ("starter", "neon_dark", "templates", "default", "vintage", "clean_light", "pastel_pop", "illustrative_culture", "minimalist_gradient", "cultural_folk"):
                 col_path = Path(SLIDE_TEMPLATES_DIR) / col_name
                 if col_path.exists() and col_path.is_dir():
                     shutil.rmtree(col_path, ignore_errors=True)

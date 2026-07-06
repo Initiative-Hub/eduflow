@@ -45,6 +45,8 @@ const STYLE_COLLECTIONS: Record<string, string> = {
     'Warm cream background, hand-drawn vector buildings & clouds, Yogyakarta street aesthetic, sage green, sky blue, and gold accents — culture, art, architecture, geography, and storytelling.',
   minimalist_gradient:
     'Sleek dark theme with electric royal blue and violet gradient glows, crisp modern typography, and ambient grid lines — technology, start-ups, product design, business pitches, and modern tech topics.',
+  cultural_folk:
+    'Warm plum-gray background, cream text, terracotta and sand accents with a grounded earth strip — culture, diversity, social studies, community, humanities and storytelling topics.',
 };
 
 export const presentationPlanSchema = z.object({
