@@ -44,4 +44,5 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .claude
-/src/generated/prismaexternal-services/templates/
+/src/generated/prisma
+external-services/templates/
