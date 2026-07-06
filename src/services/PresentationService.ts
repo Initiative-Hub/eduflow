@@ -173,7 +173,7 @@ Layout Binding Specifications (use these EXACT keys in each slide's 'bindings' o
 - 'CONCLUSION_SUMMARY': { "summary_points": string[] }
 - 'CALL_TO_ACTION': { "action_items": string[] }
 - 'QA_CONTACT': { "footer_note": string }
-- 'REFERENCES_LIST': { "sources": Array<{ "title": string, "url": string, "summary"?: string }> }
+- 'REFERENCES_LIST': { "sources": Array<{ "title": string, "url": string, "summary"?: string }> } (If the lesson content does not explicitly contain reference links, generate 2-3 highly relevant, reputable external references, books, or online articles on this topic)
 - 'PYRAMID_LEVELS': { "levels": Array<{ "title": string, "description": string }>, "footer_note"?: string } (3–5 levels, apex first)
 - 'FUNNEL_STAGES': { "stages": Array<{ "title": string, "description": string }>, "footer_note"?: string } (3–5 stages, widest first)
 - 'PROCESS_ARROWS': { "process_steps": Array<{ "title": string, "description": string }>, "footer_note"?: string } (3–5 steps, titles ≤3 words, descriptions ≤10 words)
@@ -241,7 +241,8 @@ INSTRUCTIONS:
     "metrics": Array<{ "value": string, "label": string }>,
     "steps": string[],
     "events": Array<{ "date_or_step": string, "description": string }>,
-    "summary_points": string[]
+    "summary_points": string[],
+    "sources": Array<{ "title": string, "url": string, "summary"?: string }>
   }
 - Write complete, audience-facing copy — no placeholders, no "TODO".
 - Match the lesson's language (write in Vietnamese if the lesson is in Vietnamese).
