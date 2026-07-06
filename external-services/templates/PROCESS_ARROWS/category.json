@@ -1,8 +1,0 @@
-{
-  "description": "Horizontal chevron arrows: a left-to-right process flow, one arrow per step with title and description below. Use for workflows, methodologies, sequential processes. Pick the variant matching the number of steps.",
-  "variants": {
-    "steps_3": "Process Arrows with exactly 3 steps — use when the content has 3 items.",
-    "steps_4": "Process Arrows with exactly 4 steps — use when the content has 4 items.",
-    "steps_5": "Process Arrows with exactly 5 steps — use when the content has 5 items."
-  }
-}

@@ -1,7 +1,0 @@
-{
-  "description": "Structured grid presenting data in rows and columns.",
-  "variants": {
-    "standard": "pastel_pop style — Sleek glowing tech table with clear headers and row dividers.",
-    "striped_rows": "pastel_pop style — Zebra-striped table with a cyan header band — softer, modern alternative to grid lines."
-  }
-}

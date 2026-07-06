@@ -1,7 +1,0 @@
-{
-  "description": "Dashboard slide containing three major statistics or numeric KPIs.",
-  "variants": {
-    "standard": "Sleek three-column statistic cards with huge glowing values.",
-    "hero_number": "One giant hero number centered with two secondary stat cards below — leads with the headline metric."
-  }
-}

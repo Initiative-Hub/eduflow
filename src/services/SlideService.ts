@@ -1,6 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { FILE_TEMPLATES_BUCKET_NAME } from '@/lib/storage/file-storage';
+import {
+  FILE_DEFAULT_TEMPLATES_BUCKET_NAME,
+  FILE_TEMPLATES_BUCKET_NAME,
+} from '@/lib/storage/file-storage';
 import { StorageService } from './StorageService';
 
 // In-memory cache for slide template previews
@@ -65,18 +68,25 @@ export class SlideService {
     // 3. If no local templates found, try fetching from S3 via StorageService
     if (Object.keys(svgs).length === 0) {
       try {
+        const defaultCollections = new Set([
+          'templates',
+          'default',
+          'starter',
+          'neon_dark',
+          'vintage',
+          'clean_light',
+          'pastel_pop',
+        ]);
+        const bucketName = defaultCollections.has(collectionName.toLowerCase())
+          ? FILE_DEFAULT_TEMPLATES_BUCKET_NAME
+          : FILE_TEMPLATES_BUCKET_NAME;
+
         const prefix = `templates/${collectionName}/`;
-        const keys = await StorageService.listPrefixKeys(
-          prefix,
-          FILE_TEMPLATES_BUCKET_NAME
-        );
+        const keys = await StorageService.listPrefixKeys(prefix, bucketName);
 
         const svgKeys = keys.filter((key) => key.endsWith('.svg'));
         const downloadPromises = svgKeys.map(async (key) => {
-          const body = await StorageService.getObjectString(
-            key,
-            FILE_TEMPLATES_BUCKET_NAME
-          );
+          const body = await StorageService.getObjectString(key, bucketName);
           if (body) {
             const name = path.parse(key).name;
             return { name, body };

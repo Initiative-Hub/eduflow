@@ -90,19 +90,21 @@ STANDARD_LAYOUT_TYPES = [
 @router.get("/templates/{collection}/categories")
 async def get_collection_categories(collection: str):
     """Return the category (layout type) names available in a template collection.
-    For built-in collections (starter, neon_dark) returns the 16 standard types.
-    For custom collections reads subdirectory names from S3.
+    Queries the directory structures inside S3 to determine categories.
     """
-    if collection in ("starter", "neon_dark"):
-        return {"categories": STANDARD_LAYOUT_TYPES, "is_custom": False}
-
     try:
-        from app.deps import AWS_S3_TEMPLATES_BUCKET
+        from app.deps import AWS_S3_TEMPLATES_BUCKET, AWS_S3_DEFAULT_TEMPLATES_BUCKET
         from app.services.s3_service import list_files_in_s3_prefix
+
+        default_collections = {"templates", "default", "starter", "neon_dark", "vintage", "clean_light", "pastel_pop"}
+        if collection.lower() in default_collections:
+            bucket_name = AWS_S3_DEFAULT_TEMPLATES_BUCKET
+        else:
+            bucket_name = AWS_S3_TEMPLATES_BUCKET
 
         s3_prefix = f"templates/{collection}/"
         s3_keys = await list_files_in_s3_prefix(
-            s3_prefix, bucket_name=AWS_S3_TEMPLATES_BUCKET
+            s3_prefix, bucket_name=bucket_name
         )
 
         categories: set[str] = set()
@@ -112,11 +114,18 @@ async def get_collection_categories(collection: str):
             if len(parts) > 1 and parts[0]:
                 categories.add(parts[0])
 
+        is_custom = collection not in ("starter", "neon_dark", "vintage", "clean_light", "pastel_pop")
+
         if not categories:
             # Fall back to standard types if collection is empty / not found
-            return {"categories": STANDARD_LAYOUT_TYPES, "is_custom": False}
+            return {"categories": STANDARD_LAYOUT_TYPES, "is_custom": is_custom}
 
-        return {"categories": sorted(categories), "is_custom": True}
+        # Ignore non-category file keys like collection.json at the root of the collection prefix
+        valid_categories = {cat for cat in categories if cat.isupper()}
+        if not valid_categories:
+            return {"categories": STANDARD_LAYOUT_TYPES, "is_custom": is_custom}
+
+        return {"categories": sorted(valid_categories), "is_custom": is_custom}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

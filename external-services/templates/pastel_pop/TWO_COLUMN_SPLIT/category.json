@@ -1,7 +1,0 @@
-{
-  "description": "Comparative layout featuring two distinct content columns.",
-  "variants": {
-    "standard": "pastel_pop style — Symmetric side-by-side columns under highlighted headers.",
-    "versus_cards": "pastel_pop style — Two framed cards with a central VS badge — head-to-head comparison look."
-  }
-}

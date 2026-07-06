@@ -464,7 +464,10 @@ export function usePresentation(options: {
         levels: [
           { title: 'Vision', description: 'The overarching goal at the top' },
           { title: 'Strategy', description: 'How we plan to get there' },
-          { title: 'Execution', description: 'Daily work that delivers results' },
+          {
+            title: 'Execution',
+            description: 'Daily work that delivers results',
+          },
         ],
         footer_note: 'Each level builds on the one below it.',
       };

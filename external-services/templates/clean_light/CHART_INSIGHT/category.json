@@ -1,7 +1,0 @@
-{
-  "description": "Visual data layout featuring a graph along with an explanatory insight card.",
-  "variants": {
-    "standard": "clean_light style — Sleek mockup bar chart alongside strategic narrative insight column.",
-    "horizontal_bars": "clean_light style — Horizontal bar chart (4 bars, descending) with an INSIGHT panel on the right."
-  }
-}

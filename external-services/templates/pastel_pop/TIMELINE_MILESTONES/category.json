@@ -1,7 +1,0 @@
-{
-  "description": "Timeline slide displaying a list of chronological events, milestones or steps.",
-  "variants": {
-    "standard": "pastel_pop style — Alternating chronological timeline nodes on a glowing dashed path.",
-    "zigzag": "pastel_pop style — Horizontal timeline with milestone cards alternating above and below the track."
-  }
-}

@@ -1,7 +1,0 @@
-{
-  "description": "Agenda or Table of Contents slide listing main topics of the presentation.",
-  "variants": {
-    "standard": "Standard neon-dark table of contents with glowing step indicators.",
-    "numbered_grid": "Numbered agenda cards in a two-column grid — visual, card-based table of contents."
-  }
-}

@@ -1,8 +1,0 @@
-{
-  "description": "Layered pyramid / hierarchy diagram: ranked levels from apex (most important) down, each with a title and description. Use for priorities, maturity models, value hierarchies, strategy layers. Pick the variant whose level count matches the number of items.",
-  "variants": {
-    "tiers_3": "pastel_pop style — Pyramid with exactly 3 levels — use when the content has 3 items/tiers.",
-    "tiers_4": "pastel_pop style — Pyramid with exactly 4 levels — use when the content has 4 items/tiers.",
-    "tiers_5": "pastel_pop style — Pyramid with exactly 5 levels — use when the content has 5 items/tiers."
-  }
-}

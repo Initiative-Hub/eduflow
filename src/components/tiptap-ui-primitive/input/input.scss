@@ -20,10 +20,7 @@
   background: transparent;
   font-size: 1rem;
   outline: none;
-  transition:
-    color,
-    background-color,
-    border-color 150ms;
+  transition: color, background-color, border-color 150ms;
 
   &::placeholder {
     color: var(--tt-input-placeholder);

@@ -1,7 +1,0 @@
-{
-  "description": "Slide listing citations, links, reference items or academic sources.",
-  "variants": {
-    "standard": "Sleek list of reference cards with distinct highlight lines.",
-    "two_column": "Reference source cards in a two-column grid (up to 4 sources) with numbered badges."
-  }
-}
