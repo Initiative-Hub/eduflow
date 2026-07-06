@@ -1,0 +1,39 @@
+{
+  "fields": {
+    "heading": {
+      "type": "title",
+      "desc": "heading / title",
+      "max_chars": 24
+    },
+    "source_title_1": {
+      "type": "text",
+      "desc": "First text content",
+      "max_chars": 70
+    },
+    "source_url_1": {
+      "type": "text",
+      "desc": "First text content",
+      "max_chars": 80
+    },
+    "source_title_2": {
+      "type": "text",
+      "desc": "Second text content",
+      "max_chars": 70
+    },
+    "source_url_2": {
+      "type": "text",
+      "desc": "Second text content",
+      "max_chars": 80
+    },
+    "source_title_3": {
+      "type": "text",
+      "desc": "Third text content",
+      "max_chars": 70
+    },
+    "source_url_3": {
+      "type": "text",
+      "desc": "Third text content",
+      "max_chars": 80
+    }
+  }
+}

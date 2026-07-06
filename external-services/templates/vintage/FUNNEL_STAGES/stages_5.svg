@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 810">
+  <rect width="1440" height="810" fill="#F5EEDC"/><rect x="18" y="18" width="1404" height="774" fill="none" stroke="#8C3B2E" stroke-width="2" stroke-opacity="0.55"/><rect x="28" y="28" width="1384" height="754" fill="none" stroke="#4E6E58" stroke-width="1" stroke-opacity="0.45"/>
+  <circle cx="1320" cy="110" r="130" fill="#4E6E58" fill-opacity="0.18"/>
+  <text x="100" y="120" font-family="Georgia, 'Times New Roman', serif" font-size="52" font-weight="bold" fill="#3E2C1C">{{heading|24}}</text>
+  <rect x="100" y="145" width="220" height="4" fill="#8C3B2E" rx="2"/>
+  <g>
+    <polygon points="100,190 760,190 715,286 145,286" fill="#4E6E58" fill-opacity="0.18" stroke="#4E6E58" stroke-width="2" stroke-opacity="0.7"/>
+    <text x="430" y="250" font-family="Georgia, 'Times New Roman', serif" font-size="34" font-weight="bold" fill="#3E2C1C" text-anchor="middle">1</text>
+    <line x1="820" y1="290" x2="1340" y2="290" stroke="#5C4A36" stroke-opacity="0.12" stroke-width="1.5"/>
+    <text x="840" y="232" font-family="Georgia, 'Times New Roman', serif" font-size="29" font-weight="bold" fill="#4E6E58">{{title_1|28}}</text>
+    <text x="840" y="268" font-family="Georgia, 'Times New Roman', serif" font-size="21" fill="#5C4A36">{{desc_1|55}}</text>
+  </g>
+  <g>
+    <polygon points="145,294 715,294 670,390 190,390" fill="#8C3B2E" fill-opacity="0.18" stroke="#8C3B2E" stroke-width="2" stroke-opacity="0.7"/>
+    <text x="430" y="354" font-family="Georgia, 'Times New Roman', serif" font-size="34" font-weight="bold" fill="#3E2C1C" text-anchor="middle">2</text>
+    <line x1="820" y1="394" x2="1340" y2="394" stroke="#5C4A36" stroke-opacity="0.12" stroke-width="1.5"/>
+    <text x="840" y="336" font-family="Georgia, 'Times New Roman', serif" font-size="29" font-weight="bold" fill="#8C3B2E">{{title_2|28}}</text>
+    <text x="840" y="372" font-family="Georgia, 'Times New Roman', serif" font-size="21" fill="#5C4A36">{{desc_2|55}}</text>
+  </g>
+  <g>
+    <polygon points="190,398 670,398 625,494 235,494" fill="#4E6E58" fill-opacity="0.18" stroke="#4E6E58" stroke-width="2" stroke-opacity="0.7"/>
+    <text x="430" y="458" font-family="Georgia, 'Times New Roman', serif" font-size="34" font-weight="bold" fill="#3E2C1C" text-anchor="middle">3</text>
+    <line x1="820" y1="498" x2="1340" y2="498" stroke="#5C4A36" stroke-opacity="0.12" stroke-width="1.5"/>
+    <text x="840" y="440" font-family="Georgia, 'Times New Roman', serif" font-size="29" font-weight="bold" fill="#4E6E58">{{title_3|28}}</text>
+    <text x="840" y="476" font-family="Georgia, 'Times New Roman', serif" font-size="21" fill="#5C4A36">{{desc_3|55}}</text>
+  </g>
+  <g>
+    <polygon points="235,502 625,502 580,598 280,598" fill="#8C3B2E" fill-opacity="0.18" stroke="#8C3B2E" stroke-width="2" stroke-opacity="0.7"/>
+    <text x="430" y="562" font-family="Georgia, 'Times New Roman', serif" font-size="34" font-weight="bold" fill="#3E2C1C" text-anchor="middle">4</text>
+    <line x1="820" y1="602" x2="1340" y2="602" stroke="#5C4A36" stroke-opacity="0.12" stroke-width="1.5"/>
+    <text x="840" y="544" font-family="Georgia, 'Times New Roman', serif" font-size="29" font-weight="bold" fill="#8C3B2E">{{title_4|28}}</text>
+    <text x="840" y="580" font-family="Georgia, 'Times New Roman', serif" font-size="21" fill="#5C4A36">{{desc_4|55}}</text>
+  </g>
+  <g>
+    <polygon points="280,606 580,606 535,702 325,702" fill="#4E6E58" fill-opacity="0.18" stroke="#4E6E58" stroke-width="2" stroke-opacity="0.7"/>
+    <text x="430" y="666" font-family="Georgia, 'Times New Roman', serif" font-size="34" font-weight="bold" fill="#3E2C1C" text-anchor="middle">5</text>
+    <line x1="820" y1="706" x2="1340" y2="706" stroke="#5C4A36" stroke-opacity="0.12" stroke-width="1.5"/>
+    <text x="840" y="648" font-family="Georgia, 'Times New Roman', serif" font-size="29" font-weight="bold" fill="#4E6E58">{{title_5|28}}</text>
+    <text x="840" y="684" font-family="Georgia, 'Times New Roman', serif" font-size="21" fill="#5C4A36">{{desc_5|55}}</text>
+  </g>
+  <text x="100" y="780" font-family="Georgia, 'Times New Roman', serif" font-size="22" fill="#5C4A36" fill-opacity="0.8">{{footer_note|90}}</text>
+</svg>

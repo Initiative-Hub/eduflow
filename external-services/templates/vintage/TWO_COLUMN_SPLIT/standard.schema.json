@@ -1,0 +1,31 @@
+{
+  "fields": {
+    "heading": {
+      "type": "title",
+      "desc": "heading / title",
+      "max_chars": 24
+    },
+    "left_col_title": {
+      "type": "text",
+      "desc": "text content",
+      "max_chars": 30
+    },
+    "left_col_text": {
+      "type": "text",
+      "desc": "text content",
+      "max_chars": 40,
+      "lines": 5
+    },
+    "right_col_title": {
+      "type": "text",
+      "desc": "text content",
+      "max_chars": 30
+    },
+    "right_col_text": {
+      "type": "text",
+      "desc": "text content",
+      "max_chars": 40,
+      "lines": 5
+    }
+  }
+}

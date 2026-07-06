@@ -32,8 +32,7 @@ const STANDARD_LAYOUT_TYPES = [
  * subject and tone. Must match folder names under external-services/templates.
  */
 const STYLE_COLLECTIONS: Record<string, string> = {
-  starter:
-    'Neutral, professional default — safe for any subject or audience.',
+  starter: 'Neutral, professional default — safe for any subject or audience.',
   neon_dark:
     'Dark background with vivid cyan/pink neon accents — tech, coding, gaming, modern engineering topics.',
   vintage:
@@ -108,8 +107,14 @@ export class PresentationService {
     contentSnippet: string;
     targetSlideCount: number;
     context?: string;
+    styleCollections?: Record<string, string>;
   }): string {
     const { lessonTitle, contentSnippet, targetSlideCount, context } = opts;
+    // live inventory (local + S3) when available; built-in list otherwise
+    const styles =
+      opts.styleCollections && Object.keys(opts.styleCollections).length > 0
+        ? opts.styleCollections
+        : STYLE_COLLECTIONS;
 
     return `
 You are compiling a complete, professional slide deck from the lesson below. Treat the lesson as the single source of truth and turn it into a deck a presenter could deliver as-is.
@@ -176,7 +181,7 @@ Layout Binding Specifications (use these EXACT keys in each slide's 'bindings' o
 
 STYLE SELECTION:
 Pick the ONE visual style that best matches this lesson's subject and tone, and return its name as 'recommendedCollection':
-${Object.entries(STYLE_COLLECTIONS)
+${Object.entries(styles)
   .map(([name, desc]) => `- '${name}': ${desc}`)
   .join('\n')}
 
@@ -255,6 +260,7 @@ HARD CONSTRAINTS:
     duration: string;
     context?: string;
     templateCategories?: string[];
+    styleCollections?: Record<string, string>;
   }): Promise<PresentationPlan> {
     const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) {
@@ -287,6 +293,7 @@ HARD CONSTRAINTS:
           contentSnippet,
           targetSlideCount,
           context: opts.context,
+          styleCollections: opts.styleCollections,
         });
 
     const finalResponse = await generateText({
@@ -329,8 +336,16 @@ HARD CONSTRAINTS:
     duration: string;
     context?: string;
     templateCategories?: string[];
+    styleCollections?: Record<string, string>;
   }): ReadableStream<string> {
-    const { lessonId, userId, duration, context, templateCategories } = options;
+    const {
+      lessonId,
+      userId,
+      duration,
+      context,
+      templateCategories,
+      styleCollections,
+    } = options;
     const { readable, writable } = new TransformStream<string, string>();
     const writer = writable.getWriter();
 
@@ -349,15 +364,18 @@ HARD CONSTRAINTS:
           duration,
           context,
           templateCategories,
+          styleCollections,
         });
 
+        // validate against the live inventory (or the built-in fallback)
+        const knownStyles = styleCollections ?? STYLE_COLLECTIONS;
         await writer.write(
           `${JSON.stringify({
             type: 'done',
             slides: plan.slides,
             recommendedCollection:
               plan.recommendedCollection &&
-              plan.recommendedCollection in STYLE_COLLECTIONS
+              plan.recommendedCollection in knownStyles
                 ? plan.recommendedCollection
                 : undefined,
           })}\n`

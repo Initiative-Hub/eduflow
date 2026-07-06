@@ -45,6 +45,35 @@ async function fetchTemplateCategories(
 }
 
 /**
+ * Fetches the live style inventory (local + S3 collections with their
+ * descriptions) so the planner AI picks a style from whatever actually
+ * exists — no hardcoded list. Returns null on failure (planner falls back
+ * to its built-in defaults).
+ */
+async function fetchStyleCollections(): Promise<Record<string, string> | null> {
+  try {
+    const res = await fetch(
+      `${EXTERNAL_SERVICE_URL}/slides/templates/collections`,
+      { cache: 'no-store' }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    const list: Array<{ name: string; description?: string }> = Array.isArray(
+      data
+    )
+      ? data
+      : (data.collections ?? []);
+    const map: Record<string, string> = {};
+    for (const c of list) {
+      if (c?.name) map[c.name] = c.description || `Style '${c.name}'`;
+    }
+    return Object.keys(map).length > 0 ? map : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * @swagger
  * /api/v1/presentation/plan:
  *   post:
@@ -105,11 +134,15 @@ export const POST = withAuth(async (req, sessionData) => {
 
     // Fetch template categories for custom collections so the AI can use
     // the template's own layout type names instead of the standard 16.
+    // ('auto' means the AI picks the style — standard planning path.)
     let templateCategories: string[] | undefined;
-    if (collection) {
+    if (collection && collection !== 'auto') {
       const cats = await fetchTemplateCategories(collection);
       if (cats) templateCategories = cats;
     }
+
+    // Live style inventory (local + S3) for the AI's style recommendation.
+    const styleCollections = await fetchStyleCollections();
 
     const stream = PresentationService.planPresentationStream({
       lessonId,
@@ -117,6 +150,7 @@ export const POST = withAuth(async (req, sessionData) => {
       duration,
       context,
       templateCategories,
+      styleCollections: styleCollections ?? undefined,
     });
 
     return new Response(stream as unknown as ReadableStream<Uint8Array>, {

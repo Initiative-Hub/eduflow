@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 810">
+  <rect width="1440" height="810" fill="#F5EEDC"/><rect x="18" y="18" width="1404" height="774" fill="none" stroke="#8C3B2E" stroke-width="2" stroke-opacity="0.55"/><rect x="28" y="28" width="1384" height="754" fill="none" stroke="#4E6E58" stroke-width="1" stroke-opacity="0.45"/>
+  <circle cx="720" cy="420" r="260" fill="#8C3B2E" fill-opacity="0.18"/>
+
+  <!-- Heading, centered -->
+  <text x="720" y="130" font-family="Georgia, 'Times New Roman', serif" font-size="54" font-weight="bold" fill="#3E2C1C" text-anchor="middle">{{heading|24}}</text>
+  <rect x="610" y="158" width="220" height="4" fill="#4E6E58" rx="2"/>
+
+  <!-- Left card (cyan) -->
+  <g transform="translate(110, 220)">
+    <rect width="560" height="500" fill="#EDE2C4" rx="22" stroke="#4E6E58" stroke-width="2" stroke-opacity="0.45"/>
+    <rect x="150" y="-26" width="260" height="52" fill="#4E6E58" rx="26"/>
+    <text x="280" y="9" font-family="Georgia, 'Times New Roman', serif" font-size="24" font-weight="bold" fill="#F5EEDC" text-anchor="middle">{{left_col_title|30}}</text>
+    <text x="50" y="105" font-family="Georgia, 'Times New Roman', serif" font-size="26" fill="#5C4A36">{{left_col_text.1|40}}</text>
+    <text x="50" y="175" font-family="Georgia, 'Times New Roman', serif" font-size="26" fill="#5C4A36">{{left_col_text.2|40}}</text>
+    <text x="50" y="245" font-family="Georgia, 'Times New Roman', serif" font-size="26" fill="#5C4A36">{{left_col_text.3|40}}</text>
+    <text x="50" y="315" font-family="Georgia, 'Times New Roman', serif" font-size="26" fill="#5C4A36">{{left_col_text.4|40}}</text>
+    <text x="50" y="385" font-family="Georgia, 'Times New Roman', serif" font-size="26" fill="#5C4A36">{{left_col_text.5|40}}</text>
+  </g>
+
+  <!-- Divider badge -->
+  <circle cx="720" cy="470" r="44" fill="#F5EEDC" stroke="#8C3B2E" stroke-width="3"/>
+  <text x="720" y="482" font-family="Georgia, 'Times New Roman', serif" font-size="28" font-weight="900" fill="#8C3B2E" text-anchor="middle">VS</text>
+
+  <!-- Right card (pink) -->
+  <g transform="translate(770, 220)">
+    <rect width="560" height="500" fill="#EDE2C4" rx="22" stroke="#8C3B2E" stroke-width="2" stroke-opacity="0.45"/>
+    <rect x="150" y="-26" width="260" height="52" fill="#8C3B2E" rx="26"/>
+    <text x="280" y="9" font-family="Georgia, 'Times New Roman', serif" font-size="24" font-weight="bold" fill="#3E2C1C" text-anchor="middle">{{right_col_title|30}}</text>
+    <text x="50" y="105" font-family="Georgia, 'Times New Roman', serif" font-size="26" fill="#5C4A36">{{right_col_text.1|40}}</text>
+    <text x="50" y="175" font-family="Georgia, 'Times New Roman', serif" font-size="26" fill="#5C4A36">{{right_col_text.2|40}}</text>
+    <text x="50" y="245" font-family="Georgia, 'Times New Roman', serif" font-size="26" fill="#5C4A36">{{right_col_text.3|40}}</text>
+    <text x="50" y="315" font-family="Georgia, 'Times New Roman', serif" font-size="26" fill="#5C4A36">{{right_col_text.4|40}}</text>
+    <text x="50" y="385" font-family="Georgia, 'Times New Roman', serif" font-size="26" fill="#5C4A36">{{right_col_text.5|40}}</text>
+  </g>
+</svg>

@@ -1,0 +1,55 @@
+{
+  "fields": {
+    "heading": {
+      "type": "title",
+      "desc": "chart heading",
+      "max_chars": 24
+    },
+    "insight_text": {
+      "type": "text",
+      "desc": "key insight drawn from the chart",
+      "max_chars": 45,
+      "lines": 3
+    },
+    "chart_label_1": {
+      "type": "text",
+      "desc": "bar 1 label",
+      "max_chars": 12
+    },
+    "chart_value_1": {
+      "type": "stat",
+      "desc": "bar 1 value",
+      "max_chars": 8
+    },
+    "chart_label_2": {
+      "type": "text",
+      "desc": "bar 2 label",
+      "max_chars": 12
+    },
+    "chart_value_2": {
+      "type": "stat",
+      "desc": "bar 2 value",
+      "max_chars": 8
+    },
+    "chart_label_3": {
+      "type": "text",
+      "desc": "bar 3 label",
+      "max_chars": 12
+    },
+    "chart_value_3": {
+      "type": "stat",
+      "desc": "bar 3 value",
+      "max_chars": 8
+    },
+    "chart_label_4": {
+      "type": "text",
+      "desc": "bar 4 label",
+      "max_chars": 12
+    },
+    "chart_value_4": {
+      "type": "stat",
+      "desc": "bar 4 value",
+      "max_chars": 8
+    }
+  }
+}

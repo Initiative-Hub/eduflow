@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 810">
+  <rect width="1440" height="810" fill="#F5EEDC"/><rect x="18" y="18" width="1404" height="774" fill="none" stroke="#8C3B2E" stroke-width="2" stroke-opacity="0.55"/><rect x="28" y="28" width="1384" height="754" fill="none" stroke="#4E6E58" stroke-width="1" stroke-opacity="0.45"/>
+  <line x1="80" y1="0" x2="80" y2="810" stroke="#4E6E58" stroke-width="3" stroke-opacity="0.3"/>
+
+  <!-- Centered concluding content -->
+  <g transform="translate(720, 400)">
+    <rect x="-450" y="-220" width="900" height="400" fill="#EDE2C4" fill-opacity="0.7" rx="24" stroke="#8C3B2E" stroke-width="2" stroke-opacity="0.4"/>
+    
+    <text x="0" y="-120" font-family="Georgia, 'Times New Roman', serif" font-size="72" font-weight="extrabold" fill="#4E6E58" text-anchor="middle">Questions &amp; Answers</text>
+    <text x="0" y="-30" font-family="Georgia, 'Times New Roman', serif" font-size="36" fill="#3E2C1C" text-anchor="middle">Thank you for your time!</text>
+    
+    <line x1="-150" y1="30" x2="150" y2="30" stroke="#8C3B2E" stroke-width="2"/>
+    
+    <text x="0" y="90" font-family="Georgia, 'Times New Roman', serif" font-size="26" fill="#5C4A36" text-anchor="middle">{{footer_note.1|50}}</text>
+    <text x="0" y="130" font-family="Georgia, 'Times New Roman', serif" font-size="26" fill="#5C4A36" text-anchor="middle">{{footer_note.2|50}}</text>
+  </g>
+</svg>

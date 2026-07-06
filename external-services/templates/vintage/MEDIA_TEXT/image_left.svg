@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 810">
+  <rect width="1440" height="810" fill="#F5EEDC"/><rect x="18" y="18" width="1404" height="774" fill="none" stroke="#8C3B2E" stroke-width="2" stroke-opacity="0.55"/><rect x="28" y="28" width="1384" height="754" fill="none" stroke="#4E6E58" stroke-width="1" stroke-opacity="0.45"/>
+  <circle cx="1330" cy="700" r="160" fill="#8C3B2E" fill-opacity="0.18"/>
+
+  <!-- Image, left -->
+  <g transform="translate(120, 180)">
+    <rect x="-8" y="-8" width="536" height="476" fill="none" stroke="#8C3B2E" stroke-width="2" stroke-opacity="0.45" rx="20"/>
+    <clipPath id="media_left_clip"><rect width="520" height="460" rx="14"/></clipPath>
+    <image width="520" height="460" href="{{media_image}}" clip-path="url(#media_left_clip)" preserveAspectRatio="xMidYMid slice"/>
+  </g>
+
+  <!-- Text, right -->
+  <text x="720" y="215" font-family="Georgia, 'Times New Roman', serif" font-size="52" font-weight="bold" fill="#3E2C1C">{{heading|24}}</text>
+  <rect x="720" y="240" width="200" height="4" fill="#4E6E58" rx="2"/>
+
+  <g transform="translate(720, 300)">
+    <text x="0" y="30" font-family="Georgia, 'Times New Roman', serif" font-size="27" fill="#5C4A36">{{body_text.1|50}}</text>
+    <text x="0" y="85" font-family="Georgia, 'Times New Roman', serif" font-size="27" fill="#5C4A36">{{body_text.2|50}}</text>
+    <text x="0" y="140" font-family="Georgia, 'Times New Roman', serif" font-size="27" fill="#5C4A36">{{body_text.3|50}}</text>
+    <text x="0" y="195" font-family="Georgia, 'Times New Roman', serif" font-size="27" fill="#5C4A36">{{body_text.4|50}}</text>
+    <text x="0" y="250" font-family="Georgia, 'Times New Roman', serif" font-size="27" fill="#5C4A36">{{body_text.5|50}}</text>
+    <text x="0" y="305" font-family="Georgia, 'Times New Roman', serif" font-size="27" fill="#5C4A36">{{body_text.6|50}}</text>
+  </g>
+</svg>

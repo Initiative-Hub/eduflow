@@ -1,0 +1,89 @@
+{
+  "fields": {
+    "heading": {
+      "type": "title",
+      "desc": "table heading",
+      "max_chars": 24
+    },
+    "header_1": {
+      "type": "text",
+      "desc": "column 1 header",
+      "max_chars": 20
+    },
+    "header_2": {
+      "type": "text",
+      "desc": "column 2 header",
+      "max_chars": 20
+    },
+    "header_3": {
+      "type": "text",
+      "desc": "column 3 header",
+      "max_chars": 20
+    },
+    "header_4": {
+      "type": "text",
+      "desc": "column 4 header",
+      "max_chars": 20
+    },
+    "row_1_1": {
+      "type": "text",
+      "desc": "row 1 col 1",
+      "max_chars": 20
+    },
+    "row_1_2": {
+      "type": "text",
+      "desc": "row 1 col 2",
+      "max_chars": 20
+    },
+    "row_1_3": {
+      "type": "text",
+      "desc": "row 1 col 3",
+      "max_chars": 20
+    },
+    "row_1_4": {
+      "type": "text",
+      "desc": "row 1 col 4",
+      "max_chars": 20
+    },
+    "row_2_1": {
+      "type": "text",
+      "desc": "row 2 col 1",
+      "max_chars": 20
+    },
+    "row_2_2": {
+      "type": "text",
+      "desc": "row 2 col 2",
+      "max_chars": 20
+    },
+    "row_2_3": {
+      "type": "text",
+      "desc": "row 2 col 3",
+      "max_chars": 20
+    },
+    "row_2_4": {
+      "type": "text",
+      "desc": "row 2 col 4",
+      "max_chars": 20
+    },
+    "row_3_1": {
+      "type": "text",
+      "desc": "row 3 col 1",
+      "max_chars": 20
+    },
+    "row_3_2": {
+      "type": "text",
+      "desc": "row 3 col 2",
+      "max_chars": 20
+    },
+    "row_3_3": {
+      "type": "text",
+      "desc": "row 3 col 3",
+      "max_chars": 20
+    },
+    "row_3_4": {
+      "type": "text",
+      "desc": "row 3 col 4",
+      "max_chars": 20
+    }
+  }
+}

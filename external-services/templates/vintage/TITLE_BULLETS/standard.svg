@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 810">
+  <rect width="1440" height="810" fill="#F5EEDC"/><rect x="18" y="18" width="1404" height="774" fill="none" stroke="#8C3B2E" stroke-width="2" stroke-opacity="0.55"/><rect x="28" y="28" width="1384" height="754" fill="none" stroke="#4E6E58" stroke-width="1" stroke-opacity="0.45"/>
+  <line x1="80" y1="0" x2="80" y2="810" stroke="#4E6E58" stroke-width="3" stroke-opacity="0.3"/>
+  <circle cx="1200" cy="150" r="160" fill="#8C3B2E" fill-opacity="0.18"/>
+
+  <!-- Heading -->
+  <text x="140" y="150" font-family="Georgia, 'Times New Roman', serif" font-size="56" font-weight="bold" fill="#3E2C1C">{{heading|24}}</text>
+  <rect x="140" y="175" width="220" height="4" fill="#4E6E58" rx="2"/>
+
+  <!-- Bullets list -->
+  <g transform="translate(140, 240)">
+    <!-- Bullet 1 -->
+    <rect x="0" y="25" width="16" height="16" fill="#4E6E58" rx="4"/>
+    <text x="40" y="40" font-family="Georgia, 'Times New Roman', serif" font-size="28" fill="#5C4A36">{{bullets.1|70}}</text>
+
+    <!-- Bullet 2 -->
+    <rect x="0" y="115" width="16" height="16" fill="#4E6E58" rx="4"/>
+    <text x="40" y="130" font-family="Georgia, 'Times New Roman', serif" font-size="28" fill="#5C4A36">{{bullets.2|70}}</text>
+
+    <!-- Bullet 3 -->
+    <rect x="0" y="205" width="16" height="16" fill="#4E6E58" rx="4"/>
+    <text x="40" y="220" font-family="Georgia, 'Times New Roman', serif" font-size="28" fill="#5C4A36">{{bullets.3|70}}</text>
+
+    <!-- Bullet 4 -->
+    <rect x="0" y="295" width="16" height="16" fill="#4E6E58" rx="4"/>
+    <text x="40" y="310" font-family="Georgia, 'Times New Roman', serif" font-size="28" fill="#5C4A36">{{bullets.4|70}}</text>
+
+    <!-- Bullet 5 -->
+    <rect x="0" y="385" width="16" height="16" fill="#4E6E58" rx="4"/>
+    <text x="40" y="400" font-family="Georgia, 'Times New Roman', serif" font-size="28" fill="#5C4A36">{{bullets.5|70}}</text>
+  </g>
+</svg>

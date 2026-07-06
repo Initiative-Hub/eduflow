@@ -1,0 +1,39 @@
+{
+  "fields": {
+    "heading": {
+      "type": "title",
+      "desc": "gallery heading",
+      "max_chars": 24
+    },
+    "label_1": {
+      "type": "text",
+      "desc": "image 1 label",
+      "max_chars": 26
+    },
+    "caption_1": {
+      "type": "text",
+      "desc": "image 1 caption",
+      "max_chars": 34
+    },
+    "label_2": {
+      "type": "text",
+      "desc": "image 2 label",
+      "max_chars": 26
+    },
+    "caption_2": {
+      "type": "text",
+      "desc": "image 2 caption",
+      "max_chars": 34
+    },
+    "label_3": {
+      "type": "text",
+      "desc": "image 3 label",
+      "max_chars": 26
+    },
+    "caption_3": {
+      "type": "text",
+      "desc": "image 3 caption",
+      "max_chars": 34
+    }
+  }
+}
