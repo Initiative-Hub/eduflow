@@ -36,6 +36,41 @@ def custom_select_and_fill_slide(variants, slide_content, **kwargs):
 
 slide_skills.svg_categories.select_and_fill_slide = custom_select_and_fill_slide
 
+# --- style-aware image prompts -------------------------------------------------
+# Generated images should match the collection's illustration style. The active
+# collection's collection.json may define "image_style"; we set it here before
+# generation and append it to every image prompt. If the planner supplied an
+# explicit image_prompt_description binding, that takes precedence over the
+# content-derived prompt.
+_ACTIVE_IMAGE_STYLE: dict = {"hint": ""}
+_orig_image_prompt = slide_skills.svg_categories._image_prompt
+
+
+def _styled_image_prompt(slide, name, texts=None):
+    bindings = (slide or {}).get("bindings") or {}
+    desc = bindings.get("image_prompt_description")
+    base = (f"A clear illustration of: {desc}. No text, no words, no letters."
+            if isinstance(desc, str) and desc.strip()
+            else _orig_image_prompt(slide, name, texts))
+    hint = _ACTIVE_IMAGE_STYLE.get("hint") or ""
+    return f"{base} Art style: {hint}." if hint else base
+
+
+slide_skills.svg_categories._image_prompt = _styled_image_prompt
+
+
+def _set_image_style_for(library_dir) -> None:
+    """Load the collection's image_style hint (if any) for prompt styling."""
+    import json as _json
+    _ACTIVE_IMAGE_STYLE["hint"] = ""
+    try:
+        meta = Path(library_dir) / "collection.json"
+        if meta.exists():
+            _ACTIVE_IMAGE_STYLE["hint"] = str(
+                _json.loads(meta.read_text(encoding="utf-8")).get("image_style", ""))
+    except Exception:
+        pass
+
 
 def flatten_slide_bindings(category: str, slide_title: str, bindings: dict) -> dict:
     flat = bindings.copy()
@@ -150,6 +185,16 @@ def flatten_slide_bindings(category: str, slide_title: str, bindings: dict) -> d
                 flat[f"source_title_{idx}"] = str(src.get("title", ""))
                 flat[f"source_url_{idx}"] = str(src.get("url", ""))
 
+    # 13b. Flatten STATEMENT_IMAGE: statement -> statement.1..3 script lines
+    if "statement" in bindings and isinstance(bindings["statement"], str):
+        s_width = max(20, -(-len(bindings["statement"]) // 3))
+        s_lines = textwrap.wrap(bindings["statement"], width=s_width)
+        while len(s_lines) > 3:
+            s_width += 2
+            s_lines = textwrap.wrap(bindings["statement"], width=s_width)
+        for idx, line in enumerate(s_lines, 1):
+            flat[f"statement.{idx}"] = line
+
     # 14. Flatten diagram families (PYRAMID_LEVELS / FUNNEL_STAGES /
     #     PROCESS_ARROWS / CIRCLE_CYCLE): Array<{title, description}>
     #     -> title_1/desc_1 ... The per-count variants (tiers_3..5, stages_3..5,
@@ -181,7 +226,7 @@ class SlideService:
         if col_path.exists() and any(col_path.glob("**/*.svg")):
             return col_path
             
-        default_collections = {"templates", "default", "starter", "neon_dark", "vintage", "clean_light", "pastel_pop", "illustrative_culture", "minimalist_gradient", "cultural_folk"}
+        default_collections = {"templates", "default", "starter", "neon_dark", "vintage", "clean_light", "pastel_pop", "illustrative_culture", "minimalist_gradient", "cultural_folk", "organic_streets"}
         if collection.lower() in default_collections:
             from app.deps import AWS_S3_DEFAULT_TEMPLATES_BUCKET as BUCKET_NAME
         else:
@@ -246,6 +291,7 @@ class SlideService:
             "references_list",
             "image_gallery",
             "kpi_big_numbers",
+            "statement_image",
             "pyramid_levels",
             "funnel_stages",
             "process_arrows",
@@ -296,6 +342,7 @@ class SlideService:
                         "neon_dark": "A modern, high-contrast dark theme with glowing neon accents.",
                         "illustrative_culture": "Warm cream paper, hand-drawn buildings & clouds, Yogyakarta street aesthetic, sage green accents.",
                         "minimalist_gradient": "Sleek dark theme with electric royal blue and violet gradient glows, crisp geometric typography, and ambient grid lines.",
+                        "organic_streets": "Organic illustration style: cream paper, plum script headlines, golden sun discs, slate and terracotta blobs, line-art European skylines.",
                         "cultural_folk": "Rich cultural folk style: warm plum night sky over a sand earth strip, arch and temple shapes, radiant sun badges, festival bunting and stitched lines in terracotta, gold, dusty blue and rose."
                     }
                     return well_known.get(name.lower(), default_desc)
@@ -539,6 +586,7 @@ class SlideService:
 
         try:
             actual_palette = None if palette == "auto" else palette
+            _set_image_style_for(library_dir)   # style-matched AI image prompts
             res = await run_in_threadpool(
                 slide_skills.generate_deck_from_plan,
                 plan,
@@ -559,7 +607,7 @@ class SlideService:
                 except Exception:
                     pass
             # Remove the S3-downloaded collection from local disk after use
-            if col_name and col_name not in ("starter", "neon_dark", "templates", "default", "vintage", "clean_light", "pastel_pop", "illustrative_culture", "minimalist_gradient", "cultural_folk"):
+            if col_name and col_name not in ("starter", "neon_dark", "templates", "default", "vintage", "clean_light", "pastel_pop", "illustrative_culture", "minimalist_gradient", "cultural_folk", "organic_streets"):
                 col_path = Path(SLIDE_TEMPLATES_DIR) / col_name
                 if col_path.exists() and col_path.is_dir():
                     shutil.rmtree(col_path, ignore_errors=True)

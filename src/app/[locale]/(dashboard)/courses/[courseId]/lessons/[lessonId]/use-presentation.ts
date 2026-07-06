@@ -25,6 +25,7 @@ export interface PlannedSlide {
     | 'CALL_TO_ACTION'
     | 'QA_CONTACT'
     | 'REFERENCES_LIST'
+    | 'STATEMENT_IMAGE'
     | 'PYRAMID_LEVELS'
     | 'FUNNEL_STAGES'
     | 'PROCESS_ARROWS'
@@ -458,6 +459,14 @@ export function usePresentation(options: {
     } else if (newLayout === 'REFERENCES_LIST') {
       defaultBindings = {
         sources: [{ title: 'Reference Source 1', url: 'https://example.com' }],
+      };
+    } else if (newLayout === 'STATEMENT_IMAGE') {
+      defaultBindings = {
+        statement: 'Every idea has a story worth telling.',
+        body_text:
+          'A short supporting paragraph that grounds the statement in concrete detail for the audience.',
+        image_prompt_description:
+          'A quiet European old-town street at golden hour',
       };
     } else if (newLayout === 'PYRAMID_LEVELS') {
       defaultBindings = {

@@ -21,6 +21,7 @@ const STANDARD_LAYOUT_TYPES = [
   'CALL_TO_ACTION',
   'QA_CONTACT',
   'REFERENCES_LIST',
+  'STATEMENT_IMAGE',
   'PYRAMID_LEVELS',
   'FUNNEL_STAGES',
   'PROCESS_ARROWS',
@@ -45,6 +46,8 @@ const STYLE_COLLECTIONS: Record<string, string> = {
     'Warm cream background, hand-drawn vector buildings & clouds, Yogyakarta street aesthetic, sage green, sky blue, and gold accents — culture, art, architecture, geography, and storytelling.',
   minimalist_gradient:
     'Sleek dark theme with electric royal blue and violet gradient glows, crisp modern typography, and ambient grid lines — technology, start-ups, product design, business pitches, and modern tech topics.',
+  organic_streets:
+    'Cream paper, deep plum script headlines, golden sun discs, slate and terracotta organic blobs, line-art European street skylines — travel, geography, history, literature, art and storytelling topics.',
   cultural_folk:
     'Warm plum-gray background, cream text, terracotta and sand accents with a grounded earth strip — culture, diversity, social studies, community, humanities and storytelling topics.',
 };
@@ -147,6 +150,7 @@ CHOOSE THE BEST LAYOUT FOR EACH IDEA (do not default everything to TITLE_BULLETS
 - A process, "how it works", or ordered method → 'STEP_BY_STEP' (3–6 concrete steps).
 - Chronology, roadmap, history, milestones, phases → 'TIMELINE_MILESTONES' (3–6 events).
 - A memorable quote, testimonial, or single big takeaway → 'BIG_QUOTE_TAKEAWAY'.
+- An evocative, narrative or scene-setting idea best told as one poetic statement with a large illustration → 'STATEMENT_IMAGE' (statement ≤70 chars + a short supporting paragraph + a vivid image_prompt_description).
 - Structured rows/columns of facts → 'DATA_TABLE' (clear headers + at least 3 rows).
 - A point best paired with a visual, demo, screenshot, or diagram → 'MEDIA_TEXT' (write a vivid image_prompt_description).
 - A set of related points or features with no stronger structure → 'TITLE_BULLETS' (3–5 substantive bullets).
@@ -180,6 +184,7 @@ Layout Binding Specifications (use these EXACT keys in each slide's 'bindings' o
 - 'CALL_TO_ACTION': { "action_items": string[] }
 - 'QA_CONTACT': { "footer_note": string }
 - 'REFERENCES_LIST': { "sources": Array<{ "title": string, "url": string, "summary"?: string }> } (If the lesson content does not explicitly contain reference links, generate 2-3 highly relevant, reputable external references, books, or online articles on this topic)
+- 'STATEMENT_IMAGE': { "statement": string, "body_text": string, "image_prompt_description": string }
 - 'PYRAMID_LEVELS': { "levels": Array<{ "title": string, "description": string }>, "footer_note"?: string } (3–5 levels, apex first)
 - 'FUNNEL_STAGES': { "stages": Array<{ "title": string, "description": string }>, "footer_note"?: string } (3–5 stages, widest first)
 - 'PROCESS_ARROWS': { "process_steps": Array<{ "title": string, "description": string }>, "footer_note"?: string } (3–5 steps, titles ≤3 words, descriptions ≤10 words)
