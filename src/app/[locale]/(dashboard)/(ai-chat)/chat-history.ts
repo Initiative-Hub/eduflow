@@ -1,6 +1,5 @@
 import type { InfiniteData } from '@tanstack/react-query';
 import type { UIMessage } from 'ai';
-import type { ChatDetailsResponse } from './chat.service';
 
 function getMessageSignature(message: UIMessage) {
   return JSON.stringify({
