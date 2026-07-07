@@ -1,22 +1,11 @@
-import type { UIMessage } from 'ai';
 import { NextResponse } from 'next/server';
-import z from 'zod';
-import {
-  AiChatRole,
-  AiChatStatus,
-  AiChatType,
-  ShareResourceType,
-} from '@/generated/prisma';
+import { z } from 'zod';
 import { getChatOwner } from '@/lib/api/guest-session';
-import { prisma } from '@/lib/prisma';
-import {
-  getStudyInteractiveContentParts,
-  studyInteractiveContentSchema,
-} from '@/utils/study-interactive-content';
+import { StudyShareService } from '@/services/StudyShareService';
 
 const shareInteractiveContentSchema = z.object({
   messageId: z.string().trim().min(1),
-  contentIndex: z.number().min(0).default(0),
+  contentIndex: z.number().int().min(0).default(0),
 });
 
 /**
@@ -67,44 +56,15 @@ export async function POST(
       );
     }
 
-    const message = await prisma.aiChatMessage.findFirst({
-      where: {
-        id: parsedBody.data.messageId,
+    const sharedResource =
+      await StudyShareService.createInteractiveContentShare({
         chatId,
-        role: AiChatRole.ASSISTANT,
-        chat: {
-          userId,
-          type: AiChatType.STUDY_ASSISTANT,
-          status: AiChatStatus.ACTIVE,
-          deletedAt: null,
-        },
-      },
-      select: {
-        id: true,
-        parts: true,
-      },
-    });
+        userId,
+        messageId: parsedBody.data.messageId,
+        contentIndex: parsedBody.data.contentIndex,
+      });
 
-    if (!message) {
-      return NextResponse.json(
-        {
-          error: 'Message not found or access denied',
-          message: 'Message not found or access denied.',
-        },
-        { status: 404 }
-      );
-    }
-
-    const interactiveContents = getStudyInteractiveContentParts({
-      id: message.id,
-      role: 'assistant',
-      parts: Array.isArray(message.parts) ? message.parts : [],
-    } as UIMessage);
-
-    const content = interactiveContents[parsedBody.data.contentIndex];
-    const parsedContent = studyInteractiveContentSchema.safeParse(content);
-
-    if (!parsedContent.success) {
+    if (!sharedResource) {
       return NextResponse.json(
         {
           error: 'Interactive content not found',
@@ -113,21 +73,6 @@ export async function POST(
         { status: 404 }
       );
     }
-
-    const sharedResource = await prisma.sharedResource.create({
-      data: {
-        ownerUserId: userId,
-        resourceType: ShareResourceType.STUDY_INTERACTIVE_CONTENT,
-        sourceChatId: chatId,
-        sourceMessageId: message.id,
-        title: parsedContent.data.title,
-        description: parsedContent.data.description,
-        payload: parsedContent.data,
-      },
-      select: {
-        id: true,
-      },
-    });
 
     const shareUrl = new URL(
       `/share/study/interactive/${sharedResource.id}`,
