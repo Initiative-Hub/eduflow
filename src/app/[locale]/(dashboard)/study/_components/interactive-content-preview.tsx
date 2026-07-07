@@ -1,6 +1,9 @@
 'use client';
 
 import {
+  AlertCircle,
+  Check,
+  Copy,
   Download,
   Loader2,
   Maximize2,
@@ -10,6 +13,16 @@ import {
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import {
   Tooltip,
   TooltipContent,
@@ -72,22 +85,29 @@ const InteractiveContentPreview = ({
   const t = useTranslations('StudyPage.features.interactiveContent');
   const {
     containerRef,
+    handleCopyShareLink,
     handleDownload,
     handleFullscreen,
     handleReset,
     handleSaveToInventory,
     handleShare,
     isSavingToInventory,
+    isShareCopied,
+    isShareDialogOpen,
     isSharing,
     previewKey,
     secureDocument,
+    setIsShareDialogOpen,
+    shareError,
+    shareUrl,
   } = useInteractiveContentPreview({
+    copyErrorMessage: t('copyError'),
+    copySuccessMessage: t('shareSuccess'),
     html,
     saveErrorMessage: t('saveError'),
     saveSuccessMessage: t('saveSuccess'),
     share,
     shareErrorMessage: t('shareError'),
-    shareSuccessMessage: t('shareSuccess'),
     title,
   });
 
@@ -168,6 +188,80 @@ const InteractiveContentPreview = ({
         srcDoc={secureDocument}
         title={t('previewTitle', { title })}
       />
+      {share ? (
+        <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>{t('shareDialogTitle')}</DialogTitle>
+              <DialogDescription>
+                {shareUrl
+                  ? t('shareDialogReadyDescription')
+                  : t('shareDialogDescription')}
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              {isSharing ? (
+                <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/40 p-3">
+                  <Loader2 className="size-4 animate-spin text-primary" />
+                  <p className="font-medium text-sm">{t('shareGenerating')}</p>
+                </div>
+              ) : null}
+
+              {shareError ? (
+                <div className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-destructive">
+                  <AlertCircle className="mt-0.5 size-4 shrink-0" />
+                  <p className="text-sm">{shareError}</p>
+                </div>
+              ) : null}
+
+              {shareUrl ? (
+                <div className="space-y-2">
+                  <p className="font-medium text-foreground text-sm">
+                    {t('shareLinkLabel')}
+                  </p>
+                  <div className="rounded-lg border border-border bg-muted/40 p-3">
+                    <p className="break-all font-mono text-muted-foreground text-xs leading-relaxed">
+                      {shareUrl}
+                    </p>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+
+            <DialogFooter>
+              {shareError && !shareUrl ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleShare}
+                  disabled={isSharing}
+                >
+                  <RefreshCw className="size-4" />
+                  <span>{t('retry')}</span>
+                </Button>
+              ) : null}
+              <DialogClose asChild>
+                <Button type="button" variant="outline">
+                  {t('close')}
+                </Button>
+              </DialogClose>
+              <Button
+                type="button"
+                onClick={() => void handleCopyShareLink()}
+                disabled={!shareUrl || isSharing}
+              >
+                {isShareCopied ? (
+                  <Check className="size-4" />
+                ) : (
+                  <Copy className="size-4" />
+                )}
+                <span>{isShareCopied ? t('copied') : t('copyLink')}</span>
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      ) : null}
     </section>
   );
 };

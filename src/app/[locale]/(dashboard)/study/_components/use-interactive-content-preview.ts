@@ -23,8 +23,9 @@ type UseInteractiveContentPreviewOptions = {
   saveErrorMessage: string;
   saveSuccessMessage: string;
   share?: InteractiveContentShareInput;
+  copyErrorMessage?: string;
+  copySuccessMessage?: string;
   shareErrorMessage?: string;
-  shareSuccessMessage?: string;
 };
 
 export function useInteractiveContentPreview({
@@ -33,11 +34,16 @@ export function useInteractiveContentPreview({
   saveErrorMessage,
   saveSuccessMessage,
   share,
+  copyErrorMessage = 'Could not copy share link.',
+  copySuccessMessage = 'Share link copied.',
   shareErrorMessage = 'Could not create share link.',
-  shareSuccessMessage = 'Share link copied.',
 }: UseInteractiveContentPreviewOptions) {
   const containerRef = useRef<HTMLElement>(null);
   const [previewKey, setPreviewKey] = useState(0);
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [shareError, setShareError] = useState<string | null>(null);
+  const [isShareCopied, setIsShareCopied] = useState(false);
   const secureDocument = useMemo(
     () => createSecureInteractiveContentDocument(html),
     [html]
@@ -76,11 +82,13 @@ export function useInteractiveContentPreview({
         contentIndex: share.contentIndex,
       });
     },
-    onSuccess: async ({ shareUrl }) => {
-      await navigator.clipboard.writeText(shareUrl);
-      toast.success(shareSuccessMessage);
+    onSuccess: ({ shareUrl }) => {
+      setShareUrl(shareUrl);
+      setShareError(null);
+      setIsShareCopied(false);
     },
     onError: () => {
+      setShareError(shareErrorMessage);
       toast.error(shareErrorMessage);
     },
   });
@@ -94,7 +102,31 @@ export function useInteractiveContentPreview({
   };
 
   const handleShare = () => {
+    setIsShareDialogOpen(true);
+    setShareUrl(null);
+    setShareError(null);
+    setIsShareCopied(false);
     shareMutation.mutate();
+  };
+
+  const handleCopyShareLink = async () => {
+    if (!shareUrl) return;
+
+    if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) {
+      setShareError(copyErrorMessage);
+      toast.error(copyErrorMessage);
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setIsShareCopied(true);
+      setShareError(null);
+      toast.success(copySuccessMessage);
+    } catch {
+      setShareError(copyErrorMessage);
+      toast.error(copyErrorMessage);
+    }
   };
 
   const handleFullscreen = () => {
@@ -126,13 +158,19 @@ export function useInteractiveContentPreview({
   return {
     containerRef,
     handleDownload,
+    handleCopyShareLink,
     handleFullscreen,
     handleReset,
     handleSaveToInventory,
     handleShare,
     isSavingToInventory: saveToInventoryMutation.isPending,
+    isShareCopied,
+    isShareDialogOpen,
     isSharing: shareMutation.isPending,
     previewKey,
     secureDocument,
+    setIsShareDialogOpen,
+    shareError,
+    shareUrl,
   };
 }
