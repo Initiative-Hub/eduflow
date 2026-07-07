@@ -9,6 +9,13 @@ import {
   Share2,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import type { ReactNode } from 'react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import type { StudyInteractiveContentData } from '@/utils/study-interactive-content';
 import { useInteractiveContentPreview } from './use-interactive-content-preview';
 
@@ -20,6 +27,40 @@ type InteractiveContentPreviewProps = StudyInteractiveContentData & {
   };
   showSaveToInventory?: boolean;
 };
+
+type PreviewActionButtonProps = {
+  children: ReactNode;
+  disabled?: boolean;
+  label: string;
+  onClick: () => void;
+};
+
+function PreviewActionButton({
+  children,
+  disabled,
+  label,
+  onClick,
+}: PreviewActionButtonProps) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          aria-label={label}
+          className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-border bg-background text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+          onClick={onClick}
+          disabled={disabled}
+        >
+          {children}
+          <span className="sr-only">{label}</span>
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="top">
+        <p>{label}</p>
+      </TooltipContent>
+    </Tooltip>
+  );
+}
 
 const InteractiveContentPreview = ({
   title,
@@ -65,72 +106,58 @@ const InteractiveContentPreview = ({
           ) : null}
         </div>
 
-        <fieldset className="m-0 flex w-full min-w-0 flex-wrap items-center gap-2 border-0 p-0">
-          <legend className="sr-only">{t('actionsLabel')}</legend>
+        <TooltipProvider>
+          <fieldset className="m-0 flex w-full min-w-0 flex-wrap items-center gap-2 border-0 p-0">
+            <legend className="sr-only">{t('actionsLabel')}</legend>
 
-          <button
-            type="button"
-            className="inline-flex h-9 min-w-36 flex-1 items-center justify-center gap-2 rounded-lg border border-border bg-background px-3 font-medium text-foreground text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            onClick={handleReset}
-          >
-            <RefreshCw className="size-4" />
-            <span>{t('reset')}</span>
-          </button>
+            <PreviewActionButton label={t('reset')} onClick={handleReset}>
+              <RefreshCw className="size-4" />
+            </PreviewActionButton>
 
-          <button
-            type="button"
-            className="inline-flex h-9 min-w-36 flex-1 items-center justify-center gap-2 rounded-lg border border-border bg-background px-3 font-medium text-foreground text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            onClick={handleFullscreen}
-          >
-            <Maximize2 className="size-4" />
-            <span>{t('fullscreen')}</span>
-          </button>
-
-          <button
-            type="button"
-            className="inline-flex h-9 min-w-36 flex-1 items-center justify-center gap-2 rounded-lg border border-border bg-background px-3 font-medium text-foreground text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            onClick={handleDownload}
-          >
-            <Download className="size-4" />
-            <span>{t('download')}</span>
-          </button>
-
-          {share ? (
-            <button
-              type="button"
-              className="inline-flex h-9 min-w-36 flex-1 items-center justify-center gap-2 rounded-lg border border-border bg-background px-3 font-medium text-foreground text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
-              onClick={handleShare}
-              disabled={isSharing}
+            <PreviewActionButton
+              label={t('fullscreen')}
+              onClick={handleFullscreen}
             >
-              {isSharing ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <Share2 className="size-4" />
-              )}
-              <span>{isSharing ? t('sharing') : t('share')}</span>
-            </button>
-          ) : null}
+              <Maximize2 className="size-4" />
+            </PreviewActionButton>
 
-          {showSaveToInventory ? (
-            <button
-              type="button"
-              className="inline-flex h-9 min-w-36 flex-1 items-center justify-center gap-2 rounded-lg border border-border bg-background px-3 font-medium text-foreground text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
-              onClick={handleSaveToInventory}
-              disabled={isSavingToInventory}
-            >
-              {isSavingToInventory ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <Save className="size-4" />
-              )}
-              <span>
-                {isSavingToInventory
-                  ? t('savingToInventory')
-                  : t('saveToInventory')}
-              </span>
-            </button>
-          ) : null}
-        </fieldset>
+            <PreviewActionButton label={t('download')} onClick={handleDownload}>
+              <Download className="size-4" />
+            </PreviewActionButton>
+
+            {share ? (
+              <PreviewActionButton
+                label={isSharing ? t('sharing') : t('share')}
+                onClick={handleShare}
+                disabled={isSharing}
+              >
+                {isSharing ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Share2 className="size-4" />
+                )}
+              </PreviewActionButton>
+            ) : null}
+
+            {showSaveToInventory ? (
+              <PreviewActionButton
+                label={
+                  isSavingToInventory
+                    ? t('savingToInventory')
+                    : t('saveToInventory')
+                }
+                onClick={handleSaveToInventory}
+                disabled={isSavingToInventory}
+              >
+                {isSavingToInventory ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Save className="size-4" />
+                )}
+              </PreviewActionButton>
+            ) : null}
+          </fieldset>
+        </TooltipProvider>
       </header>
 
       <iframe
