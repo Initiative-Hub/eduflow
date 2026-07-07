@@ -73,7 +73,9 @@ export class StudyShareService {
         OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
       },
       select: {
+        ownerUserId: true,
         payload: true,
+        sourceChatId: true,
       },
     });
 
@@ -83,6 +85,12 @@ export class StudyShareService {
       sharedResource.payload
     );
 
-    return parsedPayload.success ? parsedPayload.data : null;
+    return parsedPayload.success
+      ? {
+          content: parsedPayload.data,
+          ownerUserId: sharedResource.ownerUserId,
+          sourceChatId: sharedResource.sourceChatId,
+        }
+      : null;
   }
 }

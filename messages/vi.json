@@ -1967,7 +1967,12 @@
       "viewAll": "Xem Tất Cả"
     },
     "sharedInteractiveContent": {
-      "eyebrow": "Hoạt động EduFlow được chia sẻ"
+      "createdBy": "Được tạo bằng EduFlow",
+      "eyebrow": "Hoạt động EduFlow được chia sẻ",
+      "ownerCta": "Mở phiên học gốc",
+      "ownerHelper": "Bạn đang xem hoạt động do chính bạn chia sẻ.",
+      "visitorCta": "Thử EduFlow",
+      "visitorHelper": "Tạo hoạt động học tập bằng AI của riêng bạn trong EduFlow."
     },
     "sidebar": {
       "actionsLabel": "Hành động cho {title}",

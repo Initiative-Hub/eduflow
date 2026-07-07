@@ -1967,7 +1967,12 @@
       "viewAll": "View All"
     },
     "sharedInteractiveContent": {
-      "eyebrow": "Shared EduFlow activity"
+      "createdBy": "Created with EduFlow",
+      "eyebrow": "Shared EduFlow activity",
+      "ownerCta": "Open original session",
+      "ownerHelper": "You are viewing your own shared activity.",
+      "visitorCta": "Try EduFlow",
+      "visitorHelper": "Create your own AI-powered study activity in EduFlow."
     },
     "sidebar": {
       "actionsLabel": "Actions for {title}",
