@@ -54,4 +54,17 @@ export const studyService = {
       params: { search: search || undefined, limit, offset },
     });
   },
+
+  shareInteractiveContent: async (
+    chatId: string,
+    data: {
+      messageId: string;
+      contentIndex: number;
+    }
+  ) => {
+    return apiClient.post<{ shareId: string; shareUrl: string }>(
+      `/v1/ai/study/${chatId}/share/interactive-content`,
+      data
+    );
+  },
 };
