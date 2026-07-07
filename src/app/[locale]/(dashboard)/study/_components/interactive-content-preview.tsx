@@ -13,16 +13,8 @@ import {
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
+import { DialogTemplate } from '@/components/custom/dialog';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import {
   Tooltip,
   TooltipContent,
@@ -189,47 +181,18 @@ const InteractiveContentPreview = ({
         title={t('previewTitle', { title })}
       />
       {share ? (
-        <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>{t('shareDialogTitle')}</DialogTitle>
-              <DialogDescription>
-                {shareUrl
-                  ? t('shareDialogReadyDescription')
-                  : t('shareDialogDescription')}
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-4">
-              {isSharing ? (
-                <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/40 p-3">
-                  <Loader2 className="size-4 animate-spin text-primary" />
-                  <p className="font-medium text-sm">{t('shareGenerating')}</p>
-                </div>
-              ) : null}
-
-              {shareError ? (
-                <div className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-destructive">
-                  <AlertCircle className="mt-0.5 size-4 shrink-0" />
-                  <p className="text-sm">{shareError}</p>
-                </div>
-              ) : null}
-
-              {shareUrl ? (
-                <div className="space-y-2">
-                  <p className="font-medium text-foreground text-sm">
-                    {t('shareLinkLabel')}
-                  </p>
-                  <div className="rounded-lg border border-border bg-muted/40 p-3">
-                    <p className="break-all font-mono text-muted-foreground text-xs leading-relaxed">
-                      {shareUrl}
-                    </p>
-                  </div>
-                </div>
-              ) : null}
-            </div>
-
-            <DialogFooter>
+        <DialogTemplate
+          isOpen={isShareDialogOpen}
+          onOpenChange={setIsShareDialogOpen}
+          title={t('shareDialogTitle')}
+          description={
+            shareUrl
+              ? t('shareDialogReadyDescription')
+              : t('shareDialogDescription')
+          }
+          className="sm:max-w-md"
+          footer={
+            <>
               {shareError && !shareUrl ? (
                 <Button
                   type="button"
@@ -241,11 +204,15 @@ const InteractiveContentPreview = ({
                   <span>{t('retry')}</span>
                 </Button>
               ) : null}
-              <DialogClose asChild>
-                <Button type="button" variant="outline">
-                  {t('close')}
-                </Button>
-              </DialogClose>
+
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsShareDialogOpen(false)}
+              >
+                {t('close')}
+              </Button>
+
               <Button
                 type="button"
                 onClick={() => void handleCopyShareLink()}
@@ -258,9 +225,38 @@ const InteractiveContentPreview = ({
                 )}
                 <span>{isShareCopied ? t('copied') : t('copyLink')}</span>
               </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            </>
+          }
+        >
+          <div className="space-y-4">
+            {isSharing ? (
+              <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/40 p-3">
+                <Loader2 className="size-4 animate-spin text-primary" />
+                <p className="font-medium text-sm">{t('shareGenerating')}</p>
+              </div>
+            ) : null}
+
+            {shareError ? (
+              <div className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-destructive">
+                <AlertCircle className="mt-0.5 size-4 shrink-0" />
+                <p className="text-sm">{shareError}</p>
+              </div>
+            ) : null}
+
+            {shareUrl ? (
+              <div className="space-y-2">
+                <p className="font-medium text-foreground text-sm">
+                  {t('shareLinkLabel')}
+                </p>
+                <div className="rounded-lg border border-border bg-muted/40 p-3">
+                  <p className="break-all font-mono text-muted-foreground text-xs leading-relaxed">
+                    {shareUrl}
+                  </p>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </DialogTemplate>
       ) : null}
     </section>
   );
