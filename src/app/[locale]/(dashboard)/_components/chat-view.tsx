@@ -37,6 +37,8 @@ import { ChatInputAttachments } from './chat-input-attachments';
 import { ChatToolInvocations } from './chat-tools';
 
 interface ChatViewProps {
+  chatId?: string;
+  canShareInteractiveContent?: boolean;
   messages: UIMessage[];
   hasOlderMessages?: boolean;
   isLoadingOlderMessages?: boolean;
@@ -50,6 +52,8 @@ interface ChatViewProps {
 const Quiz = dynamic(() => import('@/components/quiz').then((mod) => mod.Quiz));
 
 export function ChatView({
+  chatId,
+  canShareInteractiveContent = false,
   messages,
   hasOlderMessages = false,
   isLoadingOlderMessages = false,
@@ -364,6 +368,15 @@ export function ChatView({
                               title={content.title}
                               description={content.description}
                               html={content.html}
+                              share={
+                                chatId && canShareInteractiveContent
+                                  ? {
+                                      chatId,
+                                      messageId: message.id,
+                                      contentIndex: index,
+                                    }
+                                  : undefined
+                              }
                             />
                           </div>
                         ))}
