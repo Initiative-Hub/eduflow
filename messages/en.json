@@ -1919,7 +1919,11 @@
         "saveError": "Could not save this activity to inventory.",
         "saveSuccess": "Activity saved to inventory.",
         "saveToInventory": "Save to Inventory",
-        "savingToInventory": "Saving..."
+        "savingToInventory": "Saving...",
+        "share": "Share link",
+        "shareError": "Could not create share link.",
+        "shareSuccess": "Share link copied.",
+        "sharing": "Sharing..."
       },
       "practiceTest": {
         "description": "Challenge yourself with AI-generated multiple choice, short answer, and flashcard sets."
@@ -1961,6 +1965,9 @@
       "title": "Recent Sessions",
       "updated": "Updated {date}",
       "viewAll": "View All"
+    },
+    "sharedInteractiveContent": {
+      "eyebrow": "Shared EduFlow activity"
     },
     "sidebar": {
       "actionsLabel": "Actions for {title}",

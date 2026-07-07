@@ -1919,7 +1919,11 @@
         "saveError": "Không thể lưu hoạt động này vào kho tài liệu.",
         "saveSuccess": "Đã lưu hoạt động vào kho tài liệu.",
         "saveToInventory": "Lưu vào tài liệu",
-        "savingToInventory": "Đang lưu..."
+        "savingToInventory": "Đang lưu...",
+        "share": "Chia sẻ liên kết",
+        "shareError": "Không thể tạo liên kết chia sẻ.",
+        "shareSuccess": "Đã sao chép liên kết chia sẻ.",
+        "sharing": "Đang chia sẻ..."
       },
       "practiceTest": {
         "description": "Thử thách bản thân với câu hỏi trắc nghiệm, câu ngắn và thẻ ghi nhớ do AI tạo ra."
@@ -1961,6 +1965,9 @@
       "title": "Phiên Gần Đây",
       "updated": "Đã cập nhật {date}",
       "viewAll": "Xem Tất Cả"
+    },
+    "sharedInteractiveContent": {
+      "eyebrow": "Hoạt động EduFlow được chia sẻ"
     },
     "sidebar": {
       "actionsLabel": "Hành động cho {title}",
