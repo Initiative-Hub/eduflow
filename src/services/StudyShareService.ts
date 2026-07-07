@@ -8,12 +8,36 @@ import {
 import { prisma } from '@/lib/prisma';
 import {
   getStudyInteractiveContentParts,
+  type StudyInteractiveContentData,
   studyInteractiveContentSchema,
 } from '@/utils/study-interactive-content';
+
+function createInteractiveContentSharedResource(input: {
+  chatId: string;
+  content: StudyInteractiveContentData;
+  sourceMessageId: string | null;
+  userId: string;
+}) {
+  return prisma.sharedResource.create({
+    data: {
+      ownerUserId: input.userId,
+      resourceType: ShareResourceType.STUDY_INTERACTIVE_CONTENT,
+      sourceChatId: input.chatId,
+      sourceMessageId: input.sourceMessageId,
+      title: input.content.title,
+      description: input.content.description,
+      payload: input.content,
+    },
+    select: {
+      id: true,
+    },
+  });
+}
 
 export class StudyShareService {
   static async createInteractiveContentShare(input: {
     chatId: string;
+    content?: StudyInteractiveContentData;
     userId: string;
     messageId: string;
     contentIndex: number;
@@ -36,7 +60,35 @@ export class StudyShareService {
       },
     });
 
-    if (!message) return null;
+    if (!message) {
+      if (!input.content) return null;
+
+      const chat = await prisma.aiChat.findFirst({
+        where: {
+          id: input.chatId,
+          userId: input.userId,
+          type: AiChatType.STUDY_ASSISTANT,
+          status: AiChatStatus.ACTIVE,
+          deletedAt: null,
+        },
+        select: { id: true },
+      });
+
+      if (!chat) return null;
+
+      const parsedContent = studyInteractiveContentSchema.safeParse(
+        input.content
+      );
+
+      if (!parsedContent.success) return null;
+
+      return createInteractiveContentSharedResource({
+        chatId: input.chatId,
+        content: parsedContent.data,
+        sourceMessageId: null,
+        userId: input.userId,
+      });
+    }
 
     const interactiveContents = getStudyInteractiveContentParts({
       id: message.id,
@@ -49,19 +101,11 @@ export class StudyShareService {
 
     if (!parsedContent.success) return null;
 
-    return prisma.sharedResource.create({
-      data: {
-        ownerUserId: input.userId,
-        resourceType: ShareResourceType.STUDY_INTERACTIVE_CONTENT,
-        sourceChatId: input.chatId,
-        sourceMessageId: message.id,
-        title: parsedContent.data.title,
-        description: parsedContent.data.description,
-        payload: parsedContent.data,
-      },
-      select: {
-        id: true,
-      },
+    return createInteractiveContentSharedResource({
+      chatId: input.chatId,
+      content: parsedContent.data,
+      sourceMessageId: message.id,
+      userId: input.userId,
     });
   }
   static async getPublicInteractiveContent(shareId: string) {

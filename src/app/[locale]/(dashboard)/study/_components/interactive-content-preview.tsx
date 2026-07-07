@@ -95,6 +95,7 @@ const InteractiveContentPreview = ({
   } = useInteractiveContentPreview({
     copyErrorMessage: t('copyError'),
     copySuccessMessage: t('shareSuccess'),
+    description,
     html,
     saveErrorMessage: t('saveError'),
     saveSuccessMessage: t('saveSuccess'),

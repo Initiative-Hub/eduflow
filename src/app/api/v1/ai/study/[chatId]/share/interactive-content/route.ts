@@ -2,10 +2,12 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getChatOwner } from '@/lib/api/guest-session';
 import { StudyShareService } from '@/services/StudyShareService';
+import { studyInteractiveContentSchema } from '@/utils/study-interactive-content';
 
 const shareInteractiveContentSchema = z.object({
   messageId: z.string().trim().min(1),
   contentIndex: z.number().int().min(0).default(0),
+  content: studyInteractiveContentSchema.optional(),
 });
 
 /**
@@ -59,6 +61,7 @@ export async function POST(
     const sharedResource =
       await StudyShareService.createInteractiveContentShare({
         chatId,
+        content: parsedBody.data.content,
         userId,
         messageId: parsedBody.data.messageId,
         contentIndex: parsedBody.data.contentIndex,

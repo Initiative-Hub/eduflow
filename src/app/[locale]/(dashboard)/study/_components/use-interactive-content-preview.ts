@@ -18,6 +18,7 @@ type InteractiveContentShareInput = {
 };
 
 type UseInteractiveContentPreviewOptions = {
+  description: string;
   html: string;
   title: string;
   saveErrorMessage: string;
@@ -29,6 +30,7 @@ type UseInteractiveContentPreviewOptions = {
 };
 
 export function useInteractiveContentPreview({
+  description,
   html,
   title,
   saveErrorMessage,
@@ -78,6 +80,11 @@ export function useInteractiveContentPreview({
       }
 
       return studyService.shareInteractiveContent(share.chatId, {
+        content: {
+          description,
+          html,
+          title,
+        },
         messageId: share.messageId,
         contentIndex: share.contentIndex,
       });

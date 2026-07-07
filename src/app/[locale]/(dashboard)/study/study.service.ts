@@ -3,6 +3,7 @@ import type {
   StudyMode,
   StudyQuizOptions,
 } from '@/lib/validations/study.schema';
+import type { StudyInteractiveContentData } from '@/utils/study-interactive-content';
 import type {
   ChatHistoryPageResponse,
   ChatListResponse,
@@ -60,6 +61,7 @@ export const studyService = {
     data: {
       messageId: string;
       contentIndex: number;
+      content?: StudyInteractiveContentData;
     }
   ) => {
     return apiClient.post<{ shareId: string; shareUrl: string }>(
