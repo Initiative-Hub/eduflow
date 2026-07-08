@@ -815,7 +815,7 @@ export class StorageService {
     return serializeFileInventory(uploaded);
   }
 
-  /**thumbnailUrl
+/**
    * Generates a temporary signed read URL for a single file.
    */
   static async createShareUrl(options: {
