@@ -496,8 +496,9 @@ async function collectDescendantEntries(
   rootId: string,
   courseId?: string | null
 ) {
-  const entries: Array<Pick<FileInventory, 'id' | 'isFolder' | 'objectKey'>> =
-    [];
+  const entries: Array<
+    Pick<FileInventory, 'id' | 'isFolder' | 'objectKey' | 'thumbnailObjectKey'>
+  > = [];
   const queue: string[] = [rootId];
 
   while (queue.length > 0) {
@@ -516,6 +517,7 @@ async function collectDescendantEntries(
         id: true,
         isFolder: true,
         objectKey: true,
+        thumbnailObjectKey: true,
       },
     });
 
@@ -1287,7 +1289,10 @@ export class StorageService {
     });
 
     const allEntries: Array<
-      Pick<FileInventory, 'id' | 'isFolder' | 'objectKey'>
+      Pick<
+        FileInventory,
+        'id' | 'isFolder' | 'objectKey' | 'thumbnailObjectKey'
+      >
     > = [];
 
     for (const root of roots) {
@@ -1302,9 +1307,17 @@ export class StorageService {
     const allIds = Array.from(new Set(allEntries.map((entry) => entry.id)));
 
     for (const entry of allEntries) {
-      if (!entry.isFolder && entry.objectKey) {
+      if (entry.isFolder) {
+        continue;
+      }
+
+      const objectKeys = [entry.objectKey, entry.thumbnailObjectKey].filter(
+        (objectKey): objectKey is string => Boolean(objectKey)
+      );
+
+      for (const objectKey of objectKeys) {
         try {
-          await deleteInventoryObject({ objectKey: entry.objectKey });
+          await deleteInventoryObject({ objectKey });
         } catch {}
       }
     }
