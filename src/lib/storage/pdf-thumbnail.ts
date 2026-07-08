@@ -1,6 +1,9 @@
 const THUMBNAIL_MAX_WIDTH = 640;
 const THUMBNAIL_MAX_HEIGHT = 360;
 const THUMBNAIL_JPEG_QUALITY = 0.82;
+const PDF_VIEWPORT_BASE_SCALE = 1;
+const THUMBNAIL_BACKGROUND_COLOR = '#ffffff';
+const CANVAS_ORIGIN = 0;
 
 export async function createPdfFirstPageThumbnail(bytes: Uint8Array) {
   const [{ createCanvas }, { getDocument }] = await Promise.all([
@@ -16,8 +19,9 @@ export async function createPdfFirstPageThumbnail(bytes: Uint8Array) {
 
   try {
     const page = await document.getPage(1);
-    const baseViewport = page.getViewport({ scale: 1 });
+    const baseViewport = page.getViewport({ scale: PDF_VIEWPORT_BASE_SCALE });
     const scale = Math.min(
+      1,
       THUMBNAIL_MAX_WIDTH / baseViewport.width,
       THUMBNAIL_MAX_HEIGHT / baseViewport.height
     );
@@ -28,14 +32,19 @@ export async function createPdfFirstPageThumbnail(bytes: Uint8Array) {
     );
     const canvasContext = canvas.getContext('2d');
 
-    canvasContext.fillStyle = '#ffffff';
-    canvasContext.fillRect(0, 0, canvas.width, canvas.height);
+    canvasContext.fillStyle = THUMBNAIL_BACKGROUND_COLOR;
+    canvasContext.fillRect(
+      CANVAS_ORIGIN,
+      CANVAS_ORIGIN,
+      canvas.width,
+      canvas.height
+    );
 
     await page.render({
       canvasContext: canvasContext as unknown as CanvasRenderingContext2D,
       canvas: canvas as unknown as HTMLCanvasElement,
       viewport,
-      background: '#ffffff',
+      background: THUMBNAIL_BACKGROUND_COLOR,
     }).promise;
 
     return new Uint8Array(
