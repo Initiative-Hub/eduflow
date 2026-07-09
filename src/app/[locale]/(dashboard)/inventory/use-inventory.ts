@@ -365,6 +365,10 @@ export function useInventory({
     });
   };
 
+  const handleSelectSingleEntry = (entryId: string) => {
+    setSelectedIds([entryId]);
+  };
+
   const handleSelectAll = (checked: boolean) => {
     setSelectedIds(checked ? entries.map((entry) => entry.id) : []);
   };
@@ -545,6 +549,7 @@ export function useInventory({
     handleSearchChange,
     handleSelectAll,
     handleSelectEntry,
+    handleSelectSingleEntry,
     handleShareEntry,
     handleShareSelected,
     isFetching: listQuery.isFetching,

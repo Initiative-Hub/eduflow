@@ -5,7 +5,14 @@ import {
   Download,
   Edit2,
   Eye,
+  FileArchive,
+  FileAudio,
+  FileCode,
   FileIcon,
+  FileImage,
+  FileSpreadsheet,
+  FileText,
+  FileVideo,
   FolderOpen,
   MoreVertical,
   Move,
@@ -35,13 +42,21 @@ import { cn } from '@/lib/utils';
 import { inventoryService } from '../inventory.service';
 import type { InventoryEntry } from '../inventory.types';
 import {
+  canPreviewInventoryEntry,
   formatDate,
   formatFileSize,
   getEntryTypeLabel,
+  getInventoryPreviewKind,
 } from '../inventory.utils';
+import {
+  ARCHIVE_FILE_EXTENSIONS,
+  CODE_FILE_EXTENSIONS,
+  SPREADSHEET_FILE_EXTENSIONS,
+} from '../inventory-file.constant';
 
 interface FileCardProps {
   entry: InventoryEntry;
+  isSelected?: boolean;
   locale: string;
   onOpen?: (entry: InventoryEntry) => void;
   onRename: (entry: InventoryEntry) => void;
@@ -51,11 +66,49 @@ interface FileCardProps {
   onDownload?: (entry: InventoryEntry) => void;
   onDelete: (entry: InventoryEntry) => void;
   onNavigateIntoFolder?: (entry: InventoryEntry) => void;
+  onSelectEntry?: (entryId: string) => void;
   uploadProgress?: number;
+}
+
+function getInventoryCardIcon(entry: InventoryEntry) {
+  if (entry.isFolder) return FolderOpen;
+
+  const previewKind = getInventoryPreviewKind(entry);
+  const extension = entry.extension?.toLowerCase() ?? '';
+
+  if (previewKind === 'image') return FileImage;
+  if (previewKind === 'audio') return FileAudio;
+  if (previewKind === 'video') return FileVideo;
+
+  if (CODE_FILE_EXTENSIONS.has(extension)) {
+    return FileCode;
+  }
+
+  if (SPREADSHEET_FILE_EXTENSIONS.has(extension)) {
+    return FileSpreadsheet;
+  }
+
+  if (ARCHIVE_FILE_EXTENSIONS.has(extension)) {
+    return FileArchive;
+  }
+
+  if (previewKind === 'text') return FileText;
+
+  return FileIcon;
+}
+
+function canShowCardBodyPreview(entry: InventoryEntry) {
+  const previewKind = getInventoryPreviewKind(entry);
+  return (
+    previewKind === 'image' ||
+    previewKind === 'video' ||
+    Boolean(entry.thumbnailUrl)
+  );
 }
 
 export function InventoryCard({
   entry,
+  isSelected = false,
   locale,
   onOpen,
   onRename,
@@ -65,12 +118,33 @@ export function InventoryCard({
   onDownload,
   onDelete,
   onNavigateIntoFolder,
+  onSelectEntry,
   uploadProgress,
 }: FileCardProps) {
   const t = useTranslations('InventoryPage');
-  const [previewImageFailed, setPreviewImageFailed] = useState(false);
-  const isImagePreview =
-    !entry.isFolder && Boolean(entry.mimeType?.startsWith('image/'));
+
+  const [cardBodyPreviewFailed, setCardBodyPreviewFailed] = useState(false);
+  const previewKind = getInventoryPreviewKind(entry);
+  const canShowBodyPreview = canShowCardBodyPreview(entry);
+  const FileTypeIcon = getInventoryCardIcon(entry);
+
+  const canOpenFromCard = entry.isFolder || canPreviewInventoryEntry(entry);
+  const hasCardInteraction = canOpenFromCard || Boolean(onSelectEntry);
+
+  const handleCardClick = () => {
+    onSelectEntry?.(entry.id);
+  };
+
+  const handleCardDoubleClick = () => {
+    if (entry.isFolder) {
+      onNavigateIntoFolder?.(entry);
+      return;
+    }
+
+    if (canPreviewInventoryEntry(entry)) {
+      onPreview?.(entry);
+    }
+  };
 
   const previewUrlQuery = useQuery({
     queryKey: ['inventory', 'preview-url', entry.id],
@@ -78,19 +152,44 @@ export function InventoryCard({
       const response = await inventoryService.shareEntry(entry.id);
       return response.data.signedUrl;
     },
-    enabled: isImagePreview,
+    enabled:
+      canShowBodyPreview &&
+      !entry.thumbnailUrl &&
+      canPreviewInventoryEntry(entry),
     staleTime: 5 * 60 * 1000,
     retry: 1,
   });
 
+  const cardBodyPreviewUrl = entry.thumbnailUrl ?? previewUrlQuery.data;
+
   return (
-    <Card className="group/card h-fit border-border/70 bg-card/90 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg">
+    <Card
+      aria-selected={isSelected}
+      className={`h-fit border-border/70 bg-card/90 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg ${
+        hasCardInteraction ? 'cursor-pointer' : ''
+      } ${
+        isSelected
+          ? 'border-primary/60 bg-primary/5 shadow-md ring-2 ring-primary/30'
+          : ''
+      }`}
+      data-selected={isSelected}
+      onClick={handleCardClick}
+      onDoubleClick={handleCardDoubleClick}
+    >
       <CardHeader className="gap-3">
         <div className="flex items-start justify-between gap-3 overflow-hidden">
           <button
             type="button"
-            className="flex flex-1 gap-3 overflow-hidden text-left"
-            onClick={() => onOpen?.(entry)}
+            className={cn(
+              'flex flex-1 gap-3 overflow-hidden text-left',
+              hasCardInteraction && 'cursor-pointer'
+            )}
+            onClick={(event) => {
+              if (!entry.isFolder) return;
+
+              event.stopPropagation();
+              onOpen?.(entry);
+            }}
           >
             <div
               className={cn(
@@ -100,14 +199,10 @@ export function InventoryCard({
                   : 'border-border bg-muted'
               )}
             >
-              {entry.isFolder ? (
-                <FolderOpen
-                  data-icon="inline-start"
-                  className="size-5 text-secondary"
-                />
-              ) : (
-                <FileIcon data-icon="inline-start" className="size-5" />
-              )}
+              <FileTypeIcon
+                data-icon="inline-start"
+                className={cn('size-5', entry.isFolder && 'text-secondary')}
+              />
             </div>
             <div
               className="flex flex-1 flex-col gap-1 overflow-hidden"
@@ -127,7 +222,13 @@ export function InventoryCard({
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon-sm" className="shrink-0">
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="shrink-0"
+                onClick={(event) => event.stopPropagation()}
+                onDoubleClick={(event) => event.stopPropagation()}
+              >
                 <MoreVertical />
               </Button>
             </DropdownMenuTrigger>
@@ -155,7 +256,7 @@ export function InventoryCard({
                   {t('actions.open')}
                 </DropdownMenuItem>
               ) : (
-                entry.status === 'READY' && (
+                canPreviewInventoryEntry(entry) && (
                   <>
                     <DropdownMenuItem
                       onClick={() => onPreview?.(entry)}
@@ -196,19 +297,36 @@ export function InventoryCard({
 
       {!entry.isFolder && (
         <CardContent className="p-0">
-          {isImagePreview && previewUrlQuery.data && !previewImageFailed ? (
-            <Image
-              src={previewUrlQuery.data}
-              alt={entry.name}
-              width={640}
-              height={360}
-              unoptimized
-              onError={() => setPreviewImageFailed(true)}
-              className="h-36 object-cover"
-            />
+          {canShowBodyPreview &&
+          cardBodyPreviewUrl &&
+          !cardBodyPreviewFailed ? (
+            entry.thumbnailUrl || previewKind === 'image' ? (
+              <Image
+                src={cardBodyPreviewUrl}
+                alt={entry.name}
+                width={640}
+                height={360}
+                unoptimized
+                onError={() => setCardBodyPreviewFailed(true)}
+                className="h-36 w-full object-cover"
+              />
+            ) : (
+              <video
+                muted
+                playsInline
+                preload="metadata"
+                onError={() => setCardBodyPreviewFailed(true)}
+                className="h-36 w-full bg-background object-cover"
+              >
+                <source
+                  src={cardBodyPreviewUrl}
+                  type={entry.mimeType ?? undefined}
+                />
+              </video>
+            )
           ) : (
             <div className="flex h-36 w-full items-center justify-center border border-border/60 bg-muted text-muted-foreground">
-              <FileIcon className="size-6" />
+              <FileTypeIcon className="size-7" />
             </div>
           )}
         </CardContent>

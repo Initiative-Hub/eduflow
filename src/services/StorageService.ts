@@ -8,6 +8,7 @@ import { createS3Client } from '@/lib/aws/s3-client';
 import { prisma } from '@/lib/prisma';
 import {
   buildInventoryObjectKey,
+  buildInventoryThumbnailObjectKey,
   createInventoryReadSignedUrl,
   createInventoryWriteSignedUrl,
   deleteInventoryObject,
@@ -22,6 +23,7 @@ import {
   createStorageNameConflictError,
   isPrismaUniqueConstraintError,
 } from '@/lib/storage/inventory-errors';
+import { createPdfFirstPageThumbnail } from '@/lib/storage/pdf-thumbnail';
 
 type SerializedFileInventory = Omit<FileInventory, 'fileSize'> & {
   fileSize: number | null;
@@ -68,6 +70,24 @@ function buildInventoryScope(options: {
   return {
     userId: options.userId,
     courseId: null,
+  };
+}
+
+async function serializeFileInventoryWithThumbnail(record: FileInventory) {
+  const serialized = serializeFileInventory(record);
+
+  if (!record.thumbnailObjectKey) {
+    return {
+      ...serialized,
+      thumbnailUrl: null,
+    };
+  }
+
+  return {
+    ...serialized,
+    thumbnailUrl: await createInventoryReadSignedUrl({
+      objectKey: record.thumbnailObjectKey,
+    }),
   };
 }
 
@@ -476,8 +496,9 @@ async function collectDescendantEntries(
   rootId: string,
   courseId?: string | null
 ) {
-  const entries: Array<Pick<FileInventory, 'id' | 'isFolder' | 'objectKey'>> =
-    [];
+  const entries: Array<
+    Pick<FileInventory, 'id' | 'isFolder' | 'objectKey' | 'thumbnailObjectKey'>
+  > = [];
   const queue: string[] = [rootId];
 
   while (queue.length > 0) {
@@ -496,6 +517,7 @@ async function collectDescendantEntries(
         id: true,
         isFolder: true,
         objectKey: true,
+        thumbnailObjectKey: true,
       },
     });
 
@@ -574,7 +596,7 @@ export class StorageService {
     ]);
 
     return {
-      items: items.map(serializeFileInventory),
+      items: await Promise.all(items.map(serializeFileInventoryWithThumbnail)),
       total,
     };
   }
@@ -741,6 +763,44 @@ export class StorageService {
       }
     }
 
+    let thumbnailObjectKey: string | null = null;
+    let thumbnailMimeType: string | null = null;
+
+    const isPdf =
+      existing.mimeType === 'application/pdf' ||
+      existing.extension?.toLowerCase() === 'pdf';
+
+    if (isPdf) {
+      try {
+        const downloaded = await downloadInventoryObject({
+          objectKey: existing.objectKey,
+        });
+
+        const thumbnailBytes = await createPdfFirstPageThumbnail(
+          downloaded.bytes
+        );
+
+        thumbnailObjectKey = buildInventoryThumbnailObjectKey({
+          userId: existing.userId,
+          courseId: existing.courseId,
+          fileId: existing.id,
+        });
+
+        thumbnailMimeType = 'image/jpeg';
+
+        await uploadInventoryObject({
+          objectKey: thumbnailObjectKey,
+          contentType: thumbnailMimeType,
+          body: thumbnailBytes,
+        });
+      } catch (error) {
+        console.warn(
+          '[StorageService] PDF thumbnail generation failed:',
+          error
+        );
+      }
+    }
+
     const uploaded = await prisma.fileInventory.update({
       where: {
         id: existing.id,
@@ -749,6 +809,8 @@ export class StorageService {
         status: 'READY',
         checksumSha256: options.checksumSha256 ?? null,
         uploadedAt: new Date(),
+        thumbnailObjectKey,
+        thumbnailMimeType,
       },
     });
 
@@ -1227,7 +1289,10 @@ export class StorageService {
     });
 
     const allEntries: Array<
-      Pick<FileInventory, 'id' | 'isFolder' | 'objectKey'>
+      Pick<
+        FileInventory,
+        'id' | 'isFolder' | 'objectKey' | 'thumbnailObjectKey'
+      >
     > = [];
 
     for (const root of roots) {
@@ -1242,9 +1307,17 @@ export class StorageService {
     const allIds = Array.from(new Set(allEntries.map((entry) => entry.id)));
 
     for (const entry of allEntries) {
-      if (!entry.isFolder && entry.objectKey) {
+      if (entry.isFolder) {
+        continue;
+      }
+
+      const objectKeys = [entry.objectKey, entry.thumbnailObjectKey].filter(
+        (objectKey): objectKey is string => Boolean(objectKey)
+      );
+
+      for (const objectKey of objectKeys) {
         try {
-          await deleteInventoryObject({ objectKey: entry.objectKey });
+          await deleteInventoryObject({ objectKey });
         } catch {}
       }
     }
