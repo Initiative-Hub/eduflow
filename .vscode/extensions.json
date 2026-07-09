@@ -9,6 +9,7 @@
     "lokalise.i18n-ally", // i18n Ally
     "prisma.prisma", // Prisma
     "ms-azuretools.vscode-docker", // Docker
+    "typescriptteam.native-preview", // TypeScript 7
     "eamodio.gitlens", // GitLens
     "vitest.vitest" // Vitest
   ]
