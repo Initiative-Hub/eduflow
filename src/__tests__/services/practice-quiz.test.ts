@@ -1,7 +1,7 @@
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { convertToModelMessages, generateText, tool } from 'ai';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { z } from 'zod';
+import * as z from 'zod/v4';
 
 const mocks = vi.hoisted(() => ({
   convertToModelMessages: vi.fn(async (messages) => messages),
@@ -20,8 +20,7 @@ vi.mock('@openrouter/ai-sdk-provider', () => ({
 }));
 
 vi.mock('@/lib/validations/quiz.schema', async () => {
-  const actual = await vi.importActual<typeof import('zod')>('zod');
-  const zod = actual.z ?? actual;
+  const zod = await vi.importActual<typeof import('zod/v4')>('zod/v4');
   const questionSchema = zod.object({
     explanation: zod.string().optional(),
     prompt: zod.string(),
@@ -36,8 +35,7 @@ vi.mock('@/lib/validations/quiz.schema', async () => {
 });
 
 vi.mock('@/lib/validations/study.schema', async () => {
-  const actual = await vi.importActual<typeof import('zod')>('zod');
-  const zod = actual.z ?? actual;
+  const zod = await vi.importActual<typeof import('zod/v4')>('zod/v4');
 
   return {
     DEFAULT_STUDY_QUIZ_OPTIONS: {
