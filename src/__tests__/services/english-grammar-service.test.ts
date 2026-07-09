@@ -53,14 +53,14 @@ describe('GrammarService', () => {
     await GrammarService.analyze('White has many opportunities.');
 
     const calls = generateText.mock.calls as unknown as Array<
-      [{ system: string; output: { name: string } }]
+      [{ instructions: string; output: { name: string } }]
     >;
     const request = calls[0]?.[0];
     if (!request) throw new Error('generateText was not called');
 
-    expect(request.system).toContain('map grammar roles directly');
-    expect(request.system).toContain('why the tense is appropriate');
-    expect(request.system).toContain('Ways to say this');
+    expect(request.instructions).toContain('map grammar roles directly');
+    expect(request.instructions).toContain('why the tense is appropriate');
+    expect(request.instructions).toContain('Ways to say this');
     expect(request.output.name).toBe('object');
   });
 

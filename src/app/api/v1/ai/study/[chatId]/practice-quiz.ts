@@ -3,7 +3,7 @@ import {
   convertToModelMessages,
   generateText,
   Output,
-  stepCountIs,
+  isStepCount,
   type ToolSet,
   type UIMessage,
 } from 'ai';
@@ -110,7 +110,7 @@ async function extractPracticeQuizIntent({
       description:
         'Explicit practice quiz question count and question type instructions.',
     }),
-    system: `
+    instructions: `
 You extract explicit quiz configuration from the learner's latest message.
 Allowed questionTypes:
 - multiple_choice
@@ -306,10 +306,10 @@ export async function generatePracticeQuiz({
   // tool-call steps produce intermediate messages that leave output undefined.
   const toolCallResult = await generateText({
     model: provider(model ?? DEFAULT_MODELS.openrouter),
-    system: toolSystemPrompt,
+    instructions: toolSystemPrompt,
     messages: modelMessages,
     tools,
-    stopWhen: maxSteps ? stepCountIs(maxSteps) : undefined,
+    stopWhen: maxSteps ? isStepCount(maxSteps) : undefined,
   });
 
   // Phase 2: generate the structured quiz from the enriched message history.
@@ -322,7 +322,7 @@ export async function generatePracticeQuiz({
       name: 'practiceQuiz',
       description: 'A mixed interactive practice quiz for self-study.',
     }),
-    system: quizSystemPrompt,
+    instructions: quizSystemPrompt,
     messages: [...modelMessages, ...toolResponseMessages],
   });
 

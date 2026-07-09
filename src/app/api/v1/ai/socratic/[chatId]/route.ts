@@ -333,7 +333,7 @@ export async function POST(
         });
         writer.write({ type: 'finish', finishReason: 'stop' });
       },
-      onFinish: async ({ messages }) => {
+      onEnd: async ({ messages }) => {
         await ChatPersistenceService.saveMessages({
           chatId,
           userId,

@@ -13,7 +13,7 @@ vi.mock('ai', () => ({
   Output: {
     array: vi.fn((config) => ({ kind: 'array-output', ...config })),
   },
-  stepCountIs: vi.fn((count: number) => ({ count })),
+  isStepCount: vi.fn((count: number) => ({ count })),
 }));
 
 vi.mock('@tavily/ai-sdk', () => ({

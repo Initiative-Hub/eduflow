@@ -25,7 +25,7 @@ vi.mock('@ai-sdk/openai', () => ({
 
 vi.mock('ai', async (importOriginal) => ({
   ...(await importOriginal<typeof import('ai')>()),
-  experimental_generateSpeech: generateSpeech,
+  generateSpeech,
 }));
 
 vi.mock('@/lib/aws/polly-client', () => ({

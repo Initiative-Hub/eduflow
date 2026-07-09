@@ -3,7 +3,7 @@ import {
   convertToModelMessages,
   generateText,
   Output,
-  stepCountIs,
+  isStepCount,
   type ToolSet,
   type UIMessage,
 } from 'ai';
@@ -222,10 +222,10 @@ export async function generateInteractiveContent({
 
   const contextResult = await generateText({
     model: provider(model ?? DEFAULT_MODELS.openrouter),
-    system: INTERACTIVE_TOOL_SYSTEM_PROMPT,
+    instructions: INTERACTIVE_TOOL_SYSTEM_PROMPT,
     messages: modelMessages,
     tools,
-    stopWhen: maxSteps ? stepCountIs(maxSteps) : undefined,
+    stopWhen: maxSteps ? isStepCount(maxSteps) : undefined,
   });
 
   const result = await generateText({
@@ -236,7 +236,7 @@ export async function generateInteractiveContent({
       description:
         'A self-contained interactive educational HTML activity for EduFlow.',
     }),
-    system: INTERACTIVE_CONTENT_SYSTEM_PROMPT,
+    instructions: INTERACTIVE_CONTENT_SYSTEM_PROMPT,
     messages: [...modelMessages, ...contextResult.response.messages],
   });
 

@@ -1,8 +1,8 @@
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { createGoogle } from '@ai-sdk/google';
 import {
   convertToModelMessages,
   smoothStream,
-  stepCountIs,
+  isStepCount,
   streamText,
 } from 'ai';
 import { DEFAULT_MODELS } from '@/services/ai/chat-provider.constants';
@@ -26,17 +26,17 @@ export class GoogleService implements ChatProviderService {
     }
 
     const model = input.model ?? DEFAULT_MODELS.google;
-    const provider = createGoogleGenerativeAI({ apiKey });
+    const provider = createGoogle({ apiKey });
 
     return streamText({
       experimental_transform: smoothStream(),
       model: provider(model),
-      system: resolveChatSystemPrompt(options?.prompt ?? ''),
+      instructions: resolveChatSystemPrompt(options?.prompt ?? ''),
       messages: await convertToModelMessages(input.messages, {
         convertDataPart: convertLessonReferenceDataPart,
       }),
       tools: options?.tools,
-      stopWhen: options?.maxSteps ? stepCountIs(options.maxSteps) : undefined,
+      stopWhen: options?.maxSteps ? isStepCount(options.maxSteps) : undefined,
     });
   }
 }
