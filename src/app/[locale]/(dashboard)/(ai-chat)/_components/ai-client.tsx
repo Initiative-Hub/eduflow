@@ -225,14 +225,18 @@ export function AIClient({
       onStop={stop}
       selectedModel={pendingModel ?? DEFAULT_CHAT_MODEL}
       onModelChange={setPendingModel}
-      tools={(toolContext) => (
-        <ChatLessonReferenceTool
-          disabled={toolContext.disabled}
-          disabledLessonIds={toolContext.disabledLessonIds}
-          maxSelectable={toolContext.maxSelectable}
-          onAttach={toolContext.onAttachLessonReferences}
-        />
-      )}
+      tools={
+        isAuthenticated
+          ? (toolContext) => (
+              <ChatLessonReferenceTool
+                disabled={toolContext.disabled}
+                disabledLessonIds={toolContext.disabledLessonIds}
+                maxSelectable={toolContext.maxSelectable}
+                onAttach={toolContext.onAttachLessonReferences}
+              />
+            )
+          : undefined
+      }
     />
   );
 

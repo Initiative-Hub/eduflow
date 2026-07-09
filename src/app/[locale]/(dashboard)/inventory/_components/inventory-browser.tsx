@@ -42,6 +42,7 @@ type InventoryBrowserProps = {
   onRename: (entry: InventoryEntry) => void;
   onSelectAll: (checked: boolean) => void;
   onSelectEntry: (entryId: string, checked: boolean) => void;
+  onSelectSingleEntry: (entryId: string) => void;
   onShare: (entry: InventoryEntry) => void;
   onUploadOpen: () => void;
   pageIndex: number;
@@ -77,6 +78,7 @@ export function InventoryBrowser({
   onRename,
   onSelectAll,
   onSelectEntry,
+  onSelectSingleEntry,
   onShare,
   onUploadOpen,
   pageIndex,
@@ -130,12 +132,14 @@ export function InventoryBrowser({
                   <InventoryCard
                     key={entry.id}
                     entry={entry}
+                    isSelected={selectedIds.includes(entry.id)}
                     locale={locale}
                     onOpen={onOpen}
                     onRename={onRename}
                     onMove={onMove}
                     onDelete={onDeleteEntry}
                     onNavigateIntoFolder={onNavigateIntoFolder}
+                    onSelectEntry={onSelectSingleEntry}
                   />
                 ))}
               </div>
@@ -146,6 +150,7 @@ export function InventoryBrowser({
                   <InventoryCard
                     key={entry.id}
                     entry={entry}
+                    isSelected={selectedIds.includes(entry.id)}
                     locale={locale}
                     onRename={onRename}
                     onMove={onMove}
@@ -153,6 +158,7 @@ export function InventoryBrowser({
                     onPreview={onPreview}
                     onDownload={onDownload}
                     onDelete={onDeleteEntry}
+                    onSelectEntry={onSelectSingleEntry}
                     uploadProgress={getUploadProgress(entry.id)}
                   />
                 ))}

@@ -225,10 +225,12 @@ model FileInventory {
   mimeType  String? @map("mime_type")
   extension String? @map("extension")
 
-  bucket         String?
-  objectKey      String? @map("object_key")
-  checksumSha256 String? @map("checksum_sha256")
-  vectorDbId     String? @map("vector_db_id")
+  bucket             String?
+  objectKey          String? @map("object_key")
+  checksumSha256     String? @map("checksum_sha256")
+  vectorDbId         String? @map("vector_db_id")
+  thumbnailObjectKey String? @map("thumbnail_object_key")
+  thumbnailMimeType  String? @map("thumbnail_mime_type")
 
   createdAt  DateTime  @default(now()) @map("created_at")
   updatedAt  DateTime  @updatedAt @map("updated_at")
