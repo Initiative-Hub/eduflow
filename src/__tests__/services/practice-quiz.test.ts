@@ -19,14 +19,6 @@ vi.mock('@openrouter/ai-sdk-provider', () => ({
   createOpenRouter: vi.fn(() => mocks.provider),
 }));
 
-vi.mock('zod', async () => {
-  const actual = await vi.importActual<typeof import('zod')>('zod');
-  return {
-    ...actual,
-    z: actual.z ?? actual,
-  };
-});
-
 vi.mock('@/lib/validations/quiz.schema', async () => {
   const actual = await vi.importActual<typeof import('zod')>('zod');
   const zod = actual.z ?? actual;
