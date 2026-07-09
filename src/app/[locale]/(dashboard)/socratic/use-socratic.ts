@@ -1,7 +1,11 @@
 'use client';
 
 import { useChat } from '@ai-sdk/react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { DefaultChatTransport } from 'ai';
 import { useEffect, useMemo, useRef } from 'react';
 import { toast } from 'sonner';
@@ -17,6 +21,10 @@ import type { SocraticUIMessage } from '@/types/socratic-ui-message';
 import { hasReachedUserMessageLimit } from '@/utils/chat-limit';
 import { prepareLastMessageRequest } from '@/utils/chat-request';
 import { uploadChatAttachments } from '../chat-attachments.service';
+import {
+  createInitialChatHistoryData,
+  mergeChatMessages,
+} from '../(ai-chat)/chat-history';
 import { socraticService } from './socratic.service';
 
 const MAX_USER_MESSAGES = 5;
@@ -24,12 +32,18 @@ const MAX_USER_MESSAGES = 5;
 interface UseSocraticOptions {
   chatId?: string;
   initialMessages?: SocraticUIMessage[];
+  initialMessagesPagination?: {
+    hasMore: boolean;
+    limit: number;
+    nextCursor: string | null;
+  };
   isAuthenticated: boolean;
 }
 
 export const useSocratic = ({
   chatId,
   initialMessages = [],
+  initialMessagesPagination,
   isAuthenticated,
 }: UseSocraticOptions) => {
   const router = useRouter();
@@ -60,6 +74,39 @@ export const useSocratic = ({
         : undefined,
     [chatId]
   );
+
+  const initialHistoryPage = useMemo(
+    () =>
+      chatId
+        ? {
+            title: '',
+            messageCount: initialMessages.length,
+            messages: initialMessages,
+            pagination: initialMessagesPagination ?? {
+              hasMore: false,
+              limit: initialMessages.length,
+              nextCursor: null,
+            },
+          }
+        : null,
+    [chatId, initialMessages, initialMessagesPagination]
+  );
+
+  const historyQuery = useInfiniteQuery({
+    queryKey: ['socratic-chat-messages', chatId],
+    initialPageParam: undefined as string | undefined,
+    enabled: Boolean(chatId),
+    initialData: initialHistoryPage
+      ? createInitialChatHistoryData(initialHistoryPage)
+      : undefined,
+    queryFn: ({ pageParam }) =>
+      socraticService.getChat(chatId as string, {
+        limit: initialMessagesPagination?.limit ?? 5,
+        before: pageParam,
+      }),
+    getNextPageParam: (lastPage) =>
+      lastPage.pagination.hasMore ? lastPage.pagination.nextCursor : undefined,
+  });
 
   const { messages, status, sendMessage, stop } = useChat<SocraticUIMessage>({
     id: chatId,
@@ -94,7 +141,10 @@ export const useSocratic = ({
     pendingChatId && pendingChatId === chatId && pendingMessage
       ? [pendingMessage]
       : [];
-  const displayMessages = messages.length > 0 ? messages : pendingForChat;
+  const liveMessages = messages.length > 0 ? messages : pendingForChat;
+  const displayMessages = chatId
+    ? mergeChatMessages(historyQuery.data?.pages, liveMessages)
+    : liveMessages;
 
   useEffect(() => {
     if (!pendingMessage || !pendingChatId || !chatId) return;
@@ -193,6 +243,9 @@ export const useSocratic = ({
 
   return {
     messages: displayMessages,
+    hasOlderMessages: historyQuery.hasNextPage,
+    isLoadingOlderMessages: historyQuery.isFetchingNextPage,
+    loadOlderMessages: historyQuery.fetchNextPage,
     userMessageCount,
     maxMessages: MAX_USER_MESSAGES,
     hasOutput: displayMessages.length > 0,
