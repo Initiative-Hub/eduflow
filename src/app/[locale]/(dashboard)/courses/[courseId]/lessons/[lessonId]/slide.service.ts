@@ -22,6 +22,15 @@ export const slideService = {
     );
   },
 
+  getTemplateCategories: (
+    collectionName: string
+  ): Promise<{ categories: string[]; is_custom: boolean }> => {
+    return apiClient.get<{ categories: string[]; is_custom: boolean }>(
+      `/v1/ai/templates/${collectionName}/categories`,
+      { headers: { 'Cache-Control': 'no-store' } }
+    );
+  },
+
   importTemplate: (file: File, name?: string): Promise<{ message: string }> => {
     const formData = new FormData();
     formData.append('file', file);
@@ -30,7 +39,8 @@ export const slideService = {
     }
     return apiClient.post<{ message: string }>(
       '/v1/ai/templates/import',
-      formData
+      formData,
+      { timeout: 600000 } // 10 minutes timeout for heavy PPTX/AI extraction
     );
   },
 
