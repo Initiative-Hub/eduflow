@@ -59,7 +59,6 @@ const handler: AuthHandler = async (_req, sessionData, { params }) => {
         select: {
           title: true,
           description: true,
-          subType: true,
           deliveryMode: true,
           questions: true,
           quizQuestions: {
@@ -84,7 +83,7 @@ const handler: AuthHandler = async (_req, sessionData, { params }) => {
       const snapshot = (quizSnapshot as QuizAttemptSnapshot | null) ?? {
         title: quiz.title,
         description: quiz.description ?? '',
-        type: quiz.subType,
+        type: fallbackQuestions[0]?.type ?? 'mixed',
         deliveryMode: quiz.deliveryMode,
         questions: fallbackQuestions,
       };

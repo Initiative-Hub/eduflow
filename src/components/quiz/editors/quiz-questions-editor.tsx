@@ -33,9 +33,12 @@ interface QuizQuestionsEditorProps {
     questionIds: Array<string | null>
   ) => void;
   isSaving?: boolean;
-  onGenerateAI?: () => void;
+  onGenerateAI?: (
+    appendQuestions: (questions: QuestionBlock[]) => void
+  ) => void;
   isGeneratingAI?: boolean;
-  questionCount?: number;
+  initialAction?: 'manual' | 'question-bank';
+  creationMode?: boolean;
 }
 
 export function QuizQuestionsEditor({
@@ -46,15 +49,19 @@ export function QuizQuestionsEditor({
   isSaving = false,
   onGenerateAI,
   isGeneratingAI = false,
-  questionCount,
+  initialAction,
+  creationMode = false,
 }: QuizQuestionsEditorProps) {
   const t = useTranslations('Courses.QuizPlayer');
+  const tCreate = useTranslations('Courses.CreateQuiz');
   const [questions, setQuestions] = useState<QuestionBlock[]>(initialQuestions);
   const [questionIds, setQuestionIds] = useState<Array<string | null>>(() =>
     initialQuestions.map((_, index) => initialQuestionIds[index] ?? null)
   );
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isBankPickerOpen, setIsBankPickerOpen] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(initialAction === 'manual');
+  const [isBankPickerOpen, setIsBankPickerOpen] = useState(
+    initialAction === 'question-bank'
+  );
   const [editingQuestion, setEditingQuestion] = useState<QuestionBlock | null>(
     null
   );
@@ -143,6 +150,14 @@ export function QuizQuestionsEditor({
     ]);
   };
 
+  const appendGeneratedQuestions = (generatedQuestions: QuestionBlock[]) => {
+    setQuestions((current) => [...current, ...generatedQuestions]);
+    setQuestionIds((current) => [
+      ...current,
+      ...generatedQuestions.map(() => null),
+    ]);
+  };
+
   // Handle saving questions via parent callback
   const handleSaveAll = () => {
     if (onSave) {
@@ -211,78 +226,96 @@ export function QuizQuestionsEditor({
       {/* Action Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b pb-4">
         <div className="flex items-center gap-2">
-          <Badge
-            variant="outline"
-            className="bg-primary/5 px-2 py-0.5 font-semibold text-primary text-xs uppercase tracking-wider"
-          >
-            {t('teacherView')}
-          </Badge>
+          <span>
+            
+          </span>
           <span className="text-muted-foreground text-sm">
             {t('questionTotal', { count: questions.length })}
           </span>
         </div>
 
-        <div className="flex gap-2">
-          {onGenerateAI && (
+        <div className="flex flex-col gap-2 xl:flex-row">
+          <div
+            className={
+              creationMode ? 'grid grid-cols-3 gap-2' : 'flex flex-wrap gap-2'
+            }
+          >
+            {onGenerateAI ? (
+              <Button
+                type="button"
+                variant={creationMode ? 'secondary' : 'outline'}
+                onClick={() => onGenerateAI(appendGeneratedQuestions)}
+                disabled={isGeneratingAI}
+                className={
+                  creationMode
+                    ? 'min-h-11 cursor-pointer gap-1.5 border border-border bg-muted text-foreground shadow-xs hover:bg-muted/80'
+                    : 'cursor-pointer gap-1.5'
+                }
+              >
+                {isGeneratingAI ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Sparkles className="h-4 w-4" />
+                )}
+                {isGeneratingAI
+                  ? t('generatingAIQuestions')
+                  : creationMode
+                    ? tCreate('methods.ai.title')
+                    : t('generateAIQuestions')}
+              </Button>
+            ) : null}
+
             <Button
               type="button"
-              variant="outline"
-              onClick={onGenerateAI}
-              disabled={
-                isGeneratingAI ||
-                (questionCount !== undefined &&
-                  questions.length >= questionCount)
+              variant={creationMode ? 'secondary' : 'outline'}
+              onClick={handleAddClick}
+              disabled={isGeneratingAI}
+              className={
+                creationMode
+                  ? 'min-h-11 cursor-pointer border border-border bg-muted text-foreground shadow-xs hover:bg-muted/80'
+                  : 'cursor-pointer'
               }
-              className="cursor-pointer gap-1.5"
             >
-              {isGeneratingAI ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Sparkles className="h-4 w-4" />
-              )}
-              {isGeneratingAI
-                ? t('generatingAIQuestions')
-                : t('generateAIQuestions')}
+              <Plus className="mr-1.5 h-4 w-4" />
+              {creationMode
+                ? tCreate('methods.manual.title')
+                : t('addQuestion')}
             </Button>
-          )}
 
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleAddClick}
-            disabled={
-              isGeneratingAI ||
-              (questionCount !== undefined && questions.length >= questionCount)
-            }
-            className="cursor-pointer"
-          >
-            <Plus className="mr-1.5 h-4 w-4" />
-            {t('addQuestion')}
-          </Button>
-
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setIsBankPickerOpen(true)}
-            disabled={isGeneratingAI}
-            className="cursor-pointer"
-          >
-            <Library className="mr-1.5 h-4 w-4" />
-            {t('addFromQuestionBank')}
-          </Button>
+            <Button
+              type="button"
+              variant={creationMode ? 'secondary' : 'outline'}
+              onClick={() => setIsBankPickerOpen(true)}
+              disabled={isGeneratingAI}
+              className={
+                creationMode
+                  ? 'min-h-11 cursor-pointer border border-border bg-muted text-foreground shadow-xs hover:bg-muted/80'
+                  : 'cursor-pointer'
+              }
+            >
+              <Library className="mr-1.5 h-4 w-4" />
+              {creationMode
+                ? tCreate('methods.question-bank.title')
+                : t('addFromQuestionBank')}
+            </Button>
+          </div>
 
           <Button
             type="button"
             onClick={handleSaveAll}
             disabled={isSaving || isGeneratingAI}
-            className="cursor-pointer gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
+            className="min-h-11 cursor-pointer gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
           >
             {isSaving ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <Save className="h-4 w-4" />
             )}
-            {isSaving ? t('saving') : t('saveChanges')}
+            {isSaving
+              ? t('saving')
+              : creationMode
+                ? tCreate('saveQuiz')
+                : t('saveChanges')}
           </Button>
         </div>
       </div>

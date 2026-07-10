@@ -1,4 +1,4 @@
-import type { DeliveryMode, QuestionSubType } from '@/generated/prisma';
+import type { DeliveryMode } from '@/generated/prisma';
 import type {
   QuestionBlock,
   QuestionResult,
@@ -8,7 +8,7 @@ import type {
 export interface QuizAttemptSnapshot {
   title: string;
   description: string;
-  type: QuestionSubType;
+  type: string;
   deliveryMode: DeliveryMode;
   questions: QuestionBlock[];
 }
@@ -16,7 +16,6 @@ export interface QuizAttemptSnapshot {
 interface SnapshotQuizMetadata {
   title: string;
   description: string | null;
-  subType: QuestionSubType;
   deliveryMode: DeliveryMode;
 }
 
@@ -33,7 +32,7 @@ export function createQuizAttemptSnapshot(
   return {
     title: quiz.title,
     description: quiz.description ?? '',
-    type: quiz.subType,
+    type: questions[0]?.type ?? 'mixed',
     deliveryMode: quiz.deliveryMode,
     questions,
   };

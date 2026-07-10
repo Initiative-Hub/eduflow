@@ -34,7 +34,6 @@ import {
 } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import type { QuizDefinition } from '@/lib/quiz-template';
-import { QUESTION_SUB_TYPE_LABELS } from '@/lib/quiz-template';
 import { cn } from '@/lib/utils';
 import DeleteLessonDialog from '../lessons/[lessonId]/_components/delete-lesson-dialog';
 import type { Module } from '../use-modules';
@@ -49,7 +48,6 @@ export type AccordionListItem =
       kind: 'quiz';
       id: string;
       title: string;
-      subType: string;
       questionCount: number;
       indent: number;
     };
@@ -91,7 +89,6 @@ function buildItemList(
       kind: 'quiz',
       id: quiz.id,
       title: quiz.title,
-      subType: quiz.subType,
       questionCount: quiz.questionCount,
       indent: savedIndents.get(quiz.id) ?? 0,
     });
@@ -439,13 +436,6 @@ function SortableAccordionRow({
         <div>
           <span className="font-medium text-sm">{item.title}</span>
           <div className="mt-0.5 flex items-center gap-1.5">
-            <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">
-              {
-                QUESTION_SUB_TYPE_LABELS[
-                  item.subType as keyof typeof QUESTION_SUB_TYPE_LABELS
-                ]
-              }
-            </Badge>
             <span className="text-[10px] text-muted-foreground">
               {item.questionCount}{' '}
               {item.questionCount === 1 ? 'question' : 'questions'}

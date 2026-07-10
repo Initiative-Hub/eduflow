@@ -3,6 +3,20 @@ import type { QuizConfiguration, QuizDefinition } from '@/lib/quiz-template';
 import type { QuestionBlock } from '@/lib/quiz-template/types';
 
 export const quizService = {
+  generateDraft: async (
+    courseId: string,
+    params: {
+      lessonIds: string[];
+      questionCounts: QuizConfiguration['questionCounts'];
+      context?: string;
+    }
+  ) => {
+    return apiClient.post<{ questions: QuestionBlock[] }>('v1/ai/quiz', {
+      courseId,
+      ...params,
+    });
+  },
+
   createGeneratedQuiz: async (
     courseId: string,
     config: QuizConfiguration & { lessonIds: string[] },
@@ -14,8 +28,7 @@ export const quizService = {
         lessonIds: config.lessonIds,
         title: config.title,
         description: config.description,
-        category: config.category,
-        subType: config.subType,
+        questionCounts: config.questionCounts,
         deliveryMode: config.deliveryMode,
         selectionMethod: 'MANUAL_CREATE',
         questionCount: config.questionCount,

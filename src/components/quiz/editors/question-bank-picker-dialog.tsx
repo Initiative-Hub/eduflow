@@ -122,7 +122,9 @@ export function QuestionBankPickerDialog({
                       <Check className="h-3.5 w-3.5" />
                     ) : null}
                   </span>
-                  <span className="line-clamp-3 text-sm">{question.prompt}</span>
+                  <span className="line-clamp-3 text-sm">
+                    {question.prompt}
+                  </span>
                 </button>
               );
             })

@@ -58,11 +58,13 @@ export function CreateQuizDialog({
         lessonIds,
         title: data.title,
         description: data.description || undefined,
-        category: data.category,
-        subType: data.subType,
+        questionCounts: data.questionCounts,
         deliveryMode: data.deliveryMode,
         selectionMethod: 'MANUAL_CREATE',
-        questionCount: data.questionCount,
+        questionCount: Object.values(data.questionCounts).reduce(
+          (total, count) => total + (count ?? 0),
+          0
+        ),
       },
       {
         onSuccess: (generatedQuiz) => {

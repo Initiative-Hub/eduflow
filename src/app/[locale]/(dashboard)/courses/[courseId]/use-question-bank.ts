@@ -110,17 +110,23 @@ export function useQuestionBank({ courseId }: UseQuestionBankOptions) {
 
   // Create quiz via real API
   const createQuizMutation = useMutation({
-    mutationFn: async (config: QuizConfiguration & { lessonIds: string[] }) => {
+    mutationFn: async (
+      config: QuizConfiguration & {
+        lessonIds: string[];
+        questions?: QuestionBlock[];
+        questionIds?: Array<string | null>;
+      }
+    ) => {
       return apiClient.post<QuizDefinition>(`v1/courses/${courseId}/quizzes`, {
         lessonIds: config.lessonIds,
         title: config.title,
         description: config.description,
-        category: config.category,
-        subType: config.subType,
+        questionCounts: config.questionCounts,
         deliveryMode: config.deliveryMode,
         selectionMethod: config.selectionMethod,
         questionCount: config.questionCount,
-        questions: [],
+        questions: config.questions ?? [],
+        questionIds: config.questionIds,
       });
     },
     onSuccess: (createdQuiz) => {
@@ -175,6 +181,15 @@ export function useQuestionBank({ courseId }: UseQuestionBankOptions) {
     },
   });
 
+  const generateDraftQuizMutation = useMutation({
+    mutationFn: (params: {
+      lessonIds: string[];
+      questionCounts: Partial<Record<QuestionSubType, number>>;
+      context?: string;
+    }) => quizService.generateDraft(courseId, params),
+    onError: () => toast.error(t('createWithAIError')),
+  });
+
   // AI question generation (still uses the placeholder function)
   const generateQuestionsMutation = useMutation({
     mutationFn: async (params: {
@@ -216,6 +231,10 @@ export function useQuestionBank({ courseId }: UseQuestionBankOptions) {
     createGeneratedQuiz: createGeneratedQuizMutation.mutate,
     isCreatingGeneratedQuiz: createGeneratedQuizMutation.isPending,
     createGeneratedQuizError: createGeneratedQuizMutation.error,
+
+    generateDraftQuiz: generateDraftQuizMutation.mutate,
+    isGeneratingDraftQuiz: generateDraftQuizMutation.isPending,
+    generateDraftQuizError: generateDraftQuizMutation.error,
 
     generateQuestions: generateQuestionsMutation.mutateAsync,
     isGeneratingQuestions: generateQuestionsMutation.isPending,

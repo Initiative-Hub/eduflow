@@ -6,13 +6,36 @@ import { QuizService } from '@/services/QuizService';
 
 // ─── Validation Schema ────────────────────────────────────────────────────────
 
-const generateQuizInputSchema = z.object({
-  quizId: z.string().uuid('Invalid courseId'),
+const aiOptionsSchema = z.object({
   context: z.string().max(500).optional(),
   topic: z.string().max(500).optional(),
   apiKey: z.string().min(1).optional(),
   model: z.string().min(1).optional(),
 });
+
+const questionSubTypeSchema = z.enum([
+  'MULTIPLE_CHOICE',
+  'TRUE_FALSE',
+  'MATCHING',
+  'ORDERING',
+  'ESSAY',
+  'FILL_IN_THE_BLANK',
+  'DRAG_AND_DROP',
+]);
+
+const generateQuizInputSchema = z.union([
+  aiOptionsSchema.extend({
+    quizId: z.string().uuid('Invalid quizId'),
+  }),
+  aiOptionsSchema.extend({
+    courseId: z.string().uuid('Invalid courseId'),
+    lessonIds: z.array(z.string().uuid()).min(1),
+    questionCounts: z.partialRecord(
+      questionSubTypeSchema,
+      z.number().int().min(0).max(50)
+    ),
+  }),
+]);
 
 // ─── POST /api/v1/ai/quiz ─────────────────────────────────────────────────────
 
@@ -73,10 +96,27 @@ export const POST = withRoles(
         );
       }
 
-      const { quizId, topic, apiKey, model, context } = parsed.data;
+      const { topic, apiKey, model, context } = parsed.data;
+
+      if ('courseId' in parsed.data) {
+        const draft = await QuizService.generateDraft(
+          parsed.data.courseId,
+          sessionData.user.id,
+          {
+            lessonIds: parsed.data.lessonIds,
+            questionCounts: parsed.data.questionCounts,
+            topic,
+            apiKey,
+            model,
+            context,
+          }
+        );
+
+        return NextResponse.json(draft, { status: 201 });
+      }
 
       const quiz = await QuizService.generateAndSave(
-        quizId,
+        parsed.data.quizId,
         sessionData.user.id,
         {
           topic,

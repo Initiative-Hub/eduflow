@@ -2,10 +2,14 @@ import type {
   DeliveryMode,
   Prisma,
   QuestionSubType,
-  QuizCategory,
   SelectionMethod,
 } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
+import {
+  getQuestionTaxonomy,
+  QUESTION_CATEGORY_BY_SUB_TYPE,
+  SUB_TYPE_TO_QUESTION_TYPE,
+} from '@/lib/quiz-template';
 import { CourseService } from '@/services/CourseService';
 import { OpenRouterService } from './ai/OpenRouterService';
 import { safeMapAIQuizToSchema } from './ai/quizMapper';
@@ -92,18 +96,145 @@ export type CreateQuizInput = {
   lessonIds: string[];
   title: string;
   description?: string | null;
-  category: QuizCategory;
-  subType: QuestionSubType;
+  questionCounts: Partial<Record<QuestionSubType, number>>;
   deliveryMode: DeliveryMode;
   selectionMethod: SelectionMethod;
   questionCount: number;
   questions?: Record<string, unknown>[];
+  questionIds?: Array<string | null>;
   selectedQuestionIds?: string[];
 };
+
+type AiGenerationInput = {
+  topic?: string;
+  apiKey?: string;
+  model?: string;
+  context?: string;
+};
+
+type GenerationLesson = {
+  id: string;
+  title: string;
+  content: unknown;
+};
+
+async function generateQuestionsForLessons(
+  lessons: GenerationLesson[],
+  questionCounts: Partial<Record<QuestionSubType, number>>,
+  aiInput: AiGenerationInput,
+  currentQuestions: Record<string, unknown>[] = []
+) {
+  const requestedCounts = Object.entries(questionCounts).filter(
+    (entry): entry is [QuestionSubType, number] =>
+      typeof entry[1] === 'number' && entry[1] > 0
+  );
+  const requestedTotal = requestedCounts.reduce(
+    (total, [, count]) => total + count,
+    0
+  );
+  if (requestedTotal === 0) {
+    throw new Error('Quiz has no AI question distribution');
+  }
+  if (currentQuestions.length >= requestedTotal) {
+    throw new Error('Quiz already has the maximum number of questions');
+  }
+  if (lessons.length === 0) {
+    throw new Error('No lessons linked to quiz');
+  }
+
+  const lessonText = lessons
+    .map((lesson, index) => {
+      const body = lessonContentToText(lesson.content);
+      const title = lesson.title?.trim() || `Lesson ${index + 1}`;
+      return body ? `Lesson: ${title}\n${body}` : `Lesson: ${title}`;
+    })
+    .join('\n\n---\n\n');
+  const currentCounts = currentQuestions.reduce<
+    Partial<Record<QuestionSubType, number>>
+  >((counts, question) => {
+    try {
+      const { subType } = getQuestionTaxonomy(
+        question.type as Parameters<typeof getQuestionTaxonomy>[0]
+      );
+      counts[subType] = (counts[subType] ?? 0) + 1;
+    } catch {
+      // Legacy unsupported question types do not consume a requested slot.
+    }
+    return counts;
+  }, {});
+
+  const service = new OpenRouterService();
+  const generatedBatches = await Promise.all(
+    requestedCounts.flatMap(([subType, requestedCount]) => {
+      const remainingCount = requestedCount - (currentCounts[subType] ?? 0);
+      if (remainingCount <= 0) return [];
+      return [
+        service
+          .createQuiz({
+            ...aiInput,
+            quizType: SUB_TYPE_TO_QUESTION_TYPE[subType],
+            context: aiInput.context
+              ? `${aiInput.context}\n\n${lessonText}`
+              : lessonText,
+            questionNumbers: String(remainingCount),
+            topic: aiInput.topic ?? lessons[0]?.title ?? undefined,
+            content: lessonText || undefined,
+          })
+          .then((generated) => ({ generated, subType })),
+      ];
+    })
+  );
+
+  return generatedBatches.flatMap(({ generated, subType }) => {
+    const safe = safeMapAIQuizToSchema(generated, subType);
+    const normalized = safe.success ? safe.data : null;
+    const questions = normalized
+      ? (normalized.questions as unknown[])
+      : (generated.questions as unknown[]);
+    return questions.map((question) => ({
+      question,
+      subType,
+      description: normalized?.description ?? generated.description,
+      deliveryMode: normalized?.deliveryMode ?? generated.deliveryMode,
+      selectionMethod: normalized?.selectionMethod ?? generated.selectionMethod,
+    }));
+  });
+}
 
 // ─── QuizService ──────────────────────────────────────────────────────────────
 
 export class QuizService {
+  static async generateDraft(
+    courseId: string,
+    userId: string,
+    input: AiGenerationInput & {
+      lessonIds: string[];
+      questionCounts: Partial<Record<QuestionSubType, number>>;
+    }
+  ) {
+    await CourseService.assertCourseOwner(courseId, userId);
+    const lessons = await prisma.lesson.findMany({
+      where: {
+        id: { in: input.lessonIds },
+        deletedAt: null,
+        module: { courseId, deletedAt: null },
+      },
+      select: { id: true, title: true, content: true },
+    });
+    if (lessons.length !== input.lessonIds.length) {
+      throw new Error('Some lessons do not belong to this course');
+    }
+
+    const generated = await generateQuestionsForLessons(
+      lessons,
+      input.questionCounts,
+      input
+    );
+    return {
+      questions: generated.map(({ question }) => question),
+    };
+  }
+
   static async createForCourse(
     courseId: string,
     userId: string,
@@ -134,16 +265,17 @@ export class QuizService {
       (data.questions?.length ?? 0) === 0 &&
       data.selectionMethod !== 'MANUAL_CREATE'
     ) {
-      const questionWhere: Record<string, unknown> = {
-        courseId,
-        category: data.category,
-        subType: data.subType,
-      };
+      const requestedSubTypes = Object.entries(data.questionCounts)
+        .filter(([, count]) => (count ?? 0) > 0)
+        .map(([subType]) => subType as QuestionSubType);
+      const questionWhere: Record<string, unknown> = { courseId };
       if (
         data.selectionMethod === 'HAND_PICK' &&
         data.selectedQuestionIds?.length
       ) {
         questionWhere.id = { in: data.selectedQuestionIds };
+      } else if (requestedSubTypes.length > 0) {
+        questionWhere.subType = { in: requestedSubTypes };
       }
 
       const bankQuestions = await prisma.question.findMany({
@@ -153,8 +285,12 @@ export class QuizService {
 
       let selectedQuestions = bankQuestions;
       if (data.selectionMethod === 'RANDOM') {
-        const shuffled = [...bankQuestions].sort(() => Math.random() - 0.5);
-        selectedQuestions = shuffled.slice(0, data.questionCount);
+        selectedQuestions = requestedSubTypes.flatMap((subType) => {
+          const shuffled = bankQuestions
+            .filter((question) => question.subType === subType)
+            .sort(() => Math.random() - 0.5);
+          return shuffled.slice(0, data.questionCounts[subType] ?? 0);
+        });
       } else if (data.selectedQuestionIds?.length) {
         const questionsById = new Map(
           bankQuestions.map((question) => [question.id, question])
@@ -169,31 +305,63 @@ export class QuizService {
       selectedQuestionIds = selectedQuestions.map(({ id }) => id);
     }
 
-    const quiz = await prisma.quiz.create({
-      data: {
-        courseId,
-        title: data.title,
-        description: data.description ?? null,
-        category: data.category,
-        subType: data.subType,
-        deliveryMode: data.deliveryMode,
-        selectionMethod: data.selectionMethod,
-        questionCount:
-          data.selectionMethod === 'MANUAL_CREATE'
-            ? data.questionCount
-            : selectedQuestionIds.length,
-        questions: [],
-        lessonQuizzes: {
-          create: data.lessonIds.map((lessonId) => ({ lessonId })),
+    const quiz = await prisma.$transaction(async (tx) => {
+      if (data.questions?.length) {
+        selectedQuestionIds = [];
+        for (const [index, questionData] of data.questions.entries()) {
+          const existingQuestionId = data.questionIds?.[index];
+          if (existingQuestionId) {
+            const existing = await tx.question.findFirst({
+              where: { id: existingQuestionId, courseId },
+              select: { id: true },
+            });
+            if (!existing) throw new Error('Question not found');
+            selectedQuestionIds.push(existing.id);
+            continue;
+          }
+
+          const taxonomy = getQuestionTaxonomy(
+            questionData.type as Parameters<typeof getQuestionTaxonomy>[0]
+          );
+          const created = await tx.question.create({
+            data: {
+              courseId,
+              ...taxonomy,
+              prompt: getQuestionPrompt(questionData),
+              answerData: questionData as Prisma.InputJsonValue,
+              explanation:
+                typeof questionData.explanation === 'string'
+                  ? questionData.explanation
+                  : null,
+            },
+            select: { id: true },
+          });
+          selectedQuestionIds.push(created.id);
+        }
+      }
+
+      return tx.quiz.create({
+        data: {
+          courseId,
+          title: data.title,
+          description: data.description ?? null,
+          deliveryMode: data.deliveryMode,
+          selectionMethod: data.selectionMethod,
+          questionCount: selectedQuestionIds.length,
+          questionCounts: data.questionCounts,
+          questions: [],
+          lessonQuizzes: {
+            create: data.lessonIds.map((lessonId) => ({ lessonId })),
+          },
+          quizQuestions: {
+            create: selectedQuestionIds.map((questionId, orderIndex) => ({
+              questionId,
+              orderIndex,
+            })),
+          },
         },
-        quizQuestions: {
-          create: selectedQuestionIds.map((questionId, orderIndex) => ({
-            questionId,
-            orderIndex,
-          })),
-        },
-      },
-      include: quizRelations,
+        include: quizRelations,
+      });
     });
 
     return withLessonIds(quiz);
@@ -209,8 +377,6 @@ export class QuizService {
       select: {
         id: true,
         courseId: true,
-        category: true,
-        subType: true,
         course: { select: { ownerId: true } },
       },
     });
@@ -231,7 +397,11 @@ export class QuizService {
           typeof questionData.explanation === 'string'
             ? questionData.explanation
             : null;
+        const taxonomy = getQuestionTaxonomy(
+          questionData.type as Parameters<typeof getQuestionTaxonomy>[0]
+        );
         const data = {
+          ...taxonomy,
           prompt: getQuestionPrompt(questionData),
           answerData: questionData as Prisma.InputJsonValue,
           explanation,
@@ -248,8 +418,6 @@ export class QuizService {
           const created = await tx.question.create({
             data: {
               courseId: quiz.courseId,
-              category: quiz.category,
-              subType: quiz.subType,
               ...data,
             },
             select: { id: true },
@@ -271,7 +439,10 @@ export class QuizService {
 
       return tx.quiz.update({
         where: { id: quizId },
-        data: { questions: [], questionCount: persistedQuestionIds.length },
+        data: {
+          questions: [],
+          questionCount: persistedQuestionIds.length,
+        },
         include: quizRelations,
       });
     });
@@ -326,7 +497,20 @@ export class QuizService {
       fetchedQuiz.quizQuestions,
       fetchedQuiz.questions
     ).questions;
-    if (currentQuestions.length >= fetchedQuiz.questionCount) {
+    const requestedCounts = Object.entries(
+      fetchedQuiz.questionCounts as Partial<Record<QuestionSubType, number>>
+    ).filter(
+      (entry): entry is [QuestionSubType, number] =>
+        typeof entry[1] === 'number' && entry[1] > 0
+    );
+    const requestedTotal = requestedCounts.reduce(
+      (total, [, count]) => total + count,
+      0
+    );
+    if (requestedTotal === 0) {
+      throw new Error('Quiz has no AI question distribution');
+    }
+    if (currentQuestions.length >= requestedTotal) {
       throw new Error('Quiz already has the maximum number of questions');
     }
     // Aggregate content from all linked lessons
@@ -345,37 +529,67 @@ export class QuizService {
       })
       .join('\n\n---\n\n');
 
-    // 2. Generate the quiz from the lesson content
-    const service = new OpenRouterService();
-    const generated = await service.createQuiz({
-      ...aiInput,
-      quizType: fetchedQuiz.subType,
-      context: aiInput.context
-        ? `${aiInput.context}\n\n${lessonText}`
-        : lessonText,
-      questionNumbers: String(fetchedQuiz.questionCount),
-      topic: aiInput.topic ?? lessons[0]?.title ?? undefined,
-      content: lessonText || undefined,
-    });
-    // Normalize AI output into our internal schema (tolerant mapping)
-    const safe = safeMapAIQuizToSchema(generated, fetchedQuiz.subType);
-    const normalized = safe.success ? safe.data : null;
+    const currentCounts = currentQuestions.reduce<
+      Partial<Record<QuestionSubType, number>>
+    >((counts, question) => {
+      try {
+        const { subType } = getQuestionTaxonomy(question.type);
+        counts[subType] = (counts[subType] ?? 0) + 1;
+      } catch {
+        // Legacy unsupported question types do not consume a requested slot.
+      }
+      return counts;
+    }, {});
 
-    const questionsToSave = normalized
-      ? (normalized.questions as unknown[])
-      : (generated.questions as unknown[]);
+    // Generate each requested type independently so a quiz can mix formats.
+    const service = new OpenRouterService();
+    const generatedBatches = await Promise.all(
+      requestedCounts.flatMap(([subType, requestedCount]) => {
+        const remainingCount = requestedCount - (currentCounts[subType] ?? 0);
+        if (remainingCount <= 0) return [];
+        return [
+          service
+            .createQuiz({
+              ...aiInput,
+              quizType: SUB_TYPE_TO_QUESTION_TYPE[subType],
+              context: aiInput.context
+                ? `${aiInput.context}\n\n${lessonText}`
+                : lessonText,
+              questionNumbers: String(remainingCount),
+              topic: aiInput.topic ?? lessons[0]?.title ?? undefined,
+              content: lessonText || undefined,
+            })
+            .then((generated) => ({ generated, subType })),
+        ];
+      })
+    );
+    const generatedQuestions = generatedBatches.flatMap(
+      ({ generated, subType }) => {
+        const safe = safeMapAIQuizToSchema(generated, subType);
+        const normalized = safe.success ? safe.data : null;
+        const questions = normalized
+          ? (normalized.questions as unknown[])
+          : (generated.questions as unknown[]);
+        return questions.map((question) => ({
+          question,
+          subType,
+          description: normalized?.description ?? generated.description,
+          deliveryMode: normalized?.deliveryMode ?? generated.deliveryMode,
+          selectionMethod:
+            normalized?.selectionMethod ?? generated.selectionMethod,
+        }));
+      }
+    );
 
     // 3. Persist to the database (use normalized questions when available)
     const quiz = await prisma.$transaction(async (tx) => {
       const createdQuestions = await Promise.all(
-        questionsToSave.map((question) =>
+        generatedQuestions.map(({ question, subType }) =>
           tx.question.create({
             data: {
               courseId: fetchedQuiz.courseId,
-              category: (normalized?.category ??
-                generated.category) as QuizCategory,
-              subType: (normalized?.subType ??
-                generated.subType) as QuestionSubType,
+              category: QUESTION_CATEGORY_BY_SUB_TYPE[subType],
+              subType,
               prompt: getQuestionPrompt(question as Record<string, unknown>),
               answerData: question as Prisma.InputJsonValue,
               explanation:
@@ -390,13 +604,12 @@ export class QuizService {
         )
       );
 
-      await tx.quizQuestion.deleteMany({ where: { quizId } });
       if (createdQuestions.length > 0) {
         await tx.quizQuestion.createMany({
           data: createdQuestions.map(({ id: questionId }, orderIndex) => ({
             quizId,
             questionId,
-            orderIndex,
+            orderIndex: currentQuestions.length + orderIndex,
           })),
         });
       }
@@ -404,18 +617,13 @@ export class QuizService {
       return tx.quiz.update({
         where: { id: quizId },
         data: {
-          description: (normalized?.description ?? generated.description) as
-            | string
-            | null,
-          category: (normalized?.category ??
-            generated.category) as QuizCategory,
-          subType: (normalized?.subType ??
-            generated.subType) as QuestionSubType,
-          deliveryMode: (normalized?.deliveryMode ??
-            generated.deliveryMode) as DeliveryMode,
-          selectionMethod: (normalized?.selectionMethod ??
-            generated.selectionMethod) as SelectionMethod,
-          questionCount: questionsToSave.length,
+          description: (generatedQuestions[0]?.description ??
+            fetchedQuiz.description) as string | null,
+          deliveryMode: (generatedQuestions[0]?.deliveryMode ??
+            fetchedQuiz.deliveryMode) as DeliveryMode,
+          selectionMethod: (generatedQuestions[0]?.selectionMethod ??
+            fetchedQuiz.selectionMethod) as SelectionMethod,
+          questionCount: requestedTotal,
           questions: [],
         },
         include: quizRelations,

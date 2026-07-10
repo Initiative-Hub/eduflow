@@ -8,27 +8,41 @@ import { resolveReferencedQuestions } from '@/services/quiz-question-references'
 
 // ─── Validation Schemas ──────────────────────────────────────────────────────
 
-const createQuizSchema = z.object({
-  lessonIds: z.array(z.string()).min(1, 'At least one lesson is required'),
-  title: z.string().min(1, 'Title is required'),
-  description: z.string().optional(),
-  category: z.enum(['SELECTION_BASED', 'OPEN_ENDED']),
-  subType: z.enum([
-    'MULTIPLE_CHOICE',
-    'TRUE_FALSE',
-    'MATCHING',
-    'ORDERING',
-    'ESSAY',
-    'FILL_IN_THE_BLANK',
-    'DRAG_AND_DROP',
-  ]),
-  deliveryMode: z.enum(['INSTANT_FEEDBACK', 'POST_QUIZ_REVIEW']),
-  selectionMethod: z.enum(['HAND_PICK', 'RANDOM', 'MANUAL_CREATE']),
-  questionCount: z.number().int().min(1),
-  questions: z.array(z.record(z.string(), z.unknown())).optional(),
-  /** IDs of hand-picked questions (when selectionMethod is HAND_PICK) */
-  selectedQuestionIds: z.array(z.string()).optional(),
-});
+const questionSubTypeSchema = z.enum([
+  'MULTIPLE_CHOICE',
+  'TRUE_FALSE',
+  'MATCHING',
+  'ORDERING',
+  'ESSAY',
+  'FILL_IN_THE_BLANK',
+  'DRAG_AND_DROP',
+]);
+
+const createQuizSchema = z
+  .object({
+    lessonIds: z.array(z.string()).min(1, 'At least one lesson is required'),
+    title: z.string().min(1, 'Title is required'),
+    description: z.string().optional(),
+    questionCounts: z.partialRecord(
+      questionSubTypeSchema,
+      z.number().int().min(0).max(50)
+    ),
+    deliveryMode: z.enum(['INSTANT_FEEDBACK', 'POST_QUIZ_REVIEW']),
+    selectionMethod: z.enum(['HAND_PICK', 'RANDOM', 'MANUAL_CREATE']),
+    questionCount: z.number().int().min(0),
+    questions: z.array(z.record(z.string(), z.unknown())).optional(),
+    questionIds: z.array(z.string().uuid().nullable()).optional(),
+    /** IDs of hand-picked questions (when selectionMethod is HAND_PICK) */
+    selectedQuestionIds: z.array(z.string()).optional(),
+  })
+  .refine(
+    (data) =>
+      !data.questionIds || data.questionIds.length === data.questions?.length,
+    {
+      message: 'questions and questionIds must have the same length',
+      path: ['questionIds'],
+    }
+  );
 
 // ─── GET /api/v1/courses/:courseId/quizzes ────────────────────────────────────
 
@@ -116,7 +130,7 @@ export const GET = withAuth(async (_req, _sessionData, { params }) => {
  *         application/json:
  *           schema:
  *             type: object
- *             required: [lessonIds, title, category, subType, deliveryMode, selectionMethod, questionCount]
+ *             required: [lessonIds, title, questionCounts, deliveryMode, selectionMethod, questionCount]
  *             properties:
  *               lessonIds:
  *                 type: array
@@ -126,10 +140,10 @@ export const GET = withAuth(async (_req, _sessionData, { params }) => {
  *                 type: string
  *               description:
  *                 type: string
- *               category:
- *                 type: string
- *               subType:
- *                 type: string
+ *               questionCounts:
+ *                 type: object
+ *                 additionalProperties:
+ *                   type: integer
  *               deliveryMode:
  *                 type: string
  *               selectionMethod:
@@ -179,12 +193,12 @@ export const POST = withAuth(async (req, _sessionData, { params }) => {
       lessonIds,
       title,
       description,
-      category,
-      subType,
+      questionCounts,
       deliveryMode,
       selectionMethod,
       questionCount,
       questions,
+      questionIds,
       selectedQuestionIds,
     } = parsed.data;
 
@@ -195,12 +209,12 @@ export const POST = withAuth(async (req, _sessionData, { params }) => {
         lessonIds,
         title,
         description,
-        category,
-        subType,
+        questionCounts,
         deliveryMode,
         selectionMethod,
         questionCount,
         questions,
+        questionIds,
         selectedQuestionIds,
       }
     );

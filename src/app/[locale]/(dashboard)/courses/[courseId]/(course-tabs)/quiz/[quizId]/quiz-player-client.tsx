@@ -27,13 +27,10 @@ import { apiClient } from '@/lib/api/api-client';
 import { useSession } from '@/lib/auth-client';
 import {
   DELIVERY_MODE_LABELS,
-  QUESTION_SUB_TYPE_LABELS,
-  QUIZ_CATEGORIES,
   type QuizContent,
   type ScoreResult,
   type StudentAnswer,
   type StudentAnswers,
-  SUB_TYPE_TO_QUESTION_TYPE,
 } from '@/lib/quiz-template';
 import type { QuizAttemptSnapshot } from '@/services/quiz-attempt-snapshot';
 import { LessonOutline } from '../../../lessons/[lessonId]/_components/lesson-outline';
@@ -87,6 +84,11 @@ export function QuizPlayerClient({ courseId, quizId }: QuizPlayerClientProps) {
   const [isRetaking, setIsRetaking] = useState(false);
   const [isAiDialogOpen, setIsAiDialogOpen] = useState(false);
   const activeTab = searchParams.get('tab') === 'edit' ? 'edit' : 'take';
+  const actionParam = searchParams.get('action');
+  const initialEditorAction =
+    actionParam === 'manual' || actionParam === 'question-bank'
+      ? actionParam
+      : undefined;
 
   const { data: sessionData } = useSession();
 
@@ -110,7 +112,7 @@ export function QuizPlayerClient({ courseId, quizId }: QuizPlayerClientProps) {
     return {
       title: quiz.title,
       description: quiz.description ?? '',
-      type: SUB_TYPE_TO_QUESTION_TYPE[quiz.subType] ?? quiz.subType,
+      type: quiz.questions[0]?.type ?? 'mixed',
       questions: quiz.questions,
     };
   }, [quiz]);
@@ -346,12 +348,13 @@ export function QuizPlayerClient({ courseId, quizId }: QuizPlayerClientProps) {
 
       {/* Quiz metadata */}
       <div className="mt-6 flex flex-wrap items-center gap-2">
-        <Badge variant="secondary">
-          {QUIZ_CATEGORIES[quiz.category].label}
-        </Badge>
-        <Badge variant="outline">
-          {QUESTION_SUB_TYPE_LABELS[quiz.subType]}
-        </Badge>
+        {Array.from(
+          new Set(quiz.questions.map((question) => question.type))
+        ).map((questionType) => (
+          <Badge key={questionType} variant="secondary">
+            {t(`questionTypes.${questionType}`)}
+          </Badge>
+        ))}
         <Badge variant="outline">
           {DELIVERY_MODE_LABELS[quiz.deliveryMode]}
         </Badge>
@@ -368,16 +371,16 @@ export function QuizPlayerClient({ courseId, quizId }: QuizPlayerClientProps) {
             key={`${quiz.updatedAt}:${quiz.questionIds?.join(',') ?? ''}`}
             initialQuestions={quiz.questions ?? []}
             initialQuestionIds={quiz.questionIds ?? []}
-            questionBank={questionBank.filter(
-              (question) =>
-                question.category === quiz.category &&
-                question.subType === quiz.subType
-            )}
+            questionBank={questionBank}
             onSave={saveQuestions}
             isSaving={isSavingQuestions}
-            onGenerateAI={handleOpenAiDialog}
+            onGenerateAI={
+              Object.values(quiz.questionCounts).some((count) => count > 0)
+                ? handleOpenAiDialog
+                : undefined
+            }
             isGeneratingAI={isGeneratingQuestions}
-            questionCount={quiz.questionCount}
+            initialAction={initialEditorAction}
           />
         ) : showPreviousResult && previousQuizContent ? (
           <QuizResult

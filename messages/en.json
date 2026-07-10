@@ -906,8 +906,23 @@
       "availableQuestions": "{count} matching questions available in bank",
       "back": "Back",
       "cancel": "Cancel",
-      "category": "Quiz Category",
-      "categoryPlaceholder": "Select a category...",
+      "backToMethods": "Back to creation methods",
+      "category": "Question Category",
+      "categoryPlaceholder": "Select a question category...",
+      "categories": {
+        "OPEN_ENDED": {
+          "description": "Fill in the blank, drag-and-drop fill, and essay",
+          "label": "Open-ended"
+        },
+        "SELECTION_BASED": {
+          "description": "Multiple choice, true/false, matching, and ordering",
+          "label": "Selection-based"
+        }
+      },
+      "chooseMethodDescription": "Start with AI, write questions yourself, or build from your question bank.",
+      "chooseMethodTitle": "How would you like to build this quiz?",
+      "configureDescription": "Set up the quiz, then continue to the question editor.",
+      "configureTitle": "Configure your quiz",
       "contentSource": "Content Source",
       "contentSourceAllModules": "All Modules",
       "contentSourceAllModulesHint": "Generate from all course content",
@@ -923,9 +938,10 @@
       "creatingWithAI": "Creating with AI...",
       "deliveryMode": "Delivery Mode",
       "description": "Create a quiz based on your module content.",
+      "draftQuestionsTitle": "Questions",
       "deselectAll": "Deselect All",
       "errors": {
-        "categoryRequired": "Please select a quiz category.",
+        "categoryRequired": "Please select a question category.",
         "insufficientQuestions": "Only {available} questions available, but {requested} requested.",
         "lessonRequired": "Please select at least one lesson.",
         "questionCountMin": "At least 1 question is required.",
@@ -936,9 +952,44 @@
       "generateQuiz": "Generate Quiz",
       "generatingQuestions": "Generating...",
       "lessonsSelected": "{count, plural, =1 {1 lesson selected} other {# lessons selected}}",
+      "methods": {
+        "ai": {
+          "action": "Configure AI generation",
+          "description": "Choose a question category and set a separate question count for every format you want AI to generate.",
+          "title": "Create with AI"
+        },
+        "manual": {
+          "action": "Start writing",
+          "continue": "Open question editor",
+          "description": "Create an empty quiz, choose each question type, and write the questions and answers directly.",
+          "setupDescription": "Add the quiz details first. The question editor will open next.",
+          "setupTitle": "Create questions manually",
+          "title": "Add questions manually"
+        },
+        "question-bank": {
+          "action": "Browse question bank",
+          "continue": "Choose bank questions",
+          "description": "Create a quiz by selecting any mix of existing questions from this course.",
+          "setupDescription": "Add the quiz details first. The question bank will open next.",
+          "setupTitle": "Build from the question bank",
+          "title": "Add from question bank"
+        }
+      },
       "next": "Next",
       "noLessonsAvailable": "No lessons available. Add lessons to your modules first.",
       "questionCount": "Number of Questions",
+      "questionDistribution": "Questions by type",
+      "questionDistributionDescription": "Enter the number of each question type to generate. Use 0 to skip a type.",
+      "questionTypeCount": "Number of {type} questions",
+      "questionTypes": {
+        "DRAG_AND_DROP": "Drag & Drop Fill",
+        "ESSAY": "Essay",
+        "FILL_IN_THE_BLANK": "Fill in the Blank",
+        "MATCHING": "Matching",
+        "MULTIPLE_CHOICE": "Multiple Choice",
+        "ORDERING": "Ordering",
+        "TRUE_FALSE": "True / False"
+      },
       "quizDescription": "Description (optional)",
       "quizDescriptionPlaceholder": "Brief description of this quiz...",
       "quizTitle": "Quiz Title",
@@ -948,9 +999,11 @@
       "selectLesson": "Select Lesson",
       "selectLessonPlaceholder": "Choose a lesson...",
       "selectLessons": "Select Lessons",
+      "saveQuiz": "Save quiz",
       "subType": "Question Type",
       "subTypePlaceholder": "Select a question type...",
-      "title": "Create Quiz"
+      "title": "Create Quiz",
+      "workspaceDescription": "Set the quiz details once, then build one draft from any combination of the three question sources."
     },
     "description": "Manage and publish your courses here.",
     "emptySearch": {
@@ -1213,13 +1266,23 @@
       "questionBankSearch": "Search question bank...",
       "questionRemoved": "Question removed from this quiz.",
       "questionTotal": "{count, plural, =1 {1 question total} other {# questions total}}",
+      "questionTypes": {
+        "drag_and_drop": "Drag & Drop Fill",
+        "essay": "Essay",
+        "fill_in_the_blank": "Fill in the Blank",
+        "matching": "Matching",
+        "multiple_choice": "Multiple Choice",
+        "ordering": "Ordering",
+        "timed_challenge": "Timed Challenge",
+        "true_false": "True / False"
+      },
       "questionUpdated": "Question updated. Save changes to update the bank.",
       "notFound": "Quiz Not Found",
       "notFoundDescription": "This quiz does not exist or has been removed.",
       "options": "Options",
       "orderingItems": "Ordering Items (in correct order)",
       "points": "Points",
-      "prompt": "Prompt",
+      "prompt": "Question",
       "questionType": "Question Type",
       "retry": "Retry",
       "rightItem": "Right Item",

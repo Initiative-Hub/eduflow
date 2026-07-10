@@ -153,7 +153,6 @@ const handler: AuthHandler = async (req, sessionData) => {
         title: true,
         description: true,
         questions: true,
-        subType: true,
         deliveryMode: true,
         questionCount: true,
         quizQuestions: {
@@ -210,7 +209,7 @@ const handler: AuthHandler = async (req, sessionData) => {
 
     // Build the quiz schema for scoring
     const schema: QuizSchema = {
-      type: quiz.subType,
+      type: questions[0]?.type ?? 'mixed',
       constraints: { minQuestions: 1, maxQuestions: 100 },
       scoring: { pointsPerQuestion: 10 },
       questions,

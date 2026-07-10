@@ -20,7 +20,6 @@ describe('quiz attempt snapshots', () => {
         {
           title: 'Astronomy check',
           description: 'A short review',
-          subType: 'TRUE_FALSE',
           deliveryMode: 'INSTANT_FEEDBACK',
         },
         questions
@@ -28,7 +27,7 @@ describe('quiz attempt snapshots', () => {
     ).toEqual({
       title: 'Astronomy check',
       description: 'A short review',
-      type: 'TRUE_FALSE',
+      type: 'true_false',
       deliveryMode: 'INSTANT_FEEDBACK',
       questions,
     });

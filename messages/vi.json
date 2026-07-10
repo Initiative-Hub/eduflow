@@ -906,8 +906,23 @@
       "availableQuestions": "{count} câu hỏi phù hợp có sẵn trong ngân hàng",
       "back": "Quay lại",
       "cancel": "Hủy",
-      "category": "Danh mục bài kiểm tra",
-      "categoryPlaceholder": "Chọn danh mục...",
+      "backToMethods": "Quay lại cách tạo bài",
+      "category": "Nhóm câu hỏi",
+      "categoryPlaceholder": "Chọn nhóm câu hỏi...",
+      "categories": {
+        "OPEN_ENDED": {
+          "description": "Điền vào chỗ trống, kéo thả điền khuyết và tự luận",
+          "label": "Câu hỏi mở"
+        },
+        "SELECTION_BASED": {
+          "description": "Trắc nghiệm, đúng/sai, ghép cặp và sắp xếp",
+          "label": "Câu hỏi lựa chọn"
+        }
+      },
+      "chooseMethodDescription": "Bắt đầu bằng AI, tự soạn câu hỏi hoặc chọn từ ngân hàng câu hỏi.",
+      "chooseMethodTitle": "Bạn muốn tạo bài kiểm tra theo cách nào?",
+      "configureDescription": "Thiết lập bài kiểm tra rồi tiếp tục đến trình chỉnh sửa câu hỏi.",
+      "configureTitle": "Thiết lập bài kiểm tra",
       "contentSource": "Nguồn nội dung",
       "contentSourceAllModules": "Tất cả mô-đun",
       "contentSourceAllModulesHint": "Tạo từ toàn bộ nội dung khóa học",
@@ -923,9 +938,10 @@
       "creatingWithAI": "Đang tạo bằng AI...",
       "deliveryMode": "Chế độ phản hồi",
       "description": "Tạo bài kiểm tra dựa trên nội dung mô-đun của bạn.",
+      "draftQuestionsTitle": "Câu hỏi",
       "deselectAll": "Bỏ chọn tất cả",
       "errors": {
-        "categoryRequired": "Vui lòng chọn danh mục bài kiểm tra.",
+        "categoryRequired": "Vui lòng chọn nhóm câu hỏi.",
         "insufficientQuestions": "Chỉ có {available} câu hỏi, nhưng yêu cầu {requested}.",
         "lessonRequired": "Vui lòng chọn ít nhất một bài học.",
         "questionCountMin": "Cần ít nhất 1 câu hỏi.",
@@ -936,9 +952,44 @@
       "generateQuiz": "Tạo bài kiểm tra",
       "generatingQuestions": "Đang tạo...",
       "lessonsSelected": "{count, plural, =1 {1 bài học đã chọn} other {# bài học đã chọn}}",
+      "methods": {
+        "ai": {
+          "action": "Thiết lập tạo bằng AI",
+          "description": "Chọn nhóm câu hỏi và nhập riêng số lượng cho từng dạng câu hỏi mà AI sẽ tạo.",
+          "title": "Tạo bằng AI"
+        },
+        "manual": {
+          "action": "Bắt đầu soạn",
+          "continue": "Mở trình soạn câu hỏi",
+          "description": "Tạo bài trống, chọn từng dạng câu hỏi rồi nhập trực tiếp câu hỏi và đáp án.",
+          "setupDescription": "Nhập thông tin bài kiểm tra trước. Trình soạn câu hỏi sẽ mở ở bước tiếp theo.",
+          "setupTitle": "Tự soạn câu hỏi",
+          "title": "Thêm câu hỏi thủ công"
+        },
+        "question-bank": {
+          "action": "Mở ngân hàng câu hỏi",
+          "continue": "Chọn câu hỏi có sẵn",
+          "description": "Tạo bài kiểm tra bằng cách chọn nhiều dạng câu hỏi có sẵn trong khóa học.",
+          "setupDescription": "Nhập thông tin bài kiểm tra trước. Ngân hàng câu hỏi sẽ mở ở bước tiếp theo.",
+          "setupTitle": "Tạo từ ngân hàng câu hỏi",
+          "title": "Thêm từ ngân hàng câu hỏi"
+        }
+      },
       "next": "Tiếp theo",
       "noLessonsAvailable": "Không có bài học nào. Hãy thêm bài học vào mô-đun trước.",
       "questionCount": "Số lượng câu hỏi",
+      "questionDistribution": "Số câu theo từng dạng",
+      "questionDistributionDescription": "Nhập số lượng cần tạo cho từng dạng câu hỏi. Nhập 0 để bỏ qua dạng đó.",
+      "questionTypeCount": "Số câu hỏi dạng {type}",
+      "questionTypes": {
+        "DRAG_AND_DROP": "Kéo thả điền khuyết",
+        "ESSAY": "Tự luận",
+        "FILL_IN_THE_BLANK": "Điền vào chỗ trống",
+        "MATCHING": "Ghép cặp",
+        "MULTIPLE_CHOICE": "Trắc nghiệm nhiều lựa chọn",
+        "ORDERING": "Sắp xếp",
+        "TRUE_FALSE": "Đúng / Sai"
+      },
       "quizDescription": "Mô tả (tùy chọn)",
       "quizDescriptionPlaceholder": "Mô tả ngắn về bài kiểm tra...",
       "quizTitle": "Tiêu đề bài kiểm tra",
@@ -948,9 +999,11 @@
       "selectLesson": "Chọn bài học",
       "selectLessonPlaceholder": "Chọn một bài học...",
       "selectLessons": "Chọn bài học",
+      "saveQuiz": "Lưu bài kiểm tra",
       "subType": "Loại câu hỏi",
       "subTypePlaceholder": "Chọn loại câu hỏi...",
-      "title": "Tạo bài kiểm tra"
+      "title": "Tạo bài kiểm tra",
+      "workspaceDescription": "Thiết lập thông tin bài kiểm tra một lần, sau đó tạo một bản nháp bằng cách kết hợp ba nguồn câu hỏi."
     },
     "description": "Quản lý và xuất bản các khóa học của bạn tại đây.",
     "emptySearch": {
@@ -1213,6 +1266,16 @@
       "questionBankSearch": "Tìm trong ngân hàng câu hỏi...",
       "questionRemoved": "Đã gỡ câu hỏi khỏi bài kiểm tra này.",
       "questionTotal": "Tổng cộng {count, plural, =1 {1 câu hỏi} other {# câu hỏi}}",
+      "questionTypes": {
+        "drag_and_drop": "Kéo thả điền chỗ trống",
+        "essay": "Tự luận",
+        "fill_in_the_blank": "Điền vào chỗ trống",
+        "matching": "Ghép cặp",
+        "multiple_choice": "Trắc nghiệm nhiều lựa chọn",
+        "ordering": "Sắp xếp",
+        "timed_challenge": "Thử thách tính giờ",
+        "true_false": "Đúng / Sai"
+      },
       "questionUpdated": "Đã cập nhật câu hỏi. Hãy lưu thay đổi để cập nhật ngân hàng.",
       "notFound": "Không tìm thấy bài kiểm tra",
       "notFoundDescription": "Bài kiểm tra này không tồn tại hoặc đã bị xóa.",
