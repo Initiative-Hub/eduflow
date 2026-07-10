@@ -159,6 +159,8 @@ export function StudyClient({
     </div>
   ) : (
     <ChatView
+      chatId={chatId}
+      canShareInteractiveContent={isAuthenticated}
       messages={messages}
       hasOlderMessages={hasOlderMessages}
       isLoadingOlderMessages={isLoadingOlderMessages}
@@ -186,14 +188,18 @@ export function StudyClient({
       selectedModel={pendingModel ?? DEFAULT_CHAT_MODEL}
       onModelChange={setPendingModel}
       placeholder={t('input.placeholder')}
-      tools={(toolContext) => (
-        <ChatLessonReferenceTool
-          disabled={toolContext.disabled}
-          disabledLessonIds={toolContext.disabledLessonIds}
-          maxSelectable={toolContext.maxSelectable}
-          onAttach={toolContext.onAttachLessonReferences}
-        />
-      )}
+      tools={
+        isAuthenticated
+          ? (toolContext) => (
+              <ChatLessonReferenceTool
+                disabled={toolContext.disabled}
+                disabledLessonIds={toolContext.disabledLessonIds}
+                maxSelectable={toolContext.maxSelectable}
+                onAttach={toolContext.onAttachLessonReferences}
+              />
+            )
+          : undefined
+      }
     />
   );
 

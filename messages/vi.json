@@ -529,7 +529,9 @@
     },
     "previewDialog": {
       "description": "Đang xem trước {type}",
+      "loading": "Đang tải bản xem trước...",
       "placeholder": "Xem trước",
+      "textError": "Không thể tải bản xem trước văn bản.",
       "title": "Xem trước tệp",
       "unsupported": "Loại tệp này chưa thể xem trước trực tiếp."
     },
@@ -1465,7 +1467,9 @@
     },
     "previewDialog": {
       "description": "Đang xem trước {type}",
+      "loading": "Đang tải bản xem trước...",
       "placeholder": "Xem trước",
+      "textError": "Không thể tải bản xem trước văn bản.",
       "title": "Xem trước tệp",
       "unsupported": "Loại tệp này chưa thể xem trước trực tiếp."
     },
@@ -1911,15 +1915,29 @@
     "features": {
       "interactiveContent": {
         "actionsLabel": "Thao tác hoạt động tương tác",
+        "close": "Đóng",
+        "copied": "Đã sao chép",
+        "copyError": "Không thể sao chép liên kết chia sẻ.",
+        "copyLink": "Sao chép liên kết",
         "description": "Tạo hoạt động trực quan tương tác để bạn khám phá và luyện tập trực tiếp.",
         "download": "Tải xuống",
         "fullscreen": "Toàn màn hình",
         "previewTitle": "Hoạt động tương tác: {title}",
         "reset": "Đặt lại hoạt động",
+        "retry": "Thử lại",
         "saveError": "Không thể lưu hoạt động này vào kho tài liệu.",
         "saveSuccess": "Đã lưu hoạt động vào kho tài liệu.",
         "saveToInventory": "Lưu vào tài liệu",
-        "savingToInventory": "Đang lưu..."
+        "savingToInventory": "Đang lưu...",
+        "share": "Chia sẻ liên kết",
+        "shareDialogDescription": "EduFlow đang chuẩn bị liên kết công khai cho hoạt động này.",
+        "shareDialogReadyDescription": "Bất kỳ ai có liên kết này đều có thể mở hoạt động mà không cần đăng nhập.",
+        "shareDialogTitle": "Chia sẻ hoạt động",
+        "shareError": "Không thể tạo liên kết chia sẻ.",
+        "shareGenerating": "Đang tạo liên kết chia sẻ...",
+        "shareLinkLabel": "Liên kết công khai",
+        "shareSuccess": "Đã sao chép liên kết chia sẻ.",
+        "sharing": "Đang chia sẻ..."
       },
       "practiceTest": {
         "description": "Thử thách bản thân với câu hỏi trắc nghiệm, câu ngắn và thẻ ghi nhớ do AI tạo ra."
@@ -1961,6 +1979,14 @@
       "title": "Phiên Gần Đây",
       "updated": "Đã cập nhật {date}",
       "viewAll": "Xem Tất Cả"
+    },
+    "sharedInteractiveContent": {
+      "createdBy": "Được tạo bằng EduFlow",
+      "eyebrow": "Hoạt động EduFlow được chia sẻ",
+      "ownerCta": "Mở phiên học gốc",
+      "ownerHelper": "Bạn đang xem hoạt động do chính bạn chia sẻ.",
+      "visitorCta": "Thử EduFlow",
+      "visitorHelper": "Tạo hoạt động học tập bằng AI của riêng bạn trong EduFlow."
     },
     "sidebar": {
       "actionsLabel": "Hành động cho {title}",

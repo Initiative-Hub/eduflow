@@ -3,6 +3,7 @@ import type {
   StudyMode,
   StudyQuizOptions,
 } from '@/lib/validations/study.schema';
+import type { StudyInteractiveContentData } from '@/utils/study-interactive-content';
 import type {
   ChatHistoryPageResponse,
   ChatListResponse,
@@ -53,5 +54,19 @@ export const studyService = {
     return apiClient.get<ChatListResponse>('/v1/ai/study/list', {
       params: { search: search || undefined, limit, offset },
     });
+  },
+
+  shareInteractiveContent: async (
+    chatId: string,
+    data: {
+      messageId: string;
+      contentIndex: number;
+      content?: StudyInteractiveContentData;
+    }
+  ) => {
+    return apiClient.post<{ shareId: string; shareUrl: string }>(
+      `/v1/ai/study/${chatId}/share/interactive-content`,
+      data
+    );
   },
 };

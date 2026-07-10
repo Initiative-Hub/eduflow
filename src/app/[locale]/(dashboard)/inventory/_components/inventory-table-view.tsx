@@ -35,6 +35,7 @@ import {
 import { inventoryService } from '../inventory.service';
 import type { InventoryEntry, InventoryTranslations } from '../inventory.types';
 import {
+  canPreviewInventoryEntry,
   formatDate,
   formatFileSize,
   getEntryTypeLabel,
@@ -168,7 +169,19 @@ export function InventoryTableView({
                 <TableCell>
                   <button
                     type="button"
-                    onClick={() => onOpen(entry)}
+                    onClick={() => {
+                      if (entry.isFolder) onOpen(entry);
+                    }}
+                    onDoubleClick={() => {
+                      if (entry.isFolder) {
+                        onNavigateIntoFolder(entry);
+                        return;
+                      }
+
+                      if (canPreviewInventoryEntry(entry)) {
+                        onPreview(entry);
+                      }
+                    }}
                     className="flex items-center gap-3 text-left"
                   >
                     <div className="flex size-9 items-center justify-center rounded-md bg-muted text-muted-foreground">
@@ -244,7 +257,7 @@ export function InventoryTableView({
                           {t('actions.open')}
                         </DropdownMenuItem>
                       ) : (
-                        entry.status === 'READY' && (
+                        canPreviewInventoryEntry(entry) && (
                           <>
                             <DropdownMenuItem
                               onClick={() => onPreview(entry)}

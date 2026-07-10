@@ -234,16 +234,13 @@ export function ChatInput({
     setPickerSource(source);
   };
 
-  const inputPlaceholder = placeholder ?? t('placeholder');
-  const hasCompactActions = isAuthenticated;
   const disabledLessonIds = selectedReferenceLessons.flatMap((item) =>
     item.lessonPart ? [item.lessonPart.data.lessonId] : []
   );
   const renderedTools =
     typeof tools === 'function'
       ? tools({
-          disabled:
-            !isAuthenticated || isStreaming || isUploading || isLimitReached,
+          disabled: isStreaming || isUploading || isLimitReached,
           disabledLessonIds,
           maxSelectable: remainingAttachmentSlots,
           onAttachLessonReferences: addReferenceLessons,
@@ -315,7 +312,7 @@ export function ChatInput({
           type="file"
         />
         <PromptInput
-          className="*:data-[slot=input-group]:rounded-4xl *:data-[slot=input-group]:border *:data-[slot=input-group]:border-border/80 *:data-[slot=input-group]:bg-background! *:data-[slot=input-group]:px-2.5 *:data-[slot=input-group]:py-2 *:data-[slot=input-group]:shadow-sm *:data-[slot=input-group]:transition-all *:data-[slot=input-group]:group-focus-within:border-primary/70 *:data-[slot=input-group]:group-focus-within:shadow-md *:data-[slot=input-group]:group-focus-within:ring-4 *:data-[slot=input-group]:group-focus-within:ring-primary/10"
+          className="*:data-[slot=input-group]:rounded-4xl *:data-[slot=input-group]:border *:data-[slot=input-group]:border-border/80 *:data-[slot=input-group]:bg-white *:data-[slot=input-group]:px-2.5 *:data-[slot=input-group]:py-2 *:data-[slot=input-group]:shadow-sm *:data-[slot=input-group]:transition-all *:data-[slot=input-group]:group-focus-within:border-primary/70 *:data-[slot=input-group]:group-focus-within:shadow-md *:data-[slot=input-group]:group-focus-within:ring-4 *:data-[slot=input-group]:group-focus-within:ring-primary/10 dark:*:data-[slot=input-group]:bg-zinc-950"
           maxFiles={0}
           onSubmit={onPromptSubmit}
         >
@@ -335,7 +332,7 @@ export function ChatInput({
             <PromptInputTextarea
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              placeholder={inputPlaceholder}
+              placeholder={placeholder ?? t('placeholder')}
               className="min-h-11 px-2 py-2.5 text-base leading-normal placeholder:text-foreground sm:text-lg"
               disabled={isLimitReached}
             />
@@ -343,7 +340,7 @@ export function ChatInput({
 
           <PromptInputFooter className="flex items-center justify-between gap-2 px-1 pb-0.5">
             <div className="flex min-w-0 flex-1 items-center gap-1.5">
-              {hasCompactActions ? (
+              {isAuthenticated ? (
                 <DropdownTemplate
                   align="start"
                   className="w-56 rounded-2xl p-1.5"

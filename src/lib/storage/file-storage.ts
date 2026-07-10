@@ -23,6 +23,18 @@ function sanitizeSegment(value: string) {
     .slice(0, 180);
 }
 
+export function buildInventoryThumbnailObjectKey(options: {
+  userId: string;
+  fileId: string;
+  courseId?: string | null;
+}) {
+  const scope = options.courseId
+    ? `courses/${options.courseId}`
+    : `users/${options.userId}`;
+
+  return `${scope}/thumbnails/${options.fileId}.jpg`;
+}
+
 export function buildInventoryObjectKey(
   userId: string,
   fileName: string,
