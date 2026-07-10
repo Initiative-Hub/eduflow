@@ -1,4 +1,5 @@
 ﻿import { describe, expect, it } from 'vitest';
+import { PUBLIC_PATHS } from '@/constants/common';
 import { isPathMatched } from '../../utils/path-helper';
 
 describe('isPathMatched', () => {
@@ -45,6 +46,17 @@ describe('isPathMatched', () => {
 
     it('returns false for natural false-positive behavior of startsWith', () => {
       expect(isPathMatched('/api-docs', ['/api'])).toBe(false);
+    });
+  });
+
+  describe('public application paths', () => {
+    it('treats shared study activity links as public paths', () => {
+      expect(
+        isPathMatched(
+          '/share/study/interactive/132bddea-0927-4b00-992a-e95bab8c53e2',
+          PUBLIC_PATHS
+        )
+      ).toBe(true);
     });
   });
 });

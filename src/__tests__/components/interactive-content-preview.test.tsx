@@ -10,7 +10,9 @@ vi.mock('next-intl', () => ({
   useTranslations: () => (key: string) => key,
 }));
 
-const renderPreviewMarkup = () => {
+const renderPreviewMarkup = (
+  props: Partial<React.ComponentProps<typeof InteractiveContentPreview>> = {}
+) => {
   const queryClient = new QueryClient();
 
   return renderToStaticMarkup(
@@ -19,6 +21,7 @@ const renderPreviewMarkup = () => {
         description="Arrange the stages"
         html="<main>Water cycle activity</main>"
         title="Water cycle"
+        {...props}
       />
     </QueryClientProvider>
   );
@@ -37,6 +40,29 @@ describe('interactive content preview', () => {
     const markup = renderPreviewMarkup();
 
     expect(markup).toContain('saveToInventory');
+  });
+
+  it('renders compact icon actions with accessible labels', () => {
+    const markup = renderPreviewMarkup({
+      share: {
+        chatId: 'chat-1',
+        contentIndex: 0,
+        messageId: 'message-1',
+      },
+    });
+
+    expect(markup).toContain('aria-label="reset"');
+    expect(markup).toContain('aria-label="fullscreen"');
+    expect(markup).toContain('aria-label="download"');
+    expect(markup).toContain('aria-label="share"');
+    expect(markup).toContain('aria-label="saveToInventory"');
+    expect(markup.match(/cursor-pointer/g)).toHaveLength(5);
+    expect(markup).toContain(
+      'class="inline-flex size-9 shrink-0 cursor-pointer'
+    );
+    expect(markup).not.toContain('size-4 cursor-pointer');
+    expect(markup).toContain('<span class="sr-only">share</span>');
+    expect(markup).not.toContain('<span>share</span>');
   });
 
   it('prepares the generated activity as an HTML inventory file', async () => {
