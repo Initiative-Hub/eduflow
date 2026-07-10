@@ -6,13 +6,6 @@ import { SlideService } from '@/services/SlideService';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 630; // 10.5 min — covers AI-based PPTX extraction (~10 min)
 
-function getExternalServiceUrl(): string {
-  return (process.env.EXTERNAL_SERVICE_URL || 'http://localhost:8000').replace(
-    /\/$/,
-    ''
-  );
-}
-
 /**
  * @swagger
  * /api/v1/ai/templates/import:
@@ -81,81 +74,22 @@ export const POST = withAuth(
         );
       }
 
-      // Reconstruct FormData to forward to the external service
-      const forwardFormData = new FormData();
-      forwardFormData.append('file', file, filename);
-      if (name) {
-        forwardFormData.append('name', name);
-      }
-
-      const baseUrl = getExternalServiceUrl();
-      const response = await fetch(`${baseUrl}/slides/templates/import`, {
-        method: 'POST',
-        body: forwardFormData,
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Template import forward error:', errorText);
-        return errorResponse(
-          'INTERNAL_ERROR',
-          `External service failed: ${response.statusText}`,
-          response.status
-        );
-      }
-
-      const queued = await response.json();
-      const jobId: string = queued.job_id;
-
-      // Poll the job status until done or error (AI processing can take minutes)
-      const POLL_INTERVAL_MS = 3000;
-      const MAX_POLLS = 200; // up to ~10 minutes for large PPTX with AI classification
-      for (let i = 0; i < MAX_POLLS; i++) {
-        await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
-
-        const statusRes = await fetch(
-          `${baseUrl}/slides/templates/import/${jobId}`
-        );
-        if (!statusRes.ok) {
-          if (statusRes.status === 404) {
-            // Service restarted and lost the in-memory job state
-            return errorResponse(
-              'INTERNAL_ERROR',
-              'Import job was lost (service restarted). Please try again.',
-              500
-            );
-          }
-          return errorResponse(
-            'INTERNAL_ERROR',
-            'Failed to poll import job',
-            500
-          );
-        }
-
-        const job = await statusRes.json();
-
-        if (job.status === 'done') {
-          SlideService.clearCache();
-          return NextResponse.json(
-            { status: 'success', imported: job.result },
-            { status: 200 }
-          );
-        }
-
-        if (job.status === 'error') {
-          console.error('Template import job error:', job.message);
-          return errorResponse(
-            'INTERNAL_ERROR',
-            job.message || 'Import job failed',
-            500
-          );
-        }
-        // status is 'queued' or 'running' — keep polling
-      }
-
-      return errorResponse('INTERNAL_ERROR', 'Import job timed out', 504);
+      const result = await SlideService.importTemplateCollection(file, name);
+      return NextResponse.json(result, { status: 200 });
     } catch (error) {
       console.error('Template import error:', error);
+      if (error instanceof Error) {
+        if (error.message === 'Import job timed out') {
+          return errorResponse('INTERNAL_ERROR', error.message, 504);
+        }
+
+        if (
+          error.message === 'Failed to poll import job' ||
+          error.message.includes('service restarted')
+        ) {
+          return errorResponse('INTERNAL_ERROR', error.message, 500);
+        }
+      }
       return errorResponse('INTERNAL_ERROR', 'Failed to import templates', 500);
     }
   })

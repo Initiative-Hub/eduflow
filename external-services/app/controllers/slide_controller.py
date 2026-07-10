@@ -1,62 +1,15 @@
-import uuid
 from pathlib import Path
-from typing import Any, Dict
 from fastapi import APIRouter, BackgroundTasks, File, UploadFile, HTTPException
 from fastapi.responses import FileResponse
 
+from app.deps import STORAGE_DIR
 from app.schemas.slide_schema import GenReq, PlanGenReq
 from app.services.slide_service import SlideService
-from app.deps import STORAGE_DIR
-from app.services.s3_service import upload_file_to_s3, download_file_from_s3
+from app.services.slide_job_service import SlideJobService
 
 router = APIRouter(prefix="/slides", tags=["Slides"])
 slide_service = SlideService()
-
-# Global memory job database
-jobs: Dict[str, Dict[str, Any]] = {}
-
-
-async def execute_generation_job(job_id: str, req: GenReq, out_path: Path):
-    try:
-        jobs[job_id]["status"] = "running"
-        result = await slide_service.generate_deck(
-            topic=req.topic,
-            collection=req.collection,
-            output_path=out_path,
-            palette=req.palette,
-            language=req.language,
-            animation=req.animation,
-        )
-        # Upload to S3 then remove the local file to save disk space
-        s3_key = f"slides/{job_id}.html"
-        uploaded = await upload_file_to_s3(out_path, s3_key)
-        if uploaded and out_path.exists():
-            out_path.unlink()
-
-        jobs[job_id]["status"] = "done"
-        jobs[job_id]["result"] = {
-            "deck_id": job_id,
-            "slides": result.get("slides", []),
-            "usage": result.get("usage", {}),
-        }
-        if uploaded:
-            jobs[job_id]["result"]["s3_key"] = s3_key
-    except Exception as e:
-        jobs[job_id]["status"] = "error"
-        jobs[job_id]["message"] = str(e)
-
-
-async def execute_import_job(
-    job_id: str, file_bytes: bytes, filename: str, name: str | None
-):
-    try:
-        jobs[job_id]["status"] = "running"
-        res = await slide_service.import_template_collection(file_bytes, filename, name)
-        jobs[job_id]["status"] = "done"
-        jobs[job_id]["result"] = res
-    except Exception as e:
-        jobs[job_id]["status"] = "error"
-        jobs[job_id]["message"] = str(e)
+slide_job_service = SlideJobService(slide_service)
 
 
 @router.get("/templates/categories")
@@ -67,70 +20,10 @@ async def get_categories():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-STANDARD_LAYOUT_TYPES = [
-    "TITLE_SLIDE",
-    "AGENDA_OUTLINE",
-    "SECTION_HEADER",
-    "TITLE_BULLETS",
-    "TWO_COLUMN_SPLIT",
-    "BIG_QUOTE_TAKEAWAY",
-    "KPI_BIG_NUMBER",
-    "CHART_INSIGHT",
-    "DATA_TABLE",
-    "MEDIA_TEXT",
-    "TIMELINE_MILESTONES",
-    "STEP_BY_STEP",
-    "CONCLUSION_SUMMARY",
-    "CALL_TO_ACTION",
-    "QA_CONTACT",
-    "REFERENCES_LIST",
-    "STATEMENT_IMAGE",
-    "PYRAMID_LEVELS",
-    "FUNNEL_STAGES",
-    "PROCESS_ARROWS",
-    "CIRCLE_CYCLE",
-]
-
-
 @router.get("/templates/{collection}/categories")
 async def get_collection_categories(collection: str):
-    """Return the category (layout type) names available in a template collection.
-    Queries the directory structures inside S3 to determine categories.
-    """
     try:
-        from app.deps import AWS_S3_TEMPLATES_BUCKET, AWS_S3_DEFAULT_TEMPLATES_BUCKET
-        from app.services.s3_service import list_files_in_s3_prefix
-
-        default_collections = {"templates", "default", "starter", "neon_dark", "vintage", "clean_light", "pastel_pop", "illustrative_culture", "minimalist_gradient", "cultural_folk", "organic_streets"}
-        if collection.lower() in default_collections:
-            bucket_name = AWS_S3_DEFAULT_TEMPLATES_BUCKET
-        else:
-            bucket_name = AWS_S3_TEMPLATES_BUCKET
-
-        s3_prefix = f"templates/{collection}/"
-        s3_keys = await list_files_in_s3_prefix(
-            s3_prefix, bucket_name=bucket_name
-        )
-
-        categories: set[str] = set()
-        for key in s3_keys:
-            relative = key[len(s3_prefix) :]
-            parts = relative.split("/")
-            if len(parts) > 1 and parts[0]:
-                categories.add(parts[0])
-
-        is_custom = collection not in ("starter", "neon_dark", "vintage", "clean_light", "pastel_pop")
-
-        if not categories:
-            # Fall back to standard types if collection is empty / not found
-            return {"categories": STANDARD_LAYOUT_TYPES, "is_custom": is_custom}
-
-        # Ignore non-category file keys like collection.json at the root of the collection prefix
-        valid_categories = {cat for cat in categories if cat.isupper()}
-        if not valid_categories:
-            return {"categories": STANDARD_LAYOUT_TYPES, "is_custom": is_custom}
-
-        return {"categories": sorted(valid_categories), "is_custom": is_custom}
+        return await slide_service.get_collection_categories(collection)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -145,66 +38,22 @@ async def get_collections():
 
 @router.post("/generate")
 async def generate(req: GenReq, background_tasks: BackgroundTasks):
-    job_id = uuid.uuid4().hex[:12]
-    out_path = STORAGE_DIR / f"{job_id}.html"
-    jobs[job_id] = {
-        "status": "queued",
-        "result": None,
-        "message": None,
-    }
-    background_tasks.add_task(execute_generation_job, job_id, req, out_path)
-    return {"job_id": job_id, "status": "queued"}
+    return await slide_job_service.queue_generation_job(background_tasks, req)
 
 
 @router.post("/generate-from-plan")
 async def generate_from_plan(req: PlanGenReq):
-    job_id = uuid.uuid4().hex[:12]
-    out_path = STORAGE_DIR / f"{job_id}.html"
-    try:
-        plan_dict = {"title": req.title, "slides": [s.model_dump() for s in req.slides]}
-        result = await slide_service.generate_deck_from_plan(
-            plan=plan_dict,
-            output_path=out_path,
-            palette=req.palette,
-            images=req.images,
-            image_source=req.image_source,
-            collection=req.collection,
-        )
-        # Upload to S3 then remove the local file to save disk space
-        s3_key = f"slides/{job_id}.html"
-        uploaded = await upload_file_to_s3(out_path, s3_key)
-        if uploaded and out_path.exists():
-            out_path.unlink()
-
-        res = {
-            "deck_id": job_id,
-            "slides": result.get("slides", []),
-            "usage": result.get("usage", {}),
-            "warnings": result.get("warnings", []),
-        }
-        if uploaded:
-            res["s3_key"] = s3_key
-        return {"status": "done", "result": res}
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
+    return await slide_job_service.generate_deck_from_plan(req)
 
 
 @router.get("/jobs/{job_id}")
 async def get_job_status(job_id: str):
-    if job_id not in jobs:
-        raise HTTPException(status_code=404, detail="Job not found")
-    return jobs[job_id]
+    return slide_job_service.get_job_status(job_id)
 
 
 @router.get("/decks/{deck_id}")
 async def get_deck(deck_id: str):
-    file_path = STORAGE_DIR / f"{deck_id}.html"
-    if not file_path.exists():
-        s3_key = f"slides/{deck_id}.html"
-        downloaded = await download_file_from_s3(s3_key, file_path)
-        if not downloaded:
-            raise HTTPException(status_code=404, detail="Deck file not found")
-    return FileResponse(file_path, media_type="text/html")
+    return await slide_job_service.get_deck_file(deck_id)
 
 
 def cleanup_temp_files(*paths: Path):
@@ -223,7 +72,7 @@ def cleanup_temp_files(*paths: Path):
 @router.get("/decks/{deck_id}/pptx")
 async def get_deck_pptx(deck_id: str, background_tasks: BackgroundTasks):
     try:
-        pptx_path = await slide_service.generate_pptx(deck_id)
+        pptx_path = await slide_job_service.get_deck_pptx(deck_id)
         latest_html = STORAGE_DIR / f"{deck_id}_latest.html"
         background_tasks.add_task(cleanup_temp_files, pptx_path, latest_html)
         return FileResponse(
@@ -264,15 +113,11 @@ async def import_templates(
     finally:
         await file.close()
 
-    job_id = uuid.uuid4().hex[:12]
-    jobs[job_id] = {"status": "queued", "result": None, "message": None}
-    background_tasks.add_task(execute_import_job, job_id, file_bytes, filename, name)
-    return {"job_id": job_id, "status": "queued"}
+    return await slide_job_service.queue_import_job(
+        background_tasks, file_bytes, filename, name
+    )
 
 
 @router.get("/templates/import/{job_id}")
 async def get_import_job_status(job_id: str):
-    """Poll the status of a template import job."""
-    if job_id not in jobs:
-        raise HTTPException(status_code=404, detail="Import job not found")
-    return jobs[job_id]
+    return slide_job_service.get_job_status(job_id, detail="Import job not found")

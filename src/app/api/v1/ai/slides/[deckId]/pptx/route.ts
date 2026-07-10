@@ -1,5 +1,6 @@
 import { errorResponse } from '@/lib/api/error-response';
 import { withAuth, withRoles } from '@/lib/api/middlewares';
+import { LessonPresentationService } from '@/services/LessonPresentationService';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,31 +43,7 @@ export const GET = withAuth(
     ) => {
       try {
         const { deckId } = await params;
-
-        const externalServiceUrl = (
-          process.env.EXTERNAL_SERVICE_URL || 'http://localhost:8000'
-        ).replace(/\/$/, '');
-
-        const res = await fetch(
-          `${externalServiceUrl}/slides/decks/${deckId}/pptx`,
-          {
-            cache: 'no-store',
-          }
-        );
-
-        if (!res.ok) {
-          console.error(
-            'Failed to download PPTX from external service:',
-            res.statusText
-          );
-          return errorResponse(
-            'INTERNAL_ERROR',
-            'Failed to generate PPTX from slide service',
-            res.status
-          );
-        }
-
-        const pptxBuffer = await res.arrayBuffer();
+        const pptxBuffer = await LessonPresentationService.getDeckPptx(deckId);
 
         return new Response(pptxBuffer, {
           status: 200,

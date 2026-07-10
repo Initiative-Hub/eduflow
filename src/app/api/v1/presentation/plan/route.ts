@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withAuth } from '@/lib/api/middlewares';
 import { PresentationService } from '@/services/PresentationService';
+import { SlideService } from '@/services/SlideService';
 
 const planPresentationSchema = z.object({
   lessonId: z.string().min(1, 'lessonId is required'),
@@ -21,57 +22,6 @@ const planPresentationSchema = z.object({
     .default(''),
   collection: z.string().optional(),
 });
-
-const EXTERNAL_SERVICE_URL = (
-  process.env.EXTERNAL_SERVICE_URL || 'http://localhost:8000'
-).replace(/\/$/, '');
-
-async function fetchTemplateCategories(
-  collection: string
-): Promise<string[] | null> {
-  try {
-    const res = await fetch(
-      `${EXTERNAL_SERVICE_URL}/slides/templates/${encodeURIComponent(collection)}/categories`,
-      { cache: 'no-store' }
-    );
-    if (!res.ok) return null;
-    const data = await res.json();
-    // Only return categories for custom templates
-    if (!data.is_custom) return null;
-    return data.categories as string[];
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Fetches the live style inventory (local + S3 collections with their
- * descriptions) so the planner AI picks a style from whatever actually
- * exists — no hardcoded list. Returns null on failure (planner falls back
- * to its built-in defaults).
- */
-async function fetchStyleCollections(): Promise<Record<string, string> | null> {
-  try {
-    const res = await fetch(
-      `${EXTERNAL_SERVICE_URL}/slides/templates/collections`,
-      { cache: 'no-store' }
-    );
-    if (!res.ok) return null;
-    const data = await res.json();
-    const list: Array<{ name: string; description?: string }> = Array.isArray(
-      data
-    )
-      ? data
-      : (data.collections ?? []);
-    const map: Record<string, string> = {};
-    for (const c of list) {
-      if (c?.name) map[c.name] = c.description || `Style '${c.name}'`;
-    }
-    return Object.keys(map).length > 0 ? map : null;
-  } catch {
-    return null;
-  }
-}
 
 /**
  * @swagger
@@ -137,12 +87,12 @@ export const POST = withAuth(async (req, sessionData) => {
     // ('auto' means the AI picks the style — standard planning path.)
     let templateCategories: string[] | undefined;
     if (collection && collection !== 'auto') {
-      const cats = await fetchTemplateCategories(collection);
-      if (cats) templateCategories = cats;
+      templateCategories =
+        await SlideService.getPlanningTemplateCategories(collection);
     }
 
     // Live style inventory (local + S3) for the AI's style recommendation.
-    const styleCollections = await fetchStyleCollections();
+    const styleCollections = await SlideService.getStyleCollections();
 
     const stream = PresentationService.planPresentationStream({
       lessonId,
@@ -150,7 +100,7 @@ export const POST = withAuth(async (req, sessionData) => {
       duration,
       context,
       templateCategories,
-      styleCollections: styleCollections ?? undefined,
+      styleCollections,
     });
 
     return new Response(stream as unknown as ReadableStream<Uint8Array>, {

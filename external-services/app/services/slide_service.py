@@ -12,6 +12,44 @@ from app.deps import SLIDE_TEMPLATES_DIR
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_COLLECTIONS = {
+    "templates",
+    "default",
+    "starter",
+    "neon_dark",
+    "vintage",
+    "clean_light",
+    "pastel_pop",
+    "illustrative_culture",
+    "minimalist_gradient",
+    "cultural_folk",
+    "organic_streets",
+}
+
+STANDARD_LAYOUT_TYPES = [
+    "TITLE_SLIDE",
+    "AGENDA_OUTLINE",
+    "SECTION_HEADER",
+    "TITLE_BULLETS",
+    "TWO_COLUMN_SPLIT",
+    "BIG_QUOTE_TAKEAWAY",
+    "KPI_BIG_NUMBER",
+    "CHART_INSIGHT",
+    "DATA_TABLE",
+    "MEDIA_TEXT",
+    "TIMELINE_MILESTONES",
+    "STEP_BY_STEP",
+    "CONCLUSION_SUMMARY",
+    "CALL_TO_ACTION",
+    "QA_CONTACT",
+    "REFERENCES_LIST",
+    "STATEMENT_IMAGE",
+    "PYRAMID_LEVELS",
+    "FUNNEL_STAGES",
+    "PROCESS_ARROWS",
+    "CIRCLE_CYCLE",
+]
+
 # Monkeypatch select_and_fill_slide to enforce outline bindings
 _orig_select_and_fill_slide = slide_skills.svg_categories.select_and_fill_slide
 
@@ -49,9 +87,11 @@ _orig_image_prompt = slide_skills.svg_categories._image_prompt
 def _styled_image_prompt(slide, name, texts=None):
     bindings = (slide or {}).get("bindings") or {}
     desc = bindings.get("image_prompt_description")
-    base = (f"A clear illustration of: {desc}. No text, no words, no letters."
-            if isinstance(desc, str) and desc.strip()
-            else _orig_image_prompt(slide, name, texts))
+    base = (
+        f"A clear illustration of: {desc}. No text, no words, no letters."
+        if isinstance(desc, str) and desc.strip()
+        else _orig_image_prompt(slide, name, texts)
+    )
     hint = _ACTIVE_IMAGE_STYLE.get("hint") or ""
     return f"{base} Art style: {hint}." if hint else base
 
@@ -62,12 +102,14 @@ slide_skills.svg_categories._image_prompt = _styled_image_prompt
 def _set_image_style_for(library_dir) -> None:
     """Load the collection's image_style hint (if any) for prompt styling."""
     import json as _json
+
     _ACTIVE_IMAGE_STYLE["hint"] = ""
     try:
         meta = Path(library_dir) / "collection.json"
         if meta.exists():
             _ACTIVE_IMAGE_STYLE["hint"] = str(
-                _json.loads(meta.read_text(encoding="utf-8")).get("image_style", ""))
+                _json.loads(meta.read_text(encoding="utf-8")).get("image_style", "")
+            )
     except Exception:
         pass
 
@@ -220,32 +262,36 @@ class SlideService:
     async def _ensure_collection_downloaded(self, collection: str | None) -> Path:
         if not collection:
             collection = "templates"
-        
+
         col_path = Path(SLIDE_TEMPLATES_DIR) / collection
         # Check if the folder exists and has files (already downloaded)
         if col_path.exists() and any(col_path.glob("**/*.svg")):
             return col_path
-            
-        default_collections = {"templates", "default", "starter", "neon_dark", "vintage", "clean_light", "pastel_pop", "illustrative_culture", "minimalist_gradient", "cultural_folk", "organic_streets"}
-        if collection.lower() in default_collections:
+
+        if collection.lower() in DEFAULT_COLLECTIONS:
             from app.deps import AWS_S3_DEFAULT_TEMPLATES_BUCKET as BUCKET_NAME
         else:
             from app.deps import AWS_S3_TEMPLATES_BUCKET as BUCKET_NAME
-            
-        from app.services.s3_service import list_files_in_s3_prefix, download_file_from_s3
-        
-        s3_prefix = f"templates/{collection}/"
-        s3_keys = await list_files_in_s3_prefix(
-            s3_prefix, bucket_name=BUCKET_NAME
+
+        from app.services.s3_service import (
+            list_files_in_s3_prefix,
+            download_file_from_s3,
         )
+
+        s3_prefix = f"templates/{collection}/"
+        s3_keys = await list_files_in_s3_prefix(s3_prefix, bucket_name=BUCKET_NAME)
         if not s3_keys:
-            logger.warning(f"No files found in S3 bucket {BUCKET_NAME} for template collection '{collection}' at prefix '{s3_prefix}'")
+            logger.warning(
+                f"No files found in S3 bucket {BUCKET_NAME} for template collection '{collection}' at prefix '{s3_prefix}'"
+            )
             return col_path
-            
-        logger.info(f"Downloading template collection '{collection}' from S3 bucket {BUCKET_NAME}...")
+
+        logger.info(
+            f"Downloading template collection '{collection}' from S3 bucket {BUCKET_NAME}..."
+        )
         col_path.mkdir(parents=True, exist_ok=True)
         for key in s3_keys:
-            relative = key[len(s3_prefix):]
+            relative = key[len(s3_prefix) :]
             if not relative:
                 continue
             dest = col_path / relative
@@ -264,6 +310,36 @@ class SlideService:
             slide_skills.scan_template_library, str(library_dir)
         )
         return library.category_map()
+
+    async def get_collection_categories(self, collection: str) -> Dict[str, Any]:
+        from app.deps import AWS_S3_DEFAULT_TEMPLATES_BUCKET, AWS_S3_TEMPLATES_BUCKET
+        from app.services.s3_service import list_files_in_s3_prefix
+
+        bucket_name = (
+            AWS_S3_DEFAULT_TEMPLATES_BUCKET
+            if collection.lower() in DEFAULT_COLLECTIONS
+            else AWS_S3_TEMPLATES_BUCKET
+        )
+        s3_prefix = f"templates/{collection}/"
+        s3_keys = await list_files_in_s3_prefix(s3_prefix, bucket_name=bucket_name)
+
+        categories: set[str] = set()
+        for key in s3_keys:
+            relative = key[len(s3_prefix) :]
+            parts = relative.split("/")
+            if len(parts) > 1 and parts[0]:
+                categories.add(parts[0])
+
+        is_custom = collection.lower() not in DEFAULT_COLLECTIONS
+
+        if not categories:
+            return {"categories": STANDARD_LAYOUT_TYPES, "is_custom": is_custom}
+
+        valid_categories = {cat for cat in categories if cat.isupper()}
+        if not valid_categories:
+            return {"categories": STANDARD_LAYOUT_TYPES, "is_custom": is_custom}
+
+        return {"categories": sorted(valid_categories), "is_custom": is_custom}
 
     async def get_collections(self) -> List[Dict[str, Any]]:
         import json as _json
@@ -303,7 +379,7 @@ class SlideService:
             default_keys = await list_files_in_s3_prefix(
                 "templates/", bucket_name=AWS_S3_DEFAULT_TEMPLATES_BUCKET
             )
-            
+
             # 2. Fetch custom template keys from AWS_S3_TEMPLATES_BUCKET
             custom_keys = await list_files_in_s3_prefix(
                 "templates/", bucket_name=AWS_S3_TEMPLATES_BUCKET
@@ -311,23 +387,29 @@ class SlideService:
 
             # Group keys by collection name along with their source bucket
             collections_files: Dict[str, Dict[str, Any]] = {}
-            
+
             # Add default collections
             for key in default_keys:
                 parts = key.split("/")
                 if len(parts) >= 3 and parts[0] == "templates" and parts[1]:
                     col_name = parts[1]
                     if col_name not in collections_files:
-                        collections_files[col_name] = {"keys": [], "bucket": AWS_S3_DEFAULT_TEMPLATES_BUCKET}
+                        collections_files[col_name] = {
+                            "keys": [],
+                            "bucket": AWS_S3_DEFAULT_TEMPLATES_BUCKET,
+                        }
                     collections_files[col_name]["keys"].append(key)
-                    
+
             # Add custom collections
             for key in custom_keys:
                 parts = key.split("/")
                 if len(parts) >= 3 and parts[0] == "templates" and parts[1]:
                     col_name = parts[1]
                     if col_name not in collections_files:
-                        collections_files[col_name] = {"keys": [], "bucket": AWS_S3_TEMPLATES_BUCKET}
+                        collections_files[col_name] = {
+                            "keys": [],
+                            "bucket": AWS_S3_TEMPLATES_BUCKET,
+                        }
                     collections_files[col_name]["keys"].append(key)
 
             async def get_description(name: str, keys: List[str], bucket: str) -> str:
@@ -343,14 +425,15 @@ class SlideService:
                         "illustrative_culture": "Warm cream paper, hand-drawn buildings & clouds, Yogyakarta street aesthetic, sage green accents.",
                         "minimalist_gradient": "Sleek dark theme with electric royal blue and violet gradient glows, crisp geometric typography, and ambient grid lines.",
                         "organic_streets": "Organic illustration style: cream paper, plum script headlines, golden sun discs, slate and terracotta blobs, line-art European skylines.",
-                        "cultural_folk": "Rich cultural folk style: warm plum night sky over a sand earth strip, arch and temple shapes, radiant sun badges, festival bunting and stitched lines in terracotta, gold, dusty blue and rose."
+                        "cultural_folk": "Rich cultural folk style: warm plum night sky over a sand earth strip, arch and temple shapes, radiant sun badges, festival bunting and stitched lines in terracotta, gold, dusty blue and rose.",
                     }
                     return well_known.get(name.lower(), default_desc)
-                    
+
                 try:
                     with tempfile.TemporaryDirectory() as tmpdir:
                         temp_file = Path(tmpdir) / f"{name}_collection.json"
                         from app.services.s3_service import download_file_from_s3
+
                         downloaded = await download_file_from_s3(
                             json_key, temp_file, bucket_name=bucket
                         )
@@ -358,17 +441,25 @@ class SlideService:
                             content = temp_file.read_text(encoding="utf-8")
                             return _json.loads(content).get("description", default_desc)
                 except Exception as e:
-                    logger.warning(f"Could not read collection.json for {name} from S3: {e}")
+                    logger.warning(
+                        f"Could not read collection.json for {name} from S3: {e}"
+                    )
                 return default_desc
 
             # Process names that are not individual categories and not the base "templates" or "default" collections
             valid_collections = [
-                name for name in collections_files.keys()
-                if name.lower() not in categories and name.lower() not in ("templates", "default")
+                name
+                for name in collections_files.keys()
+                if name.lower() not in categories
+                and name.lower() not in ("templates", "default")
             ]
 
             tasks = [
-                get_description(name, collections_files[name]["keys"], collections_files[name]["bucket"])
+                get_description(
+                    name,
+                    collections_files[name]["keys"],
+                    collections_files[name]["bucket"],
+                )
                 for name in sorted(valid_collections)
             ]
             descriptions = await asyncio.gather(*tasks)
@@ -568,9 +659,7 @@ class SlideService:
                         shutil.copy2(matched_file, cat_dir / "variant_a.svg")
                         schema_json = matched_file.with_suffix(".schema.json")
                         if schema_json.exists():
-                            shutil.copy2(
-                                schema_json, cat_dir / "variant_a.schema.json"
-                            )
+                            shutil.copy2(schema_json, cat_dir / "variant_a.schema.json")
 
                     (cat_dir / "category.json").write_text(
                         json.dumps(
@@ -586,7 +675,7 @@ class SlideService:
 
         try:
             actual_palette = None if palette == "auto" else palette
-            _set_image_style_for(library_dir)   # style-matched AI image prompts
+            _set_image_style_for(library_dir)  # style-matched AI image prompts
             res = await run_in_threadpool(
                 slide_skills.generate_deck_from_plan,
                 plan,
@@ -607,7 +696,7 @@ class SlideService:
                 except Exception:
                     pass
             # Remove the S3-downloaded collection from local disk after use
-            if col_name and col_name not in ("starter", "neon_dark", "templates", "default", "vintage", "clean_light", "pastel_pop", "illustrative_culture", "minimalist_gradient", "cultural_folk", "organic_streets"):
+            if col_name and col_name not in DEFAULT_COLLECTIONS:
                 col_path = Path(SLIDE_TEMPLATES_DIR) / col_name
                 if col_path.exists() and col_path.is_dir():
                     shutil.rmtree(col_path, ignore_errors=True)
@@ -692,21 +781,26 @@ class SlideService:
                 meta_file = dest_dir / "collection.json"
                 if not meta_file.exists():
                     import json
+
                     try:
                         meta_file.write_text(
                             json.dumps(
                                 {
                                     "name": collection_name,
-                                    "description": f"Custom slide template collection '{collection_name}'."
+                                    "description": f"Custom slide template collection '{collection_name}'.",
                                 },
                                 indent=2,
-                                ensure_ascii=False
+                                ensure_ascii=False,
                             ),
-                            encoding="utf-8"
+                            encoding="utf-8",
                         )
-                        logger.info(f"Created default collection.json for custom collection '{collection_name}'")
+                        logger.info(
+                            f"Created default collection.json for custom collection '{collection_name}'"
+                        )
                     except Exception as e:
-                        logger.warning(f"Could not auto-create collection.json for '{collection_name}': {e}")
+                        logger.warning(
+                            f"Could not auto-create collection.json for '{collection_name}': {e}"
+                        )
 
                 async def upload_dir_to_s3(directory: Path, prefix: str):
                     for child in directory.iterdir():

@@ -1,13 +1,7 @@
 import { NextResponse } from 'next/server';
 import { errorResponse } from '@/lib/api/error-response';
-import { withAuth } from '@/lib/api/middlewares';
-
-function getExternalServiceUrl(): string {
-  return (process.env.EXTERNAL_SERVICE_URL || 'http://localhost:8000').replace(
-    /\/$/,
-    ''
-  );
-}
+import { withAuth, withRoles } from '@/lib/api/middlewares';
+import { SlideService } from '@/services/SlideService';
 
 /**
  * @swagger
@@ -33,34 +27,25 @@ function getExternalServiceUrl(): string {
  *         description: Internal server error
  */
 export const GET = withAuth(
-  async (
-    _req: Request,
-    _session,
-    { params }: { params: Promise<{ collectionName: string }> }
-  ) => {
-    try {
-      const { collectionName } = await params;
-      const baseUrl = getExternalServiceUrl();
-      const res = await fetch(
-        `${baseUrl}/slides/templates/${encodeURIComponent(collectionName)}/categories`,
-        { cache: 'no-store' }
-      );
-      if (!res.ok) {
+  withRoles(
+    ['TEACHER'],
+    async (
+      _req: Request,
+      _session,
+      { params }: { params: Promise<{ collectionName: string }> }
+    ) => {
+      try {
+        const { collectionName } = await params;
+        const data = await SlideService.getTemplateCategories(collectionName);
+        return NextResponse.json(data);
+      } catch (error) {
+        console.error('Collection categories error:', error);
         return errorResponse(
           'INTERNAL_ERROR',
           'Failed to fetch collection categories',
-          res.status
+          500
         );
       }
-      const data = await res.json();
-      return NextResponse.json(data);
-    } catch (error) {
-      console.error('Collection categories error:', error);
-      return errorResponse(
-        'INTERNAL_ERROR',
-        'Failed to fetch collection categories',
-        500
-      );
     }
-  }
+  )
 );
