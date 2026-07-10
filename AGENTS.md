@@ -78,6 +78,7 @@ for any tasks.).
 
 - **Authenticate First**: In server components and route handlers, call `auth()` before protected Prisma reads or writes. Redirect unauthenticated users to `/login` or return `401` before querying protected data.
 - **Explicit Role Checks**: Keep admin-only routes explicit about role checks before exposing privileged data or mutations. The current pattern in `src/app/api/admin/users/route.ts` is to load the current user, verify `ADMIN`, then proceed.
+- **Composable Auth Wrappers**: Keep `withRoles(...)` and `withPermissions(...)` self-sufficient. They must be usable directly on route handlers without wrapping them in `withAuth(...)`, while still accepting a forwarded session when composed under another auth-aware wrapper.
 - **Shared Prisma Client**: Use the shared Prisma client from `src/lib/prisma.ts` and local bootstrap data from `prisma/seed.ts`; use `bun db:reset` when you need a clean local database.
 
 ### 6.2 UI & Rendering Patterns
