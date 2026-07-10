@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import type { Prisma } from '@/generated/prisma';
 import { errorResponse } from '@/lib/api/error-response';
-import { type AuthHandler, withAuth } from '@/lib/api/middlewares';
+import { withAuth } from '@/lib/api/middlewares';
 import { prisma } from '@/lib/prisma';
 
 // ─── Validation ──────────────────────────────────────────────────────────────
@@ -73,7 +73,7 @@ interface ItemLayoutEntry {
  *       500:
  *         description: Internal server error
  */
-const handler: AuthHandler = async (req, _sessionData, { params }) => {
+export const PATCH = withAuth(async (req, _sessionData, { params }) => {
   try {
     const resolvedParams = await params;
     const parsedParams = routeParamsSchema.safeParse(resolvedParams);
@@ -142,6 +142,4 @@ const handler: AuthHandler = async (req, _sessionData, { params }) => {
     console.error('Error updating module order:', error);
     return errorResponse('INTERNAL_ERROR', 'Internal Server Error', 500);
   }
-};
-
-export const PATCH = withAuth(handler);
+});
