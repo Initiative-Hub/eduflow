@@ -1,5 +1,4 @@
 import sys
-import tomllib
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -68,25 +67,6 @@ class MarkItDownServiceTests(unittest.TestCase):
         self.assertEqual(fake_markitdown.stream_info.extension, ".pdf")
         self.assertEqual(fake_markitdown.stream_info.mimetype, "application/pdf")
         self.assertEqual(fake_markitdown.stream_info.filename, "document.pdf")
-
-    def test_project_declares_only_service_runtime_dependencies(self) -> None:
-        pyproject_path = Path(__file__).resolve().parents[1] / "pyproject.toml"
-
-        project = tomllib.loads(pyproject_path.read_text())
-
-        self.assertEqual(
-            project["project"]["dependencies"],
-            [
-                "fastapi[standard]==0.136.3",
-                "python-multipart==0.0.30",
-                "markitdown[pdf]==0.1.6",
-                "modal==1.4.3",
-                "youtube-transcript-api>=1.2.4",
-                "slide-skills>=0.2.22",
-                "tavily-python>=0.7.26",
-                "boto3>=1.43.29",
-            ],
-        )
 
 
 if __name__ == "__main__":

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { withAuth } from '@/lib/api/middlewares';
+import { withPermissions } from '@/lib/api/middlewares';
+import { PLATFORM_PERMISSION } from '@/lib/permissions/permission-keys';
 import { StorageService } from '@/services/StorageService';
 
 const shareQuerySchema = z.object({
@@ -49,36 +50,39 @@ const shareQuerySchema = z.object({
  *         description: Internal server error
  *
  */
-export const GET = withAuth(async (req, session) => {
-  try {
-    const { searchParams } = new URL(req.url);
-    const parsed = shareQuerySchema.safeParse({
-      fileId: searchParams.get('fileId') ?? undefined,
-      expiresIn: searchParams.get('expiresIn') ?? undefined,
-    });
+export const GET = withPermissions(
+  [PLATFORM_PERMISSION.PERSONAL_FILES_MANAGE],
+  async (req, session) => {
+    try {
+      const { searchParams } = new URL(req.url);
+      const parsed = shareQuerySchema.safeParse({
+        fileId: searchParams.get('fileId') ?? undefined,
+        expiresIn: searchParams.get('expiresIn') ?? undefined,
+      });
 
-    if (!parsed.success) {
+      if (!parsed.success) {
+        return NextResponse.json(
+          { message: 'Invalid query params', details: parsed.error.flatten() },
+          { status: 400 }
+        );
+      }
+
+      const signedUrl = await StorageService.createShareUrl({
+        userId: session.user.id,
+        fileId: parsed.data.fileId,
+        expiresInSeconds: parsed.data.expiresIn,
+      });
+
+      return NextResponse.json({ data: { signedUrl } });
+    } catch (error: any) {
+      if (error?.message === 'File not found') {
+        return NextResponse.json({ message: error.message }, { status: 404 });
+      }
+
       return NextResponse.json(
-        { message: 'Invalid query params', details: parsed.error.flatten() },
-        { status: 400 }
+        { message: error?.message || 'Internal Server Error' },
+        { status: 500 }
       );
     }
-
-    const signedUrl = await StorageService.createShareUrl({
-      userId: session.user.id,
-      fileId: parsed.data.fileId,
-      expiresInSeconds: parsed.data.expiresIn,
-    });
-
-    return NextResponse.json({ data: { signedUrl } });
-  } catch (error: any) {
-    if (error?.message === 'File not found') {
-      return NextResponse.json({ message: error.message }, { status: 404 });
-    }
-
-    return NextResponse.json(
-      { message: error?.message || 'Internal Server Error' },
-      { status: 500 }
-    );
   }
-});
+);

@@ -77,3 +77,27 @@
     border-top-width: 0;
   }
 }
+
+/* ─── Separator ──────────────────────────────────────────── */
+.tiptap-button-group-separator {
+  position: relative;
+  align-self: stretch;
+}
+
+.tiptap-button-group-separator[data-orientation="horizontal"] {
+  margin-left: 1px;
+  margin-right: 1px;
+}
+
+.tiptap-button-group-separator[data-orientation="horizontal"] {
+  width: auto;
+}
+
+.tiptap-button-group-separator[data-orientation="vertical"] {
+  margin-top: 1px;
+  margin-bottom: 1px;
+}
+
+.tiptap-button-group-separator[data-orientation="vertical"] {
+  height: auto;
+}

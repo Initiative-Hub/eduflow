@@ -4,14 +4,20 @@ import {
   ArrowRight,
   ChevronLeft,
   ChevronRight,
+  Download,
+  Edit,
   Maximize2,
   Minimize2,
   Plus,
+  Save,
   Sparkles,
   Trash2,
   X,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
+import { DialogTemplate } from '@/components/custom/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -25,7 +31,14 @@ import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import type { TiptapDocument } from '@/utils/lesson-content';
+import {
+  useDownloadPptx,
+  useSlideHtml,
+  useSlideTemplates,
+  useUpdateSlideHtml,
+} from '../use-lesson';
 import { type PlannedSlide, usePresentation } from '../use-presentation';
+import { TemplateUploadSheet } from './template-upload-sheet';
 
 interface LessonPresentationProps {
   isOpen: boolean;
@@ -61,11 +74,268 @@ export function LessonPresentation({
     handleStartPlanning,
     handleStartGenerating,
     startNewDeck,
+    editOutline,
     updateSlideTitle,
     changeSlideLayout,
     deleteSlide,
     addSlide,
+    selectedCollection,
+    setSelectedCollection,
   } = usePresentation({ title, content, isOpen, onClose });
+
+  const [isDownloadingPptx, setIsDownloadingPptx] = useState(false);
+  const [iframeVersion, setIframeVersion] = useState(0);
+
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const deckId = deckUrl ? deckUrl.split('/').pop() : undefined;
+
+  const updateSlideHtml = useUpdateSlideHtml();
+
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
+
+  // TanStack Query for slide templates
+  const { data: collectionsData, isLoading: isLoadingTemplates } =
+    useSlideTemplates();
+  const collections = collectionsData || [];
+
+  // TanStack Mutation for downloading PPTX
+  const downloadPptx = useDownloadPptx();
+
+  const handleDownloadPptx = async () => {
+    if (!deckId) return;
+    setIsDownloadingPptx(true);
+    downloadPptx.mutate(deckId, {
+      onSuccess: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `presentation-${deckId}.pptx`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        toast.success(t('pptxDownloadSuccess'));
+        setIsDownloadingPptx(false);
+      },
+      onError: (err: any) => {
+        console.error(err);
+        toast.error(t('pptxDownloadError'));
+        setIsDownloadingPptx(false);
+      },
+    });
+  };
+
+  // Turn text-bearing nodes inside the generated iframe into editable elements.
+  // Injects custom hover & focus dashed/solid styling outline blocks.
+  const enableVisualEditing = () => {
+    console.log('[VisualEditor] enableVisualEditing triggered');
+    try {
+      const iframe = iframeRef.current;
+      if (!iframe) {
+        console.warn('[VisualEditor] Iframe ref is null');
+        return;
+      }
+
+      const doc = iframe.contentDocument;
+      if (!doc) {
+        console.warn(
+          '[VisualEditor] contentDocument is null (cross-origin or not loaded yet)'
+        );
+        return;
+      }
+
+      console.log(
+        '[VisualEditor] Accessed iframe contentDocument successfully'
+      );
+
+      // Inject temporary styles for visual feedback on editable SVG text elements
+      if (!doc.querySelector('style[data-slide-editor]')) {
+        const style = doc.createElement('style');
+        style.setAttribute('data-slide-editor', 'true');
+        style.innerHTML = `
+          text, tspan {
+            transition: outline 0.15s ease-in-out;
+            pointer-events: auto !important;
+          }
+          text:hover, tspan:hover {
+            outline: 1px dashed rgba(59, 130, 246, 0.8) !important;
+            cursor: text;
+          }
+        `;
+        doc.head.appendChild(style);
+        console.log('[VisualEditor] Injected hover styles into iframe head');
+      }
+
+      const elements = doc.querySelectorAll('text, tspan');
+      console.log(
+        `[VisualEditor] Found ${elements.length} text/tspan elements in iframe`
+      );
+
+      // Select SVG text & tspan nodes and make them editable via clicking
+      elements.forEach((el) => {
+        if (el.getAttribute('data-has-click-listener') === 'true') return;
+        el.setAttribute('data-has-click-listener', 'true');
+
+        el.addEventListener('click', (e) => {
+          console.log('[VisualEditor] Text element clicked:', el.textContent);
+          e.stopPropagation();
+          e.preventDefault();
+
+          // Blur any active textareas first
+          const activeTextarea = doc.querySelector(
+            'textarea[data-active-editor="true"]'
+          ) as HTMLTextAreaElement;
+          if (activeTextarea) {
+            activeTextarea.blur();
+          }
+
+          const textEl = el as SVGTextElement;
+          const rect = textEl.getBoundingClientRect();
+          const scrollTop = doc.documentElement.scrollTop || doc.body.scrollTop;
+          const scrollLeft =
+            doc.documentElement.scrollLeft || doc.body.scrollLeft;
+
+          // Position the textarea overlay directly over the text element
+          const top = rect.top + scrollTop;
+          const left = rect.left + scrollLeft;
+
+          const textarea = doc.createElement('textarea');
+          textarea.setAttribute('data-active-editor', 'true');
+
+          // Extract styling
+          const computedStyle = doc.defaultView?.getComputedStyle(textEl);
+          const fontFamily = computedStyle?.fontFamily || 'sans-serif';
+          const fontSize = computedStyle?.fontSize || '20px';
+          const fontWeight = computedStyle?.fontWeight || 'normal';
+          const fill = computedStyle?.fill || '#000000';
+
+          Object.assign(textarea.style, {
+            position: 'absolute',
+            top: `${top - 4}px`,
+            left: `${left - 6}px`,
+            width: `${Math.max(120, rect.width + 20)}px`,
+            height: `${Math.max(32, rect.height + 8)}px`,
+            fontFamily,
+            fontSize,
+            fontWeight,
+            color: fill,
+            background: '#111827',
+            border: '2px solid #3b82f6',
+            borderRadius: '4px',
+            outline: 'none',
+            zIndex: '99999',
+            resize: 'none',
+            padding: '2px 4px',
+            lineHeight: '1.2',
+            overflow: 'hidden',
+          });
+
+          textarea.value = textEl.textContent || '';
+          doc.body.appendChild(textarea);
+          textarea.focus();
+          textarea.select();
+
+          // Temporarily hide the original node
+          textEl.style.visibility = 'hidden';
+
+          const finishEditing = () => {
+            textEl.textContent = textarea.value;
+            textEl.style.visibility = 'visible';
+            textarea.remove();
+          };
+
+          textarea.addEventListener('blur', finishEditing);
+          textarea.addEventListener('keydown', (evt) => {
+            if (evt.key === 'Enter' && !evt.shiftKey) {
+              evt.preventDefault();
+              textarea.blur();
+            } else if (evt.key === 'Escape') {
+              textarea.value = textEl.textContent || '';
+              textarea.blur();
+            }
+          });
+        });
+      });
+    } catch (err) {
+      console.error('[VisualEditor] Error in enableVisualEditing:', err);
+    }
+  };
+
+  // Manually attach load listeners and check document status to guarantee visual editing binds
+  useEffect(() => {
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+
+    const handleLoad = () => {
+      console.log(
+        '[VisualEditor] Iframe load event fired (useEffect listener)'
+      );
+      enableVisualEditing();
+    };
+
+    // If iframe is already loaded, enable it directly
+    try {
+      const doc = iframe.contentDocument;
+      if (doc && doc.readyState === 'complete') {
+        console.log(
+          '[VisualEditor] Iframe already fully loaded, enabling visual editing immediately'
+        );
+        enableVisualEditing();
+      }
+    } catch (err) {
+      console.warn('[VisualEditor] Cross-origin error or document busy:', err);
+    }
+
+    iframe.addEventListener('load', handleLoad);
+    return () => {
+      iframe.removeEventListener('load', handleLoad);
+    };
+  }, [deckUrl, iframeVersion]);
+
+  // Clones the current visual iframe layout, strips visual editor traits,
+  // and saves the raw serialized HTML back to S3.
+  const handleSaveVisualEdits = () => {
+    const doc = iframeRef.current?.contentDocument;
+    if (!doc || !deckId) return;
+
+    // Flush any currently open editor
+    const activeTextarea = doc.querySelector(
+      'textarea[data-active-editor="true"]'
+    ) as HTMLTextAreaElement;
+    if (activeTextarea) {
+      activeTextarea.blur();
+    }
+
+    // Clone root layout
+    const clone = doc.documentElement.cloneNode(true) as HTMLElement;
+
+    // Clean up our click listener attributes
+    clone.querySelectorAll('[data-has-click-listener]').forEach((el) => {
+      el.removeAttribute('data-has-click-listener');
+    });
+
+    // Remove the injected editor style tag
+    clone.querySelectorAll('style[data-slide-editor]').forEach((el) => {
+      el.remove();
+    });
+
+    // Strip stray editors
+    clone.querySelectorAll('textarea[data-active-editor]').forEach((el) => {
+      el.remove();
+    });
+
+    const html = '<!DOCTYPE html>\n' + clone.outerHTML;
+
+    updateSlideHtml.mutate(
+      { deckId, html },
+      {
+        onSuccess: () => {
+          setIframeVersion((v) => v + 1);
+          toast.success(t('visualSaveSuccess'));
+        },
+      }
+    );
+  };
 
   // Dynamic layout renderer for presentation view mode
   const renderSlideContent = (slide: PlannedSlide) => {
@@ -1145,15 +1415,41 @@ export function LessonPresentation({
         </div>
         <div className="flex items-center gap-2">
           {step === 'generated' && deckUrl && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-9 gap-1.5 rounded-lg border-slate-200 bg-white font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
-              onClick={startNewDeck}
-            >
-              <Sparkles className="h-4 w-4" />
-              {t('btnNewDeck')}
-            </Button>
+            <>
+              <Button
+                variant="default"
+                size="sm"
+                className="h-9 gap-1.5 rounded-lg bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
+                onClick={handleSaveVisualEdits}
+                disabled={updateSlideHtml.isPending}
+              >
+                <Save className="h-4 w-4" />
+                {updateSlideHtml.isPending
+                  ? t('savingHtml')
+                  : t('btnSaveVisual')}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9 gap-1.5 rounded-lg border-slate-200 bg-white font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                onClick={handleDownloadPptx}
+                disabled={isDownloadingPptx}
+              >
+                <Download className="h-4 w-4" />
+                {isDownloadingPptx
+                  ? t('pptxDownloading')
+                  : t('btnDownloadPptx')}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9 gap-1.5 rounded-lg border-slate-200 bg-white font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                onClick={startNewDeck}
+              >
+                <Sparkles className="h-4 w-4" />
+                {t('btnNewDeck')}
+              </Button>
+            </>
           )}
           {step === 'generated' && (
             <Button
@@ -1225,6 +1521,42 @@ export function LessonPresentation({
                     <SelectItem value="60">{t('duration60')}</SelectItem>
                     <SelectItem value="90">{t('duration90')}</SelectItem>
                     <SelectItem value="120">{t('duration120')}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-slate-400 text-xs uppercase tracking-wider dark:text-slate-500">
+                    Template Style
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setIsUploadOpen(true)}
+                    className="flex items-center gap-1 font-semibold text-primary text-xs hover:underline dark:text-primary-foreground/90"
+                  >
+                    <Plus className="h-3 w-3" />
+                    Manage Styles
+                  </button>
+                </div>
+                <Select
+                  value={selectedCollection}
+                  onValueChange={setSelectedCollection}
+                >
+                  <SelectTrigger className="flex h-11 w-full justify-between rounded-xl border-slate-200 bg-slate-50 px-4 py-2.5 text-slate-900 text-sm dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100">
+                    <SelectValue placeholder="System Default (Starter)" />
+                  </SelectTrigger>
+                  <SelectContent className="border-slate-200 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100">
+                    <SelectItem value="starter">
+                      System Default (Starter)
+                    </SelectItem>
+                    {collections
+                      .filter((c) => c.name !== 'starter')
+                      .map((c) => (
+                        <SelectItem key={c.name} value={c.name}>
+                          {c.name === 'neon_dark' ? 'Neon Dark Theme' : c.name}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -1306,7 +1638,37 @@ export function LessonPresentation({
                 {t('plannedDesc')}
               </p>
             </div>
-            <div className="flex shrink-0 gap-2">
+            <div className="flex shrink-0 items-center gap-2">
+              <div className="flex items-center gap-1.5 rounded-lg border border-slate-200/60 bg-slate-100/90 px-3 py-1.5 dark:border-slate-800/80 dark:bg-slate-900/80">
+                <span className="font-bold text-[10px] text-slate-500 uppercase tracking-wider dark:text-slate-400">
+                  Style:
+                </span>
+                <span
+                  className="block max-w-[150px] truncate font-bold text-slate-800 text-xs dark:text-slate-200"
+                  title={
+                    selectedCollection === 'starter'
+                      ? 'Default Starter'
+                      : selectedCollection === 'neon_dark'
+                        ? 'Neon Dark Theme'
+                        : selectedCollection
+                  }
+                >
+                  {selectedCollection === 'starter'
+                    ? 'Default Starter'
+                    : selectedCollection === 'neon_dark'
+                      ? 'Neon Dark Theme'
+                      : selectedCollection}
+                </span>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsUploadOpen(true)}
+                className="h-9 gap-1.5 rounded-lg border-slate-200 bg-white px-3 font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-800"
+              >
+                <Plus className="h-4 w-4" />
+                Choose Template style
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -1515,9 +1877,13 @@ export function LessonPresentation({
         (deckUrl ? (
           <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col items-center justify-center gap-2 overflow-hidden px-2 py-4">
             <iframe
-              src={deckUrl}
+              ref={iframeRef}
+              src={
+                iframeVersion > 0 ? `${deckUrl}?v=${iframeVersion}` : deckUrl
+              }
               title={title}
               allow="fullscreen"
+              onLoad={enableVisualEditing}
               className={cn(
                 'w-full rounded-2xl border border-slate-200 bg-white shadow-2xl transition-all duration-300 dark:border-slate-800/80 dark:bg-slate-950',
                 isFullscreen ? 'h-[82vh]' : 'h-[58vh]'
@@ -1613,6 +1979,14 @@ export function LessonPresentation({
           <div className="order-2 w-9 md:order-3" />
         </div>
       )}
+      <TemplateUploadSheet
+        isOpen={isUploadOpen}
+        onOpenChange={setIsUploadOpen}
+        selectedCollection={selectedCollection}
+        onSelectCollection={setSelectedCollection}
+        collections={collections}
+        isLoading={isLoadingTemplates}
+      />
     </div>
   );
 }

@@ -17,16 +17,16 @@ export default async function CourseSettingsPage({
   params: Promise<{ courseId: string }>;
 }) {
   const { courseId } = await params;
-  const session = await auth.api.getSession({ headers: await headers() });
 
-  if (!session) {
+  const sessionData = await auth.api.getSession({ headers: await headers() });
+  if (!sessionData) {
     redirect('/login');
   }
 
   try {
     const settings = await CourseSettingsService.getSettings(
       courseId,
-      session.user.id
+      sessionData.user.id
     );
 
     return (

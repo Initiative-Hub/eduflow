@@ -15,6 +15,7 @@ const generateDeckSchema = presentationPlanSchema.extend({
   lessonId: z.string().min(1, 'lessonId is required'),
   title: z.string().min(1, 'title is required'),
   palette: z.string().min(1).optional().default('auto'),
+  collection: z.string().optional(),
 });
 
 // ─── POST /api/v1/ai/slides ───────────────────────────────────────────────────
@@ -84,9 +85,14 @@ export const POST = withRoles(
         );
       }
 
-      const { lessonId, title, palette, slides } = parsed.data;
+      const { lessonId, title, palette, slides, collection } = parsed.data;
 
-      const deck = await generateDeckFromPlan({ title, palette, slides });
+      const deck = await generateDeckFromPlan({
+        title,
+        palette,
+        slides,
+        collection,
+      });
 
       // Persist the deck reference so the lesson can re-open it later without
       // regenerating. Don't fail the whole request if only the save errors —

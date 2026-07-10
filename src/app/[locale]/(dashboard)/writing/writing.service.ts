@@ -1,5 +1,6 @@
 import { apiClient } from '@/lib/api';
 import type {
+  ChatHistoryPageResponse,
   ChatListResponse,
   ChatUpdateResponse,
 } from '../(ai-chat)/chat.service';
@@ -11,6 +12,18 @@ export const writingService = {
       tool,
     });
   },
+  getChat: async (
+    chatId: string,
+    params?: {
+      limit?: number;
+      before?: string;
+    }
+  ) => {
+    return apiClient.get<ChatHistoryPageResponse>(`/v1/ai/writing/${chatId}`, {
+      params,
+    });
+  },
+
   updateChat: async (
     chatId: string,
     data: { title?: string; deleted_at?: string }

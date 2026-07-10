@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
+  filterAdminNavItems,
+  getAdminNavItems,
   getAssistantNavItems,
   getCourseNavItems,
   getSettingNavItems,
 } from '@/components/layout/sidebar-config';
+import { PLATFORM_PERMISSION } from '@/lib/permissions/permission-keys';
 
 const t = (key: string) => key;
 
@@ -39,5 +42,14 @@ describe('sidebar-config', () => {
       'courseGrades',
     ]);
     expect(courseItems[2].url).toBe('/courses/course-123/grades');
+  });
+
+  it('filters admin nav items by view or manage platform permissions', () => {
+    const adminItems = getAdminNavItems(t as never);
+    const filteredItems = filterAdminNavItems(adminItems, [
+      PLATFORM_PERMISSION.ROLES_MANAGE,
+    ]);
+
+    expect(filteredItems.map((item) => item.url)).toEqual(['/admin/roles']);
   });
 });

@@ -17,6 +17,7 @@ import {
   STORAGE_PAGE_SIZE,
 } from './inventory.types';
 import { formatFileSize } from './inventory.utils';
+import { getInventoryErrorMessage } from './inventory-error-message';
 
 const INVENTORY_QUERY_KEY = ['inventory'] as const;
 const INVENTORY_LIST_QUERY_KEY = [...INVENTORY_QUERY_KEY, 'list'] as const;
@@ -24,19 +25,6 @@ const INVENTORY_ANALYTICS_QUERY_KEY = [
   ...INVENTORY_QUERY_KEY,
   'analytics',
 ] as const;
-
-function getErrorMessage(error: unknown, fallback: string) {
-  if (
-    error &&
-    typeof error === 'object' &&
-    'message' in error &&
-    typeof error.message === 'string'
-  ) {
-    return error.message;
-  }
-
-  return fallback;
-}
 
 async function copyToClipboard(value: string) {
   if (!navigator.clipboard?.writeText) {
@@ -202,7 +190,7 @@ export function useInventory({
       });
     },
     onError: (error: ApiError) => {
-      toast.error(getErrorMessage(error, t('toast.genericError')));
+      toast.error(getInventoryErrorMessage(error, t));
     },
   });
 
@@ -268,7 +256,7 @@ export function useInventory({
       });
     },
     onError: (error: ApiError) => {
-      toast.error(getErrorMessage(error, t('toast.genericError')));
+      toast.error(getInventoryErrorMessage(error, t));
     },
   });
 
@@ -286,7 +274,7 @@ export function useInventory({
       });
     },
     onError: (error: ApiError) => {
-      toast.error(getErrorMessage(error, t('toast.genericError')));
+      toast.error(getInventoryErrorMessage(error, t));
     },
   });
 
@@ -310,7 +298,7 @@ export function useInventory({
       });
     },
     onError: (error: ApiError) => {
-      toast.error(getErrorMessage(error, t('toast.genericError')));
+      toast.error(getInventoryErrorMessage(error, t));
     },
   });
 
@@ -326,7 +314,7 @@ export function useInventory({
       toast.success(t('toast.deleted', { count: result.deletedCount }));
     },
     onError: (error: ApiError) => {
-      toast.error(getErrorMessage(error, t('toast.genericError')));
+      toast.error(getInventoryErrorMessage(error, t));
     },
   });
 
@@ -461,7 +449,9 @@ export function useInventory({
         mimeType: entry.mimeType,
       });
     } catch (error) {
-      toast.error(getErrorMessage(error, t('toast.previewUnavailable')));
+      toast.error(
+        getInventoryErrorMessage(error, t, t('toast.previewUnavailable'))
+      );
     }
   };
 
@@ -491,7 +481,7 @@ export function useInventory({
         description: entry.name,
       });
     } catch (error) {
-      toast.error(getErrorMessage(error, t('toast.genericError')));
+      toast.error(getInventoryErrorMessage(error, t));
     }
   };
 
@@ -516,7 +506,7 @@ export function useInventory({
         }),
       });
     } catch (error) {
-      toast.error(getErrorMessage(error, t('toast.genericError')));
+      toast.error(getInventoryErrorMessage(error, t));
     }
   };
 

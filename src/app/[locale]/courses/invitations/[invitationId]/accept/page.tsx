@@ -10,15 +10,15 @@ export default async function AcceptCourseInvitationPage({
   params: Promise<{ invitationId: string }>;
 }) {
   const { invitationId } = await params;
-  const session = await auth.api.getSession({ headers: await headers() });
+  const sessionData = await auth.api.getSession({ headers: await headers() });
 
-  if (!session) {
+  if (!sessionData) {
     redirect('/login');
   }
 
   const result = await CourseInvitationService.acceptDirectInvitation({
     invitationId,
-    userId: session.user.id,
+    userId: sessionData.user.id,
   }).catch(() => null);
 
   // Genuine 404 — invitation doesn't exist or course is deleted

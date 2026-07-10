@@ -13,8 +13,8 @@ export interface SlidePlanItem {
 export interface DeckPlan {
   title: string;
   slides: SlidePlanItem[];
-  /** Palette selection: "auto", "corporate", "modern", etc. */
   palette?: string;
+  collection?: string;
 }
 
 /** Token/cost usage for a generation job, as reported by slide_skills. */
@@ -74,6 +74,7 @@ export async function generateDeckFromPlan(
   const payload = {
     title: plan.title,
     palette: plan.palette ?? 'auto',
+    collection: plan.collection ?? 'starter',
     slides: plan.slides.map((slide) => ({
       category: slide.layoutType,
       slideTitle: slide.slideTitle,
@@ -89,62 +90,44 @@ export async function generateDeckFromPlan(
 
   if (!submitRes.ok) {
     const errorText = await submitRes.text();
-    console.error('Slide generation submit error:', errorText);
-    throw new Error(`Failed to submit slide plan: ${submitRes.statusText}`);
+    console.error('Slide generation error:', errorText);
+    throw new Error(`Failed to generate slides: ${submitRes.statusText}`);
   }
 
-  const { job_id: jobId } = (await submitRes.json()) as { job_id: string };
-  if (!jobId) {
-    throw new Error('Slide service did not return a job id');
+  const job = (await submitRes.json()) as JobResponse;
+
+  if (job.status === 'done' && job.result) {
+    return {
+      deckId: job.result.deck_id,
+      slides: job.result.slides ?? [],
+      warnings: job.result.warnings ?? [],
+      usage: job.result.usage,
+      s3Key: job.result.s3_key,
+    };
   }
 
-  const deadline = Date.now() + POLL_TIMEOUT_MS;
-
-  while (Date.now() < deadline) {
-    await sleep(POLL_INTERVAL_MS);
-
-    const statusRes = await fetch(`${baseUrl}/slides/jobs/${jobId}`);
-    if (!statusRes.ok) {
-      const errorText = await statusRes.text();
-      console.error('Slide job status error:', errorText);
-      throw new Error(`Failed to poll slide job: ${statusRes.statusText}`);
-    }
-
-    const job = (await statusRes.json()) as JobResponse;
-
-    if (job.status === 'done' && job.result) {
-      return {
-        deckId: job.result.deck_id,
-        slides: job.result.slides ?? [],
-        warnings: job.result.warnings ?? [],
-        usage: job.result.usage,
-        s3Key: job.result.s3_key,
-      };
-    }
-
-    if (job.status === 'error') {
-      throw new Error(job.message || 'Slide generation failed');
-    }
+  if (job.status === 'error') {
+    throw new Error(job.message || 'Slide generation failed');
   }
 
-  throw new Error('Slide generation timed out');
+  throw new Error('Unexpected response status from slide service');
+}
+
+import { StorageService } from '@/services/StorageService';
+
+/**
+ * Fetches the rendered HTML for a generated deck.
+ */
+export async function getDeckHtml(deckId: string): Promise<string> {
+  return StorageService.getSlideDeck(deckId);
 }
 
 /**
- * Fetches the rendered HTML for a generated deck from the external service.
+ * Saves the edited HTML for a generated deck directly.
  */
-export async function getDeckHtml(deckId: string): Promise<string> {
-  const baseUrl = getBaseUrl();
-  const res = await fetch(`${baseUrl}/slides/decks/${deckId}`);
-
-  if (!res.ok) {
-    if (res.status === 404) {
-      throw new Error('Deck not found');
-    }
-    const errorText = await res.text();
-    console.error('Deck fetch error:', errorText);
-    throw new Error(`Failed to fetch deck: ${res.statusText}`);
-  }
-
-  return res.text();
+export async function saveDeckHtml(
+  deckId: string,
+  html: string
+): Promise<void> {
+  await StorageService.saveSlideDeck(deckId, html);
 }

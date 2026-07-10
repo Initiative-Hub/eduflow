@@ -94,17 +94,8 @@ for any tasks.).
 - **Icon Availability**: When introducing a new `lucide-react` icon, verify the installed package exports it; use a generic available icon when brand-specific icons are absent.
 - **JSX Curly Braces**: Literally render double curly braces `{{` and `}}` in JSX text by quoting them, like `{'{{placeholder}}'}`, to prevent the JSX compiler from parsing them as JS object shorthand syntax.
 - **Research Citations**: For AI research/chat responses with numbered citations, derive source metadata from AI SDK `source-url` parts and web-search tool outputs in shared helpers, then render inline citation UI from that normalized source list instead of hardcoding source parsing in components.
-- **Generated Suggestions**: When AI routes stream `data-suggestions` parts for clickable follow-ups, make system prompts explicitly tell the model not to print follow-up questions, JSON, markdown chips, or numbered suggestion lists in the visible assistant response.
-- **Grouped Citation UI**: Keep multi-source citation markers such as `[1, 2]` as a single inline trigger that previews the first source, shows the additional source count, and exposes the full source set in a clickable hover-card carousel.
-- **Citation Labels**: Keep citation hover-card labels such as source counts localized through `next-intl`; do not hardcode English fallback copy in citation UI components.
-- **Citation Link Hover**: Use subtle semantic hover states such as `hover:bg-muted/60` for citation source cards; avoid saturated accent fills that compete with the citation content.
-- **Citation Source Identity**: Prefer source favicons from web-search metadata for citation identity marks, with a generic `lucide-react` icon only as a fallback.
-- **Remote Favicons**: Render arbitrary citation favicons with `next/image` and `unoptimized` unless the remote domains are explicitly configured in `next.config`.
-- **Search Favicons**: Enable favicon metadata on web-search tools when citation UI depends on source identity, and provide a deterministic domain favicon fallback for older results without favicon metadata.
 - **Study Modes**: When adding or removing a Study mode, update the shared Zod mode schema, mode selector cards, mode-specific system prompts, and both locale files together so the UI, API validation, and prompt behavior stay synchronized.
 - **Interactive Content Prompts**: Keep generated activity instructions aligned with the structured output schema and sandbox CSP; do not advertise CDNs or external libraries unless the renderer, sanitizer, and CSP are deliberately updated together.
-- **Interactive Learning Scaffolding**: For broad learning requests, generated activities should progress from age-appropriate intuition and a concrete example to the core concept, guided manipulation, explanatory feedback, a misconception check, and a concise takeaway.
-- **Interactive Content Branding**: Generated activity documents must retain the compact EduFlow wordmark header; apply the canonical EduFlow palette only as the fallback when the learner has not requested a specific theme or color direction.
 
 ### 6.3 Security & Validation
 
@@ -120,7 +111,6 @@ for any tasks.).
 - **Test Scope Discipline**: Keep tests focused on durable behavior the project wants to preserve. Remove exploratory, speculative, or TDD-only scaffolding when it no longer represents required coverage.
 - **Type Check**: After TypeScript or JavaScript edits, finish with `bun type-check`.
 - **Formatting**: Use `bun format:fix` before verification if the change is formatting-sensitive.
-- **Targeted Formatting Fallback**: If `bun format:fix` reports permission diagnostics while traversing `.agents/skills`, rerun Biome formatting only on the touched project files before verification.
 - **Shell Paths**: Quote file paths that include `(`, `)`, `[`, or `]` when running shell or git commands.
 - **API Client Paths**: The shared browser API client already targets the `/api` base URL, so request paths should start at `v1/...` instead of `api/v1/...`.
 
@@ -139,6 +129,7 @@ for any tasks.).
 - **Upload Confirmation Fallback**: When an uploaded file does not exist on the remote bucket during `confirmUpload`, explicitly delete the pending database entry to roll back the state.
 - **Bucket Initialization**: When adding new buckets to the storage config, ensure they are also added to `docker-compose.yml` initialization scripts (`minio-init` and `minio-reset`).
 - **Preview Delivery**: For inventory previews, prefer signed URLs over fetching full blobs into browser memory, and provide UI fallbacks when inline rendering fails.
+- **Resilient S3 Client Initializers**: Always provide fallback checks to standard AWS environment variables (`AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`) when namespaced variables (e.g. `AWS_S3_REGION`) are missing to prevent startup failures on custom local dev configurations.
 
 ## 7. Continuous Improvement (Session Retrospective)
 

@@ -1,20 +1,28 @@
 import { headers } from 'next/headers';
-import { redirect } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { auth } from '@/lib/auth';
+import { PLATFORM_PERMISSION } from '@/lib/permissions/permission-keys';
 
 export default async function AdminLayout({
   children,
 }: {
   children: ReactNode;
 }) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user) {
+  const sessionData = await auth.api.getSession({ headers: await headers() });
+  if (!sessionData) {
     redirect('/login');
   }
 
-  if (session.user.role !== 'ADMIN') {
-    redirect('/');
+  const hasAdminAccess = [
+    PLATFORM_PERMISSION.USERS_VIEW,
+    PLATFORM_PERMISSION.USERS_MANAGE,
+    PLATFORM_PERMISSION.ROLES_VIEW,
+    PLATFORM_PERMISSION.ROLES_MANAGE,
+  ].some((permission) => sessionData.user.permissions.includes(permission));
+
+  if (!hasAdminAccess) {
+    notFound();
   }
 
   return <>{children}</>;

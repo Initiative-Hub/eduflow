@@ -5,7 +5,7 @@ import { PenLine } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import type React from 'react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import type { WritingTool } from '@/lib/validations/writing.schema';
 import { DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
@@ -20,6 +20,11 @@ interface WritingClientProps {
   chatId?: string;
   initialTool?: WritingTool;
   initialMessages?: UIMessage[];
+  initialMessagesPagination?: {
+    hasMore: boolean;
+    limit: number;
+    nextCursor: string | null;
+  };
 }
 
 const ChatView = dynamic(() =>
@@ -30,12 +35,17 @@ export default function WritingClient({
   chatId,
   initialTool = 'caption',
   initialMessages,
+  initialMessagesPagination,
 }: WritingClientProps) {
   const t = useTranslations('AIChat');
   const [selectedTool, setSelectedTool] = useState<WritingTool>(initialTool);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
   const {
     messages,
+    hasOlderMessages,
+    isLoadingOlderMessages,
+    loadOlderMessages,
     maxMessages,
     userMessageCount,
     hasOutput,
@@ -49,6 +59,7 @@ export default function WritingClient({
     tool: selectedTool,
     chatId,
     initialMessages,
+    initialMessagesPagination,
   });
 
   const notifyLimitReached = () => {
@@ -74,10 +85,14 @@ export default function WritingClient({
   ) : (
     <ChatView
       messages={messages}
+      hasOlderMessages={hasOlderMessages}
+      isLoadingOlderMessages={isLoadingOlderMessages}
       isStreaming={isStreaming}
+      loadOlderMessages={() => void loadOlderMessages()}
       onSuggestionSelect={(suggestion) =>
         void handleSubmit(undefined, suggestion)
       }
+      scrollContainerRef={scrollContainerRef}
       suggestionsDisabled={isStreaming || isLimitReached}
     />
   );
@@ -100,7 +115,11 @@ export default function WritingClient({
 
   return (
     <>
-      <ChatWorkspaceShell composer={composer} viewport={viewport} />
+      <ChatWorkspaceShell
+        composer={composer}
+        scrollContainerRef={scrollContainerRef}
+        viewport={viewport}
+      />
       <ChatSidebar
         currentChatId={chatId}
         emptyIcon={PenLine}
