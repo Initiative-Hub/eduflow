@@ -159,6 +159,8 @@ export function StudyClient({
     </div>
   ) : (
     <ChatView
+      chatId={chatId}
+      canShareInteractiveContent={isAuthenticated}
       messages={messages}
       hasOlderMessages={hasOlderMessages}
       isLoadingOlderMessages={isLoadingOlderMessages}

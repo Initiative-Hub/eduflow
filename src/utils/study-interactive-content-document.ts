@@ -14,6 +14,49 @@ const SANDBOX_CSP = [
 ].join('; ');
 
 const SECURITY_META = `<meta http-equiv="Content-Security-Policy" content="${SANDBOX_CSP}">`;
+const RESPONSIVE_GUARD_STYLE = `<style id="eduflow-responsive-guard">
+html,
+body {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  overflow-x: hidden !important;
+}
+
+body {
+  box-sizing: border-box;
+  overflow-wrap: break-word;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+  min-width: 0;
+}
+
+img,
+svg,
+canvas,
+video,
+iframe {
+  max-width: 100% !important;
+}
+
+pre,
+code {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}
+</style>`;
+const EDUFLOW_HEAD_INJECTION = `${SECURITY_META}
+${RESPONSIVE_GUARD_STYLE}`;
 
 /**
  * Prepares AI-generated HTML for rendering inside EduFlow's sandboxed iframe.
@@ -38,20 +81,32 @@ export function createSecureInteractiveContentDocument(html: string): string {
     .replace(/<link\b[^>]*\/?>/gi, '');
 
   if (/<head\b[^>]*>/i.test(cleanedHtml)) {
-    return cleanedHtml.replace(/<head\b([^>]*)>/i, `<head$1>${SECURITY_META}`);
+    const documentWithSecurityMeta = cleanedHtml.replace(
+      /<head\b([^>]*)>/i,
+      `<head$1>${SECURITY_META}`
+    );
+
+    if (/<\/head\s*>/i.test(documentWithSecurityMeta)) {
+      return documentWithSecurityMeta.replace(
+        /<\/head\s*>/i,
+        `${RESPONSIVE_GUARD_STYLE}</head>`
+      );
+    }
+
+    return documentWithSecurityMeta;
   }
 
   if (/<html\b[^>]*>/i.test(cleanedHtml)) {
     return cleanedHtml.replace(
       /<html\b([^>]*)>/i,
-      `<html$1><head>${SECURITY_META}</head>`
+      `<html$1><head>${EDUFLOW_HEAD_INJECTION}</head>`
     );
   }
 
   return `<!doctype html>
 <html lang="en">
 <head>
-${SECURITY_META}
+${EDUFLOW_HEAD_INJECTION}
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>

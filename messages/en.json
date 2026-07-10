@@ -1915,15 +1915,29 @@
     "features": {
       "interactiveContent": {
         "actionsLabel": "Interactive activity actions",
+        "close": "Close",
+        "copied": "Copied",
+        "copyError": "Could not copy share link.",
+        "copyLink": "Copy link",
         "description": "Create an interactive visual activity that you can explore and practice directly.",
         "download": "Download",
         "fullscreen": "Full screen",
         "previewTitle": "Interactive activity: {title}",
         "reset": "Reset activity",
+        "retry": "Try again",
         "saveError": "Could not save this activity to inventory.",
         "saveSuccess": "Activity saved to inventory.",
         "saveToInventory": "Save to Inventory",
-        "savingToInventory": "Saving..."
+        "savingToInventory": "Saving...",
+        "share": "Share link",
+        "shareDialogDescription": "EduFlow is preparing a public link for this activity.",
+        "shareDialogReadyDescription": "Anyone with this link can open the activity without signing in.",
+        "shareDialogTitle": "Share activity",
+        "shareError": "Could not create share link.",
+        "shareGenerating": "Generating share link...",
+        "shareLinkLabel": "Public link",
+        "shareSuccess": "Share link copied.",
+        "sharing": "Sharing..."
       },
       "practiceTest": {
         "description": "Challenge yourself with AI-generated multiple choice, short answer, and flashcard sets."
@@ -1965,6 +1979,14 @@
       "title": "Recent Sessions",
       "updated": "Updated {date}",
       "viewAll": "View All"
+    },
+    "sharedInteractiveContent": {
+      "createdBy": "Created with EduFlow",
+      "eyebrow": "Shared EduFlow activity",
+      "ownerCta": "Open original session",
+      "ownerHelper": "You are viewing your own shared activity.",
+      "visitorCta": "Try EduFlow",
+      "visitorHelper": "Create your own AI-powered study activity in EduFlow."
     },
     "sidebar": {
       "actionsLabel": "Actions for {title}",

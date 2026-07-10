@@ -7,7 +7,7 @@ import {
   type ToolSet,
   type UIMessage,
 } from 'ai';
-import { z } from 'zod';
+import * as z from 'zod';
 import type { QuizContent } from '@/lib/quiz-template';
 import {
   fillInTheBlankQuestionSchema,
