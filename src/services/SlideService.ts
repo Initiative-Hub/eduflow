@@ -1,12 +1,74 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { FILE_TEMPLATES_BUCKET_NAME } from '@/lib/storage/file-storage';
+import {
+  FILE_DEFAULT_TEMPLATES_BUCKET_NAME,
+  FILE_TEMPLATES_BUCKET_NAME,
+} from '@/lib/storage/file-storage';
 import { StorageService } from './StorageService';
 
 // In-memory cache for slide template previews
 const previewsCache = new Map<string, Record<string, string>>();
 
+export interface SlideTemplate {
+  name: string;
+  description?: string;
+  palette?: string[];
+}
+
+export interface SlidePlanItem {
+  layoutType: string;
+  slideTitle: string;
+  bindings: Record<string, unknown>;
+}
+
+export interface DeckPlan {
+  title: string;
+  slides: SlidePlanItem[];
+  palette?: string;
+  collection?: string;
+}
+
+export interface DeckUsage {
+  input_tokens?: number;
+  output_tokens?: number;
+  total_tokens?: number;
+  requests?: number;
+  estimated_cost_usd?: number;
+  report?: string;
+}
+
+export interface GeneratedDeck {
+  deckId: string;
+  slides: unknown[];
+  warnings: string[];
+  usage?: DeckUsage;
+  s3Key?: string;
+}
+
+type JobResponse = {
+  status: 'queued' | 'running' | 'done' | 'error';
+  result?: {
+    deck_id: string;
+    slides?: unknown[];
+    usage?: DeckUsage;
+    warnings?: string[];
+    s3_key?: string;
+  } | null;
+  message?: string | null;
+};
+
+type TemplateCategoriesResponse = {
+  categories: string[];
+  is_custom: boolean;
+};
+
 export class SlideService {
+  static getExternalServiceUrl(): string {
+    return (
+      process.env.EXTERNAL_SERVICE_URL || 'http://localhost:8000'
+    ).replace(/\/$/, '');
+  }
+
   /**
    * Clears the cached template previews (all or a specific collection).
    */
@@ -65,18 +127,29 @@ export class SlideService {
     // 3. If no local templates found, try fetching from S3 via StorageService
     if (Object.keys(svgs).length === 0) {
       try {
+        const defaultCollections = new Set([
+          'templates',
+          'default',
+          'starter',
+          'neon_dark',
+          'vintage',
+          'clean_light',
+          'pastel_pop',
+          'illustrative_culture',
+          'minimalist_gradient',
+          'cultural_folk',
+          'organic_streets',
+        ]);
+        const bucketName = defaultCollections.has(collectionName.toLowerCase())
+          ? FILE_DEFAULT_TEMPLATES_BUCKET_NAME
+          : FILE_TEMPLATES_BUCKET_NAME;
+
         const prefix = `templates/${collectionName}/`;
-        const keys = await StorageService.listPrefixKeys(
-          prefix,
-          FILE_TEMPLATES_BUCKET_NAME
-        );
+        const keys = await StorageService.listPrefixKeys(prefix, bucketName);
 
         const svgKeys = keys.filter((key) => key.endsWith('.svg'));
         const downloadPromises = svgKeys.map(async (key) => {
-          const body = await StorageService.getObjectString(
-            key,
-            FILE_TEMPLATES_BUCKET_NAME
-          );
+          const body = await StorageService.getObjectString(key, bucketName);
           if (body) {
             const name = path.parse(key).name;
             return { name, body };
@@ -104,5 +177,185 @@ export class SlideService {
     }
 
     return svgs;
+  }
+
+  static async getTemplateCollections(): Promise<SlideTemplate[]> {
+    const response = await fetch(
+      `${this.getExternalServiceUrl()}/slides/templates/collections`,
+      { cache: 'no-store' }
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        `Failed to fetch templates from slide service: ${response.statusText}`
+      );
+    }
+
+    return response.json();
+  }
+
+  static async getTemplateCategories(
+    collectionName: string
+  ): Promise<TemplateCategoriesResponse> {
+    const response = await fetch(
+      `${this.getExternalServiceUrl()}/slides/templates/${encodeURIComponent(collectionName)}/categories`,
+      { cache: 'no-store' }
+    );
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch collection categories');
+    }
+
+    return response.json();
+  }
+
+  static async getPlanningTemplateCategories(
+    collectionName: string
+  ): Promise<string[] | undefined> {
+    const data = await this.getTemplateCategories(collectionName);
+    return data.is_custom ? data.categories : undefined;
+  }
+
+  static async getStyleCollections(): Promise<
+    Record<string, string> | undefined
+  > {
+    try {
+      const collections = await this.getTemplateCollections();
+      const map = collections.reduce<Record<string, string>>(
+        (acc, collection) => {
+          if (collection.name) {
+            acc[collection.name] =
+              collection.description || `Style '${collection.name}'`;
+          }
+          return acc;
+        },
+        {}
+      );
+
+      return Object.keys(map).length > 0 ? map : undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
+  static async generateDeckFromPlan(plan: DeckPlan): Promise<GeneratedDeck> {
+    const payload = {
+      title: plan.title,
+      palette: plan.palette ?? 'auto',
+      collection: plan.collection ?? 'starter',
+      slides: plan.slides.map((slide) => ({
+        category: slide.layoutType,
+        slideTitle: slide.slideTitle,
+        bindings: slide.bindings ?? {},
+      })),
+    };
+
+    const response = await fetch(
+      `${this.getExternalServiceUrl()}/slides/generate-from-plan`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to generate slides: ${response.statusText}`);
+    }
+
+    const job = (await response.json()) as JobResponse;
+
+    if (job.status === 'done' && job.result) {
+      return {
+        deckId: job.result.deck_id,
+        slides: job.result.slides ?? [],
+        warnings: job.result.warnings ?? [],
+        usage: job.result.usage,
+        s3Key: job.result.s3_key,
+      };
+    }
+
+    if (job.status === 'error') {
+      throw new Error(job.message || 'Slide generation failed');
+    }
+
+    throw new Error('Unexpected response status from slide service');
+  }
+
+  static async getDeckPptx(deckId: string): Promise<ArrayBuffer> {
+    const response = await fetch(
+      `${this.getExternalServiceUrl()}/slides/decks/${deckId}/pptx`,
+      { cache: 'no-store' }
+    );
+
+    if (!response.ok) {
+      throw new Error('Failed to generate PPTX from slide service');
+    }
+
+    return response.arrayBuffer();
+  }
+
+  static async importTemplateCollection(
+    file: File,
+    name?: string | null
+  ): Promise<{ status: 'success'; imported: unknown }> {
+    const forwardFormData = new FormData();
+    forwardFormData.append('file', file, file.name || 'template');
+    if (name) {
+      forwardFormData.append('name', name);
+    }
+
+    const baseUrl = this.getExternalServiceUrl();
+    const response = await fetch(`${baseUrl}/slides/templates/import`, {
+      method: 'POST',
+      body: forwardFormData,
+    });
+
+    if (!response.ok) {
+      throw new Error(`External service failed: ${response.statusText}`);
+    }
+
+    const queued = (await response.json()) as {
+      job_id: string;
+      status: 'queued' | 'running';
+    };
+
+    const pollIntervalMs = 3000;
+    const maxPolls = 200;
+
+    for (let index = 0; index < maxPolls; index += 1) {
+      await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
+
+      const statusResponse = await fetch(
+        `${baseUrl}/slides/templates/import/${queued.job_id}`,
+        { cache: 'no-store' }
+      );
+
+      if (!statusResponse.ok) {
+        if (statusResponse.status === 404) {
+          throw new Error(
+            'Import job was lost (service restarted). Please try again.'
+          );
+        }
+        throw new Error('Failed to poll import job');
+      }
+
+      const job = (await statusResponse.json()) as {
+        status: 'queued' | 'running' | 'done' | 'error';
+        result?: unknown;
+        message?: string;
+      };
+
+      if (job.status === 'done') {
+        this.clearCache();
+        return { status: 'success', imported: job.result };
+      }
+
+      if (job.status === 'error') {
+        throw new Error(job.message || 'Import job failed');
+      }
+    }
+
+    throw new Error('Import job timed out');
   }
 }

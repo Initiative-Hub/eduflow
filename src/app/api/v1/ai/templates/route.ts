@@ -1,15 +1,9 @@
 import { NextResponse } from 'next/server';
 import { errorResponse } from '@/lib/api/error-response';
 import { withAuth, withRoles } from '@/lib/api/middlewares';
+import { SlideService } from '@/services/SlideService';
 
 export const dynamic = 'force-dynamic';
-
-function getExternalServiceUrl(): string {
-  return (process.env.EXTERNAL_SERVICE_URL || 'http://localhost:8000').replace(
-    /\/$/,
-    ''
-  );
-}
 
 /**
  * @swagger
@@ -31,20 +25,7 @@ function getExternalServiceUrl(): string {
 export const GET = withAuth(
   withRoles(['TEACHER'], async () => {
     try {
-      const baseUrl = getExternalServiceUrl();
-      const response = await fetch(`${baseUrl}/slides/templates/collections`, {
-        cache: 'no-store',
-      });
-
-      if (!response.ok) {
-        return errorResponse(
-          'INTERNAL_ERROR',
-          `Failed to fetch templates from slide service: ${response.statusText}`,
-          response.status
-        );
-      }
-
-      const result = await response.json();
+      const result = await SlideService.getTemplateCollections();
       return NextResponse.json(result, { status: 200 });
     } catch (error) {
       console.error('Fetch templates error:', error);

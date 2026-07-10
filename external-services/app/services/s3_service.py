@@ -38,7 +38,9 @@ def get_s3_client():
     return boto3.client("s3", **kwargs)
 
 
-async def upload_file_to_s3(local_path: Path, object_key: str, bucket_name: str | None = None) -> bool:
+async def upload_file_to_s3(
+    local_path: Path, object_key: str, bucket_name: str | None = None
+) -> bool:
     try:
         s3 = get_s3_client()
         if not s3:
@@ -73,7 +75,9 @@ async def upload_file_to_s3(local_path: Path, object_key: str, bucket_name: str 
         return False
 
 
-async def download_file_from_s3(object_key: str, local_path: Path, bucket_name: str | None = None) -> bool:
+async def download_file_from_s3(
+    object_key: str, local_path: Path, bucket_name: str | None = None
+) -> bool:
     try:
         s3 = get_s3_client()
         if not s3:
@@ -98,7 +102,9 @@ async def download_file_from_s3(object_key: str, local_path: Path, bucket_name: 
         return False
 
 
-async def list_files_in_s3_prefix(prefix: str, bucket_name: str | None = None) -> list[str]:
+async def list_files_in_s3_prefix(
+    prefix: str, bucket_name: str | None = None
+) -> list[str]:
     try:
         s3 = get_s3_client()
         if not s3:

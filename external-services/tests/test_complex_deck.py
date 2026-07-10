@@ -1,4 +1,3 @@
-import time
 import requests
 
 BASE_URL = "http://localhost:8000"
@@ -217,42 +216,24 @@ def test_complex_deck_generation():
         return
 
     job_data = resp.json()
-    job_id = job_data["job_id"]
-    print(f"Job queued successfully. Job ID: {job_id}")
+    if job_data.get("status") == "error":
+        print(f"Job failed with error: {job_data.get('message')}")
+        assert False, f"Generation failed: {job_data.get('message')}"
 
-    # 2. Poll the job status until done
-    for attempt in range(30):
-        print(f"Polling job status (attempt {attempt + 1})...")
-        status_resp = requests.get(f"{BASE_URL}/slides/jobs/{job_id}")
-        if status_resp.status_code != 200:
-            print(f"Error polling job: {status_resp.status_code} - {status_resp.text}")
-            return
-
-        status_data = status_resp.json()
-        status = status_data["status"]
-        print(f"Current Status: {status}")
-
-        if status == "done":
-            print("\nJob completed successfully!")
-            print(f"Result S3 Key: {status_data['result'].get('s3_key')}")
-            print(f"Slides generated: {len(status_data['result'].get('slides', []))}")
-            break
-        elif status == "error":
-            print(f"Job failed with error: {status_data.get('message')}")
-            return
-
-        time.sleep(2)
-    else:
-        print("Timeout waiting for job completion.")
-        return
+    result = job_data.get("result") or {}
+    deck_id = result.get("deck_id")
+    print(f"Deck generated successfully. Deck ID: {deck_id}")
+    print(f"Result S3 Key: {result.get('s3_key')}")
+    print(f"Slides generated: {len(result.get('slides', []))}")
 
     # 3. Retrieve the generated slide deck
-    print(f"Fetching generated deck from /slides/decks/{job_id}...")
-    deck_resp = requests.get(f"{BASE_URL}/slides/decks/{job_id}")
+    print(f"Fetching generated deck from /slides/decks/{deck_id}...")
+    deck_resp = requests.get(f"{BASE_URL}/slides/decks/{deck_id}")
     if deck_resp.status_code == 200:
         print(f"Deck fetched successfully! Response size: {len(deck_resp.text)} bytes")
     else:
         print(f"Error fetching deck: {deck_resp.status_code} - {deck_resp.text}")
+        assert False, f"Failed to fetch generated deck: {deck_resp.text}"
 
 
 if __name__ == "__main__":

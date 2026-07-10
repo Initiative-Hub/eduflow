@@ -4,14 +4,7 @@ import { withAuth, withRoles } from '@/lib/api/middlewares';
 import { SlideService } from '@/services/SlideService';
 
 export const dynamic = 'force-dynamic';
-export const maxDuration = 300;
-
-function getExternalServiceUrl(): string {
-  return (process.env.EXTERNAL_SERVICE_URL || 'http://localhost:8000').replace(
-    /\/$/,
-    ''
-  );
-}
+export const maxDuration = 630; // 10.5 min — covers AI-based PPTX extraction (~10 min)
 
 /**
  * @swagger
@@ -81,35 +74,22 @@ export const POST = withAuth(
         );
       }
 
-      // Reconstruct FormData to forward to the external service
-      const forwardFormData = new FormData();
-      forwardFormData.append('file', file, filename);
-      if (name) {
-        forwardFormData.append('name', name);
-      }
-
-      const baseUrl = getExternalServiceUrl();
-      const response = await fetch(`${baseUrl}/slides/templates/import`, {
-        method: 'POST',
-        body: forwardFormData,
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Template import forward error:', errorText);
-        return errorResponse(
-          'INTERNAL_ERROR',
-          `External service failed: ${response.statusText}`,
-          response.status
-        );
-      }
-
-      const result = await response.json();
-      // Clear template previews cache so imports render immediately
-      SlideService.clearCache();
+      const result = await SlideService.importTemplateCollection(file, name);
       return NextResponse.json(result, { status: 200 });
     } catch (error) {
       console.error('Template import error:', error);
+      if (error instanceof Error) {
+        if (error.message === 'Import job timed out') {
+          return errorResponse('INTERNAL_ERROR', error.message, 504);
+        }
+
+        if (
+          error.message === 'Failed to poll import job' ||
+          error.message.includes('service restarted')
+        ) {
+          return errorResponse('INTERNAL_ERROR', error.message, 500);
+        }
+      }
       return errorResponse('INTERNAL_ERROR', 'Failed to import templates', 500);
     }
   })

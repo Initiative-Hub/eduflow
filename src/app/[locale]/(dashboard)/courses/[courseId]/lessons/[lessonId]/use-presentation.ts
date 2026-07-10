@@ -24,7 +24,12 @@ export interface PlannedSlide {
     | 'CONCLUSION_SUMMARY'
     | 'CALL_TO_ACTION'
     | 'QA_CONTACT'
-    | 'REFERENCES_LIST';
+    | 'REFERENCES_LIST'
+    | 'STATEMENT_IMAGE'
+    | 'PYRAMID_LEVELS'
+    | 'FUNNEL_STAGES'
+    | 'PROCESS_ARROWS'
+    | 'CIRCLE_CYCLE';
   slideTitle: string;
   bindings: Record<string, any>;
 }
@@ -64,7 +69,11 @@ export function usePresentation(options: {
   const [deckUrl, setDeckUrl] = useState<string | null>(null);
   // Token/cost usage reported for the most recent generation.
   const [deckUsage, setDeckUsage] = useState<DeckUsage | null>(null);
-  const [selectedCollection, setSelectedCollection] = useState('starter');
+  const [selectedCollection, setSelectedCollection] = useState('auto');
+  // Style the planner AI judged best for the lesson (used when 'auto').
+  const [recommendedCollection, setRecommendedCollection] = useState<
+    string | null
+  >(null);
 
   // Dynamic Outlines fallback generator
   const generateOutlines = useCallback(
@@ -271,6 +280,7 @@ export function usePresentation(options: {
           lessonId,
           duration,
           context: instructions,
+          collection: selectedCollection,
         }),
       });
 
@@ -316,6 +326,9 @@ export function usePresentation(options: {
                 })
               );
               setPlannedSlides(slidesWithIds);
+              if (event.recommendedCollection) {
+                setRecommendedCollection(event.recommendedCollection);
+              }
               setStep('planned');
               break;
             }
@@ -447,6 +460,54 @@ export function usePresentation(options: {
       defaultBindings = {
         sources: [{ title: 'Reference Source 1', url: 'https://example.com' }],
       };
+    } else if (newLayout === 'STATEMENT_IMAGE') {
+      defaultBindings = {
+        statement: 'Every idea has a story worth telling.',
+        body_text:
+          'A short supporting paragraph that grounds the statement in concrete detail for the audience.',
+        image_prompt_description:
+          'A quiet European old-town street at golden hour',
+      };
+    } else if (newLayout === 'PYRAMID_LEVELS') {
+      defaultBindings = {
+        levels: [
+          { title: 'Vision', description: 'The overarching goal at the top' },
+          { title: 'Strategy', description: 'How we plan to get there' },
+          {
+            title: 'Execution',
+            description: 'Daily work that delivers results',
+          },
+        ],
+        footer_note: 'Each level builds on the one below it.',
+      };
+    } else if (newLayout === 'FUNNEL_STAGES') {
+      defaultBindings = {
+        stages: [
+          { title: 'Awareness', description: 'Visitors discover the product' },
+          { title: 'Consideration', description: 'They compare and evaluate' },
+          { title: 'Conversion', description: 'They sign up and pay' },
+        ],
+        footer_note: 'Each stage narrows toward committed users.',
+      };
+    } else if (newLayout === 'PROCESS_ARROWS') {
+      defaultBindings = {
+        process_steps: [
+          { title: 'Plan', description: 'Define scope and goals' },
+          { title: 'Build', description: 'Implement the solution' },
+          { title: 'Review', description: 'Test and gather feedback' },
+        ],
+        footer_note: 'A simple flow from idea to delivery.',
+      };
+    } else if (newLayout === 'CIRCLE_CYCLE') {
+      defaultBindings = {
+        phases: [
+          { title: 'Plan', description: 'Set the goals for this iteration' },
+          { title: 'Do', description: 'Carry out the plan' },
+          { title: 'Check', description: 'Measure the results' },
+          { title: 'Act', description: 'Adjust and start again' },
+        ],
+        footer_note: 'A continuous improvement loop.',
+      };
     }
 
     setPlannedSlides((prev) =>
@@ -496,7 +557,11 @@ export function usePresentation(options: {
         lessonId,
         title,
         palette: 'auto',
-        collection: selectedCollection,
+        // 'auto' = use the style the planner AI recommended for this lesson
+        collection:
+          selectedCollection === 'auto'
+            ? (recommendedCollection ?? 'starter')
+            : selectedCollection,
         slides: plannedSlides.map((slide) => ({
           layoutType: slide.layoutType,
           slideTitle: slide.slideTitle,
@@ -632,5 +697,6 @@ export function usePresentation(options: {
     addSlide,
     selectedCollection,
     setSelectedCollection,
+    recommendedCollection,
   };
 }

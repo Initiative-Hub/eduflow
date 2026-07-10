@@ -1,6 +1,6 @@
 import { errorResponse } from '@/lib/api/error-response';
 import { withAuth, withRoles } from '@/lib/api/middlewares';
-import { getDeckHtml, saveDeckHtml } from '@/lib/slides';
+import { LessonPresentationService } from '@/services/LessonPresentationService';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,7 +42,7 @@ export const GET = withRoles(
   ) => {
     try {
       const { deckId } = await params;
-      const html = await getDeckHtml(deckId);
+      const html = await LessonPresentationService.getDeckHtml(deckId);
 
       return new Response(html, {
         status: 200,
@@ -78,7 +78,7 @@ export const PUT = withAuth(
           return errorResponse('VALIDATION_ERROR', 'Missing HTML content', 400);
         }
 
-        await saveDeckHtml(deckId, html);
+        await LessonPresentationService.saveDeckHtml(deckId, html);
 
         return new Response(JSON.stringify({ status: 'success' }), {
           status: 200,
