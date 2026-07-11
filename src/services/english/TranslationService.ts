@@ -100,7 +100,7 @@ export class TranslationService {
     try {
       const { text } = await generateText({
         model: provider(DEFAULT_MODELS.openrouter),
-        system: `You are a professional translator. Translate the given text from ${fromLang} to ${toLang}. 
+        instructions: `You are a professional translator. Translate the given text from ${fromLang} to ${toLang}. 
 Output ONLY the translated text with no commentary, notes, or explanation.`,
         prompt: input.text,
       });

@@ -312,7 +312,7 @@ HARD CONSTRAINTS:
       model: provider(model),
       output: Output.object({ schema: presentationPlanSchema }),
       prompt: masterPrompt,
-      system: PLANNER_SYSTEM_PROMPT,
+      instructions: PLANNER_SYSTEM_PROMPT,
       temperature: 0.7,
       // Detailed decks (up to 20 fully-populated slides) need plenty of room.
       maxOutputTokens: 16000,
