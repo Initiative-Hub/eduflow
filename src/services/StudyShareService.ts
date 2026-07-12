@@ -11,6 +11,102 @@ import {
   type StudyInteractiveContentData,
   studyInteractiveContentSchema,
 } from '@/utils/study-interactive-content';
+import { z } from 'zod';
+
+import {
+  isStudyPracticeQuizData,
+  type StudyPracticeQuizData,
+} from '@/utils/study-practice-quiz';
+
+const publicStudyChatPartSchema = z.discriminatedUnion('type', [
+  z.object({
+    type: z.literal('text'),
+    text: z.string().min(1),
+  }),
+  z.object({
+    type: z.literal('data-interactive-content'),
+    data: studyInteractiveContentSchema,
+  }),
+  z.object({
+    type: z.literal('data-practice-quiz'),
+    data: z.custom<StudyPracticeQuizData>(isStudyPracticeQuizData),
+  }),
+]);
+
+const publicStudyChatMessageSchema = z.object({
+  id: z.string().min(1),
+  role: z.enum(['user', 'assistant']),
+  parts: z.array(publicStudyChatPartSchema),
+});
+
+const publicStudyChatSnapshotSchema = z.object({
+  version: z.literal(1),
+  messages: z.array(publicStudyChatMessageSchema),
+});
+
+type PublicStudyChatPart = z.infer<typeof publicStudyChatPartSchema>;
+type PublicStudyChatMessage = z.infer<typeof publicStudyChatMessageSchema>;
+type PublicStudyChatSnapshot = z.infer<typeof publicStudyChatSnapshotSchema>;
+
+function createPublicStudyChatSnapshot(
+  uiMessages: UIMessage[]
+): PublicStudyChatSnapshot {
+  const messages: PublicStudyChatMessage[] = [];
+
+  for (const message of uiMessages) {
+    if (message.role !== 'user' && message.role !== 'assistant') {
+      continue;
+    }
+
+    const parts: PublicStudyChatPart[] = [];
+
+    for (const part of message.parts) {
+      if (part.type === 'text' && part.text.trim()) {
+        parts.push({
+          type: 'text',
+          text: part.text,
+        });
+        continue;
+      }
+
+      if (part.type === 'data-interactive-content') {
+        const content = studyInteractiveContentSchema.safeParse(part.data);
+
+        if (content.success) {
+          parts.push({
+            type: 'data-interactive-content',
+            data: content.data,
+          });
+        }
+
+        continue;
+      }
+
+      if (
+        part.type === 'data-practice-quiz' &&
+        isStudyPracticeQuizData(part.data)
+      ) {
+        parts.push({
+          type: 'data-practice-quiz',
+          data: part.data,
+        });
+      }
+    }
+
+    if (parts.length > 0) {
+      messages.push({
+        id: message.id,
+        role: message.role,
+        parts,
+      });
+    }
+  }
+
+  return {
+    version: 1,
+    messages,
+  };
+}
 
 function createInteractiveContentSharedResource(input: {
   chatId: string;
