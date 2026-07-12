@@ -41,7 +41,7 @@ export const useChatSessionStore = create<ChatSessionState>()(
     }),
     {
       name: 'chat-session-store',
-      storage: createJSONStorage(() => sessionStorage),
+      storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         pendingMessage: state.pendingMessage,
         pendingChatId: state.pendingChatId,
