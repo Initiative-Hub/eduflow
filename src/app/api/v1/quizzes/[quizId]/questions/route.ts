@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withRoles } from '@/lib/api/middlewares';
+import { questionBlockSchema } from '@/lib/validations/quiz.schema';
 import { QuizService } from '@/services/QuizService';
 
 const saveQuestionsSchema = z
   .object({
-    questions: z.array(z.record(z.string(), z.unknown())),
+    questions: z.array(questionBlockSchema),
     questionIds: z.array(z.string().uuid().nullable()),
   })
   .refine((data) => data.questions.length === data.questionIds.length, {

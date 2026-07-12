@@ -13,11 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  QUESTION_SUB_TYPE_LABELS,
-  QUIZ_CATEGORIES,
-  type QuestionBankEntry,
-} from '@/lib/quiz-template';
+import type { QuestionBankEntry } from '@/lib/quiz-template';
 import { useModules } from '../../use-modules';
 import {
   useQuestionBank,
@@ -125,10 +121,10 @@ export function QuestionBankClient({ courseId }: QuestionBankClientProps) {
             {previewQuestion && (
               <div className="mt-2 flex items-center gap-2">
                 <Badge variant="secondary">
-                  {QUIZ_CATEGORIES[previewQuestion.category].label}
+                  {t(`categories.${previewQuestion.category}`)}
                 </Badge>
                 <Badge variant="outline">
-                  {QUESTION_SUB_TYPE_LABELS[previewQuestion.subType]}
+                  {t(`questionTypes.${previewQuestion.subType}`)}
                 </Badge>
                 {previewQuestion.lessonId && (
                   <Badge variant="outline">

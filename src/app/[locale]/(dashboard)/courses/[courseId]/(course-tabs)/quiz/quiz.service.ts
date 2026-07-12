@@ -1,5 +1,9 @@
 import { apiClient } from '@/lib/api';
-import type { QuizConfiguration, QuizDefinition } from '@/lib/quiz-template';
+import type {
+  DeliveryMode,
+  QuizConfiguration,
+  QuizDefinition,
+} from '@/lib/quiz-template';
 import type { QuestionBlock } from '@/lib/quiz-template/types';
 
 export const quizService = {
@@ -51,6 +55,18 @@ export const quizService = {
       questions,
       questionIds,
     });
+  },
+
+  updateDetails: async (
+    quizId: string,
+    details: {
+      title: string;
+      description?: string;
+      lessonIds: string[];
+      deliveryMode: DeliveryMode;
+    }
+  ) => {
+    return apiClient.patch<QuizDefinition>(`v1/quizzes/${quizId}`, details);
   },
 
   deleteQuiz: async (quizId: string) => {

@@ -4,6 +4,7 @@ import type { Prisma } from '@/generated/prisma';
 import { errorResponse } from '@/lib/api/error-response';
 import { withRoles } from '@/lib/api/middlewares';
 import { prisma } from '@/lib/prisma';
+import { questionBlockSchema } from '@/lib/validations/quiz.schema';
 
 // ─── Validation ──────────────────────────────────────────────────────────────
 
@@ -12,7 +13,7 @@ const routeParamsSchema = z.object({
 });
 const updateQuestionSchema = z.object({
   prompt: z.string().min(1),
-  answerData: z.record(z.string(), z.unknown()),
+  answerData: questionBlockSchema,
   explanation: z.string().nullable().optional(),
 });
 

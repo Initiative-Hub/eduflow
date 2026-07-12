@@ -32,19 +32,6 @@ export function QuestionRenderer({
   showResult,
   disabled = false,
 }: QuestionRendererProps) {
-  // Handle timed_challenge by rendering its inner question
-  if (question.type === 'timed_challenge') {
-    return (
-      <QuestionRenderer
-        question={question.innerQuestion}
-        answer={answer}
-        onAnswer={onAnswer}
-        showResult={showResult}
-        disabled={disabled}
-      />
-    );
-  }
-
   const handler = getHandler(question.type);
   const Component = handler.component;
 

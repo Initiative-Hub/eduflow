@@ -23,6 +23,10 @@ import type { QuestionBankEntry } from '@/lib/quiz-template';
 import type { QuestionBlock } from '@/lib/quiz-template/types';
 import { QuestionBankPickerDialog } from './question-bank-picker-dialog';
 import { QuestionEditorDialog } from './question-editor-dialog';
+import {
+  getQuestionSummary,
+  getSolutionSummary,
+} from './quiz-question-summary';
 
 interface QuizQuestionsEditorProps {
   initialQuestions: QuestionBlock[];
@@ -210,12 +214,6 @@ export function QuizQuestionsEditor({
             Essay
           </Badge>
         );
-      case 'timed_challenge':
-        return (
-          <Badge className="border-none bg-rose-500 text-white hover:bg-rose-600">
-            Timed Challenge
-          </Badge>
-        );
       default:
         return <Badge variant="outline">{type}</Badge>;
     }
@@ -226,9 +224,7 @@ export function QuizQuestionsEditor({
       {/* Action Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b pb-4">
         <div className="flex items-center gap-2">
-          <span>
-            
-          </span>
+          <span></span>
           <span className="text-muted-foreground text-sm">
             {t('questionTotal', { count: questions.length })}
           </span>
@@ -365,22 +361,21 @@ export function QuizQuestionsEditor({
                 <div className="min-w-0 flex-1 space-y-1.5">
                   <div className="flex flex-wrap items-center gap-2">
                     {getTypeBadge(q.type)}
-                    {q.type === 'timed_challenge' && (
-                      <Badge variant="outline" className="text-xs">
-                        {q.timeLimitSeconds}s Limit
-                      </Badge>
-                    )}
                   </div>
-                  <p className="line-clamp-2 font-semibold text-foreground text-sm md:text-base">
-                    {q.type === 'fill_in_the_blank'
-                      ? q.promptTemplate
-                      : q.prompt}
-                  </p>
-                  {q.explanation && (
-                    <p className="line-clamp-1 text-muted-foreground text-xs italic">
-                      {t('explanation')}: {q.explanation}
+                  <div className="space-y-1">
+                    <p className="line-clamp-2 font-semibold text-foreground text-sm leading-6 md:text-base">
+                      <span className="mr-1 text-muted-foreground">
+                        {t('questionLabel')}:
+                      </span>
+                      {getQuestionSummary(q)}
                     </p>
-                  )}
+                    <p className="line-clamp-1 text-muted-foreground text-sm">
+                      <span className="font-medium text-foreground/80">
+                        {t('solutionLabel')}:
+                      </span>{' '}
+                      {getSolutionSummary(q) || t('noSolutionSummary')}
+                    </p>
+                  </div>
                 </div>
 
                 {/* Reorder and Edit Actions */}

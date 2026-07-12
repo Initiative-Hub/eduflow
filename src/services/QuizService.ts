@@ -10,6 +10,8 @@ import {
   QUESTION_CATEGORY_BY_SUB_TYPE,
   SUB_TYPE_TO_QUESTION_TYPE,
 } from '@/lib/quiz-template';
+import type { QuestionBlock } from '@/lib/quiz-template/types';
+import { questionBlockSchema } from '@/lib/validations/quiz.schema';
 import { CourseService } from '@/services/CourseService';
 import { OpenRouterService } from './ai/OpenRouterService';
 import { safeMapAIQuizToSchema } from './ai/quizMapper';
@@ -57,6 +59,14 @@ function lessonContentToText(content: unknown): string {
   }
 }
 
+function questionToJson(question: QuestionBlock): Prisma.InputJsonValue {
+  return question as unknown as Prisma.InputJsonValue;
+}
+
+function getQuestionExplanation(question: QuestionBlock): string | null {
+  return typeof question.explanation === 'string' ? question.explanation : null;
+}
+
 function withLessonIds<
   T extends {
     lessonQuizzes?: { lesson: { id: string } }[];
@@ -100,7 +110,7 @@ export type CreateQuizInput = {
   deliveryMode: DeliveryMode;
   selectionMethod: SelectionMethod;
   questionCount: number;
-  questions?: Record<string, unknown>[];
+  questions?: QuestionBlock[];
   questionIds?: Array<string | null>;
   selectedQuestionIds?: string[];
 };
@@ -110,6 +120,13 @@ type AiGenerationInput = {
   apiKey?: string;
   model?: string;
   context?: string;
+};
+
+type UpdateQuizDetailsInput = {
+  title: string;
+  description?: string | null;
+  lessonIds: string[];
+  deliveryMode: DeliveryMode;
 };
 
 type GenerationLesson = {
@@ -122,7 +139,7 @@ async function generateQuestionsForLessons(
   lessons: GenerationLesson[],
   questionCounts: Partial<Record<QuestionSubType, number>>,
   aiInput: AiGenerationInput,
-  currentQuestions: Record<string, unknown>[] = []
+  currentQuestions: QuestionBlock[] = []
 ) {
   const requestedCounts = Object.entries(questionCounts).filter(
     (entry): entry is [QuestionSubType, number] =>
@@ -153,9 +170,7 @@ async function generateQuestionsForLessons(
     Partial<Record<QuestionSubType, number>>
   >((counts, question) => {
     try {
-      const { subType } = getQuestionTaxonomy(
-        question.type as Parameters<typeof getQuestionTaxonomy>[0]
-      );
+      const { subType } = getQuestionTaxonomy(question.type);
       counts[subType] = (counts[subType] ?? 0) + 1;
     } catch {
       // Legacy unsupported question types do not consume a requested slot.
@@ -189,8 +204,10 @@ async function generateQuestionsForLessons(
     const safe = safeMapAIQuizToSchema(generated, subType);
     const normalized = safe.success ? safe.data : null;
     const questions = normalized
-      ? (normalized.questions as unknown[])
-      : (generated.questions as unknown[]);
+      ? (normalized.questions as QuestionBlock[])
+      : (generated.questions as unknown[]).map((question) =>
+          questionBlockSchema.parse(question)
+        );
     return questions.map((question) => ({
       question,
       subType,
@@ -320,19 +337,14 @@ export class QuizService {
             continue;
           }
 
-          const taxonomy = getQuestionTaxonomy(
-            questionData.type as Parameters<typeof getQuestionTaxonomy>[0]
-          );
+          const taxonomy = getQuestionTaxonomy(questionData.type);
           const created = await tx.question.create({
             data: {
               courseId,
               ...taxonomy,
               prompt: getQuestionPrompt(questionData),
-              answerData: questionData as Prisma.InputJsonValue,
-              explanation:
-                typeof questionData.explanation === 'string'
-                  ? questionData.explanation
-                  : null,
+              answerData: questionToJson(questionData),
+              explanation: getQuestionExplanation(questionData),
             },
             select: { id: true },
           });
@@ -369,7 +381,7 @@ export class QuizService {
   static async updateQuestions(
     quizId: string,
     userId: string,
-    questions: Record<string, unknown>[],
+    questions: QuestionBlock[],
     questionIds: Array<string | null>
   ) {
     const quiz = await prisma.quiz.findUnique({
@@ -397,13 +409,11 @@ export class QuizService {
           typeof questionData.explanation === 'string'
             ? questionData.explanation
             : null;
-        const taxonomy = getQuestionTaxonomy(
-          questionData.type as Parameters<typeof getQuestionTaxonomy>[0]
-        );
+        const taxonomy = getQuestionTaxonomy(questionData.type);
         const data = {
           ...taxonomy,
           prompt: getQuestionPrompt(questionData),
-          answerData: questionData as Prisma.InputJsonValue,
+          answerData: questionToJson(questionData),
           explanation,
         };
 
@@ -442,6 +452,64 @@ export class QuizService {
         data: {
           questions: [],
           questionCount: persistedQuestionIds.length,
+        },
+        include: quizRelations,
+      });
+    });
+
+    return withLessonIds(updatedQuiz);
+  }
+
+  static async updateDetails(
+    quizId: string,
+    userId: string,
+    data: UpdateQuizDetailsInput
+  ) {
+    const quiz = await prisma.quiz.findUnique({
+      where: { id: quizId },
+      select: {
+        id: true,
+        courseId: true,
+        course: { select: { ownerId: true } },
+      },
+    });
+
+    if (!quiz) {
+      throw new Error('Quiz not found');
+    }
+    if (quiz.course.ownerId !== userId) {
+      throw new Error('Forbidden');
+    }
+
+    const linkedLessons = await prisma.lesson.findMany({
+      where: {
+        id: { in: data.lessonIds },
+        deletedAt: null,
+        module: {
+          courseId: quiz.courseId,
+          deletedAt: null,
+          course: { deletedAt: null },
+        },
+      },
+      select: { id: true },
+    });
+
+    if (linkedLessons.length !== data.lessonIds.length) {
+      throw new Error('Some lessons do not belong to this course');
+    }
+
+    const updatedQuiz = await prisma.$transaction(async (tx) => {
+      await tx.lessonQuiz.deleteMany({ where: { quizId } });
+      await tx.lessonQuiz.createMany({
+        data: data.lessonIds.map((lessonId) => ({ quizId, lessonId })),
+      });
+
+      return tx.quiz.update({
+        where: { id: quizId },
+        data: {
+          title: data.title,
+          description: data.description?.trim() || null,
+          deliveryMode: data.deliveryMode,
         },
         include: quizRelations,
       });
@@ -568,8 +636,10 @@ export class QuizService {
         const safe = safeMapAIQuizToSchema(generated, subType);
         const normalized = safe.success ? safe.data : null;
         const questions = normalized
-          ? (normalized.questions as unknown[])
-          : (generated.questions as unknown[]);
+          ? (normalized.questions as QuestionBlock[])
+          : (generated.questions as unknown[]).map((question) =>
+              questionBlockSchema.parse(question)
+            );
         return questions.map((question) => ({
           question,
           subType,
@@ -590,14 +660,9 @@ export class QuizService {
               courseId: fetchedQuiz.courseId,
               category: QUESTION_CATEGORY_BY_SUB_TYPE[subType],
               subType,
-              prompt: getQuestionPrompt(question as Record<string, unknown>),
-              answerData: question as Prisma.InputJsonValue,
-              explanation:
-                typeof (question as Record<string, unknown>).explanation ===
-                'string'
-                  ? ((question as Record<string, unknown>)
-                      .explanation as string)
-                  : null,
+              prompt: getQuestionPrompt(question),
+              answerData: questionToJson(question),
+              explanation: getQuestionExplanation(question),
             },
             select: { id: true },
           })

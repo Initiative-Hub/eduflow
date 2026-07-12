@@ -18,7 +18,6 @@ import {
   matchingQuestionSchema,
   multipleChoiceQuestionSchema,
   orderingQuestionSchema,
-  timedChallengeQuestionSchema,
   trueFalseQuestionSchema,
 } from '@/lib/validations/quiz.schema';
 import {
@@ -181,7 +180,6 @@ export class OpenRouterService implements ChatProviderService {
       ordering: orderingQuestionSchema.omit({ type: true }),
       drag_and_drop: dragAndDropQuestionSchema.omit({ type: true }),
       essay: essayQuestionSchema.omit({ type: true }),
-      timed_challenge: timedChallengeQuestionSchema.omit({ type: true }),
     };
 
     const aiQuestionSchema =

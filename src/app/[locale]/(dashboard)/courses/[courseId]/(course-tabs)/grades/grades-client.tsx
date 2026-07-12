@@ -2,9 +2,9 @@
 
 import { Award, BookOpenCheck, RotateCcw, Target } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { Accordion } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
-import { GradeAttemptCard } from './grade-attempt-card';
+import { LatestGradeAttemptCard } from './grade-attempt-card';
+import { getLatestGradeAttemptsByQuiz } from './grades.utils';
 import { useGrades } from './use-grades';
 
 interface GradesClientProps {
@@ -15,6 +15,7 @@ export function GradesClient({ courseId }: GradesClientProps) {
   const t = useTranslations('Courses.Grades');
   const gradesQuery = useGrades(courseId);
   const attempts = gradesQuery.data ?? [];
+  const latestAttempts = getLatestGradeAttemptsByQuiz(attempts);
   const average = attempts.length
     ? attempts.reduce((total, attempt) => total + attempt.percentage, 0) /
       attempts.length
@@ -109,11 +110,16 @@ export function GradesClient({ courseId }: GradesClientProps) {
                 </p>
               </div>
             </div>
-            <Accordion type="multiple" className="space-y-4">
-              {attempts.map((attempt) => (
-                <GradeAttemptCard key={attempt.id} attempt={attempt} />
+            <div className="space-y-4">
+              {latestAttempts.map(({ attempt, attemptCount }) => (
+                <LatestGradeAttemptCard
+                  key={attempt.quizId}
+                  attempt={attempt}
+                  attemptCount={attemptCount}
+                  href={`/courses/${courseId}/grades/${attempt.quizId}`}
+                />
               ))}
-            </Accordion>
+            </div>
           </section>
         </>
       )}

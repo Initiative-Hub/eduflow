@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { errorResponse } from '@/lib/api/error-response';
 import { withAuth } from '@/lib/api/middlewares';
 import { prisma } from '@/lib/prisma';
+import { questionBlockSchema } from '@/lib/validations/quiz.schema';
 import { QuizService } from '@/services/QuizService';
 import { resolveReferencedQuestions } from '@/services/quiz-question-references';
 
@@ -30,7 +31,7 @@ const createQuizSchema = z
     deliveryMode: z.enum(['INSTANT_FEEDBACK', 'POST_QUIZ_REVIEW']),
     selectionMethod: z.enum(['HAND_PICK', 'RANDOM', 'MANUAL_CREATE']),
     questionCount: z.number().int().min(0),
-    questions: z.array(z.record(z.string(), z.unknown())).optional(),
+    questions: z.array(questionBlockSchema).optional(),
     questionIds: z.array(z.string().uuid().nullable()).optional(),
     /** IDs of hand-picked questions (when selectionMethod is HAND_PICK) */
     selectedQuestionIds: z.array(z.string()).optional(),

@@ -1,21 +1,100 @@
 'use client';
 
-import { CalendarDays, ChevronDown, Clock3 } from 'lucide-react';
+import { CalendarDays, ChevronDown, ChevronRight, Clock3 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
+import type { ReactNode } from 'react';
 import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
+import { Link } from '@/i18n/navigation';
 import { GradeQuestionReview } from './grade-question-review';
 import type { StudentGradeAttempt } from './grades.types';
 
 interface GradeAttemptCardProps {
   attempt: StudentGradeAttempt;
+  attemptCount?: number;
 }
 
-export function GradeAttemptCard({ attempt }: GradeAttemptCardProps) {
+interface LatestGradeAttemptCardProps extends GradeAttemptCardProps {
+  href: string;
+}
+
+export function LatestGradeAttemptCard({
+  attempt,
+  attemptCount = 1,
+  href,
+}: LatestGradeAttemptCardProps) {
+  const t = useTranslations('Courses.Grades');
+
+  return (
+    <Link
+      href={href}
+      className="group block overflow-hidden rounded-2xl border bg-card shadow-sm outline-none transition-colors hover:border-primary/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+      aria-label={t('openQuizHistory', {
+        title: attempt.quizSnapshot.title,
+        count: attemptCount,
+      })}
+    >
+      <GradeAttemptSummary
+        attempt={attempt}
+        attemptCount={attemptCount}
+        action={
+          <span className="flex min-h-12 items-center gap-2 border-t bg-muted/20 px-4 py-3 text-sm transition-colors group-hover:bg-muted/50 sm:px-6">
+            {t('viewAllAttempts')}
+            <ChevronRight className="ml-auto size-4" aria-hidden="true" />
+          </span>
+        }
+      />
+    </Link>
+  );
+}
+
+export function GradeAttemptCard({
+  attempt,
+  attemptCount,
+}: GradeAttemptCardProps) {
+  const t = useTranslations('Courses.Grades');
+
+  return (
+    <AccordionItem
+      value={attempt.id}
+      className="overflow-hidden rounded-2xl border bg-card shadow-sm"
+    >
+      <GradeAttemptSummary attempt={attempt} attemptCount={attemptCount} />
+
+      <AccordionTrigger className="group min-h-12 border-t bg-muted/20 px-4 py-3 text-sm hover:bg-muted/50 hover:no-underline sm:px-6 [&>svg]:hidden">
+        <span>{t('reviewAnswers')}</span>
+        <ChevronDown className="ml-auto size-4 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+      </AccordionTrigger>
+      <AccordionContent className="border-t bg-muted/10 px-4 pt-4 pb-5 sm:px-6 sm:pt-6 sm:pb-6">
+        <div className="space-y-4">
+          {attempt.quizSnapshot.questions.map((question, index) => (
+            <GradeQuestionReview
+              key={`${attempt.id}-${index}`}
+              answer={attempt.answers[index.toString()]}
+              index={index}
+              question={question}
+              result={attempt.results[index]}
+            />
+          ))}
+        </div>
+      </AccordionContent>
+    </AccordionItem>
+  );
+}
+
+function GradeAttemptSummary({
+  attempt,
+  attemptCount,
+  action,
+}: {
+  attempt: StudentGradeAttempt;
+  attemptCount?: number;
+  action?: ReactNode;
+}) {
   const t = useTranslations('Courses.Grades');
   const locale = useLocale();
   const totalQuestions = attempt.quizSnapshot.questions.length;
@@ -28,10 +107,7 @@ export function GradeAttemptCard({ attempt }: GradeAttemptCardProps) {
   }).format(new Date(attempt.createdAt));
 
   return (
-    <AccordionItem
-      value={attempt.id}
-      className="overflow-hidden rounded-2xl border bg-card shadow-sm"
-    >
+    <>
       <div className="p-4 sm:p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0 space-y-2">
@@ -42,6 +118,11 @@ export function GradeAttemptCard({ attempt }: GradeAttemptCardProps) {
               <Badge variant="secondary">
                 {t(`deliveryMode.${attempt.quizSnapshot.deliveryMode}`)}
               </Badge>
+              {attemptCount ? (
+                <Badge variant="outline">
+                  {t('attemptCount', { count: attemptCount })}
+                </Badge>
+              ) : null}
               {attempt.isLegacySnapshot ? (
                 <Badge variant="outline">{t('legacyAttempt')}</Badge>
               ) : null}
@@ -88,25 +169,8 @@ export function GradeAttemptCard({ attempt }: GradeAttemptCardProps) {
           </p>
         ) : null}
       </div>
-
-      <AccordionTrigger className="group min-h-12 border-t bg-muted/20 px-4 py-3 text-sm hover:bg-muted/50 hover:no-underline sm:px-6 [&>svg]:hidden">
-        <span>{t('reviewAnswers')}</span>
-        <ChevronDown className="ml-auto size-4 transition-transform duration-200 group-data-[state=open]:rotate-180" />
-      </AccordionTrigger>
-      <AccordionContent className="border-t bg-muted/10 px-4 pt-4 pb-5 sm:px-6 sm:pt-6 sm:pb-6">
-        <div className="space-y-4">
-          {attempt.quizSnapshot.questions.map((question, index) => (
-            <GradeQuestionReview
-              key={`${attempt.id}-${index}`}
-              answer={attempt.answers[index.toString()]}
-              index={index}
-              question={question}
-              result={attempt.results[index]}
-            />
-          ))}
-        </div>
-      </AccordionContent>
-    </AccordionItem>
+      {action}
+    </>
   );
 }
 

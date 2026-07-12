@@ -172,7 +172,6 @@ export const QUESTION_TYPE_TO_SUB_TYPE: Record<
   essay: 'ESSAY',
   fill_in_the_blank: 'FILL_IN_THE_BLANK',
   drag_and_drop: 'DRAG_AND_DROP',
-  timed_challenge: null,
 };
 
 export const QUESTION_CATEGORY_BY_SUB_TYPE: Record<

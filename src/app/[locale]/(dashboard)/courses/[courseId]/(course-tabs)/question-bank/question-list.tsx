@@ -5,11 +5,7 @@ import { useTranslations } from 'next-intl';
 import { InlineConfirm } from '@/components/custom/inline-confirm';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  QUESTION_SUB_TYPE_LABELS,
-  QUIZ_CATEGORIES,
-  type QuestionBankEntry,
-} from '@/lib/quiz-template';
+import type { QuestionBankEntry } from '@/lib/quiz-template';
 import type { Module } from '../../use-modules';
 
 interface QuestionListProps {
@@ -76,10 +72,10 @@ export function QuestionList({
             </p>
             <div className="mt-2 flex flex-wrap items-center gap-1.5">
               <Badge variant="secondary" className="text-xs">
-                {QUIZ_CATEGORIES[question.category].label}
+                {t(`categories.${question.category}`)}
               </Badge>
               <Badge variant="outline" className="text-xs">
-                {QUESTION_SUB_TYPE_LABELS[question.subType]}
+                {t(`questionTypes.${question.subType}`)}
               </Badge>
               {question.lessonId && (
                 <Badge variant="outline" className="text-xs">
