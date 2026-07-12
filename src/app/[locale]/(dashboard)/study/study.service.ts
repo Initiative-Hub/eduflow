@@ -56,6 +56,12 @@ export const studyService = {
     });
   },
 
+  shareChat: async (chatId: string) => {
+    return apiClient.post<{ shareId: string; shareUrl: string }>(
+      `/v1/ai/study/${chatId}/share`
+    );
+  },
+
   shareInteractiveContent: async (
     chatId: string,
     data: {
