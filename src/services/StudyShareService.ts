@@ -1,4 +1,5 @@
 import type { UIMessage } from 'ai';
+import { z } from 'zod';
 import {
   AiChatRole,
   AiChatStatus,
@@ -12,7 +13,6 @@ import {
   type StudyInteractiveContentData,
   studyInteractiveContentSchema,
 } from '@/utils/study-interactive-content';
-import { z } from 'zod';
 
 import {
   isStudyPracticeQuizData,

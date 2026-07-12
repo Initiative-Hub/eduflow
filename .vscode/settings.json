@@ -38,6 +38,9 @@
     "**/app/**/route.ts": "${dirname} - API Route",
     "**/components/**/index.tsx": "${dirname} - Component"
   },
+  "editor.codeActionsOnSave": {
+    "source.organizeImports.biome": "explicit"
+  },
   "tailwindCSS.experimental.configFile": "src/app/globals.css",
   "vitest.disableWorkspaceWarning": true,
   "i18n-ally.enabledFrameworks": ["next-intl"],
