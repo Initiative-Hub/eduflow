@@ -27,6 +27,9 @@ export interface InventoryEntry {
   updatedAt: string;
   uploadedAt: string;
   deletedAt: string | null;
+  thumbnailObjectKey: string | null;
+  thumbnailMimeType: string | null;
+  thumbnailUrl?: string | null;
 }
 
 export interface InventoryListPagination {

@@ -71,13 +71,13 @@ describe('VocabularyService', () => {
     await VocabularyService.analyze('Hello there!');
 
     const calls = generateText.mock.calls as unknown as Array<
-      [{ system: string; output: { name: string } }]
+      [{ instructions: string; output: { name: string } }]
     >;
     const request = calls[0]?.[0];
     if (!request) throw new Error('generateText was not called');
 
-    expect(request.system).toContain('IPA');
-    expect(request.system).toContain('phonemic');
+    expect(request.instructions).toContain('IPA');
+    expect(request.instructions).toContain('phonemic');
     expect(request.output.name).toBe('object');
   });
 

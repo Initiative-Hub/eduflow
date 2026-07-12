@@ -1,6 +1,6 @@
 import { openai } from '@ai-sdk/openai';
 import { SynthesizeSpeechCommand, type VoiceId } from '@aws-sdk/client-polly';
-import { experimental_generateSpeech as generateSpeech } from 'ai';
+import { generateSpeech } from 'ai';
 import { createPollyClient } from '@/lib/aws/polly-client';
 
 export type PollyVoiceId = Extract<

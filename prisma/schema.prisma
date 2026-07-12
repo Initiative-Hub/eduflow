@@ -43,6 +43,7 @@ model User {
   vocabularyLists        VocabularyList[]
   wordbankReviewSessions WordbankReviewSession[]
   wordbankReviewAttempts WordbankReviewAttempt[]
+  sharedResources        SharedResource[]
 
   @@map("user")
 }
@@ -224,10 +225,12 @@ model FileInventory {
   mimeType  String? @map("mime_type")
   extension String? @map("extension")
 
-  bucket         String?
-  objectKey      String? @map("object_key")
-  checksumSha256 String? @map("checksum_sha256")
-  vectorDbId     String? @map("vector_db_id")
+  bucket             String?
+  objectKey          String? @map("object_key")
+  checksumSha256     String? @map("checksum_sha256")
+  vectorDbId         String? @map("vector_db_id")
+  thumbnailObjectKey String? @map("thumbnail_object_key")
+  thumbnailMimeType  String? @map("thumbnail_mime_type")
 
   createdAt  DateTime  @default(now()) @map("created_at")
   updatedAt  DateTime  @updatedAt @map("updated_at")
@@ -672,4 +675,30 @@ model DictionaryCache {
   @@unique([word, source])
   @@index([word, source])
   @@map("dictionary_cache")
+}
+
+enum ShareResourceType {
+  STUDY_INTERACTIVE_CONTENT
+  STUDY_CHAT
+}
+
+model SharedResource {
+  id              String            @id @default(uuid())
+  ownerUserId     String?           @map("owner_user_id")
+  resourceType    ShareResourceType @map("resource_type")
+  sourceChatId    String?           @map("source_chat_id")
+  sourceMessageId String?           @map("source_message_id")
+  title           String
+  description     String?
+  payload         Json
+  expiresAt       DateTime?         @map("expires_at")
+  revokedAt       DateTime?         @map("revoked_at")
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+
+  owner User? @relation(fields: [ownerUserId], references: [id], onDelete: SetNull)
+
+  @@index([ownerUserId, createdAt(sort: Desc)])
+  @@index([resourceType, createdAt(sort: Desc)])
+  @@map("shared_resource")
 }

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withAuth } from '@/lib/api/middlewares';
 import { PresentationService } from '@/services/PresentationService';
+import { SlideService } from '@/services/SlideService';
 
 const planPresentationSchema = z.object({
   lessonId: z.string().min(1, 'lessonId is required'),
@@ -19,6 +20,7 @@ const planPresentationSchema = z.object({
     .max(500, 'Context guidelines cannot exceed 500 characters')
     .optional()
     .default(''),
+  collection: z.string().optional(),
 });
 
 /**
@@ -78,13 +80,27 @@ export const POST = withAuth(async (req, sessionData) => {
       );
     }
 
-    const { lessonId, duration, context } = parsed.data;
+    const { lessonId, duration, context, collection } = parsed.data;
+
+    // Fetch template categories for custom collections so the AI can use
+    // the template's own layout type names instead of the standard 16.
+    // ('auto' means the AI picks the style — standard planning path.)
+    let templateCategories: string[] | undefined;
+    if (collection && collection !== 'auto') {
+      templateCategories =
+        await SlideService.getPlanningTemplateCategories(collection);
+    }
+
+    // Live style inventory (local + S3) for the AI's style recommendation.
+    const styleCollections = await SlideService.getStyleCollections();
 
     const stream = PresentationService.planPresentationStream({
       lessonId,
       userId,
       duration,
       context,
+      templateCategories,
+      styleCollections,
     });
 
     return new Response(stream as unknown as ReadableStream<Uint8Array>, {

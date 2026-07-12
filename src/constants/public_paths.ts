@@ -5,6 +5,7 @@ export const APP_PUBLIC_PATHS = [
   '/api-docs',
   '/chat',
   '/landing',
+  '/share',
   '/course',
   '/english',
   '/socratic',

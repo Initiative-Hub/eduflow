@@ -400,7 +400,7 @@ export async function POST(
           });
         },
 
-        onFinish: async ({ messages }) => {
+        onEnd: async ({ messages }) => {
           await ChatPersistenceService.saveMessages({
             chatId,
             userId,
@@ -465,7 +465,7 @@ export async function POST(
           writer.write({ type: 'finish', finishReason: 'stop' });
         },
 
-        onFinish: async ({ messages }) => {
+        onEnd: async ({ messages }) => {
           await ChatPersistenceService.saveMessages({
             chatId,
             userId,
@@ -526,7 +526,7 @@ export async function POST(
         writer.write({ type: 'finish', finishReason: 'stop' });
       },
 
-      onFinish: async ({ messages }) => {
+      onEnd: async ({ messages }) => {
         await ChatPersistenceService.saveMessages({
           chatId,
           userId,

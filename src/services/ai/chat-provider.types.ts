@@ -23,9 +23,7 @@ export type StreamCourseInput = {
   context?: string;
   model?: string;
   apiKey?: string;
-  onFinish?: (event: {
-    object: AICourseGeneration;
-  }) => PromiseLike<void> | void;
+  onEnd?: (event: { object: AICourseGeneration }) => PromiseLike<void> | void;
 };
 
 export type AIQuizInput = {

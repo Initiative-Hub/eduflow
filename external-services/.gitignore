@@ -28,3 +28,9 @@ env/
 
 # Logs
 *.log
+
+# Storage
+storage/
+
+# Slide templates
+templates/

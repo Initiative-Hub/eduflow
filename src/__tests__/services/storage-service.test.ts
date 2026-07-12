@@ -2,12 +2,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { prisma } from '@/lib/prisma';
 import {
   buildInventoryObjectKey,
+  buildInventoryThumbnailObjectKey,
   createInventoryReadSignedUrl,
   createInventoryWriteSignedUrl,
   deleteInventoryObject,
   downloadInventoryObject,
   getInventoryObjectMetadata,
+  uploadInventoryObject,
 } from '@/lib/storage/file-storage';
+import { createPdfFirstPageThumbnail } from '@/lib/storage/pdf-thumbnail';
 import { StorageService } from '@/services/StorageService';
 
 vi.mock('@/lib/prisma', () => ({
@@ -29,11 +32,17 @@ vi.mock('@/lib/storage/file-storage', () => ({
   STORAGE_MAX_FILE_SIZE_BYTES: 50 * 1024 * 1024,
   FILE_INVENTORY_BUCKET_NAME: 'eduflow-inventory',
   buildInventoryObjectKey: vi.fn(),
+  buildInventoryThumbnailObjectKey: vi.fn(),
   getInventoryObjectMetadata: vi.fn(),
+  uploadInventoryObject: vi.fn(),
   downloadInventoryObject: vi.fn(),
   deleteInventoryObject: vi.fn(),
   createInventoryReadSignedUrl: vi.fn(),
   createInventoryWriteSignedUrl: vi.fn(),
+}));
+
+vi.mock('@/lib/storage/pdf-thumbnail', () => ({
+  createPdfFirstPageThumbnail: vi.fn(),
 }));
 
 const fileInventory = prisma.fileInventory as unknown as Record<
@@ -43,7 +52,12 @@ const fileInventory = prisma.fileInventory as unknown as Record<
 const mockBuildInventoryObjectKey = buildInventoryObjectKey as ReturnType<
   typeof vi.fn
 >;
+const mockBuildInventoryThumbnailObjectKey =
+  buildInventoryThumbnailObjectKey as ReturnType<typeof vi.fn>;
 const mockGetInventoryObjectMetadata = getInventoryObjectMetadata as ReturnType<
+  typeof vi.fn
+>;
+const mockUploadInventoryObject = uploadInventoryObject as ReturnType<
   typeof vi.fn
 >;
 const mockCreateInventoryReadSignedUrl =
@@ -56,6 +70,8 @@ const mockDeleteInventoryObject = deleteInventoryObject as ReturnType<
 const mockDownloadInventoryObject = downloadInventoryObject as ReturnType<
   typeof vi.fn
 >;
+const mockCreatePdfFirstPageThumbnail =
+  createPdfFirstPageThumbnail as ReturnType<typeof vi.fn>;
 
 describe('StorageService', () => {
   beforeEach(() => {
@@ -63,11 +79,14 @@ describe('StorageService', () => {
       mockFn.mockReset();
     });
     mockBuildInventoryObjectKey.mockReset();
+    mockBuildInventoryThumbnailObjectKey.mockReset();
     mockGetInventoryObjectMetadata.mockReset();
+    mockUploadInventoryObject.mockReset();
     mockCreateInventoryReadSignedUrl.mockReset();
     mockCreateInventoryWriteSignedUrl.mockReset();
     mockDeleteInventoryObject.mockReset();
     mockDownloadInventoryObject.mockReset();
+    mockCreatePdfFirstPageThumbnail.mockReset();
   });
 
   describe('listDirectory', () => {
@@ -85,7 +104,9 @@ describe('StorageService', () => {
       });
 
       expect(result.total).toBe(1);
-      expect(result.items).toEqual([{ id: 'f1', fileSize: 2 }]);
+      expect(result.items).toEqual([
+        { id: 'f1', fileSize: 2, thumbnailUrl: null },
+      ]);
     });
 
     it('throws when parent folder is invalid', async () => {
@@ -477,6 +498,66 @@ describe('StorageService', () => {
 
       expect(result.status).toBe('READY');
       expect(fileInventory.update).toHaveBeenCalled();
+    });
+
+    it('generates and persists a PDF thumbnail when confirming upload', async () => {
+      fileInventory.findFirst.mockResolvedValue({
+        id: 'f1',
+        userId: 'u1',
+        courseId: null,
+        isFolder: false,
+        objectKey: 'users/u1/file.pdf',
+        fileSize: BigInt(10),
+        mimeType: 'application/pdf',
+        extension: 'pdf',
+      });
+      mockGetInventoryObjectMetadata.mockResolvedValue({
+        exists: true,
+        contentLength: 10,
+      });
+      mockDownloadInventoryObject.mockResolvedValue({
+        bytes: new Uint8Array([1, 2, 3]),
+        contentType: 'application/pdf',
+      });
+      mockCreatePdfFirstPageThumbnail.mockResolvedValue(
+        new Uint8Array([0xff, 0xd8, 0xff])
+      );
+      mockBuildInventoryThumbnailObjectKey.mockReturnValue(
+        'users/u1/thumbnails/f1.jpg'
+      );
+      fileInventory.update.mockResolvedValue({
+        id: 'f1',
+        fileSize: BigInt(10),
+        status: 'READY',
+        thumbnailObjectKey: 'users/u1/thumbnails/f1.jpg',
+        thumbnailMimeType: 'image/jpeg',
+      });
+
+      await StorageService.confirmUpload({
+        userId: 'u1',
+        fileId: 'f1',
+      });
+
+      expect(mockCreatePdfFirstPageThumbnail).toHaveBeenCalledWith(
+        new Uint8Array([1, 2, 3])
+      );
+      expect(mockUploadInventoryObject).toHaveBeenCalledWith({
+        objectKey: 'users/u1/thumbnails/f1.jpg',
+        contentType: 'image/jpeg',
+        body: new Uint8Array([0xff, 0xd8, 0xff]),
+      });
+      expect(fileInventory.update).toHaveBeenCalledWith({
+        where: {
+          id: 'f1',
+        },
+        data: {
+          status: 'READY',
+          checksumSha256: null,
+          uploadedAt: expect.any(Date),
+          thumbnailObjectKey: 'users/u1/thumbnails/f1.jpg',
+          thumbnailMimeType: 'image/jpeg',
+        },
+      });
     });
 
     it('rolls back pending file when object does not exist', async () => {

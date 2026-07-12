@@ -12,6 +12,7 @@ export const STORAGE_MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024;
 
 export const FILE_INVENTORY_BUCKET_NAME = 'eduflow-inventory';
 export const FILE_TEMPLATES_BUCKET_NAME = 'eduflow-template';
+export const FILE_DEFAULT_TEMPLATES_BUCKET_NAME = 'eduflow-default-template';
 
 function sanitizeSegment(value: string) {
   return value
@@ -20,6 +21,18 @@ function sanitizeSegment(value: string) {
     .replace(/[^a-zA-Z0-9._ -]/g, '')
     .replace(/\s+/g, ' ')
     .slice(0, 180);
+}
+
+export function buildInventoryThumbnailObjectKey(options: {
+  userId: string;
+  fileId: string;
+  courseId?: string | null;
+}) {
+  const scope = options.courseId
+    ? `courses/${options.courseId}`
+    : `users/${options.userId}`;
+
+  return `${scope}/thumbnails/${options.fileId}.jpg`;
 }
 
 export function buildInventoryObjectKey(

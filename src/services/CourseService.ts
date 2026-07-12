@@ -619,7 +619,7 @@ export class CourseService {
       try {
         const aiService = new OpenRouterService();
 
-        // Runs extract → search → generate deltas → done, persists via onFinish
+        // Runs extract → search → generate deltas → done, persists via onEnd
         await aiService.streamCourseToWriter(
           {
             userId: data.userId,
@@ -628,7 +628,7 @@ export class CourseService {
             context: data.context,
             apiKey: data.apiKey,
             model: data.model,
-            onFinish: async ({ object }) => {
+            onEnd: async ({ object }) => {
               if (!object) return;
               // Emit save event before persisting
               await writer.write(`${JSON.stringify({ type: 'save' })}\n`);

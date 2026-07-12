@@ -78,6 +78,7 @@ for any tasks.).
 
 - **Authenticate First**: In server components and route handlers, call `auth()` before protected Prisma reads or writes. Redirect unauthenticated users to `/login` or return `401` before querying protected data.
 - **Explicit Role Checks**: Keep admin-only routes explicit about role checks before exposing privileged data or mutations. The current pattern in `src/app/api/admin/users/route.ts` is to load the current user, verify `ADMIN`, then proceed.
+- **Composable Auth Wrappers**: Keep `withRoles(...)` and `withPermissions(...)` self-sufficient. They must be usable directly on route handlers without wrapping them in `withAuth(...)`, while still accepting a forwarded session when composed under another auth-aware wrapper.
 - **Shared Prisma Client**: Use the shared Prisma client from `src/lib/prisma.ts` and local bootstrap data from `prisma/seed.ts`; use `bun db:reset` when you need a clean local database.
 
 ### 6.2 UI & Rendering Patterns
@@ -126,10 +127,19 @@ for any tasks.).
 
 ### 6.6 Storage & Uploads
 
-- **Upload Confirmation Fallback**: When an uploaded file does not exist on the remote bucket during `confirmUpload`, explicitly delete the pending database entry to roll back the state.
+- Upload Confirmation Fallback: When an uploaded file does not exist on the remote bucket during `confirmUpload`, explicitly delete the pending database entry to roll back the state.
 - **Bucket Initialization**: When adding new buckets to the storage config, ensure they are also added to `docker-compose.yml` initialization scripts (`minio-init` and `minio-reset`).
 - **Preview Delivery**: For inventory previews, prefer signed URLs over fetching full blobs into browser memory, and provide UI fallbacks when inline rendering fails.
 - **Resilient S3 Client Initializers**: Always provide fallback checks to standard AWS environment variables (`AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`) when namespaced variables (e.g. `AWS_S3_REGION`) are missing to prevent startup failures on custom local dev configurations.
+- **S3-First Multi-Bucket Templates**: Slide templates are stored in two distinct S3 buckets under the `templates/` prefix:
+  - System default collections (e.g., `vintage`, `clean_light`, `pastel_pop`, `starter`, `neon_dark` and the base `templates` layout categories) belong in the system default templates bucket (`AWS_S3_DEFAULT_TEMPLATES_BUCKET`, i.e., `eduflow-default-template`).
+  - User-uploaded custom templates must remain isolated and persist inside the custom templates bucket (`AWS_S3_TEMPLATES_BUCKET`, i.e., `eduflow-template`).
+  - The backend slide service lists collections and downloads layouts dynamically from these buckets on demand, caching them locally under `SLIDE_TEMPLATES_DIR`. Local static layout files in `external-services/templates` are no longer required and can be deleted safely after they are uploaded to S3.
+  - **System Template Style Registration**: When adding a new system-wide default style collection (e.g. `illustrative_culture`, `minimalist_gradient`), register it in the following places so that S3 requests are routed to the default templates bucket:
+    1. **`slide_service.py`**: Add it to `default_collections` set (in `_ensure_collection_downloaded`), the fallback descriptions dictionary, and the directory cleanup exemption whitelist.
+    2. **`slide_controller.py`**: Add it to `default_collections` set in the categories lookup controller.
+    3. **`SlideService.ts`**: Add it to `defaultCollections` Set in the template previews resolver.
+    4. **`PresentationService.ts`**: Register it in the `STYLE_COLLECTIONS` record with its prompt-optimized styling description so the AI planner can recommend it.
 
 ## 7. Continuous Improvement (Session Retrospective)
 

@@ -2,8 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { errorResponse } from '@/lib/api/error-response';
 import { withRoles } from '@/lib/api/middlewares';
-import { generateDeckFromPlan } from '@/lib/slides';
-import { LessonService } from '@/services/LessonService';
+import { LessonPresentationService } from '@/services/LessonPresentationService';
 import { presentationPlanSchema } from '@/services/PresentationService';
 
 export const dynamic = 'force-dynamic';
@@ -87,38 +86,16 @@ export const POST = withRoles(
 
       const { lessonId, title, palette, slides, collection } = parsed.data;
 
-      const deck = await generateDeckFromPlan({
+      const deck = await LessonPresentationService.generateDeckFromPlan({
+        lessonId,
+        userId: sessionData.user.id,
         title,
         palette,
         slides,
         collection,
       });
 
-      // Persist the deck reference so the lesson can re-open it later without
-      // regenerating. Don't fail the whole request if only the save errors —
-      // the deck is already rendered and viewable this session.
-      const warnings = [...deck.warnings];
-      try {
-        await LessonService.saveLessonPresentation(
-          lessonId,
-          sessionData.user.id,
-          { deckId: deck.deckId, deckKey: deck.s3Key }
-        );
-      } catch (saveError) {
-        console.error('Failed to persist slide deck reference:', saveError);
-        warnings.push('Deck generated but could not be saved to the lesson.');
-      }
-
-      return NextResponse.json(
-        {
-          deckId: deck.deckId,
-          deckUrl: `/api/v1/ai/slides/${deck.deckId}`,
-          slides: deck.slides,
-          warnings,
-          usage: deck.usage,
-        },
-        { status: 200 }
-      );
+      return NextResponse.json(deck, { status: 200 });
     } catch (error) {
       console.error('AI Slide Generation Error:', error);
       if (error instanceof Error && error.message.includes('timed out')) {

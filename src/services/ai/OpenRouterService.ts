@@ -2,9 +2,9 @@ import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import {
   convertToModelMessages,
   generateText,
+  isStepCount,
   Output,
   smoothStream,
-  stepCountIs,
   streamText,
 } from 'ai';
 import type { z } from 'zod';
@@ -53,12 +53,12 @@ export class OpenRouterService implements ChatProviderService {
     return streamText({
       experimental_transform: smoothStream(),
       model: provider(model),
-      system: resolveChatSystemPrompt(options?.prompt ?? ''),
+      instructions: resolveChatSystemPrompt(options?.prompt ?? ''),
       messages: await convertToModelMessages(input.messages, {
         convertDataPart: convertLessonReferenceDataPart,
       }),
       tools: options?.tools,
-      stopWhen: options?.maxSteps ? stepCountIs(options.maxSteps) : undefined,
+      stopWhen: options?.maxSteps ? isStepCount(options.maxSteps) : undefined,
     });
   }
 
@@ -122,7 +122,7 @@ export class OpenRouterService implements ChatProviderService {
     const result = streamText({
       model: provider(model),
       output: Output.object({ schema: aiCourseGenerationSchema }),
-      system: COURSE_GENERATION_PROMPT,
+      instructions: COURSE_GENERATION_PROMPT,
       prompt: `
         Content to analyze and transform into a course:
         
@@ -155,7 +155,7 @@ export class OpenRouterService implements ChatProviderService {
     }
 
     const generatedCourse = await result.output;
-    await options.onFinish?.({ object: generatedCourse });
+    await options.onEnd?.({ object: generatedCourse });
     await emit({ type: 'done' });
   }
 
@@ -208,7 +208,7 @@ export class OpenRouterService implements ChatProviderService {
       model: provider(model),
       output: Output.object({ schema: aiSchema }),
       prompt,
-      system: QUIZ_GENERATION_PROMPT,
+      instructions: QUIZ_GENERATION_PROMPT,
     });
 
     // Inject the correct `type` field into every question (the AI schema omitted it)

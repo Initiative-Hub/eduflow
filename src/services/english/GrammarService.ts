@@ -84,7 +84,7 @@ export class GrammarService {
     const { output } = await generateText({
       model: provider(DEFAULT_MODELS.openrouter),
       output: Output.object({ schema: grammarAnalysisSchema }),
-      system: `You are a friendly English grammar teacher helping ESL/EFL students.
+      instructions: `You are a friendly English grammar teacher helping ESL/EFL students.
 Analyze the given sentence for grammar, spelling, punctuation, and style issues.
 Be encouraging and constructive. Keep explanations simple and clear.
 Never rewrite the learner's sentence as the analyzed sentence. Treat the prompt sentence as immutable learner input.

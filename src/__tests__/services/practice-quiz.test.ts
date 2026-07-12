@@ -1,7 +1,7 @@
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { convertToModelMessages, generateText, tool } from 'ai';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { z } from 'zod';
+import * as z from 'zod';
 
 const mocks = vi.hoisted(() => ({
   convertToModelMessages: vi.fn(async (messages) => messages),
@@ -19,17 +19,8 @@ vi.mock('@openrouter/ai-sdk-provider', () => ({
   createOpenRouter: vi.fn(() => mocks.provider),
 }));
 
-vi.mock('zod', async () => {
-  const actual = await vi.importActual<typeof import('zod')>('zod');
-  return {
-    ...actual,
-    z: actual.z ?? actual,
-  };
-});
-
 vi.mock('@/lib/validations/quiz.schema', async () => {
-  const actual = await vi.importActual<typeof import('zod')>('zod');
-  const zod = actual.z ?? actual;
+  const zod = await vi.importActual<typeof import('zod')>('zod');
   const questionSchema = zod.object({
     explanation: zod.string().optional(),
     prompt: zod.string(),
@@ -44,8 +35,7 @@ vi.mock('@/lib/validations/quiz.schema', async () => {
 });
 
 vi.mock('@/lib/validations/study.schema', async () => {
-  const actual = await vi.importActual<typeof import('zod')>('zod');
-  const zod = actual.z ?? actual;
+  const zod = await vi.importActual<typeof import('zod')>('zod');
 
   return {
     DEFAULT_STUDY_QUIZ_OPTIONS: {
@@ -150,7 +140,7 @@ describe('study practice quiz generation', () => {
     expect(mockGenerateText.mock.calls[1][0].stopWhen).toBeDefined();
     expect(mockGenerateText.mock.calls[2][0]).toMatchObject({
       output: expect.any(Object),
-      system: expect.any(String),
+      instructions: expect.any(String),
     });
   });
 });

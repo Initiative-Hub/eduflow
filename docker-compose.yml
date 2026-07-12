@@ -68,6 +68,8 @@ services:
       mc anonymous set none local/eduflow-inventory;
       mc mb --ignore-existing local/eduflow-template;
       mc anonymous set none local/eduflow-template;
+      mc mb --ignore-existing local/eduflow-default-template;
+      mc anonymous set none local/eduflow-default-template;
       "
     networks:
       - storage-network
@@ -92,6 +94,9 @@ services:
       mc rm --force --recursive local/eduflow-template;
       mc mb --ignore-existing local/eduflow-template;
       mc anonymous set none local/eduflow-template;
+      mc rm --force --recursive local/eduflow-default-template;
+      mc mb --ignore-existing local/eduflow-default-template;
+      mc anonymous set none local/eduflow-default-template;
       "
     networks:
       - storage-network
@@ -135,7 +140,6 @@ services:
       - ./external-services/.env
     volumes:
       - ./external-services/storage:/app/storage
-      - ./external-services/templates:/app/templates
 
 
 networks: 

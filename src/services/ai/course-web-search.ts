@@ -1,5 +1,5 @@
 import { tavilySearch } from '@tavily/ai-sdk';
-import { type LanguageModel, Output, stepCountIs, streamText } from 'ai';
+import { isStepCount, type LanguageModel, Output, streamText } from 'ai';
 import * as z from 'zod';
 import type {
   CourseSearchSourceKind,
@@ -92,8 +92,8 @@ async function generateSearchContext({
           topic: 'general',
         }),
       },
-      stopWhen: stepCountIs(3),
-      system:
+      stopWhen: isStepCount(3),
+      instructions:
         'You turn Tavily search results into structured source context for an educational course generator. Preserve source titles, URLs, and useful source content.',
       prompt:
         purpose === 'web'

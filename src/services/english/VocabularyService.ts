@@ -68,7 +68,7 @@ export class VocabularyService {
     const { output } = await generateText({
       model: provider(DEFAULT_MODELS.openrouter),
       output: Output.object({ schema: vocabularySchema }),
-      system: `You are an English vocabulary tutor.
+      instructions: `You are an English vocabulary tutor.
 Analyze the given text and extract 8-12 key vocabulary words that are important for understanding the text.
 Prefer words that are: advanced, academic, or contextually significant.
 Avoid extracting very common words (the, is, a, in, etc.).

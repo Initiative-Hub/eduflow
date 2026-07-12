@@ -1,0 +1,147 @@
+import uuid
+from pathlib import Path
+from typing import Any, Dict
+
+from fastapi import BackgroundTasks, HTTPException
+from fastapi.responses import FileResponse
+
+from app.deps import STORAGE_DIR
+from app.schemas.slide_schema import GenReq, PlanGenReq
+from app.services.s3_service import download_file_from_s3, upload_file_to_s3
+from app.services.slide_service import SlideService
+
+
+class SlideJobService:
+    def __init__(self, slide_service: SlideService):
+        self.slide_service = slide_service
+        self.jobs: Dict[str, Dict[str, Any]] = {}
+
+    def create_job(self) -> str:
+        job_id = uuid.uuid4().hex[:12]
+        self.jobs[job_id] = {
+            "status": "queued",
+            "result": None,
+            "message": None,
+        }
+        return job_id
+
+    def get_job_status(
+        self, job_id: str, detail: str = "Job not found"
+    ) -> Dict[str, Any]:
+        if job_id not in self.jobs:
+            raise HTTPException(status_code=404, detail=detail)
+        return self.jobs[job_id]
+
+    async def _execute_generation_job(
+        self, job_id: str, req: GenReq, out_path: Path
+    ) -> None:
+        try:
+            self.jobs[job_id]["status"] = "running"
+            result = await self.slide_service.generate_deck(
+                topic=req.topic,
+                collection=req.collection,
+                output_path=out_path,
+                palette=req.palette,
+                language=req.language,
+                animation=req.animation,
+            )
+
+            s3_key = f"slides/{job_id}.html"
+            uploaded = await upload_file_to_s3(out_path, s3_key)
+            if uploaded and out_path.exists():
+                out_path.unlink()
+
+            self.jobs[job_id]["status"] = "done"
+            self.jobs[job_id]["result"] = {
+                "deck_id": job_id,
+                "slides": result.get("slides", []),
+                "usage": result.get("usage", {}),
+            }
+            if uploaded:
+                self.jobs[job_id]["result"]["s3_key"] = s3_key
+        except Exception as error:
+            self.jobs[job_id]["status"] = "error"
+            self.jobs[job_id]["message"] = str(error)
+
+    async def queue_generation_job(
+        self, background_tasks: BackgroundTasks, req: GenReq
+    ) -> Dict[str, str]:
+        job_id = self.create_job()
+        out_path = STORAGE_DIR / f"{job_id}.html"
+        background_tasks.add_task(self._execute_generation_job, job_id, req, out_path)
+        return {"job_id": job_id, "status": "queued"}
+
+    async def generate_deck_from_plan(self, req: PlanGenReq) -> Dict[str, Any]:
+        job_id = uuid.uuid4().hex[:12]
+        out_path = STORAGE_DIR / f"{job_id}.html"
+
+        try:
+            plan_dict = {
+                "title": req.title,
+                "slides": [slide.model_dump() for slide in req.slides],
+            }
+            result = await self.slide_service.generate_deck_from_plan(
+                plan=plan_dict,
+                output_path=out_path,
+                palette=req.palette,
+                images=req.images,
+                image_source=req.image_source,
+                collection=req.collection,
+            )
+
+            s3_key = f"slides/{job_id}.html"
+            uploaded = await upload_file_to_s3(out_path, s3_key)
+            if uploaded and out_path.exists():
+                out_path.unlink()
+
+            response = {
+                "deck_id": job_id,
+                "slides": result.get("slides", []),
+                "usage": result.get("usage", {}),
+                "warnings": result.get("warnings", []),
+            }
+            if uploaded:
+                response["s3_key"] = s3_key
+
+            return {"status": "done", "result": response}
+        except Exception as error:
+            return {"status": "error", "message": str(error)}
+
+    async def _execute_import_job(
+        self, job_id: str, file_bytes: bytes, filename: str, name: str | None
+    ) -> None:
+        try:
+            self.jobs[job_id]["status"] = "running"
+            result = await self.slide_service.import_template_collection(
+                file_bytes, filename, name
+            )
+            self.jobs[job_id]["status"] = "done"
+            self.jobs[job_id]["result"] = result
+        except Exception as error:
+            self.jobs[job_id]["status"] = "error"
+            self.jobs[job_id]["message"] = str(error)
+
+    async def queue_import_job(
+        self,
+        background_tasks: BackgroundTasks,
+        file_bytes: bytes,
+        filename: str,
+        name: str | None,
+    ) -> Dict[str, str]:
+        job_id = self.create_job()
+        background_tasks.add_task(
+            self._execute_import_job, job_id, file_bytes, filename, name
+        )
+        return {"job_id": job_id, "status": "queued"}
+
+    async def get_deck_file(self, deck_id: str) -> FileResponse:
+        file_path = STORAGE_DIR / f"{deck_id}.html"
+        if not file_path.exists():
+            s3_key = f"slides/{deck_id}.html"
+            downloaded = await download_file_from_s3(s3_key, file_path)
+            if not downloaded:
+                raise HTTPException(status_code=404, detail="Deck file not found")
+        return FileResponse(file_path, media_type="text/html")
+
+    async def get_deck_pptx(self, deck_id: str) -> Path:
+        return await self.slide_service.generate_pptx(deck_id)

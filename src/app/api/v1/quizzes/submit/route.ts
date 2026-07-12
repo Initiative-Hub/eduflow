@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { CourseEnrollmentStatus, type Prisma } from '@/generated/prisma';
 import { errorResponse } from '@/lib/api/error-response';
-import { type AuthHandler, withAuth } from '@/lib/api/middlewares';
+import { withAuth } from '@/lib/api/middlewares';
 import { prisma } from '@/lib/prisma';
 import { calculateScore } from '@/lib/quiz-template/scoring';
 import type {
@@ -117,7 +117,7 @@ const submitQuizSchema = z.object({
  *       500:
  *         description: Internal server error
  */
-const handler: AuthHandler = async (req, sessionData) => {
+export const POST = withAuth(async (req, sessionData) => {
   try {
     const body = await req.json();
 
@@ -246,6 +246,4 @@ const handler: AuthHandler = async (req, sessionData) => {
     console.error('Quiz submission error:', error);
     return errorResponse('INTERNAL_ERROR', 'Internal Server Error', 500);
   }
-};
-
-export const POST = withAuth(handler);
+});
