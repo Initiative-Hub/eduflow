@@ -31,4 +31,4 @@ jobs:
       - name: Deploy job
         run: |
           cd external-services
-          modal deploy -m modal_deployment.py
+          modal deploy modal_deployment.py
