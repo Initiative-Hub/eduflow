@@ -50,6 +50,14 @@ const STYLE_COLLECTIONS: Record<string, string> = {
     'Cream paper, deep plum script headlines, golden sun discs, slate and terracotta organic blobs, line-art European street skylines — travel, geography, history, literature, art and storytelling topics.',
   cultural_folk:
     'Warm plum-gray background, cream text, terracotta and sand accents with a grounded earth strip — culture, diversity, social studies, community, humanities and storytelling topics.',
+  electric_green_white:
+    'Clean white editorial canvas with black contrast, electric green accents, modern automotive framing, and bold geometric type — electric vehicles, sustainability, engineering, product showcases, and transportation topics.',
+  green_environment_care:
+    'Cream paper, deep forest-green condensed headlines, lush nature photography, sage botanical ornaments, and subtle halftone texture — conservation, climate, ecology, sustainability, biodiversity, and environmental care topics.',
+  rmit_red_modern:
+    'Crisp white academic canvas with bold RMIT-red geometric frames, subtle contour-line texture, black sans-serif typography, and red-washed campus image panels — university lectures, course briefings, research presentations, and academic project decks.',
+  startup_neon_pitch:
+    'Black startup pitch deck with oversized white typography, electric blue and violet light trails, glossy gradient pills, and contact-footer details — startup pitches, business proposals, tech products, investor decks, and modern company presentations.',
 };
 
 export const presentationPlanSchema = z.object({
