@@ -7,7 +7,7 @@ from app.controllers.pdf_controller import router as pdf_router  # noqa: E402
 from app.controllers.youtube_controller import router as youtube_router  # noqa: E402
 from app.controllers.slide_controller import router as slide_router  # noqa: E402
 
-app = FastAPI(title="External Services API")
+app = FastAPI(title="EduFlow External Services API")
 
 
 @app.get("/health")
