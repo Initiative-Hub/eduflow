@@ -3,6 +3,7 @@ import {
   AiChatRole,
   AiChatStatus,
   AiChatType,
+  type Prisma,
   ShareResourceType,
 } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
@@ -49,7 +50,11 @@ type PublicStudyChatMessage = z.infer<typeof publicStudyChatMessageSchema>;
 type PublicStudyChatSnapshot = z.infer<typeof publicStudyChatSnapshotSchema>;
 
 function createPublicStudyChatSnapshot(
-  uiMessages: UIMessage[]
+  uiMessages: Array<{
+    id: string;
+    role: string;
+    parts: unknown;
+  }>
 ): PublicStudyChatSnapshot {
   const messages: PublicStudyChatMessage[] = [];
 
@@ -60,36 +65,11 @@ function createPublicStudyChatSnapshot(
 
     const parts: PublicStudyChatPart[] = [];
 
-    for (const part of message.parts) {
-      if (part.type === 'text' && part.text.trim()) {
-        parts.push({
-          type: 'text',
-          text: part.text,
-        });
-        continue;
-      }
+    for (const rawPart of Array.isArray(message.parts) ? message.parts : []) {
+      const parsedPart = publicStudyChatPartSchema.safeParse(rawPart);
 
-      if (part.type === 'data-interactive-content') {
-        const content = studyInteractiveContentSchema.safeParse(part.data);
-
-        if (content.success) {
-          parts.push({
-            type: 'data-interactive-content',
-            data: content.data,
-          });
-        }
-
-        continue;
-      }
-
-      if (
-        part.type === 'data-practice-quiz' &&
-        isStudyPracticeQuizData(part.data)
-      ) {
-        parts.push({
-          type: 'data-practice-quiz',
-          data: part.data,
-        });
+      if (parsedPart.success) {
+        parts.push(parsedPart.data);
       }
     }
 
@@ -131,6 +111,80 @@ function createInteractiveContentSharedResource(input: {
 }
 
 export class StudyShareService {
+  static async createStudyChatShare(input: { chatId: string; userId: string }) {
+    const chat = await prisma.aiChat.findFirst({
+      where: {
+        id: input.chatId,
+        userId: input.userId,
+        type: AiChatType.STUDY_ASSISTANT,
+        status: AiChatStatus.ACTIVE,
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        title: true,
+        messages: {
+          orderBy: { createdAt: 'asc' },
+          select: {
+            id: true,
+            role: true,
+            parts: true,
+          },
+        },
+      },
+    });
+
+    if (!chat) return null;
+
+    const snapshot = createPublicStudyChatSnapshot(chat.messages);
+
+    return prisma.sharedResource.create({
+      data: {
+        ownerUserId: input.userId,
+        resourceType: ShareResourceType.STUDY_CHAT,
+        sourceChatId: chat.id,
+        title: chat.title || 'Shared study chat',
+        payload: snapshot as Prisma.InputJsonValue,
+      },
+      select: {
+        id: true,
+      },
+    });
+  }
+
+  static async getPublicStudyChat(shareId: string) {
+    const sharedResource = await prisma.sharedResource.findFirst({
+      where: {
+        id: shareId,
+        resourceType: ShareResourceType.STUDY_CHAT,
+        revokedAt: null,
+        OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+      },
+
+      select: {
+        ownerUserId: true,
+        payload: true,
+        sourceChatId: true,
+        title: true,
+      },
+    });
+
+    if (!sharedResource) return null;
+
+    const snapshot = publicStudyChatSnapshotSchema.safeParse(
+      sharedResource.payload
+    );
+
+    if (!snapshot.success) return null;
+
+    return {
+      messages: snapshot.data.messages as unknown as UIMessage[],
+      ownerUserId: sharedResource.ownerUserId,
+      sourceChatId: sharedResource.sourceChatId,
+      title: sharedResource.title,
+    };
+  }
+
   static async createInteractiveContentShare(input: {
     chatId: string;
     content?: StudyInteractiveContentData;
