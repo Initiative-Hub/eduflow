@@ -1980,6 +1980,27 @@
       "updated": "Đã cập nhật {date}",
       "viewAll": "Xem Tất Cả"
     },
+    "sharedChat": {
+      "close": "Đóng",
+      "copied": "Đã sao chép",
+      "copyError": "Không thể sao chép liên kết chia sẻ.",
+      "copyLink": "Sao chép liên kết",
+      "createdBy": "Được tạo với EduFlow",
+      "eyebrow": "Phiên học EduFlow được chia sẻ",
+      "ownerCta": "Mở phiên học gốc",
+      "ownerHelper": "Bạn đang xem phiên học do chính bạn chia sẻ.",
+      "retry": "Thử lại",
+      "share": "Chia sẻ cuộc trò chuyện",
+      "shareDialogDescription": "EduFlow đang chuẩn bị liên kết công khai cho cuộc trò chuyện học tập này.",
+      "shareDialogReadyDescription": "Bất kỳ ai có liên kết này đều có thể xem cuộc trò chuyện mà không cần đăng nhập.",
+      "shareDialogTitle": "Chia sẻ cuộc trò chuyện học tập",
+      "shareError": "Không thể tạo liên kết chia sẻ.",
+      "shareGenerating": "Đang tạo liên kết chia sẻ...",
+      "shareLinkLabel": "Liên kết công khai",
+      "shareSuccess": "Đã sao chép liên kết chia sẻ.",
+      "visitorCta": "Dùng thử EduFlow",
+      "visitorHelper": "Tạo phiên học có AI hỗ trợ của riêng bạn với EduFlow."
+    },
     "sharedInteractiveContent": {
       "createdBy": "Được tạo bằng EduFlow",
       "eyebrow": "Hoạt động EduFlow được chia sẻ",
