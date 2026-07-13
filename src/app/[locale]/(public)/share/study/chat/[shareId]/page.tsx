@@ -42,8 +42,8 @@ export default async function SharedStudyChatPage({
     sharedChat.ownerUserId === sessionData?.user?.id;
 
   return (
-    <main className="min-h-screen bg-background px-4 py-8 text-foreground sm:px-6 lg:px-8">
-      <div className="mx-auto w-full max-w-5xl">
+    <main className="min-h-screen bg-background px-3 py-6 text-foreground sm:px-5 sm:py-8 lg:px-8 xl:px-10">
+      <div className="mx-auto w-full max-w-6xl">
         <SharedStudyChatHeader
           title={sharedChat.title}
           ctaHref={
@@ -56,6 +56,7 @@ export default async function SharedStudyChatPage({
         />
 
         <ChatView
+          containerClassName="max-w-6xl"
           messages={sharedChat.messages}
           isStreaming={false}
           showInteractiveContentSaveToInventory={false}
