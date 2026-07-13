@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 import { DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
 import type { ChatSubmitAttachments } from '@/types/chat-attachments';
 import { ChatLessonReferenceTool } from '../../_components/chat-lesson-reference-tool';
+import { ChatShareButton } from '../../_components/chat-share-button';
 import { ChatSidebar } from '../../_components/chat-sidebar';
 import { ChatWorkspaceShell } from '../../_components/chat-workspace-shell';
 import { useChatController } from '../use-chat';
@@ -245,6 +246,15 @@ export function AIClient({
       <ChatWorkspaceShell
         composer={composer}
         scrollContainerRef={scrollContainerRef}
+        toolbar={
+          chatId && isAuthenticated && hasOutput ? (
+            <ChatShareButton
+              chatId={chatId}
+              chatType="CHAT_ASSISTANT"
+              disabled={isStreaming}
+            />
+          ) : undefined
+        }
         viewport={viewport}
       />
       <ChatSidebar currentChatId={chatId} />
