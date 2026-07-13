@@ -31,7 +31,7 @@ export function getCleanedPreviewSvg(svgContent: string): string {
   };
 
   // Replace standard {{key|length}} and {{key}} placeholders
-  cleaned = cleaned.replace(/\{\{([^}|]+)(?:\|[^}]+)?\}\}/g, (match, p1) => {
+  cleaned = cleaned.replace(/\{\{([^}|]+)(?:\|[^}]+)?\}\}/g, (_match, p1) => {
     const key = p1.trim().toLowerCase();
     if (replacements[key]) return replacements[key];
 

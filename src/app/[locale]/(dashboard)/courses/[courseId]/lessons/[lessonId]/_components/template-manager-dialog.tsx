@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -16,13 +17,7 @@ import {
   DropzoneEmptyState,
 } from '@/components/ui/dropzone';
 import { Input } from '@/components/ui/input';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
+import { Separator } from '@/components/ui/separator';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 import { getCleanedPreviewSvg } from '@/utils/slide-preview';
@@ -38,7 +33,7 @@ interface CollectionItem {
   palette?: string[];
 }
 
-interface TemplateUploadSheetProps {
+interface TemplateManagerDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   selectedCollection: string;
@@ -48,7 +43,7 @@ interface TemplateUploadSheetProps {
   isLoading?: boolean;
 }
 
-export function TemplateUploadSheet({
+export function TemplateManagerDialog({
   isOpen,
   onOpenChange,
   selectedCollection,
@@ -56,7 +51,7 @@ export function TemplateUploadSheet({
   collections,
   onUploadSuccess,
   isLoading = false,
-}: TemplateUploadSheetProps) {
+}: TemplateManagerDialogProps) {
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [collectionName, setCollectionName] = useState('');
 
@@ -109,24 +104,21 @@ export function TemplateUploadSheet({
 
   return (
     <>
-      <Sheet open={isOpen} onOpenChange={onOpenChange}>
-        <SheetContent
-          side="right"
-          className="flex h-full w-full flex-col border-slate-200 border-l bg-white text-slate-900 sm:max-w-md dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
-        >
-          <SheetHeader className="shrink-0">
-            <SheetTitle className="font-bold text-lg text-slate-800 dark:text-slate-100">
+      <Dialog open={isOpen} onOpenChange={onOpenChange}>
+        <DialogContent className="flex flex-col border-slate-200 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100">
+          <DialogHeader className="shrink-0">
+            <DialogTitle className="font-bold text-lg text-slate-800 dark:text-slate-100">
               Presentation Templates Manager
-            </SheetTitle>
-            <SheetDescription className="mt-1 text-slate-500 text-xs dark:text-slate-400">
+            </DialogTitle>
+            <DialogDescription className="mt-1 text-slate-500 text-xs dark:text-slate-400">
               Choose a visual style collection or upload a new template bank to
               customize slide renderings.
-            </SheetDescription>
-          </SheetHeader>
+            </DialogDescription>
+          </DialogHeader>
 
           <form
             onSubmit={handleUploadTemplate}
-            className="mt-4 flex min-h-0 flex-1 flex-col gap-6 overflow-hidden"
+            className="flex min-h-0 flex-1 flex-col gap-6 overflow-hidden"
           >
             <div className="flex flex-1 flex-col gap-6 overflow-y-auto pr-1">
               {/* Choose Template Style */}
@@ -145,7 +137,7 @@ export function TemplateUploadSheet({
                     No styles found. Upload a PowerPoint deck below.
                   </div>
                 ) : (
-                  <div className="grid max-h-[260px] grid-cols-1 gap-2.5 overflow-y-auto pr-1">
+                  <div className="grid max-h-65 grid-cols-1 gap-2.5 overflow-y-auto pr-1">
                     {collections.map((col) => {
                       const isSelected = selectedCollection === col.name;
                       return (
@@ -211,7 +203,7 @@ export function TemplateUploadSheet({
                 )}
               </div>
 
-              <div className="my-1 h-px shrink-0 bg-slate-200 dark:bg-slate-800" />
+              <Separator className="my-1 h-px shrink-0 bg-slate-200 dark:bg-slate-800" />
 
               {/* Upload Area */}
               <div className="space-y-4">
@@ -293,8 +285,8 @@ export function TemplateUploadSheet({
               </Button>
             </div>
           </form>
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
 
       {/* Larger Canva-like Slide Previews Pop-up Dialog */}
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
@@ -311,12 +303,12 @@ export function TemplateUploadSheet({
           </DialogHeader>
 
           {isLoadingPreviews ? (
-            <div className="flex min-h-[400px] flex-1 flex-col items-center justify-center text-slate-500 text-sm">
+            <div className="flex min-h-100 flex-1 flex-col items-center justify-center text-slate-500 text-sm">
               <Spinner className="mb-2 h-8 w-8 text-primary" />
               Loading preview slides...
             </div>
           ) : Object.keys(previews).length === 0 ? (
-            <div className="flex min-h-[400px] flex-1 items-center justify-center text-slate-400 text-xs">
+            <div className="flex min-h-100 flex-1 items-center justify-center text-slate-400 text-xs">
               No preview slides found for this template style.
             </div>
           ) : (
@@ -329,7 +321,7 @@ export function TemplateUploadSheet({
                       {name.replace(/_/g, ' ')} Slide
                     </span>
                     <div
-                      className="group flex aspect-[16/9] w-full cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-50 shadow-sm transition-all duration-200 hover:scale-[1.01] hover:border-slate-300 hover:shadow-md dark:border-slate-800 dark:hover:border-slate-700"
+                      className="group flex aspect-video w-full cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-50 shadow-sm transition-all duration-200 hover:scale-[1.01] hover:border-slate-300 hover:shadow-md dark:border-slate-800 dark:hover:border-slate-700"
                       onClick={() => setZoomedSlideIndex(idx)}
                       dangerouslySetInnerHTML={{ __html: cleanedSvg }}
                     />
@@ -348,7 +340,7 @@ export function TemplateUploadSheet({
           if (!open) setZoomedSlideIndex(null);
         }}
       >
-        <DialogContent className="flex aspect-[16/9] w-[95vw] flex-col items-center justify-center overflow-hidden rounded-2xl border-none bg-slate-900 p-2 sm:max-w-[85vw] sm:rounded-2xl dark:bg-slate-950">
+        <DialogContent className="flex aspect-video w-[95vw] flex-col items-center justify-center overflow-hidden rounded-2xl border-none bg-slate-900 p-2 sm:max-w-[85vw] sm:rounded-2xl dark:bg-slate-950">
           {zoomedSlideIndex !== null && (
             <div className="group/lightbox relative flex h-full w-full flex-col">
               {/* Slide name overlay */}
