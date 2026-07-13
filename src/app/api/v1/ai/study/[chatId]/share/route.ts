@@ -31,10 +31,13 @@ export async function POST(
     const parsedChatId = chatIdSchema.safeParse(chatId);
 
     if (!parsedChatId.success) {
-      return NextResponse.json({
-        error: 'Invalid chat ID',
-        message: 'Invalid chat ID',
-      });
+      return NextResponse.json(
+        {
+          error: 'Invalid chat ID',
+          message: 'Invalid chat ID',
+        },
+        { status: 400 }
+      );
     }
 
     const { userId } = await getChatOwner();

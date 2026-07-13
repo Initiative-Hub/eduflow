@@ -1947,27 +1947,6 @@
       },
       "review": {
         "description": "Synthesize key concepts and definitions from your sources into digestible study guides."
-      },
-      "sharedChat": {
-        "close": "Close",
-        "copied": "Copied",
-        "copyError": "Could not copy share link.",
-        "copyLink": "Copy link",
-        "createdBy": "Created with EduFlow",
-        "eyebrow": "Shared EduFlow study chat",
-        "ownerCta": "Open original session",
-        "ownerHelper": "You are viewing your own shared study chat.",
-        "retry": "Try again",
-        "share": "Share chat",
-        "shareDialogDescription": "EduFlow is preparing a public link for this study chat.",
-        "shareDialogReadyDescription": "Anyone with this link can view this chat without signing in.",
-        "shareDialogTitle": "Share study chat",
-        "shareError": "Could not create share link.",
-        "shareGenerating": "Generating share link...",
-        "shareLinkLabel": "Public link",
-        "shareSuccess": "Share link copied.",
-        "visitorCta": "Try EduFlow",
-        "visitorHelper": "Create your own AI-powered study session in EduFlow."
       }
     },
     "input": {
@@ -2000,6 +1979,27 @@
       "title": "Recent Sessions",
       "updated": "Updated {date}",
       "viewAll": "View All"
+    },
+    "sharedChat": {
+      "close": "Close",
+      "copied": "Copied",
+      "copyError": "Could not copy share link.",
+      "copyLink": "Copy link",
+      "createdBy": "Created with EduFlow",
+      "eyebrow": "Shared EduFlow study chat",
+      "ownerCta": "Open original session",
+      "ownerHelper": "You are viewing your own shared study chat.",
+      "retry": "Try again",
+      "share": "Share chat",
+      "shareDialogDescription": "EduFlow is preparing a public link for this study chat.",
+      "shareDialogReadyDescription": "Anyone with this link can view this chat without signing in.",
+      "shareDialogTitle": "Share study chat",
+      "shareError": "Could not create share link.",
+      "shareGenerating": "Generating share link...",
+      "shareLinkLabel": "Public link",
+      "shareSuccess": "Share link copied.",
+      "visitorCta": "Try EduFlow",
+      "visitorHelper": "Create your own AI-powered study session in EduFlow."
     },
     "sharedInteractiveContent": {
       "createdBy": "Created with EduFlow",

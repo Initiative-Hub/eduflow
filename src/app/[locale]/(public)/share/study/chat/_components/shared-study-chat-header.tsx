@@ -37,7 +37,9 @@ export const SharedStudyChatHeader = ({
         <p className="font-medium text-muted-foreground text-sm">
           {t('eyebrow')}
         </p>
-        <h1 className="font-semibold text-3xl tracking-tight">{title}</h1>
+        <h1 className="wrap-break-words text-pretty font-semibold text-3xl tracking-tight">
+          {title}
+        </h1>
         <p className="text-muted-foreground text-sm leading-relaxed">
           {isOwner ? t('ownerHelper') : t('visitorHelper')}
         </p>

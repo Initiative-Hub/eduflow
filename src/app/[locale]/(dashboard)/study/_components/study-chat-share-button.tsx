@@ -68,20 +68,21 @@ export function StudyChatShareButton({
   };
 
   return (
-    <>
+    <div className="mr-4">
       <Button
         type="button"
         variant="outline"
         size="sm"
         disabled={disabled || shareMutation.isPending}
         onClick={createShareLink}
+        className="cursor-pointer"
       >
         {shareMutation.isPending ? (
           <Loader2 className="size-4 animate-spin" />
         ) : (
           <Share2 className="size-4" />
         )}
-        <span>{t('share')}</span>
+        {/* <span>{t('share')}</span> */}
       </Button>
 
       <DialogTemplate
@@ -158,6 +159,6 @@ export function StudyChatShareButton({
           ) : null}
         </div>
       </DialogTemplate>
-    </>
+    </div>
   );
 }
