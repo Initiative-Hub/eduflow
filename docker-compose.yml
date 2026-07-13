@@ -138,8 +138,6 @@ services:
       - storage-network
     env_file:
       - ./external-services/.env
-    volumes:
-      - ./external-services/storage:/app/storage
 
 
 networks: 

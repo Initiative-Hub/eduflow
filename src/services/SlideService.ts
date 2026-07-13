@@ -139,6 +139,10 @@ export class SlideService {
           'minimalist_gradient',
           'cultural_folk',
           'organic_streets',
+          'electric_green_white',
+          'green_environment_care',
+          'rmit_red_modern',
+          'startup_neon_pitch',
         ]);
         const bucketName = defaultCollections.has(collectionName.toLowerCase())
           ? FILE_DEFAULT_TEMPLATES_BUCKET_NAME
