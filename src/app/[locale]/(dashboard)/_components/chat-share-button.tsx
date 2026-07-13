@@ -12,25 +12,33 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { DialogTemplate } from '@/components/custom/dialog';
 import { Button } from '@/components/ui/button';
-import { studyService } from '../study.service';
+import { aiChatShareClient } from '@/lib/api/ai-chat-share-client';
+import type { ShareableAiChatType } from '@/lib/validations/ai-chat-share.schema';
+import { studyService } from '../study/study.service';
 
-type StudyChatShareButtonProps = {
+type ChatShareButtonProps = {
   chatId: string;
+  chatType: ShareableAiChatType;
   disabled?: boolean;
 };
 
-export function StudyChatShareButton({
+export function ChatShareButton({
   chatId,
+  chatType,
   disabled = false,
-}: StudyChatShareButtonProps) {
-  const t = useTranslations('StudyPage.sharedChat');
+}: ChatShareButtonProps) {
+  const t = useTranslations('SharedAiChat');
   const [isOpen, setIsOpen] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [shareError, setShareError] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState(false);
 
   const shareMutation = useMutation({
-    mutationFn: () => studyService.shareChat(chatId),
+    mutationFn: () =>
+      aiChatShareClient.createShare({
+        chatId,
+        chatType,
+      }),
     onSuccess: ({ shareUrl: nextShareUrl }) => {
       setShareUrl(nextShareUrl);
       setShareError(null);
