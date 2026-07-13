@@ -59,7 +59,9 @@ function createPublicStudyChatSnapshot(
   const messages: PublicStudyChatMessage[] = [];
 
   for (const message of uiMessages) {
-    if (message.role !== 'user' && message.role !== 'assistant') {
+    const role = message.role.toLowerCase();
+
+    if (role !== 'user' && role !== 'assistant') {
       continue;
     }
 
@@ -76,7 +78,7 @@ function createPublicStudyChatSnapshot(
     if (parts.length > 0) {
       messages.push({
         id: message.id,
-        role: message.role,
+        role,
         parts,
       });
     }
