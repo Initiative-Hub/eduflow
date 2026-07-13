@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import * as z from 'zod';
 
 // Define the root Quiz structure schema wrapper
 export const createQuizSchema = (questionSchema: z.ZodTypeAny) =>

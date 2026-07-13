@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { z } from 'zod';
+import * as z from 'zod';
 import { errorResponse } from '@/lib/api/error-response';
 import { withRoles } from '@/lib/api/middlewares';
 import { QuizService } from '@/services/QuizService';
