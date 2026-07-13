@@ -20,6 +20,7 @@ import { ChatWorkspaceShell } from '../../_components/chat-workspace-shell';
 import { studyService } from '../study.service';
 import { useStudy } from '../use-study';
 import { LandingRecentStudyChats } from './landing-recent-study-chats';
+import { StudyChatShareButton } from './study-chat-share-button';
 import { StudyModeSelector } from './study-mode-selector';
 
 const ChatView = dynamic(() =>
@@ -208,6 +209,11 @@ export function StudyClient({
       <ChatWorkspaceShell
         composer={composer}
         scrollContainerRef={scrollContainerRef}
+        toolbar={
+          chatId && isAuthenticated && hasOutput ? (
+            <StudyChatShareButton chatId={chatId} disabled={isStreaming} />
+          ) : undefined
+        }
         viewport={viewport}
       />
       <ChatSidebar
