@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { after } from 'next/server';
 import {
   CourseEnrollmentStatus,
@@ -15,6 +16,7 @@ import type { AICourseGeneration } from '@/lib/validations/course.schema';
 import { OpenRouterService } from '@/services/ai/OpenRouterService';
 import { LessonContentEmbeddingService } from '@/services/LessonContentEmbeddingService';
 import { StorageService } from '@/services/StorageService';
+import type { TiptapDocument } from '@/utils/lesson-content';
 
 export type CourseListSort =
   | 'updated-desc'
@@ -656,54 +658,98 @@ export class CourseService {
     courseId: string,
     data: AICourseGeneration
   ) {
-    if (!data.modules || !Array.isArray(data.modules)) return;
+    const parseStartedAt = performance.now();
+    let totalContentCharacters = 0;
+    const moduleRows: Array<{
+      id: string;
+      courseId: string;
+      title: string;
+      orderIndex: number;
+    }> = [];
+    const lessonRows: Array<{
+      id: string;
+      moduleId: string;
+      title: string;
+      content: TiptapDocument;
+      orderIndex: number;
+    }> = [];
 
-    // Get the current max order index for the modules of this course
-    const lastModule = await prisma.module.findFirst({
-      where: { courseId, deletedAt: null },
-      orderBy: { orderIndex: 'desc' },
-      select: { orderIndex: true },
-    });
+    // Parse and prepare every row before opening the transaction. This keeps
+    // CPU-heavy HTML conversion out of the transaction's timeout window.
+    for (const mod of data.modules) {
+      const moduleId = randomUUID();
+      moduleRows.push({
+        id: moduleId,
+        courseId,
+        title: mod.title || 'Untitled Module',
+        orderIndex: moduleRows.length,
+      });
 
-    let currentModuleOrder = lastModule ? lastModule.orderIndex + 1 : 0;
+      let lessonOrder = 0;
+      for (const lesson of mod.lessons ?? []) {
+        const html = lesson.content || '';
+        totalContentCharacters += html.length;
+        lessonRows.push({
+          id: randomUUID(),
+          moduleId,
+          title: lesson.lessonTitle || 'Untitled Lesson',
+          content: htmlToTiptapDocument(html),
+          orderIndex: lessonOrder++,
+        });
+      }
+    }
 
-    const createdLessonIds = await prisma.$transaction(async (tx) => {
-      const lessonIds: string[] = [];
+    const parseDurationMs = Math.round(performance.now() - parseStartedAt);
+    const transactionStartedAt = performance.now();
 
-      for (const mod of data.modules) {
-        // Create the module
-        const createdModule = await tx.module.create({
-          data: {
-            courseId,
-            title: mod.title || 'Untitled Module',
-            orderIndex: currentModuleOrder++,
-          },
+    try {
+      await prisma.$transaction(async (tx) => {
+        const lastModule = await tx.module.findFirst({
+          where: { courseId, deletedAt: null },
+          orderBy: { orderIndex: 'desc' },
+          select: { orderIndex: true },
         });
 
-        if (mod.lessons && Array.isArray(mod.lessons)) {
-          let currentLessonOrder = 0;
+        const firstModuleOrder = lastModule ? lastModule.orderIndex + 1 : 0;
 
-          for (const lesson of mod.lessons) {
-            const createdLesson = await tx.lesson.create({
-              data: {
-                moduleId: createdModule.id,
-                title: lesson.lessonTitle || 'Untitled Lesson',
-                content: htmlToTiptapDocument(lesson.content || ''),
-                orderIndex: currentLessonOrder++,
-              },
-              select: { id: true },
-            });
+        await tx.module.createMany({
+          data: moduleRows.map((module, index) => ({
+            ...module,
+            orderIndex: firstModuleOrder + index,
+          })),
+        });
 
-            lessonIds.push(createdLesson.id);
-          }
-        }
-      }
+        await tx.lesson.createMany({ data: lessonRows });
+      });
+    } catch (error) {
+      console.error('Generated course persistence failed', {
+        courseId,
+        moduleCount: moduleRows.length,
+        lessonCount: lessonRows.length,
+        totalContentCharacters,
+        parseDurationMs,
+        transactionDurationMs: Math.round(
+          performance.now() - transactionStartedAt
+        ),
+        error: error instanceof Error ? error.message : String(error),
+      });
 
-      return lessonIds;
+      throw error;
+    }
+
+    console.info('Generated course persistence completed', {
+      courseId,
+      moduleCount: moduleRows.length,
+      lessonCount: lessonRows.length,
+      totalContentCharacters,
+      parseDurationMs,
+      transactionDurationMs: Math.round(
+        performance.now() - transactionStartedAt
+      ),
     });
 
-    for (const lessonId of createdLessonIds) {
-      scheduleLessonContentIndexing(lessonId);
+    for (const lesson of lessonRows) {
+      scheduleLessonContentIndexing(lesson.id);
     }
   }
 }
