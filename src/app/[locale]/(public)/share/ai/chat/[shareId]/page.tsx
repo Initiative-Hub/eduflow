@@ -2,10 +2,11 @@ import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
+import { ChatView } from '@/app/[locale]/(dashboard)/_components/chat-view';
 import { auth } from '@/lib/auth';
 import type { ShareableAiChatType } from '@/lib/validations/ai-chat-share.schema';
 import { AiChatShareService } from '@/services/AiChatShareService';
-import { ChatView } from '@/app/[locale]/(dashboard)/_components/chat-view';
+import { SharedAiChatHeader } from '../_components/shared-ai-chat-header';
 
 const chatPaths: Record<ShareableAiChatType, string> = {
   CHAT_ASSISTANT: '/chat',
