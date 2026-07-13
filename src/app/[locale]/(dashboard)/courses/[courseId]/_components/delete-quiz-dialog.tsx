@@ -6,16 +6,19 @@ import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '@/components/custom/dialog';
 import { Button } from '@/components/ui/button';
+import type { QuizDefinition } from '@/lib/quiz-template';
 import { quizService } from '../(course-tabs)/quiz/quiz.service';
 
 interface DeleteQuizDialogProps {
   courseId: string;
+  onDeleted?: (quizId: string) => void;
   quizId: string;
   quizTitle: string;
 }
 
 export function DeleteQuizDialog({
   courseId,
+  onDeleted,
   quizId,
   quizTitle,
 }: DeleteQuizDialogProps) {
@@ -24,6 +27,11 @@ export function DeleteQuizDialog({
   const mutation = useMutation({
     mutationFn: () => quizService.deleteQuiz(quizId),
     onSuccess: () => {
+      queryClient.setQueryData<QuizDefinition[]>(
+        ['quizzes', courseId],
+        (current) => current?.filter((quiz) => quiz.id !== quizId) ?? current
+      );
+      onDeleted?.(quizId);
       queryClient.invalidateQueries({ queryKey: ['quizzes', courseId] });
       queryClient.invalidateQueries({ queryKey: ['modules', courseId] });
       toast.success(t('success'));

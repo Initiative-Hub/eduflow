@@ -115,16 +115,21 @@ export function ModuleAccordionItem({
   quizzes = [],
 }: ModuleAccordionItemProps) {
   const tAccordion = useTranslations('Courses.ModuleAccordion');
+  const [deletedQuizIds, setDeletedQuizIds] = useState<Set<string>>(
+    () => new Set()
+  );
 
   const moduleQuizzes = useMemo(() => {
     const moduleLessonIds = new Set(moduleItem.lessons.map((l) => l.id));
 
     return quizzes.filter((quiz) => {
+      if (deletedQuizIds.has(quiz.id)) return false;
+
       const linkedLessonIds = quiz.lessonIds;
 
       return linkedLessonIds.some((lessonId) => moduleLessonIds.has(lessonId));
     });
-  }, [moduleItem.lessons, quizzes]);
+  }, [deletedQuizIds, moduleItem.lessons, quizzes]);
 
   const [localOrder, setLocalOrder] = useState<Map<string, number> | null>(
     () => {
@@ -235,6 +240,14 @@ export function ModuleAccordionItem({
     [items, indentMutation]
   );
 
+  const handleQuizDeleted = useCallback((quizId: string) => {
+    setDeletedQuizIds((current) => {
+      const next = new Set(current);
+      next.add(quizId);
+      return next;
+    });
+  }, []);
+
   return (
     <AccordionItem
       value={moduleItem.id}
@@ -286,7 +299,7 @@ export function ModuleAccordionItem({
           />
         </div>
 
-        <AccordionContent className="m-0 border-none bg-card p-0 text-sm">
+        <AccordionContent className="m-0 h-auto border-none bg-card p-0 text-sm">
           <div className="divide-y">
             {items.length === 0 ? (
               <div className="p-4 text-center text-muted-foreground italic">
@@ -310,6 +323,7 @@ export function ModuleAccordionItem({
                       canDeleteContent={canDeleteContent}
                       onIndent={handleIndent}
                       onOutdent={handleOutdent}
+                      onQuizDeleted={handleQuizDeleted}
                     />
                   ))}
                 </SortableContext>
@@ -330,6 +344,7 @@ interface SortableAccordionRowProps {
   canDeleteContent: boolean;
   onIndent: (id: string) => void;
   onOutdent: (id: string) => void;
+  onQuizDeleted: (id: string) => void;
 }
 
 function SortableAccordionRow({
@@ -338,6 +353,7 @@ function SortableAccordionRow({
   canDeleteContent,
   onIndent,
   onOutdent,
+  onQuizDeleted,
 }: SortableAccordionRowProps) {
   const {
     attributes,
@@ -447,6 +463,7 @@ function SortableAccordionRow({
         {canDeleteContent ? (
           <DeleteQuizDialog
             courseId={courseId}
+            onDeleted={onQuizDeleted}
             quizId={item.id}
             quizTitle={item.title}
           />
