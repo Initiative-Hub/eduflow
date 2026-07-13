@@ -22,8 +22,9 @@ import {
 import type { useTranslations } from 'next-intl';
 import type { ReactElement } from 'react';
 import {
+  COURSE_PERMISSION,
+  type PermissionKey,
   PLATFORM_PERMISSION,
-  type PlatformPermissionKey,
 } from '@/lib/permissions/permission-keys';
 
 export type SidebarItem = {
@@ -31,17 +32,7 @@ export type SidebarItem = {
   url: string;
   icon: ReactElement;
   isActive: (pathname: string) => boolean;
-};
-
-const adminPermissionsByUrl: Record<string, PlatformPermissionKey[]> = {
-  '/admin/users': [
-    PLATFORM_PERMISSION.USERS_VIEW,
-    PLATFORM_PERMISSION.USERS_MANAGE,
-  ],
-  '/admin/roles': [
-    PLATFORM_PERMISSION.ROLES_VIEW,
-    PLATFORM_PERMISSION.ROLES_MANAGE,
-  ],
+  requirePermissions?: PermissionKey[];
 };
 
 export const sidebarIconClassName =
@@ -53,7 +44,7 @@ function isExactMatch(pathname: string, url: string) {
 
 function hasAnyPermission(
   userPermissions: readonly string[],
-  requiredPermissions: readonly PlatformPermissionKey[]
+  requiredPermissions: readonly PermissionKey[]
 ) {
   return requiredPermissions.some((permission) =>
     userPermissions.includes(permission)
@@ -64,14 +55,24 @@ export function filterAdminNavItems(
   items: SidebarItem[],
   userPermissions: readonly string[]
 ) {
-  return items.filter((item) => {
-    const requiredPermissions = adminPermissionsByUrl[item.url];
+  return items.filter(
+    (item) =>
+      item.requirePermissions &&
+      hasAnyPermission(userPermissions, item.requirePermissions)
+  );
+}
 
-    return (
-      requiredPermissions &&
-      hasAnyPermission(userPermissions, requiredPermissions)
-    );
-  });
+export function filterCourseNavItems(
+  items: SidebarItem[],
+  coursePermissions: readonly string[]
+) {
+  return items.filter(
+    (item) =>
+      !item.requirePermissions ||
+      item.requirePermissions.every((permission) =>
+        coursePermissions.includes(permission)
+      )
+  );
 }
 
 export function getAssistantNavItems(
@@ -165,12 +166,20 @@ export function getAdminNavItems(
       url: '/admin/users',
       icon: <UserCog className={sidebarIconClassName} />,
       isActive: (pathname) => isExactMatch(pathname, '/admin/users'),
+      requirePermissions: [
+        PLATFORM_PERMISSION.USERS_VIEW,
+        PLATFORM_PERMISSION.USERS_MANAGE,
+      ],
     },
     {
       name: t('adminRoles'),
       url: '/admin/roles',
       icon: <ShieldCheck className={sidebarIconClassName} />,
       isActive: (pathname) => isExactMatch(pathname, '/admin/roles'),
+      requirePermissions: [
+        PLATFORM_PERMISSION.ROLES_VIEW,
+        PLATFORM_PERMISSION.ROLES_MANAGE,
+      ],
     },
   ];
 }
@@ -182,6 +191,7 @@ export function getCourseNavItems(courseId: string): SidebarItem[] {
       url: `/courses/${courseId}`,
       icon: <BookOpen className={sidebarIconClassName} />,
       isActive: (pathname) => isExactMatch(pathname, `/courses/${courseId}`),
+      requirePermissions: [COURSE_PERMISSION.COURSE_CONTENT_VIEW],
     },
     {
       name: 'Question Bank',
@@ -189,6 +199,10 @@ export function getCourseNavItems(courseId: string): SidebarItem[] {
       icon: <ClipboardList className={sidebarIconClassName} />,
       isActive: (pathname) =>
         isExactMatch(pathname, `/courses/${courseId}/question-bank`),
+      requirePermissions: [
+        COURSE_PERMISSION.ASSESSMENTS_CREATE,
+        COURSE_PERMISSION.ASSESSMENTS_UPDATE,
+      ],
     },
     {
       name: 'Files',
@@ -196,6 +210,7 @@ export function getCourseNavItems(courseId: string): SidebarItem[] {
       icon: <Files className={sidebarIconClassName} />,
       isActive: (pathname) =>
         isExactMatch(pathname, `/courses/${courseId}/files`),
+      requirePermissions: [COURSE_PERMISSION.COURSE_FILES_VIEW],
     },
     {
       name: 'Members',
@@ -203,6 +218,7 @@ export function getCourseNavItems(courseId: string): SidebarItem[] {
       icon: <Users className={sidebarIconClassName} />,
       isActive: (pathname) =>
         isExactMatch(pathname, `/courses/${courseId}/members`),
+      requirePermissions: [COURSE_PERMISSION.COURSE_MEMBERS_VIEW],
     },
     {
       name: 'Roles',
@@ -210,6 +226,7 @@ export function getCourseNavItems(courseId: string): SidebarItem[] {
       icon: <ShieldCheck className={sidebarIconClassName} />,
       isActive: (pathname) =>
         isExactMatch(pathname, `/courses/${courseId}/roles`),
+      requirePermissions: [COURSE_PERMISSION.COURSE_SETTINGS_MANAGE],
     },
     {
       name: 'Analytics',
@@ -217,6 +234,7 @@ export function getCourseNavItems(courseId: string): SidebarItem[] {
       icon: <LineChart className={sidebarIconClassName} />,
       isActive: (pathname) =>
         isExactMatch(pathname, `/courses/${courseId}/analytics`),
+      requirePermissions: [COURSE_PERMISSION.COURSE_ANALYTICS_VIEW],
     },
     {
       name: 'Settings',
@@ -224,6 +242,7 @@ export function getCourseNavItems(courseId: string): SidebarItem[] {
       icon: <Settings className={sidebarIconClassName} />,
       isActive: (pathname) =>
         isExactMatch(pathname, `/courses/${courseId}/settings`),
+      requirePermissions: [COURSE_PERMISSION.COURSE_SETTINGS_MANAGE],
     },
   ];
 }

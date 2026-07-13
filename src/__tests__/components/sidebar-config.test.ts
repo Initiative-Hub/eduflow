@@ -1,12 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
   filterAdminNavItems,
+  filterCourseNavItems,
   getAdminNavItems,
   getAssistantNavItems,
   getCourseNavItems,
   getSettingNavItems,
 } from '@/components/layout/sidebar-config';
 import { PLATFORM_PERMISSION } from '@/lib/permissions/permission-keys';
+import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
 
 const t = (key: string) => key;
 
@@ -32,6 +34,40 @@ describe('sidebar-config', () => {
 
     expect(courseItems[0].isActive('/courses/course-123')).toBe(true);
     expect(courseItems[0].isActive('/courses/course-123/chat')).toBe(false);
+  });
+
+  it('filters course items by the current course permissions', () => {
+    const courseItems = getCourseNavItems('course-123');
+
+    const filteredItems = filterCourseNavItems(courseItems, [
+      COURSE_PERMISSION.COURSE_CONTENT_VIEW,
+    ]);
+
+    expect(filteredItems.map((item) => item.url)).toEqual([
+      '/courses/course-123',
+    ]);
+  });
+
+  it('requires both assessment authoring permissions for the question bank', () => {
+    const questionBank = getCourseNavItems('course-123').find((item) =>
+      item.url.endsWith('/question-bank')
+    );
+
+    expect(
+      filterCourseNavItems(
+        [questionBank!],
+        [COURSE_PERMISSION.ASSESSMENTS_CREATE]
+      )
+    ).toEqual([]);
+    expect(
+      filterCourseNavItems(
+        [questionBank!],
+        [
+          COURSE_PERMISSION.ASSESSMENTS_CREATE,
+          COURSE_PERMISSION.ASSESSMENTS_UPDATE,
+        ]
+      )
+    ).toEqual([questionBank]);
   });
 
   it('filters admin nav items by view or manage platform permissions', () => {

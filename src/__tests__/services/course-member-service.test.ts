@@ -13,6 +13,12 @@ vi.mock('@/lib/email-service', () => ({
   },
 }));
 
+vi.mock('@/lib/permissions/course-permission', () => ({
+  getCoursePermissions: vi.fn(() => ({
+    withoutPermission: () => false,
+  })),
+}));
+
 vi.mock('@/lib/prisma', () => ({
   prisma: {
     $transaction: vi.fn(),
@@ -168,6 +174,7 @@ describe('CourseMemberService', () => {
 
     const result = await CourseMemberService.listCandidates({
       courseId: 'course-1',
+      currentUserId: 'user-1',
       search: 'user',
       limit: 20,
       offset: 0,
@@ -293,6 +300,7 @@ describe('CourseMemberService', () => {
       CourseMemberService.updateMemberRole({
         courseId: 'course-1',
         memberId: 'owner-user',
+        currentUserId: 'manager-user',
         role: CourseRoleName.STUDENT,
       })
     ).rejects.toThrow('Course owner role cannot be changed');
@@ -337,6 +345,7 @@ describe('CourseMemberService', () => {
       CourseMemberService.updateMemberRole({
         courseId: 'course-1',
         memberId: 'user-1',
+        currentUserId: 'manager-user',
         role: CourseRoleName.TEACHER,
       })
     ).rejects.toThrow('Course member not found');

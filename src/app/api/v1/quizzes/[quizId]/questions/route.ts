@@ -50,7 +50,7 @@ const saveQuestionsSchema = z.object({
  */
 export const POST = withRoles(
   ['TEACHER', 'ADMIN'],
-  async (req, _sessionData, { params }) => {
+  async (req, sessionData, { params }) => {
     try {
       const { quizId } = await params;
       const body = await req.json();
@@ -65,6 +65,7 @@ export const POST = withRoles(
 
       const updatedQuiz = await QuizService.updateQuestions(
         quizId,
+        sessionData.user.id,
         parsed.data.questions
       );
 
@@ -128,7 +129,7 @@ export const POST = withRoles(
  */
 export const PUT = withRoles(
   ['TEACHER', 'ADMIN'],
-  async (req, _sessionData, { params }) => {
+  async (req, sessionData, { params }) => {
     try {
       const { quizId } = await params;
       const body = await req.json();
@@ -143,6 +144,7 @@ export const PUT = withRoles(
 
       const updatedQuiz = await QuizService.updateQuestions(
         quizId,
+        sessionData.user.id,
         parsed.data.questions
       );
 

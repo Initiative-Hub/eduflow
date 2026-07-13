@@ -8,6 +8,8 @@ import {
   type Prisma,
 } from '@/generated/prisma';
 import { emailService } from '@/lib/email-service';
+import { getCoursePermissions } from '@/lib/permissions/course-permission';
+import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
 import { prisma } from '@/lib/prisma';
 
 const MIN_CANDIDATE_SEARCH_LENGTH = 2;
@@ -175,6 +177,13 @@ async function getCourseCapacityUsage(
 
 export class CourseMemberService {
   static async listMembers(input: CourseMemberListInput) {
+    const permissions = await getCoursePermissions(
+      input.currentUserId,
+      input.courseId
+    );
+    if (permissions.withoutPermission(COURSE_PERMISSION.COURSE_MEMBERS_VIEW)) {
+      throw new Error('Forbidden');
+    }
     const where = buildEnrollmentWhere(input);
     const [total, enrollments] = await Promise.all([
       prisma.enrollment.count({ where }),
@@ -230,7 +239,18 @@ export class CourseMemberService {
     };
   }
 
-  static async listCandidates(input: CourseMemberCandidateListInput) {
+  static async listCandidates(
+    input: CourseMemberCandidateListInput & { currentUserId: string }
+  ) {
+    const permissions = await getCoursePermissions(
+      input.currentUserId,
+      input.courseId
+    );
+    if (
+      permissions.withoutPermission(COURSE_PERMISSION.COURSE_MEMBERS_MANAGE)
+    ) {
+      throw new Error('Forbidden');
+    }
     const where = buildCandidateUserWhere(input);
 
     if (!where) {
@@ -289,6 +309,17 @@ export class CourseMemberService {
     role: CourseRoleNameType;
     addedById?: string;
   }): Promise<CourseMemberMutationResponse> {
+    if (input.addedById) {
+      const permissions = await getCoursePermissions(
+        input.addedById,
+        input.courseId
+      );
+      if (
+        permissions.withoutPermission(COURSE_PERMISSION.COURSE_MEMBERS_MANAGE)
+      ) {
+        throw new Error('Forbidden');
+      }
+    }
     if (input.role === CourseRoleName.COURSE_OWNER) {
       throw new Error('Cannot assign the course owner role');
     }
@@ -395,7 +426,17 @@ export class CourseMemberService {
     courseId: string;
     memberId: string;
     role: CourseRoleNameType;
+    currentUserId: string;
   }): Promise<CourseMemberMutationResponse> {
+    const permissions = await getCoursePermissions(
+      input.currentUserId,
+      input.courseId
+    );
+    if (
+      permissions.withoutPermission(COURSE_PERMISSION.COURSE_MEMBERS_MANAGE)
+    ) {
+      throw new Error('Forbidden');
+    }
     if (input.role === CourseRoleName.COURSE_OWNER) {
       throw new Error('Cannot assign the course owner role');
     }
@@ -457,6 +498,15 @@ export class CourseMemberService {
     memberId: string;
     currentUserId: string;
   }): Promise<CourseMemberMutationResponse> {
+    const permissions = await getCoursePermissions(
+      input.currentUserId,
+      input.courseId
+    );
+    if (
+      permissions.withoutPermission(COURSE_PERMISSION.COURSE_MEMBERS_MANAGE)
+    ) {
+      throw new Error('Forbidden');
+    }
     const enrollment = await prisma.enrollment.findFirst({
       where: {
         courseId: input.courseId,

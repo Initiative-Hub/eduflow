@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { errorResponse } from '@/lib/api/error-response';
 import { withAuth } from '@/lib/api/middlewares';
+import { getCoursePermissions } from '@/lib/permissions/course-permission';
+import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
 import { prisma } from '@/lib/prisma';
 
 // ─── Validation ──────────────────────────────────────────────────────────────
@@ -37,7 +39,7 @@ const routeParamsSchema = z.object({
  *       500:
  *         description: Internal server error
  */
-export const DELETE = withAuth(async (_req, _sessionData, { params }) => {
+export const DELETE = withAuth(async (_req, sessionData, { params }) => {
   try {
     const resolvedParams = await params;
     const parsed = routeParamsSchema.safeParse(resolvedParams);
@@ -56,11 +58,19 @@ export const DELETE = withAuth(async (_req, _sessionData, { params }) => {
     // Verify question exists
     const question = await prisma.question.findUnique({
       where: { id: questionId },
-      select: { id: true },
+      select: { id: true, courseId: true },
     });
 
     if (!question) {
       return errorResponse('QUESTION_NOT_FOUND', 'Question not found', 404);
+    }
+
+    const permissions = await getCoursePermissions(
+      sessionData.user.id,
+      question.courseId
+    );
+    if (permissions.withoutPermission(COURSE_PERMISSION.ASSESSMENTS_DELETE)) {
+      return errorResponse('FORBIDDEN', 'Forbidden', 403);
     }
 
     await prisma.question.delete({

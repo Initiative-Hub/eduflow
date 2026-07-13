@@ -32,7 +32,7 @@ describe('ModuleService soft deletion', () => {
   it('lists only active modules and active lessons', async () => {
     mocks.module.findMany.mockResolvedValue([]);
 
-    await ModuleService.getModulesByCourse('course-1');
+    await ModuleService.getModulesByCourse('course-1', 'user-1');
 
     expect(prisma.module.findMany).toHaveBeenCalledWith({
       where: {
