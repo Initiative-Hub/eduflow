@@ -47,6 +47,7 @@ interface ChatViewProps {
   onSuggestionSelect?: (suggestion: string) => void;
   scrollContainerRef?: RefObject<HTMLDivElement | null>;
   suggestionsDisabled?: boolean;
+  showInteractiveContentSaveToInventory?: boolean;
 }
 
 const Quiz = dynamic(() => import('@/components/quiz').then((mod) => mod.Quiz));
@@ -62,6 +63,7 @@ export function ChatView({
   onSuggestionSelect,
   scrollContainerRef,
   suggestionsDisabled = false,
+  showInteractiveContentSaveToInventory = true,
 }: ChatViewProps) {
   const t = useTranslations('AIChat');
   const topSentinelRef = useRef<HTMLDivElement | null>(null);
@@ -376,6 +378,9 @@ export function ChatView({
                                       contentIndex: index,
                                     }
                                   : undefined
+                              }
+                              showSaveToInventory={
+                                showInteractiveContentSaveToInventory
                               }
                             />
                           </div>
