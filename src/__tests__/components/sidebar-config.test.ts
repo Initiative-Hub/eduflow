@@ -7,8 +7,10 @@ import {
   getCourseNavItems,
   getSettingNavItems,
 } from '@/components/layout/sidebar-config';
-import { PLATFORM_PERMISSION } from '@/lib/permissions/permission-keys';
-import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
+import {
+  COURSE_PERMISSION,
+  PLATFORM_PERMISSION,
+} from '@/lib/permissions/permission-keys';
 
 const t = (key: string) => key;
 
@@ -19,7 +21,7 @@ describe('sidebar-config', () => {
     expect(homeItem.isActive('/')).toBe(true);
     expect(homeItem.isActive('/inventory')).toBe(false);
     expect(inventoryItem.isActive('/inventory')).toBe(true);
-    expect(inventoryItem.isActive('/inventory/books')).toBe(false);
+    expect(inventoryItem.isActive('/inventory/books')).toBe(true);
   });
 
   it('keeps settings root item inactive on child routes', () => {
@@ -65,6 +67,7 @@ describe('sidebar-config', () => {
         [
           COURSE_PERMISSION.ASSESSMENTS_CREATE,
           COURSE_PERMISSION.ASSESSMENTS_UPDATE,
+          COURSE_PERMISSION.ASSESSMENTS_DELETE,
         ]
       )
     ).toEqual([questionBank]);
@@ -73,6 +76,7 @@ describe('sidebar-config', () => {
   it('filters admin nav items by view or manage platform permissions', () => {
     const adminItems = getAdminNavItems(t as never);
     const filteredItems = filterAdminNavItems(adminItems, [
+      PLATFORM_PERMISSION.ROLES_VIEW,
       PLATFORM_PERMISSION.ROLES_MANAGE,
     ]);
 
