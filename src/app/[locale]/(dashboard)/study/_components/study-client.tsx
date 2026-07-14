@@ -15,12 +15,12 @@ import { DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
 import type { ChatSubmitAttachments } from '@/types/chat-attachments';
 import { ChatInput } from '../../_components/chat-input';
 import { ChatLessonReferenceTool } from '../../_components/chat-lesson-reference-tool';
+import { ChatShareButton } from '../../_components/chat-share-button';
 import { ChatSidebar } from '../../_components/chat-sidebar';
 import { ChatWorkspaceShell } from '../../_components/chat-workspace-shell';
 import { studyService } from '../study.service';
 import { useStudy } from '../use-study';
 import { LandingRecentStudyChats } from './landing-recent-study-chats';
-import { StudyChatShareButton } from './study-chat-share-button';
 import { StudyModeSelector } from './study-mode-selector';
 
 const ChatView = dynamic(() =>
@@ -211,7 +211,11 @@ export function StudyClient({
         scrollContainerRef={scrollContainerRef}
         toolbar={
           chatId && isAuthenticated && hasOutput ? (
-            <StudyChatShareButton chatId={chatId} disabled={isStreaming} />
+            <ChatShareButton
+              chatId={chatId}
+              chatType="STUDY_ASSISTANT"
+              disabled={isStreaming}
+            />
           ) : undefined
         }
         viewport={viewport}

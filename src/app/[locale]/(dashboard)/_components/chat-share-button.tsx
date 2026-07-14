@@ -14,7 +14,6 @@ import { DialogTemplate } from '@/components/custom/dialog';
 import { Button } from '@/components/ui/button';
 import { aiChatShareClient } from '@/lib/api/ai-chat-share-client';
 import type { ShareableAiChatType } from '@/lib/validations/ai-chat-share.schema';
-import { studyService } from '../study/study.service';
 
 type ChatShareButtonProps = {
   chatId: string;

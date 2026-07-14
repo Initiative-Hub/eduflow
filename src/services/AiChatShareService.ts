@@ -1,5 +1,5 @@
 import type { UIMessage } from 'ai';
-import { z } from 'better-auth';
+import { z } from 'zod';
 import {
   AiChatStatus,
   type AiChatType,
