@@ -38,33 +38,30 @@ export type SidebarItem = {
 export const sidebarIconClassName =
   'size-5 text-primary/80 transition-colors group-data-[active=true]/menu-button:text-primary group-hover/menu-button:text-primary ';
 
-function isExactMatch(pathname: string, url: string) {
-  return pathname === url;
+function isExactMatch(pathname: string, path: string) {
+  return pathname === path;
 }
 
-function hasAnyPermission(
-  userPermissions: readonly string[],
-  requiredPermissions: readonly PermissionKey[]
-) {
-  return requiredPermissions.some((permission) =>
-    userPermissions.includes(permission)
-  );
+function isPrefixMatch(pathname: string, path: string) {
+  return pathname === path || pathname.startsWith(`${path}/`);
 }
 
 export function filterAdminNavItems(
   items: SidebarItem[],
-  userPermissions: readonly string[]
+  userPermissions: string[]
 ) {
   return items.filter(
     (item) =>
-      item.requirePermissions &&
-      hasAnyPermission(userPermissions, item.requirePermissions)
+      !item.requirePermissions ||
+      item.requirePermissions.every((permission) =>
+        userPermissions.includes(permission)
+      )
   );
 }
 
 export function filterCourseNavItems(
   items: SidebarItem[],
-  coursePermissions: readonly string[]
+  coursePermissions: string[]
 ) {
   return items.filter(
     (item) =>
@@ -89,31 +86,31 @@ export function getAssistantNavItems(
       name: t('yourInventory'),
       url: '/inventory',
       icon: <Archive className={sidebarIconClassName} />,
-      isActive: (pathname) => isExactMatch(pathname, '/inventory'),
+      isActive: (pathname) => isPrefixMatch(pathname, '/inventory'),
     },
     {
       name: t('socraticTutor'),
       url: '/socratic',
       icon: <GraduationCap className={sidebarIconClassName} />,
-      isActive: (pathname) => isExactMatch(pathname, '/socratic'),
+      isActive: (pathname) => isPrefixMatch(pathname, '/socratic'),
     },
     {
       name: t('englishAssistant'),
       url: '/english',
       icon: <Languages className={sidebarIconClassName} />,
-      isActive: (pathname) => isExactMatch(pathname, '/english'),
+      isActive: (pathname) => isPrefixMatch(pathname, '/english'),
     },
     {
       name: t('writingAssistant'),
       url: '/writing',
       icon: <PenLine className={sidebarIconClassName} />,
-      isActive: (pathname) => isExactMatch(pathname, '/writing'),
+      isActive: (pathname) => isPrefixMatch(pathname, '/writing'),
     },
     {
       name: t('studyAssistant'),
       url: '/study',
       icon: <BookOpen className={sidebarIconClassName} />,
-      isActive: (pathname) => isExactMatch(pathname, '/study'),
+      isActive: (pathname) => isPrefixMatch(pathname, '/study'),
     },
   ];
 }
@@ -202,6 +199,7 @@ export function getCourseNavItems(courseId: string): SidebarItem[] {
       requirePermissions: [
         COURSE_PERMISSION.ASSESSMENTS_CREATE,
         COURSE_PERMISSION.ASSESSMENTS_UPDATE,
+        COURSE_PERMISSION.ASSESSMENTS_DELETE,
       ],
     },
     {
@@ -226,7 +224,7 @@ export function getCourseNavItems(courseId: string): SidebarItem[] {
       icon: <ShieldCheck className={sidebarIconClassName} />,
       isActive: (pathname) =>
         isExactMatch(pathname, `/courses/${courseId}/roles`),
-      requirePermissions: [COURSE_PERMISSION.COURSE_SETTINGS_MANAGE],
+      requirePermissions: [COURSE_PERMISSION.COURSE_ROLES_MANAGE],
     },
     {
       name: 'Analytics',

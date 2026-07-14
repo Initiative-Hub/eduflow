@@ -27,9 +27,7 @@ export const GET = withAuth(async (_req, sessionData, { params }) => {
     const { courseId } = await params;
     const currentUserId = sessionData.user.id;
     const permissions = await getCoursePermissions(currentUserId, courseId);
-    if (
-      permissions.withoutPermission(COURSE_PERMISSION.COURSE_SETTINGS_MANAGE)
-    ) {
+    if (permissions.withoutPermission(COURSE_PERMISSION.COURSE_ROLES_MANAGE)) {
       return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
     }
 
@@ -51,9 +49,7 @@ export const PATCH = withAuth(async (req, sessionData, { params }) => {
     const { courseId } = await params;
     const currentUserId = sessionData.user.id;
     const permissions = await getCoursePermissions(currentUserId, courseId);
-    if (
-      permissions.withoutPermission(COURSE_PERMISSION.COURSE_SETTINGS_MANAGE)
-    ) {
+    if (permissions.withoutPermission(COURSE_PERMISSION.COURSE_ROLES_MANAGE)) {
       return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
     }
 

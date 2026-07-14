@@ -191,6 +191,12 @@ export const COURSE_PERMISSION_CATEGORIES: PermissionCategory[] = [
         title: 'Manage members',
         description: 'Add, remove, or change course member roles.',
       },
+      {
+        key: COURSE_PERMISSION.COURSE_ROLES_MANAGE,
+        icon: Shield,
+        title: 'Manage course roles',
+        description: 'Enable or disable permissions for course roles.',
+      },
     ],
   },
   {

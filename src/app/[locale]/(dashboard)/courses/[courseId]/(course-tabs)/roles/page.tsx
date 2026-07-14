@@ -23,9 +23,7 @@ export default async function CourseRolesPage({
     courseId
   );
   if (
-    coursePermissions.withoutPermission(
-      COURSE_PERMISSION.COURSE_SETTINGS_MANAGE
-    )
+    coursePermissions.withoutPermission(COURSE_PERMISSION.COURSE_ROLES_MANAGE)
   ) {
     notFound();
   }

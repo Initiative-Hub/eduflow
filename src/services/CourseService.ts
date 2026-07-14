@@ -5,13 +5,13 @@ import {
   CourseInvitationStatus,
   CourseRoleName,
 } from '@/generated/prisma';
+import { getCoursePermissions } from '@/lib/permissions/course-permission';
 import {
   COURSE_PERMISSION,
   COURSE_PERMISSION_KEYS,
   type CoursePermissionKey,
 } from '@/lib/permissions/permission-keys';
 import { prisma } from '@/lib/prisma';
-import { getCoursePermissions } from '@/lib/permissions/course-permission';
 import { htmlToTiptapDocument } from '@/lib/tiptap-html';
 import type { AICourseGeneration } from '@/lib/validations/course.schema';
 import { OpenRouterService } from '@/services/ai/OpenRouterService';
@@ -127,24 +127,25 @@ export class CourseService {
         COURSE_OWNER: COURSE_PERMISSION_KEYS,
         TEACHER: [
           COURSE_PERMISSION.COURSE_MEMBERS_VIEW,
+          COURSE_PERMISSION.COURSE_ROLES_MANAGE,
           COURSE_PERMISSION.COURSE_CONTENT_VIEW,
           COURSE_PERMISSION.COURSE_CONTENT_CREATE,
           COURSE_PERMISSION.COURSE_CONTENT_UPDATE,
+          COURSE_PERMISSION.COURSE_FILES_VIEW,
+          COURSE_PERMISSION.COURSE_FILES_MANAGE,
+          COURSE_PERMISSION.COURSE_ANALYTICS_VIEW,
+          COURSE_PERMISSION.AI_USE_COURSE_GENERATION,
           COURSE_PERMISSION.ASSESSMENTS_VIEW,
           COURSE_PERMISSION.ASSESSMENTS_CREATE,
           COURSE_PERMISSION.ASSESSMENTS_UPDATE,
           COURSE_PERMISSION.ASSESSMENTS_RESULTS_VIEW,
           COURSE_PERMISSION.ASSESSMENTS_GRADE,
-          COURSE_PERMISSION.COURSE_FILES_VIEW,
-          COURSE_PERMISSION.COURSE_FILES_MANAGE,
-          COURSE_PERMISSION.AI_USE_COURSE_GENERATION,
-          COURSE_PERMISSION.COURSE_ANALYTICS_VIEW,
         ],
         STUDENT: [
           COURSE_PERMISSION.COURSE_CONTENT_VIEW,
+          COURSE_PERMISSION.COURSE_FILES_VIEW,
           COURSE_PERMISSION.ASSESSMENTS_VIEW,
           COURSE_PERMISSION.ASSESSMENTS_RESULTS_VIEW,
-          COURSE_PERMISSION.COURSE_FILES_VIEW,
         ],
       };
 

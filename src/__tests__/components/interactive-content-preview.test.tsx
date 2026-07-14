@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import { createInteractiveContentInventoryFile } from '@/utils/study-interactive-content-document';
-import InteractiveContentPreview from '@/app/[locale]/(dashboard)/study/_components/interactive-content-preview';
+import InteractiveContentPreview from '@/app/[locale]/(dashboard)/(ai)/study/_components/interactive-content-preview';
 
 vi.mock('next-intl', () => ({
   useTranslations: () => (key: string) => key,
