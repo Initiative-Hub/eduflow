@@ -39,9 +39,3 @@ lint = "ruff lint --check ."
 lint-fix = "ruff lint ."
 serve = "modal serve modal_deployment.py"
 deploy = "modal deploy modal_deployment.py"
-
-[tool.uv]
-environments = [
-    "sys_platform == 'linux'",
-    "sys_platform == 'darwin'",
-]

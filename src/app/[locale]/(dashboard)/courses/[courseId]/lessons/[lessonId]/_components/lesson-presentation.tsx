@@ -5,7 +5,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Download,
-  Edit,
   Maximize2,
   Minimize2,
   Plus,
@@ -15,9 +14,8 @@ import {
   X,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { DialogTemplate } from '@/components/custom/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -33,13 +31,12 @@ import { cn } from '@/lib/utils';
 import type { TiptapDocument } from '@/utils/lesson-content';
 import {
   useDownloadPptx,
-  useSlideHtml,
   useSlideTemplateCategories,
   useSlideTemplates,
   useUpdateSlideHtml,
 } from '../use-lesson';
 import { type PlannedSlide, usePresentation } from '../use-presentation';
-import { TemplateUploadSheet } from './template-upload-sheet';
+import { TemplateManagerDialog } from './template-manager-dialog';
 
 const formatLayoutName = (layout: string, t: any) => {
   const map: Record<string, string> = {
@@ -106,7 +103,6 @@ export function LessonPresentation({
     handleStartPlanning,
     handleStartGenerating,
     startNewDeck,
-    editOutline,
     updateSlideTitle,
     changeSlideLayout,
     deleteSlide,
@@ -167,7 +163,7 @@ export function LessonPresentation({
 
   // Turn text-bearing nodes inside the generated iframe into editable elements.
   // Injects custom hover & focus dashed/solid styling outline blocks.
-  const enableVisualEditing = () => {
+  const enableVisualEditing = useCallback(() => {
     console.log('[VisualEditor] enableVisualEditing triggered');
     try {
       const iframe = iframeRef.current;
@@ -299,7 +295,7 @@ export function LessonPresentation({
     } catch (err) {
       console.error('[VisualEditor] Error in enableVisualEditing:', err);
     }
-  };
+  }, []);
 
   // Manually attach load listeners and check document status to guarantee visual editing binds
   useEffect(() => {
@@ -330,7 +326,7 @@ export function LessonPresentation({
     return () => {
       iframe.removeEventListener('load', handleLoad);
     };
-  }, [deckUrl, iframeVersion]);
+  }, [enableVisualEditing]);
 
   // Clones the current visual iframe layout, strips visual editor traits,
   // and saves the raw serialized HTML back to S3.
@@ -364,7 +360,7 @@ export function LessonPresentation({
       el.remove();
     });
 
-    const html = '<!DOCTYPE html>\n' + clone.outerHTML;
+    const html = `<!DOCTYPE html>\n${clone.outerHTML}`;
 
     updateSlideHtml.mutate(
       { deckId, html },
@@ -386,7 +382,7 @@ export function LessonPresentation({
         return (
           <div className="flex h-full min-h-[30vh] flex-col items-center justify-center py-6 text-center">
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.08),transparent_60%)]" />
-            <h1 className="mb-6 bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-650 bg-clip-text font-extrabold text-3xl text-transparent tracking-tight drop-shadow-md md:text-4xl lg:text-5xl dark:from-blue-400 dark:via-indigo-200 dark:to-purple-400">
+            <h1 className="mb-6 bg-linear-to-r from-blue-600 via-indigo-500 to-purple-650 bg-clip-text font-extrabold text-3xl text-transparent tracking-tight drop-shadow-md md:text-4xl lg:text-5xl dark:from-blue-400 dark:via-indigo-200 dark:to-purple-400">
               {slideTitle}
             </h1>
             {bindings.subtitle && (
@@ -554,9 +550,9 @@ export function LessonPresentation({
                 bindings.metrics.map((metric: any, index: number) => (
                   <div
                     key={index}
-                    className="min-w-[150px] flex-1 rounded-2xl border border-slate-200 bg-slate-50/30 p-5 text-center shadow-inner dark:border-slate-800 dark:bg-slate-950/40"
+                    className="min-w-37.5 flex-1 rounded-2xl border border-slate-200 bg-slate-50/30 p-5 text-center shadow-inner dark:border-slate-800 dark:bg-slate-950/40"
                   >
-                    <div className="mb-2 bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text font-extrabold text-3xl text-transparent md:text-5xl dark:from-emerald-400 dark:to-teal-200">
+                    <div className="mb-2 bg-linear-to-r from-emerald-600 to-teal-500 bg-clip-text font-extrabold text-3xl text-transparent md:text-5xl dark:from-emerald-400 dark:to-teal-200">
                       {metric.value}
                     </div>
                     <div className="font-bold text-slate-500 text-xs uppercase tracking-wider dark:text-slate-400">
@@ -598,7 +594,7 @@ export function LessonPresentation({
                           className="flex flex-1 flex-col items-center"
                         >
                           <div
-                            className="w-full max-w-[20px] rounded-t bg-gradient-to-t from-primary/40 to-primary transition-all duration-500"
+                            className="w-full max-w-5 rounded-t bg-linear-to-t from-primary/40 to-primary transition-all duration-500"
                             style={{ height: `${heightPct}%` }}
                           />
                           <span className="mt-1.5 max-w-full truncate font-bold text-[9px] text-slate-650 dark:text-slate-500">
@@ -672,7 +668,7 @@ export function LessonPresentation({
             </h2>
             <div className="grid grid-cols-1 items-center gap-6 md:grid-cols-2">
               <div className="relative flex h-40 flex-col items-center justify-center overflow-hidden rounded-2xl border border-slate-200 border-dashed bg-slate-50 p-5 text-center dark:border-slate-800 dark:bg-slate-950/60">
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-100/50 to-transparent dark:from-slate-950/50" />
+                <div className="absolute inset-0 bg-linear-to-t from-slate-100/50 to-transparent dark:from-slate-950/50" />
                 <span className="z-10 mb-1 font-bold text-[10px] text-primary/80 uppercase tracking-widest">
                   Suggested Visual Asset
                 </span>
@@ -700,7 +696,7 @@ export function LessonPresentation({
               {Array.isArray(bindings.events) &&
                 bindings.events.map((event: any, index: number) => (
                   <div key={index} className="relative">
-                    <span className="absolute top-1.5 -left-[27px] flex h-3.5 w-3.5 items-center justify-center rounded-full border border-primary bg-white text-primary dark:bg-slate-950" />
+                    <span className="absolute top-1.5 -left-6.75 flex h-3.5 w-3.5 items-center justify-center rounded-full border border-primary bg-white text-primary dark:bg-slate-950" />
                     <div>
                       <span className="mb-0.5 inline-block rounded border border-primary/20 bg-primary/10 px-1.5 py-0.5 font-extrabold text-[9px] text-primary uppercase">
                         {event.date_or_step}
@@ -842,7 +838,7 @@ export function LessonPresentation({
         return (
           <div className="flex h-full min-h-[30vh] flex-col items-center justify-center py-8 text-center">
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.08),transparent_60%)]" />
-            <h1 className="mb-6 bg-gradient-to-r from-emerald-600 via-teal-500 to-blue-600 bg-clip-text font-extrabold text-3xl text-transparent tracking-tight md:text-4xl dark:from-emerald-400 dark:via-teal-200 dark:to-blue-400">
+            <h1 className="mb-6 bg-linear-to-r from-emerald-600 via-teal-500 to-blue-600 bg-clip-text font-extrabold text-3xl text-transparent tracking-tight md:text-4xl dark:from-emerald-400 dark:via-teal-200 dark:to-blue-400">
               Questions & Answers
             </h1>
             {bindings.footer_note && (
@@ -1315,7 +1311,7 @@ export function LessonPresentation({
                 value={bindings.insight_text || ''}
                 onChange={(e) => updateBinding('insight_text', e.target.value)}
                 placeholder="Visual analytics insights..."
-                className="h-full min-h-[140px] resize-none rounded-xl border-slate-800 bg-slate-950 px-4 py-2 text-slate-100 text-sm focus:border-primary focus:ring-1 focus:ring-primary"
+                className="h-full min-h-35 resize-none rounded-xl border-slate-800 bg-slate-950 px-4 py-2 text-slate-100 text-sm focus:border-primary focus:ring-1 focus:ring-primary"
               />
             </div>
           </div>
@@ -1426,9 +1422,9 @@ export function LessonPresentation({
     <div
       ref={containerRef}
       className={cn(
-        'relative m-0 flex min-h-[75vh] w-full select-none flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-slate-100 p-6 text-slate-900 shadow-xl md:p-10 dark:border-slate-800 dark:from-zinc-950 dark:via-slate-900 dark:to-zinc-950 dark:text-slate-100',
+        'relative m-0 flex min-h-[75vh] w-full select-none flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 bg-linear-to-br from-white via-slate-50 to-slate-100 p-6 text-slate-900 shadow-xl md:p-10 dark:border-slate-800 dark:from-zinc-950 dark:via-slate-900 dark:to-zinc-950 dark:text-slate-100',
         isFullscreen &&
-          'fixed inset-0 z-[9999] m-0 h-screen w-screen rounded-none border-none'
+          'fixed inset-0 z-99 m-0 h-screen w-screen rounded-none border-none'
       )}
     >
       {/* Top progress bar */}
@@ -1687,7 +1683,7 @@ export function LessonPresentation({
                   Style:
                 </span>
                 <span
-                  className="block max-w-[150px] truncate font-bold text-slate-800 text-xs dark:text-slate-200"
+                  className="block max-w-37.5 truncate font-bold text-slate-800 text-xs dark:text-slate-200"
                   title={
                     selectedCollection === 'auto'
                       ? `Auto — AI picked${recommendedCollection ? `: ${recommendedCollection}` : ' (decided at planning)'}`
@@ -2010,7 +2006,7 @@ export function LessonPresentation({
           <div className="order-2 w-9 md:order-3" />
         </div>
       )}
-      <TemplateUploadSheet
+      <TemplateManagerDialog
         isOpen={isUploadOpen}
         onOpenChange={setIsUploadOpen}
         selectedCollection={selectedCollection}
