@@ -901,7 +901,7 @@ export function LessonPresentation({
                 value={bindings.subtitle || ''}
                 onChange={(e) => updateBinding('subtitle', e.target.value)}
                 placeholder="Slide Subtitle"
-                className="h-10 rounded-xl border-slate-800 bg-slate-950 px-4 text-slate-100 text-sm focus:border-primary focus:ring-1 focus:ring-primary"
+                className="h-10 rounded-xl border-slate-200 bg-slate-50 px-4 text-slate-900 text-sm focus-visible:border-primary dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
               />
             </div>
             <div className="flex flex-col gap-1.5">
@@ -912,7 +912,7 @@ export function LessonPresentation({
                 value={bindings.author || ''}
                 onChange={(e) => updateBinding('author', e.target.value)}
                 placeholder="Author / Date info"
-                className="h-10 rounded-xl border-slate-800 bg-slate-950 px-4 text-slate-100 text-sm focus:border-primary focus:ring-1 focus:ring-primary"
+                className="h-10 rounded-xl border-slate-200 bg-slate-50 px-4 text-slate-900 text-sm focus-visible:border-primary dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
               />
             </div>
           </div>
