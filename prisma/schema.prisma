@@ -678,7 +678,7 @@ model DictionaryCache {
 
 enum ShareResourceType {
   STUDY_INTERACTIVE_CONTENT
-  STUDY_CHAT
+  AI_CHAT
 }
 
 model SharedResource {
