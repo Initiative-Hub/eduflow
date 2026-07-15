@@ -15,6 +15,7 @@ import { DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
 import type { ChatSubmitAttachments } from '@/types/chat-attachments';
 import { ChatInput } from '../../_components/chat-input';
 import { ChatLessonReferenceTool } from '../../_components/chat-lesson-reference-tool';
+import { ChatShareButton } from '../../_components/chat-share-button';
 import { ChatSidebar } from '../../_components/chat-sidebar';
 import { ChatWorkspaceShell } from '../../_components/chat-workspace-shell';
 import { studyService } from '../study.service';
@@ -208,6 +209,15 @@ export function StudyClient({
       <ChatWorkspaceShell
         composer={composer}
         scrollContainerRef={scrollContainerRef}
+        toolbar={
+          chatId && isAuthenticated && hasOutput ? (
+            <ChatShareButton
+              chatId={chatId}
+              chatType="STUDY_ASSISTANT"
+              disabled={isStreaming}
+            />
+          ) : undefined
+        }
         viewport={viewport}
       />
       <ChatSidebar

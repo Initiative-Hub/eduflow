@@ -31,6 +31,7 @@ import { getMessageReasoning, getMessageText } from '@/utils/chat-message';
 import { getChatSuggestionItems } from '@/utils/chat-suggestions';
 import { getStudyInteractiveContentParts } from '@/utils/study-interactive-content';
 import { getStudyPracticeQuizParts } from '@/utils/study-practice-quiz';
+import { cn } from '@/lib/utils';
 import InteractiveContentPreview from '../study/_components/interactive-content-preview';
 import { createChatCitationComponents } from './chat-citations';
 import { ChatInputAttachments } from './chat-input-attachments';
@@ -39,6 +40,7 @@ import { ChatToolInvocations } from './chat-tools';
 interface ChatViewProps {
   chatId?: string;
   canShareInteractiveContent?: boolean;
+  containerClassName?: string;
   messages: UIMessage[];
   hasOlderMessages?: boolean;
   isLoadingOlderMessages?: boolean;
@@ -47,6 +49,7 @@ interface ChatViewProps {
   onSuggestionSelect?: (suggestion: string) => void;
   scrollContainerRef?: RefObject<HTMLDivElement | null>;
   suggestionsDisabled?: boolean;
+  showInteractiveContentSaveToInventory?: boolean;
 }
 
 const Quiz = dynamic(() => import('@/components/quiz').then((mod) => mod.Quiz));
@@ -54,6 +57,7 @@ const Quiz = dynamic(() => import('@/components/quiz').then((mod) => mod.Quiz));
 export function ChatView({
   chatId,
   canShareInteractiveContent = false,
+  containerClassName,
   messages,
   hasOlderMessages = false,
   isLoadingOlderMessages = false,
@@ -62,6 +66,7 @@ export function ChatView({
   onSuggestionSelect,
   scrollContainerRef,
   suggestionsDisabled = false,
+  showInteractiveContentSaveToInventory = true,
 }: ChatViewProps) {
   const t = useTranslations('AIChat');
   const topSentinelRef = useRef<HTMLDivElement | null>(null);
@@ -202,7 +207,7 @@ export function ChatView({
   }, [isAtBottom, isStreaming, messages, scrollContainerRef]);
 
   return (
-    <div className="mx-auto max-w-4xl">
+    <div className={cn('mx-auto w-full max-w-4xl', containerClassName)}>
       <Conversation>
         <ConversationContent className="gap-6 py-8">
           {hasOlderMessages || isLoadingOlderMessages ? (
@@ -376,6 +381,9 @@ export function ChatView({
                                       contentIndex: index,
                                     }
                                   : undefined
+                              }
+                              showSaveToInventory={
+                                showInteractiveContentSaveToInventory
                               }
                             />
                           </div>

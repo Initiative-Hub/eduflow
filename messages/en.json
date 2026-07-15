@@ -1835,6 +1835,27 @@
     "synonyms": "Synonyms",
     "wordNotFound": "Word not found"
   },
+  "SharedAiChat": {
+    "close": "Close",
+    "copied": "Copied",
+    "copyError": "Could not copy share link.",
+    "copyLink": "Copy link",
+    "createdBy": "Created with EduFlow",
+    "eyebrow": "Shared EduFlow AI chat",
+    "ownerCta": "Open original chat",
+    "ownerHelper": "You are viewing your own shared conversation.",
+    "retry": "Try again",
+    "share": "Share chat",
+    "shareDialogDescription": "EduFlow is preparing a public link for this conversation.",
+    "shareDialogReadyDescription": "Anyone with this link can view this conversation without signing in.",
+    "shareDialogTitle": "Share AI chat",
+    "shareError": "Could not create share link.",
+    "shareGenerating": "Generating share link…",
+    "shareLinkLabel": "Public link",
+    "shareSuccess": "Share link copied.",
+    "visitorCta": "Try EduFlow",
+    "visitorHelper": "Create your own AI-powered conversation with EduFlow."
+  },
   "SocraticPage": {
     "disciplines": {
       "biochemistry": {

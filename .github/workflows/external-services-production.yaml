@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - production
+    paths:
+      - external-services/**
   workflow_dispatch:
 
 jobs:

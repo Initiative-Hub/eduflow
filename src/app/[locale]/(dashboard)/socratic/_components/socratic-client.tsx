@@ -12,6 +12,7 @@ import { DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
 import type { ChatSubmitAttachments } from '@/types/chat-attachments';
 import type { SocraticUIMessage } from '@/types/socratic-ui-message';
 import { ChatInput } from '../../_components/chat-input';
+import { ChatShareButton } from '../../_components/chat-share-button';
 import { ChatSidebar } from '../../_components/chat-sidebar';
 import { ChatWorkspaceShell } from '../../_components/chat-workspace-shell';
 import { socraticService } from '../socratic.service';
@@ -189,6 +190,15 @@ export function SocraticClient({
       <ChatWorkspaceShell
         composer={composer}
         scrollContainerRef={scrollContainerRef}
+        toolbar={
+          chatId && isAuthenticated && hasOutput ? (
+            <ChatShareButton
+              chatId={chatId}
+              chatType="SOCRATIC_TUTOR"
+              disabled={isStreaming}
+            />
+          ) : undefined
+        }
         viewport={viewport}
       />
       <ChatSidebar
