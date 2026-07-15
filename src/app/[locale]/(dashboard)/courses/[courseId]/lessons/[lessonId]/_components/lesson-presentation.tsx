@@ -69,6 +69,9 @@ const formatLayoutName = (layout: string, t: any) => {
     .join(' ');
 };
 
+const selectItemHighlightClassName =
+  'focus:bg-primary/20 focus:text-foreground focus:**:!text-foreground data-highlighted:bg-primary/10 data-highlighted:text-foreground data-highlighted:**:!text-foreground';
+
 interface LessonPresentationProps {
   isOpen: boolean;
   onClose: () => void;
@@ -1549,14 +1552,54 @@ export function LessonPresentation({
                     <SelectValue placeholder={t('duration15')} />
                   </SelectTrigger>
                   <SelectContent className="border-slate-200 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100">
-                    <SelectItem value="5">{t('duration5')}</SelectItem>
-                    <SelectItem value="10">{t('duration10')}</SelectItem>
-                    <SelectItem value="15">{t('duration15')}</SelectItem>
-                    <SelectItem value="30">{t('duration30')}</SelectItem>
-                    <SelectItem value="45">{t('duration45')}</SelectItem>
-                    <SelectItem value="60">{t('duration60')}</SelectItem>
-                    <SelectItem value="90">{t('duration90')}</SelectItem>
-                    <SelectItem value="120">{t('duration120')}</SelectItem>
+                    <SelectItem
+                      className={selectItemHighlightClassName}
+                      value="5"
+                    >
+                      {t('duration5')}
+                    </SelectItem>
+                    <SelectItem
+                      className={selectItemHighlightClassName}
+                      value="10"
+                    >
+                      {t('duration10')}
+                    </SelectItem>
+                    <SelectItem
+                      className={selectItemHighlightClassName}
+                      value="15"
+                    >
+                      {t('duration15')}
+                    </SelectItem>
+                    <SelectItem
+                      className={selectItemHighlightClassName}
+                      value="30"
+                    >
+                      {t('duration30')}
+                    </SelectItem>
+                    <SelectItem
+                      className={selectItemHighlightClassName}
+                      value="45"
+                    >
+                      {t('duration45')}
+                    </SelectItem>
+                    <SelectItem
+                      className={selectItemHighlightClassName}
+                      value="60"
+                    >
+                      {t('duration60')}
+                    </SelectItem>
+                    <SelectItem
+                      className={selectItemHighlightClassName}
+                      value="90"
+                    >
+                      {t('duration90')}
+                    </SelectItem>
+                    <SelectItem
+                      className={selectItemHighlightClassName}
+                      value="120"
+                    >
+                      {t('duration120')}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -1583,16 +1626,26 @@ export function LessonPresentation({
                     <SelectValue placeholder="System Default (Starter)" />
                   </SelectTrigger>
                   <SelectContent className="border-slate-200 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100">
-                    <SelectItem value="auto">
+                    <SelectItem
+                      className={selectItemHighlightClassName}
+                      value="auto"
+                    >
                       ✨ Auto — AI picks from content
                     </SelectItem>
-                    <SelectItem value="starter">
+                    <SelectItem
+                      className={selectItemHighlightClassName}
+                      value="starter"
+                    >
                       System Default (Starter)
                     </SelectItem>
                     {collections
                       .filter((c) => c.name !== 'starter')
                       .map((c) => (
-                        <SelectItem key={c.name} value={c.name}>
+                        <SelectItem
+                          key={c.name}
+                          className={selectItemHighlightClassName}
+                          value={c.name}
+                        >
                           {c.name === 'neon_dark' ? 'Neon Dark Theme' : c.name}
                         </SelectItem>
                       ))}
