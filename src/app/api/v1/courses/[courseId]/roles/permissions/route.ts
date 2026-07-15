@@ -1,11 +1,9 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withAuth } from '@/lib/api/middlewares';
+import { isCoursePermissionKey } from '@/lib/permissions/permission-keys';
 import { getCoursePermissions } from '@/lib/permissions/course-permission';
-import {
-  COURSE_PERMISSION,
-  isCoursePermissionKey,
-} from '@/lib/permissions/permission-keys';
+import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
 import { CourseRolePermissionService } from '@/services/CourseRolePermissionService';
 
 const coursePermissionSchema = z
@@ -29,10 +27,7 @@ export const GET = withAuth(async (_req, sessionData, { params }) => {
     const { courseId } = await params;
     const currentUserId = sessionData.user.id;
     const permissions = await getCoursePermissions(currentUserId, courseId);
-
-    if (
-      permissions.withoutPermission(COURSE_PERMISSION.COURSE_SETTINGS_MANAGE)
-    ) {
+    if (permissions.withoutPermission(COURSE_PERMISSION.COURSE_ROLES_MANAGE)) {
       return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
     }
 
@@ -41,6 +36,9 @@ export const GET = withAuth(async (_req, sessionData, { params }) => {
 
     return NextResponse.json({ roles });
   } catch (error) {
+    if (error instanceof Error && error.message === 'Forbidden') {
+      return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+    }
     console.error('List course role permissions error:', error);
     return NextResponse.json({ message: 'Server error' }, { status: 500 });
   }
@@ -50,13 +48,8 @@ export const PATCH = withAuth(async (req, sessionData, { params }) => {
   try {
     const { courseId } = await params;
     const currentUserId = sessionData.user.id;
-    const permissionState = await getCoursePermissions(currentUserId, courseId);
-
-    if (
-      permissionState.withoutPermission(
-        COURSE_PERMISSION.COURSE_SETTINGS_MANAGE
-      )
-    ) {
+    const permissions = await getCoursePermissions(currentUserId, courseId);
+    if (permissions.withoutPermission(COURSE_PERMISSION.COURSE_ROLES_MANAGE)) {
       return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
     }
 
@@ -69,7 +62,7 @@ export const PATCH = withAuth(async (req, sessionData, { params }) => {
       );
     }
 
-    const permissions =
+    const updatedPermissions =
       await CourseRolePermissionService.updateCourseRolePermissions({
         courseId,
         role: parsed.data.role,
@@ -78,12 +71,15 @@ export const PATCH = withAuth(async (req, sessionData, { params }) => {
 
     return NextResponse.json({
       role: parsed.data.role,
-      permissions: permissions.map((permission) => ({
+      permissions: updatedPermissions.map((permission) => ({
         permission: permission.permission,
         enabled: permission.enabled,
       })),
     });
   } catch (error) {
+    if (error instanceof Error && error.message === 'Forbidden') {
+      return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+    }
     console.error('Update course role permission error:', error);
     return NextResponse.json({ message: 'Server error' }, { status: 500 });
   }

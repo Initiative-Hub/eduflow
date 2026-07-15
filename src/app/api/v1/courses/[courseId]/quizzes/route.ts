@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { errorResponse } from '@/lib/api/error-response';
 import { withAuth } from '@/lib/api/middlewares';
+import { getCoursePermissions } from '@/lib/permissions/course-permission';
+import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
 import { prisma } from '@/lib/prisma';
 import { questionBlockSchema } from '@/lib/validations/quiz.schema';
 import { QuizService } from '@/services/QuizService';
@@ -70,9 +72,16 @@ const createQuizSchema = z
  *       500:
  *         description: Internal server error
  */
-export const GET = withAuth(async (_req, _sessionData, { params }) => {
+export const GET = withAuth(async (_req, sessionData, { params }) => {
   try {
     const { courseId } = await params;
+    const permissions = await getCoursePermissions(
+      sessionData.user.id,
+      courseId
+    );
+    if (permissions.withoutPermission(COURSE_PERMISSION.ASSESSMENTS_VIEW)) {
+      return errorResponse('FORBIDDEN', 'Forbidden', 403);
+    }
 
     const quizzes = await prisma.quiz.findMany({
       where: { courseId },
@@ -109,6 +118,9 @@ export const GET = withAuth(async (_req, _sessionData, { params }) => {
 
     return NextResponse.json(populatedQuizzes);
   } catch (error: unknown) {
+    if (error instanceof Error && error.message === 'Forbidden') {
+      return errorResponse('FORBIDDEN', 'Forbidden', 403);
+    }
     console.error('Error fetching quizzes:', error);
     return errorResponse('INTERNAL_ERROR', 'Internal Server Error', 500);
   }
@@ -165,9 +177,16 @@ export const GET = withAuth(async (_req, _sessionData, { params }) => {
  *       500:
  *         description: Internal server error
  */
-export const POST = withAuth(async (req, _sessionData, { params }) => {
+export const POST = withAuth(async (req, sessionData, { params }) => {
   try {
     const { courseId } = await params;
+    const permissions = await getCoursePermissions(
+      sessionData.user.id,
+      courseId
+    );
+    if (permissions.withoutPermission(COURSE_PERMISSION.ASSESSMENTS_CREATE)) {
+      return errorResponse('FORBIDDEN', 'Forbidden', 403);
+    }
     const body = await req.json();
 
     const parsed = createQuizSchema.safeParse(body);
@@ -205,7 +224,7 @@ export const POST = withAuth(async (req, _sessionData, { params }) => {
 
     const quiz = await QuizService.createForCourse(
       courseId,
-      _sessionData.user.id,
+      sessionData.user.id,
       {
         lessonIds,
         title,

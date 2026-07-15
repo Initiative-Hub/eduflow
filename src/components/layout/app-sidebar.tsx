@@ -31,6 +31,7 @@ import { PLATFORM_PERMISSION } from '@/lib/permissions/permission-keys';
 import { NavbarAvatar } from './navbar-avatar';
 import {
   filterAdminNavItems,
+  filterCourseNavItems,
   getAdminNavItems,
   getAssistantNavItems,
   getCourseNavItems,
@@ -63,7 +64,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     ? courses.find((c) => c.id === courseId)
     : null;
 
-  const courseItems = courseId ? getCourseNavItems(courseId, t) : [];
+  const courseItems = courseId
+    ? filterCourseNavItems(
+        getCourseNavItems(courseId, t),
+        currentCourse?.coursePermissions ?? []
+      )
+    : [];
 
   const isSettingsContext =
     pathname === '/profile' || pathname.startsWith('/settings');

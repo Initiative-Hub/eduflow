@@ -5,6 +5,7 @@ import {
   CourseInvitationStatus,
   CourseRoleName,
 } from '@/generated/prisma';
+import { getCoursePermissions } from '@/lib/permissions/course-permission';
 import {
   COURSE_PERMISSION,
   COURSE_PERMISSION_KEYS,
@@ -126,24 +127,25 @@ export class CourseService {
         COURSE_OWNER: COURSE_PERMISSION_KEYS,
         TEACHER: [
           COURSE_PERMISSION.COURSE_MEMBERS_VIEW,
+          COURSE_PERMISSION.COURSE_ROLES_MANAGE,
           COURSE_PERMISSION.COURSE_CONTENT_VIEW,
           COURSE_PERMISSION.COURSE_CONTENT_CREATE,
           COURSE_PERMISSION.COURSE_CONTENT_UPDATE,
+          COURSE_PERMISSION.COURSE_FILES_VIEW,
+          COURSE_PERMISSION.COURSE_FILES_MANAGE,
+          COURSE_PERMISSION.COURSE_ANALYTICS_VIEW,
+          COURSE_PERMISSION.AI_USE_COURSE_GENERATION,
           COURSE_PERMISSION.ASSESSMENTS_VIEW,
           COURSE_PERMISSION.ASSESSMENTS_CREATE,
           COURSE_PERMISSION.ASSESSMENTS_UPDATE,
           COURSE_PERMISSION.ASSESSMENTS_RESULTS_VIEW,
           COURSE_PERMISSION.ASSESSMENTS_GRADE,
-          COURSE_PERMISSION.COURSE_FILES_VIEW,
-          COURSE_PERMISSION.COURSE_FILES_MANAGE,
-          COURSE_PERMISSION.AI_USE_COURSE_GENERATION,
-          COURSE_PERMISSION.COURSE_ANALYTICS_VIEW,
         ],
         STUDENT: [
           COURSE_PERMISSION.COURSE_CONTENT_VIEW,
+          COURSE_PERMISSION.COURSE_FILES_VIEW,
           COURSE_PERMISSION.ASSESSMENTS_VIEW,
           COURSE_PERMISSION.ASSESSMENTS_RESULTS_VIEW,
-          COURSE_PERMISSION.COURSE_FILES_VIEW,
         ],
       };
 
@@ -292,7 +294,17 @@ export class CourseService {
           },
           enrollments: {
             where: { memberId: userId },
-            select: { status: true },
+            select: {
+              status: true,
+              role: {
+                select: {
+                  permissions: {
+                    where: { enabled: true },
+                    select: { permission: true },
+                  },
+                },
+              },
+            },
             take: 1,
           },
           invitations: {
@@ -324,6 +336,10 @@ export class CourseService {
             ? CourseEnrollmentStatus.ACTIVE
             : (course.enrollments[0]?.status ?? null),
         pendingInvitationId: course.invitations[0]?.id ?? null,
+        coursePermissions:
+          course.enrollments[0]?.role.permissions.map(
+            ({ permission }) => permission
+          ) ?? [],
       })),
       page,
       pageSize,
@@ -351,6 +367,13 @@ export class CourseService {
 
     if (!member && course.ownerId !== userId) {
       throw new Error('Unauthorized');
+    }
+
+    const coursePermissions = await getCoursePermissions(userId, courseId);
+    if (
+      coursePermissions.withoutPermission(COURSE_PERMISSION.COURSE_CONTENT_VIEW)
+    ) {
+      throw new Error('Forbidden');
     }
 
     return course;
@@ -384,8 +407,12 @@ export class CourseService {
     limit: number;
     offset: number;
   }) {
-    if (!(await CourseService.isMember(options.courseId, options.userId))) {
-      throw new Error('Unauthorized');
+    const permissions = await getCoursePermissions(
+      options.userId,
+      options.courseId
+    );
+    if (permissions.withoutPermission(COURSE_PERMISSION.COURSE_FILES_VIEW)) {
+      throw new Error('Forbidden');
     }
 
     return await StorageService.listDirectory({
@@ -399,8 +426,11 @@ export class CourseService {
   }
 
   static async getAnalytics(courseId: string, userId: string) {
-    if (!(await CourseService.isMember(courseId, userId))) {
-      throw new Error('Unauthorized');
+    const permissions = await getCoursePermissions(userId, courseId);
+    if (
+      permissions.withoutPermission(COURSE_PERMISSION.COURSE_ANALYTICS_VIEW)
+    ) {
+      throw new Error('Forbidden');
     }
 
     return await StorageService.getAnalytics({
@@ -415,8 +445,12 @@ export class CourseService {
     parentId?: string | null;
     name: string;
   }) {
-    if (!(await CourseService.isMember(options.courseId, options.userId))) {
-      throw new Error('Unauthorized');
+    const permissions = await getCoursePermissions(
+      options.userId,
+      options.courseId
+    );
+    if (permissions.withoutPermission(COURSE_PERMISSION.COURSE_FILES_MANAGE)) {
+      throw new Error('Forbidden');
     }
 
     return await StorageService.createFolder({
@@ -435,8 +469,12 @@ export class CourseService {
     contentType: string;
     fileSize: number;
   }) {
-    if (!(await CourseService.isMember(options.courseId, options.userId))) {
-      throw new Error('Unauthorized');
+    const permissions = await getCoursePermissions(
+      options.userId,
+      options.courseId
+    );
+    if (permissions.withoutPermission(COURSE_PERMISSION.COURSE_FILES_MANAGE)) {
+      throw new Error('Forbidden');
     }
 
     return await StorageService.initializeUpload({
@@ -450,8 +488,9 @@ export class CourseService {
   }
 
   static async confirmUpload(courseId: string, userId: string, fileId: string) {
-    if (!(await CourseService.isMember(courseId, userId))) {
-      throw new Error('Unauthorized');
+    const permissions = await getCoursePermissions(userId, courseId);
+    if (permissions.withoutPermission(COURSE_PERMISSION.COURSE_FILES_MANAGE)) {
+      throw new Error('Forbidden');
     }
 
     // We still need to check if the file belongs to the course
@@ -475,8 +514,9 @@ export class CourseService {
     userId: string,
     fileIds: string[]
   ) {
-    if (!(await CourseService.isMember(courseId, userId))) {
-      throw new Error('Unauthorized');
+    const permissions = await getCoursePermissions(userId, courseId);
+    if (permissions.withoutPermission(COURSE_PERMISSION.COURSE_FILES_MANAGE)) {
+      throw new Error('Forbidden');
     }
 
     // Verify all files belong to the course
@@ -503,8 +543,12 @@ export class CourseService {
     name?: string;
     parentId?: string | null;
   }) {
-    if (!(await CourseService.isMember(options.courseId, options.userId))) {
-      throw new Error('Unauthorized');
+    const permissions = await getCoursePermissions(
+      options.userId,
+      options.courseId
+    );
+    if (permissions.withoutPermission(COURSE_PERMISSION.COURSE_FILES_MANAGE)) {
+      throw new Error('Forbidden');
     }
 
     const file = await prisma.fileInventory.findUnique({
@@ -530,8 +574,9 @@ export class CourseService {
     userId: string,
     fileId: string
   ) {
-    if (!(await CourseService.isMember(courseId, userId))) {
-      throw new Error('Unauthorized');
+    const permissions = await getCoursePermissions(userId, courseId);
+    if (permissions.withoutPermission(COURSE_PERMISSION.COURSE_FILES_VIEW)) {
+      throw new Error('Forbidden');
     }
 
     const file = await prisma.fileInventory.findUnique({
@@ -556,8 +601,9 @@ export class CourseService {
     fileIds: string[],
     expiresInSeconds?: number
   ) {
-    if (!(await CourseService.isMember(courseId, userId))) {
-      throw new Error('Unauthorized');
+    const permissions = await getCoursePermissions(userId, courseId);
+    if (permissions.withoutPermission(COURSE_PERMISSION.COURSE_FILES_VIEW)) {
+      throw new Error('Forbidden');
     }
 
     const files = await prisma.fileInventory.findMany({
@@ -582,6 +628,12 @@ export class CourseService {
     isPublished: boolean,
     ownerId: string
   ) {
+    const permissions = await getCoursePermissions(ownerId, courseId);
+    if (
+      permissions.withoutPermission(COURSE_PERMISSION.COURSE_SETTINGS_MANAGE)
+    ) {
+      throw new Error('Forbidden');
+    }
     const course = await prisma.course.findUnique({
       where: { id: courseId },
     });

@@ -1,7 +1,7 @@
 name: Check Database Migrations
 
 on:
-  pull_request:
+  push:
     paths:
       - 'prisma/migrations/**'
   workflow_dispatch:

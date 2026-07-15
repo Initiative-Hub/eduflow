@@ -2,8 +2,6 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { CourseRoleName } from '@/generated/prisma';
 import { withAuth } from '@/lib/api/middlewares';
-import { getCoursePermissions } from '@/lib/permissions/course-permission';
-import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
 import { CourseMemberService } from '@/services/CourseMemberService';
 import { mapCourseMemberError } from '../course-member-route-utils';
 
@@ -37,17 +35,6 @@ export const PATCH = withAuth(async (req, sessionData, { params }) => {
       );
     }
 
-    const permissions = await getCoursePermissions(
-      sessionData.user.id,
-      parsedParams.data.courseId
-    );
-
-    if (
-      permissions.withoutPermission(COURSE_PERMISSION.COURSE_MEMBERS_MANAGE)
-    ) {
-      return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
-    }
-
     const parsedBody = updateMemberRoleSchema.safeParse(await req.json());
 
     if (!parsedBody.success) {
@@ -60,6 +47,7 @@ export const PATCH = withAuth(async (req, sessionData, { params }) => {
     const result = await CourseMemberService.updateMemberRole({
       courseId: parsedParams.data.courseId,
       memberId: parsedParams.data.memberId,
+      currentUserId: sessionData.user.id,
       role: parsedBody.data.role,
     });
 
@@ -88,17 +76,6 @@ export const DELETE = withAuth(async (_req, sessionData, { params }) => {
         { message: 'Invalid request', details: parsedParams.error.flatten() },
         { status: 400 }
       );
-    }
-
-    const permissions = await getCoursePermissions(
-      sessionData.user.id,
-      parsedParams.data.courseId
-    );
-
-    if (
-      permissions.withoutPermission(COURSE_PERMISSION.COURSE_MEMBERS_MANAGE)
-    ) {
-      return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
     }
 
     const result = await CourseMemberService.removeMember({

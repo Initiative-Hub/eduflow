@@ -28,11 +28,7 @@ A branch gives a feature or fix its own line of development. You can commit expe
 A merge conflict means Git cannot safely choose between overlapping edits. The correct answer is not always one side or the other. Read both versions, understand the intended final behavior, and combine them deliberately.
 
 ```text
-<<<<<<< HEAD
 Submit assignment
-=======
-Turn in project
->>>>>>> feature/copy-update
 ```
 
 In this example, the right final copy depends on the product decision, not on which branch is newer.

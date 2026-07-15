@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import type { WritingTool } from '@/lib/validations/writing.schema';
 import { DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
 import { ChatInput } from '../../_components/chat-input';
+import { ChatShareButton } from '../../_components/chat-share-button';
 import { ChatSidebar } from '../../_components/chat-sidebar';
 import { ChatWorkspaceShell } from '../../_components/chat-workspace-shell';
 import { useWriting } from '../use-writing';
@@ -118,6 +119,15 @@ export default function WritingClient({
       <ChatWorkspaceShell
         composer={composer}
         scrollContainerRef={scrollContainerRef}
+        toolbar={
+          chatId && hasOutput ? (
+            <ChatShareButton
+              chatId={chatId}
+              chatType="WRITING_ASSISTANT"
+              disabled={isStreaming}
+            />
+          ) : undefined
+        }
         viewport={viewport}
       />
       <ChatSidebar

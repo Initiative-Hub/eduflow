@@ -2018,6 +2018,27 @@
     "synonyms": "Từ đồng nghĩa",
     "wordNotFound": "Không tìm thấy từ"
   },
+  "SharedAiChat": {
+    "close": "Đóng",
+    "copied": "Đã sao chép",
+    "copyError": "Không thể sao chép liên kết chia sẻ.",
+    "copyLink": "Sao chép liên kết",
+    "createdBy": "Được tạo với EduFlow",
+    "eyebrow": "Cuộc trò chuyện AI EduFlow được chia sẻ",
+    "ownerCta": "Mở cuộc trò chuyện gốc",
+    "ownerHelper": "Bạn đang xem cuộc trò chuyện do chính bạn chia sẻ.",
+    "retry": "Thử lại",
+    "share": "Chia sẻ cuộc trò chuyện",
+    "shareDialogDescription": "EduFlow đang chuẩn bị liên kết công khai cho cuộc trò chuyện này.",
+    "shareDialogReadyDescription": "Bất kỳ ai có liên kết này đều có thể xem cuộc trò chuyện mà không cần đăng nhập.",
+    "shareDialogTitle": "Chia sẻ cuộc trò chuyện AI",
+    "shareError": "Không thể tạo liên kết chia sẻ.",
+    "shareGenerating": "Đang tạo liên kết chia sẻ…",
+    "shareLinkLabel": "Liên kết công khai",
+    "shareSuccess": "Đã sao chép liên kết chia sẻ.",
+    "visitorCta": "Dùng thử EduFlow",
+    "visitorHelper": "Tạo cuộc trò chuyện được hỗ trợ bởi AI của riêng bạn với EduFlow."
+  },
   "SocraticPage": {
     "disciplines": {
       "biochemistry": {

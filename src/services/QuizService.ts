@@ -4,6 +4,8 @@ import type {
   QuestionSubType,
   SelectionMethod,
 } from '@/generated/prisma';
+import { getCoursePermissions } from '@/lib/permissions/course-permission';
+import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
 import { prisma } from '@/lib/prisma';
 import {
   getQuestionTaxonomy,
@@ -257,6 +259,13 @@ export class QuizService {
     userId: string,
     data: CreateQuizInput
   ) {
+    const createPermissions = await getCoursePermissions(userId, courseId);
+    if (
+      createPermissions.withoutPermission(COURSE_PERMISSION.ASSESSMENTS_CREATE)
+    ) {
+      throw new Error('Forbidden');
+    }
+
     await CourseService.assertCourseOwner(courseId, userId);
 
     const linkedLessons = await prisma.lesson.findMany({
@@ -396,7 +405,14 @@ export class QuizService {
     if (!quiz) {
       throw new Error('Quiz not found');
     }
-    if (quiz.course.ownerId !== userId) {
+
+    const updatePermissions = await getCoursePermissions(userId, quiz.courseId);
+    if (
+      updatePermissions.withoutPermission(
+        COURSE_PERMISSION.ASSESSMENTS_UPDATE
+      ) ||
+      quiz.course.ownerId !== userId
+    ) {
       throw new Error('Forbidden');
     }
 
@@ -477,7 +493,14 @@ export class QuizService {
     if (!quiz) {
       throw new Error('Quiz not found');
     }
-    if (quiz.course.ownerId !== userId) {
+
+    const updatePermissions = await getCoursePermissions(userId, quiz.courseId);
+    if (
+      updatePermissions.withoutPermission(
+        COURSE_PERMISSION.ASSESSMENTS_UPDATE
+      ) ||
+      quiz.course.ownerId !== userId
+    ) {
       throw new Error('Forbidden');
     }
 
@@ -558,9 +581,23 @@ export class QuizService {
     if (!fetchedQuiz) {
       throw new Error('Quiz not found');
     }
-    if (fetchedQuiz.course.ownerId !== userId) {
+
+    const updatePermissions = await getCoursePermissions(
+      userId,
+      fetchedQuiz.courseId
+    );
+    if (
+      updatePermissions.withoutPermission(
+        COURSE_PERMISSION.ASSESSMENTS_UPDATE
+      ) ||
+      updatePermissions.withoutPermission(
+        COURSE_PERMISSION.AI_USE_COURSE_GENERATION
+      ) ||
+      fetchedQuiz.course.ownerId !== userId
+    ) {
       throw new Error('Forbidden');
     }
+
     const currentQuestions = resolveReferencedQuestions(
       fetchedQuiz.quizQuestions,
       fetchedQuiz.questions

@@ -8,6 +8,8 @@ import {
 import { APP_URL } from '@/lib/api/endpoints';
 import { emailService } from '@/lib/email-service';
 import { prisma } from '@/lib/prisma';
+import { getCoursePermissions } from '@/lib/permissions/course-permission';
+import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
 import {
   ASSIGNABLE_COURSE_MEMBER_ROLES,
   type AssignableCourseMemberRole,
@@ -116,6 +118,15 @@ export class CourseInvitationService {
     userId: string;
     role: CourseRoleNameType;
   }) {
+    const permissions = await getCoursePermissions(
+      input.invitedById,
+      input.courseId
+    );
+    if (
+      permissions.withoutPermission(COURSE_PERMISSION.COURSE_MEMBERS_MANAGE)
+    ) {
+      throw new Error('Forbidden');
+    }
     if (
       !ASSIGNABLE_COURSE_MEMBER_ROLES.includes(
         input.role as AssignableCourseMemberRole
@@ -393,7 +404,11 @@ export class CourseInvitationService {
     return { id: invitation.id, message: 'Invitation declined' };
   }
 
-  static async listInviteLinks(courseId: string) {
+  static async listInviteLinks(courseId: string, userId: string) {
+    const permissions = await getCoursePermissions(userId, courseId);
+    if (permissions.withoutPermission(COURSE_PERMISSION.COURSE_MEMBERS_VIEW)) {
+      throw new Error('Forbidden');
+    }
     const links = await prisma.courseInviteLink.findMany({
       where: { courseId },
       include: { role: { select: { name: true } } },
@@ -410,6 +425,15 @@ export class CourseInvitationService {
     maxUses?: number | null;
     expiresAt?: Date | null;
   }) {
+    const permissions = await getCoursePermissions(
+      input.createdById,
+      input.courseId
+    );
+    if (
+      permissions.withoutPermission(COURSE_PERMISSION.COURSE_MEMBERS_MANAGE)
+    ) {
+      throw new Error('Forbidden');
+    }
     if (
       !ASSIGNABLE_COURSE_MEMBER_ROLES.includes(
         input.role as AssignableCourseMemberRole
@@ -451,7 +475,20 @@ export class CourseInvitationService {
     return toInviteLinkView(link);
   }
 
-  static async revokeInviteLink(input: { courseId: string; inviteId: string }) {
+  static async revokeInviteLink(input: {
+    courseId: string;
+    inviteId: string;
+    currentUserId: string;
+  }) {
+    const permissions = await getCoursePermissions(
+      input.currentUserId,
+      input.courseId
+    );
+    if (
+      permissions.withoutPermission(COURSE_PERMISSION.COURSE_MEMBERS_MANAGE)
+    ) {
+      throw new Error('Forbidden');
+    }
     const link = await prisma.courseInviteLink.findFirst({
       where: { courseId: input.courseId, id: input.inviteId },
       select: { id: true },

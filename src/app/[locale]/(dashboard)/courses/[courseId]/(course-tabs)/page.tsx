@@ -1,5 +1,5 @@
 import { headers } from 'next/headers';
-import { redirect } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { getCoursePermissions } from '@/lib/permissions/course-permission';
 import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
@@ -21,6 +21,10 @@ export default async function CourseModulesPage({
   }
 
   const permissions = await getCoursePermissions(sessionData.user.id, courseId);
+
+  if (permissions.withoutPermission(COURSE_PERMISSION.COURSE_CONTENT_VIEW)) {
+    notFound();
+  }
 
   return (
     <CourseModulesClient
