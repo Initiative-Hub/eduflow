@@ -3,6 +3,8 @@ import {
   CourseRoleName,
   type CourseRoleName as CourseRoleNameType,
 } from '@/generated/prisma';
+import { getCoursePermissions } from '@/lib/permissions/course-permission';
+import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
 import { prisma } from '@/lib/prisma';
 
 type CourseSettingsMemberView = {
@@ -132,6 +134,12 @@ export class CourseSettingsService {
   }
 
   static async getSettings(courseId: string, currentUserId: string) {
+    const permissions = await getCoursePermissions(currentUserId, courseId);
+    if (
+      permissions.withoutPermission(COURSE_PERMISSION.COURSE_SETTINGS_MANAGE)
+    ) {
+      throw new Error('Forbidden');
+    }
     const { course, enrollment } =
       await CourseSettingsService.assertCourseMember(courseId, currentUserId);
     const currentRole = enrollment?.role.name ?? CourseRoleName.STUDENT;
@@ -194,6 +202,15 @@ export class CourseSettingsService {
   }
 
   static async updateSettings(input: CourseSettingsUpdateInput) {
+    const permissions = await getCoursePermissions(
+      input.currentUserId,
+      input.courseId
+    );
+    if (
+      permissions.withoutPermission(COURSE_PERMISSION.COURSE_SETTINGS_MANAGE)
+    ) {
+      throw new Error('Forbidden');
+    }
     await CourseSettingsService.assertCourseOwnerRole(
       input.courseId,
       input.currentUserId
@@ -331,6 +348,15 @@ export class CourseSettingsService {
       input.courseId,
       input.currentUserId
     );
+    const permissions = await getCoursePermissions(
+      input.currentUserId,
+      input.courseId
+    );
+    if (
+      permissions.withoutPermission(COURSE_PERMISSION.COURSE_SETTINGS_MANAGE)
+    ) {
+      throw new Error('Forbidden');
+    }
 
     const course = await prisma.course.update({
       where: { id: input.courseId },
@@ -345,6 +371,15 @@ export class CourseSettingsService {
     courseId: string;
     currentUserId: string;
   }): Promise<CourseSettingsMutationResponse> {
+    const permissions = await getCoursePermissions(
+      input.currentUserId,
+      input.courseId
+    );
+    if (
+      permissions.withoutPermission(COURSE_PERMISSION.COURSE_SETTINGS_MANAGE)
+    ) {
+      throw new Error('Forbidden');
+    }
     await CourseSettingsService.assertCourseOwnerRole(
       input.courseId,
       input.currentUserId
@@ -370,6 +405,15 @@ export class CourseSettingsService {
       input.courseId,
       input.currentUserId
     );
+    const permissions = await getCoursePermissions(
+      input.currentUserId,
+      input.courseId
+    );
+    if (
+      permissions.withoutPermission(COURSE_PERMISSION.COURSE_SETTINGS_MANAGE)
+    ) {
+      throw new Error('Forbidden');
+    }
 
     const course = await prisma.course.update({
       where: { id: input.courseId },

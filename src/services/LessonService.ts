@@ -4,7 +4,31 @@ import { prisma } from '@/lib/prisma';
 import type { TiptapDocument } from '@/utils/lesson-content';
 
 export class LessonService {
-  static async createLesson(data: { moduleId: string; title: string }) {
+  static async createLesson(data: {
+    moduleId: string;
+    title: string;
+    userId: string;
+  }) {
+    const moduleRecord = await prisma.module.findFirst({
+      where: {
+        id: data.moduleId,
+        deletedAt: null,
+        course: { deletedAt: null },
+      },
+      select: { courseId: true },
+    });
+    if (!moduleRecord) throw new Error('Module not found');
+
+    const permissions = await getCoursePermissions(
+      data.userId,
+      moduleRecord.courseId
+    );
+    if (
+      permissions.withoutPermission(COURSE_PERMISSION.COURSE_CONTENT_CREATE)
+    ) {
+      throw new Error('Forbidden');
+    }
+
     const lastLesson = await prisma.lesson.findFirst({
       where: {
         moduleId: data.moduleId,

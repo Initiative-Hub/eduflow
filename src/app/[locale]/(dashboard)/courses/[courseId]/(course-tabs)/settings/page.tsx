@@ -3,6 +3,8 @@ import { headers } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { auth } from '@/lib/auth';
+import { getCoursePermissions } from '@/lib/permissions/course-permission';
+import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
 import { CourseSettingsService } from '@/services/CourseSettingsService';
 import { CourseSettingsClient } from './client';
 
@@ -21,6 +23,18 @@ export default async function CourseSettingsPage({
   const sessionData = await auth.api.getSession({ headers: await headers() });
   if (!sessionData) {
     redirect('/login');
+  }
+
+  const coursePermissions = await getCoursePermissions(
+    sessionData.user.id,
+    courseId
+  );
+  if (
+    coursePermissions.withoutPermission(
+      COURSE_PERMISSION.COURSE_SETTINGS_MANAGE
+    )
+  ) {
+    notFound();
   }
 
   try {

@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withRoles } from '@/lib/api/middlewares';
 import { CourseService } from '@/services/CourseService';
+import { getCoursePermissions } from '@/lib/permissions/course-permission';
+import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
 
 /**
  * Zod schema for course generation input.
@@ -114,6 +116,18 @@ export const POST = withRoles(
             { status: 400 }
           );
         }
+      }
+
+      const permissions = await getCoursePermissions(
+        userId,
+        parsed.data.courseId
+      );
+      if (
+        permissions.withoutPermission(
+          COURSE_PERMISSION.AI_USE_COURSE_GENERATION
+        )
+      ) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       }
 
       const result = CourseService.generateModulesStream({

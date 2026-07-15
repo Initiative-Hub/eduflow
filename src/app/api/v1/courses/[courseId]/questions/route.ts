@@ -3,6 +3,8 @@ import { z } from 'zod';
 import type { Prisma } from '@/generated/prisma';
 import { errorResponse } from '@/lib/api/error-response';
 import { withAuth } from '@/lib/api/middlewares';
+import { getCoursePermissions } from '@/lib/permissions/course-permission';
+import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
 import { prisma } from '@/lib/prisma';
 
 // ─── Validation Schemas ──────────────────────────────────────────────────────
@@ -65,9 +67,20 @@ const createQuestionSchema = z.object({
  *       500:
  *         description: Internal server error
  */
-export const GET = withAuth(async (req, _sessionData, { params }) => {
+export const GET = withAuth(async (req, sessionData, { params }) => {
   try {
     const { courseId } = await params;
+    const permissions = await getCoursePermissions(
+      sessionData.user.id,
+      courseId
+    );
+    if (
+      permissions.withoutPermission(COURSE_PERMISSION.ASSESSMENTS_CREATE) ||
+      permissions.withoutPermission(COURSE_PERMISSION.ASSESSMENTS_UPDATE) ||
+      permissions.withoutPermission(COURSE_PERMISSION.ASSESSMENTS_DELETE)
+    ) {
+      return errorResponse('FORBIDDEN', 'Forbidden', 403);
+    }
     const { searchParams } = new URL(req.url);
 
     const category = searchParams.get('category');
@@ -98,6 +111,9 @@ export const GET = withAuth(async (req, _sessionData, { params }) => {
 
     return NextResponse.json(questions);
   } catch (error: unknown) {
+    if (error instanceof Error && error.message === 'Forbidden') {
+      return errorResponse('FORBIDDEN', 'Forbidden', 403);
+    }
     console.error('Error fetching questions:', error);
     return errorResponse('INTERNAL_ERROR', 'Internal Server Error', 500);
   }
@@ -145,9 +161,16 @@ export const GET = withAuth(async (req, _sessionData, { params }) => {
  *       500:
  *         description: Internal server error
  */
-export const POST = withAuth(async (req, _sessionData, { params }) => {
+export const POST = withAuth(async (req, sessionData, { params }) => {
   try {
     const { courseId } = await params;
+    const permissions = await getCoursePermissions(
+      sessionData.user.id,
+      courseId
+    );
+    if (permissions.withoutPermission(COURSE_PERMISSION.ASSESSMENTS_CREATE)) {
+      return errorResponse('FORBIDDEN', 'Forbidden', 403);
+    }
     const body = await req.json();
 
     const parsed = createQuestionSchema.safeParse(body);
@@ -187,6 +210,9 @@ export const POST = withAuth(async (req, _sessionData, { params }) => {
 
     return NextResponse.json(question, { status: 201 });
   } catch (error: unknown) {
+    if (error instanceof Error && error.message === 'Forbidden') {
+      return errorResponse('FORBIDDEN', 'Forbidden', 403);
+    }
     console.error('Error creating question:', error);
     return errorResponse('INTERNAL_ERROR', 'Internal Server Error', 500);
   }

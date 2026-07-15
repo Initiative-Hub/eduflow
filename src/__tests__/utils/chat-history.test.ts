@@ -1,10 +1,10 @@
 import type { UIMessage } from 'ai';
 import { describe, expect, it } from 'vitest';
+import type { ChatDetailsResponse } from '@/app/[locale]/(dashboard)/(ai-chat)/chat.service';
 import {
   createInitialChatHistoryData,
   mergeChatMessages,
 } from '@/app/[locale]/(dashboard)/(ai-chat)/chat-history';
-import type { ChatDetailsResponse } from '@/app/[locale]/(dashboard)/(ai-chat)/chat.service';
 
 function createMessage(
   id: string,

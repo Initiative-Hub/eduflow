@@ -3,7 +3,17 @@ import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
 import { prisma } from '@/lib/prisma';
 
 export class ModuleService {
-  static async createModule(data: { courseId: string; title: string }) {
+  static async createModule(data: {
+    courseId: string;
+    title: string;
+    userId: string;
+  }) {
+    const permissions = await getCoursePermissions(data.userId, data.courseId);
+    if (
+      permissions.withoutPermission(COURSE_PERMISSION.COURSE_CONTENT_CREATE)
+    ) {
+      throw new Error('Forbidden');
+    }
     // Auto increment orderIndex based on existing modules
     const lastModule = await prisma.module.findFirst({
       where: {
@@ -25,7 +35,11 @@ export class ModuleService {
     });
   }
 
-  static async getModulesByCourse(courseId: string) {
+  static async getModulesByCourse(courseId: string, userId: string) {
+    const permissions = await getCoursePermissions(userId, courseId);
+    if (permissions.withoutPermission(COURSE_PERMISSION.COURSE_CONTENT_VIEW)) {
+      throw new Error('Forbidden');
+    }
     return await prisma.module.findMany({
       where: {
         courseId,

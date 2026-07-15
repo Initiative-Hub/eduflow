@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withAuth } from '@/lib/api/middlewares';
-import { getCoursePermissions } from '@/lib/permissions/course-permission';
-import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
 import { CourseMemberService } from '@/services/CourseMemberService';
 import { mapCourseMemberError } from '../course-member-route-utils';
 
@@ -37,17 +35,6 @@ export const GET = withAuth(async (req, sessionData, { params }) => {
       );
     }
 
-    const permissions = await getCoursePermissions(
-      sessionData.user.id,
-      parsedParams.data.courseId
-    );
-
-    if (
-      permissions.withoutPermission(COURSE_PERMISSION.COURSE_MEMBERS_MANAGE)
-    ) {
-      return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
-    }
-
     const { searchParams } = new URL(req.url);
     const parsedQuery = candidateListQuerySchema.safeParse({
       search: searchParams.get('search') ?? undefined,
@@ -64,6 +51,7 @@ export const GET = withAuth(async (req, sessionData, { params }) => {
 
     const result = await CourseMemberService.listCandidates({
       courseId: parsedParams.data.courseId,
+      currentUserId: sessionData.user.id,
       search: parsedQuery.data.search,
       limit: parsedQuery.data.limit,
       offset: parsedQuery.data.offset,

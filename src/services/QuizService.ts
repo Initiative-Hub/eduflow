@@ -5,6 +5,8 @@ import type {
   QuizCategory,
   SelectionMethod,
 } from '@/generated/prisma';
+import { getCoursePermissions } from '@/lib/permissions/course-permission';
+import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
 import { prisma } from '@/lib/prisma';
 import { CourseService } from '@/services/CourseService';
 import { OpenRouterService } from './ai/OpenRouterService';
@@ -81,6 +83,12 @@ export class QuizService {
     userId: string,
     data: CreateQuizInput
   ) {
+    const createPermissions = await getCoursePermissions(userId, courseId);
+    if (
+      createPermissions.withoutPermission(COURSE_PERMISSION.ASSESSMENTS_CREATE)
+    ) {
+      throw new Error('Forbidden');
+    }
     await CourseService.assertCourseOwner(courseId, userId);
 
     const linkedLessons = await prisma.lesson.findMany({
@@ -168,15 +176,23 @@ export class QuizService {
   }
   static async updateQuestions(
     quizId: string,
+    userId: string,
     questions: Record<string, unknown>[]
   ) {
     const quiz = await prisma.quiz.findUnique({
       where: { id: quizId },
-      select: { id: true },
+      select: { id: true, courseId: true },
     });
 
     if (!quiz) {
       throw new Error('Quiz not found');
+    }
+
+    const updatePermissions = await getCoursePermissions(userId, quiz.courseId);
+    if (
+      updatePermissions.withoutPermission(COURSE_PERMISSION.ASSESSMENTS_UPDATE)
+    ) {
+      throw new Error('Forbidden');
     }
 
     const updatedQuiz = await prisma.quiz.update({
@@ -228,6 +244,26 @@ export class QuizService {
     });
     if (!fetchedQuiz) {
       throw new Error('Quiz not found');
+    }
+    const updatePermissions = await getCoursePermissions(
+      userId,
+      fetchedQuiz.courseId
+    );
+    if (
+      updatePermissions.withoutPermission(COURSE_PERMISSION.ASSESSMENTS_UPDATE)
+    ) {
+      throw new Error('Forbidden');
+    }
+    const aiPermissions = await getCoursePermissions(
+      userId,
+      fetchedQuiz.courseId
+    );
+    if (
+      aiPermissions.withoutPermission(
+        COURSE_PERMISSION.AI_USE_COURSE_GENERATION
+      )
+    ) {
+      throw new Error('Forbidden');
     }
     if (fetchedQuiz.course.ownerId !== userId) {
       throw new Error('Forbidden');

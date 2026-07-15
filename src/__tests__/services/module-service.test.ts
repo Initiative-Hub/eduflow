@@ -4,6 +4,7 @@ import { ModuleService } from '@/services/ModuleService';
 
 const mocks = vi.hoisted(() => ({
   containPermission: vi.fn(() => true),
+  withoutPermission: vi.fn(() => false),
   getCoursePermissions: vi.fn(),
   module: {
     findFirst: vi.fn(),
@@ -26,13 +27,14 @@ describe('ModuleService soft deletion', () => {
     vi.clearAllMocks();
     mocks.getCoursePermissions.mockResolvedValue({
       containPermission: mocks.containPermission,
+      withoutPermission: mocks.withoutPermission,
     });
   });
 
   it('lists only active modules and active lessons', async () => {
     mocks.module.findMany.mockResolvedValue([]);
 
-    await ModuleService.getModulesByCourse('course-1');
+    await ModuleService.getModulesByCourse('course-1', 'user-1');
 
     expect(prisma.module.findMany).toHaveBeenCalledWith({
       where: {
