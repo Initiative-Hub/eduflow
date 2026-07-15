@@ -212,6 +212,7 @@ export function getCourseNavItems(
       icon: <Award className={sidebarIconClassName} />,
       isActive: (pathname) =>
         isExactMatch(pathname, `/courses/${courseId}/grades`),
+      requirePermissions: [COURSE_PERMISSION.ASSESSMENTS_RESULTS_VIEW],
     },
     {
       name: t('courseFiles'),
