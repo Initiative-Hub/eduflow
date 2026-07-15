@@ -105,7 +105,7 @@ export function TemplateManagerDialog({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
-        <DialogContent className="flex flex-col border-slate-200 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100">
+        <DialogContent className="flex w-full flex-col border-slate-200 bg-white px-6 py-5 text-slate-900 sm:max-w-lg dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100">
           <DialogHeader className="shrink-0">
             <DialogTitle className="font-bold text-lg text-slate-800 dark:text-slate-100">
               Presentation Templates Manager
@@ -120,7 +120,7 @@ export function TemplateManagerDialog({
             onSubmit={handleUploadTemplate}
             className="flex min-h-0 flex-1 flex-col gap-6 overflow-hidden"
           >
-            <div className="flex flex-1 flex-col gap-6 overflow-y-auto pr-1">
+            <div className="flex flex-1 flex-col gap-6 overflow-y-auto px-1">
               {/* Choose Template Style */}
               <div className="space-y-3">
                 <span className="font-semibold text-slate-600 text-xs uppercase tracking-wider dark:text-slate-400">
@@ -220,7 +220,7 @@ export function TemplateManagerDialog({
                     placeholder="e.g. Minimalist Dark"
                     value={collectionName}
                     onChange={(e) => setCollectionName(e.target.value)}
-                    className="h-10 rounded-xl border-slate-200 bg-slate-50 text-slate-900 text-sm focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+                    className="h-10 rounded-xl border-slate-200 bg-slate-50 text-slate-900 text-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
                   />
                 </div>
 
