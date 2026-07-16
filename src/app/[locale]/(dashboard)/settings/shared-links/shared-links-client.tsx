@@ -1,8 +1,14 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { Link2, ShieldCheck } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import {
   Card,
@@ -21,17 +27,21 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { aiChatShareClient } from '@/lib/api/ai-chat-share-client';
 import type { ApiError } from '@/lib/api/types';
+import { SharedLinksPagination } from './shared-links-pagination';
 import { SharedLinksTable } from './shared-links-table';
 
-const queryKey = ['shared-links'];
+const PAGE_SIZE = 10;
+const queryKey = ['shared-links'] as const;
 
 export function SharedLinksClient() {
   const t = useTranslations('AiShareLinks');
   const queryClient = useQueryClient();
+  const [page, setPage] = useState(1);
 
   const sharesQuery = useQuery({
-    queryKey,
-    queryFn: aiChatShareClient.listShares,
+    queryKey: [...queryKey, page],
+    placeholderData: keepPreviousData,
+    queryFn: () => aiChatShareClient.listShares({ page, pageSize: PAGE_SIZE }),
   });
 
   const revokeMutation = useMutation({
@@ -55,6 +65,7 @@ export function SharedLinksClient() {
   };
 
   const shares = sharesQuery.data?.data ?? [];
+  const pagination = sharesQuery.data?.pagination;
 
   return (
     <Card className="overflow-hidden border-border/70 bg-card/95 p-0 shadow-sm">
@@ -74,7 +85,7 @@ export function SharedLinksClient() {
         </div>
         <div className="inline-flex shrink-0 items-center gap-2 self-start rounded-full border border-border/70 bg-background px-3 py-1.5 font-medium text-muted-foreground text-xs shadow-xs sm:self-auto">
           <ShieldCheck className="size-3.5 text-primary" />
-          {t('summary.active', { count: shares.length })}
+          {t('summary.active', { count: pagination?.total ?? 0 })}
         </div>
       </CardHeader>
 
@@ -100,12 +111,24 @@ export function SharedLinksClient() {
             </EmptyHeader>
           </Empty>
         ) : (
-          <SharedLinksTable
-            isRevoking={revokeMutation.isPending}
-            onCopy={copyLink}
-            onRevoke={revokeMutation.mutate}
-            shares={shares}
-          />
+          <>
+            <SharedLinksTable
+              isRevoking={revokeMutation.isPending}
+              onCopy={copyLink}
+              onRevoke={revokeMutation.mutate}
+              shares={shares}
+            />
+            {pagination ? (
+              <SharedLinksPagination
+                isPending={sharesQuery.isFetching}
+                onPageChange={setPage}
+                page={pagination.page}
+                pageSize={pagination.pageSize}
+                total={pagination.total}
+                totalPages={pagination.totalPages}
+              />
+            ) : null}
+          </>
         )}
       </CardContent>
     </Card>

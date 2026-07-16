@@ -294,6 +294,12 @@
       "description": "Anyone using this link will no longer be able to view the shared item.",
       "title": "Revoke this public link?"
     },
+    "pagination": {
+      "next": "Next",
+      "page": "Page {page} of {total}",
+      "previous": "Previous",
+      "range": "Showing {start}-{end} of {total} links"
+    },
     "summary": {
       "active": "{count} active links"
     },

@@ -175,26 +175,47 @@ export class AiChatShareService {
     };
   }
 
-  static async listShares(userId: string) {
-    return prisma.sharedResource.findMany({
-      where: {
-        ownerUserId: userId,
-        resourceType: {
-          in: [
-            ShareResourceType.AI_CHAT,
-            ShareResourceType.STUDY_INTERACTIVE_CONTENT,
-          ],
+  static async listShares(input: {
+    page: number;
+    pageSize: number;
+    userId: string;
+  }) {
+    const where = {
+      ownerUserId: input.userId,
+      resourceType: {
+        in: [
+          ShareResourceType.AI_CHAT,
+          ShareResourceType.STUDY_INTERACTIVE_CONTENT,
+        ],
+      },
+      revokedAt: null,
+    };
+
+    const [total, data] = await Promise.all([
+      prisma.sharedResource.count({ where }),
+      prisma.sharedResource.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (input.page - 1) * input.pageSize,
+        take: input.pageSize,
+        select: {
+          id: true,
+          title: true,
+          createdAt: true,
+          resourceType: true,
         },
-        revokedAt: null,
+      }),
+    ]);
+
+    return {
+      data,
+      pagination: {
+        page: input.page,
+        pageSize: input.pageSize,
+        total,
+        totalPages: Math.ceil(total / input.pageSize),
       },
-      orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        title: true,
-        createdAt: true,
-        resourceType: true,
-      },
-    });
+    };
   }
 
   static async revokeShare(input: { shareId: string; userId: string }) {

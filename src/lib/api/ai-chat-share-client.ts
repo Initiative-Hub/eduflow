@@ -10,6 +10,18 @@ export type SharedResourceLink = {
   shareUrl: string;
 };
 
+export type SharedLinksPagination = {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+};
+
+export type SharedLinksResponse = {
+  data: SharedResourceLink[];
+  pagination: SharedLinksPagination;
+};
+
 export const aiChatShareClient = {
   createShare: (input: { chatId: string; chatType: ShareableAiChatType }) =>
     apiClient.post<{ shareId: string; shareUrl: string }>(
@@ -17,10 +29,19 @@ export const aiChatShareClient = {
       input
     ),
 
-  listShares: () =>
-    apiClient.get<{ data: SharedResourceLink[] }>('v1/ai/share', {
-      headers: { 'Cache-Control': 'no-store' },
-    }),
+  listShares: ({ page, pageSize }: { page: number; pageSize: number }) => {
+    const searchParams = new URLSearchParams({
+      page: String(page),
+      pageSize: String(pageSize),
+    });
+
+    return apiClient.get<SharedLinksResponse>(
+      `v1/ai/share?${searchParams.toString()}`,
+      {
+        headers: { 'Cache-Control': 'no-store' },
+      }
+    );
+  },
 
   revokeShare: (shareId: string) =>
     apiClient.delete<{ data: { revoked: boolean } }>(`v1/ai/share/${shareId}`),

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { ShareResourceType } from '@/generated/prisma';
 import { getChatOwner } from '@/lib/api/guest-session';
 import { createAiChatShareSchema } from '@/lib/validations/ai-chat-share.schema';
@@ -9,6 +10,11 @@ const sharePaths: Record<ShareResourceType, string> = {
   [ShareResourceType.STUDY_INTERACTIVE_CONTENT]: '/share/study/interactive',
 };
 
+const listSharesQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(50).default(10),
+});
+
 /**
  * @swagger
  * /api/v1/ai/share:
@@ -18,6 +24,21 @@ const sharePaths: Record<ShareResourceType, string> = {
  *     summary: List the current user's public AI shares
  */
 export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const query = listSharesQuerySchema.safeParse(
+    Object.fromEntries(searchParams)
+  );
+
+  if (!query.success) {
+    return NextResponse.json(
+      {
+        message: 'Invalid query parameters',
+        details: query.error.flatten(),
+      },
+      { status: 400 }
+    );
+  }
+
   const { userId } = await getChatOwner();
 
   if (!userId) {
@@ -27,16 +48,20 @@ export async function GET(req: Request) {
     );
   }
 
-  const shares = await AiChatShareService.listShares(userId);
+  const shares = await AiChatShareService.listShares({
+    ...query.data,
+    userId,
+  });
 
   return NextResponse.json({
-    data: shares.map((share) => ({
+    data: shares.data.map((share) => ({
       ...share,
       shareUrl: new URL(
         `${sharePaths[share.resourceType]}/${share.id}`,
         req.url
       ).toString(),
     })),
+    pagination: shares.pagination,
   });
 }
 

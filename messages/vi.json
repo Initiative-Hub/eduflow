@@ -294,6 +294,12 @@
       "description": "Bất kỳ ai dùng liên kết này sẽ không thể xem nội dung đã chia sẻ nữa.",
       "title": "Thu hồi liên kết công khai này?"
     },
+    "pagination": {
+      "next": "Tiếp",
+      "page": "Trang {page} / {total}",
+      "previous": "Trước",
+      "range": "Hiển thị {start}-{end} trong số {total} liên kết"
+    },
     "summary": {
       "active": "{count} liên kết đang hoạt động"
     },
