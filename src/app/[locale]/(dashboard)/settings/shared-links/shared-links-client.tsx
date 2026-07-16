@@ -30,7 +30,7 @@ import type { ApiError } from '@/lib/api/types';
 import { SharedLinksPagination } from './shared-links-pagination';
 import { SharedLinksTable } from './shared-links-table';
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 5;
 const queryKey = ['shared-links'] as const;
 
 export function SharedLinksClient() {
