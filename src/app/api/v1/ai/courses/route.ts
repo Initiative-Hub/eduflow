@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withRoles } from '@/lib/api/middlewares';
-import { CourseService } from '@/services/CourseService';
 import { getCoursePermissions } from '@/lib/permissions/course-permission';
 import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
+import { CourseService } from '@/services/CourseService';
 
 /**
  * Zod schema for course generation input.
@@ -123,6 +123,9 @@ export const POST = withRoles(
         parsed.data.courseId
       );
       if (
+        permissions.withoutPermission(
+          COURSE_PERMISSION.COURSE_CONTENT_CREATE
+        ) ||
         permissions.withoutPermission(
           COURSE_PERMISSION.AI_USE_COURSE_GENERATION
         )
