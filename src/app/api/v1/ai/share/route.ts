@@ -6,6 +6,34 @@ import { AiChatShareService } from '@/services/AiChatShareService';
 /**
  * @swagger
  * /api/v1/ai/share:
+ *   get:
+ *     tags:
+ *       - AI
+ *     summary: List the current user's shared AI chats
+ */
+export async function GET(req: Request) {
+  const { userId } = await getChatOwner();
+
+  if (!userId) {
+    return NextResponse.json(
+      { message: 'Authentication required' },
+      { status: 401 }
+    );
+  }
+
+  const shares = await AiChatShareService.listShares(userId);
+
+  return NextResponse.json({
+    data: shares.map((share) => ({
+      ...share,
+      shareUrl: new URL(`/share/ai/chat/${share.id}`, req.url).toString(),
+    })),
+  });
+}
+
+/**
+ * @swagger
+ * /api/v1/ai/share:
  *   post:
  *     tags:
  *       - AI
