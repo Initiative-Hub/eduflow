@@ -69,6 +69,9 @@ const formatLayoutName = (layout: string, t: any) => {
     .join(' ');
 };
 
+const selectItemHighlightClassName =
+  'focus:bg-primary/20 focus:text-foreground focus:**:!text-foreground data-highlighted:bg-primary/10 data-highlighted:text-foreground data-highlighted:**:!text-foreground';
+
 interface LessonPresentationProps {
   isOpen: boolean;
   onClose: () => void;
@@ -891,25 +894,25 @@ export function LessonPresentation({
         return (
           <div className="mt-2 grid grid-cols-1 gap-3 md:grid-cols-2">
             <div className="flex flex-col gap-1.5">
-              <span className="font-bold text-muted-foreground text-[10px] uppercase tracking-wider">
+              <span className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider">
                 Subtitle
               </span>
               <Input
                 value={bindings.subtitle || ''}
                 onChange={(e) => updateBinding('subtitle', e.target.value)}
                 placeholder="Slide Subtitle"
-                className="h-10 rounded-xl border-input bg-card px-4 text-foreground text-sm"
+                className="h-10 rounded-xl border-input bg-card text-foreground text-sm"
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <span className="font-bold text-muted-foreground text-[10px] uppercase tracking-wider">
+              <span className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider">
                 Author / Info
               </span>
               <Input
                 value={bindings.author || ''}
                 onChange={(e) => updateBinding('author', e.target.value)}
                 placeholder="Author / Date info"
-                className="h-10 rounded-xl border-input bg-card px-4 text-foreground text-sm"
+                className="h-10 rounded-xl border-input bg-card text-foreground text-sm"
               />
             </div>
           </div>
@@ -918,7 +921,7 @@ export function LessonPresentation({
       case 'SECTION_HEADER':
         return (
           <div className="mt-2 flex flex-col gap-1.5">
-            <span className="font-bold text-muted-foreground text-[10px] uppercase tracking-wider">
+            <span className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider">
               Sub-module Name
             </span>
             <Input
@@ -934,7 +937,7 @@ export function LessonPresentation({
         return (
           <div className="mt-2 space-y-2">
             <div className="flex flex-col gap-1.5">
-              <span className="font-bold text-muted-foreground text-[10px] uppercase tracking-wider">
+              <span className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider">
                 Quote Text
               </span>
               <Textarea
@@ -945,7 +948,7 @@ export function LessonPresentation({
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <span className="font-bold text-muted-foreground text-[10px] uppercase tracking-wider">
+              <span className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider">
                 Author or Source
               </span>
               <Input
@@ -964,7 +967,7 @@ export function LessonPresentation({
         return (
           <div className="mt-2 space-y-2">
             <div className="flex flex-col gap-1.5">
-              <span className="font-bold text-muted-foreground text-[10px] uppercase tracking-wider">
+              <span className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider">
                 Suggested Visual Prompt Description
               </span>
               <Textarea
@@ -977,7 +980,7 @@ export function LessonPresentation({
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <span className="font-bold text-muted-foreground text-[10px] uppercase tracking-wider">
+              <span className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider">
                 Body Text
               </span>
               <Textarea
@@ -994,7 +997,7 @@ export function LessonPresentation({
         const sources = Array.isArray(bindings.sources) ? bindings.sources : [];
         return (
           <div className="mt-2 flex flex-col gap-3">
-            <span className="font-bold text-muted-foreground text-[10px] uppercase tracking-wider">
+            <span className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider">
               {t('referenceSources')}
             </span>
             <div className="flex max-h-64 flex-col gap-2.5 overflow-y-auto pr-1">
@@ -1080,7 +1083,7 @@ export function LessonPresentation({
       case 'QA_CONTACT':
         return (
           <div className="mt-2 flex flex-col gap-1.5">
-            <span className="font-bold text-muted-foreground text-[10px] uppercase tracking-wider">
+            <span className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider">
               Footer Closing Note
             </span>
             <Textarea
@@ -1110,7 +1113,7 @@ export function LessonPresentation({
         const arr = Array.isArray(bindings[listKey]) ? bindings[listKey] : [];
         return (
           <div className="mt-2 flex flex-col gap-1.5">
-            <span className="font-bold text-muted-foreground text-[10px] uppercase tracking-wider">
+            <span className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider">
               List Items (One per line)
             </span>
             <Textarea
@@ -1136,7 +1139,7 @@ export function LessonPresentation({
           <div className="mt-2 grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <div className="flex flex-col gap-1.5">
-                <span className="font-bold text-muted-foreground text-[10px] uppercase tracking-wider">
+                <span className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider">
                   Left Column Title
                 </span>
                 <Input
@@ -1149,7 +1152,7 @@ export function LessonPresentation({
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <span className="font-bold text-muted-foreground text-[10px] uppercase tracking-wider">
+                <span className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider">
                   Left Column Items (One per line)
                 </span>
                 <Textarea
@@ -1164,7 +1167,7 @@ export function LessonPresentation({
             </div>
             <div className="space-y-2">
               <div className="flex flex-col gap-1.5">
-                <span className="font-bold text-muted-foreground text-[10px] uppercase tracking-wider">
+                <span className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider">
                   Right Column Title
                 </span>
                 <Input
@@ -1177,7 +1180,7 @@ export function LessonPresentation({
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <span className="font-bold text-muted-foreground text-[10px] uppercase tracking-wider">
+                <span className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider">
                   Right Column Items (One per line)
                 </span>
                 <Textarea
@@ -1274,7 +1277,7 @@ export function LessonPresentation({
           <div className="mt-2 grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <div className="flex flex-col gap-1.5">
-                <span className="font-bold text-muted-foreground text-[10px] uppercase tracking-wider">
+                <span className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider">
                   Chart Type
                 </span>
                 <Select
@@ -1292,7 +1295,7 @@ export function LessonPresentation({
                 </Select>
               </div>
               <div className="flex flex-col gap-1.5">
-                <span className="font-bold text-muted-foreground text-[10px] uppercase tracking-wider">
+                <span className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider">
                   Chart Data (Label:Value, one per line)
                 </span>
                 <Textarea
@@ -1304,7 +1307,7 @@ export function LessonPresentation({
               </div>
             </div>
             <div className="flex flex-col gap-1.5">
-              <span className="font-bold text-muted-foreground text-[10px] uppercase tracking-wider">
+              <span className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider">
                 Insight Explanation
               </span>
               <Textarea
@@ -1325,7 +1328,7 @@ export function LessonPresentation({
         return (
           <div className="mt-2 grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="flex flex-col gap-1.5">
-              <span className="font-bold text-muted-foreground text-[10px] uppercase tracking-wider">
+              <span className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider">
                 Headers (comma-separated)
               </span>
               <Input
@@ -1341,7 +1344,7 @@ export function LessonPresentation({
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <span className="font-bold text-muted-foreground text-[10px] uppercase tracking-wider">
+              <span className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider">
                 Rows (cols comma-separated, one row per line)
               </span>
               <Textarea
@@ -1383,7 +1386,7 @@ export function LessonPresentation({
         };
         return (
           <div className="mt-2 flex flex-col gap-1.5">
-            <span className="font-bold text-muted-foreground text-[10px] uppercase tracking-wider">
+            <span className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider">
               Events List (Date/Step:Description, one per line)
             </span>
             <Textarea
@@ -1399,7 +1402,7 @@ export function LessonPresentation({
       default:
         return (
           <div className="mt-2 flex flex-col gap-1.5">
-            <span className="font-bold text-muted-foreground text-[10px] uppercase tracking-wider">
+            <span className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider">
               Raw Bindings Data (JSON)
             </span>
             <Textarea
@@ -1549,14 +1552,54 @@ export function LessonPresentation({
                     <SelectValue placeholder={t('duration15')} />
                   </SelectTrigger>
                   <SelectContent className="border-border bg-popover text-popover-foreground">
-                    <SelectItem value="5">{t('duration5')}</SelectItem>
-                    <SelectItem value="10">{t('duration10')}</SelectItem>
-                    <SelectItem value="15">{t('duration15')}</SelectItem>
-                    <SelectItem value="30">{t('duration30')}</SelectItem>
-                    <SelectItem value="45">{t('duration45')}</SelectItem>
-                    <SelectItem value="60">{t('duration60')}</SelectItem>
-                    <SelectItem value="90">{t('duration90')}</SelectItem>
-                    <SelectItem value="120">{t('duration120')}</SelectItem>
+                    <SelectItem
+                      className={selectItemHighlightClassName}
+                      value="5"
+                    >
+                      {t('duration5')}
+                    </SelectItem>
+                    <SelectItem
+                      className={selectItemHighlightClassName}
+                      value="10"
+                    >
+                      {t('duration10')}
+                    </SelectItem>
+                    <SelectItem
+                      className={selectItemHighlightClassName}
+                      value="15"
+                    >
+                      {t('duration15')}
+                    </SelectItem>
+                    <SelectItem
+                      className={selectItemHighlightClassName}
+                      value="30"
+                    >
+                      {t('duration30')}
+                    </SelectItem>
+                    <SelectItem
+                      className={selectItemHighlightClassName}
+                      value="45"
+                    >
+                      {t('duration45')}
+                    </SelectItem>
+                    <SelectItem
+                      className={selectItemHighlightClassName}
+                      value="60"
+                    >
+                      {t('duration60')}
+                    </SelectItem>
+                    <SelectItem
+                      className={selectItemHighlightClassName}
+                      value="90"
+                    >
+                      {t('duration90')}
+                    </SelectItem>
+                    <SelectItem
+                      className={selectItemHighlightClassName}
+                      value="120"
+                    >
+                      {t('duration120')}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -1583,16 +1626,26 @@ export function LessonPresentation({
                     <SelectValue placeholder="System Default (Starter)" />
                   </SelectTrigger>
                   <SelectContent className="border-border bg-popover text-popover-foreground">
-                    <SelectItem value="auto">
+                    <SelectItem
+                      className={selectItemHighlightClassName}
+                      value="auto"
+                    >
                       ✨ Auto — AI picks from content
                     </SelectItem>
-                    <SelectItem value="starter">
+                    <SelectItem
+                      className={selectItemHighlightClassName}
+                      value="starter"
+                    >
                       System Default (Starter)
                     </SelectItem>
                     {collections
                       .filter((c) => c.name !== 'starter')
                       .map((c) => (
-                        <SelectItem key={c.name} value={c.name}>
+                        <SelectItem
+                          key={c.name}
+                          className={selectItemHighlightClassName}
+                          value={c.name}
+                        >
                           {c.name === 'neon_dark' ? 'Neon Dark Theme' : c.name}
                         </SelectItem>
                       ))}
@@ -1749,7 +1802,7 @@ export function LessonPresentation({
                   <div className="mt-2 space-y-4">
                     {/* Slide Layout Selection */}
                     <div className="flex flex-col gap-1.5">
-                      <span className="font-bold text-muted-foreground text-[10px] uppercase tracking-wider">
+                      <span className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider">
                         Layout Type
                       </span>
                       <Select
@@ -1801,7 +1854,7 @@ export function LessonPresentation({
 
                     {/* Slide Title Input */}
                     <div className="flex flex-col gap-1.5">
-                      <span className="font-bold text-muted-foreground text-[10px] uppercase tracking-wider">
+                      <span className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider">
                         Slide Title
                       </span>
                       <Input
