@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
-import { z } from 'zod';
+import * as z from 'zod';
 import type { Prisma } from '@/generated/prisma';
 import { errorResponse } from '@/lib/api/error-response';
 import { type AuthHandler, withAuth } from '@/lib/api/middlewares';
-import { prisma } from '@/lib/prisma';
 import { getCoursePermissions } from '@/lib/permissions/course-permission';
 import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
+import { prisma } from '@/lib/prisma';
 
 // ─── Validation ──────────────────────────────────────────────────────────────
 
