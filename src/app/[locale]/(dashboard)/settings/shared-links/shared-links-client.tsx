@@ -1,21 +1,9 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Copy, Link2, Link2Off } from 'lucide-react';
-import { useLocale, useTranslations } from 'next-intl';
+import { Link2, ShieldCheck } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -31,28 +19,15 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { aiChatShareClient } from '@/lib/api/ai-chat-share-client';
 import type { ApiError } from '@/lib/api/types';
-import { formatDateTime } from '@/utils/date';
+import { SharedLinksTable } from './shared-links-table';
 
 const queryKey = ['shared-links'];
 
 export function SharedLinksClient() {
   const t = useTranslations('AiShareLinks');
-  const locale = useLocale();
   const queryClient = useQueryClient();
-  const resourceTypeLabels = {
-    AI_CHAT: t('types.aiChat'),
-    STUDY_INTERACTIVE_CONTENT: t('types.interactiveContent'),
-  };
 
   const sharesQuery = useQuery({
     queryKey,
@@ -82,25 +57,40 @@ export function SharedLinksClient() {
   const shares = sharesQuery.data?.data ?? [];
 
   return (
-    <Card className="border-border/70 bg-card/90 p-0 shadow-sm">
-      <CardHeader>
-        <CardTitle className="font-heading text-xl">{t('cardTitle')}</CardTitle>
-        <CardDescription>{t('cardDescription')}</CardDescription>
+    <Card className="overflow-hidden border-border/70 bg-card/95 p-0 shadow-sm">
+      <CardHeader className="flex flex-col gap-4 border-border/60 border-b bg-muted/15 px-5 py-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-start gap-3">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-border/70 bg-background text-primary shadow-xs">
+            <Link2 className="size-4" />
+          </div>
+          <div className="space-y-1">
+            <CardTitle className="font-heading text-xl">
+              {t('cardTitle')}
+            </CardTitle>
+            <CardDescription className="max-w-2xl leading-6">
+              {t('cardDescription')}
+            </CardDescription>
+          </div>
+        </div>
+        <div className="inline-flex shrink-0 items-center gap-2 self-start rounded-full border border-border/70 bg-background px-3 py-1.5 font-medium text-muted-foreground text-xs shadow-xs sm:self-auto">
+          <ShieldCheck className="size-3.5 text-primary" />
+          {t('summary.active', { count: shares.length })}
+        </div>
       </CardHeader>
 
-      <CardContent>
+      <CardContent className="p-0">
         {sharesQuery.isError ? (
-          <p className="rounded-lg border border-destructive/30 p-4 text-destructive text-sm">
+          <p className="m-5 rounded-lg border border-destructive/30 p-4 text-destructive text-sm">
             {t('error')}
           </p>
         ) : sharesQuery.isLoading ? (
-          <div className="space-y-3">
+          <div className="space-y-3 p-5">
             {Array.from({ length: 3 }).map((_, index) => (
-              <Skeleton className="h-12 w-full" key={index} />
+              <Skeleton className="h-16 w-full" key={index} />
             ))}
           </div>
         ) : shares.length === 0 ? (
-          <Empty className="border">
+          <Empty className="m-5 border border-dashed">
             <EmptyHeader>
               <EmptyMedia variant="icon">
                 <Link2 />
@@ -110,101 +100,12 @@ export function SharedLinksClient() {
             </EmptyHeader>
           </Empty>
         ) : (
-          <div className="overflow-hidden rounded-lg border border-border/60">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/30">
-                  <TableHead>{t('table.conversation')}</TableHead>
-                  <TableHead>{t('table.type')}</TableHead>
-                  <TableHead>{t('table.created')}</TableHead>
-                  <TableHead className="text-right">
-                    <span className="sr-only">{t('table.actions')}</span>
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-
-              <TableBody>
-                {shares.map((share) => (
-                  <TableRow key={share.id}>
-                    <TableCell className="max-w-80">
-                      <a
-                        className="block truncate font-medium hover:underline"
-                        href={share.shareUrl}
-                        rel="noreferrer"
-                        target="_blank"
-                      >
-                        {share.title}
-                      </a>
-                      <p className="truncate font-mono text-muted-foreground text-xs">
-                        {share.shareUrl}
-                      </p>
-                    </TableCell>
-                    <TableCell>
-                      {resourceTypeLabels[share.resourceType]}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {formatDateTime(share.createdAt, locale)}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          onClick={() => copyLink(share.shareUrl)}
-                          size="icon-sm"
-                          type="button"
-                          variant="ghost"
-                        >
-                          <Copy />
-                          <span className="sr-only">{t('actions.copy')}</span>
-                        </Button>
-
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              disabled={revokeMutation.isPending}
-                              size="icon-sm"
-                              type="button"
-                              variant="ghost"
-                            >
-                              <Link2Off />
-                              <span className="sr-only">
-                                {t('actions.revoke')}
-                              </span>
-                            </Button>
-                          </AlertDialogTrigger>
-
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>
-                                {t('revokeDialog.title')}
-                              </AlertDialogTitle>
-                              <AlertDialogDescription>
-                                {t('revokeDialog.description')}
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel
-                                disabled={revokeMutation.isPending}
-                              >
-                                {t('actions.cancel')}
-                              </AlertDialogCancel>
-                              <AlertDialogAction
-                                disabled={revokeMutation.isPending}
-                                onClick={() => revokeMutation.mutate(share.id)}
-                                variant="destructive"
-                              >
-                                <Link2Off data-icon="inline-start" />
-                                {t('actions.revoke')}
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          <SharedLinksTable
+            isRevoking={revokeMutation.isPending}
+            onCopy={copyLink}
+            onRevoke={revokeMutation.mutate}
+            shares={shares}
+          />
         )}
       </CardContent>
     </Card>

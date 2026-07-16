@@ -284,6 +284,7 @@
     "cardDescription": "Việc thu hồi liên kết sẽ ngay lập tức chặn quyền truy cập công khai vào nội dung đã chia sẻ.",
     "cardTitle": "Liên kết công khai",
     "description": "Xem và thu hồi các liên kết công khai đến cuộc trò chuyện AI và nội dung tương tác của bạn.",
+    "eyebrow": "Kiểm soát chia sẻ",
     "empty": {
       "description": "Các liên kết công khai bạn tạo từ cuộc trò chuyện AI và nội dung tương tác sẽ xuất hiện ở đây.",
       "title": "Chưa có liên kết nào được chia sẻ"
@@ -292,6 +293,9 @@
     "revokeDialog": {
       "description": "Bất kỳ ai dùng liên kết này sẽ không thể xem nội dung đã chia sẻ nữa.",
       "title": "Thu hồi liên kết công khai này?"
+    },
+    "summary": {
+      "active": "{count} liên kết đang hoạt động"
     },
     "table": {
       "actions": "Thao tác",

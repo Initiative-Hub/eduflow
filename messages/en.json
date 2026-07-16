@@ -284,6 +284,7 @@
     "cardDescription": "Revoking a link immediately removes public access to its shared item.",
     "cardTitle": "Public links",
     "description": "Review and revoke public links to your AI chats and interactive content.",
+    "eyebrow": "Sharing controls",
     "empty": {
       "description": "Public links you create from AI chats and interactive content will appear here.",
       "title": "No shared links"
@@ -292,6 +293,9 @@
     "revokeDialog": {
       "description": "Anyone using this link will no longer be able to view the shared item.",
       "title": "Revoke this public link?"
+    },
+    "summary": {
+      "active": "{count} active links"
     },
     "table": {
       "actions": "Actions",
