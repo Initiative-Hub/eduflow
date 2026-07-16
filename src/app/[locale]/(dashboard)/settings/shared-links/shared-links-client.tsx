@@ -117,7 +117,6 @@ export function SharedLinksClient() {
                   <TableHead>{t('table.conversation')}</TableHead>
                   <TableHead>{t('table.type')}</TableHead>
                   <TableHead>{t('table.created')}</TableHead>
-                  <TableHead>{t('table.expires')}</TableHead>
                   <TableHead className="text-right">
                     <span className="sr-only">{t('table.actions')}</span>
                   </TableHead>
@@ -145,11 +144,6 @@ export function SharedLinksClient() {
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       {formatDateTime(share.createdAt, locale)}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {share.expiresAt
-                        ? formatDateTime(share.expiresAt, locale)
-                        : t('neverExpires')}
                     </TableCell>
                     <TableCell>
                       <div className="flex justify-end gap-2">

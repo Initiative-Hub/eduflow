@@ -289,7 +289,6 @@
       "title": "No shared links"
     },
     "error": "We could not load your shared links right now.",
-    "neverExpires": "Never",
     "revokeDialog": {
       "description": "Anyone using this link will no longer be able to view the shared item.",
       "title": "Revoke this public link?"
@@ -298,7 +297,6 @@
       "actions": "Actions",
       "conversation": "Conversation",
       "created": "Created",
-      "expires": "Expires",
       "type": "Type"
     },
     "title": "Shared links",

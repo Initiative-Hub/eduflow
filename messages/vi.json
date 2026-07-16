@@ -289,7 +289,6 @@
       "title": "Chưa có liên kết nào được chia sẻ"
     },
     "error": "Không thể tải các liên kết đã chia sẻ của bạn.",
-    "neverExpires": "Không bao giờ",
     "revokeDialog": {
       "description": "Bất kỳ ai dùng liên kết này sẽ không thể xem nội dung đã chia sẻ nữa.",
       "title": "Thu hồi liên kết công khai này?"
@@ -298,7 +297,6 @@
       "actions": "Thao tác",
       "conversation": "Cuộc trò chuyện",
       "created": "Đã tạo",
-      "expires": "Hết hạn",
       "type": "Loại"
     },
     "title": "Liên kết đã chia sẻ",

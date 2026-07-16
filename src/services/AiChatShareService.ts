@@ -192,7 +192,6 @@ export class AiChatShareService {
         id: true,
         title: true,
         createdAt: true,
-        expiresAt: true,
         resourceType: true,
       },
     });

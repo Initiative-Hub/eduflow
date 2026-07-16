@@ -1,12 +1,11 @@
-import { apiClient } from '@/lib/api';
 import type { ShareResourceType } from '@/generated/prisma';
+import { apiClient } from '@/lib/api';
 import type { ShareableAiChatType } from '@/lib/validations/ai-chat-share.schema';
 
 export type SharedResourceLink = {
   id: string;
   title: string;
   createdAt: string;
-  expiresAt: string | null;
   resourceType: ShareResourceType;
   shareUrl: string;
 };
