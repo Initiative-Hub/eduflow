@@ -179,7 +179,12 @@ export class AiChatShareService {
     return prisma.sharedResource.findMany({
       where: {
         ownerUserId: userId,
-        resourceType: ShareResourceType.AI_CHAT,
+        resourceType: {
+          in: [
+            ShareResourceType.AI_CHAT,
+            ShareResourceType.STUDY_INTERACTIVE_CONTENT,
+          ],
+        },
         revokedAt: null,
       },
       orderBy: { createdAt: 'desc' },
@@ -188,6 +193,7 @@ export class AiChatShareService {
         title: true,
         createdAt: true,
         expiresAt: true,
+        resourceType: true,
       },
     });
   }
@@ -197,7 +203,12 @@ export class AiChatShareService {
       where: {
         id: input.shareId,
         ownerUserId: input.userId,
-        resourceType: ShareResourceType.AI_CHAT,
+        resourceType: {
+          in: [
+            ShareResourceType.AI_CHAT,
+            ShareResourceType.STUDY_INTERACTIVE_CONTENT,
+          ],
+        },
         revokedAt: null,
       },
       data: {

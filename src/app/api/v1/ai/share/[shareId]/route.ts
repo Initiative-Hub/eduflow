@@ -17,7 +17,7 @@ type RouteContext = {
  *   delete:
  *     tags:
  *       - AI
- *     summary: Revoke a public AI chat link
+ *     summary: Revoke a public AI share link
  */
 export async function DELETE(_req: Request, { params }: RouteContext) {
   const { userId } = await getChatOwner();

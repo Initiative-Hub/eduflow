@@ -1,7 +1,13 @@
 import { NextResponse } from 'next/server';
+import { ShareResourceType } from '@/generated/prisma';
 import { getChatOwner } from '@/lib/api/guest-session';
 import { createAiChatShareSchema } from '@/lib/validations/ai-chat-share.schema';
 import { AiChatShareService } from '@/services/AiChatShareService';
+
+const sharePaths: Record<ShareResourceType, string> = {
+  [ShareResourceType.AI_CHAT]: '/share/ai/chat',
+  [ShareResourceType.STUDY_INTERACTIVE_CONTENT]: '/share/study/interactive',
+};
 
 /**
  * @swagger
@@ -9,7 +15,7 @@ import { AiChatShareService } from '@/services/AiChatShareService';
  *   get:
  *     tags:
  *       - AI
- *     summary: List the current user's shared AI chats
+ *     summary: List the current user's public AI shares
  */
 export async function GET(req: Request) {
   const { userId } = await getChatOwner();
@@ -26,7 +32,10 @@ export async function GET(req: Request) {
   return NextResponse.json({
     data: shares.map((share) => ({
       ...share,
-      shareUrl: new URL(`/share/ai/chat/${share.id}`, req.url).toString(),
+      shareUrl: new URL(
+        `${sharePaths[share.resourceType]}/${share.id}`,
+        req.url
+      ).toString(),
     })),
   });
 }

@@ -43,12 +43,16 @@ import { aiChatShareClient } from '@/lib/api/ai-chat-share-client';
 import type { ApiError } from '@/lib/api/types';
 import { formatDateTime } from '@/utils/date';
 
-const queryKey = ['ai-chat-share-links'];
+const queryKey = ['shared-links'];
 
 export function SharedLinksClient() {
   const t = useTranslations('AiShareLinks');
   const locale = useLocale();
   const queryClient = useQueryClient();
+  const resourceTypeLabels = {
+    AI_CHAT: t('types.aiChat'),
+    STUDY_INTERACTIVE_CONTENT: t('types.interactiveContent'),
+  };
 
   const sharesQuery = useQuery({
     queryKey,
@@ -111,6 +115,7 @@ export function SharedLinksClient() {
               <TableHeader>
                 <TableRow className="bg-muted/30">
                   <TableHead>{t('table.conversation')}</TableHead>
+                  <TableHead>{t('table.type')}</TableHead>
                   <TableHead>{t('table.created')}</TableHead>
                   <TableHead>{t('table.expires')}</TableHead>
                   <TableHead className="text-right">
@@ -134,6 +139,9 @@ export function SharedLinksClient() {
                       <p className="truncate font-mono text-muted-foreground text-xs">
                         {share.shareUrl}
                       </p>
+                    </TableCell>
+                    <TableCell>
+                      {resourceTypeLabels[share.resourceType]}
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       {formatDateTime(share.createdAt, locale)}

@@ -1,11 +1,13 @@
 import { apiClient } from '@/lib/api';
+import type { ShareResourceType } from '@/generated/prisma';
 import type { ShareableAiChatType } from '@/lib/validations/ai-chat-share.schema';
 
-export type SharedAiChatLink = {
+export type SharedResourceLink = {
   id: string;
   title: string;
   createdAt: string;
   expiresAt: string | null;
+  resourceType: ShareResourceType;
   shareUrl: string;
 };
 
@@ -17,7 +19,7 @@ export const aiChatShareClient = {
     ),
 
   listShares: () =>
-    apiClient.get<{ data: SharedAiChatLink[] }>('v1/ai/share', {
+    apiClient.get<{ data: SharedResourceLink[] }>('v1/ai/share', {
       headers: { 'Cache-Control': 'no-store' },
     }),
 
