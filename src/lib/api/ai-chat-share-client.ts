@@ -16,11 +16,10 @@ export const aiChatShareClient = {
       input
     ),
 
-  listShares: () => {
+  listShares: () =>
     apiClient.get<{ data: SharedAiChatLink[] }>('v1/ai/share', {
       headers: { 'Cache-Control': 'no-store' },
-    });
-  },
+    }),
 
   revokeShare: (shareId: string) =>
     apiClient.delete<{ data: { revoked: boolean } }>(`v1/ai/share/${shareId}`),
