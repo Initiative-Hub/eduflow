@@ -275,6 +275,39 @@
       "searchingContent": "Searching lesson content..."
     }
   },
+  "AiShareLinks": {
+    "actions": {
+      "cancel": "Cancel",
+      "copy": "Copy link",
+      "revoke": "Revoke link"
+    },
+    "cardDescription": "Revoking a link immediately removes public access to its conversation.",
+    "cardTitle": "Public links",
+    "description": "Review and revoke public links to your AI conversations.",
+    "empty": {
+      "description": "Public links you create from AI conversations will appear here.",
+      "title": "No shared conversations"
+    },
+    "error": "We could not load your shared links right now.",
+    "neverExpires": "Never",
+    "revokeDialog": {
+      "description": "Anyone using this link will no longer be able to view the shared conversation.",
+      "title": "Revoke this public link?"
+    },
+    "table": {
+      "actions": "Actions",
+      "conversation": "Conversation",
+      "created": "Created",
+      "expires": "Expires"
+    },
+    "title": "Shared AI chat links",
+    "toast": {
+      "copied": "Share link copied.",
+      "copyFailed": "Could not copy share link.",
+      "revoked": "Share link revoked.",
+      "revokeFailed": "Could not revoke share link."
+    }
+  },
   "ApiDocsPage": {
     "cookieHint": "Sign in another tab to reuse your Better Auth session cookie.",
     "description": "Explore and test the EduFlow API endpoints.",
@@ -1555,6 +1588,7 @@
     "settingsHeading": "EduFlow Settings",
     "settingsIntegrations": "Integrations",
     "settingsProfile": "Profile",
+    "settingsSharedLinks": "Shared links",
     "settingsSubheading": "Manage your scholarly workspace",
     "settingsSystemSettings": "System Settings",
     "socraticTutor": "Socratic Tutor",

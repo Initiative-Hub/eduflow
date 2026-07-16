@@ -9,9 +9,9 @@ import {
   GraduationCap,
   Languages,
   LineChart,
+  Link2,
   MessageSquare,
   PenLine,
-  School,
   Settings,
   ShieldCheck,
   Sparkles,
@@ -126,11 +126,10 @@ export function getSettingNavItems(
       isActive: (pathname) => isExactMatch(pathname, '/profile'),
     },
     {
-      name: t('settingsAcademicContext'),
-      url: '/settings/academic-context',
-      icon: <School className={sidebarIconClassName} />,
-      isActive: (pathname) =>
-        isExactMatch(pathname, '/settings/academic-context'),
+      name: t('settingsSharedLinks'),
+      url: '/settings/shared-links',
+      icon: <Link2 className={sidebarIconClassName} />,
+      isActive: (pathname) => isExactMatch(pathname, '/settings/shared-links'),
     },
     {
       name: t('settingsSystemSettings'),
