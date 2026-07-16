@@ -281,31 +281,36 @@
       "copy": "Copy link",
       "revoke": "Revoke link"
     },
-    "cardDescription": "Revoking a link immediately removes public access to its conversation.",
+    "cardDescription": "Revoking a link immediately removes public access to its shared item.",
     "cardTitle": "Public links",
-    "description": "Review and revoke public links to your AI conversations.",
+    "description": "Review and revoke public links to your AI chats and interactive content.",
     "empty": {
-      "description": "Public links you create from AI conversations will appear here.",
-      "title": "No shared conversations"
+      "description": "Public links you create from AI chats and interactive content will appear here.",
+      "title": "No shared links"
     },
     "error": "We could not load your shared links right now.",
     "neverExpires": "Never",
     "revokeDialog": {
-      "description": "Anyone using this link will no longer be able to view the shared conversation.",
+      "description": "Anyone using this link will no longer be able to view the shared item.",
       "title": "Revoke this public link?"
     },
     "table": {
       "actions": "Actions",
       "conversation": "Conversation",
       "created": "Created",
-      "expires": "Expires"
+      "expires": "Expires",
+      "type": "Type"
     },
-    "title": "Shared AI chat links",
+    "title": "Shared links",
     "toast": {
       "copied": "Share link copied.",
       "copyFailed": "Could not copy share link.",
       "revoked": "Share link revoked.",
       "revokeFailed": "Could not revoke share link."
+    },
+    "types": {
+      "aiChat": "AI chat",
+      "interactiveContent": "Interactive content"
     }
   },
   "ApiDocsPage": {

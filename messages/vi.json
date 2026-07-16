@@ -281,31 +281,36 @@
       "copy": "Sao chép liên kết",
       "revoke": "Thu hồi liên kết"
     },
-    "cardDescription": "Việc thu hồi liên kết sẽ ngay lập tức chặn quyền truy cập công khai vào cuộc trò chuyện.",
+    "cardDescription": "Việc thu hồi liên kết sẽ ngay lập tức chặn quyền truy cập công khai vào nội dung đã chia sẻ.",
     "cardTitle": "Liên kết công khai",
-    "description": "Xem và thu hồi các liên kết công khai đến cuộc trò chuyện AI của bạn.",
+    "description": "Xem và thu hồi các liên kết công khai đến cuộc trò chuyện AI và nội dung tương tác của bạn.",
     "empty": {
-      "description": "Các liên kết công khai bạn tạo từ cuộc trò chuyện AI sẽ xuất hiện ở đây.",
-      "title": "Chưa có cuộc trò chuyện nào được chia sẻ"
+      "description": "Các liên kết công khai bạn tạo từ cuộc trò chuyện AI và nội dung tương tác sẽ xuất hiện ở đây.",
+      "title": "Chưa có liên kết nào được chia sẻ"
     },
     "error": "Không thể tải các liên kết đã chia sẻ của bạn.",
     "neverExpires": "Không bao giờ",
     "revokeDialog": {
-      "description": "Bất kỳ ai dùng liên kết này sẽ không thể xem cuộc trò chuyện đã chia sẻ nữa.",
+      "description": "Bất kỳ ai dùng liên kết này sẽ không thể xem nội dung đã chia sẻ nữa.",
       "title": "Thu hồi liên kết công khai này?"
     },
     "table": {
       "actions": "Thao tác",
       "conversation": "Cuộc trò chuyện",
       "created": "Đã tạo",
-      "expires": "Hết hạn"
+      "expires": "Hết hạn",
+      "type": "Loại"
     },
-    "title": "Liên kết trò chuyện AI đã chia sẻ",
+    "title": "Liên kết đã chia sẻ",
     "toast": {
       "copied": "Đã sao chép liên kết chia sẻ.",
       "copyFailed": "Không thể sao chép liên kết chia sẻ.",
       "revoked": "Đã thu hồi liên kết chia sẻ.",
       "revokeFailed": "Không thể thu hồi liên kết chia sẻ."
+    },
+    "types": {
+      "aiChat": "Trò chuyện AI",
+      "interactiveContent": "Nội dung tương tác"
     }
   },
   "ApiDocsPage": {
