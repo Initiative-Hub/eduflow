@@ -3,7 +3,7 @@ import { z } from 'zod';
 import {
   AiChatStatus,
   type AiChatType,
-  Prisma,
+  type Prisma,
   ShareResourceType,
 } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
@@ -173,5 +173,38 @@ export class AiChatShareService {
       sourceChatId: sharedResource.sourceChatId,
       title: sharedResource.title,
     };
+  }
+
+  static async listShares(userId: string) {
+    return prisma.sharedResource.findMany({
+      where: {
+        ownerUserId: userId,
+        resourceType: ShareResourceType.AI_CHAT,
+        revokedAt: null,
+      },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        title: true,
+        createdAt: true,
+        expiresAt: true,
+      },
+    });
+  }
+
+  static async revokeShare(input: { shareId: string; userId: string }) {
+    const result = await prisma.sharedResource.updateMany({
+      where: {
+        id: input.shareId,
+        ownerUserId: input.userId,
+        resourceType: ShareResourceType.AI_CHAT,
+        revokedAt: null,
+      },
+      data: {
+        revokedAt: new Date(),
+      },
+    });
+
+    return result.count === 1;
   }
 }
