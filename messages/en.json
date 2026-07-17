@@ -112,6 +112,7 @@
       "close": "Close actions",
       "fromCourseInventory": "From course inventory",
       "fromDevice": "From this device",
+      "fromGoogleDrive": "From Google Drive",
       "fromUserInventory": "From user inventory",
       "open": "Open actions",
       "uploadFiles": "Upload files"
@@ -147,6 +148,12 @@
       "add": "Attach files",
       "defaultMessage": "Please use the attached {count, plural, one {reference} other {references}}.",
       "fileTooLarge": "{name} exceeds the maximum upload size.",
+      "googleDriveConnectRequired": "Connect Google Drive in Integrations first.",
+      "googleDrivePickerUnavailable": "Google Drive Picker is unavailable.",
+      "googleDriveSessionChanged": "Google Drive session changed. Reconnect Google Drive.",
+      "googleDriveStillLoading": "Google Drive Picker is still loading.",
+      "googleDriveTokenFailed": "Could not prepare Google Drive Picker.",
+      "googleDriveUnavailable": "Google Drive import is not configured yet.",
       "remove": "Remove {name}",
       "signInRequired": "Sign in to upload files to chat.",
       "tooMany": "You can attach up to {count} files.",
@@ -568,6 +575,7 @@
       "fileTooLarge": "File exceeds the maximum upload size of {size}.",
       "folderCreated": "Folder created.",
       "genericError": "Something went wrong. Try again.",
+      "googleDriveImported": "Google Drive file imported.",
       "invalidMove": "You cannot move a folder into itself.",
       "moved": "Item moved.",
       "nameConflictCreateFolder": "A file or folder with this name already exists here.",
@@ -591,6 +599,15 @@
       "dropzoneDescription": "One file at a time, up to {size}.",
       "dropzoneHint": "One file per upload",
       "dropzoneTitle": "Drop a file here",
+      "googleDrive": "Google Drive",
+      "googleDriveConnectRequired": "Connect Google Drive in Integrations first.",
+      "googleDriveDescription": "Choose a Drive file and import it into this folder.",
+      "googleDrivePickerUnavailable": "Google Drive Picker is unavailable.",
+      "googleDriveSessionChanged": "Google Drive session changed. Reconnect Google Drive.",
+      "googleDriveStillLoading": "Google Drive Picker is still loading.",
+      "googleDriveTokenFailed": "Could not prepare Google Drive Picker.",
+      "googleDriveUnavailable": "Add Google Drive environment variables to enable Drive import.",
+      "importingGoogleDrive": "Importing...",
       "title": "Upload file"
     },
     "view": {
@@ -1376,6 +1393,37 @@
   "HomePage": {
     "title": "Hello world!"
   },
+  "IntegrationsPage": {
+    "actions": {
+      "connect": "Connect",
+      "disconnect": "Disconnect",
+      "refresh": "Refresh"
+    },
+    "description": "Connect external services that can import learning materials into your EduFlow workspace.",
+    "googleDrive": {
+      "account": "Google account",
+      "accountNote": "Your Google Drive account can be different from your EduFlow sign-in account.",
+      "connected": "Connected",
+      "description": "Select files from Google Drive and import them into inventory, course files, or chat attachments.",
+      "driveAccount": "Google Drive account",
+      "eduflowAccount": "EduFlow account",
+      "noAccount": "No account connected",
+      "notConnected": "Not connected",
+      "scope": "EduFlow requests limited Drive file access for files you select or create through the app.",
+      "title": "Google Drive"
+    },
+    "notice": {
+      "connectedDescription": "You can now choose Google Drive files from upload and attachment menus.",
+      "connectedTitle": "Google Drive connected",
+      "errorDescription": "Google did not complete the authorization flow. Try connecting again.",
+      "errorTitle": "Connection failed"
+    },
+    "title": "Integrations",
+    "toast": {
+      "disconnected": "Google Drive disconnected.",
+      "disconnectFailed": "Could not disconnect Google Drive."
+    }
+  },
   "InventoryPage": {
     "actions": {
       "cancel": "Cancel",
@@ -1506,6 +1554,7 @@
       "fileTooLarge": "File exceeds the maximum upload size of {size}.",
       "folderCreated": "Folder created.",
       "genericError": "Something went wrong. Try again.",
+      "googleDriveImported": "Google Drive file imported.",
       "invalidMove": "You cannot move a folder into itself.",
       "moved": "Item moved.",
       "nameConflictCreateFolder": "A file or folder with this name already exists here.",
@@ -1529,6 +1578,15 @@
       "dropzoneDescription": "One file at a time, up to {size}.",
       "dropzoneHint": "One file per upload",
       "dropzoneTitle": "Drop a file here",
+      "googleDrive": "Google Drive",
+      "googleDriveConnectRequired": "Connect Google Drive in Integrations first.",
+      "googleDriveDescription": "Choose a Drive file and import it into this folder.",
+      "googleDrivePickerUnavailable": "Google Drive Picker is unavailable.",
+      "googleDriveSessionChanged": "Google Drive session changed. Reconnect Google Drive.",
+      "googleDriveStillLoading": "Google Drive Picker is still loading.",
+      "googleDriveTokenFailed": "Could not prepare Google Drive Picker.",
+      "googleDriveUnavailable": "Add Google Drive environment variables to enable Drive import.",
+      "importingGoogleDrive": "Importing...",
       "title": "Upload file"
     },
     "view": {

@@ -1,4 +1,5 @@
 import {
+  Cloud,
   Download,
   Edit2,
   FileIcon,
@@ -9,7 +10,12 @@ import {
   Upload,
 } from 'lucide-react';
 import Image from 'next/image';
-import { type Dispatch, type SetStateAction, useState } from 'react';
+import {
+  useCallback,
+  type Dispatch,
+  type SetStateAction,
+  useState,
+} from 'react';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -48,6 +54,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useGoogleDrivePicker } from '@/hooks/use-google-drive-picker';
 import { courseFilesService } from '../course-files.service';
 import type {
   InventoryEntry,
@@ -111,6 +118,8 @@ type InventoryDialogsProps = {
   uploadOpen: boolean;
   uploadPending: boolean;
   onUploadFiles: (files: File[]) => void;
+  onImportGoogleDriveFile: (fileId: string) => void;
+  googleDriveImportPending: boolean;
   maxFileSizeBytes: number;
 };
 
@@ -128,7 +137,9 @@ export function InventoryDialogs({
   moveDialog,
   moveOptions,
   movePending,
+  onImportGoogleDriveFile,
   onUploadFiles,
+  googleDriveImportPending,
   maxFileSizeBytes,
   previewDialog,
   renameDialog,
@@ -143,6 +154,40 @@ export function InventoryDialogs({
   uploadPending,
 }: InventoryDialogsProps) {
   const [previewRenderFailed, setPreviewRenderFailed] = useState(false);
+  const handleGoogleDrivePickerError = useCallback((message: string) => {
+    toast.error(message);
+  }, []);
+  const closeUploadBeforeGooglePicker = useCallback(() => {
+    setUploadOpen(false);
+  }, [setUploadOpen]);
+  const handleGoogleDrivePicked = useCallback(
+    (fileIds: string[]) => {
+      const [fileId] = fileIds;
+      if (!fileId) return;
+
+      setUploadOpen(false);
+      onImportGoogleDriveFile(fileId);
+    },
+    [onImportGoogleDriveFile, setUploadOpen]
+  );
+  const googleDrivePicker = useGoogleDrivePicker({
+    messages: {
+      connectRequired: t('uploadDialog.googleDriveConnectRequired'),
+      notConfigured: t('uploadDialog.googleDriveUnavailable'),
+      sessionChanged: t('uploadDialog.googleDriveSessionChanged'),
+      stillLoading: t('uploadDialog.googleDriveStillLoading'),
+      tokenFailed: t('uploadDialog.googleDriveTokenFailed'),
+      unavailable: t('uploadDialog.googleDrivePickerUnavailable'),
+    },
+    onBeforeOpen: closeUploadBeforeGooglePicker,
+    onError: handleGoogleDrivePickerError,
+    onPicked: handleGoogleDrivePicked,
+  });
+  const googleDriveDisabled =
+    uploadPending ||
+    googleDriveImportPending ||
+    isStorageLimitReached ||
+    !googleDrivePicker.isConfigured;
 
   return (
     <>
@@ -197,6 +242,36 @@ export function InventoryDialogs({
               {t('storage.limitReached')}
             </p>
           )}
+          <div className="rounded-lg border bg-muted/30 p-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-1">
+                <div className="font-medium text-sm">
+                  {t('uploadDialog.googleDrive')}
+                </div>
+                <p className="text-muted-foreground text-sm">
+                  {googleDrivePicker.isConfigured
+                    ? t('uploadDialog.googleDriveDescription')
+                    : t('uploadDialog.googleDriveUnavailable')}
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={googleDriveDisabled}
+                onClick={googleDrivePicker.openPicker}
+                className="shrink-0"
+              >
+                {googleDriveImportPending || googleDrivePicker.isLoading ? (
+                  <Loader2 data-icon="inline-start" className="animate-spin" />
+                ) : (
+                  <Cloud data-icon="inline-start" />
+                )}
+                {googleDriveImportPending
+                  ? t('uploadDialog.importingGoogleDrive')
+                  : t('uploadDialog.googleDrive')}
+              </Button>
+            </div>
+          </div>
           <DialogFooter>
             <DialogClose asChild>
               <Button variant="outline">{t('actions.cancel')}</Button>

@@ -41,6 +41,11 @@ interface ShareBatchInput {
   expiresIn?: number;
 }
 
+interface ImportGoogleDriveInput {
+  fileId: string;
+  parentId?: string | null;
+}
+
 const buildSearchParams = (
   params: Record<string, string | number | null | undefined>
 ) => {
@@ -120,6 +125,18 @@ export const inventoryService = {
       'v1/storage/confirm-upload',
       {
         fileId: response.data.fileId,
+      }
+    );
+  },
+
+  importFromGoogleDrive: async (
+    input: ImportGoogleDriveInput
+  ): Promise<InventoryResponse<InventoryEntry>> => {
+    return apiClient.post<InventoryResponse<InventoryEntry>>(
+      'v1/storage/import/google-drive',
+      {
+        fileId: input.fileId,
+        parentId: input.parentId ?? null,
       }
     );
   },

@@ -1,5 +1,6 @@
 'use client';
 
+import { useMutation } from '@tanstack/react-query';
 import {
   ArrowUp,
   Cloud,
@@ -13,7 +14,7 @@ import {
   Square,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { type FormEvent, type ReactNode, useState } from 'react';
+import { type FormEvent, type ReactNode, useCallback, useState } from 'react';
 import { toast } from 'sonner';
 import {
   PromptInput,
@@ -27,12 +28,15 @@ import {
 } from '@/components/ai-elements/prompt-input';
 import { DropdownTemplate, type MenuItem } from '@/components/custom/dropdown';
 import { Button } from '@/components/ui/button';
+import { useGoogleDrivePicker } from '@/hooks/use-google-drive-picker';
 import type { ChatModel } from '@/services/ai/chat-models';
 import type {
   ChatFileUIPart,
   ChatSubmitAttachments,
 } from '@/types/chat-attachments';
 import type { ChatLessonReferenceUIPart } from '@/types/chat-lesson-references';
+import { inventoryService } from '../inventory/inventory.service';
+import type { InventoryEntry } from '../inventory/inventory.types';
 import {
   ChatInputAttachments,
   type SelectedChatFile,
@@ -42,6 +46,28 @@ import { ChatModelSelectControl } from './chat-model-select-control';
 import { useChatInputFiles } from './use-chat-input-files';
 
 const MAX_CHAT_ATTACHMENTS = 10;
+const DEFAULT_MEDIA_TYPE = 'application/octet-stream';
+
+function toChatFilePart({
+  entry,
+  signedUrl,
+}: {
+  entry: InventoryEntry;
+  signedUrl: string;
+}): ChatFileUIPart {
+  return {
+    bucket: entry.bucket,
+    courseId: null,
+    fileId: entry.id,
+    fileSize: entry.fileSize,
+    filename: entry.name,
+    mediaType: entry.mimeType ?? DEFAULT_MEDIA_TYPE,
+    objectKey: entry.objectKey,
+    source: 'personal',
+    type: 'file',
+    url: signedUrl,
+  };
+}
 
 export type ChatInputToolsContext = {
   disabled: boolean;
@@ -126,6 +152,7 @@ export function ChatInput({
     if (
       isStreaming ||
       isUploading ||
+      googleDriveImportMutation.isPending ||
       isLimitReached ||
       (!message.text.trim() && selectedAttachments.length === 0)
     ) {
@@ -233,6 +260,68 @@ export function ChatInput({
 
     setPickerSource(source);
   };
+  const googleDriveImportMutation = useMutation({
+    mutationFn: async (fileId: string) => {
+      const importResponse = await inventoryService.importFromGoogleDrive({
+        fileId,
+      });
+      const entry = importResponse.data;
+      const shareResponse = await inventoryService.shareEntry(entry.id);
+
+      return toChatFilePart({
+        entry,
+        signedUrl: shareResponse.data.signedUrl,
+      });
+    },
+    onError: (error: { message?: string }) => {
+      toast.error(error.message ?? t('attachments.uploadError'));
+    },
+    onSuccess: (file) => {
+      addReferenceFiles([file]);
+    },
+  });
+  const handleGoogleDrivePickerError = useCallback((message: string) => {
+    toast.error(message);
+  }, []);
+  const handleGoogleDrivePicked = useCallback(
+    (fileIds: string[]) => {
+      if (remainingAttachmentSlots === 0) {
+        toast.error(t('attachments.tooMany', { count: MAX_CHAT_ATTACHMENTS }));
+        return;
+      }
+
+      const [fileId] = fileIds;
+      if (!fileId) return;
+
+      googleDriveImportMutation.mutate(fileId);
+    },
+    [googleDriveImportMutation, remainingAttachmentSlots, t]
+  );
+  const googleDrivePicker = useGoogleDrivePicker({
+    messages: {
+      connectRequired: t('attachments.googleDriveConnectRequired'),
+      notConfigured: t('attachments.googleDriveUnavailable'),
+      sessionChanged: t('attachments.googleDriveSessionChanged'),
+      stillLoading: t('attachments.googleDriveStillLoading'),
+      tokenFailed: t('attachments.googleDriveTokenFailed'),
+      unavailable: t('attachments.googleDrivePickerUnavailable'),
+    },
+    onError: handleGoogleDrivePickerError,
+    onPicked: handleGoogleDrivePicked,
+  });
+  const openGoogleDrivePicker = () => {
+    if (remainingAttachmentSlots === 0) {
+      toast.error(t('attachments.tooMany', { count: MAX_CHAT_ATTACHMENTS }));
+      return;
+    }
+
+    if (!googleDrivePicker.isConfigured) {
+      toast.error(t('attachments.googleDriveUnavailable'));
+      return;
+    }
+
+    googleDrivePicker.openPicker();
+  };
 
   const disabledLessonIds = selectedReferenceLessons.flatMap((item) =>
     item.lessonPart ? [item.lessonPart.data.lessonId] : []
@@ -262,6 +351,17 @@ export function ChatInput({
           label: t('actionMenu.fromCourseInventory'),
           icon: <Cloud />,
           onClick: () => openInventoryPicker('course'),
+        },
+        {
+          label: t('actionMenu.fromGoogleDrive'),
+          icon:
+            googleDriveImportMutation.isPending ||
+            googleDrivePicker.isLoading ? (
+              <Loader2 className="animate-spin" />
+            ) : (
+              <Cloud />
+            ),
+          onClick: openGoogleDrivePicker,
         },
         {
           label: t('actionMenu.fromDevice'),
@@ -383,6 +483,7 @@ export function ChatInput({
               disabled={
                 isLimitReached ||
                 isUploading ||
+                googleDriveImportMutation.isPending ||
                 (!isStreaming &&
                   !inputValue.trim() &&
                   selectedAttachments.length === 0)

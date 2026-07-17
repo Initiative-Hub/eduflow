@@ -81,6 +81,7 @@ export default function CourseFilesClient() {
     handleShareEntry,
     handleShareSelected,
     handleUploadFiles,
+    handleImportGoogleDriveFile,
     isFetching,
     isLoading,
     maxFileSizeBytes,
@@ -105,6 +106,7 @@ export default function CourseFilesClient() {
     setViewType,
     uploadOpen,
     uploadPending,
+    googleDriveImportPending,
     viewType,
   } = useFiles({
     courseId,
@@ -247,7 +249,9 @@ export default function CourseFilesClient() {
         moveDialog={moveDialog}
         moveOptions={moveOptions}
         movePending={movePending}
+        onImportGoogleDriveFile={handleImportGoogleDriveFile}
         onUploadFiles={handleUploadFiles}
+        googleDriveImportPending={googleDriveImportPending}
         previewDialog={previewDialog}
         renameDialog={renameDialog}
         renamePending={renamePending}

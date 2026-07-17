@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { Suspense } from 'react';
 import { auth } from '@/lib/auth';
+import IntegrationsClient from './client';
 
 export const metadata: Metadata = {
   title: 'Integrations',
@@ -13,5 +15,9 @@ export default async function IntegrationsPage() {
     redirect('/login');
   }
 
-  return <section>Integrations Page</section>;
+  return (
+    <Suspense fallback={null}>
+      <IntegrationsClient eduflowAccountEmail={sessionData.user.email} />
+    </Suspense>
+  );
 }

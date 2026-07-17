@@ -818,6 +818,84 @@ export class StorageService {
   }
 
   /**
+   * Copies trusted server-side bytes into inventory using the same object
+   * storage and confirmation path as browser uploads.
+   */
+  static async createFileFromBytes(options: {
+    userId: string;
+    courseId?: string | null;
+    parentId?: string | null;
+    folderPath?: string[];
+    fileName: string;
+    contentType: string;
+    bytes: Uint8Array;
+    metadata?: Prisma.InputJsonValue;
+  }) {
+    const usesFolderPath = Boolean(options.folderPath?.length);
+    const parentId = usesFolderPath
+      ? await ensureFolderPath({
+          userId: options.userId,
+          courseId: options.courseId,
+          folderPath: options.folderPath,
+        })
+      : (options.parentId ?? null);
+    if (!usesFolderPath) {
+      await ensureParentFolder(options.userId, parentId, options.courseId);
+    }
+
+    const normalizedName = normalizeName(options.fileName);
+    if (!normalizedName) {
+      throw new Error('File name is required');
+    }
+
+    if (options.bytes.byteLength > STORAGE_MAX_FILE_SIZE_BYTES) {
+      throw new Error('File size exceeds storage upload limit');
+    }
+
+    const { file, objectKey } = await createUploadEntryWithAutoRename({
+      userId: options.userId,
+      courseId: options.courseId,
+      parentId,
+      fileName: normalizedName,
+      contentType: options.contentType,
+      fileSize: options.bytes.byteLength,
+    });
+
+    try {
+      await uploadInventoryObject({
+        objectKey,
+        contentType: options.contentType,
+        body: options.bytes,
+      });
+
+      const uploaded = await StorageService.confirmUpload({
+        userId: options.userId,
+        fileId: file.id,
+      });
+
+      if (!options.metadata) {
+        return uploaded;
+      }
+
+      const updated = await prisma.fileInventory.update({
+        where: { id: uploaded.id },
+        data: { metadata: options.metadata },
+      });
+
+      return serializeFileInventory(updated);
+    } catch (error) {
+      await prisma.fileInventory
+        .delete({
+          where: { id: file.id },
+        })
+        .catch(() => undefined);
+
+      await deleteInventoryObject({ objectKey }).catch(() => undefined);
+      throw error;
+    }
+  }
+
+  /**
    * Generates a temporary signed read URL for a single file.
    */
   static async createShareUrl(options: {

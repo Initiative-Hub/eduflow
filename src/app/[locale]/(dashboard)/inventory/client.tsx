@@ -78,6 +78,7 @@ export function InventoryClient() {
     handleShareEntry,
     handleShareSelected,
     handleUploadFiles,
+    handleImportGoogleDriveFile,
     isFetching,
     isLoading,
     maxFileSizeBytes,
@@ -102,6 +103,7 @@ export function InventoryClient() {
     setViewType,
     uploadOpen,
     uploadPending,
+    googleDriveImportPending,
     viewType,
   } = useInventory({
     maxFileSizeBytes: STORAGE_MAX_FILE_SIZE_BYTES,
@@ -243,7 +245,9 @@ export function InventoryClient() {
         moveDialog={moveDialog}
         moveOptions={moveOptions}
         movePending={movePending}
+        onImportGoogleDriveFile={handleImportGoogleDriveFile}
         onUploadFiles={handleUploadFiles}
+        googleDriveImportPending={googleDriveImportPending}
         previewDialog={previewDialog}
         renameDialog={renameDialog}
         renamePending={renamePending}

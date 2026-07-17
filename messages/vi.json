@@ -112,6 +112,7 @@
       "close": "Đóng tùy chọn",
       "fromCourseInventory": "Từ kho khóa học",
       "fromDevice": "Từ thiết bị này",
+      "fromGoogleDrive": "Từ Google Drive",
       "fromUserInventory": "Từ kho cá nhân",
       "open": "Mở tùy chọn",
       "uploadFiles": "Tải tệp lên"
@@ -147,6 +148,12 @@
       "add": "Đính kèm tệp",
       "defaultMessage": "Vui lòng sử dụng {count, plural, one {tham chiếu đính kèm} other {các tham chiếu đính kèm}}.",
       "fileTooLarge": "{name} vượt quá dung lượng tải lên tối đa.",
+      "googleDriveConnectRequired": "Hãy kết nối Google Drive trong phần Tích hợp trước.",
+      "googleDrivePickerUnavailable": "Không thể mở Google Drive Picker.",
+      "googleDriveSessionChanged": "Phiên Google Drive đã thay đổi. Hãy kết nối lại Google Drive.",
+      "googleDriveStillLoading": "Google Drive Picker vẫn đang tải.",
+      "googleDriveTokenFailed": "Không thể chuẩn bị Google Drive Picker.",
+      "googleDriveUnavailable": "Tính năng nhập từ Google Drive chưa được cấu hình.",
       "remove": "Gỡ {name}",
       "signInRequired": "Hãy đăng nhập để tải tệp lên trò chuyện.",
       "tooMany": "Bạn có thể đính kèm tối đa {count} tệp.",
@@ -568,6 +575,7 @@
       "fileTooLarge": "Tệp vượt quá kích thước tải lên tối đa {size}.",
       "folderCreated": "Đã tạo thư mục.",
       "genericError": "Đã xảy ra lỗi. Vui lòng thử lại.",
+      "googleDriveImported": "Đã nhập tệp từ Google Drive.",
       "invalidMove": "Bạn không thể di chuyển một thư mục vào chính nó.",
       "moved": "Đã di chuyển mục.",
       "nameConflictCreateFolder": "Đã có tệp hoặc thư mục khác dùng tên này tại đây.",
@@ -591,6 +599,15 @@
       "dropzoneDescription": "Mỗi lần chỉ một tệp, giới hạn kích thước {size}.",
       "dropzoneHint": "Mỗi lần tải một tệp",
       "dropzoneTitle": "Thả tệp vào đây",
+      "googleDrive": "Google Drive",
+      "googleDriveConnectRequired": "Hãy kết nối Google Drive trong phần Tích hợp trước.",
+      "googleDriveDescription": "Chọn một tệp Drive và nhập vào thư mục này.",
+      "googleDrivePickerUnavailable": "Không thể mở Google Drive Picker.",
+      "googleDriveSessionChanged": "Phiên Google Drive đã thay đổi. Hãy kết nối lại Google Drive.",
+      "googleDriveStillLoading": "Google Drive Picker vẫn đang tải.",
+      "googleDriveTokenFailed": "Không thể chuẩn bị Google Drive Picker.",
+      "googleDriveUnavailable": "Thêm biến môi trường Google Drive để bật tính năng nhập từ Drive.",
+      "importingGoogleDrive": "Đang nhập...",
       "title": "Tải tệp lên"
     },
     "view": {
@@ -1376,6 +1393,37 @@
   "HomePage": {
     "title": "Xin chào thế giới!"
   },
+  "IntegrationsPage": {
+    "actions": {
+      "connect": "Kết nối",
+      "disconnect": "Ngắt kết nối",
+      "refresh": "Tải lại"
+    },
+    "description": "Kết nối các dịch vụ bên ngoài để nhập tài liệu học tập vào không gian EduFlow.",
+    "googleDrive": {
+      "account": "Tài khoản Google",
+      "accountNote": "Tài khoản Google Drive có thể khác với tài khoản đăng nhập EduFlow.",
+      "connected": "Đã kết nối",
+      "description": "Chọn tệp từ Google Drive và nhập vào kho cá nhân, tệp khóa học hoặc tệp đính kèm trò chuyện.",
+      "driveAccount": "Tài khoản Google Drive",
+      "eduflowAccount": "Tài khoản EduFlow",
+      "noAccount": "Chưa kết nối tài khoản",
+      "notConnected": "Chưa kết nối",
+      "scope": "EduFlow chỉ yêu cầu quyền Drive giới hạn cho các tệp bạn chọn hoặc tạo qua ứng dụng.",
+      "title": "Google Drive"
+    },
+    "notice": {
+      "connectedDescription": "Bạn có thể chọn tệp Google Drive từ menu tải lên và đính kèm.",
+      "connectedTitle": "Đã kết nối Google Drive",
+      "errorDescription": "Google chưa hoàn tất luồng cấp quyền. Hãy thử kết nối lại.",
+      "errorTitle": "Kết nối thất bại"
+    },
+    "title": "Tích hợp",
+    "toast": {
+      "disconnected": "Đã ngắt kết nối Google Drive.",
+      "disconnectFailed": "Không thể ngắt kết nối Google Drive."
+    }
+  },
   "InventoryPage": {
     "actions": {
       "cancel": "Hủy",
@@ -1506,6 +1554,7 @@
       "fileTooLarge": "Tệp vượt quá kích thước tải lên tối đa {size}.",
       "folderCreated": "Đã tạo thư mục.",
       "genericError": "Đã xảy ra lỗi. Vui lòng thử lại.",
+      "googleDriveImported": "Đã nhập tệp từ Google Drive.",
       "invalidMove": "Bạn không thể di chuyển một thư mục vào chính nó.",
       "moved": "Đã di chuyển mục.",
       "nameConflictCreateFolder": "Đã có tệp hoặc thư mục khác dùng tên này tại đây.",
@@ -1529,6 +1578,15 @@
       "dropzoneDescription": "Mỗi lần chỉ một tệp, giới hạn kích thước {size}.",
       "dropzoneHint": "Mỗi lần tải một tệp",
       "dropzoneTitle": "Thả tệp vào đây",
+      "googleDrive": "Google Drive",
+      "googleDriveConnectRequired": "Hãy kết nối Google Drive trong phần Tích hợp trước.",
+      "googleDriveDescription": "Chọn một tệp Drive và nhập vào thư mục này.",
+      "googleDrivePickerUnavailable": "Không thể mở Google Drive Picker.",
+      "googleDriveSessionChanged": "Phiên Google Drive đã thay đổi. Hãy kết nối lại Google Drive.",
+      "googleDriveStillLoading": "Google Drive Picker vẫn đang tải.",
+      "googleDriveTokenFailed": "Không thể chuẩn bị Google Drive Picker.",
+      "googleDriveUnavailable": "Thêm biến môi trường Google Drive để bật tính năng nhập từ Drive.",
+      "importingGoogleDrive": "Đang nhập...",
       "title": "Tải tệp lên"
     },
     "view": {
