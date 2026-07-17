@@ -275,6 +275,52 @@
       "searchingContent": "Đang tìm kiếm nội dung bài học..."
     }
   },
+  "AiShareLinks": {
+    "actions": {
+      "cancel": "Hủy",
+      "copy": "Sao chép liên kết",
+      "revoke": "Thu hồi liên kết"
+    },
+    "cardDescription": "Việc thu hồi liên kết sẽ ngay lập tức chặn quyền truy cập công khai vào nội dung đã chia sẻ.",
+    "cardTitle": "Liên kết công khai",
+    "description": "Xem và thu hồi các liên kết công khai đến cuộc trò chuyện AI và nội dung tương tác của bạn.",
+    "empty": {
+      "description": "Các liên kết công khai bạn tạo từ cuộc trò chuyện AI và nội dung tương tác sẽ xuất hiện ở đây.",
+      "title": "Chưa có liên kết nào được chia sẻ"
+    },
+    "error": "Không thể tải các liên kết đã chia sẻ của bạn.",
+    "eyebrow": "Kiểm soát chia sẻ",
+    "pagination": {
+      "next": "Tiếp",
+      "page": "Trang {page} / {total}",
+      "previous": "Trước",
+      "range": "Hiển thị {start}-{end} trong số {total} liên kết"
+    },
+    "revokeDialog": {
+      "description": "Bất kỳ ai dùng liên kết này sẽ không thể xem nội dung đã chia sẻ nữa.",
+      "title": "Thu hồi liên kết công khai này?"
+    },
+    "summary": {
+      "active": "{count} liên kết đang hoạt động"
+    },
+    "table": {
+      "actions": "Thao tác",
+      "conversation": "Cuộc trò chuyện",
+      "created": "Đã tạo",
+      "type": "Loại"
+    },
+    "title": "Liên kết đã chia sẻ",
+    "toast": {
+      "copied": "Đã sao chép liên kết chia sẻ.",
+      "copyFailed": "Không thể sao chép liên kết chia sẻ.",
+      "revoked": "Đã thu hồi liên kết chia sẻ.",
+      "revokeFailed": "Không thể thu hồi liên kết chia sẻ."
+    },
+    "types": {
+      "aiChat": "Trò chuyện AI",
+      "interactiveContent": "Nội dung tương tác"
+    }
+  },
   "ApiDocsPage": {
     "cookieHint": "Hãy đăng nhập ở tab khác để dùng lại cookie phiên Better Auth.",
     "description": "Khám phá và thử các điểm cuối API của EduFlow.",
@@ -1733,6 +1779,7 @@
     "settingsHeading": "Cài đặt EduFlow",
     "settingsIntegrations": "Tích hợp",
     "settingsProfile": "Hồ sơ",
+    "settingsSharedLinks": "Liên kết đã chia sẻ",
     "settingsSubheading": "Quản lý không gian học thuật của bạn",
     "settingsSystemSettings": "Cài đặt hệ thống",
     "socraticTutor": "Gia sư Socratic",

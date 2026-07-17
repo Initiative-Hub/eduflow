@@ -275,6 +275,52 @@
       "searchingContent": "Searching lesson content..."
     }
   },
+  "AiShareLinks": {
+    "actions": {
+      "cancel": "Cancel",
+      "copy": "Copy link",
+      "revoke": "Revoke link"
+    },
+    "cardDescription": "Revoking a link immediately removes public access to its shared item.",
+    "cardTitle": "Public links",
+    "description": "Review and revoke public links to your AI chats and interactive content.",
+    "empty": {
+      "description": "Public links you create from AI chats and interactive content will appear here.",
+      "title": "No shared links"
+    },
+    "error": "We could not load your shared links right now.",
+    "eyebrow": "Sharing controls",
+    "pagination": {
+      "next": "Next",
+      "page": "Page {page} of {total}",
+      "previous": "Previous",
+      "range": "Showing {start}-{end} of {total} links"
+    },
+    "revokeDialog": {
+      "description": "Anyone using this link will no longer be able to view the shared item.",
+      "title": "Revoke this public link?"
+    },
+    "summary": {
+      "active": "{count} active links"
+    },
+    "table": {
+      "actions": "Actions",
+      "conversation": "Conversation",
+      "created": "Created",
+      "type": "Type"
+    },
+    "title": "Shared links",
+    "toast": {
+      "copied": "Share link copied.",
+      "copyFailed": "Could not copy share link.",
+      "revoked": "Share link revoked.",
+      "revokeFailed": "Could not revoke share link."
+    },
+    "types": {
+      "aiChat": "AI chat",
+      "interactiveContent": "Interactive content"
+    }
+  },
   "ApiDocsPage": {
     "cookieHint": "Sign in another tab to reuse your Better Auth session cookie.",
     "description": "Explore and test the EduFlow API endpoints.",
@@ -1733,6 +1779,7 @@
     "settingsHeading": "EduFlow Settings",
     "settingsIntegrations": "Integrations",
     "settingsProfile": "Profile",
+    "settingsSharedLinks": "Shared links",
     "settingsSubheading": "Manage your scholarly workspace",
     "settingsSystemSettings": "System Settings",
     "socraticTutor": "Socratic Tutor",
