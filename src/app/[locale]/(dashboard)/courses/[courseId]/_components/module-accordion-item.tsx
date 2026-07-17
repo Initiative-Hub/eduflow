@@ -32,13 +32,12 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import { Badge } from '@/components/ui/badge';
 import type { QuizDefinition } from '@/lib/quiz-template';
-import { QUESTION_SUB_TYPE_LABELS } from '@/lib/quiz-template';
 import { cn } from '@/lib/utils';
 import DeleteLessonDialog from '../lessons/[lessonId]/_components/delete-lesson-dialog';
 import type { Module } from '../use-modules';
 import { DeleteModuleDialog } from './delete-module-dialog';
+import { DeleteQuizDialog } from './delete-quiz-dialog';
 import { useModuleOrderMutations } from './use-module-order-mutations';
 
 // Unified item type for flat list rendering
@@ -48,7 +47,6 @@ export type AccordionListItem =
       kind: 'quiz';
       id: string;
       title: string;
-      subType: string;
       questionCount: number;
       indent: number;
     };
@@ -56,7 +54,10 @@ export type AccordionListItem =
 interface ModuleAccordionItemProps {
   moduleItem: Module;
   courseId: string;
+  canCreateContent: boolean;
+  canEditContent: boolean;
   canDeleteContent: boolean;
+  canCreateQuiz: boolean;
   /** Called with the module ID when the user clicks "Add lesson" */
   onAddLesson: (moduleId: string) => void;
   /** Called with the module ID when the user clicks "Create Quiz" from the dropdown */
@@ -90,7 +91,6 @@ function buildItemList(
       kind: 'quiz',
       id: quiz.id,
       title: quiz.title,
-      subType: quiz.subType,
       questionCount: quiz.questionCount,
       indent: savedIndents.get(quiz.id) ?? 0,
     });
@@ -111,22 +111,30 @@ function buildItemList(
 export function ModuleAccordionItem({
   moduleItem,
   courseId,
+  canCreateContent,
+  canEditContent,
   canDeleteContent,
+  canCreateQuiz,
   onAddLesson,
   onCreateQuiz,
   quizzes = [],
 }: ModuleAccordionItemProps) {
   const tAccordion = useTranslations('Courses.ModuleAccordion');
+  const [deletedQuizIds, setDeletedQuizIds] = useState<Set<string>>(
+    () => new Set()
+  );
 
   const moduleQuizzes = useMemo(() => {
     const moduleLessonIds = new Set(moduleItem.lessons.map((l) => l.id));
 
     return quizzes.filter((quiz) => {
+      if (deletedQuizIds.has(quiz.id)) return false;
+
       const linkedLessonIds = quiz.lessonIds;
 
       return linkedLessonIds.some((lessonId) => moduleLessonIds.has(lessonId));
     });
-  }, [moduleItem.lessons, quizzes]);
+  }, [deletedQuizIds, moduleItem.lessons, quizzes]);
 
   const [localOrder, setLocalOrder] = useState<Map<string, number> | null>(
     () => {
@@ -171,9 +179,38 @@ export function ModuleAccordionItem({
   );
 
   const itemIds = useMemo(() => items.map((i) => i.id), [items]);
+  const moduleActions = useMemo(() => {
+    const actions = [];
+
+    if (canCreateContent) {
+      actions.push({
+        label: tAccordion('addLesson'),
+        icon: <BookOpen className="h-4 w-4" />,
+        onClick: () => onAddLesson(moduleItem.id),
+      });
+    }
+
+    if (canCreateQuiz) {
+      actions.push({
+        label: tAccordion('addQuiz'),
+        icon: <ClipboardList className="h-4 w-4" />,
+        onClick: () => onCreateQuiz(moduleItem.id),
+      });
+    }
+
+    return actions;
+  }, [
+    canCreateContent,
+    canCreateQuiz,
+    moduleItem.id,
+    onAddLesson,
+    onCreateQuiz,
+    tAccordion,
+  ]);
 
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
+      if (!canEditContent) return;
       const { active, over } = event;
       if (!over || active.id === over.id) return;
 
@@ -198,11 +235,12 @@ export function ModuleAccordionItem({
         })),
       });
     },
-    [items, reorderMutation]
+    [canEditContent, items, reorderMutation]
   );
 
   const handleIndent = useCallback(
     (id: string) => {
+      if (!canEditContent) return;
       const currentItem = items.find((i) => i.id === id);
       if (!currentItem || currentItem.indent >= 2) return;
 
@@ -216,11 +254,12 @@ export function ModuleAccordionItem({
       // Persist via API
       indentMutation.mutate({ itemId: id, indent: newIndent });
     },
-    [items, indentMutation]
+    [canEditContent, items, indentMutation]
   );
 
   const handleOutdent = useCallback(
     (id: string) => {
+      if (!canEditContent) return;
       const currentItem = items.find((i) => i.id === id);
       if (!currentItem || currentItem.indent <= 0) return;
 
@@ -234,8 +273,16 @@ export function ModuleAccordionItem({
       // Persist via API
       indentMutation.mutate({ itemId: id, indent: newIndent });
     },
-    [items, indentMutation]
+    [canEditContent, items, indentMutation]
   );
+
+  const handleQuizDeleted = useCallback((quizId: string) => {
+    setDeletedQuizIds((current) => {
+      const next = new Set(current);
+      next.add(quizId);
+      return next;
+    });
+  }, []);
 
   return (
     <AccordionItem
@@ -260,41 +307,32 @@ export function ModuleAccordionItem({
             />
           ) : null}
 
-          <DropdownTemplate
-            trigger={
-              <button
-                type="button"
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-100 text-violet-600 transition-colors hover:bg-violet-200 dark:bg-violet-900/30 dark:text-violet-400 dark:hover:bg-violet-900/50"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                }}
-              >
-                <Plus className="h-4 w-4" strokeWidth={2.5} />
-              </button>
-            }
-            items={[
-              {
-                label: tAccordion('addLesson'),
-                icon: <BookOpen className="h-4 w-4" />,
-                onClick: () => onAddLesson(moduleItem.id),
-              },
-              {
-                label: tAccordion('addQuiz'),
-                icon: <ClipboardList className="h-4 w-4" />,
-                onClick: () => onCreateQuiz(moduleItem.id),
-              },
-            ]}
-          />
+          {moduleActions.length > 0 ? (
+            <DropdownTemplate
+              trigger={
+                <button
+                  type="button"
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-100 text-violet-600 transition-colors hover:bg-violet-200 dark:bg-violet-900/30 dark:text-violet-400 dark:hover:bg-violet-900/50"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                  }}
+                >
+                  <Plus className="h-4 w-4" strokeWidth={2.5} />
+                </button>
+              }
+              items={moduleActions}
+            />
+          ) : null}
         </div>
 
-        <AccordionContent className="m-0 border-none bg-card p-0 text-sm">
+        <AccordionContent className="m-0 h-auto border-none bg-card p-0 text-sm">
           <div className="divide-y">
             {items.length === 0 ? (
               <div className="p-4 text-center text-muted-foreground italic">
                 {tAccordion('noLessons')}
               </div>
-            ) : (
+            ) : canEditContent ? (
               <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
@@ -310,12 +348,27 @@ export function ModuleAccordionItem({
                       item={item}
                       courseId={courseId}
                       canDeleteContent={canDeleteContent}
+                      canEditContent={canEditContent}
                       onIndent={handleIndent}
                       onOutdent={handleOutdent}
+                      onQuizDeleted={handleQuizDeleted}
                     />
                   ))}
                 </SortableContext>
               </DndContext>
+            ) : (
+              items.map((item) => (
+                <SortableAccordionRow
+                  key={item.id}
+                  item={item}
+                  courseId={courseId}
+                  canDeleteContent={canDeleteContent}
+                  canEditContent={canEditContent}
+                  onIndent={handleIndent}
+                  onOutdent={handleOutdent}
+                  onQuizDeleted={handleQuizDeleted}
+                />
+              ))
             )}
           </div>
         </AccordionContent>
@@ -330,16 +383,20 @@ interface SortableAccordionRowProps {
   item: AccordionListItem;
   courseId: string;
   canDeleteContent: boolean;
+  canEditContent: boolean;
   onIndent: (id: string) => void;
   onOutdent: (id: string) => void;
+  onQuizDeleted: (id: string) => void;
 }
 
 function SortableAccordionRow({
   item,
   courseId,
   canDeleteContent,
+  canEditContent,
   onIndent,
   onOutdent,
+  onQuizDeleted,
 }: SortableAccordionRowProps) {
   const {
     attributes,
@@ -378,40 +435,44 @@ function SortableAccordionRow({
           <span className="font-medium">{item.title}</span>
         </Link>
         <div className="flex items-center gap-1 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
-          {canDeleteContent ? (
+          {canDeleteContent && (
             <DeleteLessonDialog
               courseId={courseId}
               lessonId={item.id}
               compact
               navigateAfterDelete={false}
             />
-          ) : null}
-          <button
-            type="button"
-            className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30"
-            onClick={() => onOutdent(item.id)}
-            disabled={item.indent === 0}
-            title="Outdent"
-          >
-            <Outdent className="h-3.5 w-3.5" />
-          </button>
-          <button
-            type="button"
-            className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30"
-            onClick={() => onIndent(item.id)}
-            disabled={item.indent >= 2}
-            title="Indent"
-          >
-            <Indent className="h-3.5 w-3.5" />
-          </button>
-          <button
-            type="button"
-            className="cursor-grab touch-none rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-            {...attributes}
-            {...listeners}
-          >
-            <GripVertical className="h-3.5 w-3.5" />
-          </button>
+          )}
+          {canEditContent && (
+            <>
+              <button
+                type="button"
+                className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30"
+                onClick={() => onOutdent(item.id)}
+                disabled={item.indent === 0}
+                title="Outdent"
+              >
+                <Outdent className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30"
+                onClick={() => onIndent(item.id)}
+                disabled={item.indent >= 2}
+                title="Indent"
+              >
+                <Indent className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                className="cursor-grab touch-none rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                {...attributes}
+                {...listeners}
+              >
+                <GripVertical className="h-3.5 w-3.5" />
+              </button>
+            </>
+          )}
         </div>
       </div>
     );
@@ -438,13 +499,6 @@ function SortableAccordionRow({
         <div>
           <span className="font-medium text-sm">{item.title}</span>
           <div className="mt-0.5 flex items-center gap-1.5">
-            <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">
-              {
-                QUESTION_SUB_TYPE_LABELS[
-                  item.subType as keyof typeof QUESTION_SUB_TYPE_LABELS
-                ]
-              }
-            </Badge>
             <span className="text-[10px] text-muted-foreground">
               {item.questionCount}{' '}
               {item.questionCount === 1 ? 'question' : 'questions'}
@@ -453,32 +507,44 @@ function SortableAccordionRow({
         </div>
       </Link>
       <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-        <button
-          type="button"
-          className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30"
-          onClick={() => onOutdent(item.id)}
-          disabled={item.indent === 0}
-          title="Outdent"
-        >
-          <Outdent className="h-3.5 w-3.5" />
-        </button>
-        <button
-          type="button"
-          className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30"
-          onClick={() => onIndent(item.id)}
-          disabled={item.indent >= 2}
-          title="Indent"
-        >
-          <Indent className="h-3.5 w-3.5" />
-        </button>
-        <button
-          type="button"
-          className="cursor-grab touch-none rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-          {...attributes}
-          {...listeners}
-        >
-          <GripVertical className="h-3.5 w-3.5" />
-        </button>
+        {canDeleteContent && (
+          <DeleteQuizDialog
+            courseId={courseId}
+            onDeleted={onQuizDeleted}
+            quizId={item.id}
+            quizTitle={item.title}
+          />
+        )}
+        {canEditContent && (
+          <>
+            <button
+              type="button"
+              className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30"
+              onClick={() => onOutdent(item.id)}
+              disabled={item.indent === 0}
+              title="Outdent"
+            >
+              <Outdent className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30"
+              onClick={() => onIndent(item.id)}
+              disabled={item.indent >= 2}
+              title="Indent"
+            >
+              <Indent className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              className="cursor-grab touch-none rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+              {...attributes}
+              {...listeners}
+            >
+              <GripVertical className="h-3.5 w-3.5" />
+            </button>
+          </>
+        )}
       </div>
     </div>
   );

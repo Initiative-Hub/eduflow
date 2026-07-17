@@ -19,7 +19,6 @@ import { Textarea } from '@/components/ui/textarea';
 import {
   DELIVERY_MODE_LABELS,
   type DeliveryMode,
-  QUESTION_SUB_TYPE_LABELS,
   QUIZ_CATEGORIES,
   type QuestionSubType,
   type QuizCategory,
@@ -38,14 +37,15 @@ export interface QuizFormProps {
   isSubmitting: boolean;
   /** Whether AI generation is in progress */
   isGeneratingQuestions?: boolean;
+  /** Show the AI generation notice even when generation is handled by submit */
+  showAIGenerationNotice?: boolean;
   /** Error from AI question generation */
   generateQuestionsError?: Error | null;
   /** Called when user clicks "Generate with AI" */
   onGenerateWithAI?: (params: {
     lessonIds: string[];
     category: QuizCategory;
-    subType: QuestionSubType;
-    count: number;
+    questionCounts: Partial<Record<QuestionSubType, number>>;
   }) => void;
   /** Use compact spacing for dialog mode */
   compact?: boolean;
@@ -67,12 +67,23 @@ export interface QuizFormProps {
 export interface QuizFormSubmitData {
   title: string;
   description: string;
-  category: QuizCategory;
-  subType: QuestionSubType;
+  questionCategory: QuizCategory;
+  questionCounts: Partial<Record<QuestionSubType, number>>;
   deliveryMode: DeliveryMode;
-  questionCount: number;
   selectedLessonIds: string[];
   contentSource: 'specific-lessons' | 'all-modules';
+}
+
+function normalizeQuestionCounts(
+  counts: Partial<Record<QuestionSubType, string>>
+): Partial<Record<QuestionSubType, number>> {
+  return Object.entries(counts).reduce<
+    Partial<Record<QuestionSubType, number>>
+  >((normalized, [subType, value]) => {
+    const count = Number.parseInt(value ?? '', 10) || 0;
+    if (count > 0) normalized[subType as QuestionSubType] = count;
+    return normalized;
+  }, {});
 }
 
 export function QuizForm({
@@ -81,6 +92,7 @@ export function QuizForm({
   onSubmit,
   isSubmitting,
   generateQuestionsError,
+  showAIGenerationNotice = false,
   onGenerateWithAI,
   compact = false,
   hideLessonSelector = false,
@@ -96,7 +108,6 @@ export function QuizForm({
     setTitle,
     setDescription,
     handleCategoryChange,
-    setSubType,
     setDeliveryMode,
     setQuestionCount,
     setContentSource,
@@ -114,17 +125,16 @@ export function QuizForm({
     onSubmit({
       title: formState.title.trim(),
       description: formState.description.trim(),
-      category: formState.category as QuizCategory,
-      subType: formState.subType as QuestionSubType,
+      questionCategory: formState.category as QuizCategory,
+      questionCounts: normalizeQuestionCounts(formState.questionCounts),
       deliveryMode: formState.deliveryMode,
-      questionCount: Number.parseInt(formState.questionCount, 10) || 1,
       selectedLessonIds: formState.selectedLessonIds,
       contentSource: formState.contentSource,
     });
   };
 
   const handleGenerateWithAI = () => {
-    if (!formState.category || !formState.subType || !onGenerateWithAI) return;
+    if (!formState.category || !onGenerateWithAI) return;
 
     const lessonIdsForGeneration =
       formState.contentSource === 'all-modules'
@@ -136,8 +146,7 @@ export function QuizForm({
     onGenerateWithAI({
       lessonIds: lessonIdsForGeneration,
       category: formState.category as QuizCategory,
-      subType: formState.subType as QuestionSubType,
-      count: Number.parseInt(formState.questionCount, 10) || 5,
+      questionCounts: normalizeQuestionCounts(formState.questionCounts),
     });
   };
 
@@ -152,7 +161,7 @@ export function QuizForm({
   return (
     <div className={spacing}>
       {/* AI Question Generation Card */}
-      {onGenerateWithAI && (
+      {(onGenerateWithAI || showAIGenerationNotice) && (
         <div className="rounded-lg border border-dashed bg-muted/20 p-4">
           <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
@@ -211,41 +220,20 @@ export function QuizForm({
         />
       </div>
 
-      {/* Category & Sub-Type */}
-      {compact ? (
-        <div className="grid grid-cols-2 gap-4">
-          <CategorySelect
-            category={formState.category}
-            onCategoryChange={handleCategoryChange}
-            errors={errors}
-          />
-          <SubTypeSelect
-            subType={formState.subType}
-            onSubTypeChange={(v) => setSubType(v as QuestionSubType)}
-            availableSubTypes={availableSubTypes}
-            disabled={!formState.category}
-            errors={errors}
-          />
-        </div>
-      ) : (
-        <>
-          <CategorySelect
-            category={formState.category}
-            onCategoryChange={handleCategoryChange}
-            errors={errors}
-          />
-          <SubTypeSelect
-            subType={formState.subType}
-            onSubTypeChange={(v) => setSubType(v as QuestionSubType)}
-            availableSubTypes={availableSubTypes}
-            disabled={!formState.category}
-            errors={errors}
-          />
-        </>
-      )}
+      <CategorySelect
+        category={formState.category}
+        onCategoryChange={handleCategoryChange}
+        errors={errors}
+      />
 
-      {/* Delivery Mode and Question Count */}
-      <div className="grid grid-cols-2 gap-4">
+      <QuestionDistribution
+        questionCounts={formState.questionCounts}
+        availableSubTypes={availableSubTypes}
+        onCountChange={setQuestionCount}
+        errors={errors}
+      />
+
+      <div>
         <div className="space-y-2">
           <Label>{t('deliveryMode')}</Label>
           <Select
@@ -263,23 +251,6 @@ export function QuizForm({
               ))}
             </SelectContent>
           </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor={`question-count-${idPrefix}`}>
-            {t('questionCount')}
-          </Label>
-          <Input
-            id={`question-count-${idPrefix}`}
-            type="number"
-            min={1}
-            className="w-24"
-            value={formState.questionCount}
-            onChange={(e) => setQuestionCount(e.target.value)}
-          />
-          {errors.questionCount && (
-            <p className="text-destructive text-xs">{errors.questionCount}</p>
-          )}
         </div>
       </div>
 
@@ -558,12 +529,14 @@ function CategorySelect({
           <SelectValue placeholder={t('categoryPlaceholder')} />
         </SelectTrigger>
         <SelectContent>
-          {Object.entries(QUIZ_CATEGORIES).map(([key, meta]) => (
+          {Object.keys(QUIZ_CATEGORIES).map((key) => (
             <SelectItem key={key} value={key}>
               <div className="text-left">
-                <div className="font-medium">{meta.label}</div>
+                <div className="font-medium">
+                  {t(`categories.${key}.label`)}
+                </div>
                 <div className="text-muted-foreground text-xs">
-                  {meta.description}
+                  {t(`categories.${key}.description`)}
                 </div>
               </div>
             </SelectItem>
@@ -577,45 +550,66 @@ function CategorySelect({
   );
 }
 
-interface SubTypeSelectProps {
-  subType: QuestionSubType | '';
-  onSubTypeChange: (value: string) => void;
+interface QuestionDistributionProps {
+  questionCounts: Partial<Record<QuestionSubType, string>>;
   availableSubTypes: QuestionSubType[];
-  disabled: boolean;
+  onCountChange: (subType: QuestionSubType, value: string) => void;
   errors: Record<string, string>;
 }
 
-function SubTypeSelect({
-  subType,
-  onSubTypeChange,
+function QuestionDistribution({
+  questionCounts,
   availableSubTypes,
-  disabled,
+  onCountChange,
   errors,
-}: SubTypeSelectProps) {
+}: QuestionDistributionProps) {
   const t = useTranslations('Courses.CreateQuiz');
 
+  if (availableSubTypes.length === 0) return null;
+
   return (
-    <div className="space-y-2">
-      <Label>{t('subType')}</Label>
-      <Select
-        value={subType}
-        onValueChange={onSubTypeChange}
-        disabled={disabled}
-      >
-        <SelectTrigger className="w-full">
-          <SelectValue placeholder={t('subTypePlaceholder')} />
-        </SelectTrigger>
-        <SelectContent>
-          {availableSubTypes.map((st) => (
-            <SelectItem key={st} value={st}>
-              {QUESTION_SUB_TYPE_LABELS[st]}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      {errors.subType && (
-        <p className="text-destructive text-xs">{errors.subType}</p>
-      )}
-    </div>
+    <fieldset className="space-y-3">
+      <div>
+        <Label asChild>
+          <legend>{t('questionDistribution')}</legend>
+        </Label>
+        <p className="mt-1 text-muted-foreground text-xs">
+          {t('questionDistributionDescription')}
+        </p>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {availableSubTypes.map((subType) => (
+          <div
+            key={subType}
+            className="flex min-h-14 items-center justify-between gap-4 rounded-lg border bg-card px-4 py-3"
+          >
+            <Label
+              htmlFor={`question-count-${subType}`}
+              className="leading-snug"
+            >
+              {t(`questionTypes.${subType}`)}
+            </Label>
+            <Input
+              id={`question-count-${subType}`}
+              type="number"
+              min={0}
+              max={50}
+              inputMode="numeric"
+              value={questionCounts[subType] ?? '0'}
+              onChange={(event) => onCountChange(subType, event.target.value)}
+              className="h-11 w-20 tabular-nums"
+              aria-label={t('questionTypeCount', {
+                type: t(`questionTypes.${subType}`),
+              })}
+            />
+          </div>
+        ))}
+      </div>
+      {errors.questionCount ? (
+        <p className="text-destructive text-xs" role="alert">
+          {errors.questionCount}
+        </p>
+      ) : null}
+    </fieldset>
   );
 }

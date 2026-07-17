@@ -4,6 +4,7 @@ import { BookOpen, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
+import { QuestionEditorDialog } from '@/components/quiz/editors';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,11 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  QUESTION_SUB_TYPE_LABELS,
-  QUIZ_CATEGORIES,
-  type QuestionBankEntry,
-} from '@/lib/quiz-template';
+import type { QuestionBankEntry } from '@/lib/quiz-template';
 import { useModules } from '../../use-modules';
 import {
   useQuestionBank,
@@ -34,13 +31,20 @@ interface QuestionBankClientProps {
 export function QuestionBankClient({ courseId }: QuestionBankClientProps) {
   const t = useTranslations('Courses.QuestionBank');
   const { modules } = useModules(courseId);
-  const { questions, isLoadingQuestions, deleteQuestion, isDeletingQuestion } =
-    useQuestionBank({ courseId });
+  const {
+    questions,
+    isLoadingQuestions,
+    deleteQuestion,
+    isDeletingQuestion,
+    updateQuestion,
+  } = useQuestionBank({ courseId });
   const filters = useQuestionBankFilters(questions);
 
   const [previewQuestion, setPreviewQuestion] =
     useState<QuestionBankEntry | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [editingQuestion, setEditingQuestion] =
+    useState<QuestionBankEntry | null>(null);
 
   const allLessons = modules.flatMap((m) => m.lessons);
 
@@ -101,6 +105,7 @@ export function QuestionBankClient({ courseId }: QuestionBankClientProps) {
         isDeletingQuestion={isDeletingQuestion}
         onDelete={deleteQuestion}
         onPreview={setPreviewQuestion}
+        onEdit={setEditingQuestion}
       />
 
       {/* Question Preview Dialog */}
@@ -116,10 +121,10 @@ export function QuestionBankClient({ courseId }: QuestionBankClientProps) {
             {previewQuestion && (
               <div className="mt-2 flex items-center gap-2">
                 <Badge variant="secondary">
-                  {QUIZ_CATEGORIES[previewQuestion.category].label}
+                  {t(`categories.${previewQuestion.category}`)}
                 </Badge>
                 <Badge variant="outline">
-                  {QUESTION_SUB_TYPE_LABELS[previewQuestion.subType]}
+                  {t(`questionTypes.${previewQuestion.subType}`)}
                 </Badge>
                 {previewQuestion.lessonId && (
                   <Badge variant="outline">
@@ -135,6 +140,18 @@ export function QuestionBankClient({ courseId }: QuestionBankClientProps) {
           </div>
         </DialogContent>
       </Dialog>
+      <QuestionEditorDialog
+        isOpen={!!editingQuestion}
+        onOpenChange={(open) => !open && setEditingQuestion(null)}
+        question={editingQuestion?.answerData ?? null}
+        onSave={(question) => {
+          if (!editingQuestion) return;
+          updateQuestion(
+            { questionId: editingQuestion.id, question },
+            { onSuccess: () => setEditingQuestion(null) }
+          );
+        }}
+      />
     </div>
   );
 }

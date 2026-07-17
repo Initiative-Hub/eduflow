@@ -54,12 +54,12 @@ export interface QuizDefinition {
   lessonIds: string[];
   title: string;
   description?: string;
-  category: QuizCategory;
-  subType: QuestionSubType;
+  questionCounts: Partial<Record<QuestionSubType, number>>;
   deliveryMode: DeliveryMode;
   selectionMethod: SelectionMethod;
   questionCount: number;
   questions: QuestionBlock[];
+  questionIds?: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -69,8 +69,7 @@ export interface QuizDefinition {
 export interface QuizConfiguration {
   title: string;
   description?: string;
-  category: QuizCategory;
-  subType: QuestionSubType;
+  questionCounts: Partial<Record<QuestionSubType, number>>;
   deliveryMode: DeliveryMode;
   selectionMethod: SelectionMethod;
   questionCount: number;
@@ -120,8 +119,8 @@ export const QUIZ_CATEGORIES: Record<
   OPEN_ENDED: {
     label: 'Open-Ended',
     description:
-      'Essay, Fill-in-the-Blank, Drag-and-Drop Fill (students input/write)',
-    subTypes: ['ESSAY', 'FILL_IN_THE_BLANK', 'DRAG_AND_DROP'],
+      'Fill-in-the-Blank, Drag-and-Drop Fill, Essay (students input/write)',
+    subTypes: ['FILL_IN_THE_BLANK', 'DRAG_AND_DROP', 'ESSAY'],
   },
 };
 
@@ -161,3 +160,37 @@ export const SUB_TYPE_TO_QUESTION_TYPE: Record<QuestionSubType, string> = {
   FILL_IN_THE_BLANK: 'fill_in_the_blank',
   DRAG_AND_DROP: 'drag_and_drop',
 };
+
+export const QUESTION_TYPE_TO_SUB_TYPE: Record<
+  QuestionBlock['type'],
+  QuestionSubType | null
+> = {
+  multiple_choice: 'MULTIPLE_CHOICE',
+  true_false: 'TRUE_FALSE',
+  matching: 'MATCHING',
+  ordering: 'ORDERING',
+  essay: 'ESSAY',
+  fill_in_the_blank: 'FILL_IN_THE_BLANK',
+  drag_and_drop: 'DRAG_AND_DROP',
+};
+
+export const QUESTION_CATEGORY_BY_SUB_TYPE: Record<
+  QuestionSubType,
+  QuizCategory
+> = {
+  MULTIPLE_CHOICE: 'SELECTION_BASED',
+  TRUE_FALSE: 'SELECTION_BASED',
+  MATCHING: 'SELECTION_BASED',
+  ORDERING: 'SELECTION_BASED',
+  FILL_IN_THE_BLANK: 'OPEN_ENDED',
+  DRAG_AND_DROP: 'OPEN_ENDED',
+  ESSAY: 'OPEN_ENDED',
+};
+
+export function getQuestionTaxonomy(type: QuestionBlock['type']) {
+  const subType = QUESTION_TYPE_TO_SUB_TYPE[type];
+  if (!subType) {
+    throw new Error(`Unsupported persisted question type: ${type}`);
+  }
+  return { subType, category: QUESTION_CATEGORY_BY_SUB_TYPE[subType] };
+}

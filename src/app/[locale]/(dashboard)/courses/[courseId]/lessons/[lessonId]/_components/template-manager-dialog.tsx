@@ -105,12 +105,12 @@ export function TemplateManagerDialog({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
-        <DialogContent className="flex flex-col border-slate-200 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100">
+        <DialogContent className="flex w-full flex-col border-border bg-background px-6 py-5 text-foreground sm:max-w-lg">
           <DialogHeader className="shrink-0">
-            <DialogTitle className="font-bold text-lg text-slate-800 dark:text-slate-100">
+            <DialogTitle className="font-bold text-foreground text-lg">
               Presentation Templates Manager
             </DialogTitle>
-            <DialogDescription className="mt-1 text-slate-500 text-xs dark:text-slate-400">
+            <DialogDescription className="mt-1 text-muted-foreground text-xs">
               Choose a visual style collection or upload a new template bank to
               customize slide renderings.
             </DialogDescription>
@@ -120,20 +120,20 @@ export function TemplateManagerDialog({
             onSubmit={handleUploadTemplate}
             className="flex min-h-0 flex-1 flex-col gap-6 overflow-hidden"
           >
-            <div className="flex flex-1 flex-col gap-6 overflow-y-auto pr-1">
+            <div className="flex flex-1 flex-col gap-6 overflow-y-auto px-1">
               {/* Choose Template Style */}
               <div className="space-y-3">
-                <span className="font-semibold text-slate-600 text-xs uppercase tracking-wider dark:text-slate-400">
+                <span className="font-semibold text-muted-foreground text-xs uppercase tracking-wider">
                   Choose Template Style
                 </span>
 
                 {isLoading ? (
-                  <div className="flex items-center justify-center py-8 text-slate-500">
+                  <div className="flex items-center justify-center py-8 text-muted-foreground">
                     <Spinner className="mr-2 h-6 w-6 text-primary" />
                     Loading template library...
                   </div>
                 ) : collections.length === 0 ? (
-                  <div className="rounded-xl border border-slate-200 border-dashed p-4 text-center text-slate-500 text-xs dark:border-slate-800">
+                  <div className="rounded-xl border border-border border-dashed p-4 text-center text-muted-foreground text-xs">
                     No styles found. Upload a PowerPoint deck below.
                   </div>
                 ) : (
@@ -147,7 +147,7 @@ export function TemplateManagerDialog({
                             'group relative flex w-full items-center justify-between rounded-xl border p-3 text-left transition-all',
                             isSelected
                               ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
-                              : 'border-slate-200 bg-slate-50 hover:bg-slate-100/75 dark:border-slate-800 dark:bg-slate-900/60 dark:hover:bg-slate-800/80'
+                              : 'border-border bg-muted/40 hover:bg-accent/40'
                           )}
                         >
                           <button
@@ -155,7 +155,7 @@ export function TemplateManagerDialog({
                             onClick={() => onSelectCollection(col.name)}
                             className="min-w-0 flex-1 py-1 pr-2 text-left"
                           >
-                            <h4 className="truncate font-semibold text-slate-800 text-sm dark:text-slate-200">
+                            <h4 className="truncate font-semibold text-foreground text-sm">
                               {col.name === 'starter'
                                 ? 'Default Starter'
                                 : col.name === 'neon_dark'
@@ -163,7 +163,7 @@ export function TemplateManagerDialog({
                                   : col.name}
                             </h4>
                             {col.description && (
-                              <p className="mt-0.5 truncate pr-2 text-slate-500 text-xs">
+                              <p className="mt-0.5 truncate pr-2 text-muted-foreground text-xs">
                                 {col.description}
                               </p>
                             )}
@@ -175,7 +175,7 @@ export function TemplateManagerDialog({
                                 {col.palette.slice(0, 3).map((color, cIdx) => (
                                   <div
                                     key={cIdx}
-                                    className="h-2.5 w-2.5 rounded-full border border-white dark:border-slate-900"
+                                    className="h-2.5 w-2.5 rounded-full border border-background"
                                     style={{ backgroundColor: color }}
                                   />
                                 ))}
@@ -185,7 +185,7 @@ export function TemplateManagerDialog({
                               type="button"
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 rounded-lg text-slate-500 hover:bg-slate-200/50 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                              className="size-8 rounded-lg text-muted-foreground"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setPreviewCollection(col.name);
@@ -203,16 +203,16 @@ export function TemplateManagerDialog({
                 )}
               </div>
 
-              <Separator className="my-1 h-px shrink-0 bg-slate-200 dark:bg-slate-800" />
+              <Separator className="my-1 h-px shrink-0 bg-border" />
 
               {/* Upload Area */}
               <div className="space-y-4">
-                <span className="font-semibold text-slate-600 text-xs uppercase tracking-wider dark:text-slate-400">
+                <span className="font-semibold text-muted-foreground text-xs uppercase tracking-wider">
                   Or Upload New Template Bank
                 </span>
 
                 <div className="flex flex-col gap-1.5">
-                  <span className="text-slate-500 text-xs dark:text-slate-400">
+                  <span className="text-muted-foreground text-xs">
                     Collection Name (optional)
                   </span>
                   <Input
@@ -220,12 +220,12 @@ export function TemplateManagerDialog({
                     placeholder="e.g. Minimalist Dark"
                     value={collectionName}
                     onChange={(e) => setCollectionName(e.target.value)}
-                    className="h-10 rounded-xl border-slate-200 bg-slate-50 text-slate-900 text-sm focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+                    className="h-10 rounded-xl border-input bg-muted/40 text-sm"
                   />
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <span className="text-slate-500 text-xs dark:text-slate-400">
+                  <span className="text-muted-foreground text-xs">
                     PPTX, ZIP or SVG File
                   </span>
                   <Dropzone
@@ -243,7 +243,7 @@ export function TemplateManagerDialog({
                     }}
                     maxSize={50 * 1024 * 1024} // 50MB
                     disabled={isUploading}
-                    className="border-2 border-slate-200 border-dashed bg-slate-50/50 focus-within:ring-primary hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-950 dark:hover:bg-slate-900"
+                    className="border-2 border-input border-dashed bg-muted/30 focus-within:ring-ring hover:bg-accent/20"
                   >
                     <DropzoneContent />
                     <DropzoneEmptyState />
@@ -252,7 +252,7 @@ export function TemplateManagerDialog({
               </div>
             </div>
 
-            <div className="mt-auto flex shrink-0 items-center justify-end gap-3 border-slate-200 border-t pt-4 dark:border-slate-800">
+            <div className="mt-auto flex shrink-0 items-center justify-end gap-3 border-border border-t pt-4">
               <Button
                 type="button"
                 variant="ghost"
@@ -262,7 +262,7 @@ export function TemplateManagerDialog({
                   setCollectionName('');
                 }}
                 disabled={isUploading}
-                className="rounded-xl font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                className="rounded-xl font-medium text-muted-foreground"
               >
                 Close
               </Button>
@@ -290,9 +290,9 @@ export function TemplateManagerDialog({
 
       {/* Larger Canva-like Slide Previews Pop-up Dialog */}
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-        <DialogContent className="flex max-h-[85vh] w-full flex-col rounded-2xl border border-slate-200 bg-white p-6 sm:max-w-5xl dark:border-slate-800 dark:bg-slate-950">
+        <DialogContent className="flex max-h-[85vh] w-full flex-col rounded-2xl border border-border bg-background p-6 sm:max-w-5xl">
           <DialogHeader>
-            <DialogTitle className="font-bold text-lg text-slate-800 capitalize dark:text-slate-100">
+            <DialogTitle className="font-bold text-foreground text-lg capitalize">
               Style Preview:{' '}
               {previewCollection === 'starter'
                 ? 'Default Starter'
@@ -303,12 +303,12 @@ export function TemplateManagerDialog({
           </DialogHeader>
 
           {isLoadingPreviews ? (
-            <div className="flex min-h-100 flex-1 flex-col items-center justify-center text-slate-500 text-sm">
+            <div className="flex min-h-100 flex-1 flex-col items-center justify-center text-muted-foreground text-sm">
               <Spinner className="mb-2 h-8 w-8 text-primary" />
               Loading preview slides...
             </div>
           ) : Object.keys(previews).length === 0 ? (
-            <div className="flex min-h-100 flex-1 items-center justify-center text-slate-400 text-xs">
+            <div className="flex min-h-100 flex-1 items-center justify-center text-muted-foreground text-xs">
               No preview slides found for this template style.
             </div>
           ) : (
@@ -317,11 +317,11 @@ export function TemplateManagerDialog({
                 const cleanedSvg = getCleanedPreviewSvg(svgContent);
                 return (
                   <div key={name} className="flex flex-col space-y-1.5">
-                    <span className="font-semibold text-[11px] text-slate-600 uppercase tracking-wider dark:text-slate-400">
+                    <span className="font-semibold text-[11px] text-muted-foreground uppercase tracking-wider">
                       {name.replace(/_/g, ' ')} Slide
                     </span>
                     <div
-                      className="group flex aspect-video w-full cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-50 shadow-sm transition-all duration-200 hover:scale-[1.01] hover:border-slate-300 hover:shadow-md dark:border-slate-800 dark:hover:border-slate-700"
+                      className="group flex aspect-video w-full cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-border bg-muted/30 shadow-sm transition-all duration-200 hover:scale-[1.01] hover:bg-accent/20 hover:shadow-md"
                       onClick={() => setZoomedSlideIndex(idx)}
                       dangerouslySetInnerHTML={{ __html: cleanedSvg }}
                     />
@@ -340,18 +340,18 @@ export function TemplateManagerDialog({
           if (!open) setZoomedSlideIndex(null);
         }}
       >
-        <DialogContent className="flex aspect-video w-[95vw] flex-col items-center justify-center overflow-hidden rounded-2xl border-none bg-slate-900 p-2 sm:max-w-[85vw] sm:rounded-2xl dark:bg-slate-950">
+        <DialogContent className="flex aspect-video w-[95vw] flex-col items-center justify-center overflow-hidden rounded-2xl border-none bg-background p-2 sm:max-w-[85vw] sm:rounded-2xl">
           {zoomedSlideIndex !== null && (
             <div className="group/lightbox relative flex h-full w-full flex-col">
               {/* Slide name overlay */}
-              <div className="absolute top-4 left-4 z-10 rounded-full bg-slate-800/80 px-4 py-1.5 font-semibold text-slate-100 text-xs uppercase tracking-wider backdrop-blur-sm">
+              <div className="absolute top-4 left-4 z-10 rounded-full bg-background/80 px-4 py-1.5 font-semibold text-foreground text-xs uppercase tracking-wider backdrop-blur-sm">
                 {Object.keys(previews)[zoomedSlideIndex].replace(/_/g, ' ')}{' '}
                 Slide
               </div>
 
               {/* Render cleaned SVG preview */}
               <div
-                className="flex h-full w-full items-center justify-center bg-slate-900 p-2 dark:bg-slate-950"
+                className="flex h-full w-full items-center justify-center bg-background p-2"
                 dangerouslySetInnerHTML={{
                   __html: getCleanedPreviewSvg(
                     Object.values(previews)[zoomedSlideIndex]
@@ -365,7 +365,7 @@ export function TemplateManagerDialog({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="absolute top-1/2 left-4 h-12 w-12 -translate-y-1/2 rounded-full bg-slate-800/60 text-white opacity-60 backdrop-blur-sm transition-all hover:bg-slate-850 hover:text-white hover:opacity-100"
+                  className="absolute top-1/2 left-4 size-12 -translate-y-1/2 rounded-full bg-background/70 text-foreground opacity-70 backdrop-blur-sm transition-all hover:bg-background hover:opacity-100"
                   onClick={(e) => {
                     e.stopPropagation();
                     setZoomedSlideIndex(zoomedSlideIndex - 1);
@@ -381,7 +381,7 @@ export function TemplateManagerDialog({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="absolute top-1/2 right-4 h-12 w-12 -translate-y-1/2 rounded-full bg-slate-800/60 text-white opacity-60 backdrop-blur-sm transition-all hover:bg-slate-850 hover:text-white hover:opacity-100"
+                  className="absolute top-1/2 right-4 size-12 -translate-y-1/2 rounded-full bg-background/70 text-foreground opacity-70 backdrop-blur-sm transition-all hover:bg-background hover:opacity-100"
                   onClick={(e) => {
                     e.stopPropagation();
                     setZoomedSlideIndex(zoomedSlideIndex + 1);

@@ -508,11 +508,10 @@ model Quiz {
   lessonQuizzes   LessonQuiz[]
   title           String
   description     String?
-  category        QuizCategory
-  subType         QuestionSubType @map("sub_type")
   deliveryMode    DeliveryMode    @map("delivery_mode")
   selectionMethod SelectionMethod @map("selection_method")
   questionCount   Int             @map("question_count")
+  questionCounts  Json            @default("{}") @map("question_counts")
   questions       Json?           @default("[]")
   createdAt       DateTime        @default(now()) @map("created_at")
   updatedAt       DateTime        @updatedAt @map("updated_at")
@@ -555,6 +554,8 @@ model QuizAttempt {
   userId           String   @map("user_id")
   user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   answers          Json
+  quizSnapshot     Json?    @map("quiz_snapshot")
+  answeredCount    Int      @default(0) @map("answered_count")
   score            Float
   maxScore         Float    @map("max_score")
   percentage       Float

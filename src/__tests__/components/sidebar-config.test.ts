@@ -32,14 +32,24 @@ describe('sidebar-config', () => {
   });
 
   it('supports course items that only match the course root route', () => {
-    const courseItems = getCourseNavItems('course-123');
+    const courseItems = getCourseNavItems('course-123', t as never);
 
     expect(courseItems[0].isActive('/courses/course-123')).toBe(true);
     expect(courseItems[0].isActive('/courses/course-123/chat')).toBe(false);
   });
 
+  it('places Grades immediately below Question Bank', () => {
+    const courseItems = getCourseNavItems('course-123', t as never);
+
+    expect(courseItems.slice(1, 3).map((item) => item.name)).toEqual([
+      'courseQuestionBank',
+      'courseGrades',
+    ]);
+    expect(courseItems[2].url).toBe('/courses/course-123/grades');
+  });
+
   it('filters course items by the current course permissions', () => {
-    const courseItems = getCourseNavItems('course-123');
+    const courseItems = getCourseNavItems('course-123', t as never);
 
     const filteredItems = filterCourseNavItems(courseItems, [
       COURSE_PERMISSION.COURSE_CONTENT_VIEW,
@@ -51,8 +61,8 @@ describe('sidebar-config', () => {
   });
 
   it('requires both assessment authoring permissions for the question bank', () => {
-    const questionBank = getCourseNavItems('course-123').find((item) =>
-      item.url.endsWith('/question-bank')
+    const questionBank = getCourseNavItems('course-123', t as never).find(
+      (item) => item.url.endsWith('/question-bank')
     );
 
     expect(

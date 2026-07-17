@@ -7,7 +7,6 @@ import {
   matchingQuestionSchema,
   multipleChoiceQuestionSchema,
   orderingQuestionSchema,
-  timedChallengeQuestionSchema,
   trueFalseQuestionSchema,
 } from '@/lib/validations/quiz.schema';
 
@@ -19,7 +18,6 @@ const questionUnion = z.union([
   orderingQuestionSchema,
   dragAndDropQuestionSchema,
   essayQuestionSchema,
-  timedChallengeQuestionSchema,
 ]);
 
 export const aiQuizSchema = createQuizSchema(questionUnion);
@@ -33,7 +31,6 @@ const quizSchemaByType: Record<string, ReturnType<typeof createQuizSchema>> = {
   ordering: createQuizSchema(orderingQuestionSchema),
   drag_and_drop: createQuizSchema(dragAndDropQuestionSchema),
   essay: createQuizSchema(essayQuestionSchema),
-  timed_challenge: createQuizSchema(timedChallengeQuestionSchema),
 };
 
 /**
@@ -96,6 +93,7 @@ function mapTrueFalse(q: any) {
 
 function mapFillBlank(q: any) {
   let promptTemplate = q.promptTemplate ?? q.prompt ?? q.question ?? '';
+  const prompt = q.prompt ?? q.question ?? promptTemplate;
 
   const makeBlank = (id: string, acceptableAnswers: string[]) => ({
     id,
@@ -114,6 +112,7 @@ function mapFillBlank(q: any) {
 
     return {
       type: 'fill_in_the_blank',
+      prompt,
       promptTemplate,
       blanks,
       explanation: q.explanation,
@@ -170,6 +169,7 @@ function mapFillBlank(q: any) {
 
     return {
       type: 'fill_in_the_blank',
+      prompt,
       promptTemplate,
       blanks,
       explanation: q.explanation,
@@ -200,6 +200,7 @@ function mapFillBlank(q: any) {
 
     return {
       type: 'fill_in_the_blank',
+      prompt,
       promptTemplate,
       blanks,
       explanation: q.explanation,
@@ -221,6 +222,7 @@ function mapFillBlank(q: any) {
 
     return {
       type: 'fill_in_the_blank',
+      prompt,
       promptTemplate,
       blanks: [makeBlank(id, [String(q.answer)])],
       explanation: q.explanation,
@@ -229,6 +231,7 @@ function mapFillBlank(q: any) {
 
   return {
     type: 'fill_in_the_blank',
+    prompt,
     promptTemplate,
     blanks: [],
     explanation: q.explanation,
@@ -316,16 +319,6 @@ function mapEssay(q: any) {
   };
 }
 
-function mapTimedChallenge(q: any) {
-  return {
-    type: 'timed_challenge',
-    prompt: q.prompt ?? q.question ?? '',
-    timeLimitSeconds: Number(q.timeLimitSeconds || q.timeLimit || 30),
-    innerQuestion: q.innerQuestion ?? q.question ?? {},
-    explanation: q.explanation,
-  };
-}
-
 function mapQuestion(q: any) {
   const t = (q.type ?? q.questionType ?? '').toString().toLowerCase();
   if (t.includes('multiple') || t.includes('mcq')) return mapMultipleChoice(q);
@@ -336,8 +329,6 @@ function mapQuestion(q: any) {
   if (t.includes('order')) return mapOrdering(q);
   if (t.includes('drag') || t.includes('drop')) return mapDragAndDrop(q);
   if (t.includes('essay')) return mapEssay(q);
-  if (t.includes('timed') || t.includes('challenge'))
-    return mapTimedChallenge(q);
 
   return mapMultipleChoice(q);
 }

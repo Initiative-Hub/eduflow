@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import * as z from 'zod';
 
 // Define the root Quiz structure schema wrapper
 export const createQuizSchema = (questionSchema: z.ZodTypeAny) =>
@@ -73,6 +73,7 @@ export const trueFalseQuestionSchema = z.object({
 // 3. Fill in the Blank Question Schema
 export const fillInTheBlankQuestionSchema = z.object({
   type: z.literal('fill_in_the_blank'),
+  prompt: z.string().optional().describe('The question text or prompt'),
   promptTemplate: z
     .string()
     .describe(
@@ -215,37 +216,12 @@ export const essayQuestionSchema = z.object({
     .describe('Explanation or model answer guidelines'),
 });
 
-// 8. Timed Challenge Question Schema
-export const timedChallengeQuestionSchema = z.object({
-  type: z.literal('timed_challenge'),
-  prompt: z
-    .string()
-    .describe('The prompt or introduction of the timed challenge'),
-  timeLimitSeconds: z.number().int().describe('Time limit in seconds'),
-  innerQuestion: z
-    .object({
-      type: z.enum(['multiple_choice', 'true_false']),
-      prompt: z.string().describe('The question text or prompt'),
-      options: z
-        .array(
-          z.object({
-            id: z.string(),
-            text: z.string(),
-            isCorrect: z.boolean(),
-          })
-        )
-        .optional()
-        .describe(
-          'Only for multiple_choice inner questions (exactly one correct)'
-        ),
-      correctAnswer: z
-        .boolean()
-        .optional()
-        .describe('Only for true_false inner questions'),
-    })
-    .describe('The question wrapped by the timed challenge'),
-  explanation: z
-    .string()
-    .optional()
-    .describe('Brief explanation of the answer'),
-});
+export const questionBlockSchema = z.discriminatedUnion('type', [
+  multipleChoiceQuestionSchema,
+  trueFalseQuestionSchema,
+  fillInTheBlankQuestionSchema,
+  matchingQuestionSchema,
+  orderingQuestionSchema,
+  dragAndDropQuestionSchema,
+  essayQuestionSchema,
+]);

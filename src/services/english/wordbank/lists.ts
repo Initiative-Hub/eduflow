@@ -140,7 +140,20 @@ export async function updateSavedVocabularyItems(
     }
   }
 
+  const [total, savedWords, lists] = await Promise.all([
+    prisma.savedVocabulary.count({ where: { userId } }),
+    prisma.savedVocabulary.findMany({
+      where: { userId },
+      orderBy: { savedAt: 'desc' },
+      select: { word: true },
+    }),
+    listVocabularyLists(userId),
+  ]);
+
   return {
+    lists,
+    savedWords: savedWords.map((item) => item.word),
+    total,
     updatedCount:
       updateResult.count > 0 ? updateResult.count : ownedVocabularyIds.length,
   };

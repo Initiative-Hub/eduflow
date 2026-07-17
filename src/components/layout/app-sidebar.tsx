@@ -66,7 +66,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const courseItems = courseId
     ? filterCourseNavItems(
-        getCourseNavItems(courseId),
+        getCourseNavItems(courseId, t),
         currentCourse?.coursePermissions ?? []
       )
     : [];
