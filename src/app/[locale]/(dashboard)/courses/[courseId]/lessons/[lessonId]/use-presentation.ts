@@ -2,6 +2,7 @@ import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import type { TiptapDocument } from '@/utils/lesson-content';
+import { useQueryClient } from '@tanstack/react-query';
 import { useGenerateSlideDeck, useLesson } from './use-lesson';
 
 type Step = 'input' | 'planning' | 'planned' | 'generating' | 'generated';
@@ -57,6 +58,7 @@ export function usePresentation(options: {
   const { generateSlideDeck } = useGenerateSlideDeck();
   const { lesson, isLoading: isLessonLoading } = useLesson(lessonId);
   const savedDeckId = lesson?.presentationDeckId;
+  const queryClient = useQueryClient();
 
   // State Machine
   const [step, setStep] = useState<Step>('input');
@@ -74,6 +76,13 @@ export function usePresentation(options: {
   const [recommendedCollection, setRecommendedCollection] = useState<
     string | null
   >(null);
+
+  // Gamma App state
+  const [generatorType, setGeneratorType] = useState<'default' | 'gamma'>(
+    'default'
+  );
+  const [gammaTheme, setGammaTheme] = useState('auto');
+  const [exportUrl, setExportUrl] = useState<string | null>(null);
 
   // Dynamic Outlines fallback generator
   const generateOutlines = useCallback(
@@ -587,10 +596,62 @@ export function usePresentation(options: {
     }
   };
 
+  // Gamma slide generation handler
+  const handleGenerateGamma = async () => {
+    setStep('generating');
+    setLoaderStep(0);
+    setDeckUrl(null);
+    setDeckUsage(null);
+    setExportUrl(null);
+
+    const t1 = setTimeout(() => setLoaderStep(1), 1000);
+    const t2 = setTimeout(() => setLoaderStep(2), 5000);
+
+    try {
+      const response = await fetch('/api/v1/presentation/gamma', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lessonId,
+          title,
+          duration,
+          context: instructions,
+          themeId: gammaTheme === 'auto' ? undefined : gammaTheme,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP ${response.status}`);
+      }
+
+      const result = await response.json();
+      setDeckUrl(result.gammaUrl);
+      setExportUrl(result.exportUrl ?? null);
+
+      queryClient.invalidateQueries({
+        queryKey: ['lesson', lessonId],
+      });
+
+      setStep('generated');
+    } catch (error) {
+      console.error('Gamma slide generation failed:', error);
+      const message =
+        (error as { message?: string })?.message ||
+        'Failed to generate Gamma presentation. Please try again.';
+      toast.error(message);
+      setStep('input');
+    } finally {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    }
+  };
+
   // Discard the saved deck and return to the planner to build a new one.
   const startNewDeck = useCallback(() => {
     setDeckUrl(null);
     setDeckUsage(null);
+    setExportUrl(null);
     setStep('input');
   }, []);
 
@@ -598,6 +659,7 @@ export function usePresentation(options: {
   const editOutline = useCallback(() => {
     setDeckUrl(null);
     setDeckUsage(null);
+    setExportUrl(null);
     setStep('planned');
   }, []);
 
@@ -613,9 +675,14 @@ export function usePresentation(options: {
     if (didInitDeckRef.current || isLessonLoading) return;
     didInitDeckRef.current = true;
     if (savedDeckId) {
-      setDeckUrl(`/api/v1/ai/slides/${savedDeckId}`);
-      setCurrentSlideIndex(0);
-      setStep('generated');
+      if (savedDeckId.startsWith('gamma:')) {
+        setDeckUrl(savedDeckId.substring(6));
+        setStep('generated');
+      } else {
+        setDeckUrl(`/api/v1/ai/slides/${savedDeckId}`);
+        setCurrentSlideIndex(0);
+        setStep('generated');
+      }
     }
   }, [isOpen, isLessonLoading, savedDeckId]);
 
@@ -698,5 +765,12 @@ export function usePresentation(options: {
     selectedCollection,
     setSelectedCollection,
     recommendedCollection,
+    // Gamma App state
+    generatorType,
+    setGeneratorType,
+    gammaTheme,
+    setGammaTheme,
+    exportUrl,
+    handleGenerateGamma,
   };
 }
