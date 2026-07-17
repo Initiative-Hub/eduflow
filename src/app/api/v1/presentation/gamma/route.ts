@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { errorResponse } from '@/lib/api/error-response';
 import { withRoles } from '@/lib/api/middlewares';
+import { prisma } from '@/lib/prisma';
 import { GammaService } from '@/services/GammaService';
 import { LessonService } from '@/services/LessonService';
 
@@ -101,6 +102,20 @@ export const POST = withRoles(
         return errorResponse('NOT_FOUND', 'Lesson not found', 404);
       }
 
+      // Check current Gamma credits for the account
+      const user = await prisma.user.findUnique({
+        where: { id: sessionData.user.id },
+        select: { gammaCredits: true },
+      });
+
+      if (user && user.gammaCredits !== null && user.gammaCredits <= 0) {
+        return errorResponse(
+          'PAYMENT_REQUIRED',
+          'Insufficient Gamma credits. Please recharge your workspace.',
+          402
+        );
+      }
+
       const result = await GammaService.generatePresentation({
         title,
         duration,
@@ -128,6 +143,18 @@ export const POST = withRoles(
           'Failed to persist Gamma presentation reference:',
           saveError
         );
+      }
+
+      // Save remaining credits in User table
+      if (result.credits?.remaining !== undefined) {
+        try {
+          await prisma.user.update({
+            where: { id: sessionData.user.id },
+            data: { gammaCredits: result.credits.remaining },
+          });
+        } catch (creditError) {
+          console.error('Failed to save remaining Gamma credits:', creditError);
+        }
       }
 
       return NextResponse.json(result, { status: 200 });

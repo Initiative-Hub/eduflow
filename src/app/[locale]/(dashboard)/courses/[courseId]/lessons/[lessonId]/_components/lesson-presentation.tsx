@@ -1554,12 +1554,12 @@ export function LessonPresentation({
             </p>
 
             {/* Generator Mode Tabs */}
-            <div className="flex rounded-xl bg-muted p-1 mb-6">
+            <div className="mb-6 flex rounded-xl bg-muted p-1">
               <button
                 type="button"
                 onClick={() => setGeneratorType('default')}
                 className={cn(
-                  'flex-1 rounded-lg py-2 text-center text-xs font-semibold transition-all',
+                  'flex-1 rounded-lg py-2 text-center font-semibold text-xs transition-all',
                   generatorType === 'default'
                     ? 'bg-background text-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
@@ -1571,7 +1571,7 @@ export function LessonPresentation({
                 type="button"
                 onClick={() => setGeneratorType('gamma')}
                 className={cn(
-                  'flex-1 rounded-lg py-2 text-center text-xs font-semibold transition-all',
+                  'flex-1 rounded-lg py-2 text-center font-semibold text-xs transition-all',
                   generatorType === 'gamma'
                     ? 'bg-background text-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
