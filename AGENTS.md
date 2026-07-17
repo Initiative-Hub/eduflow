@@ -127,6 +127,7 @@ for any tasks.).
 
 ### 6.6 Storage & Uploads
 
+- **Direct Uploads for Large Files**: Avoid routing binary file uploads (e.g. presentation templates, zips, pptx files, or large assets) directly through Next.js API route handlers when deploying to serverless platforms (like Vercel) or VPS setups. Doing so triggers the 4.5MB request body limit (on Vercel) or Nginx's default 1MB limit, along with function timeout limits. Instead, upload files directly from the client side (using S3/MinIO presigned URLs or direct HTTP posts to independent utility backend services with CORS configured).
 - Upload Confirmation Fallback: When an uploaded file does not exist on the remote bucket during `confirmUpload`, explicitly delete the pending database entry to roll back the state.
 - **Bucket Initialization**: When adding new buckets to the storage config, ensure they are also added to `docker-compose.yml` initialization scripts (`minio-init` and `minio-reset`).
 - **Preview Delivery**: For inventory previews, prefer signed URLs over fetching full blobs into browser memory, and provide UI fallbacks when inline rendering fails.
