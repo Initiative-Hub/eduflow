@@ -1,7 +1,7 @@
 'use client';
 
 import { type ChangeEvent, useEffect, useRef, useState } from 'react';
-import { STORAGE_MAX_FILE_SIZE_BYTES } from '../inventory/inventory.types';
+import { STORAGE_MAX_FILE_SIZE_BYTES } from '../../inventory/inventory.types';
 import type { SelectedChatFile } from './chat-input-attachments';
 
 interface UseChatInputFilesOptions {

@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
-import InteractiveContentPreview from '@/app/[locale]/(dashboard)/study/_components/interactive-content-preview';
+import InteractiveContentPreview from '@/app/[locale]/(dashboard)/(ai)/study/_components/interactive-content-preview';
 import { auth } from '@/lib/auth';
 import { StudyShareService } from '@/services/StudyShareService';
 import { SharedInteractiveContentHeader } from '../_components/shared-interactive-content-header';

@@ -4,7 +4,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type React from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { createChatCitationComponents } from '@/app/[locale]/(dashboard)/_components/chat-citations';
+import { createChatCitationComponents } from '@/app/[locale]/(dashboard)/(ai)/_components/chat-citations';
 
 vi.mock('next/image', () => ({
   default: ({
