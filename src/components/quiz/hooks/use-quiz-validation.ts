@@ -23,11 +23,10 @@ export function useQuizValidation(formState: QuizFormState) {
     if (!formState.category) {
       newErrors.category = t('errors.categoryRequired');
     }
-    if (!formState.subType) {
-      newErrors.subType = t('errors.subTypeRequired');
-    }
-
-    const count = Number.parseInt(formState.questionCount, 10) || 0;
+    const count = Object.values(formState.questionCounts).reduce(
+      (total, value) => total + (Number.parseInt(value ?? '', 10) || 0),
+      0
+    );
     if (count < 1) {
       newErrors.questionCount = t('errors.questionCountMin');
     }

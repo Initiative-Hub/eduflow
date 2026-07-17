@@ -2,6 +2,7 @@
 
 import {
   Archive,
+  Award,
   BookOpen,
   ClipboardList,
   Cloud,
@@ -181,17 +182,20 @@ export function getAdminNavItems(
   ];
 }
 
-export function getCourseNavItems(courseId: string): SidebarItem[] {
+export function getCourseNavItems(
+  courseId: string,
+  t: ReturnType<typeof useTranslations>
+): SidebarItem[] {
   return [
     {
-      name: 'Modules',
+      name: t('courseModules'),
       url: `/courses/${courseId}`,
       icon: <BookOpen className={sidebarIconClassName} />,
       isActive: (pathname) => isExactMatch(pathname, `/courses/${courseId}`),
       requirePermissions: [COURSE_PERMISSION.COURSE_CONTENT_VIEW],
     },
     {
-      name: 'Question Bank',
+      name: t('courseQuestionBank'),
       url: `/courses/${courseId}/question-bank`,
       icon: <ClipboardList className={sidebarIconClassName} />,
       isActive: (pathname) =>
@@ -203,7 +207,15 @@ export function getCourseNavItems(courseId: string): SidebarItem[] {
       ],
     },
     {
-      name: 'Files',
+      name: t('courseGrades'),
+      url: `/courses/${courseId}/grades`,
+      icon: <Award className={sidebarIconClassName} />,
+      isActive: (pathname) =>
+        isExactMatch(pathname, `/courses/${courseId}/grades`),
+      requirePermissions: [COURSE_PERMISSION.ASSESSMENTS_RESULTS_VIEW],
+    },
+    {
+      name: t('courseFiles'),
       url: `/courses/${courseId}/files`,
       icon: <Files className={sidebarIconClassName} />,
       isActive: (pathname) =>
@@ -211,7 +223,7 @@ export function getCourseNavItems(courseId: string): SidebarItem[] {
       requirePermissions: [COURSE_PERMISSION.COURSE_FILES_VIEW],
     },
     {
-      name: 'Members',
+      name: t('courseMembers'),
       url: `/courses/${courseId}/members`,
       icon: <Users className={sidebarIconClassName} />,
       isActive: (pathname) =>
@@ -219,7 +231,7 @@ export function getCourseNavItems(courseId: string): SidebarItem[] {
       requirePermissions: [COURSE_PERMISSION.COURSE_MEMBERS_VIEW],
     },
     {
-      name: 'Roles',
+      name: t('courseRoles'),
       url: `/courses/${courseId}/roles`,
       icon: <ShieldCheck className={sidebarIconClassName} />,
       isActive: (pathname) =>
@@ -227,7 +239,7 @@ export function getCourseNavItems(courseId: string): SidebarItem[] {
       requirePermissions: [COURSE_PERMISSION.COURSE_ROLES_MANAGE],
     },
     {
-      name: 'Analytics',
+      name: t('courseAnalytics'),
       url: `/courses/${courseId}/analytics`,
       icon: <LineChart className={sidebarIconClassName} />,
       isActive: (pathname) =>
@@ -235,7 +247,7 @@ export function getCourseNavItems(courseId: string): SidebarItem[] {
       requirePermissions: [COURSE_PERMISSION.COURSE_ANALYTICS_VIEW],
     },
     {
-      name: 'Settings',
+      name: t('courseSettings'),
       url: `/courses/${courseId}/settings`,
       icon: <Settings className={sidebarIconClassName} />,
       isActive: (pathname) =>

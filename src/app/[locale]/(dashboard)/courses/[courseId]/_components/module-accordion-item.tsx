@@ -32,13 +32,12 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import { Badge } from '@/components/ui/badge';
 import type { QuizDefinition } from '@/lib/quiz-template';
-import { QUESTION_SUB_TYPE_LABELS } from '@/lib/quiz-template';
 import { cn } from '@/lib/utils';
 import DeleteLessonDialog from '../lessons/[lessonId]/_components/delete-lesson-dialog';
 import type { Module } from '../use-modules';
 import { DeleteModuleDialog } from './delete-module-dialog';
+import { DeleteQuizDialog } from './delete-quiz-dialog';
 import { useModuleOrderMutations } from './use-module-order-mutations';
 
 // Unified item type for flat list rendering
@@ -48,7 +47,6 @@ export type AccordionListItem =
       kind: 'quiz';
       id: string;
       title: string;
-      subType: string;
       questionCount: number;
       indent: number;
     };
@@ -93,7 +91,6 @@ function buildItemList(
       kind: 'quiz',
       id: quiz.id,
       title: quiz.title,
-      subType: quiz.subType,
       questionCount: quiz.questionCount,
       indent: savedIndents.get(quiz.id) ?? 0,
     });
@@ -123,16 +120,21 @@ export function ModuleAccordionItem({
   quizzes = [],
 }: ModuleAccordionItemProps) {
   const tAccordion = useTranslations('Courses.ModuleAccordion');
+  const [deletedQuizIds, setDeletedQuizIds] = useState<Set<string>>(
+    () => new Set()
+  );
 
   const moduleQuizzes = useMemo(() => {
     const moduleLessonIds = new Set(moduleItem.lessons.map((l) => l.id));
 
     return quizzes.filter((quiz) => {
+      if (deletedQuizIds.has(quiz.id)) return false;
+
       const linkedLessonIds = quiz.lessonIds;
 
       return linkedLessonIds.some((lessonId) => moduleLessonIds.has(lessonId));
     });
-  }, [moduleItem.lessons, quizzes]);
+  }, [deletedQuizIds, moduleItem.lessons, quizzes]);
 
   const [localOrder, setLocalOrder] = useState<Map<string, number> | null>(
     () => {
@@ -274,6 +276,14 @@ export function ModuleAccordionItem({
     [canEditContent, items, indentMutation]
   );
 
+  const handleQuizDeleted = useCallback((quizId: string) => {
+    setDeletedQuizIds((current) => {
+      const next = new Set(current);
+      next.add(quizId);
+      return next;
+    });
+  }, []);
+
   return (
     <AccordionItem
       value={moduleItem.id}
@@ -316,7 +326,7 @@ export function ModuleAccordionItem({
           ) : null}
         </div>
 
-        <AccordionContent className="m-0 border-none bg-card p-0 text-sm">
+        <AccordionContent className="m-0 h-auto border-none bg-card p-0 text-sm">
           <div className="divide-y">
             {items.length === 0 ? (
               <div className="p-4 text-center text-muted-foreground italic">
@@ -341,6 +351,7 @@ export function ModuleAccordionItem({
                       canEditContent={canEditContent}
                       onIndent={handleIndent}
                       onOutdent={handleOutdent}
+                      onQuizDeleted={handleQuizDeleted}
                     />
                   ))}
                 </SortableContext>
@@ -355,6 +366,7 @@ export function ModuleAccordionItem({
                   canEditContent={canEditContent}
                   onIndent={handleIndent}
                   onOutdent={handleOutdent}
+                  onQuizDeleted={handleQuizDeleted}
                 />
               ))
             )}
@@ -374,6 +386,7 @@ interface SortableAccordionRowProps {
   canEditContent: boolean;
   onIndent: (id: string) => void;
   onOutdent: (id: string) => void;
+  onQuizDeleted: (id: string) => void;
 }
 
 function SortableAccordionRow({
@@ -383,6 +396,7 @@ function SortableAccordionRow({
   canEditContent,
   onIndent,
   onOutdent,
+  onQuizDeleted,
 }: SortableAccordionRowProps) {
   const {
     attributes,
@@ -421,15 +435,15 @@ function SortableAccordionRow({
           <span className="font-medium">{item.title}</span>
         </Link>
         <div className="flex items-center gap-1 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
-          {canDeleteContent ? (
+          {canDeleteContent && (
             <DeleteLessonDialog
               courseId={courseId}
               lessonId={item.id}
               compact
               navigateAfterDelete={false}
             />
-          ) : null}
-          {canEditContent ? (
+          )}
+          {canEditContent && (
             <>
               <button
                 type="button"
@@ -458,7 +472,7 @@ function SortableAccordionRow({
                 <GripVertical className="h-3.5 w-3.5" />
               </button>
             </>
-          ) : null}
+          )}
         </div>
       </div>
     );
@@ -485,13 +499,6 @@ function SortableAccordionRow({
         <div>
           <span className="font-medium text-sm">{item.title}</span>
           <div className="mt-0.5 flex items-center gap-1.5">
-            <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">
-              {
-                QUESTION_SUB_TYPE_LABELS[
-                  item.subType as keyof typeof QUESTION_SUB_TYPE_LABELS
-                ]
-              }
-            </Badge>
             <span className="text-[10px] text-muted-foreground">
               {item.questionCount}{' '}
               {item.questionCount === 1 ? 'question' : 'questions'}
@@ -500,7 +507,15 @@ function SortableAccordionRow({
         </div>
       </Link>
       <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-        {canEditContent ? (
+        {canDeleteContent && (
+          <DeleteQuizDialog
+            courseId={courseId}
+            onDeleted={onQuizDeleted}
+            quizId={item.id}
+            quizTitle={item.title}
+          />
+        )}
+        {canEditContent && (
           <>
             <button
               type="button"
@@ -529,7 +544,7 @@ function SortableAccordionRow({
               <GripVertical className="h-3.5 w-3.5" />
             </button>
           </>
-        ) : null}
+        )}
       </div>
     </div>
   );

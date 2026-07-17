@@ -21,7 +21,6 @@ import type {
   QuizSchema,
   StudentAnswer,
   StudentAnswers,
-  TimedChallengeQuestion,
   TrueFalseQuestion,
 } from '@/lib/quiz-template/types';
 
@@ -168,34 +167,6 @@ const arbEssay: fc.Arbitrary<EssayQuestion> = fc
   })
   .map((r) => ({ type: 'essay' as const, ...r }));
 
-// For timed_challenge, use a non-timed inner question to avoid recursion
-const arbInnerQuestion: fc.Arbitrary<
-  Exclude<QuestionBlock, TimedChallengeQuestion>
-> = fc.oneof(
-  arbMultipleChoice,
-  arbTrueFalse,
-  arbFillInTheBlank,
-  arbMatching,
-  arbOrdering,
-  arbDragAndDrop,
-  arbEssay
-);
-
-const arbTimedChallenge: fc.Arbitrary<TimedChallengeQuestion> =
-  arbInnerQuestion.chain((inner) =>
-    fc
-      .record({
-        prompt: arbNonEmptyString,
-        timeLimitSeconds: fc.integer({ min: 10, max: 300 }),
-        explanation: fc.option(arbNonEmptyString, { nil: undefined }),
-      })
-      .map((r) => ({
-        type: 'timed_challenge' as const,
-        innerQuestion: inner,
-        ...r,
-      }))
-  );
-
 const arbQuestionBlock: fc.Arbitrary<QuestionBlock> = fc.oneof(
   arbMultipleChoice,
   arbTrueFalse,
@@ -203,8 +174,7 @@ const arbQuestionBlock: fc.Arbitrary<QuestionBlock> = fc.oneof(
   arbMatching,
   arbOrdering,
   arbDragAndDrop,
-  arbEssay,
-  arbTimedChallenge
+  arbEssay
 );
 
 // ─── Property 1: Answer stripping removes all answer fields ──────────────────

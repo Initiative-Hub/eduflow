@@ -5,6 +5,7 @@ import {
   ArrowDown,
   ArrowUp,
   Edit,
+  Library,
   Loader2,
   Plus,
   Save,
@@ -12,43 +13,63 @@ import {
   Trash2,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
+import { InlineConfirm } from '@/components/custom/inline-confirm';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import type { QuestionBankEntry } from '@/lib/quiz-template';
 import type { QuestionBlock } from '@/lib/quiz-template/types';
+import { QuestionBankPickerDialog } from './question-bank-picker-dialog';
 import { QuestionEditorDialog } from './question-editor-dialog';
+import {
+  getQuestionSummary,
+  getSolutionSummary,
+} from './quiz-question-summary';
 
 interface QuizQuestionsEditorProps {
   initialQuestions: QuestionBlock[];
-  onSave?: (questions: QuestionBlock[]) => void;
+  initialQuestionIds?: string[];
+  questionBank?: QuestionBankEntry[];
+  onSave?: (
+    questions: QuestionBlock[],
+    questionIds: Array<string | null>
+  ) => void;
   isSaving?: boolean;
-  onGenerateAI?: () => void;
+  onGenerateAI?: (
+    appendQuestions: (questions: QuestionBlock[]) => void
+  ) => void;
   isGeneratingAI?: boolean;
-  questionCount?: number;
+  initialAction?: 'manual' | 'question-bank';
+  creationMode?: boolean;
 }
 
 export function QuizQuestionsEditor({
   initialQuestions,
+  initialQuestionIds = [],
+  questionBank = [],
   onSave,
   isSaving = false,
   onGenerateAI,
   isGeneratingAI = false,
-  questionCount,
+  initialAction,
+  creationMode = false,
 }: QuizQuestionsEditorProps) {
   const t = useTranslations('Courses.QuizPlayer');
+  const tCreate = useTranslations('Courses.CreateQuiz');
   const [questions, setQuestions] = useState<QuestionBlock[]>(initialQuestions);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [questionIds, setQuestionIds] = useState<Array<string | null>>(() =>
+    initialQuestions.map((_, index) => initialQuestionIds[index] ?? null)
+  );
+  const [isDialogOpen, setIsDialogOpen] = useState(initialAction === 'manual');
+  const [isBankPickerOpen, setIsBankPickerOpen] = useState(
+    initialAction === 'question-bank'
+  );
   const [editingQuestion, setEditingQuestion] = useState<QuestionBlock | null>(
     null
   );
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
-
-  // Sync state when initialQuestions changes (e.g. after AI generation)
-  useEffect(() => {
-    setQuestions(initialQuestions);
-  }, [initialQuestions]);
 
   // Open dialog to add new question
   const handleAddClick = () => {
@@ -64,13 +85,10 @@ export function QuizQuestionsEditor({
     setIsDialogOpen(true);
   };
 
-  // Delete question
   const handleDeleteClick = (index: number) => {
-    if (confirm(t('confirmDelete'))) {
-      const updated = questions.filter((_, idx) => idx !== index);
-      setQuestions(updated);
-      toast.success(`${t('deleteQuestion')} successful`);
-    }
+    setQuestions((current) => current.filter((_, idx) => idx !== index));
+    setQuestionIds((current) => current.filter((_, idx) => idx !== index));
+    toast.success(t('questionRemoved'));
   };
 
   // Move question up
@@ -81,6 +99,11 @@ export function QuizQuestionsEditor({
     updated[index] = updated[index - 1];
     updated[index - 1] = temp;
     setQuestions(updated);
+    setQuestionIds((current) => {
+      const next = [...current];
+      [next[index - 1], next[index]] = [next[index], next[index - 1]];
+      return next;
+    });
   };
 
   // Move question down
@@ -91,6 +114,11 @@ export function QuizQuestionsEditor({
     updated[index] = updated[index + 1];
     updated[index + 1] = temp;
     setQuestions(updated);
+    setQuestionIds((current) => {
+      const next = [...current];
+      [next[index], next[index + 1]] = [next[index + 1], next[index]];
+      return next;
+    });
   };
 
   // Save changes from dialog
@@ -101,18 +129,43 @@ export function QuizQuestionsEditor({
         idx === editingIndex ? savedQuestion : q
       );
       setQuestions(updated);
-      toast.success('Question updated locally');
+      toast.success(t('questionUpdated'));
     } else {
       // Adding new
-      setQuestions([...questions, savedQuestion]);
-      toast.success('Question added locally');
+      setQuestions((current) => [...current, savedQuestion]);
+      setQuestionIds((current) => [...current, null]);
+      toast.success(t('questionAdded'));
     }
+  };
+
+  const handleAddFromBank = (bankQuestions: QuestionBankEntry[]) => {
+    setQuestions((current) => [
+      ...current,
+      ...bankQuestions.map((question) => ({
+        ...question.answerData,
+        ...(question.explanation && !question.answerData.explanation
+          ? { explanation: question.explanation }
+          : {}),
+      })),
+    ]);
+    setQuestionIds((current) => [
+      ...current,
+      ...bankQuestions.map((question) => question.id),
+    ]);
+  };
+
+  const appendGeneratedQuestions = (generatedQuestions: QuestionBlock[]) => {
+    setQuestions((current) => [...current, ...generatedQuestions]);
+    setQuestionIds((current) => [
+      ...current,
+      ...generatedQuestions.map(() => null),
+    ]);
   };
 
   // Handle saving questions via parent callback
   const handleSaveAll = () => {
     if (onSave) {
-      onSave(questions);
+      onSave(questions, questionIds);
     }
   };
 
@@ -161,12 +214,6 @@ export function QuizQuestionsEditor({
             Essay
           </Badge>
         );
-      case 'timed_challenge':
-        return (
-          <Badge className="border-none bg-rose-500 text-white hover:bg-rose-600">
-            Timed Challenge
-          </Badge>
-        );
       default:
         return <Badge variant="outline">{type}</Badge>;
     }
@@ -177,68 +224,94 @@ export function QuizQuestionsEditor({
       {/* Action Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b pb-4">
         <div className="flex items-center gap-2">
-          <Badge
-            variant="outline"
-            className="bg-primary/5 px-2 py-0.5 font-semibold text-primary text-xs uppercase tracking-wider"
-          >
-            {t('teacherView')}
-          </Badge>
+          <span></span>
           <span className="text-muted-foreground text-sm">
-            {questions.length}{' '}
-            {questions.length === 1 ? 'question' : 'questions'} total
+            {t('questionTotal', { count: questions.length })}
           </span>
         </div>
 
-        <div className="flex gap-2">
-          {onGenerateAI && (
+        <div className="flex flex-col gap-2 xl:flex-row">
+          <div
+            className={
+              creationMode ? 'grid grid-cols-3 gap-2' : 'flex flex-wrap gap-2'
+            }
+          >
+            {onGenerateAI ? (
+              <Button
+                type="button"
+                variant={creationMode ? 'secondary' : 'outline'}
+                onClick={() => onGenerateAI(appendGeneratedQuestions)}
+                disabled={isGeneratingAI}
+                className={
+                  creationMode
+                    ? 'min-h-11 cursor-pointer gap-1.5 border border-border bg-muted text-foreground shadow-xs hover:bg-muted/80'
+                    : 'cursor-pointer gap-1.5'
+                }
+              >
+                {isGeneratingAI ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Sparkles className="h-4 w-4" />
+                )}
+                {isGeneratingAI
+                  ? t('generatingAIQuestions')
+                  : creationMode
+                    ? tCreate('methods.ai.title')
+                    : t('generateAIQuestions')}
+              </Button>
+            ) : null}
+
             <Button
               type="button"
-              variant="outline"
-              onClick={onGenerateAI}
-              disabled={
-                isGeneratingAI ||
-                (questionCount !== undefined &&
-                  questions.length >= questionCount)
+              variant={creationMode ? 'secondary' : 'outline'}
+              onClick={handleAddClick}
+              disabled={isGeneratingAI}
+              className={
+                creationMode
+                  ? 'min-h-11 cursor-pointer border border-border bg-muted text-foreground shadow-xs hover:bg-muted/80'
+                  : 'cursor-pointer'
               }
-              className="cursor-pointer gap-1.5"
             >
-              {isGeneratingAI ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Sparkles className="h-4 w-4" />
-              )}
-              {isGeneratingAI
-                ? t('generatingAIQuestions')
-                : t('generateAIQuestions')}
+              <Plus className="mr-1.5 h-4 w-4" />
+              {creationMode
+                ? tCreate('methods.manual.title')
+                : t('addQuestion')}
             </Button>
-          )}
 
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleAddClick}
-            disabled={
-              isGeneratingAI ||
-              (questionCount !== undefined && questions.length >= questionCount)
-            }
-            className="cursor-pointer"
-          >
-            <Plus className="mr-1.5 h-4 w-4" />
-            {t('addQuestion')}
-          </Button>
+            <Button
+              type="button"
+              variant={creationMode ? 'secondary' : 'outline'}
+              onClick={() => setIsBankPickerOpen(true)}
+              disabled={isGeneratingAI}
+              className={
+                creationMode
+                  ? 'min-h-11 cursor-pointer border border-border bg-muted text-foreground shadow-xs hover:bg-muted/80'
+                  : 'cursor-pointer'
+              }
+            >
+              <Library className="mr-1.5 h-4 w-4" />
+              {creationMode
+                ? tCreate('methods.question-bank.title')
+                : t('addFromQuestionBank')}
+            </Button>
+          </div>
 
           <Button
             type="button"
             onClick={handleSaveAll}
             disabled={isSaving || isGeneratingAI}
-            className="cursor-pointer gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
+            className="min-h-11 cursor-pointer gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
           >
             {isSaving ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <Save className="h-4 w-4" />
             )}
-            {isSaving ? 'Saving...' : t('saveChanges')}
+            {isSaving
+              ? t('saving')
+              : creationMode
+                ? tCreate('saveQuiz')
+                : t('saveChanges')}
           </Button>
         </div>
       </div>
@@ -266,7 +339,7 @@ export function QuizQuestionsEditor({
                 onClick={handleAddClick}
                 className="mt-1"
               >
-                Add the first question
+                {t('addFirstQuestion')}
               </Button>
             </CardContent>
           </Card>
@@ -288,22 +361,21 @@ export function QuizQuestionsEditor({
                 <div className="min-w-0 flex-1 space-y-1.5">
                   <div className="flex flex-wrap items-center gap-2">
                     {getTypeBadge(q.type)}
-                    {q.type === 'timed_challenge' && (
-                      <Badge variant="outline" className="text-xs">
-                        {q.timeLimitSeconds}s Limit
-                      </Badge>
-                    )}
                   </div>
-                  <p className="line-clamp-2 font-semibold text-foreground text-sm md:text-base">
-                    {q.type === 'fill_in_the_blank'
-                      ? q.promptTemplate
-                      : q.prompt}
-                  </p>
-                  {q.explanation && (
-                    <p className="line-clamp-1 text-muted-foreground text-xs italic">
-                      {t('explanation')}: {q.explanation}
+                  <div className="space-y-1">
+                    <p className="line-clamp-2 font-semibold text-foreground text-sm leading-6 md:text-base">
+                      <span className="mr-1 text-muted-foreground">
+                        {t('questionLabel')}:
+                      </span>
+                      {getQuestionSummary(q)}
                     </p>
-                  )}
+                    <p className="line-clamp-1 text-muted-foreground text-sm">
+                      <span className="font-medium text-foreground/80">
+                        {t('solutionLabel')}:
+                      </span>{' '}
+                      {getSolutionSummary(q) || t('noSolutionSummary')}
+                    </p>
+                  </div>
                 </div>
 
                 {/* Reorder and Edit Actions */}
@@ -337,15 +409,21 @@ export function QuizQuestionsEditor({
                   >
                     <Edit className="h-4 w-4" />
                   </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDeleteClick(idx)}
-                    className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <InlineConfirm
+                    trigger={
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    }
+                    confirmLabel={t('removeQuestion')}
+                    cancelLabel={t('cancel')}
+                    onConfirm={() => handleDeleteClick(idx)}
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -359,6 +437,13 @@ export function QuizQuestionsEditor({
         onOpenChange={setIsDialogOpen}
         question={editingQuestion}
         onSave={handleDialogSave}
+      />
+      <QuestionBankPickerDialog
+        open={isBankPickerOpen}
+        onOpenChange={setIsBankPickerOpen}
+        questions={questionBank}
+        selectedQuestionIds={questionIds}
+        onAdd={handleAddFromBank}
       />
     </div>
   );

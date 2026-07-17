@@ -1,19 +1,26 @@
 'use client';
 
-import { ArrowLeft, Sparkles } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { QuizForm, type QuizFormSubmitData } from '@/components/quiz/quiz-form';
+import { useRef, useState } from 'react';
+import { QuizQuestionsEditor } from '@/components/quiz/editors/quiz-questions-editor';
 import { Button } from '@/components/ui/button';
-import type { QuestionSubType, QuizCategory } from '@/lib/quiz-template';
+import {
+  type DeliveryMode,
+  getQuestionTaxonomy,
+  type QuestionSubType,
+} from '@/lib/quiz-template';
+import type { QuestionBlock } from '@/lib/quiz-template/types';
 import { useModules } from '../../../use-modules';
 import { useQuestionBank } from '../../../use-question-bank';
+import { QuizAiDraftDialog } from './quiz-ai-draft-dialog';
+import { QuizDetailsForm } from './quiz-details-form';
 
 interface CreateQuizClientProps {
   courseId: string;
   preselectedModuleId?: string;
-  /** When provided, the lesson is pre-selected and the selector is hidden */
   lessonId?: string;
 }
 
@@ -26,115 +33,147 @@ export function CreateQuizClient({
   const router = useRouter();
   const { modules } = useModules(courseId);
   const {
+    questions: questionBank,
     createQuiz,
     isCreatingQuiz,
-    generateQuestions,
-    isGeneratingQuestions,
-    generateQuestionsError,
+    generateDraftQuiz,
+    isGeneratingDraftQuiz,
   } = useQuestionBank({ courseId });
-
-  // Get lessons from the preselected module or all modules
   const availableLessons = preselectedModuleId
-    ? (modules.find((m) => m.id === preselectedModuleId)?.lessons ?? [])
-    : modules.flatMap((m) => m.lessons);
+    ? (modules.find((module) => module.id === preselectedModuleId)?.lessons ??
+      [])
+    : modules.flatMap((module) => module.lessons);
+  const initialLessonIds = lessonId
+    ? [lessonId]
+    : preselectedModuleId
+      ? availableLessons.map((lesson) => lesson.id)
+      : [];
 
-  const handleSubmit = (data: QuizFormSubmitData) => {
-    const lessonIds =
-      data.contentSource === 'all-modules'
-        ? availableLessons.map((l) => l.id)
-        : data.selectedLessonIds;
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [lessonIds, setLessonIds] = useState(initialLessonIds);
+  const [deliveryMode, setDeliveryMode] =
+    useState<DeliveryMode>('INSTANT_FEEDBACK');
+  const [showErrors, setShowErrors] = useState(false);
+  const [isAiDialogOpen, setIsAiDialogOpen] = useState(false);
+  const appendGeneratedRef = useRef<
+    ((questions: QuestionBlock[]) => void) | null
+  >(null);
 
-    createQuiz(
+  const handleOpenAi = (
+    appendQuestions: (questions: QuestionBlock[]) => void
+  ) => {
+    appendGeneratedRef.current = appendQuestions;
+    if (lessonIds.length === 0) {
+      setShowErrors(true);
+      return;
+    }
+    setIsAiDialogOpen(true);
+  };
+
+  const handleGenerate = (data: {
+    questionCounts: Partial<Record<QuestionSubType, number>>;
+    context?: string;
+  }) => {
+    generateDraftQuiz(
+      { lessonIds, ...data },
       {
-        lessonIds,
-        title: data.title,
-        description: data.description || undefined,
-        category: data.category,
-        subType: data.subType,
-        deliveryMode: data.deliveryMode,
-        selectionMethod: 'HAND_PICK',
-        questionCount: data.questionCount,
-      },
-      {
-        onSuccess: () => router.push(`/courses/${courseId}`),
+        onSuccess: ({ questions }) => {
+          appendGeneratedRef.current?.(questions);
+          setIsAiDialogOpen(false);
+        },
       }
     );
   };
 
-  const handleGenerateWithAI = async (params: {
-    lessonIds: string[];
-    category: QuizCategory;
-    subType: QuestionSubType;
-    count: number;
-  }) => {
-    if (params.lessonIds.length === 0) return;
-    try {
-      await generateQuestions({
-        lessonId: params.lessonIds[0],
-        category: params.category,
-        subType: params.subType,
-        count: params.count,
-      });
-    } catch {
-      // handled by mutation
-    }
+  const handleSave = (
+    draftQuestions: QuestionBlock[],
+    questionIds: Array<string | null>
+  ) => {
+    setShowErrors(true);
+    if (!title.trim() || lessonIds.length === 0) return;
+
+    const questionCounts = draftQuestions.reduce<
+      Partial<Record<QuestionSubType, number>>
+    >((counts, question) => {
+      try {
+        const { subType } = getQuestionTaxonomy(question.type);
+        counts[subType] = (counts[subType] ?? 0) + 1;
+      } catch {
+        // Unsupported legacy types are still saved but omitted from distribution.
+      }
+      return counts;
+    }, {});
+
+    createQuiz(
+      {
+        lessonIds,
+        title: title.trim(),
+        description: description.trim() || undefined,
+        questionCounts,
+        deliveryMode,
+        selectionMethod: 'MANUAL_CREATE',
+        questionCount: draftQuestions.length,
+        questions: draftQuestions,
+        questionIds,
+      },
+      {
+        onSuccess: (quiz) =>
+          router.push(`/courses/${courseId}/quiz/${quiz.id}?tab=edit`),
+      }
+    );
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-8">
-      {/* Header */}
-      <div className="flex items-center gap-4 border-b pb-4">
-        <Link href={`/courses/${courseId}`}>
-          <Button variant="ghost" size="icon" className="h-9 w-9">
+    <div className="mx-auto max-w-5xl space-y-7 pb-12">
+      <header className="flex items-start gap-3 border-b pb-5">
+        <Button variant="ghost" size="icon" className="mt-0.5" asChild>
+          <Link href={`/courses/${courseId}`} aria-label={t('back')}>
             <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
+          </Link>
+        </Button>
         <div>
           <h1 className="font-bold text-2xl text-foreground">{t('title')}</h1>
-          <p className="mt-0.5 text-muted-foreground text-sm">
-            {t('description')}
+          <p className="mt-1 max-w-2xl text-muted-foreground text-sm leading-6">
+            {t('workspaceDescription')}
           </p>
         </div>
-      </div>
+      </header>
 
-      {/* Form */}
-      <QuizForm
-        modules={modules}
-        availableLessons={availableLessons}
-        onSubmit={handleSubmit}
-        isSubmitting={isCreatingQuiz}
-        isGeneratingQuestions={isGeneratingQuestions}
-        generateQuestionsError={generateQuestionsError}
-        onGenerateWithAI={handleGenerateWithAI}
+      <QuizDetailsForm
+        title={title}
+        description={description}
+        lessonIds={lessonIds}
+        lessons={availableLessons}
+        deliveryMode={deliveryMode}
+        showErrors={showErrors}
         hideLessonSelector={!!lessonId}
-        preselectedLessonId={lessonId}
-        renderFooter={(submitForm, generateWithAI) => (
-          <div className="flex items-center justify-between border-t pt-6">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={generateWithAI}
-              disabled={isGeneratingQuestions}
-            >
-              {isGeneratingQuestions ? (
-                <Sparkles className="mr-1.5 h-3.5 w-3.5 animate-pulse" />
-              ) : (
-                <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-              )}
-              {isGeneratingQuestions
-                ? t('generatingQuestions')
-                : t('aiGenerate')}
-            </Button>
-            <div className="flex items-center gap-3">
-              <Link href={`/courses/${courseId}`}>
-                <Button variant="ghost">{t('cancel')}</Button>
-              </Link>
-              <Button onClick={submitForm} disabled={isCreatingQuiz}>
-                {isCreatingQuiz ? t('creating') : t('generateQuiz')}
-              </Button>
-            </div>
-          </div>
-        )}
+        onTitleChange={setTitle}
+        onDescriptionChange={setDescription}
+        onLessonIdsChange={setLessonIds}
+        onDeliveryModeChange={setDeliveryMode}
+      />
+
+      <section className="rounded-2xl border bg-card p-5 md:p-6">
+        <div className="mb-5">
+          <h2 className="font-semibold text-lg">{t('draftQuestionsTitle')}</h2>
+        </div>
+        <QuizQuestionsEditor
+          initialQuestions={[]}
+          questionBank={questionBank}
+          onSave={handleSave}
+          isSaving={isCreatingQuiz}
+          onGenerateAI={handleOpenAi}
+          isGeneratingAI={isGeneratingDraftQuiz}
+          creationMode
+        />
+      </section>
+
+      <QuizAiDraftDialog
+        open={isAiDialogOpen}
+        onOpenChange={setIsAiDialogOpen}
+        isGenerating={isGeneratingDraftQuiz}
+        onSubmit={handleGenerate}
       />
     </div>
   );

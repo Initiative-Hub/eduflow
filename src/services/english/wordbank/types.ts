@@ -88,9 +88,11 @@ export interface UpdateSavedVocabularyItemsInput {
   masteryLevel?: number;
 }
 
-export interface UpdateSavedVocabularyItemsResult {
+export type UpdateSavedVocabularyItemsResult = Partial<
+  Pick<SavedVocabularyListResult, 'lists' | 'savedWords' | 'stats' | 'total'>
+> & {
   updatedCount: number;
-}
+};
 
 export interface CreateReviewSessionInput {
   listId?: string;

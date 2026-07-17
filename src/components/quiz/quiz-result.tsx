@@ -1,6 +1,13 @@
 'use client';
 
-import { CheckCircle2, Clock, RotateCcw, Trophy, XCircle } from 'lucide-react';
+import {
+  CheckCircle2,
+  CircleDashed,
+  Clock,
+  RotateCcw,
+  Trophy,
+  XCircle,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -10,6 +17,7 @@ import type {
   StudentAnswers,
 } from '@/lib/quiz-template';
 import { cn } from '@/lib/utils';
+import { getQuestionAttemptStatus } from '@/services/quiz-attempt-snapshot';
 import {
   QuizCard,
   QuizCardContent,
@@ -141,6 +149,7 @@ export function QuizResult({
         {quiz.questions.map((question, index) => {
           const answer = answers.get(index);
           const qr = result.questionResults[index];
+          const status = getQuestionAttemptStatus(answer, qr);
 
           return (
             <QuizCard key={index}>
@@ -153,20 +162,25 @@ export function QuizResult({
                 <div
                   className={cn(
                     'flex size-6 items-center justify-center rounded-full',
-                    qr?.pendingReview
+                    status === 'pending'
                       ? 'bg-yellow-100 dark:bg-yellow-950/30'
-                      : qr?.isCorrect
+                      : status === 'correct'
                         ? 'bg-green-100 dark:bg-green-950/30'
-                        : 'bg-red-100 dark:bg-red-950/30'
+                        : status === 'unanswered'
+                          ? 'bg-muted'
+                          : 'bg-red-100 dark:bg-red-950/30'
                   )}
                 >
-                  {qr?.pendingReview ? (
+                  {status === 'pending' ? (
                     <Clock className="size-4 text-yellow-600" />
-                  ) : qr?.isCorrect ? (
+                  ) : status === 'correct' ? (
                     <CheckCircle2 className="size-4 text-green-600" />
+                  ) : status === 'unanswered' ? (
+                    <CircleDashed className="size-4 text-muted-foreground" />
                   ) : (
                     <XCircle className="size-4 text-red-600" />
                   )}
+                  <span className="sr-only">{t(`status.${status}`)}</span>
                 </div>
               </QuizCardHeader>
               <QuizCardContent>

@@ -9,6 +9,10 @@ vi.mock('next-intl', () => ({
   useTranslations: () => (key: string) => key,
 }));
 
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn() }),
+}));
+
 vi.mock('@/app/[locale]/(dashboard)/courses/[courseId]/use-modules', () => ({
   useModules: useModulesMock,
 }));

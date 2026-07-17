@@ -1,15 +1,11 @@
 'use client';
 
-import { BookOpen, Trash2 } from 'lucide-react';
+import { BookOpen, Pencil, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { InlineConfirm } from '@/components/custom/inline-confirm';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  QUESTION_SUB_TYPE_LABELS,
-  QUIZ_CATEGORIES,
-  type QuestionBankEntry,
-} from '@/lib/quiz-template';
+import type { QuestionBankEntry } from '@/lib/quiz-template';
 import type { Module } from '../../use-modules';
 
 interface QuestionListProps {
@@ -19,6 +15,7 @@ interface QuestionListProps {
   isDeletingQuestion: boolean;
   onDelete: (questionId: string) => void;
   onPreview: (question: QuestionBankEntry) => void;
+  onEdit: (question: QuestionBankEntry) => void;
 }
 
 export function QuestionList({
@@ -28,6 +25,7 @@ export function QuestionList({
   isDeletingQuestion,
   onDelete,
   onPreview,
+  onEdit,
 }: QuestionListProps) {
   const t = useTranslations('Courses.QuestionBank');
   const allLessons = modules.flatMap((m) => m.lessons);
@@ -62,27 +60,22 @@ export function QuestionList({
       {questions.map((question) => (
         <div
           key={question.id}
-          role="button"
-          tabIndex={0}
-          className="group flex w-full cursor-pointer items-start justify-between rounded-lg border bg-card p-4 text-left transition-colors hover:bg-muted/40"
-          onClick={() => onPreview(question)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              onPreview(question);
-            }
-          }}
+          className="group flex w-full items-start justify-between rounded-lg border bg-card p-4 transition-colors hover:bg-muted/40"
         >
-          <div className="min-w-0 flex-1">
+          <button
+            type="button"
+            className="min-w-0 flex-1 cursor-pointer text-left"
+            onClick={() => onPreview(question)}
+          >
             <p className="line-clamp-2 font-medium text-foreground text-sm">
               {question.prompt}
             </p>
             <div className="mt-2 flex flex-wrap items-center gap-1.5">
               <Badge variant="secondary" className="text-xs">
-                {QUIZ_CATEGORIES[question.category].label}
+                {t(`categories.${question.category}`)}
               </Badge>
               <Badge variant="outline" className="text-xs">
-                {QUESTION_SUB_TYPE_LABELS[question.subType]}
+                {t(`questionTypes.${question.subType}`)}
               </Badge>
               {question.lessonId && (
                 <Badge variant="outline" className="text-xs">
@@ -91,12 +84,17 @@ export function QuestionList({
                 </Badge>
               )}
             </div>
-          </div>
-          <div
-            className="ml-3 flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100"
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => e.stopPropagation()}
-          >
+          </button>
+          <div className="ml-3 flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => onEdit(question)}
+            >
+              <Pencil className="h-4 w-4" />
+              <span className="sr-only">{t('editQuestion')}</span>
+            </Button>
             <InlineConfirm
               trigger={
                 <Button variant="ghost" size="icon" className="h-8 w-8">

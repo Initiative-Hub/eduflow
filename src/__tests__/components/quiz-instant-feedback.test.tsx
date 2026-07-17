@@ -49,6 +49,21 @@ const clientQuiz: ClientQuizContent = {
   type: 'multiple_choice',
 };
 
+const twoQuestionQuiz: ClientQuizContent = {
+  ...clientQuiz,
+  questions: [
+    ...clientQuiz.questions,
+    {
+      type: 'multiple_choice',
+      prompt: 'Which definition matches "orbit"?',
+      options: [
+        { id: 'orbit-correct', text: 'to move around something' },
+        { id: 'orbit-wrong', text: 'to stop suddenly' },
+      ],
+    },
+  ],
+};
+
 const reviewQuestion: MultipleChoiceQuestion = {
   type: 'multiple_choice',
   prompt: 'Which definition matches "resign"?',
@@ -64,6 +79,35 @@ const reviewQuestion: MultipleChoiceQuestion = {
 };
 
 describe('Quiz instant feedback', () => {
+  it('shows only the current question position in the progress badge', async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => Response.json({ isCorrect: false, reviewQuestion }))
+    );
+
+    render(
+      <Quiz
+        deliveryMode="INSTANT_FEEDBACK"
+        instantFeedbackUrl="/api/v1/english/wordbank/review-sessions/session-1/check"
+        quiz={twoQuestionQuiz}
+        quizId="session-1"
+      />
+    );
+
+    await user.click(screen.getByRole('button', { name: /Start Quiz/ }));
+    await user.click(screen.getByRole('button', { name: /to move quickly/ }));
+    await user.click(screen.getByRole('button', { name: 'Check Answer' }));
+
+    expect(screen.getAllByText('1/2')).toHaveLength(1);
+    expect(screen.queryByText('0/2')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+
+    expect(screen.getAllByText('2/2')).toHaveLength(1);
+    expect(screen.queryByText('0/2')).not.toBeInTheDocument();
+  });
+
   it('marks a correct answer as correct right away', async () => {
     const user = userEvent.setup();
     vi.stubGlobal(
