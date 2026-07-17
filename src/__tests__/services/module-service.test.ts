@@ -3,8 +3,8 @@ import { prisma } from '@/lib/prisma';
 import { ModuleService } from '@/services/ModuleService';
 
 const mocks = vi.hoisted(() => ({
-  containPermission: vi.fn(() => true),
-  withoutPermission: vi.fn(() => false),
+  containPermission: vi.fn<(permission: string) => boolean>(() => true),
+  withoutPermission: vi.fn<(permission: string) => boolean>(() => false),
   getCoursePermissions: vi.fn(),
   module: {
     findFirst: vi.fn(),
@@ -62,6 +62,20 @@ describe('ModuleService soft deletion', () => {
     });
   });
 
+  it('rejects module creation when course content create permission is missing', async () => {
+    mocks.withoutPermission.mockImplementation((permission: string) => {
+      return permission === 'COURSE_CONTENT_CREATE';
+    });
+
+    await expect(
+      ModuleService.createModule({
+        courseId: 'course-1',
+        title: 'Module 1',
+        userId: 'user-1',
+      })
+    ).rejects.toThrow('Forbidden');
+  });
+
   it('finds an active module before soft deleting it', async () => {
     const moduleRecord = { courseId: 'course-1', id: 'module-1' };
     mocks.module.findFirst.mockResolvedValue(moduleRecord);
@@ -83,5 +97,17 @@ describe('ModuleService soft deletion', () => {
       data: { deletedAt: expect.any(Date) },
       select: { id: true },
     });
+  });
+
+  it('rejects module deletion when course content delete permission is missing', async () => {
+    const moduleRecord = { courseId: 'course-1', id: 'module-1' };
+    mocks.module.findFirst.mockResolvedValue(moduleRecord);
+    mocks.containPermission.mockImplementation((permission: string) => {
+      return permission !== 'COURSE_CONTENT_DELETE';
+    });
+
+    await expect(
+      ModuleService.deleteModule('module-1', 'user-1')
+    ).rejects.toThrow('Unauthorized: Missing COURSE_CONTENT_DELETE permission');
   });
 });

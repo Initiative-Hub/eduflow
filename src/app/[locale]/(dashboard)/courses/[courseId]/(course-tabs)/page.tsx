@@ -29,8 +29,20 @@ export default async function CourseModulesPage({
   return (
     <CourseModulesClient
       courseId={courseId}
+      canCreateContent={permissions.containPermission(
+        COURSE_PERMISSION.COURSE_CONTENT_CREATE
+      )}
+      canEditContent={permissions.containPermission(
+        COURSE_PERMISSION.COURSE_CONTENT_UPDATE
+      )}
       canDeleteContent={permissions.containPermission(
         COURSE_PERMISSION.COURSE_CONTENT_DELETE
+      )}
+      canUseCourseGenerationAI={permissions.containPermission(
+        COURSE_PERMISSION.AI_USE_COURSE_GENERATION
+      )}
+      canCreateQuiz={permissions.containPermission(
+        COURSE_PERMISSION.ASSESSMENTS_CREATE
       )}
     />
   );

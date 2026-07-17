@@ -1,7 +1,7 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useRef } from 'react';
 import { QuizForm, type QuizFormSubmitData } from '@/components/quiz/quiz-form';
 import { Button } from '@/components/ui/button';

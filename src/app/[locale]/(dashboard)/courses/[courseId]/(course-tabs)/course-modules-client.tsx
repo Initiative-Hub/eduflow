@@ -17,12 +17,20 @@ import { AiClientDialog } from './ai-client/ai-client-dialog';
 
 interface CourseModulesClientProps {
   courseId: string;
+  canCreateContent: boolean;
+  canEditContent: boolean;
   canDeleteContent: boolean;
+  canUseCourseGenerationAI: boolean;
+  canCreateQuiz: boolean;
 }
 
 export function CourseModulesClient({
   courseId,
+  canCreateContent,
+  canEditContent,
   canDeleteContent,
+  canUseCourseGenerationAI,
+  canCreateQuiz,
 }: CourseModulesClientProps) {
   const t = useTranslations('Courses.CourseModules');
   const router = useRouter();
@@ -98,18 +106,22 @@ export function CourseModulesClient({
           </p>
         </div>
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            className="gap-2 border-primary/20 bg-primary/5 hover:bg-primary/10 hover:text-primary"
-            onClick={() => setIsAiOpen(true)}
-          >
-            <Sparkles className="h-4 w-4" />
-            {t('aiAssistant')}
-          </Button>
-          <Button onClick={() => setIsAddModuleOpen(true)}>
-            <Plus className="mr-1 h-4 w-4" />
-            {t('addModule')}
-          </Button>
+          {canCreateContent && canUseCourseGenerationAI ? (
+            <Button
+              variant="outline"
+              className="gap-2 border-primary/20 bg-primary/5 hover:bg-primary/10 hover:text-primary"
+              onClick={() => setIsAiOpen(true)}
+            >
+              <Sparkles className="h-4 w-4" />
+              {t('aiAssistant')}
+            </Button>
+          ) : null}
+          {canCreateContent ? (
+            <Button onClick={() => setIsAddModuleOpen(true)}>
+              <Plus className="mr-1 h-4 w-4" />
+              {t('addModule')}
+            </Button>
+          ) : null}
         </div>
       </div>
 
@@ -129,7 +141,10 @@ export function CourseModulesClient({
               key={moduleItem.id}
               moduleItem={moduleItem}
               courseId={courseId}
+              canCreateContent={canCreateContent}
+              canEditContent={canEditContent}
               canDeleteContent={canDeleteContent}
+              canCreateQuiz={canCreateQuiz}
               onAddLesson={setActiveModuleIdForLesson}
               onCreateQuiz={handleCreateQuiz}
               quizzes={quizzes}
@@ -138,31 +153,37 @@ export function CourseModulesClient({
         </Accordion>
       )}
 
-      <AddModuleDialog
-        isOpen={isAddModuleOpen}
-        onOpenChange={setIsAddModuleOpen}
-        onSubmit={onCreateModule}
-        isLoading={isCreatingModule}
-      />
+      {canCreateContent ? (
+        <AddModuleDialog
+          isOpen={isAddModuleOpen}
+          onOpenChange={setIsAddModuleOpen}
+          onSubmit={onCreateModule}
+          isLoading={isCreatingModule}
+        />
+      ) : null}
 
-      <AddLessonDialog
-        isOpen={!!activeModuleIdForLesson}
-        onOpenChange={(open) => !open && setActiveModuleIdForLesson(null)}
-        onSubmit={onCreateLesson}
-        isLoading={isCreatingLesson}
-      />
+      {canCreateContent ? (
+        <AddLessonDialog
+          isOpen={!!activeModuleIdForLesson}
+          onOpenChange={(open) => !open && setActiveModuleIdForLesson(null)}
+          onSubmit={onCreateLesson}
+          isLoading={isCreatingLesson}
+        />
+      ) : null}
 
-      <AiClientDialog
-        isOpen={isAiOpen}
-        onOpenChange={setIsAiOpen}
-        onSelect={onAiSelect}
-        onRetry={onAiRetry}
-        generationStep={generationStep}
-        generationError={generationError}
-        isRunning={isRunning}
-        streamingCourse={streamingCourse}
-        searchSources={searchSources}
-      />
+      {canCreateContent && canUseCourseGenerationAI ? (
+        <AiClientDialog
+          isOpen={isAiOpen}
+          onOpenChange={setIsAiOpen}
+          onSelect={onAiSelect}
+          onRetry={onAiRetry}
+          generationStep={generationStep}
+          generationError={generationError}
+          isRunning={isRunning}
+          streamingCourse={streamingCourse}
+          searchSources={searchSources}
+        />
+      ) : null}
     </div>
   );
 }
