@@ -80,7 +80,6 @@ export function Quiz({
   const {
     checkAnswer,
     isRevealed: answerRevealed,
-    instantResults,
     instantReviewQuestions,
     setRevealed,
     resetRevealed,
@@ -163,23 +162,20 @@ export function Quiz({
 
   // ─── In-Progress State ─────────────────────────────────────────────────────
 
-  const instantScore = isInstantMode
-    ? {
-        checked: instantResults.size,
-        correct: Array.from(instantResults.values()).filter(Boolean).length,
-      }
-    : null;
+  const currentProgressLabel = `${currentIndex + 1}/${totalQuestions}`;
 
   return (
     <QuizErrorBoundary>
       <QuizCard className={className}>
         <QuizCardHeader>
-          <QuizProgress current={currentIndex + 1} total={totalQuestions} />
-          {isInstantMode && instantScore && instantScore.checked > 0 && (
-            <Badge variant="outline" className="ml-2 text-xs">
-              {instantScore.correct}/{instantScore.checked}
-            </Badge>
-          )}
+          <QuizProgress
+            current={currentIndex + 1}
+            total={totalQuestions}
+            showLabel={false}
+          />
+          <Badge variant="outline" className="ml-2 text-xs">
+            {currentProgressLabel}
+          </Badge>
         </QuizCardHeader>
 
         <QuizCardContent className="min-h-50">

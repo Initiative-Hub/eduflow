@@ -12,9 +12,8 @@ export interface QuizFormState {
   title: string;
   description: string;
   category: QuizCategory | '';
-  subType: QuestionSubType | '';
   deliveryMode: DeliveryMode;
-  questionCount: string;
+  questionCounts: Partial<Record<QuestionSubType, string>>;
   contentSource: 'specific-lessons' | 'all-modules';
   selectedLessonIds: string[];
 }
@@ -29,10 +28,11 @@ export function useQuizFormState(options: UseQuizFormStateOptions = {}) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<QuizCategory | ''>('');
-  const [subType, setSubType] = useState<QuestionSubType | ''>('');
   const [deliveryMode, setDeliveryMode] =
     useState<DeliveryMode>('INSTANT_FEEDBACK');
-  const [questionCount, setQuestionCount] = useState<string>('5');
+  const [questionCounts, setQuestionCounts] = useState<
+    Partial<Record<QuestionSubType, string>>
+  >({});
   const [contentSource, setContentSource] = useState<
     'specific-lessons' | 'all-modules'
   >(preselectedLessonId ? 'specific-lessons' : 'specific-lessons');
@@ -42,7 +42,11 @@ export function useQuizFormState(options: UseQuizFormStateOptions = {}) {
 
   const handleCategoryChange = (value: QuizCategory) => {
     setCategory(value);
-    setSubType('');
+    setQuestionCounts({});
+  };
+
+  const setQuestionCount = (subType: QuestionSubType, value: string) => {
+    setQuestionCounts((current) => ({ ...current, [subType]: value }));
   };
 
   const toggleLessonSelection = (lessonId: string) => {
@@ -67,9 +71,8 @@ export function useQuizFormState(options: UseQuizFormStateOptions = {}) {
     title,
     description,
     category,
-    subType,
     deliveryMode,
-    questionCount,
+    questionCounts,
     contentSource,
     selectedLessonIds,
   };
@@ -79,7 +82,6 @@ export function useQuizFormState(options: UseQuizFormStateOptions = {}) {
     setTitle,
     setDescription,
     handleCategoryChange,
-    setSubType,
     setDeliveryMode,
     setQuestionCount,
     setContentSource,

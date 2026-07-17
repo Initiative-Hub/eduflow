@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { z } from 'zod';
+import * as z from 'zod';
 import type { Prisma } from '@/generated/prisma';
 import { errorResponse } from '@/lib/api/error-response';
 import { withAuth } from '@/lib/api/middlewares';

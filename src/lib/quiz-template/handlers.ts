@@ -1,15 +1,11 @@
 /**
  * Question Type Handler Registrations
  *
- * Registers all 8 question types with their scoring and answer-stripping
+ * Registers all supported question types with their scoring and answer-stripping
  * functions. Import this module to ensure all handlers are registered.
- *
- * Note: The timed_challenge handler delegates to getHandler() for its inner
- * question. This works because all handlers are registered synchronously
- * in this module before any scoring/stripping calls occur at runtime.
  */
 
-import { getHandler, registerQuestionType } from './registry';
+import { registerQuestionType } from './registry';
 import type {
   ClientQuestionBlock,
   DragAndDropQuestion,
@@ -20,7 +16,6 @@ import type {
   OrderingQuestion,
   QuestionBlock,
   StudentAnswer,
-  TimedChallengeQuestion,
   TrueFalseQuestion,
 } from './types';
 
@@ -106,15 +101,6 @@ function scoreEssay(_question: QuestionBlock, _answer: StudentAnswer): boolean {
   return false;
 }
 
-function scoreTimedChallenge(
-  question: QuestionBlock,
-  answer: StudentAnswer
-): boolean {
-  if (question.type !== 'timed_challenge') return false;
-  const innerHandler = getHandler(question.innerQuestion.type);
-  return innerHandler.score(question.innerQuestion, answer);
-}
-
 // ─── Strip Functions ─────────────────────────────────────────────────────────
 
 function stripMultipleChoice(question: QuestionBlock): ClientQuestionBlock {
@@ -198,18 +184,6 @@ function stripEssay(question: QuestionBlock): ClientQuestionBlock {
   };
 }
 
-function stripTimedChallenge(question: QuestionBlock): ClientQuestionBlock {
-  const q = question as TimedChallengeQuestion;
-  // Delegate to the inner question's handler for stripping
-  const innerHandler = getHandler(q.innerQuestion.type);
-  return {
-    type: 'timed_challenge',
-    prompt: q.prompt,
-    innerQuestion: innerHandler.stripAnswers(q.innerQuestion),
-    timeLimitSeconds: q.timeLimitSeconds,
-  };
-}
-
 // ─── Register All Handlers ───────────────────────────────────────────────────
 
 registerQuestionType({
@@ -252,10 +226,4 @@ registerQuestionType({
   type: 'essay',
   score: scoreEssay,
   stripAnswers: stripEssay,
-});
-
-registerQuestionType({
-  type: 'timed_challenge',
-  score: scoreTimedChallenge,
-  stripAnswers: stripTimedChallenge,
 });

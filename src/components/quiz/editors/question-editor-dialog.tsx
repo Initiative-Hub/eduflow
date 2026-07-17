@@ -35,10 +35,9 @@ type EditorQuestionType =
   | 'matching'
   | 'ordering'
   | 'drag_and_drop'
-  | 'essay'
-  | 'timed_challenge';
+  | 'essay';
 
-function toEditorQuestionType(type: string): EditorQuestionType {
+export function toEditorQuestionType(type: string): EditorQuestionType {
   switch (type.replace(/-/g, '_')) {
     case 'multiple_choice':
       return 'multiple_choice';
@@ -46,30 +45,38 @@ function toEditorQuestionType(type: string): EditorQuestionType {
       return 'true_false';
     case 'fill_in_the_blank':
       return 'fill_in_the_blank';
+    case 'matching':
+      return 'matching';
+    case 'ordering':
+      return 'ordering';
     case 'drag_and_drop':
       return 'drag_and_drop';
-    case 'timed_challenge':
-      return 'timed_challenge';
+    case 'essay':
+      return 'essay';
     default:
       return 'multiple_choice';
   }
 }
 
 function toStoredQuestionType(type: EditorQuestionType): string {
-  switch (type) {
-    case 'multiple_choice':
-      return 'multiple_choice';
-    case 'true_false':
-      return 'true_false';
-    case 'fill_in_the_blank':
-      return 'fill_in_the_blank';
-    case 'drag_and_drop':
-      return 'drag_and_drop';
-    case 'timed_challenge':
-      return 'timed_challenge';
-    default:
-      return type;
+  return type;
+}
+
+function getEditorPrompt(question: QuestionBlock) {
+  if (question.type === 'fill_in_the_blank') {
+    return question.prompt ?? question.promptTemplate;
   }
+
+  return 'prompt' in question ? question.prompt : '';
+}
+
+function getMatchItemCode(
+  items: Array<{ id: string }>,
+  itemId: string,
+  prefix: 'L' | 'R'
+) {
+  const index = items.findIndex((item) => item.id === itemId);
+  return index >= 0 ? `${prefix}${index + 1}` : itemId;
 }
 
 interface QuestionEditorDialogProps {
@@ -142,25 +149,13 @@ export function QuestionEditorDialog({
   >('immediate');
   const [essayAllowTeacherRubric, setEssayAllowTeacherRubric] = useState(false);
 
-  // Timed Challenge
-  const [timeLimit, setTimeLimit] = useState(60);
-  const [innerType, setInnerType] =
-    useState<Exclude<EditorQuestionType, 'timed_challenge'>>('multiple_choice');
-  // Simple inner MC state for nested demo
-  const [innerMcOptions, setInnerMcOptions] = useState<
-    Array<{ id: string; text: string; isCorrect: boolean }>
-  >([
-    { id: generateId(), text: 'Option A', isCorrect: true },
-    { id: generateId(), text: 'Option B', isCorrect: false },
-  ]);
-
   // Load question data when editing
   useEffect(() => {
     if (!isOpen) return;
 
     if (question) {
       setType(toEditorQuestionType(question.type));
-      setPrompt('prompt' in question ? question.prompt : '');
+      setPrompt(getEditorPrompt(question));
       setExplanation(question.explanation ?? '');
 
       // Populate type-specific states
@@ -193,21 +188,6 @@ export function QuestionEditorDialog({
         setEssayAllowAttachments(!!question.allowAttachments);
         setEssayDelivery(question.deliveryOption ?? 'immediate');
         setEssayAllowTeacherRubric(!!question.allowTeacherRubric);
-      } else if (question.type === 'timed_challenge') {
-        setTimeLimit(question.timeLimitSeconds);
-        if (question.innerQuestion) {
-          setInnerType(
-            toEditorQuestionType(question.innerQuestion.type) as Exclude<
-              EditorQuestionType,
-              'timed_challenge'
-            >
-          );
-          if (question.innerQuestion.type === 'multiple_choice') {
-            setInnerMcOptions(
-              question.innerQuestion.options.map((o: any) => ({ ...o }))
-            );
-          }
-        }
       }
     } else {
       // Reset to defaults for new question
@@ -234,8 +214,6 @@ export function QuestionEditorDialog({
       setEssayAllowAttachments(false);
       setEssayDelivery('immediate');
       setEssayAllowTeacherRubric(false);
-      setTimeLimit(60);
-      setInnerType('multiple_choice');
     }
   }, [question, isOpen]);
 
@@ -266,6 +244,7 @@ export function QuestionEditorDialog({
     } else if (type === 'fill_in_the_blank') {
       savedQuestion = {
         type: toStoredQuestionType(type),
+        prompt: prompt.trim(),
         promptTemplate: blankTemplate.trim(),
         explanation: explanation.trim() || undefined,
         blanks: blankAnswers.map((b) => ({
@@ -318,32 +297,6 @@ export function QuestionEditorDialog({
         deliveryOption: essayDelivery,
         allowTeacherRubric: essayAllowTeacherRubric,
       };
-    } else if (type === 'timed_challenge') {
-      // Build inner question
-      const innerQuestion =
-        innerType === 'multiple_choice'
-          ? {
-              type: 'multiple_choice',
-              prompt: prompt.trim(),
-              options: innerMcOptions.map((o) => ({
-                id: o.id,
-                text: o.text.trim(),
-                isCorrect: o.isCorrect,
-              })),
-            }
-          : {
-              type: 'true_false',
-              prompt: prompt.trim(),
-              correctAnswer: tfCorrect,
-            };
-
-      savedQuestion = {
-        type: toStoredQuestionType(type),
-        prompt: prompt.trim(),
-        explanation: explanation.trim() || undefined,
-        timeLimitSeconds: timeLimit,
-        innerQuestion,
-      };
     } else {
       return;
     }
@@ -374,16 +327,27 @@ export function QuestionEditorDialog({
                 <SelectValue placeholder={t('questionType')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="multiple_choice">Multiple Choice</SelectItem>
-                <SelectItem value="true_false">True/False</SelectItem>
-                <SelectItem value="fill_in_the_blank">
-                  Fill in the Blank
+                <SelectItem value="multiple_choice">
+                  {t('questionTypes.multiple_choice')}
                 </SelectItem>
-                <SelectItem value="matching">Matching</SelectItem>
-                <SelectItem value="ordering">Ordering</SelectItem>
-                <SelectItem value="drag_and_drop">Drag & Drop</SelectItem>
-                <SelectItem value="essay">Essay</SelectItem>
-                <SelectItem value="timed_challenge">Timed Challenge</SelectItem>
+                <SelectItem value="true_false">
+                  {t('questionTypes.true_false')}
+                </SelectItem>
+                <SelectItem value="fill_in_the_blank">
+                  {t('questionTypes.fill_in_the_blank')}
+                </SelectItem>
+                <SelectItem value="matching">
+                  {t('questionTypes.matching')}
+                </SelectItem>
+                <SelectItem value="ordering">
+                  {t('questionTypes.ordering')}
+                </SelectItem>
+                <SelectItem value="drag_and_drop">
+                  {t('questionTypes.drag_and_drop')}
+                </SelectItem>
+                <SelectItem value="essay">
+                  {t('questionTypes.essay')}
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -393,7 +357,7 @@ export function QuestionEditorDialog({
             <Label htmlFor="question-prompt">{t('prompt')}</Label>
             <Textarea
               id="question-prompt"
-              placeholder="What is the question?"
+              placeholder={t('questionPlaceholder')}
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               rows={3}
@@ -452,7 +416,9 @@ export function QuestionEditorDialog({
                       title={t('correctAnswer')}
                     />
                     <Input
-                      placeholder={`Option ${index + 1}`}
+                      placeholder={t('optionPlaceholder', {
+                        number: index + 1,
+                      })}
                       value={option.text}
                       onChange={(e) => {
                         setMcOptions(
@@ -520,12 +486,11 @@ export function QuestionEditorDialog({
               <div className="space-y-2">
                 <Label htmlFor="blank-template">{t('sentenceTemplate')}</Label>
                 <span className="block text-muted-foreground text-xs">
-                  Use double curly braces to indicate blanks: e.g. "React was
-                  created by {'{{company}}'}"
+                  {t('blankTemplateHint', { placeholder: '{{company}}' })}
                 </span>
                 <Textarea
                   id="blank-template"
-                  placeholder="e.g. The capital of France is {{capital}}."
+                  placeholder={t('blankTemplatePlaceholder')}
                   value={blankTemplate}
                   onChange={(e) => {
                     setBlankTemplate(e.target.value);
@@ -556,7 +521,7 @@ export function QuestionEditorDialog({
               {blankAnswers.length > 0 && (
                 <div className="space-y-3">
                   <Label className="font-semibold text-sm">
-                    Blanks Configuration
+                    {t('blanksConfiguration')}
                   </Label>
                   <div className="space-y-2">
                     {blankAnswers.map((blank) => (
@@ -570,7 +535,7 @@ export function QuestionEditorDialog({
                           {'}}'}
                         </span>
                         <Input
-                          placeholder="Acceptable answers..."
+                          placeholder={t('acceptableAnswersPlaceholder')}
                           value={blank.answers}
                           onChange={(e) => {
                             setBlankAnswers(
@@ -620,7 +585,8 @@ export function QuestionEditorDialog({
                         L{index + 1}
                       </span>
                       <Input
-                        placeholder="Left side item"
+                        placeholder={t('leftItemPlaceholder')}
+                        aria-label={t('leftItem')}
                         value={item.text}
                         onChange={(e) =>
                           setMatchLeft(
@@ -680,7 +646,8 @@ export function QuestionEditorDialog({
                         R{index + 1}
                       </span>
                       <Input
-                        placeholder="Right side item"
+                        placeholder={t('rightItemPlaceholder')}
+                        aria-label={t('rightItem')}
                         value={item.text}
                         onChange={(e) =>
                           setMatchRight(
@@ -741,7 +708,10 @@ export function QuestionEditorDialog({
                   </div>
                   <div className="space-y-2">
                     {matchPairs.map((pair, index) => (
-                      <div key={index} className="flex items-center gap-2">
+                      <div
+                        key={index}
+                        className="grid items-center gap-2 rounded-lg border bg-muted/20 p-2 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_2.5rem]"
+                      >
                         <Select
                           value={pair.leftId}
                           onValueChange={(val) =>
@@ -752,20 +722,29 @@ export function QuestionEditorDialog({
                             )
                           }
                         >
-                          <SelectTrigger className="w-1/2">
-                            <SelectValue />
+                          <SelectTrigger className="min-h-11 w-full">
+                            <span className="truncate font-medium text-sm">
+                              {getMatchItemCode(matchLeft, pair.leftId, 'L')}
+                            </span>
                           </SelectTrigger>
                           <SelectContent>
-                            {matchLeft.map((i) => (
+                            {matchLeft.map((i, itemIndex) => (
                               <SelectItem key={i.id} value={i.id}>
-                                {i.text || '(empty left)'}
+                                <span className="flex min-w-0 items-center gap-2">
+                                  <span className="shrink-0 font-medium text-muted-foreground">
+                                    L{itemIndex + 1}
+                                  </span>
+                                  <span className="truncate">
+                                    {i.text || t('emptyLeftItem')}
+                                  </span>
+                                </span>
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
 
-                        <span className="font-semibold text-muted-foreground">
-                          ↔
+                        <span className="justify-self-center font-semibold text-muted-foreground text-xs">
+                          &lt;-&gt;
                         </span>
 
                         <Select
@@ -778,13 +757,22 @@ export function QuestionEditorDialog({
                             )
                           }
                         >
-                          <SelectTrigger className="w-1/2">
-                            <SelectValue />
+                          <SelectTrigger className="min-h-11 w-full">
+                            <span className="truncate font-medium text-sm">
+                              {getMatchItemCode(matchRight, pair.rightId, 'R')}
+                            </span>
                           </SelectTrigger>
                           <SelectContent>
-                            {matchRight.map((i) => (
+                            {matchRight.map((i, itemIndex) => (
                               <SelectItem key={i.id} value={i.id}>
-                                {i.text || '(empty right)'}
+                                <span className="flex min-w-0 items-center gap-2">
+                                  <span className="shrink-0 font-medium text-muted-foreground">
+                                    R{itemIndex + 1}
+                                  </span>
+                                  <span className="truncate">
+                                    {i.text || t('emptyRightItem')}
+                                  </span>
+                                </span>
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -794,6 +782,7 @@ export function QuestionEditorDialog({
                           type="button"
                           variant="ghost"
                           size="icon"
+                          className="h-10 w-10 justify-self-end"
                           onClick={() =>
                             setMatchPairs(
                               matchPairs.filter((_, idx) => idx !== index)
@@ -838,7 +827,8 @@ export function QuestionEditorDialog({
                       #{index + 1}
                     </span>
                     <Input
-                      placeholder="Step / Item text"
+                      placeholder={t('orderingItemPlaceholder')}
+                      aria-label={t('orderingItem')}
                       value={item.text}
                       onChange={(e) =>
                         setOrderItems(
@@ -876,8 +866,10 @@ export function QuestionEditorDialog({
               <div className="space-y-2">
                 <Label>{t('sentenceTemplate')}</Label>
                 <span className="block text-muted-foreground text-xs">
-                  Specify zone placeholders: e.g. "Google was founded in{' '}
-                  {'{{zone1}}'} by {'{{zone2}}'}."
+                  {t('dragAndDropTemplateHint', {
+                    zone1: '{{zone1}}',
+                    zone2: '{{zone2}}',
+                  })}
                 </span>
                 <Textarea
                   value={dndTemplate}
@@ -901,7 +893,7 @@ export function QuestionEditorDialog({
                       })
                     );
                   }}
-                  placeholder="e.g. Red is a {{zone1}} color, while Blue is {{zone2}}."
+                  placeholder={t('dragAndDropTemplatePlaceholder')}
                   rows={2}
                 />
               </div>
@@ -926,7 +918,8 @@ export function QuestionEditorDialog({
                   {dndItems.map((item) => (
                     <div key={item.id} className="flex items-center gap-2">
                       <Input
-                        placeholder="Draggable label"
+                        placeholder={t('draggableItemPlaceholder')}
+                        aria-label={t('draggableItem')}
                         value={item.text}
                         onChange={(e) =>
                           setDndItems(
@@ -984,12 +977,12 @@ export function QuestionEditorDialog({
                           }
                         >
                           <SelectTrigger className="w-2/3">
-                            <SelectValue placeholder="Select correct item..." />
+                            <SelectValue placeholder={t('selectCorrectItem')} />
                           </SelectTrigger>
                           <SelectContent>
                             {dndItems.map((i) => (
                               <SelectItem key={i.id} value={i.id}>
-                                {i.text || '(empty item)'}
+                                {i.text || t('emptyItem')}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -1014,6 +1007,7 @@ export function QuestionEditorDialog({
                     value={essayMinWords}
                     onChange={(e) => setEssayMinWords(e.target.value)}
                     placeholder="e.g. 50"
+                    aria-label={t('minWords')}
                   />
                 </div>
                 <div className="space-y-2">
@@ -1024,6 +1018,7 @@ export function QuestionEditorDialog({
                     value={essayMaxWords}
                     onChange={(e) => setEssayMaxWords(e.target.value)}
                     placeholder="e.g. 500"
+                    aria-label={t('maxWords')}
                   />
                 </div>
               </div>
@@ -1034,7 +1029,7 @@ export function QuestionEditorDialog({
                     {t('allowAttachments')}
                   </Label>
                   <p className="text-muted-foreground text-xs">
-                    Let students upload files with essay answers
+                    {t('allowAttachmentsDescription')}
                   </p>
                 </div>
                 <Switch
@@ -1049,7 +1044,7 @@ export function QuestionEditorDialog({
                     {t('allowTeacherRubric')}
                   </Label>
                   <p className="text-muted-foreground text-xs">
-                    Define custom grading rubric files or descriptions
+                    {t('allowTeacherRubricDescription')}
                   </p>
                 </div>
                 <Switch
@@ -1069,121 +1064,13 @@ export function QuestionEditorDialog({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="immediate">
-                      Immediate AI evaluation
+                      {t('deliveryImmediate')}
                     </SelectItem>
                     <SelectItem value="teacher-review">
-                      Hold for Teacher review
+                      {t('deliveryTeacherReview')}
                     </SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-            </div>
-          )}
-
-          {/* 8. Timed Challenge */}
-          {type === 'timed_challenge' && (
-            <div className="space-y-4 border-t pt-4">
-              <div className="space-y-2">
-                <Label htmlFor="timed-limit">{t('timeLimit')}</Label>
-                <Input
-                  id="timed-limit"
-                  type="number"
-                  min={5}
-                  value={timeLimit}
-                  onChange={(e) =>
-                    setTimeLimit(Number.parseInt(e.target.value, 10))
-                  }
-                />
-              </div>
-
-              <div className="space-y-3 rounded-lg border border-dashed p-4">
-                <Label className="block border-b pb-1.5 font-bold text-primary text-sm">
-                  Nested Question Setup
-                </Label>
-
-                <div className="mt-2 space-y-2">
-                  <Label>{t('innerQuestionType')}</Label>
-                  <Select
-                    value={innerType}
-                    onValueChange={(val) => setInnerType(val as any)}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="multiple_choice">
-                        Multiple Choice
-                      </SelectItem>
-                      <SelectItem value="true_false">True/False</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {innerType === 'multiple_choice' && (
-                  <div className="mt-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label className="font-semibold text-sm">
-                        {t('options')}
-                      </Label>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="xs"
-                        onClick={() =>
-                          setInnerMcOptions([
-                            ...innerMcOptions,
-                            { id: generateId(), text: '', isCorrect: false },
-                          ])
-                        }
-                      >
-                        <Plus className="mr-1 h-3 w-3" />
-                        {t('addOption')}
-                      </Button>
-                    </div>
-                    <div className="space-y-2">
-                      {innerMcOptions.map((option, idx) => (
-                        <div
-                          key={option.id}
-                          className={cn(
-                            'flex items-center gap-2 rounded-md border p-1.5 transition-all',
-                            option.isCorrect
-                              ? 'border-green-500 bg-green-50/20 dark:bg-green-950/10'
-                              : 'border-border'
-                          )}
-                        >
-                          <input
-                            type="radio"
-                            name="inner-mc-correct-option"
-                            checked={option.isCorrect}
-                            onChange={() => {
-                              setInnerMcOptions(
-                                innerMcOptions.map((o) => ({
-                                  ...o,
-                                  isCorrect: o.id === option.id,
-                                }))
-                              );
-                            }}
-                            className="h-3.5 w-3.5 shrink-0 cursor-pointer accent-green-600"
-                          />
-                          <Input
-                            placeholder={`Option ${idx + 1}`}
-                            value={option.text}
-                            onChange={(e) =>
-                              setInnerMcOptions(
-                                innerMcOptions.map((o) =>
-                                  o.id === option.id
-                                    ? { ...o, text: e.target.value }
-                                    : o
-                                )
-                              )
-                            }
-                            className="h-8 flex-1 border-none px-0 text-sm shadow-none focus-visible:ring-0"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           )}
@@ -1193,7 +1080,7 @@ export function QuestionEditorDialog({
             <Label htmlFor="question-explanation">{t('explanation')}</Label>
             <Textarea
               id="question-explanation"
-              placeholder="Provide context or explanation for why the answer is correct."
+              placeholder={t('explanationPlaceholder')}
               value={explanation}
               onChange={(e) => setExplanation(e.target.value)}
               rows={2}

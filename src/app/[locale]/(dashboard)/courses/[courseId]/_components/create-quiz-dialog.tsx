@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useRef } from 'react';
 import { QuizForm, type QuizFormSubmitData } from '@/components/quiz/quiz-form';
@@ -11,7 +12,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import type { QuestionSubType, QuizCategory } from '@/lib/quiz-template';
 import { useModules } from '../use-modules';
 import { useQuestionBank } from '../use-question-bank';
 
@@ -33,13 +33,12 @@ export function CreateQuizDialog({
   moduleName,
 }: CreateQuizDialogProps) {
   const t = useTranslations('Courses.CreateQuiz');
+  const router = useRouter();
   const { modules } = useModules(courseId);
   const {
-    createQuiz,
-    isCreatingQuiz,
-    generateQuestions,
-    isGeneratingQuestions,
-    generateQuestionsError,
+    createGeneratedQuiz,
+    isCreatingGeneratedQuiz,
+    createGeneratedQuizError,
   } = useQuestionBank({ courseId });
   const submitRef = useRef<(() => void) | null>(null);
 
@@ -54,42 +53,26 @@ export function CreateQuizDialog({
         ? availableLessons.map((l) => l.id)
         : data.selectedLessonIds;
 
-    createQuiz(
+    createGeneratedQuiz(
       {
         lessonIds,
         title: data.title,
         description: data.description || undefined,
-        category: data.category,
-        subType: data.subType,
+        questionCounts: data.questionCounts,
         deliveryMode: data.deliveryMode,
-        selectionMethod: 'HAND_PICK',
-        questionCount: data.questionCount,
+        selectionMethod: 'MANUAL_CREATE',
+        questionCount: Object.values(data.questionCounts).reduce(
+          (total, count) => total + (count ?? 0),
+          0
+        ),
       },
       {
-        onSuccess: () => {
+        onSuccess: (generatedQuiz) => {
           onOpenChange(false);
+          router.push(`/courses/${courseId}/quiz/${generatedQuiz.id}?tab=edit`);
         },
       }
     );
-  };
-
-  const handleGenerateWithAI = async (params: {
-    lessonIds: string[];
-    category: QuizCategory;
-    subType: QuestionSubType;
-    count: number;
-  }) => {
-    if (params.lessonIds.length === 0) return;
-    try {
-      await generateQuestions({
-        lessonId: params.lessonIds[0],
-        category: params.category,
-        subType: params.subType,
-        count: params.count,
-      });
-    } catch {
-      // handled by mutation
-    }
   };
 
   return (
@@ -107,10 +90,9 @@ export function CreateQuizDialog({
             modules={modules}
             availableLessons={availableLessons}
             onSubmit={handleSubmit}
-            isSubmitting={isCreatingQuiz}
-            isGeneratingQuestions={isGeneratingQuestions}
-            generateQuestionsError={generateQuestionsError}
-            onGenerateWithAI={handleGenerateWithAI}
+            isSubmitting={isCreatingGeneratedQuiz}
+            generateQuestionsError={createGeneratedQuizError}
+            showAIGenerationNotice
             compact
             hideLessonSelector={!!lessonId}
             preselectedLessonId={lessonId}
@@ -127,9 +109,9 @@ export function CreateQuizDialog({
           </Button>
           <Button
             onClick={() => submitRef.current?.()}
-            disabled={isCreatingQuiz}
+            disabled={isCreatingGeneratedQuiz}
           >
-            {isCreatingQuiz ? t('creating') : t('generateQuiz')}
+            {isCreatingGeneratedQuiz ? t('creatingWithAI') : t('createWithAI')}
           </Button>
         </div>
       </DialogContent>
