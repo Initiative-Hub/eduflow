@@ -129,7 +129,10 @@ describe('ModuleAccordionItem', () => {
     render(
       <Accordion type="multiple" defaultValue={['module-1']}>
         <ModuleAccordionItem
+          canCreateContent={false}
           canDeleteContent
+          canEditContent={false}
+          canCreateQuiz={false}
           courseId="course-1"
           moduleItem={moduleItem}
           onAddLesson={vi.fn()}
