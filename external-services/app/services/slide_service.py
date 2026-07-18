@@ -9,6 +9,7 @@ from fastapi.concurrency import run_in_threadpool
 import slide_skills  # type: ignore
 import slide_skills.svg_categories  # type: ignore
 from app.deps import SLIDE_TEMPLATES_DIR
+from app.schemas.slide_schema import RenderSlideReq
 
 logger = logging.getLogger(__name__)
 
@@ -565,7 +566,7 @@ class SlideService:
             if has_category_subdirs:
                 # New format — the collection dir IS a valid library_dir,
                 # so pass it directly without any manual remapping.
-                library_dir = str(collection_path)
+                library_dir = collection_path
                 logger.info(
                     f"Using new-format collection '{col_name}' directly as library_dir"
                 )
@@ -679,7 +680,7 @@ class SlideService:
                         )
                     )
 
-                library_dir = str(temp_lib_dir)
+                library_dir = temp_lib_dir
 
         try:
             actual_palette = None if palette == "auto" else palette
@@ -713,6 +714,204 @@ class SlideService:
                     )
 
         return res
+
+    async def render_slide(self, req: RenderSlideReq) -> Dict[str, Any]:
+
+        bindings: Dict[str, Any] = req.bindings.copy() if req.bindings else {}
+        slide: Dict[str, Any] = {
+            "category": req.layoutType,
+            "slideTitle": req.slideTitle,
+            "bindings": bindings,
+        }
+        category = req.layoutType
+        slide_title = req.slideTitle
+
+        slide["category"] = category
+
+        for diagram_key in ("levels", "stages", "process_steps", "phases"):
+            items = bindings.get(diagram_key)
+            if isinstance(items, list) and items:
+                slide["talking_points"] = [
+                    str(it.get("title", "")) if isinstance(it, dict) else str(it)
+                    for it in items
+                ]
+                break
+
+        bindings = flatten_slide_bindings(category, slide_title, bindings)
+
+        if "body_text" in bindings and isinstance(bindings["body_text"], str):
+            bindings["body_text"] = textwrap.wrap(bindings["body_text"], width=50)
+
+        slide["bindings"] = bindings
+
+        col_name = req.collection or "templates"
+        collection_path = await self._ensure_collection_downloaded(col_name)
+
+        library_dir = SLIDE_TEMPLATES_DIR
+        temp_dir_context = None
+
+        if collection_path.exists() and collection_path.is_dir():
+            has_category_subdirs = any(
+                child.is_dir() for child in collection_path.iterdir()
+            )
+            if has_category_subdirs:
+                library_dir = collection_path
+            else:
+                # Legacy flat format
+                import json
+
+                temp_dir_context = tempfile.TemporaryDirectory()
+                temp_lib_dir = Path(temp_dir_context.name)
+
+                categories_to_map = [
+                    "TITLE_SLIDE",
+                    "AGENDA_OUTLINE",
+                    "SECTION_HEADER",
+                    "TITLE_BULLETS",
+                    "TWO_COLUMN_SPLIT",
+                    "BIG_QUOTE_TAKEAWAY",
+                    "KPI_BIG_NUMBER",
+                    "CHART_INSIGHT",
+                    "DATA_TABLE",
+                    "MEDIA_TEXT",
+                    "TIMELINE_MILESTONES",
+                    "STEP_BY_STEP",
+                    "CONCLUSION_SUMMARY",
+                    "CALL_TO_ACTION",
+                    "QA_CONTACT",
+                    "REFERENCES_LIST",
+                ]
+
+                patterns = {
+                    "TITLE_SLIDE": ["title", "slide_00", "slide_title"],
+                    "AGENDA_OUTLINE": ["agenda", "outline", "slide_01"],
+                    "SECTION_HEADER": ["section", "header", "slide_02"],
+                    "TITLE_BULLETS": ["bullets", "bullet", "points", "slide_03"],
+                    "TWO_COLUMN_SPLIT": ["split", "columns", "slide_04"],
+                    "BIG_QUOTE_TAKEAWAY": ["quote", "takeaway", "slide_05"],
+                    "KPI_BIG_NUMBER": ["kpi", "number", "metric", "slide_06"],
+                    "CHART_INSIGHT": ["chart", "insight", "graph", "slide_07"],
+                    "DATA_TABLE": ["table", "data_table", "slide_08"],
+                    "MEDIA_TEXT": ["media", "image_text", "slide_09"],
+                    "TIMELINE_MILESTONES": ["timeline", "milestone", "slide_10"],
+                    "STEP_BY_STEP": ["step", "process_steps", "slide_11"],
+                    "CONCLUSION_SUMMARY": ["conclusion", "summary", "slide_12"],
+                    "CALL_TO_ACTION": ["cta", "action", "slide_13"],
+                    "QA_CONTACT": ["qa", "contact", "slide_14"],
+                    "REFERENCES_LIST": ["references", "source", "slide_15"],
+                }
+
+                svg_files = list(collection_path.glob("*.svg"))
+                for idx, cat in enumerate(categories_to_map):
+                    cat_dir = temp_lib_dir / cat
+                    cat_dir.mkdir(parents=True, exist_ok=True)
+
+                    matched_file = None
+                    for pattern in patterns.get(cat, []):
+                        for svg_file in svg_files:
+                            if pattern in svg_file.name.lower():
+                                matched_file = svg_file
+                                break
+                        if matched_file:
+                            break
+
+                    if not matched_file:
+                        for svg_file in svg_files:
+                            stem_lower = svg_file.stem.lower()
+                            if (
+                                cat.lower() in stem_lower
+                                or cat.replace("_", "").lower() in stem_lower
+                            ):
+                                matched_file = svg_file
+                                break
+
+                    if not matched_file and svg_files:
+                        matched_file = svg_files[idx % len(svg_files)]
+
+                    if matched_file:
+                        shutil.copy2(matched_file, cat_dir / "variant_a.svg")
+                        schema_json = matched_file.with_suffix(".schema.json")
+                        if schema_json.exists():
+                            shutil.copy2(schema_json, cat_dir / "variant_a.schema.json")
+
+                    (cat_dir / "category.json").write_text(
+                        json.dumps(
+                            {
+                                "description": f"{cat} category layout",
+                                "variants": {"variant_a": "Default design"},
+                            },
+                            ensure_ascii=False,
+                        )
+                    )
+
+                library_dir = temp_lib_dir
+
+        try:
+            lib = await run_in_threadpool(
+                slide_skills.scan_template_library, library_dir
+            )
+            key = lib.resolve(category)
+            if key is None:
+                raise ValueError(
+                    f"No category matches {category!r} in template library"
+                )
+
+            mapping = {}
+            target = (
+                slide_skills.PRESETS.get(req.palette)
+                if isinstance(req.palette, str)
+                else req.palette
+            )
+            if target is not None:
+                from slide_skills.svg_categories import _library_palette
+
+                mapping = slide_skills.auto_map_palette(_library_palette(lib), target)
+
+            result = await run_in_threadpool(
+                slide_skills.svg_categories.select_and_fill_slide,
+                lib.categories[key],
+                slide,
+            )
+            if not result:
+                raise ValueError(f"No variant selected for layout {category}")
+
+            variant = result["variant"]
+            svg = Path(variant.path).read_text(encoding="utf-8")
+
+            from slide_skills.svg_categories import (
+                prune_empty_groups,
+                fill_svg,
+                fit_text_to_boxes,
+            )
+
+            svg = prune_empty_groups(svg, result["texts"])
+
+            texts = result["texts"]
+            if 'data-w="' in svg:
+                from slide_skills.svg_categories import _backfill_slots
+
+                texts = _backfill_slots(texts, variant, slide)
+
+            svg = fill_svg(svg, texts)
+            svg = fit_text_to_boxes(svg)
+
+            if mapping:
+                svg = slide_skills.retheme_svg(svg, mapping)
+
+            return {"svg": svg}
+        finally:
+            if temp_dir_context:
+                try:
+                    temp_dir_context.cleanup()
+                except Exception:
+                    pass
+            if col_name and col_name not in DEFAULT_COLLECTIONS:
+                col_path = Path(SLIDE_TEMPLATES_DIR) / col_name
+                if col_path.exists() and col_path.is_dir():
+                    shutil.rmtree(col_path, ignore_errors=True)
+                    logger.info(
+                        f"Cleaned up downloaded S3 collection '{col_name}' after rendering"
+                    )
 
     async def import_template_collection(
         self, file_bytes: bytes, filename: str, name: str | None = None

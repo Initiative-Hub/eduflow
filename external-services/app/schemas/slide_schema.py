@@ -44,3 +44,18 @@ class PlanGenReq(BaseModel):
         default="ai",
         description="Image generator: 'ai' (photo model) or 'svg' (cheaper GPT-4o vector)",
     )
+
+
+class RenderSlideReq(BaseModel):
+    layoutType: str = Field(..., description="The template category name")
+    slideTitle: str = Field(default="", description="The title of the slide")
+    bindings: dict = Field(
+        default_factory=dict,
+        description="Key-value bindings for the slide placeholders",
+    )
+    collection: str | None = Field(
+        default="starter", description="The slide template collection/theme name"
+    )
+    palette: str | None = Field(
+        default="auto", description="The color palette selection"
+    )

@@ -12,10 +12,12 @@ import {
   Sparkles,
   Trash2,
   X,
+  ListPlus,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { SlideItemEditor } from './slide-item-editor';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -123,11 +125,35 @@ export function LessonPresentation({
 
   const [isDownloadingPptx, setIsDownloadingPptx] = useState(false);
   const [iframeVersion, setIframeVersion] = useState(0);
+  // Interactive item editor panel ("+ Add item" on generated slides)
+  const [showItemEditor, setShowItemEditor] = useState(false);
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const deckId = deckUrl ? deckUrl.split('/').pop() : undefined;
 
   const updateSlideHtml = useUpdateSlideHtml();
+
+  /** Swap a re-rendered slide SVG into the preview iframe (namespacing its
+   * ids so clipPaths/gradients don't collide with other slides). */
+  const applySvgToPreviewSlide = useCallback((index: number, svg: string) => {
+    const doc = iframeRef.current?.contentDocument;
+    const target = doc?.querySelectorAll('.slide')?.[index];
+    if (!doc || !target) {
+      toast.error('Preview not ready — reload the deck and try again');
+      return;
+    }
+    const prefix = `edit${index}x${Date.now().toString(36)}_`;
+    const safe = svg
+      .replace(/id="([^"]+)"/g, `id="${prefix}$1"`)
+      .replace(/url\(#([^)]+)\)/g, `url(#${prefix}$1)`)
+      .replace(/href="#([^"]+)"/g, `href="#${prefix}$1"`);
+    const old = target.querySelector('svg');
+    if (old) {
+      old.outerHTML = safe;
+    } else {
+      target.innerHTML = safe;
+    }
+  }, []);
   const isGamma = !!deckUrl?.includes('gamma.app');
 
   const [isUploadOpen, setIsUploadOpen] = useState(false);
@@ -1468,6 +1494,17 @@ export function LessonPresentation({
             <>
               {!isGamma && (
                 <Button
+                  variant={showItemEditor ? 'default' : 'outline'}
+                  size="sm"
+                  className="h-9 gap-1.5 rounded-lg"
+                  onClick={() => setShowItemEditor((v) => !v)}
+                >
+                  <ListPlus className="h-4 w-4" />
+                  Edit items
+                </Button>
+              )}
+              {!isGamma && (
+                <Button
                   variant="default"
                   size="sm"
                   className="h-9 gap-1.5 rounded-lg bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
@@ -2106,19 +2143,46 @@ export function LessonPresentation({
       {step === 'generated' &&
         (deckUrl ? (
           <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col items-center justify-center gap-2 overflow-hidden px-2 py-4">
-            <iframe
-              ref={iframeRef}
-              src={
-                iframeVersion > 0 ? `${deckUrl}?v=${iframeVersion}` : deckUrl
-              }
-              title={title}
-              allow="fullscreen"
-              onLoad={enableVisualEditing}
-              className={cn(
-                'w-full rounded-2xl border border-border bg-card shadow-2xl transition-all duration-300',
-                isFullscreen ? 'h-[82vh]' : 'h-[58vh]'
+            <div className="flex w-full flex-1 gap-2 overflow-hidden">
+              <iframe
+                ref={iframeRef}
+                src={
+                  iframeVersion > 0 ? `${deckUrl}?v=${iframeVersion}` : deckUrl
+                }
+                title={title}
+                allow="fullscreen"
+                onLoad={enableVisualEditing}
+                className={cn(
+                  'w-full rounded-2xl border border-border bg-card shadow-2xl transition-all duration-300',
+                  isFullscreen ? 'h-[82vh]' : 'h-[58vh]'
+                )}
+              />
+              {showItemEditor && !isGamma && (
+                <div
+                  className={cn(
+                    'w-80 shrink-0 overflow-hidden rounded-2xl border border-border bg-card shadow-2xl',
+                    isFullscreen ? 'h-[82vh]' : 'h-[58vh]'
+                  )}
+                >
+                  <SlideItemEditor
+                    slides={plannedSlides}
+                    collection={
+                      selectedCollection === 'auto'
+                        ? (recommendedCollection ?? 'starter')
+                        : selectedCollection
+                    }
+                    onBindingsChanged={(index, bindings) =>
+                      setPlannedSlides((prev) =>
+                        prev.map((s, i) =>
+                          i === index ? { ...s, bindings } : s
+                        )
+                      )
+                    }
+                    onSlideRendered={applySvgToPreviewSlide}
+                  />
+                </div>
               )}
-            />
+            </div>
             {deckUsage && (
               <div className="flex shrink-0 flex-wrap items-center justify-center gap-x-4 gap-y-1 font-medium text-[11px] text-muted-foreground">
                 {typeof deckUsage.total_tokens === 'number' && (
