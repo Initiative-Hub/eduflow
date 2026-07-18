@@ -50,12 +50,12 @@ describe('parseBrowser', () => {
     ).toBe('Chromium');
   });
 
-  it.each([
-    '',
-    'UnknownBrowser/1.0',
-  ])('returns "unknown" for unsupported input %s', (userAgent) => {
-    expect(parseBrowser(userAgent)).toBe('unknown');
-  });
+  it.each(['', 'UnknownBrowser/1.0'])(
+    'returns "unknown" for unsupported input %s',
+    (userAgent) => {
+      expect(parseBrowser(userAgent)).toBe('unknown');
+    }
+  );
 
   it('prefers Edge over Chrome when both tokens are present', () => {
     expect(

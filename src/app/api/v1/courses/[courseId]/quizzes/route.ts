@@ -7,7 +7,7 @@ import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
 import { prisma } from '@/lib/prisma';
 import { questionBlockSchema } from '@/lib/validations/quiz.schema';
 import { QuizService } from '@/services/QuizService';
-import { resolveReferencedQuestions } from '@/services/quiz-question-references';
+import { resolveReferencedQuestions } from '@/utils/quiz-question-references';
 
 // ─── Validation Schemas ──────────────────────────────────────────────────────
 

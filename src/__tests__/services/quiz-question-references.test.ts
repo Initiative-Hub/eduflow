@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   getQuestionPrompt,
   resolveReferencedQuestions,
-} from '@/services/quiz-question-references';
+} from '@/utils/quiz-question-references';
 
 describe('quiz question references', () => {
   it('resolves linked question rows in quiz order and exposes their IDs', () => {

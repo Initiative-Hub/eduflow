@@ -17,7 +17,7 @@ import type {
   StudentAnswers,
 } from '@/lib/quiz-template';
 import { cn } from '@/lib/utils';
-import { getQuestionAttemptStatus } from '@/services/quiz-attempt-snapshot';
+import { getQuestionAttemptStatus } from '@/utils/quiz-attempt-snapshot';
 import {
   QuizCard,
   QuizCardContent,

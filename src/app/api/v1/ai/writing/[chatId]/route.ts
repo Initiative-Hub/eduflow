@@ -1,6 +1,8 @@
 import {
   createUIMessageStream,
   createUIMessageStreamResponse,
+  type ToolSet,
+  toUIMessageStream,
   type UIMessage,
 } from 'ai';
 import { z } from 'zod';
@@ -304,7 +306,8 @@ export async function POST(
       execute: async ({ writer }) => {
         let assistantText = '';
 
-        for await (const chunk of result.toUIMessageStream<UIMessage>({
+        for await (const chunk of toUIMessageStream<ToolSet, UIMessage>({
+          stream: result.stream,
           sendFinish: false,
         })) {
           if (chunk.type === 'text-delta') {

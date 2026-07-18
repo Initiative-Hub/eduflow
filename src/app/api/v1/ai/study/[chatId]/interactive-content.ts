@@ -2,8 +2,8 @@ import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import {
   convertToModelMessages,
   generateText,
-  Output,
   isStepCount,
+  Output,
   type ToolSet,
   type UIMessage,
 } from 'ai';
@@ -220,7 +220,7 @@ export async function generateInteractiveContent({
     convertDataPart: convertLessonReferenceDataPart,
   });
 
-  const contextResult = await generateText({
+  const { finalStep } = await generateText({
     model: provider(model ?? DEFAULT_MODELS.openrouter),
     instructions: INTERACTIVE_TOOL_SYSTEM_PROMPT,
     messages: modelMessages,
@@ -228,7 +228,7 @@ export async function generateInteractiveContent({
     stopWhen: maxSteps ? isStepCount(maxSteps) : undefined,
   });
 
-  const result = await generateText({
+  const { output } = await generateText({
     model: provider(model ?? DEFAULT_MODELS.openrouter),
     output: Output.object({
       schema: generatedInteractiveContentSchema,
@@ -237,8 +237,8 @@ export async function generateInteractiveContent({
         'A self-contained interactive educational HTML activity for EduFlow.',
     }),
     instructions: INTERACTIVE_CONTENT_SYSTEM_PROMPT,
-    messages: [...modelMessages, ...contextResult.response.messages],
+    messages: [...modelMessages, ...finalStep.response.messages],
   });
 
-  return result.output;
+  return output;
 }

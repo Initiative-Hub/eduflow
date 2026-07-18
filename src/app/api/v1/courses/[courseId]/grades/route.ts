@@ -7,8 +7,8 @@ import { CourseService } from '@/services/CourseService';
 import {
   countAnsweredQuestions,
   type QuizAttemptSnapshot,
-} from '@/services/quiz-attempt-snapshot';
-import { resolveReferencedQuestions } from '@/services/quiz-question-references';
+} from '@/utils/quiz-attempt-snapshot';
+import { resolveReferencedQuestions } from '@/utils/quiz-question-references';
 
 const routeParamsSchema = z.object({ courseId: z.string().uuid() });
 

@@ -10,7 +10,7 @@ import type {
   StudentAnswer,
 } from '@/lib/quiz-template/types';
 import { cn } from '@/lib/utils';
-import { getQuestionAttemptStatus } from '@/services/quiz-attempt-snapshot';
+import { getQuestionAttemptStatus } from '@/utils/quiz-attempt-snapshot';
 
 interface GradeQuestionReviewProps {
   answer?: StudentAnswer;

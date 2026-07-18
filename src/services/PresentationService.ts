@@ -316,7 +316,7 @@ HARD CONSTRAINTS:
           styleCollections: opts.styleCollections,
         });
 
-    const finalResponse = await generateText({
+    const { output } = await generateText({
       model: provider(model),
       output: Output.object({ schema: presentationPlanSchema }),
       prompt: masterPrompt,
@@ -326,7 +326,7 @@ HARD CONSTRAINTS:
       maxOutputTokens: 16000,
     });
 
-    return finalResponse.output;
+    return output;
   }
 
   static async planPresentation(options: {

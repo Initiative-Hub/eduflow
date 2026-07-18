@@ -3,7 +3,7 @@ import {
   countAnsweredQuestions,
   createQuizAttemptSnapshot,
   getQuestionAttemptStatus,
-} from '@/services/quiz-attempt-snapshot';
+} from '@/utils/quiz-attempt-snapshot';
 
 describe('quiz attempt snapshots', () => {
   it('captures quiz metadata and full authoritative questions at submission time', () => {
