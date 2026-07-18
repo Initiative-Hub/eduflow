@@ -1,8 +1,9 @@
+import { useQueryClient } from '@tanstack/react-query';
+import type { JSONContent } from '@tiptap/core';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import type { TiptapDocument } from '@/utils/lesson-content';
-import { useQueryClient } from '@tanstack/react-query';
 import { useGenerateSlideDeck, useLesson } from './use-lesson';
 
 type Step = 'input' | 'planning' | 'planned' | 'generating' | 'generated';
@@ -42,6 +43,362 @@ export interface DeckUsage {
   requests?: number;
   estimated_cost_usd?: number;
   report?: string;
+}
+
+interface LessonSection {
+  title: string;
+  paragraphs: string[];
+  bulletItems: string[];
+  quotes: string[];
+}
+
+const GENERIC_SLIDE_TITLE_RE =
+  /^(concept expansion|slide \d+|topic \d+|section \d+|content slide \d+|deep dive \d+)/i;
+
+function normalizeText(text: string): string {
+  return text.replace(/\s+/g, ' ').trim();
+}
+
+function nodeText(node?: JSONContent | null): string {
+  if (!node) return '';
+  if (typeof node.text === 'string') return normalizeText(node.text);
+  return normalizeText((node.content || []).map(nodeText).join(' '));
+}
+
+function dedupeStrings(items: string[]): string[] {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    const normalized = normalizeText(item).toLowerCase();
+    if (!normalized || seen.has(normalized)) return false;
+    seen.add(normalized);
+    return true;
+  });
+}
+
+function sentenceParts(text: string): string[] {
+  return dedupeStrings(
+    text
+      .split(/(?<=[.!?])\s+|\n+/)
+      .map((part) => normalizeText(part.replace(/^[-*•]\s*/, '')))
+  );
+}
+
+function trimWords(text: string, maxWords: number): string {
+  const words = normalizeText(text).split(' ');
+  if (words.length <= maxWords) return normalizeText(text);
+  return `${words.slice(0, maxWords).join(' ')}...`;
+}
+
+function collectListItems(node?: JSONContent | null): string[] {
+  if (!node) return [];
+
+  if (node.type === 'listItem' || node.type === 'taskItem') {
+    const directText = normalizeText(
+      (node.content || [])
+        .map((child) =>
+          child.type === 'bulletList' ||
+          child.type === 'orderedList' ||
+          child.type === 'taskList'
+            ? ''
+            : nodeText(child)
+        )
+        .join(' ')
+    );
+
+    return dedupeStrings([
+      directText,
+      ...(node.content || []).flatMap((child) => collectListItems(child)),
+    ]);
+  }
+
+  return (node.content || []).flatMap((child) => collectListItems(child));
+}
+
+function collectLessonSections(document: TiptapDocument): LessonSection[] {
+  const sections: LessonSection[] = [];
+  let current: LessonSection = {
+    title: 'Lesson Overview',
+    paragraphs: [],
+    bulletItems: [],
+    quotes: [],
+  };
+
+  const pushCurrent = () => {
+    const hasContent =
+      current.paragraphs.length > 0 ||
+      current.bulletItems.length > 0 ||
+      current.quotes.length > 0;
+    if (hasContent || sections.length === 0) {
+      sections.push({
+        title: current.title,
+        paragraphs: dedupeStrings(current.paragraphs),
+        bulletItems: dedupeStrings(current.bulletItems),
+        quotes: dedupeStrings(current.quotes),
+      });
+    }
+  };
+
+  for (const node of document.content || []) {
+    if (node.type === 'heading') {
+      const headingText = nodeText(node);
+      if (!headingText) continue;
+      if (
+        current.paragraphs.length > 0 ||
+        current.bulletItems.length > 0 ||
+        current.quotes.length > 0
+      ) {
+        pushCurrent();
+      }
+      current = {
+        title: headingText,
+        paragraphs: [],
+        bulletItems: [],
+        quotes: [],
+      };
+      continue;
+    }
+
+    if (node.type === 'paragraph') {
+      const text = nodeText(node);
+      if (text) current.paragraphs.push(text);
+      continue;
+    }
+
+    if (
+      node.type === 'bulletList' ||
+      node.type === 'orderedList' ||
+      node.type === 'taskList'
+    ) {
+      current.bulletItems.push(...collectListItems(node));
+      continue;
+    }
+
+    if (node.type === 'blockquote') {
+      const text = nodeText(node);
+      if (text) current.quotes.push(text);
+    }
+  }
+
+  pushCurrent();
+  return sections.filter(
+    (section) =>
+      section.title ||
+      section.paragraphs.length > 0 ||
+      section.bulletItems.length > 0 ||
+      section.quotes.length > 0
+  );
+}
+
+function buildSectionPoints(
+  section: LessonSection,
+  min = 3,
+  max = 5
+): string[] {
+  const combined = dedupeStrings([
+    ...section.bulletItems,
+    ...section.paragraphs.flatMap(sentenceParts),
+    ...section.quotes.flatMap(sentenceParts),
+  ]);
+
+  return combined
+    .map((item) => trimWords(item, 14))
+    .slice(0, Math.min(max, Math.max(min, combined.length)));
+}
+
+function buildSectionSteps(section: LessonSection): string[] {
+  const steps = dedupeStrings([
+    ...section.bulletItems,
+    ...section.paragraphs.flatMap(sentenceParts),
+  ]);
+  return steps.map((step) => trimWords(step, 10)).slice(0, 5);
+}
+
+function buildSectionTakeaway(section: LessonSection): string | null {
+  const source =
+    section.quotes[0] ||
+    section.paragraphs.flatMap(sentenceParts)[0] ||
+    section.bulletItems[0];
+  return source ? trimWords(source, 22) : null;
+}
+
+function buildSectionCandidates(
+  section: LessonSection,
+  index: number
+): PlannedSlide[] {
+  const points = buildSectionPoints(section);
+  const steps = buildSectionSteps(section);
+  const takeaway = buildSectionTakeaway(section);
+  const safeTitle = section.title || `Lesson Insight ${index + 1}`;
+
+  const candidates: PlannedSlide[] = [];
+
+  if (points.length > 0) {
+    candidates.push({
+      id: `fallback-section-${index}-bullets`,
+      layoutType: 'TITLE_BULLETS',
+      slideTitle: safeTitle,
+      bindings: { bullets: points },
+    });
+  }
+
+  if (points.length >= 4) {
+    candidates.push({
+      id: `fallback-section-${index}-split`,
+      layoutType: 'TWO_COLUMN_SPLIT',
+      slideTitle: `${safeTitle}: Key Ideas and Application`,
+      bindings: {
+        left_col_title: 'Key Ideas',
+        left_col_text: points.slice(0, 2),
+        right_col_title: 'In Practice',
+        right_col_text: points.slice(2, 4),
+      },
+    });
+  }
+
+  if (steps.length >= 3) {
+    candidates.push({
+      id: `fallback-section-${index}-steps`,
+      layoutType: 'STEP_BY_STEP',
+      slideTitle: `${safeTitle}: Practical Flow`,
+      bindings: {
+        steps: steps.slice(0, 5),
+      },
+    });
+  }
+
+  if (takeaway) {
+    candidates.push({
+      id: `fallback-section-${index}-takeaway`,
+      layoutType: 'BIG_QUOTE_TAKEAWAY',
+      slideTitle: `${safeTitle}: Main Takeaway`,
+      bindings: {
+        quote: takeaway,
+        author_or_source: 'Lesson takeaway',
+      },
+    });
+  }
+
+  return candidates;
+}
+
+function fallbackAgendaItems(sections: LessonSection[]): string[] {
+  const items = dedupeStrings(
+    sections.map((section) => section.title).filter(Boolean)
+  );
+  return items.length > 0
+    ? items.slice(0, 6)
+    : ['Core objectives', 'Key concepts', 'Practical applications'];
+}
+
+function deriveTitleFromSlide(
+  slide: Pick<PlannedSlide, 'layoutType' | 'bindings'>,
+  fallbackTopic: string
+): string {
+  switch (slide.layoutType) {
+    case 'TITLE_BULLETS':
+      return fallbackTopic;
+    case 'STEP_BY_STEP':
+      return `${fallbackTopic}: Practical Flow`;
+    case 'TWO_COLUMN_SPLIT':
+      return `${fallbackTopic}: Key Ideas and Application`;
+    case 'BIG_QUOTE_TAKEAWAY':
+      return `${fallbackTopic}: Main Takeaway`;
+    case 'KPI_BIG_NUMBER':
+      return `${fallbackTopic}: Key Metrics`;
+    case 'CHART_INSIGHT':
+      return `${fallbackTopic}: Data Snapshot`;
+    case 'TIMELINE_MILESTONES':
+      return `${fallbackTopic}: Milestones`;
+    case 'CONCLUSION_SUMMARY':
+      return 'Key Takeaways';
+    case 'CALL_TO_ACTION':
+      return 'Next Steps';
+    case 'REFERENCES_LIST':
+      return 'References';
+    case 'SECTION_HEADER':
+      return fallbackTopic;
+    default:
+      return fallbackTopic;
+  }
+}
+
+function normalizePlannedSlides(
+  slides: PlannedSlide[],
+  document: TiptapDocument,
+  lessonTitle: string
+): PlannedSlide[] {
+  const sections = collectLessonSections(document);
+  const agenda = fallbackAgendaItems(sections);
+  const usedTitles = new Set<string>();
+  let topicCursor = 0;
+
+  return slides.map((slide) => {
+    const bindings = { ...slide.bindings };
+    const currentTitle = normalizeText(slide.slideTitle || '');
+    const fallbackTopic =
+      sections[topicCursor]?.title || sections[0]?.title || lessonTitle;
+    const shouldRepairTitle =
+      !currentTitle ||
+      GENERIC_SLIDE_TITLE_RE.test(currentTitle) ||
+      usedTitles.has(currentTitle.toLowerCase());
+
+    let nextTitle =
+      slide.layoutType === 'TITLE_SLIDE'
+        ? currentTitle || lessonTitle
+        : shouldRepairTitle
+          ? deriveTitleFromSlide(slide, fallbackTopic)
+          : currentTitle;
+
+    let suffix = 2;
+    while (usedTitles.has(nextTitle.toLowerCase())) {
+      nextTitle = `${deriveTitleFromSlide(slide, fallbackTopic)} (${suffix})`;
+      suffix += 1;
+    }
+    usedTitles.add(nextTitle.toLowerCase());
+
+    if (
+      slide.layoutType !== 'TITLE_SLIDE' &&
+      slide.layoutType !== 'AGENDA_OUTLINE' &&
+      slide.layoutType !== 'CONCLUSION_SUMMARY' &&
+      sections.length > 0
+    ) {
+      topicCursor = Math.min(topicCursor + 1, sections.length - 1);
+    }
+
+    if (slide.layoutType === 'AGENDA_OUTLINE') {
+      const currentItems = Array.isArray(bindings.items)
+        ? bindings.items
+            .map((item) => normalizeText(String(item || '')))
+            .filter(Boolean)
+        : [];
+      const genericCount = currentItems.filter((item) =>
+        GENERIC_SLIDE_TITLE_RE.test(item)
+      ).length;
+      if (
+        currentItems.length === 0 ||
+        genericCount >= Math.ceil(currentItems.length / 2)
+      ) {
+        bindings.items = agenda;
+      }
+    }
+
+    if (slide.layoutType === 'CONCLUSION_SUMMARY') {
+      const currentItems = Array.isArray(bindings.summary_points)
+        ? bindings.summary_points.filter(Boolean)
+        : [];
+      if (currentItems.length === 0) {
+        bindings.summary_points = dedupeStrings(
+          sections.flatMap((section) => buildSectionPoints(section, 1, 2))
+        ).slice(0, 4);
+      }
+    }
+
+    return {
+      ...slide,
+      slideTitle: nextTitle,
+      bindings,
+    };
+  });
 }
 
 export function usePresentation(options: {
@@ -99,10 +456,8 @@ export function usePresentation(options: {
       else if (slideDuration === '90') maxSlides = 16;
       else if (slideDuration === '120') maxSlides = 20;
 
-      const headings = content.content
-        .filter((node) => node.type === 'heading')
-        .map((node) => node.content?.map((c) => c.text).join('') || '')
-        .filter(Boolean);
+      const sections = collectLessonSections(content);
+      const headings = sections.map((section) => section.title).filter(Boolean);
 
       const list: PlannedSlide[] = [];
 
@@ -125,83 +480,35 @@ export function usePresentation(options: {
         layoutType: 'AGENDA_OUTLINE',
         slideTitle: 'Agenda & Overview',
         bindings: {
-          items:
-            headings.length > 0
-              ? headings.slice(0, 4)
-              : ['Core Objectives', 'Key Concepts', 'Practical Summary'],
+          items: fallbackAgendaItems(sections),
         },
       });
 
-      const availableSlots = Math.max(1, maxSlides - 3);
+      const shouldIncludeConclusion = maxSlides >= 5;
+      const contentSlots = Math.max(
+        1,
+        maxSlides - 3 - (shouldIncludeConclusion ? 1 : 0)
+      );
 
-      if (headings.length > 0) {
-        headings.slice(0, availableSlots).forEach((heading, idx) => {
-          const layouts: Array<PlannedSlide['layoutType']> = [
-            'TITLE_BULLETS',
-            'TWO_COLUMN_SPLIT',
-            'BIG_QUOTE_TAKEAWAY',
-            'STEP_BY_STEP',
-          ];
-          const layoutType = layouts[idx % layouts.length];
+      if (sections.length > 0) {
+        const sectionCandidates = sections.map((section, idx) =>
+          buildSectionCandidates(section, idx)
+        );
+        const usedTitles = new Set<string>();
 
-          let bindings: Record<string, any> = {};
-          if (layoutType === 'TITLE_BULLETS') {
-            bindings = {
-              bullets: [
-                `Introduction to ${heading}`,
-                `Key challenges in ${heading}`,
-                'Strategic advantages',
-              ],
-            };
-          } else if (layoutType === 'TWO_COLUMN_SPLIT') {
-            bindings = {
-              left_col_title: 'Core Objectives',
-              left_col_text: [
-                `Understand ${heading} basics`,
-                'Apply theory to examples',
-              ],
-              right_col_title: 'Key Outcomes',
-              right_col_text: [
-                'Successful implementation',
-                'Advanced scaling capacity',
-              ],
-            };
-          } else if (layoutType === 'BIG_QUOTE_TAKEAWAY') {
-            bindings = {
-              quote: `The essence of ${heading} lies in mastering the fundamentals and applying them with consistency.`,
-              author_or_source: 'Lesson Key Takeaway',
-            };
-          } else {
-            bindings = {
-              steps: [
-                `Analyze ${heading}`,
-                `Implement core solutions`,
-                'Review and optimize performance',
-              ],
-            };
+        for (
+          let pass = 0;
+          list.length < 2 + contentSlots &&
+          pass < Math.max(...sectionCandidates.map((items) => items.length), 0);
+          pass++
+        ) {
+          for (const candidates of sectionCandidates) {
+            const candidate = candidates[pass];
+            if (!candidate || list.length >= 2 + contentSlots) continue;
+            if (usedTitles.has(candidate.slideTitle.toLowerCase())) continue;
+            usedTitles.add(candidate.slideTitle.toLowerCase());
+            list.push(candidate);
           }
-
-          list.push({
-            id: `slide-heading-${idx}`,
-            layoutType,
-            slideTitle: heading,
-            bindings,
-          });
-        });
-
-        while (list.length < maxSlides - 1) {
-          const idx = list.length;
-          list.push({
-            id: `slide-extra-${idx}`,
-            layoutType: 'TITLE_BULLETS',
-            slideTitle: `Concept Expansion ${idx}`,
-            bindings: {
-              bullets: [
-                'Detailed discussion of theoretical implications',
-                'Practical edge cases to consider',
-              ],
-            },
-          });
         }
       } else {
         const fallbacks: Array<{
@@ -249,7 +556,7 @@ export function usePresentation(options: {
           },
         ];
 
-        const count = Math.min(availableSlots, fallbacks.length);
+        const count = Math.min(contentSlots, fallbacks.length);
         for (let i = 0; i < count; i++) {
           list.push({
             id: `slide-fallback-${i}`,
@@ -258,6 +565,19 @@ export function usePresentation(options: {
             bindings: fallbacks[i].bindings,
           });
         }
+      }
+
+      if (shouldIncludeConclusion) {
+        list.push({
+          id: 'slide-conclusion',
+          layoutType: 'CONCLUSION_SUMMARY',
+          slideTitle: 'Key Takeaways',
+          bindings: {
+            summary_points: dedupeStrings(
+              sections.flatMap((section) => buildSectionPoints(section, 1, 2))
+            ).slice(0, 4),
+          },
+        });
       }
 
       list.push({
@@ -270,7 +590,7 @@ export function usePresentation(options: {
         },
       });
 
-      return list;
+      return normalizePlannedSlides(list, content, title);
     },
     [content, title]
   );
@@ -334,7 +654,9 @@ export function usePresentation(options: {
                   bindings: s.bindings || {},
                 })
               );
-              setPlannedSlides(slidesWithIds);
+              setPlannedSlides(
+                normalizePlannedSlides(slidesWithIds, content, title)
+              );
               if (event.recommendedCollection) {
                 setRecommendedCollection(event.recommendedCollection);
               }
@@ -350,6 +672,9 @@ export function usePresentation(options: {
       console.error(
         'API Slide Planning stream failed, falling back to local simulation:',
         error
+      );
+      toast.error(
+        'AI planning was unavailable, so a local lesson-based outline was created instead.'
       );
       setTimeout(() => {
         const outlines = generateOutlines(instructions, duration);
