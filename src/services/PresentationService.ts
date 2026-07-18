@@ -60,12 +60,102 @@ const STYLE_COLLECTIONS: Record<string, string> = {
     'Black startup pitch deck with oversized white typography, electric blue and violet light trails, glossy gradient pills, and contact-footer details — startup pitches, business proposals, tech products, investor decks, and modern company presentations.',
 };
 
+const slideBindingsSchema = z.object({
+  subtitle: z.string().optional(),
+  author: z.string().optional(),
+  sub_module_name: z.string().optional(),
+  bullets: z.array(z.string()).optional(),
+  items: z.array(z.string()).optional(),
+  steps: z.array(z.string()).optional(),
+  summary_points: z.array(z.string()).optional(),
+  action_items: z.array(z.string()).optional(),
+  left_col_title: z.string().optional(),
+  left_col_text: z.array(z.string()).optional(),
+  right_col_title: z.string().optional(),
+  right_col_text: z.array(z.string()).optional(),
+  quote: z.string().optional(),
+  author_or_source: z.string().optional(),
+  metrics: z
+    .array(
+      z.object({
+        value: z.string(),
+        label: z.string(),
+      })
+    )
+    .optional(),
+  chart_type: z.enum(['bar', 'line', 'pie']).optional(),
+  chart_data: z
+    .array(
+      z.object({
+        label: z.string(),
+        value: z.number(),
+      })
+    )
+    .optional(),
+  insight_text: z.string().optional(),
+  headers: z.array(z.string()).optional(),
+  rows: z.array(z.array(z.string())).optional(),
+  image_prompt_description: z.string().optional(),
+  body_text: z.string().optional(),
+  statement: z.string().optional(),
+  events: z
+    .array(
+      z.object({
+        date_or_step: z.string(),
+        description: z.string(),
+      })
+    )
+    .optional(),
+  sources: z
+    .array(
+      z.object({
+        title: z.string(),
+        url: z.string(),
+        summary: z.string().optional(),
+      })
+    )
+    .optional(),
+  levels: z
+    .array(
+      z.object({
+        title: z.string(),
+        description: z.string(),
+      })
+    )
+    .optional(),
+  stages: z
+    .array(
+      z.object({
+        title: z.string(),
+        description: z.string(),
+      })
+    )
+    .optional(),
+  process_steps: z
+    .array(
+      z.object({
+        title: z.string(),
+        description: z.string(),
+      })
+    )
+    .optional(),
+  phases: z
+    .array(
+      z.object({
+        title: z.string(),
+        description: z.string(),
+      })
+    )
+    .optional(),
+  footer_note: z.string().optional(),
+});
+
 export const presentationPlanSchema = z.object({
   slides: z.array(
     z.object({
       layoutType: z.string(),
       slideTitle: z.string(),
-      bindings: z.record(z.string(), z.any()),
+      bindings: slideBindingsSchema,
     })
   ),
   // Style collection the AI judged best-fitting for the lesson (optional).

@@ -5,6 +5,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Download,
+  ListPlus,
   Maximize2,
   Minimize2,
   Plus,
@@ -12,12 +13,10 @@ import {
   Sparkles,
   Trash2,
   X,
-  ListPlus,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { SlideItemEditor } from './slide-item-editor';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -38,6 +37,7 @@ import {
   useUpdateSlideHtml,
 } from '../use-lesson';
 import { type PlannedSlide, usePresentation } from '../use-presentation';
+import { SlideItemEditor } from './slide-item-editor';
 import { TemplateManagerDialog } from './template-manager-dialog';
 
 const formatLayoutName = (layout: string, t: any) => {
@@ -133,6 +133,11 @@ export function LessonPresentation({
 
   const updateSlideHtml = useUpdateSlideHtml();
 
+  const plannedSlidesRef = useRef(plannedSlides);
+  useEffect(() => {
+    plannedSlidesRef.current = plannedSlides;
+  }, [plannedSlides]);
+
   /** Swap a re-rendered slide SVG into the preview iframe (namespacing its
    * ids so clipPaths/gradients don't collide with other slides). */
   const applySvgToPreviewSlide = useCallback((index: number, svg: string) => {
@@ -223,6 +228,30 @@ export function LessonPresentation({
       console.log(
         '[VisualEditor] Accessed iframe contentDocument successfully'
       );
+
+      // Try to load plannedSlides from script tag in S3 HTML
+      const metaEl = doc.querySelector('#slide-plan-metadata');
+      console.log(metaEl, 'metaEl');
+      if (metaEl) {
+        try {
+          const meta = JSON.parse(metaEl.textContent || '{}');
+          if (Array.isArray(meta.slides) && meta.slides.length > 0) {
+            if (plannedSlidesRef.current.length === 0) {
+              console.log(
+                '[VisualEditor] Restored plannedSlides from HTML metadata:',
+                meta.slides
+              );
+              console.log(meta.slides, 'hello');
+              setPlannedSlides(meta.slides);
+            }
+          }
+        } catch (err) {
+          console.error(
+            '[VisualEditor] Failed to parse slide metadata script tag:',
+            err
+          );
+        }
+      }
 
       // Inject temporary styles for visual feedback on editable SVG text elements
       if (!doc.querySelector('style[data-slide-editor]')) {
@@ -399,6 +428,21 @@ export function LessonPresentation({
     clone.querySelectorAll('textarea[data-active-editor]').forEach((el) => {
       el.remove();
     });
+
+    // Embed the latest plannedSlides metadata JSON into the HTML file
+    let metaEl = clone.querySelector('#slide-plan-metadata');
+    if (!metaEl) {
+      metaEl = doc.createElement('script');
+      metaEl.id = 'slide-plan-metadata';
+      metaEl.setAttribute('type', 'application/json');
+      const body = clone.querySelector('body');
+      if (body) {
+        body.appendChild(metaEl);
+      } else {
+        clone.appendChild(metaEl);
+      }
+    }
+    metaEl.textContent = JSON.stringify({ slides: plannedSlidesRef.current });
 
     const html = `<!DOCTYPE html>\n${clone.outerHTML}`;
 
