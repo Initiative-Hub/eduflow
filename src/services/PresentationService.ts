@@ -237,10 +237,19 @@ ${
     : ''
 }
 NARRATIVE & STRUCTURE
-- Build a coherent story arc, not a pile of bullet slides.
-- Slide 1 MUST be 'TITLE_SLIDE'. Slide 2 SHOULD be 'AGENDA_OUTLINE' summarizing what the deck covers (unless the deck is very short, ≤3 slides).
-- Use 'SECTION_HEADER' to transition between major parts of longer decks.
-- End the deck with a wrap-up: a 'CONCLUSION_SUMMARY' of key takeaways, and where it fits a 'CALL_TO_ACTION', 'QA_CONTACT', or 'REFERENCES_LIST'.
+- Build a coherent story arc following a standard corporate/educational slide deck structure:
+  1. Slide 1 MUST be 'TITLE_SLIDE'.
+  2. Slide 2 MUST be 'AGENDA_OUTLINE' summarizing the main topics covered in the deck.
+  3. Divide the presentation into 2 to 4 logical sections/sub-topics based on the lesson contents.
+  4. Introduce each section using a 'SECTION_HEADER' slide (a big title divider slide).
+  5. Follow each 'SECTION_HEADER' with 2 to 4 detailed content slides (like 'TWO_COLUMN_SPLIT', 'TITLE_BULLETS', 'STEP_BY_STEP', 'KPI_BIG_NUMBER', 'TIMELINE_MILESTONES', 'STATEMENT_IMAGE', etc.) explaining the concepts in that section.
+  6. End the presentation with a wrap-up sequence: a 'CONCLUSION_SUMMARY' slide of key takeaways, and a final closing slide ('QA_CONTACT', 'CALL_TO_ACTION', or 'REFERENCES_LIST').
+- STRICT STRUCTURE ENFORCEMENT: The slide sequence MUST strictly alternate as:
+  \`[TITLE_SLIDE] -> [AGENDA_OUTLINE] -> [SECTION_HEADER (Topic A)] -> [2–4 Content Slides (Topic A)] -> [SECTION_HEADER (Topic B)] -> [2–4 Content Slides (Topic B)] -> ... -> [CONCLUSION_SUMMARY] -> [Final Closing Slide]\`
+  NEVER put two 'SECTION_HEADER' slides consecutively.
+  NEVER skip 'SECTION_HEADER' dividers for long decks (>6 slides).
+- STRICT VARIETY CONSTRAINT: For decks >5 slides, you MUST use at least 4 distinct layoutTypes. NEVER use the same layoutType for more than 2 slides in a row. Forbid layout monotony; distribute concepts across list slides, diagram layouts (PYRAMID_LEVELS, FUNNEL_STAGES, PROCESS_ARROWS, CIRCLE_CYCLE), comparisons (TWO_COLUMN_SPLIT), and text/media splits.
+- UNIQUE HEADLINES: EVERY slideTitle must be a highly descriptive, unique, content-specific headline summarizing that slide's specific concept (e.g. "T-Test Formula Requirements", "Practical P-Value Interpretation"). NEVER use repetitive, generic sequential titles like "Concept Expansion 1", "Concept Expansion 2", etc.
 CHOOSE THE BEST LAYOUT FOR EACH IDEA (do not default everything to TITLE_BULLETS — aim for variety):
 - Hard numbers, stats, metrics, KPIs → 'KPI_BIG_NUMBER' (2–4 metrics with real values + labels).
 - Numeric data worth comparing across categories → 'CHART_INSIGHT' (pick bar/line/pie, 3–5 data points, plus a one-sentence insight).

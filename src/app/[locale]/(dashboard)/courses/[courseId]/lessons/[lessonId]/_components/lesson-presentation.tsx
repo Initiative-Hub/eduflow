@@ -159,6 +159,23 @@ export function LessonPresentation({
       target.innerHTML = safe;
     }
   }, []);
+
+  const handleEditorSlideChange = useCallback((index: number) => {
+    const doc = iframeRef.current?.contentDocument;
+    if (doc) {
+      const slides = doc.querySelectorAll('.slide');
+      slides.forEach((s, k) => {
+        s.classList.remove('active');
+        if (k === index) {
+          s.classList.add('active');
+        }
+      });
+      const counter = doc.getElementById('counter');
+      if (counter) {
+        counter.textContent = `${index + 1} / ${slides.length}`;
+      }
+    }
+  }, []);
   const isGamma = !!deckUrl?.includes('gamma.app');
 
   const [isUploadOpen, setIsUploadOpen] = useState(false);
@@ -2223,6 +2240,7 @@ export function LessonPresentation({
                       )
                     }
                     onSlideRendered={applySvgToPreviewSlide}
+                    onSelectedSlideChange={handleEditorSlideChange}
                   />
                 </div>
               )}

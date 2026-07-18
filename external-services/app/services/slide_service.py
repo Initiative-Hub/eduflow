@@ -67,11 +67,16 @@ def custom_select_and_fill_slide(variants, slide_content, **kwargs):
     variant = res.get("variant")
     texts = res.get("texts") or {}
 
-    # Overwrite LLM-generated values with input bindings if they exist
-    input_bindings = slide_content.get("bindings") or {}
+    # Check both raw (unflattened) and flat bindings to support both multi-line
+    # array placeholders (like "bullets", "items") and individual slot placeholders
+    raw_bindings = slide_content.get("raw_bindings") or {}
+    flat_bindings = slide_content.get("bindings") or {}
+
     for key in variant.placeholders:
-        if key in input_bindings:
-            texts[key] = input_bindings[key]
+        if key in raw_bindings:
+            texts[key] = raw_bindings[key]
+        elif key in flat_bindings:
+            texts[key] = flat_bindings[key]
 
     res["texts"] = texts
     return res
@@ -140,22 +145,22 @@ def flatten_slide_bindings(category: str, slide_title: str, bindings: dict) -> d
 
     # 1. Flatten AGENDA_OUTLINE: items -> items.1, items.2, etc.
     if "items" in bindings and isinstance(bindings["items"], list):
-        for idx, item in enumerate(bindings["items"][:5], 1):
+        for idx, item in enumerate(bindings["items"][:10], 1):
             flat[f"items.{idx}"] = str(item)
             flat[f"item_{idx}"] = str(item)
 
     # 2. Flatten TITLE_BULLETS: bullets -> bullets.1, bullets.2, etc.
     if "bullets" in bindings and isinstance(bindings["bullets"], list):
-        for idx, item in enumerate(bindings["bullets"][:5], 1):
+        for idx, item in enumerate(bindings["bullets"][:10], 1):
             flat[f"bullets.{idx}"] = str(item)
             flat[f"bullet_{idx}"] = str(item)
 
     # 3. Flatten TWO_COLUMN_SPLIT: left_col_text and right_col_text arrays
     if "left_col_text" in bindings and isinstance(bindings["left_col_text"], list):
-        for idx, item in enumerate(bindings["left_col_text"][:5], 1):
+        for idx, item in enumerate(bindings["left_col_text"][:10], 1):
             flat[f"left_col_text.{idx}"] = str(item)
     if "right_col_text" in bindings and isinstance(bindings["right_col_text"], list):
-        for idx, item in enumerate(bindings["right_col_text"][:5], 1):
+        for idx, item in enumerate(bindings["right_col_text"][:10], 1):
             flat[f"right_col_text.{idx}"] = str(item)
 
     # 4. Flatten BIG_QUOTE_TAKEAWAY: quote textwrap
@@ -166,14 +171,14 @@ def flatten_slide_bindings(category: str, slide_title: str, bindings: dict) -> d
 
     # 5. Flatten KPI_BIG_NUMBER: metrics -> stat_1, label_1, etc.
     if "metrics" in bindings and isinstance(bindings["metrics"], list):
-        for idx, metric in enumerate(bindings["metrics"][:3], 1):
+        for idx, metric in enumerate(bindings["metrics"][:6], 1):
             if isinstance(metric, dict):
                 flat[f"stat_{idx}"] = str(metric.get("value", ""))
                 flat[f"label_{idx}"] = str(metric.get("label", ""))
 
     # 6. Flatten CHART_INSIGHT: chart_data & insight_text wrap
     if "chart_data" in bindings and isinstance(bindings["chart_data"], list):
-        for idx, data_point in enumerate(bindings["chart_data"][:4], 1):
+        for idx, data_point in enumerate(bindings["chart_data"][:10], 1):
             if isinstance(data_point, dict):
                 flat[f"chart_label_{idx}"] = str(data_point.get("label", ""))
                 flat[f"chart_value_{idx}"] = str(data_point.get("value", ""))
@@ -184,17 +189,17 @@ def flatten_slide_bindings(category: str, slide_title: str, bindings: dict) -> d
 
     # 7. Flatten DATA_TABLE: headers & rows
     if "headers" in bindings and isinstance(bindings["headers"], list):
-        for idx, header in enumerate(bindings["headers"][:4], 1):
+        for idx, header in enumerate(bindings["headers"][:8], 1):
             flat[f"header_{idx}"] = str(header)
     if "rows" in bindings and isinstance(bindings["rows"], list):
-        for r_idx, row in enumerate(bindings["rows"][:3], 1):
+        for r_idx, row in enumerate(bindings["rows"][:10], 1):
             if isinstance(row, list):
-                for c_idx, val in enumerate(row[:4], 1):
+                for c_idx, val in enumerate(row[:8], 1):
                     flat[f"row_{r_idx}_{c_idx}"] = str(val)
 
     # 8. Flatten TIMELINE_MILESTONES: events date & desc wrap
     if "events" in bindings and isinstance(bindings["events"], list):
-        for idx, ev in enumerate(bindings["events"][:4], 1):
+        for idx, ev in enumerate(bindings["events"][:10], 1):
             if isinstance(ev, dict):
                 flat[f"date_{idx}"] = str(
                     ev.get("date_or_step", "") or ev.get("date", "")
@@ -206,17 +211,17 @@ def flatten_slide_bindings(category: str, slide_title: str, bindings: dict) -> d
 
     # 9. Flatten STEP_BY_STEP: steps -> step_1, step_2, etc.
     if "steps" in bindings and isinstance(bindings["steps"], list):
-        for idx, step in enumerate(bindings["steps"][:4], 1):
+        for idx, step in enumerate(bindings["steps"][:10], 1):
             flat[f"step_{idx}"] = str(step)
 
     # 10. Flatten CONCLUSION_SUMMARY: summary_points -> summary_points.1, etc.
     if "summary_points" in bindings and isinstance(bindings["summary_points"], list):
-        for idx, pt in enumerate(bindings["summary_points"][:4], 1):
+        for idx, pt in enumerate(bindings["summary_points"][:10], 1):
             flat[f"summary_points.{idx}"] = str(pt)
 
     # 11. Flatten CALL_TO_ACTION: action_items -> action_items.1, etc.
     if "action_items" in bindings and isinstance(bindings["action_items"], list):
-        for idx, item in enumerate(bindings["action_items"][:4], 1):
+        for idx, item in enumerate(bindings["action_items"][:10], 1):
             flat[f"action_items.{idx}"] = str(item)
 
     # 12. Flatten QA_CONTACT: footer_note
@@ -227,7 +232,7 @@ def flatten_slide_bindings(category: str, slide_title: str, bindings: dict) -> d
 
     # 13. Flatten REFERENCES_LIST: sources -> source_title_1, source_url_1
     if "sources" in bindings and isinstance(bindings["sources"], list):
-        for idx, src in enumerate(bindings["sources"][:4], 1):
+        for idx, src in enumerate(bindings["sources"][:10], 1):
             if isinstance(src, dict):
                 flat[f"source_title_{idx}"] = str(src.get("title", ""))
                 flat[f"source_url_{idx}"] = str(src.get("url", ""))
@@ -249,7 +254,7 @@ def flatten_slide_bindings(category: str, slide_title: str, bindings: dict) -> d
     #     flattener covers every size.
     for diagram_key in ("levels", "stages", "process_steps", "phases"):
         if diagram_key in bindings and isinstance(bindings[diagram_key], list):
-            for idx, item in enumerate(bindings[diagram_key][:6], 1):
+            for idx, item in enumerate(bindings[diagram_key][:10], 1):
                 if isinstance(item, dict):
                     flat[f"title_{idx}"] = str(item.get("title", ""))
                     desc = str(item.get("description", ""))
@@ -529,18 +534,28 @@ class SlideService:
             # Ensure category field is populated for slide_skills resolver
             slide["category"] = category
 
-            # Diagram families come in per-count variants (tiers_3..5,
-            # stages_3..5, steps_3..5, phases_4..6). Expose the item count as
-            # talking_points so slide_skills' capacity shortlist picks the
-            # variant whose level count matches the content exactly.
-            for diagram_key in ("levels", "stages", "process_steps", "phases"):
+            # Diagram and list families come in per-count variants. Expose the item
+            # count as talking_points so slide_skills' capacity shortlist picks the
+            # variant whose level/slot count matches the content exactly.
+            list_keys = (
+                "levels", "stages", "process_steps", "phases",
+                "items", "bullets", "steps", "summary_points", "action_items",
+                "metrics", "events", "chart_data", "sources"
+            )
+            for diagram_key in list_keys:
                 items = bindings.get(diagram_key)
                 if isinstance(items, list) and items:
                     slide["talking_points"] = [
-                        str(it.get("title", "")) if isinstance(it, dict) else str(it)
+                        str(it.get("title", "") or it.get("label", "") or next(iter(it.values()), ""))
+                        if isinstance(it, dict)
+                        else str(it)
                         for it in items
                     ]
                     break
+
+            # Expose raw bindings for monkeypatched custom_select_and_fill_slide
+            import json
+            slide["raw_bindings"] = json.loads(json.dumps(bindings))
 
             # Flatten bindings to map to flat SVG placeholders
             bindings = flatten_slide_bindings(category, slide_title, bindings)
@@ -728,14 +743,28 @@ class SlideService:
 
         slide["category"] = category
 
-        for diagram_key in ("levels", "stages", "process_steps", "phases"):
+        # Diagram and list families come in per-count variants. Expose the item
+        # count as talking_points so slide_skills' capacity shortlist picks the
+        # variant whose level/slot count matches the content exactly.
+        list_keys = (
+            "levels", "stages", "process_steps", "phases",
+            "items", "bullets", "steps", "summary_points", "action_items",
+            "metrics", "events", "chart_data", "sources"
+        )
+        for diagram_key in list_keys:
             items = bindings.get(diagram_key)
             if isinstance(items, list) and items:
                 slide["talking_points"] = [
-                    str(it.get("title", "")) if isinstance(it, dict) else str(it)
+                    str(it.get("title", "") or it.get("label", "") or next(iter(it.values()), ""))
+                    if isinstance(it, dict)
+                    else str(it)
                     for it in items
                 ]
                 break
+
+        # Expose raw bindings for monkeypatched custom_select_and_fill_slide
+        import json
+        slide["raw_bindings"] = json.loads(json.dumps(bindings))
 
         bindings = flatten_slide_bindings(category, slide_title, bindings)
 
@@ -872,6 +901,9 @@ class SlideService:
                 lib.categories[key],
                 slide,
             )
+            logger.info(f"===> RENDER_SLIDE RESULT: {result.get('variant').name if result else None}")
+            logger.info(f"===> RENDER_SLIDE INPUT TALKING POINTS: {slide.get('talking_points')}")
+            logger.info(f"===> RENDER_SLIDE INPUT BINDINGS: {slide.get('bindings')}")
             if not result:
                 raise ValueError(f"No variant selected for layout {category}")
 

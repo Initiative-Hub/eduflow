@@ -1,7 +1,7 @@
 'use client';
 
 import { Loader2, Plus, Trash2, Wand2 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,27 +22,27 @@ const ARRAY_FIELDS: Record<
   string,
   { key: string; max: number; fields: string[] }
 > = {
-  TITLE_BULLETS: { key: 'bullets', max: 5, fields: ['*'] },
-  AGENDA_OUTLINE: { key: 'items', max: 5, fields: ['*'] },
-  STEP_BY_STEP: { key: 'steps', max: 4, fields: ['*'] },
-  CONCLUSION_SUMMARY: { key: 'summary_points', max: 4, fields: ['*'] },
-  CALL_TO_ACTION: { key: 'action_items', max: 4, fields: ['*'] },
-  KPI_BIG_NUMBER: { key: 'metrics', max: 3, fields: ['value', 'label'] },
+  TITLE_BULLETS: { key: 'bullets', max: 10, fields: ['*'] },
+  AGENDA_OUTLINE: { key: 'items', max: 10, fields: ['*'] },
+  STEP_BY_STEP: { key: 'steps', max: 10, fields: ['*'] },
+  CONCLUSION_SUMMARY: { key: 'summary_points', max: 10, fields: ['*'] },
+  CALL_TO_ACTION: { key: 'action_items', max: 10, fields: ['*'] },
+  KPI_BIG_NUMBER: { key: 'metrics', max: 6, fields: ['value', 'label'] },
   TIMELINE_MILESTONES: {
     key: 'events',
-    max: 4,
+    max: 10,
     fields: ['date_or_step', 'description'],
   },
-  CHART_INSIGHT: { key: 'chart_data', max: 4, fields: ['label', 'value'] },
-  REFERENCES_LIST: { key: 'sources', max: 4, fields: ['title', 'url'] },
-  PYRAMID_LEVELS: { key: 'levels', max: 5, fields: ['title', 'description'] },
-  FUNNEL_STAGES: { key: 'stages', max: 5, fields: ['title', 'description'] },
+  CHART_INSIGHT: { key: 'chart_data', max: 10, fields: ['label', 'value'] },
+  REFERENCES_LIST: { key: 'sources', max: 10, fields: ['title', 'url'] },
+  PYRAMID_LEVELS: { key: 'levels', max: 10, fields: ['title', 'description'] },
+  FUNNEL_STAGES: { key: 'stages', max: 10, fields: ['title', 'description'] },
   PROCESS_ARROWS: {
     key: 'process_steps',
-    max: 5,
+    max: 10,
     fields: ['title', 'description'],
   },
-  CIRCLE_CYCLE: { key: 'phases', max: 6, fields: ['title', 'description'] },
+  CIRCLE_CYCLE: { key: 'phases', max: 10, fields: ['title', 'description'] },
 };
 
 interface SlideItemEditorProps {
@@ -52,6 +52,8 @@ interface SlideItemEditorProps {
   onSlideRendered: (index: number, svg: string) => void;
   /** Persist updated bindings back into plannedSlides state. */
   onBindingsChanged: (index: number, bindings: Record<string, any>) => void;
+  /** Triggered when the user changes slide selection in the editor panel. */
+  onSelectedSlideChange?: (index: number) => void;
 }
 
 export function SlideItemEditor({
@@ -59,6 +61,7 @@ export function SlideItemEditor({
   collection,
   onSlideRendered,
   onBindingsChanged,
+  onSelectedSlideChange,
 }: SlideItemEditorProps) {
   const editable = useMemo(
     () =>
@@ -71,6 +74,12 @@ export function SlideItemEditor({
     editable.length > 0 ? editable[0].index : null
   );
   const [isApplying, setIsApplying] = useState(false);
+
+  useEffect(() => {
+    if (selected !== null) {
+      onSelectedSlideChange?.(selected);
+    }
+  }, [selected, onSelectedSlideChange]);
 
   if (editable.length === 0) {
     return (
