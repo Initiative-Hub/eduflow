@@ -21,7 +21,9 @@ AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "minioadmin")
 AWS_S3_ENDPOINT = os.getenv("AWS_S3_ENDPOINT", "")
 AWS_S3_BUCKET = os.getenv("AWS_S3_BUCKET", "eduflow-inventory")
 AWS_S3_TEMPLATES_BUCKET = os.getenv("AWS_S3_TEMPLATES_BUCKET", "eduflow-template")
-AWS_S3_DEFAULT_TEMPLATES_BUCKET = os.getenv("AWS_S3_DEFAULT_TEMPLATES_BUCKET", "eduflow-default-template")
+AWS_S3_DEFAULT_TEMPLATES_BUCKET = os.getenv(
+    "AWS_S3_DEFAULT_TEMPLATES_BUCKET", "eduflow-default-template"
+)
 
 # Handle Docker environment resolving localhost to minio container name
 if os.path.exists("/.dockerenv") and AWS_S3_ENDPOINT:

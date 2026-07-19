@@ -1,9 +1,6 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { ButtonGroup, ButtonGroupText } from '@/components/ui/button-group';
-import { cn } from '@/lib/utils';
-import type { SpeechResult as SpeechResult } from 'ai';
+import type { SpeechResult } from 'ai';
 import {
   MediaControlBar,
   MediaController,
@@ -17,6 +14,9 @@ import {
   MediaVolumeRange,
 } from 'media-chrome/react';
 import type { ComponentProps, CSSProperties } from 'react';
+import { Button } from '@/components/ui/button';
+import { ButtonGroup, ButtonGroupText } from '@/components/ui/button-group';
+import { cn } from '@/lib/utils';
 
 export type AudioPlayerProps = Omit<
   ComponentProps<typeof MediaController>,

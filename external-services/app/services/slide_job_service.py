@@ -1,3 +1,5 @@
+import json
+import time
 import uuid
 from pathlib import Path
 from typing import Any, Dict
@@ -47,6 +49,23 @@ class SlideJobService:
             )
 
             s3_key = f"slides/{job_id}.html"
+            if out_path.exists():
+                html = out_path.read_text(encoding="utf-8")
+                slides_meta = []
+                for idx, s in enumerate(result.get("slides", [])):
+                    slides_meta.append({
+                        "id": f"slide-{idx}-{int(time.time() * 1000)}",
+                        "layoutType": s.get("category") or s.get("layoutType") or "",
+                        "slideTitle": s.get("slideTitle") or "",
+                        "bindings": s.get("bindings") or {},
+                    })
+                metadata_script = f'<script id="slide-plan-metadata" type="application/json">{json.dumps({"slides": slides_meta})}</script>'
+                if "</body>" in html:
+                    html = html.replace("</body>", f"{metadata_script}\n</body>")
+                else:
+                    html += f"\n{metadata_script}"
+                out_path.write_text(html, encoding="utf-8")
+
             uploaded = await upload_file_to_s3(out_path, s3_key)
             if uploaded and out_path.exists():
                 out_path.unlink()
@@ -90,6 +109,23 @@ class SlideJobService:
             )
 
             s3_key = f"slides/{job_id}.html"
+            if out_path.exists():
+                html = out_path.read_text(encoding="utf-8")
+                slides_meta = []
+                for idx, s in enumerate(req.slides):
+                    slides_meta.append({
+                        "id": f"slide-{idx}-{int(time.time() * 1000)}",
+                        "layoutType": s.category,
+                        "slideTitle": s.slideTitle or "",
+                        "bindings": s.bindings or {},
+                    })
+                metadata_script = f'<script id="slide-plan-metadata" type="application/json">{json.dumps({"slides": slides_meta})}</script>'
+                if "</body>" in html:
+                    html = html.replace("</body>", f"{metadata_script}\n</body>")
+                else:
+                    html += f"\n{metadata_script}"
+                out_path.write_text(html, encoding="utf-8")
+
             uploaded = await upload_file_to_s3(out_path, s3_key)
             if uploaded and out_path.exists():
                 out_path.unlink()

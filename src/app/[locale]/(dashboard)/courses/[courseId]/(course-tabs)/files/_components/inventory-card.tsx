@@ -15,6 +15,12 @@ import {
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
+import type { InventoryEntry } from '@/app/[locale]/(dashboard)/inventory/inventory.types';
+import {
+  formatDate,
+  formatFileSize,
+  getEntryTypeLabel,
+} from '@/app/[locale]/(dashboard)/inventory/inventory.utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -33,12 +39,6 @@ import {
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { courseFilesService } from '../course-files.service';
-import type { InventoryEntry } from '@/app/[locale]/(dashboard)/inventory/inventory.types';
-import {
-  formatDate,
-  formatFileSize,
-  getEntryTypeLabel,
-} from '@/app/[locale]/(dashboard)/inventory/inventory.utils';
 
 interface FileCardProps {
   entry: InventoryEntry;

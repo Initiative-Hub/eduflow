@@ -5,6 +5,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Download,
+  ListPlus,
   Maximize2,
   Minimize2,
   Plus,
@@ -35,7 +36,12 @@ import {
   useSlideTemplates,
   useUpdateSlideHtml,
 } from '../use-lesson';
-import { type PlannedSlide, usePresentation } from '../use-presentation';
+import {
+  normalizeSlideBindings,
+  type PlannedSlide,
+  usePresentation,
+} from '../use-presentation';
+import { SlideItemEditor } from './slide-item-editor';
 import { TemplateManagerDialog } from './template-manager-dialog';
 
 const formatLayoutName = (layout: string, t: any) => {
@@ -71,6 +77,57 @@ const formatLayoutName = (layout: string, t: any) => {
 
 const selectItemHighlightClassName =
   'focus:bg-primary/20 focus:text-foreground focus:**:!text-foreground data-highlighted:bg-primary/10 data-highlighted:text-foreground data-highlighted:**:!text-foreground';
+
+const QUALITATIVE_CHART_SCORES: Record<string, number> = {
+  'very low': 1,
+  low: 2,
+  medium: 3,
+  moderate: 3,
+  high: 4,
+  'very high': 5,
+  strong: 4,
+  weak: 2,
+  critical: 5,
+  stable: 3,
+};
+
+const parseChartMagnitude = (value: unknown): number | null => {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value !== 'string') return null;
+
+  const normalized = value.trim().replace(/\s+/g, ' ').toLowerCase();
+  if (!normalized) return null;
+
+  for (const [label, score] of Object.entries(QUALITATIVE_CHART_SCORES)) {
+    if (normalized.includes(label)) return score;
+  }
+
+  const rangeMatch = normalized.match(
+    /(-?\d+(?:\.\d+)?)\s*[-–]\s*(-?\d+(?:\.\d+)?)/
+  );
+  if (rangeMatch) {
+    const start = Number(rangeMatch[1]);
+    const end = Number(rangeMatch[2]);
+    if (Number.isFinite(start) && Number.isFinite(end)) {
+      return (start + end) / 2;
+    }
+  }
+
+  const numericMatch = normalized.match(/-?\d+(?:\.\d+)?/);
+  if (numericMatch) {
+    const parsed = Number(numericMatch[0]);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  return null;
+};
+
+const getChartDisplayValue = (item: any) => {
+  const explicit =
+    typeof item?.display_value === 'string' ? item.display_value.trim() : '';
+  if (explicit) return explicit;
+  return String(item?.value ?? '').trim();
+};
 
 interface LessonPresentationProps {
   isOpen: boolean;
@@ -113,15 +170,68 @@ export function LessonPresentation({
     selectedCollection,
     setSelectedCollection,
     recommendedCollection,
+    generatorType,
+    setGeneratorType,
+    gammaTheme,
+    setGammaTheme,
+    exportUrl,
+    handleGenerateGamma,
   } = usePresentation({ title, content, isOpen, onClose });
 
   const [isDownloadingPptx, setIsDownloadingPptx] = useState(false);
   const [iframeVersion, setIframeVersion] = useState(0);
+  // Interactive item editor panel ("+ Add item" on generated slides)
+  const [showItemEditor, setShowItemEditor] = useState(false);
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const deckId = deckUrl ? deckUrl.split('/').pop() : undefined;
 
   const updateSlideHtml = useUpdateSlideHtml();
+
+  const plannedSlidesRef = useRef(plannedSlides);
+  useEffect(() => {
+    plannedSlidesRef.current = plannedSlides;
+  }, [plannedSlides]);
+
+  /** Swap a re-rendered slide SVG into the preview iframe (namespacing its
+   * ids so clipPaths/gradients don't collide with other slides). */
+  const applySvgToPreviewSlide = useCallback((index: number, svg: string) => {
+    const doc = iframeRef.current?.contentDocument;
+    const target = doc?.querySelectorAll('.slide')?.[index];
+    if (!doc || !target) {
+      toast.error('Preview not ready — reload the deck and try again');
+      return;
+    }
+    const prefix = `edit${index}x${Date.now().toString(36)}_`;
+    const safe = svg
+      .replace(/id="([^"]+)"/g, `id="${prefix}$1"`)
+      .replace(/url\(#([^)]+)\)/g, `url(#${prefix}$1)`)
+      .replace(/href="#([^"]+)"/g, `href="#${prefix}$1"`);
+    const old = target.querySelector('svg');
+    if (old) {
+      old.outerHTML = safe;
+    } else {
+      target.innerHTML = safe;
+    }
+  }, []);
+
+  const handleEditorSlideChange = useCallback((index: number) => {
+    const doc = iframeRef.current?.contentDocument;
+    if (doc) {
+      const slides = doc.querySelectorAll('.slide');
+      slides.forEach((s, k) => {
+        s.classList.remove('active');
+        if (k === index) {
+          s.classList.add('active');
+        }
+      });
+      const counter = doc.getElementById('counter');
+      if (counter) {
+        counter.textContent = `${index + 1} / ${slides.length}`;
+      }
+    }
+  }, []);
+  const isGamma = !!deckUrl?.includes('gamma.app');
 
   const [isUploadOpen, setIsUploadOpen] = useState(false);
 
@@ -164,10 +274,14 @@ export function LessonPresentation({
     });
   };
 
-  // Turn text-bearing nodes inside the generated iframe into editable elements.
-  // Injects custom hover & focus dashed/solid styling outline blocks.
   const enableVisualEditing = useCallback(() => {
     console.log('[VisualEditor] enableVisualEditing triggered');
+    if (deckUrl?.includes('gamma.app')) {
+      console.log(
+        '[VisualEditor] Gamma presentation, skipping visual editor injection'
+      );
+      return;
+    }
     try {
       const iframe = iframeRef.current;
       if (!iframe) {
@@ -186,6 +300,30 @@ export function LessonPresentation({
       console.log(
         '[VisualEditor] Accessed iframe contentDocument successfully'
       );
+
+      // Try to load plannedSlides from script tag in S3 HTML
+      const metaEl = doc.querySelector('#slide-plan-metadata');
+      console.log(metaEl, 'metaEl');
+      if (metaEl) {
+        try {
+          const meta = JSON.parse(metaEl.textContent || '{}');
+          if (Array.isArray(meta.slides) && meta.slides.length > 0) {
+            if (plannedSlidesRef.current.length === 0) {
+              console.log(
+                '[VisualEditor] Restored plannedSlides from HTML metadata:',
+                meta.slides
+              );
+              console.log(meta.slides, 'hello');
+              setPlannedSlides(meta.slides);
+            }
+          }
+        } catch (err) {
+          console.error(
+            '[VisualEditor] Failed to parse slide metadata script tag:',
+            err
+          );
+        }
+      }
 
       // Inject temporary styles for visual feedback on editable SVG text elements
       if (!doc.querySelector('style[data-slide-editor]')) {
@@ -298,7 +436,7 @@ export function LessonPresentation({
     } catch (err) {
       console.error('[VisualEditor] Error in enableVisualEditing:', err);
     }
-  }, []);
+  }, [setPlannedSlides, deckUrl?.includes]);
 
   // Manually attach load listeners and check document status to guarantee visual editing binds
   useEffect(() => {
@@ -362,6 +500,21 @@ export function LessonPresentation({
     clone.querySelectorAll('textarea[data-active-editor]').forEach((el) => {
       el.remove();
     });
+
+    // Embed the latest plannedSlides metadata JSON into the HTML file
+    let metaEl = clone.querySelector('#slide-plan-metadata');
+    if (!metaEl) {
+      metaEl = doc.createElement('script');
+      metaEl.id = 'slide-plan-metadata';
+      metaEl.setAttribute('type', 'application/json');
+      const body = clone.querySelector('body');
+      if (body) {
+        body.appendChild(metaEl);
+      } else {
+        clone.appendChild(metaEl);
+      }
+    }
+    metaEl.textContent = JSON.stringify({ slides: plannedSlidesRef.current });
 
     const html = `<!DOCTYPE html>\n${clone.outerHTML}`;
 
@@ -582,14 +735,19 @@ export function LessonPresentation({
                   {Array.isArray(bindings.chart_data) &&
                     bindings.chart_data.map((item: any, idx: number) => {
                       const maxVal = Math.max(
-                        ...bindings.chart_data.map(
-                          (d: any) => Number(d.value) || 1
-                        ),
+                        ...(bindings.chart_data
+                          .map((d: any) => parseChartMagnitude(d.value))
+                          .filter(
+                            (value: number | null): value is number =>
+                              typeof value === 'number' &&
+                              Number.isFinite(value)
+                          ) || [1]),
                         1
                       );
+                      const magnitude = parseChartMagnitude(item.value) || 0;
                       const heightPct = Math.min(
                         100,
-                        Math.max(10, ((Number(item.value) || 0) / maxVal) * 100)
+                        Math.max(10, (magnitude / maxVal) * 100)
                       );
                       return (
                         <div
@@ -602,6 +760,9 @@ export function LessonPresentation({
                           />
                           <span className="mt-1.5 max-w-full truncate font-bold text-[9px] text-muted-foreground">
                             {item.label}
+                          </span>
+                          <span className="max-w-full truncate font-semibold text-[9px] text-primary">
+                            {getChartDisplayValue(item)}
                           </span>
                         </div>
                       );
@@ -879,10 +1040,10 @@ export function LessonPresentation({
           i === idx
             ? {
                 ...s,
-                bindings: {
+                bindings: normalizeSlideBindings(layoutType, slide.slideTitle, {
                   ...s.bindings,
                   [key]: value,
-                },
+                }),
               }
             : s
         )
@@ -1257,17 +1418,34 @@ export function LessonPresentation({
           ? bindings.chart_data
           : [];
         const chartDataStr = chartData
-          .map((d: any) => `${d.label}:${d.value}`)
+          .map(
+            (d: any) =>
+              `${d.label}:${d.value}${d.display_value ? `|${d.display_value}` : ''}`
+          )
           .join('\n');
         const updateChartData = (val: string) => {
           const parsedData = val
             .split('\n')
             .map((line) => {
-              const [label, numStr] = line.split(':');
+              const [chartPart, displayPart] = line.split('|');
+              const separatorIndex = chartPart.indexOf(':');
+              const label =
+                separatorIndex >= 0
+                  ? chartPart.slice(0, separatorIndex)
+                  : chartPart;
+              const rawValue =
+                separatorIndex >= 0 ? chartPart.slice(separatorIndex + 1) : '';
               if (!label) return null;
+              const trimmedDisplay = displayPart?.trim() || '';
+              const trimmedRawValue = rawValue.trim();
               return {
                 label: label.trim(),
-                value: Number(numStr?.trim() || 0),
+                value: parseChartMagnitude(trimmedRawValue) ?? 0,
+                ...(trimmedDisplay
+                  ? { display_value: trimmedDisplay }
+                  : trimmedRawValue && Number.isNaN(Number(trimmedRawValue))
+                    ? { display_value: trimmedRawValue }
+                    : {}),
               };
             })
             .filter(Boolean);
@@ -1296,12 +1474,12 @@ export function LessonPresentation({
               </div>
               <div className="flex flex-col gap-1.5">
                 <span className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider">
-                  Chart Data (Label:Value, one per line)
+                  Chart Data (Label:Value|Display, one per line)
                 </span>
                 <Textarea
                   value={chartDataStr}
                   onChange={(e) => updateChartData(e.target.value)}
-                  placeholder="Q1:20&#10;Q2:80&#10;Q3:45"
+                  placeholder="Mode:4|4.0/5&#10;Dissatisfaction:1.5|1-2 low&#10;Variance Focus:4|High"
                   className="h-24 resize-none rounded-xl border-input bg-card px-4 py-2 text-foreground text-sm"
                 />
               </div>
@@ -1455,30 +1633,55 @@ export function LessonPresentation({
         <div className="flex items-center gap-2">
           {step === 'generated' && deckUrl && (
             <>
-              <Button
-                variant="default"
-                size="sm"
-                className="h-9 gap-1.5 rounded-lg bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
-                onClick={handleSaveVisualEdits}
-                disabled={updateSlideHtml.isPending}
-              >
-                <Save className="h-4 w-4" />
-                {updateSlideHtml.isPending
-                  ? t('savingHtml')
-                  : t('btnSaveVisual')}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-9 gap-1.5 rounded-lg"
-                onClick={handleDownloadPptx}
-                disabled={isDownloadingPptx}
-              >
-                <Download className="h-4 w-4" />
-                {isDownloadingPptx
-                  ? t('pptxDownloading')
-                  : t('btnDownloadPptx')}
-              </Button>
+              {!isGamma && (
+                <Button
+                  variant={showItemEditor ? 'default' : 'outline'}
+                  size="sm"
+                  className="h-9 gap-1.5 rounded-lg"
+                  onClick={() => setShowItemEditor((v) => !v)}
+                >
+                  <ListPlus className="h-4 w-4" />
+                  Edit items
+                </Button>
+              )}
+              {!isGamma && (
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="h-9 gap-1.5 rounded-lg bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
+                  onClick={handleSaveVisualEdits}
+                  disabled={updateSlideHtml.isPending}
+                >
+                  <Save className="h-4 w-4" />
+                  {updateSlideHtml.isPending
+                    ? t('savingHtml')
+                    : t('btnSaveVisual')}
+                </Button>
+              )}
+              {isGamma && exportUrl ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 gap-1.5 rounded-lg"
+                  onClick={() => window.open(exportUrl, '_blank')}
+                >
+                  <Download className="h-4 w-4" />
+                  {t('btnDownloadPptx')}
+                </Button>
+              ) : !isGamma ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 gap-1.5 rounded-lg"
+                  onClick={handleDownloadPptx}
+                  disabled={isDownloadingPptx}
+                >
+                  <Download className="h-4 w-4" />
+                  {isDownloadingPptx
+                    ? t('pptxDownloading')
+                    : t('btnDownloadPptx')}
+                </Button>
+              ) : null}
               <Button
                 variant="outline"
                 size="sm"
@@ -1517,7 +1720,6 @@ export function LessonPresentation({
         </div>
       </div>
 
-      {/* Render Steps */}
       {step === 'input' && (
         <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col justify-center px-4 py-6">
           <div className="rounded-2xl border border-border/80 bg-card/80 p-6 shadow-2xl backdrop-blur-md md:p-8">
@@ -1528,6 +1730,34 @@ export function LessonPresentation({
             <p className="mb-6 text-muted-foreground text-sm leading-relaxed">
               {t('inputDesc')}
             </p>
+
+            {/* Generator Mode Tabs */}
+            <div className="mb-6 flex rounded-xl bg-muted p-1">
+              <button
+                type="button"
+                onClick={() => setGeneratorType('default')}
+                className={cn(
+                  'flex-1 rounded-lg py-2 text-center font-semibold text-xs transition-all',
+                  generatorType === 'default'
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                {t('tabSystem')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setGeneratorType('gamma')}
+                className={cn(
+                  'flex-1 rounded-lg py-2 text-center font-semibold text-xs transition-all',
+                  generatorType === 'gamma'
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                {t('tabGamma')}
+              </button>
+            </div>
 
             <div className="space-y-4">
               <div className="relative">
@@ -1604,54 +1834,91 @@ export function LessonPresentation({
                 </Select>
               </div>
 
-              <div className="flex flex-col gap-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold text-muted-foreground text-xs uppercase tracking-wider">
-                    Template Style
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setIsUploadOpen(true)}
-                    className="flex items-center gap-1 font-semibold text-primary text-xs hover:underline"
+              {generatorType === 'default' && (
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+                      Template Style
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setIsUploadOpen(true)}
+                      className="flex items-center gap-1 font-semibold text-primary text-xs hover:underline"
+                    >
+                      <Plus className="h-3 w-3" />
+                      Manage Styles
+                    </button>
+                  </div>
+                  <Select
+                    value={selectedCollection}
+                    onValueChange={setSelectedCollection}
                   >
-                    <Plus className="h-3 w-3" />
-                    Manage Styles
-                  </button>
+                    <SelectTrigger className="flex h-11 w-full justify-between rounded-xl border-input bg-muted/30 px-4 py-2.5 text-foreground text-sm">
+                      <SelectValue placeholder="System Default (Starter)" />
+                    </SelectTrigger>
+                    <SelectContent className="border-border bg-popover text-popover-foreground">
+                      <SelectItem
+                        className={selectItemHighlightClassName}
+                        value="auto"
+                      >
+                        ✨ Auto — AI picks from content
+                      </SelectItem>
+                      <SelectItem
+                        className={selectItemHighlightClassName}
+                        value="starter"
+                      >
+                        System Default (Starter)
+                      </SelectItem>
+                      {collections
+                        .filter((c) => c.name !== 'starter')
+                        .map((c) => (
+                          <SelectItem
+                            key={c.name}
+                            className={selectItemHighlightClassName}
+                            value={c.name}
+                          >
+                            {c.name === 'neon_dark'
+                              ? 'Neon Dark Theme'
+                              : c.name}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-                <Select
-                  value={selectedCollection}
-                  onValueChange={setSelectedCollection}
-                >
-                  <SelectTrigger className="flex h-11 w-full justify-between rounded-xl border-input bg-muted/30 px-4 py-2.5 text-foreground text-sm">
-                    <SelectValue placeholder="System Default (Starter)" />
-                  </SelectTrigger>
-                  <SelectContent className="border-border bg-popover text-popover-foreground">
-                    <SelectItem
-                      className={selectItemHighlightClassName}
-                      value="auto"
-                    >
-                      ✨ Auto — AI picks from content
-                    </SelectItem>
-                    <SelectItem
-                      className={selectItemHighlightClassName}
-                      value="starter"
-                    >
-                      System Default (Starter)
-                    </SelectItem>
-                    {collections
-                      .filter((c) => c.name !== 'starter')
-                      .map((c) => (
-                        <SelectItem
-                          key={c.name}
-                          className={selectItemHighlightClassName}
-                          value={c.name}
-                        >
-                          {c.name === 'neon_dark' ? 'Neon Dark Theme' : c.name}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              )}
+
+              {generatorType === 'gamma' && (
+                <div className="flex flex-col gap-1.5">
+                  <span className="font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+                    {t('gammaThemeLabel')}
+                  </span>
+                  <Select value={gammaTheme} onValueChange={setGammaTheme}>
+                    <SelectTrigger className="flex h-11 w-full justify-between rounded-xl border-input bg-muted/30 px-4 py-2.5 text-foreground text-sm">
+                      <SelectValue placeholder={t('themeAuto')} />
+                    </SelectTrigger>
+                    <SelectContent className="border-border bg-popover text-popover-foreground">
+                      <SelectItem
+                        className={selectItemHighlightClassName}
+                        value="auto"
+                      >
+                        {t('themeAuto')}
+                      </SelectItem>
+                      <SelectItem
+                        className={selectItemHighlightClassName}
+                        value="light"
+                      >
+                        {t('themeLight')}
+                      </SelectItem>
+                      <SelectItem
+                        className={selectItemHighlightClassName}
+                        value="dark"
+                      >
+                        {t('themeDark')}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               <div>
                 <span className="mb-2 block font-semibold text-muted-foreground text-xs uppercase tracking-wider">
@@ -1691,13 +1958,23 @@ export function LessonPresentation({
               >
                 Cancel
               </Button>
-              <Button
-                onClick={handleStartPlanning}
-                className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2 font-semibold text-primary-foreground hover:bg-primary/90"
-              >
-                {t('btnPlan')}
-                <ArrowRight className="h-4 w-4" />
-              </Button>
+              {generatorType === 'default' ? (
+                <Button
+                  onClick={handleStartPlanning}
+                  className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2 font-semibold text-primary-foreground hover:bg-primary/90"
+                >
+                  {t('btnPlan')}
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleGenerateGamma}
+                  className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2 font-semibold text-primary-foreground hover:bg-primary/90"
+                >
+                  {t('btnGenerateGamma')}
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -1903,52 +2180,103 @@ export function LessonPresentation({
             <Spinner className="h-12 w-12 animate-spin text-primary" />
           </div>
           <h3 className="mb-2 font-bold text-foreground text-xl">
-            {t('generatingText')}
+            {generatorType === 'gamma'
+              ? 'Generating Gamma Presentation'
+              : t('generatingText')}
           </h3>
 
           <div className="mt-6 w-full space-y-3 rounded-xl border border-border bg-muted/30 p-4 text-left">
-            <div className="flex items-center gap-3 text-sm">
-              <span
-                className={cn(
-                  'flex h-5 w-5 items-center justify-center rounded-full font-semibold text-xs',
-                  loaderStep >= 1
-                    ? 'border border-primary/20 bg-primary/10 text-primary'
-                    : 'border border-border bg-muted text-muted-foreground'
-                )}
-              >
-                {loaderStep >= 1 ? '✓' : '1'}
-              </span>
-              <span
-                className={
-                  loaderStep >= 1
-                    ? 'font-medium text-foreground'
-                    : 'text-muted-foreground'
-                }
-              >
-                Designing slide layouts...
-              </span>
-            </div>
-            <div className="flex items-center gap-3 text-sm">
-              <span
-                className={cn(
-                  'flex h-5 w-5 items-center justify-center rounded-full font-semibold text-xs',
-                  loaderStep >= 2
-                    ? 'border border-primary/20 bg-primary/10 text-primary'
-                    : 'border border-border bg-muted text-muted-foreground'
-                )}
-              >
-                {loaderStep >= 2 ? '✓' : '2'}
-              </span>
-              <span
-                className={
-                  loaderStep >= 2
-                    ? 'font-medium text-foreground'
-                    : 'text-muted-foreground'
-                }
-              >
-                Injecting slide contents...
-              </span>
-            </div>
+            {generatorType === 'gamma' ? (
+              <>
+                <div className="flex items-center gap-3 text-sm">
+                  <span
+                    className={cn(
+                      'flex h-5 w-5 items-center justify-center rounded-full font-semibold text-xs',
+                      loaderStep >= 1
+                        ? 'border border-primary/20 bg-primary/10 text-primary'
+                        : 'border border-border bg-muted text-muted-foreground'
+                    )}
+                  >
+                    {loaderStep >= 1 ? '✓' : '1'}
+                  </span>
+                  <span
+                    className={
+                      loaderStep >= 1
+                        ? 'font-medium text-foreground'
+                        : 'text-muted-foreground'
+                    }
+                  >
+                    Connecting to Gamma API...
+                  </span>
+                </div>
+                <div className="flex items-center gap-3 text-sm">
+                  <span
+                    className={cn(
+                      'flex h-5 w-5 items-center justify-center rounded-full font-semibold text-xs',
+                      loaderStep >= 2
+                        ? 'border border-primary/20 bg-primary/10 text-primary'
+                        : 'border border-border bg-muted text-muted-foreground'
+                    )}
+                  >
+                    {loaderStep >= 2 ? '✓' : '2'}
+                  </span>
+                  <span
+                    className={
+                      loaderStep >= 2
+                        ? 'font-medium text-foreground'
+                        : 'text-muted-foreground'
+                    }
+                  >
+                    Designing cards and layouts...
+                  </span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-3 text-sm">
+                  <span
+                    className={cn(
+                      'flex h-5 w-5 items-center justify-center rounded-full font-semibold text-xs',
+                      loaderStep >= 1
+                        ? 'border border-primary/20 bg-primary/10 text-primary'
+                        : 'border border-border bg-muted text-muted-foreground'
+                    )}
+                  >
+                    {loaderStep >= 1 ? '✓' : '1'}
+                  </span>
+                  <span
+                    className={
+                      loaderStep >= 1
+                        ? 'font-medium text-foreground'
+                        : 'text-muted-foreground'
+                    }
+                  >
+                    Designing slide layouts...
+                  </span>
+                </div>
+                <div className="flex items-center gap-3 text-sm">
+                  <span
+                    className={cn(
+                      'flex h-5 w-5 items-center justify-center rounded-full font-semibold text-xs',
+                      loaderStep >= 2
+                        ? 'border border-primary/20 bg-primary/10 text-primary'
+                        : 'border border-border bg-muted text-muted-foreground'
+                    )}
+                  >
+                    {loaderStep >= 2 ? '✓' : '2'}
+                  </span>
+                  <span
+                    className={
+                      loaderStep >= 2
+                        ? 'font-medium text-foreground'
+                        : 'text-muted-foreground'
+                    }
+                  >
+                    Injecting slide contents...
+                  </span>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -1956,19 +2284,56 @@ export function LessonPresentation({
       {step === 'generated' &&
         (deckUrl ? (
           <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col items-center justify-center gap-2 overflow-hidden px-2 py-4">
-            <iframe
-              ref={iframeRef}
-              src={
-                iframeVersion > 0 ? `${deckUrl}?v=${iframeVersion}` : deckUrl
-              }
-              title={title}
-              allow="fullscreen"
-              onLoad={enableVisualEditing}
-              className={cn(
-                'w-full rounded-2xl border border-border bg-card shadow-2xl transition-all duration-300',
-                isFullscreen ? 'h-[82vh]' : 'h-[58vh]'
+            <div className="flex w-full flex-1 gap-2 overflow-hidden">
+              <iframe
+                ref={iframeRef}
+                src={
+                  iframeVersion > 0 ? `${deckUrl}?v=${iframeVersion}` : deckUrl
+                }
+                title={title}
+                allow="fullscreen"
+                onLoad={enableVisualEditing}
+                className={cn(
+                  'w-full rounded-2xl border border-border bg-card shadow-2xl transition-all duration-300',
+                  isFullscreen ? 'h-[82vh]' : 'h-[58vh]'
+                )}
+              />
+              {showItemEditor && !isGamma && (
+                <div
+                  className={cn(
+                    'w-80 shrink-0 overflow-hidden rounded-2xl border border-border bg-card shadow-2xl',
+                    isFullscreen ? 'h-[82vh]' : 'h-[58vh]'
+                  )}
+                >
+                  <SlideItemEditor
+                    slides={plannedSlides}
+                    collection={
+                      selectedCollection === 'auto'
+                        ? (recommendedCollection ?? 'starter')
+                        : selectedCollection
+                    }
+                    onBindingsChanged={(index, bindings) =>
+                      setPlannedSlides((prev) =>
+                        prev.map((s, i) =>
+                          i === index
+                            ? {
+                                ...s,
+                                bindings: normalizeSlideBindings(
+                                  s.layoutType,
+                                  s.slideTitle,
+                                  bindings
+                                ),
+                              }
+                            : s
+                        )
+                      )
+                    }
+                    onSlideRendered={applySvgToPreviewSlide}
+                    onSelectedSlideChange={handleEditorSlideChange}
+                  />
+                </div>
               )}
-            />
+            </div>
             {deckUsage && (
               <div className="flex shrink-0 flex-wrap items-center justify-center gap-x-4 gap-y-1 font-medium text-[11px] text-muted-foreground">
                 {typeof deckUsage.total_tokens === 'number' && (

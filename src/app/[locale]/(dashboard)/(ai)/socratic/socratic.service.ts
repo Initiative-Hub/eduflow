@@ -1,10 +1,10 @@
 import { apiClient } from '@/lib/api';
+import type { SocraticUIMessage } from '@/types/socratic-ui-message';
 import type {
   ChatHistoryPageResponse,
   ChatListResponse,
   ChatUpdateResponse,
 } from '../(ai-chat)/chat.service';
-import type { SocraticUIMessage } from '@/types/socratic-ui-message';
 
 export const socraticService = {
   createChat: async (firstMessage: string) => {

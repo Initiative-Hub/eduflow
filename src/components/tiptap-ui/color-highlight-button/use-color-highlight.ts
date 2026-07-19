@@ -1,22 +1,19 @@
 'use client';
 
+import type { Editor } from '@tiptap/react';
 import { useCallback, useEffect, useState } from 'react';
-import { type Editor } from '@tiptap/react';
 import { useHotkeys } from 'react-hotkeys-hook';
-
-// --- Hooks ---
-import { useTiptapEditor } from '@/hooks/use-tiptap-editor';
-import { useIsBreakpoint } from '@/hooks/use-is-breakpoint';
-
-// --- Lib ---
-import {
-  isMarkInSchema,
-  isNodeTypeSelected,
-  isExtensionAvailable,
-} from '@/lib/tiptap-utils';
-
 // --- Icons ---
 import { HighlighterIcon } from '@/components/tiptap-icons/highlighter-icon';
+import { useIsBreakpoint } from '@/hooks/use-is-breakpoint';
+// --- Hooks ---
+import { useTiptapEditor } from '@/hooks/use-tiptap-editor';
+// --- Lib ---
+import {
+  isExtensionAvailable,
+  isMarkInSchema,
+  isNodeTypeSelected,
+} from '@/lib/tiptap-utils';
 
 export const COLOR_HIGHLIGHT_SHORTCUT_KEY = 'mod+shift+h';
 export const HIGHLIGHT_COLORS = [
@@ -163,7 +160,7 @@ export function canColorHighlight(
   editor: Editor | null,
   mode: HighlightMode = 'mark'
 ): boolean {
-  if (!editor || !editor.isEditable) return false;
+  if (!editor?.isEditable) return false;
 
   if (mode === 'mark') {
     if (
@@ -192,7 +189,7 @@ export function isColorHighlightActive(
   highlightColor?: string,
   mode: HighlightMode = 'mark'
 ): boolean {
-  if (!editor || !editor.isEditable) return false;
+  if (!editor?.isEditable) return false;
 
   if (mode === 'mark') {
     return highlightColor
@@ -226,7 +223,7 @@ export function removeHighlight(
   editor: Editor | null,
   mode: HighlightMode = 'mark'
 ): boolean {
-  if (!editor || !editor.isEditable) return false;
+  if (!editor?.isEditable) return false;
   if (!canColorHighlight(editor, mode)) return false;
 
   if (mode === 'mark') {

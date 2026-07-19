@@ -1,4 +1,3 @@
-import type { WordbankReviewMasteryResult } from '@/services/english/SavedVocabularyService';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -10,6 +9,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
+import type { WordbankReviewMasteryResult } from '@/services/english/SavedVocabularyService';
 
 export type WordbankTranslator = (
   key: string,

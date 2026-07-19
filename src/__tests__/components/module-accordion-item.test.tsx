@@ -3,8 +3,8 @@ import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { ModuleAccordionItem } from '@/app/[locale]/(dashboard)/courses/[courseId]/_components/module-accordion-item';
-import { Accordion } from '@/components/ui/accordion';
 import type { Module } from '@/app/[locale]/(dashboard)/courses/[courseId]/use-modules';
+import { Accordion } from '@/components/ui/accordion';
 import type { QuizDefinition } from '@/lib/quiz-template';
 
 vi.mock('next-intl', () => ({

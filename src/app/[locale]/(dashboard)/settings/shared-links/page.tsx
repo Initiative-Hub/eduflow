@@ -1,7 +1,7 @@
+import { Link2 } from 'lucide-react';
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { Link2 } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import { auth } from '@/lib/auth';
 import { SharedLinksClient } from './shared-links-client';
