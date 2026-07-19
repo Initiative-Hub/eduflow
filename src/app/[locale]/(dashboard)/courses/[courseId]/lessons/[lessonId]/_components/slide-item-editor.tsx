@@ -33,7 +33,11 @@ const ARRAY_FIELDS: Record<
     max: 10,
     fields: ['date_or_step', 'description'],
   },
-  CHART_INSIGHT: { key: 'chart_data', max: 10, fields: ['label', 'value'] },
+  CHART_INSIGHT: {
+    key: 'chart_data',
+    max: 10,
+    fields: ['label', 'value', 'display_value'],
+  },
   REFERENCES_LIST: { key: 'sources', max: 10, fields: ['title', 'url'] },
   PYRAMID_LEVELS: { key: 'levels', max: 10, fields: ['title', 'description'] },
   FUNNEL_STAGES: { key: 'stages', max: 10, fields: ['title', 'description'] },

@@ -1,3 +1,4 @@
+import json
 import logging
 import shutil
 import tempfile
@@ -54,6 +55,83 @@ STANDARD_LAYOUT_TYPES = [
     "PROCESS_ARROWS",
     "CIRCLE_CYCLE",
 ]
+
+CATEGORY_METADATA_FIELDS = (
+    "description",
+    "when_to_use",
+    "prompt_hint",
+    "content_guidance",
+)
+
+
+def _filter_category_metadata(raw: Any) -> Dict[str, Any]:
+    if not isinstance(raw, dict):
+        return {}
+    return {
+        key: value
+        for key, value in raw.items()
+        if key in CATEGORY_METADATA_FIELDS and value not in (None, "", [])
+    }
+
+
+def _read_category_metadata(meta_path: Path) -> Dict[str, Any]:
+    if not meta_path.exists():
+        return {}
+    try:
+        raw = json.loads(meta_path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        logger.warning(f"Could not read category metadata from {meta_path}: {exc}")
+        return {}
+
+    return _filter_category_metadata(raw)
+
+
+def _read_collection_category_metadata(library_dir: Path) -> Dict[str, Dict[str, Any]]:
+    meta_path = library_dir / "collection.json"
+    if not meta_path.exists():
+        return {}
+
+    try:
+        raw = json.loads(meta_path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        logger.warning(f"Could not read collection metadata from {meta_path}: {exc}")
+        return {}
+
+    categories = raw.get("categories")
+    if not isinstance(categories, dict):
+        return {}
+
+    metadata: Dict[str, Dict[str, Any]] = {}
+    for category, category_raw in categories.items():
+        filtered = _filter_category_metadata(category_raw)
+        if filtered:
+            metadata[str(category)] = filtered
+
+    return metadata
+
+
+def _build_category_metadata(
+    library_dir: Path | None, categories: set[str]
+) -> Dict[str, Dict[str, Any]]:
+    metadata: Dict[str, Dict[str, Any]] = {}
+    collection_metadata = (
+        _read_collection_category_metadata(library_dir) if library_dir else {}
+    )
+
+    for category in sorted(categories):
+        if not library_dir:
+            continue
+        merged = dict(collection_metadata.get(category, {}))
+        category_metadata = _read_category_metadata(
+            library_dir / category / "category.json"
+        )
+        for key, value in category_metadata.items():
+            merged.setdefault(key, value)
+        if merged:
+            metadata[category] = merged
+
+    return metadata
+
 
 # Monkeypatch select_and_fill_slide to enforce outline bindings
 _orig_select_and_fill_slide = slide_skills.svg_categories.select_and_fill_slide
@@ -181,7 +259,9 @@ def flatten_slide_bindings(category: str, slide_title: str, bindings: dict) -> d
         for idx, data_point in enumerate(bindings["chart_data"][:10], 1):
             if isinstance(data_point, dict):
                 flat[f"chart_label_{idx}"] = str(data_point.get("label", ""))
-                flat[f"chart_value_{idx}"] = str(data_point.get("value", ""))
+                flat[f"chart_value_{idx}"] = str(
+                    data_point.get("display_value", data_point.get("value", ""))
+                )
     if "insight_text" in bindings and isinstance(bindings["insight_text"], str):
         wrapped = textwrap.wrap(bindings["insight_text"], width=45)
         for idx, line in enumerate(wrapped[:3], 1):
@@ -322,34 +402,41 @@ class SlideService:
         return library.category_map()
 
     async def get_collection_categories(self, collection: str) -> Dict[str, Any]:
-        from app.deps import AWS_S3_DEFAULT_TEMPLATES_BUCKET, AWS_S3_TEMPLATES_BUCKET
-        from app.services.s3_service import list_files_in_s3_prefix
-
-        bucket_name = (
-            AWS_S3_DEFAULT_TEMPLATES_BUCKET
-            if collection.lower() in DEFAULT_COLLECTIONS
-            else AWS_S3_TEMPLATES_BUCKET
-        )
-        s3_prefix = f"templates/{collection}/"
-        s3_keys = await list_files_in_s3_prefix(s3_prefix, bucket_name=bucket_name)
-
+        library_dir = await self._ensure_collection_downloaded(collection)
         categories: set[str] = set()
-        for key in s3_keys:
-            relative = key[len(s3_prefix) :]
-            parts = relative.split("/")
-            if len(parts) > 1 and parts[0]:
-                categories.add(parts[0])
+        if library_dir.exists():
+            for child in library_dir.iterdir():
+                if child.is_dir() and child.name:
+                    categories.add(child.name)
 
         is_custom = collection.lower() not in DEFAULT_COLLECTIONS
 
         if not categories:
-            return {"categories": STANDARD_LAYOUT_TYPES, "is_custom": is_custom}
+            fallback_categories = set(STANDARD_LAYOUT_TYPES)
+            fallback_metadata = _build_category_metadata(None, fallback_categories)
+            return {
+                "categories": STANDARD_LAYOUT_TYPES,
+                "is_custom": is_custom,
+                "metadata": fallback_metadata or None,
+            }
 
         valid_categories = {cat for cat in categories if cat.isupper()}
         if not valid_categories:
-            return {"categories": STANDARD_LAYOUT_TYPES, "is_custom": is_custom}
+            fallback_categories = set(STANDARD_LAYOUT_TYPES)
+            fallback_metadata = _build_category_metadata(None, fallback_categories)
+            return {
+                "categories": STANDARD_LAYOUT_TYPES,
+                "is_custom": is_custom,
+                "metadata": fallback_metadata or None,
+            }
 
-        return {"categories": sorted(valid_categories), "is_custom": is_custom}
+        metadata = _build_category_metadata(library_dir, valid_categories)
+
+        return {
+            "categories": sorted(valid_categories),
+            "is_custom": is_custom,
+            "metadata": metadata or None,
+        }
 
     async def get_collections(self) -> List[Dict[str, Any]]:
         import json as _json
@@ -538,15 +625,29 @@ class SlideService:
             # count as talking_points so slide_skills' capacity shortlist picks the
             # variant whose level/slot count matches the content exactly.
             list_keys = (
-                "levels", "stages", "process_steps", "phases",
-                "items", "bullets", "steps", "summary_points", "action_items",
-                "metrics", "events", "chart_data", "sources"
+                "levels",
+                "stages",
+                "process_steps",
+                "phases",
+                "items",
+                "bullets",
+                "steps",
+                "summary_points",
+                "action_items",
+                "metrics",
+                "events",
+                "chart_data",
+                "sources",
             )
             for diagram_key in list_keys:
                 items = bindings.get(diagram_key)
                 if isinstance(items, list) and items:
                     slide["talking_points"] = [
-                        str(it.get("title", "") or it.get("label", "") or next(iter(it.values()), ""))
+                        str(
+                            it.get("title", "")
+                            or it.get("label", "")
+                            or next(iter(it.values()), "")
+                        )
                         if isinstance(it, dict)
                         else str(it)
                         for it in items
@@ -555,6 +656,7 @@ class SlideService:
 
             # Expose raw bindings for monkeypatched custom_select_and_fill_slide
             import json
+
             slide["raw_bindings"] = json.loads(json.dumps(bindings))
 
             # Flatten bindings to map to flat SVG placeholders
@@ -747,15 +849,29 @@ class SlideService:
         # count as talking_points so slide_skills' capacity shortlist picks the
         # variant whose level/slot count matches the content exactly.
         list_keys = (
-            "levels", "stages", "process_steps", "phases",
-            "items", "bullets", "steps", "summary_points", "action_items",
-            "metrics", "events", "chart_data", "sources"
+            "levels",
+            "stages",
+            "process_steps",
+            "phases",
+            "items",
+            "bullets",
+            "steps",
+            "summary_points",
+            "action_items",
+            "metrics",
+            "events",
+            "chart_data",
+            "sources",
         )
         for diagram_key in list_keys:
             items = bindings.get(diagram_key)
             if isinstance(items, list) and items:
                 slide["talking_points"] = [
-                    str(it.get("title", "") or it.get("label", "") or next(iter(it.values()), ""))
+                    str(
+                        it.get("title", "")
+                        or it.get("label", "")
+                        or next(iter(it.values()), "")
+                    )
                     if isinstance(it, dict)
                     else str(it)
                     for it in items
@@ -764,6 +880,7 @@ class SlideService:
 
         # Expose raw bindings for monkeypatched custom_select_and_fill_slide
         import json
+
         slide["raw_bindings"] = json.loads(json.dumps(bindings))
 
         bindings = flatten_slide_bindings(category, slide_title, bindings)
@@ -901,8 +1018,12 @@ class SlideService:
                 lib.categories[key],
                 slide,
             )
-            logger.info(f"===> RENDER_SLIDE RESULT: {result.get('variant').name if result else None}")
-            logger.info(f"===> RENDER_SLIDE INPUT TALKING POINTS: {slide.get('talking_points')}")
+            logger.info(
+                f"===> RENDER_SLIDE RESULT: {result.get('variant').name if result else None}"
+            )
+            logger.info(
+                f"===> RENDER_SLIDE INPUT TALKING POINTS: {slide.get('talking_points')}"
+            )
             logger.info(f"===> RENDER_SLIDE INPUT BINDINGS: {slide.get('bindings')}")
             if not result:
                 raise ValueError(f"No variant selected for layout {category}")

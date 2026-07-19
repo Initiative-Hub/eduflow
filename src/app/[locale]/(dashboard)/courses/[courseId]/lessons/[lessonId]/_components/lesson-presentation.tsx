@@ -36,7 +36,11 @@ import {
   useSlideTemplates,
   useUpdateSlideHtml,
 } from '../use-lesson';
-import { type PlannedSlide, usePresentation } from '../use-presentation';
+import {
+  normalizeSlideBindings,
+  type PlannedSlide,
+  usePresentation,
+} from '../use-presentation';
 import { SlideItemEditor } from './slide-item-editor';
 import { TemplateManagerDialog } from './template-manager-dialog';
 
@@ -73,6 +77,57 @@ const formatLayoutName = (layout: string, t: any) => {
 
 const selectItemHighlightClassName =
   'focus:bg-primary/20 focus:text-foreground focus:**:!text-foreground data-highlighted:bg-primary/10 data-highlighted:text-foreground data-highlighted:**:!text-foreground';
+
+const QUALITATIVE_CHART_SCORES: Record<string, number> = {
+  'very low': 1,
+  low: 2,
+  medium: 3,
+  moderate: 3,
+  high: 4,
+  'very high': 5,
+  strong: 4,
+  weak: 2,
+  critical: 5,
+  stable: 3,
+};
+
+const parseChartMagnitude = (value: unknown): number | null => {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value !== 'string') return null;
+
+  const normalized = value.trim().replace(/\s+/g, ' ').toLowerCase();
+  if (!normalized) return null;
+
+  for (const [label, score] of Object.entries(QUALITATIVE_CHART_SCORES)) {
+    if (normalized.includes(label)) return score;
+  }
+
+  const rangeMatch = normalized.match(
+    /(-?\d+(?:\.\d+)?)\s*[-–]\s*(-?\d+(?:\.\d+)?)/
+  );
+  if (rangeMatch) {
+    const start = Number(rangeMatch[1]);
+    const end = Number(rangeMatch[2]);
+    if (Number.isFinite(start) && Number.isFinite(end)) {
+      return (start + end) / 2;
+    }
+  }
+
+  const numericMatch = normalized.match(/-?\d+(?:\.\d+)?/);
+  if (numericMatch) {
+    const parsed = Number(numericMatch[0]);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  return null;
+};
+
+const getChartDisplayValue = (item: any) => {
+  const explicit =
+    typeof item?.display_value === 'string' ? item.display_value.trim() : '';
+  if (explicit) return explicit;
+  return String(item?.value ?? '').trim();
+};
 
 interface LessonPresentationProps {
   isOpen: boolean;
@@ -680,14 +735,19 @@ export function LessonPresentation({
                   {Array.isArray(bindings.chart_data) &&
                     bindings.chart_data.map((item: any, idx: number) => {
                       const maxVal = Math.max(
-                        ...bindings.chart_data.map(
-                          (d: any) => Number(d.value) || 1
-                        ),
+                        ...(bindings.chart_data
+                          .map((d: any) => parseChartMagnitude(d.value))
+                          .filter(
+                            (value: number | null): value is number =>
+                              typeof value === 'number' &&
+                              Number.isFinite(value)
+                          ) || [1]),
                         1
                       );
+                      const magnitude = parseChartMagnitude(item.value) || 0;
                       const heightPct = Math.min(
                         100,
-                        Math.max(10, ((Number(item.value) || 0) / maxVal) * 100)
+                        Math.max(10, (magnitude / maxVal) * 100)
                       );
                       return (
                         <div
@@ -700,6 +760,9 @@ export function LessonPresentation({
                           />
                           <span className="mt-1.5 max-w-full truncate font-bold text-[9px] text-muted-foreground">
                             {item.label}
+                          </span>
+                          <span className="max-w-full truncate font-semibold text-[9px] text-primary">
+                            {getChartDisplayValue(item)}
                           </span>
                         </div>
                       );
@@ -977,10 +1040,10 @@ export function LessonPresentation({
           i === idx
             ? {
                 ...s,
-                bindings: {
+                bindings: normalizeSlideBindings(layoutType, slide.slideTitle, {
                   ...s.bindings,
                   [key]: value,
-                },
+                }),
               }
             : s
         )
@@ -1355,17 +1418,34 @@ export function LessonPresentation({
           ? bindings.chart_data
           : [];
         const chartDataStr = chartData
-          .map((d: any) => `${d.label}:${d.value}`)
+          .map(
+            (d: any) =>
+              `${d.label}:${d.value}${d.display_value ? `|${d.display_value}` : ''}`
+          )
           .join('\n');
         const updateChartData = (val: string) => {
           const parsedData = val
             .split('\n')
             .map((line) => {
-              const [label, numStr] = line.split(':');
+              const [chartPart, displayPart] = line.split('|');
+              const separatorIndex = chartPart.indexOf(':');
+              const label =
+                separatorIndex >= 0
+                  ? chartPart.slice(0, separatorIndex)
+                  : chartPart;
+              const rawValue =
+                separatorIndex >= 0 ? chartPart.slice(separatorIndex + 1) : '';
               if (!label) return null;
+              const trimmedDisplay = displayPart?.trim() || '';
+              const trimmedRawValue = rawValue.trim();
               return {
                 label: label.trim(),
-                value: Number(numStr?.trim() || 0),
+                value: parseChartMagnitude(trimmedRawValue) ?? 0,
+                ...(trimmedDisplay
+                  ? { display_value: trimmedDisplay }
+                  : trimmedRawValue && Number.isNaN(Number(trimmedRawValue))
+                    ? { display_value: trimmedRawValue }
+                    : {}),
               };
             })
             .filter(Boolean);
@@ -1394,12 +1474,12 @@ export function LessonPresentation({
               </div>
               <div className="flex flex-col gap-1.5">
                 <span className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider">
-                  Chart Data (Label:Value, one per line)
+                  Chart Data (Label:Value|Display, one per line)
                 </span>
                 <Textarea
                   value={chartDataStr}
                   onChange={(e) => updateChartData(e.target.value)}
-                  placeholder="Q1:20&#10;Q2:80&#10;Q3:45"
+                  placeholder="Mode:4|4.0/5&#10;Dissatisfaction:1.5|1-2 low&#10;Variance Focus:4|High"
                   className="h-24 resize-none rounded-xl border-input bg-card px-4 py-2 text-foreground text-sm"
                 />
               </div>
@@ -2235,7 +2315,16 @@ export function LessonPresentation({
                     onBindingsChanged={(index, bindings) =>
                       setPlannedSlides((prev) =>
                         prev.map((s, i) =>
-                          i === index ? { ...s, bindings } : s
+                          i === index
+                            ? {
+                                ...s,
+                                bindings: normalizeSlideBindings(
+                                  s.layoutType,
+                                  s.slideTitle,
+                                  bindings
+                                ),
+                              }
+                            : s
                         )
                       )
                     }

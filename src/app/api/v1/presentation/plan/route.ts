@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { withAuth } from '@/lib/api/middlewares';
 import { PresentationService } from '@/services/PresentationService';
 import { SlideService } from '@/services/SlideService';
+import slideLayoutGuidance from '../../../../../../config/slide-layout-guidance.json';
 
 const planPresentationSchema = z.object({
   lessonId: z.string().min(1, 'lessonId is required'),
@@ -82,24 +83,63 @@ export const POST = withAuth(async (req, sessionData) => {
 
     const { lessonId, duration, context, collection } = parsed.data;
 
+    let standardCategoryMetadata:
+      | Record<
+          string,
+          {
+            description?: string;
+            when_to_use?: string;
+            prompt_hint?: string;
+            content_guidance?: string[];
+          }
+        >
+      | undefined;
+
     // Fetch template categories for custom collections so the AI can use
     // the template's own layout type names instead of the standard 16.
     // ('auto' means the AI picks the style — standard planning path.)
     let templateCategories: string[] | undefined;
-    if (collection && collection !== 'auto') {
-      templateCategories =
-        await SlideService.getPlanningTemplateCategories(collection);
+    let templateCategoryMetadata:
+      | Record<
+          string,
+          {
+            description?: string;
+            when_to_use?: string;
+            prompt_hint?: string;
+            content_guidance?: string[];
+          }
+        >
+      | undefined;
+    if (!collection || collection === 'auto') {
+      standardCategoryMetadata = slideLayoutGuidance;
+    } else if (SlideService.isBuiltInCollectionName(collection)) {
+      standardCategoryMetadata = slideLayoutGuidance;
+    } else {
+      const planningCollection =
+        await SlideService.getPlanningCollectionData(collection);
+      if (planningCollection.is_custom) {
+        templateCategories = planningCollection.categories;
+        templateCategoryMetadata = planningCollection.metadata;
+      } else {
+        standardCategoryMetadata =
+          planningCollection.metadata ?? slideLayoutGuidance;
+      }
     }
 
     // Live style inventory (local + S3) for the AI's style recommendation.
-    const styleCollections = await SlideService.getStyleCollections();
+    const styleCollections =
+      !collection || collection === 'auto'
+        ? await SlideService.getDefaultStyleCollections()
+        : await SlideService.getStyleCollections();
 
     const stream = PresentationService.planPresentationStream({
       lessonId,
       userId,
       duration,
       context,
+      standardCategoryMetadata,
       templateCategories,
+      templateCategoryMetadata,
       styleCollections,
     });
 

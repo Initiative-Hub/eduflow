@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import type { TiptapDocument } from '@/utils/lesson-content';
+import { getNextRecommendedCollectionForPlannerState } from './presentation-planner-state';
 import { useGenerateSlideDeck, useLesson } from './use-lesson';
 
 type Step = 'input' | 'planning' | 'planned' | 'generating' | 'generated';
@@ -54,6 +55,14 @@ interface LessonSection {
 
 const GENERIC_SLIDE_TITLE_RE =
   /^(concept expansion|slide \d+|topic \d+|section \d+|content slide \d+|deep dive \d+)/i;
+const NON_TOPIC_LAYOUTS = new Set<PlannedSlide['layoutType']>([
+  'TITLE_SLIDE',
+  'AGENDA_OUTLINE',
+  'CONCLUSION_SUMMARY',
+  'CALL_TO_ACTION',
+  'QA_CONTACT',
+  'REFERENCES_LIST',
+]);
 
 function normalizeText(text: string): string {
   return text.replace(/\s+/g, ' ').trim();
@@ -83,10 +92,255 @@ function sentenceParts(text: string): string[] {
   );
 }
 
+function isGenericTopicLabel(text: string): boolean {
+  const normalized = normalizeText(text);
+  if (!normalized) return true;
+  return (
+    GENERIC_SLIDE_TITLE_RE.test(normalized) ||
+    /^(agenda|next module|lesson overview)$/i.test(normalized)
+  );
+}
+
+function baseTopicTitle(title: string): string {
+  const normalized = normalizeText(title);
+  if (!normalized) return '';
+  return normalizeText(normalized.split(/\s*:\s*/)[0] || normalized);
+}
+
+function isTopicSlide(layoutType: PlannedSlide['layoutType']): boolean {
+  return !NON_TOPIC_LAYOUTS.has(layoutType);
+}
+
 function trimWords(text: string, maxWords: number): string {
   const words = normalizeText(text).split(' ');
   if (words.length <= maxWords) return normalizeText(text);
   return `${words.slice(0, maxWords).join(' ')}...`;
+}
+
+const QUALITATIVE_CHART_SCORES: Record<string, number> = {
+  'very low': 1,
+  low: 2,
+  medium: 3,
+  moderate: 3,
+  high: 4,
+  'very high': 5,
+  strong: 4,
+  weak: 2,
+  critical: 5,
+  stable: 3,
+};
+
+function formatCompactNumber(value: number): string {
+  if (!Number.isFinite(value)) return '';
+  const abs = Math.abs(value);
+  if (abs >= 1_000_000) {
+    return `${(value / 1_000_000)
+      .toFixed(abs >= 10_000_000 ? 0 : 1)
+      .replace(/\.0$/, '')}M`;
+  }
+  if (abs >= 1_000) {
+    return `${(value / 1_000)
+      .toFixed(abs >= 10_000 ? 0 : 1)
+      .replace(/\.0$/, '')}k`;
+  }
+  if (Number.isInteger(value)) return String(value);
+  return value
+    .toFixed(Math.abs(value) < 10 ? 1 : 2)
+    .replace(/\.0+$/, '')
+    .replace(/(\.\d*[1-9])0+$/, '$1');
+}
+
+function extractChartMagnitude(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value !== 'string') return null;
+
+  const normalized = normalizeText(value).toLowerCase();
+  if (!normalized) return null;
+
+  for (const [label, score] of Object.entries(QUALITATIVE_CHART_SCORES)) {
+    if (normalized.includes(label)) return score;
+  }
+
+  const rangeMatch = normalized.match(
+    /(-?\d+(?:\.\d+)?)\s*[-–]\s*(-?\d+(?:\.\d+)?)/
+  );
+  if (rangeMatch) {
+    const start = Number(rangeMatch[1]);
+    const end = Number(rangeMatch[2]);
+    if (Number.isFinite(start) && Number.isFinite(end)) {
+      return (start + end) / 2;
+    }
+  }
+
+  const numericMatch = normalized.match(/-?\d+(?:\.\d+)?/);
+  if (numericMatch) {
+    const parsed = Number(numericMatch[0]);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  return null;
+}
+
+function buildChartDisplayValue(
+  slideTitle: string,
+  label: string,
+  rawValue: unknown,
+  explicitDisplayValue?: unknown
+): string {
+  const explicit = normalizeText(String(explicitDisplayValue || ''));
+  if (explicit) return explicit;
+
+  const rawString =
+    typeof rawValue === 'string' ? normalizeText(String(rawValue)) : '';
+  if (
+    rawString &&
+    (/[a-z]/i.test(rawString) ||
+      /[-–]/.test(rawString) ||
+      rawString.includes('/'))
+  ) {
+    return rawString;
+  }
+
+  const magnitude = extractChartMagnitude(rawValue);
+  if (magnitude === null) return rawString;
+
+  const compact = formatCompactNumber(magnitude);
+  const context = `${slideTitle} ${label}`.toLowerCase();
+
+  if (
+    magnitude > 0 &&
+    magnitude <= 5 &&
+    /mode|mean|median|score|rating|index|sentiment|satisfaction|feedback|skew/.test(
+      context
+    )
+  ) {
+    return `${compact}/5`;
+  }
+  if (magnitude > 0 && magnitude <= 1) {
+    return `${Math.round(magnitude * 100)}%`;
+  }
+  if (
+    magnitude > 0 &&
+    magnitude < 10 &&
+    /variance|spread|dispersion|focus|intensity|volatility/.test(context)
+  ) {
+    return `${compact} lvl`;
+  }
+
+  return compact;
+}
+
+function buildChartInsightText(
+  slideTitle: string,
+  chartData: Array<{
+    label: string;
+    value?: unknown;
+    display_value?: unknown;
+  }>
+): string {
+  const cleaned = chartData
+    .map((item) => {
+      const label = normalizeText(String(item.label || ''));
+      const display = normalizeText(
+        String(item.display_value ?? item.value ?? '')
+      );
+      return {
+        label,
+        display,
+        magnitude: extractChartMagnitude(item.value),
+      };
+    })
+    .filter((item) => item.label && item.display);
+
+  if (cleaned.length === 0) return '';
+
+  const numeric = cleaned
+    .filter(
+      (item): item is typeof item & { magnitude: number } =>
+        typeof item.magnitude === 'number'
+    )
+    .sort((a, b) => b.magnitude - a.magnitude);
+
+  const top = numeric[0];
+  const low = numeric.length > 1 ? numeric[numeric.length - 1] : undefined;
+  const qualitative = cleaned.find(
+    (item) =>
+      /high|low|medium|stable|strong|weak/i.test(item.display) &&
+      item.label !== top?.label &&
+      item.label !== low?.label
+  );
+
+  const sentences: string[] = [];
+
+  if (top && low && top.label !== low.label) {
+    sentences.push(
+      `${top.label} stands out at ${top.display}, while ${low.label} stays lower at ${low.display}.`
+    );
+  } else {
+    sentences.push(`${cleaned[0].label} stands out at ${cleaned[0].display}.`);
+  }
+
+  if (qualitative) {
+    sentences.push(
+      `${qualitative.label} is marked ${qualitative.display}, adding context beyond the raw score.`
+    );
+  } else if (numeric.length > 1) {
+    sentences.push(
+      'Use the gap to explain what is driving the pattern, not just the values.'
+    );
+  } else {
+    sentences.push(
+      `Use this signal to explain the main takeaway behind ${slideTitle.toLowerCase()}.`
+    );
+  }
+
+  return trimWords(normalizeText(sentences.join(' ')), 26);
+}
+
+export function normalizeSlideBindings(
+  layoutType: PlannedSlide['layoutType'],
+  slideTitle: string,
+  bindings: Record<string, any>
+): Record<string, any> {
+  const next = { ...bindings };
+
+  if (layoutType === 'CHART_INSIGHT') {
+    const rawChartData = Array.isArray(next.chart_data) ? next.chart_data : [];
+    const normalizedChartData = rawChartData
+      .map((item: any, index: number) => {
+        if (!item || typeof item !== 'object') return null;
+
+        const label = normalizeText(String(item.label || `Point ${index + 1}`));
+        const numericValue = extractChartMagnitude(item.value);
+        const displayValue = buildChartDisplayValue(
+          slideTitle,
+          label,
+          item.value,
+          item.display_value
+        );
+
+        return {
+          ...item,
+          label,
+          value: numericValue ?? index + 1,
+          ...(displayValue ? { display_value: displayValue } : {}),
+        };
+      })
+      .filter(Boolean);
+
+    if (normalizedChartData.length > 0) {
+      next.chart_data = normalizedChartData;
+    }
+
+    const currentInsight = normalizeText(String(next.insight_text || ''));
+    if (!currentInsight || currentInsight.split(/\s+/).length < 8) {
+      next.insight_text =
+        buildChartInsightText(slideTitle, normalizedChartData as any) ||
+        currentInsight;
+    }
+  }
+
+  return next;
 }
 
 function collectListItems(node?: JSONContent | null): string[] {
@@ -237,7 +491,7 @@ function buildSectionCandidates(
       id: `fallback-section-${index}-bullets`,
       layoutType: 'TITLE_BULLETS',
       slideTitle: safeTitle,
-      bindings: { bullets: points },
+      bindings: { bullets: points, __topic: safeTitle },
     });
   }
 
@@ -247,6 +501,7 @@ function buildSectionCandidates(
       layoutType: 'TWO_COLUMN_SPLIT',
       slideTitle: `${safeTitle}: Key Ideas and Application`,
       bindings: {
+        __topic: safeTitle,
         left_col_title: 'Key Ideas',
         left_col_text: points.slice(0, 2),
         right_col_title: 'In Practice',
@@ -261,6 +516,7 @@ function buildSectionCandidates(
       layoutType: 'STEP_BY_STEP',
       slideTitle: `${safeTitle}: Practical Flow`,
       bindings: {
+        __topic: safeTitle,
         steps: steps.slice(0, 5),
       },
     });
@@ -272,6 +528,7 @@ function buildSectionCandidates(
       layoutType: 'BIG_QUOTE_TAKEAWAY',
       slideTitle: `${safeTitle}: Main Takeaway`,
       bindings: {
+        __topic: safeTitle,
         quote: takeaway,
         author_or_source: 'Lesson takeaway',
       },
@@ -281,13 +538,67 @@ function buildSectionCandidates(
   return candidates;
 }
 
-function fallbackAgendaItems(sections: LessonSection[]): string[] {
+function fallbackAgendaItems(
+  sections: LessonSection[],
+  maxItems = 6
+): string[] {
   const items = dedupeStrings(
     sections.map((section) => section.title).filter(Boolean)
   );
   return items.length > 0
-    ? items.slice(0, 6)
+    ? items.slice(0, maxItems)
     : ['Core objectives', 'Key concepts', 'Practical applications'];
+}
+
+function inferredTopicFromSlide(
+  slide: Pick<PlannedSlide, 'layoutType' | 'slideTitle' | 'bindings'>
+): string {
+  const fromBindings = normalizeText(String(slide.bindings?.__topic || ''));
+  if (fromBindings && !isGenericTopicLabel(fromBindings)) return fromBindings;
+
+  if (slide.layoutType === 'SECTION_HEADER') {
+    const fromSectionBinding = normalizeText(
+      String(slide.bindings?.sub_module_name || '')
+    );
+    if (fromSectionBinding && !isGenericTopicLabel(fromSectionBinding)) {
+      return fromSectionBinding;
+    }
+  }
+
+  const fromTitle = baseTopicTitle(slide.slideTitle || '');
+  return isGenericTopicLabel(fromTitle) ? '' : fromTitle;
+}
+
+function buildCoveredAgendaItems(
+  slides: PlannedSlide[],
+  sections: LessonSection[],
+  lessonTitle: string
+): string[] {
+  const explicitSections = dedupeStrings(
+    slides
+      .filter((slide) => slide.layoutType === 'SECTION_HEADER')
+      .map(inferredTopicFromSlide)
+      .filter(Boolean)
+  );
+  if (explicitSections.length > 0) return explicitSections.slice(0, 6);
+
+  const inferredTopics = dedupeStrings(
+    slides
+      .filter((slide) => isTopicSlide(slide.layoutType))
+      .map(inferredTopicFromSlide)
+      .filter(Boolean)
+  );
+  if (inferredTopics.length > 0) return inferredTopics.slice(0, 6);
+
+  const topicalSlideCount = slides.filter((slide) =>
+    isTopicSlide(slide.layoutType)
+  ).length;
+  const fallbackCount = Math.max(
+    1,
+    Math.min(sections.length, topicalSlideCount || 1)
+  );
+  const fallback = fallbackAgendaItems(sections, fallbackCount);
+  return fallback.length > 0 ? fallback : [lessonTitle];
 }
 
 function deriveTitleFromSlide(
@@ -328,15 +639,28 @@ function normalizePlannedSlides(
   lessonTitle: string
 ): PlannedSlide[] {
   const sections = collectLessonSections(document);
-  const agenda = fallbackAgendaItems(sections);
   const usedTitles = new Set<string>();
-  let topicCursor = 0;
+  const hasSectionHeaders = slides.some(
+    (slide) => slide.layoutType === 'SECTION_HEADER'
+  );
+  let autoSectionIndex = 0;
+  let activeSectionIndex = 0;
 
-  return slides.map((slide) => {
+  const normalizedSlides = slides.map((slide) => {
     const bindings = { ...slide.bindings };
     const currentTitle = normalizeText(slide.slideTitle || '');
+    if (slide.layoutType === 'SECTION_HEADER' && sections.length > 0) {
+      activeSectionIndex = autoSectionIndex;
+    }
+
     const fallbackTopic =
-      sections[topicCursor]?.title || sections[0]?.title || lessonTitle;
+      sections[
+        hasSectionHeaders && slide.layoutType !== 'SECTION_HEADER'
+          ? activeSectionIndex
+          : autoSectionIndex
+      ]?.title ||
+      sections[0]?.title ||
+      lessonTitle;
     const shouldRepairTitle =
       !currentTitle ||
       GENERIC_SLIDE_TITLE_RE.test(currentTitle) ||
@@ -356,29 +680,26 @@ function normalizePlannedSlides(
     }
     usedTitles.add(nextTitle.toLowerCase());
 
-    if (
-      slide.layoutType !== 'TITLE_SLIDE' &&
-      slide.layoutType !== 'AGENDA_OUTLINE' &&
-      slide.layoutType !== 'CONCLUSION_SUMMARY' &&
-      sections.length > 0
-    ) {
-      topicCursor = Math.min(topicCursor + 1, sections.length - 1);
-    }
-
-    if (slide.layoutType === 'AGENDA_OUTLINE') {
-      const currentItems = Array.isArray(bindings.items)
-        ? bindings.items
-            .map((item) => normalizeText(String(item || '')))
-            .filter(Boolean)
-        : [];
-      const genericCount = currentItems.filter((item) =>
-        GENERIC_SLIDE_TITLE_RE.test(item)
-      ).length;
+    if (slide.layoutType === 'SECTION_HEADER') {
+      const currentSectionBinding = normalizeText(
+        String(bindings.sub_module_name || '')
+      );
       if (
-        currentItems.length === 0 ||
-        genericCount >= Math.ceil(currentItems.length / 2)
+        !currentSectionBinding ||
+        isGenericTopicLabel(currentSectionBinding)
       ) {
-        bindings.items = agenda;
+        bindings.sub_module_name = fallbackTopic;
+      }
+      bindings.__topic = fallbackTopic;
+      if (sections.length > 0) {
+        autoSectionIndex = Math.min(autoSectionIndex + 1, sections.length - 1);
+      }
+    } else if (isTopicSlide(slide.layoutType)) {
+      if (shouldRepairTitle && !normalizeText(String(bindings.__topic || ''))) {
+        bindings.__topic = fallbackTopic;
+      }
+      if (!hasSectionHeaders && sections.length > 0) {
+        autoSectionIndex = Math.min(autoSectionIndex + 1, sections.length - 1);
       }
     }
 
@@ -393,11 +714,50 @@ function normalizePlannedSlides(
       }
     }
 
+    const normalizedBindings = normalizeSlideBindings(
+      slide.layoutType,
+      nextTitle,
+      bindings
+    );
+
     return {
       ...slide,
       slideTitle: nextTitle,
-      bindings,
+      bindings: normalizedBindings,
     };
+  });
+
+  const coveredAgenda = buildCoveredAgendaItems(
+    normalizedSlides,
+    sections,
+    lessonTitle
+  );
+
+  return normalizedSlides.map((slide) => {
+    if (slide.layoutType !== 'AGENDA_OUTLINE') return slide;
+
+    const currentItems = Array.isArray(slide.bindings.items)
+      ? slide.bindings.items
+          .map((item) => normalizeText(String(item || '')))
+          .filter(Boolean)
+      : [];
+    const genericCount = currentItems.filter((item) =>
+      isGenericTopicLabel(item)
+    ).length;
+    const shouldAlignAgenda =
+      currentItems.length === 0 ||
+      genericCount >= Math.ceil(currentItems.length / 2) ||
+      currentItems.length > coveredAgenda.length;
+
+    return shouldAlignAgenda
+      ? {
+          ...slide,
+          bindings: {
+            ...slide.bindings,
+            items: coveredAgenda,
+          },
+        }
+      : slide;
   });
 }
 
@@ -480,15 +840,15 @@ export function usePresentation(options: {
         layoutType: 'AGENDA_OUTLINE',
         slideTitle: 'Agenda & Overview',
         bindings: {
-          items: fallbackAgendaItems(sections),
+          items: fallbackAgendaItems(sections, Math.max(1, maxSlides - 3)),
         },
       });
 
-      const shouldIncludeConclusion = maxSlides >= 5;
-      const contentSlots = Math.max(
-        1,
-        maxSlides - 3 - (shouldIncludeConclusion ? 1 : 0)
-      );
+      const shouldIncludeClosing = maxSlides >= 4;
+      const shouldIncludeConclusion = maxSlides >= 6;
+      const reservedSlides =
+        2 + (shouldIncludeConclusion ? 1 : 0) + (shouldIncludeClosing ? 1 : 0);
+      const contentSlots = Math.max(1, maxSlides - reservedSlides);
 
       if (sections.length > 0) {
         const sectionCandidates = sections.map((section, idx) =>
@@ -580,15 +940,17 @@ export function usePresentation(options: {
         });
       }
 
-      list.push({
-        id: 'slide-qa',
-        layoutType: 'QA_CONTACT',
-        slideTitle: 'Q&A & Contact Info',
-        bindings: {
-          footer_note:
-            'Thank you for attending! Let us move to the discussion session.',
-        },
-      });
+      if (shouldIncludeClosing) {
+        list.push({
+          id: 'slide-qa',
+          layoutType: 'QA_CONTACT',
+          slideTitle: 'Q&A & Contact Info',
+          bindings: {
+            footer_note:
+              'Thank you for attending! Let us move to the discussion session.',
+          },
+        });
+      }
 
       return normalizePlannedSlides(list, content, title);
     },
@@ -600,6 +962,9 @@ export function usePresentation(options: {
     setStep('planning');
     setLoaderStep(0);
     setDeckUrl(null);
+    setRecommendedCollection(
+      getNextRecommendedCollectionForPlannerState({ phase: 'start' })
+    );
 
     try {
       const response = await fetch('/api/v1/presentation/plan', {
@@ -657,9 +1022,12 @@ export function usePresentation(options: {
               setPlannedSlides(
                 normalizePlannedSlides(slidesWithIds, content, title)
               );
-              if (event.recommendedCollection) {
-                setRecommendedCollection(event.recommendedCollection);
-              }
+              setRecommendedCollection(
+                getNextRecommendedCollectionForPlannerState({
+                  phase: 'done',
+                  recommendedCollection: event.recommendedCollection,
+                })
+              );
               setStep('planned');
               break;
             }
@@ -672,6 +1040,9 @@ export function usePresentation(options: {
       console.error(
         'API Slide Planning stream failed, falling back to local simulation:',
         error
+      );
+      setRecommendedCollection(
+        getNextRecommendedCollectionForPlannerState({ phase: 'error' })
       );
       toast.error(
         'AI planning was unavailable, so a local lesson-based outline was created instead.'
@@ -740,11 +1111,12 @@ export function usePresentation(options: {
       defaultBindings = {
         chart_type: 'bar',
         chart_data: [
-          { label: 'Q1', value: 30 },
-          { label: 'Q2', value: 85 },
-          { label: 'Q3', value: 65 },
+          { label: 'Baseline', value: 30, display_value: '30 base' },
+          { label: 'Peak', value: 85, display_value: '85 peak' },
+          { label: 'Stability', value: 65, display_value: '65 steady' },
         ],
-        insight_text: 'Q2 sales grew by 85% due to seasonal integration.',
+        insight_text:
+          'Peak is the strongest signal, while the baseline frames the comparison and stability shows how much momentum holds afterward.',
       };
     } else if (newLayout === 'DATA_TABLE') {
       defaultBindings = {
@@ -847,7 +1219,15 @@ export function usePresentation(options: {
     setPlannedSlides((prev) =>
       prev.map((slide, idx) =>
         idx === index
-          ? { ...slide, layoutType: newLayout, bindings: defaultBindings }
+          ? {
+              ...slide,
+              layoutType: newLayout,
+              bindings: normalizeSlideBindings(
+                newLayout,
+                slide.slideTitle,
+                defaultBindings
+              ),
+            }
           : slide
       )
     );
@@ -977,6 +1357,7 @@ export function usePresentation(options: {
     setDeckUrl(null);
     setDeckUsage(null);
     setExportUrl(null);
+    setRecommendedCollection(null);
     setStep('input');
   }, []);
 

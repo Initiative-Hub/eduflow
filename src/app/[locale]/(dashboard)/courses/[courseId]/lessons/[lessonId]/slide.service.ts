@@ -7,6 +7,13 @@ export interface SlideTemplate {
   palette?: string[];
 }
 
+export interface TemplateCategoryMetadata {
+  description?: string;
+  when_to_use?: string;
+  prompt_hint?: string;
+  content_guidance?: string[];
+}
+
 export const slideService = {
   getTemplates: (): Promise<SlideTemplate[]> => {
     return apiClient.get<SlideTemplate[]>('/v1/ai/templates', {
@@ -25,11 +32,18 @@ export const slideService = {
 
   getTemplateCategories: (
     collectionName: string
-  ): Promise<{ categories: string[]; is_custom: boolean }> => {
-    return apiClient.get<{ categories: string[]; is_custom: boolean }>(
-      `/v1/ai/templates/${collectionName}/categories`,
-      { headers: { 'Cache-Control': 'no-store' } }
-    );
+  ): Promise<{
+    categories: string[];
+    is_custom: boolean;
+    metadata?: Record<string, TemplateCategoryMetadata>;
+  }> => {
+    return apiClient.get<{
+      categories: string[];
+      is_custom: boolean;
+      metadata?: Record<string, TemplateCategoryMetadata>;
+    }>(`/v1/ai/templates/${collectionName}/categories`, {
+      headers: { 'Cache-Control': 'no-store' },
+    });
   },
 
   importTemplate: async (
