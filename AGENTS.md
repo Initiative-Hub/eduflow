@@ -113,6 +113,7 @@ for any tasks.).
 - **Test Scope Discipline**: Keep tests focused on durable behavior the project wants to preserve. Remove exploratory, speculative, or TDD-only scaffolding when it no longer represents required coverage.
 - **Type Check**: After TypeScript or JavaScript edits, finish with `bun type-check`.
 - **Formatting**: Use `bun format:fix` before verification if the change is formatting-sensitive.
+- **Biome Scope**: Keep repo-wide Biome checks focused on repo-owned code. Exclude checked-in skill/example bundles (such as `.agents/**`) and vendor primitive directories like `src/components/ai-elements`, `src/components/ui`, and Tiptap primitive/icon/template packages unless the team explicitly chooses to maintain those files as first-party code.
 - **Shell Paths**: Quote file paths that include `(`, `)`, `[`, or `]` when running shell or git commands.
 - **API Client Paths**: The shared browser API client already targets the `/api` base URL, so request paths should start at `v1/...` instead of `api/v1/...`.
 

@@ -11,6 +11,16 @@ import {
 import Image from 'next/image';
 import { type Dispatch, type SetStateAction, useState } from 'react';
 import { toast } from 'sonner';
+import type {
+  InventoryEntry,
+  InventoryMoveOption,
+  InventoryPreviewState,
+  InventoryTranslations,
+} from '@/app/[locale]/(dashboard)/inventory/inventory.types';
+import {
+  formatFileSize,
+  getEntryTypeLabel,
+} from '@/app/[locale]/(dashboard)/inventory/inventory.utils';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,16 +59,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { courseFilesService } from '../course-files.service';
-import type {
-  InventoryEntry,
-  InventoryMoveOption,
-  InventoryPreviewState,
-  InventoryTranslations,
-} from '@/app/[locale]/(dashboard)/inventory/inventory.types';
-import {
-  formatFileSize,
-  getEntryTypeLabel,
-} from '@/app/[locale]/(dashboard)/inventory/inventory.utils';
 
 const ROOT_OPTION_VALUE = '__root__';
 

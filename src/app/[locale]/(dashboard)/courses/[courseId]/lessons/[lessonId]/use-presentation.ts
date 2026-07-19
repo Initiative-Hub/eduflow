@@ -817,7 +817,9 @@ export function usePresentation(options: {
       else if (slideDuration === '120') maxSlides = 20;
 
       const sections = collectLessonSections(content);
-      const headings = sections.map((section) => section.title).filter(Boolean);
+      const _headings = sections
+        .map((section) => section.title)
+        .filter(Boolean);
 
       const list: PlannedSlide[] = [];
 

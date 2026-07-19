@@ -1,13 +1,11 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
 import type { Editor } from '@tiptap/react';
-
-// --- Hooks ---
-import { useTiptapEditor } from '@/hooks/use-tiptap-editor';
-
+import { useCallback, useEffect, useState } from 'react';
 // --- Icons ---
 import { LinkIcon } from '@/components/tiptap-icons/link-icon';
+// --- Hooks ---
+import { useTiptapEditor } from '@/hooks/use-tiptap-editor';
 
 // --- Lib ---
 import {
@@ -53,7 +51,7 @@ export interface LinkHandlerProps {
  * Checks if a link can be set in the current editor state
  */
 export function canSetLink(editor: Editor | null): boolean {
-  if (!editor || !editor.isEditable) return false;
+  if (!editor?.isEditable) return false;
 
   // The third argument 'true' checks whether the current selection is inside an image caption, and prevents setting a link there
   // If the selection is inside an image caption, we can't set a link
@@ -69,7 +67,7 @@ export function canSetLink(editor: Editor | null): boolean {
  * Checks if a link is currently active in the editor
  */
 export function isLinkActive(editor: Editor | null): boolean {
-  if (!editor || !editor.isEditable) return false;
+  if (!editor?.isEditable) return false;
   return editor.isActive('link');
 }
 
@@ -82,7 +80,7 @@ export function shouldShowLinkButton(props: {
 }): boolean {
   const { editor, hideWhenUnavailable } = props;
 
-  if (!editor || !editor.isEditable) return false;
+  if (!editor?.isEditable) return false;
 
   const linkInSchema = isMarkInSchema('link', editor);
 

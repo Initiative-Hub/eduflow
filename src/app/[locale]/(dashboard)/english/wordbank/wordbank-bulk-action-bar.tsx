@@ -8,9 +8,9 @@ import type {
   VocabularyListSummary,
 } from '@/services/english/SavedVocabularyService';
 import {
+  WordbankListManager,
   type WordbankListMembership,
   type WordbankListUpdate,
-  WordbankListManager,
 } from './wordbank-list-manager';
 import type { WordbankTranslator } from './wordbank-mastery';
 

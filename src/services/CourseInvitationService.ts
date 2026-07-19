@@ -7,9 +7,9 @@ import {
 } from '@/generated/prisma';
 import { APP_URL } from '@/lib/api/endpoints';
 import { emailService } from '@/lib/email-service';
-import { prisma } from '@/lib/prisma';
 import { getCoursePermissions } from '@/lib/permissions/course-permission';
 import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
+import { prisma } from '@/lib/prisma';
 import {
   ASSIGNABLE_COURSE_MEMBER_ROLES,
   type AssignableCourseMemberRole,

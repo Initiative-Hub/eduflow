@@ -105,7 +105,7 @@ export function TranslationEngineSelector({
               </span>
               <span
                 className={cn(
-                  'rounded-full px-1.5 py-0.5 text-xs font-medium',
+                  'rounded-full px-1.5 py-0.5 font-medium text-xs',
                   badgeStyles[p.badgeVariant]
                 )}
               >

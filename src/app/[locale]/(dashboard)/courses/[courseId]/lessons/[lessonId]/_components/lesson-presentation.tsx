@@ -436,7 +436,7 @@ export function LessonPresentation({
     } catch (err) {
       console.error('[VisualEditor] Error in enableVisualEditing:', err);
     }
-  }, []);
+  }, [setPlannedSlides, deckUrl?.includes]);
 
   // Manually attach load listeners and check document status to guarantee visual editing binds
   useEffect(() => {

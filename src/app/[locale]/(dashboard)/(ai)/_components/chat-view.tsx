@@ -22,6 +22,7 @@ import {
   ReasoningTrigger,
 } from '@/components/ai-elements/reasoning';
 import { Suggestion } from '@/components/ai-elements/suggestion';
+import { cn } from '@/lib/utils';
 import type { ChatLessonReferenceUIPart } from '@/types/chat-lesson-references';
 import {
   buildInlineCitationMarkdown,
@@ -31,7 +32,6 @@ import { getMessageReasoning, getMessageText } from '@/utils/chat-message';
 import { getChatSuggestionItems } from '@/utils/chat-suggestions';
 import { getStudyInteractiveContentParts } from '@/utils/study-interactive-content';
 import { getStudyPracticeQuizParts } from '@/utils/study-practice-quiz';
-import { cn } from '@/lib/utils';
 import InteractiveContentPreview from '../study/_components/interactive-content-preview';
 import { createChatCitationComponents } from './chat-citations';
 import { ChatInputAttachments } from './chat-input-attachments';

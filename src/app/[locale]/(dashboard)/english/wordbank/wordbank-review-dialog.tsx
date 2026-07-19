@@ -16,8 +16,8 @@ import type {
   WordbankReviewSessionResult,
 } from '@/services/english/SavedVocabularyService';
 import {
-  type WordbankTranslator,
   WordbankReviewResults,
+  type WordbankTranslator,
 } from './wordbank-mastery';
 
 export function WordbankReviewDialog({
@@ -47,7 +47,7 @@ export function WordbankReviewDialog({
 
   useEffect(() => {
     setQuizStarted(false);
-  }, [session?.sessionId]);
+  }, []);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

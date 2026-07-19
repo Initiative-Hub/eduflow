@@ -1,9 +1,9 @@
 'use client';
 
-import { Lightbulb, Loader2, Pause, Play, Sparkles } from 'lucide-react';
+import { useMutation } from '@tanstack/react-query';
+import { Loader2, Pause, Play, Sparkles } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useCallback, useRef, useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 
 interface SentencePlayerProps {
@@ -135,8 +135,8 @@ export function SentencePlayer({
 
             <p
               className={cn(
-                'flex-1 text-sm leading-relaxed py-1',
-                isActive ? 'text-foreground font-medium' : 'text-foreground/80'
+                'flex-1 py-1 text-sm leading-relaxed',
+                isActive ? 'font-medium text-foreground' : 'text-foreground/80'
               )}
             >
               {sentence}

@@ -4,8 +4,8 @@ import {
   ArrowRight,
   Library,
   ListPlus,
-  Sparkles,
   type LucideIcon,
+  Sparkles,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 

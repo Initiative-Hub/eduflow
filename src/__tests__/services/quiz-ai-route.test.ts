@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { QuizService } from '@/services/QuizService';
 
 vi.mock('@/lib/api/middlewares', () => ({
-  withRoles: (allowedRoles: string[], handler: any) => {
+  withRoles: (_allowedRoles: string[], handler: any) => {
     return (req: Request, ...args: any[]) => {
       const sessionData = args[0];
       return handler(req, sessionData, ...args.slice(1));

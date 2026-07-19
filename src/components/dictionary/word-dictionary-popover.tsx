@@ -131,7 +131,7 @@ export function WordDictionaryPopover({
           </button>
         </div>
 
-        <div className="min-h-[100px] max-h-[300px] flex-1 overflow-y-auto px-4 pb-4 pt-3">
+        <div className="max-h-[300px] min-h-[100px] flex-1 overflow-y-auto px-4 pt-3 pb-4">
           {dictionaryQuery.isLoading && (
             <div className="flex items-center justify-center gap-2 py-8">
               <Loader2 className="size-4 animate-spin text-primary" />
@@ -163,7 +163,7 @@ export function WordDictionaryPopover({
                     {meaning.definition}
                   </p>
                   {meaning.example && (
-                    <p className="border-l-2 border-primary/25 pl-3 text-muted-foreground text-xs italic leading-relaxed">
+                    <p className="border-primary/25 border-l-2 pl-3 text-muted-foreground text-xs italic leading-relaxed">
                       &ldquo;{meaning.example}&rdquo;
                     </p>
                   )}

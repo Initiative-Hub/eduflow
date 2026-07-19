@@ -1,4 +1,5 @@
 import { FolderOpen, Search } from 'lucide-react';
+import type { InventoryTranslations } from '@/app/[locale]/(dashboard)/inventory/inventory.types';
 import { Button } from '@/components/ui/button';
 import {
   Empty,
@@ -8,7 +9,6 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty';
-import type { InventoryTranslations } from '@/app/[locale]/(dashboard)/inventory/inventory.types';
 
 type InventoryEmptyStateProps = {
   isSearching: boolean;

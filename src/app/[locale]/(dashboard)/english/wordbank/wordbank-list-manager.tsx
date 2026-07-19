@@ -68,7 +68,7 @@ export function WordbankListManager({
               return (
                 <div
                   key={list.id}
-                  className="flex min-h-9 items-center gap-2 rounded-md px-2 py-1.5 transition-colors hover:bg-primary/10 focus-within:bg-primary/10"
+                  className="flex min-h-9 items-center gap-2 rounded-md px-2 py-1.5 transition-colors focus-within:bg-primary/10 hover:bg-primary/10"
                 >
                   <Checkbox
                     id={checkboxId}

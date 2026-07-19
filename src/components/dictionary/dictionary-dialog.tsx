@@ -178,7 +178,7 @@ export function DictionaryDialog({
               <div className="flex items-center gap-3 border-b pb-4">
                 <div>
                   <div className="flex items-center gap-2">
-                    <h2 className="text-2xl font-bold text-foreground">
+                    <h2 className="font-bold text-2xl text-foreground">
                       {fetchState.data.word}
                     </h2>
                     {fetchState.data.audioUrl && (
@@ -197,7 +197,7 @@ export function DictionaryDialog({
                     )}
                   </div>
                   {fetchState.data.phonetic && (
-                    <p className="font-mono text-muted-foreground text-sm mt-0.5">
+                    <p className="mt-0.5 font-mono text-muted-foreground text-sm">
                       {fetchState.data.phonetic}
                     </p>
                   )}
@@ -208,14 +208,14 @@ export function DictionaryDialog({
               <div className="space-y-4">
                 {fetchState.data.meanings.map((meaning, idx) => (
                   <div key={idx} className="space-y-1.5">
-                    <p className="font-semibold text-xs uppercase tracking-wide text-primary">
+                    <p className="font-semibold text-primary text-xs uppercase tracking-wide">
                       {meaning.partOfSpeech}
                     </p>
                     <p className="text-foreground text-sm leading-relaxed">
                       {meaning.definition}
                     </p>
                     {meaning.example && (
-                      <p className="border-l-2 border-muted-foreground/40 pl-3 text-muted-foreground text-sm italic">
+                      <p className="border-muted-foreground/40 border-l-2 pl-3 text-muted-foreground text-sm italic">
                         &ldquo;{meaning.example}&rdquo;
                       </p>
                     )}

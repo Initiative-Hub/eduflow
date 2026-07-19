@@ -1,8 +1,8 @@
 import {
   convertToModelMessages,
   createGateway,
-  smoothStream,
   isStepCount,
+  smoothStream,
   streamText,
 } from 'ai';
 import { DEFAULT_MODELS } from '@/services/ai/chat-provider.constants';
