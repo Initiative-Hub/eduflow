@@ -241,7 +241,7 @@ export function TemplateManagerDialog({
                       'application/vnd.openxmlformats-officedocument.presentationml.presentation':
                         ['.pptx'],
                     }}
-                    maxSize={50 * 1024 * 1024} // 50MB
+                    maxSize={100 * 1024 * 1024} // 50MB
                     disabled={isUploading}
                     className="border-2 border-input border-dashed bg-muted/30 focus-within:ring-ring hover:bg-accent/20"
                   >
