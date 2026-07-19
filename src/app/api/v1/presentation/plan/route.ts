@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { z } from 'zod';
+import * as z from 'zod';
 import { withAuth } from '@/lib/api/middlewares';
 import { PresentationService } from '@/services/PresentationService';
 import { SlideService } from '@/services/SlideService';
