@@ -1,5 +1,5 @@
 import type { QuestionResult, StudentAnswer } from '@/lib/quiz-template/types';
-import type { QuizAttemptSnapshot } from '@/services/quiz-attempt-snapshot';
+import type { QuizAttemptSnapshot } from '@/utils/quiz-attempt-snapshot';
 
 export interface StudentGradeAttempt {
   id: string;

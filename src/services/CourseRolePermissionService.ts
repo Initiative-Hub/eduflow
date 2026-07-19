@@ -1,6 +1,5 @@
 import type { CourseRoleName } from '@/generated/prisma';
 import {
-  COURSE_PERMISSION,
   COURSE_PERMISSION_KEYS,
   type CoursePermissionKey,
   isCoursePermissionKey,

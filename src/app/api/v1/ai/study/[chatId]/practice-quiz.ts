@@ -2,8 +2,8 @@ import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import {
   convertToModelMessages,
   generateText,
-  Output,
   isStepCount,
+  Output,
   type ToolSet,
   type UIMessage,
 } from 'ai';
@@ -102,7 +102,7 @@ async function extractPracticeQuizIntent({
     };
   }
 
-  const result = await generateText({
+  const { output } = await generateText({
     model: provider(model ?? DEFAULT_MODELS.openrouter),
     output: Output.object({
       schema: quizIntentSchema,
@@ -128,10 +128,10 @@ Rules:
     prompt: latestUserText,
   });
 
-  return result.output;
+  return output;
 }
 
-export async function resolvePracticeQuizOptions({
+async function resolvePracticeQuizOptions({
   messages,
   quizOptions,
   provider,
@@ -162,7 +162,7 @@ export async function resolvePracticeQuizOptions({
   return mergeQuizIntentWithOptions({ intent, quizOptions });
 }
 
-export function createPracticeQuizCounts(
+function createPracticeQuizCounts(
   options: StudyQuizOptions = DEFAULT_STUDY_QUIZ_OPTIONS
 ): Record<StudyQuizQuestionType, number> {
   const selected = options.questionTypes;
@@ -210,7 +210,7 @@ function createAiPracticeQuizSchema(
   });
 }
 
-export function buildPracticeQuizContent(output: AiPracticeQuiz): QuizContent {
+function buildPracticeQuizContent(output: AiPracticeQuiz): QuizContent {
   return {
     title: output.title,
     description: output.description,
@@ -314,7 +314,7 @@ export async function generatePracticeQuiz({
 
   // Phase 2: generate the structured quiz from the enriched message history.
   // No tools here so Output.object resolves correctly.
-  const toolResponseMessages = toolCallResult.response.messages;
+  const toolResponseMessages = toolCallResult.finalStep.response.messages;
   const result = await generateText({
     model: provider(model ?? DEFAULT_MODELS.openrouter),
     output: Output.object({

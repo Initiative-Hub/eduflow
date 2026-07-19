@@ -1,10 +1,13 @@
 import { randomUUID } from 'node:crypto';
+import { createOpenRouter } from '@openrouter/ai-sdk-provider';
+import { Output, streamText } from 'ai';
 import { after } from 'next/server';
 import {
   CourseEnrollmentStatus,
   CourseInvitationStatus,
   CourseRoleName,
 } from '@/generated/prisma';
+import { pdfToMarkdown } from '@/lib/pdf';
 import { getCoursePermissions } from '@/lib/permissions/course-permission';
 import {
   COURSE_PERMISSION,
@@ -13,10 +16,19 @@ import {
 } from '@/lib/permissions/permission-keys';
 import { prisma } from '@/lib/prisma';
 import { htmlToTiptapDocument } from '@/lib/tiptap-html';
-import type { AICourseGeneration } from '@/lib/validations/course.schema';
-import { OpenRouterService } from '@/services/ai/OpenRouterService';
+import {
+  type AICourseGeneration,
+  aiCourseGenerationSchema,
+} from '@/lib/validations/course.schema';
+import {
+  COURSE_GENERATION_PROMPT,
+  DEFAULT_MODELS,
+} from '@/services/ai/chat-provider.constants';
+import type { StreamCourseInput } from '@/services/ai/chat-provider.types';
+import { generateSupplementarySearchContexts } from '@/services/ai/course-web-search';
 import { LessonContentEmbeddingService } from '@/services/LessonContentEmbeddingService';
 import { StorageService } from '@/services/StorageService';
+import type { CourseStreamEvent } from '@/types/course-stream-event';
 import type { TiptapDocument } from '@/utils/lesson-content';
 
 export type CourseListSort =
@@ -657,6 +669,96 @@ export class CourseService {
    *   {"type":"extract"} → {"type":"search"} → {"type":"generate","delta":"..."} × N
    *   → {"type":"save"} → {"type":"done"}
    */
+  static async streamCourseToWriter(
+    options: StreamCourseInput,
+    writer: WritableStreamDefaultWriter<string>
+  ): Promise<void> {
+    const emit = async (event: CourseStreamEvent) =>
+      writer.write(`${JSON.stringify(event)}\n`);
+
+    await emit({ type: 'extract' });
+
+    let pdfBuffer: Buffer;
+    if (options.fileId) {
+      const payload = await StorageService.getDownloadPayload({
+        userId: options.userId,
+        fileId: options.fileId,
+      });
+      pdfBuffer = Buffer.from(payload.bytes);
+    } else if (options.file) {
+      pdfBuffer = Buffer.from(await options.file.arrayBuffer());
+    } else {
+      throw new Error('Missing file or fileId');
+    }
+
+    const markdownContent = await pdfToMarkdown(pdfBuffer);
+
+    await emit({ type: 'search' });
+
+    const searchQuery = options.context
+      ? `${options.context} ${markdownContent.slice(0, 150)}`
+      : markdownContent.slice(0, 200);
+
+    const apiKey = options.apiKey ?? process.env.OPENROUTER_API_KEY;
+    if (!apiKey) throw new Error(`Missing API key for provider "openrouter"`);
+
+    const model = options.model ?? DEFAULT_MODELS.openrouter;
+    const provider = createOpenRouter({ apiKey });
+
+    const { webContext, youtubeContext } =
+      await generateSupplementarySearchContexts({
+        model: provider(model),
+        searchQuery,
+        onSource: async ({ sourceKind, source }) => {
+          await emit({ type: 'source-found', sourceKind, source });
+        },
+        onSearchComplete: async ({ sourceKind, count }) => {
+          await emit({ type: 'search-complete', sourceKind, count });
+        },
+      });
+    const webContextJSON = JSON.stringify(webContext, null, 2);
+    const youtubeContextJSON = JSON.stringify(youtubeContext, null, 2);
+
+    const result = streamText({
+      model: provider(model),
+      output: Output.object({ schema: aiCourseGenerationSchema }),
+      instructions: COURSE_GENERATION_PROMPT,
+      prompt: `
+        Content to analyze and transform into a course:
+
+        ${markdownContent}
+
+        ${
+          options.context
+            ? `=== ADDITIONAL CONTEXT FROM INSTRUCTOR ===\n${options.context}`
+            : ''
+        }
+
+        === SUPPLEMENTARY WEB CONTEXT ===
+        Use the following web search results to enrich lesson content with current, real-world examples and up-to-date information:
+
+        ${webContextJSON}
+
+        === SUPPLEMENTARY YOUTUBE VIDEOS ===
+        For each module or lesson, pick the most relevant YouTube video from the list below if it matches the topic, and embed it at the end of the lesson's HTML content using this exact HTML structure:
+        <div data-youtube-video="">
+          <iframe src="https://www.youtube.com/embed/VIDEO_ID" width="640" height="480" allowfullscreen="true"></iframe>
+        </div>
+        Extract the 11-character video ID from the search results to form the "/embed/VIDEO_ID" URL. Do NOT output standard links or plain paragraphs for the YouTube video URL; use only the exact div and iframe structure above. Only choose relevant videos from this list:
+
+        ${youtubeContextJSON}
+      `,
+    });
+
+    for await (const chunk of result.textStream) {
+      await emit({ type: 'generate', delta: chunk });
+    }
+
+    const generatedCourse = await result.output;
+    await options.onEnd?.({ object: generatedCourse });
+    await emit({ type: 'done' });
+  }
+
   static generateModulesStream(data: {
     userId: string;
     courseId: string;
@@ -671,10 +773,8 @@ export class CourseService {
 
     (async () => {
       try {
-        const aiService = new OpenRouterService();
-
         // Runs extract → search → generate deltas → done, persists via onEnd
-        await aiService.streamCourseToWriter(
+        await CourseService.streamCourseToWriter(
           {
             userId: data.userId,
             fileId: data.fileId,

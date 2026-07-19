@@ -3,7 +3,7 @@ import { z } from 'zod';
 import {
   AiChatStatus,
   type AiChatType,
-  Prisma,
+  type Prisma,
   ShareResourceType,
 } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
@@ -173,5 +173,69 @@ export class AiChatShareService {
       sourceChatId: sharedResource.sourceChatId,
       title: sharedResource.title,
     };
+  }
+
+  static async listShares(input: {
+    page: number;
+    pageSize: number;
+    userId: string;
+  }) {
+    const where = {
+      ownerUserId: input.userId,
+      resourceType: {
+        in: [
+          ShareResourceType.AI_CHAT,
+          ShareResourceType.STUDY_INTERACTIVE_CONTENT,
+        ],
+      },
+      revokedAt: null,
+    };
+
+    const [total, data] = await Promise.all([
+      prisma.sharedResource.count({ where }),
+      prisma.sharedResource.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (input.page - 1) * input.pageSize,
+        take: input.pageSize,
+        select: {
+          id: true,
+          title: true,
+          createdAt: true,
+          resourceType: true,
+        },
+      }),
+    ]);
+
+    return {
+      data,
+      pagination: {
+        page: input.page,
+        pageSize: input.pageSize,
+        total,
+        totalPages: Math.ceil(total / input.pageSize),
+      },
+    };
+  }
+
+  static async revokeShare(input: { shareId: string; userId: string }) {
+    const result = await prisma.sharedResource.updateMany({
+      where: {
+        id: input.shareId,
+        ownerUserId: input.userId,
+        resourceType: {
+          in: [
+            ShareResourceType.AI_CHAT,
+            ShareResourceType.STUDY_INTERACTIVE_CONTENT,
+          ],
+        },
+        revokedAt: null,
+      },
+      data: {
+        revokedAt: new Date(),
+      },
+    });
+
+    return result.count === 1;
   }
 }

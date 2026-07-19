@@ -1,7 +1,69 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
+import { ShareResourceType } from '@/generated/prisma';
 import { getChatOwner } from '@/lib/api/guest-session';
 import { createAiChatShareSchema } from '@/lib/validations/ai-chat-share.schema';
 import { AiChatShareService } from '@/services/AiChatShareService';
+
+const sharePaths: Record<ShareResourceType, string> = {
+  [ShareResourceType.AI_CHAT]: '/share/ai/chat',
+  [ShareResourceType.STUDY_INTERACTIVE_CONTENT]: '/share/study/interactive',
+};
+
+const listSharesQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(50).default(5),
+});
+
+/**
+ * @swagger
+ * /api/v1/ai/share:
+ *   get:
+ *     tags:
+ *       - AI
+ *     summary: List the current user's public AI shares
+ */
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const query = listSharesQuerySchema.safeParse(
+    Object.fromEntries(searchParams)
+  );
+
+  if (!query.success) {
+    return NextResponse.json(
+      {
+        message: 'Invalid query parameters',
+        details: query.error.flatten(),
+      },
+      { status: 400 }
+    );
+  }
+
+  const { userId } = await getChatOwner();
+
+  if (!userId) {
+    return NextResponse.json(
+      { message: 'Authentication required' },
+      { status: 401 }
+    );
+  }
+
+  const shares = await AiChatShareService.listShares({
+    ...query.data,
+    userId,
+  });
+
+  return NextResponse.json({
+    data: shares.data.map((share) => ({
+      ...share,
+      shareUrl: new URL(
+        `${sharePaths[share.resourceType]}/${share.id}`,
+        req.url
+      ).toString(),
+    })),
+    pagination: shares.pagination,
+  });
+}
 
 /**
  * @swagger

@@ -12,7 +12,7 @@ import type {
 } from '@/lib/quiz-template';
 import { generateQuestionsFromLesson } from '@/lib/quiz-template';
 import type { QuestionBlock } from '@/lib/quiz-template/types';
-import { getQuestionPrompt } from '@/services/quiz-question-references';
+import { getQuestionPrompt } from '@/utils/quiz-question-references';
 import { quizService } from './(course-tabs)/quiz/quiz.service';
 
 // ─── Question Bank Hook ──────────────────────────────────────────────────────

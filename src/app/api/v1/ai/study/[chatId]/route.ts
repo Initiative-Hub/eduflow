@@ -2,7 +2,9 @@ import { tavilySearch } from '@tavily/ai-sdk';
 import {
   createUIMessageStream,
   createUIMessageStreamResponse,
-  type UIMessage,
+  type ToolSet,
+  toUIMessageStream,
+  type UIMessageStreamWriter,
 } from 'ai';
 import { z } from 'zod';
 import { AiChatType } from '@/generated/prisma';
@@ -17,6 +19,7 @@ import type { ChatProvider } from '@/services/ai/chat-provider.types';
 import { createChatTools } from '@/services/ai/chat-tools';
 import { CacheService } from '@/services/CacheService';
 import { ChatPersistenceService } from '@/services/ChatPersistenceService';
+import type { StudyUIMessage } from '@/types/study-ui-message';
 import {
   hasChatFileParts,
   hydrateChatAttachmentDataUrls,
@@ -25,7 +28,6 @@ import {
   hasChatLessonReferenceParts,
   hydrateChatLessonReferenceContent,
 } from '@/utils/chat-lesson-references';
-import type { StudyUIMessage } from '@/utils/study-practice-quiz';
 import { generateInteractiveContent } from './interactive-content';
 import { generatePracticeQuiz } from './practice-quiz';
 import {
@@ -339,67 +341,15 @@ export async function POST(
 
     const maxSteps = 5;
 
-    // TODO: Try to simpler and decouple these code
-    if (parsedBody.data.mode === 'interactiveContent') {
+    const createStudyStreamResponse = (
+      execute: (options: {
+        writer: UIMessageStreamWriter<StudyUIMessage>;
+      }) => Promise<void>
+    ) => {
       const stream = createUIMessageStream<StudyUIMessage>({
-        originalMessages: messagesForModel as StudyUIMessage[],
+        originalMessages: messagesForModel,
         generateId: () => crypto.randomUUID(),
-
-        execute: async ({ writer }) => {
-          const generatedContent = await generateInteractiveContent({
-            messages: messagesForModel,
-            model: parsedBody.data.model,
-            apiKey: parsedBody.data.apiKey,
-            tools,
-            maxSteps,
-          });
-
-          const textId = `interactive-intro-${crypto.randomUUID()}`;
-
-          writer.write({
-            type: 'text-start',
-            id: textId,
-          });
-
-          writer.write({
-            type: 'text-delta',
-            id: textId,
-            delta: generatedContent.introduction,
-          });
-
-          writer.write({
-            type: 'data-interactive-content',
-            id: `interactive-content-${crypto.randomUUID()}`,
-            data: {
-              title: generatedContent.title,
-              description: generatedContent.description,
-              html: generatedContent.html,
-            },
-          });
-
-          const suggestions = await generateStudySuggestions({
-            provider,
-            messages: messagesForModel,
-            assistantText: generatedContent.introduction,
-            providerName,
-            model: parsedBody.data.model,
-            apiKey: parsedBody.data.apiKey,
-          });
-
-          writer.write({
-            type: 'data-suggestions',
-            id: `suggestions-${crypto.randomUUID()}`,
-            data: {
-              items: suggestions,
-            },
-          });
-
-          writer.write({
-            type: 'finish',
-            finishReason: 'stop',
-          });
-        },
-
+        execute,
         onEnd: async ({ messages }) => {
           await ChatPersistenceService.saveMessages({
             chatId,
@@ -414,100 +364,93 @@ export async function POST(
       });
 
       return createUIMessageStreamResponse({ stream });
+    };
+
+    if (parsedBody.data.mode === 'interactiveContent') {
+      return createStudyStreamResponse(async ({ writer }) => {
+        const generatedContent = await generateInteractiveContent({
+          messages: messagesForModel,
+          model: parsedBody.data.model,
+          apiKey: parsedBody.data.apiKey,
+          tools,
+          maxSteps,
+        });
+
+        const textId = `interactive-intro-${crypto.randomUUID()}`;
+
+        writer.write({
+          type: 'text-start',
+          id: textId,
+        });
+
+        writer.write({
+          type: 'text-delta',
+          id: textId,
+          delta: generatedContent.introduction,
+        });
+
+        writer.write({
+          type: 'data-interactive-content',
+          id: `interactive-content-${crypto.randomUUID()}`,
+          data: {
+            title: generatedContent.title,
+            description: generatedContent.description,
+            html: generatedContent.html,
+          },
+        });
+
+        const suggestions = await generateStudySuggestions({
+          provider,
+          messages: messagesForModel,
+          assistantText: generatedContent.introduction,
+          providerName,
+          model: parsedBody.data.model,
+          apiKey: parsedBody.data.apiKey,
+        });
+
+        writer.write({
+          type: 'data-suggestions',
+          id: `suggestions-${crypto.randomUUID()}`,
+          data: {
+            items: suggestions,
+          },
+        });
+
+        writer.write({
+          type: 'finish',
+          finishReason: 'stop',
+        });
+      });
     }
 
     if (parsedBody.data.mode === 'practiceTest') {
-      const stream = createUIMessageStream<StudyUIMessage>({
-        originalMessages: messagesForModel,
-        generateId: () => `${crypto.randomUUID()}`,
-        execute: async ({ writer }) => {
-          const quiz = await generatePracticeQuiz({
-            messages: messagesForModel,
-            quizOptions: parsedBody.data.quizOptions,
-            model: parsedBody.data.model,
-            apiKey: parsedBody.data.apiKey,
-            tools,
-            maxSteps,
-          });
+      return createStudyStreamResponse(async ({ writer }) => {
+        const quiz = await generatePracticeQuiz({
+          messages: messagesForModel,
+          quizOptions: parsedBody.data.quizOptions,
+          model: parsedBody.data.model,
+          apiKey: parsedBody.data.apiKey,
+          tools,
+          maxSteps,
+        });
 
-          const assistantText =
-            'I created an interactive practice quiz for you. Answer each question and use instant feedback to review the concept.';
+        const assistantText =
+          'I created an interactive practice quiz for you. Answer each question and use instant feedback to review the concept.';
 
-          const textId = `practice-intro-${crypto.randomUUID()}`;
-          writer.write({ type: 'text-start', id: textId });
-          writer.write({
-            type: 'text-delta',
-            id: textId,
-            delta: assistantText,
-          });
-          writer.write({ type: 'text-end', id: textId });
+        const textId = `practice-intro-${crypto.randomUUID()}`;
+        writer.write({ type: 'text-start', id: textId });
+        writer.write({
+          type: 'text-delta',
+          id: textId,
+          delta: assistantText,
+        });
+        writer.write({ type: 'text-end', id: textId });
 
-          writer.write({
-            type: 'data-practice-quiz',
-            id: `practice-quiz-${crypto.randomUUID()}`,
-            data: { quiz, deliveryMode: 'INSTANT_FEEDBACK' },
-          });
-
-          const suggestions = await generateStudySuggestions({
-            provider,
-            messages: messagesForModel,
-            assistantText,
-            providerName,
-            model: parsedBody.data.model,
-            apiKey: parsedBody.data.apiKey,
-          });
-
-          writer.write({
-            type: 'data-suggestions',
-            id: `suggestions-${crypto.randomUUID()}`,
-            data: { items: suggestions },
-          });
-          writer.write({ type: 'finish', finishReason: 'stop' });
-        },
-
-        onEnd: async ({ messages }) => {
-          await ChatPersistenceService.saveMessages({
-            chatId,
-            userId,
-            guestId,
-            messages,
-            provider: providerName,
-            model: parsedBody.data.model,
-            chatType: AiChatType.STUDY_ASSISTANT,
-          });
-        },
-      });
-
-      return createUIMessageStreamResponse({ stream });
-    }
-
-    const result = await provider.streamChat(
-      {
-        messages: messagesForModel,
-        provider: parsedBody.data.provider,
-        model: parsedBody.data.model,
-        apiKey: parsedBody.data.apiKey,
-      },
-      { prompt: systemPrompt, tools, maxSteps }
-    );
-
-    result.consumeStream();
-
-    const stream = createUIMessageStream<UIMessage>({
-      originalMessages: messagesForModel,
-      generateId: () => `${crypto.randomUUID()}`,
-      execute: async ({ writer }) => {
-        let assistantText = '';
-
-        for await (const chunk of result.toUIMessageStream<UIMessage>({
-          sendFinish: false,
-        })) {
-          if (chunk.type === 'text-delta') {
-            assistantText += chunk.delta;
-          }
-
-          writer.write(chunk);
-        }
+        writer.write({
+          type: 'data-practice-quiz',
+          id: `practice-quiz-${crypto.randomUUID()}`,
+          data: { quiz, deliveryMode: 'INSTANT_FEEDBACK' },
+        });
 
         const suggestions = await generateStudySuggestions({
           provider,
@@ -524,22 +467,51 @@ export async function POST(
           data: { items: suggestions },
         });
         writer.write({ type: 'finish', finishReason: 'stop' });
-      },
+      });
+    }
 
-      onEnd: async ({ messages }) => {
-        await ChatPersistenceService.saveMessages({
-          chatId,
-          userId,
-          guestId,
-          messages,
-          provider: providerName,
-          model: parsedBody.data.model,
-          chatType: AiChatType.STUDY_ASSISTANT,
-        });
+    const result = await provider.streamChat(
+      {
+        messages: messagesForModel,
+        provider: parsedBody.data.provider,
+        model: parsedBody.data.model,
+        apiKey: parsedBody.data.apiKey,
       },
+      { prompt: systemPrompt, tools, maxSteps }
+    );
+
+    result.consumeStream();
+
+    return createStudyStreamResponse(async ({ writer }) => {
+      let assistantText = '';
+
+      for await (const chunk of toUIMessageStream<ToolSet, StudyUIMessage>({
+        stream: result.stream,
+        sendFinish: false,
+      })) {
+        if (chunk.type === 'text-delta') {
+          assistantText += chunk.delta;
+        }
+
+        writer.write(chunk);
+      }
+
+      const suggestions = await generateStudySuggestions({
+        provider,
+        messages: messagesForModel,
+        assistantText,
+        providerName,
+        model: parsedBody.data.model,
+        apiKey: parsedBody.data.apiKey,
+      });
+
+      writer.write({
+        type: 'data-suggestions',
+        id: `suggestions-${crypto.randomUUID()}`,
+        data: { items: suggestions },
+      });
+      writer.write({ type: 'finish', finishReason: 'stop' });
     });
-
-    return createUIMessageStreamResponse({ stream });
   } catch (error: unknown) {
     const message =
       error instanceof Error ? error.message : 'Unknown error occurred';

@@ -24,22 +24,22 @@ import {
 import { useCourseNavigation } from '@/hooks/use-course-navigation';
 import { apiClient } from '@/lib/api/api-client';
 import { useSession } from '@/lib/auth-client';
-import {
-  type DeliveryMode,
-  type QuizContent,
-  type ScoreResult,
-  type StudentAnswer,
-  type StudentAnswers,
-  type QuestionSubType,
+import type {
+  DeliveryMode,
+  QuestionSubType,
+  QuizContent,
+  ScoreResult,
+  StudentAnswer,
+  StudentAnswers,
 } from '@/lib/quiz-template';
 import type { QuestionBlock } from '@/lib/quiz-template/types';
-import type { QuizAttemptSnapshot } from '@/services/quiz-attempt-snapshot';
+import type { QuizAttemptSnapshot } from '@/utils/quiz-attempt-snapshot';
 import { LessonOutline } from '../../../lessons/[lessonId]/_components/lesson-outline';
 import { useModules } from '../../../use-modules';
 import { useQuestionBank } from '../../../use-question-bank';
-import { useQuiz } from '../use-quiz';
 import { QuizAiDraftDialog } from '../create/quiz-ai-draft-dialog';
 import { QuizDetailsForm } from '../create/quiz-details-form';
+import { useQuiz } from '../use-quiz';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 

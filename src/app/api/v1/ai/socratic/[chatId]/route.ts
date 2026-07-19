@@ -1,4 +1,9 @@
-import { createUIMessageStream, createUIMessageStreamResponse } from 'ai';
+import {
+  createUIMessageStream,
+  createUIMessageStreamResponse,
+  type ToolSet,
+  toUIMessageStream,
+} from 'ai';
 import { z } from 'zod';
 import { AiChatType } from '@/generated/prisma';
 import { getChatOwner } from '@/lib/api/guest-session';
@@ -307,9 +312,12 @@ export async function POST(
       execute: async ({ writer }) => {
         let assistantText = '';
 
-        for await (const chunk of result.toUIMessageStream<SocraticUIMessage>({
-          sendFinish: false,
-        })) {
+        for await (const chunk of toUIMessageStream<ToolSet, SocraticUIMessage>(
+          {
+            stream: result.stream,
+            sendFinish: false,
+          }
+        )) {
           if (chunk.type === 'text-delta') {
             assistantText += chunk.delta;
           }

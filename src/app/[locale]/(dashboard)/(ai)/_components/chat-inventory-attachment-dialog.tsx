@@ -35,16 +35,16 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { apiClient } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import type { ChatFileUIPart } from '@/types/chat-attachments';
-import { courseFilesService } from '../courses/[courseId]/(course-tabs)/files/course-files.service';
-import { inventoryService } from '../inventory/inventory.service';
+import { courseFilesService } from '../../courses/[courseId]/(course-tabs)/files/course-files.service';
+import { inventoryService } from '../../inventory/inventory.service';
 import {
   type InventoryEntry,
   STORAGE_PAGE_SIZE,
-} from '../inventory/inventory.types';
+} from '../../inventory/inventory.types';
 import {
   formatFileSize,
   getEntryTypeLabel,
-} from '../inventory/inventory.utils';
+} from '../../inventory/inventory.utils';
 
 type AttachmentSource = 'personal' | 'course';
 

@@ -7,8 +7,8 @@ import {
   createInteractiveContentDownloadFilename,
   createInteractiveContentInventoryFile,
   createSecureInteractiveContentDocument,
-} from '@/utils/study-interactive-content-document';
-import { inventoryService } from '../../inventory/inventory.service';
+} from '@/utils/study-interactive-content';
+import { inventoryService } from '../../../inventory/inventory.service';
 import { studyService } from '../study.service';
 
 type InteractiveContentShareInput = {

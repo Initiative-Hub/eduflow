@@ -1,3 +1,6 @@
+import { createOpenRouter } from '@openrouter/ai-sdk-provider';
+import { generateText, Output } from 'ai';
+import type { z } from 'zod';
 import type {
   DeliveryMode,
   Prisma,
@@ -13,14 +16,28 @@ import {
   SUB_TYPE_TO_QUESTION_TYPE,
 } from '@/lib/quiz-template';
 import type { QuestionBlock } from '@/lib/quiz-template/types';
-import { questionBlockSchema } from '@/lib/validations/quiz.schema';
+import {
+  createQuizSchema,
+  dragAndDropQuestionSchema,
+  essayQuestionSchema,
+  fillInTheBlankQuestionSchema,
+  matchingQuestionSchema,
+  multipleChoiceQuestionSchema,
+  orderingQuestionSchema,
+  questionBlockSchema,
+  trueFalseQuestionSchema,
+} from '@/lib/validations/quiz.schema';
+import {
+  DEFAULT_MODELS,
+  QUIZ_GENERATION_PROMPT,
+} from '@/services/ai/chat-provider.constants';
+import type { AIQuizInput } from '@/services/ai/chat-provider.types';
 import { CourseService } from '@/services/CourseService';
-import { OpenRouterService } from './ai/OpenRouterService';
-import { safeMapAIQuizToSchema } from './ai/quizMapper';
 import {
   getQuestionPrompt,
   resolveReferencedQuestions,
-} from './quiz-question-references';
+} from '../utils/quiz-question-references';
+import { safeMapAIQuizToSchema } from './ai/quizMapper';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -180,24 +197,21 @@ async function generateQuestionsForLessons(
     return counts;
   }, {});
 
-  const service = new OpenRouterService();
   const generatedBatches = await Promise.all(
     requestedCounts.flatMap(([subType, requestedCount]) => {
       const remainingCount = requestedCount - (currentCounts[subType] ?? 0);
       if (remainingCount <= 0) return [];
       return [
-        service
-          .createQuiz({
-            ...aiInput,
-            quizType: SUB_TYPE_TO_QUESTION_TYPE[subType],
-            context: aiInput.context
-              ? `${aiInput.context}\n\n${lessonText}`
-              : lessonText,
-            questionNumbers: String(remainingCount),
-            topic: aiInput.topic ?? lessons[0]?.title ?? undefined,
-            content: lessonText || undefined,
-          })
-          .then((generated) => ({ generated, subType })),
+        QuizService.createQuiz({
+          ...aiInput,
+          quizType: SUB_TYPE_TO_QUESTION_TYPE[subType],
+          context: aiInput.context
+            ? `${aiInput.context}\n\n${lessonText}`
+            : lessonText,
+          questionNumbers: String(remainingCount),
+          topic: aiInput.topic ?? lessons[0]?.title ?? undefined,
+          content: lessonText || undefined,
+        }).then((generated) => ({ generated, subType })),
       ];
     })
   );
@@ -223,6 +237,59 @@ async function generateQuestionsForLessons(
 // ─── QuizService ──────────────────────────────────────────────────────────────
 
 export class QuizService {
+  static async createQuiz(options: AIQuizInput) {
+    const apiKey = options.apiKey ?? process.env.OPENROUTER_API_KEY;
+    if (!apiKey) throw new Error(`Missing API key for provider "openrouter"`);
+
+    const model = options.model ?? DEFAULT_MODELS.openrouter;
+    const provider = createOpenRouter({ apiKey });
+
+    const normalizedType = options.quizType.toLowerCase();
+
+    // The AI schema omits the discriminator, then we inject the known type.
+    const aiQuestionSchemaMap: Record<string, z.ZodTypeAny> = {
+      multiple_choice: multipleChoiceQuestionSchema.omit({ type: true }),
+      true_false: trueFalseQuestionSchema.omit({ type: true }),
+      fill_in_the_blank: fillInTheBlankQuestionSchema.omit({ type: true }),
+      matching: matchingQuestionSchema.omit({ type: true }),
+      ordering: orderingQuestionSchema.omit({ type: true }),
+      drag_and_drop: dragAndDropQuestionSchema.omit({ type: true }),
+      essay: essayQuestionSchema.omit({ type: true }),
+    };
+
+    const aiQuestionSchema =
+      aiQuestionSchemaMap[normalizedType] ??
+      aiQuestionSchemaMap.multiple_choice;
+    const aiSchema = createQuizSchema(aiQuestionSchema);
+
+    const count = parseInt(options.questionNumbers, 10) || 5;
+    const prompt = `
+      Generate a complete, high-quality educational Quiz object containing exactly ${count} questions of type "${options.quizType}".
+      ${options.topic ? `The quiz topic or theme is: "${options.topic}".` : ''}
+      ${options.content ? `Generate the quiz based on the following content:\n\n${options.content}` : 'Generate interesting educational questions.'}
+
+      Instructions:
+      1. Provide a clear, engaging title and description for the quiz.
+      2. Set category, subType, deliveryMode, and selectionMethod appropriately for the quizType.
+      3. Generate exactly ${count} questions in the questions array.
+      4. Ensure all option, blank, zone, and item IDs are unique (e.g. opt1, opt2, blank1, zone1, item1, left1, right1).
+      5. Provide helpful explanations for each question.
+    `;
+
+    const { output } = await generateText({
+      model: provider(model),
+      output: Output.object({ schema: aiSchema }),
+      prompt,
+      instructions: QUIZ_GENERATION_PROMPT,
+    });
+
+    const questionsWithType = (
+      output.questions as Record<string, unknown>[]
+    ).map((question) => ({ type: normalizedType, ...question }));
+
+    return { ...output, questions: questionsWithType };
+  }
+
   static async generateDraft(
     courseId: string,
     userId: string,
@@ -647,24 +714,21 @@ export class QuizService {
     }, {});
 
     // Generate each requested type independently so a quiz can mix formats.
-    const service = new OpenRouterService();
     const generatedBatches = await Promise.all(
       requestedCounts.flatMap(([subType, requestedCount]) => {
         const remainingCount = requestedCount - (currentCounts[subType] ?? 0);
         if (remainingCount <= 0) return [];
         return [
-          service
-            .createQuiz({
-              ...aiInput,
-              quizType: SUB_TYPE_TO_QUESTION_TYPE[subType],
-              context: aiInput.context
-                ? `${aiInput.context}\n\n${lessonText}`
-                : lessonText,
-              questionNumbers: String(remainingCount),
-              topic: aiInput.topic ?? lessons[0]?.title ?? undefined,
-              content: lessonText || undefined,
-            })
-            .then((generated) => ({ generated, subType })),
+          QuizService.createQuiz({
+            ...aiInput,
+            quizType: SUB_TYPE_TO_QUESTION_TYPE[subType],
+            context: aiInput.context
+              ? `${aiInput.context}\n\n${lessonText}`
+              : lessonText,
+            questionNumbers: String(remainingCount),
+            topic: aiInput.topic ?? lessons[0]?.title ?? undefined,
+            content: lessonText || undefined,
+          }).then((generated) => ({ generated, subType })),
         ];
       })
     );

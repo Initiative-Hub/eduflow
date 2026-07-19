@@ -13,8 +13,8 @@ import type {
 import {
   countAnsweredQuestions,
   createQuizAttemptSnapshot,
-} from '@/services/quiz-attempt-snapshot';
-import { resolveReferencedQuestions } from '@/services/quiz-question-references';
+} from '@/utils/quiz-attempt-snapshot';
+import { resolveReferencedQuestions } from '@/utils/quiz-question-references';
 
 // ─── Request Validation Schemas ──────────────────────────────────────────────
 
