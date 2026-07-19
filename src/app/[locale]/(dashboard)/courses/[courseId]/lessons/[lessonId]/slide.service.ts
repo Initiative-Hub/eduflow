@@ -51,7 +51,7 @@ export const slideService = {
     name?: string
   ): Promise<{ message: string }> => {
     const baseUrl = (
-      process.env.EXTERNAL_SERVICE_URL || 'http://localhost:8000'
+      process.env.NEXT_PUBLIC_EXTERNAL_SERVICE_URL || 'http://localhost:8000'
     ).replace(/\/$/, '');
 
     const formData = new FormData();

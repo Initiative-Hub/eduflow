@@ -1162,25 +1162,40 @@ class SlideService:
                             f"Could not auto-create collection.json for '{collection_name}': {e}"
                         )
 
-                async def upload_dir_to_s3(directory: Path, prefix: str):
+                async def upload_dir_to_s3(directory: Path, prefix: str) -> int:
+                    uploaded_count = 0
                     for child in directory.iterdir():
                         if child.is_file():
-                            await upload_file_to_s3(
+                            uploaded = await upload_file_to_s3(
                                 child,
                                 f"{prefix}/{child.name}",
                                 bucket_name=AWS_S3_TEMPLATES_BUCKET,
                             )
+                            if not uploaded:
+                                raise RuntimeError(
+                                    f"Failed to upload template file '{child}' to S3 bucket '{AWS_S3_TEMPLATES_BUCKET}'"
+                                )
+                            uploaded_count += 1
                         elif child.is_dir():
-                            await upload_dir_to_s3(child, f"{prefix}/{child.name}")
+                            uploaded_count += await upload_dir_to_s3(
+                                child, f"{prefix}/{child.name}"
+                            )
+                    return uploaded_count
 
                 # Always use collection_name (without _template) as the S3 prefix
                 # so get_collections and generate_deck_from_plan can find it consistently
-                await upload_dir_to_s3(dest_dir, f"templates/{collection_name}")
+                uploaded_count = await upload_dir_to_s3(
+                    dest_dir, f"templates/{collection_name}"
+                )
+                if uploaded_count == 0:
+                    raise RuntimeError(
+                        f"No template files were uploaded to S3 for collection '{collection_name}'"
+                    )
 
                 # Remove local files after successful S3 upload
                 shutil.rmtree(dest_dir, ignore_errors=True)
                 logger.info(
-                    f"Removed local template collection '{dest_dir.name}' after S3 upload"
+                    f"Removed local template collection '{dest_dir.name}' after uploading {uploaded_count} files to S3"
                 )
 
             return res
