@@ -13,6 +13,7 @@ import type { InventoryEntry } from '../../../../inventory/inventory.types';
 import { formatFileSize } from '../../../../inventory/inventory.utils';
 import { useInventory } from '../../../../inventory/use-inventory';
 import type {
+  GenerationPipelineStep,
   GenerationStep,
   StreamingCourse,
 } from '../../use-generate-course';
@@ -35,6 +36,7 @@ interface AiClientDialogProps {
     context?: string;
   }) => void;
   generationStep?: GenerationStep;
+  lastStartedGenerationStep?: GenerationPipelineStep | null;
   generationError?: string | null;
   isRunning?: boolean;
   streamingCourse?: StreamingCourse | null;
@@ -49,6 +51,7 @@ export function AiClientDialog({
   onSelect,
   onRetry,
   generationStep = 'idle',
+  lastStartedGenerationStep = null,
   generationError = null,
   isRunning = false,
   streamingCourse,
@@ -345,6 +348,7 @@ export function AiClientDialog({
       {phase === 'generating' ? (
         <AiClientGeneratingPanel
           generationStep={generationStep}
+          lastStartedStep={lastStartedGenerationStep}
           generationError={generationError}
           streamingCourse={streamingCourse}
           searchSources={searchSources}

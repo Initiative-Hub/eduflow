@@ -39,6 +39,7 @@ export function useModules(courseId: string) {
 
   const {
     step,
+    lastStartedStep,
     streamingCourse,
     searchSources,
     isRunning,
@@ -136,6 +137,7 @@ export function useModules(courseId: string) {
 
     // New stream state
     generationStep: step,
+    lastStartedGenerationStep: lastStartedStep,
     generationError,
     streamingCourse,
     searchSources,

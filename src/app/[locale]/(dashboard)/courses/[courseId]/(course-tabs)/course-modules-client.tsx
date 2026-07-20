@@ -45,6 +45,7 @@ export function CourseModulesClient({
     streamingCourse,
     searchSources,
     generationStep,
+    lastStartedGenerationStep,
     generationError,
     isRunning,
     resetGeneration,
@@ -178,6 +179,7 @@ export function CourseModulesClient({
           onSelect={onAiSelect}
           onRetry={onAiRetry}
           generationStep={generationStep}
+          lastStartedGenerationStep={lastStartedGenerationStep}
           generationError={generationError}
           isRunning={isRunning}
           streamingCourse={streamingCourse}

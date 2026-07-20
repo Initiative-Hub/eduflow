@@ -17,6 +17,7 @@ export type GenerationStep =
   | 'idle'
   | 'error';
 
+export type GenerationPipelineStep = 'extract' | 'search' | 'generate' | 'save';
 export interface StreamingModule {
   title?: string;
   lessons?: Array<{ lessonTitle?: string }>;
@@ -29,6 +30,7 @@ export interface StreamingCourse {
 
 export interface UseGenerateCourseReturn {
   step: GenerationStep;
+  lastStartedStep: GenerationPipelineStep | null;
   streamingCourse: StreamingCourse | null;
   searchSources: SearchSourcesState;
   isRunning: boolean;
@@ -53,6 +55,8 @@ export function useGenerateCourse(
   onError?: (msg: string) => void
 ): UseGenerateCourseReturn {
   const [step, setStep] = useState<GenerationStep>('idle');
+  const [lastStartedStep, setLastStartedStep] =
+    useState<GenerationPipelineStep | null>(null);
   const [streamingCourse, setStreamingCourse] =
     useState<StreamingCourse | null>(null);
   const [searchSources, setSearchSources] = useState<SearchSourcesState>(() =>
@@ -66,6 +70,7 @@ export function useGenerateCourse(
 
   const reset = useCallback(() => {
     setStep('idle');
+    setLastStartedStep(null);
     setStreamingCourse(null);
     setSearchSources(createEmptySearchSources());
     setIsRunning(false);
@@ -183,9 +188,11 @@ export function useGenerateCourse(
             switch (event.type) {
               case 'extract':
                 setStep('extract');
+                setLastStartedStep('extract');
                 break;
               case 'search':
                 setStep('search');
+                setLastStartedStep('search');
                 break;
               case 'source-found':
               case 'search-complete':
@@ -195,11 +202,13 @@ export function useGenerateCourse(
                 break;
               case 'generate':
                 setStep('generate');
+                setLastStartedStep('generate');
                 deltaBufferRef.current += event.delta;
                 setStreamingCourse(tryParseDelta(deltaBufferRef.current));
                 break;
               case 'save':
                 setStep('save');
+                setLastStartedStep('save');
                 break;
               case 'done':
                 setStep('done');
@@ -225,6 +234,7 @@ export function useGenerateCourse(
 
   return {
     step,
+    lastStartedStep,
     streamingCourse,
     searchSources,
     isRunning,

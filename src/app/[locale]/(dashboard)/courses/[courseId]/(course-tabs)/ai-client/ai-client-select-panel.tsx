@@ -78,7 +78,7 @@ export function AiClientSelectPanel({
         </TabsTrigger>
       </TabsList>
 
-      <div className="mt-6 min-h-112.5 overflow-hidden rounded-xl border border-dashed bg-muted/30">
+      <div className="mt-6 h-100 overflow-hidden rounded-xl border border-dashed bg-muted/30">
         <TabsContent value="personal" className="mt-0 outline-none">
           <ResourceBrowser
             entries={personalFiles}
