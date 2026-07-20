@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { SearchSourcesPreview } from '@/app/[locale]/(dashboard)/courses/[courseId]/(course-tabs)/ai-client/search-sources-preview';
-import type { CourseContentSearchSourcesState } from '@/lib/course-content/stream-state';
+import type { CourseContentSearchSourcesState } from '@/lib/course-content/search-source-state';
 
 const labels = {
   title: 'Found sources',

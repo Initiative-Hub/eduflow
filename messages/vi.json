@@ -866,7 +866,6 @@
     },
     "CourseModules": {
       "addModule": "Thêm mô-đun",
-      "generateCourseContent": "Tạo nội dung khóa học",
       "AiDialog": {
         "clickToBrowse": "Nhấp để duyệt tệp",
         "comingSoonTitle": "Thế hệ nâng cao",
@@ -919,6 +918,9 @@
         "retry": "Thử lại",
         "saving": "Đang lưu",
         "savingCourseContent": "Đang lưu các mô-đun và bài học mới của bạn...",
+        "skippingWebSearch": "Đang bỏ qua tìm kiếm Web...",
+        "skipWebSearch": "Bỏ qua tìm kiếm Web",
+        "skipWebSearchFailed": "Không thể bỏ qua tìm kiếm Web. Quá trình sẽ tiếp tục ở nền.",
         "sourcePreview": {
           "empty": "Chưa tìm thấy nguồn nào",
           "foundCount": "{count, plural, =0 {Chưa có nguồn} =1 {1 nguồn} other {# nguồn}}",
@@ -931,9 +933,12 @@
         },
         "startingCourseContentGeneration": "Đang bắt đầu tạo nội dung...",
         "success": "Các mô-đun khóa học đã được tạo và lưu thành công!",
-        "webSearching": "Đang tìm kiếm trên web để lấy thêm ngữ cảnh và tài liệu tham khảo..."
+        "webSearchFailed": "Tìm kiếm Web không thể hoàn tất. Các nguồn đã tìm thấy vẫn sẽ được sử dụng.",
+        "webSearching": "Đang tìm kiếm trên web để lấy thêm ngữ cảnh và tài liệu tham khảo...",
+        "webSearchSkipped": "Đã bỏ qua tìm kiếm Web. Các nguồn đã tìm thấy vẫn sẽ được sử dụng."
       },
       "description": "Tổ chức chương trình giảng dạy của bạn thành các mô-đun và bài học.",
+      "generateCourseContent": "Tạo nội dung khóa học",
       "noModules": "Chưa có mô-đun nào. Tạo mô-đun đầu tiên của bạn để bắt đầu.",
       "title": "Mô-đun"
     },

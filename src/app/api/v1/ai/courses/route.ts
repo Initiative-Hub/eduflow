@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
 import * as z from 'zod';
 import { withRoles } from '@/lib/api/middlewares';
+import { createCourseContentGenerationControl } from '@/lib/course-content/generation-control';
 import { getCoursePermissions } from '@/lib/permissions/course-permission';
 import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
+import { hasUpstashRestEnv } from '@/lib/upstash/redis/client';
 import { CourseService } from '@/services/CourseService';
 
 /**
@@ -133,6 +135,21 @@ export const POST = withRoles(
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       }
 
+      let controlId: string | undefined;
+      if (hasUpstashRestEnv()) {
+        try {
+          controlId = await createCourseContentGenerationControl({
+            courseId: parsed.data.courseId,
+            userId,
+          });
+        } catch (error) {
+          console.error(
+            'Course content generation skip control unavailable:',
+            error
+          );
+        }
+      }
+
       const result = CourseService.generateCourseContentStream({
         userId,
         courseId: parsed.data.courseId,
@@ -141,6 +158,7 @@ export const POST = withRoles(
         context: parsed.data.context,
         apiKey: parsed.data.apiKey,
         model: parsed.data.model,
+        controlId,
       });
 
       // Return the NDJSON stream
@@ -150,6 +168,9 @@ export const POST = withRoles(
           'Transfer-Encoding': 'chunked',
           'Cache-Control': 'no-cache',
           'X-Accel-Buffering': 'no',
+          ...(controlId
+            ? { 'X-Course-Content-Generation-Control': controlId }
+            : {}),
         },
       });
     } catch (error) {

@@ -2,27 +2,34 @@ import { Loader2, RefreshCw, XCircle } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import type { CourseContentSearchSourcesState } from '@/lib/course-content/stream-state';
+import type { CourseContentPipelineState } from '@/lib/course-content/pipeline-state';
+import type { CourseContentSearchSourcesState } from '@/lib/course-content/search-source-state';
 import type {
   CourseContentDraft,
   GenerationPipelineStep,
   GenerationStep,
 } from '../../use-generate-course-content';
 import { CourseContentPreview } from './course-content-preview';
+import { CourseContentSearchStep } from './course-content-search-step';
 import {
   GenerationPipelineStepper,
   PIPELINE_STEP_ORDER,
   type PipelineStep,
   type PipelineStepStatus,
 } from './generation-pipeline-stepper';
-import { SearchSourcesPreview } from './search-sources-preview';
 
 type AiClientGeneratingPanelProps = {
   generationStep: GenerationStep;
   lastStartedStep: GenerationPipelineStep | null;
+  pipelineState?: CourseContentPipelineState;
   generationError: string | null;
   courseContentDraft: CourseContentDraft | null | undefined;
   searchSources?: CourseContentSearchSourcesState;
+  searchFailureMessage?: string | null;
+  isSearchSkipAvailable?: boolean;
+  isSearchSkipRequested?: boolean;
+  searchSkipError?: string | null;
+  onSkipSearch?: () => Promise<void>;
   lastSelection: {
     fileId?: string;
     file?: File;
@@ -45,9 +52,15 @@ function getPipelineStep(step: GenerationStep): PipelineStep | null {
 export function AiClientGeneratingPanel({
   generationStep,
   lastStartedStep,
+  pipelineState,
   generationError,
   courseContentDraft,
   searchSources,
+  searchFailureMessage,
+  isSearchSkipAvailable = false,
+  isSearchSkipRequested: isSearchSkipRequestedFromStream = false,
+  searchSkipError,
+  onSkipSearch,
   lastSelection,
   onDismiss,
   onRetry,
@@ -60,6 +73,7 @@ export function AiClientGeneratingPanel({
   const [viewingStep, setViewingStep] = useState<PipelineStep | null>(
     progressStep
   );
+  const [skipRequested, setSkipRequested] = useState(false);
 
   useEffect(() => {
     if (!progressStep) {
@@ -76,6 +90,10 @@ export function AiClientGeneratingPanel({
     previousProgressStep.current = progressStep;
   }, [progressStep]);
 
+  useEffect(() => {
+    if (generationStep !== 'search') setSkipRequested(false);
+  }, [generationStep]);
+
   const selectedStep = viewingStep ?? progressStep;
   const searchSourcesState = searchSources ?? {
     web: [],
@@ -83,34 +101,39 @@ export function AiClientGeneratingPanel({
     completed: { web: false, youtube: false },
   };
 
-  const sourcePreviewLabels = {
-    title: genT('sourcePreview.title'),
-    web: genT('sourcePreview.web'),
-    youtube: genT('sourcePreview.youtube'),
-    webDescription: genT('sourcePreview.webDescription'),
-    youtubeDescription: genT('sourcePreview.youtubeDescription'),
-    searching: genT('sourcePreview.searching'),
-    empty: genT('sourcePreview.empty'),
-    foundCount: (count: number) => genT('sourcePreview.foundCount', { count }),
-  };
-
   const getStepStatus = (step: PipelineStep): PipelineStepStatus => {
+    if (pipelineState) return pipelineState[step];
     if (!progressStep) return 'pending';
 
     const progressIndex = PIPELINE_STEP_ORDER.indexOf(progressStep);
     const stepIndex = PIPELINE_STEP_ORDER.indexOf(step);
-    if (generationStep === 'error' && step === progressStep) return 'error';
-    if (stepIndex < progressIndex) return 'done';
+    if (generationStep === 'error' && step === progressStep) return 'failed';
+    if (stepIndex < progressIndex) return 'completed';
     if (stepIndex === progressIndex)
-      return generationStep === 'done' ? 'done' : 'active';
+      return generationStep === 'done' ? 'completed' : 'running';
     return 'pending';
+  };
+
+  const isSearchSkipRequested =
+    skipRequested || isSearchSkipRequestedFromStream;
+  const handleSkipSearch = async () => {
+    if (!onSkipSearch) return;
+
+    setSkipRequested(true);
+    try {
+      await onSkipSearch();
+    } catch {
+      setSkipRequested(false);
+    }
   };
 
   const statusLabel =
     generationStep === 'extract'
       ? genT('documentReceived')
       : generationStep === 'search'
-        ? genT('webSearching')
+        ? isSearchSkipRequested
+          ? genT('skippingWebSearch')
+          : genT('webSearching')
         : generationStep === 'generate'
           ? genT('creatingCourseContent')
           : genT('savingCourseContent');
@@ -125,10 +148,15 @@ export function AiClientGeneratingPanel({
       />
 
       {selectedStep === 'search' && (
-        <SearchSourcesPreview
+        <CourseContentSearchStep
           sources={searchSourcesState}
+          status={getStepStatus('search')}
           isSearching={generationStep === 'search'}
-          labels={sourcePreviewLabels}
+          failureMessage={searchFailureMessage}
+          isSkipAvailable={isSearchSkipAvailable}
+          isSkipRequested={isSearchSkipRequested}
+          skipError={searchSkipError}
+          onSkip={handleSkipSearch}
         />
       )}
       {selectedStep === 'generate' && (
@@ -174,7 +202,10 @@ export function AiClientGeneratingPanel({
           </div>
         </div>
       ) : (
-        <div className="flex items-center justify-center gap-2 text-muted-foreground text-sm">
+        <div
+          role="status"
+          className="flex items-center justify-center gap-2 text-muted-foreground text-sm"
+        >
           <Loader2 className="h-4 w-4 animate-spin text-primary" />
           <span>{statusLabel}</span>
         </div>

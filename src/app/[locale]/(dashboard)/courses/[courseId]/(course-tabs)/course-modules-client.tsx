@@ -46,10 +46,16 @@ export function CourseModulesClient({
     searchSources,
     generationStep,
     lastStartedGenerationStep,
+    generationPipelineState,
     generationError,
+    searchFailureMessage,
+    isSearchSkipAvailable,
+    isSearchSkipRequested,
+    searchSkipError,
     isRunning,
     resetGeneration,
     generateCourseContent,
+    skipSearch,
   } = useModules(courseId);
 
   const { quizzes } = useQuestionBank({ courseId });
@@ -180,10 +186,16 @@ export function CourseModulesClient({
           onRetry={onAiRetry}
           generationStep={generationStep}
           lastStartedGenerationStep={lastStartedGenerationStep}
+          generationPipelineState={generationPipelineState}
           generationError={generationError}
           isRunning={isRunning}
           courseContentDraft={courseContentDraft}
           searchSources={searchSources}
+          searchFailureMessage={searchFailureMessage}
+          isSearchSkipAvailable={isSearchSkipAvailable}
+          isSearchSkipRequested={isSearchSkipRequested}
+          searchSkipError={searchSkipError}
+          onSkipSearch={skipSearch}
         />
       ) : null}
     </div>

@@ -5,13 +5,13 @@ import {
   Globe,
   Loader2,
   Sparkles,
-  XCircle,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
+import type { CourseContentPipelineStatus } from '@/lib/course-content/pipeline-state';
 import { cn } from '@/lib/utils';
 
 export type PipelineStep = 'extract' | 'search' | 'generate' | 'save';
-export type PipelineStepStatus = 'done' | 'active' | 'error' | 'pending';
+export type PipelineStepStatus = CourseContentPipelineStatus;
 
 export const PIPELINE_STEP_ORDER: PipelineStep[] = [
   'extract',
@@ -56,9 +56,7 @@ export function GenerationPipelineStepper({
               <div
                 className={cn(
                   'absolute top-6 right-1/2 h-0.5 w-full transition-colors duration-300',
-                  getStepStatus(pipelineSteps[idx - 1].key) === 'done'
-                    ? 'bg-primary'
-                    : 'bg-muted'
+                  status !== 'pending' ? 'bg-primary' : 'bg-muted'
                 )}
               />
             )}
@@ -72,23 +70,23 @@ export function GenerationPipelineStepper({
               <span
                 className={cn(
                   'flex h-12 w-12 items-center justify-center rounded-full border-2 transition-all duration-300',
-                  status === 'done' &&
+                  status === 'completed' &&
                     'border-primary bg-primary text-primary-foreground',
-                  status === 'active' &&
+                  status === 'running' &&
                     'border-primary bg-primary text-primary-foreground',
-                  status === 'error' &&
-                    'border-destructive bg-destructive text-destructive-foreground',
+                  status === 'failed' &&
+                    'border-destructive bg-destructive/10 text-destructive',
+                  status === 'skipped' &&
+                    'border-muted-foreground/50 bg-muted text-muted-foreground',
                   status === 'pending' &&
                     'border-muted bg-muted text-muted-foreground',
                   isViewing && 'ring-2 ring-ring ring-offset-2'
                 )}
               >
-                {status === 'done' ? (
+                {status === 'completed' ? (
                   <Check className="h-5 w-5" />
-                ) : status === 'active' ? (
+                ) : status === 'running' ? (
                   <Loader2 className="h-5 w-5 animate-spin" />
-                ) : status === 'error' ? (
-                  <XCircle className="h-5 w-5" />
                 ) : (
                   step.icon
                 )}
@@ -96,9 +94,10 @@ export function GenerationPipelineStepper({
               <span
                 className={cn(
                   'text-center font-medium text-[11px] transition-colors duration-200',
-                  status === 'active' && 'text-primary',
-                  status === 'done' && 'text-primary/70',
-                  status === 'error' && 'text-destructive',
+                  status === 'running' && 'text-primary',
+                  status === 'completed' && 'text-primary/70',
+                  status === 'failed' && 'text-destructive',
+                  status === 'skipped' && 'text-muted-foreground',
                   status === 'pending' && 'text-muted-foreground'
                 )}
               >

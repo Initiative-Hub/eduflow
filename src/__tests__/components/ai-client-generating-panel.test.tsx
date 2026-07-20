@@ -139,4 +139,75 @@ describe('AiClientGeneratingPanel', () => {
       screen.getByRole('button', { name: 'pipeline.extract' })
     ).toHaveAttribute('aria-current', 'step');
   });
+
+  it('lets users request a web search skip only while that phase is running', async () => {
+    const user = userEvent.setup();
+    const onSkipSearch = vi.fn().mockResolvedValue(undefined);
+    renderPanel({
+      generationStep: 'search',
+      lastStartedStep: 'search',
+      onSkipSearch,
+      isSearchSkipAvailable: true,
+    } as any);
+
+    const skipButton = screen.getByRole('button', {
+      name: 'skipWebSearch',
+    });
+
+    expect(skipButton).toBeEnabled();
+    await user.click(skipButton);
+
+    expect(onSkipSearch).toHaveBeenCalledOnce();
+    expect(skipButton).toBeDisabled();
+    expect(skipButton).toHaveTextContent('skipWebSearch');
+    expect(screen.getByRole('status')).toHaveTextContent('skippingWebSearch');
+  });
+
+  it('does not render a separate skipped-search message box', async () => {
+    const user = userEvent.setup();
+    renderPanel({
+      pipelineState: {
+        extract: 'completed',
+        search: 'skipped',
+        generate: 'running',
+        save: 'pending',
+      },
+    });
+
+    await user.click(screen.getByRole('button', { name: 'pipeline.search' }));
+
+    expect(screen.queryByText('webSearchSkipped')).not.toBeInTheDocument();
+  });
+
+  it('keeps a failed Web Search selectable with its destructive Globe state', async () => {
+    const user = userEvent.setup();
+    renderPanel({
+      pipelineState: {
+        extract: 'completed',
+        search: 'failed',
+        generate: 'running',
+        save: 'pending',
+      },
+      searchFailureMessage: 'Search provider unavailable',
+    });
+
+    const searchStep = screen.getByRole('button', {
+      name: 'pipeline.search',
+    });
+
+    expect(searchStep).toBeEnabled();
+    expect(searchStep.querySelector('.lucide-globe')).toBeInTheDocument();
+
+    await user.click(searchStep);
+
+    expect(screen.getByText('Search provider unavailable')).toHaveAttribute(
+      'role',
+      'alert'
+    );
+    expect(
+      screen
+        .getByRole('button', { name: 'pipeline.generate' })
+        .querySelector('.animate-spin')
+    ).toBeInTheDocument();
+  });
 });

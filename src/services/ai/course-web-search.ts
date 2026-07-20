@@ -23,6 +23,8 @@ const webSearchSourceSchema = z.object({
 
 export type WebSearchContext = z.infer<typeof webSearchSourceSchema>[];
 
+export type SupplementarySearchStatus = 'completed' | 'failed' | 'skipped';
+
 type SourceFoundEvent = {
   sourceKind: CourseContentSearchSourceKind;
   source: CourseContentSearchSourcePreview;
@@ -36,6 +38,7 @@ type SearchCompleteEvent = {
 type SupplementarySearchInput = {
   model: LanguageModel;
   searchQuery: string;
+  abortSignal?: AbortSignal;
   onSource?: (event: SourceFoundEvent) => Promise<void> | void;
   onSearchComplete?: (event: SearchCompleteEvent) => Promise<void> | void;
 };
@@ -47,6 +50,7 @@ type SearchContextInput = SupplementarySearchInput & {
 export async function generateSupplementarySearchContexts({
   model,
   searchQuery,
+  abortSignal,
   onSource,
   onSearchComplete,
 }: SupplementarySearchInput) {
@@ -57,6 +61,7 @@ export async function generateSupplementarySearchContexts({
       model,
       searchQuery: trimmedQuery,
       purpose: 'web',
+      abortSignal,
       onSource,
       onSearchComplete,
     }),
@@ -64,24 +69,42 @@ export async function generateSupplementarySearchContexts({
       model,
       searchQuery: `${trimmedQuery} site:youtube.com`,
       purpose: 'youtube',
+      abortSignal,
       onSource,
       onSearchComplete,
     }),
   ]);
 
-  return { webContext, youtubeContext };
+  const failedSearch = [webContext, youtubeContext].find(
+    (search) => search.error
+  );
+
+  return {
+    webContext: webContext.context,
+    youtubeContext: youtubeContext.context,
+    status: abortSignal?.aborted
+      ? 'skipped'
+      : failedSearch
+        ? 'failed'
+        : 'completed',
+    ...(failedSearch?.error ? { message: failedSearch.error } : {}),
+  };
 }
 
 async function generateSearchContext({
   model,
   searchQuery,
   purpose,
+  abortSignal,
   onSource,
   onSearchComplete,
-}: SearchContextInput): Promise<WebSearchContext> {
+}: SearchContextInput): Promise<{ context: WebSearchContext; error?: string }> {
+  const streamedSources: WebSearchContext = [];
+
   try {
     const result = streamText({
       model,
+      abortSignal,
       output: Output.array({ element: webSearchSourceSchema }),
       tools: {
         webSearch: tavilySearch({
@@ -106,6 +129,7 @@ async function generateSearchContext({
 
     for await (const source of result.elementStream) {
       streamedCount += 1;
+      streamedSources.push(source);
       await onSource?.({
         sourceKind: purpose,
         source: toSearchSourcePreview(source),
@@ -120,11 +144,17 @@ async function generateSearchContext({
 
     console.log(`Generated ${purpose} context:`, output);
 
-    return output;
+    return { context: output };
   } catch (error) {
-    console.error('Failed to execute AI SDK web search:', error);
-    await onSearchComplete?.({ sourceKind: purpose, count: 0 });
-    return [];
+    const message = error instanceof Error ? error.message : 'Search failed';
+    if (!abortSignal?.aborted) {
+      console.error('Failed to execute AI SDK web search:', error);
+    }
+    await onSearchComplete?.({
+      sourceKind: purpose,
+      count: streamedSources.length,
+    });
+    return { context: streamedSources, error: message };
   }
 }
 

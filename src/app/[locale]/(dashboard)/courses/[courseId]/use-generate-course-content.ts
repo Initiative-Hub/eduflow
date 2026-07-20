@@ -1,11 +1,18 @@
 'use client';
 
+import { useMutation } from '@tanstack/react-query';
 import { useCallback, useRef, useState } from 'react';
+import {
+  applyCourseContentPipelineEvent,
+  type CourseContentPipelineState,
+  type CourseContentPipelineStep,
+  createCourseContentPipelineState,
+} from '@/lib/course-content/pipeline-state';
 import {
   applyCourseContentSearchSourceEvent,
   type CourseContentSearchSourcesState,
   createEmptyCourseContentSearchSources,
-} from '@/lib/course-content/stream-state';
+} from '@/lib/course-content/search-source-state';
 import type { CourseContentStreamEvent } from '@/types/course-content-stream-event';
 
 export type GenerationStep =
@@ -17,7 +24,7 @@ export type GenerationStep =
   | 'idle'
   | 'error';
 
-export type GenerationPipelineStep = 'extract' | 'search' | 'generate' | 'save';
+export type GenerationPipelineStep = CourseContentPipelineStep;
 export interface CourseContentModuleDraft {
   title?: string;
   lessons?: Array<{ lessonTitle?: string }>;
@@ -31,8 +38,13 @@ export interface CourseContentDraft {
 export interface UseGenerateCourseContentReturn {
   step: GenerationStep;
   lastStartedStep: GenerationPipelineStep | null;
+  pipelineState: CourseContentPipelineState;
   courseContentDraft: CourseContentDraft | null;
   searchSources: CourseContentSearchSourcesState;
+  searchFailureMessage: string | null;
+  isSearchSkipAvailable: boolean;
+  isSearchSkipRequested: boolean;
+  searchSkipError: string | null;
   isRunning: boolean;
   error: string | null;
   generateCourseContent: (params: {
@@ -43,6 +55,7 @@ export interface UseGenerateCourseContentReturn {
     apiKey?: string;
     model?: string;
   }) => Promise<void>;
+  skipSearch: () => Promise<void>;
   reset: () => void;
 }
 
@@ -57,6 +70,10 @@ export function useGenerateCourseContent(
   const [step, setStep] = useState<GenerationStep>('idle');
   const [lastStartedStep, setLastStartedStep] =
     useState<GenerationPipelineStep | null>(null);
+  const [pipelineState, setPipelineState] =
+    useState<CourseContentPipelineState>(() =>
+      createCourseContentPipelineState()
+    );
   const [courseContentDraft, setCourseContentDraft] =
     useState<CourseContentDraft | null>(null);
   const [searchSources, setSearchSources] =
@@ -65,19 +82,64 @@ export function useGenerateCourseContent(
     );
   const [isRunning, setIsRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [searchFailureMessage, setSearchFailureMessage] = useState<
+    string | null
+  >(null);
+  const [controlId, setControlId] = useState<string | null>(null);
+  const [isSearchSkipRequested, setIsSearchSkipRequested] = useState(false);
+  const [searchSkipError, setSearchSkipError] = useState<string | null>(null);
 
   // Accumulate raw JSON delta text from the AI
   const deltaBufferRef = useRef('');
 
+  const skipSearchMutation = useMutation({
+    mutationFn: async (generationControlId: string) => {
+      const response = await fetch(
+        `/api/v1/ai/courses/${generationControlId}/skip-search`,
+        {
+          method: 'POST',
+          cache: 'no-store',
+          credentials: 'include',
+        }
+      );
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+    },
+  });
+
   const reset = useCallback(() => {
     setStep('idle');
     setLastStartedStep(null);
+    setPipelineState(createCourseContentPipelineState());
     setCourseContentDraft(null);
     setSearchSources(createEmptyCourseContentSearchSources());
     setIsRunning(false);
     setError(null);
+    setSearchFailureMessage(null);
+    setControlId(null);
+    setIsSearchSkipRequested(false);
+    setSearchSkipError(null);
+    skipSearchMutation.reset();
     deltaBufferRef.current = '';
-  }, []);
+  }, [skipSearchMutation]);
+
+  const skipSearch = useCallback(async () => {
+    if (!controlId) return;
+
+    setSearchSkipError(null);
+    try {
+      await skipSearchMutation.mutateAsync(controlId);
+      setIsSearchSkipRequested(true);
+    } catch (skipError) {
+      const message =
+        skipError instanceof Error
+          ? skipError.message
+          : 'Unable to skip search';
+      setSearchSkipError(message);
+      throw skipError;
+    }
+  }, [controlId, skipSearchMutation]);
 
   /**
    * Attempt to parse the accumulated delta buffer as partial JSON and extract
@@ -167,6 +229,10 @@ export function useGenerateCourseContent(
           throw new Error(`HTTP ${response.status}`);
         }
 
+        setControlId(
+          response.headers.get('X-Course-Content-Generation-Control')
+        );
+
         const reader = response.body
           .pipeThrough(new TextDecoderStream())
           .getReader();
@@ -195,10 +261,16 @@ export function useGenerateCourseContent(
               case 'extract':
                 setStep('extract');
                 setLastStartedStep('extract');
+                setPipelineState((current) =>
+                  applyCourseContentPipelineEvent(current, event)
+                );
                 break;
               case 'search':
                 setStep('search');
                 setLastStartedStep('search');
+                setPipelineState((current) =>
+                  applyCourseContentPipelineEvent(current, event)
+                );
                 break;
               case 'source-found':
               case 'search-complete':
@@ -206,9 +278,24 @@ export function useGenerateCourseContent(
                   applyCourseContentSearchSourceEvent(current, event)
                 );
                 break;
+              case 'search-skipped':
+                setIsSearchSkipRequested(false);
+                setPipelineState((current) =>
+                  applyCourseContentPipelineEvent(current, event)
+                );
+                break;
+              case 'search-failed':
+                setSearchFailureMessage(event.message);
+                setPipelineState((current) =>
+                  applyCourseContentPipelineEvent(current, event)
+                );
+                break;
               case 'generate':
                 setStep('generate');
                 setLastStartedStep('generate');
+                setPipelineState((current) =>
+                  applyCourseContentPipelineEvent(current, event)
+                );
                 deltaBufferRef.current += event.delta;
                 setCourseContentDraft(
                   parseCourseContentDraft(deltaBufferRef.current)
@@ -217,11 +304,20 @@ export function useGenerateCourseContent(
               case 'save':
                 setStep('save');
                 setLastStartedStep('save');
+                setPipelineState((current) =>
+                  applyCourseContentPipelineEvent(current, event)
+                );
                 break;
               case 'done':
                 setStep('done');
+                setPipelineState((current) =>
+                  applyCourseContentPipelineEvent(current, event)
+                );
                 break;
               case 'error':
+                setPipelineState((current) =>
+                  applyCourseContentPipelineEvent(current, event)
+                );
                 throw new Error(event.message);
             }
           }
@@ -232,6 +328,12 @@ export function useGenerateCourseContent(
         const msg = err instanceof Error ? err.message : 'Unknown error';
         setError(msg);
         setStep('error');
+        setPipelineState((current) =>
+          applyCourseContentPipelineEvent(current, {
+            type: 'error',
+            message: msg,
+          })
+        );
         onError?.(msg);
       } finally {
         setIsRunning(false);
@@ -243,11 +345,18 @@ export function useGenerateCourseContent(
   return {
     step,
     lastStartedStep,
+    pipelineState,
     courseContentDraft,
     searchSources,
+    searchFailureMessage,
+    isSearchSkipAvailable: Boolean(controlId),
+    isSearchSkipRequested:
+      isSearchSkipRequested || skipSearchMutation.isPending,
+    searchSkipError,
     isRunning,
     error,
     generateCourseContent,
+    skipSearch,
     reset,
   };
 }

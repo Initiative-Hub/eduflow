@@ -40,11 +40,17 @@ export function useModules(courseId: string) {
   const {
     step,
     lastStartedStep,
+    pipelineState,
     courseContentDraft,
     searchSources,
+    searchFailureMessage,
+    isSearchSkipAvailable,
+    isSearchSkipRequested,
+    searchSkipError,
     isRunning,
     error: generationError,
     generateCourseContent: streamCourseContent,
+    skipSearch,
     reset,
   } = useGenerateCourseContent(
     () => {
@@ -138,12 +144,18 @@ export function useModules(courseId: string) {
     // New stream state
     generationStep: step,
     lastStartedGenerationStep: lastStartedStep,
+    generationPipelineState: pipelineState,
     generationError,
     courseContentDraft,
     searchSources,
+    searchFailureMessage,
+    isSearchSkipAvailable,
+    isSearchSkipRequested,
+    searchSkipError,
     isRunning,
     resetGeneration: reset,
     generateCourseContent,
+    skipSearch,
     getAdjacentLessons,
   };
 }

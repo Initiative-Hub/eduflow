@@ -18,6 +18,7 @@ export type StreamChatInternalOptions = {
 
 export type StreamCourseContentInput = {
   userId: string;
+  controlId?: string;
   fileId?: string;
   file?: File;
   context?: string;

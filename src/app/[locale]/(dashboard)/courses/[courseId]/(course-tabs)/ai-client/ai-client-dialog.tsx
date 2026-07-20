@@ -7,7 +7,8 @@ import { useTranslations } from 'next-intl';
 import { type ChangeEvent, useEffect, useMemo, useState } from 'react';
 import { DialogTemplate } from '@/components/custom/dialog';
 import { Button } from '@/components/ui/button';
-import type { CourseContentSearchSourcesState } from '@/lib/course-content/stream-state';
+import type { CourseContentPipelineState } from '@/lib/course-content/pipeline-state';
+import type { CourseContentSearchSourcesState } from '@/lib/course-content/search-source-state';
 import { inventoryService } from '../../../../inventory/inventory.service';
 import type { InventoryEntry } from '../../../../inventory/inventory.types';
 import { formatFileSize } from '../../../../inventory/inventory.utils';
@@ -37,10 +38,16 @@ interface AiClientDialogProps {
   }) => void;
   generationStep?: GenerationStep;
   lastStartedGenerationStep?: GenerationPipelineStep | null;
+  generationPipelineState?: CourseContentPipelineState;
   generationError?: string | null;
   isRunning?: boolean;
   courseContentDraft?: CourseContentDraft | null;
   searchSources?: CourseContentSearchSourcesState;
+  searchFailureMessage?: string | null;
+  isSearchSkipAvailable?: boolean;
+  isSearchSkipRequested?: boolean;
+  searchSkipError?: string | null;
+  onSkipSearch?: () => Promise<void>;
 }
 
 type DialogPhase = 'select' | 'context' | 'generating';
@@ -52,10 +59,16 @@ export function AiClientDialog({
   onRetry,
   generationStep = 'idle',
   lastStartedGenerationStep = null,
+  generationPipelineState,
   generationError = null,
   isRunning = false,
   courseContentDraft,
   searchSources,
+  searchFailureMessage,
+  isSearchSkipAvailable,
+  isSearchSkipRequested,
+  searchSkipError,
+  onSkipSearch,
 }: AiClientDialogProps) {
   const t = useTranslations('Courses.CourseModules.AiDialog');
   const genT = useTranslations('Courses.CourseModules.CourseContentGeneration');
@@ -349,9 +362,15 @@ export function AiClientDialog({
         <AiClientGeneratingPanel
           generationStep={generationStep}
           lastStartedStep={lastStartedGenerationStep}
+          pipelineState={generationPipelineState}
           generationError={generationError}
           courseContentDraft={courseContentDraft}
           searchSources={searchSources}
+          searchFailureMessage={searchFailureMessage}
+          isSearchSkipAvailable={isSearchSkipAvailable}
+          isSearchSkipRequested={isSearchSkipRequested}
+          searchSkipError={searchSkipError}
+          onSkipSearch={onSkipSearch}
           lastSelection={lastSelection}
           onDismiss={() => handleOpenChange(false)}
           onRetry={onRetry}

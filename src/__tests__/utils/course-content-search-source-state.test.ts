@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   applyCourseContentSearchSourceEvent,
   createEmptyCourseContentSearchSources,
-} from '@/lib/course-content/stream-state';
+} from '@/lib/course-content/search-source-state';
 
 describe('course content search source state', () => {
   it('accumulates web and youtube sources independently', () => {

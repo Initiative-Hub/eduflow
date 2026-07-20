@@ -7,6 +7,10 @@ import {
   CourseInvitationStatus,
   CourseRoleName,
 } from '@/generated/prisma';
+import {
+  deleteCourseContentGenerationControl,
+  isCourseContentSearchSkipRequested,
+} from '@/lib/course-content/generation-control';
 import { pdfToMarkdown } from '@/lib/pdf';
 import { getCoursePermissions } from '@/lib/permissions/course-permission';
 import {
@@ -705,10 +709,43 @@ export class CourseService {
     const model = options.model ?? DEFAULT_MODELS.openrouter;
     const provider = createOpenRouter({ apiKey });
 
-    const { webContext, youtubeContext } =
-      await generateSupplementarySearchContexts({
+    const searchAbortController = new AbortController();
+    let checkingSkip = false;
+    const checkForSearchSkip = async () => {
+      if (
+        !options.controlId ||
+        checkingSkip ||
+        searchAbortController.signal.aborted
+      ) {
+        return;
+      }
+
+      checkingSkip = true;
+      try {
+        if (await isCourseContentSearchSkipRequested(options.controlId)) {
+          searchAbortController.abort();
+        }
+      } catch (error) {
+        console.error('Course content search skip check failed:', error);
+      } finally {
+        checkingSkip = false;
+      }
+    };
+
+    await checkForSearchSkip();
+    const skipCheckInterval = options.controlId
+      ? setInterval(() => void checkForSearchSkip(), 250)
+      : null;
+
+    let searchResult: Awaited<
+      ReturnType<typeof generateSupplementarySearchContexts>
+    >;
+
+    try {
+      searchResult = await generateSupplementarySearchContexts({
         model: provider(model),
         searchQuery,
+        abortSignal: searchAbortController.signal,
         onSource: async ({ sourceKind, source }) => {
           await emit({ type: 'source-found', sourceKind, source });
         },
@@ -716,8 +753,25 @@ export class CourseService {
           await emit({ type: 'search-complete', sourceKind, count });
         },
       });
-    const webContextJSON = JSON.stringify(webContext, null, 2);
-    const youtubeContextJSON = JSON.stringify(youtubeContext, null, 2);
+    } finally {
+      if (skipCheckInterval) clearInterval(skipCheckInterval);
+    }
+
+    if (searchResult.status === 'skipped') {
+      await emit({ type: 'search-skipped' });
+    } else if (searchResult.status === 'failed') {
+      await emit({
+        type: 'search-failed',
+        message: searchResult.message ?? 'Web search failed',
+      });
+    }
+
+    const webContextJSON = JSON.stringify(searchResult.webContext, null, 2);
+    const youtubeContextJSON = JSON.stringify(
+      searchResult.youtubeContext,
+      null,
+      2
+    );
 
     const result = streamText({
       model: provider(model),
@@ -767,6 +821,7 @@ export class CourseService {
     context?: string;
     apiKey?: string;
     model?: string;
+    controlId?: string;
   }): ReadableStream<string> {
     const { readable, writable } = new TransformStream<string, string>();
     const writer = writable.getWriter();
@@ -782,6 +837,7 @@ export class CourseService {
             context: data.context,
             apiKey: data.apiKey,
             model: data.model,
+            controlId: data.controlId,
             onEnd: async ({ object }) => {
               if (!object) return;
               // Emit save event before persisting
@@ -799,6 +855,16 @@ export class CourseService {
         console.log('Error in course content stream:', message);
         await writer.write(`${JSON.stringify({ type: 'error', message })}\n`);
       } finally {
+        if (data.controlId) {
+          try {
+            await deleteCourseContentGenerationControl(data.controlId);
+          } catch (error) {
+            console.error(
+              'Course content generation control cleanup failed:',
+              error
+            );
+          }
+        }
         await writer.close();
       }
     })();

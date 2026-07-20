@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Spinner } from '@/components/ui/spinner';
-import type { CourseContentSearchSourcesState } from '@/lib/course-content/stream-state';
+import type { CourseContentSearchSourcesState } from '@/lib/course-content/search-source-state';
 import { cn } from '@/lib/utils';
 import type { CourseContentSearchSourcePreview } from '@/types/course-content-stream-event';
 import { getHostname } from '@/utils/url-helper';

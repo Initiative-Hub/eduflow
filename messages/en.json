@@ -866,7 +866,6 @@
     },
     "CourseModules": {
       "addModule": "Add Module",
-      "generateCourseContent": "Generate Course Content",
       "AiDialog": {
         "clickToBrowse": "Click to browse files",
         "comingSoonTitle": "Advanced Generation",
@@ -919,6 +918,9 @@
         "retry": "Try Again",
         "saving": "Saving",
         "savingCourseContent": "Saving your new modules and lessons...",
+        "skippingWebSearch": "Skipping Web Search...",
+        "skipWebSearch": "Skip Web Search",
+        "skipWebSearchFailed": "Unable to skip Web Search. It will continue in the background.",
         "sourcePreview": {
           "empty": "No sources found yet",
           "foundCount": "{count, plural, =0 {No sources} =1 {1 source} other {# sources}}",
@@ -931,9 +933,12 @@
         },
         "startingCourseContentGeneration": "Starting content generation...",
         "success": "Course modules generated and saved successfully!",
-        "webSearching": "Searching the web for additional context and references..."
+        "webSearchFailed": "Web Search could not finish. The sources already found will still be used.",
+        "webSearching": "Searching the web for additional context and references...",
+        "webSearchSkipped": "Web Search skipped. Any sources already found will still be used."
       },
       "description": "Organize your curriculum into modules and lessons.",
+      "generateCourseContent": "Generate Course Content",
       "noModules": "No modules yet. Create your first module to begin.",
       "title": "Course Modules"
     },

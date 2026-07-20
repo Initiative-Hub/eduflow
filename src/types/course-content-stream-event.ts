@@ -24,6 +24,8 @@ export type CourseContentStreamEvent =
       sourceKind: CourseContentSearchSourceKind;
       count: number;
     }
+  | { type: 'search-skipped' }
+  | { type: 'search-failed'; message: string }
   | { type: 'generate'; delta: string }
   | { type: 'save' }
   | { type: 'done' }
