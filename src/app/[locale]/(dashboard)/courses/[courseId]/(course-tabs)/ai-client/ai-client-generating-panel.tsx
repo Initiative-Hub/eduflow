@@ -136,7 +136,9 @@ export function AiClientGeneratingPanel({
           : genT('webSearching')
         : generationStep === 'generate'
           ? genT('creatingCourseContent')
-          : genT('savingCourseContent');
+          : generationStep === 'save'
+            ? genT('savingCourseContent')
+            : '';
 
   return (
     <div className="mt-6 space-y-6 pb-2">
@@ -161,13 +163,6 @@ export function AiClientGeneratingPanel({
       )}
       {selectedStep === 'generate' && (
         <CourseContentPreview courseContentDraft={courseContentDraft} />
-      )}
-      {(selectedStep === 'extract' || selectedStep === 'save') && (
-        <div className="rounded-xl border bg-muted/20 px-4 py-5 text-center text-muted-foreground text-sm">
-          {selectedStep === 'extract'
-            ? genT('documentReceived')
-            : genT('savingCourseContent')}
-        </div>
       )}
 
       {generationStep === 'error' ? (
@@ -201,7 +196,7 @@ export function AiClientGeneratingPanel({
             )}
           </div>
         </div>
-      ) : (
+      ) : generationStep !== 'idle' && generationStep !== 'done' ? (
         <div
           role="status"
           className="flex items-center justify-center gap-2 text-muted-foreground text-sm"
@@ -209,7 +204,7 @@ export function AiClientGeneratingPanel({
           <Loader2 className="h-4 w-4 animate-spin text-primary" />
           <span>{statusLabel}</span>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
