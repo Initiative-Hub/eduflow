@@ -14,6 +14,15 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
+import type {
+  InventoryEntry,
+  InventoryTranslations,
+} from '@/app/[locale]/(dashboard)/inventory/inventory.types';
+import {
+  formatDate,
+  formatFileSize,
+  getEntryTypeLabel,
+} from '@/app/[locale]/(dashboard)/inventory/inventory.utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -33,15 +42,6 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { courseFilesService } from '../course-files.service';
-import type {
-  InventoryEntry,
-  InventoryTranslations,
-} from '@/app/[locale]/(dashboard)/inventory/inventory.types';
-import {
-  formatDate,
-  formatFileSize,
-  getEntryTypeLabel,
-} from '@/app/[locale]/(dashboard)/inventory/inventory.utils';
 
 function InventoryEntryPreview({
   entry,

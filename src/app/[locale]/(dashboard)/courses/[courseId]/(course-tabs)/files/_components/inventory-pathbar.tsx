@@ -1,5 +1,9 @@
 import { LayoutGrid, LayoutList } from 'lucide-react';
 import { Fragment } from 'react';
+import type {
+  InventoryBreadcrumb,
+  InventoryTranslations,
+} from '@/app/[locale]/(dashboard)/inventory/inventory.types';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -9,10 +13,6 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import type {
-  InventoryBreadcrumb,
-  InventoryTranslations,
-} from '@/app/[locale]/(dashboard)/inventory/inventory.types';
 
 type InventoryPathBarProps = {
   breadcrumbItems: InventoryBreadcrumb[];

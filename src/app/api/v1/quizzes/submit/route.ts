@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { CourseEnrollmentStatus } from '@/generated/prisma';
+import { CourseEnrollmentStatus, type Prisma } from '@/generated/prisma';
 import { errorResponse } from '@/lib/api/error-response';
 import { withAuth } from '@/lib/api/middlewares';
 import { prisma } from '@/lib/prisma';
@@ -10,6 +10,11 @@ import type {
   QuizSchema,
   StudentAnswers,
 } from '@/lib/quiz-template/types';
+import {
+  countAnsweredQuestions,
+  createQuizAttemptSnapshot,
+} from '@/utils/quiz-attempt-snapshot';
+import { resolveReferencedQuestions } from '@/utils/quiz-question-references';
 
 // ─── Request Validation Schemas ──────────────────────────────────────────────
 
@@ -145,9 +150,19 @@ export const POST = withAuth(async (req, sessionData) => {
       select: {
         id: true,
         courseId: true,
+        title: true,
+        description: true,
         questions: true,
-        subType: true,
+        deliveryMode: true,
         questionCount: true,
+        quizQuestions: {
+          orderBy: { orderIndex: 'asc' },
+          select: {
+            questionId: true,
+            orderIndex: true,
+            question: { select: { answerData: true, explanation: true } },
+          },
+        },
       },
     });
 
@@ -178,8 +193,10 @@ export const POST = withAuth(async (req, sessionData) => {
       );
     }
 
-    // Get questions from the quiz's stored JSON
-    const questions = (quiz.questions as unknown as QuestionBlock[]) ?? [];
+    const questions = resolveReferencedQuestions(
+      quiz.quizQuestions,
+      quiz.questions
+    ).questions as QuestionBlock[];
 
     // Convert the answers record (string keys) to a Map (number keys)
     const studentAnswers: StudentAnswers = new Map();
@@ -192,7 +209,7 @@ export const POST = withAuth(async (req, sessionData) => {
 
     // Build the quiz schema for scoring
     const schema: QuizSchema = {
-      type: quiz.subType,
+      type: questions[0]?.type ?? 'mixed',
       constraints: { minQuestions: 1, maxQuestions: 100 },
       scoring: { pointsPerQuestion: 10 },
       questions,
@@ -200,6 +217,8 @@ export const POST = withAuth(async (req, sessionData) => {
 
     // Score on the server using the authoritative question data
     const scoreResult = calculateScore(studentAnswers, schema);
+    const quizSnapshot = createQuizAttemptSnapshot(quiz, questions);
+    const answeredCount = countAnsweredQuestions(answers, questions.length);
 
     // Persist the quiz attempt
     await prisma.quizAttempt.create({
@@ -207,6 +226,8 @@ export const POST = withAuth(async (req, sessionData) => {
         quizId,
         userId,
         answers: JSON.parse(JSON.stringify(answers)),
+        quizSnapshot: quizSnapshot as unknown as Prisma.InputJsonValue,
+        answeredCount,
         score: scoreResult.earnedPoints,
         maxScore: scoreResult.totalPoints,
         percentage: scoreResult.percentage,

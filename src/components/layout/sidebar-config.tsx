@@ -2,6 +2,7 @@
 
 import {
   Archive,
+  Award,
   BookOpen,
   ClipboardList,
   Cloud,
@@ -9,9 +10,9 @@ import {
   GraduationCap,
   Languages,
   LineChart,
+  Link2,
   MessageSquare,
   PenLine,
-  School,
   Settings,
   ShieldCheck,
   Sparkles,
@@ -22,8 +23,9 @@ import {
 import type { useTranslations } from 'next-intl';
 import type { ReactElement } from 'react';
 import {
+  COURSE_PERMISSION,
+  type PermissionKey,
   PLATFORM_PERMISSION,
-  type PlatformPermissionKey,
 } from '@/lib/permissions/permission-keys';
 
 export type SidebarItem = {
@@ -31,47 +33,44 @@ export type SidebarItem = {
   url: string;
   icon: ReactElement;
   isActive: (pathname: string) => boolean;
-};
-
-const adminPermissionsByUrl: Record<string, PlatformPermissionKey[]> = {
-  '/admin/users': [
-    PLATFORM_PERMISSION.USERS_VIEW,
-    PLATFORM_PERMISSION.USERS_MANAGE,
-  ],
-  '/admin/roles': [
-    PLATFORM_PERMISSION.ROLES_VIEW,
-    PLATFORM_PERMISSION.ROLES_MANAGE,
-  ],
+  requirePermissions?: PermissionKey[];
 };
 
 export const sidebarIconClassName =
   'size-5 text-primary/80 transition-colors group-data-[active=true]/menu-button:text-primary group-hover/menu-button:text-primary ';
 
-function isExactMatch(pathname: string, url: string) {
-  return pathname === url;
+function isExactMatch(pathname: string, path: string) {
+  return pathname === path;
 }
 
-function hasAnyPermission(
-  userPermissions: readonly string[],
-  requiredPermissions: readonly PlatformPermissionKey[]
-) {
-  return requiredPermissions.some((permission) =>
-    userPermissions.includes(permission)
-  );
+function isPrefixMatch(pathname: string, path: string) {
+  return pathname === path || pathname.startsWith(`${path}/`);
 }
 
 export function filterAdminNavItems(
   items: SidebarItem[],
-  userPermissions: readonly string[]
+  userPermissions: string[]
 ) {
-  return items.filter((item) => {
-    const requiredPermissions = adminPermissionsByUrl[item.url];
+  return items.filter(
+    (item) =>
+      !item.requirePermissions ||
+      item.requirePermissions.every((permission) =>
+        userPermissions.includes(permission)
+      )
+  );
+}
 
-    return (
-      requiredPermissions &&
-      hasAnyPermission(userPermissions, requiredPermissions)
-    );
-  });
+export function filterCourseNavItems(
+  items: SidebarItem[],
+  coursePermissions: string[]
+) {
+  return items.filter(
+    (item) =>
+      !item.requirePermissions ||
+      item.requirePermissions.every((permission) =>
+        coursePermissions.includes(permission)
+      )
+  );
 }
 
 export function getAssistantNavItems(
@@ -88,31 +87,31 @@ export function getAssistantNavItems(
       name: t('yourInventory'),
       url: '/inventory',
       icon: <Archive className={sidebarIconClassName} />,
-      isActive: (pathname) => isExactMatch(pathname, '/inventory'),
+      isActive: (pathname) => isPrefixMatch(pathname, '/inventory'),
     },
     {
       name: t('socraticTutor'),
       url: '/socratic',
       icon: <GraduationCap className={sidebarIconClassName} />,
-      isActive: (pathname) => isExactMatch(pathname, '/socratic'),
+      isActive: (pathname) => isPrefixMatch(pathname, '/socratic'),
     },
     {
       name: t('englishAssistant'),
       url: '/english',
       icon: <Languages className={sidebarIconClassName} />,
-      isActive: (pathname) => isExactMatch(pathname, '/english'),
+      isActive: (pathname) => isPrefixMatch(pathname, '/english'),
     },
     {
       name: t('writingAssistant'),
       url: '/writing',
       icon: <PenLine className={sidebarIconClassName} />,
-      isActive: (pathname) => isExactMatch(pathname, '/writing'),
+      isActive: (pathname) => isPrefixMatch(pathname, '/writing'),
     },
     {
       name: t('studyAssistant'),
       url: '/study',
       icon: <BookOpen className={sidebarIconClassName} />,
-      isActive: (pathname) => isExactMatch(pathname, '/study'),
+      isActive: (pathname) => isPrefixMatch(pathname, '/study'),
     },
   ];
 }
@@ -128,11 +127,10 @@ export function getSettingNavItems(
       isActive: (pathname) => isExactMatch(pathname, '/profile'),
     },
     {
-      name: t('settingsAcademicContext'),
-      url: '/settings/academic-context',
-      icon: <School className={sidebarIconClassName} />,
-      isActive: (pathname) =>
-        isExactMatch(pathname, '/settings/academic-context'),
+      name: t('settingsSharedLinks'),
+      url: '/settings/shared-links',
+      icon: <Link2 className={sidebarIconClassName} />,
+      isActive: (pathname) => isExactMatch(pathname, '/settings/shared-links'),
     },
     {
       name: t('settingsSystemSettings'),
@@ -165,65 +163,95 @@ export function getAdminNavItems(
       url: '/admin/users',
       icon: <UserCog className={sidebarIconClassName} />,
       isActive: (pathname) => isExactMatch(pathname, '/admin/users'),
+      requirePermissions: [
+        PLATFORM_PERMISSION.USERS_VIEW,
+        PLATFORM_PERMISSION.USERS_MANAGE,
+      ],
     },
     {
       name: t('adminRoles'),
       url: '/admin/roles',
       icon: <ShieldCheck className={sidebarIconClassName} />,
       isActive: (pathname) => isExactMatch(pathname, '/admin/roles'),
+      requirePermissions: [
+        PLATFORM_PERMISSION.ROLES_VIEW,
+        PLATFORM_PERMISSION.ROLES_MANAGE,
+      ],
     },
   ];
 }
 
-export function getCourseNavItems(courseId: string): SidebarItem[] {
+export function getCourseNavItems(
+  courseId: string,
+  t: ReturnType<typeof useTranslations>
+): SidebarItem[] {
   return [
     {
-      name: 'Modules',
+      name: t('courseModules'),
       url: `/courses/${courseId}`,
       icon: <BookOpen className={sidebarIconClassName} />,
       isActive: (pathname) => isExactMatch(pathname, `/courses/${courseId}`),
+      requirePermissions: [COURSE_PERMISSION.COURSE_CONTENT_VIEW],
     },
     {
-      name: 'Question Bank',
+      name: t('courseQuestionBank'),
       url: `/courses/${courseId}/question-bank`,
       icon: <ClipboardList className={sidebarIconClassName} />,
       isActive: (pathname) =>
         isExactMatch(pathname, `/courses/${courseId}/question-bank`),
+      requirePermissions: [
+        COURSE_PERMISSION.ASSESSMENTS_CREATE,
+        COURSE_PERMISSION.ASSESSMENTS_UPDATE,
+        COURSE_PERMISSION.ASSESSMENTS_DELETE,
+      ],
     },
     {
-      name: 'Files',
+      name: t('courseGrades'),
+      url: `/courses/${courseId}/grades`,
+      icon: <Award className={sidebarIconClassName} />,
+      isActive: (pathname) =>
+        isExactMatch(pathname, `/courses/${courseId}/grades`),
+      requirePermissions: [COURSE_PERMISSION.ASSESSMENTS_RESULTS_VIEW],
+    },
+    {
+      name: t('courseFiles'),
       url: `/courses/${courseId}/files`,
       icon: <Files className={sidebarIconClassName} />,
       isActive: (pathname) =>
         isExactMatch(pathname, `/courses/${courseId}/files`),
+      requirePermissions: [COURSE_PERMISSION.COURSE_FILES_VIEW],
     },
     {
-      name: 'Members',
+      name: t('courseMembers'),
       url: `/courses/${courseId}/members`,
       icon: <Users className={sidebarIconClassName} />,
       isActive: (pathname) =>
         isExactMatch(pathname, `/courses/${courseId}/members`),
+      requirePermissions: [COURSE_PERMISSION.COURSE_MEMBERS_VIEW],
     },
     {
-      name: 'Roles',
+      name: t('courseRoles'),
       url: `/courses/${courseId}/roles`,
       icon: <ShieldCheck className={sidebarIconClassName} />,
       isActive: (pathname) =>
         isExactMatch(pathname, `/courses/${courseId}/roles`),
+      requirePermissions: [COURSE_PERMISSION.COURSE_ROLES_MANAGE],
     },
     {
-      name: 'Analytics',
+      name: t('courseAnalytics'),
       url: `/courses/${courseId}/analytics`,
       icon: <LineChart className={sidebarIconClassName} />,
       isActive: (pathname) =>
         isExactMatch(pathname, `/courses/${courseId}/analytics`),
+      requirePermissions: [COURSE_PERMISSION.COURSE_ANALYTICS_VIEW],
     },
     {
-      name: 'Settings',
+      name: t('courseSettings'),
       url: `/courses/${courseId}/settings`,
       icon: <Settings className={sidebarIconClassName} />,
       isActive: (pathname) =>
         isExactMatch(pathname, `/courses/${courseId}/settings`),
+      requirePermissions: [COURSE_PERMISSION.COURSE_SETTINGS_MANAGE],
     },
   ];
 }

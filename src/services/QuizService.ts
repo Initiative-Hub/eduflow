@@ -1,13 +1,42 @@
+import { createOpenRouter } from '@openrouter/ai-sdk-provider';
+import { generateText, Output } from 'ai';
+import type { z } from 'zod';
 import type {
   DeliveryMode,
   Prisma,
   QuestionSubType,
-  QuizCategory,
   SelectionMethod,
 } from '@/generated/prisma';
+import { getCoursePermissions } from '@/lib/permissions/course-permission';
+import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
 import { prisma } from '@/lib/prisma';
+import {
+  getQuestionTaxonomy,
+  QUESTION_CATEGORY_BY_SUB_TYPE,
+  SUB_TYPE_TO_QUESTION_TYPE,
+} from '@/lib/quiz-template';
+import type { QuestionBlock } from '@/lib/quiz-template/types';
+import {
+  createQuizSchema,
+  dragAndDropQuestionSchema,
+  essayQuestionSchema,
+  fillInTheBlankQuestionSchema,
+  matchingQuestionSchema,
+  multipleChoiceQuestionSchema,
+  orderingQuestionSchema,
+  questionBlockSchema,
+  trueFalseQuestionSchema,
+} from '@/lib/validations/quiz.schema';
+import {
+  DEFAULT_MODELS,
+  QUIZ_GENERATION_PROMPT,
+} from '@/services/ai/chat-provider.constants';
+import type { AIQuizInput } from '@/services/ai/chat-provider.types';
 import { CourseService } from '@/services/CourseService';
-import { OpenRouterService } from './ai/OpenRouterService';
+import {
+  getQuestionPrompt,
+  resolveReferencedQuestions,
+} from '../utils/quiz-question-references';
 import { safeMapAIQuizToSchema } from './ai/quizMapper';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -49,38 +78,261 @@ function lessonContentToText(content: unknown): string {
   }
 }
 
+function questionToJson(question: QuestionBlock): Prisma.InputJsonValue {
+  return question as unknown as Prisma.InputJsonValue;
+}
+
+function getQuestionExplanation(question: QuestionBlock): string | null {
+  return typeof question.explanation === 'string' ? question.explanation : null;
+}
+
 function withLessonIds<
-  T extends { lessonQuizzes?: { lesson: { id: string } }[] },
+  T extends {
+    lessonQuizzes?: { lesson: { id: string } }[];
+    quizQuestions?: {
+      questionId: string;
+      orderIndex: number;
+      question: { answerData: unknown; explanation: string | null };
+    }[];
+    questions?: unknown;
+  },
 >(quiz: T) {
-  const { lessonQuizzes = [], ...rest } = quiz;
+  const { lessonQuizzes = [], quizQuestions = [], ...rest } = quiz;
+  const resolved = resolveReferencedQuestions(quizQuestions, quiz.questions);
   return {
     ...rest,
     lessonIds: lessonQuizzes.map(({ lesson }) => lesson.id),
+    ...resolved,
   };
 }
+
+const quizRelations = {
+  lessonQuizzes: {
+    select: { lesson: { select: { id: true } } },
+  },
+  quizQuestions: {
+    orderBy: { orderIndex: 'asc' as const },
+    select: {
+      questionId: true,
+      orderIndex: true,
+      question: { select: { answerData: true, explanation: true } },
+    },
+  },
+};
 
 // CreateQuizInput type used by service-level create helper
 export type CreateQuizInput = {
   lessonIds: string[];
   title: string;
   description?: string | null;
-  category: QuizCategory;
-  subType: QuestionSubType;
+  questionCounts: Partial<Record<QuestionSubType, number>>;
   deliveryMode: DeliveryMode;
   selectionMethod: SelectionMethod;
   questionCount: number;
-  questions?: Record<string, unknown>[];
+  questions?: QuestionBlock[];
+  questionIds?: Array<string | null>;
   selectedQuestionIds?: string[];
 };
+
+type AiGenerationInput = {
+  topic?: string;
+  apiKey?: string;
+  model?: string;
+  context?: string;
+};
+
+type UpdateQuizDetailsInput = {
+  title: string;
+  description?: string | null;
+  lessonIds: string[];
+  deliveryMode: DeliveryMode;
+};
+
+type GenerationLesson = {
+  id: string;
+  title: string;
+  content: unknown;
+};
+
+async function generateQuestionsForLessons(
+  lessons: GenerationLesson[],
+  questionCounts: Partial<Record<QuestionSubType, number>>,
+  aiInput: AiGenerationInput,
+  currentQuestions: QuestionBlock[] = []
+) {
+  const requestedCounts = Object.entries(questionCounts).filter(
+    (entry): entry is [QuestionSubType, number] =>
+      typeof entry[1] === 'number' && entry[1] > 0
+  );
+  const requestedTotal = requestedCounts.reduce(
+    (total, [, count]) => total + count,
+    0
+  );
+  if (requestedTotal === 0) {
+    throw new Error('Quiz has no AI question distribution');
+  }
+  if (currentQuestions.length >= requestedTotal) {
+    throw new Error('Quiz already has the maximum number of questions');
+  }
+  if (lessons.length === 0) {
+    throw new Error('No lessons linked to quiz');
+  }
+
+  const lessonText = lessons
+    .map((lesson, index) => {
+      const body = lessonContentToText(lesson.content);
+      const title = lesson.title?.trim() || `Lesson ${index + 1}`;
+      return body ? `Lesson: ${title}\n${body}` : `Lesson: ${title}`;
+    })
+    .join('\n\n---\n\n');
+  const currentCounts = currentQuestions.reduce<
+    Partial<Record<QuestionSubType, number>>
+  >((counts, question) => {
+    try {
+      const { subType } = getQuestionTaxonomy(question.type);
+      counts[subType] = (counts[subType] ?? 0) + 1;
+    } catch {
+      // Legacy unsupported question types do not consume a requested slot.
+    }
+    return counts;
+  }, {});
+
+  const generatedBatches = await Promise.all(
+    requestedCounts.flatMap(([subType, requestedCount]) => {
+      const remainingCount = requestedCount - (currentCounts[subType] ?? 0);
+      if (remainingCount <= 0) return [];
+      return [
+        QuizService.createQuiz({
+          ...aiInput,
+          quizType: SUB_TYPE_TO_QUESTION_TYPE[subType],
+          context: aiInput.context
+            ? `${aiInput.context}\n\n${lessonText}`
+            : lessonText,
+          questionNumbers: String(remainingCount),
+          topic: aiInput.topic ?? lessons[0]?.title ?? undefined,
+          content: lessonText || undefined,
+        }).then((generated) => ({ generated, subType })),
+      ];
+    })
+  );
+
+  return generatedBatches.flatMap(({ generated, subType }) => {
+    const safe = safeMapAIQuizToSchema(generated, subType);
+    const normalized = safe.success ? safe.data : null;
+    const questions = normalized
+      ? (normalized.questions as QuestionBlock[])
+      : (generated.questions as unknown[]).map((question) =>
+          questionBlockSchema.parse(question)
+        );
+    return questions.map((question) => ({
+      question,
+      subType,
+      description: normalized?.description ?? generated.description,
+      deliveryMode: normalized?.deliveryMode ?? generated.deliveryMode,
+      selectionMethod: normalized?.selectionMethod ?? generated.selectionMethod,
+    }));
+  });
+}
 
 // ─── QuizService ──────────────────────────────────────────────────────────────
 
 export class QuizService {
+  static async createQuiz(options: AIQuizInput) {
+    const apiKey = options.apiKey ?? process.env.OPENROUTER_API_KEY;
+    if (!apiKey) throw new Error(`Missing API key for provider "openrouter"`);
+
+    const model = options.model ?? DEFAULT_MODELS.openrouter;
+    const provider = createOpenRouter({ apiKey });
+
+    const normalizedType = options.quizType.toLowerCase();
+
+    // The AI schema omits the discriminator, then we inject the known type.
+    const aiQuestionSchemaMap: Record<string, z.ZodTypeAny> = {
+      multiple_choice: multipleChoiceQuestionSchema.omit({ type: true }),
+      true_false: trueFalseQuestionSchema.omit({ type: true }),
+      fill_in_the_blank: fillInTheBlankQuestionSchema.omit({ type: true }),
+      matching: matchingQuestionSchema.omit({ type: true }),
+      ordering: orderingQuestionSchema.omit({ type: true }),
+      drag_and_drop: dragAndDropQuestionSchema.omit({ type: true }),
+      essay: essayQuestionSchema.omit({ type: true }),
+    };
+
+    const aiQuestionSchema =
+      aiQuestionSchemaMap[normalizedType] ??
+      aiQuestionSchemaMap.multiple_choice;
+    const aiSchema = createQuizSchema(aiQuestionSchema);
+
+    const count = parseInt(options.questionNumbers, 10) || 5;
+    const prompt = `
+      Generate a complete, high-quality educational Quiz object containing exactly ${count} questions of type "${options.quizType}".
+      ${options.topic ? `The quiz topic or theme is: "${options.topic}".` : ''}
+      ${options.content ? `Generate the quiz based on the following content:\n\n${options.content}` : 'Generate interesting educational questions.'}
+
+      Instructions:
+      1. Provide a clear, engaging title and description for the quiz.
+      2. Set category, subType, deliveryMode, and selectionMethod appropriately for the quizType.
+      3. Generate exactly ${count} questions in the questions array.
+      4. Ensure all option, blank, zone, and item IDs are unique (e.g. opt1, opt2, blank1, zone1, item1, left1, right1).
+      5. Provide helpful explanations for each question.
+    `;
+
+    const { output } = await generateText({
+      model: provider(model),
+      output: Output.object({ schema: aiSchema }),
+      prompt,
+      instructions: QUIZ_GENERATION_PROMPT,
+    });
+
+    const questionsWithType = (
+      output.questions as Record<string, unknown>[]
+    ).map((question) => ({ type: normalizedType, ...question }));
+
+    return { ...output, questions: questionsWithType };
+  }
+
+  static async generateDraft(
+    courseId: string,
+    userId: string,
+    input: AiGenerationInput & {
+      lessonIds: string[];
+      questionCounts: Partial<Record<QuestionSubType, number>>;
+    }
+  ) {
+    await CourseService.assertCourseOwner(courseId, userId);
+    const lessons = await prisma.lesson.findMany({
+      where: {
+        id: { in: input.lessonIds },
+        deletedAt: null,
+        module: { courseId, deletedAt: null },
+      },
+      select: { id: true, title: true, content: true },
+    });
+    if (lessons.length !== input.lessonIds.length) {
+      throw new Error('Some lessons do not belong to this course');
+    }
+
+    const generated = await generateQuestionsForLessons(
+      lessons,
+      input.questionCounts,
+      input
+    );
+    return {
+      questions: generated.map(({ question }) => question),
+    };
+  }
+
   static async createForCourse(
     courseId: string,
     userId: string,
     data: CreateQuizInput
   ) {
+    const createPermissions = await getCoursePermissions(userId, courseId);
+    if (
+      createPermissions.withoutPermission(COURSE_PERMISSION.ASSESSMENTS_CREATE)
+    ) {
+      throw new Error('Forbidden');
+    }
+
     await CourseService.assertCourseOwner(courseId, userId);
 
     const linkedLessons = await prisma.lesson.findMany({
@@ -100,22 +352,23 @@ export class QuizService {
       throw new Error('Some lessons do not belong to this course');
     }
 
-    let resolvedQuestions: unknown[] = data.questions ?? [];
+    let selectedQuestionIds: string[] = [];
 
     if (
-      resolvedQuestions.length === 0 &&
+      (data.questions?.length ?? 0) === 0 &&
       data.selectionMethod !== 'MANUAL_CREATE'
     ) {
-      const questionWhere: Record<string, unknown> = {
-        courseId,
-        category: data.category,
-        subType: data.subType,
-      };
+      const requestedSubTypes = Object.entries(data.questionCounts)
+        .filter(([, count]) => (count ?? 0) > 0)
+        .map(([subType]) => subType as QuestionSubType);
+      const questionWhere: Record<string, unknown> = { courseId };
       if (
         data.selectionMethod === 'HAND_PICK' &&
         data.selectedQuestionIds?.length
       ) {
         questionWhere.id = { in: data.selectedQuestionIds };
+      } else if (requestedSubTypes.length > 0) {
+        questionWhere.subType = { in: requestedSubTypes };
       }
 
       const bankQuestions = await prisma.question.findMany({
@@ -125,73 +378,231 @@ export class QuizService {
 
       let selectedQuestions = bankQuestions;
       if (data.selectionMethod === 'RANDOM') {
-        const shuffled = [...bankQuestions].sort(() => Math.random() - 0.5);
-        selectedQuestions = shuffled.slice(0, data.questionCount);
+        selectedQuestions = requestedSubTypes.flatMap((subType) => {
+          const shuffled = bankQuestions
+            .filter((question) => question.subType === subType)
+            .sort(() => Math.random() - 0.5);
+          return shuffled.slice(0, data.questionCounts[subType] ?? 0);
+        });
+      } else if (data.selectedQuestionIds?.length) {
+        const questionsById = new Map(
+          bankQuestions.map((question) => [question.id, question])
+        );
+        selectedQuestions = data.selectedQuestionIds.flatMap((questionId) => {
+          const question = questionsById.get(questionId);
+          return question ? [question] : [];
+        });
       } else {
         selectedQuestions = bankQuestions.slice(0, data.questionCount);
       }
-
-      resolvedQuestions = selectedQuestions.map((q) => {
-        const answerData = q.answerData as Record<string, unknown>;
-        if (q.explanation && !answerData.explanation) {
-          return { ...answerData, explanation: q.explanation };
-        }
-        return answerData;
-      });
+      selectedQuestionIds = selectedQuestions.map(({ id }) => id);
     }
 
-    const quiz = await prisma.quiz.create({
-      data: {
-        courseId,
-        title: data.title,
-        description: data.description ?? null,
-        category: data.category,
-        subType: data.subType,
-        deliveryMode: data.deliveryMode,
-        selectionMethod: data.selectionMethod,
-        questionCount: data.questionCount,
-        questions: resolvedQuestions as unknown as Prisma.InputJsonValue,
-        lessonQuizzes: {
-          create: data.lessonIds.map((lessonId) => ({ lessonId })),
-        },
-      },
-      include: {
-        lessonQuizzes: {
-          select: {
-            lesson: { select: { id: true } },
+    const quiz = await prisma.$transaction(async (tx) => {
+      if (data.questions?.length) {
+        selectedQuestionIds = [];
+        for (const [index, questionData] of data.questions.entries()) {
+          const existingQuestionId = data.questionIds?.[index];
+          if (existingQuestionId) {
+            const existing = await tx.question.findFirst({
+              where: { id: existingQuestionId, courseId },
+              select: { id: true },
+            });
+            if (!existing) throw new Error('Question not found');
+            selectedQuestionIds.push(existing.id);
+            continue;
+          }
+
+          const taxonomy = getQuestionTaxonomy(questionData.type);
+          const created = await tx.question.create({
+            data: {
+              courseId,
+              ...taxonomy,
+              prompt: getQuestionPrompt(questionData),
+              answerData: questionToJson(questionData),
+              explanation: getQuestionExplanation(questionData),
+            },
+            select: { id: true },
+          });
+          selectedQuestionIds.push(created.id);
+        }
+      }
+
+      return tx.quiz.create({
+        data: {
+          courseId,
+          title: data.title,
+          description: data.description ?? null,
+          deliveryMode: data.deliveryMode,
+          selectionMethod: data.selectionMethod,
+          questionCount: selectedQuestionIds.length,
+          questionCounts: data.questionCounts,
+          questions: [],
+          lessonQuizzes: {
+            create: data.lessonIds.map((lessonId) => ({ lessonId })),
+          },
+          quizQuestions: {
+            create: selectedQuestionIds.map((questionId, orderIndex) => ({
+              questionId,
+              orderIndex,
+            })),
           },
         },
-      },
+        include: quizRelations,
+      });
     });
 
     return withLessonIds(quiz);
   }
   static async updateQuestions(
     quizId: string,
-    questions: Record<string, unknown>[]
+    userId: string,
+    questions: QuestionBlock[],
+    questionIds: Array<string | null>
   ) {
     const quiz = await prisma.quiz.findUnique({
       where: { id: quizId },
-      select: { id: true },
+      select: {
+        id: true,
+        courseId: true,
+        course: { select: { ownerId: true } },
+      },
     });
 
     if (!quiz) {
       throw new Error('Quiz not found');
     }
 
-    const updatedQuiz = await prisma.quiz.update({
+    const updatePermissions = await getCoursePermissions(userId, quiz.courseId);
+    if (
+      updatePermissions.withoutPermission(
+        COURSE_PERMISSION.ASSESSMENTS_UPDATE
+      ) ||
+      quiz.course.ownerId !== userId
+    ) {
+      throw new Error('Forbidden');
+    }
+
+    const updatedQuiz = await prisma.$transaction(async (tx) => {
+      const persistedQuestionIds: string[] = [];
+
+      for (const [orderIndex, questionData] of questions.entries()) {
+        const questionId = questionIds[orderIndex];
+        const explanation =
+          typeof questionData.explanation === 'string'
+            ? questionData.explanation
+            : null;
+        const taxonomy = getQuestionTaxonomy(questionData.type);
+        const data = {
+          ...taxonomy,
+          prompt: getQuestionPrompt(questionData),
+          answerData: questionToJson(questionData),
+          explanation,
+        };
+
+        if (questionId) {
+          const updated = await tx.question.updateMany({
+            where: { id: questionId, courseId: quiz.courseId },
+            data,
+          });
+          if (updated.count !== 1) throw new Error('Question not found');
+          persistedQuestionIds.push(questionId);
+        } else {
+          const created = await tx.question.create({
+            data: {
+              courseId: quiz.courseId,
+              ...data,
+            },
+            select: { id: true },
+          });
+          persistedQuestionIds.push(created.id);
+        }
+      }
+
+      await tx.quizQuestion.deleteMany({ where: { quizId } });
+      if (persistedQuestionIds.length > 0) {
+        await tx.quizQuestion.createMany({
+          data: persistedQuestionIds.map((questionId, orderIndex) => ({
+            quizId,
+            questionId,
+            orderIndex,
+          })),
+        });
+      }
+
+      return tx.quiz.update({
+        where: { id: quizId },
+        data: {
+          questions: [],
+          questionCount: persistedQuestionIds.length,
+        },
+        include: quizRelations,
+      });
+    });
+
+    return withLessonIds(updatedQuiz);
+  }
+
+  static async updateDetails(
+    quizId: string,
+    userId: string,
+    data: UpdateQuizDetailsInput
+  ) {
+    const quiz = await prisma.quiz.findUnique({
       where: { id: quizId },
-      data: {
-        questions: questions as unknown as Prisma.InputJsonValue,
-        questionCount: questions.length,
+      select: {
+        id: true,
+        courseId: true,
+        course: { select: { ownerId: true } },
       },
-      include: {
-        lessonQuizzes: {
-          select: {
-            lesson: { select: { id: true } },
-          },
+    });
+
+    if (!quiz) {
+      throw new Error('Quiz not found');
+    }
+
+    const updatePermissions = await getCoursePermissions(userId, quiz.courseId);
+    if (
+      updatePermissions.withoutPermission(
+        COURSE_PERMISSION.ASSESSMENTS_UPDATE
+      ) ||
+      quiz.course.ownerId !== userId
+    ) {
+      throw new Error('Forbidden');
+    }
+
+    const linkedLessons = await prisma.lesson.findMany({
+      where: {
+        id: { in: data.lessonIds },
+        deletedAt: null,
+        module: {
+          courseId: quiz.courseId,
+          deletedAt: null,
+          course: { deletedAt: null },
         },
       },
+      select: { id: true },
+    });
+
+    if (linkedLessons.length !== data.lessonIds.length) {
+      throw new Error('Some lessons do not belong to this course');
+    }
+
+    const updatedQuiz = await prisma.$transaction(async (tx) => {
+      await tx.lessonQuiz.deleteMany({ where: { quizId } });
+      await tx.lessonQuiz.createMany({
+        data: data.lessonIds.map((lessonId) => ({ quizId, lessonId })),
+      });
+
+      return tx.quiz.update({
+        where: { id: quizId },
+        data: {
+          title: data.title,
+          description: data.description?.trim() || null,
+          deliveryMode: data.deliveryMode,
+        },
+        include: quizRelations,
+      });
     });
 
     return withLessonIds(updatedQuiz);
@@ -224,16 +635,54 @@ export class QuizService {
             lesson: { select: { id: true, title: true, content: true } },
           },
         },
+        quizQuestions: {
+          orderBy: { orderIndex: 'asc' },
+          select: {
+            questionId: true,
+            orderIndex: true,
+            question: { select: { answerData: true, explanation: true } },
+          },
+        },
       },
     });
     if (!fetchedQuiz) {
       throw new Error('Quiz not found');
     }
-    if (fetchedQuiz.course.ownerId !== userId) {
+
+    const updatePermissions = await getCoursePermissions(
+      userId,
+      fetchedQuiz.courseId
+    );
+    if (
+      updatePermissions.withoutPermission(
+        COURSE_PERMISSION.ASSESSMENTS_UPDATE
+      ) ||
+      updatePermissions.withoutPermission(
+        COURSE_PERMISSION.AI_USE_COURSE_GENERATION
+      ) ||
+      fetchedQuiz.course.ownerId !== userId
+    ) {
       throw new Error('Forbidden');
     }
-    const currentQuestions = (fetchedQuiz.questions as unknown[]) ?? [];
-    if (currentQuestions.length >= fetchedQuiz.questionCount) {
+
+    const currentQuestions = resolveReferencedQuestions(
+      fetchedQuiz.quizQuestions,
+      fetchedQuiz.questions
+    ).questions;
+    const requestedCounts = Object.entries(
+      fetchedQuiz.questionCounts as Partial<Record<QuestionSubType, number>>
+    ).filter(
+      (entry): entry is [QuestionSubType, number] =>
+        typeof entry[1] === 'number' && entry[1] > 0
+    );
+    const requestedTotal = requestedCounts.reduce(
+      (total, [, count]) => total + count,
+      0
+    );
+    if (requestedTotal === 0) {
+      throw new Error('Quiz has no AI question distribution');
+    }
+    if (currentQuestions.length >= requestedTotal) {
       throw new Error('Quiz already has the maximum number of questions');
     }
     // Aggregate content from all linked lessons
@@ -252,49 +701,99 @@ export class QuizService {
       })
       .join('\n\n---\n\n');
 
-    // 2. Generate the quiz from the lesson content
-    const service = new OpenRouterService();
-    const generated = await service.createQuiz({
-      ...aiInput,
-      quizType: fetchedQuiz.subType,
-      context: aiInput.context
-        ? `${aiInput.context}\n\n${lessonText}`
-        : lessonText,
-      questionNumbers: String(fetchedQuiz.questionCount),
-      topic: aiInput.topic ?? lessons[0]?.title ?? undefined,
-      content: lessonText || undefined,
-    });
-    // Normalize AI output into our internal schema (tolerant mapping)
-    const safe = safeMapAIQuizToSchema(generated, fetchedQuiz.subType);
-    const normalized = safe.success ? safe.data : null;
+    const currentCounts = currentQuestions.reduce<
+      Partial<Record<QuestionSubType, number>>
+    >((counts, question) => {
+      try {
+        const { subType } = getQuestionTaxonomy(question.type);
+        counts[subType] = (counts[subType] ?? 0) + 1;
+      } catch {
+        // Legacy unsupported question types do not consume a requested slot.
+      }
+      return counts;
+    }, {});
 
-    const questionsToSave = normalized
-      ? (normalized.questions as unknown[])
-      : (generated.questions as unknown[]);
+    // Generate each requested type independently so a quiz can mix formats.
+    const generatedBatches = await Promise.all(
+      requestedCounts.flatMap(([subType, requestedCount]) => {
+        const remainingCount = requestedCount - (currentCounts[subType] ?? 0);
+        if (remainingCount <= 0) return [];
+        return [
+          QuizService.createQuiz({
+            ...aiInput,
+            quizType: SUB_TYPE_TO_QUESTION_TYPE[subType],
+            context: aiInput.context
+              ? `${aiInput.context}\n\n${lessonText}`
+              : lessonText,
+            questionNumbers: String(remainingCount),
+            topic: aiInput.topic ?? lessons[0]?.title ?? undefined,
+            content: lessonText || undefined,
+          }).then((generated) => ({ generated, subType })),
+        ];
+      })
+    );
+    const generatedQuestions = generatedBatches.flatMap(
+      ({ generated, subType }) => {
+        const safe = safeMapAIQuizToSchema(generated, subType);
+        const normalized = safe.success ? safe.data : null;
+        const questions = normalized
+          ? (normalized.questions as QuestionBlock[])
+          : (generated.questions as unknown[]).map((question) =>
+              questionBlockSchema.parse(question)
+            );
+        return questions.map((question) => ({
+          question,
+          subType,
+          description: normalized?.description ?? generated.description,
+          deliveryMode: normalized?.deliveryMode ?? generated.deliveryMode,
+          selectionMethod:
+            normalized?.selectionMethod ?? generated.selectionMethod,
+        }));
+      }
+    );
 
     // 3. Persist to the database (use normalized questions when available)
-    const quiz = await prisma.quiz.update({
-      where: { id: quizId },
-      data: {
-        description: (normalized?.description ?? generated.description) as
-          | string
-          | null,
-        category: (normalized?.category ?? generated.category) as QuizCategory,
-        subType: (normalized?.subType ?? generated.subType) as QuestionSubType,
-        deliveryMode: (normalized?.deliveryMode ??
-          generated.deliveryMode) as DeliveryMode,
-        selectionMethod: (normalized?.selectionMethod ??
-          generated.selectionMethod) as SelectionMethod,
-        questionCount: questionsToSave.length,
-        questions: questionsToSave as unknown as Prisma.InputJsonValue,
-      },
-      include: {
-        lessonQuizzes: {
-          select: {
-            lesson: { select: { id: true } },
-          },
+    const quiz = await prisma.$transaction(async (tx) => {
+      const createdQuestions = await Promise.all(
+        generatedQuestions.map(({ question, subType }) =>
+          tx.question.create({
+            data: {
+              courseId: fetchedQuiz.courseId,
+              category: QUESTION_CATEGORY_BY_SUB_TYPE[subType],
+              subType,
+              prompt: getQuestionPrompt(question),
+              answerData: questionToJson(question),
+              explanation: getQuestionExplanation(question),
+            },
+            select: { id: true },
+          })
+        )
+      );
+
+      if (createdQuestions.length > 0) {
+        await tx.quizQuestion.createMany({
+          data: createdQuestions.map(({ id: questionId }, orderIndex) => ({
+            quizId,
+            questionId,
+            orderIndex: currentQuestions.length + orderIndex,
+          })),
+        });
+      }
+
+      return tx.quiz.update({
+        where: { id: quizId },
+        data: {
+          description: (generatedQuestions[0]?.description ??
+            fetchedQuiz.description) as string | null,
+          deliveryMode: (generatedQuestions[0]?.deliveryMode ??
+            fetchedQuiz.deliveryMode) as DeliveryMode,
+          selectionMethod: (generatedQuestions[0]?.selectionMethod ??
+            fetchedQuiz.selectionMethod) as SelectionMethod,
+          questionCount: requestedTotal,
+          questions: [],
         },
-      },
+        include: quizRelations,
+      });
     });
 
     return withLessonIds(quiz);

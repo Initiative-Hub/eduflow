@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
-import { z } from 'zod';
+import * as z from 'zod';
 import type { Prisma } from '@/generated/prisma';
 import { errorResponse } from '@/lib/api/error-response';
 import { type AuthHandler, withAuth } from '@/lib/api/middlewares';
+import { getCoursePermissions } from '@/lib/permissions/course-permission';
+import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
 import { prisma } from '@/lib/prisma';
 
 // ─── Validation ──────────────────────────────────────────────────────────────
@@ -66,7 +68,7 @@ interface ItemLayoutEntry {
  *       500:
  *         description: Internal server error
  */
-const handler: AuthHandler = async (req, _sessionData, { params }) => {
+const handler: AuthHandler = async (req, sessionData, { params }) => {
   try {
     const resolvedParams = await params;
     const parsedParams = routeParamsSchema.safeParse(resolvedParams);
@@ -81,7 +83,6 @@ const handler: AuthHandler = async (req, _sessionData, { params }) => {
     }
 
     const { moduleId } = parsedParams.data;
-
     // Verify module exists and get current layout
     const moduleRecord = await prisma.module.findFirst({
       where: {
@@ -89,11 +90,20 @@ const handler: AuthHandler = async (req, _sessionData, { params }) => {
         deletedAt: null,
         course: { deletedAt: null },
       },
-      select: { id: true, itemLayout: true },
+      select: { id: true, courseId: true, itemLayout: true },
     });
 
     if (!moduleRecord) {
       return errorResponse('MODULE_NOT_FOUND', 'Module not found', 404);
+    }
+    const permissions = await getCoursePermissions(
+      sessionData.user.id,
+      moduleRecord.courseId
+    );
+    if (
+      permissions.withoutPermission(COURSE_PERMISSION.COURSE_CONTENT_UPDATE)
+    ) {
+      return errorResponse('FORBIDDEN', 'Forbidden', 403);
     }
 
     // Parse and validate body

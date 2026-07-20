@@ -1,12 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import {
   filterAdminNavItems,
+  filterCourseNavItems,
   getAdminNavItems,
   getAssistantNavItems,
   getCourseNavItems,
   getSettingNavItems,
 } from '@/components/layout/sidebar-config';
-import { PLATFORM_PERMISSION } from '@/lib/permissions/permission-keys';
+import {
+  COURSE_PERMISSION,
+  PLATFORM_PERMISSION,
+} from '@/lib/permissions/permission-keys';
 
 const t = (key: string) => key;
 
@@ -17,7 +21,7 @@ describe('sidebar-config', () => {
     expect(homeItem.isActive('/')).toBe(true);
     expect(homeItem.isActive('/inventory')).toBe(false);
     expect(inventoryItem.isActive('/inventory')).toBe(true);
-    expect(inventoryItem.isActive('/inventory/books')).toBe(false);
+    expect(inventoryItem.isActive('/inventory/books')).toBe(true);
   });
 
   it('keeps settings root item inactive on child routes', () => {
@@ -28,15 +32,61 @@ describe('sidebar-config', () => {
   });
 
   it('supports course items that only match the course root route', () => {
-    const courseItems = getCourseNavItems('course-123');
+    const courseItems = getCourseNavItems('course-123', t as never);
 
     expect(courseItems[0].isActive('/courses/course-123')).toBe(true);
     expect(courseItems[0].isActive('/courses/course-123/chat')).toBe(false);
   });
 
+  it('places Grades immediately below Question Bank', () => {
+    const courseItems = getCourseNavItems('course-123', t as never);
+
+    expect(courseItems.slice(1, 3).map((item) => item.name)).toEqual([
+      'courseQuestionBank',
+      'courseGrades',
+    ]);
+    expect(courseItems[2].url).toBe('/courses/course-123/grades');
+  });
+
+  it('filters course items by the current course permissions', () => {
+    const courseItems = getCourseNavItems('course-123', t as never);
+
+    const filteredItems = filterCourseNavItems(courseItems, [
+      COURSE_PERMISSION.COURSE_CONTENT_VIEW,
+    ]);
+
+    expect(filteredItems.map((item) => item.url)).toEqual([
+      '/courses/course-123',
+    ]);
+  });
+
+  it('requires both assessment authoring permissions for the question bank', () => {
+    const questionBank = getCourseNavItems('course-123', t as never).find(
+      (item) => item.url.endsWith('/question-bank')
+    );
+
+    expect(
+      filterCourseNavItems(
+        [questionBank!],
+        [COURSE_PERMISSION.ASSESSMENTS_CREATE]
+      )
+    ).toEqual([]);
+    expect(
+      filterCourseNavItems(
+        [questionBank!],
+        [
+          COURSE_PERMISSION.ASSESSMENTS_CREATE,
+          COURSE_PERMISSION.ASSESSMENTS_UPDATE,
+          COURSE_PERMISSION.ASSESSMENTS_DELETE,
+        ]
+      )
+    ).toEqual([questionBank]);
+  });
+
   it('filters admin nav items by view or manage platform permissions', () => {
     const adminItems = getAdminNavItems(t as never);
     const filteredItems = filterAdminNavItems(adminItems, [
+      PLATFORM_PERMISSION.ROLES_VIEW,
       PLATFORM_PERMISSION.ROLES_MANAGE,
     ]);
 

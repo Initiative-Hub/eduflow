@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/api/api-client';
@@ -10,6 +11,9 @@ import type {
   QuizDefinition,
 } from '@/lib/quiz-template';
 import { generateQuestionsFromLesson } from '@/lib/quiz-template';
+import type { QuestionBlock } from '@/lib/quiz-template/types';
+import { getQuestionPrompt } from '@/utils/quiz-question-references';
+import { quizService } from './(course-tabs)/quiz/quiz.service';
 
 // ─── Question Bank Hook ──────────────────────────────────────────────────────
 
@@ -19,6 +23,8 @@ interface UseQuestionBankOptions {
 
 export function useQuestionBank({ courseId }: UseQuestionBankOptions) {
   const queryClient = useQueryClient();
+  const t = useTranslations('Courses.CreateQuiz');
+  const tQuestionBank = useTranslations('Courses.QuestionBank');
 
   // Fetch all questions for the course via real API
   const questionsQuery = useQuery({
@@ -81,19 +87,46 @@ export function useQuestionBank({ courseId }: UseQuestionBankOptions) {
     },
   });
 
+  const updateQuestionMutation = useMutation({
+    mutationFn: async ({
+      questionId,
+      question,
+    }: {
+      questionId: string;
+      question: QuestionBlock;
+    }) =>
+      apiClient.put<QuestionBankEntry>(`v1/questions/${questionId}`, {
+        prompt: getQuestionPrompt(question),
+        answerData: question,
+        explanation: question.explanation ?? null,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['question-bank', courseId] });
+      queryClient.invalidateQueries({ queryKey: ['quizzes', courseId] });
+      toast.success(tQuestionBank('questionUpdateSuccess'));
+    },
+    onError: () => toast.error(tQuestionBank('questionUpdateError')),
+  });
+
   // Create quiz via real API
   const createQuizMutation = useMutation({
-    mutationFn: async (config: QuizConfiguration & { lessonIds: string[] }) => {
+    mutationFn: async (
+      config: QuizConfiguration & {
+        lessonIds: string[];
+        questions?: QuestionBlock[];
+        questionIds?: Array<string | null>;
+      }
+    ) => {
       return apiClient.post<QuizDefinition>(`v1/courses/${courseId}/quizzes`, {
         lessonIds: config.lessonIds,
         title: config.title,
         description: config.description,
-        category: config.category,
-        subType: config.subType,
+        questionCounts: config.questionCounts,
         deliveryMode: config.deliveryMode,
         selectionMethod: config.selectionMethod,
         questionCount: config.questionCount,
-        questions: [],
+        questions: config.questions ?? [],
+        questionIds: config.questionIds,
       });
     },
     onSuccess: (createdQuiz) => {
@@ -115,6 +148,46 @@ export function useQuestionBank({ courseId }: UseQuestionBankOptions) {
     onError: () => {
       toast.error('Failed to create quiz');
     },
+  });
+
+  const createGeneratedQuizMutation = useMutation({
+    mutationFn: async (config: QuizConfiguration & { lessonIds: string[] }) => {
+      return quizService.createGeneratedQuiz(courseId, config);
+    },
+    onSuccess: (generatedQuiz) => {
+      queryClient.setQueryData<QuizDefinition[]>(
+        ['quizzes', courseId],
+        (oldQuizzes = []) => {
+          const existingIndex = oldQuizzes.findIndex(
+            (quiz) => quiz.id === generatedQuiz.id
+          );
+
+          if (existingIndex === -1) {
+            return [generatedQuiz, ...oldQuizzes];
+          }
+
+          return oldQuizzes.map((quiz) =>
+            quiz.id === generatedQuiz.id ? { ...quiz, ...generatedQuiz } : quiz
+          );
+        }
+      );
+
+      queryClient.invalidateQueries({ queryKey: ['quizzes', courseId] });
+      queryClient.invalidateQueries({ queryKey: ['modules', courseId] });
+      toast.success(t('createWithAISuccess'));
+    },
+    onError: () => {
+      toast.error(t('createWithAIError'));
+    },
+  });
+
+  const generateDraftQuizMutation = useMutation({
+    mutationFn: (params: {
+      lessonIds: string[];
+      questionCounts: Partial<Record<QuestionSubType, number>>;
+      context?: string;
+    }) => quizService.generateDraft(courseId, params),
+    onError: () => toast.error(t('createWithAIError')),
   });
 
   // AI question generation (still uses the placeholder function)
@@ -149,8 +222,19 @@ export function useQuestionBank({ courseId }: UseQuestionBankOptions) {
     deleteQuestion: deleteQuestionMutation.mutate,
     isDeletingQuestion: deleteQuestionMutation.isPending,
 
+    updateQuestion: updateQuestionMutation.mutate,
+    isUpdatingQuestion: updateQuestionMutation.isPending,
+
     createQuiz: createQuizMutation.mutate,
     isCreatingQuiz: createQuizMutation.isPending,
+
+    createGeneratedQuiz: createGeneratedQuizMutation.mutate,
+    isCreatingGeneratedQuiz: createGeneratedQuizMutation.isPending,
+    createGeneratedQuizError: createGeneratedQuizMutation.error,
+
+    generateDraftQuiz: generateDraftQuizMutation.mutate,
+    isGeneratingDraftQuiz: generateDraftQuizMutation.isPending,
+    generateDraftQuizError: generateDraftQuizMutation.error,
 
     generateQuestions: generateQuestionsMutation.mutateAsync,
     isGeneratingQuestions: generateQuestionsMutation.isPending,

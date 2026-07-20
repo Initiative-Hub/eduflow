@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
-import { z } from 'zod';
+import * as z from 'zod';
 import { withRoles } from '@/lib/api/middlewares';
+import { getCoursePermissions } from '@/lib/permissions/course-permission';
+import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
 import { CourseService } from '@/services/CourseService';
 
 /**
@@ -114,6 +116,21 @@ export const POST = withRoles(
             { status: 400 }
           );
         }
+      }
+
+      const permissions = await getCoursePermissions(
+        userId,
+        parsed.data.courseId
+      );
+      if (
+        permissions.withoutPermission(
+          COURSE_PERMISSION.COURSE_CONTENT_CREATE
+        ) ||
+        permissions.withoutPermission(
+          COURSE_PERMISSION.AI_USE_COURSE_GENERATION
+        )
+      ) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       }
 
       const result = CourseService.generateModulesStream({

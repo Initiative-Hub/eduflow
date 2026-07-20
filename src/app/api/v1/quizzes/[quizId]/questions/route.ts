@@ -1,11 +1,17 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withRoles } from '@/lib/api/middlewares';
+import { questionBlockSchema } from '@/lib/validations/quiz.schema';
 import { QuizService } from '@/services/QuizService';
 
-const saveQuestionsSchema = z.object({
-  questions: z.array(z.record(z.string(), z.unknown())),
-});
+const saveQuestionsSchema = z
+  .object({
+    questions: z.array(questionBlockSchema),
+    questionIds: z.array(z.string().uuid().nullable()),
+  })
+  .refine((data) => data.questions.length === data.questionIds.length, {
+    message: 'questions and questionIds must have the same length',
+  });
 
 /**
  * @swagger
@@ -50,7 +56,7 @@ const saveQuestionsSchema = z.object({
  */
 export const POST = withRoles(
   ['TEACHER', 'ADMIN'],
-  async (req, _sessionData, { params }) => {
+  async (req, sessionData, { params }) => {
     try {
       const { quizId } = await params;
       const body = await req.json();
@@ -65,7 +71,9 @@ export const POST = withRoles(
 
       const updatedQuiz = await QuizService.updateQuestions(
         quizId,
-        parsed.data.questions
+        sessionData.user.id,
+        parsed.data.questions,
+        parsed.data.questionIds
       );
 
       return NextResponse.json(updatedQuiz);
@@ -75,6 +83,9 @@ export const POST = withRoles(
           { message: 'Quiz not found' },
           { status: 404 }
         );
+      }
+      if (error.message === 'Forbidden') {
+        return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
       }
       console.error('Error saving quiz questions:', error);
       return NextResponse.json(
@@ -128,7 +139,7 @@ export const POST = withRoles(
  */
 export const PUT = withRoles(
   ['TEACHER', 'ADMIN'],
-  async (req, _sessionData, { params }) => {
+  async (req, sessionData, { params }) => {
     try {
       const { quizId } = await params;
       const body = await req.json();
@@ -143,7 +154,9 @@ export const PUT = withRoles(
 
       const updatedQuiz = await QuizService.updateQuestions(
         quizId,
-        parsed.data.questions
+        sessionData.user.id,
+        parsed.data.questions,
+        parsed.data.questionIds
       );
 
       return NextResponse.json(updatedQuiz);
@@ -153,6 +166,9 @@ export const PUT = withRoles(
           { message: 'Quiz not found' },
           { status: 404 }
         );
+      }
+      if (error.message === 'Forbidden') {
+        return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
       }
       console.error('Error saving quiz questions:', error);
       return NextResponse.json(

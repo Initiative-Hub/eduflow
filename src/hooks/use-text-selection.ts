@@ -30,7 +30,7 @@ interface UseTextSelectionReturn {
 /** Minimum space (px) needed above the word to show the popup there */
 const POPUP_HEIGHT_ESTIMATE = 300;
 /** Minimum space (px) needed below the word to show the popup there */
-const POPUP_BOTTOM_MARGIN = 100;
+const _POPUP_BOTTOM_MARGIN = 100;
 /** Minimum top offset (px) to avoid being covered by the navbar */
 const NAVBAR_HEIGHT = 64;
 
@@ -217,7 +217,7 @@ export function useTextSelection(
       );
       document.removeEventListener('mousedown', handleMouseDown);
     };
-  }, [clearSelection, popupRef, updatePosition]);
+  }, [popupRef, updatePosition]);
 
   return { selectedWord, coords, placement, clearSelection };
 }

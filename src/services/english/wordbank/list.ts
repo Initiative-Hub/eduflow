@@ -1,8 +1,8 @@
 import type { Prisma } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
+import { listVocabularyLists } from './lists';
 import { savedVocabularyListInclude, toSavedVocabularyItem } from './mappers';
 import { getLocalDayRange } from './scheduling';
-import { listVocabularyLists } from './lists';
 import type {
   SavedVocabularyListResult,
   WordbankListOptions,

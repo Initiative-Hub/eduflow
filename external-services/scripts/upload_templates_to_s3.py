@@ -14,19 +14,23 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-TEMPLATES = Path(os.environ["TEMPLATES_DIR"]) if os.environ.get("TEMPLATES_DIR") \
+TEMPLATES = (
+    Path(os.environ["TEMPLATES_DIR"])
+    if os.environ.get("TEMPLATES_DIR")
     else ROOT / "templates"
+)
 DEFAULT_COLLECTIONS = ["vintage", "clean_light", "pastel_pop"]
 
 # load env the same way the service resolves it (.env here, then repo root)
 try:
     from dotenv import load_dotenv
+
     load_dotenv(ROOT / ".env")
     load_dotenv(ROOT.parent / ".env")
 except ImportError:
     pass
 
-import boto3  # noqa: E402
+import boto3  # type: ignore  # noqa: E402
 
 BUCKET = os.getenv("AWS_S3_TEMPLATES_BUCKET", "eduflow-template")
 ENDPOINT = os.getenv("AWS_S3_ENDPOINT", "") or None
@@ -54,12 +58,17 @@ def main() -> None:
     # service loads as collection "templates" (keys templates/templates/...).
     use_default_bucket = "--default" in args
     names = [a for a in args if not a.startswith("--")] or DEFAULT_COLLECTIONS
-    bucket = (os.getenv("AWS_S3_DEFAULT_TEMPLATES_BUCKET", "eduflow-default-template")
-              if use_default_bucket
-              else os.getenv("AWS_S3_TEMPLATES_BUCKET", "eduflow-template"))
+    bucket = (
+        os.getenv("AWS_S3_DEFAULT_TEMPLATES_BUCKET", "eduflow-default-template")
+        if use_default_bucket
+        else os.getenv("AWS_S3_TEMPLATES_BUCKET", "eduflow-template")
+    )
     client = boto3.client(
-        "s3", region_name=REGION, endpoint_url=ENDPOINT,
-        aws_access_key_id=KEY or None, aws_secret_access_key=SECRET or None,
+        "s3",
+        region_name=REGION,
+        endpoint_url=ENDPOINT,
+        aws_access_key_id=KEY or None,
+        aws_secret_access_key=SECRET or None,
     )
     # create the bucket if it doesn't exist yet (fresh MinIO/dev)
     try:
@@ -75,8 +84,9 @@ def main() -> None:
             n = 0
             for cat in sorted(TEMPLATES.iterdir()):
                 if cat.is_dir() and cat.name.isupper():
-                    n += upload_dir(client, bucket, cat,
-                                    f"templates/templates/{cat.name}/")
+                    n += upload_dir(
+                        client, bucket, cat, f"templates/templates/{cat.name}/"
+                    )
             total += n
             print(f"  base bank: {n} files -> s3://{bucket}/templates/templates/")
             continue

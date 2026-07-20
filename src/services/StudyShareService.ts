@@ -108,6 +108,7 @@ export class StudyShareService {
       userId: input.userId,
     });
   }
+
   static async getPublicInteractiveContent(shareId: string) {
     const sharedResource = await prisma.sharedResource.findFirst({
       where: {

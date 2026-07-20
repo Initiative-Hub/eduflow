@@ -32,6 +32,7 @@ export interface Course {
   isOwner?: boolean;
   membershipStatus?: 'ACTIVE' | 'PENDING_INVITE' | null;
   pendingInvitationId?: string | null;
+  coursePermissions?: string[];
   _count?: {
     modules: number;
     enrollments: number;

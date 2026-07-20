@@ -1,8 +1,8 @@
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { generateText, Output } from 'ai';
 import * as z from 'zod';
-import { DictionaryService } from '@/services/dictionary';
 import { DEFAULT_MODELS } from '@/services/ai/chat-provider.constants';
+import { DictionaryService } from '@/services/dictionary';
 
 const vocabularySchema = z.object({
   vocabulary: z.array(

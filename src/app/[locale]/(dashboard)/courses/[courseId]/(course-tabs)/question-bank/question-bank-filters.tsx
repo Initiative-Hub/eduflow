@@ -9,11 +9,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import {
-  QUESTION_SUB_TYPE_LABELS,
-  QUIZ_CATEGORIES,
-  type QuestionSubType,
-} from '@/lib/quiz-template';
+import { QUIZ_CATEGORIES, type QuestionSubType } from '@/lib/quiz-template';
 import { cn } from '@/lib/utils';
 import type { Module } from '../../use-modules';
 
@@ -77,10 +73,10 @@ export function QuestionBankFilters({
           <div className="space-y-3">
             <div>
               <p className="mb-1.5 font-semibold text-muted-foreground text-xs uppercase tracking-wide">
-                {QUIZ_CATEGORIES['SELECTION_BASED'].label}
+                {t('categories.SELECTION_BASED')}
               </p>
               <div className="space-y-1">
-                {QUIZ_CATEGORIES['SELECTION_BASED'].subTypes.map((st) => (
+                {QUIZ_CATEGORIES.SELECTION_BASED.subTypes.map((st) => (
                   <label
                     key={st}
                     className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 hover:bg-muted/50"
@@ -89,19 +85,17 @@ export function QuestionBankFilters({
                       checked={subTypeFilters.has(st)}
                       onCheckedChange={() => toggleSubType(st)}
                     />
-                    <span className="text-sm">
-                      {QUESTION_SUB_TYPE_LABELS[st]}
-                    </span>
+                    <span className="text-sm">{t(`questionTypes.${st}`)}</span>
                   </label>
                 ))}
               </div>
             </div>
             <div>
               <p className="mb-1.5 font-semibold text-muted-foreground text-xs uppercase tracking-wide">
-                {QUIZ_CATEGORIES['OPEN_ENDED'].label}
+                {t('categories.OPEN_ENDED')}
               </p>
               <div className="space-y-1">
-                {QUIZ_CATEGORIES['OPEN_ENDED'].subTypes.map((st) => (
+                {QUIZ_CATEGORIES.OPEN_ENDED.subTypes.map((st) => (
                   <label
                     key={st}
                     className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 hover:bg-muted/50"
@@ -110,9 +104,7 @@ export function QuestionBankFilters({
                       checked={subTypeFilters.has(st)}
                       onCheckedChange={() => toggleSubType(st)}
                     />
-                    <span className="text-sm">
-                      {QUESTION_SUB_TYPE_LABELS[st]}
-                    </span>
+                    <span className="text-sm">{t(`questionTypes.${st}`)}</span>
                   </label>
                 ))}
               </div>

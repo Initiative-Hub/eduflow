@@ -9,13 +9,12 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Quiz, QuizQuestionsEditor } from '@/components/quiz';
 import { QuizResult } from '@/components/quiz/quiz-result';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -25,21 +24,22 @@ import {
 import { useCourseNavigation } from '@/hooks/use-course-navigation';
 import { apiClient } from '@/lib/api/api-client';
 import { useSession } from '@/lib/auth-client';
-import {
-  DELIVERY_MODE_LABELS,
-  QUESTION_SUB_TYPE_LABELS,
-  QUIZ_CATEGORIES,
-  type QuizContent,
-  type ScoreResult,
-  type StudentAnswer,
-  type StudentAnswers,
-  SUB_TYPE_TO_QUESTION_TYPE,
+import type {
+  DeliveryMode,
+  QuestionSubType,
+  QuizContent,
+  ScoreResult,
+  StudentAnswer,
+  StudentAnswers,
 } from '@/lib/quiz-template';
+import type { QuestionBlock } from '@/lib/quiz-template/types';
+import type { QuizAttemptSnapshot } from '@/utils/quiz-attempt-snapshot';
 import { LessonOutline } from '../../../lessons/[lessonId]/_components/lesson-outline';
 import { useModules } from '../../../use-modules';
 import { useQuestionBank } from '../../../use-question-bank';
+import { QuizAiDraftDialog } from '../create/quiz-ai-draft-dialog';
+import { QuizDetailsForm } from '../create/quiz-details-form';
 import { useQuiz } from '../use-quiz';
-import QuizAiDialog from './_components/quiz_ai_dialog';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -48,6 +48,8 @@ interface QuizAttemptResponse {
   quizId: string;
   userId: string;
   answers: Record<string, StudentAnswer>;
+  quizSnapshot: QuizAttemptSnapshot | null;
+  answeredCount: number;
   score: number;
   maxScore: number;
   percentage: number;
@@ -71,37 +73,63 @@ interface QuizPlayerClientProps {
 export function QuizPlayerClient({ courseId, quizId }: QuizPlayerClientProps) {
   const t = useTranslations('Courses.QuizPlayer');
   const router = useRouter();
-  const { quizzes, isLoadingQuizzes, isQuizzesError, refetchQuizzes } =
-    useQuestionBank({ courseId });
+  const searchParams = useSearchParams();
+  const {
+    quizzes,
+    questions: questionBank,
+    isLoadingQuizzes,
+    isQuizzesError,
+    refetchQuizzes,
+    generateDraftQuiz,
+    isGeneratingDraftQuiz,
+  } = useQuestionBank({ courseId });
   const { modules, isLoading: isModulesLoading } = useModules(courseId);
   const [showOutline, setShowOutline] = useState(false);
   const [isRetaking, setIsRetaking] = useState(false);
-  const [activeTab, setActiveTab] = useState<'take' | 'edit'>('take');
   const [isAiDialogOpen, setIsAiDialogOpen] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editLessonIds, setEditLessonIds] = useState<string[]>([]);
+  const [editDeliveryMode, setEditDeliveryMode] =
+    useState<DeliveryMode>('INSTANT_FEEDBACK');
+  const [showEditErrors, setShowEditErrors] = useState(false);
+  const appendGeneratedRef = useRef<
+    ((questions: QuestionBlock[]) => void) | null
+  >(null);
+  const activeTab = searchParams.get('tab') === 'edit' ? 'edit' : 'take';
+  const actionParam = searchParams.get('action');
+  const initialEditorAction =
+    actionParam === 'manual' || actionParam === 'question-bank'
+      ? actionParam
+      : undefined;
 
   const { data: sessionData } = useSession();
 
   const isTeacher =
     sessionData?.user.role === 'TEACHER' || sessionData?.user.role === 'ADMIN';
 
-  const {
-    saveQuestions,
-    isSavingQuestions,
-    generateQuestions,
-    isGeneratingQuestions,
-  } = useQuiz({ courseId, quizId });
+  const { saveQuizDraft, isSavingQuizDraft } = useQuiz({ courseId, quizId });
 
   const quiz = useMemo(
     () => quizzes.find((q) => q.id === quizId),
     [quizzes, quizId]
   );
 
+  useEffect(() => {
+    if (!quiz) return;
+    setEditTitle(quiz.title);
+    setEditDescription(quiz.description ?? '');
+    setEditLessonIds(quiz.lessonIds);
+    setEditDeliveryMode(quiz.deliveryMode);
+    setShowEditErrors(false);
+  }, [quiz]);
+
   const quizContent: QuizContent | null = useMemo(() => {
     if (!quiz) return null;
     return {
       title: quiz.title,
       description: quiz.description ?? '',
-      type: SUB_TYPE_TO_QUESTION_TYPE[quiz.subType] ?? quiz.subType,
+      type: quiz.questions[0]?.type ?? 'mixed',
       questions: quiz.questions,
     };
   }, [quiz]);
@@ -145,6 +173,18 @@ export function QuizPlayerClient({ courseId, quizId }: QuizPlayerClientProps) {
     return map;
   }, [mostRecentAttempt]);
 
+  const previousQuizContent = useMemo<QuizContent | null>(() => {
+    if (mostRecentAttempt?.quizSnapshot) {
+      return {
+        title: mostRecentAttempt.quizSnapshot.title,
+        description: mostRecentAttempt.quizSnapshot.description,
+        type: mostRecentAttempt.quizSnapshot.type,
+        questions: mostRecentAttempt.quizSnapshot.questions,
+      };
+    }
+    return quizContent;
+  }, [mostRecentAttempt, quizContent]);
+
   // Find the module title for breadcrumb
   const currentModule = useMemo(() => {
     if (!quiz) return null;
@@ -153,6 +193,11 @@ export function QuizPlayerClient({ courseId, quizId }: QuizPlayerClientProps) {
       m.lessons.some((l) => linkedLessonIds.includes(l.id))
     );
   }, [modules, quiz]);
+
+  const availableLessons = useMemo(
+    () => modules.flatMap((module) => module.lessons),
+    [modules]
+  );
 
   // Build navigation: prev/next considering lessons and quizzes in sequence
   const { prev, next } = useCourseNavigation(
@@ -174,19 +219,69 @@ export function QuizPlayerClient({ courseId, quizId }: QuizPlayerClientProps) {
     setIsRetaking(true);
   }, []);
 
-  const handleOpenAiDialog = useCallback(() => {
-    setIsAiDialogOpen(true);
-  }, []);
+  const handleOpenDraftAiDialog = useCallback(
+    (appendQuestions: (questions: QuestionBlock[]) => void) => {
+      appendGeneratedRef.current = appendQuestions;
+      if (editLessonIds.length === 0) {
+        setShowEditErrors(true);
+        return;
+      }
+      setIsAiDialogOpen(true);
+    },
+    [editLessonIds.length]
+  );
 
-  const handleGenerateWithContext = useCallback(
-    (context: string) => {
-      generateQuestions(context || undefined, {
-        onSuccess: () => {
-          setIsAiDialogOpen(false);
-        },
+  const handleTabChange = useCallback(
+    (nextTab: 'take' | 'edit') => {
+      const nextParams = new URLSearchParams(searchParams.toString());
+      if (nextTab === 'edit') {
+        nextParams.set('tab', 'edit');
+      } else {
+        nextParams.delete('tab');
+      }
+
+      const queryString = nextParams.toString();
+      router.replace(
+        `/courses/${courseId}/quiz/${quizId}${queryString ? `?${queryString}` : ''}`,
+        { scroll: false }
+      );
+    },
+    [courseId, quizId, router, searchParams]
+  );
+
+  const handleGenerateDraft = useCallback(
+    (data: {
+      questionCounts: Partial<Record<QuestionSubType, number>>;
+      context?: string;
+    }) => {
+      generateDraftQuiz(
+        { lessonIds: editLessonIds, ...data },
+        {
+          onSuccess: ({ questions }) => {
+            appendGeneratedRef.current?.(questions);
+            setIsAiDialogOpen(false);
+          },
+        }
+      );
+    },
+    [editLessonIds, generateDraftQuiz]
+  );
+
+  const handleSaveDraft = useCallback(
+    (questions: QuestionBlock[], questionIds: Array<string | null>) => {
+      setShowEditErrors(true);
+      if (!editTitle.trim() || editLessonIds.length === 0) return;
+
+      saveQuizDraft({
+        title: editTitle.trim(),
+        description: editDescription.trim() || undefined,
+        lessonIds: editLessonIds,
+        deliveryMode: editDeliveryMode,
+        questions,
+        questionIds,
       });
     },
-    [generateQuestions]
+    [editDeliveryMode, editDescription, editLessonIds, editTitle, saveQuizDraft]
   );
 
   if (isLoadingQuizzes || isModulesLoading) {
@@ -288,7 +383,7 @@ export function QuizPlayerClient({ courseId, quizId }: QuizPlayerClientProps) {
             <Button
               variant={activeTab === 'take' ? 'secondary' : 'ghost'}
               size="xs"
-              onClick={() => setActiveTab('take')}
+              onClick={() => handleTabChange('take')}
               className="h-7 cursor-pointer px-3 font-semibold text-xs"
             >
               {t('studentView')}
@@ -296,7 +391,7 @@ export function QuizPlayerClient({ courseId, quizId }: QuizPlayerClientProps) {
             <Button
               variant={activeTab === 'edit' ? 'secondary' : 'ghost'}
               size="xs"
-              onClick={() => setActiveTab('edit')}
+              onClick={() => handleTabChange('edit')}
               className="h-7 cursor-pointer px-3 font-semibold text-xs"
             >
               {t('editQuestions')}
@@ -305,38 +400,52 @@ export function QuizPlayerClient({ courseId, quizId }: QuizPlayerClientProps) {
         )}
       </div>
 
-      {/* Quiz metadata */}
-      <div className="mt-6 flex flex-wrap items-center gap-2">
-        <Badge variant="secondary">
-          {QUIZ_CATEGORIES[quiz.category].label}
-        </Badge>
-        <Badge variant="outline">
-          {QUESTION_SUB_TYPE_LABELS[quiz.subType]}
-        </Badge>
-        <Badge variant="outline">
-          {DELIVERY_MODE_LABELS[quiz.deliveryMode]}
-        </Badge>
-        <Badge variant="outline">
-          {quiz.questionCount}{' '}
-          {quiz.questionCount === 1 ? 'question' : 'questions'}
-        </Badge>
-      </div>
-
       {/* Quiz Player or Previous Result */}
-      <div className="mx-auto mt-6 max-w-2xl">
+      <div
+        className={
+          activeTab === 'edit'
+            ? 'mx-auto mt-6 max-w-5xl space-y-7'
+            : 'mx-auto mt-6 max-w-2xl'
+        }
+      >
         {activeTab === 'edit' ? (
-          <QuizQuestionsEditor
-            initialQuestions={quiz.questions ?? []}
-            onSave={saveQuestions}
-            isSaving={isSavingQuestions}
-            onGenerateAI={handleOpenAiDialog}
-            isGeneratingAI={isGeneratingQuestions}
-            questionCount={quiz.questionCount}
-          />
-        ) : showPreviousResult ? (
+          <>
+            <QuizDetailsForm
+              title={editTitle}
+              description={editDescription}
+              lessonIds={editLessonIds}
+              lessons={availableLessons}
+              deliveryMode={editDeliveryMode}
+              showErrors={showEditErrors}
+              hideLessonSelector={false}
+              onTitleChange={setEditTitle}
+              onDescriptionChange={setEditDescription}
+              onLessonIdsChange={setEditLessonIds}
+              onDeliveryModeChange={setEditDeliveryMode}
+            />
+
+            <section className="rounded-2xl border bg-card p-5 md:p-6">
+              <div className="mb-5">
+                <h2 className="font-semibold text-lg">{t('questionsTitle')}</h2>
+              </div>
+              <QuizQuestionsEditor
+                key={`${quiz.updatedAt}:${quiz.questionIds?.join(',') ?? ''}`}
+                initialQuestions={quiz.questions ?? []}
+                initialQuestionIds={quiz.questionIds ?? []}
+                questionBank={questionBank}
+                onSave={handleSaveDraft}
+                isSaving={isSavingQuizDraft}
+                onGenerateAI={handleOpenDraftAiDialog}
+                isGeneratingAI={isGeneratingDraftQuiz}
+                initialAction={initialEditorAction}
+                creationMode
+              />
+            </section>
+          </>
+        ) : showPreviousResult && previousQuizContent ? (
           <QuizResult
             result={previousResult}
-            quiz={quizContent}
+            quiz={previousQuizContent}
             answers={previousAnswers}
             onRetry={handleRetake}
           />
@@ -383,11 +492,11 @@ export function QuizPlayerClient({ courseId, quizId }: QuizPlayerClientProps) {
         </div>
       )}
 
-      <QuizAiDialog
+      <QuizAiDraftDialog
         open={isAiDialogOpen}
         onOpenChange={setIsAiDialogOpen}
-        onSubmit={handleGenerateWithContext}
-        isGenerating={isGeneratingQuestions}
+        onSubmit={handleGenerateDraft}
+        isGenerating={isGeneratingDraftQuiz}
       />
     </>
   );

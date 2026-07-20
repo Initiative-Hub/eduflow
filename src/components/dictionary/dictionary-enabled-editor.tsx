@@ -106,9 +106,9 @@ function getHoverWordPlugin(
           const offset = resolved.parentOffset;
 
           const wordRegex = /[a-zA-Z'-]+/g;
-          let match;
+          let match: RegExpExecArray | null = wordRegex.exec(text);
           let foundMatch = null;
-          while ((match = wordRegex.exec(text)) !== null) {
+          while (match !== null) {
             if (
               offset >= match.index &&
               offset <= match.index + match[0].length
@@ -126,6 +126,7 @@ function getHoverWordPlugin(
               foundMatch = match;
               break;
             }
+            match = wordRegex.exec(text);
           }
 
           if (!foundMatch) {
@@ -181,11 +182,11 @@ function getHoverWordPlugin(
           const offset = resolved.parentOffset;
 
           const wordRegex = /[a-zA-Z'-]+/g;
-          let match;
+          let match: RegExpExecArray | null = wordRegex.exec(text);
           let foundWord = null;
           let foundStart = 0;
           let foundEnd = 0;
-          while ((match = wordRegex.exec(text)) !== null) {
+          while (match !== null) {
             if (
               offset >= match.index &&
               offset <= match.index + match[0].length
@@ -205,6 +206,7 @@ function getHoverWordPlugin(
               foundEnd = foundStart + match[0].length;
               break;
             }
+            match = wordRegex.exec(text);
           }
 
           if (foundWord) {
@@ -303,7 +305,7 @@ export function DictionaryEnabledEditor({
       let text = '';
       editor.state.doc.descendants((node) => {
         if (node.isBlock) {
-          text += node.textContent + '\n';
+          text += `${node.textContent}\n`;
         }
       });
       onChange(text.trimEnd());
@@ -321,7 +323,7 @@ export function DictionaryEnabledEditor({
       let currentText = '';
       editor.state.doc.descendants((node) => {
         if (node.isBlock) {
-          currentText += node.textContent + '\n';
+          currentText += `${node.textContent}\n`;
         }
       });
       currentText = currentText.trimEnd();

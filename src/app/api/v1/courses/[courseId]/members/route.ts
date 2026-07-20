@@ -66,15 +66,6 @@ export const GET = withAuth(async (req, sessionData, { params }) => {
       );
     }
 
-    const permissions = await getCoursePermissions(
-      sessionData.user.id,
-      parsedParams.data.courseId
-    );
-
-    if (permissions.withoutPermission(COURSE_PERMISSION.COURSE_MEMBERS_VIEW)) {
-      return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
-    }
-
     const result = await CourseMemberService.listMembers({
       courseId: parsedParams.data.courseId,
       currentUserId: sessionData.user.id,
@@ -83,6 +74,10 @@ export const GET = withAuth(async (req, sessionData, { params }) => {
       limit: parsedQuery.data.limit,
       offset: parsedQuery.data.offset,
     });
+    const permissions = await getCoursePermissions(
+      sessionData.user.id,
+      parsedParams.data.courseId
+    );
 
     return NextResponse.json({
       ...result,
@@ -116,17 +111,6 @@ export const POST = withAuth(async (req, sessionData, { params }) => {
         { message: 'Invalid request', details: parsedParams.error.flatten() },
         { status: 400 }
       );
-    }
-
-    const permissions = await getCoursePermissions(
-      sessionData.user.id,
-      parsedParams.data.courseId
-    );
-
-    if (
-      permissions.withoutPermission(COURSE_PERMISSION.COURSE_MEMBERS_MANAGE)
-    ) {
-      return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
     }
 
     const parsedBody = addMemberSchema.safeParse(await req.json());

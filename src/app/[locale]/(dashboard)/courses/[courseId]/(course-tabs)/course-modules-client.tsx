@@ -1,13 +1,13 @@
 'use client';
 
 import { Plus, Sparkles } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { Accordion } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { AddLessonDialog } from '../_components/add-lesson-dialog';
 import { AddModuleDialog } from '../_components/add-module-dialog';
-import { CreateQuizDialog } from '../_components/create-quiz-dialog';
 import { ModuleAccordionItem } from '../_components/module-accordion-item';
 import type { CreateLessonFormData } from '../create-lesson.config';
 import type { CreateModuleFormData } from '../create-module.config';
@@ -17,14 +17,23 @@ import { AiClientDialog } from './ai-client/ai-client-dialog';
 
 interface CourseModulesClientProps {
   courseId: string;
+  canCreateContent: boolean;
+  canEditContent: boolean;
   canDeleteContent: boolean;
+  canUseCourseGenerationAI: boolean;
+  canCreateQuiz: boolean;
 }
 
 export function CourseModulesClient({
   courseId,
+  canCreateContent,
+  canEditContent,
   canDeleteContent,
+  canUseCourseGenerationAI,
+  canCreateQuiz,
 }: CourseModulesClientProps) {
   const t = useTranslations('Courses.CourseModules');
+  const router = useRouter();
 
   const {
     modules,
@@ -42,16 +51,13 @@ export function CourseModulesClient({
     generateCourseModules,
   } = useModules(courseId);
 
-  const { quizzes, isCreatingQuiz } = useQuestionBank({ courseId });
+  const { quizzes } = useQuestionBank({ courseId });
 
   const [isAddModuleOpen, setIsAddModuleOpen] = useState(false);
   const [isAiOpen, setIsAiOpen] = useState(false);
   const [activeModuleIdForLesson, setActiveModuleIdForLesson] = useState<
     string | null
   >(null);
-  const [createQuizModuleId, setCreateQuizModuleId] = useState<string | null>(
-    null
-  );
 
   const onCreateModule = (data: CreateModuleFormData) => {
     handleCreateModule(
@@ -70,8 +76,7 @@ export function CourseModulesClient({
   };
 
   const handleCreateQuiz = (moduleId: string) => {
-    if (isCreatingQuiz) return;
-    setCreateQuizModuleId(moduleId);
+    router.push(`/courses/${courseId}/quiz/create?moduleId=${moduleId}`);
   };
 
   const onAiSelect = async (selection: {
@@ -101,18 +106,22 @@ export function CourseModulesClient({
           </p>
         </div>
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            className="gap-2 border-primary/20 bg-primary/5 hover:bg-primary/10 hover:text-primary"
-            onClick={() => setIsAiOpen(true)}
-          >
-            <Sparkles className="h-4 w-4" />
-            {t('aiAssistant')}
-          </Button>
-          <Button onClick={() => setIsAddModuleOpen(true)}>
-            <Plus className="mr-1 h-4 w-4" />
-            {t('addModule')}
-          </Button>
+          {canCreateContent && canUseCourseGenerationAI ? (
+            <Button
+              variant="outline"
+              className="gap-2 border-primary/20 bg-primary/5 hover:bg-primary/10 hover:text-primary"
+              onClick={() => setIsAiOpen(true)}
+            >
+              <Sparkles className="h-4 w-4" />
+              {t('aiAssistant')}
+            </Button>
+          ) : null}
+          {canCreateContent ? (
+            <Button onClick={() => setIsAddModuleOpen(true)}>
+              <Plus className="mr-1 h-4 w-4" />
+              {t('addModule')}
+            </Button>
+          ) : null}
         </div>
       </div>
 
@@ -132,7 +141,10 @@ export function CourseModulesClient({
               key={moduleItem.id}
               moduleItem={moduleItem}
               courseId={courseId}
+              canCreateContent={canCreateContent}
+              canEditContent={canEditContent}
               canDeleteContent={canDeleteContent}
+              canCreateQuiz={canCreateQuiz}
               onAddLesson={setActiveModuleIdForLesson}
               onCreateQuiz={handleCreateQuiz}
               quizzes={quizzes}
@@ -141,41 +153,37 @@ export function CourseModulesClient({
         </Accordion>
       )}
 
-      <AddModuleDialog
-        isOpen={isAddModuleOpen}
-        onOpenChange={setIsAddModuleOpen}
-        onSubmit={onCreateModule}
-        isLoading={isCreatingModule}
-      />
+      {canCreateContent ? (
+        <AddModuleDialog
+          isOpen={isAddModuleOpen}
+          onOpenChange={setIsAddModuleOpen}
+          onSubmit={onCreateModule}
+          isLoading={isCreatingModule}
+        />
+      ) : null}
 
-      <AddLessonDialog
-        isOpen={!!activeModuleIdForLesson}
-        onOpenChange={(open) => !open && setActiveModuleIdForLesson(null)}
-        onSubmit={onCreateLesson}
-        isLoading={isCreatingLesson}
-      />
+      {canCreateContent ? (
+        <AddLessonDialog
+          isOpen={!!activeModuleIdForLesson}
+          onOpenChange={(open) => !open && setActiveModuleIdForLesson(null)}
+          onSubmit={onCreateLesson}
+          isLoading={isCreatingLesson}
+        />
+      ) : null}
 
-      <AiClientDialog
-        isOpen={isAiOpen}
-        onOpenChange={setIsAiOpen}
-        onSelect={onAiSelect}
-        onRetry={onAiRetry}
-        generationStep={generationStep}
-        generationError={generationError}
-        isRunning={isRunning}
-        streamingCourse={streamingCourse}
-        searchSources={searchSources}
-      />
-
-      <CreateQuizDialog
-        isOpen={!!createQuizModuleId}
-        onOpenChange={(open) => !open && setCreateQuizModuleId(null)}
-        courseId={courseId}
-        preselectedModuleId={createQuizModuleId ?? undefined}
-        moduleName={
-          modules.find((m) => m.id === createQuizModuleId)?.title ?? ''
-        }
-      />
+      {canCreateContent && canUseCourseGenerationAI ? (
+        <AiClientDialog
+          isOpen={isAiOpen}
+          onOpenChange={setIsAiOpen}
+          onSelect={onAiSelect}
+          onRetry={onAiRetry}
+          generationStep={generationStep}
+          generationError={generationError}
+          isRunning={isRunning}
+          streamingCourse={streamingCourse}
+          searchSources={searchSources}
+        />
+      ) : null}
     </div>
   );
 }

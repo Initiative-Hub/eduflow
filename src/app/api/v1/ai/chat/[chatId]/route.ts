@@ -1,6 +1,7 @@
 import {
   createUIMessageStream,
   createUIMessageStreamResponse,
+  toUIMessageStream,
   type UIMessage,
 } from 'ai';
 import { z } from 'zod';
@@ -389,13 +390,14 @@ export async function POST(
 
     result.consumeStream();
 
-    const stream = createUIMessageStream<UIMessage>({
+    const stream = createUIMessageStream({
       originalMessages: messagesForModel,
       generateId: () => `${crypto.randomUUID()}`,
       execute: async ({ writer }) => {
         let assistantText = '';
 
-        for await (const chunk of result.toUIMessageStream<UIMessage>({
+        for await (const chunk of toUIMessageStream({
+          stream: result.stream,
           sendFinish: false,
         })) {
           if (chunk.type === 'text-delta') {

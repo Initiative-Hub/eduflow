@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
-import { normalizeWord } from './mappers';
 import { listSavedVocabulary } from './list';
+import { normalizeWord } from './mappers';
 import type {
   RemoveVocabularyResult,
   SaveVocabularyInput,

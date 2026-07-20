@@ -1,9 +1,9 @@
 'use client';
 
 import {
+  BookMarked,
   BookmarkMinus,
   BookmarkPlus,
-  BookMarked,
   Languages,
   Loader2,
   Volume2,
@@ -172,7 +172,7 @@ export function VocabularyList({
             size="lg"
             onClick={wordbank.onSaveAll}
             disabled={wordbank.isSaving}
-            className="min-h-12 rounded-full px-5 shadow-xl shadow-primary/20"
+            className="min-h-12 rounded-full px-5 shadow-primary/20 shadow-xl"
           >
             {wordbank.isSaving ? (
               <Loader2

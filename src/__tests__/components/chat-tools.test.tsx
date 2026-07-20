@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { ChatToolInvocations } from '@/app/[locale]/(dashboard)/_components/chat-tools';
+import { ChatToolInvocations } from '@/app/[locale]/(dashboard)/(ai)/_components/chat-tools';
 
 describe('chat tools', () => {
   it('renders chat tool invocation status from tool parts', () => {

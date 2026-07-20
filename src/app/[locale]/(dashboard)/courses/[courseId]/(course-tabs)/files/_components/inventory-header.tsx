@@ -1,11 +1,11 @@
 import { Library } from 'lucide-react';
-import { Progress } from '@/components/ui/progress';
-import { cn } from '@/lib/utils';
 import type {
   InventoryAnalytics,
   InventoryTranslations,
 } from '@/app/[locale]/(dashboard)/inventory/inventory.types';
 import { formatFileSize } from '@/app/[locale]/(dashboard)/inventory/inventory.utils';
+import { Progress } from '@/components/ui/progress';
+import { cn } from '@/lib/utils';
 
 type InventoryHeaderProps = {
   analytics?: InventoryAnalytics;

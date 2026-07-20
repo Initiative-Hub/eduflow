@@ -70,8 +70,10 @@ describe('study practice quiz generation', () => {
         },
       })
       .mockResolvedValueOnce({
-        response: {
-          messages: [],
+        finalStep: {
+          response: {
+            messages: [],
+          },
         },
       })
       .mockResolvedValueOnce({

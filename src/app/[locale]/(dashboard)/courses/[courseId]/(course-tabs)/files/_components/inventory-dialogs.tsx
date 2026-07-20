@@ -17,6 +17,16 @@ import {
   useState,
 } from 'react';
 import { toast } from 'sonner';
+import type {
+  InventoryEntry,
+  InventoryMoveOption,
+  InventoryPreviewState,
+  InventoryTranslations,
+} from '@/app/[locale]/(dashboard)/inventory/inventory.types';
+import {
+  formatFileSize,
+  getEntryTypeLabel,
+} from '@/app/[locale]/(dashboard)/inventory/inventory.utils';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -56,16 +66,6 @@ import {
 } from '@/components/ui/select';
 import { useGoogleDrivePicker } from '@/hooks/use-google-drive-picker';
 import { courseFilesService } from '../course-files.service';
-import type {
-  InventoryEntry,
-  InventoryMoveOption,
-  InventoryPreviewState,
-  InventoryTranslations,
-} from '@/app/[locale]/(dashboard)/inventory/inventory.types';
-import {
-  formatFileSize,
-  getEntryTypeLabel,
-} from '@/app/[locale]/(dashboard)/inventory/inventory.utils';
 
 const ROOT_OPTION_VALUE = '__root__';
 

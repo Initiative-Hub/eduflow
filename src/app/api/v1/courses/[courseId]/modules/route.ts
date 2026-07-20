@@ -33,7 +33,8 @@ export const GET = withAuth(async (_req, sessionData, { params }) => {
 
     const resolvedParams = await params;
     const modules = await ModuleService.getModulesByCourse(
-      resolvedParams.courseId
+      resolvedParams.courseId,
+      sessionData.user.id
     );
 
     return NextResponse.json(modules);
@@ -100,6 +101,7 @@ export const POST = withAuth(async (req, sessionData, { params }) => {
     const newModule = await ModuleService.createModule({
       courseId: resolvedParams.courseId,
       title: parsed.data.title,
+      userId: sessionData.user.id,
     });
 
     return NextResponse.json(newModule, { status: 201 });

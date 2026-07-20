@@ -58,17 +58,15 @@ STYLES = {
         # background, cream text, terracotta + sand accents, a sand "ground"
         # strip along the bottom, friendly rounded sans headings.
         "colors": {
-            "#0A0E1A": "#5B5158",   # warm plum-gray slide bg
-            "#111827": "#6B6169",   # lighter plum cards
-            "#00F0FF": "#E07A4F",   # terracotta
-            "#FF007F": "#D9B36C",   # warm sand gold
-            "#FFFFFF": "#FFF6EC",   # warm cream headings
-            "#E2E8F0": "#EEE3D6",   # warm light body text
+            "#0A0E1A": "#5B5158",  # warm plum-gray slide bg
+            "#111827": "#6B6169",  # lighter plum cards
+            "#00F0FF": "#E07A4F",  # terracotta
+            "#FF007F": "#D9B36C",  # warm sand gold
+            "#FFFFFF": "#FFF6EC",  # warm cream headings
+            "#E2E8F0": "#EEE3D6",  # warm light body text
         },
         "font": "'Trebuchet MS', 'Segoe UI', Verdana, sans-serif",
-        "frame": (
-            '<rect x="0" y="796" width="1440" height="14" fill="#C9A876"/>'
-        ),
+        "frame": ('<rect x="0" y="796" width="1440" height="14" fill="#C9A876"/>'),
         "light": False,
         "description": "Warm cultural folk style: plum-gray background, cream text, terracotta and sand accents with a grounded earth strip — culture, diversity, social studies, community, humanities and storytelling topics.",
     },

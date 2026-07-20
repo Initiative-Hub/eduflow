@@ -508,6 +508,68 @@ describe('EnglishAssistantClient', () => {
     });
   });
 
+  it('updates the English assistant wordbank count from the save response before refetch settles', async () => {
+    const user = userEvent.setup();
+    let listRequestCount = 0;
+
+    apiClient.get.mockImplementation(async (url: string) => {
+      if (url === 'v1/english/wordbank') {
+        listRequestCount += 1;
+
+        if (listRequestCount > 1) {
+          return new Promise(() => {});
+        }
+
+        return {
+          items: [],
+          lists: [],
+          savedWords: [],
+          stats: {
+            dueWords: 0,
+            familiarWords: 0,
+            masteredWords: 0,
+            newWords: 0,
+            savedToday: 0,
+            savedWords: 0,
+          },
+          total: 0,
+        };
+      }
+
+      return {};
+    });
+    apiClient.post.mockImplementation(async (url: string) => {
+      if (url === 'v1/english/wordbank') {
+        return {
+          savedCount: 1,
+          savedWords: ['hello'],
+          total: 1,
+        };
+      }
+
+      return {};
+    });
+
+    renderEnglishAssistantClient();
+
+    await user.type(
+      screen.getByRole('textbox', { name: 'Source Content' }),
+      'Hello there.'
+    );
+    await user.click(
+      screen.getByRole('button', { name: 'Translate & Analyze' })
+    );
+
+    await screen.findByText('hello');
+    await user.click(
+      screen.getByRole('button', { name: 'Save all to Wordbank (1)' })
+    );
+
+    expect(
+      await screen.findByRole('link', { name: 'Wordbank 1' })
+    ).toBeInTheDocument();
+  });
+
   it('centers vocabulary rows and keeps wordbank bookmark actions borderless', async () => {
     const user = userEvent.setup();
 
