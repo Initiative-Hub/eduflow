@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { SearchSourcesPreview } from '@/app/[locale]/(dashboard)/courses/[courseId]/(course-tabs)/ai-client/search-sources-preview';
-import type { SearchSourcesState } from '@/lib/course-generation/stream-state';
+import type { CourseContentSearchSourcesState } from '@/lib/course-content/stream-state';
 
 const labels = {
   title: 'Found sources',
@@ -17,7 +17,7 @@ const labels = {
 
 describe('SearchSourcesPreview', () => {
   it('renders two source columns with discovered source cards', () => {
-    const sources: SearchSourcesState = {
+    const sources: CourseContentSearchSourcesState = {
       web: [
         {
           title: 'Reliable source',

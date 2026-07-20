@@ -30,7 +30,7 @@ vi.mock('@/lib/prisma', () => ({
 
 vi.mock('@/services/CourseService', () => ({
   CourseService: {
-    generateModulesStream: vi.fn(() => new ReadableStream()),
+    generateCourseContentStream: vi.fn(() => new ReadableStream()),
   },
 }));
 
@@ -58,7 +58,7 @@ describe('course content permission route enforcement', () => {
     });
   });
 
-  it('rejects AI course generation when content create is missing', async () => {
+  it('rejects AI course content generation when content create is missing', async () => {
     const { POST } = await import('@/app/api/v1/ai/courses/route');
 
     const response = await POST(

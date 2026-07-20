@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 
 import { apiClient } from '@/lib/api/api-client';
 import type { TiptapDocument } from '@/utils/lesson-content';
-import { useGenerateCourse } from './use-generate-course';
+import { useGenerateCourseContent } from './use-generate-course-content';
 
 export interface Lesson {
   id: string;
@@ -40,29 +40,29 @@ export function useModules(courseId: string) {
   const {
     step,
     lastStartedStep,
-    streamingCourse,
+    courseContentDraft,
     searchSources,
     isRunning,
     error: generationError,
-    generate,
+    generateCourseContent: streamCourseContent,
     reset,
-  } = useGenerateCourse(
+  } = useGenerateCourseContent(
     () => {
       queryClient.invalidateQueries({ queryKey: ['modules', courseId] });
-      toast.success(t('AiGeneration.success'));
+      toast.success(t('CourseContentGeneration.success'));
     },
     (msg) => {
-      toast.error(t('AiGeneration.failed'));
+      toast.error(t('CourseContentGeneration.failed'));
       console.error(msg);
     }
   );
 
-  const generateCourseModules = async (selection: {
+  const generateCourseContent = async (selection: {
     fileId?: string;
     file?: File;
     context?: string;
   }) => {
-    await generate({
+    await streamCourseContent({
       courseId,
       fileId: selection.fileId,
       file: selection.file,
@@ -139,11 +139,11 @@ export function useModules(courseId: string) {
     generationStep: step,
     lastStartedGenerationStep: lastStartedStep,
     generationError,
-    streamingCourse,
+    courseContentDraft,
     searchSources,
     isRunning,
     resetGeneration: reset,
-    generateCourseModules,
+    generateCourseContent,
     getAdjacentLessons,
   };
 }

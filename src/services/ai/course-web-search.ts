@@ -2,9 +2,9 @@ import { tavilySearch } from '@tavily/ai-sdk';
 import { isStepCount, type LanguageModel, Output, streamText } from 'ai';
 import * as z from 'zod';
 import type {
-  CourseSearchSourceKind,
-  CourseSearchSourcePreview,
-} from '@/types/course-stream-event';
+  CourseContentSearchSourceKind,
+  CourseContentSearchSourcePreview,
+} from '@/types/course-content-stream-event';
 
 const webSearchSourceSchema = z.object({
   title: z.string().describe('The title of the source returned by web search.'),
@@ -12,24 +12,24 @@ const webSearchSourceSchema = z.object({
   summary: z
     .string()
     .describe(
-      'A concise source summary or extracted content useful for course generation.'
+      'A concise source summary or extracted content useful for course content generation.'
     ),
   content: z
     .string()
     .describe(
-      'The full raw text content extracted from the source, which may include key excerpts or relevant information for course generation.'
+      'The full raw text content extracted from the source, which may include key excerpts or relevant information for course content generation.'
     ),
 });
 
 export type WebSearchContext = z.infer<typeof webSearchSourceSchema>[];
 
 type SourceFoundEvent = {
-  sourceKind: CourseSearchSourceKind;
-  source: CourseSearchSourcePreview;
+  sourceKind: CourseContentSearchSourceKind;
+  source: CourseContentSearchSourcePreview;
 };
 
 type SearchCompleteEvent = {
-  sourceKind: CourseSearchSourceKind;
+  sourceKind: CourseContentSearchSourceKind;
   count: number;
 };
 
@@ -41,7 +41,7 @@ type SupplementarySearchInput = {
 };
 
 type SearchContextInput = SupplementarySearchInput & {
-  purpose: CourseSearchSourceKind;
+  purpose: CourseContentSearchSourceKind;
 };
 
 export async function generateSupplementarySearchContexts({
@@ -130,7 +130,7 @@ async function generateSearchContext({
 
 function toSearchSourcePreview(
   source: z.infer<typeof webSearchSourceSchema>
-): CourseSearchSourcePreview {
+): CourseContentSearchSourcePreview {
   return {
     title: source.title,
     url: source.url,

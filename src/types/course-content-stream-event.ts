@@ -1,27 +1,27 @@
 /**
- * NDJSON event types emitted by the course generation stream.
+ * NDJSON event types emitted by the course content stream.
  * Each line in the response body is one JSON object matching one of these shapes.
  */
 
-export type CourseSearchSourceKind = 'web' | 'youtube';
+export type CourseContentSearchSourceKind = 'web' | 'youtube';
 
-export type CourseSearchSourcePreview = {
+export type CourseContentSearchSourcePreview = {
   title: string;
   url: string;
   summary: string;
 };
 
-export type CourseStreamEvent =
+export type CourseContentStreamEvent =
   | { type: 'extract' }
   | { type: 'search' }
   | {
       type: 'source-found';
-      sourceKind: CourseSearchSourceKind;
-      source: CourseSearchSourcePreview;
+      sourceKind: CourseContentSearchSourceKind;
+      source: CourseContentSearchSourcePreview;
     }
   | {
       type: 'search-complete';
-      sourceKind: CourseSearchSourceKind;
+      sourceKind: CourseContentSearchSourceKind;
       count: number;
     }
   | { type: 'generate'; delta: string }

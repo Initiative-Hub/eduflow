@@ -1,5 +1,5 @@
 import type { ToolSet, UIMessage } from 'ai'; // Add CoreTool here
-import type { AICourseGeneration } from '@/lib/validations/course.schema';
+import type { AICourseContentGeneration } from '@/lib/validations/course.schema';
 
 export type ChatProvider = 'ai-gateway' | 'google' | 'openrouter';
 
@@ -16,14 +16,16 @@ export type StreamChatInternalOptions = {
   maxSteps?: number;
 };
 
-export type StreamCourseInput = {
+export type StreamCourseContentInput = {
   userId: string;
   fileId?: string;
   file?: File;
   context?: string;
   model?: string;
   apiKey?: string;
-  onEnd?: (event: { object: AICourseGeneration }) => PromiseLike<void> | void;
+  onEnd?: (event: {
+    object: AICourseContentGeneration;
+  }) => PromiseLike<void> | void;
 };
 
 export type AIQuizInput = {

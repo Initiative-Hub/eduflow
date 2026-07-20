@@ -58,7 +58,7 @@ export const GENERAL_AI_TOOL_SYSTEM_PROMPT = `
   - When content is sensitive or unsafe, refuse briefly and redirect to a safe learning alternative.
 `;
 
-export const COURSE_GENERATION_PROMPT = `
+export const COURSE_CONTENT_GENERATION_PROMPT = `
   You are an expert Academic Curriculum Designer and Subject Matter Expert. 
   Your goal is to transform raw document text into a high-quality, structured learning experience.
 

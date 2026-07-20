@@ -17,18 +17,18 @@ import {
 import { prisma } from '@/lib/prisma';
 import { htmlToTiptapDocument } from '@/lib/tiptap-html';
 import {
-  type AICourseGeneration,
-  aiCourseGenerationSchema,
+  type AICourseContentGeneration,
+  aiCourseContentGenerationSchema,
 } from '@/lib/validations/course.schema';
 import {
-  COURSE_GENERATION_PROMPT,
+  COURSE_CONTENT_GENERATION_PROMPT,
   DEFAULT_MODELS,
 } from '@/services/ai/chat-provider.constants';
-import type { StreamCourseInput } from '@/services/ai/chat-provider.types';
+import type { StreamCourseContentInput } from '@/services/ai/chat-provider.types';
 import { generateSupplementarySearchContexts } from '@/services/ai/course-web-search';
 import { LessonContentEmbeddingService } from '@/services/LessonContentEmbeddingService';
 import { StorageService } from '@/services/StorageService';
-import type { CourseStreamEvent } from '@/types/course-stream-event';
+import type { CourseContentStreamEvent } from '@/types/course-content-stream-event';
 import type { TiptapDocument } from '@/utils/lesson-content';
 
 export type CourseListSort =
@@ -669,11 +669,11 @@ export class CourseService {
    *   {"type":"extract"} → {"type":"search"} → {"type":"generate","delta":"..."} × N
    *   → {"type":"save"} → {"type":"done"}
    */
-  static async streamCourseToWriter(
-    options: StreamCourseInput,
+  static async streamCourseContentToWriter(
+    options: StreamCourseContentInput,
     writer: WritableStreamDefaultWriter<string>
   ): Promise<void> {
-    const emit = async (event: CourseStreamEvent) =>
+    const emit = async (event: CourseContentStreamEvent) =>
       writer.write(`${JSON.stringify(event)}\n`);
 
     await emit({ type: 'extract' });
@@ -721,8 +721,8 @@ export class CourseService {
 
     const result = streamText({
       model: provider(model),
-      output: Output.object({ schema: aiCourseGenerationSchema }),
-      instructions: COURSE_GENERATION_PROMPT,
+      output: Output.object({ schema: aiCourseContentGenerationSchema }),
+      instructions: COURSE_CONTENT_GENERATION_PROMPT,
       prompt: `
         Content to analyze and transform into a course:
 
@@ -754,12 +754,12 @@ export class CourseService {
       await emit({ type: 'generate', delta: chunk });
     }
 
-    const generatedCourse = await result.output;
-    await options.onEnd?.({ object: generatedCourse });
+    const generatedCourseContent = await result.output;
+    await options.onEnd?.({ object: generatedCourseContent });
     await emit({ type: 'done' });
   }
 
-  static generateModulesStream(data: {
+  static generateCourseContentStream(data: {
     userId: string;
     courseId: string;
     fileId?: string;
@@ -774,7 +774,7 @@ export class CourseService {
     (async () => {
       try {
         // Runs extract → search → generate deltas → done, persists via onEnd
-        await CourseService.streamCourseToWriter(
+        await CourseService.streamCourseContentToWriter(
           {
             userId: data.userId,
             fileId: data.fileId,
@@ -786,7 +786,7 @@ export class CourseService {
               if (!object) return;
               // Emit save event before persisting
               await writer.write(`${JSON.stringify({ type: 'save' })}\n`);
-              await CourseService.saveGeneratedCourseData(
+              await CourseService.saveGeneratedCourseContent(
                 data.courseId,
                 object
               );
@@ -796,7 +796,7 @@ export class CourseService {
         );
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Unknown error';
-        console.log('Error in course generation stream:', message);
+        console.log('Error in course content stream:', message);
         await writer.write(`${JSON.stringify({ type: 'error', message })}\n`);
       } finally {
         await writer.close();
@@ -806,9 +806,9 @@ export class CourseService {
     return readable;
   }
 
-  static async saveGeneratedCourseData(
+  static async saveGeneratedCourseContent(
     courseId: string,
-    data: AICourseGeneration
+    data: AICourseContentGeneration
   ) {
     const parseStartedAt = performance.now();
     let totalContentCharacters = 0;

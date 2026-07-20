@@ -6,10 +6,10 @@ import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
 import { CourseService } from '@/services/CourseService';
 
 /**
- * Zod schema for course generation input.
+ * Zod schema for course content generation input.
  * Allows either a fileId (string) or a file (Blob/File).
  */
-const courseGenerationInputSchema = z
+const courseContentGenerationInputSchema = z
   .object({
     fileId: z.string().uuid().optional(),
     file: z.any().optional(),
@@ -29,7 +29,7 @@ const courseGenerationInputSchema = z
  *   post:
  *     tags:
  *       - AI Courses
- *     summary: Create AI course generation
+ *     summary: Generate AI course content
  *     security:
  *       - SessionCookie: []
  *     requestBody:
@@ -51,7 +51,7 @@ const courseGenerationInputSchema = z
  *                 format: uuid
  *     responses:
  *       200:
- *         description: AI course generation
+ *         description: Generated course content stream
  *       400:
  *         description: Invalid input
  *       401:
@@ -98,7 +98,7 @@ export const POST = withRoles(
         };
       }
 
-      const parsed = courseGenerationInputSchema.safeParse(input);
+      const parsed = courseContentGenerationInputSchema.safeParse(input);
 
       if (!parsed.success) {
         return NextResponse.json(
@@ -133,7 +133,7 @@ export const POST = withRoles(
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       }
 
-      const result = CourseService.generateModulesStream({
+      const result = CourseService.generateCourseContentStream({
         userId,
         courseId: parsed.data.courseId,
         fileId: parsed.data.fileId,
@@ -153,7 +153,7 @@ export const POST = withRoles(
         },
       });
     } catch (error) {
-      console.error('AI Course Generation Error:', error);
+      console.error('AI Course Content Generation Error:', error);
       return NextResponse.json(
         { error: 'Internal Server Error' },
         { status: 500 }

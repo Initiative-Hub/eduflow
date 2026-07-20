@@ -33,7 +33,7 @@ function renderPanel(
       generationStep="generate"
       lastStartedStep="generate"
       generationError={null}
-      streamingCourse={{
+      courseContentDraft={{
         modules: [
           {
             title: 'AI Fundamentals',
@@ -50,7 +50,7 @@ function renderPanel(
 }
 
 describe('AiClientGeneratingPanel', () => {
-  it('lets users review completed search results while AI generation continues', async () => {
+  it('lets users review completed search results while content generation continues', async () => {
     const user = userEvent.setup();
     renderPanel();
 
@@ -90,7 +90,7 @@ describe('AiClientGeneratingPanel', () => {
         generationStep="save"
         lastStartedStep="save"
         generationError={null}
-        streamingCourse={{ modules: [] }}
+        courseContentDraft={{ modules: [] }}
         searchSources={searchSources}
         lastSelection={null}
         onDismiss={vi.fn()}
@@ -117,7 +117,7 @@ describe('AiClientGeneratingPanel', () => {
         generationStep="idle"
         lastStartedStep={null}
         generationError={null}
-        streamingCourse={null}
+        courseContentDraft={null}
         searchSources={searchSources}
         lastSelection={null}
         onDismiss={vi.fn()}
@@ -128,7 +128,7 @@ describe('AiClientGeneratingPanel', () => {
         generationStep="extract"
         lastStartedStep="extract"
         generationError={null}
-        streamingCourse={null}
+        courseContentDraft={null}
         searchSources={searchSources}
         lastSelection={null}
         onDismiss={vi.fn()}

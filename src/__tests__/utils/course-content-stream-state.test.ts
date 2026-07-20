@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
-  applySearchSourceEvent,
-  createEmptySearchSources,
-} from '@/lib/course-generation/stream-state';
+  applyCourseContentSearchSourceEvent,
+  createEmptyCourseContentSearchSources,
+} from '@/lib/course-content/stream-state';
 
-describe('course generation search source state', () => {
+describe('course content search source state', () => {
   it('accumulates web and youtube sources independently', () => {
     const webSource = {
       title: 'Reliable web reference',
@@ -17,13 +17,13 @@ describe('course generation search source state', () => {
       summary: 'Useful video context.',
     };
 
-    const empty = createEmptySearchSources();
-    const withWeb = applySearchSourceEvent(empty, {
+    const empty = createEmptyCourseContentSearchSources();
+    const withWeb = applyCourseContentSearchSourceEvent(empty, {
       type: 'source-found',
       sourceKind: 'web',
       source: webSource,
     });
-    const withYoutube = applySearchSourceEvent(withWeb, {
+    const withYoutube = applyCourseContentSearchSourceEvent(withWeb, {
       type: 'source-found',
       sourceKind: 'youtube',
       source: youtubeSource,
@@ -41,12 +41,15 @@ describe('course generation search source state', () => {
       summary: 'First summary.',
     };
 
-    const state = applySearchSourceEvent(
-      applySearchSourceEvent(createEmptySearchSources(), {
-        type: 'source-found',
-        sourceKind: 'web',
-        source,
-      }),
+    const state = applyCourseContentSearchSourceEvent(
+      applyCourseContentSearchSourceEvent(
+        createEmptyCourseContentSearchSources(),
+        {
+          type: 'source-found',
+          sourceKind: 'web',
+          source,
+        }
+      ),
       {
         type: 'source-found',
         sourceKind: 'web',
@@ -64,12 +67,15 @@ describe('course generation search source state', () => {
       summary: 'Useful web context.',
     };
 
-    const withSource = applySearchSourceEvent(createEmptySearchSources(), {
-      type: 'source-found',
-      sourceKind: 'web',
-      source,
-    });
-    const complete = applySearchSourceEvent(withSource, {
+    const withSource = applyCourseContentSearchSourceEvent(
+      createEmptyCourseContentSearchSources(),
+      {
+        type: 'source-found',
+        sourceKind: 'web',
+        source,
+      }
+    );
+    const complete = applyCourseContentSearchSourceEvent(withSource, {
       type: 'search-complete',
       sourceKind: 'web',
       count: 1,

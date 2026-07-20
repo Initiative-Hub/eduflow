@@ -2,12 +2,13 @@ import { Loader2, RefreshCw, XCircle } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import type { SearchSourcesState } from '@/lib/course-generation/stream-state';
+import type { CourseContentSearchSourcesState } from '@/lib/course-content/stream-state';
 import type {
+  CourseContentDraft,
   GenerationPipelineStep,
   GenerationStep,
-  StreamingCourse,
-} from '../../use-generate-course';
+} from '../../use-generate-course-content';
+import { CourseContentPreview } from './course-content-preview';
 import {
   GenerationPipelineStepper,
   PIPELINE_STEP_ORDER,
@@ -15,14 +16,13 @@ import {
   type PipelineStepStatus,
 } from './generation-pipeline-stepper';
 import { SearchSourcesPreview } from './search-sources-preview';
-import { StreamingCoursePreview } from './streaming-course-preview';
 
 type AiClientGeneratingPanelProps = {
   generationStep: GenerationStep;
   lastStartedStep: GenerationPipelineStep | null;
   generationError: string | null;
-  streamingCourse: StreamingCourse | null | undefined;
-  searchSources?: SearchSourcesState;
+  courseContentDraft: CourseContentDraft | null | undefined;
+  searchSources?: CourseContentSearchSourcesState;
   lastSelection: {
     fileId?: string;
     file?: File;
@@ -46,14 +46,14 @@ export function AiClientGeneratingPanel({
   generationStep,
   lastStartedStep,
   generationError,
-  streamingCourse,
+  courseContentDraft,
   searchSources,
   lastSelection,
   onDismiss,
   onRetry,
 }: AiClientGeneratingPanelProps) {
   const t = useTranslations('Courses.CourseModules.AiDialog');
-  const genT = useTranslations('Courses.CourseModules.AiGeneration');
+  const genT = useTranslations('Courses.CourseModules.CourseContentGeneration');
   const liveStep = getPipelineStep(generationStep);
   const progressStep = liveStep ?? lastStartedStep;
   const previousProgressStep = useRef<PipelineStep | null>(progressStep);
@@ -112,8 +112,8 @@ export function AiClientGeneratingPanel({
       : generationStep === 'search'
         ? genT('webSearching')
         : generationStep === 'generate'
-          ? genT('craftingCurriculum')
-          : genT('savingModules');
+          ? genT('creatingCourseContent')
+          : genT('savingCourseContent');
 
   return (
     <div className="mt-6 space-y-6 pb-2">
@@ -132,13 +132,13 @@ export function AiClientGeneratingPanel({
         />
       )}
       {selectedStep === 'generate' && (
-        <StreamingCoursePreview streamingCourse={streamingCourse} />
+        <CourseContentPreview courseContentDraft={courseContentDraft} />
       )}
       {(selectedStep === 'extract' || selectedStep === 'save') && (
         <div className="rounded-xl border bg-muted/20 px-4 py-5 text-center text-muted-foreground text-sm">
           {selectedStep === 'extract'
             ? genT('documentReceived')
-            : genT('savingModules')}
+            : genT('savingCourseContent')}
         </div>
       )}
 

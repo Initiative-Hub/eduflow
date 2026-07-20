@@ -42,14 +42,14 @@ export function CourseModulesClient({
     handleCreateModule,
     isCreatingLesson,
     handleCreateLesson,
-    streamingCourse,
+    courseContentDraft,
     searchSources,
     generationStep,
     lastStartedGenerationStep,
     generationError,
     isRunning,
     resetGeneration,
-    generateCourseModules,
+    generateCourseContent,
   } = useModules(courseId);
 
   const { quizzes } = useQuestionBank({ courseId });
@@ -85,7 +85,7 @@ export function CourseModulesClient({
     file?: File;
     context?: string;
   }) => {
-    await generateCourseModules(selection);
+    await generateCourseContent(selection);
   };
 
   const onAiRetry = (selection: {
@@ -94,7 +94,7 @@ export function CourseModulesClient({
     context?: string;
   }) => {
     resetGeneration();
-    generateCourseModules(selection);
+    generateCourseContent(selection);
   };
 
   return (
@@ -114,7 +114,7 @@ export function CourseModulesClient({
               onClick={() => setIsAiOpen(true)}
             >
               <Sparkles className="h-4 w-4" />
-              {t('aiAssistant')}
+              {t('generateCourseContent')}
             </Button>
           ) : null}
           {canCreateContent ? (
@@ -182,7 +182,7 @@ export function CourseModulesClient({
           lastStartedGenerationStep={lastStartedGenerationStep}
           generationError={generationError}
           isRunning={isRunning}
-          streamingCourse={streamingCourse}
+          courseContentDraft={courseContentDraft}
           searchSources={searchSources}
         />
       ) : null}

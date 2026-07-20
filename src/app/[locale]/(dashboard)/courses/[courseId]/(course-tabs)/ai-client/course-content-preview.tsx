@@ -1,21 +1,21 @@
 import { FileText } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import type { StreamingCourse } from '../../use-generate-course';
+import type { CourseContentDraft } from '../../use-generate-course-content';
 
-type StreamingCoursePreviewProps = {
-  streamingCourse: StreamingCourse | null | undefined;
+type CourseContentPreviewProps = {
+  courseContentDraft: CourseContentDraft | null | undefined;
 };
 
-export function StreamingCoursePreview({
-  streamingCourse,
-}: StreamingCoursePreviewProps) {
-  const genT = useTranslations('Courses.CourseModules.AiGeneration');
-  const modules = streamingCourse?.modules ?? [];
+export function CourseContentPreview({
+  courseContentDraft,
+}: CourseContentPreviewProps) {
+  const genT = useTranslations('Courses.CourseModules.CourseContentGeneration');
+  const modules = courseContentDraft?.modules ?? [];
 
   if (modules.length === 0) {
     return (
       <div className="rounded-xl border bg-muted/20 px-4 py-5 text-center text-muted-foreground text-sm">
-        {genT('startingGeneration')}
+        {genT('startingCourseContentGeneration')}
       </div>
     );
   }

@@ -2,11 +2,11 @@
 
 import { useCallback, useRef, useState } from 'react';
 import {
-  applySearchSourceEvent,
-  createEmptySearchSources,
-  type SearchSourcesState,
-} from '@/lib/course-generation/stream-state';
-import type { CourseStreamEvent } from '@/types/course-stream-event';
+  applyCourseContentSearchSourceEvent,
+  type CourseContentSearchSourcesState,
+  createEmptyCourseContentSearchSources,
+} from '@/lib/course-content/stream-state';
+import type { CourseContentStreamEvent } from '@/types/course-content-stream-event';
 
 export type GenerationStep =
   | 'extract'
@@ -18,24 +18,24 @@ export type GenerationStep =
   | 'error';
 
 export type GenerationPipelineStep = 'extract' | 'search' | 'generate' | 'save';
-export interface StreamingModule {
+export interface CourseContentModuleDraft {
   title?: string;
   lessons?: Array<{ lessonTitle?: string }>;
 }
 
-export interface StreamingCourse {
+export interface CourseContentDraft {
   courseTitle?: string;
-  modules?: StreamingModule[];
+  modules?: CourseContentModuleDraft[];
 }
 
-export interface UseGenerateCourseReturn {
+export interface UseGenerateCourseContentReturn {
   step: GenerationStep;
   lastStartedStep: GenerationPipelineStep | null;
-  streamingCourse: StreamingCourse | null;
-  searchSources: SearchSourcesState;
+  courseContentDraft: CourseContentDraft | null;
+  searchSources: CourseContentSearchSourcesState;
   isRunning: boolean;
   error: string | null;
-  generate: (params: {
+  generateCourseContent: (params: {
     courseId: string;
     fileId?: string;
     file?: File;
@@ -47,21 +47,22 @@ export interface UseGenerateCourseReturn {
 }
 
 /**
- * Reads the NDJSON course-generation stream from /api/v1/ai/courses and
- * exposes real-time step + partial course object to the UI.
+ * Reads the NDJSON course-content stream from /api/v1/ai/courses and
+ * exposes the real-time pipeline step and content draft to the UI.
  */
-export function useGenerateCourse(
+export function useGenerateCourseContent(
   onSuccess?: () => void,
   onError?: (msg: string) => void
-): UseGenerateCourseReturn {
+): UseGenerateCourseContentReturn {
   const [step, setStep] = useState<GenerationStep>('idle');
   const [lastStartedStep, setLastStartedStep] =
     useState<GenerationPipelineStep | null>(null);
-  const [streamingCourse, setStreamingCourse] =
-    useState<StreamingCourse | null>(null);
-  const [searchSources, setSearchSources] = useState<SearchSourcesState>(() =>
-    createEmptySearchSources()
-  );
+  const [courseContentDraft, setCourseContentDraft] =
+    useState<CourseContentDraft | null>(null);
+  const [searchSources, setSearchSources] =
+    useState<CourseContentSearchSourcesState>(() =>
+      createEmptyCourseContentSearchSources()
+    );
   const [isRunning, setIsRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -71,8 +72,8 @@ export function useGenerateCourse(
   const reset = useCallback(() => {
     setStep('idle');
     setLastStartedStep(null);
-    setStreamingCourse(null);
-    setSearchSources(createEmptySearchSources());
+    setCourseContentDraft(null);
+    setSearchSources(createEmptyCourseContentSearchSources());
     setIsRunning(false);
     setError(null);
     deltaBufferRef.current = '';
@@ -80,41 +81,46 @@ export function useGenerateCourse(
 
   /**
    * Attempt to parse the accumulated delta buffer as partial JSON and extract
-   * a best-effort StreamingCourse for live preview.
+   * a best-effort CourseContentDraft for live preview.
    */
-  const tryParseDelta = useCallback((raw: string): StreamingCourse => {
-    // Extract courseTitle
-    const titleMatch = raw.match(/"courseTitle"\s*:\s*"([^"]*)"/);
-    const courseTitle = titleMatch?.[1];
+  const parseCourseContentDraft = useCallback(
+    (raw: string): CourseContentDraft => {
+      // Extract courseTitle
+      const titleMatch = raw.match(/"courseTitle"\s*:\s*"([^"]*)"/);
+      const courseTitle = titleMatch?.[1];
 
-    // Extract module titles and their lesson titles
-    const modules: StreamingModule[] = [];
-    const moduleRegex = /"title"\s*:\s*"([^"]*)"/g;
-    const lessonRegex = /"lessonTitle"\s*:\s*"([^"]*)"/g;
+      // Extract module titles and their lesson titles
+      const modules: CourseContentModuleDraft[] = [];
+      const moduleRegex = /"title"\s*:\s*"([^"]*)"/g;
+      const lessonRegex = /"lessonTitle"\s*:\s*"([^"]*)"/g;
 
-    // Simple heuristic: find all title/lessonTitle pairs in order
-    const titles = Array.from(raw.matchAll(moduleRegex)).map((m) => m[1]);
-    const lessonTitles = Array.from(raw.matchAll(lessonRegex)).map((m) => m[1]);
+      // Simple heuristic: find all title/lessonTitle pairs in order
+      const titles = Array.from(raw.matchAll(moduleRegex)).map((m) => m[1]);
+      const lessonTitles = Array.from(raw.matchAll(lessonRegex)).map(
+        (m) => m[1]
+      );
 
-    // Group: each module title gets the lessons that follow it
-    // (rough approximation — good enough for live preview)
-    for (let i = 0; i < titles.length; i++) {
-      modules.push({ title: titles[i], lessons: [] });
-    }
-    lessonTitles.forEach((lt, idx) => {
-      const modIdx = Math.min(Math.floor(idx / 3), modules.length - 1);
-      if (modules[modIdx]) {
-        modules[modIdx].lessons = [
-          ...(modules[modIdx].lessons ?? []),
-          { lessonTitle: lt },
-        ];
+      // Group: each module title gets the lessons that follow it
+      // (rough approximation — good enough for live preview)
+      for (let i = 0; i < titles.length; i++) {
+        modules.push({ title: titles[i], lessons: [] });
       }
-    });
+      lessonTitles.forEach((lt, idx) => {
+        const modIdx = Math.min(Math.floor(idx / 3), modules.length - 1);
+        if (modules[modIdx]) {
+          modules[modIdx].lessons = [
+            ...(modules[modIdx].lessons ?? []),
+            { lessonTitle: lt },
+          ];
+        }
+      });
 
-    return { courseTitle, modules };
-  }, []);
+      return { courseTitle, modules };
+    },
+    []
+  );
 
-  const generate = useCallback(
+  const generateCourseContent = useCallback(
     async (params: {
       courseId: string;
       fileId?: string;
@@ -178,9 +184,9 @@ export function useGenerateCourse(
             const trimmed = line.trim();
             if (!trimmed) continue;
 
-            let event: CourseStreamEvent;
+            let event: CourseContentStreamEvent;
             try {
-              event = JSON.parse(trimmed) as CourseStreamEvent;
+              event = JSON.parse(trimmed) as CourseContentStreamEvent;
             } catch {
               continue;
             }
@@ -197,14 +203,16 @@ export function useGenerateCourse(
               case 'source-found':
               case 'search-complete':
                 setSearchSources((current) =>
-                  applySearchSourceEvent(current, event)
+                  applyCourseContentSearchSourceEvent(current, event)
                 );
                 break;
               case 'generate':
                 setStep('generate');
                 setLastStartedStep('generate');
                 deltaBufferRef.current += event.delta;
-                setStreamingCourse(tryParseDelta(deltaBufferRef.current));
+                setCourseContentDraft(
+                  parseCourseContentDraft(deltaBufferRef.current)
+                );
                 break;
               case 'save':
                 setStep('save');
@@ -229,17 +237,17 @@ export function useGenerateCourse(
         setIsRunning(false);
       }
     },
-    [reset, tryParseDelta, onSuccess, onError]
+    [reset, parseCourseContentDraft, onSuccess, onError]
   );
 
   return {
     step,
     lastStartedStep,
-    streamingCourse,
+    courseContentDraft,
     searchSources,
     isRunning,
     error,
-    generate,
+    generateCourseContent,
     reset,
   };
 }
