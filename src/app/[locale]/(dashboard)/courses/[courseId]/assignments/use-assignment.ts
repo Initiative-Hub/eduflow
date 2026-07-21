@@ -149,7 +149,7 @@ export function useGradeSubmission(assignmentId: string) {
       });
       toast.success(t('gradeSaved'));
     },
-    
+
     onError: (error: { message?: string }) => {
       toast.error(error.message || t('gradeError'));
     },

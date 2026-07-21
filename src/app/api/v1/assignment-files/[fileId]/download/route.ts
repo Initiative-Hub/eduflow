@@ -4,15 +4,10 @@ import { withAuth } from '@/lib/api/middlewares';
 import { AssignmentService } from '@/services/AssignmentService';
 
 export const GET = withAuth(async (_request, session, { params }) => {
-  const parsed = z
-    .object({ fileId: z.uuid() })
-    .safeParse(await params);
+  const parsed = z.object({ fileId: z.uuid() }).safeParse(await params);
 
   if (!parsed.success) {
-    return NextResponse.json(
-      { message: 'Invalid file ID' },
-      { status: 400 }
-    );
+    return NextResponse.json({ message: 'Invalid file ID' }, { status: 400 });
   }
 
   try {

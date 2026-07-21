@@ -10,6 +10,14 @@ export type AssignmentFile = {
   status: string;
 };
 
+export type TeacherAssignmentSubmission = AssignmentSubmission & {
+  student: {
+    id: string;
+    name: string;
+    email: string;
+  } | null;
+};
+
 export type AssignmentSubmission = {
   id: string;
   status: 'DRAFT' | 'SUBMITTED' | 'GRADED';
@@ -112,7 +120,7 @@ export const assignmentService = {
     ),
 
   listSubmissions: (assignmentId: string) =>
-    apiClient.get<AssignmentSubmission[]>(
+    apiClient.get<TeacherAssignmentSubmission[]>(
       `/v1/assignments/${assignmentId}/submissions`
     ),
 
