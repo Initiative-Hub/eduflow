@@ -60,13 +60,18 @@ export const PATCH = withAuth(async (request, session, { params }) => {
       );
     }
 
-    const assignment = await AssignmentService.updateAssignment(
+    await AssignmentService.updateAssignment(
       parsedParams.data.assignmentId,
       session.user.id,
       parsedBody.data
     );
 
-    return NextResponse.json(assignment);
+    const updatedAssignment = await AssignmentService.getAssignmentById(
+      parsedParams.data.assignmentId,
+      session.user.id
+    );
+
+    return NextResponse.json(updatedAssignment);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Internal error';
 

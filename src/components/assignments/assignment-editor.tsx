@@ -102,6 +102,12 @@ export function AssignmentEditor({
   });
 
   useEffect(() => {
+    if (!editor) return;
+
+    editor.setEditable(canEdit && isEditing);
+  }, [editor, canEdit, isEditing]);
+
+  useEffect(() => {
     if (!editor || isEditing) return;
 
     editor.commands.setContent(content, {
