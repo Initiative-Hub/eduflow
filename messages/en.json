@@ -975,6 +975,14 @@
       "noModules": "No modules yet. Create your first module to begin.",
       "title": "Course Modules"
     },
+    "CreateAssignment": {
+      "back": "Back to assignments",
+      "description": "Write the assignment instructions and configure its submission settings.",
+      "dueAt": "Due date and time",
+      "maxPoints": "Maximum points",
+      "maxPointsRequired": "Maximum points must be greater than zero.",
+      "title": "Create assignment"
+    },
     "CreateDialog": {
       "description": "Enter the basics for your new course to get started.",
       "fields": {
