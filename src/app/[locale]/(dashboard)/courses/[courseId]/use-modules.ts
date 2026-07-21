@@ -73,7 +73,7 @@ export function useModules(courseId: string) {
       fileId: selection.fileId,
       file: selection.file,
       context: selection.context,
-      model: 'gemini-3.1-pro-preview',
+      model: 'gemini-3.5-flash',
     });
   };
 

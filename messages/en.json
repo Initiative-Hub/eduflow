@@ -910,6 +910,7 @@
         "creatingLessons": "Creating lessons...",
         "dismiss": "Dismiss",
         "documentReceived": "Document received, extracting PDF content...",
+        "documentReceiving": "Receiving document...",
         "draftingLesson": "Drafting Lesson...",
         "error": "Something went wrong. Please try again.",
         "failed": "Failed to generate course content",

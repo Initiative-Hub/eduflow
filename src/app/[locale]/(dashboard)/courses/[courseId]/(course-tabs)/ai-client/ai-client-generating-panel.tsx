@@ -127,18 +127,32 @@ export function AiClientGeneratingPanel({
     }
   };
 
-  const statusLabel =
-    generationStep === 'extract'
-      ? genT('documentReceived')
-      : generationStep === 'search'
-        ? isSearchSkipRequested
-          ? genT('skippingWebSearch')
-          : genT('webSearching')
-        : generationStep === 'generate'
-          ? genT('creatingCourseContent')
-          : generationStep === 'save'
-            ? genT('savingCourseContent')
-            : '';
+  let statusLabel: string;
+
+  switch (generationStep) {
+    case 'idle':
+      statusLabel = genT('documentReceiving');
+      break;
+    case 'extract':
+      statusLabel = genT('documentReceived');
+      break;
+    case 'search':
+      statusLabel = isSearchSkipRequested
+        ? genT('skippingWebSearch')
+        : genT('webSearching');
+      break;
+    case 'generate':
+      statusLabel = genT('creatingCourseContent');
+      break;
+    case 'save':
+      statusLabel = genT('savingCourseContent');
+      break;
+    case 'done':
+      statusLabel = genT('success');
+      break;
+    default:
+      statusLabel = genT('error');
+  }
 
   return (
     <div className="mt-6 space-y-6 pb-2">
@@ -196,7 +210,7 @@ export function AiClientGeneratingPanel({
             )}
           </div>
         </div>
-      ) : generationStep !== 'idle' && generationStep !== 'done' ? (
+      ) : (
         <div
           role="status"
           className="flex items-center justify-center gap-2 text-muted-foreground text-sm"
@@ -204,7 +218,7 @@ export function AiClientGeneratingPanel({
           <Loader2 className="h-4 w-4 animate-spin text-primary" />
           <span>{statusLabel}</span>
         </div>
-      ) : null}
+      )}
     </div>
   );
 }
