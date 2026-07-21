@@ -1,6 +1,7 @@
 'use client';
 
-import { Link, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
+import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { useAssignments } from '../../assignments/use-assignment';
