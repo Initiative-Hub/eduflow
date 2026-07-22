@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 
 import { apiClient } from '@/lib/api/api-client';
 import type { TiptapDocument } from '@/utils/lesson-content';
-import { useGenerateCourse } from './use-generate-course';
+import { useGenerateCourseContent } from './use-generate-course-content';
 
 export interface Lesson {
   id: string;
@@ -39,34 +39,41 @@ export function useModules(courseId: string) {
 
   const {
     step,
-    streamingCourse,
+    lastStartedStep,
+    pipelineState,
+    courseContentDraft,
     searchSources,
+    searchFailureMessage,
+    isSearchSkipAvailable,
+    isSearchSkipRequested,
+    searchSkipError,
     isRunning,
     error: generationError,
-    generate,
+    generateCourseContent: streamCourseContent,
+    skipSearch,
     reset,
-  } = useGenerateCourse(
+  } = useGenerateCourseContent(
     () => {
       queryClient.invalidateQueries({ queryKey: ['modules', courseId] });
-      toast.success(t('AiGeneration.success'));
+      toast.success(t('CourseContentGeneration.success'));
     },
     (msg) => {
-      toast.error(t('AiGeneration.failed'));
+      toast.error(t('CourseContentGeneration.failed'));
       console.error(msg);
     }
   );
 
-  const generateCourseModules = async (selection: {
+  const generateCourseContent = async (selection: {
     fileId?: string;
     file?: File;
     context?: string;
   }) => {
-    await generate({
+    await streamCourseContent({
       courseId,
       fileId: selection.fileId,
       file: selection.file,
       context: selection.context,
-      model: 'gemini-3.1-pro-preview',
+      model: 'gemini-3.5-flash',
     });
   };
 
@@ -136,12 +143,19 @@ export function useModules(courseId: string) {
 
     // New stream state
     generationStep: step,
+    lastStartedGenerationStep: lastStartedStep,
+    generationPipelineState: pipelineState,
     generationError,
-    streamingCourse,
+    courseContentDraft,
     searchSources,
+    searchFailureMessage,
+    isSearchSkipAvailable,
+    isSearchSkipRequested,
+    searchSkipError,
     isRunning,
     resetGeneration: reset,
-    generateCourseModules,
+    generateCourseContent,
+    skipSearch,
     getAdjacentLessons,
   };
 }
