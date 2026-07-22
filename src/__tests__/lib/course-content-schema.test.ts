@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { aiCourseGenerationSchema } from '@/lib/validations/course.schema';
+import { aiCourseContentGenerationSchema } from '@/lib/validations/course.schema';
 
-describe('aiCourseGenerationSchema', () => {
+describe('aiCourseContentGenerationSchema', () => {
   it('uses HTML strings for generated lesson content', () => {
-    const result = aiCourseGenerationSchema.safeParse({
+    const result = aiCourseContentGenerationSchema.safeParse({
       courseTitle: 'Biology 101',
       description: 'A course about cells.',
       modules: [
@@ -24,7 +24,7 @@ describe('aiCourseGenerationSchema', () => {
   });
 
   it('rejects generated lesson content that is already Tiptap JSON', () => {
-    const result = aiCourseGenerationSchema.safeParse({
+    const result = aiCourseContentGenerationSchema.safeParse({
       courseTitle: 'Biology 101',
       description: 'A course about cells.',
       modules: [

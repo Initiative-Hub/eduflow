@@ -9,9 +9,9 @@ import {
 } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Spinner } from '@/components/ui/spinner';
-import type { SearchSourcesState } from '@/lib/course-generation/stream-state';
+import type { CourseContentSearchSourcesState } from '@/lib/course-content/search-source-state';
 import { cn } from '@/lib/utils';
-import type { CourseSearchSourcePreview } from '@/types/course-stream-event';
+import type { CourseContentSearchSourcePreview } from '@/types/course-content-stream-event';
 import { getHostname } from '@/utils/url-helper';
 
 export type SearchSourcesPreviewLabels = {
@@ -26,7 +26,7 @@ export type SearchSourcesPreviewLabels = {
 };
 
 type SearchSourcesPreviewProps = {
-  sources: SearchSourcesState;
+  sources: CourseContentSearchSourcesState;
   isSearching: boolean;
   labels: SearchSourcesPreviewLabels;
 };
@@ -85,7 +85,7 @@ type SourceColumnProps = {
   title: string;
   description: string;
   icon: typeof Globe;
-  sources: CourseSearchSourcePreview[];
+  sources: CourseContentSearchSourcePreview[];
   completed: boolean;
   isSearching: boolean;
   labels: SearchSourcesPreviewLabels;
@@ -149,7 +149,7 @@ function SourceColumn({
   );
 }
 
-function SourceCard({ source }: { source: CourseSearchSourcePreview }) {
+function SourceCard({ source }: { source: CourseContentSearchSourcePreview }) {
   const hostname = getHostname(source.url);
 
   return (

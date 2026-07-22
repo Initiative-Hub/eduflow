@@ -7,15 +7,17 @@ import { useTranslations } from 'next-intl';
 import { type ChangeEvent, useEffect, useMemo, useState } from 'react';
 import { DialogTemplate } from '@/components/custom/dialog';
 import { Button } from '@/components/ui/button';
-import type { SearchSourcesState } from '@/lib/course-generation/stream-state';
+import type { CourseContentPipelineState } from '@/lib/course-content/pipeline-state';
+import type { CourseContentSearchSourcesState } from '@/lib/course-content/search-source-state';
 import { inventoryService } from '../../../../inventory/inventory.service';
 import type { InventoryEntry } from '../../../../inventory/inventory.types';
 import { formatFileSize } from '../../../../inventory/inventory.utils';
 import { useInventory } from '../../../../inventory/use-inventory';
 import type {
+  CourseContentDraft,
+  GenerationPipelineStep,
   GenerationStep,
-  StreamingCourse,
-} from '../../use-generate-course';
+} from '../../use-generate-course-content';
 import { courseFilesService } from '../files/course-files.service';
 import { AiClientContextPanel } from './ai-client-context-panel';
 import { AiClientGeneratingPanel } from './ai-client-generating-panel';
@@ -35,10 +37,17 @@ interface AiClientDialogProps {
     context?: string;
   }) => void;
   generationStep?: GenerationStep;
+  lastStartedGenerationStep?: GenerationPipelineStep | null;
+  generationPipelineState?: CourseContentPipelineState;
   generationError?: string | null;
   isRunning?: boolean;
-  streamingCourse?: StreamingCourse | null;
-  searchSources?: SearchSourcesState;
+  courseContentDraft?: CourseContentDraft | null;
+  searchSources?: CourseContentSearchSourcesState;
+  searchFailureMessage?: string | null;
+  isSearchSkipAvailable?: boolean;
+  isSearchSkipRequested?: boolean;
+  searchSkipError?: string | null;
+  onSkipSearch?: () => Promise<void>;
 }
 
 type DialogPhase = 'select' | 'context' | 'generating';
@@ -49,13 +58,20 @@ export function AiClientDialog({
   onSelect,
   onRetry,
   generationStep = 'idle',
+  lastStartedGenerationStep = null,
+  generationPipelineState,
   generationError = null,
   isRunning = false,
-  streamingCourse,
+  courseContentDraft,
   searchSources,
+  searchFailureMessage,
+  isSearchSkipAvailable,
+  isSearchSkipRequested,
+  searchSkipError,
+  onSkipSearch,
 }: AiClientDialogProps) {
   const t = useTranslations('Courses.CourseModules.AiDialog');
-  const genT = useTranslations('Courses.CourseModules.AiGeneration');
+  const genT = useTranslations('Courses.CourseModules.CourseContentGeneration');
   const invT = useTranslations('InventoryPage');
   const { courseId } = useParams() as { courseId: string };
 
@@ -245,7 +261,7 @@ export function AiClientDialog({
     phase === 'generating' ? (
       <div className="flex items-center gap-2">
         <Sparkles className="h-5 w-5 text-primary" />
-        <span>{genT('generatingCourse')}</span>
+        <span>{genT('generatingCourseContent')}</span>
       </div>
     ) : phase === 'context' ? (
       <div className="flex items-center gap-2">
@@ -261,7 +277,7 @@ export function AiClientDialog({
 
   const dialogDescription =
     phase === 'generating'
-      ? genT('craftingCurriculum')
+      ? genT('creatingCourseContent')
       : phase === 'context'
         ? t('contextTab.description')
         : t('description');
@@ -345,9 +361,16 @@ export function AiClientDialog({
       {phase === 'generating' ? (
         <AiClientGeneratingPanel
           generationStep={generationStep}
+          lastStartedStep={lastStartedGenerationStep}
+          pipelineState={generationPipelineState}
           generationError={generationError}
-          streamingCourse={streamingCourse}
+          courseContentDraft={courseContentDraft}
           searchSources={searchSources}
+          searchFailureMessage={searchFailureMessage}
+          isSearchSkipAvailable={isSearchSkipAvailable}
+          isSearchSkipRequested={isSearchSkipRequested}
+          searchSkipError={searchSkipError}
+          onSkipSearch={onSkipSearch}
           lastSelection={lastSelection}
           onDismiss={() => handleOpenChange(false)}
           onRetry={onRetry}

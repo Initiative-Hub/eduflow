@@ -883,28 +883,27 @@
     },
     "CourseModules": {
       "addModule": "Add Module",
-      "aiAssistant": "AI Assistant",
       "AiDialog": {
         "clickToBrowse": "Click to browse files",
         "comingSoonTitle": "Advanced Generation",
         "contextTab": {
           "back": "Back to Document",
           "description": "Provide additional instructions to guide the AI — e.g. target audience, focus areas, or specific topics to emphasize.",
-          "generate": "Generate Course",
+          "generate": "Generate Content",
           "label": "Additional Instructions",
           "placeholder": "e.g. Focus on beginner-friendly explanations. Emphasize practical examples. Target audience: university students.",
           "selectedFile": "Selected document",
           "title": "Add Context (Optional)"
         },
         "courseDescription": "Access shared files within this course workspace.",
-        "description": "Generate a logical course structure from your educational documents.",
+        "description": "Generate modules and lessons from your educational documents.",
         "folder": "Folder",
         "loadingFiles": "Loading your files...",
         "personalDescription": "Select a PDF from your personal library to use as context.",
         "pipeline": {
           "extract": "Extract PDF",
-          "generate": "AI Generation",
-          "save": "Save Course",
+          "generate": "Generate Content",
+          "save": "Save Content",
           "search": "Web Search"
         },
         "preparingDocument": "Preparing your document for the AI Assistant",
@@ -917,25 +916,29 @@
           "personal": "Personal Files",
           "upload": "Upload PDF"
         },
-        "title": "AI Learning Assistant",
+        "title": "Generate Course Content",
         "uploadDescription": "Select a PDF file from your device to use as a context for AI content generation.",
         "uploadDifferent": "Upload Different File",
         "uploadReference": "Upload Reference Document",
         "useSelected": "Use Selected PDF"
       },
-      "AiGeneration": {
-        "craftingCurriculum": "AI is crafting your curriculum from the provided document",
+      "CourseContentGeneration": {
+        "creatingCourseContent": "AI is creating modules and lessons from the provided document",
         "creatingLessons": "Creating lessons...",
         "dismiss": "Dismiss",
         "documentReceived": "Document received, extracting PDF content...",
+        "documentReceiving": "Receiving document...",
         "draftingLesson": "Drafting Lesson...",
         "error": "Something went wrong. Please try again.",
-        "failed": "Failed to generate course structure",
-        "generatingCourse": "Generating Course...",
+        "failed": "Failed to generate course content",
+        "generatingCourseContent": "Generating Course Content...",
         "identifyingModule": "Identifying Module...",
         "retry": "Try Again",
         "saving": "Saving",
-        "savingModules": "Saving your new modules and lessons...",
+        "savingCourseContent": "Saving your new modules and lessons...",
+        "skippingWebSearch": "Skipping Web Search...",
+        "skipWebSearch": "Skip Web Search",
+        "skipWebSearchFailed": "Unable to skip Web Search. It will continue in the background.",
         "sourcePreview": {
           "empty": "No sources found yet",
           "foundCount": "{count, plural, =0 {No sources} =1 {1 source} other {# sources}}",
@@ -946,11 +949,14 @@
           "youtube": "YouTube",
           "youtubeDescription": "Video options"
         },
-        "startingGeneration": "Starting AI generation...",
+        "startingCourseContentGeneration": "Starting content generation...",
         "success": "Course modules generated and saved successfully!",
-        "webSearching": "Searching the web for additional context and references..."
+        "webSearchFailed": "Web Search could not finish. The sources already found will still be used.",
+        "webSearching": "Searching the web for additional context and references...",
+        "webSearchSkipped": "Web Search skipped. Any sources already found will still be used."
       },
       "description": "Organize your curriculum into modules and lessons.",
+      "generateCourseContent": "Generate Course Content",
       "noModules": "No modules yet. Create your first module to begin.",
       "title": "Course Modules"
     },
