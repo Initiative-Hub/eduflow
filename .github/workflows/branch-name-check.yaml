@@ -14,6 +14,7 @@ jobs:
   check-branch-name:
     name: Check branch name
     runs-on: self-hosted
+    timeout-minutes: 15
     steps:
       - name: Check branch name
         run: |
