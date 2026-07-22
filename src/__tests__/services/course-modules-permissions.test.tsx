@@ -84,13 +84,13 @@ describe('CourseModulesClient permissions', () => {
       handleCreateModule: vi.fn(),
       isCreatingLesson: false,
       handleCreateLesson: vi.fn(),
-      streamingCourse: null,
+      courseContentDraft: null,
       searchSources: [],
       generationStep: 'idle',
       generationError: null,
       isRunning: false,
       resetGeneration: vi.fn(),
-      generateCourseModules: vi.fn(),
+      generateCourseContent: vi.fn(),
     });
     useQuestionBankMock.mockReturnValue({ quizzes: [], isCreatingQuiz: false });
 
@@ -114,7 +114,7 @@ describe('CourseModulesClient permissions', () => {
     ).not.toBeInTheDocument();
     expect(
       screen.queryByRole('button', {
-        name: 'aiAssistant',
+        name: 'generateCourseContent',
       })
     ).not.toBeInTheDocument();
     expect(
@@ -130,13 +130,13 @@ describe('CourseModulesClient permissions', () => {
       handleCreateModule: vi.fn(),
       isCreatingLesson: false,
       handleCreateLesson: vi.fn(),
-      streamingCourse: null,
+      courseContentDraft: null,
       searchSources: [],
       generationStep: 'idle',
       generationError: null,
       isRunning: false,
       resetGeneration: vi.fn(),
-      generateCourseModules: vi.fn(),
+      generateCourseContent: vi.fn(),
     });
     useQuestionBankMock.mockReturnValue({ quizzes: [], isCreatingQuiz: false });
 
@@ -157,7 +157,7 @@ describe('CourseModulesClient permissions', () => {
 
     expect(
       screen.getByRole('button', {
-        name: 'aiAssistant',
+        name: 'generateCourseContent',
       })
     ).toBeInTheDocument();
     expect(

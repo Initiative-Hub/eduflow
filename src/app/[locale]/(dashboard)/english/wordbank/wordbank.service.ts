@@ -1,5 +1,4 @@
 import { apiClient } from '@/lib/api/api-client';
-import type { VocabularyItem } from '@/services/english/VocabularyService';
 import type {
   CreateReviewSessionInput,
   CreateVocabularyListInput,
@@ -13,6 +12,7 @@ import type {
   WordbankReviewSessionResult,
   WordbankSort,
 } from '@/services/english/SavedVocabularyService';
+import type { VocabularyItem } from '@/services/english/VocabularyService';
 
 export interface WordbankQueryParams {
   search?: string;

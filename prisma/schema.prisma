@@ -25,6 +25,7 @@ model User {
   updatedAt     DateTime @updatedAt @map("updated_at")
   roleId        String?  @map("role_id")
   bio           String?
+  gammaCredits  Int?     @map("gamma_credits")
 
   // relations
   role                   PlatformRole?           @relation(fields: [roleId], references: [id])

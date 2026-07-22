@@ -1,3 +1,4 @@
+import json
 import logging
 import shutil
 import tempfile
@@ -9,6 +10,7 @@ from fastapi.concurrency import run_in_threadpool
 import slide_skills  # type: ignore
 import slide_skills.svg_categories  # type: ignore
 from app.deps import SLIDE_TEMPLATES_DIR
+from app.schemas.slide_schema import RenderSlideReq
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +56,83 @@ STANDARD_LAYOUT_TYPES = [
     "CIRCLE_CYCLE",
 ]
 
+CATEGORY_METADATA_FIELDS = (
+    "description",
+    "when_to_use",
+    "prompt_hint",
+    "content_guidance",
+)
+
+
+def _filter_category_metadata(raw: Any) -> Dict[str, Any]:
+    if not isinstance(raw, dict):
+        return {}
+    return {
+        key: value
+        for key, value in raw.items()
+        if key in CATEGORY_METADATA_FIELDS and value not in (None, "", [])
+    }
+
+
+def _read_category_metadata(meta_path: Path) -> Dict[str, Any]:
+    if not meta_path.exists():
+        return {}
+    try:
+        raw = json.loads(meta_path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        logger.warning(f"Could not read category metadata from {meta_path}: {exc}")
+        return {}
+
+    return _filter_category_metadata(raw)
+
+
+def _read_collection_category_metadata(library_dir: Path) -> Dict[str, Dict[str, Any]]:
+    meta_path = library_dir / "collection.json"
+    if not meta_path.exists():
+        return {}
+
+    try:
+        raw = json.loads(meta_path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        logger.warning(f"Could not read collection metadata from {meta_path}: {exc}")
+        return {}
+
+    categories = raw.get("categories")
+    if not isinstance(categories, dict):
+        return {}
+
+    metadata: Dict[str, Dict[str, Any]] = {}
+    for category, category_raw in categories.items():
+        filtered = _filter_category_metadata(category_raw)
+        if filtered:
+            metadata[str(category)] = filtered
+
+    return metadata
+
+
+def _build_category_metadata(
+    library_dir: Path | None, categories: set[str]
+) -> Dict[str, Dict[str, Any]]:
+    metadata: Dict[str, Dict[str, Any]] = {}
+    collection_metadata = (
+        _read_collection_category_metadata(library_dir) if library_dir else {}
+    )
+
+    for category in sorted(categories):
+        if not library_dir:
+            continue
+        merged = dict(collection_metadata.get(category, {}))
+        category_metadata = _read_category_metadata(
+            library_dir / category / "category.json"
+        )
+        for key, value in category_metadata.items():
+            merged.setdefault(key, value)
+        if merged:
+            metadata[category] = merged
+
+    return metadata
+
+
 # Monkeypatch select_and_fill_slide to enforce outline bindings
 _orig_select_and_fill_slide = slide_skills.svg_categories.select_and_fill_slide
 
@@ -66,11 +145,16 @@ def custom_select_and_fill_slide(variants, slide_content, **kwargs):
     variant = res.get("variant")
     texts = res.get("texts") or {}
 
-    # Overwrite LLM-generated values with input bindings if they exist
-    input_bindings = slide_content.get("bindings") or {}
+    # Check both raw (unflattened) and flat bindings to support both multi-line
+    # array placeholders (like "bullets", "items") and individual slot placeholders
+    raw_bindings = slide_content.get("raw_bindings") or {}
+    flat_bindings = slide_content.get("bindings") or {}
+
     for key in variant.placeholders:
-        if key in input_bindings:
-            texts[key] = input_bindings[key]
+        if key in raw_bindings:
+            texts[key] = raw_bindings[key]
+        elif key in flat_bindings:
+            texts[key] = flat_bindings[key]
 
     res["texts"] = texts
     return res
@@ -139,22 +223,22 @@ def flatten_slide_bindings(category: str, slide_title: str, bindings: dict) -> d
 
     # 1. Flatten AGENDA_OUTLINE: items -> items.1, items.2, etc.
     if "items" in bindings and isinstance(bindings["items"], list):
-        for idx, item in enumerate(bindings["items"][:5], 1):
+        for idx, item in enumerate(bindings["items"][:10], 1):
             flat[f"items.{idx}"] = str(item)
             flat[f"item_{idx}"] = str(item)
 
     # 2. Flatten TITLE_BULLETS: bullets -> bullets.1, bullets.2, etc.
     if "bullets" in bindings and isinstance(bindings["bullets"], list):
-        for idx, item in enumerate(bindings["bullets"][:5], 1):
+        for idx, item in enumerate(bindings["bullets"][:10], 1):
             flat[f"bullets.{idx}"] = str(item)
             flat[f"bullet_{idx}"] = str(item)
 
     # 3. Flatten TWO_COLUMN_SPLIT: left_col_text and right_col_text arrays
     if "left_col_text" in bindings and isinstance(bindings["left_col_text"], list):
-        for idx, item in enumerate(bindings["left_col_text"][:5], 1):
+        for idx, item in enumerate(bindings["left_col_text"][:10], 1):
             flat[f"left_col_text.{idx}"] = str(item)
     if "right_col_text" in bindings and isinstance(bindings["right_col_text"], list):
-        for idx, item in enumerate(bindings["right_col_text"][:5], 1):
+        for idx, item in enumerate(bindings["right_col_text"][:10], 1):
             flat[f"right_col_text.{idx}"] = str(item)
 
     # 4. Flatten BIG_QUOTE_TAKEAWAY: quote textwrap
@@ -165,17 +249,19 @@ def flatten_slide_bindings(category: str, slide_title: str, bindings: dict) -> d
 
     # 5. Flatten KPI_BIG_NUMBER: metrics -> stat_1, label_1, etc.
     if "metrics" in bindings and isinstance(bindings["metrics"], list):
-        for idx, metric in enumerate(bindings["metrics"][:3], 1):
+        for idx, metric in enumerate(bindings["metrics"][:6], 1):
             if isinstance(metric, dict):
                 flat[f"stat_{idx}"] = str(metric.get("value", ""))
                 flat[f"label_{idx}"] = str(metric.get("label", ""))
 
     # 6. Flatten CHART_INSIGHT: chart_data & insight_text wrap
     if "chart_data" in bindings and isinstance(bindings["chart_data"], list):
-        for idx, data_point in enumerate(bindings["chart_data"][:4], 1):
+        for idx, data_point in enumerate(bindings["chart_data"][:10], 1):
             if isinstance(data_point, dict):
                 flat[f"chart_label_{idx}"] = str(data_point.get("label", ""))
-                flat[f"chart_value_{idx}"] = str(data_point.get("value", ""))
+                flat[f"chart_value_{idx}"] = str(
+                    data_point.get("display_value", data_point.get("value", ""))
+                )
     if "insight_text" in bindings and isinstance(bindings["insight_text"], str):
         wrapped = textwrap.wrap(bindings["insight_text"], width=45)
         for idx, line in enumerate(wrapped[:3], 1):
@@ -183,17 +269,17 @@ def flatten_slide_bindings(category: str, slide_title: str, bindings: dict) -> d
 
     # 7. Flatten DATA_TABLE: headers & rows
     if "headers" in bindings and isinstance(bindings["headers"], list):
-        for idx, header in enumerate(bindings["headers"][:4], 1):
+        for idx, header in enumerate(bindings["headers"][:8], 1):
             flat[f"header_{idx}"] = str(header)
     if "rows" in bindings and isinstance(bindings["rows"], list):
-        for r_idx, row in enumerate(bindings["rows"][:3], 1):
+        for r_idx, row in enumerate(bindings["rows"][:10], 1):
             if isinstance(row, list):
-                for c_idx, val in enumerate(row[:4], 1):
+                for c_idx, val in enumerate(row[:8], 1):
                     flat[f"row_{r_idx}_{c_idx}"] = str(val)
 
     # 8. Flatten TIMELINE_MILESTONES: events date & desc wrap
     if "events" in bindings and isinstance(bindings["events"], list):
-        for idx, ev in enumerate(bindings["events"][:4], 1):
+        for idx, ev in enumerate(bindings["events"][:10], 1):
             if isinstance(ev, dict):
                 flat[f"date_{idx}"] = str(
                     ev.get("date_or_step", "") or ev.get("date", "")
@@ -205,17 +291,17 @@ def flatten_slide_bindings(category: str, slide_title: str, bindings: dict) -> d
 
     # 9. Flatten STEP_BY_STEP: steps -> step_1, step_2, etc.
     if "steps" in bindings and isinstance(bindings["steps"], list):
-        for idx, step in enumerate(bindings["steps"][:4], 1):
+        for idx, step in enumerate(bindings["steps"][:10], 1):
             flat[f"step_{idx}"] = str(step)
 
     # 10. Flatten CONCLUSION_SUMMARY: summary_points -> summary_points.1, etc.
     if "summary_points" in bindings and isinstance(bindings["summary_points"], list):
-        for idx, pt in enumerate(bindings["summary_points"][:4], 1):
+        for idx, pt in enumerate(bindings["summary_points"][:10], 1):
             flat[f"summary_points.{idx}"] = str(pt)
 
     # 11. Flatten CALL_TO_ACTION: action_items -> action_items.1, etc.
     if "action_items" in bindings and isinstance(bindings["action_items"], list):
-        for idx, item in enumerate(bindings["action_items"][:4], 1):
+        for idx, item in enumerate(bindings["action_items"][:10], 1):
             flat[f"action_items.{idx}"] = str(item)
 
     # 12. Flatten QA_CONTACT: footer_note
@@ -226,7 +312,7 @@ def flatten_slide_bindings(category: str, slide_title: str, bindings: dict) -> d
 
     # 13. Flatten REFERENCES_LIST: sources -> source_title_1, source_url_1
     if "sources" in bindings and isinstance(bindings["sources"], list):
-        for idx, src in enumerate(bindings["sources"][:4], 1):
+        for idx, src in enumerate(bindings["sources"][:10], 1):
             if isinstance(src, dict):
                 flat[f"source_title_{idx}"] = str(src.get("title", ""))
                 flat[f"source_url_{idx}"] = str(src.get("url", ""))
@@ -248,7 +334,7 @@ def flatten_slide_bindings(category: str, slide_title: str, bindings: dict) -> d
     #     flattener covers every size.
     for diagram_key in ("levels", "stages", "process_steps", "phases"):
         if diagram_key in bindings and isinstance(bindings[diagram_key], list):
-            for idx, item in enumerate(bindings[diagram_key][:6], 1):
+            for idx, item in enumerate(bindings[diagram_key][:10], 1):
                 if isinstance(item, dict):
                     flat[f"title_{idx}"] = str(item.get("title", ""))
                     desc = str(item.get("description", ""))
@@ -316,34 +402,41 @@ class SlideService:
         return library.category_map()
 
     async def get_collection_categories(self, collection: str) -> Dict[str, Any]:
-        from app.deps import AWS_S3_DEFAULT_TEMPLATES_BUCKET, AWS_S3_TEMPLATES_BUCKET
-        from app.services.s3_service import list_files_in_s3_prefix
-
-        bucket_name = (
-            AWS_S3_DEFAULT_TEMPLATES_BUCKET
-            if collection.lower() in DEFAULT_COLLECTIONS
-            else AWS_S3_TEMPLATES_BUCKET
-        )
-        s3_prefix = f"templates/{collection}/"
-        s3_keys = await list_files_in_s3_prefix(s3_prefix, bucket_name=bucket_name)
-
+        library_dir = await self._ensure_collection_downloaded(collection)
         categories: set[str] = set()
-        for key in s3_keys:
-            relative = key[len(s3_prefix) :]
-            parts = relative.split("/")
-            if len(parts) > 1 and parts[0]:
-                categories.add(parts[0])
+        if library_dir.exists():
+            for child in library_dir.iterdir():
+                if child.is_dir() and child.name:
+                    categories.add(child.name)
 
         is_custom = collection.lower() not in DEFAULT_COLLECTIONS
 
         if not categories:
-            return {"categories": STANDARD_LAYOUT_TYPES, "is_custom": is_custom}
+            fallback_categories = set(STANDARD_LAYOUT_TYPES)
+            fallback_metadata = _build_category_metadata(None, fallback_categories)
+            return {
+                "categories": STANDARD_LAYOUT_TYPES,
+                "is_custom": is_custom,
+                "metadata": fallback_metadata or None,
+            }
 
         valid_categories = {cat for cat in categories if cat.isupper()}
         if not valid_categories:
-            return {"categories": STANDARD_LAYOUT_TYPES, "is_custom": is_custom}
+            fallback_categories = set(STANDARD_LAYOUT_TYPES)
+            fallback_metadata = _build_category_metadata(None, fallback_categories)
+            return {
+                "categories": STANDARD_LAYOUT_TYPES,
+                "is_custom": is_custom,
+                "metadata": fallback_metadata or None,
+            }
 
-        return {"categories": sorted(valid_categories), "is_custom": is_custom}
+        metadata = _build_category_metadata(library_dir, valid_categories)
+
+        return {
+            "categories": sorted(valid_categories),
+            "is_custom": is_custom,
+            "metadata": metadata or None,
+        }
 
     async def get_collections(self) -> List[Dict[str, Any]]:
         import json as _json
@@ -528,18 +621,43 @@ class SlideService:
             # Ensure category field is populated for slide_skills resolver
             slide["category"] = category
 
-            # Diagram families come in per-count variants (tiers_3..5,
-            # stages_3..5, steps_3..5, phases_4..6). Expose the item count as
-            # talking_points so slide_skills' capacity shortlist picks the
-            # variant whose level count matches the content exactly.
-            for diagram_key in ("levels", "stages", "process_steps", "phases"):
+            # Diagram and list families come in per-count variants. Expose the item
+            # count as talking_points so slide_skills' capacity shortlist picks the
+            # variant whose level/slot count matches the content exactly.
+            list_keys = (
+                "levels",
+                "stages",
+                "process_steps",
+                "phases",
+                "items",
+                "bullets",
+                "steps",
+                "summary_points",
+                "action_items",
+                "metrics",
+                "events",
+                "chart_data",
+                "sources",
+            )
+            for diagram_key in list_keys:
                 items = bindings.get(diagram_key)
                 if isinstance(items, list) and items:
                     slide["talking_points"] = [
-                        str(it.get("title", "")) if isinstance(it, dict) else str(it)
+                        str(
+                            it.get("title", "")
+                            or it.get("label", "")
+                            or next(iter(it.values()), "")
+                        )
+                        if isinstance(it, dict)
+                        else str(it)
                         for it in items
                     ]
                     break
+
+            # Expose raw bindings for monkeypatched custom_select_and_fill_slide
+            import json
+
+            slide["raw_bindings"] = json.loads(json.dumps(bindings))
 
             # Flatten bindings to map to flat SVG placeholders
             bindings = flatten_slide_bindings(category, slide_title, bindings)
@@ -565,7 +683,7 @@ class SlideService:
             if has_category_subdirs:
                 # New format — the collection dir IS a valid library_dir,
                 # so pass it directly without any manual remapping.
-                library_dir = str(collection_path)
+                library_dir = collection_path
                 logger.info(
                     f"Using new-format collection '{col_name}' directly as library_dir"
                 )
@@ -679,7 +797,7 @@ class SlideService:
                         )
                     )
 
-                library_dir = str(temp_lib_dir)
+                library_dir = temp_lib_dir
 
         try:
             actual_palette = None if palette == "auto" else palette
@@ -713,6 +831,240 @@ class SlideService:
                     )
 
         return res
+
+    async def render_slide(self, req: RenderSlideReq) -> Dict[str, Any]:
+
+        bindings: Dict[str, Any] = req.bindings.copy() if req.bindings else {}
+        slide: Dict[str, Any] = {
+            "category": req.layoutType,
+            "slideTitle": req.slideTitle,
+            "bindings": bindings,
+        }
+        category = req.layoutType
+        slide_title = req.slideTitle
+
+        slide["category"] = category
+
+        # Diagram and list families come in per-count variants. Expose the item
+        # count as talking_points so slide_skills' capacity shortlist picks the
+        # variant whose level/slot count matches the content exactly.
+        list_keys = (
+            "levels",
+            "stages",
+            "process_steps",
+            "phases",
+            "items",
+            "bullets",
+            "steps",
+            "summary_points",
+            "action_items",
+            "metrics",
+            "events",
+            "chart_data",
+            "sources",
+        )
+        for diagram_key in list_keys:
+            items = bindings.get(diagram_key)
+            if isinstance(items, list) and items:
+                slide["talking_points"] = [
+                    str(
+                        it.get("title", "")
+                        or it.get("label", "")
+                        or next(iter(it.values()), "")
+                    )
+                    if isinstance(it, dict)
+                    else str(it)
+                    for it in items
+                ]
+                break
+
+        # Expose raw bindings for monkeypatched custom_select_and_fill_slide
+        import json
+
+        slide["raw_bindings"] = json.loads(json.dumps(bindings))
+
+        bindings = flatten_slide_bindings(category, slide_title, bindings)
+
+        if "body_text" in bindings and isinstance(bindings["body_text"], str):
+            bindings["body_text"] = textwrap.wrap(bindings["body_text"], width=50)
+
+        slide["bindings"] = bindings
+
+        col_name = req.collection or "templates"
+        collection_path = await self._ensure_collection_downloaded(col_name)
+
+        library_dir = SLIDE_TEMPLATES_DIR
+        temp_dir_context = None
+
+        if collection_path.exists() and collection_path.is_dir():
+            has_category_subdirs = any(
+                child.is_dir() for child in collection_path.iterdir()
+            )
+            if has_category_subdirs:
+                library_dir = collection_path
+            else:
+                # Legacy flat format
+                import json
+
+                temp_dir_context = tempfile.TemporaryDirectory()
+                temp_lib_dir = Path(temp_dir_context.name)
+
+                categories_to_map = [
+                    "TITLE_SLIDE",
+                    "AGENDA_OUTLINE",
+                    "SECTION_HEADER",
+                    "TITLE_BULLETS",
+                    "TWO_COLUMN_SPLIT",
+                    "BIG_QUOTE_TAKEAWAY",
+                    "KPI_BIG_NUMBER",
+                    "CHART_INSIGHT",
+                    "DATA_TABLE",
+                    "MEDIA_TEXT",
+                    "TIMELINE_MILESTONES",
+                    "STEP_BY_STEP",
+                    "CONCLUSION_SUMMARY",
+                    "CALL_TO_ACTION",
+                    "QA_CONTACT",
+                    "REFERENCES_LIST",
+                ]
+
+                patterns = {
+                    "TITLE_SLIDE": ["title", "slide_00", "slide_title"],
+                    "AGENDA_OUTLINE": ["agenda", "outline", "slide_01"],
+                    "SECTION_HEADER": ["section", "header", "slide_02"],
+                    "TITLE_BULLETS": ["bullets", "bullet", "points", "slide_03"],
+                    "TWO_COLUMN_SPLIT": ["split", "columns", "slide_04"],
+                    "BIG_QUOTE_TAKEAWAY": ["quote", "takeaway", "slide_05"],
+                    "KPI_BIG_NUMBER": ["kpi", "number", "metric", "slide_06"],
+                    "CHART_INSIGHT": ["chart", "insight", "graph", "slide_07"],
+                    "DATA_TABLE": ["table", "data_table", "slide_08"],
+                    "MEDIA_TEXT": ["media", "image_text", "slide_09"],
+                    "TIMELINE_MILESTONES": ["timeline", "milestone", "slide_10"],
+                    "STEP_BY_STEP": ["step", "process_steps", "slide_11"],
+                    "CONCLUSION_SUMMARY": ["conclusion", "summary", "slide_12"],
+                    "CALL_TO_ACTION": ["cta", "action", "slide_13"],
+                    "QA_CONTACT": ["qa", "contact", "slide_14"],
+                    "REFERENCES_LIST": ["references", "source", "slide_15"],
+                }
+
+                svg_files = list(collection_path.glob("*.svg"))
+                for idx, cat in enumerate(categories_to_map):
+                    cat_dir = temp_lib_dir / cat
+                    cat_dir.mkdir(parents=True, exist_ok=True)
+
+                    matched_file = None
+                    for pattern in patterns.get(cat, []):
+                        for svg_file in svg_files:
+                            if pattern in svg_file.name.lower():
+                                matched_file = svg_file
+                                break
+                        if matched_file:
+                            break
+
+                    if not matched_file:
+                        for svg_file in svg_files:
+                            stem_lower = svg_file.stem.lower()
+                            if (
+                                cat.lower() in stem_lower
+                                or cat.replace("_", "").lower() in stem_lower
+                            ):
+                                matched_file = svg_file
+                                break
+
+                    if not matched_file and svg_files:
+                        matched_file = svg_files[idx % len(svg_files)]
+
+                    if matched_file:
+                        shutil.copy2(matched_file, cat_dir / "variant_a.svg")
+                        schema_json = matched_file.with_suffix(".schema.json")
+                        if schema_json.exists():
+                            shutil.copy2(schema_json, cat_dir / "variant_a.schema.json")
+
+                    (cat_dir / "category.json").write_text(
+                        json.dumps(
+                            {
+                                "description": f"{cat} category layout",
+                                "variants": {"variant_a": "Default design"},
+                            },
+                            ensure_ascii=False,
+                        )
+                    )
+
+                library_dir = temp_lib_dir
+
+        try:
+            lib = await run_in_threadpool(
+                slide_skills.scan_template_library, library_dir
+            )
+            key = lib.resolve(category)
+            if key is None:
+                raise ValueError(
+                    f"No category matches {category!r} in template library"
+                )
+
+            mapping = {}
+            target = (
+                slide_skills.PRESETS.get(req.palette)
+                if isinstance(req.palette, str)
+                else req.palette
+            )
+            if target is not None:
+                from slide_skills.svg_categories import _library_palette
+
+                mapping = slide_skills.auto_map_palette(_library_palette(lib), target)
+
+            result = await run_in_threadpool(
+                slide_skills.svg_categories.select_and_fill_slide,
+                lib.categories[key],
+                slide,
+            )
+            logger.info(
+                f"===> RENDER_SLIDE RESULT: {result.get('variant').name if result else None}"
+            )
+            logger.info(
+                f"===> RENDER_SLIDE INPUT TALKING POINTS: {slide.get('talking_points')}"
+            )
+            logger.info(f"===> RENDER_SLIDE INPUT BINDINGS: {slide.get('bindings')}")
+            if not result:
+                raise ValueError(f"No variant selected for layout {category}")
+
+            variant = result["variant"]
+            svg = Path(variant.path).read_text(encoding="utf-8")
+
+            from slide_skills.svg_categories import (
+                prune_empty_groups,
+                fill_svg,
+                fit_text_to_boxes,
+            )
+
+            svg = prune_empty_groups(svg, result["texts"])
+
+            texts = result["texts"]
+            if 'data-w="' in svg:
+                from slide_skills.svg_categories import _backfill_slots
+
+                texts = _backfill_slots(texts, variant, slide)
+
+            svg = fill_svg(svg, texts)
+            svg = fit_text_to_boxes(svg)
+
+            if mapping:
+                svg = slide_skills.retheme_svg(svg, mapping)
+
+            return {"svg": svg}
+        finally:
+            if temp_dir_context:
+                try:
+                    temp_dir_context.cleanup()
+                except Exception:
+                    pass
+            if col_name and col_name not in DEFAULT_COLLECTIONS:
+                col_path = Path(SLIDE_TEMPLATES_DIR) / col_name
+                if col_path.exists() and col_path.is_dir():
+                    shutil.rmtree(col_path, ignore_errors=True)
+                    logger.info(
+                        f"Cleaned up downloaded S3 collection '{col_name}' after rendering"
+                    )
 
     async def import_template_collection(
         self, file_bytes: bytes, filename: str, name: str | None = None
@@ -810,25 +1162,40 @@ class SlideService:
                             f"Could not auto-create collection.json for '{collection_name}': {e}"
                         )
 
-                async def upload_dir_to_s3(directory: Path, prefix: str):
+                async def upload_dir_to_s3(directory: Path, prefix: str) -> int:
+                    uploaded_count = 0
                     for child in directory.iterdir():
                         if child.is_file():
-                            await upload_file_to_s3(
+                            uploaded = await upload_file_to_s3(
                                 child,
                                 f"{prefix}/{child.name}",
                                 bucket_name=AWS_S3_TEMPLATES_BUCKET,
                             )
+                            if not uploaded:
+                                raise RuntimeError(
+                                    f"Failed to upload template file '{child}' to S3 bucket '{AWS_S3_TEMPLATES_BUCKET}'"
+                                )
+                            uploaded_count += 1
                         elif child.is_dir():
-                            await upload_dir_to_s3(child, f"{prefix}/{child.name}")
+                            uploaded_count += await upload_dir_to_s3(
+                                child, f"{prefix}/{child.name}"
+                            )
+                    return uploaded_count
 
                 # Always use collection_name (without _template) as the S3 prefix
                 # so get_collections and generate_deck_from_plan can find it consistently
-                await upload_dir_to_s3(dest_dir, f"templates/{collection_name}")
+                uploaded_count = await upload_dir_to_s3(
+                    dest_dir, f"templates/{collection_name}"
+                )
+                if uploaded_count == 0:
+                    raise RuntimeError(
+                        f"No template files were uploaded to S3 for collection '{collection_name}'"
+                    )
 
                 # Remove local files after successful S3 upload
                 shutil.rmtree(dest_dir, ignore_errors=True)
                 logger.info(
-                    f"Removed local template collection '{dest_dir.name}' after S3 upload"
+                    f"Removed local template collection '{dest_dir.name}' after uploading {uploaded_count} files to S3"
                 )
 
             return res

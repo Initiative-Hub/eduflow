@@ -2,9 +2,9 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { CourseRoleName } from '@/generated/prisma';
 import { withAuth } from '@/lib/api/middlewares';
-import { CourseMemberService } from '@/services/CourseMemberService';
 import { getCoursePermissions } from '@/lib/permissions/course-permission';
 import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
+import { CourseMemberService } from '@/services/CourseMemberService';
 import { mapCourseMemberError } from './course-member-route-utils';
 
 const courseParamsSchema = z.object({

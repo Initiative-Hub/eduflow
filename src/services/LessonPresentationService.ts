@@ -1,8 +1,8 @@
 import { LessonService } from '@/services/LessonService';
 import {
-  SlideService,
   type DeckUsage,
   type SlidePlanItem,
+  SlideService,
 } from '@/services/SlideService';
 import { StorageService } from '@/services/StorageService';
 

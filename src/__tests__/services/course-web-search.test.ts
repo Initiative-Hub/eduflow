@@ -74,6 +74,7 @@ describe('generateSupplementarySearchContexts', () => {
     expect(result).toEqual({
       webContext: [webSource],
       youtubeContext: [youtubeSource],
+      status: 'completed',
     });
     expect(emittedSources).toHaveLength(2);
     expect(emittedSources).toEqual(
@@ -103,5 +104,71 @@ describe('generateSupplementarySearchContexts', () => {
         { sourceKind: 'youtube', count: 1 },
       ])
     );
+  });
+
+  it('reports a partial search failure while preserving successful source context', async () => {
+    const youtubeSource = {
+      title: 'Assessment walkthrough video',
+      url: 'https://www.youtube.com/watch?v=abc123xyz00',
+      summary: 'A concise summary for the video.',
+      content: 'Full extracted video context.',
+    };
+
+    mocks.streamText
+      .mockImplementationOnce(() => {
+        throw new Error('Web search provider unavailable');
+      })
+      .mockReturnValueOnce({
+        elementStream: streamElements([youtubeSource]),
+        output: Promise.resolve([youtubeSource]),
+      });
+
+    const result = await generateSupplementarySearchContexts({
+      model: {} as never,
+      searchQuery: 'formative assessment',
+    });
+
+    expect(result).toMatchObject({
+      status: 'failed',
+      message: 'Web search provider unavailable',
+      webContext: [],
+      youtubeContext: [youtubeSource],
+    });
+  });
+
+  it('reports a skipped search while retaining sources found before cancellation', async () => {
+    const controller = new AbortController();
+    const webSource = {
+      title: 'Reliable web reference',
+      url: 'https://example.edu/reference',
+      summary: 'Useful current context.',
+      content: 'Full source content.',
+    };
+
+    mocks.streamText
+      .mockReturnValueOnce({
+        elementStream: (async function* () {
+          yield webSource;
+          if (controller.signal.aborted) throw new Error('Search aborted');
+        })(),
+        output: Promise.resolve([webSource]),
+      })
+      .mockReturnValueOnce({
+        elementStream: streamElements([]),
+        output: Promise.resolve([]),
+      });
+
+    const result = await generateSupplementarySearchContexts({
+      model: {} as never,
+      searchQuery: 'formative assessment',
+      abortSignal: controller.signal,
+      onSource: () => controller.abort(),
+    });
+
+    expect(result).toMatchObject({
+      status: 'skipped',
+      webContext: [webSource],
+      youtubeContext: [],
+    });
   });
 });

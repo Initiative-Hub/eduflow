@@ -42,13 +42,20 @@ export function CourseModulesClient({
     handleCreateModule,
     isCreatingLesson,
     handleCreateLesson,
-    streamingCourse,
+    courseContentDraft,
     searchSources,
     generationStep,
+    lastStartedGenerationStep,
+    generationPipelineState,
     generationError,
+    searchFailureMessage,
+    isSearchSkipAvailable,
+    isSearchSkipRequested,
+    searchSkipError,
     isRunning,
     resetGeneration,
-    generateCourseModules,
+    generateCourseContent,
+    skipSearch,
   } = useModules(courseId);
 
   const { quizzes } = useQuestionBank({ courseId });
@@ -84,7 +91,7 @@ export function CourseModulesClient({
     file?: File;
     context?: string;
   }) => {
-    await generateCourseModules(selection);
+    await generateCourseContent(selection);
   };
 
   const onAiRetry = (selection: {
@@ -93,7 +100,7 @@ export function CourseModulesClient({
     context?: string;
   }) => {
     resetGeneration();
-    generateCourseModules(selection);
+    generateCourseContent(selection);
   };
 
   return (
@@ -113,7 +120,7 @@ export function CourseModulesClient({
               onClick={() => setIsAiOpen(true)}
             >
               <Sparkles className="h-4 w-4" />
-              {t('aiAssistant')}
+              {t('generateCourseContent')}
             </Button>
           ) : null}
           {canCreateContent ? (
@@ -178,10 +185,17 @@ export function CourseModulesClient({
           onSelect={onAiSelect}
           onRetry={onAiRetry}
           generationStep={generationStep}
+          lastStartedGenerationStep={lastStartedGenerationStep}
+          generationPipelineState={generationPipelineState}
           generationError={generationError}
           isRunning={isRunning}
-          streamingCourse={streamingCourse}
+          courseContentDraft={courseContentDraft}
           searchSources={searchSources}
+          searchFailureMessage={searchFailureMessage}
+          isSearchSkipAvailable={isSearchSkipAvailable}
+          isSearchSkipRequested={isSearchSkipRequested}
+          searchSkipError={searchSkipError}
+          onSkipSearch={skipSearch}
         />
       ) : null}
     </div>

@@ -3,7 +3,7 @@ from fastapi import APIRouter, BackgroundTasks, File, UploadFile, HTTPException
 from fastapi.responses import FileResponse
 
 from app.deps import STORAGE_DIR
-from app.schemas.slide_schema import GenReq, PlanGenReq
+from app.schemas.slide_schema import GenReq, PlanGenReq, RenderSlideReq
 from app.services.slide_service import SlideService
 from app.services.slide_job_service import SlideJobService
 
@@ -44,6 +44,14 @@ async def generate(req: GenReq, background_tasks: BackgroundTasks):
 @router.post("/generate-from-plan")
 async def generate_from_plan(req: PlanGenReq):
     return await slide_job_service.generate_deck_from_plan(req)
+
+
+@router.post("/render-slide")
+async def render_slide(req: RenderSlideReq):
+    try:
+        return await slide_service.render_slide(req)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/jobs/{job_id}")

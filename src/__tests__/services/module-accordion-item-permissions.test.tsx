@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
+import { describe, expect, it, vi } from 'vitest';
 import { Accordion } from '@/components/ui/accordion';
 
 vi.mock('next-intl', () => ({

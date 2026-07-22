@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { getLatestGradeAttemptsByQuiz } from '@/app/[locale]/(dashboard)/courses/[courseId]/(course-tabs)/grades/grades.utils';
 import type { StudentGradeAttempt } from '@/app/[locale]/(dashboard)/courses/[courseId]/(course-tabs)/grades/grades.types';
+import { getLatestGradeAttemptsByQuiz } from '@/app/[locale]/(dashboard)/courses/[courseId]/(course-tabs)/grades/grades.utils';
 
 function createAttempt(
   id: string,

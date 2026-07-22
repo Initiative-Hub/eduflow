@@ -1,10 +1,10 @@
 'use client';
 
-import { useRef, useState } from 'react';
 import type { NodeViewProps } from '@tiptap/react';
 import { NodeViewWrapper } from '@tiptap/react';
-import { Button } from '@/components/tiptap-ui-primitive/button';
+import { useRef, useState } from 'react';
 import { CloseIcon } from '@/components/tiptap-icons/close-icon';
+import { Button } from '@/components/tiptap-ui-primitive/button';
 import '@/components/tiptap-node/image-upload-node/image-upload-node.scss';
 import { focusNextNode, isValidPosition } from '@/lib/tiptap-utils';
 
@@ -360,7 +360,7 @@ const ImageUploadPreview: React.FC<ImageUploadPreviewProps> = ({
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+    return `${parseFloat((bytes / k ** i).toFixed(2))} ${sizes[i]}`;
   };
 
   return (

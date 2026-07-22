@@ -1,4 +1,3 @@
-import { normalizeWord } from './wordbank/mappers';
 import { removeVocabulary, saveVocabulary } from './wordbank/crud';
 import { listSavedVocabulary } from './wordbank/list';
 import {
@@ -8,6 +7,7 @@ import {
   updateSavedVocabularyItems,
   updateVocabularyList,
 } from './wordbank/lists';
+import { normalizeWord } from './wordbank/mappers';
 import {
   checkReviewSessionAnswer,
   createReviewSession,
@@ -16,9 +16,9 @@ import {
 
 export { getNextReviewDate } from './wordbank/scheduling';
 export type {
-  CreateReviewSessionInput,
   CheckReviewSessionAnswerInput,
   CheckReviewSessionAnswerResult,
+  CreateReviewSessionInput,
   CreateVocabularyListInput,
   RemoveVocabularyResult,
   ReviewWordMapItem,

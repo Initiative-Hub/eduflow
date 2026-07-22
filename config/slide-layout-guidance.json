@@ -1,0 +1,232 @@
+{
+  "AGENDA_OUTLINE": {
+    "description": "Agenda or Table of Contents slide listing main topics of the presentation.",
+    "when_to_use": "Use near the start of the deck after the title slide.",
+    "prompt_hint": "Use to preview the real parts of the talk. Fill with short section labels only, and include only topics that later slides actually cover.",
+    "content_guidance": [
+      "List concise section names, not full explanations.",
+      "Match the number of agenda items to the available slide count.",
+      "Every agenda item should map to at least one later content slide."
+    ]
+  },
+  "BIG_QUOTE_TAKEAWAY": {
+    "description": "High-emphasis presentation slide highlighting a significant quote or takeaway.",
+    "when_to_use": "Use when one sentence or quotation deserves full attention.",
+    "prompt_hint": "Use for a strong quote, principle, or takeaway line. Fill with one memorable sentence and an author, source, or attribution label.",
+    "content_guidance": [
+      "Choose one sentence worth pausing on.",
+      "Add attribution when the statement comes from a person or source.",
+      "Avoid turning this slide into a list or paragraph."
+    ]
+  },
+  "CALL_TO_ACTION": {
+    "description": "Action-oriented layout highlighting specific action items or tasks for the audience.",
+    "when_to_use": "Use at the end when the presentation should lead to decisions, follow-up steps, or commitments.",
+    "prompt_hint": "Use when the deck should end with action. Fill with 2 to 4 concrete next steps, asks, or recommendations the audience can follow immediately.",
+    "content_guidance": [
+      "Make each action specific and actionable.",
+      "Order the actions by priority or sequence when possible.",
+      "Use verbs so the next step is unmistakable."
+    ]
+  },
+  "CHART_INSIGHT": {
+    "description": "Visual data layout featuring a graph along with an explanatory insight card.",
+    "when_to_use": "Use when the audience should compare numeric values, trends, or distributions.",
+    "prompt_hint": "Use for 3 to 5 comparable data points. Keep chart values numeric for scale, add display values when needed for audience context, and write an insight that explains what the pattern means.",
+    "content_guidance": [
+      "Choose a chart type that matches the relationship being shown.",
+      "Use display labels for scales like 4.0/5, 1-2 low, or 32 percent when raw numeric values need context.",
+      "Insight text should interpret the pattern instead of repeating the numbers."
+    ]
+  },
+  "CIRCLE_CYCLE": {
+    "description": "Circular cycle diagram: numbered nodes around a ring with a legend of titles and descriptions. Use for recurring cycles, iterative loops, continuous processes. Pick the variant matching the number of phases.",
+    "when_to_use": "Use when the sequence repeats rather than ending in a terminal state.",
+    "prompt_hint": "Use for 4 to 6 recurring phases. Fill each phase with a short label and a description that explains its role in the cycle.",
+    "content_guidance": [
+      "Make the cyclical relationship explicit.",
+      "Use phase names that are distinct and ordered.",
+      "Descriptions should show how one phase feeds the next."
+    ]
+  },
+  "CONCLUSION_SUMMARY": {
+    "description": "Concluding slide summarizing main learnings, takeaways or summary points.",
+    "when_to_use": "Use near the end of the presentation to reinforce what matters most.",
+    "prompt_hint": "Use to close the story with 3 to 5 takeaways. Fill with concise summary points that synthesize the presentation instead of introducing new material.",
+    "content_guidance": [
+      "Focus on the most important conclusions or lessons.",
+      "Keep each point short, final, and audience-facing.",
+      "Do not add brand-new evidence or unexplained ideas here."
+    ]
+  },
+  "DATA_TABLE": {
+    "description": "Structured grid presenting data in rows and columns.",
+    "when_to_use": "Use when several facts must be read precisely across consistent fields.",
+    "prompt_hint": "Use for structured facts that need exact lookup. Fill with clear headers and at least 3 rows that share the same comparison fields.",
+    "content_guidance": [
+      "Keep headers short and unambiguous.",
+      "Use consistent row structure so the comparison is easy to read.",
+      "Avoid tables for content that would be clearer as bullets or a chart."
+    ]
+  },
+  "FUNNEL_STAGES": {
+    "description": "Narrowing funnel diagram: sequential stages from widest (top) to narrowest (bottom). Use for conversion funnels, filtering processes, recruitment pipelines. Pick the variant matching the number of stages.",
+    "when_to_use": "Use when the story shows reduction, selection, or progressive qualification across stages.",
+    "prompt_hint": "Use for 3 to 5 funnel stages. Fill with concise stage names and short descriptions that explain how the audience moves from broad input to focused output.",
+    "content_guidance": [
+      "Order the stages from widest to narrowest scope.",
+      "Explain the filtering logic between stages.",
+      "Use this when the process meaningfully narrows or concentrates."
+    ]
+  },
+  "IMAGE_GALLERY": {
+    "description": "THE layout for a section that lists exactly THREE parallel items, types, services, options, or categories — each item gets its own image panel with a label and one-line caption. Strongly prefer this over a plain bullet list whenever a section presents exactly 3 distinct things that can each be pictured (e.g. '3 types of X', '3 options', '3 categories').",
+    "when_to_use": "Use when the presentation needs to compare exactly three visual categories, options, examples, or items in parallel.",
+    "prompt_hint": "Use for exactly 3 items that each benefit from an image. Fill each card with a short label, one-line caption, and a clear visual prompt or source image idea.",
+    "content_guidance": [
+      "Use exactly three parallel items so the grid stays balanced.",
+      "Choose items that can each be represented visually, not abstract filler.",
+      "Keep labels short and captions concise so the images remain primary."
+    ]
+  },
+  "KPI_BIG_NUMBER": {
+    "description": "Dashboard slide containing three major statistics or numeric KPIs.",
+    "when_to_use": "Use when the slide should foreground a few important quantitative facts.",
+    "prompt_hint": "Use for 2 to 4 metrics or benchmark values. Fill each metric with the number, unit or scale, and a label that explains exactly what the value measures.",
+    "content_guidance": [
+      "Pair every value with a meaningful label, not a bare number.",
+      "Include units, percentages, scales, ranges, or timeframes when relevant.",
+      "Use only the most decision-relevant metrics on the slide."
+    ]
+  },
+  "KPI_BIG_NUMBERS": {
+    "description": "Highlight key metrics and statistics with large, scannable numbers.",
+    "when_to_use": "Use when the audience should quickly absorb a small set of headline metrics, benchmarks, or outcomes.",
+    "prompt_hint": "Use for 2 to 5 important numbers. Fill each metric with a value, unit or scale, and a label that explains why the number matters.",
+    "content_guidance": [
+      "Pair every number with a precise label and unit, scale, or timeframe when relevant.",
+      "Use only the most decision-relevant metrics rather than dumping raw stats.",
+      "If there are more than 5 metrics, rank or group them before placing them here."
+    ]
+  },
+  "MEDIA_TEXT": {
+    "description": "Text on the left with a supporting IMAGE on the right. Use for a concept, product, or idea that benefits from a visual illustration.",
+    "when_to_use": "Use when a screenshot, scene, object, or conceptual illustration strengthens the explanation.",
+    "prompt_hint": "Use when the idea benefits from a visual plus supporting copy. Fill with a vivid image prompt and a short body paragraph that explains the visual's significance.",
+    "content_guidance": [
+      "Describe the intended visual clearly enough to generate or source it.",
+      "Use body text to explain why the visual matters.",
+      "Do not duplicate the exact same information in both image and text."
+    ]
+  },
+  "PROCESS_ARROWS": {
+    "description": "Horizontal chevron arrows: a left-to-right process flow, one arrow per step with title and description below. Use for workflows, methodologies, sequential processes. Pick the variant matching the number of steps.",
+    "when_to_use": "Use when each process step needs both a label and a brief explanation.",
+    "prompt_hint": "Use for 3 to 5 directional steps. Fill each step with a very short title and a compact description so the flow reads clearly from left to right.",
+    "content_guidance": [
+      "Keep titles extremely short and scannable.",
+      "Use descriptions to explain what each step produces or changes.",
+      "Prefer this over simple step lists when the visual flow matters."
+    ]
+  },
+  "PYRAMID_LEVELS": {
+    "description": "Layered pyramid / hierarchy diagram: ranked levels from apex (most important) down, each with a title and description. Use for priorities, maturity models, value hierarchies, strategy layers. Pick the variant whose level count matches the number of items.",
+    "when_to_use": "Use when ideas stack from foundational to advanced or from broad to peak importance.",
+    "prompt_hint": "Use for 3 to 5 ranked levels. Fill each level with a short title and supporting description, ordered clearly from base to apex or vice versa as the template expects.",
+    "content_guidance": [
+      "Make the hierarchy explicit and meaningful.",
+      "Use titles that distinguish each level clearly.",
+      "Descriptions should explain what changes from one level to the next."
+    ]
+  },
+  "QA_CONTACT": {
+    "description": "Concluding slide for holding Q&A or listing contact info and thank you note.",
+    "when_to_use": "Use as the final slide when the presenter wants a clean Q&A or contact moment.",
+    "prompt_hint": "Use to end with an invitation for questions or follow-up. Fill with a short closing note, contact cue, or discussion prompt.",
+    "content_guidance": [
+      "Keep the footer note brief and welcoming.",
+      "Use this for final presenter-facing closure rather than content-heavy material.",
+      "Include practical follow-up context when relevant."
+    ]
+  },
+  "REFERENCES_LIST": {
+    "description": "Slide listing citations, links, reference items or academic sources.",
+    "when_to_use": "Use when the topic relies on external evidence, citations, or recommended sources.",
+    "prompt_hint": "Use to cite references or direct further reading. Fill with 2 to 5 reputable sources, each with a clear title and URL, plus a short note when helpful.",
+    "content_guidance": [
+      "Prioritize authoritative and relevant sources.",
+      "Use source summaries only when they add decision value.",
+      "Keep titles recognizable so the audience can revisit them."
+    ]
+  },
+  "SECTION_HEADER": {
+    "description": "Typographic visual break slide used to delineate different modules or sections.",
+    "when_to_use": "Use between major topics in medium and long decks.",
+    "prompt_hint": "Use as a visual divider before a new topic cluster. Fill with the section name and a concise sub-module or transition label.",
+    "content_guidance": [
+      "Use a short topic name that prepares the audience for the next slides.",
+      "Keep the supporting sub-module text compact and directional.",
+      "Do not use this layout for detailed explanations or lists."
+    ]
+  },
+  "STATEMENT_IMAGE": {
+    "description": "A poetic statement with a supporting paragraph and one large image. Use for evocative, narrative or scene-setting content.",
+    "when_to_use": "Use when an idea is best introduced with a bold line and an evocative visual.",
+    "prompt_hint": "Use for one short statement, a supporting paragraph, and a vivid image prompt. Best for scene-setting, framing, or emotionally memorable transitions.",
+    "content_guidance": [
+      "Keep the statement short, striking, and audience-facing.",
+      "Use body text to clarify the meaning or implication.",
+      "Describe a visual that reinforces the statement instead of repeating it literally."
+    ]
+  },
+  "STEP_BY_STEP": {
+    "description": "Sequence slide displaying a numbered process flow step by step.",
+    "when_to_use": "Use when the audience needs to follow a sequence of actions or method steps.",
+    "prompt_hint": "Use for 3 to 6 concrete steps in execution order. Fill with action-oriented step text that explains what to do or what happens next.",
+    "content_guidance": [
+      "Write steps as actions, not vague nouns.",
+      "Keep the order logical and instructional.",
+      "Use when the emphasis is the procedure itself rather than side-by-side comparison."
+    ]
+  },
+  "TIMELINE_MILESTONES": {
+    "description": "Timeline slide displaying a list of chronological events, milestones or steps.",
+    "when_to_use": "Use for ordered developments across time or phases.",
+    "prompt_hint": "Use for 3 to 6 events in time order. Fill each milestone with a date or step label and a concise description of what changed or mattered.",
+    "content_guidance": [
+      "Keep the sequence genuinely chronological.",
+      "Use milestone descriptions that explain significance, not just names.",
+      "Prefer this layout over bullet lists when order is essential."
+    ]
+  },
+  "TITLE_BULLETS": {
+    "description": "Standard bullet points slide for detailing subtopics, arguments or lists.",
+    "when_to_use": "Use when the content is best expressed as a short set of related points without a stronger visual structure.",
+    "prompt_hint": "Use for 3 to 5 substantial points that belong together. Fill with a clear headline and tight bullets that each add a distinct idea, example, or takeaway.",
+    "content_guidance": [
+      "Prefer 3 to 5 bullets with one idea per bullet.",
+      "Each bullet should be concrete, not generic filler.",
+      "Use when the material is not better shown as a process, comparison, chart, or diagram."
+    ]
+  },
+  "TITLE_SLIDE": {
+    "description": "Opening slide with the deck title and presenter.",
+    "when_to_use": "Use once at the start of every deck.",
+    "prompt_hint": "Opening slide only. Use a topic-specific headline, a subtitle that frames the scope or promise, and author or presenter details.",
+    "content_guidance": [
+      "Keep the headline specific to the lesson or thesis.",
+      "Use the subtitle for scope, audience, context, or the core question.",
+      "Use the author field for presenter, team, course, or organization."
+    ]
+  },
+  "TWO_COLUMN_SPLIT": {
+    "description": "Comparative layout featuring two distinct content columns.",
+    "when_to_use": "Use for contrasts, alternatives, pros and cons, before and after, or two perspectives on the same topic.",
+    "prompt_hint": "Use when the audience needs to compare two sides. Fill each column with a short title and 2 to 4 aligned points that make the contrast easy to scan.",
+    "content_guidance": [
+      "Give each column a specific comparison label.",
+      "Use balanced point counts so both sides feel complete.",
+      "Keep each side clearly distinct and avoid repeating the same idea."
+    ]
+  }
+}

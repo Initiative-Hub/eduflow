@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { DictionaryDialog } from './dictionary-dialog';
 import { useTextSelection } from '@/hooks/use-text-selection';
+import { DictionaryDialog } from './dictionary-dialog';
 
 export function SelectionDictionary() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);

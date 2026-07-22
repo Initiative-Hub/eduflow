@@ -1,15 +1,17 @@
 import { NextResponse } from 'next/server';
 import * as z from 'zod';
 import { withRoles } from '@/lib/api/middlewares';
+import { createCourseContentGenerationControl } from '@/lib/course-content/generation-control';
 import { getCoursePermissions } from '@/lib/permissions/course-permission';
 import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
+import { hasUpstashRestEnv } from '@/lib/upstash/redis/client';
 import { CourseService } from '@/services/CourseService';
 
 /**
- * Zod schema for course generation input.
+ * Zod schema for course content generation input.
  * Allows either a fileId (string) or a file (Blob/File).
  */
-const courseGenerationInputSchema = z
+const courseContentGenerationInputSchema = z
   .object({
     fileId: z.string().uuid().optional(),
     file: z.any().optional(),
@@ -29,7 +31,7 @@ const courseGenerationInputSchema = z
  *   post:
  *     tags:
  *       - AI Courses
- *     summary: Create AI course generation
+ *     summary: Generate AI course content
  *     security:
  *       - SessionCookie: []
  *     requestBody:
@@ -51,7 +53,7 @@ const courseGenerationInputSchema = z
  *                 format: uuid
  *     responses:
  *       200:
- *         description: AI course generation
+ *         description: Generated course content stream
  *       400:
  *         description: Invalid input
  *       401:
@@ -98,7 +100,7 @@ export const POST = withRoles(
         };
       }
 
-      const parsed = courseGenerationInputSchema.safeParse(input);
+      const parsed = courseContentGenerationInputSchema.safeParse(input);
 
       if (!parsed.success) {
         return NextResponse.json(
@@ -133,7 +135,22 @@ export const POST = withRoles(
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       }
 
-      const result = CourseService.generateModulesStream({
+      let controlId: string | undefined;
+      if (hasUpstashRestEnv()) {
+        try {
+          controlId = await createCourseContentGenerationControl({
+            courseId: parsed.data.courseId,
+            userId,
+          });
+        } catch (error) {
+          console.error(
+            'Course content generation skip control unavailable:',
+            error
+          );
+        }
+      }
+
+      const result = CourseService.generateCourseContentStream({
         userId,
         courseId: parsed.data.courseId,
         fileId: parsed.data.fileId,
@@ -141,6 +158,7 @@ export const POST = withRoles(
         context: parsed.data.context,
         apiKey: parsed.data.apiKey,
         model: parsed.data.model,
+        controlId,
       });
 
       // Return the NDJSON stream
@@ -150,10 +168,13 @@ export const POST = withRoles(
           'Transfer-Encoding': 'chunked',
           'Cache-Control': 'no-cache',
           'X-Accel-Buffering': 'no',
+          ...(controlId
+            ? { 'X-Course-Content-Generation-Control': controlId }
+            : {}),
         },
       });
     } catch (error) {
-      console.error('AI Course Generation Error:', error);
+      console.error('AI Course Content Generation Error:', error);
       return NextResponse.json(
         { error: 'Internal Server Error' },
         { status: 500 }

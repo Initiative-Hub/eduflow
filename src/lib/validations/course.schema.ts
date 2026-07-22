@@ -1,6 +1,6 @@
 import * as z from 'zod';
 
-export const aiCourseGenerationSchema = z.object({
+export const aiCourseContentGenerationSchema = z.object({
   courseTitle: z.string().describe('The overall title of the course'),
   description: z
     .string()
@@ -25,4 +25,6 @@ export const aiCourseGenerationSchema = z.object({
   ),
 });
 
-export type AICourseGeneration = z.infer<typeof aiCourseGenerationSchema>;
+export type AICourseContentGeneration = z.infer<
+  typeof aiCourseContentGenerationSchema
+>;

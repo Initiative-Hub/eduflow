@@ -228,7 +228,7 @@ export function WordbankToolbar({
       </div>
       {view === 'grid' ? (
         <div className="flex justify-end">
-          <label className="flex min-h-11 items-center gap-2 text-sm text-muted-foreground">
+          <label className="flex min-h-11 items-center gap-2 text-muted-foreground text-sm">
             <Switch
               checked={practiceMode}
               onCheckedChange={onPracticeModeChange}

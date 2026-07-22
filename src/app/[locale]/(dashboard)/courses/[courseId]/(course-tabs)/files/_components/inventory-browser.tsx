@@ -1,3 +1,7 @@
+import type {
+  InventoryEntry,
+  InventoryTranslations,
+} from '@/app/[locale]/(dashboard)/inventory/inventory.types';
 import { Badge } from '@/components/ui/badge';
 import {
   Card,
@@ -13,10 +17,6 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import type {
-  InventoryEntry,
-  InventoryTranslations,
-} from '@/app/[locale]/(dashboard)/inventory/inventory.types';
 import { InventoryCard } from './inventory-card';
 import { InventoryEmptyState } from './inventory-empty-state';
 import { InventoryLoadingSkeleton } from './inventory-loading-skeleton';

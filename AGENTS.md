@@ -88,6 +88,7 @@ for any tasks.).
 - **SSR Page Entries**: Keep `src/app/**/page.tsx` as Server Components by NEVER adding 'use client' on top of them. Move only interactive logic into focused local client islands.
 - **Shared Shells**: Reuse `DialogTemplate` and `FormTemplate` for modal and form shells instead of rebuilding the same structure ad hoc.
 - **Pipeline Step Panels**: In generation/progress dialogs, render step-specific detail panels only while their step is active; add explicit step navigation before showing historical step details.
+- **Planner Recommendation State**: When async planning derives a secondary UI state such as `recommendedCollection`, clear that state at the start of each new run and on fallback/error paths so the UI never shows a stale result from a previous request.
 - **Dialog Success Flow**: When a dialog triggers an async mutation, close it via `onOpenChange(false)` before navigation and guard entry points with the mutation pending state to avoid duplicate opens/submits.
 - **Tabular Lists**: Use the shared `Table` components for list-style layouts instead of custom row divs to keep alignment consistent.
 - **Server Layouts**: For async server layouts that only pass through children, return a fragment instead of raw children.
@@ -112,6 +113,7 @@ for any tasks.).
 - **Test Scope Discipline**: Keep tests focused on durable behavior the project wants to preserve. Remove exploratory, speculative, or TDD-only scaffolding when it no longer represents required coverage.
 - **Type Check**: After TypeScript or JavaScript edits, finish with `bun type-check`.
 - **Formatting**: Use `bun format:fix` before verification if the change is formatting-sensitive.
+- **Biome Scope**: Keep repo-wide Biome checks focused on repo-owned code. Exclude checked-in skill/example bundles (such as `.agents/**`) and vendor primitive directories like `src/components/ai-elements`, `src/components/ui`, and Tiptap primitive/icon/template packages unless the team explicitly chooses to maintain those files as first-party code.
 - **Shell Paths**: Quote file paths that include `(`, `)`, `[`, or `]` when running shell or git commands.
 - **API Client Paths**: The shared browser API client already targets the `/api` base URL, so request paths should start at `v1/...` instead of `api/v1/...`.
 
@@ -127,6 +129,7 @@ for any tasks.).
 
 ### 6.6 Storage & Uploads
 
+- **Direct Uploads for Large Files**: Avoid routing binary file uploads (e.g. presentation templates, zips, pptx files, or large assets) directly through Next.js API route handlers when deploying to serverless platforms (like Vercel) or VPS setups. Doing so triggers the 4.5MB request body limit (on Vercel) or Nginx's default 1MB limit, along with function timeout limits. Instead, upload files directly from the client side (using S3/MinIO presigned URLs or direct HTTP posts to independent utility backend services with CORS configured).
 - Upload Confirmation Fallback: When an uploaded file does not exist on the remote bucket during `confirmUpload`, explicitly delete the pending database entry to roll back the state.
 - **Bucket Initialization**: When adding new buckets to the storage config, ensure they are also added to `docker-compose.yml` initialization scripts (`minio-init` and `minio-reset`).
 - **Preview Delivery**: For inventory previews, prefer signed URLs over fetching full blobs into browser memory, and provide UI fallbacks when inline rendering fails.
@@ -135,6 +138,12 @@ for any tasks.).
   - System default collections (e.g., `vintage`, `clean_light`, `pastel_pop`, `starter`, `neon_dark` and the base `templates` layout categories) belong in the system default templates bucket (`AWS_S3_DEFAULT_TEMPLATES_BUCKET`, i.e., `eduflow-default-template`).
   - User-uploaded custom templates must remain isolated and persist inside the custom templates bucket (`AWS_S3_TEMPLATES_BUCKET`, i.e., `eduflow-template`).
   - The backend slide service lists collections and downloads layouts dynamically from these buckets on demand, caching them locally under `SLIDE_TEMPLATES_DIR`. Local static layout files in `external-services/templates` are no longer required and can be deleted safely after they are uploaded to S3.
+  - Keep slide usage guidance in each `CATEGORY/category.json` as the source of truth. Top-level `collection.json` should keep collection-wide style metadata such as name, description, palette, and `image_style`, and it may also mirror a `categories` block for browsing or distribution when needed. When loading template metadata at runtime, prefer `collection.json.categories` first and fall back to each `CATEGORY/category.json` for any missing fields.
+  - For standard built-in planning in the Next.js app, prefer the checked-in `config/slide-layout-guidance.json` file. Use dynamic template category metadata only for custom collections or as a fallback when the local planning guidance is incomplete.
+  - In the presentation planner, the `auto` style picker must recommend only built-in default style collections. Never include user-uploaded custom template collections in the AI auto-pick candidate list.
+  - For built-in auto-style selection, higher-education, university lecture, student-feedback, and research-presentation topics should bias toward `rmit_red_modern` over generic light themes such as `clean_light`.
+  - When the planning prompt explicitly requests a built-in style collection by name or alias (for example, "use the RMIT template" or just `rmit_red_modern`), treat that request as authoritative in `auto` mode and override softer topic-based style heuristics.
+  - When live template inventory is missing some built-in default collections, merge it with the checked-in built-in style registry before planning or resolving `auto` recommendations so explicit built-in style requests still remain selectable.
   - **System Template Style Registration**: When adding a new system-wide default style collection (e.g. `illustrative_culture`, `minimalist_gradient`), register it in the following places so that S3 requests are routed to the default templates bucket:
     1. **`slide_service.py`**: Add it to `default_collections` set (in `_ensure_collection_downloaded`), the fallback descriptions dictionary, and the directory cleanup exemption whitelist.
     2. **`slide_controller.py`**: Add it to `default_collections` set in the categories lookup controller.

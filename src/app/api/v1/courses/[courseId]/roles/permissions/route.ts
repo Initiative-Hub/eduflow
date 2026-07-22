@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withAuth } from '@/lib/api/middlewares';
-import { isCoursePermissionKey } from '@/lib/permissions/permission-keys';
 import { getCoursePermissions } from '@/lib/permissions/course-permission';
-import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
+import {
+  COURSE_PERMISSION,
+  isCoursePermissionKey,
+} from '@/lib/permissions/permission-keys';
 import { CourseRolePermissionService } from '@/services/CourseRolePermissionService';
 
 const coursePermissionSchema = z

@@ -76,7 +76,7 @@ export function QuestionBankFilters({
                 {t('categories.SELECTION_BASED')}
               </p>
               <div className="space-y-1">
-                {QUIZ_CATEGORIES['SELECTION_BASED'].subTypes.map((st) => (
+                {QUIZ_CATEGORIES.SELECTION_BASED.subTypes.map((st) => (
                   <label
                     key={st}
                     className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 hover:bg-muted/50"
@@ -95,7 +95,7 @@ export function QuestionBankFilters({
                 {t('categories.OPEN_ENDED')}
               </p>
               <div className="space-y-1">
-                {QUIZ_CATEGORIES['OPEN_ENDED'].subTypes.map((st) => (
+                {QUIZ_CATEGORIES.OPEN_ENDED.subTypes.map((st) => (
                   <label
                     key={st}
                     className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 hover:bg-muted/50"

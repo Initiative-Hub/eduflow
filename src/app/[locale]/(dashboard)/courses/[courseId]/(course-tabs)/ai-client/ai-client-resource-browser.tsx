@@ -39,7 +39,7 @@ export function ResourceBrowser({
   const t = useTranslations('Courses.CourseModules.AiDialog');
 
   return (
-    <div className="flex h-112.5 flex-col outline-none">
+    <div className="flex h-100 flex-col outline-none">
       <div className="flex items-center justify-between border-b bg-muted/20 px-4 py-2">
         <div className="flex items-center gap-2">
           {currentParentId !== null && (

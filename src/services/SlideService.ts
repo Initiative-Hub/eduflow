@@ -9,10 +9,35 @@ import { StorageService } from './StorageService';
 // In-memory cache for slide template previews
 const previewsCache = new Map<string, Record<string, string>>();
 
+export const DEFAULT_TEMPLATE_COLLECTIONS = new Set([
+  'templates',
+  'default',
+  'starter',
+  'neon_dark',
+  'vintage',
+  'clean_light',
+  'pastel_pop',
+  'illustrative_culture',
+  'minimalist_gradient',
+  'cultural_folk',
+  'organic_streets',
+  'electric_green_white',
+  'green_environment_care',
+  'rmit_red_modern',
+  'startup_neon_pitch',
+]);
+
 export interface SlideTemplate {
   name: string;
   description?: string;
   palette?: string[];
+}
+
+export interface TemplateCategoryMetadata {
+  description?: string;
+  when_to_use?: string;
+  prompt_hint?: string;
+  content_guidance?: string[];
 }
 
 export interface SlidePlanItem {
@@ -60,6 +85,12 @@ type JobResponse = {
 type TemplateCategoriesResponse = {
   categories: string[];
   is_custom: boolean;
+  description?: string;
+  metadata?: Record<string, TemplateCategoryMetadata>;
+};
+
+type PlanningCollectionData = TemplateCategoriesResponse & {
+  collection: string;
 };
 
 export class SlideService {
@@ -127,24 +158,9 @@ export class SlideService {
     // 3. If no local templates found, try fetching from S3 via StorageService
     if (Object.keys(svgs).length === 0) {
       try {
-        const defaultCollections = new Set([
-          'templates',
-          'default',
-          'starter',
-          'neon_dark',
-          'vintage',
-          'clean_light',
-          'pastel_pop',
-          'illustrative_culture',
-          'minimalist_gradient',
-          'cultural_folk',
-          'organic_streets',
-          'electric_green_white',
-          'green_environment_care',
-          'rmit_red_modern',
-          'startup_neon_pitch',
-        ]);
-        const bucketName = defaultCollections.has(collectionName.toLowerCase())
+        const bucketName = DEFAULT_TEMPLATE_COLLECTIONS.has(
+          collectionName.toLowerCase()
+        )
           ? FILE_DEFAULT_TEMPLATES_BUCKET_NAME
           : FILE_TEMPLATES_BUCKET_NAME;
 
@@ -185,7 +201,7 @@ export class SlideService {
 
   static async getTemplateCollections(): Promise<SlideTemplate[]> {
     const response = await fetch(
-      `${this.getExternalServiceUrl()}/slides/templates/collections`,
+      `${SlideService.getExternalServiceUrl()}/slides/templates/collections`,
       { cache: 'no-store' }
     );
 
@@ -202,7 +218,7 @@ export class SlideService {
     collectionName: string
   ): Promise<TemplateCategoriesResponse> {
     const response = await fetch(
-      `${this.getExternalServiceUrl()}/slides/templates/${encodeURIComponent(collectionName)}/categories`,
+      `${SlideService.getExternalServiceUrl()}/slides/templates/${encodeURIComponent(collectionName)}/categories`,
       { cache: 'no-store' }
     );
 
@@ -216,15 +232,38 @@ export class SlideService {
   static async getPlanningTemplateCategories(
     collectionName: string
   ): Promise<string[] | undefined> {
-    const data = await this.getTemplateCategories(collectionName);
+    const data = await SlideService.getTemplateCategories(collectionName);
     return data.is_custom ? data.categories : undefined;
+  }
+
+  static async getPlanningCollectionData(
+    collectionName?: string
+  ): Promise<PlanningCollectionData> {
+    const resolvedCollection =
+      !collectionName || collectionName === 'auto'
+        ? 'templates'
+        : collectionName;
+    const data = await SlideService.getTemplateCategories(resolvedCollection);
+
+    return {
+      collection: resolvedCollection,
+      ...data,
+    };
+  }
+
+  static isBuiltInCollectionName(collectionName?: string): boolean {
+    if (!collectionName) {
+      return true;
+    }
+
+    return DEFAULT_TEMPLATE_COLLECTIONS.has(collectionName.toLowerCase());
   }
 
   static async getStyleCollections(): Promise<
     Record<string, string> | undefined
   > {
     try {
-      const collections = await this.getTemplateCollections();
+      const collections = await SlideService.getTemplateCollections();
       const map = collections.reduce<Record<string, string>>(
         (acc, collection) => {
           if (collection.name) {
@@ -242,6 +281,23 @@ export class SlideService {
     }
   }
 
+  static async getDefaultStyleCollections(): Promise<
+    Record<string, string> | undefined
+  > {
+    const styles = await SlideService.getStyleCollections();
+    if (!styles) {
+      return undefined;
+    }
+
+    const filtered = Object.fromEntries(
+      Object.entries(styles).filter(([name]) =>
+        DEFAULT_TEMPLATE_COLLECTIONS.has(name.toLowerCase())
+      )
+    );
+
+    return Object.keys(filtered).length > 0 ? filtered : undefined;
+  }
+
   static async generateDeckFromPlan(plan: DeckPlan): Promise<GeneratedDeck> {
     const payload = {
       title: plan.title,
@@ -255,7 +311,7 @@ export class SlideService {
     };
 
     const response = await fetch(
-      `${this.getExternalServiceUrl()}/slides/generate-from-plan`,
+      `${SlideService.getExternalServiceUrl()}/slides/generate-from-plan`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -288,7 +344,7 @@ export class SlideService {
 
   static async getDeckPptx(deckId: string): Promise<ArrayBuffer> {
     const response = await fetch(
-      `${this.getExternalServiceUrl()}/slides/decks/${deckId}/pptx`,
+      `${SlideService.getExternalServiceUrl()}/slides/decks/${deckId}/pptx`,
       { cache: 'no-store' }
     );
 
@@ -309,7 +365,7 @@ export class SlideService {
       forwardFormData.append('name', name);
     }
 
-    const baseUrl = this.getExternalServiceUrl();
+    const baseUrl = SlideService.getExternalServiceUrl();
     const response = await fetch(`${baseUrl}/slides/templates/import`, {
       method: 'POST',
       body: forwardFormData,
@@ -351,7 +407,7 @@ export class SlideService {
       };
 
       if (job.status === 'done') {
-        this.clearCache();
+        SlideService.clearCache();
         return { status: 'success', imported: job.result };
       }
 

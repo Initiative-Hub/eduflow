@@ -20,11 +20,11 @@ import type {
 import type { SocraticUIMessage } from '@/types/socratic-ui-message';
 import { hasReachedUserMessageLimit } from '@/utils/chat-limit';
 import { prepareLastMessageRequest } from '@/utils/chat-request';
-import { uploadChatAttachments } from '../chat-attachments.service';
 import {
   createInitialChatHistoryData,
   mergeChatMessages,
 } from '../(ai-chat)/chat-history';
+import { uploadChatAttachments } from '../chat-attachments.service';
 import { socraticService } from './socratic.service';
 
 const MAX_USER_MESSAGES = 5;
