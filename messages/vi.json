@@ -1000,6 +1000,8 @@
       "maxPoints": "Tổng điểm",
       "maxPointsRequired": "Tổng điểm phải lớn hơn 0.",
       "pointsGrading": "Điểm số",
+      "publish": "Xuất bản",
+      "publishing": "Đang xuất bản...",
       "schedule": "Lịch trình",
       "scheduleDescription": "Chọn thời điểm đóng nhận bài.",
       "settings": "Cài đặt",

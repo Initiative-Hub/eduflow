@@ -1000,6 +1000,8 @@
       "maxPoints": "Maximum points",
       "maxPointsRequired": "Maximum points must be greater than zero.",
       "pointsGrading": "Points",
+      "publish": "Publish",
+      "publishing": "Publishing...",
       "schedule": "Schedule",
       "scheduleDescription": "Choose when submissions close.",
       "settings": "Settings",

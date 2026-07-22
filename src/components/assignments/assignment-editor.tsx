@@ -39,9 +39,11 @@ type AssignmentEditorProps = {
   content: TiptapDocument;
   canEdit: boolean;
   appearance?: 'page' | 'embedded';
+  showActions?: boolean;
   startEditing?: boolean;
   hideTitleInput?: boolean;
   isSaving?: boolean;
+  onContentChange?: (content: TiptapDocument) => void;
   onSave?: (
     data: {
       title: string;
@@ -58,9 +60,11 @@ export function AssignmentEditor({
   content = EMPTY_TIPTAP_DOCUMENT,
   canEdit,
   appearance = 'page',
+  showActions = true,
   startEditing = false,
   hideTitleInput = false,
   isSaving = false,
+  onContentChange,
   onSave,
 }: AssignmentEditorProps) {
   const t = useTranslations('Courses.AssignmentEditor');
@@ -108,7 +112,10 @@ export function AssignmentEditor({
       Selection,
     ],
     onUpdate: ({ editor: currentEditor }) => {
-      setDraftContent(currentEditor.getJSON() as TiptapDocument);
+      const nextContent = currentEditor.getJSON() as TiptapDocument;
+
+      setDraftContent(nextContent);
+      onContentChange?.(nextContent);
     },
   });
 
@@ -199,7 +206,7 @@ export function AssignmentEditor({
           )}
         </div>
 
-        {isEditing ? (
+        {showActions && isEditing ? (
           <div className="flex shrink-0 justify-end gap-2">
             <Button variant="outline" onClick={cancelEdit}>
               {t('cancel')}
@@ -212,7 +219,7 @@ export function AssignmentEditor({
               {isSaving ? t('saving') : t('save')}
             </Button>
           </div>
-        ) : canEdit ? (
+        ) : showActions && canEdit ? (
           <Button variant="outline" onClick={startEdit}>
             <Edit3 data-icon="inline-start" />
             {t('edit')}

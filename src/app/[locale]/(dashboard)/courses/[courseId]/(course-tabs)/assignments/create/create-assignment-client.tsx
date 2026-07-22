@@ -1,6 +1,12 @@
 'use client';
 
-import { ArrowLeft, CalendarDays, FileText, Settings2 } from 'lucide-react';
+import {
+  ArrowLeft,
+  CalendarDays,
+  FileText,
+  Send,
+  Settings2,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -24,17 +30,10 @@ export function CreateAssignmentClient({ courseId }: { courseId: string }) {
   const [dueAt, setDueAt] = useState('');
   const [title, setTitle] = useState('');
   const [maxPoints, setMaxPoints] = useState('100');
+  const [content, setContent] = useState<TiptapDocument>(EMPTY_TIPTAP_DOCUMENT);
   const [showErrors, setShowErrors] = useState(false);
 
-  const handleSave = (
-    data: {
-      title: string;
-      content: TiptapDocument;
-    },
-    options: {
-      onSuccess: () => void;
-    }
-  ) => {
+  const handlePublish = () => {
     setShowErrors(true);
 
     const parsedMaxPoints = Number(maxPoints);
@@ -50,14 +49,12 @@ export function CreateAssignmentClient({ courseId }: { courseId: string }) {
     createAssignment.mutate(
       {
         title: title.trim(),
-        content: data.content,
+        content,
         dueAt: dueAt ? new Date(dueAt) : null,
         maxPoints: parsedMaxPoints,
       },
       {
         onSuccess: (assignment) => {
-          options.onSuccess();
-
           router.push(`/courses/${courseId}/assignments/${assignment.id}`);
         },
       }
@@ -70,28 +67,39 @@ export function CreateAssignmentClient({ courseId }: { courseId: string }) {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 pb-16">
-      <header className="flex items-start gap-4">
-        <Button variant="outline" size="icon" className="mt-1" asChild>
-          <Link
-            href={`/courses/${courseId}/assignments`}
-            aria-label={t('back')}
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex items-start gap-4">
+          <Button variant="outline" size="icon" className="mt-1" asChild>
+            <Link
+              href={`/courses/${courseId}/assignments`}
+              aria-label={t('back')}
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+          </Button>
 
-        <div>
-          <p className="mb-1 font-medium text-primary text-sm tracking-wide">
-            {t('eyebrow')}
-          </p>
-          <h1 className="font-bold text-3xl text-foreground tracking-tight md:text-4xl">
-            {t('title')}
-          </h1>
+          <div>
+            <p className="mb-1 font-medium text-primary text-sm tracking-wide">
+              {t('eyebrow')}
+            </p>
+            <h1 className="font-bold text-3xl text-foreground tracking-tight md:text-4xl">
+              {t('title')}
+            </h1>
 
-          <p className="mt-2 max-w-2xl text-muted-foreground text-sm leading-6">
-            {t('description')}
-          </p>
+            <p className="mt-2 max-w-2xl text-muted-foreground text-sm leading-6">
+              {t('description')}
+            </p>
+          </div>
         </div>
+
+        <Button
+          onClick={handlePublish}
+          disabled={createAssignment.isPending}
+          className="w-full sm:w-auto"
+        >
+          <Send data-icon="inline-start" />
+          {createAssignment.isPending ? t('publishing') : t('publish')}
+        </Button>
       </header>
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_21rem]">
@@ -150,13 +158,13 @@ export function CreateAssignmentClient({ courseId }: { courseId: string }) {
           <section className="overflow-hidden rounded-xl border bg-card shadow-sm">
             <AssignmentEditor
               title={title}
-              content={EMPTY_TIPTAP_DOCUMENT}
+              content={content}
               canEdit
               appearance="embedded"
               hideTitleInput
-              isSaving={createAssignment.isPending}
+              showActions={false}
               startEditing
-              onSave={handleSave}
+              onContentChange={setContent}
             />
           </section>
         </main>
