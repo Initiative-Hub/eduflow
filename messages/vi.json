@@ -823,6 +823,7 @@
     "AssignmentEditor": {
       "cancel": "Hủy",
       "content": "Nội dung bài tập",
+      "contentPlaceholder": "Viết hướng dẫn bài tập tại đây...",
       "edit": "Chỉnh sửa bài tập",
       "empty": "Chưa có nội dung bài tập.",
       "save": "Lưu",

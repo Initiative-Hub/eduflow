@@ -3,6 +3,7 @@
 import { Highlight } from '@tiptap/extension-highlight';
 import { Image } from '@tiptap/extension-image';
 import { TaskItem, TaskList } from '@tiptap/extension-list';
+import Placeholder from '@tiptap/extension-placeholder';
 import { Subscript } from '@tiptap/extension-subscript';
 import { Superscript } from '@tiptap/extension-superscript';
 import { TextAlign } from '@tiptap/extension-text-align';
@@ -90,6 +91,9 @@ export function AssignmentEditor({
       TextAlign.configure({
         types: ['heading', 'paragraph'],
       }),
+      Placeholder.configure({
+        placeholder: t('contentPlaceholder'),
+      }),
       TaskList,
       TaskItem.configure({ nested: true }),
       Highlight.configure({ multicolor: true }),
@@ -104,12 +108,6 @@ export function AssignmentEditor({
       setDraftContent(currentEditor.getJSON() as TiptapDocument);
     },
   });
-
-  useEffect(() => {
-    if (!editor) return;
-
-    editor.setEditable(canEdit && isEditing);
-  }, [editor, canEdit, isEditing]);
 
   useEffect(() => {
     if (hideTitleInput) {

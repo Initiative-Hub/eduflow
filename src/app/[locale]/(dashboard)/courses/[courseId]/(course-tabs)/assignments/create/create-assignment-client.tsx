@@ -148,7 +148,7 @@ export function CreateAssignmentClient({ courseId }: { courseId: string }) {
             </div>
           </section>
 
-          <section className="overflow-hidden rounded-2xl border bg-card shadow-sm">
+          <section className="rounded-2xl border bg-card shadow-sm">
             <AssignmentEditor
               title={title}
               content={EMPTY_TIPTAP_DOCUMENT}

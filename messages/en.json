@@ -823,6 +823,7 @@
     "AssignmentEditor": {
       "cancel": "Cancel",
       "content": "Assignment content",
+      "contentPlaceholder": "Write the assignment instructions here...",
       "edit": "Edit assignment",
       "empty": "No assignment details have been added yet.",
       "save": "Save",
