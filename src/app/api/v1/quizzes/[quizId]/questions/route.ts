@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { withRoles } from '@/lib/api/middlewares';
+import { withAuth } from '@/lib/api/middlewares';
 import { questionBlockSchema } from '@/lib/validations/quiz.schema';
 import { QuizService } from '@/services/QuizService';
 
@@ -54,47 +54,41 @@ const saveQuestionsSchema = z
  *       500:
  *         description: Internal server error
  */
-export const POST = withRoles(
-  ['TEACHER', 'ADMIN'],
-  async (req, sessionData, { params }) => {
-    try {
-      const { quizId } = await params;
-      const body = await req.json();
+export const POST = withAuth(async (req, sessionData, { params }) => {
+  try {
+    const { quizId } = await params;
+    const body = await req.json();
 
-      const parsed = saveQuestionsSchema.safeParse(body);
-      if (!parsed.success) {
-        return NextResponse.json(
-          { message: 'Invalid questions data', errors: parsed.error.format() },
-          { status: 400 }
-        );
-      }
-
-      const updatedQuiz = await QuizService.updateQuestions(
-        quizId,
-        sessionData.user.id,
-        parsed.data.questions,
-        parsed.data.questionIds
-      );
-
-      return NextResponse.json(updatedQuiz);
-    } catch (error: any) {
-      if (error.message === 'Quiz not found') {
-        return NextResponse.json(
-          { message: 'Quiz not found' },
-          { status: 404 }
-        );
-      }
-      if (error.message === 'Forbidden') {
-        return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
-      }
-      console.error('Error saving quiz questions:', error);
+    const parsed = saveQuestionsSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { message: 'Internal Server Error' },
-        { status: 500 }
+        { message: 'Invalid questions data', errors: parsed.error.format() },
+        { status: 400 }
       );
     }
+
+    const updatedQuiz = await QuizService.updateQuestions(
+      quizId,
+      sessionData.user.id,
+      parsed.data.questions,
+      parsed.data.questionIds
+    );
+
+    return NextResponse.json(updatedQuiz);
+  } catch (error: any) {
+    if (error.message === 'Quiz not found') {
+      return NextResponse.json({ message: 'Quiz not found' }, { status: 404 });
+    }
+    if (error.message === 'Forbidden') {
+      return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+    }
+    console.error('Error saving quiz questions:', error);
+    return NextResponse.json(
+      { message: 'Internal Server Error' },
+      { status: 500 }
+    );
   }
-);
+});
 
 /**
  * @swagger
@@ -137,44 +131,38 @@ export const POST = withRoles(
  *       500:
  *         description: Internal server error
  */
-export const PUT = withRoles(
-  ['TEACHER', 'ADMIN'],
-  async (req, sessionData, { params }) => {
-    try {
-      const { quizId } = await params;
-      const body = await req.json();
+export const PUT = withAuth(async (req, sessionData, { params }) => {
+  try {
+    const { quizId } = await params;
+    const body = await req.json();
 
-      const parsed = saveQuestionsSchema.safeParse(body);
-      if (!parsed.success) {
-        return NextResponse.json(
-          { message: 'Invalid questions data', errors: parsed.error.format() },
-          { status: 400 }
-        );
-      }
-
-      const updatedQuiz = await QuizService.updateQuestions(
-        quizId,
-        sessionData.user.id,
-        parsed.data.questions,
-        parsed.data.questionIds
-      );
-
-      return NextResponse.json(updatedQuiz);
-    } catch (error: any) {
-      if (error.message === 'Quiz not found') {
-        return NextResponse.json(
-          { message: 'Quiz not found' },
-          { status: 404 }
-        );
-      }
-      if (error.message === 'Forbidden') {
-        return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
-      }
-      console.error('Error saving quiz questions:', error);
+    const parsed = saveQuestionsSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { message: 'Internal Server Error' },
-        { status: 500 }
+        { message: 'Invalid questions data', errors: parsed.error.format() },
+        { status: 400 }
       );
     }
+
+    const updatedQuiz = await QuizService.updateQuestions(
+      quizId,
+      sessionData.user.id,
+      parsed.data.questions,
+      parsed.data.questionIds
+    );
+
+    return NextResponse.json(updatedQuiz);
+  } catch (error: any) {
+    if (error.message === 'Quiz not found') {
+      return NextResponse.json({ message: 'Quiz not found' }, { status: 404 });
+    }
+    if (error.message === 'Forbidden') {
+      return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+    }
+    console.error('Error saving quiz questions:', error);
+    return NextResponse.json(
+      { message: 'Internal Server Error' },
+      { status: 500 }
+    );
   }
-);
+});

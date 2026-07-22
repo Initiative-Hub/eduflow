@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import * as z from 'zod';
-import { withRoles } from '@/lib/api/middlewares';
+import { withAuth } from '@/lib/api/middlewares';
 import { createCourseContentGenerationControl } from '@/lib/course-content/generation-control';
 import { getCoursePermissions } from '@/lib/permissions/course-permission';
 import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
@@ -63,122 +63,115 @@ const courseContentGenerationInputSchema = z
  *       500:
  *         description: Internal server error
  */
-export const POST = withRoles(
-  ['TEACHER'],
-  async (request: Request, sessionData) => {
-    try {
-      const userId = sessionData.user.id;
+export const POST = withAuth(async (request: Request, sessionData) => {
+  try {
+    const userId = sessionData.user.id;
 
-      let input: any;
-      const contentType = request.headers.get('content-type') || '';
+    let input: any;
+    const contentType = request.headers.get('content-type') || '';
 
-      if (contentType.includes('multipart/form-data')) {
-        const formData = await request.formData();
-        const courseId = formData.get('courseId') as string | null;
-        const fileId = formData.get('fileId') as string | null;
-        const file = formData.get('file') as File | null;
-        const context = formData.get('context') as string | null;
-        const apiKey = formData.get('apiKey') as string | null;
-        const model = formData.get('model') as string | null;
+    if (contentType.includes('multipart/form-data')) {
+      const formData = await request.formData();
+      const courseId = formData.get('courseId') as string | null;
+      const fileId = formData.get('fileId') as string | null;
+      const file = formData.get('file') as File | null;
+      const context = formData.get('context') as string | null;
+      const apiKey = formData.get('apiKey') as string | null;
+      const model = formData.get('model') as string | null;
 
-        input = {
-          courseId: courseId || undefined,
-          fileId: fileId || undefined,
-          file: file || undefined,
-          context: context || undefined,
-          apiKey: apiKey || undefined,
-          model: model || undefined,
-        };
-      } else {
-        const body = await request.json();
-        input = {
-          fileId: body.fileId,
-          courseId: body.courseId,
-          context: body.context,
-          apiKey: body.apiKey,
-          model: body.model,
-        };
-      }
+      input = {
+        courseId: courseId || undefined,
+        fileId: fileId || undefined,
+        file: file || undefined,
+        context: context || undefined,
+        apiKey: apiKey || undefined,
+        model: model || undefined,
+      };
+    } else {
+      const body = await request.json();
+      input = {
+        fileId: body.fileId,
+        courseId: body.courseId,
+        context: body.context,
+        apiKey: body.apiKey,
+        model: body.model,
+      };
+    }
 
-      const parsed = courseContentGenerationInputSchema.safeParse(input);
+    const parsed = courseContentGenerationInputSchema.safeParse(input);
 
-      if (!parsed.success) {
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Invalid input', details: parsed.error.format() },
+        { status: 400 }
+      );
+    }
+
+    // Check if file is PDF if provided
+    if (parsed.data.file) {
+      const file = parsed.data.file as File;
+      if (file.type !== 'application/pdf') {
         return NextResponse.json(
-          { error: 'Invalid input', details: parsed.error.format() },
+          { error: 'Only PDF files are allowed' },
           { status: 400 }
         );
       }
-
-      // Check if file is PDF if provided
-      if (parsed.data.file) {
-        const file = parsed.data.file as File;
-        if (file.type !== 'application/pdf') {
-          return NextResponse.json(
-            { error: 'Only PDF files are allowed' },
-            { status: 400 }
-          );
-        }
-      }
-
-      const permissions = await getCoursePermissions(
-        userId,
-        parsed.data.courseId
-      );
-      if (
-        permissions.withoutPermission(
-          COURSE_PERMISSION.COURSE_CONTENT_CREATE
-        ) ||
-        permissions.withoutPermission(
-          COURSE_PERMISSION.AI_USE_COURSE_GENERATION
-        )
-      ) {
-        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-      }
-
-      let controlId: string | undefined;
-      if (hasUpstashRestEnv()) {
-        try {
-          controlId = await createCourseContentGenerationControl({
-            courseId: parsed.data.courseId,
-            userId,
-          });
-        } catch (error) {
-          console.error(
-            'Course content generation skip control unavailable:',
-            error
-          );
-        }
-      }
-
-      const result = CourseService.generateCourseContentStream({
-        userId,
-        courseId: parsed.data.courseId,
-        fileId: parsed.data.fileId,
-        file: parsed.data.file,
-        context: parsed.data.context,
-        apiKey: parsed.data.apiKey,
-        model: parsed.data.model,
-        controlId,
-      });
-
-      // Return the NDJSON stream
-      return new Response(result as unknown as ReadableStream<Uint8Array>, {
-        headers: {
-          'Content-Type': 'application/x-ndjson',
-          'Transfer-Encoding': 'chunked',
-          'Cache-Control': 'no-cache',
-          'X-Accel-Buffering': 'no',
-          ...(controlId
-            ? { 'X-Course-Content-Generation-Control': controlId }
-            : {}),
-        },
-      });
-    } catch (error) {
-      console.error('AI Course Content Generation Error:', error);
-      return NextResponse.json(
-        { error: 'Internal Server Error' },
-        { status: 500 }
-      );
     }
+
+    const permissions = await getCoursePermissions(
+      userId,
+      parsed.data.courseId
+    );
+    if (
+      permissions.withoutPermission(COURSE_PERMISSION.COURSE_CONTENT_CREATE) ||
+      permissions.withoutPermission(COURSE_PERMISSION.AI_USE_COURSE_GENERATION)
+    ) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    let controlId: string | undefined;
+    if (hasUpstashRestEnv()) {
+      try {
+        controlId = await createCourseContentGenerationControl({
+          courseId: parsed.data.courseId,
+          userId,
+        });
+      } catch (error) {
+        console.error(
+          'Course content generation skip control unavailable:',
+          error
+        );
+      }
+    }
+
+    const result = CourseService.generateCourseContentStream({
+      userId,
+      courseId: parsed.data.courseId,
+      fileId: parsed.data.fileId,
+      file: parsed.data.file,
+      context: parsed.data.context,
+      apiKey: parsed.data.apiKey,
+      model: parsed.data.model,
+      controlId,
+    });
+
+    // Return the NDJSON stream
+    return new Response(result as unknown as ReadableStream<Uint8Array>, {
+      headers: {
+        'Content-Type': 'application/x-ndjson',
+        'Transfer-Encoding': 'chunked',
+        'Cache-Control': 'no-cache',
+        'X-Accel-Buffering': 'no',
+        ...(controlId
+          ? { 'X-Course-Content-Generation-Control': controlId }
+          : {}),
+      },
+    });
+  } catch (error) {
+    console.error('AI Course Content Generation Error:', error);
+    return NextResponse.json(
+      { error: 'Internal Server Error' },
+      { status: 500 }
+    );
   }
-);
+});
