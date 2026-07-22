@@ -43,6 +43,8 @@ type AssignmentEditorProps = {
   startEditing?: boolean;
   hideTitleInput?: boolean;
   isSaving?: boolean;
+  headerTitle?: string;
+  headerDescription?: string;
   onContentChange?: (content: TiptapDocument) => void;
   onSave?: (
     data: {
@@ -64,6 +66,8 @@ export function AssignmentEditor({
   startEditing = false,
   hideTitleInput = false,
   isSaving = false,
+  headerTitle,
+  headerDescription,
   onContentChange,
   onSave,
 }: AssignmentEditorProps) {
@@ -193,10 +197,10 @@ export function AssignmentEditor({
           ) : isEmbedded ? (
             <div>
               <h2 className="font-semibold text-lg tracking-tight">
-                {t('content')}
+                {headerTitle ?? t('content')}
               </h2>
               <p className="mt-0.5 text-muted-foreground text-sm">
-                {t('contentDescription')}
+                {headerDescription ?? t('contentDescription')}
               </p>
             </div>
           ) : (

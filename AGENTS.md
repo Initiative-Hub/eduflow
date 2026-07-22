@@ -123,6 +123,7 @@ for any tasks.).
 - **UUID Params**: Validate UUID path params with shared Zod schemas when an API route accepts IDs from the URL.
 - **Typed JSON**: Use Zod transforms to keep JSON request payloads typed before handing them to Prisma create/update calls.
 - **Lesson Content Payloads**: Lesson editors must load and save only Tiptap JSON documents (`{"type":"doc","content":[...]}`); AI generation may emit transient lesson HTML only if it is converted to Tiptap JSON before persistence.
+- **Assignment First Upload**: In student assignment views, treat a missing submission as an upload-ready pre-draft state because the upload initialization endpoint creates the draft submission; only require an existing `DRAFT` submission for the final submit action.
 - **Inferred Types**: Prefer inferred Prisma and Zod types over handwritten duplicates; when a shape repeats, extract it into a local type alias or helper instead of retyping the structure.
 - **ICU Messages**: Use ICU-style placeholders in `next-intl` messages (`{name}`, `{count}`) when adding plurals or selects.
 - **Generated Prisma Sync**: If `src/generated/prisma` and `prisma/schema.prisma` drift, rerun `bun db:generate` before assuming a storage or Prisma-backed service is broken.
