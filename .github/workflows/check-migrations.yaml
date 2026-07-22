@@ -2,8 +2,13 @@ name: Check Database Migrations
 
 on:
   push:
-    paths:
-      - 'prisma/migrations/**'
+    branches:
+      - main
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
   workflow_dispatch:
 
 jobs:

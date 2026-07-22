@@ -2,11 +2,13 @@ name: Bun Test Runner
 
 on:
   push:
-    branches-ignore:
-      - chore/trigger-vercel-deploy
-      - fix/biome-formatting-*
-      - staging
-      - production
+    branches:
+      - main
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
   workflow_dispatch:
 
 jobs:
