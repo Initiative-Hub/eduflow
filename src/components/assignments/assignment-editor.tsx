@@ -32,11 +32,13 @@ import '@/components/tiptap-node/image-node/image-node.scss';
 import '@/components/tiptap-node/list-node/list-node.scss';
 import '@/components/tiptap-node/paragraph-node/paragraph-node.scss';
 import '@/app/[locale]/(dashboard)/courses/[courseId]/lessons/[lessonId]/_components/lesson-editor.scss';
+import './assignment-editor.scss';
 
 type AssignmentEditorProps = {
   title: string;
   content: TiptapDocument;
   canEdit: boolean;
+  appearance?: 'page' | 'embedded';
   startEditing?: boolean;
   hideTitleInput?: boolean;
   isSaving?: boolean;
@@ -55,6 +57,7 @@ export function AssignmentEditor({
   title,
   content = EMPTY_TIPTAP_DOCUMENT,
   canEdit,
+  appearance = 'page',
   startEditing = false,
   hideTitleInput = false,
   isSaving = false,
@@ -161,10 +164,17 @@ export function AssignmentEditor({
   };
 
   const empty = isTiptapDocumentEmpty(content);
+  const isEmbedded = appearance === 'embedded';
 
   return (
     <EditorContext.Provider value={{ editor }}>
-      <div className="sticky top-14 z-30 -mx-6 flex min-h-16 items-center justify-between gap-4 border-foreground/20 border-b bg-background/95 px-6 py-3 backdrop-blur-sm md:-mx-10 md:px-10 lg:-mx-12 lg:px-12">
+      <div
+        className={
+          isEmbedded
+            ? 'flex min-h-18 flex-col items-stretch justify-between gap-4 border-b bg-card px-5 py-4 sm:flex-row sm:items-center md:px-6'
+            : 'sticky top-14 z-30 -mx-6 flex min-h-16 items-center justify-between gap-4 border-foreground/20 border-b bg-background/95 px-6 py-3 backdrop-blur-sm md:-mx-10 md:px-10 lg:-mx-12 lg:px-12'
+        }
+      >
         <div className="min-w-0 flex-1">
           {isEditing && !hideTitleInput ? (
             <Input
@@ -173,6 +183,15 @@ export function AssignmentEditor({
               aria-label={t('title')}
               className="h-10 max-w-2xl font-semibold text-lg"
             />
+          ) : isEmbedded ? (
+            <div>
+              <h2 className="font-semibold text-lg tracking-tight">
+                {t('content')}
+              </h2>
+              <p className="mt-0.5 text-muted-foreground text-sm">
+                {t('contentDescription')}
+              </p>
+            </div>
           ) : (
             <h1 className="truncate font-bold text-xl tracking-tight md:text-2xl">
               {hideTitleInput ? t('content') : title}
@@ -181,7 +200,7 @@ export function AssignmentEditor({
         </div>
 
         {isEditing ? (
-          <div className="flex shrink-0 gap-2">
+          <div className="flex shrink-0 justify-end gap-2">
             <Button variant="outline" onClick={cancelEdit}>
               {t('cancel')}
             </Button>
@@ -202,7 +221,13 @@ export function AssignmentEditor({
       </div>
 
       {isEditing ? (
-        <div className="lesson-toolbar-bar sticky top-30 z-20 -mx-6 border-foreground/20 border-b bg-background/95 px-6 py-2 backdrop-blur-sm md:-mx-10 md:px-10 lg:-mx-12 lg:px-12">
+        <div
+          className={
+            isEmbedded
+              ? 'lesson-toolbar-bar border-b bg-muted/30 px-3 py-1.5'
+              : 'lesson-toolbar-bar sticky top-30 z-20 -mx-6 border-foreground/20 border-b bg-background/95 px-6 py-2 backdrop-blur-sm md:-mx-10 md:px-10 lg:-mx-12 lg:px-12'
+          }
+        >
           <LessonEditorToolbar />
         </div>
       ) : null}
@@ -210,7 +235,12 @@ export function AssignmentEditor({
       {!isEditing && empty ? (
         <p className="py-10 text-center text-muted-foreground">{t('empty')}</p>
       ) : (
-        <EditorContent editor={editor} className="lesson-editor-content" />
+        <EditorContent
+          editor={editor}
+          className={
+            isEmbedded ? 'assignment-editor-content' : 'lesson-editor-content'
+          }
+        />
       )}
     </EditorContext.Provider>
   );

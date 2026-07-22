@@ -823,6 +823,7 @@
     "AssignmentEditor": {
       "cancel": "Cancel",
       "content": "Assignment content",
+      "contentDescription": "Add the instructions and context students need to complete the work.",
       "contentPlaceholder": "Write the assignment instructions here...",
       "edit": "Edit assignment",
       "empty": "No assignment details have been added yet.",
@@ -1000,6 +1001,7 @@
       "maxPointsRequired": "Maximum points must be greater than zero.",
       "pointsGrading": "Points",
       "schedule": "Schedule",
+      "scheduleDescription": "Choose when submissions close.",
       "settings": "Settings",
       "submissionPolicy": "Submission policy",
       "submissionPolicyDescription": "Students can upload files and submit once for this assignment.",

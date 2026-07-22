@@ -823,6 +823,7 @@
     "AssignmentEditor": {
       "cancel": "Hủy",
       "content": "Nội dung bài tập",
+      "contentDescription": "Thêm hướng dẫn và thông tin sinh viên cần để hoàn thành bài tập.",
       "contentPlaceholder": "Viết hướng dẫn bài tập tại đây...",
       "edit": "Chỉnh sửa bài tập",
       "empty": "Chưa có nội dung bài tập.",
@@ -1000,6 +1001,7 @@
       "maxPointsRequired": "Tổng điểm phải lớn hơn 0.",
       "pointsGrading": "Điểm số",
       "schedule": "Lịch trình",
+      "scheduleDescription": "Chọn thời điểm đóng nhận bài.",
       "settings": "Cài đặt",
       "submissionPolicy": "Quy định nộp bài",
       "submissionPolicyDescription": "Sinh viên có thể tải tệp lên và nộp một lần cho bài tập này.",

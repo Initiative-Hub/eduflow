@@ -87,6 +87,7 @@ for any tasks.).
 - **Next-intl Components**: When extracting text-heavy components, pass plain strings or call next-intl helpers inside the component instead of threading translator functions through props.
 - **SSR Page Entries**: Keep `src/app/**/page.tsx` as Server Components by NEVER adding 'use client' on top of them. Move only interactive logic into focused local client islands.
 - **Shared Shells**: Reuse `DialogTemplate` and `FormTemplate` for modal and form shells instead of rebuilding the same structure ad hoc.
+- **Embedded Editor Shells**: Do not place full-page editor chrome with sticky bars or negative horizontal margins inside cards. Expose an embedded appearance with local borders, a non-sticky toolbar, and a constrained writing height.
 - **Pipeline Step Panels**: In generation/progress dialogs, render step-specific detail panels only while their step is active; add explicit step navigation before showing historical step details.
 - **Planner Recommendation State**: When async planning derives a secondary UI state such as `recommendedCollection`, clear that state at the start of each new run and on fallback/error paths so the UI never shows a stale result from a previous request.
 - **Dialog Success Flow**: When a dialog triggers an async mutation, close it via `onOpenChange(false)` before navigation and guard entry points with the mutation pending state to avoid duplicate opens/submits.
