@@ -15,6 +15,38 @@ const updateSchema = z.object({
   maxPoints: z.number().positive().max(100000).optional(),
 });
 
+/**
+ * @swagger
+ * /api/v1/assignments/{assignmentId}:
+ *   get:
+ *     tags:
+ *       - Assignments
+ *     summary: Get an assignment
+ *     description: Returns one assignment with the current user's permissions and the authenticated student's submission, when applicable.
+ *     security:
+ *       - SessionCookie: []
+ *     parameters:
+ *       - in: path
+ *         name: assignmentId
+ *         required: true
+ *         description: Assignment identifier.
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Assignment returned successfully.
+ *       400:
+ *         description: The assignment identifier is invalid.
+ *       401:
+ *         description: Authentication is required.
+ *       403:
+ *         description: The user cannot view this assignment.
+ *       404:
+ *         description: Assignment not found.
+ *       500:
+ *         description: Failed to retrieve the assignment.
+ */
 export const GET = withAuth(async (_request, session, { params }) => {
   try {
     const parsed = paramsSchema.safeParse(await params);
@@ -47,6 +79,61 @@ export const GET = withAuth(async (_request, session, { params }) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/v1/assignments/{assignmentId}:
+ *   patch:
+ *     tags:
+ *       - Assignments
+ *     summary: Update an assignment
+ *     description: Updates one or more editable assignment fields and returns the enriched assignment view.
+ *     security:
+ *       - SessionCookie: []
+ *     parameters:
+ *       - in: path
+ *         name: assignmentId
+ *         required: true
+ *         description: Assignment identifier.
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 minLength: 1
+ *                 maxLength: 200
+ *               content:
+ *                 type: object
+ *                 description: Tiptap JSON document with a root type of doc.
+ *               dueAt:
+ *                 type: string
+ *                 format: date-time
+ *                 nullable: true
+ *               maxPoints:
+ *                 type: number
+ *                 exclusiveMinimum: true
+ *                 minimum: 0
+ *                 maximum: 100000
+ *     responses:
+ *       200:
+ *         description: Assignment updated successfully.
+ *       400:
+ *         description: The assignment identifier or payload is invalid.
+ *       401:
+ *         description: Authentication is required.
+ *       403:
+ *         description: The user cannot update this assignment.
+ *       404:
+ *         description: Assignment not found.
+ *       500:
+ *         description: Failed to update the assignment.
+ */
 export const PATCH = withAuth(async (request, session, { params }) => {
   try {
     const parsedParams = paramsSchema.safeParse(await params);
@@ -87,6 +174,38 @@ export const PATCH = withAuth(async (request, session, { params }) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/v1/assignments/{assignmentId}:
+ *   delete:
+ *     tags:
+ *       - Assignments
+ *     summary: Delete an assignment
+ *     description: Soft-deletes an assignment so it is no longer available in the course.
+ *     security:
+ *       - SessionCookie: []
+ *     parameters:
+ *       - in: path
+ *         name: assignmentId
+ *         required: true
+ *         description: Assignment identifier.
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       204:
+ *         description: Assignment deleted successfully.
+ *       400:
+ *         description: The assignment identifier is invalid.
+ *       401:
+ *         description: Authentication is required.
+ *       403:
+ *         description: The user cannot delete this assignment.
+ *       404:
+ *         description: Assignment not found.
+ *       500:
+ *         description: Failed to delete the assignment.
+ */
 export const DELETE = withAuth(async (_request, session, { params }) => {
   try {
     const parsed = paramsSchema.safeParse(await params);

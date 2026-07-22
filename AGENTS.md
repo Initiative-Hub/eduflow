@@ -106,6 +106,7 @@ for any tasks.).
 - **Clear Responses**: Return clear `400`/`401`/`403` responses from route handlers instead of letting invalid payloads fall through to generic errors.
 - **Visible Request Failures**: Surface client-side request failures through visible errors or toasts; the shared API client already centralizes error messaging for browser requests.
 - **Swagger Placement**: Keep each route handler's Swagger JSDoc block immediately above the exported `GET`/`POST`/`PUT`/`PATCH`/`DELETE` handler it documents; split multi-method route docs into one block per handler.
+- **Swagger Coverage**: Document every exported API route method with its authentication, path parameters, validated request body, and the response statuses actually returned by the handler; describe both initialization and confirmation for presigned upload flows.
 - **API Key Overrides**: When a service method accepts an `apiKey` override, prefer it over environment variables and cover the override with a focused unit test.
 
 ### 6.4 Tooling & CI

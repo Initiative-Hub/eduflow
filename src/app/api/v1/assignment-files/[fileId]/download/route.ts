@@ -3,6 +3,42 @@ import { z } from 'zod';
 import { withAuth } from '@/lib/api/middlewares';
 import { AssignmentService } from '@/services/AssignmentService';
 
+/**
+ * @swagger
+ * /api/v1/assignment-files/{fileId}/download:
+ *   get:
+ *     tags:
+ *       - Assignment submissions
+ *     summary: Download an assignment submission file
+ *     description: Redirects the submission owner or an authorized course grader to a short-lived signed download URL for a ready assignment file.
+ *     security:
+ *       - SessionCookie: []
+ *     parameters:
+ *       - in: path
+ *         name: fileId
+ *         required: true
+ *         description: Assignment file identifier.
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       307:
+ *         description: Redirect to the signed object-storage download URL.
+ *         headers:
+ *           Location:
+ *             description: Short-lived signed download URL.
+ *             schema:
+ *               type: string
+ *               format: uri
+ *       400:
+ *         description: The file identifier is invalid.
+ *       401:
+ *         description: Authentication is required.
+ *       403:
+ *         description: The user cannot access this submission file.
+ *       404:
+ *         description: The file is missing, deleted, or not ready.
+ */
 export const GET = withAuth(async (_request, session, { params }) => {
   const parsed = z.object({ fileId: z.uuid() }).safeParse(await params);
 
