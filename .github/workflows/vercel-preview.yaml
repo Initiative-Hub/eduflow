@@ -5,6 +5,8 @@ on:
     branches:
       - main
   pull_request:
+    branches:
+      - 'main'
     types:
       - opened
       - reopened
@@ -13,7 +15,12 @@ on:
 
 jobs:
   deploy:
+    name: Deploy to Vercel Preview
     runs-on: self-hosted
+    timeout-minutes: 15
+    if: |
+      github.event_name != 'pull_request' || 
+      (github.head_ref != 'chore/trigger-vercel-deploy' && !startsWith(github.head_ref, 'fix/biome-formatting-'))
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_STAGING_PROJECT_ID }}

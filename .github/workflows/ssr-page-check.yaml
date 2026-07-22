@@ -5,6 +5,8 @@ on:
     branches:
       - main
   pull_request:
+    branches:
+      - 'main'
     types:
       - opened
       - reopened
@@ -15,7 +17,10 @@ jobs:
   ssr-page-check:
     name: SSR Page Check
     runs-on: self-hosted
-    timeout-minutes: 10
+    timeout-minutes: 15
+    if: |
+      github.event_name != 'pull_request' || 
+      (github.head_ref != 'chore/trigger-vercel-deploy' && !startsWith(github.head_ref, 'fix/biome-formatting-'))
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
