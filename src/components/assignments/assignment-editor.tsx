@@ -37,6 +37,8 @@ type AssignmentEditorProps = {
   content: TiptapDocument;
   canEdit: boolean;
   startEditing?: boolean;
+  hideTitleInput?: boolean;
+  isSaving?: boolean;
   onSave?: (
     data: {
       title: string;
@@ -53,6 +55,8 @@ export function AssignmentEditor({
   content = EMPTY_TIPTAP_DOCUMENT,
   canEdit,
   startEditing = false,
+  hideTitleInput = false,
+  isSaving = false,
   onSave,
 }: AssignmentEditorProps) {
   const t = useTranslations('Courses.AssignmentEditor');
@@ -108,6 +112,18 @@ export function AssignmentEditor({
   }, [editor, canEdit, isEditing]);
 
   useEffect(() => {
+    if (hideTitleInput) {
+      setDraftTitle(title);
+    }
+  }, [hideTitleInput, title]);
+
+  useEffect(() => {
+    if (!editor) return;
+
+    editor.setEditable(canEdit && isEditing);
+  }, [editor, canEdit, isEditing]);
+
+  useEffect(() => {
     if (!editor || isEditing) return;
 
     editor.commands.setContent(content, {
@@ -152,7 +168,7 @@ export function AssignmentEditor({
     <EditorContext.Provider value={{ editor }}>
       <div className="sticky top-14 z-30 -mx-6 flex min-h-16 items-center justify-between gap-4 border-foreground/20 border-b bg-background/95 px-6 py-3 backdrop-blur-sm md:-mx-10 md:px-10 lg:-mx-12 lg:px-12">
         <div className="min-w-0 flex-1">
-          {isEditing ? (
+          {isEditing && !hideTitleInput ? (
             <Input
               value={draftTitle}
               onChange={(event) => setDraftTitle(event.target.value)}
@@ -161,7 +177,7 @@ export function AssignmentEditor({
             />
           ) : (
             <h1 className="truncate font-bold text-xl tracking-tight md:text-2xl">
-              {title}
+              {hideTitleInput ? t('content') : title}
             </h1>
           )}
         </div>
@@ -171,9 +187,12 @@ export function AssignmentEditor({
             <Button variant="outline" onClick={cancelEdit}>
               {t('cancel')}
             </Button>
-            <Button onClick={save} disabled={!editor || !draftTitle.trim()}>
+            <Button
+              onClick={save}
+              disabled={isSaving || !editor || !draftTitle.trim()}
+            >
               <Save data-icon="inline-start" />
-              {t('save')}
+              {isSaving ? t('saving') : t('save')}
             </Button>
           </div>
         ) : canEdit ? (

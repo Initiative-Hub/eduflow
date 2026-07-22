@@ -826,6 +826,7 @@
       "edit": "Chỉnh sửa bài tập",
       "empty": "Chưa có nội dung bài tập.",
       "save": "Lưu",
+      "saving": "Đang lưu...",
       "title": "Tiêu đề bài tập"
     },
     "Assignments": {
@@ -837,6 +838,28 @@
       "saved": "Đã lưu bài tập.",
       "saveError": "Không thể lưu bài tập.",
       "title": "Bài tập"
+    },
+    "CreateAssignment": {
+      "assignmentTitle": "Tiêu đề bài tập",
+      "assignmentTitlePlaceholder": "VD: Phân tích bài luận giữa kỳ",
+      "assignmentTitleRequired": "Tiêu đề bài tập là bắt buộc.",
+      "back": "Quay lại bài tập",
+      "details": "Thông tin bài tập",
+      "detailsDescription": "Thiết lập thông tin cơ bản mà sinh viên sẽ nhìn thấy.",
+      "description": "Viết hướng dẫn và cấu hình thông tin nộp bài.",
+      "dueAt": "Ngày và giờ hết hạn",
+      "dueAtDescription": "Sinh viên có thể nộp bài cho đến thời hạn này.",
+      "eyebrow": "Đánh giá trong khóa học",
+      "gradingType": "Kiểu chấm điểm",
+      "gradingTypeDescription": "Giáo viên sẽ nhập điểm thủ công.",
+      "maxPoints": "Tổng điểm",
+      "maxPointsRequired": "Tổng điểm phải lớn hơn 0.",
+      "pointsGrading": "Điểm số",
+      "schedule": "Lịch trình",
+      "settings": "Cài đặt",
+      "submissionPolicy": "Quy định nộp bài",
+      "submissionPolicyDescription": "Sinh viên có thể tải tệp lên và nộp một lần cho bài tập này.",
+      "title": "Tạo bài tập"
     },
     "AssignmentStudent": {
       "chooseFile": "Chọn tệp",
@@ -980,14 +1003,6 @@
       "generateCourseContent": "Tạo nội dung khóa học",
       "noModules": "Chưa có mô-đun nào. Tạo mô-đun đầu tiên của bạn để bắt đầu.",
       "title": "Mô-đun"
-    },
-    "CreateAssignment": {
-      "back": "Quay lại bài tập",
-      "description": "Viết hướng dẫn bài tập và cấu hình thông tin nộp bài.",
-      "dueAt": "Ngày và giờ hết hạn",
-      "maxPoints": "Tổng điểm",
-      "maxPointsRequired": "Tổng điểm phải lớn hơn 0.",
-      "title": "Tạo bài tập"
     },
     "CreateDialog": {
       "description": "Nhập các thông tin cơ bản cho khóa học mới của bạn để bắt đầu.",

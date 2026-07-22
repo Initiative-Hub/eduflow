@@ -826,6 +826,7 @@
       "edit": "Edit assignment",
       "empty": "No assignment details have been added yet.",
       "save": "Save",
+      "saving": "Saving...",
       "title": "Assignment title"
     },
     "Assignments": {
@@ -837,6 +838,28 @@
       "saved": "Assignment saved.",
       "saveError": "Unable to save the assignment.",
       "title": "Assignments"
+    },
+    "CreateAssignment": {
+      "assignmentTitle": "Assignment title",
+      "assignmentTitlePlaceholder": "e.g., Midterm Essay Analysis",
+      "assignmentTitleRequired": "Assignment title is required.",
+      "back": "Back to assignments",
+      "details": "Assignment details",
+      "detailsDescription": "Set the basic information students will see.",
+      "description": "Write the instructions and configure the submission settings.",
+      "dueAt": "Due date and time",
+      "dueAtDescription": "Students can submit their work until this deadline.",
+      "eyebrow": "Course assessment",
+      "gradingType": "Grading type",
+      "gradingTypeDescription": "Grades are entered manually by the teacher.",
+      "maxPoints": "Maximum points",
+      "maxPointsRequired": "Maximum points must be greater than zero.",
+      "pointsGrading": "Points",
+      "schedule": "Schedule",
+      "settings": "Settings",
+      "submissionPolicy": "Submission policy",
+      "submissionPolicyDescription": "Students can upload files and submit once for this assignment.",
+      "title": "Create assignment"
     },
     "AssignmentStudent": {
       "chooseFile": "Choose file",
@@ -980,14 +1003,6 @@
       "generateCourseContent": "Generate Course Content",
       "noModules": "No modules yet. Create your first module to begin.",
       "title": "Course Modules"
-    },
-    "CreateAssignment": {
-      "back": "Back to assignments",
-      "description": "Write the assignment instructions and configure its submission settings.",
-      "dueAt": "Due date and time",
-      "maxPoints": "Maximum points",
-      "maxPointsRequired": "Maximum points must be greater than zero.",
-      "title": "Create assignment"
     },
     "CreateDialog": {
       "description": "Enter the basics for your new course to get started.",
