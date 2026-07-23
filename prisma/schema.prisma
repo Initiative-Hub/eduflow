@@ -763,7 +763,7 @@ model AssignmentSubmission {
 
   files AssignmentSubmissionFile[]
 
-  @@unique([assignmentId, studentId], map: "assignment_submission_assignment_student_key")
+  @@index([assignmentId, studentId, createdAt(sort: Desc)], map: "assignment_submission_assignment_student_created_idx")
   @@index([assignmentId, status])
   @@index([studentId])
   @@map("assignment_submission")
