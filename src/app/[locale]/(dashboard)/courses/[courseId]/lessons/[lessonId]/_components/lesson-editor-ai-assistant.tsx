@@ -223,11 +223,6 @@ export function LessonEditorAiAssistant() {
                 <span>{diff.suffix}</span>
               </div>
             ) : null}
-            {draft ? (
-              <pre className="max-h-28 overflow-auto rounded-md bg-muted p-2 text-muted-foreground text-xs">
-                {draft}
-              </pre>
-            ) : null}
             {!isLoading ? (
               <div className="flex justify-end gap-2">
                 <Button
