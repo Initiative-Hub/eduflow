@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { apiClient } from '@/lib/api/api-client';
+import { ASSIGNMENT_API_ROUTES } from '@/lib/api/routes';
 import type { TiptapDocument } from '@/utils/lesson-content';
 
 export type AssignmentFile = {
@@ -45,10 +46,12 @@ export type Assignment = {
 
 export const assignmentService = {
   list: (courseId: string) =>
-    apiClient.get<Assignment[]>(`/v1/courses/${courseId}/assignments`),
+    apiClient.get<Assignment[]>(
+      ASSIGNMENT_API_ROUTES.COURSE_ASSIGNMENTS(courseId)
+    ),
 
   get: (assignmentId: string) =>
-    apiClient.get<Assignment>(`/v1/assignments/${assignmentId}`),
+    apiClient.get<Assignment>(ASSIGNMENT_API_ROUTES.ASSIGNMENT(assignmentId)),
 
   create: (
     courseId: string,
@@ -58,7 +61,11 @@ export const assignmentService = {
       dueAt: Date | null;
       maxPoints: number;
     }
-  ) => apiClient.post<Assignment>(`/v1/courses/${courseId}/assignments`, data),
+  ) =>
+    apiClient.post<Assignment>(
+      ASSIGNMENT_API_ROUTES.COURSE_ASSIGNMENTS(courseId),
+      data
+    ),
 
   update: (
     assignmentId: string,
@@ -68,7 +75,11 @@ export const assignmentService = {
       dueAt?: Date | null;
       maxPoints?: number;
     }
-  ) => apiClient.patch<Assignment>(`/v1/assignments/${assignmentId}`, data),
+  ) =>
+    apiClient.patch<Assignment>(
+      ASSIGNMENT_API_ROUTES.ASSIGNMENT(assignmentId),
+      data
+    ),
 
   initializeUpload: (assignmentId: string, file: File) =>
     apiClient.post<{
@@ -78,7 +89,7 @@ export const assignmentService = {
         uploadUrl: string;
         uploadHeaders: Record<string, string>;
       };
-    }>(`/v1/assignments/${assignmentId}/submission/init-upload`, {
+    }>(ASSIGNMENT_API_ROUTES.INITIALIZE_UPLOAD(assignmentId), {
       fileName: file.name,
       contentType: file.type || 'application/octet-stream',
       fileSize: file.size,
@@ -87,7 +98,9 @@ export const assignmentService = {
   confirmUpload: (assignmentId: string, fileId: string) =>
     apiClient.post<{
       data: AssignmentFile;
-    }>(`/v1/assignments/${assignmentId}/submission/confirm-upload`, { fileId }),
+    }>(ASSIGNMENT_API_ROUTES.CONFIRM_UPLOAD(assignmentId), {
+      fileId,
+    }),
 
   uploadSubmissionFile: async (
     assignmentId: string,
@@ -116,20 +129,20 @@ export const assignmentService = {
 
   submit: (assignmentId: string) =>
     apiClient.post<AssignmentSubmission>(
-      `/v1/assignments/${assignmentId}/submission/submit`
+      ASSIGNMENT_API_ROUTES.SUBMIT(assignmentId)
     ),
 
   listSubmissions: (assignmentId: string) =>
     apiClient.get<TeacherAssignmentSubmission[]>(
-      `/v1/assignments/${assignmentId}/submissions`
+      ASSIGNMENT_API_ROUTES.SUBMISSIONS(assignmentId)
     ),
 
   grade: (submissionId: string, data: { score: number; feedback?: string }) =>
     apiClient.patch<AssignmentSubmission>(
-      `/v1/assignment-submissions/${submissionId}/grade`,
+      ASSIGNMENT_API_ROUTES.GRADE_SUBMISSION(submissionId),
       data
     ),
 
   fileDownloadUrl: (fileId: string) =>
-    `/api/v1/assignment-files/${fileId}/download`,
+    ASSIGNMENT_API_ROUTES.FILE_DOWNLOAD(fileId),
 };
