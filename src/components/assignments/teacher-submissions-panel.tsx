@@ -61,7 +61,7 @@ export function TeacherSubmissionsPanel({
       </div>
 
       {selected ? (
-        <div className="grid min-h-[34rem] lg:grid-cols-[18rem_minmax(0,1fr)]">
+        <div className="grid min-h-136 lg:grid-cols-[18rem_minmax(0,1fr)]">
           <aside className="border-b bg-muted/20 lg:border-r lg:border-b-0">
             <div className="flex items-center justify-between border-b px-4 py-3">
               <p className="font-semibold text-sm">{t('studentList')}</p>
@@ -70,7 +70,7 @@ export function TeacherSubmissionsPanel({
               </span>
             </div>
 
-            <div className="max-h-72 overflow-y-auto p-2 lg:max-h-[34rem]">
+            <div className="max-h-72 overflow-y-auto p-2 lg:max-h-136">
               {submissions.map((submission) => {
                 const studentName = submission.student?.name ?? t('student');
                 const active = submission.id === selected.id;

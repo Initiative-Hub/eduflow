@@ -825,10 +825,16 @@
       "content": "Assignment content",
       "contentDescription": "Add the instructions and context students need to complete the work.",
       "contentPlaceholder": "Write the assignment instructions here...",
+      "dueAt": "Due date and time",
+      "dueAtDescription": "Students can submit their work until this deadline.",
       "edit": "Edit assignment",
       "empty": "No assignment details have been added yet.",
+      "maxPoints": "Maximum points",
+      "maxPointsRequired": "Maximum points must be greater than zero.",
       "save": "Save",
       "saving": "Saving...",
+      "settings": "Assignment settings",
+      "settingsDescription": "Update the deadline and maximum score.",
       "title": "Assignment title"
     },
     "Assignments": {

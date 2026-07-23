@@ -825,10 +825,16 @@
       "content": "Nội dung bài tập",
       "contentDescription": "Thêm hướng dẫn và thông tin sinh viên cần để hoàn thành bài tập.",
       "contentPlaceholder": "Viết hướng dẫn bài tập tại đây...",
+      "dueAt": "Ngày và giờ hết hạn",
+      "dueAtDescription": "Sinh viên có thể nộp bài cho đến thời hạn này.",
       "edit": "Chỉnh sửa bài tập",
       "empty": "Chưa có nội dung bài tập.",
+      "maxPoints": "Tổng điểm",
+      "maxPointsRequired": "Tổng điểm phải lớn hơn 0.",
       "save": "Lưu",
       "saving": "Đang lưu...",
+      "settings": "Cài đặt bài tập",
+      "settingsDescription": "Cập nhật hạn nộp và tổng điểm tối đa.",
       "title": "Tiêu đề bài tập"
     },
     "Assignments": {

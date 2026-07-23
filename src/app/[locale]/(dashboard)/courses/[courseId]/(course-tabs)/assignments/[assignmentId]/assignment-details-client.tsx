@@ -53,6 +53,9 @@ export function AssignmentDetailsClient({
         appearance="embedded"
         headerTitle={t('briefTitle')}
         headerDescription={t('briefDescription')}
+        showAssignmentSettings={assignment.canEdit}
+        dueAt={assignment.dueAt}
+        maxPoints={assignment.maxPoints}
         isSaving={updateMutation.isPending}
         showActions={assignment.canEdit}
         onSave={(data, options) => {
@@ -61,6 +64,8 @@ export function AssignmentDetailsClient({
               assignmentId: assignment.id,
               title: data.title,
               content: data.content,
+              dueAt: data.dueAt,
+              maxPoints: data.maxPoints,
             },
             {
               onSuccess: options.onSuccess,

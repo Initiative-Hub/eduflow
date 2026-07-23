@@ -19,6 +19,7 @@ import { LessonEditorToolbar } from '@/app/[locale]/(dashboard)/courses/[courseI
 import { HorizontalRule } from '@/components/tiptap-node/horizontal-rule-node/horizontal-rule-node-extension';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   EMPTY_TIPTAP_DOCUMENT,
   isTiptapDocumentEmpty,
@@ -45,11 +46,16 @@ type AssignmentEditorProps = {
   isSaving?: boolean;
   headerTitle?: string;
   headerDescription?: string;
+  showAssignmentSettings?: boolean;
+  dueAt?: string | null;
+  maxPoints?: number;
   onContentChange?: (content: TiptapDocument) => void;
   onSave?: (
     data: {
       title: string;
       content: TiptapDocument;
+      dueAt?: Date | null;
+      maxPoints?: number;
     },
     options: {
       onSuccess: () => void;
@@ -68,6 +74,9 @@ export function AssignmentEditor({
   isSaving = false,
   headerTitle,
   headerDescription,
+  showAssignmentSettings = false,
+  dueAt = null,
+  maxPoints,
   onContentChange,
   onSave,
 }: AssignmentEditorProps) {
@@ -76,6 +85,13 @@ export function AssignmentEditor({
   const [isEditing, setIsEditing] = useState(startEditing);
   const [draftTitle, setDraftTitle] = useState(title);
   const [draftContent, setDraftContent] = useState(content);
+  const [draftDueAt, setDraftDueAt] = useState(() =>
+    formatDateTimeLocal(dueAt)
+  );
+  const [draftMaxPoints, setDraftMaxPoints] = useState(() =>
+    maxPoints === undefined ? '' : String(maxPoints)
+  );
+  const [showSettingsError, setShowSettingsError] = useState(false);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -144,11 +160,16 @@ export function AssignmentEditor({
 
     setDraftTitle(title);
     setDraftContent(content);
-  }, [editor, content, title, isEditing]);
+    setDraftDueAt(formatDateTimeLocal(dueAt));
+    setDraftMaxPoints(maxPoints === undefined ? '' : String(maxPoints));
+  }, [editor, content, title, isEditing, dueAt, maxPoints]);
 
   const startEdit = () => {
     setDraftTitle(title);
     setDraftContent(content);
+    setDraftDueAt(formatDateTimeLocal(dueAt));
+    setDraftMaxPoints(maxPoints === undefined ? '' : String(maxPoints));
+    setShowSettingsError(false);
     editor?.commands.setContent(content, {
       emitUpdate: false,
     });
@@ -158,6 +179,9 @@ export function AssignmentEditor({
   const cancelEdit = () => {
     setDraftTitle(title);
     setDraftContent(content);
+    setDraftDueAt(formatDateTimeLocal(dueAt));
+    setDraftMaxPoints(maxPoints === undefined ? '' : String(maxPoints));
+    setShowSettingsError(false);
     editor?.commands.setContent(content, {
       emitUpdate: false,
     });
@@ -165,10 +189,28 @@ export function AssignmentEditor({
   };
 
   const save = () => {
+    const parsedMaxPoints = Number(draftMaxPoints);
+
+    if (
+      showAssignmentSettings &&
+      (!Number.isFinite(parsedMaxPoints) || parsedMaxPoints <= 0)
+    ) {
+      setShowSettingsError(true);
+      return;
+    }
+
+    setShowSettingsError(false);
+
     onSave?.(
       {
         title: draftTitle.trim(),
         content: (editor?.getJSON() ?? draftContent) as TiptapDocument,
+        ...(showAssignmentSettings
+          ? {
+              dueAt: draftDueAt ? new Date(draftDueAt) : null,
+              maxPoints: parsedMaxPoints,
+            }
+          : {}),
       },
       { onSuccess: () => setIsEditing(false) }
     );
@@ -231,6 +273,57 @@ export function AssignmentEditor({
         ) : null}
       </div>
 
+      {isEditing && showAssignmentSettings ? (
+        <div className="border-b bg-muted/20 px-5 py-4 md:px-6">
+          <div className="mb-4">
+            <p className="font-medium text-sm">{t('settings')}</p>
+            <p className="mt-1 text-muted-foreground text-xs">
+              {t('settingsDescription')}
+            </p>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_11rem]">
+            <div className="space-y-2">
+              <Label htmlFor="assignment-editor-due-at">{t('dueAt')}</Label>
+              <Input
+                id="assignment-editor-due-at"
+                type="datetime-local"
+                value={draftDueAt}
+                onChange={(event) => setDraftDueAt(event.target.value)}
+              />
+              <p className="text-muted-foreground text-xs">
+                {t('dueAtDescription')}
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="assignment-editor-max-points">
+                {t('maxPoints')}
+              </Label>
+              <Input
+                id="assignment-editor-max-points"
+                type="number"
+                min={1}
+                max={100000}
+                step="1"
+                value={draftMaxPoints}
+                onChange={(event) => {
+                  setDraftMaxPoints(event.target.value);
+                  setShowSettingsError(false);
+                }}
+                aria-invalid={showSettingsError}
+                className="tabular-nums"
+              />
+              {showSettingsError ? (
+                <p className="text-destructive text-xs" role="alert">
+                  {t('maxPointsRequired')}
+                </p>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       {isEditing ? (
         <div
           className={
@@ -255,4 +348,16 @@ export function AssignmentEditor({
       )}
     </EditorContext.Provider>
   );
+}
+
+function formatDateTimeLocal(value: string | null) {
+  if (!value) return '';
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return '';
+
+  const pad = (part: number) => String(part).padStart(2, '0');
+
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
