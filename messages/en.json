@@ -612,6 +612,7 @@
     "toast": {
       "deleted": "Deleted {count} items.",
       "fileTooLarge": "File exceeds the maximum upload size of {size}.",
+      "fileUsedByAssignment": "This file is attached to an assignment submission and cannot be deleted from inventory.",
       "folderCreated": "Folder created.",
       "genericError": "Something went wrong. Try again.",
       "invalidMove": "You cannot move a folder into itself.",

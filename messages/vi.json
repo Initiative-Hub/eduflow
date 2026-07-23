@@ -612,6 +612,7 @@
     "toast": {
       "deleted": "Đã xóa {count} mục.",
       "fileTooLarge": "Tệp vượt quá kích thước tải lên tối đa {size}.",
+      "fileUsedByAssignment": "Tệp này đang được đính kèm trong bài nộp và không thể bị xóa khỏi kho lưu trữ.",
       "folderCreated": "Đã tạo thư mục.",
       "genericError": "Đã xảy ra lỗi. Vui lòng thử lại.",
       "invalidMove": "Bạn không thể di chuyển một thư mục vào chính nó.",

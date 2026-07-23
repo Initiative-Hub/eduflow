@@ -14,6 +14,7 @@ import {
   type TiptapDocument,
 } from '@/utils/lesson-content';
 import { StorageService } from './StorageService';
+import { INVENTORY_FOLDER_PATHS } from '@/lib/storage/inventory-folders';
 
 type AssignmentInput = {
   courseId: string;
@@ -365,9 +366,12 @@ export class AssignmentService {
     const upload = await StorageService.initializeUpload({
       userId: input.userId,
 
-      // Submission files stay in the student's private inventory.
-      // They are exposed to teachers only through assignment permissions.
+      // Assignment files belong to the student's personal inventory.
       courseId: null,
+      folderPath: INVENTORY_FOLDER_PATHS.assignmentSubmission(
+        input.assignmentId,
+        submission.id
+      ),
       fileName: input.fileName,
       contentType: input.contentType,
       fileSize: input.fileSize,
