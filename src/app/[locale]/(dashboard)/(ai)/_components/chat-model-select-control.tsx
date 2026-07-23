@@ -14,7 +14,10 @@ import {
   ModelSelectorTrigger,
 } from '@/components/ai-elements/model-selector';
 import { Button } from '@/components/ui/button';
-import { CHAT_MODEL_OPTIONS, type ChatModel } from '@/services/ai/chat-models';
+import {
+  CHAT_MODEL_OPTIONS,
+  type ChatModel,
+} from '@/services/ai/chat-provider.constants';
 
 interface ChatModelSelectControlProps {
   disabled: boolean;

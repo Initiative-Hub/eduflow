@@ -27,7 +27,7 @@ import {
 } from '@/components/ai-elements/prompt-input';
 import { DropdownTemplate, type MenuItem } from '@/components/custom/dropdown';
 import { Button } from '@/components/ui/button';
-import type { ChatModel } from '@/services/ai/chat-models';
+import type { ChatModel } from '@/services/ai/chat-provider.constants';
 import type {
   ChatFileUIPart,
   ChatSubmitAttachments,
