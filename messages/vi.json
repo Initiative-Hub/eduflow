@@ -1121,8 +1121,8 @@
         "generating": "Đang tạo bản xem trước...",
         "placeholder": "Ví dụ: Làm cho nội dung này rõ ràng và ngắn gọn hơn",
         "promptLabel": "Yêu cầu chỉnh sửa bằng AI",
-        "proposedChanges": "Các thay đổi được đề xuất",
         "reject": "Từ chối",
+        "reviewInEditor": "Xem lại các thay đổi đề xuất ngay trong trình soạn thảo.",
         "title": "Chỉnh sửa phần đã chọn bằng AI",
         "tooltip": "Chỉnh sửa phần đã chọn bằng AI",
         "tooltipDisabled": "Chọn nội dung để chỉnh sửa bằng AI"

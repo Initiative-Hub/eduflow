@@ -17,6 +17,7 @@ import { useEffect, useState } from 'react';
 import { HorizontalRule } from '@/components/tiptap-node/horizontal-rule-node/horizontal-rule-node-extension';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { LessonAiReview } from '@/lib/lesson-ai-review';
 import {
   isTiptapDocumentEmpty,
   type TiptapDocument,
@@ -100,6 +101,7 @@ export function LessonEditor({
       Superscript,
       Subscript,
       Selection,
+      LessonAiReview,
     ],
     content,
     onUpdate: ({ editor }) => {

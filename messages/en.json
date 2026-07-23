@@ -1121,8 +1121,8 @@
         "generating": "Generating preview...",
         "placeholder": "e.g. Make this clearer and more concise",
         "promptLabel": "AI editing instruction",
-        "proposedChanges": "Proposed changes",
         "reject": "Reject",
+        "reviewInEditor": "Review the proposed changes in the editor.",
         "title": "Edit selection with AI",
         "tooltip": "Edit selection with AI",
         "tooltipDisabled": "Select content to edit with AI"

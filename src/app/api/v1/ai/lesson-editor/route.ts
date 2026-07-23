@@ -13,13 +13,16 @@ const requestSchema = z.object({
 });
 
 const LESSON_EDITOR_SYSTEM_PROMPT = `
-You edit a selected fragment from an EduFlow lesson.
+  You edit a selected fragment from an EduFlow lesson.
 
-Return only valid HTML for the supplied fragment. Never use Markdown fences, explanations, a document wrapper, script, style, or external content.
-Preserve all content that is outside the user's exact selection unless a necessary block-level formatting change requires the enclosing block to change.
-You may edit text, inline formatting, headings, lists, block quotes, code blocks, and paragraph alignment using only the tags already present in the fragment's editor schema.
-Do not add images, videos, links, or other media. Keep existing media unchanged.
-The response replaces the complete supplied fragment, so it must be valid standalone fragment HTML.
+  Return only valid HTML for the supplied fragment. Never use Markdown fences, explanations, a document wrapper, script, style, or external content.
+  The value in selectedText is the only editable content. The surroundingFragment is read-only structural context that lets you return valid HTML at the original document depth.
+  Do not shorten, rewrite, reorder, delete, or reformat any content outside selectedText. Copy all unselected text and markup from surroundingFragment unchanged.
+  If the instruction would require changing unselected content, make the best possible change only inside selectedText instead.
+  Use only inline HTML when formatting the selected text. Keep all block node types, block attributes, and list/quote structure unchanged.
+  Do not add images, videos, links, or other media. Keep existing media unchanged.
+  The response replaces the complete supplied fragment at its original document depth. Keep every required outer wrapper from the supplied fragment (for example, return <li>...</li> when the fragment is a list item) so it remains valid at that exact replacement position.
+  Before responding, verify that the only changed content is the replacement for selectedText.
 `;
 
 export const POST = withAuth(async (request) => {
@@ -49,7 +52,7 @@ export const POST = withAuth(async (request) => {
       instruction: parsed.data.instruction,
       selectedText: parsed.data.selectionText,
       surroundingFragment: parsed.data.html,
-      fragmentText: parsed.data.beforeText,
+      surroundingFragmentText: parsed.data.beforeText,
     }),
   });
 

@@ -3,7 +3,7 @@
 import { useCurrentEditor, useEditorState } from '@tiptap/react';
 import { Check, Sparkles, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button as TiptapButton } from '@/components/tiptap-ui-primitive/button';
 import { Button } from '@/components/ui/button';
@@ -18,32 +18,15 @@ import {
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  createLessonAiProposal,
-  createLessonAiTransaction,
   type LessonAiProposal,
+  prepareAiEdit,
+  resolveAiEdit,
 } from '@/lib/lesson-ai-edit';
-
-function getTextDiff(before: string, after: string) {
-  let prefix = 0;
-  while (prefix < before.length && before[prefix] === after[prefix])
-    prefix += 1;
-
-  let suffix = 0;
-  while (
-    suffix < before.length - prefix &&
-    suffix < after.length - prefix &&
-    before[before.length - suffix - 1] === after[after.length - suffix - 1]
-  ) {
-    suffix += 1;
-  }
-
-  return {
-    added: after.slice(prefix, after.length - suffix),
-    prefix: before.slice(0, prefix),
-    removed: before.slice(prefix, before.length - suffix),
-    suffix: before.slice(before.length - suffix),
-  };
-}
+import {
+  clearLessonAiReview,
+  clearLessonAiReviewTransaction,
+  showLessonAiReview,
+} from '@/lib/lesson-ai-review';
 
 export function LessonEditorAiAssistant() {
   const t = useTranslations('Courses.LessonEditor.aiAssistant');
@@ -58,20 +41,60 @@ export function LessonEditorAiAssistant() {
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [proposal, setProposal] = useState<LessonAiProposal | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const candidateTransactionRef = useRef<ReturnType<
+    typeof resolveAiEdit
+  > | null>(null);
+  const editableBeforeReviewRef = useRef<boolean | null>(null);
+  const requestIdRef = useRef(0);
+
+  const restoreEditorAfterReview = () => {
+    if (!editor) return;
+
+    clearLessonAiReview(editor);
+    if (editableBeforeReviewRef.current !== null) {
+      editor.setEditable(editableBeforeReviewRef.current);
+      editableBeforeReviewRef.current = null;
+    }
+  };
+
+  const clearReview = () => {
+    candidateTransactionRef.current = null;
+    restoreEditorAfterReview();
+  };
+
+  const cancelRequest = () => {
+    requestIdRef.current += 1;
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
+  };
 
   const reset = () => {
+    cancelRequest();
+    clearReview();
     setDraft('');
     setInstruction('');
     setIsLoading(false);
     setProposal(null);
   };
 
+  useEffect(
+    () => () => {
+      cancelRequest();
+      clearReview();
+    },
+    [editor]
+  );
+
   const generate = async () => {
     if (!editor) return;
 
     let nextProposal: LessonAiProposal;
+    let requestBody: ReturnType<typeof prepareAiEdit>['request'];
     try {
-      nextProposal = createLessonAiProposal(editor);
+      const preparedEdit = prepareAiEdit(editor, instruction);
+      nextProposal = preparedEdit.proposal;
+      requestBody = preparedEdit.request;
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -81,20 +104,20 @@ export function LessonEditorAiAssistant() {
       return;
     }
 
+    const requestId = requestIdRef.current + 1;
+    const abortController = new AbortController();
+    requestIdRef.current = requestId;
+    abortControllerRef.current = abortController;
     setIsLoading(true);
     setDraft('');
     setProposal(nextProposal);
 
     try {
       const response = await fetch('/api/v1/ai/lesson-editor', {
-        body: JSON.stringify({
-          beforeText: nextProposal.beforeText,
-          html: nextProposal.html,
-          instruction,
-          selectionText: nextProposal.selectionText,
-        }),
+        body: JSON.stringify(requestBody),
         headers: { 'Content-Type': 'application/json' },
         method: 'POST',
+        signal: abortController.signal,
       });
       if (!response.ok || !response.body) {
         throw new Error(
@@ -111,31 +134,49 @@ export function LessonEditorAiAssistant() {
         const { done, value } = await reader.read();
         if (done) break;
         output += decoder.decode(value, { stream: true });
-        setDraft(output);
+        if (requestIdRef.current === requestId) setDraft(output);
       }
 
       output += decoder.decode();
+      if (requestIdRef.current !== requestId) return;
+
+      const candidate = resolveAiEdit(editor, nextProposal, output);
+      showLessonAiReview(editor, nextProposal, candidate);
+      candidateTransactionRef.current = candidate;
+      editableBeforeReviewRef.current = editor.isEditable;
+      editor.setEditable(false);
       setDraft(output);
-      createLessonAiTransaction(editor, nextProposal, output);
     } catch (error) {
+      if (abortController.signal.aborted) return;
       setProposal(null);
       toast.error(
         error instanceof Error ? error.message : 'AI editing failed.'
       );
     } finally {
-      setIsLoading(false);
+      if (requestIdRef.current === requestId) {
+        abortControllerRef.current = null;
+        setIsLoading(false);
+      }
     }
   };
 
   const accept = () => {
-    if (!editor || !proposal || !draft) return;
+    const candidate = candidateTransactionRef.current;
+    if (!editor || !proposal || !draft || !candidate) return;
 
     try {
       editor.view.dispatch(
-        createLessonAiTransaction(editor, proposal, draft).scrollIntoView()
+        clearLessonAiReviewTransaction(editor, candidate).scrollIntoView()
       );
+      candidateTransactionRef.current = null;
+      if (editableBeforeReviewRef.current !== null) {
+        editor.setEditable(editableBeforeReviewRef.current);
+        editableBeforeReviewRef.current = null;
+      }
       setIsOpen(false);
-      reset();
+      setDraft('');
+      setInstruction('');
+      setProposal(null);
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : 'Unable to apply the AI edit.'
@@ -143,10 +184,6 @@ export function LessonEditorAiAssistant() {
     }
   };
 
-  const diff =
-    proposal && draft
-      ? getTextDiff(proposal.beforeText, draft.replace(/<[^>]+>/g, ' '))
-      : null;
   const disabled = !editor || selectionEmpty;
 
   return (
@@ -203,32 +240,16 @@ export function LessonEditorAiAssistant() {
                 <Spinner /> {t('generating')}
               </div>
             ) : null}
-            {diff ? (
-              <div
-                aria-label={t('proposedChanges')}
-                className="max-h-52 overflow-y-auto rounded-md border bg-muted/30 p-2 text-sm leading-6"
-                role="region"
-              >
-                <span>{diff.prefix}</span>
-                {diff.removed ? (
-                  <del className="bg-destructive/15 text-destructive">
-                    {diff.removed}
-                  </del>
-                ) : null}
-                {diff.added ? (
-                  <ins className="bg-primary/15 text-primary no-underline">
-                    {diff.added}
-                  </ins>
-                ) : null}
-                <span>{diff.suffix}</span>
-              </div>
+            {!isLoading && draft ? (
+              <p className="text-muted-foreground text-sm" role="status">
+                {t('reviewInEditor')}
+              </p>
             ) : null}
             {!isLoading ? (
               <div className="flex justify-end gap-2">
                 <Button
                   onClick={() => {
-                    setProposal(null);
-                    setDraft('');
+                    reset();
                   }}
                   size="sm"
                   variant="outline"

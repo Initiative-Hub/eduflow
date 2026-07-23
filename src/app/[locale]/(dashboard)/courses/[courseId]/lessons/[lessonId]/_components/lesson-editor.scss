@@ -15,7 +15,9 @@
 }
 
 .lesson-editor-content
-  .tiptap.ProseMirror.lesson-tiptap-editor[contenteditable="true"] {
+  .tiptap.ProseMirror.lesson-tiptap-editor[contenteditable="true"],
+.lesson-editor-content
+  .tiptap.ProseMirror.lesson-tiptap-editor.lesson-ai-review-active {
   margin-top: 1rem;
   padding: 1rem;
   border: 1px solid var(--border);
@@ -31,6 +33,28 @@
   float: left;
   height: 0;
   pointer-events: none;
+}
+
+.lesson-editor-content .lesson-ai-review-deleted {
+  border-radius: 0.125rem;
+  background: color-mix(in oklab, var(--destructive) 14%, transparent);
+  color: var(--destructive);
+  text-decoration: line-through;
+}
+
+.lesson-editor-content .lesson-ai-review-inserted {
+  border-radius: 0.125rem;
+  background: color-mix(in oklab, var(--primary) 14%, transparent);
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.lesson-editor-content .lesson-ai-review-original-block {
+  border-radius: 0.5rem;
+  background: color-mix(in oklab, var(--destructive) 9%, transparent);
+  color: var(--destructive);
+  opacity: 0.82;
+  text-decoration: line-through;
 }
 
 div[data-youtube-video] {
