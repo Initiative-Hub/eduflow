@@ -133,6 +133,9 @@ export class AssignmentService {
               in: assignments.map((assignment) => assignment.id),
             },
           },
+          orderBy: {
+            createdAt: 'desc',
+          },
           select: {
             assignmentId: true,
             status: true,
@@ -141,9 +144,13 @@ export class AssignmentService {
         })
       : [];
 
-    const submissionMap = new Map(
-      ownSubmissions.map((submission) => [submission.assignmentId, submission])
-    );
+    const submissionMap = new Map<string, (typeof ownSubmissions)[number]>();
+
+    for (const submission of ownSubmissions) {
+      if (!submissionMap.has(submission.assignmentId)) {
+        submissionMap.set(submission.assignmentId, submission);
+      }
+    }
 
     return assignments.map((assignment) => ({
       ...assignment,
@@ -186,12 +193,13 @@ export class AssignmentService {
     });
 
     const submission = studentEnrollment
-      ? await prisma.assignmentSubmission.findUnique({
+      ? await prisma.assignmentSubmission.findFirst({
           where: {
-            assignmentId_studentId: {
-              assignmentId,
-              studentId: userId,
-            },
+            assignmentId,
+            studentId: userId,
+          },
+          orderBy: {
+            createdAt: 'desc',
           },
           include: {
             files: {
@@ -329,24 +337,23 @@ export class AssignmentService {
       input.userId
     );
 
-    const existingSubmission = await prisma.assignmentSubmission.findUnique({
+    if (assignment.dueAt && new Date() > assignment.dueAt) {
+      throw new Error('The assignment deadline has passed');
+    }
+
+    const existingDraft = await prisma.assignmentSubmission.findFirst({
       where: {
-        assignmentId_studentId: {
-          assignmentId: input.assignmentId,
-          studentId: input.userId,
-        },
+        assignmentId: input.assignmentId,
+        studentId: input.userId,
+        status: AssignmentSubmissionStatus.DRAFT,
+      },
+      orderBy: {
+        createdAt: 'desc',
       },
     });
 
-    if (
-      existingSubmission &&
-      existingSubmission.status !== AssignmentSubmissionStatus.DRAFT
-    ) {
-      throw new Error('This assignment has already been submitted');
-    }
-
     const submission =
-      existingSubmission ??
+      existingDraft ??
       (await prisma.assignmentSubmission.create({
         data: {
           assignmentId: input.assignmentId,
@@ -440,12 +447,14 @@ export class AssignmentService {
       userId
     );
 
-    const submission = await prisma.assignmentSubmission.findUnique({
+    const submission = await prisma.assignmentSubmission.findFirst({
       where: {
-        assignmentId_studentId: {
-          assignmentId,
-          studentId: userId,
-        },
+        assignmentId,
+        studentId: userId,
+        status: AssignmentSubmissionStatus.DRAFT,
+      },
+      orderBy: {
+        createdAt: 'desc',
       },
       include: {
         files: {
@@ -462,10 +471,6 @@ export class AssignmentService {
 
     if (!submission) {
       throw new Error('Upload at least one file before submitting');
-    }
-
-    if (submission.status !== AssignmentSubmissionStatus.DRAFT) {
-      throw new Error('This assignment has already been submitted');
     }
 
     const readyFiles = submission.files.filter(
@@ -503,10 +508,19 @@ export class AssignmentService {
     const submissions = await prisma.assignmentSubmission.findMany({
       where: {
         assignmentId,
+        status: {
+          in: [
+            AssignmentSubmissionStatus.SUBMITTED,
+            AssignmentSubmissionStatus.GRADED,
+          ],
+        },
       },
-      orderBy: {
-        submittedAt: 'asc',
-      },
+      orderBy: [
+        {
+          studentId: 'asc',
+        },
+        { createdAt: 'desc' },
+      ],
       include: {
         student: {
           select: {
@@ -531,7 +545,15 @@ export class AssignmentService {
       },
     });
 
-    return submissions.map((submission) => ({
+    const latestByStudent = new Map<string, (typeof submissions)[number]>();
+
+    for (const submission of submissions) {
+      if (!latestByStudent.has(submission.studentId)) {
+        latestByStudent.set(submission.studentId, submission);
+      }
+    }
+
+    return Array.from(latestByStudent.values()).map((submission) => ({
       ...submission,
       files: submission.files.map((entry) => ({
         ...entry,
