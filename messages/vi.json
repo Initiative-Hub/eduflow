@@ -1113,6 +1113,20 @@
       "viewAllAttempts": "Xem tất cả lần làm"
     },
     "LessonEditor": {
+      "aiAssistant": {
+        "accept": "Chấp nhận",
+        "ariaLabel": "Yêu cầu AI chỉnh sửa nội dung đã chọn",
+        "description": "Chỉ khối nội dung bài học đã chọn được gửi để tạo đề xuất này.",
+        "generate": "Tạo đề xuất",
+        "generating": "Đang tạo bản xem trước...",
+        "placeholder": "Ví dụ: Làm cho nội dung này rõ ràng và ngắn gọn hơn",
+        "promptLabel": "Yêu cầu chỉnh sửa bằng AI",
+        "proposedChanges": "Các thay đổi được đề xuất",
+        "reject": "Từ chối",
+        "title": "Chỉnh sửa phần đã chọn bằng AI",
+        "tooltip": "Chỉnh sửa phần đã chọn bằng AI",
+        "tooltipDisabled": "Chọn nội dung để chỉnh sửa bằng AI"
+      },
       "cancel": "Hủy",
       "content": "Nội dung bài học",
       "save": "Lưu",

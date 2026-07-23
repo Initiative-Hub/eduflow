@@ -29,6 +29,7 @@ import {
   ToolbarSeparator,
 } from '@/components/tiptap-ui-primitive/toolbar';
 import { useIsBreakpoint } from '@/hooks/use-is-breakpoint';
+import { LessonEditorAiAssistant } from './lesson-editor-ai-assistant';
 
 function MainToolbarContent({
   onHighlighterClick,
@@ -43,6 +44,7 @@ function MainToolbarContent({
     <>
       <Spacer />
       <ToolbarGroup>
+        <LessonEditorAiAssistant />
         <UndoRedoButton action="undo" />
         <UndoRedoButton action="redo" />
       </ToolbarGroup>

@@ -1113,6 +1113,20 @@
       "viewAllAttempts": "View all attempts"
     },
     "LessonEditor": {
+      "aiAssistant": {
+        "accept": "Accept",
+        "ariaLabel": "Ask AI to edit the selected content",
+        "description": "Only the selected lesson block is sent for this suggestion.",
+        "generate": "Generate suggestion",
+        "generating": "Generating preview...",
+        "placeholder": "e.g. Make this clearer and more concise",
+        "promptLabel": "AI editing instruction",
+        "proposedChanges": "Proposed changes",
+        "reject": "Reject",
+        "title": "Edit selection with AI",
+        "tooltip": "Edit selection with AI",
+        "tooltipDisabled": "Select content to edit with AI"
+      },
       "cancel": "Cancel",
       "content": "Lesson Content",
       "save": "Save",
