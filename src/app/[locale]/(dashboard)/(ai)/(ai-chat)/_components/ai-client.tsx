@@ -14,7 +14,7 @@ import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
+import { DEFAULT_CHAT_MODEL } from '@/services/ai/chat-provider.constants';
 import type { ChatSubmitAttachments } from '@/types/chat-attachments';
 import { ChatLessonReferenceTool } from '../../_components/chat-lesson-reference-tool';
 import { ChatShareButton } from '../../_components/chat-share-button';

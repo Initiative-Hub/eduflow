@@ -14,7 +14,7 @@ import type {
   StudyMode,
   StudyQuizOptions,
 } from '@/lib/validations/study.schema';
-import { DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
+import { DEFAULT_CHAT_MODEL } from '@/services/ai/chat-provider.constants';
 import { useChatSessionStore } from '@/stores/useChatSessionStore';
 import type {
   ChatFileUIPart,
