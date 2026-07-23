@@ -10,7 +10,7 @@ import { AssignmentService } from '@/services/AssignmentService';
  *     tags:
  *       - Assignment submissions
  *     summary: List assignment submissions
- *     description: Returns all submissions for an assignment, including student identity, attached file metadata, score, and feedback. Requires assessment-results permission.
+ *     description: Returns the latest finalized submission for each student, including student identity, attached file metadata, score, and feedback. Requires assessment-results permission.
  *     security:
  *       - SessionCookie: []
  *     parameters:

@@ -31,8 +31,9 @@ export function StudentSubmissionPanel({
   const isPastDue = assignment.dueAt
     ? new Date(assignment.dueAt).getTime() < Date.now()
     : false;
-  const canUpload =
-    (!submission || submission.status === 'DRAFT') && !isPastDue;
+
+  const canUpload = !isPastDue;
+
   const canSubmit =
     submission?.status === 'DRAFT' && submission.files.length > 0 && !isPastDue;
 
@@ -73,6 +74,12 @@ export function StudentSubmissionPanel({
           className="hidden"
           onChange={handleFileChange}
         />
+
+        {!isPastDue && submission && status !== 'DRAFT' ? (
+          <p className="rounded-lg bg-muted px-3 py-2 text-muted-foreground text-sm">
+            {t('resubmitDescription')}
+          </p>
+        ) : null}
 
         {canUpload ? (
           <button

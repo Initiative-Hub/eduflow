@@ -82,11 +82,11 @@ const bodySchema = z.object({
  *                     name:
  *                       type: string
  *       400:
- *         description: The assignment identifier or upload metadata is invalid.
+ *         description: The assignment identifier or upload metadata is invalid, or the assignment deadline has passed.
  *       401:
  *         description: Authentication is required.
  *       403:
- *         description: The user is not an enrolled student or the assignment was already submitted.
+ *         description: The user is not an enrolled student.
  *       500:
  *         description: Failed to initialize the upload.
  */
@@ -112,11 +112,12 @@ export const POST = withAuth(async (request, session, { params }) => {
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Internal error';
 
-    if (
-      message === 'Only students can submit this assignment' ||
-      message === 'This assignment has already been submitted'
-    ) {
+    if (message === 'Only students can submit this assignment') {
       return NextResponse.json({ message }, { status: 403 });
+    }
+
+    if (message === 'The assignment deadline has passed') {
+      return NextResponse.json({ message }, { status: 400 });
     }
 
     return NextResponse.json({ message }, { status: 500 });
