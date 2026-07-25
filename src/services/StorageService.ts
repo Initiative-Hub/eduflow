@@ -1324,7 +1324,7 @@ export class StorageService {
     if (referencedSubmissionFile) {
       throw createStorageReferencedEntryError();
     }
-    
+
     for (const entry of allEntries) {
       if (entry.isFolder) {
         continue;

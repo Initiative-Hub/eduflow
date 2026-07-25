@@ -1,4 +1,4 @@
-import { API_PREFIX } from "../endpoints";
+import { API_PREFIX } from '../endpoints';
 
 const ASSIGNMENTS_API_PREFIX = `${API_PREFIX}/assignments`;
 
