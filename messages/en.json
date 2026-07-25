@@ -1119,11 +1119,13 @@
         "description": "Only the selected lesson block is sent for this suggestion.",
         "generate": "Generate suggestion",
         "generating": "Generating preview...",
+        "noChanges": "AI did not propose any changes.",
         "placeholder": "e.g. Make this clearer and more concise",
         "promptLabel": "AI editing instruction",
         "reject": "Reject",
         "reviewInEditor": "Review the proposed changes in the editor.",
         "title": "Edit selection with AI",
+        "unableToPreview": "This AI change cannot be previewed safely.",
         "tooltip": "Edit selection with AI",
         "tooltipDisabled": "Select content to edit with AI"
       },

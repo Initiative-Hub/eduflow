@@ -25,6 +25,7 @@ import {
 import {
   clearLessonAiReview,
   clearLessonAiReviewTransaction,
+  LessonAiReviewError,
   showLessonAiReview,
 } from '@/lib/lesson-ai-review';
 
@@ -159,7 +160,11 @@ export function LessonEditorAiAssistant({
       if (abortController.signal.aborted) return;
       setProposal(null);
       toast.error(
-        error instanceof Error ? error.message : 'AI editing failed.'
+        error instanceof LessonAiReviewError
+          ? t(error.reason)
+          : error instanceof Error
+            ? error.message
+            : 'AI editing failed.'
       );
     } finally {
       if (requestIdRef.current === requestId) {

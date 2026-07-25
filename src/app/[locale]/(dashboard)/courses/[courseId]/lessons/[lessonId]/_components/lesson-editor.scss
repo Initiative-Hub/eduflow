@@ -47,6 +47,7 @@
   background: color-mix(in oklab, var(--primary) 14%, transparent);
   color: var(--primary);
   text-decoration: none;
+  pointer-events: none;
 }
 
 .lesson-editor-content .lesson-ai-review-original-block {
@@ -55,6 +56,44 @@
   color: var(--destructive);
   opacity: 0.82;
   text-decoration: line-through;
+}
+
+.lesson-editor-content .lesson-ai-review-original-block,
+.lesson-editor-content .lesson-ai-review-original-block * {
+  color: var(--destructive) !important;
+  text-decoration: line-through;
+}
+
+.lesson-editor-content .lesson-ai-review-original-block iframe,
+.lesson-editor-content .lesson-ai-review-original-block img {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.lesson-editor-content .lesson-ai-review-inserted,
+.lesson-editor-content .lesson-ai-review-inserted * {
+  color: var(--primary) !important;
+}
+
+.lesson-editor-content .lesson-ai-review-inserted-block {
+  display: block;
+  margin: 0.75rem 0;
+}
+
+.lesson-editor-content .lesson-ai-review-inserted-block > :first-child {
+  margin-top: 0;
+}
+
+.lesson-editor-content .lesson-ai-review-inserted-block > :last-child {
+  margin-bottom: 0;
+}
+
+.lesson-editor-content .lesson-ai-review-deleted a[href]::after,
+.lesson-editor-content .lesson-ai-review-original-block a[href]::after,
+.lesson-editor-content .lesson-ai-review-inserted a[href]::after {
+  content: " (" attr(href) ")";
+  font-size: 0.85em;
+  text-decoration: none;
 }
 
 div[data-youtube-video] {

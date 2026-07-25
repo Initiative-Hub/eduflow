@@ -1,7 +1,7 @@
 import type { Editor } from '@tiptap/core';
 import { Extension } from '@tiptap/core';
-import { ChangeSet } from '@tiptap/pm/changeset';
-import type { Node as ProseMirrorNode } from '@tiptap/pm/model';
+import { ChangeSet, type TokenEncoder } from '@tiptap/pm/changeset';
+import { DOMSerializer, type Node as ProseMirrorNode } from '@tiptap/pm/model';
 import { Plugin, PluginKey, type Transaction } from '@tiptap/pm/state';
 import { Decoration, DecorationSet } from '@tiptap/pm/view';
 import type { LessonAiProposal } from '@/lib/lesson-ai-edit';
@@ -12,6 +12,37 @@ type LessonAiReviewMeta =
 
 const lessonAiReviewPluginKey = new PluginKey<DecorationSet>('lessonAiReview');
 const lessonAiReviewActiveClass = 'lesson-ai-review-active';
+
+export class LessonAiReviewError extends Error {
+  constructor(public readonly reason: 'noChanges' | 'unableToPreview') {
+    super(reason);
+  }
+}
+
+function stableValue(value: unknown): string {
+  if (value === undefined) return 'undefined';
+  if (value === null || typeof value !== 'object') {
+    return JSON.stringify(value) ?? String(value);
+  }
+  if (Array.isArray(value)) return `[${value.map(stableValue).join(',')}]`;
+
+  const record = value as Record<string, unknown>;
+  return `{${Object.keys(record)
+    .sort()
+    .map((key) => `${JSON.stringify(key)}:${stableValue(record[key])}`)
+    .join(',')}}`;
+}
+
+const reviewTokenEncoder: TokenEncoder<string> = {
+  compareTokens: (left, right) => left === right,
+  encodeCharacter: (character, marks) =>
+    `text:${character}:${marks
+      .map((mark) => `${mark.type.name}:${stableValue(mark.attrs)}`)
+      .join('|')}`,
+  encodeNodeEnd: (node) => `end:${node.type.name}`,
+  encodeNodeStart: (node) =>
+    `start:${node.type.name}:${stableValue(node.attrs)}`,
+};
 
 function blockShape(node: ProseMirrorNode): string {
   if (node.isText) return '';
@@ -37,12 +68,32 @@ function hasStructuralChange(
   return blockShape(original) !== blockShape(replacement);
 }
 
-function createInsertedTextWidget(text: string) {
+function getCandidateRange(proposal: LessonAiProposal, candidate: Transaction) {
+  return {
+    from: candidate.mapping.map(proposal.from, -1),
+    to: candidate.mapping.map(proposal.to, 1),
+  };
+}
+
+function createCandidateWidget(
+  document: ProseMirrorNode,
+  from: number,
+  to: number,
+  className: string,
+  tagName: 'div' | 'span'
+) {
+  const content = document.slice(from, to).content;
+  if (content.size === 0) return null;
+
+  const renderedContent = DOMSerializer.fromSchema(document.type.schema)
+    .serializeFragment(content)
+    .cloneNode(true) as DocumentFragment;
+
   return () => {
-    const widget = document.createElement('span');
-    widget.className = 'lesson-ai-review-inserted';
+    const widget = window.document.createElement(tagName);
+    widget.className = className;
     widget.contentEditable = 'false';
-    widget.textContent = text;
+    widget.append(renderedContent.cloneNode(true));
     return widget;
   };
 }
@@ -51,11 +102,11 @@ function createInlineDecorations(
   proposal: LessonAiProposal,
   candidate: Transaction
 ) {
-  const changes = ChangeSet.create(proposal.document).addSteps(
-    candidate.doc,
-    candidate.mapping.maps,
-    null
-  ).changes;
+  const changes = ChangeSet.create(
+    proposal.document,
+    undefined,
+    reviewTokenEncoder
+  ).addSteps(candidate.doc, candidate.mapping.maps, null).changes;
   const decorations: Decoration[] = [];
 
   for (const change of changes) {
@@ -68,12 +119,18 @@ function createInlineDecorations(
     }
 
     if (change.toB > change.fromB) {
-      const text = candidate.doc.textBetween(change.fromB, change.toB, ' ');
-      if (text) {
+      const widget = createCandidateWidget(
+        candidate.doc,
+        change.fromB,
+        change.toB,
+        'lesson-ai-review-inserted',
+        'span'
+      );
+      if (widget) {
         decorations.push(
           Decoration.widget(
             candidate.mapping.invert().map(change.fromB, -1),
-            createInsertedTextWidget(text),
+            widget,
             {
               ignoreSelection: true,
               key: `lesson-ai-review-inserted-${change.fromA}-${change.toA}`,
@@ -89,20 +146,6 @@ function createInlineDecorations(
   return decorations;
 }
 
-function getInlinePreviewPosition(proposal: LessonAiProposal) {
-  let position = proposal.from;
-
-  proposal.document.nodesBetween(proposal.from, proposal.to, (node, pos) => {
-    if (position !== proposal.from) return false;
-    if (!node.isTextblock) return;
-
-    position = pos + 1;
-    return false;
-  });
-
-  return position;
-}
-
 function createStructuralDecorations(
   proposal: LessonAiProposal,
   candidate: Transaction
@@ -112,22 +155,23 @@ function createStructuralDecorations(
       class: 'lesson-ai-review-original-block',
     })
   );
-  const candidateFrom = candidate.mapping.map(proposal.from, -1);
-  const candidateTo = candidate.mapping.map(proposal.to, 1);
-  const text = candidate.doc.textBetween(candidateFrom, candidateTo, ' ');
+  const { from, to } = getCandidateRange(proposal, candidate);
+  const widget = createCandidateWidget(
+    candidate.doc,
+    from,
+    to,
+    'lesson-ai-review-inserted lesson-ai-review-inserted-block',
+    'div'
+  );
 
-  if (text) {
+  if (widget) {
     decorations.push(
-      Decoration.widget(
-        getInlinePreviewPosition(proposal),
-        createInsertedTextWidget(text),
-        {
-          ignoreSelection: true,
-          key: 'lesson-ai-review-structural-inserted',
-          side: -1,
-          stopEvent: () => true,
-        }
-      )
+      Decoration.widget(proposal.previewAnchor, widget, {
+        ignoreSelection: true,
+        key: 'lesson-ai-review-structural-inserted',
+        side: -1,
+        stopEvent: () => true,
+      })
     );
   }
 
@@ -138,12 +182,16 @@ function createReviewDecorations(
   proposal: LessonAiProposal,
   candidate: Transaction
 ) {
-  return DecorationSet.create(
-    proposal.document,
-    hasStructuralChange(proposal, candidate)
-      ? createStructuralDecorations(proposal, candidate)
-      : createInlineDecorations(proposal, candidate)
-  );
+  const decorations = hasStructuralChange(proposal, candidate)
+    ? createStructuralDecorations(proposal, candidate)
+    : createInlineDecorations(proposal, candidate);
+  const decorationSet = DecorationSet.create(proposal.document, decorations);
+
+  if (decorationSet.find().length === 0) {
+    throw new LessonAiReviewError('unableToPreview');
+  }
+
+  return decorationSet;
 }
 
 export const LessonAiReview = Extension.create({
@@ -189,10 +237,15 @@ export function showLessonAiReview(
     );
   }
 
+  if (candidate.doc.eq(proposal.document)) {
+    throw new LessonAiReviewError('noChanges');
+  }
+
+  const decorations = createReviewDecorations(proposal, candidate);
   editor.view.dom.classList.add(lessonAiReviewActiveClass);
   editor.view.dispatch(
     editor.state.tr.setMeta(lessonAiReviewPluginKey, {
-      decorations: createReviewDecorations(proposal, candidate),
+      decorations,
       type: 'set',
     } satisfies LessonAiReviewMeta)
   );
