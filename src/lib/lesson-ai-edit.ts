@@ -1,5 +1,6 @@
 import type { Editor } from '@tiptap/core';
 import type { Node as ProseMirrorNode } from '@tiptap/pm/model';
+import DOMPurify from 'dompurify';
 import {
   DOMSerializer,
   DOMParser as ProseMirrorDOMParser,
@@ -394,36 +395,66 @@ export function prepareAiEdit(
   };
 }
 
-function isSafeUrl(value: string, tagName: string) {
+const lessonAiAllowedTags = [
+  'a',
+  'blockquote',
+  'br',
+  'code',
+  'div',
+  'em',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+  'hr',
+  'iframe',
+  'img',
+  'li',
+  'mark',
+  'ol',
+  'p',
+  'pre',
+  's',
+  'span',
+  'strong',
+  'sub',
+  'sup',
+  'u',
+  'ul',
+];
+
+const lessonAiAllowedAttributes = [
+  'alt',
+  'data-checked',
+  'data-color',
+  'data-type',
+  'data-youtube-video',
+  'height',
+  'href',
+  'rel',
+  'src',
+  'start',
+  'style',
+  'target',
+  'title',
+  'type',
+  'width',
+];
+
+function isYouTubeEmbedUrl(value: string) {
   try {
     const url = new URL(value, window.location.origin);
+    const hostname = url.hostname.toLowerCase();
 
-    if (tagName === 'iframe') {
-      return url.protocol === 'https:' && url.hostname.endsWith('youtube.com');
-    }
-
-    return ['http:', 'https:', 'mailto:', 'tel:'].includes(url.protocol);
+    return (
+      url.protocol === 'https:' &&
+      (hostname === 'youtube.com' || hostname.endsWith('.youtube.com'))
+    );
   } catch {
     return false;
   }
-}
-
-function sanitizeStyle(style: string) {
-  const allowed = style
-    .split(';')
-    .map((declaration) => declaration.trim())
-    .filter(Boolean)
-    .map((declaration) => declaration.split(':').map((part) => part.trim()))
-    .filter(([property, value]) => {
-      if (!property || !value) return false;
-      if (property === 'text-align') {
-        return ['left', 'center', 'right', 'justify'].includes(value);
-      }
-      return property === 'background-color' && /^[-#(),.%\w\s]+$/i.test(value);
-    })
-    .map(([property, value]) => `${property}: ${value}`);
-
-  return allowed.join('; ');
 }
 
 export function sanitizeLessonAiHtml(html: string) {
@@ -431,100 +462,25 @@ export function sanitizeLessonAiHtml(html: string) {
     throw new Error('The AI response is too large to apply safely.');
   }
 
-  const document = new window.DOMParser().parseFromString(html, 'text/html');
-  const allowedTags = new Set([
-    'a',
-    'blockquote',
-    'br',
-    'code',
-    'div',
-    'em',
-    'h1',
-    'h2',
-    'h3',
-    'h4',
-    'h5',
-    'h6',
-    'hr',
-    'iframe',
-    'img',
-    'li',
-    'mark',
-    'ol',
-    'p',
-    'pre',
-    's',
-    'span',
-    'strong',
-    'sub',
-    'sup',
-    'u',
-    'ul',
-  ]);
-  const removeWithContent = new Set([
-    'base',
-    'embed',
-    'link',
-    'object',
-    'script',
-    'style',
-  ]);
-  const allowedAttributes = new Set([
-    'alt',
-    'data-checked',
-    'data-color',
-    'data-type',
-    'data-youtube-video',
-    'height',
-    'href',
-    'rel',
-    'src',
-    'start',
-    'style',
-    'target',
-    'title',
-    'type',
-    'width',
-  ]);
-
-  for (const element of Array.from(
-    document.body.querySelectorAll('*')
-  ).reverse()) {
-    const tagName = element.tagName.toLowerCase();
-
-    if (!allowedTags.has(tagName)) {
-      if (removeWithContent.has(tagName)) {
-        element.remove();
-      } else {
-        element.replaceWith(...Array.from(element.childNodes));
-      }
-      continue;
+  DOMPurify.addHook('uponSanitizeAttribute', (node, data) => {
+    if (
+      node.nodeName.toLowerCase() === 'iframe' &&
+      data.attrName === 'src' &&
+      !isYouTubeEmbedUrl(data.attrValue)
+    ) {
+      data.keepAttr = false;
     }
+  });
 
-    for (const attribute of Array.from(element.attributes)) {
-      const name = attribute.name.toLowerCase();
-
-      if (!allowedAttributes.has(name) || name.startsWith('on')) {
-        element.removeAttribute(attribute.name);
-        continue;
-      }
-
-      if (name === 'style') {
-        const safeStyle = sanitizeStyle(attribute.value);
-        if (safeStyle) element.setAttribute('style', safeStyle);
-        else element.removeAttribute('style');
-      }
-
-      if (
-        (name === 'href' || name === 'src') &&
-        !isSafeUrl(attribute.value, tagName)
-      ) {
-        element.removeAttribute(attribute.name);
-      }
-    }
+  try {
+    return DOMPurify.sanitize(html, {
+      ALLOWED_ATTR: lessonAiAllowedAttributes,
+      ALLOWED_TAGS: lessonAiAllowedTags,
+      ALLOW_DATA_ATTR: false,
+    });
+  } finally {
+    DOMPurify.removeHook('uponSanitizeAttribute');
   }
-
-  return document.body.innerHTML;
 }
 
 function unwrapSelectionMarkers(html: string) {
