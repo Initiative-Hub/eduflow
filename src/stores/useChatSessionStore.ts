@@ -2,7 +2,7 @@ import type { UIMessage } from 'ai';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import type { SocraticGuidanceDepth } from '@/lib/validations/socratic.schema';
-import type { ChatModel } from '@/services/ai/chat-models';
+import type { ChatModel } from '@/services/ai/chat-provider.constants';
 
 interface ChatSessionState {
   pendingMessage: UIMessage | null;

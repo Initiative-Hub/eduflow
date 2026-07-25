@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import * as z from 'zod';
 import { errorResponse } from '@/lib/api/error-response';
-import { withRoles } from '@/lib/api/middlewares';
+import { withAuth } from '@/lib/api/middlewares';
 import { QuizService } from '@/services/QuizService';
 
 // ─── Validation Schema ────────────────────────────────────────────────────────
@@ -80,45 +80,29 @@ const generateQuizInputSchema = z.union([
  *       500:
  *         description: Internal server error
  */
-export const POST = withRoles(
-  ['TEACHER', 'ADMIN'],
-  async (req: Request, sessionData) => {
-    try {
-      const body = await req.json();
+export const POST = withAuth(async (req: Request, sessionData) => {
+  try {
+    const body = await req.json();
 
-      const parsed = generateQuizInputSchema.safeParse(body);
-      if (!parsed.success) {
-        return errorResponse(
-          'VALIDATION_ERROR',
-          'Invalid quiz generation input',
-          400,
-          parsed.error.format()
-        );
-      }
+    const parsed = generateQuizInputSchema.safeParse(body);
+    if (!parsed.success) {
+      return errorResponse(
+        'VALIDATION_ERROR',
+        'Invalid quiz generation input',
+        400,
+        parsed.error.format()
+      );
+    }
 
-      const { topic, apiKey, model, context } = parsed.data;
+    const { topic, apiKey, model, context } = parsed.data;
 
-      if ('courseId' in parsed.data) {
-        const draft = await QuizService.generateDraft(
-          parsed.data.courseId,
-          sessionData.user.id,
-          {
-            lessonIds: parsed.data.lessonIds,
-            questionCounts: parsed.data.questionCounts,
-            topic,
-            apiKey,
-            model,
-            context,
-          }
-        );
-
-        return NextResponse.json(draft, { status: 201 });
-      }
-
-      const quiz = await QuizService.generateAndSave(
-        parsed.data.quizId,
+    if ('courseId' in parsed.data) {
+      const draft = await QuizService.generateDraft(
+        parsed.data.courseId,
         sessionData.user.id,
         {
+          lessonIds: parsed.data.lessonIds,
+          questionCounts: parsed.data.questionCounts,
           topic,
           apiKey,
           model,
@@ -126,26 +110,39 @@ export const POST = withRoles(
         }
       );
 
-      return NextResponse.json(quiz, { status: 201 });
-    } catch (error) {
-      console.error('AI Quiz Generation Error:', error);
-      if (
-        error instanceof Error &&
-        error.message === 'Quiz already has the maximum number of questions'
-      ) {
-        return errorResponse('VALIDATION_ERROR', error.message, 400);
-      }
-      // Surface lesson-not-foundas a 404
-      if (
-        error instanceof Error &&
-        (error.message.startsWith('Lesson not found') ||
-          error.message === 'Forbidden')
-      ) {
-        return error.message === 'Forbidden'
-          ? errorResponse('FORBIDDEN', error.message, 403)
-          : errorResponse('NOT_FOUND', error.message, 404);
-      }
-      return errorResponse('INTERNAL_ERROR', 'Failed to generate quiz', 500);
+      return NextResponse.json(draft, { status: 201 });
     }
+
+    const quiz = await QuizService.generateAndSave(
+      parsed.data.quizId,
+      sessionData.user.id,
+      {
+        topic,
+        apiKey,
+        model,
+        context,
+      }
+    );
+
+    return NextResponse.json(quiz, { status: 201 });
+  } catch (error) {
+    console.error('AI Quiz Generation Error:', error);
+    if (
+      error instanceof Error &&
+      error.message === 'Quiz already has the maximum number of questions'
+    ) {
+      return errorResponse('VALIDATION_ERROR', error.message, 400);
+    }
+    // Surface lesson-not-foundas a 404
+    if (
+      error instanceof Error &&
+      (error.message.startsWith('Lesson not found') ||
+        error.message === 'Forbidden')
+    ) {
+      return error.message === 'Forbidden'
+        ? errorResponse('FORBIDDEN', error.message, 403)
+        : errorResponse('NOT_FOUND', error.message, 404);
+    }
+    return errorResponse('INTERNAL_ERROR', 'Failed to generate quiz', 500);
   }
-);
+});

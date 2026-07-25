@@ -9,8 +9,10 @@ import { AiChatType } from '@/generated/prisma';
 import { getChatOwner } from '@/lib/api/guest-session';
 import { socraticGuidanceDepthSchema } from '@/lib/validations/socratic.schema';
 import { ChatProviderFactory } from '@/services/ai/ChatProviderFactory';
-import { CHAT_MODEL_IDS } from '@/services/ai/chat-models';
-import { DEFAULT_PROVIDER } from '@/services/ai/chat-provider.constants';
+import {
+  CHAT_MODEL_IDS,
+  DEFAULT_PROVIDER,
+} from '@/services/ai/chat-provider.constants';
 import type { ChatProvider } from '@/services/ai/chat-provider.types';
 import { CacheService } from '@/services/CacheService';
 import { ChatPersistenceService } from '@/services/ChatPersistenceService';

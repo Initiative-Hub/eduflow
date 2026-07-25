@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import * as z from 'zod';
 import { errorResponse } from '@/lib/api/error-response';
-import { withRoles } from '@/lib/api/middlewares';
+import { withAuth } from '@/lib/api/middlewares';
+import { getCoursePermissions } from '@/lib/permissions/course-permission';
+import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
 import { prisma } from '@/lib/prisma';
 import { QuizService } from '@/services/QuizService';
 
@@ -34,54 +36,51 @@ const updateQuizDetailsSchema = z.object({
  *       404:
  *         description: Quiz not found
  */
-export const PATCH = withRoles(
-  ['TEACHER', 'ADMIN'],
-  async (req, sessionData, { params }) => {
-    try {
-      const parsedParams = routeParamsSchema.safeParse(await params);
-      if (!parsedParams.success) {
-        return errorResponse(
-          'VALIDATION_ERROR',
-          'Invalid quiz ID',
-          400,
-          parsedParams.error.format()
-        );
-      }
-
-      const parsedBody = updateQuizDetailsSchema.safeParse(await req.json());
-      if (!parsedBody.success) {
-        return errorResponse(
-          'VALIDATION_ERROR',
-          'Invalid quiz data',
-          400,
-          parsedBody.error.format()
-        );
-      }
-
-      const quiz = await QuizService.updateDetails(
-        parsedParams.data.quizId,
-        sessionData.user.id,
-        parsedBody.data
+export const PATCH = withAuth(async (req, sessionData, { params }) => {
+  try {
+    const parsedParams = routeParamsSchema.safeParse(await params);
+    if (!parsedParams.success) {
+      return errorResponse(
+        'VALIDATION_ERROR',
+        'Invalid quiz ID',
+        400,
+        parsedParams.error.format()
       );
-
-      return NextResponse.json(quiz);
-    } catch (error) {
-      if (error instanceof Error && error.message === 'Quiz not found') {
-        return errorResponse('QUIZ_NOT_FOUND', error.message, 404);
-      }
-      if (error instanceof Error && error.message === 'Forbidden') {
-        return errorResponse('FORBIDDEN', error.message, 403);
-      }
-      if (
-        error instanceof Error &&
-        error.message === 'Some lessons do not belong to this course'
-      ) {
-        return errorResponse('VALIDATION_ERROR', error.message, 400);
-      }
-      return errorResponse('INTERNAL_ERROR', 'Failed to update quiz', 500);
     }
+
+    const parsedBody = updateQuizDetailsSchema.safeParse(await req.json());
+    if (!parsedBody.success) {
+      return errorResponse(
+        'VALIDATION_ERROR',
+        'Invalid quiz data',
+        400,
+        parsedBody.error.format()
+      );
+    }
+
+    const quiz = await QuizService.updateDetails(
+      parsedParams.data.quizId,
+      sessionData.user.id,
+      parsedBody.data
+    );
+
+    return NextResponse.json(quiz);
+  } catch (error) {
+    if (error instanceof Error && error.message === 'Quiz not found') {
+      return errorResponse('QUIZ_NOT_FOUND', error.message, 404);
+    }
+    if (error instanceof Error && error.message === 'Forbidden') {
+      return errorResponse('FORBIDDEN', error.message, 403);
+    }
+    if (
+      error instanceof Error &&
+      error.message === 'Some lessons do not belong to this course'
+    ) {
+      return errorResponse('VALIDATION_ERROR', error.message, 400);
+    }
+    return errorResponse('INTERNAL_ERROR', 'Failed to update quiz', 500);
   }
-);
+});
 
 /**
  * @swagger
@@ -100,29 +99,31 @@ export const PATCH = withRoles(
  *       404:
  *         description: Quiz not found
  */
-export const DELETE = withRoles(
-  ['TEACHER', 'ADMIN'],
-  async (_req, sessionData, { params }) => {
-    const parsed = routeParamsSchema.safeParse(await params);
-    if (!parsed.success) {
-      return errorResponse(
-        'VALIDATION_ERROR',
-        'Invalid quiz ID',
-        400,
-        parsed.error.format()
-      );
-    }
-
-    const quiz = await prisma.quiz.findUnique({
-      where: { id: parsed.data.quizId },
-      select: { id: true, course: { select: { ownerId: true } } },
-    });
-    if (!quiz) return errorResponse('QUIZ_NOT_FOUND', 'Quiz not found', 404);
-    if (quiz.course.ownerId !== sessionData.user.id) {
-      return errorResponse('FORBIDDEN', 'Forbidden', 403);
-    }
-
-    await prisma.quiz.delete({ where: { id: quiz.id } });
-    return NextResponse.json({ message: 'Quiz deleted' });
+export const DELETE = withAuth(async (_req, sessionData, { params }) => {
+  const parsed = routeParamsSchema.safeParse(await params);
+  if (!parsed.success) {
+    return errorResponse(
+      'VALIDATION_ERROR',
+      'Invalid quiz ID',
+      400,
+      parsed.error.format()
+    );
   }
-);
+
+  const quiz = await prisma.quiz.findUnique({
+    where: { id: parsed.data.quizId },
+    select: { id: true, courseId: true, course: { select: { ownerId: true } } },
+  });
+  if (!quiz) return errorResponse('QUIZ_NOT_FOUND', 'Quiz not found', 404);
+
+  const permissions = await getCoursePermissions(
+    sessionData.user.id,
+    quiz.courseId
+  );
+  if (permissions.withoutPermission(COURSE_PERMISSION.ASSESSMENTS_DELETE)) {
+    return errorResponse('FORBIDDEN', 'Forbidden', 403);
+  }
+
+  await prisma.quiz.delete({ where: { id: quiz.id } });
+  return NextResponse.json({ message: 'Quiz deleted' });
+});

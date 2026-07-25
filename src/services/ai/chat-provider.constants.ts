@@ -1,10 +1,33 @@
-export const DEFAULT_PROVIDER = 'ai-gateway' as const;
+import type { ChatProvider } from './chat-provider.types';
 
-export const DEFAULT_MODELS = {
-  'ai-gateway': 'gemini-3.1-flash-lite',
-  google: 'gemini-3.1-flash-lite',
-  openrouter: 'gemini-3.1-flash-lite',
-} as const;
+export const CHAT_MODEL_IDS = [
+  'gemini-3.5-flash-lite',
+  'gemini-3.5-flash',
+  'gemini-3.6-flash',
+  'gemini-3.1-pro-preview',
+] as const;
+
+export type ChatModel = (typeof CHAT_MODEL_IDS)[number];
+
+export const DEFAULT_PROVIDER: ChatProvider = 'ai-gateway';
+
+export const DEFAULT_CHAT_MODEL: ChatModel = 'gemini-3.5-flash-lite';
+
+export const DEFAULT_MODELS: Record<ChatProvider, ChatModel> = {
+  'ai-gateway': 'gemini-3.5-flash-lite',
+  google: 'gemini-3.5-flash-lite',
+  openrouter: 'gemini-3.5-flash-lite',
+};
+
+export const CHAT_MODEL_OPTIONS: ReadonlyArray<{
+  id: ChatModel;
+  label: string;
+}> = [
+  { id: 'gemini-3.5-flash-lite', label: 'Gemini 3.5 Flash Lite' },
+  { id: 'gemini-3.5-flash', label: 'Gemini 3.5 Flash' },
+  { id: 'gemini-3.6-flash', label: 'Gemini 3.6 Flash' },
+  { id: 'gemini-3.1-pro-preview', label: 'Gemini 3.1 Pro Preview' },
+];
 
 export const GENERAL_AI_TOOL_SYSTEM_PROMPT = `
   ### GENERAL RULES FOR EDUFLOW AI TOOLS

@@ -8,7 +8,7 @@ import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { DEFAULT_SOCRATIC_GUIDANCE_DEPTH } from '@/lib/validations/socratic.schema';
-import { DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
+import { DEFAULT_CHAT_MODEL } from '@/services/ai/chat-provider.constants';
 import type { ChatSubmitAttachments } from '@/types/chat-attachments';
 import type { SocraticUIMessage } from '@/types/socratic-ui-message';
 import { ChatInput } from '../../_components/chat-input';

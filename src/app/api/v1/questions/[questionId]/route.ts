@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import type { Prisma } from '@/generated/prisma';
 import { errorResponse } from '@/lib/api/error-response';
-import { withAuth, withRoles } from '@/lib/api/middlewares';
+import { withAuth } from '@/lib/api/middlewares';
 import { getCoursePermissions } from '@/lib/permissions/course-permission';
 import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
 import { prisma } from '@/lib/prisma';
@@ -27,37 +27,39 @@ const updateQuestionSchema = z.object({
  *       - Questions
  *     summary: Update a question-bank entry
  */
-export const PUT = withRoles(
-  ['TEACHER', 'ADMIN'],
-  async (req, sessionData, { params }) => {
-    const parsedParams = routeParamsSchema.safeParse(await params);
-    const parsedBody = updateQuestionSchema.safeParse(await req.json());
-    if (!parsedParams.success || !parsedBody.success) {
-      return errorResponse('VALIDATION_ERROR', 'Invalid question data', 400);
-    }
-
-    const question = await prisma.question.findUnique({
-      where: { id: parsedParams.data.questionId },
-      select: { id: true, course: { select: { ownerId: true } } },
-    });
-    if (!question) {
-      return errorResponse('QUESTION_NOT_FOUND', 'Question not found', 404);
-    }
-    if (question.course.ownerId !== sessionData.user.id) {
-      return errorResponse('FORBIDDEN', 'Forbidden', 403);
-    }
-
-    const updatedQuestion = await prisma.question.update({
-      where: { id: question.id },
-      data: {
-        prompt: parsedBody.data.prompt,
-        answerData: parsedBody.data.answerData as Prisma.InputJsonValue,
-        explanation: parsedBody.data.explanation ?? null,
-      },
-    });
-    return NextResponse.json(updatedQuestion);
+export const PUT = withAuth(async (req, sessionData, { params }) => {
+  const parsedParams = routeParamsSchema.safeParse(await params);
+  const parsedBody = updateQuestionSchema.safeParse(await req.json());
+  if (!parsedParams.success || !parsedBody.success) {
+    return errorResponse('VALIDATION_ERROR', 'Invalid question data', 400);
   }
-);
+
+  const question = await prisma.question.findUnique({
+    where: { id: parsedParams.data.questionId },
+    select: { id: true, courseId: true },
+  });
+  if (!question) {
+    return errorResponse('QUESTION_NOT_FOUND', 'Question not found', 404);
+  }
+
+  const permissions = await getCoursePermissions(
+    sessionData.user.id,
+    question.courseId
+  );
+  if (permissions.withoutPermission(COURSE_PERMISSION.ASSESSMENTS_UPDATE)) {
+    return errorResponse('FORBIDDEN', 'Forbidden', 403);
+  }
+
+  const updatedQuestion = await prisma.question.update({
+    where: { id: question.id },
+    data: {
+      prompt: parsedBody.data.prompt,
+      answerData: parsedBody.data.answerData as Prisma.InputJsonValue,
+      explanation: parsedBody.data.explanation ?? null,
+    },
+  });
+  return NextResponse.json(updatedQuestion);
+});
 
 // ─── DELETE /api/v1/questions/:questionId ─────────────────────────────────────
 

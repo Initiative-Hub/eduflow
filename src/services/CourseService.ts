@@ -67,23 +67,6 @@ function scheduleLessonContentIndexing(lessonId: string) {
 }
 
 export class CourseService {
-  static async assertCourseOwner(courseId: string, userId: string) {
-    const course = await prisma.course.findUnique({
-      where: { id: courseId },
-      select: { deletedAt: true, ownerId: true },
-    });
-
-    if (!course || course.deletedAt) {
-      throw new Error('Course not found');
-    }
-
-    if (course.ownerId !== userId) {
-      throw new Error('Forbidden');
-    }
-
-    return course;
-  }
-
   static async createCourse(data: {
     ownerId: string;
     title: string;

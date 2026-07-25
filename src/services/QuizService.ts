@@ -32,7 +32,6 @@ import {
   QUIZ_GENERATION_PROMPT,
 } from '@/services/ai/chat-provider.constants';
 import type { AIQuizInput } from '@/services/ai/chat-provider.types';
-import { CourseService } from '@/services/CourseService';
 import {
   getQuestionPrompt,
   resolveReferencedQuestions,
@@ -298,7 +297,14 @@ export class QuizService {
       questionCounts: Partial<Record<QuestionSubType, number>>;
     }
   ) {
-    await CourseService.assertCourseOwner(courseId, userId);
+    const permissions = await getCoursePermissions(userId, courseId);
+    if (
+      permissions.withoutPermission(COURSE_PERMISSION.ASSESSMENTS_CREATE) ||
+      permissions.withoutPermission(COURSE_PERMISSION.AI_USE_COURSE_GENERATION)
+    ) {
+      throw new Error('Forbidden');
+    }
+
     const lessons = await prisma.lesson.findMany({
       where: {
         id: { in: input.lessonIds },
@@ -332,8 +338,6 @@ export class QuizService {
     ) {
       throw new Error('Forbidden');
     }
-
-    await CourseService.assertCourseOwner(courseId, userId);
 
     const linkedLessons = await prisma.lesson.findMany({
       where: {
@@ -465,7 +469,6 @@ export class QuizService {
       select: {
         id: true,
         courseId: true,
-        course: { select: { ownerId: true } },
       },
     });
 
@@ -475,10 +478,7 @@ export class QuizService {
 
     const updatePermissions = await getCoursePermissions(userId, quiz.courseId);
     if (
-      updatePermissions.withoutPermission(
-        COURSE_PERMISSION.ASSESSMENTS_UPDATE
-      ) ||
-      quiz.course.ownerId !== userId
+      updatePermissions.withoutPermission(COURSE_PERMISSION.ASSESSMENTS_UPDATE)
     ) {
       throw new Error('Forbidden');
     }
@@ -553,7 +553,6 @@ export class QuizService {
       select: {
         id: true,
         courseId: true,
-        course: { select: { ownerId: true } },
       },
     });
 
@@ -563,10 +562,7 @@ export class QuizService {
 
     const updatePermissions = await getCoursePermissions(userId, quiz.courseId);
     if (
-      updatePermissions.withoutPermission(
-        COURSE_PERMISSION.ASSESSMENTS_UPDATE
-      ) ||
-      quiz.course.ownerId !== userId
+      updatePermissions.withoutPermission(COURSE_PERMISSION.ASSESSMENTS_UPDATE)
     ) {
       throw new Error('Forbidden');
     }
@@ -629,7 +625,6 @@ export class QuizService {
     const fetchedQuiz = await prisma.quiz.findUnique({
       where: { id: quizId },
       include: {
-        course: { select: { ownerId: true } },
         lessonQuizzes: {
           select: {
             lesson: { select: { id: true, title: true, content: true } },
@@ -659,8 +654,7 @@ export class QuizService {
       ) ||
       updatePermissions.withoutPermission(
         COURSE_PERMISSION.AI_USE_COURSE_GENERATION
-      ) ||
-      fetchedQuiz.course.ownerId !== userId
+      )
     ) {
       throw new Error('Forbidden');
     }
