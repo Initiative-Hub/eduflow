@@ -14,6 +14,8 @@ from app.schemas.slide_schema import RenderSlideReq
 
 logger = logging.getLogger(__name__)
 
+BASE_TEMPLATE_COLLECTION = "templates"
+
 DEFAULT_COLLECTIONS = {
     "templates",
     "default",
@@ -354,9 +356,7 @@ class SlideService:
             collection = "templates"
 
         col_path = Path(SLIDE_TEMPLATES_DIR) / collection
-        # Check if the folder exists and has files (already downloaded)
-        if col_path.exists() and any(col_path.glob("**/*.svg")):
-            return col_path
+        has_local_layouts = col_path.exists() and any(col_path.glob("**/*.svg"))
 
         if collection.lower() in DEFAULT_COLLECTIONS:
             from app.deps import AWS_S3_DEFAULT_TEMPLATES_BUCKET as BUCKET_NAME
@@ -374,17 +374,42 @@ class SlideService:
             logger.warning(
                 f"No files found in S3 bucket {BUCKET_NAME} for template collection '{collection}' at prefix '{s3_prefix}'"
             )
+            if has_local_layouts:
+                # Keep serving a locally cached collection when S3 is empty or
+                # temporarily unreachable.
+                return col_path
+            # A missing collection must not degrade into an empty library dir,
+            # which fails later with a confusing local-path error. Fall back to
+            # the base layout collection instead.
+            if collection != BASE_TEMPLATE_COLLECTION:
+                logger.info(
+                    f"Falling back to base template collection '{BASE_TEMPLATE_COLLECTION}'"
+                )
+                return await self._ensure_collection_downloaded(
+                    BASE_TEMPLATE_COLLECTION
+                )
+            return col_path
+
+        # Reconcile the local cache with S3 so previously truncated or partial
+        # downloads are repaired instead of being treated as complete.
+        pending: list[tuple[str, Path]] = []
+        for key in s3_keys:
+            relative = key[len(s3_prefix) :]
+            if not relative or key.endswith("/"):
+                continue
+            dest = col_path / relative
+            if not dest.exists():
+                pending.append((key, dest))
+
+        if not pending:
             return col_path
 
         logger.info(
-            f"Downloading template collection '{collection}' from S3 bucket {BUCKET_NAME}..."
+            f"Downloading {len(pending)} file(s) for template collection "
+            f"'{collection}' from S3 bucket {BUCKET_NAME}..."
         )
         col_path.mkdir(parents=True, exist_ok=True)
-        for key in s3_keys:
-            relative = key[len(s3_prefix) :]
-            if not relative:
-                continue
-            dest = col_path / relative
+        for key, dest in pending:
             dest.parent.mkdir(parents=True, exist_ok=True)
             await download_file_from_s3(
                 key,
@@ -670,8 +695,14 @@ class SlideService:
         library_dir = SLIDE_TEMPLATES_DIR
         temp_dir_context = None
 
-        col_name = collection or "templates"
+        col_name = collection or BASE_TEMPLATE_COLLECTION
         collection_path = await self._ensure_collection_downloaded(col_name)
+        if not any(collection_path.glob("**/*.svg")):
+            raise ValueError(
+                f"Template collection '{col_name}' has no .svg layouts available. "
+                "Verify it exists under the 'templates/<collection>/' prefix in the "
+                "configured template S3 bucket."
+            )
         if collection_path.exists() and collection_path.is_dir():
             # Detect format: new extract_template_smart collections have
             # category subdirectories (TITLE_SLIDE/, AGENDA_OUTLINE/, etc.)

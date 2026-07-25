@@ -134,10 +134,13 @@ async def list_files_in_s3_prefix(
         bucket = bucket_name or AWS_S3_BUCKET
 
         def list_keys():
-            response = s3.list_objects_v2(Bucket=bucket, Prefix=prefix)
-            if "Contents" not in response:
-                return []
-            return [item["Key"] for item in response["Contents"]]
+            # list_objects_v2 caps each response at 1000 keys, so paginate to
+            # avoid silently truncating large template collections.
+            paginator = s3.get_paginator("list_objects_v2")
+            keys: list[str] = []
+            for page in paginator.paginate(Bucket=bucket, Prefix=prefix):
+                keys.extend(item["Key"] for item in page.get("Contents", []))
+            return keys
 
         return await run_in_threadpool(list_keys)
     except Exception as e:

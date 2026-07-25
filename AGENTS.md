@@ -145,6 +145,8 @@ for any tasks.).
   - For built-in auto-style selection, higher-education, university lecture, student-feedback, and research-presentation topics should bias toward `rmit_red_modern` over generic light themes such as `clean_light`.
   - When the planning prompt explicitly requests a built-in style collection by name or alias (for example, "use the RMIT template" or just `rmit_red_modern`), treat that request as authoritative in `auto` mode and override softer topic-based style heuristics.
   - When live template inventory is missing some built-in default collections, merge it with the checked-in built-in style registry before planning or resolving `auto` recommendations so explicit built-in style requests still remain selectable.
+  - Always paginate S3 listings for templates and other prefixes; `list_objects_v2` truncates at 1000 keys, which silently hides collections and produces partial local template caches.
+  - Reconcile cached template collections against S3 instead of trusting the presence of any local `.svg`, and resolve a missing collection to the base `templates` library rather than an empty directory so generation fails with an actionable message.
   - **System Template Style Registration**: When adding a new system-wide default style collection (e.g. `illustrative_culture`, `minimalist_gradient`), register it in the following places so that S3 requests are routed to the default templates bucket:
     1. **`slide_service.py`**: Add it to `default_collections` set (in `_ensure_collection_downloaded`), the fallback descriptions dictionary, and the directory cleanup exemption whitelist.
     2. **`slide_controller.py`**: Add it to `default_collections` set in the categories lookup controller.
