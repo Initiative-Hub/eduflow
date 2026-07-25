@@ -583,7 +583,7 @@ export class AssignmentService {
     await AssignmentService.assertPermission(
       userId,
       assignment.courseId,
-      COURSE_PERMISSION.ASSESSMENTS_RESULTS_VIEW
+      COURSE_PERMISSION.ASSESSMENTS_GRADE
     );
 
     const submissions = await prisma.assignmentSubmission.findMany({
@@ -725,17 +725,18 @@ export class AssignmentService {
       throw new Error('File not found');
     }
 
-    const assignment = attachment.submission.assignment;
-
-    const permissions = await getCoursePermissions(userId, assignment.courseId);
-
     const isStudentOwner = attachment.submission.studentId === userId;
 
-    if (
-      !isStudentOwner &&
-      permissions.withoutPermission(COURSE_PERMISSION.ASSESSMENTS_RESULTS_VIEW)
-    ) {
-      throw new Error('Forbidden');
+    if (!isStudentOwner) {
+      if (attachment.submission.status === AssignmentSubmissionStatus.DRAFT) {
+        throw new Error('Forbidden');
+      }
+
+      await AssignmentService.assertPermission(
+        userId,
+        attachment.submission.assignment.courseId,
+        COURSE_PERMISSION.ASSESSMENTS_GRADE
+      );
     }
 
     return createInventoryReadSignedUrl({

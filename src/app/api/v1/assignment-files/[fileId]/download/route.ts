@@ -10,7 +10,7 @@ import { AssignmentService } from '@/services/AssignmentService';
  *     tags:
  *       - Assignment submissions
  *     summary: Download an assignment submission file
- *     description: Redirects the submission owner or an authorized course grader to a short-lived signed download URL for a ready assignment file.
+ *     description: Redirects the submission owner to their ready file, or a user with assessment-grading permission to a ready finalized submission file.
  *     security:
  *       - SessionCookie: []
  *     parameters:

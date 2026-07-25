@@ -10,7 +10,7 @@ import { AssignmentService } from '@/services/AssignmentService';
  *     tags:
  *       - Assignment submissions
  *     summary: List assignment submissions
- *     description: Returns the latest finalized submission for each student, including student identity, attached file metadata, score, and feedback. Requires assessment-results permission.
+ *     description: Returns the latest finalized submission for each student, including student identity, attached file metadata, score, and feedback. Requires assessment-grading permission.
  *     security:
  *       - SessionCookie: []
  *     parameters:
@@ -35,7 +35,7 @@ import { AssignmentService } from '@/services/AssignmentService';
  *       401:
  *         description: Authentication is required.
  *       403:
- *         description: The user cannot view results for this assignment.
+ *         description: The user cannot grade submissions for this assignment.
  *       500:
  *         description: Failed to list assignment submissions.
  */
