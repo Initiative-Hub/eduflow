@@ -6,6 +6,7 @@ import {
   Clock3,
   FileText,
   Inbox,
+  Search,
   Timer,
 } from 'lucide-react';
 import Link from 'next/link';

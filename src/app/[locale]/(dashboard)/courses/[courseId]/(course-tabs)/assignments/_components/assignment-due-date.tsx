@@ -2,7 +2,6 @@
 
 import { CalendarClock } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { getDueKind } from './assignment-list-types';
 
@@ -33,24 +32,19 @@ export function AssignmentDueDate({
     timeStyle: 'short',
   }).format(dueDate);
 
-  const relativeLabel =
+  const urgencyLabel =
     kind === 'overdue'
       ? t('overdue')
       : kind === 'today'
         ? t('dueToday')
         : kind === 'tomorrow'
           ? t('dueTomorrow')
-          : t('dueInDays', {
-              count: Math.max(
-                1,
-                Math.ceil((dueDate.getTime() - now) / (24 * 60 * 60 * 1000))
-              ),
-            });
+          : null;
 
   return (
     <span
       className={cn(
-        'inline-flex flex-wrap items-center gap-1.5',
+        'inline-flex min-w-0 max-w-full items-center gap-1.5 whitespace-nowrap',
         kind === 'overdue'
           ? 'text-destructive'
           : kind === 'today'
@@ -59,20 +53,12 @@ export function AssignmentDueDate({
       )}
     >
       <CalendarClock className="size-3.5" aria-hidden="true" />
-      <span>
+      <span className="truncate">
         {t('due')}: {dueLabel}
+        {urgencyLabel ? (
+          <span className="font-medium"> · {urgencyLabel}</span>
+        ) : null}
       </span>
-      <Badge
-        variant={
-          kind === 'overdue'
-            ? 'destructive'
-            : kind === 'today'
-              ? 'default'
-              : 'secondary'
-        }
-      >
-        {relativeLabel}
-      </Badge>
     </span>
   );
 }
