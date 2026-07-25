@@ -1,5 +1,6 @@
 import {
   Cloud,
+  CloudUpload,
   Download,
   Edit2,
   FileIcon,
@@ -119,7 +120,9 @@ type InventoryDialogsProps = {
   uploadPending: boolean;
   onUploadFiles: (files: File[]) => void;
   onImportGoogleDriveFile: (fileId: string) => void;
+  onSaveToDrive: (entry: InventoryEntry) => void;
   googleDriveImportPending: boolean;
+  googleDriveExportPending: boolean;
   maxFileSizeBytes: number;
 };
 
@@ -138,8 +141,10 @@ export function InventoryDialogs({
   moveOptions,
   movePending,
   onImportGoogleDriveFile,
+  onSaveToDrive,
   onUploadFiles,
   googleDriveImportPending,
+  googleDriveExportPending,
   maxFileSizeBytes,
   previewDialog,
   renameDialog,
@@ -583,6 +588,23 @@ export function InventoryDialogs({
                 {t('actions.cancel')}
               </Button>
             </DialogClose>
+            {previewDialog && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onSaveToDrive(previewDialog.entry)}
+                disabled={googleDriveExportPending}
+              >
+                {googleDriveExportPending ? (
+                  <Loader2 data-icon="inline-start" className="animate-spin" />
+                ) : (
+                  <CloudUpload data-icon="inline-start" />
+                )}
+                {googleDriveExportPending
+                  ? t('actions.savingToDrive')
+                  : t('actions.saveToDrive')}
+              </Button>
+            )}
             {previewDialog && (
               <Button asChild>
                 <a

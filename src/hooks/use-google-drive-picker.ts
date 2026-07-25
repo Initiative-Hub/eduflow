@@ -21,6 +21,8 @@ type GoogleDrivePickerData = Record<
   string | GoogleDrivePickerDocument[] | undefined
 >;
 
+type GoogleDrivePickerMode = 'files' | 'folder';
+
 type GoogleDrivePickerMessages = {
   connectRequired: string;
   notConfigured: string;
@@ -106,11 +108,13 @@ export function useGoogleDrivePicker({
     tokenFailed: 'Could not prepare Google Drive Picker.',
     unavailable: 'Google Drive Picker is unavailable.',
   },
+  mode = 'files',
   onBeforeOpen,
   onError,
   onPicked,
 }: {
   messages?: GoogleDrivePickerMessages;
+  mode?: GoogleDrivePickerMode;
   onBeforeOpen?: () => void;
   onError?: (message: string) => void;
   onPicked: (fileIds: string[]) => void;
@@ -158,9 +162,15 @@ export function useGoogleDrivePicker({
         return;
       }
 
-      const docsView = new pickerApi.DocsView(pickerApi.ViewId.DOCS).setMode(
-        pickerApi.DocsViewMode.LIST
-      );
+      const docsView =
+        mode === 'folder'
+          ? new pickerApi.DocsView(pickerApi.ViewId.FOLDERS)
+              .setIncludeFolders(true)
+              .setSelectFolderEnabled(true)
+              .setMode(pickerApi.DocsViewMode.LIST)
+          : new pickerApi.DocsView(pickerApi.ViewId.DOCS).setMode(
+              pickerApi.DocsViewMode.LIST
+            );
       const picker = new pickerApi.PickerBuilder()
         .addView(docsView)
         .setOAuthToken(accessToken)
@@ -189,7 +199,7 @@ export function useGoogleDrivePicker({
 
       picker.setVisible(true);
     },
-    [apiKey, appId, messages.unavailable, onError, onPicked]
+    [apiKey, appId, messages.unavailable, mode, onError, onPicked]
   );
 
   const { isPending: isPickerTokenPending, mutate: fetchPickerToken } =

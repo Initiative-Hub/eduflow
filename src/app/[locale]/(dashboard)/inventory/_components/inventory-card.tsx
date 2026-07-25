@@ -5,6 +5,7 @@ import {
   Download,
   Edit2,
   Eye,
+  CloudUpload,
   FileArchive,
   FileAudio,
   FileCode,
@@ -64,6 +65,7 @@ interface FileCardProps {
   onShare?: (entry: InventoryEntry) => void;
   onPreview?: (entry: InventoryEntry) => void;
   onDownload?: (entry: InventoryEntry) => void;
+  onSaveToDrive?: (entry: InventoryEntry) => void;
   onDelete: (entry: InventoryEntry) => void;
   onNavigateIntoFolder?: (entry: InventoryEntry) => void;
   onSelectEntry?: (entryId: string) => void;
@@ -116,6 +118,7 @@ export function InventoryCard({
   onShare,
   onPreview,
   onDownload,
+  onSaveToDrive,
   onDelete,
   onNavigateIntoFolder,
   onSelectEntry,
@@ -279,6 +282,13 @@ export function InventoryCard({
                     >
                       <Download />
                       {t('actions.download')}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => onSaveToDrive?.(entry)}
+                      className="cursor-pointer gap-2"
+                    >
+                      <CloudUpload />
+                      {t('actions.saveToDrive')}
                     </DropdownMenuItem>
                   </>
                 )

@@ -504,6 +504,8 @@
       "preview": "Xem trước",
       "rename": "Đổi tên",
       "save": "Lưu",
+      "saveToDrive": "Lưu vào Google Drive",
+      "savingToDrive": "Đang lưu vào Drive...",
       "share": "Chia sẻ",
       "shareSelected": "Chia sẻ mục đã chọn",
       "upload": "Tải tệp lên"
@@ -1200,6 +1202,7 @@
       "duration90": "90 phút (Hội thảo chi tiết)",
       "durationLabel": "Thời lượng trình chiếu",
       "empty": "Không có nội dung để hiển thị ở trang này.",
+      "exportMenu": "Xuất tệp",
       "fullscreen": "Bật/Tắt toàn màn hình",
       "gammaThemeLabel": "Chủ đề Gamma",
       "generatingText": "Đang thiết kế slide và nạp dữ liệu nội dung...",
@@ -1216,6 +1219,8 @@
       "previous": "Trang trước",
       "referencesLayout": "Tài liệu tham khảo",
       "referenceSources": "Nguồn tham khảo",
+      "savePptxToDrive": "Lưu PPTX vào Google Drive",
+      "savingToDrive": "Đang lưu vào Drive...",
       "slideOutlineLabel": "Dàn ý Slide {number}",
       "slideProgress": "Trang {current} trên {total}",
       "suggest1": "Tập trung bài tập thực hành & ví dụ mẫu",
@@ -1599,6 +1604,15 @@
     "mwLearnersDescription": "Thiết kế cho học viên ESL/EFL nâng cao với phiên âm IPA và hơn 160.000 ví dụ sử dụng.",
     "title": "Từ điển bật lên"
   },
+  "GoogleDriveExport": {
+    "destinationError": "Hãy chọn nơi xuất tệp Google Drive trước.",
+    "failed": "Không thể lưu vào Google Drive.",
+    "legacyGamma": "Hãy tạo lại bài thuyết trình Gamma này trước khi lưu vào Google Drive.",
+    "openInDrive": "Mở trong Drive",
+    "openIntegrations": "Mở Tích hợp",
+    "savedTo": "Đã lưu vào {destination}.",
+    "success": "Đã lưu vào Google Drive."
+  },
   "GrammarAnalysis": {
     "analyzedSentence": "Câu được phân tích",
     "analyzing": "Đang phân tích...",
@@ -1625,21 +1639,35 @@
   "IntegrationsPage": {
     "actions": {
       "connect": "Kết nối",
-      "disconnect": "Ngắt kết nối",
-      "refresh": "Tải lại"
+      "disconnect": "Ngắt kết nối"
     },
-    "description": "Kết nối các dịch vụ bên ngoài để nhập tài liệu học tập vào không gian EduFlow.",
+    "description": "Kết nối các dịch vụ bên ngoài để nhập tài liệu học tập vào không gian EduFlow và nhận tệp xuất.",
     "googleDrive": {
       "account": "Tài khoản Google",
       "accountNote": "Tài khoản Google Drive có thể khác với tài khoản đăng nhập EduFlow.",
+      "changeFolder": "Đổi thư mục",
+      "chooseDestination": "Chọn nơi lưu",
       "connected": "Đã kết nối",
-      "description": "Chọn tệp từ Google Drive và nhập vào kho cá nhân, tệp khóa học hoặc tệp đính kèm trò chuyện.",
+      "description": "Chọn tệp từ Google Drive và lưu các tệp xuất của EduFlow vào nơi lưu Drive đã chọn.",
+      "destinationChangeNotice": "Việc đổi nơi lưu không di chuyển các tệp đã xuất trước đó.",
+      "destinationReady": "Nơi lưu tệp xuất",
+      "destinationRequired": "Cần thiết lập xuất tệp",
       "driveAccount": "Tài khoản Google Drive",
       "eduflowAccount": "Tài khoản EduFlow",
+      "exportSetupRequired": "Cần thiết lập xuất tệp",
       "noAccount": "Chưa kết nối tài khoản",
+      "noDestination": "Chọn một thư mục hoặc dùng My Drive trước khi lưu tệp xuất.",
       "notConnected": "Chưa kết nối",
+      "openFolder": "Mở thư mục",
+      "pickerConnectRequired": "Kết nối Google Drive trước khi chọn nơi lưu.",
+      "pickerSessionChanged": "Phiên Google Drive đã thay đổi. Hãy kết nối lại Google Drive.",
+      "pickerStillLoading": "Google Drive Picker vẫn đang tải.",
+      "pickerTokenFailed": "Không thể chuẩn bị Google Drive Picker.",
+      "pickerUnavailable": "Không thể mở Google Drive Picker.",
+      "ready": "Sẵn sàng",
       "scope": "EduFlow chỉ yêu cầu quyền Drive giới hạn cho các tệp bạn chọn hoặc tạo qua ứng dụng.",
-      "title": "Google Drive"
+      "title": "Google Drive",
+      "useMyDrive": "Dùng My Drive"
     },
     "notice": {
       "connectedDescription": "Bạn có thể chọn tệp Google Drive từ menu tải lên và đính kèm.",
@@ -1649,6 +1677,8 @@
     },
     "title": "Tích hợp",
     "toast": {
+      "destinationFailed": "Không thể cập nhật nơi lưu Google Drive.",
+      "destinationSaved": "Đã lưu nơi xuất tệp Google Drive.",
       "disconnected": "Đã ngắt kết nối Google Drive.",
       "disconnectFailed": "Không thể ngắt kết nối Google Drive."
     }
@@ -1666,6 +1696,8 @@
       "preview": "Xem trước",
       "rename": "Đổi tên",
       "save": "Lưu",
+      "saveToDrive": "Lưu vào Google Drive",
+      "savingToDrive": "Đang lưu vào Drive...",
       "share": "Chia sẻ",
       "shareSelected": "Chia sẻ mục đã chọn",
       "upload": "Tải tệp lên"
@@ -2249,7 +2281,9 @@
         "retry": "Thử lại",
         "saveError": "Không thể lưu hoạt động này vào kho tài liệu.",
         "saveSuccess": "Đã lưu hoạt động vào kho tài liệu.",
+        "saveToDrive": "Lưu vào Google Drive",
         "saveToInventory": "Lưu vào tài liệu",
+        "savingToDrive": "Đang lưu vào Drive...",
         "savingToInventory": "Đang lưu...",
         "share": "Chia sẻ liên kết",
         "shareDialogDescription": "EduFlow đang chuẩn bị liên kết công khai cho hoạt động này.",
@@ -2427,6 +2461,7 @@
     "createWordList": "Tạo Danh sách từ",
     "createWordListDescription": "Nhóm các từ đã lưu thành một danh sách để ôn tập tập trung.",
     "createWordListTitle": "Tạo Danh sách từ",
+    "downloadCsv": "Tải CSV",
     "dueWordsStat": "{count, plural, =1 {1 từ đến hạn} other {# từ đến hạn}}",
     "emptyDescription": "Lưu từ vựng trọng tâm từ Trợ lý Tiếng Anh và chúng sẽ xuất hiện tại đây.",
     "emptyFilterDescription": "Hãy thử từ khóa, danh sách từ, mức nhớ hoặc cách sắp xếp khác.",
@@ -2472,10 +2507,12 @@
     "reviewResultCorrect": "Đúng",
     "reviewResultMissed": "Sai",
     "reviewResultsTitle": "Cập nhật mức nhớ của từ",
+    "saveCsvToDrive": "Lưu CSV vào Google Drive",
     "savedToday": "Đã lưu hôm nay",
     "savedTodayStat": "{count, plural, =1 {1 từ lưu hôm nay} other {# từ lưu hôm nay}}",
     "savedWords": "Từ đã lưu",
     "savedWordsStat": "{count, plural, =1 {1 từ đã lưu} other {# từ đã lưu}}",
+    "savingToDrive": "Đang lưu vào Drive...",
     "searchLabel": "Tìm trong Wordbank",
     "searchPlaceholder": "Tìm từ...",
     "selectAll": "Chọn tất cả từ",

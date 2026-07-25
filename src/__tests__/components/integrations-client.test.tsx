@@ -11,7 +11,6 @@ vi.mock('next-intl', () => ({
     const messages: Record<string, string> = {
       'actions.connect': 'Connect',
       'actions.disconnect': 'Disconnect',
-      'actions.refresh': 'Refresh',
       description:
         'Connect external services that can import learning materials into your EduFlow workspace.',
       'googleDrive.accountNote':
@@ -92,6 +91,9 @@ describe('IntegrationsClient', () => {
     ).not.toBeInTheDocument();
     expect(
       screen.queryByRole('link', { name: /Connect/i })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /Refresh/i })
     ).not.toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /Disconnect/i })

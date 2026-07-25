@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { withAuth } from '@/lib/api/middlewares';
-import { GoogleDriveIntegrationService } from '@/services/GoogleDriveIntegrationService';
+import { GoogleDriveOAuthTokenService } from '@/services/google-drive/GoogleDriveOAuthTokenService';
 
 export const GET = withAuth(async (_req, session) => {
   try {
-    const token = await GoogleDriveIntegrationService.getPickerToken(
+    const token = await GoogleDriveOAuthTokenService.getPickerToken(
       session.user.id
     );
 

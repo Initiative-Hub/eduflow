@@ -317,6 +317,33 @@ async function gammaRequest<T>(
 }
 
 export class GammaService {
+  static async getPresentationExport(
+    generationId: string,
+    apiKey = process.env.GAMMA_API_KEY
+  ) {
+    if (!apiKey) {
+      throw new Error('Missing GAMMA_API_KEY environment variable.');
+    }
+
+    const statusResult = await gammaRequest<GammaGenerationStatusResponse>(
+      `/generations/${generationId}`,
+      {
+        method: 'GET',
+      },
+      apiKey
+    );
+
+    if (statusResult.status !== 'completed' || !statusResult.exportUrl) {
+      throw new Error('Gamma presentation export is not ready.');
+    }
+
+    return {
+      exportUrl: statusResult.exportUrl,
+      gammaUrl: statusResult.gammaUrl,
+      generationId: statusResult.generationId,
+    };
+  }
+
   static async generatePresentation(
     input: GenerateGammaPresentationInput
   ): Promise<GammaGenerationResult> {

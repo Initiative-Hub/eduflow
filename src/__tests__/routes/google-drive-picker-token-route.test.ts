@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GET } from '@/app/api/v1/integrations/google-drive/picker-token/route';
-import { GoogleDriveIntegrationService } from '@/services/GoogleDriveIntegrationService';
+import { GoogleDriveOAuthTokenService } from '@/services/google-drive/GoogleDriveOAuthTokenService';
 
 vi.mock('@/lib/api/middlewares', () => ({
   withAuth:
@@ -9,14 +9,14 @@ vi.mock('@/lib/api/middlewares', () => ({
       handler(req, { user: { id: 'user-1' } }),
 }));
 
-vi.mock('@/services/GoogleDriveIntegrationService', () => ({
-  GoogleDriveIntegrationService: {
+vi.mock('@/services/google-drive/GoogleDriveOAuthTokenService', () => ({
+  GoogleDriveOAuthTokenService: {
     getPickerToken: vi.fn(),
   },
 }));
 
-const googleDriveIntegrationService =
-  GoogleDriveIntegrationService as unknown as {
+const googleDriveOAuthTokenService =
+  GoogleDriveOAuthTokenService as unknown as {
     getPickerToken: ReturnType<typeof vi.fn>;
   };
 
@@ -26,7 +26,7 @@ describe('Google Drive picker token route', () => {
   });
 
   it('returns a picker token for the authenticated EduFlow user', async () => {
-    googleDriveIntegrationService.getPickerToken.mockResolvedValue({
+    googleDriveOAuthTokenService.getPickerToken.mockResolvedValue({
       accessToken: 'server-token',
       accountEmail: 'drive@example.com',
       expiresAt: new Date('2026-07-17T01:00:00.000Z'),
@@ -46,13 +46,13 @@ describe('Google Drive picker token route', () => {
       },
     });
     expect(response.status).toBe(200);
-    expect(googleDriveIntegrationService.getPickerToken).toHaveBeenCalledWith(
+    expect(googleDriveOAuthTokenService.getPickerToken).toHaveBeenCalledWith(
       'user-1'
     );
   });
 
   it('returns 409 when Google Drive is not connected', async () => {
-    googleDriveIntegrationService.getPickerToken.mockRejectedValue(
+    googleDriveOAuthTokenService.getPickerToken.mockRejectedValue(
       new Error('Google Drive is not connected.')
     );
 

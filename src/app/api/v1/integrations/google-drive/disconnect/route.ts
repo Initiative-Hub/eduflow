@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { withAuth } from '@/lib/api/middlewares';
-import { GoogleDriveIntegrationService } from '@/services/GoogleDriveIntegrationService';
+import { GoogleDriveOAuthTokenService } from '@/services/google-drive/GoogleDriveOAuthTokenService';
 
 export const DELETE = withAuth(async (_req, session) => {
   try {
-    await GoogleDriveIntegrationService.disconnect(session.user.id);
+    await GoogleDriveOAuthTokenService.disconnect(session.user.id);
 
     return NextResponse.json({ data: { disconnected: true } });
   } catch (error: any) {

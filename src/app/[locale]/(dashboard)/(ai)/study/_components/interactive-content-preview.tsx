@@ -3,6 +3,7 @@
 import {
   AlertCircle,
   Check,
+  CloudUpload,
   Copy,
   Download,
   Loader2,
@@ -81,9 +82,11 @@ const InteractiveContentPreview = ({
     handleDownload,
     handleFullscreen,
     handleReset,
+    handleSaveToDrive,
     handleSaveToInventory,
     handleShare,
     isSavingToInventory,
+    isSavingToDrive,
     isShareCopied,
     isShareDialogOpen,
     isSharing,
@@ -137,6 +140,20 @@ const InteractiveContentPreview = ({
             <PreviewActionButton label={t('download')} onClick={handleDownload}>
               <Download className="size-4" />
             </PreviewActionButton>
+
+            {share ? (
+              <PreviewActionButton
+                label={isSavingToDrive ? t('savingToDrive') : t('saveToDrive')}
+                onClick={handleSaveToDrive}
+                disabled={isSavingToDrive}
+              >
+                {isSavingToDrive ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <CloudUpload className="size-4" />
+                )}
+              </PreviewActionButton>
+            ) : null}
 
             {share ? (
               <PreviewActionButton

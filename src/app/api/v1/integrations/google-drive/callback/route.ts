@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { withAuth } from '@/lib/api/middlewares';
-import { GoogleDriveIntegrationService } from '@/services/GoogleDriveIntegrationService';
+import { GoogleDriveOAuthTokenService } from '@/services/google-drive/GoogleDriveOAuthTokenService';
 import {
   assertGoogleDriveOAuthState,
   buildReturnUrl,
@@ -53,7 +53,7 @@ export const GET = withAuth(async (req, session) => {
     }
 
     assertGoogleDriveOAuthState(state, expectedState, session.user.id);
-    await GoogleDriveIntegrationService.connect({
+    await GoogleDriveOAuthTokenService.connect({
       code,
       redirectUri: getGoogleDriveRedirectUri(req),
       userId: session.user.id,

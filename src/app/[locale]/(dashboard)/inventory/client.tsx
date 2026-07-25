@@ -4,6 +4,7 @@ import { RefreshCw } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { useGoogleDriveExport } from '@/hooks/use-google-drive-export';
 import { cn } from '@/lib/utils';
 import { InventoryBrowser } from './_components/inventory-browser';
 import { InventoryDialogs } from './_components/inventory-dialogs';
@@ -46,6 +47,7 @@ function downloadEntry(entry: InventoryEntry) {
 export function InventoryClient() {
   const t = useTranslations('InventoryPage');
   const locale = useLocale();
+  const googleDriveExport = useGoogleDriveExport();
   const {
     analytics,
     breadcrumbItems,
@@ -132,6 +134,14 @@ export function InventoryClient() {
     ? resolveErrorMessage(loadError, t('errors.description'))
     : null;
 
+  function saveEntryToDrive(entry: InventoryEntry) {
+    if (entry.isFolder || entry.status !== 'READY') return;
+    googleDriveExport.mutate({
+      kind: 'inventory_file',
+      fileId: entry.id,
+    });
+  }
+
   return (
     <div className="relative flex flex-col gap-6 overflow-hidden">
       {loadErrorMessage && (
@@ -215,10 +225,12 @@ export function InventoryClient() {
         onPageChange={handlePageChange}
         onPreview={handlePreviewEntry}
         onRename={handleOpenRenameDialog}
+        onSaveToDrive={saveEntryToDrive}
         onSelectAll={handleSelectAll}
         onSelectEntry={handleSelectEntry}
         onSelectSingleEntry={handleSelectSingleEntry}
         onShare={handleShareEntry}
+        isSavingToDrive={googleDriveExport.isPending}
         onUploadOpen={() => setUploadOpen(true)}
         getUploadProgress={getUploadProgress}
         pageIndex={pageIndex}
@@ -246,8 +258,10 @@ export function InventoryClient() {
         moveOptions={moveOptions}
         movePending={movePending}
         onImportGoogleDriveFile={handleImportGoogleDriveFile}
+        onSaveToDrive={saveEntryToDrive}
         onUploadFiles={handleUploadFiles}
         googleDriveImportPending={googleDriveImportPending}
+        googleDriveExportPending={googleDriveExport.isPending}
         previewDialog={previewDialog}
         renameDialog={renameDialog}
         renamePending={renamePending}

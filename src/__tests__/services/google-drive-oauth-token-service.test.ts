@@ -1,11 +1,12 @@
 import { createCipheriv, createHash, randomBytes } from 'node:crypto';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { prisma } from '@/lib/prisma';
-import { GoogleDriveIntegrationService } from '@/services/GoogleDriveIntegrationService';
+import { GoogleDriveOAuthTokenService } from '@/services/google-drive/GoogleDriveOAuthTokenService';
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
     connectedIntegration: {
+      delete: vi.fn(),
       findUnique: vi.fn(),
       update: vi.fn(),
     },
@@ -13,6 +14,7 @@ vi.mock('@/lib/prisma', () => ({
 }));
 
 const connectedIntegration = prisma.connectedIntegration as unknown as {
+  delete: ReturnType<typeof vi.fn>;
   findUnique: ReturnType<typeof vi.fn>;
   update: ReturnType<typeof vi.fn>;
 };
@@ -37,7 +39,7 @@ function encryptTokenForTest(value: string) {
   ].join(':');
 }
 
-describe('GoogleDriveIntegrationService picker token', () => {
+describe('GoogleDriveOAuthTokenService picker token', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.unstubAllGlobals();
@@ -59,7 +61,7 @@ describe('GoogleDriveIntegrationService picker token', () => {
     });
 
     const result = await (
-      GoogleDriveIntegrationService as unknown as {
+      GoogleDriveOAuthTokenService as unknown as {
         getPickerToken: (userId: string) => Promise<{
           accessToken: string;
           accountEmail: string | null;
@@ -100,7 +102,7 @@ describe('GoogleDriveIntegrationService picker token', () => {
     });
 
     const result = await (
-      GoogleDriveIntegrationService as unknown as {
+      GoogleDriveOAuthTokenService as unknown as {
         getPickerToken: (userId: string) => Promise<{
           accessToken: string;
           accountEmail: string | null;
@@ -132,10 +134,69 @@ describe('GoogleDriveIntegrationService picker token', () => {
 
     await expect(
       (
-        GoogleDriveIntegrationService as unknown as {
+        GoogleDriveOAuthTokenService as unknown as {
           getPickerToken: (userId: string) => Promise<unknown>;
         }
       ).getPickerToken('user-1')
     ).rejects.toThrow('Google Drive is not connected.');
+  });
+});
+
+describe('GoogleDriveOAuthTokenService authorization URL', () => {
+  beforeEach(() => {
+    process.env.GOOGLE_DRIVE_CLIENT_ID = 'google-client-id';
+    process.env.GOOGLE_DRIVE_CLIENT_SECRET = 'google-client-secret';
+  });
+
+  it('forces Google account selection when reconnecting Drive', () => {
+    const url = new URL(
+      GoogleDriveOAuthTokenService.getAuthorizationUrl({
+        redirectUri:
+          'https://eduflow.test/api/v1/integrations/google-drive/callback',
+        state: 'oauth-state',
+      })
+    );
+
+    expect(url.searchParams.get('prompt')).toBe('consent select_account');
+  });
+});
+
+describe('GoogleDriveOAuthTokenService disconnect', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.unstubAllGlobals();
+    process.env.GOOGLE_DRIVE_TOKEN_ENCRYPTION_KEY = 'test-encryption-secret';
+  });
+
+  it('revokes the refresh token before deleting the local integration', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(new Response(null, { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+    connectedIntegration.findUnique.mockResolvedValue({
+      accessToken: encryptTokenForTest('stored-access-token'),
+      refreshToken: encryptTokenForTest('stored-refresh-token'),
+    });
+    connectedIntegration.delete.mockResolvedValue({});
+
+    await GoogleDriveOAuthTokenService.disconnect('user-1');
+
+    const revokeRequest = fetchMock.mock.calls[0]?.[1] as
+      | { body?: URLSearchParams }
+      | undefined;
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://oauth2.googleapis.com/revoke',
+      expect.objectContaining({ method: 'POST' })
+    );
+    expect(revokeRequest?.body?.get('token')).toBe('stored-refresh-token');
+    expect(connectedIntegration.delete).toHaveBeenCalledWith({
+      where: {
+        userId_provider: {
+          provider: 'GOOGLE_DRIVE',
+          userId: 'user-1',
+        },
+      },
+    });
   });
 });

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { withAuth } from '@/lib/api/middlewares';
-import { GoogleDriveIntegrationService } from '@/services/GoogleDriveIntegrationService';
+import { GoogleDriveOAuthTokenService } from '@/services/google-drive/GoogleDriveOAuthTokenService';
 import {
   createGoogleDriveOAuthState,
   getGoogleDriveRedirectUri,
@@ -15,7 +15,7 @@ export const GET = withAuth(async (req, session) => {
     const url = new URL(req.url);
     const returnTo = sanitizeReturnTo(url.searchParams.get('returnTo'));
     const state = createGoogleDriveOAuthState({ userId: session.user.id });
-    const authorizationUrl = GoogleDriveIntegrationService.getAuthorizationUrl({
+    const authorizationUrl = GoogleDriveOAuthTokenService.getAuthorizationUrl({
       redirectUri: getGoogleDriveRedirectUri(req),
       state: state.nonce,
     });

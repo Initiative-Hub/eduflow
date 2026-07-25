@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { withAuth } from '@/lib/api/middlewares';
-import { GoogleDriveIntegrationService } from '@/services/GoogleDriveIntegrationService';
+import { GoogleDriveDestinationService } from '@/services/google-drive/GoogleDriveDestinationService';
 
 export const GET = withAuth(async (_req, session) => {
   try {
-    const status = await GoogleDriveIntegrationService.getStatus(
+    const status = await GoogleDriveDestinationService.getStatus(
       session.user.id
     );
 

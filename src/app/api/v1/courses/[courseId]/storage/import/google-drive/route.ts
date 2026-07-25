@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { withAuth } from '@/lib/api/middlewares';
 import { buildStorageErrorResponse } from '@/lib/storage/storage-error-response';
 import { CourseService } from '@/services/CourseService';
-import { GoogleDriveIntegrationService } from '@/services/GoogleDriveIntegrationService';
+import { GoogleDriveImportService } from '@/services/google-drive/GoogleDriveImportService';
 
 const routeParamsSchema = z.object({
   courseId: z.string().uuid(),
@@ -39,7 +39,7 @@ export const POST = withAuth(async (req, session, context) => {
       return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
     }
 
-    const imported = await GoogleDriveIntegrationService.importFile({
+    const imported = await GoogleDriveImportService.importFile({
       courseId: params.data.courseId,
       fileId: parsed.data.fileId,
       parentId: parsed.data.parentId ?? null,

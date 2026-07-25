@@ -6,8 +6,9 @@ import {
   CheckCircle2,
   Cloud,
   ExternalLink,
+  FolderOpen,
+  HardDrive,
   Loader2,
-  RefreshCw,
   Unplug,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -26,6 +27,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useGoogleDrivePicker } from '@/hooks/use-google-drive-picker';
 import { integrationsService } from './integrations.service';
 
 const GOOGLE_DRIVE_STATUS_QUERY_KEY = ['integrations', 'google-drive'] as const;
@@ -60,8 +62,41 @@ export default function IntegrationsClient({
     },
   });
 
+  const destinationMutation = useMutation({
+    mutationFn: integrationsService.setGoogleDriveDestination,
+    onError: (error: { message?: string }) => {
+      toast.error(error.message ?? t('toast.destinationFailed'));
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: GOOGLE_DRIVE_STATUS_QUERY_KEY,
+      });
+      toast.success(t('toast.destinationSaved'));
+    },
+  });
+
+  const googleDrivePicker = useGoogleDrivePicker({
+    mode: 'folder',
+    messages: {
+      connectRequired: t('googleDrive.pickerConnectRequired'),
+      notConfigured: t('googleDrive.pickerUnavailable'),
+      sessionChanged: t('googleDrive.pickerSessionChanged'),
+      stillLoading: t('googleDrive.pickerStillLoading'),
+      tokenFailed: t('googleDrive.pickerTokenFailed'),
+      unavailable: t('googleDrive.pickerUnavailable'),
+    },
+    onError: (message) => {
+      toast.error(message);
+    },
+    onPicked: ([folderId]) => {
+      if (!folderId) return;
+      destinationMutation.mutate({ kind: 'folder', folderId });
+    },
+  });
+
   const status = statusQuery.data?.data;
   const isConnected = Boolean(status?.connected);
+  const isDestinationPending = destinationMutation.isPending;
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
       <div className="space-y-1">
@@ -96,10 +131,16 @@ export default function IntegrationsClient({
           <CardTitle>{t('googleDrive.title')}</CardTitle>
           <CardDescription>{t('googleDrive.description')}</CardDescription>
           <CardAction>
-            <Badge variant={isConnected ? 'default' : 'outline'}>
-              {isConnected
-                ? t('googleDrive.connected')
-                : t('googleDrive.notConnected')}
+            <Badge
+              variant={
+                isConnected && status?.setupComplete ? 'default' : 'outline'
+              }
+            >
+              {isConnected && status?.setupComplete
+                ? t('googleDrive.ready')
+                : isConnected
+                  ? t('googleDrive.exportSetupRequired')
+                  : t('googleDrive.notConnected')}
             </Badge>
           </CardAction>
         </CardHeader>
@@ -130,6 +171,94 @@ export default function IntegrationsClient({
             </div>
           )}
 
+          {isConnected && (
+            <div className="rounded-lg border bg-background p-4">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div className="flex min-w-0 items-start gap-3">
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                    {status?.destination?.kind === 'folder' ? (
+                      <FolderOpen className="size-5" />
+                    ) : (
+                      <HardDrive className="size-5" />
+                    )}
+                  </div>
+                  <div className="min-w-0 space-y-1">
+                    <div className="font-medium text-sm">
+                      {status?.setupComplete
+                        ? t('googleDrive.destinationReady')
+                        : t('googleDrive.destinationRequired')}
+                    </div>
+                    <div className="truncate text-muted-foreground text-sm">
+                      {status?.destination?.name ??
+                        t('googleDrive.noDestination')}
+                    </div>
+                    <p className="text-muted-foreground text-xs">
+                      {t('googleDrive.destinationChangeNotice')}
+                    </p>
+                    {status?.destination?.webViewLink ? (
+                      <Button
+                        asChild
+                        className="mt-1 h-8 px-2"
+                        size="sm"
+                        variant="ghost"
+                      >
+                        <a
+                          href={status.destination.webViewLink}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          <ExternalLink data-icon="inline-start" />
+                          {t('googleDrive.openFolder')}
+                        </a>
+                      </Button>
+                    ) : null}
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() =>
+                      destinationMutation.mutate({ kind: 'my_drive' })
+                    }
+                    disabled={isDestinationPending}
+                  >
+                    {isDestinationPending ? (
+                      <Loader2
+                        data-icon="inline-start"
+                        className="animate-spin"
+                      />
+                    ) : (
+                      <HardDrive data-icon="inline-start" />
+                    )}
+                    {t('googleDrive.useMyDrive')}
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={googleDrivePicker.openPicker}
+                    disabled={
+                      isDestinationPending ||
+                      googleDrivePicker.isLoading ||
+                      !googleDrivePicker.isConfigured
+                    }
+                  >
+                    {isDestinationPending || googleDrivePicker.isLoading ? (
+                      <Loader2
+                        data-icon="inline-start"
+                        className="animate-spin"
+                      />
+                    ) : (
+                      <FolderOpen data-icon="inline-start" />
+                    )}
+                    {status?.destination
+                      ? t('googleDrive.changeFolder')
+                      : t('googleDrive.chooseDestination')}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-1">
               <p className="text-muted-foreground text-sm">
@@ -140,17 +269,6 @@ export default function IntegrationsClient({
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Button
-                variant="outline"
-                onClick={() => statusQuery.refetch()}
-                disabled={statusQuery.isFetching}
-              >
-                <RefreshCw
-                  data-icon="inline-start"
-                  className={statusQuery.isFetching ? 'animate-spin' : ''}
-                />
-                {t('actions.refresh')}
-              </Button>
               {!isConnected && (
                 <Button asChild>
                   <Link href={connectHref}>

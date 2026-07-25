@@ -8,6 +8,7 @@ import {
   createInteractiveContentInventoryFile,
   createSecureInteractiveContentDocument,
 } from '@/utils/study-interactive-content';
+import { useGoogleDriveExport } from '@/hooks/use-google-drive-export';
 import { inventoryService } from '../../../inventory/inventory.service';
 import { studyService } from '../study.service';
 
@@ -51,6 +52,7 @@ export function useInteractiveContentPreview({
     [html]
   );
   const queryClient = useQueryClient();
+  const googleDriveExport = useGoogleDriveExport();
 
   const saveToInventoryMutation = useMutation({
     mutationFn: async () => {
@@ -106,6 +108,23 @@ export function useInteractiveContentPreview({
 
   const handleSaveToInventory = () => {
     saveToInventoryMutation.mutate();
+  };
+
+  const handleSaveToDrive = () => {
+    if (!share) return;
+
+    googleDriveExport.mutate({
+      chatId: share.chatId,
+      content: {
+        description,
+        html,
+        title,
+      },
+      contentIndex: share.contentIndex,
+      fileName: createInteractiveContentDownloadFilename(title),
+      kind: 'study_interactive_html',
+      messageId: share.messageId,
+    });
   };
 
   const handleShare = () => {
@@ -169,8 +188,10 @@ export function useInteractiveContentPreview({
     handleFullscreen,
     handleReset,
     handleSaveToInventory,
+    handleSaveToDrive,
     handleShare,
     isSavingToInventory: saveToInventoryMutation.isPending,
+    isSavingToDrive: googleDriveExport.isPending,
     isShareCopied,
     isShareDialogOpen,
     isSharing: shareMutation.isPending,

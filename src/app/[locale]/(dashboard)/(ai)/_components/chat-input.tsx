@@ -35,8 +35,8 @@ import type {
   ChatSubmitAttachments,
 } from '@/types/chat-attachments';
 import type { ChatLessonReferenceUIPart } from '@/types/chat-lesson-references';
-import { inventoryService } from '../inventory/inventory.service';
-import type { InventoryEntry } from '../inventory/inventory.types';
+import { inventoryService } from '../../inventory/inventory.service';
+import type { InventoryEntry } from '../../inventory/inventory.types';
 import {
   ChatInputAttachments,
   type SelectedChatFile,
