@@ -93,6 +93,7 @@ export function LessonDetailsClient({
             content={lessonContent}
             canEdit={lesson.canEdit}
             canDelete={lesson.canDelete}
+            canUseLessonAI={lesson.canUseLessonAI}
             emptyContentLabel={emptyContentLabel}
             isUpdatingLesson={isUpdatingLesson}
             onSave={handleSave}

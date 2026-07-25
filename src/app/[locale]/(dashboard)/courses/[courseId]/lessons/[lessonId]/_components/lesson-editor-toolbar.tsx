@@ -35,16 +35,23 @@ function MainToolbarContent({
   onHighlighterClick,
   onLinkClick,
   isMobile,
+  lessonId,
+  canUseLessonAI,
 }: {
   onHighlighterClick: () => void;
   onLinkClick: () => void;
   isMobile: boolean;
+  lessonId: string;
+  canUseLessonAI: boolean;
 }) {
   return (
     <>
       <Spacer />
       <ToolbarGroup>
-        <LessonEditorAiAssistant />
+        <LessonEditorAiAssistant
+          lessonId={lessonId}
+          canUseLessonAI={canUseLessonAI}
+        />
         <UndoRedoButton action="undo" />
         <UndoRedoButton action="redo" />
       </ToolbarGroup>
@@ -118,7 +125,13 @@ function MobileToolbarContent({
   );
 }
 
-export function LessonEditorToolbar() {
+export function LessonEditorToolbar({
+  lessonId,
+  canUseLessonAI,
+}: {
+  lessonId: string;
+  canUseLessonAI: boolean;
+}) {
   const isMobile = useIsBreakpoint();
   const [mobileView, setMobileView] = useState<'main' | 'highlighter' | 'link'>(
     'main'
@@ -137,6 +150,8 @@ export function LessonEditorToolbar() {
           onHighlighterClick={() => setMobileView('highlighter')}
           onLinkClick={() => setMobileView('link')}
           isMobile={isMobile}
+          lessonId={lessonId}
+          canUseLessonAI={canUseLessonAI}
         />
       ) : (
         <MobileToolbarContent

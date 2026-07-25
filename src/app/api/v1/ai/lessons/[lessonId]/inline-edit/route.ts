@@ -3,7 +3,14 @@ import { createTextStreamResponse, streamText, toTextStream } from 'ai';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withAuth } from '@/lib/api/middlewares';
+import { getCoursePermissions } from '@/lib/permissions/course-permission';
+import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
+import { prisma } from '@/lib/prisma';
 import { DEFAULT_MODELS } from '@/services/ai/chat-provider.constants';
+
+const lessonParamsSchema = z.object({
+  lessonId: z.string().uuid(),
+});
 
 const requestSchema = z.object({
   beforeText: z.string().max(12_000),
@@ -11,6 +18,8 @@ const requestSchema = z.object({
   instruction: z.string().trim().min(1).max(2_000),
   selectionText: z.string().min(1).max(12_000),
 });
+
+const MAX_OUTPUT_TOKENS = 8_000;
 
 const LESSON_EDITOR_SYSTEM_PROMPT = `
   You edit a selected fragment from an EduFlow lesson.
@@ -25,7 +34,44 @@ const LESSON_EDITOR_SYSTEM_PROMPT = `
   Before responding, verify that the only changed content is the replacement for selectedText.
 `;
 
-export const POST = withAuth(async (request) => {
+export const POST = withAuth(async (request, sessionData, { params }) => {
+  const parsedParams = lessonParamsSchema.safeParse(await params);
+
+  if (!parsedParams.success) {
+    return NextResponse.json(
+      { message: 'Invalid lesson ID.' },
+      { status: 400 }
+    );
+  }
+
+  const lesson = await prisma.lesson.findFirst({
+    where: {
+      id: parsedParams.data.lessonId,
+      deletedAt: null,
+      module: {
+        deletedAt: null,
+        course: { deletedAt: null },
+      },
+    },
+    select: {
+      module: {
+        select: { courseId: true },
+      },
+    },
+  });
+
+  if (!lesson) {
+    return NextResponse.json({ message: 'Lesson not found.' }, { status: 404 });
+  }
+
+  const permissions = await getCoursePermissions(
+    sessionData.user.id,
+    lesson.module.courseId
+  );
+  if (permissions.withoutPermission(COURSE_PERMISSION.AI_USE_LESSON_EDITOR)) {
+    return NextResponse.json({ message: 'Forbidden.' }, { status: 403 });
+  }
+
   const body = await request.json().catch(() => null);
   const parsed = requestSchema.safeParse(body);
 
@@ -47,6 +93,7 @@ export const POST = withAuth(async (request) => {
   const provider = createOpenRouter({ apiKey });
   const result = streamText({
     instructions: LESSON_EDITOR_SYSTEM_PROMPT,
+    maxOutputTokens: MAX_OUTPUT_TOKENS,
     model: provider(DEFAULT_MODELS.openrouter),
     prompt: JSON.stringify({
       instruction: parsed.data.instruction,

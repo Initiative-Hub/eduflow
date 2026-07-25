@@ -41,6 +41,7 @@ interface LessonEditorProps {
   content: TiptapDocument;
   canEdit?: boolean;
   canDelete?: boolean;
+  canUseLessonAI?: boolean;
   emptyContentLabel: string;
   isUpdatingLesson?: boolean;
   onSave?: (
@@ -56,6 +57,7 @@ export function LessonEditor({
   content,
   canEdit = false,
   canDelete = false,
+  canUseLessonAI = false,
   emptyContentLabel,
   isUpdatingLesson = false,
   onSave,
@@ -243,7 +245,10 @@ export function LessonEditor({
 
       {isEditing && (
         <div className="lesson-toolbar-bar sticky top-30 z-20 -mx-6 border-foreground/20 border-b bg-background/95 px-6 py-2 backdrop-blur-sm md:-mx-10 md:px-10 lg:-mx-12 lg:px-12">
-          <LessonEditorToolbar />
+          <LessonEditorToolbar
+            lessonId={lessonId}
+            canUseLessonAI={canUseLessonAI}
+          />
         </div>
       )}
 

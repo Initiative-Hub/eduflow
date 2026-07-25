@@ -28,7 +28,13 @@ import {
   showLessonAiReview,
 } from '@/lib/lesson-ai-review';
 
-export function LessonEditorAiAssistant() {
+export function LessonEditorAiAssistant({
+  lessonId,
+  canUseLessonAI,
+}: {
+  lessonId: string;
+  canUseLessonAI: boolean;
+}) {
   const t = useTranslations('Courses.LessonEditor.aiAssistant');
   const { editor } = useCurrentEditor();
   const selectionEmpty =
@@ -113,12 +119,15 @@ export function LessonEditorAiAssistant() {
     setProposal(nextProposal);
 
     try {
-      const response = await fetch('/api/v1/ai/lesson-editor', {
-        body: JSON.stringify(requestBody),
-        headers: { 'Content-Type': 'application/json' },
-        method: 'POST',
-        signal: abortController.signal,
-      });
+      const response = await fetch(
+        `/api/v1/ai/lessons/${lessonId}/inline-edit`,
+        {
+          body: JSON.stringify(requestBody),
+          headers: { 'Content-Type': 'application/json' },
+          method: 'POST',
+          signal: abortController.signal,
+        }
+      );
       if (!response.ok || !response.body) {
         throw new Error(
           (await response.json().catch(() => null))?.message ||
@@ -183,6 +192,8 @@ export function LessonEditorAiAssistant() {
       );
     }
   };
+
+  if (!canUseLessonAI) return null;
 
   const disabled = !editor || selectionEmpty;
 
