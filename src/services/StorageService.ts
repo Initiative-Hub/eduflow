@@ -1403,6 +1403,15 @@ export class StorageService {
       contentType: 'text/html; charset=utf-8',
       body,
     });
+
+    try {
+      await StorageService.deleteUnreferencedSlideMedia(deckId, html);
+    } catch (error) {
+      console.warn(
+        `[StorageService] Failed to clean unused media for slide deck ${deckId}:`,
+        error
+      );
+    }
   }
 
   /**
@@ -1437,6 +1446,59 @@ export class StorageService {
 
       return res.text();
     }
+  }
+
+  /**
+   * Stores an immutable AI-generated image alongside its slide deck.
+   */
+  static async saveSlideGeneratedImage(options: {
+    deckId: string;
+    mediaId: string;
+    bytes: Uint8Array;
+    contentType: string;
+  }): Promise<void> {
+    await uploadInventoryObject({
+      objectKey: `slides/${options.deckId}/media/${options.mediaId}.png`,
+      contentType: options.contentType,
+      body: options.bytes,
+    });
+  }
+
+  /**
+   * Loads a deck-scoped generated image for authenticated preview delivery.
+   */
+  static async getSlideGeneratedImage(options: {
+    deckId: string;
+    mediaId: string;
+  }): Promise<{ bytes: Uint8Array; contentType: string }> {
+    return downloadInventoryObject({
+      objectKey: `slides/${options.deckId}/media/${options.mediaId}.png`,
+    });
+  }
+
+  private static async deleteUnreferencedSlideMedia(
+    deckId: string,
+    html: string
+  ): Promise<void> {
+    const referencedMediaIds = new Set(
+      Array.from(
+        html.matchAll(
+          new RegExp(`/api/v1/ai/slides/${deckId}/media/([0-9a-f-]{36})`, 'gi')
+        ),
+        (match) => match[1].toLowerCase()
+      )
+    );
+    const prefix = `slides/${deckId}/media/`;
+    const storedKeys = await StorageService.listPrefixKeys(prefix);
+
+    await Promise.all(
+      storedKeys
+        .filter((key) => {
+          const mediaId = key.slice(prefix.length).replace(/\.png$/i, '');
+          return !referencedMediaIds.has(mediaId.toLowerCase());
+        })
+        .map((objectKey) => deleteInventoryObject({ objectKey }))
+    );
   }
 
   /**

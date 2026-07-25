@@ -98,6 +98,7 @@ for any tasks.).
 - **Research Citations**: For AI research/chat responses with numbered citations, derive source metadata from AI SDK `source-url` parts and web-search tool outputs in shared helpers, then render inline citation UI from that normalized source list instead of hardcoding source parsing in components.
 - **Study Modes**: When adding or removing a Study mode, update the shared Zod mode schema, mode selector cards, mode-specific system prompts, and both locale files together so the UI, API validation, and prompt behavior stay synchronized.
 - **Interactive Content Prompts**: Keep generated activity instructions aligned with the structured output schema and sandbox CSP; do not advertise CDNs or external libraries unless the renderer, sanitizer, and CSP are deliberately updated together.
+- **Generated Slide DOM Edits**: In the generated-slide iframe editor, target only leaf SVG `text`/`tspan` nodes, resolve the active slide at action time, preserve SVG structure/IDs/layout, change only `src`/`href` when replacing images, keep generated image bytes in deck-scoped storage instead of saved HTML, and strip temporary controls/selection/editor attributes before persistence.
 
 ### 6.3 Security & Validation
 

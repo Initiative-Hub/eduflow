@@ -41,8 +41,17 @@ import {
   type PlannedSlide,
   usePresentation,
 } from '../use-presentation';
+import { SlideAiEditDialog } from './slide-ai-edit-dialog';
+import {
+  attachSlideCanvasAiControls,
+  type SlideCanvasAiControls,
+} from './slide-canvas-ai-controls';
 import { SlideItemEditor } from './slide-item-editor';
 import { TemplateManagerDialog } from './template-manager-dialog';
+import {
+  getEditableSlideTextElements,
+  useSlideAiEdit,
+} from './use-slide-ai-edit';
 
 const formatLayoutName = (layout: string, t: any) => {
   const map: Record<string, string> = {
@@ -184,9 +193,23 @@ export function LessonPresentation({
   const [showItemEditor, setShowItemEditor] = useState(false);
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const canvasAiControlsRef = useRef<SlideCanvasAiControls | null>(null);
   const deckId = deckUrl ? deckUrl.split('/').pop() : undefined;
 
   const updateSlideHtml = useUpdateSlideHtml();
+  const {
+    selectedText: selectedAiText,
+    scope: aiEditScope,
+    isDialogOpen: isAiEditOpen,
+    isPending: isAiEditing,
+    selectTextElement: selectAiTextElement,
+    clearSelection: clearAiTextSelection,
+    openSelectedTextEdit,
+    openImageEdit,
+    openCurrentSlideEdit,
+    handleOpenChange: handleAiEditOpenChange,
+    submitEdit: submitAiEdit,
+  } = useSlideAiEdit({ iframeRef, deckId });
 
   const plannedSlidesRef = useRef(plannedSlides);
   useEffect(() => {
@@ -195,42 +218,52 @@ export function LessonPresentation({
 
   /** Swap a re-rendered slide SVG into the preview iframe (namespacing its
    * ids so clipPaths/gradients don't collide with other slides). */
-  const applySvgToPreviewSlide = useCallback((index: number, svg: string) => {
-    const doc = iframeRef.current?.contentDocument;
-    const target = doc?.querySelectorAll('.slide')?.[index];
-    if (!doc || !target) {
-      toast.error('Preview not ready — reload the deck and try again');
-      return;
-    }
-    const prefix = `edit${index}x${Date.now().toString(36)}_`;
-    const safe = svg
-      .replace(/id="([^"]+)"/g, `id="${prefix}$1"`)
-      .replace(/url\(#([^)]+)\)/g, `url(#${prefix}$1)`)
-      .replace(/href="#([^"]+)"/g, `href="#${prefix}$1"`);
-    const old = target.querySelector('svg');
-    if (old) {
-      old.outerHTML = safe;
-    } else {
-      target.innerHTML = safe;
-    }
-  }, []);
-
-  const handleEditorSlideChange = useCallback((index: number) => {
-    const doc = iframeRef.current?.contentDocument;
-    if (doc) {
-      const slides = doc.querySelectorAll('.slide');
-      slides.forEach((s, k) => {
-        s.classList.remove('active');
-        if (k === index) {
-          s.classList.add('active');
-        }
-      });
-      const counter = doc.getElementById('counter');
-      if (counter) {
-        counter.textContent = `${index + 1} / ${slides.length}`;
+  const applySvgToPreviewSlide = useCallback(
+    (index: number, svg: string) => {
+      clearAiTextSelection();
+      canvasAiControlsRef.current?.hide();
+      const doc = iframeRef.current?.contentDocument;
+      const target = doc?.querySelectorAll('.slide')?.[index];
+      if (!doc || !target) {
+        toast.error(t('previewNotReady'));
+        return;
       }
-    }
-  }, []);
+      const prefix = `edit${index}x${Date.now().toString(36)}_`;
+      const safe = svg
+        .replace(/id="([^"]+)"/g, `id="${prefix}$1"`)
+        .replace(/url\(#([^)]+)\)/g, `url(#${prefix}$1)`)
+        .replace(/href="#([^"]+)"/g, `href="#${prefix}$1"`);
+      const old = target.querySelector('svg');
+      if (old) {
+        old.outerHTML = safe;
+      } else {
+        target.innerHTML = safe;
+      }
+    },
+    [clearAiTextSelection, t]
+  );
+
+  const handleEditorSlideChange = useCallback(
+    (index: number) => {
+      clearAiTextSelection();
+      canvasAiControlsRef.current?.hide();
+      const doc = iframeRef.current?.contentDocument;
+      if (doc) {
+        const slides = doc.querySelectorAll('.slide');
+        slides.forEach((s, k) => {
+          s.classList.remove('active');
+          if (k === index) {
+            s.classList.add('active');
+          }
+        });
+        const counter = doc.getElementById('counter');
+        if (counter) {
+          counter.textContent = `${index + 1} / ${slides.length}`;
+        }
+      }
+    },
+    [clearAiTextSelection]
+  );
   const isGamma = !!deckUrl?.includes('gamma.app');
 
   const [isUploadOpen, setIsUploadOpen] = useState(false);
@@ -300,6 +333,7 @@ export function LessonPresentation({
       console.log(
         '[VisualEditor] Accessed iframe contentDocument successfully'
       );
+      clearAiTextSelection();
 
       // Try to load plannedSlides from script tag in S3 HTML
       const metaEl = doc.querySelector('#slide-plan-metadata');
@@ -338,12 +372,29 @@ export function LessonPresentation({
             outline: 1px dashed rgba(59, 130, 246, 0.8) !important;
             cursor: text;
           }
+          text[data-ai-selected="true"], tspan[data-ai-selected="true"] {
+            outline: 2px solid rgba(139, 92, 246, 0.95) !important;
+            outline-offset: 3px;
+          }
         `;
         doc.head.appendChild(style);
         console.log('[VisualEditor] Injected hover styles into iframe head');
       }
 
-      const elements = doc.querySelectorAll('text, tspan');
+      canvasAiControlsRef.current?.cleanup();
+      canvasAiControlsRef.current = attachSlideCanvasAiControls({
+        document: doc,
+        textActionLabel: t('canvasAiTextAction'),
+        imageActionLabel: t('canvasAiImageAction'),
+        onTextAction: (element) => {
+          selectAiTextElement(element);
+          openSelectedTextEdit();
+        },
+        onImageAction: openImageEdit,
+        onActiveSlideChange: clearAiTextSelection,
+      });
+
+      const elements = getEditableSlideTextElements(doc);
       console.log(
         `[VisualEditor] Found ${elements.length} text/tspan elements in iframe`
       );
@@ -366,7 +417,8 @@ export function LessonPresentation({
             activeTextarea.blur();
           }
 
-          const textEl = el as SVGTextElement;
+          const textEl = el as SVGTextContentElement;
+          selectAiTextElement(textEl);
           const rect = textEl.getBoundingClientRect();
           const scrollTop = doc.documentElement.scrollTop || doc.body.scrollTop;
           const scrollLeft =
@@ -436,7 +488,15 @@ export function LessonPresentation({
     } catch (err) {
       console.error('[VisualEditor] Error in enableVisualEditing:', err);
     }
-  }, [setPlannedSlides, deckUrl?.includes]);
+  }, [
+    clearAiTextSelection,
+    deckUrl,
+    openImageEdit,
+    openSelectedTextEdit,
+    selectAiTextElement,
+    setPlannedSlides,
+    t,
+  ]);
 
   // Manually attach load listeners and check document status to guarantee visual editing binds
   useEffect(() => {
@@ -466,6 +526,8 @@ export function LessonPresentation({
     iframe.addEventListener('load', handleLoad);
     return () => {
       iframe.removeEventListener('load', handleLoad);
+      canvasAiControlsRef.current?.cleanup();
+      canvasAiControlsRef.current = null;
     };
   }, [enableVisualEditing]);
 
@@ -486,15 +548,22 @@ export function LessonPresentation({
     // Clone root layout
     const clone = doc.documentElement.cloneNode(true) as HTMLElement;
 
-    // Clean up our click listener attributes
+    // Clean up temporary editor and AI-control attributes
     clone.querySelectorAll('[data-has-click-listener]').forEach((el) => {
       el.removeAttribute('data-has-click-listener');
     });
-
-    // Remove the injected editor style tag
-    clone.querySelectorAll('style[data-slide-editor]').forEach((el) => {
-      el.remove();
+    clone.querySelectorAll('[data-ai-selected]').forEach((el) => {
+      el.removeAttribute('data-ai-selected');
     });
+
+    // Remove injected editor styles and contextual AI controls
+    clone
+      .querySelectorAll(
+        'style[data-slide-editor], style[data-slide-ai-controls], [data-slide-ai-action]'
+      )
+      .forEach((el) => {
+        el.remove();
+      });
 
     // Strip stray editors
     clone.querySelectorAll('textarea[data-active-editor]').forEach((el) => {
@@ -1630,9 +1699,33 @@ export function LessonPresentation({
             {title}
           </h2>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           {step === 'generated' && deckUrl && (
             <>
+              {!isGamma && selectedAiText && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 gap-1.5 rounded-lg border-primary/30 text-primary"
+                  onClick={openSelectedTextEdit}
+                  disabled={isAiEditing}
+                >
+                  <Sparkles className="h-4 w-4" />
+                  {t('btnAiEditText')}
+                </Button>
+              )}
+              {!isGamma && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 gap-1.5 rounded-lg"
+                  onClick={openCurrentSlideEdit}
+                  disabled={isAiEditing}
+                >
+                  <Sparkles className="h-4 w-4" />
+                  {t('btnAiEditSlide')}
+                </Button>
+              )}
               {!isGamma && (
                 <Button
                   variant={showItemEditor ? 'default' : 'outline'}
@@ -1641,7 +1734,7 @@ export function LessonPresentation({
                   onClick={() => setShowItemEditor((v) => !v)}
                 >
                   <ListPlus className="h-4 w-4" />
-                  Edit items
+                  {t('btnEditItems')}
                 </Button>
               )}
               {!isGamma && (
@@ -1650,7 +1743,7 @@ export function LessonPresentation({
                   size="sm"
                   className="h-9 gap-1.5 rounded-lg bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
                   onClick={handleSaveVisualEdits}
-                  disabled={updateSlideHtml.isPending}
+                  disabled={updateSlideHtml.isPending || isAiEditing}
                 >
                   <Save className="h-4 w-4" />
                   {updateSlideHtml.isPending
@@ -2424,6 +2517,14 @@ export function LessonPresentation({
           <div className="order-2 w-9 md:order-3" />
         </div>
       )}
+      <SlideAiEditDialog
+        isOpen={isAiEditOpen}
+        scope={aiEditScope}
+        previewText={selectedAiText ?? undefined}
+        isPending={isAiEditing}
+        onOpenChange={handleAiEditOpenChange}
+        onSubmit={submitAiEdit}
+      />
       <TemplateManagerDialog
         isOpen={isUploadOpen}
         onOpenChange={setIsUploadOpen}

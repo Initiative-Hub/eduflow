@@ -1,6 +1,10 @@
 import { errorResponse } from '@/lib/api/error-response';
 import { withRoles } from '@/lib/api/middlewares';
-import { LessonPresentationService } from '@/services/LessonPresentationService';
+import { slideDeckIdSchema } from '@/lib/validation/slide-ai-image';
+import {
+  LessonPresentationService,
+  SlideDeckAccessError,
+} from '@/services/LessonPresentationService';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,22 +41,40 @@ export const GET = withRoles(
   ['TEACHER'],
   async (
     _req: Request,
-    _sessionData,
+    sessionData,
     { params }: { params: Promise<{ deckId: string }> }
   ) => {
     try {
-      const { deckId } = await params;
-      const pptxBuffer = await LessonPresentationService.getDeckPptx(deckId);
+      const routeParams = await params;
+      const deckId = slideDeckIdSchema.safeParse(routeParams.deckId);
+      if (!deckId.success) {
+        return errorResponse('VALIDATION_ERROR', 'Invalid slide deck ID', 400);
+      }
+      await LessonPresentationService.assertDeckAccess({
+        deckId: deckId.data,
+        userId: sessionData.user.id,
+        access: 'view',
+      });
+      const pptxBuffer = await LessonPresentationService.getDeckPptx(
+        deckId.data
+      );
 
       return new Response(pptxBuffer, {
         status: 200,
         headers: {
           'Content-Type':
             'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-          'Content-Disposition': `attachment; filename="deck-${deckId}.pptx"`,
+          'Content-Disposition': `attachment; filename="deck-${deckId.data}.pptx"`,
         },
       });
     } catch (error) {
+      if (error instanceof SlideDeckAccessError) {
+        return errorResponse(
+          error.code,
+          error.message,
+          error.code === 'NOT_FOUND' ? 404 : 403
+        );
+      }
       console.error('AI Slide Deck PPTX Export Error:', error);
       return errorResponse(
         'INTERNAL_ERROR',

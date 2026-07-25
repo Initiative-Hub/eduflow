@@ -1201,14 +1201,20 @@ class SlideService:
             return res
 
     async def generate_pptx(self, deck_id: str) -> Path:
+        import base64
         import io
         import re
         import traceback
+
+        import resvg_py
         from pptx import Presentation
         from pptx.util import Emu
-        import resvg_py
+
         from app.deps import STORAGE_DIR
-        from app.services.s3_service import download_file_from_s3
+        from app.services.s3_service import (
+            download_bytes_from_s3,
+            download_file_from_s3,
+        )
 
         # Always fetch latest HTML from S3 to make sure we have visual edits
         s3_key = f"slides/{deck_id}.html"
@@ -1227,6 +1233,35 @@ class SlideService:
         except Exception as e:
             traceback.print_exc()
             raise RuntimeError(f"Failed to read deck HTML: {str(e)}")
+
+        # Browser previews use authenticated application URLs for generated media.
+        # Resolve only this deck's immutable media paths directly from S3 before
+        # handing the SVG to resvg, which cannot authenticate against the app.
+        media_path_pattern = re.compile(
+            rf"/api/v1/ai/slides/{re.escape(deck_id)}/media/"
+            r"([0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-"
+            r"[89ab][0-9a-f]{3}-[0-9a-f]{12})",
+            re.IGNORECASE,
+        )
+        for media_id in set(media_path_pattern.findall(html_content)):
+            media_object = await download_bytes_from_s3(
+                f"slides/{deck_id}/media/{media_id}.png"
+            )
+            if not media_object:
+                raise RuntimeError(f"Failed to load generated slide media {media_id}")
+
+            media_bytes, content_type = media_object
+            if content_type not in {"image/png", "image/jpeg", "image/webp"}:
+                raise RuntimeError(
+                    f"Unsupported generated slide media type: {content_type}"
+                )
+
+            data_url = (
+                f"data:{content_type};base64,"
+                f"{base64.b64encode(media_bytes).decode('ascii')}"
+            )
+            media_url = f"/api/v1/ai/slides/{deck_id}/media/{media_id}"
+            html_content = html_content.replace(media_url, data_url)
 
         # Extract all SVG markup
         svgs = re.findall(r"(<svg[^>]*>.*?</svg>)", html_content, re.DOTALL)
