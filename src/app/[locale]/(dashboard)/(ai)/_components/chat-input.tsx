@@ -29,7 +29,7 @@ import {
 import { DropdownTemplate, type MenuItem } from '@/components/custom/dropdown';
 import { Button } from '@/components/ui/button';
 import { useGoogleDrivePicker } from '@/hooks/use-google-drive-picker';
-import type { ChatModel } from '@/services/ai/chat-models';
+import type { ChatModel } from '@/services/ai/chat-provider.constants';
 import type {
   ChatFileUIPart,
   ChatSubmitAttachments,

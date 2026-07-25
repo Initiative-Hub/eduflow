@@ -8,7 +8,7 @@ import type React from 'react';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import type { WritingTool } from '@/lib/validations/writing.schema';
-import { DEFAULT_CHAT_MODEL } from '@/services/ai/chat-models';
+import { DEFAULT_CHAT_MODEL } from '@/services/ai/chat-provider.constants';
 import { ChatInput } from '../../_components/chat-input';
 import { ChatShareButton } from '../../_components/chat-share-button';
 import { ChatSidebar } from '../../_components/chat-sidebar';

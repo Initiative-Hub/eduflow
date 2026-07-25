@@ -84,6 +84,24 @@ describe('course content permission route enforcement', () => {
     expect(response.status).toBe(403);
   });
 
+  it('rejects AI course content generation when AI course generation permission is missing', async () => {
+    getCoursePermissions.mockResolvedValue({
+      withoutPermission: (permission: string) =>
+        permission === 'AI_USE_COURSE_GENERATION',
+    });
+
+    const { POST } = await import('@/app/api/v1/ai/courses/route');
+
+    const response = await POST(
+      jsonRequest({
+        fileId: '11111111-1111-4111-8111-111111111111',
+        courseId: '22222222-2222-4222-8222-222222222222',
+      })
+    );
+
+    expect(response.status).toBe(403);
+  });
+
   it('returns a search skip control ID with an authorized content stream', async () => {
     getCoursePermissions.mockResolvedValue({
       withoutPermission: () => false,

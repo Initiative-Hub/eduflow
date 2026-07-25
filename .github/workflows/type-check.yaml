@@ -2,17 +2,25 @@ name: TypeScript Type Check
 
 on:
   push:
-    branches-ignore:
-      - chore/trigger-vercel-deploy
-      - fix/biome-formatting-*
-      - staging
-      - production
+    branches:
+      - main
+  pull_request:
+    branches:
+      - 'main'
+    types:
+      - opened
+      - reopened
+      - synchronize
   workflow_dispatch:
 
 jobs:
   type-check:
     name: Type Check
     runs-on: self-hosted
+    timeout-minutes: 15
+    if: |
+      github.event_name != 'pull_request' || 
+      (github.head_ref != 'chore/trigger-vercel-deploy' && !startsWith(github.head_ref, 'fix/biome-formatting-'))
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
