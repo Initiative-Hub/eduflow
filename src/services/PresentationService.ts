@@ -65,7 +65,18 @@ type TemplateCategoryMetadata = {
   when_to_use?: string;
   prompt_hint?: string;
   content_guidance?: string[];
+  /**
+   * How much content a layout can actually hold. Extracted brand templates are
+   * often sparse: a divider may expose only a `title` slot, and any extra
+   * binding is dropped when the deck is filled, leaving a blank-looking slide.
+   */
+  text_slots?: number;
+  image_slots?: number;
+  capacity?: number;
 };
+
+/** Layouts at or below this capacity cannot hold body copy or lists. */
+const TITLE_ONLY_CAPACITY = 1;
 
 type TemplateCategoryMetadataMap = Record<string, TemplateCategoryMetadata>;
 
@@ -380,6 +391,25 @@ export class PresentationService {
     return metadata?.[category];
   }
 
+  /**
+   * Tells the planner how much a layout can hold. Without this the model routes
+   * body copy and lists into title-only layouts, where the content is silently
+   * dropped and the slide renders as a heading on an empty background.
+   */
+  private static buildCapacityNote(
+    guidance?: TemplateCategoryMetadata
+  ): string {
+    const textSlots = guidance?.text_slots;
+    if (typeof textSlots !== 'number' || textSlots <= 0) return '';
+
+    if (textSlots <= TITLE_ONLY_CAPACITY) {
+      return ' [TITLE ONLY: this layout has room for a title and nothing else. Provide only slideTitle and leave bindings empty. Never use it for bullets, body text, lists, metrics or tables.]';
+    }
+
+    const capacity = guidance?.capacity ?? textSlots;
+    return ` [holds up to ${textSlots} text slot(s), about ${capacity} content item(s) — keep content within this budget]`;
+  }
+
   private static buildCategoryGuidanceBlock(
     categories: readonly string[] | string[],
     metadata?: TemplateCategoryMetadataMap
@@ -391,8 +421,10 @@ export class PresentationService {
           metadata
         );
 
+        const capacityNote = PresentationService.buildCapacityNote(guidance);
+
         if (guidance?.prompt_hint) {
-          return `- '${category}': ${guidance.prompt_hint}`;
+          return `- '${category}': ${guidance.prompt_hint}${capacityNote}`;
         }
 
         const fallbackBits = [guidance?.description, guidance?.when_to_use]
@@ -400,8 +432,8 @@ export class PresentationService {
           .join(' ');
 
         return fallbackBits
-          ? `- '${category}': ${fallbackBits}`
-          : `- '${category}': Use the category name literally and fill it with real lesson content from the lesson.`;
+          ? `- '${category}': ${fallbackBits}${capacityNote}`
+          : `- '${category}': Use the category name literally and fill it with real lesson content from the lesson.${capacityNote}`;
       })
       .join('\n');
   }

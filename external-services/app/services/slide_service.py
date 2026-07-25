@@ -154,6 +154,37 @@ def _read_collection_category_metadata(library_dir: Path) -> Dict[str, Dict[str,
     return metadata
 
 
+def _read_category_capacity(library_dir: Path | None) -> Dict[str, Dict[str, int]]:
+    """Text/image slot counts per category, so planners avoid sending body copy
+    to a layout that only has room for a title.
+
+    Extracted brand templates are often sparse: a divider may expose a single
+    `title` slot, and any extra binding is dropped when the deck is filled.
+    """
+    if not library_dir or not library_dir.exists():
+        return {}
+
+    try:
+        library = slide_skills.scan_template_library(str(library_dir))
+    except Exception as error:
+        logger.warning(f"Could not read template capacity for {library_dir}: {error}")
+        return {}
+
+    capacity: Dict[str, Dict[str, int]] = {}
+    for entry in library.category_map():
+        variants = entry.get("variants") or []
+        if not variants:
+            continue
+        # Report the roomiest variant: that is what the planner can rely on.
+        capacity[entry["category"]] = {
+            "text_slots": max(int(v.get("text_slots") or 0) for v in variants),
+            "image_slots": max(int(v.get("image_slots") or 0) for v in variants),
+            "capacity": max(int(v.get("capacity") or 0) for v in variants),
+        }
+
+    return capacity
+
+
 def _build_category_metadata(
     library_dir: Path | None, categories: set[str]
 ) -> Dict[str, Dict[str, Any]]:
@@ -161,6 +192,7 @@ def _build_category_metadata(
     collection_metadata = (
         _read_collection_category_metadata(library_dir) if library_dir else {}
     )
+    capacity = _read_category_capacity(library_dir)
 
     for category in sorted(categories):
         if not library_dir:
@@ -171,6 +203,8 @@ def _build_category_metadata(
         )
         for key, value in category_metadata.items():
             merged.setdefault(key, value)
+        if category in capacity:
+            merged.update(capacity[category])
         if merged:
             metadata[category] = merged
 
@@ -984,6 +1018,12 @@ class SlideService:
                     logger.info(
                         f"Cleaned up downloaded S3 collection '{col_name}' after generation"
                     )
+
+        # slide-skills reports plan data that had no matching slot. Log it so a
+        # sparse template silently swallowing content is diagnosable.
+        for warning in res.get("warnings") or []:
+            if "dropped bindings" in warning:
+                logger.warning(f"[{col_name}] {warning}")
 
         return res
 
