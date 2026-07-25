@@ -11,6 +11,7 @@ export default async function AssignmentsPage({
   params: Promise<{ courseId: string }>;
 }) {
   const { courseId } = await params;
+
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -30,6 +31,9 @@ export default async function AssignmentsPage({
       courseId={courseId}
       canCreate={permissions.containPermission(
         COURSE_PERMISSION.ASSESSMENTS_CREATE
+      )}
+      canGrade={permissions.containPermission(
+        COURSE_PERMISSION.ASSESSMENTS_GRADE
       )}
     />
   );
