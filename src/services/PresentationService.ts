@@ -593,6 +593,16 @@ AVAILABLE LAYOUT TYPES (from the selected template — use ONLY these):
 ${categoryList}
 ${categoryGuidanceBlock ? `\nTEMPLATE CATEGORY GUIDANCE:\n${categoryGuidanceBlock}\n` : ''}
 
+NARRATIVE & STRUCTURE:
+- Slide 1 MUST be the deck's opening/title slide: pick the available layout whose
+  name most clearly means "title" or "cover" (e.g. TITLE_SLIDE, TITLE_SLIDE_2, COVER,
+  INTRO). Only if no such layout exists, use the most title-like one available.
+- Where the template offers a section-divider layout (e.g. SECTION_HEADER, DIVIDER),
+  use it to transition between major parts of longer decks.
+- End with a wrap-up: a summary/conclusion layout, and where one exists a
+  call-to-action, thank-you or contact layout.
+- Never repeat the opening/title layout later in the deck.
+
 INSTRUCTIONS:
 - Choose the most appropriate layout type for each slide based on its name (e.g. TEAM → team members, MISSION → company mission, TITLE_SLIDE → title slide).
 - Distribute content naturally across the available types. Use each type that makes sense for the lesson.
@@ -621,6 +631,7 @@ HARD CONSTRAINTS:
 1. Output EXACTLY ${targetSlideCount} slides.
 2. Use ONLY the layout types listed above — do NOT invent new ones.
 3. Every slide must have real content drawn from the lesson.
+4. The FIRST slide must be the title/cover layout described above.
     `.trim();
   }
 

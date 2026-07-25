@@ -10,7 +10,7 @@ dependencies = [
     "markitdown[pdf]==0.1.6",
     "modal==1.4.3",
     "youtube-transcript-api>=1.2.4",
-    "slide-skills>=0.2.34",
+    "slide-skills>=0.2.36",
     "tavily-python>=0.7.26",
     "boto3>=1.43.29",
     "pymupdf>=1.24.0",

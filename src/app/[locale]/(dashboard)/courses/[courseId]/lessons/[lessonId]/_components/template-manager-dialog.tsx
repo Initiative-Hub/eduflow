@@ -1,6 +1,7 @@
 'use client';
 
 import { ArrowRight, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -32,6 +33,14 @@ import {
   useImportSlideTemplate,
   useSlideTemplatePreviews,
 } from '../use-lesson';
+
+const MAX_TEMPLATE_UPLOAD_MB = 150;
+const MAX_TEMPLATE_UPLOAD_BYTES = MAX_TEMPLATE_UPLOAD_MB * 1024 * 1024;
+
+/** Rounded MB, so the rejection message states the actual file size. */
+function formatFileSizeMb(bytes: number): string {
+  return (bytes / (1024 * 1024)).toFixed(1);
+}
 
 const IMPORT_SOURCE_HINTS: Record<TemplateImportSource, string> = {
   auto: 'Detects brand templates automatically and falls back to the deck slides.',
@@ -66,6 +75,7 @@ export function TemplateManagerDialog({
   onUploadSuccess,
   isLoading = false,
 }: TemplateManagerDialogProps) {
+  const t = useTranslations('Courses.LessonPresentation');
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [collectionName, setCollectionName] = useState('');
   const [importSource, setImportSource] =
@@ -93,6 +103,16 @@ export function TemplateManagerDialog({
     e.preventDefault();
     if (!uploadFile) {
       toast.error('Please select a file to upload.');
+      return;
+    }
+
+    if (uploadFile.size > MAX_TEMPLATE_UPLOAD_BYTES) {
+      toast.error(
+        t('templateFileTooLarge', {
+          size: formatFileSizeMb(uploadFile.size),
+          max: MAX_TEMPLATE_UPLOAD_MB,
+        })
+      );
       return;
     }
 
@@ -250,7 +270,7 @@ export function TemplateManagerDialog({
 
                 <div className="flex flex-col gap-1.5">
                   <span className="text-muted-foreground text-xs">
-                    PPTX, ZIP or SVG File
+                    {t('templateFileLabel', { max: MAX_TEMPLATE_UPLOAD_MB })}
                   </span>
                   <Dropzone
                     src={uploadFile ? [uploadFile] : undefined}
@@ -265,7 +285,22 @@ export function TemplateManagerDialog({
                       'application/vnd.openxmlformats-officedocument.presentationml.presentation':
                         ['.pptx'],
                     }}
-                    maxSize={100 * 1024 * 1024} // 50MB
+                    // Rejects oversized files with a readable message instead of
+                    // react-dropzone's raw "larger than N bytes" text.
+                    validator={(file) =>
+                      file.size > MAX_TEMPLATE_UPLOAD_BYTES
+                        ? {
+                            code: 'file-too-large',
+                            message: t('templateFileTooLarge', {
+                              size: formatFileSizeMb(file.size),
+                              max: MAX_TEMPLATE_UPLOAD_MB,
+                            }),
+                          }
+                        : null
+                    }
+                    onError={(error) =>
+                      toast.error(error.message || t('templateUploadRejected'))
+                    }
                     disabled={isUploading}
                     className="border-2 border-input border-dashed bg-muted/30 focus-within:ring-ring hover:bg-accent/20"
                   >
