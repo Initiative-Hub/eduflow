@@ -1,10 +1,11 @@
 import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const source = readFileSync(
-  new URL(
-    '../../app/[locale]/(dashboard)/courses/[courseId]/(course-tabs)/assignments/create/create-assignment-client.tsx',
-    import.meta.url
+  resolve(
+    process.cwd(),
+    'src/app/[locale]/(dashboard)/courses/[courseId]/(course-tabs)/assignments/create/create-assignment-client.tsx'
   ),
   'utf8'
 );
@@ -18,6 +19,6 @@ describe('CreateAssignmentClient layout', () => {
 
   it('keeps the editor inside the main content column', () => {
     expect(source).toContain('<AssignmentEditor');
-    expect(source).toContain('lg:grid-cols-[minmax(0,1fr)_20rem]');
+    expect(source).toContain('lg:grid-cols-[minmax(0,1fr)_21rem]');
   });
 });

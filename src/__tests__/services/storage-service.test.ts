@@ -25,6 +25,9 @@ vi.mock('@/lib/prisma', () => ({
       updateMany: vi.fn(),
       aggregate: vi.fn(),
     },
+    assignmentSubmissionFile: {
+      findFirst: vi.fn(),
+    },
   },
 }));
 
@@ -49,6 +52,11 @@ const fileInventory = prisma.fileInventory as unknown as Record<
   string,
   ReturnType<typeof vi.fn>
 >;
+const assignmentSubmissionFile =
+  prisma.assignmentSubmissionFile as unknown as Record<
+    string,
+    ReturnType<typeof vi.fn>
+  >;
 const mockBuildInventoryObjectKey = buildInventoryObjectKey as ReturnType<
   typeof vi.fn
 >;
@@ -77,6 +85,10 @@ describe('StorageService', () => {
   beforeEach(() => {
     Object.values(fileInventory).forEach((mockFn) => {
       mockFn.mockReset();
+    });
+    Object.values(assignmentSubmissionFile).forEach((mockFn) => {
+      mockFn.mockReset();
+      mockFn.mockResolvedValue(null);
     });
     mockBuildInventoryObjectKey.mockReset();
     mockBuildInventoryThumbnailObjectKey.mockReset();
