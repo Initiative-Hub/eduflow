@@ -78,6 +78,18 @@ type TemplateCategoryMetadata = {
 /** Layouts at or below this capacity cannot hold body copy or lists. */
 const TITLE_ONLY_CAPACITY = 1;
 
+/**
+ * A content slide needs at least this many characters of real copy, or two
+ * list entries, to fill its layout. Below that the rendered slide is mostly
+ * empty space around a heading.
+ */
+const MIN_SLIDE_CONTENT_CHARS = 90;
+const MIN_SLIDE_LIST_ITEMS = 2;
+
+/** Layout names that are dividers or covers by convention, so a bare title is correct. */
+const TITLE_ONLY_LAYOUT_PATTERN =
+  /(^|_)(TITLE|COVER|SECTION|DIVIDER|INTRO|END|CLOSING|THANK|QA|BLANK)(_|$)/i;
+
 type TemplateCategoryMetadataMap = Record<string, TemplateCategoryMetadata>;
 
 const slideBindingsSchema = z.object({
@@ -410,6 +422,74 @@ export class PresentationService {
     return ` [holds up to ${textSlots} text slot(s), about ${capacity} content item(s) — keep content within this budget]`;
   }
 
+  /**
+   * A layout is title-only when the template says it has room for nothing else,
+   * or (when the template reports no capacity) when its name marks it as a
+   * cover, divider or closing slide.
+   */
+  private static isTitleOnlyLayout(
+    layoutType: string,
+    metadata?: TemplateCategoryMetadataMap
+  ): boolean {
+    const textSlots = metadata?.[layoutType]?.text_slots;
+    if (typeof textSlots === 'number' && textSlots > 0) {
+      return textSlots <= TITLE_ONLY_CAPACITY;
+    }
+    return TITLE_ONLY_LAYOUT_PATTERN.test(layoutType);
+  }
+
+  /** Counts the real copy a slide carries, ignoring the title and image prompts. */
+  private static measureSlideContent(bindings: Record<string, unknown>): {
+    chars: number;
+    items: number;
+  } {
+    let chars = 0;
+    let items = 0;
+
+    for (const [key, value] of Object.entries(bindings)) {
+      // The title lives outside bindings, and an image prompt is not slide copy.
+      if (key === 'image_prompt_description' || key === 'chart_type') continue;
+
+      if (typeof value === 'string') {
+        chars += value.trim().length;
+        continue;
+      }
+      if (!Array.isArray(value)) continue;
+
+      for (const entry of value) {
+        if (typeof entry === 'string') {
+          if (entry.trim()) items += 1;
+          chars += entry.trim().length;
+        } else if (entry && typeof entry === 'object') {
+          items += 1;
+          for (const nested of Object.values(entry)) {
+            if (typeof nested === 'string') chars += nested.trim().length;
+          }
+        }
+      }
+    }
+
+    return { chars, items };
+  }
+
+  /**
+   * True when a content layout was planned with too little copy to fill it.
+   * Divider and cover layouts are exempt: a bare title is their whole purpose.
+   */
+  private static isUnderfilledSlide(
+    slide: { layoutType: string; bindings: Record<string, unknown> },
+    metadata?: TemplateCategoryMetadataMap
+  ): boolean {
+    if (PresentationService.isTitleOnlyLayout(slide.layoutType, metadata)) {
+      return false;
+    }
+
+    const { chars, items } = PresentationService.measureSlideContent(
+      slide.bindings ?? {}
+    );
+    return items < MIN_SLIDE_LIST_ITEMS && chars < MIN_SLIDE_CONTENT_CHARS;
+  }
+
   private static buildCategoryGuidanceBlock(
     categories: readonly string[] | string[],
     metadata?: TemplateCategoryMetadataMap
@@ -635,6 +715,10 @@ NARRATIVE & STRUCTURE:
   call-to-action, thank-you or contact layout.
 - Never repeat the opening/title layout later in the deck.
 
+CONTENT DEPTH (applies to every slide that is not a cover or divider):
+- A content slide must never be just a title. Fill it with at least ${MIN_SLIDE_LIST_ITEMS} list entries or at least ${MIN_SLIDE_CONTENT_CHARS} characters of prose, up to the layout's stated budget.
+- Only cover/title and section-divider layouts may carry a title alone; for those, leave bindings empty.
+
 INSTRUCTIONS:
 - Choose the most appropriate layout type for each slide based on its name (e.g. TEAM → team members, MISSION → company mission, TITLE_SLIDE → title slide).
 - Distribute content naturally across the available types. Use each type that makes sense for the lesson.
@@ -724,7 +808,105 @@ HARD CONSTRAINTS:
       maxOutputTokens: 16000,
     });
 
-    return output;
+    return PresentationService.enrichUnderfilledSlides({
+      plan: output,
+      lessonTitle: opts.lessonTitle,
+      contentSnippet,
+      provider,
+      model,
+      metadata: isCustomTemplate
+        ? opts.templateCategoryMetadata
+        : opts.standardCategoryMetadata,
+    });
+  }
+
+  /**
+   * Rewrites content slides the planner left nearly empty.
+   *
+   * The first pass sometimes returns a heading plus a single fragment for a
+   * layout that has room for several points, which renders as a title floating
+   * in white space. Divider and cover layouts are skipped, since a bare title is
+   * their intended look.
+   */
+  private static async enrichUnderfilledSlides(opts: {
+    plan: PresentationPlan;
+    lessonTitle: string;
+    contentSnippet: string;
+    provider: ReturnType<typeof createOpenRouter>;
+    model: string;
+    metadata?: TemplateCategoryMetadataMap;
+  }): Promise<PresentationPlan> {
+    const { plan, metadata } = opts;
+    const underfilled = plan.slides
+      .map((slide, index) => ({ slide, index }))
+      .filter(({ slide }) =>
+        PresentationService.isUnderfilledSlide(
+          slide as { layoutType: string; bindings: Record<string, unknown> },
+          metadata
+        )
+      );
+
+    if (underfilled.length === 0) return plan;
+
+    const budgets = underfilled
+      .map(({ slide, index }) => {
+        const capacity = metadata?.[slide.layoutType]?.capacity;
+        const budget = capacity
+          ? ` (fills about ${capacity} content item(s))`
+          : '';
+        return `${index}: layoutType '${slide.layoutType}'${budget} — title "${slide.slideTitle}"`;
+      })
+      .join('\n');
+
+    try {
+      const { output } = await generateText({
+        model: opts.provider(opts.model),
+        output: Output.object({
+          schema: z.object({
+            slides: z.array(
+              z.object({
+                index: z.number().int(),
+                bindings: slideBindingsSchema,
+              })
+            ),
+          }),
+        }),
+        instructions: PLANNER_SYSTEM_PROMPT,
+        prompt: `These slides were planned with too little content and would render as a title on an empty slide. Write full, presentation-ready content for each one, drawn from the lesson below.
+
+Lesson Title: "${opts.lessonTitle}"
+Core Lesson Content:
+${opts.contentSnippet}
+
+SLIDES TO ENRICH (return the same index for each):
+${budgets}
+
+RULES:
+- Return bindings only; do not change layoutType or the slide title.
+- Use the binding fields that match the layout's purpose (bullets/items/steps for lists, body_text for prose, metrics for figures, left_col_*/right_col_* for comparisons).
+- Provide at least ${MIN_SLIDE_LIST_ITEMS} list entries, or at least ${MIN_SLIDE_CONTENT_CHARS} characters of prose, staying within the layout's stated budget.
+- Use concrete facts from the lesson (names, numbers, definitions, examples). Never placeholders or generic filler.
+- Write in the same language as the lesson content.`,
+        temperature: 0.6,
+        maxOutputTokens: 6000,
+      });
+
+      const enrichedByIndex = new Map(
+        output.slides.map((entry) => [entry.index, entry.bindings])
+      );
+      const slides = plan.slides.map((slide, index) => {
+        const enriched = enrichedByIndex.get(index);
+        if (!enriched) return slide;
+        // Keep anything the first pass produced; the second pass only adds.
+        return { ...slide, bindings: { ...slide.bindings, ...enriched } };
+      });
+
+      return { ...plan, slides };
+    } catch (error) {
+      // A thin deck is still usable, so never fail planning over enrichment.
+      console.warn('[PresentationService] Slide enrichment failed:', error);
+      return plan;
+    }
   }
 
   static async planPresentation(options: {
