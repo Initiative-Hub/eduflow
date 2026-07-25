@@ -8,13 +8,13 @@ import { getCoursePermissions } from '@/lib/permissions/course-permission';
 import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
 import { prisma } from '@/lib/prisma';
 import { createInventoryReadSignedUrl } from '@/lib/storage/file-storage';
+import { INVENTORY_FOLDER_PATHS } from '@/lib/storage/inventory-folders';
 import {
   EMPTY_TIPTAP_DOCUMENT,
   isTiptapDocument,
   type TiptapDocument,
 } from '@/utils/lesson-content';
 import { StorageService } from './StorageService';
-import { INVENTORY_FOLDER_PATHS } from '@/lib/storage/inventory-folders';
 
 type AssignmentInput = {
   courseId: string;
@@ -92,6 +92,9 @@ export class AssignmentService {
     );
 
     const permissions = await getCoursePermissions(userId, courseId);
+    const canGrade = permissions.containPermission(
+      COURSE_PERMISSION.ASSESSMENTS_GRADE
+    );
 
     const assignments = await prisma.assignment.findMany({
       where: {
@@ -106,14 +109,83 @@ export class AssignmentService {
           createdAt: 'desc',
         },
       ],
-      include: {
-        _count: {
-          select: {
-            submissions: true,
-          },
-        },
-      },
     });
+
+    const finalizedSubmissions = canGrade
+      ? await prisma.assignmentSubmission.findMany({
+          where: {
+            assignmentId: {
+              in: assignments.map((assignment) => assignment.id),
+            },
+            status: {
+              in: [
+                AssignmentSubmissionStatus.SUBMITTED,
+                AssignmentSubmissionStatus.GRADED,
+              ],
+            },
+          },
+          orderBy: [
+            {
+              assignmentId: 'asc',
+            },
+            {
+              studentId: 'asc',
+            },
+            {
+              createdAt: 'desc',
+            },
+          ],
+          select: {
+            assignmentId: true,
+            studentId: true,
+            status: true,
+          },
+        })
+      : [];
+
+    const latestSubmissionByStudent = new Map<
+      string,
+      (typeof finalizedSubmissions)[number]
+    >();
+
+    for (const submission of finalizedSubmissions) {
+      const key = `${submission.assignmentId}:${submission.studentId}`;
+
+      if (!latestSubmissionByStudent.has(key)) {
+        latestSubmissionByStudent.set(key, submission);
+      }
+    }
+
+    const submissionSummaryByAssignment = new Map<
+      string,
+      {
+        total: number;
+        pending: number;
+        graded: number;
+      }
+    >();
+
+    for (const submission of latestSubmissionByStudent.values()) {
+      const current = submissionSummaryByAssignment.get(
+        submission.assignmentId
+      ) ?? {
+        total: 0,
+        pending: 0,
+        graded: 0,
+      };
+
+      current.total += 1;
+
+      if (submission.status === AssignmentSubmissionStatus.SUBMITTED) {
+        current.pending += 1;
+      }
+
+      if (submission.status === AssignmentSubmissionStatus.GRADED) {
+        current.graded += 1;
+      }
+
+      submissionSummaryByAssignment.set(submission.assignmentId, current);
+    }
 
     const studentEnrollment = await prisma.enrollment.findFirst({
       where: {
@@ -164,9 +236,14 @@ export class AssignmentService {
       canDelete: permissions.containPermission(
         COURSE_PERMISSION.ASSESSMENTS_DELETE
       ),
-      canGrade: permissions.containPermission(
-        COURSE_PERMISSION.ASSESSMENTS_GRADE
-      ),
+      canGrade,
+      submissionSummary: canGrade
+        ? (submissionSummaryByAssignment.get(assignment.id) ?? {
+            total: 0,
+            pending: 0,
+            graded: 0,
+          })
+        : null,
       submission: submissionMap.get(assignment.id) ?? null,
     }));
   }

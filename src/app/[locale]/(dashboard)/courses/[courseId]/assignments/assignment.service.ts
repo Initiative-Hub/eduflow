@@ -44,9 +44,19 @@ export type Assignment = {
   submission: AssignmentSubmission | null;
 };
 
+export type AssignmentSubmissionSummary = {
+  total: number;
+  pending: number;
+  graded: number;
+};
+
+export type AssignmentListItem = Assignment & {
+  submissionSummary: AssignmentSubmissionSummary | null;
+};
+
 export const assignmentService = {
   list: (courseId: string) =>
-    apiClient.get<Assignment[]>(
+    apiClient.get<AssignmentListItem[]>(
       ASSIGNMENT_API_ROUTES.COURSE_ASSIGNMENTS(courseId)
     ),
 
