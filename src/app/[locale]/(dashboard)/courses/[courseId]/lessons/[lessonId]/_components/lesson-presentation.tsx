@@ -5,6 +5,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Download,
+  Eye,
+  EyeOff,
   ListPlus,
   Maximize2,
   Minimize2,
@@ -31,6 +33,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import type { TiptapDocument } from '@/utils/lesson-content';
 import {
+  applySlideDropRuntime,
+  removeLegacySlideDropStyles,
+  SLIDE_DROP_ATTRIBUTE,
+} from '@/utils/slide-deck-drop';
+import {
   useDownloadPptx,
   useSlideTemplateCategories,
   useSlideTemplates,
@@ -52,6 +59,7 @@ import {
   getEditableSlideTextElements,
   useSlideAiEdit,
 } from './use-slide-ai-edit';
+import { useSlideDrop } from './use-slide-drop';
 
 const formatLayoutName = (layout: string, t: any) => {
   const map: Record<string, string> = {
@@ -210,6 +218,13 @@ export function LessonPresentation({
     handleOpenChange: handleAiEditOpenChange,
     submitEdit: submitAiEdit,
   } = useSlideAiEdit({ iframeRef, deckId });
+  const {
+    isActiveSlideDropped,
+    droppedCount,
+    syncDropState,
+    toggleActiveSlideDropped,
+    focusNextDroppedSlide,
+  } = useSlideDrop({ iframeRef });
 
   const plannedSlidesRef = useRef(plannedSlides);
   useEffect(() => {
@@ -260,9 +275,10 @@ export function LessonPresentation({
         if (counter) {
           counter.textContent = `${index + 1} / ${slides.length}`;
         }
+        syncDropState();
       }
     },
-    [clearAiTextSelection]
+    [clearAiTextSelection, syncDropState]
   );
   const isGamma = !!deckUrl?.includes('gamma.app');
 
@@ -334,6 +350,10 @@ export function LessonPresentation({
         '[VisualEditor] Accessed iframe contentDocument successfully'
       );
       clearAiTextSelection();
+      // Decks saved by the earlier implementation hid dropped slides outright,
+      // which made them impossible to restore in the editor.
+      removeLegacySlideDropStyles(doc);
+      syncDropState();
 
       // Try to load plannedSlides from script tag in S3 HTML
       const metaEl = doc.querySelector('#slide-plan-metadata');
@@ -376,6 +396,10 @@ export function LessonPresentation({
             outline: 2px solid rgba(139, 92, 246, 0.95) !important;
             outline-offset: 3px;
           }
+          .slide[${SLIDE_DROP_ATTRIBUTE}="true"] svg {
+            outline: 3px dashed rgba(239, 68, 68, 0.9) !important;
+            opacity: 0.55;
+          }
         `;
         doc.head.appendChild(style);
         console.log('[VisualEditor] Injected hover styles into iframe head');
@@ -391,7 +415,10 @@ export function LessonPresentation({
           openSelectedTextEdit();
         },
         onImageAction: openImageEdit,
-        onActiveSlideChange: clearAiTextSelection,
+        onActiveSlideChange: () => {
+          clearAiTextSelection();
+          syncDropState();
+        },
       });
 
       const elements = getEditableSlideTextElements(doc);
@@ -495,6 +522,7 @@ export function LessonPresentation({
     openSelectedTextEdit,
     selectAiTextElement,
     setPlannedSlides,
+    syncDropState,
     t,
   ]);
 
@@ -584,6 +612,9 @@ export function LessonPresentation({
       }
     }
     metaEl.textContent = JSON.stringify({ slides: plannedSlidesRef.current });
+
+    // Persist dropped-slide behavior: hide them and skip them while presenting.
+    applySlideDropRuntime(clone, doc);
 
     const html = `<!DOCTYPE html>\n${clone.outerHTML}`;
 
@@ -1724,6 +1755,43 @@ export function LessonPresentation({
                 >
                   <Sparkles className="h-4 w-4" />
                   {t('btnAiEditSlide')}
+                </Button>
+              )}
+              {!isGamma && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={cn(
+                    'h-9 gap-1.5 rounded-lg',
+                    isActiveSlideDropped &&
+                      'border-destructive/40 text-destructive'
+                  )}
+                  onClick={toggleActiveSlideDropped}
+                  title={
+                    droppedCount > 0
+                      ? t('droppedSlidesCount', { count: droppedCount })
+                      : undefined
+                  }
+                >
+                  {isActiveSlideDropped ? (
+                    <Eye className="h-4 w-4" />
+                  ) : (
+                    <EyeOff className="h-4 w-4" />
+                  )}
+                  {isActiveSlideDropped
+                    ? t('btnRestoreSlide')
+                    : t('btnDropSlide')}
+                </Button>
+              )}
+              {!isGamma && droppedCount > 0 && !isActiveSlideDropped && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-9 gap-1.5 rounded-lg text-muted-foreground"
+                  onClick={focusNextDroppedSlide}
+                >
+                  <EyeOff className="h-4 w-4" />
+                  {t('btnReviewDroppedSlides', { count: droppedCount })}
                 </Button>
               )}
               {!isGamma && (
