@@ -1,21 +1,14 @@
 'use client';
 
-import {
-  CheckCircle2,
-  Download,
-  FileText,
-  LoaderCircle,
-  Send,
-  UploadCloud,
-} from 'lucide-react';
+import { CheckCircle2, LoaderCircle, Send, UploadCloud } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { type ChangeEvent, type DragEvent, useRef, useState } from 'react';
 import type { Assignment } from '@/app/[locale]/(dashboard)/courses/[courseId]/assignments/assignment.service';
-import { assignmentService } from '@/app/[locale]/(dashboard)/courses/[courseId]/assignments/assignment.service';
 import { useAssignmentSubmission } from '@/app/[locale]/(dashboard)/courses/[courseId]/assignments/use-assignment';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { SubmissionFileList } from './submission-file-list';
 
 export function StudentSubmissionPanel({
   assignment,
@@ -28,14 +21,14 @@ export function StudentSubmissionPanel({
   const { upload, submit } = useAssignmentSubmission(assignment.id);
 
   const submission = assignment.submission;
+  const draftSubmission = assignment.draftSubmission;
   const isPastDue = assignment.dueAt
     ? new Date(assignment.dueAt).getTime() < Date.now()
     : false;
 
   const canUpload = !isPastDue;
 
-  const canSubmit =
-    submission?.status === 'DRAFT' && submission.files.length > 0 && !isPastDue;
+  const canSubmit = Boolean(draftSubmission?.files.length) && !isPastDue;
 
   const uploadFile = async (file?: File) => {
     if (!file || !canUpload || upload.isPending) return;
@@ -75,9 +68,15 @@ export function StudentSubmissionPanel({
           onChange={handleFileChange}
         />
 
-        {!isPastDue && submission && status !== 'DRAFT' ? (
+        {!isPastDue && submission && !draftSubmission ? (
           <p className="rounded-lg bg-muted px-3 py-2 text-muted-foreground text-sm">
             {t('resubmitDescription')}
+          </p>
+        ) : null}
+
+        {submission && draftSubmission ? (
+          <p className="rounded-lg bg-muted px-3 py-2 text-muted-foreground text-sm">
+            {t('draftInProgress')}
           </p>
         ) : null}
 
@@ -113,45 +112,29 @@ export function StudentSubmissionPanel({
           </button>
         ) : null}
 
+        {draftSubmission?.files.length ? (
+          <SubmissionFileList
+            files={draftSubmission.files}
+            label={t('draftFiles')}
+          />
+        ) : null}
+
         {submission?.files.length ? (
-          <div className="space-y-2">
-            <p className="font-medium text-sm">{t('uploadedFiles')}</p>
-            {submission.files.map((entry) => (
-              <div
-                key={entry.id}
-                className="flex items-center gap-3 rounded-lg border bg-muted/30 p-3"
-              >
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-background text-primary">
-                  <FileText className="size-4" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium text-sm">
-                    {entry.file.name}
-                  </p>
-                  <p className="text-muted-foreground text-xs">
-                    {formatFileSize(entry.file.fileSize)}
-                  </p>
-                </div>
-                <Button variant="ghost" size="icon-sm" asChild>
-                  <a
-                    href={assignmentService.fileDownloadUrl(entry.file.id)}
-                    target="_blank"
-                    rel="noreferrer"
-                    aria-label={t('downloadFile', { name: entry.file.name })}
-                  >
-                    <Download />
-                  </a>
-                </Button>
-              </div>
-            ))}
+          <SubmissionFileList
+            files={submission.files}
+            label={
+              draftSubmission ? t('latestSubmissionFiles') : t('uploadedFiles')
+            }
+          />
+        ) : null}
+
+        {!draftSubmission?.files.length &&
+        !submission?.files.length &&
+        !canUpload ? (
+          <div className="rounded-lg border border-dashed px-4 py-6 text-center text-muted-foreground text-sm">
+            {t('noFiles')}
           </div>
-        ) : (
-          !canUpload && (
-            <div className="rounded-lg border border-dashed px-4 py-6 text-center text-muted-foreground text-sm">
-              {t('noFiles')}
-            </div>
-          )
-        )}
+        ) : null}
 
         {submission?.status === 'GRADED' ? (
           <div className="rounded-xl bg-primary/5 p-4 ring-1 ring-primary/15">
@@ -175,13 +158,13 @@ export function StudentSubmissionPanel({
           </div>
         ) : null}
 
-        {isPastDue && status === 'DRAFT' ? (
+        {isPastDue && (!submission || draftSubmission) ? (
           <p className="rounded-lg bg-muted px-3 py-2 text-muted-foreground text-sm">
             {t('deadlinePassed')}
           </p>
         ) : null}
 
-        {status === 'DRAFT' ? (
+        {draftSubmission ? (
           <Button
             size="lg"
             className="w-full"
@@ -214,11 +197,4 @@ function SubmissionStatus({
       {label}
     </Badge>
   );
-}
-
-function formatFileSize(bytes: number | null) {
-  if (bytes === null) return '—';
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 ** 2) return `${Math.round(bytes / 1024)} KB`;
-  return `${(bytes / 1024 ** 2).toFixed(1)} MB`;
 }

@@ -32,6 +32,24 @@ function serializeFile<T extends { fileSize: bigint | null }>(file: T) {
   };
 }
 
+function serializeSubmission<
+  T extends {
+    files: Array<{
+      file: {
+        fileSize: bigint | null;
+      };
+    }>;
+  },
+>(submission: T) {
+  return {
+    ...submission,
+    files: submission.files.map((entry) => ({
+      ...entry,
+      file: serializeFile(entry.file),
+    })),
+  };
+}
+
 export class AssignmentService {
   private static async getAssignment(assignmentId: string) {
     const assignment = await prisma.assignment.findFirst({
@@ -217,9 +235,21 @@ export class AssignmentService {
         })
       : [];
 
-    const submissionMap = new Map<string, (typeof ownSubmissions)[number]>();
+    const draftSubmissionMap = new Map<
+      string,
+      (typeof ownSubmissions)[number]
+    >();
+    const finalizedSubmissionMap = new Map<
+      string,
+      (typeof ownSubmissions)[number]
+    >();
 
     for (const submission of ownSubmissions) {
+      const submissionMap =
+        submission.status === AssignmentSubmissionStatus.DRAFT
+          ? draftSubmissionMap
+          : finalizedSubmissionMap;
+
       if (!submissionMap.has(submission.assignmentId)) {
         submissionMap.set(submission.assignmentId, submission);
       }
@@ -244,7 +274,8 @@ export class AssignmentService {
             graded: 0,
           })
         : null,
-      submission: submissionMap.get(assignment.id) ?? null,
+      submission: finalizedSubmissionMap.get(assignment.id) ?? null,
+      draftSubmission: draftSubmissionMap.get(assignment.id) ?? null,
     }));
   }
 
@@ -270,32 +301,65 @@ export class AssignmentService {
       },
     });
 
-    const submission = studentEnrollment
-      ? await prisma.assignmentSubmission.findFirst({
-          where: {
-            assignmentId,
-            studentId: userId,
-          },
-          orderBy: {
-            createdAt: 'desc',
-          },
-          include: {
-            files: {
-              include: {
-                file: {
-                  select: {
-                    id: true,
-                    name: true,
-                    fileSize: true,
-                    mimeType: true,
-                    status: true,
+    const [draftSubmission, finalizedSubmission] = studentEnrollment
+      ? await Promise.all([
+          prisma.assignmentSubmission.findFirst({
+            where: {
+              assignmentId,
+              studentId: userId,
+              status: AssignmentSubmissionStatus.DRAFT,
+            },
+            orderBy: {
+              createdAt: 'desc',
+            },
+            include: {
+              files: {
+                include: {
+                  file: {
+                    select: {
+                      id: true,
+                      name: true,
+                      fileSize: true,
+                      mimeType: true,
+                      status: true,
+                    },
                   },
                 },
               },
             },
-          },
-        })
-      : null;
+          }),
+          prisma.assignmentSubmission.findFirst({
+            where: {
+              assignmentId,
+              studentId: userId,
+              status: {
+                in: [
+                  AssignmentSubmissionStatus.SUBMITTED,
+                  AssignmentSubmissionStatus.GRADED,
+                ],
+              },
+            },
+            orderBy: {
+              createdAt: 'desc',
+            },
+            include: {
+              files: {
+                include: {
+                  file: {
+                    select: {
+                      id: true,
+                      name: true,
+                      fileSize: true,
+                      mimeType: true,
+                      status: true,
+                    },
+                  },
+                },
+              },
+            },
+          }),
+        ])
+      : [null, null];
 
     return {
       ...assignment,
@@ -311,14 +375,11 @@ export class AssignmentService {
       canGrade: permissions.containPermission(
         COURSE_PERMISSION.ASSESSMENTS_GRADE
       ),
-      submission: submission
-        ? {
-            ...submission,
-            files: submission.files.map((entry) => ({
-              ...entry,
-              file: serializeFile(entry.file),
-            })),
-          }
+      submission: finalizedSubmission
+        ? serializeSubmission(finalizedSubmission)
+        : null,
+      draftSubmission: draftSubmission
+        ? serializeSubmission(draftSubmission)
         : null,
     };
   }

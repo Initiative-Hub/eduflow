@@ -7,19 +7,19 @@ export type DueKind = 'none' | 'overdue' | 'today' | 'tomorrow' | 'upcoming';
 export function getStudentStatus(
   assignment: AssignmentListItem
 ): 'notStarted' | 'inProgress' | 'awaitingGrade' | 'completed' {
-  if (!assignment.submission) {
-    return 'notStarted';
-  }
-
-  if (assignment.submission.status === 'DRAFT') {
-    return 'inProgress';
-  }
-
-  if (assignment.submission.status === 'SUBMITTED') {
+  if (assignment.submission?.status === 'SUBMITTED') {
     return 'awaitingGrade';
   }
 
-  return 'completed';
+  if (assignment.submission?.status === 'GRADED') {
+    return 'completed';
+  }
+
+  if (assignment.draftSubmission) {
+    return 'inProgress';
+  }
+
+  return 'notStarted';
 }
 
 export function getDueKind(dueAt: string | null, now: number): DueKind {

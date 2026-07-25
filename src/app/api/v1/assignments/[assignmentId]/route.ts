@@ -22,7 +22,7 @@ const updateSchema = z.object({
  *     tags:
  *       - Assignments
  *     summary: Get an assignment
- *     description: Returns one assignment with the current user's permissions and the authenticated student's submission, when applicable.
+ *     description: Returns one assignment with the current user's permissions and, for students, the active draft and latest finalized submission as separate fields.
  *     security:
  *       - SessionCookie: []
  *     parameters:

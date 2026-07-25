@@ -22,7 +22,7 @@ const createAssignmentSchema = z.object({
  *     tags:
  *       - Assignments
  *     summary: List course assignments
- *     description: Returns the active assignments in a course together with the current user's assignment permissions and, for students, their submission summary.
+ *     description: Returns the active assignments in a course together with the current user's assignment permissions and, for students, their active draft and latest finalized submission as separate fields.
  *     security:
  *       - SessionCookie: []
  *     parameters:

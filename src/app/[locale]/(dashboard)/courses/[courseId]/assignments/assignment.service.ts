@@ -42,6 +42,7 @@ export type Assignment = {
   canDelete: boolean;
   canGrade: boolean;
   submission: AssignmentSubmission | null;
+  draftSubmission: AssignmentSubmission | null;
 };
 
 export type AssignmentSubmissionSummary = {
@@ -50,7 +51,12 @@ export type AssignmentSubmissionSummary = {
   graded: number;
 };
 
-export type AssignmentListItem = Assignment & {
+export type AssignmentListItem = Omit<
+  Assignment,
+  'submission' | 'draftSubmission'
+> & {
+  submission: Pick<AssignmentSubmission, 'status' | 'score'> | null;
+  draftSubmission: Pick<AssignmentSubmission, 'status'> | null;
   submissionSummary: AssignmentSubmissionSummary | null;
 };
 
