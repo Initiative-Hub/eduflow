@@ -514,37 +514,105 @@ class SlideService:
             else AWS_S3_TEMPLATES_BUCKET
         )
 
+    @staticmethod
+    def _render_category_preview(svg_path: Path, destination: Path) -> None:
+        """Rasterizes one category layout to PNG, filled with sample copy."""
+        import re
+
+        import resvg_py
+
+        svg = slide_skills.fill_svg(
+            svg_path.read_text(encoding="utf-8"), PREVIEW_SAMPLE_DATA
+        )
+        # Bare ampersands break the XML parser inside resvg.
+        svg = re.sub(r"&(?!(?:[a-zA-Z0-9]+|#[0-9]+|#x[0-9a-fA-F]+);)", "&amp;", svg)
+        destination.write_bytes(
+            bytes(resvg_py.svg_to_bytes(svg_string=svg, width=PREVIEW_WIDTH_PX))
+        )
+
+    async def build_collection_previews(self, library_dir: Path) -> int:
+        """Rasterizes a preview for every category in a local collection.
+
+        Called at import time so opening the template picker never pays the
+        rasterization cost, which takes several seconds for a large collection.
+        """
+        if not library_dir.exists():
+            return 0
+
+        rendered = 0
+        for category_dir in sorted(
+            child for child in library_dir.iterdir() if child.is_dir()
+        ):
+            variants = sorted(category_dir.glob("*.svg"))
+            png_path = category_dir / PREVIEW_FILE_NAME
+            if not variants or png_path.exists():
+                continue
+            try:
+                await run_in_threadpool(
+                    SlideService._render_category_preview, variants[0], png_path
+                )
+                rendered += 1
+            except Exception as error:
+                logger.warning(
+                    f"Failed to rasterize preview for '{category_dir.name}': {error}"
+                )
+
+        return rendered
+
     async def get_template_previews(self, collection: str) -> Dict[str, Any]:
         """Returns one rasterized PNG preview per category, cached in S3.
 
         Previews are generated once and reused, so the template picker can load
         plain images instead of parsing and laying out full SVG markup.
         """
-        import re
-
-        import resvg_py
         from app.services.s3_service import (
             download_file_from_s3,
+            list_files_in_s3_prefix,
             object_exists_in_s3,
             upload_file_to_s3,
         )
 
-        library_dir = await self._ensure_collection_downloaded(collection)
         bucket = self._template_bucket(collection)
+        prefix = f"templates/{collection}/"
+
+        # Fast path: previews already in S3 (generated at import time). Listing
+        # keys avoids downloading the whole collection just to serve thumbnails.
+        stored_keys = await list_files_in_s3_prefix(prefix, bucket_name=bucket)
+        cached_keys = [
+            key for key in stored_keys if key.endswith(f"/{PREVIEW_FILE_NAME}")
+        ]
+        categories_with_layouts = {
+            key[len(prefix) :].rsplit("/", 1)[0]
+            for key in stored_keys
+            if key.endswith(".svg") and "/" in key[len(prefix) :]
+        }
+        categories_with_previews = {
+            key[len(prefix) :].rsplit("/", 1)[0] for key in cached_keys
+        }
+        # Only skip the rebuild when every category has one, so a partially
+        # generated collection is completed rather than shown with gaps.
+        if cached_keys and categories_with_layouts <= categories_with_previews:
+            return {
+                "collection": collection,
+                "bucket": bucket,
+                "previews": [
+                    {
+                        "category": key[len(prefix) :].rsplit("/", 1)[0],
+                        "variant": "standard",
+                        "key": key,
+                    }
+                    for key in sorted(cached_keys)
+                ],
+            }
+
+        library_dir = await self._ensure_collection_downloaded(collection)
         previews: List[Dict[str, str]] = []
 
         if not library_dir.exists():
             return {"collection": collection, "bucket": bucket, "previews": []}
 
         def render_png(svg_path: Path, destination: Path) -> None:
-            svg = slide_skills.fill_svg(
-                svg_path.read_text(encoding="utf-8"), PREVIEW_SAMPLE_DATA
-            )
-            # Bare ampersands break the XML parser inside resvg.
-            svg = re.sub(r"&(?!(?:[a-zA-Z0-9]+|#[0-9]+|#x[0-9a-fA-F]+);)", "&amp;", svg)
-            destination.write_bytes(
-                bytes(resvg_py.svg_to_bytes(svg_string=svg, width=PREVIEW_WIDTH_PX))
-            )
+            SlideService._render_category_preview(svg_path, destination)
 
         for category_dir in sorted(
             child for child in library_dir.iterdir() if child.is_dir()
@@ -1411,6 +1479,14 @@ class SlideService:
                                 child, f"{prefix}/{child.name}"
                             )
                     return uploaded_count
+
+                # Rasterize category previews now so they upload with the
+                # collection. Generating them on first open makes the template
+                # picker spin for seconds on a large collection.
+                rendered = await self.build_collection_previews(dest_dir)
+                logger.info(
+                    f"Rendered {rendered} preview image(s) for collection '{collection_name}'"
+                )
 
                 # Always use collection_name (without _template) as the S3 prefix
                 # so get_collections and generate_deck_from_plan can find it consistently
