@@ -821,6 +821,21 @@
     },
     "AnalyticsPage": "Phân tích",
     "AssessmentsPage": "Bài kiểm tra",
+    "AssignmentDetails": {
+      "back": "Quay lại danh sách bài tập",
+      "briefDescription": "Xem hướng dẫn và thông tin của bài tập này.",
+      "briefTitle": "Yêu cầu bài tập",
+      "due": "Hạn nộp: {date}",
+      "noDeadline": "Không có hạn nộp",
+      "notFound": "Không tìm thấy bài tập.",
+      "overdue": "Đã quá hạn",
+      "points": "{points} điểm",
+      "remaining": "Còn {days} ngày {hours} giờ",
+      "studentEyebrow": "Bài tập khóa học",
+      "teacherEyebrow": "Đánh giá bài tập",
+      "timeRemaining": "Thời gian còn lại",
+      "timeRemainingDescription": "Nộp bài làm cuối cùng trước thời hạn."
+    },
     "AssignmentEditor": {
       "cancel": "Hủy",
       "content": "Nội dung bài tập",
@@ -842,8 +857,8 @@
       "activeAssignments": "Bài tập đang hoạt động",
       "all": "Tất cả",
       "awaitingGrade": "Chờ chấm điểm",
-      "completed": "Hoàn thành",
       "collecting": "Đang nhận bài",
+      "completed": "Hoàn thành",
       "create": "Tạo bài tập",
       "created": "Đã tạo bài tập.",
       "currentGrade": "Điểm hiện tại",
@@ -868,8 +883,8 @@
       "pending": "Đang chờ",
       "pendingCount": "Đang chờ",
       "points": "điểm",
-      "review": "Xem bài",
       "retry": "Thử lại",
+      "review": "Xem bài",
       "saved": "Đã lưu bài tập.",
       "saveError": "Không thể lưu bài tập.",
       "searchPlaceholder": "Tìm kiếm bài tập...",
@@ -881,21 +896,6 @@
       "thisTerm": "Học kỳ này",
       "title": "Bài tập",
       "upcomingDeadlines": "Thời hạn sắp tới"
-    },
-    "AssignmentDetails": {
-      "back": "Quay lại danh sách bài tập",
-      "briefDescription": "Xem hướng dẫn và thông tin của bài tập này.",
-      "briefTitle": "Yêu cầu bài tập",
-      "due": "Hạn nộp: {date}",
-      "noDeadline": "Không có hạn nộp",
-      "notFound": "Không tìm thấy bài tập.",
-      "overdue": "Đã quá hạn",
-      "points": "{points} điểm",
-      "remaining": "Còn {days} ngày {hours} giờ",
-      "studentEyebrow": "Bài tập khóa học",
-      "teacherEyebrow": "Đánh giá bài tập",
-      "timeRemaining": "Thời gian còn lại",
-      "timeRemainingDescription": "Nộp bài làm cuối cùng trước thời hạn."
     },
     "AssignmentStudent": {
       "browseFiles": "hoặc nhấn để chọn tệp từ máy tính",
@@ -913,13 +913,13 @@
       "statusSubmitted": "Đã nộp",
       "submit": "Nộp bài tập",
       "submitError": "Không thể nộp bài tập.",
-      "submitting": "Đang nộp...",
       "submitted": "Đã nộp bài tập.",
+      "submitting": "Đang nộp...",
       "title": "Bài nộp của bạn",
-      "uploadError": "Không thể tải tệp lên.",
-      "uploadSuccess": "Đã tải tệp lên.",
       "uploadedFiles": "Tệp đã tải lên",
-      "uploading": "Đang tải tệp lên..."
+      "uploadError": "Không thể tải tệp lên.",
+      "uploading": "Đang tải tệp lên...",
+      "uploadSuccess": "Đã tải tệp lên."
     },
     "AssignmentTeacher": {
       "assessment": "Đánh giá",
@@ -929,9 +929,9 @@
       "feedback": "Nhận xét định tính",
       "feedbackPlaceholder": "Viết nhận xét hữu ích cho {name}",
       "finalScore": "Điểm cuối cùng",
+      "gradedCount": "{count} đã chấm",
       "gradeError": "Không thể lưu điểm.",
       "gradeSaved": "Đã lưu điểm.",
-      "gradedCount": "{count} đã chấm",
       "noFiles": "Sinh viên này chưa đính kèm tệp nào.",
       "noSubmissions": "Chưa có bài nộp",
       "noSubmissionsDescription": "Bài làm của sinh viên sẽ xuất hiện tại đây khi họ bắt đầu nộp bài.",
@@ -947,8 +947,8 @@
       "studentList": "Danh sách sinh viên",
       "submissionFiles": "Tệp bài nộp",
       "submittedAt": "Đã nộp {date}",
-      "totalCount": "Tổng {count}",
-      "title": "Bài nộp của sinh viên"
+      "title": "Bài nộp của sinh viên",
+      "totalCount": "Tổng {count}"
     },
     "Card": {
       "accept": "Chấp nhận",

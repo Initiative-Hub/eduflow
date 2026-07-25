@@ -821,6 +821,21 @@
     },
     "AnalyticsPage": "Analytics",
     "AssessmentsPage": "Assessments",
+    "AssignmentDetails": {
+      "back": "Back to assignments",
+      "briefDescription": "Review the instructions and context for this assignment.",
+      "briefTitle": "Assignment brief",
+      "due": "Due: {date}",
+      "noDeadline": "No deadline",
+      "notFound": "Assignment not found.",
+      "overdue": "Deadline passed",
+      "points": "{points} points",
+      "remaining": "{days}d {hours}h remaining",
+      "studentEyebrow": "Course assignment",
+      "teacherEyebrow": "Assignment review",
+      "timeRemaining": "Time remaining",
+      "timeRemainingDescription": "Submit your final work before the deadline."
+    },
     "AssignmentEditor": {
       "cancel": "Cancel",
       "content": "Assignment content",
@@ -842,8 +857,8 @@
       "activeAssignments": "Active assignments",
       "all": "All",
       "awaitingGrade": "Awaiting grade",
-      "completed": "Completed",
       "collecting": "Collecting",
+      "completed": "Completed",
       "create": "Create assignment",
       "created": "Assignment created.",
       "currentGrade": "Current grade",
@@ -868,8 +883,8 @@
       "pending": "Pending",
       "pendingCount": "Pending",
       "points": "points",
-      "review": "Review",
       "retry": "Try again",
+      "review": "Review",
       "saved": "Assignment saved.",
       "saveError": "Unable to save the assignment.",
       "searchPlaceholder": "Search assignments...",
@@ -881,21 +896,6 @@
       "thisTerm": "This term",
       "title": "Assignments",
       "upcomingDeadlines": "Upcoming deadlines"
-    },
-    "AssignmentDetails": {
-      "back": "Back to assignments",
-      "briefDescription": "Review the instructions and context for this assignment.",
-      "briefTitle": "Assignment brief",
-      "due": "Due: {date}",
-      "noDeadline": "No deadline",
-      "notFound": "Assignment not found.",
-      "overdue": "Deadline passed",
-      "points": "{points} points",
-      "remaining": "{days}d {hours}h remaining",
-      "studentEyebrow": "Course assignment",
-      "teacherEyebrow": "Assignment review",
-      "timeRemaining": "Time remaining",
-      "timeRemainingDescription": "Submit your final work before the deadline."
     },
     "AssignmentStudent": {
       "browseFiles": "or click to browse from your computer",
@@ -913,13 +913,13 @@
       "statusSubmitted": "Submitted",
       "submit": "Submit assignment",
       "submitError": "Unable to submit the assignment.",
-      "submitting": "Submitting...",
       "submitted": "Assignment submitted.",
+      "submitting": "Submitting...",
       "title": "Your submission",
-      "uploadError": "Unable to upload the file.",
-      "uploadSuccess": "File uploaded.",
       "uploadedFiles": "Uploaded files",
-      "uploading": "Uploading file..."
+      "uploadError": "Unable to upload the file.",
+      "uploading": "Uploading file...",
+      "uploadSuccess": "File uploaded."
     },
     "AssignmentTeacher": {
       "assessment": "Assessment",
@@ -929,9 +929,9 @@
       "feedback": "Qualitative feedback",
       "feedbackPlaceholder": "Provide constructive feedback for {name}",
       "finalScore": "Final score",
+      "gradedCount": "{count} graded",
       "gradeError": "Unable to save the grade.",
       "gradeSaved": "Grade saved.",
-      "gradedCount": "{count} graded",
       "noFiles": "This student has not attached any files.",
       "noSubmissions": "No submissions yet",
       "noSubmissionsDescription": "Student work will appear here once a submission is started.",
@@ -947,8 +947,8 @@
       "studentList": "Student list",
       "submissionFiles": "Submission files",
       "submittedAt": "Submitted {date}",
-      "totalCount": "{count} total",
-      "title": "Student submissions"
+      "title": "Student submissions",
+      "totalCount": "{count} total"
     },
     "Card": {
       "accept": "Accept",
