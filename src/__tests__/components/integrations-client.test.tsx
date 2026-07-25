@@ -18,13 +18,20 @@ vi.mock('next-intl', () => ({
       'googleDrive.connected': 'Connected',
       'googleDrive.description':
         'Select files from Google Drive and import them into inventory, course files, or chat attachments.',
+      'googleDrive.changeFolder': 'Change folder',
+      'googleDrive.destinationChangeNotice':
+        'Changing the destination does not move existing exported files.',
+      'googleDrive.destinationReady': 'Export destination',
       'googleDrive.driveAccount': 'Google Drive account',
       'googleDrive.eduflowAccount': 'EduFlow account',
+      'googleDrive.exportSetupRequired': 'Export setup required',
       'googleDrive.noAccount': 'No account connected',
       'googleDrive.notConnected': 'Not connected',
+      'googleDrive.ready': 'Ready',
       'googleDrive.scope':
         'EduFlow requests limited Drive file access for files you select or create through the app.',
       'googleDrive.title': 'Google Drive',
+      'googleDrive.useMyDrive': 'Use My Drive',
       title: 'Integrations',
     };
 
@@ -42,6 +49,7 @@ vi.mock(
     integrationsService: {
       disconnectGoogleDrive: vi.fn(),
       getGoogleDriveStatus: vi.fn(),
+      setGoogleDriveDestination: vi.fn(),
     },
   })
 );
@@ -98,5 +106,42 @@ describe('IntegrationsClient', () => {
     expect(
       screen.getByRole('button', { name: /Disconnect/i })
     ).toBeInTheDocument();
+  });
+
+  it('uses the destination name as the Drive folder link', async () => {
+    integrationsServiceMock.getGoogleDriveStatus.mockResolvedValue({
+      data: {
+        accountEmail: 'drive@example.com',
+        connected: true,
+        destination: {
+          driveId: null,
+          folderId: 'folder-1',
+          kind: 'folder',
+          name: 'Eduflow',
+          webViewLink: 'https://drive.google.com/drive/folders/folder-1',
+        },
+        expiresAt: '2026-07-17T01:00:00.000Z',
+        metadata: null,
+        scope: 'https://www.googleapis.com/auth/drive.file',
+        setupComplete: true,
+        updatedAt: '2026-07-17T00:00:00.000Z',
+      },
+    });
+
+    renderWithQueryClient(
+      <IntegrationsClient eduflowAccountEmail="user@example.com" />
+    );
+
+    const destinationLink = await screen.findByRole('link', {
+      name: 'Eduflow',
+    });
+
+    expect(destinationLink).toHaveAttribute(
+      'href',
+      'https://drive.google.com/drive/folders/folder-1'
+    );
+    expect(
+      screen.queryByRole('link', { name: /Open folder/i })
+    ).not.toBeInTheDocument();
   });
 });

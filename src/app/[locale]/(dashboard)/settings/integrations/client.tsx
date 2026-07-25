@@ -97,6 +97,8 @@ export default function IntegrationsClient({
   const status = statusQuery.data?.data;
   const isConnected = Boolean(status?.connected);
   const isDestinationPending = destinationMutation.isPending;
+  const destinationName =
+    status?.destination?.name ?? t('googleDrive.noDestination');
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
       <div className="space-y-1">
@@ -188,30 +190,24 @@ export default function IntegrationsClient({
                         ? t('googleDrive.destinationReady')
                         : t('googleDrive.destinationRequired')}
                     </div>
-                    <div className="truncate text-muted-foreground text-sm">
-                      {status?.destination?.name ??
-                        t('googleDrive.noDestination')}
-                    </div>
+                    {status?.destination?.webViewLink ? (
+                      <a
+                        className="inline-flex max-w-full items-center gap-1.5 text-muted-foreground text-sm hover:text-foreground"
+                        href={status.destination.webViewLink}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        <span className="truncate">{destinationName}</span>
+                        <ExternalLink className="size-3.5 shrink-0" />
+                      </a>
+                    ) : (
+                      <div className="truncate text-muted-foreground text-sm">
+                        {destinationName}
+                      </div>
+                    )}
                     <p className="text-muted-foreground text-xs">
                       {t('googleDrive.destinationChangeNotice')}
                     </p>
-                    {status?.destination?.webViewLink ? (
-                      <Button
-                        asChild
-                        className="mt-1 h-8 px-2"
-                        size="sm"
-                        variant="ghost"
-                      >
-                        <a
-                          href={status.destination.webViewLink}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          <ExternalLink data-icon="inline-start" />
-                          {t('googleDrive.openFolder')}
-                        </a>
-                      </Button>
-                    ) : null}
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
