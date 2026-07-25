@@ -1,6 +1,5 @@
 import type { Editor } from '@tiptap/core';
 import type { Node as ProseMirrorNode } from '@tiptap/pm/model';
-import DOMPurify from 'dompurify';
 import {
   DOMSerializer,
   DOMParser as ProseMirrorDOMParser,
@@ -8,6 +7,7 @@ import {
   Slice,
 } from '@tiptap/pm/model';
 import { NodeSelection, type Transaction } from '@tiptap/pm/state';
+import DOMPurify from 'dompurify';
 
 const MAX_EDITED_HTML_LENGTH = 40_000;
 
