@@ -1,5 +1,3 @@
-'use client';
-
 import type { Editor } from '@tiptap/core';
 import type { Node as ProseMirrorNode } from '@tiptap/pm/model';
 import {
@@ -14,20 +12,15 @@ const MAX_EDITED_HTML_LENGTH = 40_000;
 
 export type LessonAiProposal = {
   blocks: LessonAiBlockRange[];
-  beforeText: string;
   document: ProseMirrorNode;
   from: number;
-  html: string;
   previewAnchor: number;
-  selectionText: string;
   to: number;
 };
 
 export type LessonAiEditRequest = {
-  beforeText: string;
   html: string;
   instruction: string;
-  selectionText: string;
 };
 
 export type PreparedLessonAiEdit = {
@@ -47,13 +40,167 @@ export type ExpandedBlockSelection = {
   to: number;
 };
 
-function fragmentToHtml(editor: Editor, from: number, to: number) {
+type TextSegment = {
+  from: number;
+  text: string;
+  to: number;
+};
+
+function createFragmentWrapper(editor: Editor, from: number, to: number) {
   const wrapper = window.document.createElement('div');
   const fragment = editor.state.doc.slice(from, to).content;
 
   wrapper.append(
     DOMSerializer.fromSchema(editor.schema).serializeFragment(fragment)
   );
+  return wrapper;
+}
+
+function getTextSegments(document: ProseMirrorNode, from: number, to: number) {
+  const segments: TextSegment[] = [];
+
+  document.nodesBetween(from, to, (node, position) => {
+    if (!node.isText || !node.text) return;
+
+    const segmentFrom = Math.max(position, from);
+    const segmentTo = Math.min(position + node.nodeSize, to);
+    if (segmentFrom >= segmentTo) return;
+
+    const offset = segmentFrom - position;
+    segments.push({
+      from: segmentFrom,
+      text: node.text.slice(offset, offset + segmentTo - segmentFrom),
+      to: segmentTo,
+    });
+  });
+
+  return segments;
+}
+
+function appendMarkedText(
+  fragment: DocumentFragment,
+  text: string,
+  from: number,
+  to: number,
+  selectionFrom: number,
+  selectionTo: number
+) {
+  const selectedFrom = Math.max(from, selectionFrom);
+  const selectedTo = Math.min(to, selectionTo);
+
+  if (selectedFrom >= selectedTo) {
+    fragment.append(text);
+    return;
+  }
+
+  const startOffset = selectedFrom - from;
+  const endOffset = selectedTo - from;
+  if (startOffset > 0) fragment.append(text.slice(0, startOffset));
+
+  const marker = window.document.createElement('selection');
+  marker.textContent = text.slice(startOffset, endOffset);
+  fragment.append(marker);
+
+  if (endOffset < text.length) fragment.append(text.slice(endOffset));
+}
+
+function addSelectionMarkersToText(
+  wrapper: HTMLDivElement,
+  textSegments: TextSegment[],
+  selectionFrom: number,
+  selectionTo: number
+) {
+  const textNodes: Text[] = [];
+  const walker = window.document.createTreeWalker(
+    wrapper,
+    window.NodeFilter.SHOW_TEXT
+  );
+  let currentNode = walker.nextNode();
+
+  while (currentNode) {
+    textNodes.push(currentNode as Text);
+    currentNode = walker.nextNode();
+  }
+
+  let segmentIndex = 0;
+  let segmentOffset = 0;
+
+  for (const textNode of textNodes) {
+    const text = textNode.data;
+    const replacement = window.document.createDocumentFragment();
+    let textOffset = 0;
+
+    while (textOffset < text.length) {
+      const segment = textSegments[segmentIndex];
+      if (!segment) {
+        throw new Error('Unable to mark the selected lesson content.');
+      }
+
+      const remainingSegmentLength = segment.text.length - segmentOffset;
+      const length = Math.min(text.length - textOffset, remainingSegmentLength);
+      const part = text.slice(textOffset, textOffset + length);
+      const expected = segment.text.slice(
+        segmentOffset,
+        segmentOffset + length
+      );
+
+      if (part !== expected) {
+        throw new Error('Unable to mark the selected lesson content.');
+      }
+
+      const partFrom = segment.from + segmentOffset;
+      appendMarkedText(
+        replacement,
+        part,
+        partFrom,
+        partFrom + length,
+        selectionFrom,
+        selectionTo
+      );
+
+      textOffset += length;
+      segmentOffset += length;
+      if (segmentOffset === segment.text.length) {
+        segmentIndex += 1;
+        segmentOffset = 0;
+      }
+    }
+
+    textNode.replaceWith(replacement);
+  }
+
+  if (segmentIndex !== textSegments.length || segmentOffset !== 0) {
+    throw new Error('Unable to mark the selected lesson content.');
+  }
+}
+
+function fragmentToMarkedHtml(editor: Editor, from: number, to: number) {
+  const { doc, selection } = editor.state;
+  const wrapper = createFragmentWrapper(editor, from, to);
+
+  if (selection instanceof NodeSelection) {
+    const node = wrapper.firstChild;
+    if (!node || wrapper.childNodes.length !== 1) {
+      throw new Error('Unable to mark the selected lesson content.');
+    }
+
+    const marker = window.document.createElement('selection');
+    marker.append(node);
+    wrapper.append(marker);
+    return wrapper.innerHTML;
+  }
+
+  addSelectionMarkersToText(
+    wrapper,
+    getTextSegments(doc, from, to),
+    selection.from,
+    selection.to
+  );
+
+  if (!wrapper.querySelector('selection')) {
+    throw new Error('Unable to mark the selected lesson content.');
+  }
+
   return wrapper.innerHTML;
 }
 
@@ -163,18 +310,6 @@ function getPreviewAnchor(
   return fallback;
 }
 
-function createExpandedSelection(
-  blocks: LessonAiBlockRange[],
-  previewAnchor: number
-): ExpandedBlockSelection {
-  return {
-    blocks,
-    from: blocks[0].from,
-    previewAnchor,
-    to: blocks[blocks.length - 1].to,
-  };
-}
-
 export function getExpandedBlockSelection(
   editor: Editor
 ): ExpandedBlockSelection | null {
@@ -198,10 +333,12 @@ export function getExpandedBlockSelection(
 
   if (sharedListItemDepth) {
     const listItem = getNodeRange($from, sharedListItemDepth);
-    return createExpandedSelection(
-      [{ from: listItem.from, to: listItem.to }],
-      $from.after(listItem.parentDepth)
-    );
+    return {
+      blocks: [{ from: listItem.from, to: listItem.to }],
+      from: listItem.from,
+      previewAnchor: $from.after(listItem.parentDepth),
+      to: listItem.to,
+    };
   }
 
   const fromUnit = getNearestBlockUnit($from);
@@ -213,21 +350,16 @@ export function getExpandedBlockSelection(
   );
   const blocks = getSiblingBlockRanges($from, $to, containerDepth);
 
-  return createExpandedSelection(
+  return {
     blocks,
-    getPreviewAnchor($from, containerDepth, blocks[blocks.length - 1].to)
-  );
-}
-
-function getSelectionText(editor: Editor) {
-  const { doc, selection } = editor.state;
-  const selectionText = doc.textBetween(selection.from, selection.to, ' ');
-
-  if (selectionText.trim()) return selectionText;
-  if (selection instanceof NodeSelection)
-    return `[${selection.node.type.name}]`;
-
-  return '[selected content]';
+    from: blocks[0].from,
+    previewAnchor: getPreviewAnchor(
+      $from,
+      containerDepth,
+      blocks[blocks.length - 1].to
+    ),
+    to: blocks[blocks.length - 1].to,
+  };
 }
 
 function createLessonAiProposal(editor: Editor): LessonAiProposal {
@@ -240,12 +372,9 @@ function createLessonAiProposal(editor: Editor): LessonAiProposal {
 
   return {
     blocks,
-    beforeText: editor.state.doc.textBetween(from, to, ' '),
     document: editor.state.doc,
     from,
-    html: fragmentToHtml(editor, from, to),
     previewAnchor,
-    selectionText: getSelectionText(editor),
     to,
   };
 }
@@ -259,10 +388,8 @@ export function prepareAiEdit(
   return {
     proposal,
     request: {
-      beforeText: proposal.beforeText,
-      html: proposal.html,
+      html: fragmentToMarkedHtml(editor, proposal.from, proposal.to),
       instruction,
-      selectionText: proposal.selectionText,
     },
   };
 }
@@ -400,6 +527,16 @@ export function sanitizeLessonAiHtml(html: string) {
   return document.body.innerHTML;
 }
 
+function unwrapSelectionMarkers(html: string) {
+  const document = new window.DOMParser().parseFromString(html, 'text/html');
+
+  for (const marker of Array.from(document.querySelectorAll('selection'))) {
+    marker.replaceWith(...Array.from(marker.childNodes));
+  }
+
+  return document.body.innerHTML;
+}
+
 export function resolveAiEdit(
   editor: Editor,
   proposal: LessonAiProposal,
@@ -412,7 +549,7 @@ export function resolveAiEdit(
   }
 
   const container = window.document.createElement('div');
-  container.innerHTML = sanitizeLessonAiHtml(html);
+  container.innerHTML = sanitizeLessonAiHtml(unwrapSelectionMarkers(html));
 
   const parsed = ProseMirrorDOMParser.fromSchema(editor.schema).parseSlice(
     container,

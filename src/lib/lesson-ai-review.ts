@@ -1,5 +1,3 @@
-'use client';
-
 import type { Editor } from '@tiptap/core';
 import { Extension } from '@tiptap/core';
 import { ChangeSet } from '@tiptap/pm/changeset';

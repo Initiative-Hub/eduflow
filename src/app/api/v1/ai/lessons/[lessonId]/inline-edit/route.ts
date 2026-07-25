@@ -12,26 +12,30 @@ const lessonParamsSchema = z.object({
   lessonId: z.string().uuid(),
 });
 
-const requestSchema = z.object({
-  beforeText: z.string().max(12_000),
-  html: z.string().min(1).max(40_000),
-  instruction: z.string().trim().min(1).max(2_000),
-  selectionText: z.string().min(1).max(12_000),
-});
+const requestSchema = z
+  .object({
+    html: z.string().min(1).max(40_000),
+    instruction: z.string().trim().min(1).max(2_000),
+  })
+  .strict()
+  .refine(
+    ({ html }) => /<selection(?:\s[^>]*)?>[\s\S]*?<\/selection>/i.test(html),
+    { message: 'HTML must contain a selection marker.' }
+  );
 
 const MAX_OUTPUT_TOKENS = 8_000;
 
 const LESSON_EDITOR_SYSTEM_PROMPT = `
-  You edit a selected fragment from an EduFlow lesson.
+  You edit a focused fragment from an EduFlow lesson.
 
   Return only valid HTML for the supplied fragment. Never use Markdown fences, explanations, a document wrapper, script, style, or external content.
-  The value in selectedText is the only editable content. The surroundingFragment is read-only structural context that lets you return valid HTML at the original document depth.
-  Do not shorten, rewrite, reorder, delete, or reformat any content outside selectedText. Copy all unselected text and markup from surroundingFragment unchanged.
-  If the instruction would require changing unselected content, make the best possible change only inside selectedText instead.
+  The supplied HTML contains one or more <selection>...</selection> tags. Their contents are the focus of the requested edit.
+  Prioritize improving those focus zones. You may edit related text elsewhere in the supplied fragment only when necessary for grammatical or semantic coherence.
+  Never modify content outside the supplied fragment.
   Use only inline HTML when formatting the selected text. Keep all block node types, block attributes, and list/quote structure unchanged.
   Do not add images, videos, links, or other media. Keep existing media unchanged.
   The response replaces the complete supplied fragment at its original document depth. Keep every required outer wrapper from the supplied fragment (for example, return <li>...</li> when the fragment is a list item) so it remains valid at that exact replacement position.
-  Before responding, verify that the only changed content is the replacement for selectedText.
+  Do not include <selection> tags in the response.
 `;
 
 export const POST = withAuth(async (request, sessionData, { params }) => {
@@ -95,12 +99,7 @@ export const POST = withAuth(async (request, sessionData, { params }) => {
     instructions: LESSON_EDITOR_SYSTEM_PROMPT,
     maxOutputTokens: MAX_OUTPUT_TOKENS,
     model: provider(DEFAULT_MODELS.openrouter),
-    prompt: JSON.stringify({
-      instruction: parsed.data.instruction,
-      selectedText: parsed.data.selectionText,
-      surroundingFragment: parsed.data.html,
-      surroundingFragmentText: parsed.data.beforeText,
-    }),
+    prompt: JSON.stringify(parsed.data),
   });
 
   return createTextStreamResponse({
