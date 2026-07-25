@@ -1509,14 +1509,28 @@ export class StorageService {
     bucketName: string = FILE_INVENTORY_BUCKET_NAME
   ): Promise<string[]> {
     const s3 = createS3Client();
-    const command = new ListObjectsV2Command({
-      Bucket: bucketName,
-      Prefix: prefix,
-    });
-    const response = await s3.send(command);
-    return (response.Contents || [])
-      .map((item) => item.Key)
-      .filter((key): key is string => Boolean(key));
+    const keys: string[] = [];
+    let continuationToken: string | undefined;
+
+    // list_objects_v2 caps each response at 1000 keys, so paginate to avoid
+    // silently truncating large template collections.
+    do {
+      const response = await s3.send(
+        new ListObjectsV2Command({
+          Bucket: bucketName,
+          Prefix: prefix,
+          ContinuationToken: continuationToken,
+        })
+      );
+      for (const item of response.Contents || []) {
+        if (item.Key) keys.push(item.Key);
+      }
+      continuationToken = response.IsTruncated
+        ? response.NextContinuationToken
+        : undefined;
+    } while (continuationToken);
+
+    return keys;
   }
 
   /**

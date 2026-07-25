@@ -102,6 +102,20 @@ async def download_file_from_s3(
         return False
 
 
+async def object_exists_in_s3(object_key: str, bucket_name: str | None = None) -> bool:
+    """Quiet existence check, so cache misses do not log download errors."""
+    try:
+        s3 = get_s3_client()
+        if not s3:
+            return False
+
+        bucket = bucket_name or AWS_S3_BUCKET
+        await run_in_threadpool(s3.head_object, Bucket=bucket, Key=object_key)
+        return True
+    except Exception:
+        return False
+
+
 async def download_bytes_from_s3(
     object_key: str, bucket_name: str | None = None
 ) -> tuple[bytes, str] | None:

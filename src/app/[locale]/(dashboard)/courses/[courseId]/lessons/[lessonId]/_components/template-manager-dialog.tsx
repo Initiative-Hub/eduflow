@@ -17,14 +17,28 @@ import {
   DropzoneEmptyState,
 } from '@/components/ui/dropzone';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
-import { getCleanedPreviewSvg } from '@/utils/slide-preview';
+import type { TemplateImportSource } from '../slide.service';
 import {
   useImportSlideTemplate,
   useSlideTemplatePreviews,
 } from '../use-lesson';
+
+const IMPORT_SOURCE_HINTS: Record<TemplateImportSource, string> = {
+  auto: 'Detects brand templates automatically and falls back to the deck slides.',
+  layouts:
+    'Best for university or company templates whose designs live in the Slide Master.',
+  slides: 'Extracts only the slides that exist in the uploaded deck.',
+};
 
 interface CollectionItem {
   name: string;
@@ -54,6 +68,11 @@ export function TemplateManagerDialog({
 }: TemplateManagerDialogProps) {
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [collectionName, setCollectionName] = useState('');
+  const [importSource, setImportSource] =
+    useState<TemplateImportSource>('auto');
+  const isPptxUpload = Boolean(
+    uploadFile?.name.toLowerCase().endsWith('.pptx')
+  );
 
   const [previewCollection, setPreviewCollection] = useState<string | null>(
     null
@@ -64,7 +83,7 @@ export function TemplateManagerDialog({
   // TanStack Query for previews
   const { data: previewsData, isLoading: isLoadingPreviews } =
     useSlideTemplatePreviews(previewCollection, isPreviewOpen);
-  const previews = previewsData || {};
+  const previews = previewsData || [];
 
   // TanStack Query mutation for uploads
   const importSlideTemplate = useImportSlideTemplate();
@@ -79,7 +98,11 @@ export function TemplateManagerDialog({
 
     const nameVal = collectionName.trim();
     importSlideTemplate.mutate(
-      { file: uploadFile, name: nameVal || undefined },
+      {
+        file: uploadFile,
+        name: nameVal || undefined,
+        source: isPptxUpload ? importSource : undefined,
+      },
       {
         onSuccess: async () => {
           const importedName =
@@ -90,6 +113,7 @@ export function TemplateManagerDialog({
           );
           setUploadFile(null);
           setCollectionName('');
+          setImportSource('auto');
           if (onUploadSuccess) {
             await onUploadSuccess();
           }
@@ -249,6 +273,37 @@ export function TemplateManagerDialog({
                     <DropzoneEmptyState />
                   </Dropzone>
                 </div>
+
+                {isPptxUpload && (
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-muted-foreground text-xs">
+                      How should this PowerPoint be read?
+                    </span>
+                    <Select
+                      value={importSource}
+                      onValueChange={(value) =>
+                        setImportSource(value as TemplateImportSource)
+                      }
+                      disabled={isUploading}
+                    >
+                      <SelectTrigger className="h-10 rounded-xl border-input bg-muted/40 text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="auto">Auto-detect</SelectItem>
+                        <SelectItem value="layouts">
+                          Brand template (use Slide Master layouts)
+                        </SelectItem>
+                        <SelectItem value="slides">
+                          Use the slides as they are
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-muted-foreground text-xs">
+                      {IMPORT_SOURCE_HINTS[importSource]}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -307,27 +362,36 @@ export function TemplateManagerDialog({
               <Spinner className="mb-2 h-8 w-8 text-primary" />
               Loading preview slides...
             </div>
-          ) : Object.keys(previews).length === 0 ? (
+          ) : previews.length === 0 ? (
             <div className="flex min-h-100 flex-1 items-center justify-center text-muted-foreground text-xs">
               No preview slides found for this template style.
             </div>
           ) : (
             <div className="grid flex-1 grid-cols-1 gap-6 overflow-y-auto py-2 pr-1 md:grid-cols-2">
-              {Object.entries(previews).map(([name, svgContent], idx) => {
-                const cleanedSvg = getCleanedPreviewSvg(svgContent);
-                return (
-                  <div key={name} className="flex flex-col space-y-1.5">
-                    <span className="font-semibold text-[11px] text-muted-foreground uppercase tracking-wider">
-                      {name.replace(/_/g, ' ')} Slide
-                    </span>
-                    <div
-                      className="group flex aspect-video w-full cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-border bg-muted/30 shadow-sm transition-all duration-200 hover:scale-[1.01] hover:bg-accent/20 hover:shadow-md"
-                      onClick={() => setZoomedSlideIndex(idx)}
-                      dangerouslySetInnerHTML={{ __html: cleanedSvg }}
+              {previews.map((preview, idx) => (
+                <div
+                  key={preview.category}
+                  className="flex flex-col space-y-1.5"
+                >
+                  <span className="font-semibold text-[11px] text-muted-foreground uppercase tracking-wider">
+                    {preview.category.replace(/_/g, ' ')}
+                  </span>
+                  <button
+                    type="button"
+                    className="group flex aspect-video w-full cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-border bg-muted/30 shadow-sm transition-all duration-200 hover:scale-[1.01] hover:bg-accent/20 hover:shadow-md"
+                    onClick={() => setZoomedSlideIndex(idx)}
+                    aria-label={`Zoom ${preview.category.replace(/_/g, ' ')} preview`}
+                  >
+                    <img
+                      src={preview.url}
+                      alt={`${preview.category.replace(/_/g, ' ')} template preview`}
+                      loading="lazy"
+                      decoding="async"
+                      className="h-full w-full object-contain"
                     />
-                  </div>
-                );
-              })}
+                  </button>
+                </div>
+              ))}
             </div>
           )}
         </DialogContent>
@@ -345,19 +409,17 @@ export function TemplateManagerDialog({
             <div className="group/lightbox relative flex h-full w-full flex-col">
               {/* Slide name overlay */}
               <div className="absolute top-4 left-4 z-10 rounded-full bg-background/80 px-4 py-1.5 font-semibold text-foreground text-xs uppercase tracking-wider backdrop-blur-sm">
-                {Object.keys(previews)[zoomedSlideIndex].replace(/_/g, ' ')}{' '}
-                Slide
+                {previews[zoomedSlideIndex]?.category.replace(/_/g, ' ')}
               </div>
 
-              {/* Render cleaned SVG preview */}
-              <div
-                className="flex h-full w-full items-center justify-center bg-background p-2"
-                dangerouslySetInnerHTML={{
-                  __html: getCleanedPreviewSvg(
-                    Object.values(previews)[zoomedSlideIndex]
-                  ),
-                }}
-              />
+              <div className="flex h-full w-full items-center justify-center bg-background p-2">
+                <img
+                  src={previews[zoomedSlideIndex]?.url}
+                  alt={`${previews[zoomedSlideIndex]?.category.replace(/_/g, ' ')} template preview`}
+                  decoding="async"
+                  className="h-full w-full object-contain"
+                />
+              </div>
 
               {/* Navigation Left Arrow */}
               {zoomedSlideIndex > 0 && (
@@ -376,7 +438,7 @@ export function TemplateManagerDialog({
               )}
 
               {/* Navigation Right Arrow */}
-              {zoomedSlideIndex < Object.keys(previews).length - 1 && (
+              {zoomedSlideIndex < previews.length - 1 && (
                 <Button
                   type="button"
                   variant="ghost"

@@ -14,11 +14,13 @@ export const GET = withRoles(
   ) => {
     try {
       const { collectionName } = await params;
-      const svgs = await SlideService.getTemplatePreviews(collectionName);
-      return NextResponse.json(svgs, {
+      const previews = await SlideService.getTemplatePreviews(collectionName);
+      return NextResponse.json(previews, {
         status: 200,
         headers: {
-          'Cache-Control': 'public, max-age=300, stale-while-revalidate=3600',
+          // Signed preview URLs expire, so responses must not be cached beyond
+          // their lifetime.
+          'Cache-Control': 'private, no-store',
         },
       });
     } catch (error) {

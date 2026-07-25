@@ -7,6 +7,19 @@ export interface SlideTemplate {
   palette?: string[];
 }
 
+/**
+ * How a PPTX upload should be read. Brand templates keep their designs in the
+ * Slide Master's layouts rather than in real slides.
+ */
+export type TemplateImportSource = 'auto' | 'layouts' | 'slides';
+
+/** A rasterized PNG preview for one template category. */
+export interface TemplatePreview {
+  category: string;
+  variant: string;
+  url: string;
+}
+
 export interface TemplateCategoryMetadata {
   description?: string;
   when_to_use?: string;
@@ -21,11 +34,9 @@ export const slideService = {
     });
   },
 
-  getTemplatePreviews: (
-    collectionName: string
-  ): Promise<Record<string, string>> => {
-    return apiClient.get<Record<string, string>>(
-      `/v1/ai/templates/${collectionName}/previews`,
+  getTemplatePreviews: (collectionName: string): Promise<TemplatePreview[]> => {
+    return apiClient.get<TemplatePreview[]>(
+      `/v1/ai/templates/${encodeURIComponent(collectionName)}/previews`,
       { headers: { 'Cache-Control': 'no-store' } }
     );
   },
@@ -48,7 +59,8 @@ export const slideService = {
 
   importTemplate: async (
     file: File,
-    name?: string
+    name?: string,
+    source: TemplateImportSource = 'auto'
   ): Promise<{ message: string }> => {
     const baseUrl = (
       process.env.NEXT_PUBLIC_EXTERNAL_SERVICE_URL || 'http://localhost:8000'
@@ -59,6 +71,7 @@ export const slideService = {
     if (name) {
       formData.append('name', name);
     }
+    formData.append('source', source);
 
     // 1. Post direct to Python backend
     const response = await axios.post<{ job_id: string; status: string }>(

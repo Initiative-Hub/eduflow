@@ -4,6 +4,7 @@ import shutil
 import tempfile
 import textwrap
 import zipfile
+from functools import partial
 from pathlib import Path
 from typing import Any, Dict, List, Union
 from fastapi.concurrency import run_in_threadpool
@@ -15,6 +16,47 @@ from app.schemas.slide_schema import RenderSlideReq
 logger = logging.getLogger(__name__)
 
 BASE_TEMPLATE_COLLECTION = "templates"
+
+# "auto" detects brand templates whose designs live in the Slide Master layouts,
+# "layouts" forces that reading, and "slides" extracts the deck's real slides.
+TEMPLATE_IMPORT_SOURCES = {"auto", "layouts", "slides"}
+
+# Rasterized category previews. Serving PNGs keeps the template picker light:
+# inline SVG previews ship hundreds of KB of markup and build a live DOM tree
+# per slide, which makes the dialog lag.
+PREVIEW_FILE_NAME = "preview.png"
+PREVIEW_WIDTH_PX = 1280
+
+# Sample copy so previews look like real slides. `fill_svg` blanks any
+# placeholder missing from this map instead of printing its raw name.
+PREVIEW_SAMPLE_DATA: Dict[str, Any] = {
+    "title": "Visual Learning Slide",
+    "heading": "Concept Introduction",
+    "subtitle": "A beautiful presentation design for courses and slides.",
+    "presenter": "Presented by EduFlow",
+    "author": "Presented by EduFlow",
+    "kicker": "CHAPTER 1",
+    "quote": '"Involve me and I learn."',
+    "footer_note": "EduFlow Learning Platform",
+    "body_text": (
+        "Foundational concepts explained using modern slide layouts "
+        "designed to keep students engaged."
+    ),
+    "left_col_title": "First Concept",
+    "right_col_title": "Second Concept",
+    "left_col_text": "Key details about the first concept side.",
+    "right_col_text": "Comparison points on the second concept side.",
+    "insight_text": "Engagement rose after switching to visual explanations.",
+    "bullets": [
+        "Engaging detail or concept bullet point",
+        "Supporting evidence for the concept",
+        "A practical classroom example",
+    ],
+    "items": ["Introduction", "Core concepts", "Practice", "Summary"],
+    "steps": ["Prepare", "Explain", "Practise", "Review"],
+    "summary_points": ["Key takeaway one", "Key takeaway two"],
+    "action_items": ["Read chapter 2", "Complete the worksheet"],
+}
 
 DEFAULT_COLLECTIONS = {
     "templates",
@@ -425,6 +467,88 @@ class SlideService:
             slide_skills.scan_template_library, str(library_dir)
         )
         return library.category_map()
+
+    def _template_bucket(self, collection: str) -> str:
+        from app.deps import (
+            AWS_S3_DEFAULT_TEMPLATES_BUCKET,
+            AWS_S3_TEMPLATES_BUCKET,
+        )
+
+        return (
+            AWS_S3_DEFAULT_TEMPLATES_BUCKET
+            if collection.lower() in DEFAULT_COLLECTIONS
+            else AWS_S3_TEMPLATES_BUCKET
+        )
+
+    async def get_template_previews(self, collection: str) -> Dict[str, Any]:
+        """Returns one rasterized PNG preview per category, cached in S3.
+
+        Previews are generated once and reused, so the template picker can load
+        plain images instead of parsing and laying out full SVG markup.
+        """
+        import re
+
+        import resvg_py
+        from app.services.s3_service import (
+            download_file_from_s3,
+            object_exists_in_s3,
+            upload_file_to_s3,
+        )
+
+        library_dir = await self._ensure_collection_downloaded(collection)
+        bucket = self._template_bucket(collection)
+        previews: List[Dict[str, str]] = []
+
+        if not library_dir.exists():
+            return {"collection": collection, "bucket": bucket, "previews": []}
+
+        def render_png(svg_path: Path, destination: Path) -> None:
+            svg = slide_skills.fill_svg(
+                svg_path.read_text(encoding="utf-8"), PREVIEW_SAMPLE_DATA
+            )
+            # Bare ampersands break the XML parser inside resvg.
+            svg = re.sub(r"&(?!(?:[a-zA-Z0-9]+|#[0-9]+|#x[0-9a-fA-F]+);)", "&amp;", svg)
+            destination.write_bytes(
+                bytes(resvg_py.svg_to_bytes(svg_string=svg, width=PREVIEW_WIDTH_PX))
+            )
+
+        for category_dir in sorted(
+            child for child in library_dir.iterdir() if child.is_dir()
+        ):
+            variants = sorted(category_dir.glob("*.svg"))
+            if not variants:
+                continue
+
+            variant = variants[0]
+            object_key = (
+                f"templates/{collection}/{category_dir.name}/{PREVIEW_FILE_NAME}"
+            )
+            png_path = category_dir / PREVIEW_FILE_NAME
+
+            if not png_path.exists():
+                cached = await object_exists_in_s3(
+                    object_key, bucket_name=bucket
+                ) and await download_file_from_s3(object_key, png_path, bucket)
+                if not cached:
+                    try:
+                        await run_in_threadpool(render_png, variant, png_path)
+                    except Exception as error:
+                        logger.warning(
+                            f"Failed to rasterize preview for "
+                            f"'{collection}/{category_dir.name}': {error}"
+                        )
+                        continue
+                    await upload_file_to_s3(png_path, object_key, bucket_name=bucket)
+
+            previews.append(
+                {
+                    "category": category_dir.name,
+                    "variant": variant.stem,
+                    "key": object_key,
+                }
+            )
+
+        return {"collection": collection, "bucket": bucket, "previews": previews}
 
     async def get_collection_categories(self, collection: str) -> Dict[str, Any]:
         library_dir = await self._ensure_collection_downloaded(collection)
@@ -1098,25 +1222,36 @@ class SlideService:
                     )
 
     async def import_template_collection(
-        self, file_bytes: bytes, filename: str, name: str | None = None
+        self,
+        file_bytes: bytes,
+        filename: str,
+        name: str | None = None,
+        source: str = "auto",
     ) -> Dict[str, Any]:
+        if source not in TEMPLATE_IMPORT_SOURCES:
+            raise ValueError(f"source must be one of {sorted(TEMPLATE_IMPORT_SOURCES)}")
+
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
             collection_name = name or Path(filename).stem
 
             if filename.lower().endswith(".pptx"):
-                # Use the new 0.2.27 extract_template_smart for PPTX files —
-                # it maps slides to categories via AI and writes proper
-                # CATEGORY/standard.svg structure directly into library_dir.
+                # extract_template_smart maps slides to categories via AI and
+                # writes a CATEGORY/standard.svg structure into library_dir.
+                # `source` lets brand templates be read from the Slide Master's
+                # layouts, where corporate designs actually live.
                 pptx_path = temp_path / filename
                 pptx_path.write_bytes(file_bytes)
 
                 res = await run_in_threadpool(
-                    slide_skills.extract_template_smart,
-                    str(pptx_path),
-                    collection_name,
-                    library_dir=SLIDE_TEMPLATES_DIR,
-                    use_ai=True,
+                    partial(
+                        slide_skills.extract_template_smart,
+                        str(pptx_path),
+                        collection_name,
+                        library_dir=SLIDE_TEMPLATES_DIR,
+                        use_ai=True,
+                        source=source,
+                    )
                 )
 
             elif filename.lower().endswith(".zip"):
@@ -1166,6 +1301,30 @@ class SlideService:
             )
             if not dest_dir.exists() and dest_dir_with_suffix.exists():
                 dest_dir = dest_dir_with_suffix
+
+            # Two layouts classified into the same category overwrite each other,
+            # so surface the loss instead of silently importing fewer designs.
+            warnings = list(res.get("warnings", [])) if isinstance(res, dict) else []
+            if isinstance(res, dict) and res.get("categories"):
+                classified = [
+                    entry.get("category")
+                    for entry in res["categories"]
+                    if isinstance(entry, dict) and entry.get("category")
+                ]
+                folder_count = (
+                    len([child for child in dest_dir.iterdir() if child.is_dir()])
+                    if dest_dir.exists() and dest_dir.is_dir()
+                    else 0
+                )
+                if folder_count and folder_count < len(classified):
+                    message = (
+                        f"{len(classified) - folder_count} of {len(classified)} layouts "
+                        "shared a category name and were overwritten during import."
+                    )
+                    logger.warning(f"[{collection_name}] {message}")
+                    warnings.append(message)
+            if isinstance(res, dict) and warnings:
+                res["warnings"] = warnings
 
             if dest_dir.exists() and dest_dir.is_dir():
                 # Auto-create collection.json if it doesn't exist
