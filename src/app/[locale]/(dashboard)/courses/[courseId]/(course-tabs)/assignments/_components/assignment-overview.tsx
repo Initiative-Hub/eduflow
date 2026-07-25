@@ -116,7 +116,7 @@ export function StudentOverview({
         <p className="font-bold text-primary text-xl tabular-nums">
           {currentGrade}%
         </p>
-        <p className="mt-0.5 text-muted-foreground text-[10px] uppercase tracking-[0.16em]">
+        <p className="mt-0.5 text-[10px] text-muted-foreground uppercase tracking-[0.16em]">
           {t('currentGrade')}
         </p>
       </div>
@@ -125,7 +125,7 @@ export function StudentOverview({
 
       <div className="min-w-32 px-5 py-3 text-center">
         <p className="font-bold text-xl tabular-nums">{pendingCount}</p>
-        <p className="mt-0.5 text-muted-foreground text-[10px] uppercase tracking-[0.16em]">
+        <p className="mt-0.5 text-[10px] text-muted-foreground uppercase tracking-[0.16em]">
           {t('pendingCount')}
         </p>
       </div>
