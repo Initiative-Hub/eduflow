@@ -1298,6 +1298,7 @@ class SlideService:
                 prune_empty_groups,
                 fill_svg,
                 fit_text_to_boxes,
+                reflow_text_blocks,
             )
 
             svg = prune_empty_groups(svg, result["texts"])
@@ -1310,6 +1311,8 @@ class SlideService:
 
             svg = fill_svg(svg, texts)
             svg = fit_text_to_boxes(svg)
+            # push later paragraphs down so wrapped lines can't overlap
+            svg = reflow_text_blocks(svg)
 
             if mapping:
                 svg = slide_skills.retheme_svg(svg, mapping)
