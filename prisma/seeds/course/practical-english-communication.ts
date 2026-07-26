@@ -1,4 +1,5 @@
 import { readMarkdownLessonDocument } from './lesson-document';
+import { assignmentDocument } from './assignment-document';
 import type { DemoCourse } from './types';
 
 export const practicalEnglishCommunicationCourse: DemoCourse = {
@@ -7,6 +8,38 @@ export const practicalEnglishCommunicationCourse: DemoCourse = {
   description:
     'Everyday English practice for clearer conversations, confident speaking, effective writing, and professional communication.',
   isPublished: true,
+  assignments: [
+    {
+      id: '22000000-0000-4000-8000-000000000001',
+      title: 'Personal Introduction Recording',
+      content: assignmentDocument(
+        'Prepare a two-minute spoken introduction for a new class or workplace.',
+        'Submit your recording together with a short reflection on your vocabulary, pronunciation, and confidence.'
+      ),
+      dueAt: new Date('2030-09-20T23:59:00.000Z'),
+      maxPoints: 50,
+    },
+    {
+      id: '22000000-0000-4000-8000-000000000002',
+      title: 'Professional Email',
+      content: assignmentDocument(
+        'Write a clear professional email requesting a change to a meeting schedule.',
+        'Use an appropriate subject line, polite tone, clear paragraphs, and a specific call to action.'
+      ),
+      dueAt: new Date('2030-10-05T23:59:00.000Z'),
+      maxPoints: 75,
+    },
+    {
+      id: '22000000-0000-4000-8000-000000000003',
+      title: 'Short Presentation Plan',
+      content: assignmentDocument(
+        'Create a plan for a five-minute presentation about a topic you know well.',
+        'Include your opening, key points, transitions, conclusion, and two questions for the audience.'
+      ),
+      dueAt: null,
+      maxPoints: 100,
+    },
+  ],
   modules: [
     {
       id: '21000000-0000-4000-8000-000000000001',

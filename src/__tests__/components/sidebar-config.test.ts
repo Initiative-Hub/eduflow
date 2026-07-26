@@ -38,14 +38,15 @@ describe('sidebar-config', () => {
     expect(courseItems[0].isActive('/courses/course-123/chat')).toBe(false);
   });
 
-  it('places Grades immediately below Question Bank', () => {
+  it('places Assignments between Question Bank and Grades', () => {
     const courseItems = getCourseNavItems('course-123', t as never);
 
-    expect(courseItems.slice(1, 3).map((item) => item.name)).toEqual([
+    expect(courseItems.slice(1, 4).map((item) => item.name)).toEqual([
       'courseQuestionBank',
+      'courseAssignments',
       'courseGrades',
     ]);
-    expect(courseItems[2].url).toBe('/courses/course-123/grades');
+    expect(courseItems[3].url).toBe('/courses/course-123/grades');
   });
 
   it('filters course items by the current course permissions', () => {

@@ -1,4 +1,5 @@
 import { readMarkdownLessonDocument } from './lesson-document';
+import { assignmentDocument } from './assignment-document';
 import type { DemoCourse } from './types';
 
 export const foundationsWebDevelopmentCourse: DemoCourse = {
@@ -7,6 +8,38 @@ export const foundationsWebDevelopmentCourse: DemoCourse = {
   description:
     'A practical introduction to HTML, CSS, JavaScript, accessible interfaces, and shipping a complete website.',
   isPublished: true,
+  assignments: [
+    {
+      id: '12000000-0000-4000-8000-000000000001',
+      title: 'Semantic HTML Audit',
+      content: assignmentDocument(
+        'Review a small website and identify opportunities to improve its semantic HTML structure.',
+        'Submit a short report explaining your changes and how they improve accessibility.'
+      ),
+      dueAt: new Date('2030-09-15T23:59:00.000Z'),
+      maxPoints: 100,
+    },
+    {
+      id: '12000000-0000-4000-8000-000000000002',
+      title: 'Responsive Landing Page',
+      content: assignmentDocument(
+        'Build a responsive landing page using semantic HTML and modern CSS layout techniques.',
+        'Include a desktop layout, a mobile layout, and a short README describing your design decisions.'
+      ),
+      dueAt: new Date('2030-10-15T23:59:00.000Z'),
+      maxPoints: 100,
+    },
+    {
+      id: '12000000-0000-4000-8000-000000000003',
+      title: 'Capstone Website Proposal',
+      content: assignmentDocument(
+        'Plan a complete website for a clearly defined audience and purpose.',
+        'Submit a proposal containing the target audience, content structure, visual direction, and implementation plan.'
+      ),
+      dueAt: null,
+      maxPoints: 150,
+    },
+  ],
   modules: [
     {
       id: '11000000-0000-4000-8000-000000000001',
