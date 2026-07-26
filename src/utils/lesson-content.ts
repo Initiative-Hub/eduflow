@@ -4,7 +4,7 @@ export type TiptapDocument = { type: 'doc'; content: JSONContent[] };
 
 export const EMPTY_TIPTAP_DOCUMENT: TiptapDocument = {
   type: 'doc',
-  content: [],
+  content: [{ type: 'paragraph' }],
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {

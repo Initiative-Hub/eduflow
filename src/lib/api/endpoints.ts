@@ -1,5 +1,7 @@
 import { PORT } from '@/constants/common';
 
+export const API_PREFIX = '/v1';
+
 export const APP_URL =
   process.env.NEXT_PUBLIC_APP_URL || `http://localhost:${PORT}`;
 export const API_URL =

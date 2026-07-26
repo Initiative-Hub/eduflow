@@ -47,6 +47,10 @@ model User {
   sharedResources        SharedResource[]
   connectedIntegrations  ConnectedIntegration[]
 
+  assignmentsCreated          Assignment[]           @relation("AssignmentCreatedBy")
+  assignmentSubmissions       AssignmentSubmission[] @relation("AssignmentStudent")
+  assignmentGradedSubmissions AssignmentSubmission[] @relation("AssignmentGradedBy")
+
   @@map("user")
 }
 
@@ -262,10 +266,11 @@ model FileInventory {
   thumbnailObjectKey String? @map("thumbnail_object_key")
   thumbnailMimeType  String? @map("thumbnail_mime_type")
 
-  createdAt  DateTime  @default(now()) @map("created_at")
-  updatedAt  DateTime  @updatedAt @map("updated_at")
-  uploadedAt DateTime  @default(now()) @map("uploaded_at")
-  deletedAt  DateTime? @map("deleted_at")
+  createdAt                 DateTime                   @default(now()) @map("created_at")
+  updatedAt                 DateTime                   @updatedAt @map("updated_at")
+  uploadedAt                DateTime                   @default(now()) @map("uploaded_at")
+  deletedAt                 DateTime?                  @map("deleted_at")
+  assignmentSubmissionFiles AssignmentSubmissionFile[]
 
   @@index([userId])
   @@index([courseId])
@@ -342,6 +347,7 @@ model Course {
   deletedAt   DateTime?          @map("deleted_at")
   questions   Question[]
   quizzes     Quiz[]
+  assignments Assignment[]
 
   @@index([deletedAt])
   @@index([archivedAt])
@@ -731,4 +737,77 @@ model SharedResource {
   @@index([ownerUserId, createdAt(sort: Desc)])
   @@index([resourceType, createdAt(sort: Desc)])
   @@map("shared_resource")
+}
+
+enum AssignmentSubmissionStatus {
+  DRAFT     @map("draft")
+  SUBMITTED @map("submitted")
+  GRADED    @map("graded")
+
+  @@map("assignment_submission_status")
+}
+
+model Assignment {
+  id          String @id @default(uuid())
+  courseId    String @map("course_id")
+  createdById String @map("created_by_id")
+
+  title     String
+  content   Json?
+  dueAt     DateTime? @map("due_at")
+  maxPoints Float     @default(100) @map("max_points")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  course    Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  createdBy User   @relation("AssignmentCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+
+  submissions AssignmentSubmission[]
+
+  @@index([courseId, deletedAt])
+  @@index([createdById])
+  @@map("assignment")
+}
+
+model AssignmentSubmission {
+  id           String  @id @default(uuid())
+  assignmentId String  @map("assignment_id")
+  studentId    String  @map("student_id")
+  gradedById   String? @map("graded_by_id")
+
+  status      AssignmentSubmissionStatus @default(DRAFT)
+  submittedAt DateTime?                  @map("submitted_at")
+  score       Float?
+  feedback    String?                    @db.Text
+  gradedAt    DateTime?                  @map("graded_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  assignment Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  student    User       @relation("AssignmentStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  gradedBy   User?      @relation("AssignmentGradedBy", fields: [gradedById], references: [id], onDelete: SetNull)
+
+  files AssignmentSubmissionFile[]
+
+  @@index([assignmentId, studentId, createdAt(sort: Desc)], map: "assignment_submission_assignment_student_created_idx")
+  @@index([assignmentId, status])
+  @@index([studentId])
+  @@map("assignment_submission")
+}
+
+model AssignmentSubmissionFile {
+  id           String   @id @default(uuid())
+  submissionId String   @map("submission_id")
+  fileId       String   @map("file_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  submission AssignmentSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  file       FileInventory        @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  @@unique([submissionId, fileId], map: "assignment_submission_file_submission_file_key")
+  @@index([fileId])
+  @@map("assignment_submission_file")
 }

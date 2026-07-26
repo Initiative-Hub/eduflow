@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { Editor } from '@tiptap/core';
+import { StarterKit } from '@tiptap/starter-kit';
 import {
   EMPTY_TIPTAP_DOCUMENT,
   isTiptapDocument,
@@ -36,5 +38,18 @@ describe('lesson content helpers', () => {
         ],
       })
     ).toBe(false);
+  });
+
+  it('provides an editable paragraph for a new Tiptap document', () => {
+    const editor = new Editor({
+      extensions: [StarterKit],
+      content: EMPTY_TIPTAP_DOCUMENT,
+    });
+
+    expect(editor.state.doc.childCount).toBe(1);
+    expect(editor.commands.insertContent('Assignment instructions')).toBe(true);
+    expect(editor.getText()).toBe('Assignment instructions');
+
+    editor.destroy();
   });
 });

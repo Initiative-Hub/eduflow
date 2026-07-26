@@ -122,7 +122,7 @@
       "source": "ueberdosis/tiptap",
       "sourceType": "github",
       "skillPath": "skills/tiptap/SKILL.md",
-      "computedHash": "60765ba8cb8a71503e6f14bb3a7a6ee77b34b1d98cd04b60b1bfcbb7c41ba9c7"
+      "computedHash": "7f5d1f17762bc7c41e305edad1491f6917da9a001b75db60f48538176fde403d"
     },
     "two-factor-authentication-best-practices": {
       "source": "better-auth/skills",

@@ -13,7 +13,7 @@ export async function getCoursePermissions(userId: string, courseId: string) {
       role: {
         select: {
           permissions: {
-            where: { enabled: true },
+            where: { courseId, enabled: true },
             select: { permission: true },
           },
         },

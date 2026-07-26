@@ -4,6 +4,7 @@ import {
   Archive,
   Award,
   BookOpen,
+  ClipboardCheck,
   ClipboardList,
   Cloud,
   Files,
@@ -204,6 +205,15 @@ export function getCourseNavItems(
         COURSE_PERMISSION.ASSESSMENTS_UPDATE,
         COURSE_PERMISSION.ASSESSMENTS_DELETE,
       ],
+    },
+    {
+      name: t('courseAssignments'),
+      url: `/courses/${courseId}/assignments`,
+      icon: <ClipboardCheck className={sidebarIconClassName} />,
+      isActive: (pathname) =>
+        isExactMatch(pathname, `/courses/${courseId}/assignments`) ||
+        pathname.startsWith(`/courses/${courseId}/assignments/`),
+      requirePermissions: [COURSE_PERMISSION.ASSESSMENTS_VIEW],
     },
     {
       name: t('courseGrades'),

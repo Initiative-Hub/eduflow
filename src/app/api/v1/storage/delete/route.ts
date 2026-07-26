@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { withPermissions } from '@/lib/api/middlewares';
 import { PLATFORM_PERMISSION } from '@/lib/permissions/permission-keys';
 import { StorageService } from '@/services/StorageService';
+import { buildStorageErrorResponse } from '@/lib/storage/storage-error-response';
 
 const deleteSchema = z.object({
   fileIds: z.array(z.string().uuid()).min(1).max(100),
@@ -67,10 +68,7 @@ export const DELETE = withPermissions(
 
       return NextResponse.json({ data: result });
     } catch (error: any) {
-      return NextResponse.json(
-        { message: error?.message || 'Internal Server Error' },
-        { status: 500 }
-      );
+      return buildStorageErrorResponse(error);
     }
   }
 );

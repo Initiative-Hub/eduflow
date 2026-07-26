@@ -13,14 +13,16 @@ import { EditorContent, EditorContext, useEditor } from '@tiptap/react';
 import { StarterKit } from '@tiptap/starter-kit';
 import { Edit3, Presentation, Save } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { type ReactNode, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { HorizontalRule } from '@/components/tiptap-node/horizontal-rule-node/horizontal-rule-node-extension';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { LessonAiReview } from '@/lib/lesson-ai-review';
 import {
   isTiptapDocumentEmpty,
   type TiptapDocument,
 } from '@/utils/lesson-content';
+import DeleteLessonDialog from './delete-lesson-dialog';
 import { LessonEditorToolbar } from './lesson-editor-toolbar';
 import { LessonPresentation } from './lesson-presentation';
 import '@/components/tiptap-node/blockquote-node/blockquote-node.scss';
@@ -33,26 +35,32 @@ import '@/components/tiptap-node/paragraph-node/paragraph-node.scss';
 import './lesson-editor.scss';
 
 interface LessonEditorProps {
+  courseId: string;
+  lessonId: string;
   title: string;
   content: TiptapDocument;
   canEdit?: boolean;
+  canDelete?: boolean;
+  canUseLessonAI?: boolean;
   emptyContentLabel: string;
   isUpdatingLesson?: boolean;
   onSave?: (
     data: { title: string; content: TiptapDocument },
     options: { onSuccess: () => void }
   ) => void;
-  actions?: ReactNode;
 }
 
 export function LessonEditor({
+  courseId,
+  lessonId,
   title,
   content,
   canEdit = false,
+  canDelete = false,
+  canUseLessonAI = false,
   emptyContentLabel,
   isUpdatingLesson = false,
   onSave,
-  actions,
 }: LessonEditorProps) {
   const tEditor = useTranslations('Courses.LessonEditor');
   const tHeader = useTranslations('Courses.LessonHeader');
@@ -95,6 +103,7 @@ export function LessonEditor({
       Superscript,
       Subscript,
       Selection,
+      LessonAiReview,
     ],
     content,
     onUpdate: ({ editor }) => {
@@ -200,10 +209,8 @@ export function LessonEditor({
               {isUpdatingLesson ? tEditor('saving') : tEditor('save')}
             </Button>
           </div>
-        ) : canEdit || actions ? (
+        ) : canEdit || canDelete ? (
           <div className="flex shrink-0 items-center gap-2">
-            {actions}
-
             {canEdit ? (
               <>
                 <Button
@@ -228,13 +235,20 @@ export function LessonEditor({
                 </Button>
               </>
             ) : null}
+
+            {canDelete && (
+              <DeleteLessonDialog courseId={courseId} lessonId={lessonId} />
+            )}
           </div>
         ) : null}
       </div>
 
       {isEditing && (
         <div className="lesson-toolbar-bar sticky top-30 z-20 -mx-6 border-foreground/20 border-b bg-background/95 px-6 py-2 backdrop-blur-sm md:-mx-10 md:px-10 lg:-mx-12 lg:px-12">
-          <LessonEditorToolbar />
+          <LessonEditorToolbar
+            lessonId={lessonId}
+            canUseLessonAI={canUseLessonAI}
+          />
         </div>
       )}
 
