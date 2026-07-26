@@ -13,6 +13,12 @@ export interface SlideTemplate {
  */
 export type TemplateImportSource = 'auto' | 'layouts' | 'slides';
 
+/**
+ * PPTX export renders each slide to a bitmap on the server: roughly a second per
+ * slide, so a 20-slide deck sits near 20s and larger decks go well beyond.
+ */
+const PPTX_EXPORT_TIMEOUT_MS = 5 * 60 * 1000;
+
 /** A rasterized PNG preview for one template category. */
 export interface TemplatePreview {
   category: string;
@@ -123,6 +129,9 @@ export const slideService = {
     return apiClient.get<Blob>(`/v1/ai/slides/${deckId}/pptx`, {
       responseType: 'blob',
       headers: { 'Cache-Control': 'no-store' },
+      // Export rasterizes every slide server-side, which takes far longer than
+      // the client's default 20s timeout allows for a deck of any real size.
+      timeout: PPTX_EXPORT_TIMEOUT_MS,
     });
   },
 };

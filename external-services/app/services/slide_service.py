@@ -229,6 +229,14 @@ def custom_select_and_fill_slide(variants, slide_content, **kwargs):
     flat_bindings = slide_content.get("bindings") or {}
 
     for key in variant.placeholders:
+        # Never clobber a value the library already resolved. It splits prose
+        # across indexed placeholders (`title_2.1`, `.2`, `.3`) as a list, and
+        # replacing that with the raw string leaves every indexed slot unfilled.
+        # Since 0.2.42 bridges caller names onto slot names, planner values are
+        # already present, so this only fills slots the library left empty.
+        existing = texts.get(key)
+        if existing not in (None, "", [], {}):
+            continue
         if key in raw_bindings:
             texts[key] = raw_bindings[key]
         elif key in flat_bindings:

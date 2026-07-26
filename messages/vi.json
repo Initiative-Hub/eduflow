@@ -1215,6 +1215,7 @@
       "duration5": "5 phút (Bài học nhỏ)",
       "duration60": "60 phút (Thuyết trình chi tiết)",
       "duration90": "90 phút (Hội thảo chi tiết)",
+      "deckWarnings": "{count, plural, =1 {1 slide gặp vấn đề về nội dung} other {# slide gặp vấn đề về nội dung}}",
       "droppedSlidesCount": "{count, plural, =1 {Đã bỏ 1 slide} other {Đã bỏ # slide}}",
       "dropSlideLastRemaining": "Bạn không thể bỏ toàn bộ slide. Phải giữ lại ít nhất một slide trong bài trình chiếu.",
       "dropSlideSuccess": "Đã bỏ slide. Slide này sẽ bị bỏ qua khi chuyển slide. Hãy lưu thay đổi để giữ trạng thái này.",

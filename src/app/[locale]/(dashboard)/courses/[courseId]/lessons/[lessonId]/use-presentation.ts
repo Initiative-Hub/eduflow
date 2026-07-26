@@ -1,9 +1,11 @@
 import { useQueryClient } from '@tanstack/react-query';
 import type { JSONContent } from '@tiptap/core';
 import { useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import type { TiptapDocument } from '@/utils/lesson-content';
+import { getCriticalDeckWarnings } from '@/utils/slide-deck-warnings';
 import { getNextRecommendedCollectionForPlannerState } from './presentation-planner-state';
 import { useGenerateSlideDeck, useLesson } from './use-lesson';
 
@@ -779,6 +781,7 @@ export function usePresentation(options: {
 
   // State Machine
   const [step, setStep] = useState<Step>('input');
+  const t = useTranslations('Courses.LessonPresentation');
   const [instructions, setInstructions] = useState('');
   const [duration, setDuration] = useState('15');
   const [plannedSlides, setPlannedSlides] = useState<PlannedSlide[]>([]);
@@ -1289,6 +1292,20 @@ export function usePresentation(options: {
       setDeckUsage(deck.usage ?? null);
       setCurrentSlideIndex(0);
       setStep('generated');
+
+      // Log every warning for diagnosis, but only interrupt the user for the
+      // ones that mean visible damage: a skipped slide or a failed image.
+      if (deck.warnings?.length) {
+        for (const warning of deck.warnings) {
+          console.warn('[SlideDeck]', warning);
+        }
+        const criticalWarnings = getCriticalDeckWarnings(deck.warnings);
+        if (criticalWarnings.length) {
+          toast.warning(t('deckWarnings', { count: criticalWarnings.length }), {
+            description: criticalWarnings.slice(0, 3).join('\n'),
+          });
+        }
+      }
     } catch (error) {
       console.error('Slide deck generation failed:', error);
       const message =

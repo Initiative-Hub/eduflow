@@ -7,6 +7,9 @@ import {
 } from '@/services/LessonPresentationService';
 
 export const dynamic = 'force-dynamic';
+// Rasterizing every slide takes roughly a second each, so a large deck needs far
+// more than the platform default before the response can be returned.
+export const maxDuration = 300;
 
 // ─── GET /api/v1/ai/slides/{deckId}/pptx ───────────────────────────────────────
 
