@@ -15,6 +15,7 @@ export interface Lesson {
   content: TiptapDocument;
   canEdit?: boolean;
   canDelete?: boolean;
+  canUseLessonAI?: boolean;
   /** Most recently generated presentation deck reference (if any). */
   presentationDeckId?: string | null;
   presentationDeckKey?: string | null;

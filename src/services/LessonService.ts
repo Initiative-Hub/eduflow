@@ -88,6 +88,7 @@ export class LessonService {
       ...lesson,
       canEdit: containPermission(COURSE_PERMISSION.COURSE_CONTENT_UPDATE),
       canDelete: containPermission(COURSE_PERMISSION.COURSE_CONTENT_DELETE),
+      canUseLessonAI: containPermission(COURSE_PERMISSION.AI_USE_LESSON_EDITOR),
     };
   }
 
