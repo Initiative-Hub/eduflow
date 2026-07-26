@@ -304,6 +304,12 @@ export const COURSE_PERMISSION_CATEGORIES: PermissionCategory[] = [
         title: 'Generate course content',
         description: 'Generate course modules and lessons with AI.',
       },
+      {
+        key: COURSE_PERMISSION.AI_USE_LESSON_EDITOR,
+        icon: Sparkles,
+        title: 'Edit lessons with AI',
+        description: 'Generate inline lesson edits with AI.',
+      },
     ],
   },
   {

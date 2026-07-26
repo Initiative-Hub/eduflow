@@ -15,7 +15,9 @@
 }
 
 .lesson-editor-content
-  .tiptap.ProseMirror.lesson-tiptap-editor[contenteditable="true"] {
+  .tiptap.ProseMirror.lesson-tiptap-editor[contenteditable="true"],
+.lesson-editor-content
+  .tiptap.ProseMirror.lesson-tiptap-editor.lesson-ai-review-active {
   margin-top: 1rem;
   padding: 1rem;
   border: 1px solid var(--border);
@@ -31,6 +33,67 @@
   float: left;
   height: 0;
   pointer-events: none;
+}
+
+.lesson-editor-content .lesson-ai-review-deleted {
+  border-radius: 0.125rem;
+  background: color-mix(in oklab, var(--destructive) 14%, transparent);
+  color: var(--destructive);
+  text-decoration: line-through;
+}
+
+.lesson-editor-content .lesson-ai-review-inserted {
+  border-radius: 0.125rem;
+  background: color-mix(in oklab, var(--primary) 14%, transparent);
+  color: var(--primary);
+  text-decoration: none;
+  pointer-events: none;
+}
+
+.lesson-editor-content .lesson-ai-review-original-block {
+  border-radius: 0.5rem;
+  background: color-mix(in oklab, var(--destructive) 9%, transparent);
+  color: var(--destructive);
+  opacity: 0.82;
+  text-decoration: line-through;
+}
+
+.lesson-editor-content .lesson-ai-review-original-block,
+.lesson-editor-content .lesson-ai-review-original-block * {
+  color: var(--destructive) !important;
+  text-decoration: line-through;
+}
+
+.lesson-editor-content .lesson-ai-review-original-block iframe,
+.lesson-editor-content .lesson-ai-review-original-block img {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.lesson-editor-content .lesson-ai-review-inserted,
+.lesson-editor-content .lesson-ai-review-inserted * {
+  color: var(--primary) !important;
+}
+
+.lesson-editor-content .lesson-ai-review-inserted-block {
+  display: block;
+  margin: 0.75rem 0;
+}
+
+.lesson-editor-content .lesson-ai-review-inserted-block > :first-child {
+  margin-top: 0;
+}
+
+.lesson-editor-content .lesson-ai-review-inserted-block > :last-child {
+  margin-bottom: 0;
+}
+
+.lesson-editor-content .lesson-ai-review-deleted a[href]::after,
+.lesson-editor-content .lesson-ai-review-original-block a[href]::after,
+.lesson-editor-content .lesson-ai-review-inserted a[href]::after {
+  content: " (" attr(href) ")";
+  font-size: 0.85em;
+  text-decoration: none;
 }
 
 div[data-youtube-video] {
