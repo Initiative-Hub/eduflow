@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import * as z from 'zod';
 import { studyInteractiveContentSchema } from '@/utils/study-interactive-content';
 
 const safeFileNameSchema = z

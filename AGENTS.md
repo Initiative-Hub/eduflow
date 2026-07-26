@@ -49,8 +49,9 @@ for any tasks.).
 2. In `prisma/schema.prisma`, keep Prisma enum and model names in PascalCase and Prisma field names in camelCase.
 3. Map every Prisma model, enum-backed database value where applicable, and field that persists to a database object to snake_case database names with `@@map`/`@map`; physical table, column, index, and constraint names in migrations must also be snake_case.
 4. Create/apply migrations with `bun db:migrate`.
-5. Refresh the generated client with `bun db:generate` after schema edits or before build-time type checks.
-6. Use `bun db:start` to start local PostgreSQL and `bun db:reset` for a clean reset/seed cycle.
+5. Ensure new Prisma migration directory timestamps are later than the latest migration on the PR base branch; rename/regenerate local migration directories before pushing if main has advanced.
+6. Refresh the generated client with `bun db:generate` after schema edits or before build-time type checks.
+7. Use `bun db:start` to start local PostgreSQL and `bun db:reset` for a clean reset/seed cycle.
 
 ### 4.2 UI & Navigation
 
@@ -126,6 +127,7 @@ for any tasks.).
 - **ICU Messages**: Use ICU-style placeholders in `next-intl` messages (`{name}`, `{count}`) when adding plurals or selects.
 - **Generated Prisma Sync**: If `src/generated/prisma` and `prisma/schema.prisma` drift, rerun `bun db:generate` before assuming a storage or Prisma-backed service is broken.
 - **Prisma Unknown Arguments**: If Prisma reports an unknown field on a model, verify the checked-in schema and regenerated client first; do not rename application code until the generated types and schema agree.
+- **Zod Schema Imports**: In shared validation schema modules, prefer `import * as z from 'zod'` to match existing schema files and avoid Bun/Vitest named-export interop issues.
 
 ### 6.6 Storage & Uploads
 
