@@ -15,6 +15,7 @@ export interface Lesson {
   content: TiptapDocument;
   canEdit?: boolean;
   canDelete?: boolean;
+  canUseLessonAI?: boolean;
   /** Most recently generated presentation deck reference (if any). */
   presentationDeckId?: string | null;
   presentationDeckKey?: string | null;
@@ -73,7 +74,7 @@ export function useModules(courseId: string) {
       fileId: selection.fileId,
       file: selection.file,
       context: selection.context,
-      model: 'gemini-3.5-flash',
+      model: 'gemini-3.6-flash',
     });
   };
 
