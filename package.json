@@ -61,6 +61,7 @@
     "@radix-ui/react-use-controllable-state": "^1.2.6",
     "@react-email/ui": "^6.9.1",
     "@rive-app/react-webgl2": "^4.30.0",
+    "@shadcn/react": "^0.2.1",
     "@streamdown/cjk": "^1.0.3",
     "@streamdown/code": "^1.1.1",
     "@streamdown/math": "^1.0.2",
