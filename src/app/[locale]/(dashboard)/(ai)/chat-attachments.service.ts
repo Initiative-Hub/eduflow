@@ -1,3 +1,4 @@
+import { INVENTORY_FOLDER_PATHS } from '@/lib/storage/inventory-folders';
 import type { ChatFileUIPart } from '@/types/chat-attachments';
 import { inventoryService } from '../inventory/inventory.service';
 
@@ -9,7 +10,10 @@ export async function uploadChatAttachments(
 
   const uploadResponses = await Promise.all(
     files.map((file) =>
-      inventoryService.upload({ file, folderPath: ['ai-chats', chatId] })
+      inventoryService.upload({
+        file,
+        folderPath: INVENTORY_FOLDER_PATHS.aiChat(chatId),
+      })
     )
   );
   const entries = uploadResponses.map((response) => response.data);

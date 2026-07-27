@@ -65,6 +65,29 @@ export async function seedDemoCourses({
       });
     }
 
+    for (const assignmentData of courseData.assignments) {
+      await prisma.assignment.upsert({
+        where: { id: assignmentData.id },
+        update: {
+          courseId: courseData.id,
+          createdById: teacherUserId,
+          title: assignmentData.title,
+          content: assignmentData.content,
+          dueAt: assignmentData.dueAt,
+          maxPoints: assignmentData.maxPoints,
+        },
+        create: {
+          id: assignmentData.id,
+          courseId: courseData.id,
+          createdById: teacherUserId,
+          title: assignmentData.title,
+          content: assignmentData.content,
+          dueAt: assignmentData.dueAt,
+          maxPoints: assignmentData.maxPoints,
+        },
+      });
+    }
+
     await seedCourseEnrollment({
       prisma,
       courseId: courseData.id,

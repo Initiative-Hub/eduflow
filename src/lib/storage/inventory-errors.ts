@@ -1,6 +1,7 @@
 export const STORAGE_ERROR_CODE = {
   INVALID_MOVE: 'STORAGE_INVALID_MOVE',
   NAME_CONFLICT: 'STORAGE_NAME_CONFLICT',
+  REFERENCED_ENTRY: 'STORAGE_REFERENCED_ENTRY',
 } as const;
 
 export type StorageErrorCode =
@@ -24,6 +25,10 @@ export type StorageErrorDetails =
     }
   | {
       operation: 'move';
+    }
+  | {
+      operation: 'delete';
+      referenceType: 'assignment_submission';
     };
 
 export class StorageError extends Error {
@@ -87,4 +92,17 @@ export function isPrismaUniqueConstraintError(error: unknown) {
     'code' in error &&
     error.code === 'P2002'
   );
+}
+
+export function createStorageReferencedEntryError() {
+  return new StorageError({
+    code: STORAGE_ERROR_CODE.REFERENCED_ENTRY,
+    message:
+      'This file is attached to an assignment submission and cannot be deleted from inventory.',
+    status: 409,
+    details: {
+      operation: 'delete',
+      referenceType: 'assignment_submission',
+    },
+  });
 }

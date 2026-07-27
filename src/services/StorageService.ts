@@ -21,6 +21,7 @@ import {
 import {
   createStorageInvalidMoveError,
   createStorageNameConflictError,
+  createStorageReferencedEntryError,
   isPrismaUniqueConstraintError,
 } from '@/lib/storage/inventory-errors';
 import { createPdfFirstPageThumbnail } from '@/lib/storage/pdf-thumbnail';
@@ -1305,6 +1306,24 @@ export class StorageService {
     }
 
     const allIds = Array.from(new Set(allEntries.map((entry) => entry.id)));
+
+    const referencedSubmissionFile =
+      allIds.length > 0
+        ? await prisma.assignmentSubmissionFile.findFirst({
+            where: {
+              fileId: {
+                in: allIds,
+              },
+            },
+            select: {
+              fileId: true,
+            },
+          })
+        : null;
+
+    if (referencedSubmissionFile) {
+      throw createStorageReferencedEntryError();
+    }
 
     for (const entry of allEntries) {
       if (entry.isFolder) {
