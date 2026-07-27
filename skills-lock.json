@@ -72,7 +72,8 @@
     "shadcn": {
       "source": "shadcn/ui",
       "sourceType": "github",
-      "computedHash": "77faba608ea949351d1757e29e6cb726f6ec5937f7595be0593038a7d2d76bb9"
+      "skillPath": "skills/shadcn/SKILL.md",
+      "computedHash": "f99ef49d9909d380ca683ceb8dc8c25775c20ee38140112c394e037d8c11ee18"
     },
     "streamdown": {
       "source": "vercel/streamdown",
