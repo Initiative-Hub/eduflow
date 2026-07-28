@@ -42,10 +42,8 @@ type GoogleUserInfoResponse = {
 };
 
 function getConfig() {
-  const clientId =
-    process.env.GOOGLE_DRIVE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID;
-  const clientSecret =
-    process.env.GOOGLE_DRIVE_CLIENT_SECRET || process.env.GOOGLE_CLIENT_SECRET;
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
   if (!clientId || !clientSecret) {
     throw new Error('Google Drive OAuth credentials are not configured.');
   }
@@ -53,11 +51,9 @@ function getConfig() {
 }
 
 function getEncryptionSecret() {
-  const secret =
-    process.env.GOOGLE_DRIVE_TOKEN_ENCRYPTION_KEY ||
-    process.env.BETTER_AUTH_SECRET;
+  const secret = process.env.BETTER_AUTH_SECRET;
   if (!secret) {
-    throw new Error('Google Drive token encryption key is not configured.');
+    throw new Error('Encryption secret is not configured.');
   }
   return createHash('sha256').update(secret).digest();
 }

@@ -3,12 +3,12 @@ import { withAuth } from '@/lib/api/middlewares';
 import { GoogleDriveOAuthTokenService } from '@/services/google-drive/GoogleDriveOAuthTokenService';
 import {
   createGoogleDriveOAuthState,
-  getGoogleDriveRedirectUri,
   GOOGLE_DRIVE_OAUTH_CALLBACK_PATH,
   GOOGLE_DRIVE_OAUTH_RETURN_COOKIE,
   GOOGLE_DRIVE_OAUTH_STATE_COOKIE,
+  getGoogleDriveRedirectUri,
   sanitizeReturnTo,
-} from '../oauth-utils';
+} from '@/utils/oauth-utils';
 
 export const GET = withAuth(async (req, session) => {
   try {
@@ -19,6 +19,7 @@ export const GET = withAuth(async (req, session) => {
       redirectUri: getGoogleDriveRedirectUri(req),
       state: state.nonce,
     });
+    console.log('authorizationUrl', authorizationUrl);
     const response = NextResponse.redirect(authorizationUrl);
 
     response.cookies.set(GOOGLE_DRIVE_OAUTH_STATE_COOKIE, state.cookieValue, {

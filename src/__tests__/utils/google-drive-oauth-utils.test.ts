@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import * as oauthUtils from '@/app/api/v1/integrations/google-drive/oauth-utils';
+import * as oauthUtils from '@/utils/oauth-utils';
 
 describe('Google Drive OAuth state helpers', () => {
   it('stores the initiating EduFlow user id separately from the public nonce', () => {

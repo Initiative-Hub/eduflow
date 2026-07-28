@@ -44,7 +44,6 @@ describe('useGoogleDrivePicker', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     document.head.innerHTML = '';
-    process.env.NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID = 'google-client-id';
     process.env.NEXT_PUBLIC_GOOGLE_PICKER_API_KEY = 'picker-api-key';
     process.env.NEXT_PUBLIC_GOOGLE_DRIVE_APP_ID = 'drive-app-id';
 

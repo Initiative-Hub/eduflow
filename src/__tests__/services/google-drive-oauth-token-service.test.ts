@@ -21,7 +21,7 @@ const connectedIntegration = prisma.connectedIntegration as unknown as {
 
 function encryptTokenForTest(value: string) {
   const key = createHash('sha256')
-    .update(process.env.GOOGLE_DRIVE_TOKEN_ENCRYPTION_KEY || '')
+    .update(process.env.BETTER_AUTH_SECRET || '')
     .digest();
   const iv = randomBytes(12);
   const cipher = createCipheriv('aes-256-gcm', key, iv);
@@ -44,9 +44,9 @@ describe('GoogleDriveOAuthTokenService picker token', () => {
     vi.clearAllMocks();
     vi.unstubAllGlobals();
     vi.useRealTimers();
-    process.env.GOOGLE_DRIVE_CLIENT_ID = 'google-client-id';
-    process.env.GOOGLE_DRIVE_CLIENT_SECRET = 'google-client-secret';
-    process.env.GOOGLE_DRIVE_TOKEN_ENCRYPTION_KEY = 'test-encryption-secret';
+    process.env.GOOGLE_CLIENT_ID = 'google-client-id';
+    process.env.GOOGLE_CLIENT_SECRET = 'google-client-secret';
+    process.env.BETTER_AUTH_SECRET = 'test-encryption-secret';
   });
 
   it('returns the stored access token and connected account metadata when the token is still valid', async () => {
@@ -144,8 +144,8 @@ describe('GoogleDriveOAuthTokenService picker token', () => {
 
 describe('GoogleDriveOAuthTokenService authorization URL', () => {
   beforeEach(() => {
-    process.env.GOOGLE_DRIVE_CLIENT_ID = 'google-client-id';
-    process.env.GOOGLE_DRIVE_CLIENT_SECRET = 'google-client-secret';
+    process.env.GOOGLE_CLIENT_ID = 'google-client-id';
+    process.env.GOOGLE_CLIENT_SECRET = 'google-client-secret';
   });
 
   it('forces Google account selection when reconnecting Drive', () => {
@@ -165,7 +165,7 @@ describe('GoogleDriveOAuthTokenService disconnect', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.unstubAllGlobals();
-    process.env.GOOGLE_DRIVE_TOKEN_ENCRYPTION_KEY = 'test-encryption-secret';
+    process.env.BETTER_AUTH_SECRET = 'test-encryption-secret';
   });
 
   it('revokes the refresh token before deleting the local integration', async () => {

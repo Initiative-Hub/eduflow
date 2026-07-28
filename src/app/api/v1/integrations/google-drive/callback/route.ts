@@ -5,12 +5,12 @@ import { GoogleDriveOAuthTokenService } from '@/services/google-drive/GoogleDriv
 import {
   assertGoogleDriveOAuthState,
   buildReturnUrl,
-  getGoogleDriveRedirectUri,
   GOOGLE_DRIVE_OAUTH_CALLBACK_PATH,
   GOOGLE_DRIVE_OAUTH_RETURN_COOKIE,
   GOOGLE_DRIVE_OAUTH_STATE_COOKIE,
+  getGoogleDriveRedirectUri,
   sanitizeReturnTo,
-} from '../oauth-utils';
+} from '@/utils/oauth-utils';
 
 function clearOAuthCookies(response: NextResponse) {
   response.cookies.set(GOOGLE_DRIVE_OAUTH_STATE_COOKIE, '', {

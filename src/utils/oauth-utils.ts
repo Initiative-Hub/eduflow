@@ -73,7 +73,7 @@ export function getGoogleDriveRedirectUri(req: Request) {
 }
 
 export function sanitizeReturnTo(value?: string | null) {
-  if (!value || !value.startsWith('/') || value.startsWith('//')) {
+  if (!value?.startsWith('/') || value.startsWith('//')) {
     return DEFAULT_RETURN_TO;
   }
 
