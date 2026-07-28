@@ -43,6 +43,12 @@ interface ShareBatchInput {
   expiresIn?: number;
 }
 
+interface ImportGoogleDriveInput {
+  courseId: string;
+  fileId: string;
+  parentId?: string | null;
+}
+
 const buildSearchParams = (
   params: Record<string, string | number | null | undefined>
 ) => {
@@ -119,6 +125,18 @@ export const courseFilesService = {
       `v1/courses/${input.courseId}/storage/confirm-upload`,
       {
         fileId: response.data.fileId,
+      }
+    );
+  },
+
+  importFromGoogleDrive: async (
+    input: ImportGoogleDriveInput
+  ): Promise<InventoryResponse<InventoryEntry>> => {
+    return apiClient.post<InventoryResponse<InventoryEntry>>(
+      `v1/courses/${input.courseId}/storage/import/google-drive`,
+      {
+        fileId: input.fileId,
+        parentId: input.parentId ?? null,
       }
     );
   },

@@ -1,8 +1,20 @@
 'use client';
 
-import { BookOpen, FileDown, Loader2 } from 'lucide-react';
+import {
+  BookOpen,
+  ChevronDown,
+  CloudUpload,
+  FileDown,
+  Loader2,
+} from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import type {
   SavedVocabularyItem,
   VocabularyListSummary,
@@ -24,6 +36,8 @@ export function BulkActionBar({
   onMarkMastery,
   onGenerateQuiz,
   onExportCsv,
+  onExportCsvToDrive,
+  isExportingCsvToDrive,
   t,
 }: {
   selectedCount: number;
@@ -35,6 +49,8 @@ export function BulkActionBar({
   onMarkMastery: (level: number) => void;
   onGenerateQuiz: () => void;
   onExportCsv: () => void;
+  onExportCsvToDrive: () => void;
+  isExportingCsvToDrive: boolean;
   t: WordbankTranslator;
 }) {
   if (selectedCount === 0 || selectedItems.length === 0) return null;
@@ -95,10 +111,37 @@ export function BulkActionBar({
               : t('markMastered')}
         </Button>
       ))}
-      <Button type="button" variant="outline" size="sm" onClick={onExportCsv}>
-        <FileDown data-icon="inline-start" />
-        {t('exportCsv')}
-      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={isExportingCsvToDrive}
+          >
+            {isExportingCsvToDrive ? (
+              <Loader2 data-icon="inline-start" className="animate-spin" />
+            ) : (
+              <FileDown data-icon="inline-start" />
+            )}
+            {isExportingCsvToDrive ? t('savingToDrive') : t('exportCsv')}
+            <ChevronDown className="size-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem className="min-h-11 gap-2" onSelect={onExportCsv}>
+            <FileDown />
+            {t('downloadCsv')}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="min-h-11 gap-2"
+            onSelect={onExportCsvToDrive}
+          >
+            <CloudUpload />
+            {t('saveCsvToDrive')}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }

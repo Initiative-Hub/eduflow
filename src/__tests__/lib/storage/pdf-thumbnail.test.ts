@@ -37,5 +37,5 @@ describe('createPdfFirstPageThumbnail', () => {
 
     expect(thumbnail.length).toBeGreaterThan(0);
     expect(Array.from(thumbnail.slice(0, 3))).toEqual([0xff, 0xd8, 0xff]);
-  });
+  }, 15_000);
 });

@@ -9,6 +9,8 @@ import { useDeferredValue, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useGoogleDriveExport } from '@/hooks/use-google-drive-export';
+import { createWordbankCsvArtifact } from '@/utils/wordbank-csv';
 import type {
   SubmitReviewSessionResult,
   WordbankMasteryFilter,
@@ -58,6 +60,7 @@ export function WordbankClient() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
+  const googleDriveExport = useGoogleDriveExport();
   const { preferences, setPreferences } = useWordbankDisplayPreferences();
   const [search, setSearch] = useState(searchParams.get('q') ?? '');
   const [listId, setListId] = useState(searchParams.get('list') ?? 'all');
@@ -365,6 +368,19 @@ export function WordbankClient() {
               onExportCsv={() =>
                 downloadWordbankCsv(selectedItems, exportLabels)
               }
+              onExportCsvToDrive={() => {
+                const csv = createWordbankCsvArtifact(
+                  selectedItems,
+                  exportLabels
+                );
+                googleDriveExport.mutate({
+                  kind: 'wordbank_csv',
+                  fileName: csv.fileName,
+                  labels: exportLabels,
+                  vocabularyIds: selectedItems.map((item) => item.id),
+                });
+              }}
+              isExportingCsvToDrive={googleDriveExport.isPending}
               t={t}
             />
           </>

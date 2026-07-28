@@ -31,11 +31,12 @@ class ApiClient {
       },
       async (error: AxiosError<ApiError>) => {
         const status = error.response?.status;
+        const code = error.response?.data?.code;
         const serverMessage = error.response?.data?.message;
         const message = serverMessage || getStatusMessage(status);
         const details = error.response?.data?.details;
 
-        return Promise.reject({ message, details, status });
+        return Promise.reject({ code, message, details, status });
       }
     );
   }

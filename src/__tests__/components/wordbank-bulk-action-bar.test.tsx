@@ -1,5 +1,4 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { BulkActionBar } from '@/app/[locale]/(dashboard)/english/wordbank/wordbank-components';
 import type { SavedVocabularyItem } from '@/services/english/SavedVocabularyService';
@@ -43,16 +42,17 @@ const selectedItems: SavedVocabularyItem[] = [
 ];
 
 describe('BulkActionBar', () => {
-  it('can generate a quiz from selected words', async () => {
-    const user = userEvent.setup();
+  it('can generate a quiz from selected words', () => {
     const onGenerateQuiz = vi.fn();
 
     render(
       <BulkActionBar
         isGeneratingQuiz={false}
+        isExportingCsvToDrive={false}
         isUpdating={false}
         lists={[]}
         onExportCsv={vi.fn()}
+        onExportCsvToDrive={vi.fn()}
         onGenerateQuiz={onGenerateQuiz}
         onMarkMastery={vi.fn()}
         onUpdateLists={vi.fn()}
@@ -62,7 +62,7 @@ describe('BulkActionBar', () => {
       />
     );
 
-    await user.click(screen.getByRole('button', { name: 'Generate Quiz' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Generate Quiz' }));
 
     expect(onGenerateQuiz).toHaveBeenCalledTimes(1);
   });

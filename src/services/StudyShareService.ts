@@ -35,6 +35,64 @@ function createInteractiveContentSharedResource(input: {
 }
 
 export class StudyShareService {
+  static async getOwnedInteractiveContent(input: {
+    chatId: string;
+    content?: StudyInteractiveContentData;
+    userId: string;
+    messageId: string;
+    contentIndex: number;
+  }) {
+    const message = await prisma.aiChatMessage.findFirst({
+      where: {
+        id: input.messageId,
+        chatId: input.chatId,
+        role: AiChatRole.ASSISTANT,
+        chat: {
+          userId: input.userId,
+          type: AiChatType.STUDY_ASSISTANT,
+          status: AiChatStatus.ACTIVE,
+          deletedAt: null,
+        },
+      },
+      select: {
+        id: true,
+        parts: true,
+      },
+    });
+
+    if (!message) {
+      const chat = await prisma.aiChat.findFirst({
+        where: {
+          id: input.chatId,
+          userId: input.userId,
+          type: AiChatType.STUDY_ASSISTANT,
+          status: AiChatStatus.ACTIVE,
+          deletedAt: null,
+        },
+        select: { id: true },
+      });
+
+      if (!chat || !input.content) return null;
+
+      const parsedContent = studyInteractiveContentSchema.safeParse(
+        input.content
+      );
+
+      return parsedContent.success ? { content: parsedContent.data } : null;
+    }
+
+    const interactiveContents = getStudyInteractiveContentParts({
+      id: message.id,
+      role: 'assistant',
+      parts: Array.isArray(message.parts) ? message.parts : [],
+    } as UIMessage);
+
+    const content = interactiveContents[input.contentIndex];
+    const parsedContent = studyInteractiveContentSchema.safeParse(content);
+
+    return parsedContent.success ? { content: parsedContent.data } : null;
+  }
+
   static async createInteractiveContentShare(input: {
     chatId: string;
     content?: StudyInteractiveContentData;
