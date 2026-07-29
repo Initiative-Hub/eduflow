@@ -30,14 +30,6 @@ export type TeacherSubmissionRosterItem = {
   submission: FinalizedAssignmentSubmission | null;
 };
 
-export type TeacherAssignmentSubmission = AssignmentSubmission & {
-  student: {
-    id: string;
-    name: string;
-    email: string;
-  } | null;
-};
-
 export type AssignmentSubmission = {
   id: string;
   status: 'DRAFT' | 'SUBMITTED' | 'GRADED';
@@ -80,11 +72,6 @@ export type AssignmentListItem = Omit<
 };
 
 export const assignmentService = {
-  listSubmissionRoster: (assignmentId: string) =>
-    apiClient.get<TeacherSubmissionRosterItem[]>(
-      ASSIGNMENT_API_ROUTES.SUBMISSIONS(assignmentId)
-    ),
-
   list: (courseId: string) =>
     apiClient.get<AssignmentListItem[]>(
       ASSIGNMENT_API_ROUTES.COURSE_ASSIGNMENTS(courseId)
@@ -172,8 +159,8 @@ export const assignmentService = {
       ASSIGNMENT_API_ROUTES.SUBMIT(assignmentId)
     ),
 
-  listSubmissions: (assignmentId: string) =>
-    apiClient.get<TeacherAssignmentSubmission[]>(
+  listSubmissionRoster: (assignmentId: string) =>
+    apiClient.get<TeacherSubmissionRosterItem[]>(
       ASSIGNMENT_API_ROUTES.SUBMISSIONS(assignmentId)
     ),
 

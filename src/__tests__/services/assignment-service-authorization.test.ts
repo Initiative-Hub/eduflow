@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   AssignmentSubmissionStatus,
+  CourseEnrollmentStatus,
+  CourseRoleName,
   FileInventoryStatus,
 } from '@/generated/prisma';
 import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
@@ -11,6 +13,9 @@ const mocks = vi.hoisted(() => ({
     findFirst: vi.fn(),
   },
   assignmentSubmission: {
+    findMany: vi.fn(),
+  },
+  enrollment: {
     findMany: vi.fn(),
   },
   assignmentSubmissionFile: {
@@ -29,6 +34,7 @@ vi.mock('@/lib/prisma', () => ({
     assignment: mocks.assignment,
     assignmentSubmission: mocks.assignmentSubmission,
     assignmentSubmissionFile: mocks.assignmentSubmissionFile,
+    enrollment: mocks.enrollment,
   },
 }));
 
@@ -87,6 +93,7 @@ describe('AssignmentService submission authorization', () => {
       id: 'assignment-1',
     });
     mocks.assignmentSubmission.findMany.mockResolvedValue([]);
+    mocks.enrollment.findMany.mockResolvedValue([]);
     mocks.createInventoryReadSignedUrl.mockResolvedValue(
       'https://storage.example.test/file-1'
     );
@@ -96,18 +103,121 @@ describe('AssignmentService submission authorization', () => {
     setPermissions(COURSE_PERMISSION.ASSESSMENTS_RESULTS_VIEW);
 
     await expect(
-      AssignmentService.listSubmissions('assignment-1', 'student-viewer')
+      AssignmentService.listSubmissionRoster('assignment-1', 'student-viewer')
     ).rejects.toThrow('Forbidden');
 
     expect(mocks.assignmentSubmission.findMany).not.toHaveBeenCalled();
+    expect(mocks.enrollment.findMany).not.toHaveBeenCalled();
   });
 
-  it('allows graders to list finalized submissions', async () => {
+  it('allows graders to list the active student roster', async () => {
     setPermissions(COURSE_PERMISSION.ASSESSMENTS_GRADE);
 
     await expect(
-      AssignmentService.listSubmissions('assignment-1', 'teacher-1')
+      AssignmentService.listSubmissionRoster('assignment-1', 'teacher-1')
     ).resolves.toEqual([]);
+
+    expect(mocks.enrollment.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          courseId: 'course-1',
+          role: {
+            name: CourseRoleName.STUDENT,
+          },
+          status: CourseEnrollmentStatus.ACTIVE,
+        },
+      })
+    );
+    expect(mocks.assignmentSubmission.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          assignmentId: 'assignment-1',
+          status: {
+            in: [
+              AssignmentSubmissionStatus.SUBMITTED,
+              AssignmentSubmissionStatus.GRADED,
+            ],
+          },
+        },
+      })
+    );
+  });
+
+  it('includes students without submissions and keeps only the latest finalized attempt', async () => {
+    setPermissions(COURSE_PERMISSION.ASSESSMENTS_GRADE);
+    mocks.enrollment.findMany.mockResolvedValue([
+      {
+        member: {
+          email: 'alice@example.com',
+          id: 'student-1',
+          image: null,
+          name: 'Alice',
+        },
+      },
+      {
+        member: {
+          email: 'bob@example.com',
+          id: 'student-2',
+          image: null,
+          name: 'Bob',
+        },
+      },
+    ]);
+    mocks.assignmentSubmission.findMany.mockResolvedValue([
+      {
+        assignmentId: 'assignment-1',
+        createdAt: new Date('2026-07-29T02:00:00.000Z'),
+        feedback: null,
+        files: [],
+        gradedAt: null,
+        gradedById: null,
+        id: 'submission-new',
+        score: null,
+        status: AssignmentSubmissionStatus.SUBMITTED,
+        studentId: 'student-1',
+        submittedAt: new Date('2026-07-29T02:00:00.000Z'),
+        updatedAt: new Date('2026-07-29T02:00:00.000Z'),
+      },
+      {
+        assignmentId: 'assignment-1',
+        createdAt: new Date('2026-07-28T02:00:00.000Z'),
+        feedback: 'Previous feedback',
+        files: [],
+        gradedAt: new Date('2026-07-28T03:00:00.000Z'),
+        gradedById: 'teacher-1',
+        id: 'submission-old',
+        score: 80,
+        status: AssignmentSubmissionStatus.GRADED,
+        studentId: 'student-1',
+        submittedAt: new Date('2026-07-28T02:00:00.000Z'),
+        updatedAt: new Date('2026-07-28T03:00:00.000Z'),
+      },
+    ]);
+
+    const result = await AssignmentService.listSubmissionRoster(
+      'assignment-1',
+      'teacher-1'
+    );
+
+    expect(result).toEqual([
+      {
+        student: expect.objectContaining({
+          id: 'student-1',
+          name: 'Alice',
+        }),
+        submission: expect.objectContaining({
+          id: 'submission-new',
+          status: AssignmentSubmissionStatus.SUBMITTED,
+        }),
+      },
+      {
+        student: expect.objectContaining({
+          id: 'student-2',
+          name: 'Bob',
+        }),
+        submission: null,
+      },
+    ]);
   });
 
   it('allows students to download their own submission file', async () => {

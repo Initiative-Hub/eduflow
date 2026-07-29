@@ -638,7 +638,7 @@ export class AssignmentService {
     });
   }
 
-  static async listSubmissionsRoster(assignmentId: string, userId: string) {
+  static async listSubmissionRoster(assignmentId: string, userId: string) {
     const assignment = await AssignmentService.getAssignment(assignmentId);
 
     await AssignmentService.assertPermission(

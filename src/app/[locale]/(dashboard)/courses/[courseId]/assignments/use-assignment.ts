@@ -142,7 +142,7 @@ export function useGradeSubmission(assignmentId: string) {
 
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ['assignment-submissions', assignmentId],
+        queryKey: ['assignment-submission-roster', assignmentId],
       });
       queryClient.invalidateQueries({
         queryKey: ['assignment', assignmentId],
