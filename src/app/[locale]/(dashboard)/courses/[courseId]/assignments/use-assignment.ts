@@ -117,10 +117,10 @@ export function useAssignmentSubmission(assignmentId: string) {
   };
 }
 
-export function useAssignmentSubmissions(assignmentId: string) {
+export function useAssignmentSubmissionRoster(assignmentId: string) {
   return useQuery({
-    queryKey: ['assignment-submissions', assignmentId],
-    queryFn: () => assignmentService.listSubmissions(assignmentId),
+    queryKey: ['assignment-submission-roster', assignmentId],
+    queryFn: () => assignmentService.listSubmissionRoster(assignmentId),
     enabled: Boolean(assignmentId),
   });
 }
