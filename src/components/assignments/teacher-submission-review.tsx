@@ -5,7 +5,8 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
 import type {
   Assignment,
-  TeacherAssignmentSubmission,
+  FinalizedAssignmentSubmission,
+  TeacherAssignmentStudent,
 } from '@/app/[locale]/(dashboard)/courses/[courseId]/assignments/assignment.service';
 import { assignmentService } from '@/app/[locale]/(dashboard)/courses/[courseId]/assignments/assignment.service';
 import { Badge } from '@/components/ui/badge';
@@ -16,13 +17,15 @@ import { Textarea } from '@/components/ui/textarea';
 
 type TeacherSubmissionReviewProps = {
   assignment: Assignment;
-  submission: TeacherAssignmentSubmission;
+  student: TeacherAssignmentStudent;
+  submission: FinalizedAssignmentSubmission;
   isSaving: boolean;
   onGrade: (data: { score: number; feedback?: string }) => void;
 };
 
 export function TeacherSubmissionReview({
   assignment,
+  student,
   submission,
   isSaving,
   onGrade,
@@ -31,7 +34,6 @@ export function TeacherSubmissionReview({
   const locale = useLocale();
   const [score, setScore] = useState(submission.score?.toString() ?? '');
   const [feedback, setFeedback] = useState(submission.feedback ?? '');
-  const studentName = submission.student?.name ?? t('student');
   const parsedScore = Number(score);
   const scoreIsValid =
     score.trim() !== '' &&
@@ -43,9 +45,9 @@ export function TeacherSubmissionReview({
     <article className="min-w-0 bg-muted/10">
       <div className="flex flex-col gap-3 border-b bg-card px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <p className="truncate font-semibold">{studentName}</p>
+          <p className="truncate font-semibold">{student.name}</p>
           <p className="mt-0.5 truncate text-muted-foreground text-sm">
-            {submission.student?.email}
+            {student.email}
           </p>
         </div>
         <Badge
@@ -150,7 +152,7 @@ export function TeacherSubmissionReview({
                 id={`feedback-${submission.id}`}
                 value={feedback}
                 onChange={(event) => setFeedback(event.target.value)}
-                placeholder={t('feedbackPlaceholder', { name: studentName })}
+                placeholder={t('feedbackPlaceholder', { name: student.name })}
                 rows={4}
               />
             </div>
