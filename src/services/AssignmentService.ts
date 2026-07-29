@@ -638,7 +638,7 @@ export class AssignmentService {
     });
   }
 
-  static async listSubmissions(assignmentId: string, userId: string) {
+  static async listSubmissionsRoster(assignmentId: string, userId: string) {
     const assignment = await AssignmentService.getAssignment(assignmentId);
 
     await AssignmentService.assertPermission(
@@ -647,61 +647,92 @@ export class AssignmentService {
       COURSE_PERMISSION.ASSESSMENTS_GRADE
     );
 
-    const submissions = await prisma.assignmentSubmission.findMany({
-      where: {
-        assignmentId,
-        status: {
-          in: [
-            AssignmentSubmissionStatus.SUBMITTED,
-            AssignmentSubmissionStatus.GRADED,
-          ],
-        },
-      },
-      orderBy: [
-        {
-          studentId: 'asc',
-        },
-        { createdAt: 'desc' },
-      ],
-      include: {
-        student: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
+    const [studentEnrollments, finalizedSubmissions] = await Promise.all([
+      prisma.enrollment.findMany({
+        where: {
+          courseId: assignment.courseId,
+          status: CourseEnrollmentStatus.ACTIVE,
+          role: {
+            name: CourseRoleName.STUDENT,
           },
         },
-        files: {
-          include: {
-            file: {
-              select: {
-                id: true,
-                name: true,
-                fileSize: true,
-                mimeType: true,
-                status: true,
+        orderBy: [
+          {
+            member: {
+              name: 'asc',
+            },
+          },
+          {
+            memberId: 'asc',
+          },
+        ],
+        select: {
+          member: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              image: true,
+            },
+          },
+        },
+      }),
+
+      prisma.assignmentSubmission.findMany({
+        where: {
+          assignmentId,
+          status: {
+            in: [
+              AssignmentSubmissionStatus.SUBMITTED,
+              AssignmentSubmissionStatus.GRADED,
+            ],
+          },
+        },
+        orderBy: [
+          {
+            studentId: 'asc',
+          },
+          {
+            createdAt: 'desc',
+          },
+        ],
+        include: {
+          files: {
+            include: {
+              file: {
+                select: {
+                  id: true,
+                  name: true,
+                  fileSize: true,
+                  mimeType: true,
+                  status: true,
+                },
               },
             },
           },
         },
-      },
-    });
+      }),
+    ]);
 
-    const latestByStudent = new Map<string, (typeof submissions)[number]>();
+    const latestSubmissionByStudent = new Map<
+      string,
+      (typeof finalizedSubmissions)[number]
+    >();
 
-    for (const submission of submissions) {
-      if (!latestByStudent.has(submission.studentId)) {
-        latestByStudent.set(submission.studentId, submission);
+    for (const submission of finalizedSubmissions) {
+      if (!latestSubmissionByStudent.has(submission.studentId)) {
+        latestSubmissionByStudent.set(submission.studentId, submission);
       }
     }
 
-    return Array.from(latestByStudent.values()).map((submission) => ({
-      ...submission,
-      files: submission.files.map((entry) => ({
-        ...entry,
-        file: serializeFile(entry.file),
-      })),
-    }));
+    return studentEnrollments.map(({ member }) => {
+      const submission = latestSubmissionByStudent.get(member.id);
+
+      return {
+        student: member,
+        submission: submission ? serializeSubmission(submission) : null,
+      };
+    });
   }
 
   static async gradeSubmission(input: {
