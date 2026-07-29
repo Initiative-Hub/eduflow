@@ -7,6 +7,7 @@ import InteractiveContentPreview from '@/app/[locale]/(dashboard)/(ai)/study/_co
 import { createInteractiveContentInventoryFile } from '@/utils/study-interactive-content';
 
 vi.mock('next-intl', () => ({
+  useLocale: () => 'en',
   useTranslations: () => (key: string) => key,
 }));
 
@@ -54,9 +55,10 @@ describe('interactive content preview', () => {
     expect(markup).toContain('aria-label="reset"');
     expect(markup).toContain('aria-label="fullscreen"');
     expect(markup).toContain('aria-label="download"');
+    expect(markup).toContain('aria-label="saveToDrive"');
     expect(markup).toContain('aria-label="share"');
     expect(markup).toContain('aria-label="saveToInventory"');
-    expect(markup.match(/cursor-pointer/g)).toHaveLength(5);
+    expect(markup.match(/cursor-pointer/g)).toHaveLength(6);
     expect(markup).toContain(
       'class="inline-flex size-9 shrink-0 cursor-pointer'
     );

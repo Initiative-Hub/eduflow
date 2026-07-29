@@ -4,7 +4,6 @@ import {
   ArrowRight,
   ChevronLeft,
   ChevronRight,
-  Download,
   Eye,
   EyeOff,
   ListPlus,
@@ -16,6 +15,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
+import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -48,6 +48,7 @@ import {
   type PlannedSlide,
   usePresentation,
 } from '../use-presentation';
+import { PresentationExportActions } from './presentation-export-actions';
 import { SlideAiEditDialog } from './slide-ai-edit-dialog';
 import {
   attachSlideCanvasAiControls,
@@ -160,6 +161,8 @@ export function LessonPresentation({
   content,
 }: LessonPresentationProps) {
   const t = useTranslations('Courses.LessonPresentation');
+  const params = useParams();
+  const lessonId = params.lessonId as string;
   const {
     step,
     setStep,
@@ -1819,30 +1822,14 @@ export function LessonPresentation({
                     : t('btnSaveVisual')}
                 </Button>
               )}
-              {isGamma && exportUrl ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-9 gap-1.5 rounded-lg"
-                  onClick={() => window.open(exportUrl, '_blank')}
-                >
-                  <Download className="h-4 w-4" />
-                  {t('btnDownloadPptx')}
-                </Button>
-              ) : !isGamma ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-9 gap-1.5 rounded-lg"
-                  onClick={handleDownloadPptx}
-                  disabled={isDownloadingPptx}
-                >
-                  <Download className="h-4 w-4" />
-                  {isDownloadingPptx
-                    ? t('pptxDownloading')
-                    : t('btnDownloadPptx')}
-                </Button>
-              ) : null}
+              <PresentationExportActions
+                exportUrl={exportUrl}
+                isDownloading={isDownloadingPptx}
+                isGamma={isGamma}
+                lessonId={lessonId}
+                onDownloadNative={handleDownloadPptx}
+                t={t}
+              />
               <Button
                 variant="outline"
                 size="sm"

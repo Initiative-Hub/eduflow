@@ -12,6 +12,7 @@ import {
 import { formatFileSize } from '@/app/[locale]/(dashboard)/inventory/inventory.utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { useGoogleDriveExport } from '@/hooks/use-google-drive-export';
 import { cn } from '@/lib/utils';
 import { InventoryBrowser } from './_components/inventory-browser';
 import { InventoryDialogs } from './_components/inventory-dialogs';
@@ -49,6 +50,7 @@ export default function CourseFilesClient() {
   const courseId = params.courseId as string;
   const t = useTranslations('CourseFilesPage');
   const locale = useLocale();
+  const googleDriveExport = useGoogleDriveExport();
 
   const {
     analytics,
@@ -81,6 +83,7 @@ export default function CourseFilesClient() {
     handleShareEntry,
     handleShareSelected,
     handleUploadFiles,
+    handleImportGoogleDriveFile,
     isFetching,
     isLoading,
     maxFileSizeBytes,
@@ -105,6 +108,7 @@ export default function CourseFilesClient() {
     setViewType,
     uploadOpen,
     uploadPending,
+    googleDriveImportPending,
     viewType,
   } = useFiles({
     courseId,
@@ -133,6 +137,15 @@ export default function CourseFilesClient() {
   const loadErrorMessage = loadError
     ? resolveErrorMessage(loadError, t('errors.description'))
     : null;
+
+  function saveEntryToDrive(entry: InventoryEntry) {
+    if (entry.isFolder || entry.status !== 'READY') return;
+    googleDriveExport.mutate({
+      kind: 'inventory_file',
+      courseId,
+      fileId: entry.id,
+    });
+  }
 
   return (
     <div className="relative flex flex-col gap-6 overflow-hidden">
@@ -218,9 +231,11 @@ export default function CourseFilesClient() {
         onPageChange={handlePageChange}
         onPreview={handlePreviewEntry}
         onRename={handleOpenRenameDialog}
+        onSaveToDrive={saveEntryToDrive}
         onSelectAll={handleSelectAll}
         onSelectEntry={handleSelectEntry}
         onShare={handleShareEntry}
+        isSavingToDrive={googleDriveExport.isPending}
         onUploadOpen={() => setUploadOpen(true)}
         getUploadProgress={getUploadProgress}
         pageIndex={pageIndex}
@@ -247,7 +262,11 @@ export default function CourseFilesClient() {
         moveDialog={moveDialog}
         moveOptions={moveOptions}
         movePending={movePending}
+        onImportGoogleDriveFile={handleImportGoogleDriveFile}
+        onSaveToDrive={saveEntryToDrive}
         onUploadFiles={handleUploadFiles}
+        googleDriveImportPending={googleDriveImportPending}
+        googleDriveExportPending={googleDriveExport.isPending}
         previewDialog={previewDialog}
         renameDialog={renameDialog}
         renamePending={renamePending}

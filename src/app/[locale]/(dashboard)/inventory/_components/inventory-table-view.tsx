@@ -5,6 +5,7 @@ import {
   Download,
   Edit2,
   Eye,
+  CloudUpload,
   FileIcon,
   FolderOpen,
   MoreVertical,
@@ -101,9 +102,11 @@ type InventoryTableViewProps = {
   onOpen: (entry: InventoryEntry) => void;
   onPreview: (entry: InventoryEntry) => void;
   onRename: (entry: InventoryEntry) => void;
+  onSaveToDrive: (entry: InventoryEntry) => void;
   onSelectAll: (checked: boolean) => void;
   onSelectEntry: (entryId: string, checked: boolean) => void;
   onShare: (entry: InventoryEntry) => void;
+  isSavingToDrive: boolean;
 };
 
 export function InventoryTableView({
@@ -120,9 +123,11 @@ export function InventoryTableView({
   onOpen,
   onPreview,
   onRename,
+  onSaveToDrive,
   onSelectAll,
   onSelectEntry,
   onShare,
+  isSavingToDrive,
 }: InventoryTableViewProps) {
   return (
     <div className="overflow-hidden rounded-2xl border border-border/60">
@@ -280,6 +285,16 @@ export function InventoryTableView({
                             >
                               <Download />
                               {t('actions.download')}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => onSaveToDrive(entry)}
+                              className="cursor-pointer gap-2"
+                              disabled={isSavingToDrive}
+                            >
+                              <CloudUpload />
+                              {isSavingToDrive
+                                ? t('actions.savingToDrive')
+                                : t('actions.saveToDrive')}
                             </DropdownMenuItem>
                           </>
                         )

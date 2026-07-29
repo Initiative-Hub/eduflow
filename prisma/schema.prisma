@@ -45,6 +45,7 @@ model User {
   wordbankReviewSessions WordbankReviewSession[]
   wordbankReviewAttempts WordbankReviewAttempt[]
   sharedResources        SharedResource[]
+  connectedIntegrations  ConnectedIntegration[]
 
   assignmentsCreated          Assignment[]           @relation("AssignmentCreatedBy")
   assignmentSubmissions       AssignmentSubmission[] @relation("AssignmentStudent")
@@ -169,6 +170,34 @@ enum FileInventoryStatus {
   READY
   FAILED
   DELETED
+}
+
+enum IntegrationProvider {
+  GOOGLE_DRIVE @map("google_drive")
+
+  @@map("integration_provider")
+}
+
+model ConnectedIntegration {
+  id     String @id @default(uuid())
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  provider        IntegrationProvider
+  providerAccount String?             @map("provider_account")
+  accessToken     String?             @map("access_token")
+  refreshToken    String              @map("refresh_token")
+  scope           String?
+  tokenType       String?             @map("token_type")
+  expiresAt       DateTime?           @map("expires_at")
+  metadata        Json?               @default("{}")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, provider])
+  @@index([provider])
+  @@map("connected_integration")
 }
 
 enum AiChatRole {
