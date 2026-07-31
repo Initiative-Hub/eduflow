@@ -1,0 +1,207 @@
+import type {
+  GameActor,
+  GameAnswerRecord,
+  GameParticipantRecord,
+  GameQuizWithQuestions,
+  GameRoundRecord,
+  SessionWithGameData,
+} from './types';
+
+const canManage = (actor: GameActor, ownerId: string) =>
+  actor.role === 'ADMIN' || actor.userId === ownerId;
+
+const isRevealVisible = (phase: SessionWithGameData['phase']) =>
+  phase === 'REVEAL' ||
+  phase === 'PROGRESS' ||
+  phase === 'FINAL_CELEBRATION' ||
+  phase === 'REPORT';
+
+const projectOption = (
+  option: GameRoundRecord['options'][number],
+  includeCorrectness: boolean
+) => ({
+  id: option.id,
+  orderIndex: option.orderIndex,
+  text: option.text,
+  ...(includeCorrectness ? { isCorrect: option.isCorrect } : {}),
+});
+
+const projectRound = (
+  round: GameRoundRecord,
+  includeCorrectness: boolean,
+  includeExplanation: boolean
+) => ({
+  id: round.id,
+  orderIndex: round.orderIndex,
+  prompt: round.prompt,
+  hint: round.hint,
+  ...(includeExplanation ? { explanation: round.explanation } : {}),
+  timerSeconds: round.timerSeconds,
+  maxPoints: round.maxPoints,
+  openedAt: round.openedAt,
+  deadlineAt: round.deadlineAt,
+  revealedAt: round.revealedAt,
+  options: round.options.map((option) =>
+    projectOption(option, includeCorrectness)
+  ),
+});
+
+export function projectGameQuizDefinition(quiz: GameQuizWithQuestions) {
+  return {
+    id: quiz.id,
+    title: quiz.title,
+    topic: quiz.topic,
+    difficulty: quiz.difficulty,
+    templateKey: quiz.templateKey,
+    randomizeQuestionOrder: quiz.randomizeQuestionOrder,
+    randomizeAnswerOrder: quiz.randomizeAnswerOrder,
+    showLeaderboard: quiz.showLeaderboard,
+    revision: quiz.revision,
+    createdAt: quiz.createdAt,
+    updatedAt: quiz.updatedAt,
+    questions: quiz.questions.map((question) => ({
+      id: question.id,
+      orderIndex: question.orderIndex,
+      prompt: question.prompt,
+      hint: question.hint,
+      explanation: question.explanation,
+      timerSeconds: question.timerSeconds,
+      maxPoints: question.maxPoints,
+      options: question.options.map((option) => ({
+        id: option.id,
+        orderIndex: option.orderIndex,
+        text: option.text,
+        isCorrect: option.isCorrect,
+      })),
+    })),
+  };
+}
+
+function projectParticipant(participant: GameParticipantRecord) {
+  return {
+    id: participant.id,
+    displayName: participant.displayName,
+    score: participant.score,
+    joinedAt: participant.joinedAt,
+    lastSeenAt: participant.lastSeenAt,
+  };
+}
+
+function projectPlayerAnswer(
+  answer: GameAnswerRecord | undefined,
+  revealed: boolean
+) {
+  if (!answer) {
+    return null;
+  }
+
+  return {
+    roundId: answer.roundId,
+    selectedOptionId: answer.selectedOptionId,
+    submittedAt: answer.submittedAt,
+    ...(revealed
+      ? { isCorrect: answer.isCorrect, pointsAwarded: answer.pointsAwarded }
+      : {}),
+  };
+}
+
+function projectLeaderboard(session: SessionWithGameData) {
+  return session.participants.map((participant, index) => ({
+    rank: index + 1,
+    ...projectParticipant(participant),
+  }));
+}
+
+export function projectParticipantSession(
+  session: SessionWithGameData,
+  participant: GameParticipantRecord
+) {
+  const revealed = isRevealVisible(session.phase);
+  const currentRound =
+    session.currentRoundIndex === null
+      ? null
+      : (session.rounds.find(
+          (round) => round.orderIndex === session.currentRoundIndex
+        ) ?? null);
+  const answer = currentRound
+    ? session.answers.find(
+        (candidate) =>
+          candidate.participantId === participant.id &&
+          candidate.roundId === currentRound.id
+      )
+    : undefined;
+
+  return {
+    id: session.id,
+    title: session.title,
+    topic: session.topic,
+    difficulty: session.difficulty,
+    templateKey: session.templateKey,
+    phase: session.phase,
+    currentRoundIndex: session.currentRoundIndex,
+    totalRounds: session.rounds.length,
+    joiningLocked: session.joiningLocked,
+    showLeaderboard: session.showLeaderboard,
+    stateVersion: session.stateVersion,
+    startedAt: session.startedAt,
+    endedAt: session.endedAt,
+    participant: projectParticipant(participant),
+    currentRound: currentRound
+      ? projectRound(currentRound, revealed, revealed)
+      : null,
+    answer: projectPlayerAnswer(answer, revealed),
+    leaderboard:
+      session.showLeaderboard && revealed ? projectLeaderboard(session) : null,
+  };
+}
+
+export function projectHostSession(session: SessionWithGameData) {
+  const currentRound =
+    session.currentRoundIndex === null
+      ? null
+      : (session.rounds.find(
+          (round) => round.orderIndex === session.currentRoundIndex
+        ) ?? null);
+
+  return {
+    id: session.id,
+    title: session.title,
+    topic: session.topic,
+    difficulty: session.difficulty,
+    joinCode: session.joinCode,
+    templateKey: session.templateKey,
+    phase: session.phase,
+    currentRoundIndex: session.currentRoundIndex,
+    totalRounds: session.rounds.length,
+    joiningLocked: session.joiningLocked,
+    showLeaderboard: session.showLeaderboard,
+    stateVersion: session.stateVersion,
+    startedAt: session.startedAt,
+    endedAt: session.endedAt,
+    participants: session.participants.map(projectParticipant),
+    currentRound: currentRound ? projectRound(currentRound, true, true) : null,
+    rounds: session.rounds.map((round) => projectRound(round, true, true)),
+    leaderboard: session.showLeaderboard ? projectLeaderboard(session) : null,
+  };
+}
+
+export function projectSessionForActor(
+  session: SessionWithGameData,
+  actor: GameActor
+) {
+  if (canManage(actor, session.hostId)) {
+    return { audience: 'HOST' as const, session: projectHostSession(session) };
+  }
+
+  const participant = session.participants.find(
+    (candidate) => candidate.userId === actor.userId
+  );
+  if (!participant) {
+    return null;
+  }
+
+  return {
+    audience: 'PARTICIPANT' as const,
+    session: projectParticipantSession(session, participant),
+  };
+}

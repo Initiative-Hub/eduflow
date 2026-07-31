@@ -24,6 +24,15 @@ describe('sidebar-config', () => {
     expect(inventoryItem.isActive('/inventory/books')).toBe(true);
   });
 
+  it('marks Interactive Games active across its nested routes', () => {
+    const gamesItem = getAssistantNavItems(t as never).find(
+      (item) => item.url === '/games'
+    );
+
+    expect(gamesItem?.isActive('/games')).toBe(true);
+    expect(gamesItem?.isActive('/games/sessions/session-123/host')).toBe(true);
+  });
+
   it('keeps settings root item inactive on child routes', () => {
     const settingsItems = getSettingNavItems(t as never);
 
