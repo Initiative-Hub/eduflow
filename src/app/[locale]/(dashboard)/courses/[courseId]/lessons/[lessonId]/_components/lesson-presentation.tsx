@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
+import { sanitizeSvgMarkup } from '@/lib/html-sanitizer';
 import { cn } from '@/lib/utils';
 import type { TiptapDocument } from '@/utils/lesson-content';
 import {
@@ -206,7 +207,7 @@ export function LessonPresentation({
       return;
     }
     const prefix = `edit${index}x${Date.now().toString(36)}_`;
-    const safe = svg
+    const safe = sanitizeSvgMarkup(svg)
       .replace(/id="([^"]+)"/g, `id="${prefix}$1"`)
       .replace(/url\(#([^)]+)\)/g, `url(#${prefix}$1)`)
       .replace(/href="#([^"]+)"/g, `href="#${prefix}$1"`);

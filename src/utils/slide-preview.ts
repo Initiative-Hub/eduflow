@@ -1,3 +1,5 @@
+import { sanitizeSvgMarkup } from '@/lib/html-sanitizer';
+
 /**
  * Utility to clean SVG slide template markup for responsive inline previews,
  * replacing template variable placeholders (e.g. {{title}}, {{heading}}) with
@@ -5,13 +7,6 @@
  */
 export function getCleanedPreviewSvg(svgContent: string): string {
   let cleaned = svgContent;
-
-  // Ensure SVG fills container and maintains aspect ratio
-  cleaned = cleaned.replace(/<svg([^>]*)(width|height)="[^"]*"/g, '<svg$1');
-  cleaned = cleaned.replace(
-    /<svg([^>]*)/,
-    '<svg$1 width="100%" height="100%" style="display: block; width: 100%; height: 100%; object-fit: contain;"'
-  );
 
   const replacements: Record<string, string> = {
     heading: 'Concept Introduction',
@@ -57,5 +52,5 @@ export function getCleanedPreviewSvg(svgContent: string): string {
     return key.toUpperCase();
   });
 
-  return cleaned;
+  return sanitizeSvgMarkup(cleaned);
 }
