@@ -948,6 +948,9 @@
       "assessmentDescription": "Nhập điểm và gửi nhận xét hữu ích cho sinh viên.",
       "description": "Theo dõi trạng thái nộp bài của {count} sinh viên.",
       "downloadFile": "Tải xuống {name}",
+      "enhanceFeedback": "Cải thiện bằng AI",
+      "enhanceFeedbackError": "Không thể cải thiện nhận xét.",
+      "enhancingFeedback": "Đang cải thiện...",
       "feedback": "Nhận xét định tính",
       "feedbackPlaceholder": "Viết nhận xét hữu ích cho {name}",
       "finalScore": "Điểm cuối cùng",
@@ -974,7 +977,8 @@
       "submissionFiles": "Tệp bài nộp",
       "submittedAt": "Đã nộp {date}",
       "title": "Bài nộp của sinh viên",
-      "totalCount": "Tổng {count}"
+      "totalCount": "Tổng {count}",
+      "undoAiFeedback": "Hoàn tác thay đổi của AI"
     },
     "Card": {
       "accept": "Chấp nhận",

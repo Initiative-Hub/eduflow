@@ -948,6 +948,9 @@
       "assessmentDescription": "Record a score and share constructive feedback with the student.",
       "description": "Track submission status for {count, plural, =1 {1 student} other {# students}}.",
       "downloadFile": "Download {name}",
+      "enhanceFeedback": "Enhance with AI",
+      "enhanceFeedbackError": "Unable to enhance the feedback.",
+      "enhancingFeedback": "Enhancing...",
       "feedback": "Qualitative feedback",
       "feedbackPlaceholder": "Provide constructive feedback for {name}",
       "finalScore": "Final score",
@@ -974,7 +977,8 @@
       "submissionFiles": "Submission files",
       "submittedAt": "Submitted {date}",
       "title": "Student submissions",
-      "totalCount": "{count} total"
+      "totalCount": "{count} total",
+      "undoAiFeedback": "Undo AI change"
     },
     "Card": {
       "accept": "Accept",

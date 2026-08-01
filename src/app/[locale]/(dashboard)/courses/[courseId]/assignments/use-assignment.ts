@@ -4,7 +4,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import type { TiptapDocument } from '@/utils/lesson-content';
-import { type Assignment, assignmentService } from './assignment.service';
+import {
+  type Assignment,
+  assignmentService,
+  type FeedbackTone,
+} from './assignment.service';
 
 export function useAssignments(courseId: string) {
   return useQuery({
@@ -152,6 +156,26 @@ export function useGradeSubmission(assignmentId: string) {
 
     onError: (error: { message?: string }) => {
       toast.error(error.message || t('gradeError'));
+    },
+  });
+}
+
+export function useRewriteAssignmentFeedback() {
+  const t = useTranslations('Courses.AssignmentTeacher');
+
+  return useMutation({
+    mutationFn: (input: {
+      submissionId: string;
+      feedback: string;
+      tone: FeedbackTone;
+    }) =>
+      assignmentService.rewriteFeedback(input.submissionId, {
+        feedback: input.feedback,
+        tone: input.tone,
+      }),
+
+    onError: (error: { message?: string }) => {
+      toast.error(error.message || t('enhanceFeedbackError'));
     },
   });
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { Download, FileText, Save } from 'lucide-react';
+import { Download, FileText, Save, Sparkles, Undo2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
 import type {
@@ -9,11 +9,11 @@ import type {
   TeacherAssignmentStudent,
 } from '@/app/[locale]/(dashboard)/courses/[courseId]/assignments/assignment.service';
 import { assignmentService } from '@/app/[locale]/(dashboard)/courses/[courseId]/assignments/assignment.service';
+import { useRewriteAssignmentFeedback } from '@/app/[locale]/(dashboard)/courses/[courseId]/assignments/use-assignment';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 
 type TeacherSubmissionReviewProps = {
   assignment: Assignment;
@@ -41,6 +41,28 @@ export function TeacherSubmissionReview({
     parsedScore >= 0 &&
     parsedScore <= assignment.maxPoints;
 
+  const rewriteFeedback = useRewriteAssignmentFeedback();
+  const [feedbackBeforeAi, setFeedbackBeforeAi] = useState<string | null>(null);
+
+  const handleEnhanceFeedback = () => {
+    const draft = feedback.trim();
+
+    if (!draft) return;
+
+    rewriteFeedback.mutate(
+      {
+        submissionId: submission.id,
+        feedback: draft,
+        tone: 'constructive',
+      },
+      {
+        onSuccess: ({ suggestion }) => {
+          setFeedbackBeforeAi(feedback);
+          setFeedback(suggestion);
+        },
+      }
+    );
+  };
   return (
     <article className="min-w-0 bg-muted/10">
       <div className="flex flex-col gap-3 border-b bg-card px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
@@ -148,13 +170,38 @@ export function TeacherSubmissionReview({
               <Label htmlFor={`feedback-${submission.id}`}>
                 {t('feedback')}
               </Label>
-              <Textarea
-                id={`feedback-${submission.id}`}
-                value={feedback}
-                onChange={(event) => setFeedback(event.target.value)}
-                placeholder={t('feedbackPlaceholder', { name: student.name })}
-                rows={4}
-              />
+
+              <div className="flex items-center gap-1">
+                {feedbackBeforeAi !== null && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setFeedback(feedbackBeforeAi);
+                      setFeedbackBeforeAi(null);
+                    }}
+                  >
+                    <Undo2 data-icon="inline-start" />
+                    {t('undoAiFeedback')}
+                  </Button>
+                )}
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleEnhanceFeedback}
+                  disabled={
+                    !feedback.trim() || rewriteFeedback.isPending || isSaving
+                  }
+                >
+                  <Sparkles data-icon="inline-start" />
+                  {rewriteFeedback.isPending
+                    ? t('enhancingFeedback')
+                    : t('enhanceFeedback')}
+                </Button>
+              </div>
             </div>
           </div>
 

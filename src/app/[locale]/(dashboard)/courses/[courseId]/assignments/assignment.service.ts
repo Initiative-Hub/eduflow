@@ -18,6 +18,7 @@ export type TeacherAssignmentStudent = {
   image: string | null;
 };
 
+export type FeedbackTone = 'constructive' | 'concise' | 'encouraging';
 export type FinalizedAssignmentSubmission = Omit<
   AssignmentSubmission,
   'status'
@@ -172,4 +173,16 @@ export const assignmentService = {
 
   fileDownloadUrl: (fileId: string) =>
     ASSIGNMENT_API_ROUTES.FILE_DOWNLOAD(fileId),
+
+  rewriteFeedback: (
+    submissionId: string,
+    data: {
+      feedback: string;
+      tone: FeedbackTone;
+    }
+  ) =>
+    apiClient.post<{ suggestion: string }>(
+      ASSIGNMENT_API_ROUTES.REWRITE_FEEDBACK(submissionId),
+      data
+    ),
 };
