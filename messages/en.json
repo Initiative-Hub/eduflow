@@ -953,6 +953,7 @@
       "enhancingFeedback": "Enhancing...",
       "feedback": "Qualitative feedback",
       "feedbackPlaceholder": "Provide constructive feedback for {name}",
+      "feedbackTone": "Feedback tone",
       "finalScore": "Final score",
       "gradedCount": "{count} graded",
       "gradeError": "Unable to save the grade.",
@@ -977,6 +978,9 @@
       "submissionFiles": "Submission files",
       "submittedAt": "Submitted {date}",
       "title": "Student submissions",
+      "toneConcise": "Concise",
+      "toneConstructive": "Constructive",
+      "toneEncouraging": "Encouraging",
       "totalCount": "{count} total",
       "undoAiFeedback": "Undo AI change"
     },

@@ -953,6 +953,7 @@
       "enhancingFeedback": "Đang cải thiện...",
       "feedback": "Nhận xét định tính",
       "feedbackPlaceholder": "Viết nhận xét hữu ích cho {name}",
+      "feedbackTone": "Giọng điệu nhận xét",
       "finalScore": "Điểm cuối cùng",
       "gradedCount": "{count} đã chấm",
       "gradeError": "Không thể lưu điểm.",
@@ -977,6 +978,9 @@
       "submissionFiles": "Tệp bài nộp",
       "submittedAt": "Đã nộp {date}",
       "title": "Bài nộp của sinh viên",
+      "toneConcise": "Ngắn gọn",
+      "toneConstructive": "Mang tính xây dựng",
+      "toneEncouraging": "Khích lệ",
       "totalCount": "Tổng {count}",
       "undoAiFeedback": "Hoàn tác thay đổi của AI"
     },

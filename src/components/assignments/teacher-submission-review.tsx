@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
 import type {
   Assignment,
+  FeedbackTone,
   FinalizedAssignmentSubmission,
   TeacherAssignmentStudent,
 } from '@/app/[locale]/(dashboard)/courses/[courseId]/assignments/assignment.service';
@@ -14,7 +15,14 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '../ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 
 type TeacherSubmissionReviewProps = {
   assignment: Assignment;
@@ -45,6 +53,9 @@ export function TeacherSubmissionReview({
   const rewriteFeedback = useRewriteAssignmentFeedback();
   const [feedbackBeforeAi, setFeedbackBeforeAi] = useState<string | null>(null);
 
+  const [feedbackTone, setFeedbackTone] =
+    useState<FeedbackTone>('constructive');
+
   const handleEnhanceFeedback = () => {
     const draft = feedback.trim();
 
@@ -54,7 +65,7 @@ export function TeacherSubmissionReview({
       {
         submissionId: submission.id,
         feedback: draft,
-        tone: 'constructive',
+        tone: feedbackTone,
       },
       {
         onSuccess: ({ suggestion }) => {
@@ -167,50 +178,84 @@ export function TeacherSubmissionReview({
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor={`feedback-${submission.id}`}>
-                {t('feedback')}
-              </Label>
+            <div className="min-w-0 space-y-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <Label htmlFor={`feedback-${submission.id}`}>
+                  {t('feedback')}
+                </Label>
 
-              <div className="flex items-center gap-1">
-                {feedbackBeforeAi !== null && (
+                <div className="ml-auto flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto">
+                  {feedbackBeforeAi !== null && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setFeedback(feedbackBeforeAi);
+                        setFeedbackBeforeAi(null);
+                      }}
+                    >
+                      <Undo2 data-icon="inline-start" />
+                      {t('undoAiFeedback')}
+                    </Button>
+                  )}
+
+                  <Select
+                    value={feedbackTone}
+                    onValueChange={(value) =>
+                      setFeedbackTone(value as FeedbackTone)
+                    }
+                    disabled={rewriteFeedback.isPending || isSaving}
+                  >
+                    <SelectTrigger
+                      size="sm"
+                      aria-label={t('feedbackTone')}
+                      className="w-full min-w-0 sm:w-52"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      <SelectItem value="constructive">
+                        {t('toneConstructive')}
+                      </SelectItem>
+                      <SelectItem value="concise">
+                        {t('toneConcise')}
+                      </SelectItem>
+                      <SelectItem value="encouraging">
+                        {t('toneEncouraging')}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+
                   <Button
                     type="button"
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
-                    onClick={() => {
-                      setFeedback(feedbackBeforeAi);
-                      setFeedbackBeforeAi(null);
-                    }}
+                    onClick={handleEnhanceFeedback}
+                    disabled={
+                      !feedback.trim() || rewriteFeedback.isPending || isSaving
+                    }
                   >
-                    <Undo2 data-icon="inline-start" />
-                    {t('undoAiFeedback')}
+                    <Sparkles data-icon="inline-start" />
+                    {rewriteFeedback.isPending
+                      ? t('enhancingFeedback')
+                      : t('enhanceFeedback')}
                   </Button>
-                )}
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleEnhanceFeedback}
-                  disabled={
-                    !feedback.trim() || rewriteFeedback.isPending || isSaving
-                  }
-                >
-                  <Sparkles data-icon="inline-start" />
-                  {rewriteFeedback.isPending
-                    ? t('enhancingFeedback')
-                    : t('enhanceFeedback')}
-                </Button>
+                </div>
               </div>
+
+              <Textarea
+                id={`feedback-${submission.id}`}
+                value={feedback}
+                onChange={(event) => setFeedback(event.target.value)}
+                placeholder={t('feedbackPlaceholder', { name: student.name })}
+                rows={6}
+                readOnly={rewriteFeedback.isPending || isSaving}
+                aria-busy={rewriteFeedback.isPending}
+                className="min-h-32 resize-y bg-background leading-relaxed"
+              />
             </div>
-            <Textarea
-              id={`feedback-${submission.id}`}
-              value={feedback}
-              onChange={(event) => setFeedback(event.target.value)}
-              placeholder={t('feedbackPlaceholder', { name: student.name })}
-              rows={4}
-            />
           </div>
 
           <div className="mt-5 flex justify-end">
@@ -221,7 +266,7 @@ export function TeacherSubmissionReview({
                   feedback: feedback.trim() || undefined,
                 })
               }
-              disabled={isSaving || !scoreIsValid}
+              disabled={isSaving || rewriteFeedback.isPending || !scoreIsValid}
             >
               <Save data-icon="inline-start" />
               {isSaving ? t('savingGrade') : t('saveGrade')}
