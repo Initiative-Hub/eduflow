@@ -99,6 +99,55 @@ const formatLayoutName = (layout: string, t: any) => {
 const selectItemHighlightClassName =
   'focus:bg-primary/20 focus:text-foreground focus:**:!text-foreground data-highlighted:bg-primary/10 data-highlighted:text-foreground data-highlighted:**:!text-foreground';
 
+function RawBindingsEditor({
+  bindings,
+  onChangeBindings,
+}: {
+  bindings: any;
+  onChangeBindings: (newBindings: any) => void;
+}) {
+  const [jsonText, setJsonText] = useState(() =>
+    JSON.stringify(bindings || {}, null, 2)
+  );
+
+  const prevBindingsRef = useRef(bindings);
+  useEffect(() => {
+    if (prevBindingsRef.current !== bindings) {
+      prevBindingsRef.current = bindings;
+      try {
+        if (JSON.stringify(JSON.parse(jsonText)) !== JSON.stringify(bindings)) {
+          setJsonText(JSON.stringify(bindings || {}, null, 2));
+        }
+      } catch (_) {}
+    }
+  }, [bindings, jsonText]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const val = e.target.value;
+    setJsonText(val);
+    try {
+      const parsed = JSON.parse(val);
+      if (typeof parsed === 'object' && parsed !== null) {
+        onChangeBindings(parsed);
+      }
+    } catch (_) {}
+  };
+
+  return (
+    <div className="mt-2 flex flex-col gap-1.5">
+      <span className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider">
+        Raw Bindings Data (JSON)
+      </span>
+      <Textarea
+        value={jsonText}
+        onChange={handleChange}
+        placeholder='{\n  "key": "value"\n}'
+        className="h-36 rounded-xl border-input bg-card px-4 py-2 font-mono text-foreground text-xs"
+      />
+    </div>
+  );
+}
+
 const ALL_LAYOUT_CATEGORIES = [
   'TITLE_SLIDE',
   'AGENDA_OUTLINE',
@@ -1833,20 +1882,21 @@ export function LessonPresentation({
 
       default:
         return (
-          <div className="mt-2 flex flex-col gap-1.5">
-            <span className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider">
-              Raw Bindings Data (JSON)
-            </span>
-            <Textarea
-              value={JSON.stringify(bindings, null, 2)}
-              onChange={(e) => {
-                try {
-                  updateBinding('bindings', JSON.parse(e.target.value));
-                } catch (_) {}
-              }}
-              className="h-28 rounded-xl border-input bg-card px-4 py-2 font-mono text-foreground text-xs"
-            />
-          </div>
+          <RawBindingsEditor
+            bindings={bindings}
+            onChangeBindings={(newBindings) => {
+              setPlannedSlides((prev) =>
+                prev.map((s, i) =>
+                  i === idx
+                    ? {
+                        ...s,
+                        bindings: newBindings,
+                      }
+                    : s
+                )
+              );
+            }}
+          />
         );
     }
   };
