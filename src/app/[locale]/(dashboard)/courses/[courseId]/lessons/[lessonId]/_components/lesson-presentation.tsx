@@ -109,6 +109,7 @@ function RawBindingsEditor({
   const [jsonText, setJsonText] = useState(() =>
     JSON.stringify(bindings || {}, null, 2)
   );
+  const [isValidJson, setIsValidJson] = useState(true);
 
   const prevBindingsRef = useRef(bindings);
   useEffect(() => {
@@ -117,6 +118,7 @@ function RawBindingsEditor({
       try {
         if (JSON.stringify(JSON.parse(jsonText)) !== JSON.stringify(bindings)) {
           setJsonText(JSON.stringify(bindings || {}, null, 2));
+          setIsValidJson(true);
         }
       } catch (_) {}
     }
@@ -128,21 +130,41 @@ function RawBindingsEditor({
     try {
       const parsed = JSON.parse(val);
       if (typeof parsed === 'object' && parsed !== null) {
+        setIsValidJson(true);
         onChangeBindings(parsed);
+      } else {
+        setIsValidJson(false);
       }
-    } catch (_) {}
+    } catch (_) {
+      setIsValidJson(false);
+    }
   };
 
   return (
     <div className="mt-2 flex flex-col gap-1.5">
-      <span className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider">
-        Raw Bindings Data (JSON)
-      </span>
+      <div className="flex items-center justify-between">
+        <span className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider">
+          Raw Bindings Data (JSON)
+        </span>
+        {!isValidJson && (
+          <span className="font-medium text-[11px] text-destructive">
+            ⚠️ Invalid JSON format (e.g.{' '}
+            <code className="font-mono text-[10px]">
+              {'{"footer_note": "Phat Huynh"}'}
+            </code>
+            )
+          </span>
+        )}
+      </div>
       <Textarea
         value={jsonText}
         onChange={handleChange}
-        placeholder='{\n  "key": "value"\n}'
-        className="h-36 rounded-xl border-input bg-card px-4 py-2 font-mono text-foreground text-xs"
+        placeholder='{\n  "footer_note": "Phat Huynh"\n}'
+        className={cn(
+          'h-36 rounded-xl border-input bg-card px-4 py-2 font-mono text-foreground text-xs transition-colors',
+          !isValidJson &&
+            'border-destructive/60 ring-2 ring-destructive/20 focus-visible:ring-destructive/40'
+        )}
       />
     </div>
   );
