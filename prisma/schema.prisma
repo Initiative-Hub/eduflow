@@ -46,8 +46,8 @@ model User {
   wordbankReviewAttempts WordbankReviewAttempt[]
   sharedResources        SharedResource[]
   connectedIntegrations  ConnectedIntegration[]
-  gameQuizzesOwned       GameQuiz[]               @relation("GameQuizOwner")
-  gameSessionsHosted     GameSession[]            @relation("GameSessionHost")
+  gameQuizzesOwned       GameQuiz[]              @relation("GameQuizOwner")
+  gameSessionsHosted     GameSession[]           @relation("GameSessionHost")
   gameParticipants       GameParticipant[]
 
   assignmentsCreated          Assignment[]           @relation("AssignmentCreatedBy")
@@ -625,13 +625,13 @@ enum GameQuizStatus {
 }
 
 enum GameSessionPhase {
-  LOBBY              @map("lobby")
-  QUESTION_OPEN      @map("question_open")
-  ANSWER_LOCKED      @map("answer_locked")
-  REVEAL             @map("reveal")
-  PROGRESS           @map("progress")
-  FINAL_CELEBRATION  @map("final_celebration")
-  REPORT             @map("report")
+  LOBBY             @map("lobby")
+  QUESTION_OPEN     @map("question_open")
+  ANSWER_LOCKED     @map("answer_locked")
+  REVEAL            @map("reveal")
+  PROGRESS          @map("progress")
+  FINAL_CELEBRATION @map("final_celebration")
+  REPORT            @map("report")
 
   @@map("game_session_phase")
 }
@@ -652,8 +652,8 @@ model GameQuiz {
   randomizeAnswerOrder   Boolean @default(false) @map("randomize_answer_order")
   showLeaderboard        Boolean @default(false) @map("show_leaderboard")
 
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
   archivedAt DateTime? @map("archived_at")
 
   questions GameQuizQuestion[]
@@ -672,9 +672,9 @@ model GameQuizQuestion {
   prompt       String
   hint         String?
   explanation  String?
-  timerSeconds Int      @map("timer_seconds")
-  maxPoints    Int      @map("max_points")
-  orderIndex   Int      @map("order_index")
+  timerSeconds Int     @map("timer_seconds")
+  maxPoints    Int     @map("max_points")
+  orderIndex   Int     @map("order_index")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -710,24 +710,24 @@ model GameSession {
   hostId     String   @map("host_id")
   host       User     @relation("GameSessionHost", fields: [hostId], references: [id], onDelete: Restrict)
 
-  templateKey              GameQuizTemplateKey @map("template_key")
-  gameQuizRevision         Int                 @map("game_quiz_revision")
-  title                    String
-  topic                    String?
-  difficulty               String?
-  randomizeQuestionOrder   Boolean             @map("randomize_question_order")
-  randomizeAnswerOrder     Boolean             @map("randomize_answer_order")
-  showLeaderboard          Boolean             @map("show_leaderboard")
-  joinCode                 String              @map("join_code")
-  joiningLocked            Boolean             @default(false) @map("joining_locked")
-  phase                    GameSessionPhase    @default(LOBBY)
-  currentRoundIndex        Int?                @map("current_round_index")
-  stateVersion             Int                 @default(1) @map("state_version")
-  startedAt                DateTime?           @map("started_at")
-  endedAt                  DateTime?           @map("ended_at")
-  joinCodeReleasedAt       DateTime?           @map("join_code_released_at")
-  createdAt                DateTime            @default(now()) @map("created_at")
-  updatedAt                DateTime            @updatedAt @map("updated_at")
+  templateKey            GameQuizTemplateKey @map("template_key")
+  gameQuizRevision       Int                 @map("game_quiz_revision")
+  title                  String
+  topic                  String?
+  difficulty             String?
+  randomizeQuestionOrder Boolean             @map("randomize_question_order")
+  randomizeAnswerOrder   Boolean             @map("randomize_answer_order")
+  showLeaderboard        Boolean             @map("show_leaderboard")
+  joinCode               String              @map("join_code")
+  joiningLocked          Boolean             @default(false) @map("joining_locked")
+  phase                  GameSessionPhase    @default(LOBBY)
+  currentRoundIndex      Int?                @map("current_round_index")
+  stateVersion           Int                 @default(1) @map("state_version")
+  startedAt              DateTime?           @map("started_at")
+  endedAt                DateTime?           @map("ended_at")
+  joinCodeReleasedAt     DateTime?           @map("join_code_released_at")
+  createdAt              DateTime            @default(now()) @map("created_at")
+  updatedAt              DateTime            @updatedAt @map("updated_at")
 
   rounds       GameRound[]
   participants GameParticipant[]
@@ -744,21 +744,21 @@ model GameRound {
   sessionId String      @map("session_id")
   session   GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
-  sourceQuestionId String? @map("source_question_id")
+  sourceQuestionId String?   @map("source_question_id")
   prompt           String
   hint             String?
   explanation      String?
-  timerSeconds     Int     @map("timer_seconds")
-  maxPoints        Int     @map("max_points")
-  orderIndex       Int     @map("order_index")
+  timerSeconds     Int       @map("timer_seconds")
+  maxPoints        Int       @map("max_points")
+  orderIndex       Int       @map("order_index")
   openedAt         DateTime? @map("opened_at")
   deadlineAt       DateTime? @map("deadline_at")
   revealedAt       DateTime? @map("revealed_at")
-  createdAt        DateTime @default(now()) @map("created_at")
-  updatedAt        DateTime @updatedAt @map("updated_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
 
   options GameRoundOption[]
-  answers GameAnswer[] @relation("GameRoundAnswers")
+  answers GameAnswer[]      @relation("GameRoundAnswers")
 
   @@unique([sessionId, orderIndex], map: "game_round_session_id_order_index_key")
   @@unique([id, sessionId], map: "game_round_id_session_id_key")
@@ -767,14 +767,14 @@ model GameRound {
 }
 
 model GameRoundOption {
-  id          String    @id @default(uuid())
-  roundId     String    @map("round_id")
-  round       GameRound @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  id      String    @id @default(uuid())
+  roundId String    @map("round_id")
+  round   GameRound @relation(fields: [roundId], references: [id], onDelete: Cascade)
 
-  sourceOptionId String? @map("source_option_id")
+  sourceOptionId String?  @map("source_option_id")
   text           String
-  isCorrect      Boolean @map("is_correct")
-  orderIndex     Int     @map("order_index")
+  isCorrect      Boolean  @map("is_correct")
+  orderIndex     Int      @map("order_index")
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
@@ -793,9 +793,9 @@ model GameParticipant {
   userId    String      @map("user_id")
   user      User        @relation(fields: [userId], references: [id], onDelete: Restrict)
 
-  displayName String
-  score       Int      @default(0)
-  joinedAt    DateTime @default(now()) @map("joined_at")
+  displayName String    @map("display_name")
+  score       Int       @default(0)
+  joinedAt    DateTime  @default(now()) @map("joined_at")
   lastSeenAt  DateTime? @map("last_seen_at")
 
   answers GameAnswer[]
