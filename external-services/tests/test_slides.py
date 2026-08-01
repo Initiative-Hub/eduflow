@@ -1,3 +1,10 @@
+import sys
+from pathlib import Path
+
+EXTERNAL_SERVICES_DIR = Path(__file__).resolve().parents[1]
+if str(EXTERNAL_SERVICES_DIR) not in sys.path:
+    sys.path.insert(0, str(EXTERNAL_SERVICES_DIR))
+
 import unittest
 from unittest.mock import patch
 from fastapi.testclient import TestClient
@@ -117,12 +124,12 @@ class SlideServiceTests(unittest.TestCase):
         mock_download.return_value = True
 
         with patch(
-            "app.controllers.slide_controller.FileResponse"
+            "app.services.slide_job_service.FileResponse"
         ) as mock_file_response:
             from fastapi.responses import Response
 
             mock_file_response.return_value = Response(
-                content="fake_html", media_type="text/html"
+                content=b"fake_html", media_type="text/html"
             )
             response = self.client.get("/slides/decks/testdeck")
             self.assertEqual(response.status_code, 200)

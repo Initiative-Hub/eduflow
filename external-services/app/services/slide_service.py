@@ -1519,13 +1519,17 @@ class SlideService:
 
     async def generate_pptx(self, deck_id: str) -> Path:
         import base64
+        import copy
         import io
         import re
         import traceback
+        import xml.etree.ElementTree as ET
 
         import resvg_py
         from pptx import Presentation
-        from pptx.util import Emu
+        from pptx.dml.color import RGBColor
+        from pptx.enum.text import PP_ALIGN
+        from pptx.util import Emu, Inches, Pt
 
         from app.deps import STORAGE_DIR
         from app.services.s3_service import (
@@ -1594,20 +1598,233 @@ class SlideService:
             prs.slide_height = Emu(int(12192000 * 9 / 16))  # 7.5 in
             blank_layout = prs.slide_layouts[6]  # Blank slide layout
 
+            def parse_svg_style(style_str: str | None) -> dict[str, str]:
+                res = {}
+                if not style_str:
+                    return res
+                for item in style_str.split(";"):
+                    if ":" in item:
+                        k, v = item.split(":", 1)
+                        res[k.strip().lower()] = v.strip()
+                return res
+
+            def parse_svg_color(color_str: str | None) -> RGBColor | None:
+                if not color_str or color_str.lower() in ("none", "transparent", "inherit"):
+                    return None
+                color_str = color_str.strip().lower()
+                if color_str.startswith("#"):
+                    c = color_str[1:]
+                    if len(c) == 3:
+                        c = "".join([x * 2 for x in c])
+                    if len(c) == 6:
+                        try:
+                            return RGBColor(
+                                int(c[0:2], 16), int(c[2:4], 16), int(c[4:6], 16)
+                            )
+                        except ValueError:
+                            pass
+                m = re.match(r"rgba?\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)", color_str)
+                if m:
+                    return RGBColor(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+                color_map = {
+                    "white": RGBColor(255, 255, 255),
+                    "black": RGBColor(0, 0, 0),
+                    "red": RGBColor(255, 0, 0),
+                    "blue": RGBColor(0, 0, 255),
+                    "green": RGBColor(0, 128, 0),
+                }
+                return color_map.get(color_str)
+
+            def parse_transform_translate(trans_str: str | None) -> tuple[float, float]:
+                if not trans_str:
+                    return 0.0, 0.0
+                m = re.search(
+                    r"translate\s*\(\s*([-0-9.]+)[,\s]+([-0-9.]+)\s*\)", trans_str
+                )
+                if m:
+                    return float(m.group(1)), float(m.group(2))
+                m1 = re.search(r"translate\s*\(\s*([-0-9.]+)\s*\)", trans_str)
+                if m1:
+                    return float(m1.group(1)), 0.0
+                return 0.0, 0.0
+
             for idx, svg_markup in enumerate(svgs):
-                # Escape bare ampersands to prevent XML parsing errors in resvg-py
                 clean_svg = re.sub(
                     r"&(?!(?:[a-zA-Z0-9]+|#[0-9]+|#x[0-9a-fA-F]+);)",
                     "&amp;",
                     svg_markup,
                 )
-                png_bytes = bytes(
-                    resvg_py.svg_to_bytes(svg_string=clean_svg, width=1920)
+
+                vb_match = re.search(r'viewBox=[\"\']([0-9.\s]+)[\"\']', clean_svg)
+                if vb_match:
+                    parts = [float(x) for x in vb_match.group(1).split()]
+                    svg_w, svg_h = parts[2], parts[3]
+                else:
+                    svg_w, svg_h = 1440.0, 810.0
+
+                try:
+                    root = ET.fromstring(clean_svg)
+                except ET.ParseError:
+                    # Fallback to rendering whole slide as picture if XML parsing fails
+                    png_bytes = bytes(
+                        resvg_py.svg_to_bytes(svg_string=clean_svg, width=1920)
+                    )
+                    slide = prs.slides.add_slide(blank_layout)
+                    slide.shapes.add_picture(
+                        io.BytesIO(png_bytes), 0, 0, prs.slide_width, prs.slide_height
+                    )
+                    continue
+
+                def remove_text_nodes(element: ET.Element) -> None:
+                    to_remove = []
+                    for child in list(element):
+                        if child.tag.endswith("text"):
+                            to_remove.append(child)
+                        else:
+                            remove_text_nodes(child)
+                    for child in to_remove:
+                        element.remove(child)
+
+                bg_root = copy.deepcopy(root)
+                remove_text_nodes(bg_root)
+                bg_svg = ET.tostring(bg_root, encoding="utf-8").decode("utf-8")
+                bg_png = bytes(
+                    resvg_py.svg_to_bytes(svg_string=bg_svg, width=1920)
                 )
+
                 slide = prs.slides.add_slide(blank_layout)
                 slide.shapes.add_picture(
-                    io.BytesIO(png_bytes), 0, 0, prs.slide_width, prs.slide_height
+                    io.BytesIO(bg_png), 0, 0, prs.slide_width, prs.slide_height
                 )
+
+                scale_x = prs.slide_width / svg_w
+                scale_y = prs.slide_height / svg_h
+                scale_pt = 540.0 / svg_h
+
+                def process_node(
+                    node: ET.Element, parent_tx: float = 0.0, parent_ty: float = 0.0
+                ) -> None:
+                    tx, ty = parse_transform_translate(node.attrib.get("transform"))
+                    curr_tx = parent_tx + tx
+                    curr_ty = parent_ty + ty
+
+                    if node.tag.endswith("text"):
+                        style_dict = parse_svg_style(node.attrib.get("style"))
+
+                        tspans = node.findall(".//{*}tspan")
+                        lines = []
+                        if tspans:
+                            for ts in tspans:
+                                t_text = (ts.text or "").strip()
+                                if t_text:
+                                    lines.append((t_text, ts))
+                        else:
+                            t_text = "".join(node.itertext()).strip()
+                            if t_text:
+                                lines.append((t_text, node))
+
+                        if lines:
+                            full_text = " ".join([l[0] for l in lines])
+                            x = (
+                                float(
+                                    node.attrib.get("x", style_dict.get("x", 0))
+                                )
+                                + curr_tx
+                            )
+                            y = (
+                                float(
+                                    node.attrib.get("y", style_dict.get("y", 0))
+                                )
+                                + curr_ty
+                            )
+
+                            fs_str = (
+                                node.attrib.get(
+                                    "font-size", style_dict.get("font-size", "18")
+                                )
+                                .replace("px", "")
+                                .replace("pt", "")
+                            )
+                            try:
+                                font_size = float(fs_str)
+                            except ValueError:
+                                font_size = 18.0
+
+                            font_weight = node.attrib.get(
+                                "font-weight", style_dict.get("font-weight", "normal")
+                            )
+                            font_family = node.attrib.get(
+                                "font-family", style_dict.get("font-family", "Arial")
+                            )
+                            fill_str = node.attrib.get(
+                                "fill", style_dict.get("fill", "#000000")
+                            )
+                            text_anchor = node.attrib.get(
+                                "text-anchor", style_dict.get("text-anchor", "start")
+                            )
+                            data_w_str = node.attrib.get(
+                                "data-w", style_dict.get("data-w", "0")
+                            )
+                            data_w = float(data_w_str) if data_w_str else 0.0
+
+                            box_w = (
+                                data_w
+                                if data_w > 0
+                                else max(font_size * len(full_text) * 0.6, 200.0)
+                            )
+                            box_h = font_size * 1.3 * max(len(lines), 1)
+                            top_svg = y - font_size * 0.85
+
+                            if text_anchor == "middle":
+                                left_svg = x - (box_w / 2.0)
+                                align = PP_ALIGN.CENTER
+                            elif text_anchor == "end":
+                                left_svg = x - box_w
+                                align = PP_ALIGN.RIGHT
+                            else:
+                                left_svg = x
+                                align = PP_ALIGN.LEFT
+
+                            left = Emu(int(left_svg * scale_x))
+                            top = Emu(int(top_svg * scale_y))
+                            width = Emu(int(box_w * scale_x))
+                            height = Emu(int(box_h * scale_y))
+
+                            txBox = slide.shapes.add_textbox(left, top, width, height)
+                            tf = txBox.text_frame
+                            tf.word_wrap = True
+                            tf.margin_left = Inches(0.02)
+                            tf.margin_right = Inches(0.02)
+                            tf.margin_top = Inches(0.02)
+                            tf.margin_bottom = Inches(0.02)
+
+                            for line_idx, (line_text, line_elem) in enumerate(lines):
+                                p = (
+                                    tf.paragraphs[0]
+                                    if line_idx == 0
+                                    else tf.add_paragraph()
+                                )
+                                p.text = line_text
+                                p.alignment = align
+                                p.font.name = font_family.split(",")[0].strip(
+                                    " \"'"
+                                )
+                                p.font.size = Pt(font_size * scale_pt)
+                                p.font.bold = font_weight in (
+                                    "bold",
+                                    "700",
+                                    "800",
+                                    "900",
+                                )
+
+                                c = parse_svg_color(fill_str)
+                                if c:
+                                    p.font.color.rgb = c
+                    else:
+                        for child in list(node):
+                            process_node(child, curr_tx, curr_ty)
+
+                process_node(root)
 
             prs.save(str(pptx_path))
         except Exception as e:
