@@ -1,11 +1,13 @@
 'use client';
 
+import slideLayoutGuidance from '@config/slide-layout-guidance.json';
 import {
   ArrowRight,
   ChevronLeft,
   ChevronRight,
   Eye,
   EyeOff,
+  LayoutTemplate,
   ListPlus,
   Maximize2,
   Minimize2,
@@ -17,7 +19,7 @@ import {
 } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -40,6 +42,7 @@ import {
 import {
   useDownloadPptx,
   useSlideTemplateCategories,
+  useSlideTemplatePreviews,
   useSlideTemplates,
   useUpdateSlideHtml,
 } from '../use-lesson';
@@ -95,6 +98,132 @@ const formatLayoutName = (layout: string, t: any) => {
 
 const selectItemHighlightClassName =
   'focus:bg-primary/20 focus:text-foreground focus:**:!text-foreground data-highlighted:bg-primary/10 data-highlighted:text-foreground data-highlighted:**:!text-foreground';
+
+const ALL_LAYOUT_CATEGORIES = [
+  'TITLE_SLIDE',
+  'AGENDA_OUTLINE',
+  'SECTION_HEADER',
+  'TITLE_BULLETS',
+  'TWO_COLUMN_SPLIT',
+  'BIG_QUOTE_TAKEAWAY',
+  'KPI_BIG_NUMBER',
+  'CHART_INSIGHT',
+  'DATA_TABLE',
+  'MEDIA_TEXT',
+  'TIMELINE_MILESTONES',
+  'STEP_BY_STEP',
+  'CONCLUSION_SUMMARY',
+  'CALL_TO_ACTION',
+  'QA_CONTACT',
+  'REFERENCES_LIST',
+  'STATEMENT_IMAGE',
+  'PYRAMID_LEVELS',
+  'FUNNEL_STAGES',
+  'PROCESS_ARROWS',
+  'CIRCLE_CYCLE',
+];
+
+interface LayoutCategorySelectProps {
+  value: string;
+  onValueChange: (val: string) => void;
+  categories: string[];
+  previewMap: Map<string, string>;
+  t: any;
+}
+
+function LayoutCategorySelect({
+  value,
+  onValueChange,
+  categories,
+  previewMap,
+  t,
+}: LayoutCategorySelectProps) {
+  const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
+
+  const activeCategory = hoveredCategory || value;
+  const activePreviewUrl = previewMap.get(activeCategory);
+  const activeGuidance = (slideLayoutGuidance as Record<string, any>)[
+    activeCategory
+  ];
+
+  return (
+    <Select value={value} onValueChange={onValueChange}>
+      <SelectTrigger className="flex h-10 w-full justify-between rounded-xl border-input bg-muted/30 px-4 font-semibold text-foreground text-sm">
+        <SelectValue placeholder="Select Layout">
+          {formatLayoutName(value, t)}
+        </SelectValue>
+      </SelectTrigger>
+
+      <SelectContent
+        position="popper"
+        align="start"
+        sideOffset={4}
+        className="!w-[540px] z-50 max-h-80 max-w-[92vw] overflow-hidden rounded-2xl border-border bg-popover/95 p-2 text-popover-foreground shadow-2xl backdrop-blur-xl"
+        onMouseLeave={() => setHoveredCategory(null)}
+      >
+        <div className="flex h-full w-full gap-2.5 p-1">
+          {/* Left Column: Category Options List */}
+          <div className="max-h-72 w-56 shrink-0 space-y-0.5 overflow-y-auto pr-1">
+            {categories.map((layout) => (
+              <SelectItem
+                key={layout}
+                value={layout}
+                onPointerEnter={() => setHoveredCategory(layout)}
+                onFocus={() => setHoveredCategory(layout)}
+                className={cn(
+                  'cursor-pointer rounded-xl px-3 py-2 font-medium text-foreground text-xs transition-colors hover:bg-accent focus:bg-accent',
+                  selectItemHighlightClassName
+                )}
+              >
+                {formatLayoutName(layout, t)}
+              </SelectItem>
+            ))}
+          </div>
+
+          {/* Right Column: Attached Live Preview Panel */}
+          <div className="flex w-64 shrink-0 flex-col gap-2.5 rounded-xl border border-border/60 bg-muted/40 p-3">
+            {activePreviewUrl ? (
+              <>
+                <div className="relative aspect-[16/9] w-full overflow-hidden rounded-lg border border-border/60 bg-background shadow-xs">
+                  <img
+                    src={activePreviewUrl}
+                    alt={activeCategory}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+                <div className="flex flex-col gap-1 px-0.5">
+                  <div className="flex items-center justify-between gap-1.5">
+                    <span className="truncate font-bold text-foreground text-xs">
+                      {formatLayoutName(activeCategory, t)}
+                    </span>
+                    <span className="shrink-0 rounded-md bg-primary/10 px-1.5 py-0.5 font-mono font-semibold text-[9px] text-primary">
+                      {activeCategory}
+                    </span>
+                  </div>
+                  {activeGuidance?.description && (
+                    <p className="line-clamp-3 text-[11px] text-muted-foreground leading-snug">
+                      {activeGuidance.description}
+                    </p>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-1 flex-col items-center justify-center p-4 text-center">
+                <LayoutTemplate className="mb-2 h-8 w-8 text-muted-foreground/40" />
+                <p className="font-semibold text-muted-foreground text-xs">
+                  Hover over a layout
+                </p>
+                <p className="mt-0.5 text-[10px] text-muted-foreground/70">
+                  Preview will appear here
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </SelectContent>
+    </Select>
+  );
+}
 
 const QUALITATIVE_CHART_SCORES: Record<string, number> = {
   'very low': 1,
@@ -197,6 +326,28 @@ export function LessonPresentation({
     exportUrl,
     handleGenerateGamma,
   } = usePresentation({ title, content, isOpen, onClose });
+
+  const activeCollectionName =
+    selectedCollection && selectedCollection !== 'auto'
+      ? selectedCollection
+      : recommendedCollection || 'starter';
+
+  const { data: previewsData } = useSlideTemplatePreviews(
+    activeCollectionName,
+    step === 'planned'
+  );
+
+  const previewMap = useMemo(() => {
+    const map = new Map<string, string>();
+    if (previewsData && Array.isArray(previewsData)) {
+      for (const preview of previewsData) {
+        if (preview.category && preview.url) {
+          map.set(preview.category, preview.url);
+        }
+      }
+    }
+    return map;
+  }, [previewsData]);
 
   const [isDownloadingPptx, setIsDownloadingPptx] = useState(false);
   const [iframeVersion, setIframeVersion] = useState(0);
@@ -2230,7 +2381,7 @@ export function LessonPresentation({
                       <span className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider">
                         Layout Type
                       </span>
-                      <Select
+                      <LayoutCategorySelect
                         value={slide.layoutType}
                         onValueChange={(val) =>
                           changeSlideLayout(
@@ -2238,43 +2389,14 @@ export function LessonPresentation({
                             val as PlannedSlide['layoutType']
                           )
                         }
-                      >
-                        <SelectTrigger className="flex h-10 w-full justify-between rounded-xl border-input bg-muted/30 px-4 text-foreground text-sm">
-                          <SelectValue placeholder="Select Layout" />
-                        </SelectTrigger>
-                        <SelectContent className="max-h-60 border-border bg-popover text-popover-foreground">
-                          {(activeCategories.length > 0
+                        categories={
+                          activeCategories.length > 0
                             ? activeCategories
-                            : [
-                                'TITLE_SLIDE',
-                                'AGENDA_OUTLINE',
-                                'SECTION_HEADER',
-                                'TITLE_BULLETS',
-                                'TWO_COLUMN_SPLIT',
-                                'BIG_QUOTE_TAKEAWAY',
-                                'KPI_BIG_NUMBER',
-                                'CHART_INSIGHT',
-                                'DATA_TABLE',
-                                'MEDIA_TEXT',
-                                'TIMELINE_MILESTONES',
-                                'STEP_BY_STEP',
-                                'CONCLUSION_SUMMARY',
-                                'CALL_TO_ACTION',
-                                'QA_CONTACT',
-                                'REFERENCES_LIST',
-                                'STATEMENT_IMAGE',
-                                'PYRAMID_LEVELS',
-                                'FUNNEL_STAGES',
-                                'PROCESS_ARROWS',
-                                'CIRCLE_CYCLE',
-                              ]
-                          ).map((layout) => (
-                            <SelectItem key={layout} value={layout}>
-                              {formatLayoutName(layout, t)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                            : ALL_LAYOUT_CATEGORIES
+                        }
+                        previewMap={previewMap}
+                        t={t}
+                      />
                     </div>
 
                     {/* Slide Title Input */}
