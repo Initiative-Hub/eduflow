@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '../ui/textarea';
 
 type TeacherSubmissionReviewProps = {
   assignment: Assignment;
@@ -203,6 +204,13 @@ export function TeacherSubmissionReview({
                 </Button>
               </div>
             </div>
+            <Textarea
+              id={`feedback-${submission.id}`}
+              value={feedback}
+              onChange={(event) => setFeedback(event.target.value)}
+              placeholder={t('feedbackPlaceholder', { name: student.name })}
+              rows={4}
+            />
           </div>
 
           <div className="mt-5 flex justify-end">

@@ -24,6 +24,76 @@ const bodySchema = z
   })
   .strict();
 
+/**
+ * @swagger
+ * /api/v1/ai/assignment-submissions/{submissionId}/feedback/rewrite:
+ *   post:
+ *     tags:
+ *       - Assignment submissions
+ *     summary: Rewrite assignment feedback with AI
+ *     description: >
+ *       Improves a teacher's draft feedback without saving it.
+ *       The caller must have both assignment grading permission for the course
+ *       and platform AI writing permission. Only submitted or graded
+ *       submissions can use this endpoint.
+ *     security:
+ *       - SessionCookie: []
+ *     parameters:
+ *       - in: path
+ *         name: submissionId
+ *         required: true
+ *         description: Assignment submission identifier.
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - feedback
+ *             properties:
+ *               feedback:
+ *                 type: string
+ *                 minLength: 1
+ *                 maxLength: 10000
+ *                 description: The teacher's draft feedback to improve.
+ *               tone:
+ *                 type: string
+ *                 enum:
+ *                   - constructive
+ *                   - concise
+ *                   - encouraging
+ *                 default: constructive
+ *                 description: The tone to use for the rewritten feedback.
+ *     responses:
+ *       200:
+ *         description: Feedback rewritten successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               required:
+ *                 - suggestion
+ *               properties:
+ *                 suggestion:
+ *                   type: string
+ *                   description: The AI-generated feedback suggestion.
+ *       400:
+ *         description: The submission ID or request body is invalid.
+ *       401:
+ *         description: Authentication is required.
+ *       403:
+ *         description: The user lacks grading or AI writing permission.
+ *       404:
+ *         description: A submitted or graded submission could not be found.
+ *       502:
+ *         description: The AI provider failed to generate feedback.
+ *       503:
+ *         description: AI feedback enhancement is not configured.
+ */
 export const POST = withAuth(async (request, session, { params }) => {
   const parsedParams = paramsSchema.safeParse(await params);
   const body = await request.json().catch(() => null);
@@ -103,7 +173,9 @@ export const POST = withAuth(async (request, session, { params }) => {
 
     return NextResponse.json({ suggestion });
   } catch (error) {
-    console.error('Feedback rewrite failed:', error);
+    console.error('Feedback rewrite failed', {
+      name: error instanceof Error ? error.name : 'UnknownError',
+    });
 
     return NextResponse.json(
       { message: 'Unable to enhance feedback.' },
