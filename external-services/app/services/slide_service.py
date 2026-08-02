@@ -101,6 +101,15 @@ STANDARD_LAYOUT_TYPES = [
     "CIRCLE_CYCLE",
 ]
 
+CATEGORY_ALIASES = {
+    "CHART_SLIDE": "CHART_INSIGHT",
+    "TABLE_SLIDE": "DATA_TABLE",
+    "KPI_BIG_NUMBERS": "KPI_BIG_NUMBER",
+    "IMAGE_TEXT": "MEDIA_TEXT",
+    "AGENDA_AND_OUTLINE": "AGENDA_OUTLINE",
+    "TITLE_AND_BULLETS": "TITLE_BULLETS",
+}
+
 CATEGORY_METADATA_FIELDS = (
     "description",
     "when_to_use",
@@ -856,6 +865,51 @@ class SlideService:
             base_dir=SLIDE_TEMPLATES_DIR,
         )
 
+    async def _ensure_categories_exist(
+        self, library_dir: Path, requested_categories: set[str]
+    ) -> None:
+        """Ensure all requested slide categories exist in library_dir.
+        If a custom collection is missing a category (e.g. CHART_SLIDE or CHART_INSIGHT),
+        backfill it from the base system 'templates' library so generation never fails
+        with [Errno 2] No such file or directory."""
+        if not library_dir.exists() or not library_dir.is_dir():
+            return
+
+        base_dir = await self._ensure_collection_downloaded(BASE_TEMPLATE_COLLECTION)
+
+        for cat in requested_categories:
+            if not cat:
+                continue
+            cat_dir = library_dir / cat
+            has_svgs = cat_dir.exists() and any(cat_dir.glob("*.svg"))
+            if not has_svgs:
+                cat_dir.mkdir(parents=True, exist_ok=True)
+                target_source = CATEGORY_ALIASES.get(cat, cat)
+                src_dir = base_dir / target_source
+                if not (src_dir.exists() and any(src_dir.glob("*.svg"))):
+                    src_dir = base_dir / cat
+
+                if src_dir.exists() and any(src_dir.glob("*.svg")):
+                    for item in src_dir.iterdir():
+                        if item.is_file():
+                            shutil.copy2(item, cat_dir / item.name)
+                    logger.info(
+                        f"Backfilled missing category '{cat}' in '{library_dir.name}' from base template '{src_dir.name}'"
+                    )
+                else:
+                    fallback_dirs = [
+                        d for d in base_dir.iterdir() if d.is_dir() and any(d.glob("*.svg"))
+                    ] or [
+                        d for d in library_dir.iterdir() if d.is_dir() and any(d.glob("*.svg"))
+                    ]
+                    if fallback_dirs:
+                        for item in fallback_dirs[0].iterdir():
+                            if item.is_file():
+                                shutil.copy2(item, cat_dir / item.name)
+                        logger.warning(
+                            f"Backfilled missing category '{cat}' in '{library_dir.name}' using fallback '{fallback_dirs[0].name}'"
+                        )
+
     async def generate_deck_from_plan(
         self,
         plan: Union[list, dict],
@@ -874,13 +928,17 @@ class SlideService:
         elif isinstance(plan, list):
             slides_list = plan
 
+        requested_categories: set[str] = set()
         for slide in slides_list:
             bindings = slide.get("bindings") or {}
-            category = slide.get("category") or slide.get("layoutType") or ""
+            raw_cat = slide.get("category") or slide.get("layoutType") or ""
+            category = CATEGORY_ALIASES.get(raw_cat, raw_cat)
             slide_title = slide.get("slideTitle") or ""
 
             # Ensure category field is populated for slide_skills resolver
             slide["category"] = category
+            if category:
+                requested_categories.add(category)
 
             # Diagram and list families come in per-count variants. Expose the item
             # count as talking_points so slide_skills' capacity shortlist picks the
@@ -1065,6 +1123,9 @@ class SlideService:
                     )
 
                 library_dir = temp_lib_dir
+
+        if library_dir and requested_categories:
+            await self._ensure_categories_exist(library_dir, requested_categories)
 
         try:
             actual_palette = None if palette == "auto" else palette
@@ -1264,6 +1325,9 @@ class SlideService:
                     )
 
                 library_dir = temp_lib_dir
+
+        if library_dir and category:
+            await self._ensure_categories_exist(library_dir, {category})
 
         try:
             lib = await run_in_threadpool(
