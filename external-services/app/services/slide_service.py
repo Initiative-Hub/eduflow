@@ -1310,6 +1310,7 @@ class SlideService:
                 fit_text_to_boxes,
                 reflow_text_blocks,
             )
+            from slide_skills.svg_charts import fill_data_slots
 
             svg = prune_empty_groups(svg, result["texts"])
 
@@ -1320,6 +1321,8 @@ class SlideService:
                 texts = _backfill_slots(texts, variant, slide)
 
             svg = fill_svg(svg, texts)
+            raw_binds = slide.get("raw_bindings") or slide.get("bindings") or {}
+            svg = fill_data_slots(svg, raw_binds, target)
             svg = fit_text_to_boxes(svg)
             # push later paragraphs down so wrapped lines can't overlap
             svg = reflow_text_blocks(svg)

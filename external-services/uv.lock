@@ -405,7 +405,7 @@ requires-dist = [
     { name = "modal", specifier = "==1.4.3" },
     { name = "pymupdf", specifier = ">=1.24.0" },
     { name = "python-multipart", specifier = "==0.0.30" },
-    { name = "slide-skills", specifier = ">=0.2.41" },
+    { name = "slide-skills", specifier = ">=0.2.43" },
     { name = "tavily-python", specifier = ">=0.7.26" },
 ]
 
@@ -1594,7 +1594,7 @@ wheels = [
 
 [[package]]
 name = "slide-skills"
-version = "0.2.41"
+version = "0.2.43"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "lxml" },
@@ -1604,9 +1604,9 @@ dependencies = [
     { name = "python-pptx" },
     { name = "resvg-py" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/bc/bc/65ab47c91e38303a488497a74953b298e2ef0587e86f40bf95111b2d154b/slide_skills-0.2.41.tar.gz", hash = "sha256:a03a53c74e40f49c2510cb1339a6ceb3b05245a06e9ac646ee80866443b6b841", size = 99149, upload-time = "2026-07-26T10:44:53.504Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/5c/7e/813f5649f3fb8871a302577d5e22ad3682958c715a67b502cdf3fff06301/slide_skills-0.2.43.tar.gz", hash = "sha256:b13d86a6f9c126b8559d45a4470caea0e252064fe7007c5c8809d5066e3b0990", size = 104275, upload-time = "2026-08-02T05:43:32.373Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/70/78/2948f04e717008aa3346de9adc98c27ab371ddd5bcf7b4b679f8ef636a37/slide_skills-0.2.41-py3-none-any.whl", hash = "sha256:e4a4387c9d193f04a27541f1ad7fe301cd741d91a9a883e4fd62d47551218c2f", size = 103923, upload-time = "2026-07-26T10:44:52.016Z" },
+    { url = "https://files.pythonhosted.org/packages/70/21/32d30df2380fb3f8d5bd12c4f3ae8662d7c5a30ea337a8d1b755c4bb3e46/slide_skills-0.2.43-py3-none-any.whl", hash = "sha256:1d29b6b862c74a539f178a2ca2ebcd6ee6c829f90c1c1b87797134adb46ffba1", size = 108352, upload-time = "2026-08-02T05:43:30.818Z" },
 ]
 
 [[package]]
