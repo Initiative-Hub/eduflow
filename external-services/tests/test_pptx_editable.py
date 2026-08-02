@@ -58,6 +58,48 @@ class EditablePptxTests(unittest.IsolatedAsyncioTestCase):
             if pptx_path.exists():
                 pptx_path.unlink()
 
+    async def test_generate_pptx_creates_editable_images(self) -> None:
+        service = SlideService()
+        deck_id = "test_editable_image_deck"
+
+        # Tiny 1x1 red PNG data URL
+        sample_png_data = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+
+        sample_html = f"""
+        <!DOCTYPE html>
+        <html>
+        <body>
+          <section class="slide">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 810">
+              <rect width="1440" height="810" fill="#0A0E1A"/>
+              <image href="{sample_png_data}" x="100" y="150" width="400" height="300"/>
+            </svg>
+          </section>
+        </body>
+        </html>
+        """
+
+        html_file = STORAGE_DIR / f"{deck_id}.html"
+        html_file.write_text(sample_html.strip(), encoding="utf-8")
+
+        pptx_path = Path("/tmp/dummy.pptx")
+        try:
+            pptx_path = await service.generate_pptx(deck_id)
+            self.assertTrue(pptx_path.exists())
+
+            prs = Presentation(str(pptx_path))
+            self.assertEqual(len(prs.slides), 1)
+            slide = prs.slides[0]
+
+            # Background picture + standalone picture shape
+            pictures = [shape for shape in slide.shapes if shape.shape_type == 13]  # MSO_SHAPE_TYPE.PICTURE
+            self.assertEqual(len(pictures), 2)
+        finally:
+            if html_file.exists():
+                html_file.unlink()
+            if pptx_path.exists():
+                pptx_path.unlink()
+
 
 if __name__ == "__main__":
     unittest.main()
