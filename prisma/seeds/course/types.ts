@@ -1,6 +1,6 @@
 import type { PrismaClient } from '../../../src/generated/prisma';
-import type { DemoModule } from '../module/types';
 import type { TiptapDocument } from '../../../src/utils/lesson-content';
+import type { DemoModule } from '../module/types';
 
 export type DemoAssignment = {
   id: string;

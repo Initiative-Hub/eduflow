@@ -1,7 +1,7 @@
 import { IntegrationProvider } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
-import { fetchGoogleJson } from './google-drive-http';
 import { GoogleDriveOAuthTokenService } from './GoogleDriveOAuthTokenService';
+import { fetchGoogleJson } from './google-drive-http';
 import {
   type GoogleDriveDestination,
   type GoogleDriveFileMetadata,

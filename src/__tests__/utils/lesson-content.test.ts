@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest';
 import { Editor } from '@tiptap/core';
 import { StarterKit } from '@tiptap/starter-kit';
+import { describe, expect, it } from 'vitest';
 import {
   EMPTY_TIPTAP_DOCUMENT,
   isTiptapDocument,

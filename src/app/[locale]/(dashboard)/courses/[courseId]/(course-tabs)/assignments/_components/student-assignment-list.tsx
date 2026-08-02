@@ -16,9 +16,9 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { AssignmentDueDate } from './assignment-due-date';
+import { EmptyState } from './assignment-list-states';
 import type { AssignmentFilter } from './assignment-list-types';
 import { getStudentStatus } from './assignment-list-types';
-import { EmptyState } from './assignment-list-states';
 
 export function StudentAssignmentList({
   assignments,

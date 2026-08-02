@@ -1,5 +1,12 @@
 'use client';
 
+import { Badge } from '@/components/ui/badge';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import { cn } from '@/lib/utils';
 import {
   CheckCircle2Icon,
   ChevronRightIcon,
@@ -9,13 +16,6 @@ import {
 } from 'lucide-react';
 import type { ComponentProps, HTMLAttributes } from 'react';
 import { createContext, useContext, useMemo } from 'react';
-import { Badge } from '@/components/ui/badge';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
-import { cn } from '@/lib/utils';
 
 type TestStatus = 'passed' | 'failed' | 'skipped' | 'running';
 
