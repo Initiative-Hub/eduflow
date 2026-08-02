@@ -1,24 +1,24 @@
-import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
 import { getCoursePermissions } from '@/lib/permissions/course-permission';
+import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
 import { prisma } from '@/lib/prisma';
 import { STORAGE_MAX_FILE_SIZE_BYTES } from '@/lib/storage/file-storage';
 import type { GoogleDriveExportSource } from '@/lib/validations/google-drive-export.schema';
+import {
+  savedVocabularyListInclude,
+  toSavedVocabularyItem,
+} from '@/services/english/wordbank/mappers';
 import { GammaService } from '@/services/GammaService';
 import { LessonPresentationService } from '@/services/LessonPresentationService';
 import { LessonService } from '@/services/LessonService';
 import { StorageService } from '@/services/StorageService';
 import { StudyShareService } from '@/services/StudyShareService';
 import {
-  savedVocabularyListInclude,
-  toSavedVocabularyItem,
-} from '@/services/english/wordbank/mappers';
-import {
   createInteractiveContentDownloadFilename,
   createSecureInteractiveContentDocument,
 } from '@/utils/study-interactive-content';
 import { createWordbankCsvArtifact } from '@/utils/wordbank-csv';
-import type { GoogleDriveExportArtifact } from './GoogleDriveExportService';
 import { GoogleDriveExportError } from './GoogleDriveExportError';
+import type { GoogleDriveExportArtifact } from './GoogleDriveExportService';
 
 const PPTX_MIME_TYPE =
   'application/vnd.openxmlformats-officedocument.presentationml.presentation';
@@ -139,7 +139,7 @@ async function resolveLessonPresentation(
   source: Extract<GoogleDriveExportSource, { kind: 'lesson_presentation' }>,
   userId: string
 ): Promise<GoogleDriveExportArtifact> {
-  let lesson;
+  let lesson: any;
   try {
     lesson = await LessonService.getLessonById(source.lessonId, userId);
   } catch {

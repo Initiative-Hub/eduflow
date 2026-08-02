@@ -1,4 +1,3 @@
-import type { ComponentProps, ReactNode } from 'react';
 import {
   Command,
   CommandDialog,
@@ -17,6 +16,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import type { ComponentProps, ReactNode } from 'react';
 
 export type ModelSelectorProps = ComponentProps<typeof Dialog>;
 

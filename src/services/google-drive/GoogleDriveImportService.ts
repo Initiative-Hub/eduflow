@@ -1,8 +1,8 @@
 import type { Prisma } from '@/generated/prisma';
 import { STORAGE_MAX_FILE_SIZE_BYTES } from '@/lib/storage/file-storage';
 import { StorageService } from '@/services/StorageService';
-import { fetchGoogleJson } from './google-drive-http';
 import { GoogleDriveOAuthTokenService } from './GoogleDriveOAuthTokenService';
+import { fetchGoogleJson } from './google-drive-http';
 import type { GoogleDriveFileMetadata } from './google-drive-types';
 
 const GOOGLE_DRIVE_FILES_URL = 'https://www.googleapis.com/drive/v3/files';

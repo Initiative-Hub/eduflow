@@ -42,8 +42,8 @@ import {
   type PlannedSlide,
   usePresentation,
 } from '../use-presentation';
-import { SlideItemEditor } from './slide-item-editor';
 import { PresentationExportActions } from './presentation-export-actions';
+import { SlideItemEditor } from './slide-item-editor';
 import { TemplateManagerDialog } from './template-manager-dialog';
 
 const formatLayoutName = (layout: string, t: any) => {
