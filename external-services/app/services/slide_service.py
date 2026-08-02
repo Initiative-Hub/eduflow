@@ -1384,6 +1384,17 @@ class SlideService:
                 )
                 if heading_fill:
                     slot_ink = heading_fill.group(1)
+            slot_tag = re.search(
+                r'<rect\b[^>]*\bdata-slot="(?:chart|table)"[^>]*/?>',
+                svg,
+                flags=re.IGNORECASE,
+            )
+            if slot_tag:
+                explicit_ink = re.search(
+                    r'\bdata-ink="(#[0-9A-Fa-f]{6})"', slot_tag.group(0)
+                )
+                if explicit_ink:
+                    slot_ink = explicit_ink.group(1)
 
             from slide_skills.svg_categories import (
                 prune_empty_groups,
