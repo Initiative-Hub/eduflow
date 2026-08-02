@@ -34,7 +34,11 @@ jobs:
             echo "This is the latest commit. Proceeding with build."
             echo "skip_build=false" >> $GITHUB_OUTPUT
           fi
-
+      - name: Setup Node
+        if: steps.check_commits.outputs.skip_build != 'true'
+        uses: actions/setup-node@v6
+        with:
+          node-version: "26"
       - name: Setup bun
         if: steps.check_commits.outputs.skip_build != 'true'
         uses: oven-sh/setup-bun@v2
