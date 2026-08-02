@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 import shutil
 import tempfile
 import textwrap
@@ -1368,6 +1369,22 @@ class SlideService:
             variant = result["variant"]
             svg = Path(variant.path).read_text(encoding="utf-8")
 
+            # Data-slot renderers need a theme-aware ink colour for labels and
+            # axes. Reuse the heading colour so dark collections receive light
+            # chart text while light collections keep their normal dark ink.
+            slot_ink = "#1A1A1A"
+            heading_tag = re.search(
+                r'<text\b[^>]*>\s*\{\{heading(?:\|[^}]*)?\}\}\s*</text>',
+                svg,
+                flags=re.IGNORECASE,
+            )
+            if heading_tag:
+                heading_fill = re.search(
+                    r'\bfill="(#[0-9A-Fa-f]{6})"', heading_tag.group(0)
+                )
+                if heading_fill:
+                    slot_ink = heading_fill.group(1)
+
             from slide_skills.svg_categories import (
                 prune_empty_groups,
                 fill_svg,
@@ -1386,7 +1403,7 @@ class SlideService:
 
             svg = fill_svg(svg, texts)
             raw_binds = slide.get("raw_bindings") or slide.get("bindings") or {}
-            svg = fill_data_slots(svg, raw_binds, target)
+            svg = fill_data_slots(svg, raw_binds, target, ink=slot_ink)
             svg = fit_text_to_boxes(svg)
             # push later paragraphs down so wrapped lines can't overlap
             svg = reflow_text_blocks(svg)
