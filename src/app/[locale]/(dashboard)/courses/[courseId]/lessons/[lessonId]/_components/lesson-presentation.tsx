@@ -391,12 +391,6 @@ export function LessonPresentation({
     selectedCollection,
     setSelectedCollection,
     recommendedCollection,
-    generatorType,
-    setGeneratorType,
-    gammaTheme,
-    setGammaTheme,
-    exportUrl,
-    handleGenerateGamma,
   } = usePresentation({ title, content, isOpen, onClose });
 
   const activeCollectionName =
@@ -506,8 +500,6 @@ export function LessonPresentation({
     },
     [clearAiTextSelection, syncDropState]
   );
-  const isGamma = !!deckUrl?.includes('gamma.app');
-
   const [isUploadOpen, setIsUploadOpen] = useState(false);
 
   // TanStack Query for slide templates
@@ -551,12 +543,7 @@ export function LessonPresentation({
 
   const enableVisualEditing = useCallback(() => {
     console.log('[VisualEditor] enableVisualEditing triggered');
-    if (deckUrl?.includes('gamma.app')) {
-      console.log(
-        '[VisualEditor] Gamma presentation, skipping visual editor injection'
-      );
-      return;
-    }
+    if (!iframeRef.current?.contentWindow) return;
     try {
       const iframe = iframeRef.current;
       if (!iframe) {
@@ -1960,7 +1947,7 @@ export function LessonPresentation({
         <div className="flex flex-wrap items-center justify-end gap-2">
           {step === 'generated' && deckUrl && (
             <>
-              {!isGamma && selectedAiText && (
+              {selectedAiText && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -1972,45 +1959,41 @@ export function LessonPresentation({
                   {t('btnAiEditText')}
                 </Button>
               )}
-              {!isGamma && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-9 gap-1.5 rounded-lg"
-                  onClick={openCurrentSlideEdit}
-                  disabled={isAiEditing}
-                >
-                  <Sparkles className="h-4 w-4" />
-                  {t('btnAiEditSlide')}
-                </Button>
-              )}
-              {!isGamma && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className={cn(
-                    'h-9 gap-1.5 rounded-lg',
-                    isActiveSlideDropped &&
-                      'border-destructive/40 text-destructive'
-                  )}
-                  onClick={toggleActiveSlideDropped}
-                  title={
-                    droppedCount > 0
-                      ? t('droppedSlidesCount', { count: droppedCount })
-                      : undefined
-                  }
-                >
-                  {isActiveSlideDropped ? (
-                    <Eye className="h-4 w-4" />
-                  ) : (
-                    <EyeOff className="h-4 w-4" />
-                  )}
-                  {isActiveSlideDropped
-                    ? t('btnRestoreSlide')
-                    : t('btnDropSlide')}
-                </Button>
-              )}
-              {!isGamma && droppedCount > 0 && !isActiveSlideDropped && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9 gap-1.5 rounded-lg"
+                onClick={openCurrentSlideEdit}
+                disabled={isAiEditing}
+              >
+                <Sparkles className="h-4 w-4" />
+                {t('btnAiEditSlide')}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className={cn(
+                  'h-9 gap-1.5 rounded-lg',
+                  isActiveSlideDropped &&
+                    'border-destructive/40 text-destructive'
+                )}
+                onClick={toggleActiveSlideDropped}
+                title={
+                  droppedCount > 0
+                    ? t('droppedSlidesCount', { count: droppedCount })
+                    : undefined
+                }
+              >
+                {isActiveSlideDropped ? (
+                  <Eye className="h-4 w-4" />
+                ) : (
+                  <EyeOff className="h-4 w-4" />
+                )}
+                {isActiveSlideDropped
+                  ? t('btnRestoreSlide')
+                  : t('btnDropSlide')}
+              </Button>
+              {droppedCount > 0 && !isActiveSlideDropped && (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -2021,35 +2004,29 @@ export function LessonPresentation({
                   {t('btnReviewDroppedSlides', { count: droppedCount })}
                 </Button>
               )}
-              {!isGamma && (
-                <Button
-                  variant={showItemEditor ? 'default' : 'outline'}
-                  size="sm"
-                  className="h-9 gap-1.5 rounded-lg"
-                  onClick={() => setShowItemEditor((v) => !v)}
-                >
-                  <ListPlus className="h-4 w-4" />
-                  {t('btnEditItems')}
-                </Button>
-              )}
-              {!isGamma && (
-                <Button
-                  variant="default"
-                  size="sm"
-                  className="h-9 gap-1.5 rounded-lg bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
-                  onClick={handleSaveVisualEdits}
-                  disabled={updateSlideHtml.isPending || isAiEditing}
-                >
-                  <Save className="h-4 w-4" />
-                  {updateSlideHtml.isPending
-                    ? t('savingHtml')
-                    : t('btnSaveVisual')}
-                </Button>
-              )}
+              <Button
+                variant={showItemEditor ? 'default' : 'outline'}
+                size="sm"
+                className="h-9 gap-1.5 rounded-lg"
+                onClick={() => setShowItemEditor((v) => !v)}
+              >
+                <ListPlus className="h-4 w-4" />
+                {t('btnEditItems')}
+              </Button>
+              <Button
+                variant="default"
+                size="sm"
+                className="h-9 gap-1.5 rounded-lg bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
+                onClick={handleSaveVisualEdits}
+                disabled={updateSlideHtml.isPending || isAiEditing}
+              >
+                <Save className="h-4 w-4" />
+                {updateSlideHtml.isPending
+                  ? t('savingHtml')
+                  : t('btnSaveVisual')}
+              </Button>
               <PresentationExportActions
-                exportUrl={exportUrl}
                 isDownloading={isDownloadingPptx}
-                isGamma={isGamma}
                 lessonId={lessonId}
                 onDownloadNative={handleDownloadPptx}
                 t={t}
@@ -2102,34 +2079,6 @@ export function LessonPresentation({
             <p className="mb-6 text-muted-foreground text-sm leading-relaxed">
               {t('inputDesc')}
             </p>
-
-            {/* Generator Mode Tabs */}
-            <div className="mb-6 flex rounded-xl bg-muted p-1">
-              <button
-                type="button"
-                onClick={() => setGeneratorType('default')}
-                className={cn(
-                  'flex-1 rounded-lg py-2 text-center font-semibold text-xs transition-all',
-                  generatorType === 'default'
-                    ? 'bg-background text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
-              >
-                {t('tabSystem')}
-              </button>
-              <button
-                type="button"
-                onClick={() => setGeneratorType('gamma')}
-                className={cn(
-                  'flex-1 rounded-lg py-2 text-center font-semibold text-xs transition-all',
-                  generatorType === 'gamma'
-                    ? 'bg-background text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
-              >
-                {t('tabGamma')}
-              </button>
-            </div>
 
             <div className="space-y-4">
               <div className="relative">
@@ -2206,91 +2155,54 @@ export function LessonPresentation({
                 </Select>
               </div>
 
-              {generatorType === 'default' && (
-                <div className="flex flex-col gap-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold text-muted-foreground text-xs uppercase tracking-wider">
-                      Template Style
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setIsUploadOpen(true)}
-                      className="flex items-center gap-1 font-semibold text-primary text-xs hover:underline"
-                    >
-                      <Plus className="h-3 w-3" />
-                      Manage Styles
-                    </button>
-                  </div>
-                  <Select
-                    value={selectedCollection}
-                    onValueChange={setSelectedCollection}
-                  >
-                    <SelectTrigger className="flex h-11 w-full justify-between rounded-xl border-input bg-muted/30 px-4 py-2.5 text-foreground text-sm">
-                      <SelectValue placeholder="System Default (Starter)" />
-                    </SelectTrigger>
-                    <SelectContent className="border-border bg-popover text-popover-foreground">
-                      <SelectItem
-                        className={selectItemHighlightClassName}
-                        value="auto"
-                      >
-                        ✨ Auto — AI picks from content
-                      </SelectItem>
-                      <SelectItem
-                        className={selectItemHighlightClassName}
-                        value="starter"
-                      >
-                        System Default (Starter)
-                      </SelectItem>
-                      {collections
-                        .filter((c) => c.name !== 'starter')
-                        .map((c) => (
-                          <SelectItem
-                            key={c.name}
-                            className={selectItemHighlightClassName}
-                            value={c.name}
-                          >
-                            {c.name === 'neon_dark'
-                              ? 'Neon Dark Theme'
-                              : c.name}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              {generatorType === 'gamma' && (
-                <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center justify-between">
                   <span className="font-semibold text-muted-foreground text-xs uppercase tracking-wider">
-                    {t('gammaThemeLabel')}
+                    Template Style
                   </span>
-                  <Select value={gammaTheme} onValueChange={setGammaTheme}>
-                    <SelectTrigger className="flex h-11 w-full justify-between rounded-xl border-input bg-muted/30 px-4 py-2.5 text-foreground text-sm">
-                      <SelectValue placeholder={t('themeAuto')} />
-                    </SelectTrigger>
-                    <SelectContent className="border-border bg-popover text-popover-foreground">
-                      <SelectItem
-                        className={selectItemHighlightClassName}
-                        value="auto"
-                      >
-                        {t('themeAuto')}
-                      </SelectItem>
-                      <SelectItem
-                        className={selectItemHighlightClassName}
-                        value="light"
-                      >
-                        {t('themeLight')}
-                      </SelectItem>
-                      <SelectItem
-                        className={selectItemHighlightClassName}
-                        value="dark"
-                      >
-                        {t('themeDark')}
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <button
+                    type="button"
+                    onClick={() => setIsUploadOpen(true)}
+                    className="flex items-center gap-1 font-semibold text-primary text-xs hover:underline"
+                  >
+                    <Plus className="h-3 w-3" />
+                    Manage Styles
+                  </button>
                 </div>
-              )}
+                <Select
+                  value={selectedCollection}
+                  onValueChange={setSelectedCollection}
+                >
+                  <SelectTrigger className="flex h-11 w-full justify-between rounded-xl border-input bg-muted/30 px-4 py-2.5 text-foreground text-sm">
+                    <SelectValue placeholder="System Default (Starter)" />
+                  </SelectTrigger>
+                  <SelectContent className="border-border bg-popover text-popover-foreground">
+                    <SelectItem
+                      className={selectItemHighlightClassName}
+                      value="auto"
+                    >
+                      ✨ Auto — AI picks from content
+                    </SelectItem>
+                    <SelectItem
+                      className={selectItemHighlightClassName}
+                      value="starter"
+                    >
+                      System Default (Starter)
+                    </SelectItem>
+                    {collections
+                      .filter((c) => c.name !== 'starter')
+                      .map((c) => (
+                        <SelectItem
+                          key={c.name}
+                          className={selectItemHighlightClassName}
+                          value={c.name}
+                        >
+                          {c.name === 'neon_dark' ? 'Neon Dark Theme' : c.name}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
               <div>
                 <span className="mb-2 block font-semibold text-muted-foreground text-xs uppercase tracking-wider">
@@ -2330,23 +2242,13 @@ export function LessonPresentation({
               >
                 Cancel
               </Button>
-              {generatorType === 'default' ? (
-                <Button
-                  onClick={handleStartPlanning}
-                  className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2 font-semibold text-primary-foreground hover:bg-primary/90"
-                >
-                  {t('btnPlan')}
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              ) : (
-                <Button
-                  onClick={handleGenerateGamma}
-                  className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2 font-semibold text-primary-foreground hover:bg-primary/90"
-                >
-                  {t('btnGenerateGamma')}
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              )}
+              <Button
+                onClick={handleStartPlanning}
+                className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2 font-semibold text-primary-foreground hover:bg-primary/90"
+              >
+                {t('btnPlan')}
+                <ArrowRight className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         </div>
@@ -2523,103 +2425,52 @@ export function LessonPresentation({
             <Spinner className="h-12 w-12 animate-spin text-primary" />
           </div>
           <h3 className="mb-2 font-bold text-foreground text-xl">
-            {generatorType === 'gamma'
-              ? 'Generating Gamma Presentation'
-              : t('generatingText')}
+            {t('generatingText')}
           </h3>
 
           <div className="mt-6 w-full space-y-3 rounded-xl border border-border bg-muted/30 p-4 text-left">
-            {generatorType === 'gamma' ? (
-              <>
-                <div className="flex items-center gap-3 text-sm">
-                  <span
-                    className={cn(
-                      'flex h-5 w-5 items-center justify-center rounded-full font-semibold text-xs',
-                      loaderStep >= 1
-                        ? 'border border-primary/20 bg-primary/10 text-primary'
-                        : 'border border-border bg-muted text-muted-foreground'
-                    )}
-                  >
-                    {loaderStep >= 1 ? '✓' : '1'}
-                  </span>
-                  <span
-                    className={
-                      loaderStep >= 1
-                        ? 'font-medium text-foreground'
-                        : 'text-muted-foreground'
-                    }
-                  >
-                    Connecting to Gamma API...
-                  </span>
-                </div>
-                <div className="flex items-center gap-3 text-sm">
-                  <span
-                    className={cn(
-                      'flex h-5 w-5 items-center justify-center rounded-full font-semibold text-xs',
-                      loaderStep >= 2
-                        ? 'border border-primary/20 bg-primary/10 text-primary'
-                        : 'border border-border bg-muted text-muted-foreground'
-                    )}
-                  >
-                    {loaderStep >= 2 ? '✓' : '2'}
-                  </span>
-                  <span
-                    className={
-                      loaderStep >= 2
-                        ? 'font-medium text-foreground'
-                        : 'text-muted-foreground'
-                    }
-                  >
-                    Designing cards and layouts...
-                  </span>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="flex items-center gap-3 text-sm">
-                  <span
-                    className={cn(
-                      'flex h-5 w-5 items-center justify-center rounded-full font-semibold text-xs',
-                      loaderStep >= 1
-                        ? 'border border-primary/20 bg-primary/10 text-primary'
-                        : 'border border-border bg-muted text-muted-foreground'
-                    )}
-                  >
-                    {loaderStep >= 1 ? '✓' : '1'}
-                  </span>
-                  <span
-                    className={
-                      loaderStep >= 1
-                        ? 'font-medium text-foreground'
-                        : 'text-muted-foreground'
-                    }
-                  >
-                    Designing slide layouts...
-                  </span>
-                </div>
-                <div className="flex items-center gap-3 text-sm">
-                  <span
-                    className={cn(
-                      'flex h-5 w-5 items-center justify-center rounded-full font-semibold text-xs',
-                      loaderStep >= 2
-                        ? 'border border-primary/20 bg-primary/10 text-primary'
-                        : 'border border-border bg-muted text-muted-foreground'
-                    )}
-                  >
-                    {loaderStep >= 2 ? '✓' : '2'}
-                  </span>
-                  <span
-                    className={
-                      loaderStep >= 2
-                        ? 'font-medium text-foreground'
-                        : 'text-muted-foreground'
-                    }
-                  >
-                    Injecting slide contents...
-                  </span>
-                </div>
-              </>
-            )}
+            <div className="flex items-center gap-3 text-sm">
+              <span
+                className={cn(
+                  'flex h-5 w-5 items-center justify-center rounded-full font-semibold text-xs',
+                  loaderStep >= 1
+                    ? 'border border-primary/20 bg-primary/10 text-primary'
+                    : 'border border-border bg-muted text-muted-foreground'
+                )}
+              >
+                {loaderStep >= 1 ? '✓' : '1'}
+              </span>
+              <span
+                className={
+                  loaderStep >= 1
+                    ? 'font-medium text-foreground'
+                    : 'text-muted-foreground'
+                }
+              >
+                Designing slide layouts...
+              </span>
+            </div>
+            <div className="flex items-center gap-3 text-sm">
+              <span
+                className={cn(
+                  'flex h-5 w-5 items-center justify-center rounded-full font-semibold text-xs',
+                  loaderStep >= 2
+                    ? 'border border-primary/20 bg-primary/10 text-primary'
+                    : 'border border-border bg-muted text-muted-foreground'
+                )}
+              >
+                {loaderStep >= 2 ? '✓' : '2'}
+              </span>
+              <span
+                className={
+                  loaderStep >= 2
+                    ? 'font-medium text-foreground'
+                    : 'text-muted-foreground'
+                }
+              >
+                Injecting slide contents...
+              </span>
+            </div>
           </div>
         </div>
       )}
@@ -2641,7 +2492,7 @@ export function LessonPresentation({
                   isFullscreen ? 'h-[82vh]' : 'h-[58vh]'
                 )}
               />
-              {showItemEditor && !isGamma && (
+              {showItemEditor && (
                 <div
                   className={cn(
                     'w-80 shrink-0 overflow-hidden rounded-2xl border border-border bg-card shadow-2xl',

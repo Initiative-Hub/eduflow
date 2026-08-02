@@ -11,32 +11,20 @@ import {
 import { useGoogleDriveExport } from '@/hooks/use-google-drive-export';
 
 type PresentationExportActionsProps = {
-  exportUrl?: string | null;
   isDownloading: boolean;
-  isGamma: boolean;
   lessonId: string;
   onDownloadNative: () => void;
   t: (key: string) => string;
 };
 
 export function PresentationExportActions({
-  exportUrl,
   isDownloading,
-  isGamma,
   lessonId,
   onDownloadNative,
   t,
 }: PresentationExportActionsProps) {
   const googleDriveExport = useGoogleDriveExport();
   const isPending = isDownloading || googleDriveExport.isPending;
-
-  const handleDownload = () => {
-    if (isGamma) {
-      if (exportUrl) window.open(exportUrl, '_blank', 'noopener');
-      return;
-    }
-    onDownloadNative();
-  };
 
   return (
     <DropdownMenu>
@@ -61,11 +49,7 @@ export function PresentationExportActions({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem
-          className="min-h-11"
-          disabled={isGamma && !exportUrl}
-          onSelect={handleDownload}
-        >
+        <DropdownMenuItem className="min-h-11" onSelect={onDownloadNative}>
           <Download aria-hidden="true" />
           {t('btnDownloadPptx')}
         </DropdownMenuItem>
