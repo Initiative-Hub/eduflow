@@ -281,7 +281,7 @@ export function sanitizeLessonAiHtml(html: string) {
   }
 
   return withAttributeSanitizer(
-    (node, data) => {
+    (node: any, data: any) => {
       if (
         node.nodeName.toLowerCase() === 'iframe' &&
         data.attrName === 'src' &&
