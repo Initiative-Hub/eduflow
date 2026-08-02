@@ -1,5 +1,5 @@
-import { readMarkdownLessonDocument } from './lesson-document';
 import { assignmentDocument } from './assignment-document';
+import { readMarkdownLessonDocument } from './lesson-document';
 import type { DemoCourse } from './types';
 
 export const practicalEnglishCommunicationCourse: DemoCourse = {
