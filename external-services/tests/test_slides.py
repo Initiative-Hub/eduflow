@@ -166,23 +166,27 @@ class SlideServiceTests(unittest.TestCase):
         self.assertEqual(response.status_code, 404)
         self.assertIn("Deck file not found", response.json()["detail"])
 
-    async def test_ensure_categories_exist_backfills_missing_category(self) -> None:
+    def test_ensure_categories_exist_backfills_missing_category(self) -> None:
+        import asyncio
         from app.services.slide_service import SlideService
         import tempfile
         from pathlib import Path
 
-        service = SlideService()
-        with tempfile.TemporaryDirectory() as temp_dir:
-            lib_path = Path(temp_dir) / "custom_col"
-            lib_path.mkdir()
-            (lib_path / "TITLE_SLIDE").mkdir()
-            (lib_path / "TITLE_SLIDE" / "standard.svg").write_text("<svg></svg>", encoding="utf-8")
+        async def run_test() -> None:
+            service = SlideService()
+            with tempfile.TemporaryDirectory() as temp_dir:
+                lib_path = Path(temp_dir) / "custom_col"
+                lib_path.mkdir()
+                (lib_path / "TITLE_SLIDE").mkdir()
+                (lib_path / "TITLE_SLIDE" / "standard.svg").write_text("<svg></svg>", encoding="utf-8")
 
-            # CHART_SLIDE does not exist in custom_col initially
-            self.assertFalse((lib_path / "CHART_SLIDE").exists())
+                # CHART_SLIDE does not exist in custom_col initially
+                self.assertFalse((lib_path / "CHART_SLIDE").exists())
 
-            # Call _ensure_categories_exist for CHART_SLIDE
-            await service._ensure_categories_exist(lib_path, {"CHART_SLIDE"})
+                # Call _ensure_categories_exist for CHART_SLIDE
+                await service._ensure_categories_exist(lib_path, {"CHART_SLIDE"})
 
-            # CHART_SLIDE directory should now exist in custom_col
-            self.assertTrue((lib_path / "CHART_SLIDE").exists())
+                # CHART_SLIDE directory should now exist in custom_col
+                self.assertTrue((lib_path / "CHART_SLIDE").exists())
+
+        asyncio.run(run_test())
