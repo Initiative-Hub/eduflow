@@ -39,6 +39,7 @@ export const DEFAULT_TEMPLATE_COLLECTIONS = new Set([
   'green_environment_care',
   'rmit_red_modern',
   'startup_neon_pitch',
+  'professional_focus',
 ]);
 
 export interface SlideTemplate {

@@ -58,6 +58,8 @@ const STYLE_COLLECTIONS: Record<string, string> = {
     'Crisp white academic canvas with bold RMIT-red geometric frames, subtle contour-line texture, black sans-serif typography, and red-washed campus image panels — university lectures, student learning topics, course briefings, research presentations, feedback analysis, and academic project decks.',
   startup_neon_pitch:
     'Black startup pitch deck with oversized white typography, electric blue and violet light trails, glossy gradient pills, and contact-footer details — startup pitches, business proposals, tech products, investor decks, and modern company presentations.',
+  professional_focus:
+    'Calm executive canvas with deep navy structure, precise teal signals, warm brass emphasis, generous whitespace, and varied editorial grids — strategy reviews, management briefings, consulting reports, project updates, financial analysis, and professional training.',
 };
 
 type TemplateCategoryMetadata = {
@@ -238,6 +240,7 @@ const STYLE_COLLECTION_ALIASES: Partial<
   minimalist_gradient: ['minimalist gradient'],
   organic_streets: ['organic streets'],
   pastel_pop: ['pastel pop'],
+  professional_focus: ['professional focus', 'executive focus'],
   rmit_red_modern: ['rmit', 'rmit red modern'],
   startup_neon_pitch: ['startup neon pitch'],
 };

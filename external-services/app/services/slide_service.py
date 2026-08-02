@@ -74,6 +74,7 @@ DEFAULT_COLLECTIONS = {
     "green_environment_care",
     "rmit_red_modern",
     "startup_neon_pitch",
+    "professional_focus",
 }
 
 STANDARD_LAYOUT_TYPES = [
@@ -786,6 +787,7 @@ class SlideService:
                         "green_environment_care": "Modern environmental care style: cream paper, deep forest-green condensed headlines, lush nature photography, sage botanical ornaments, halftone texture, and conservation editorial layouts.",
                         "rmit_red_modern": "RMIT-inspired academic style: crisp white space, bold red geometric frames, subtle contour-line texture, black sans-serif typography, and red-washed campus photo panels.",
                         "startup_neon_pitch": "Black startup pitch style with bold white typography, electric blue and violet light trails, glossy gradient pills, contact-footer details, and high-contrast business layouts.",
+                        "professional_focus": "Calm executive presentation style with deep navy structure, precise teal signals, warm brass emphasis, generous whitespace, and business-ready editorial layouts.",
                     }
                     return well_known.get(name.lower(), default_desc)
 
@@ -1675,18 +1677,18 @@ class SlideService:
                     )
                     continue
 
-                def remove_text_and_image_nodes(element: ET.Element) -> None:
+                def remove_text_nodes(element: ET.Element) -> None:
                     to_remove = []
                     for child in list(element):
-                        if child.tag.endswith("text") or child.tag.endswith("image"):
+                        if child.tag.endswith("text"):
                             to_remove.append(child)
                         else:
-                            remove_text_and_image_nodes(child)
+                            remove_text_nodes(child)
                     for child in to_remove:
                         element.remove(child)
 
                 bg_root = copy.deepcopy(root)
-                remove_text_and_image_nodes(bg_root)
+                remove_text_nodes(bg_root)
                 bg_svg = ET.tostring(bg_root, encoding="utf-8").decode("utf-8")
                 bg_png = bytes(
                     resvg_py.svg_to_bytes(svg_string=bg_svg, width=1920)
@@ -1700,17 +1702,6 @@ class SlideService:
                 scale_x = prs.slide_width / svg_w
                 scale_y = prs.slide_height / svg_h
                 scale_pt = 540.0 / svg_h
-
-                def extract_image_bytes(href: str | None) -> bytes | None:
-                    if not href:
-                        return None
-                    if href.startswith("data:image/"):
-                        try:
-                            _, base64_str = href.split(",", 1)
-                            return base64.b64decode(base64_str)
-                        except Exception:
-                            return None
-                    return None
 
                 def process_node(
                     node: ET.Element, parent_tx: float = 0.0, parent_ty: float = 0.0
@@ -1831,40 +1822,6 @@ class SlideService:
                                 c = parse_svg_color(fill_str)
                                 if c:
                                     p.font.color.rgb = c
-                    elif node.tag.endswith("image"):
-                        href = node.attrib.get("href") or node.attrib.get(
-                            "{http://www.w3.org/1999/xlink}href"
-                        )
-                        if href:
-                            img_bytes = extract_image_bytes(href)
-                            if img_bytes:
-                                try:
-                                    style_dict = parse_svg_style(node.attrib.get("style"))
-                                    x_str = str(node.attrib.get("x", style_dict.get("x", "0")))
-                                    y_str = str(node.attrib.get("y", style_dict.get("y", "0")))
-                                    w_str = str(node.attrib.get("width", style_dict.get("width", "0")))
-                                    h_str = str(node.attrib.get("height", style_dict.get("height", "0")))
-
-                                    x_val = float(x_str.replace("px", "")) + curr_tx
-                                    y_val = float(y_str.replace("px", "")) + curr_ty
-                                    w_val = float(w_str.replace("px", ""))
-                                    h_val = float(h_str.replace("px", ""))
-
-                                    if w_val > 0 and h_val > 0:
-                                        img_left = Emu(int(x_val * scale_x))
-                                        img_top = Emu(int(y_val * scale_y))
-                                        img_width = Emu(int(w_val * scale_x))
-                                        img_height = Emu(int(h_val * scale_y))
-
-                                        slide.shapes.add_picture(
-                                            io.BytesIO(img_bytes),
-                                            img_left,
-                                            img_top,
-                                            img_width,
-                                            img_height,
-                                        )
-                                except Exception as img_err:
-                                    print(f"[PPTX] Warning parsing image shape: {img_err}")
                     else:
                         for child in list(node):
                             process_node(child, curr_tx, curr_ty)

@@ -163,11 +163,12 @@ for any tasks.).
   - **Surface Generation Warnings**: Log every per-slide warning deck generation returns, but only alert the user about ones that mean visible damage (a skipped slide, a failed image). `dropped bindings` warnings are expected noise, because the binding flattener emits many alias spellings of the same value and every unused spelling is reported even when the slide rendered correctly.
   - **Slide Content Depth**: After planning, detect content slides the model left with only a heading and run a focused second pass to fill them from the lesson. Exempt cover and divider layouts (capacity <= 1, or a divider/cover style name) so they legitimately stay title-only, merge enriched bindings over the originals instead of replacing them, and never fail planning when enrichment errors.
   - **Layout Capacity Awareness**: Extracted brand templates are often sparse, so a layout may expose only a `title` slot. Include each category's `text_slots`/`capacity` (from `category_map()`) in the planning prompt and mark title-only layouts as dividers that must receive no bindings; otherwise planned body content is silently dropped and the slide renders as a heading on an empty background. Log `dropped bindings` warnings returned by deck generation instead of discarding them.
-  - **System Template Style Registration**: When adding a new system-wide default style collection (e.g. `illustrative_culture`, `minimalist_gradient`), register it in the following places so that S3 requests are routed to the default templates bucket:
-    1. **`slide_service.py`**: Add it to `default_collections` set (in `_ensure_collection_downloaded`), the fallback descriptions dictionary, and the directory cleanup exemption whitelist.
-    2. **`slide_controller.py`**: Add it to `default_collections` set in the categories lookup controller.
-    3. **`SlideService.ts`**: Add it to `defaultCollections` Set in the template previews resolver.
-    4. **`PresentationService.ts`**: Register it in the `STYLE_COLLECTIONS` record with its prompt-optimized styling description so the AI planner can recommend it.
+  - **System Template Style Registration**: When adding a new system-wide default style collection (e.g. `illustrative_culture`, `minimalist_gradient`), register it in the following places so S3 requests are routed to the default templates bucket and explicit style prompts resolve correctly:
+    1. **`slide_service.py`**: Add it to `DEFAULT_COLLECTIONS` and the fallback descriptions dictionary; the shared set also controls custom/default routing and cleanup exemptions.
+    2. **`SlideService.ts`**: Add it to `DEFAULT_TEMPLATE_COLLECTIONS` in the template previews resolver.
+    3. **`PresentationService.ts`**: Register it in `STYLE_COLLECTIONS` with a prompt-optimized description, and add a readable spelling to `STYLE_COLLECTION_ALIASES`.
+    4. **`upload_templates_to_s3.py`**: Add it to `DEFAULT_COLLECTIONS` when no-argument uploads should include the new built-in style.
+    After publishing, verify both `/slides/templates/collections` and `/slides/templates/<collection>/previews` against the running slide service.
 
 ## 7. Continuous Improvement (Session Retrospective)
 
