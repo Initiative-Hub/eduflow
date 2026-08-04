@@ -7,9 +7,7 @@ import {
   Slice,
 } from '@tiptap/pm/model';
 import { NodeSelection, type Transaction } from '@tiptap/pm/state';
-import DOMPurify from 'dompurify';
-
-const MAX_EDITED_HTML_LENGTH = 40_000;
+import { sanitizeLessonAiHtml } from '@/lib/html-sanitizer';
 
 export type LessonAiProposal = {
   blocks: LessonAiBlockRange[];
@@ -393,94 +391,6 @@ export function prepareAiEdit(
       instruction,
     },
   };
-}
-
-const lessonAiAllowedTags = [
-  'a',
-  'blockquote',
-  'br',
-  'code',
-  'div',
-  'em',
-  'h1',
-  'h2',
-  'h3',
-  'h4',
-  'h5',
-  'h6',
-  'hr',
-  'iframe',
-  'img',
-  'li',
-  'mark',
-  'ol',
-  'p',
-  'pre',
-  's',
-  'span',
-  'strong',
-  'sub',
-  'sup',
-  'u',
-  'ul',
-];
-
-const lessonAiAllowedAttributes = [
-  'alt',
-  'data-checked',
-  'data-color',
-  'data-type',
-  'data-youtube-video',
-  'height',
-  'href',
-  'rel',
-  'src',
-  'start',
-  'style',
-  'target',
-  'title',
-  'type',
-  'width',
-];
-
-function isYouTubeEmbedUrl(value: string) {
-  try {
-    const url = new URL(value, window.location.origin);
-    const hostname = url.hostname.toLowerCase();
-
-    return (
-      url.protocol === 'https:' &&
-      (hostname === 'youtube.com' || hostname.endsWith('.youtube.com'))
-    );
-  } catch {
-    return false;
-  }
-}
-
-export function sanitizeLessonAiHtml(html: string) {
-  if (html.length > MAX_EDITED_HTML_LENGTH) {
-    throw new Error('The AI response is too large to apply safely.');
-  }
-
-  DOMPurify.addHook('uponSanitizeAttribute', (node, data) => {
-    if (
-      node.nodeName.toLowerCase() === 'iframe' &&
-      data.attrName === 'src' &&
-      !isYouTubeEmbedUrl(data.attrValue)
-    ) {
-      data.keepAttr = false;
-    }
-  });
-
-  try {
-    return DOMPurify.sanitize(html, {
-      ALLOWED_ATTR: lessonAiAllowedAttributes,
-      ALLOWED_TAGS: lessonAiAllowedTags,
-      ALLOW_DATA_ATTR: false,
-    });
-  } finally {
-    DOMPurify.removeHook('uponSanitizeAttribute');
-  }
 }
 
 function unwrapSelectionMarkers(html: string) {

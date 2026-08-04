@@ -5,23 +5,23 @@ import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { useAssignments } from '../../assignments/use-assignment';
+import {
+  AssignmentsSkeleton,
+  EmptyState,
+  ErrorState,
+} from './_components/assignment-list-states';
 import type { AssignmentFilter } from './_components/assignment-list-types';
 import {
   getStudentStatus,
   matchesStudentFilter,
 } from './_components/assignment-list-types';
 import {
-  AssignmentsSkeleton,
-  EmptyState,
-  ErrorState,
-} from './_components/assignment-list-states';
-import {
   StudentOverview,
   TeacherOverview,
 } from './_components/assignment-overview';
 import { StudentAssignmentList } from './_components/student-assignment-list';
 import { TeacherAssignmentList } from './_components/teacher-assignment-list';
-import { useAssignments } from '../../assignments/use-assignment';
 
 export function AssignmentsClient({
   courseId,
