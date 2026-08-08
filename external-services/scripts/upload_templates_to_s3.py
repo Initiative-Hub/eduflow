@@ -19,7 +19,12 @@ TEMPLATES = (
     if os.environ.get("TEMPLATES_DIR")
     else ROOT / "templates"
 )
-DEFAULT_COLLECTIONS = ["vintage", "clean_light", "pastel_pop"]
+DEFAULT_COLLECTIONS = [
+    "vintage",
+    "clean_light",
+    "pastel_pop",
+    "professional_focus",
+]
 
 # load env the same way the service resolves it (.env here, then repo root)
 try:

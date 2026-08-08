@@ -1,3 +1,6 @@
+import { getCoursePermissions } from '@/lib/permissions/course-permission';
+import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
+import { prisma } from '@/lib/prisma';
 import { LessonService } from '@/services/LessonService';
 import {
   type DeckUsage,
@@ -23,7 +26,61 @@ type GenerateLessonDeckResult = {
   usage?: DeckUsage;
 };
 
+type SlideDeckAccess = 'view' | 'update';
+
+export class SlideDeckAccessError extends Error {
+  constructor(
+    message: string,
+    readonly code: 'NOT_FOUND' | 'FORBIDDEN'
+  ) {
+    super(message);
+    this.name = 'SlideDeckAccessError';
+  }
+}
+
 export class LessonPresentationService {
+  static async assertDeckAccess(options: {
+    deckId: string;
+    userId: string;
+    access: SlideDeckAccess;
+  }): Promise<void> {
+    const lesson = await prisma.lesson.findFirst({
+      where: {
+        presentationDeckId: options.deckId,
+        deletedAt: null,
+        module: {
+          deletedAt: null,
+          course: { deletedAt: null },
+        },
+      },
+      select: {
+        module: {
+          select: { courseId: true },
+        },
+      },
+    });
+
+    if (!lesson) {
+      throw new SlideDeckAccessError('Slide deck not found', 'NOT_FOUND');
+    }
+
+    const { containPermission } = await getCoursePermissions(
+      options.userId,
+      lesson.module.courseId
+    );
+    const requiredPermission =
+      options.access === 'update'
+        ? COURSE_PERMISSION.COURSE_CONTENT_UPDATE
+        : COURSE_PERMISSION.COURSE_CONTENT_VIEW;
+
+    if (!containPermission(requiredPermission)) {
+      throw new SlideDeckAccessError(
+        'Missing permission for this slide deck',
+        'FORBIDDEN'
+      );
+    }
+  }
+
   static async generateDeckFromPlan(
     input: GenerateLessonDeckInput
   ): Promise<GenerateLessonDeckResult> {

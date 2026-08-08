@@ -1,3 +1,10 @@
+import sys
+from pathlib import Path
+
+EXTERNAL_SERVICES_DIR = Path(__file__).resolve().parents[1]
+if str(EXTERNAL_SERVICES_DIR) not in sys.path:
+    sys.path.insert(0, str(EXTERNAL_SERVICES_DIR))
+
 import unittest
 from unittest.mock import patch
 from fastapi.testclient import TestClient
@@ -117,12 +124,12 @@ class SlideServiceTests(unittest.TestCase):
         mock_download.return_value = True
 
         with patch(
-            "app.controllers.slide_controller.FileResponse"
+            "app.services.slide_job_service.FileResponse"
         ) as mock_file_response:
             from fastapi.responses import Response
 
             mock_file_response.return_value = Response(
-                content="fake_html", media_type="text/html"
+                content=b"fake_html", media_type="text/html"
             )
             response = self.client.get("/slides/decks/testdeck")
             self.assertEqual(response.status_code, 200)
@@ -158,3 +165,28 @@ class SlideServiceTests(unittest.TestCase):
         response = self.client.get("/slides/decks/testdeck/pptx")
         self.assertEqual(response.status_code, 404)
         self.assertIn("Deck file not found", response.json()["detail"])
+
+    def test_ensure_categories_exist_backfills_missing_category(self) -> None:
+        import asyncio
+        from app.services.slide_service import SlideService
+        import tempfile
+        from pathlib import Path
+
+        async def run_test() -> None:
+            service = SlideService()
+            with tempfile.TemporaryDirectory() as temp_dir:
+                lib_path = Path(temp_dir) / "custom_col"
+                lib_path.mkdir()
+                (lib_path / "TITLE_SLIDE").mkdir()
+                (lib_path / "TITLE_SLIDE" / "standard.svg").write_text("<svg></svg>", encoding="utf-8")
+
+                # CHART_SLIDE does not exist in custom_col initially
+                self.assertFalse((lib_path / "CHART_SLIDE").exists())
+
+                # Call _ensure_categories_exist for CHART_SLIDE
+                await service._ensure_categories_exist(lib_path, {"CHART_SLIDE"})
+
+                # CHART_SLIDE directory should now exist in custom_col
+                self.assertTrue((lib_path / "CHART_SLIDE").exists())
+
+        asyncio.run(run_test())

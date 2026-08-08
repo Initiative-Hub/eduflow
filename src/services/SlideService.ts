@@ -1,13 +1,27 @@
-import fs from 'node:fs';
-import path from 'node:path';
 import {
+  createObjectReadSignedUrl,
   FILE_DEFAULT_TEMPLATES_BUCKET_NAME,
   FILE_TEMPLATES_BUCKET_NAME,
 } from '@/lib/storage/file-storage';
-import { StorageService } from './StorageService';
 
-// In-memory cache for slide template previews
-const previewsCache = new Map<string, Record<string, string>>();
+/**
+ * Cached preview object keys per collection. Signed URLs are generated per
+ * request instead of cached, because they expire.
+ */
+const previewsCache = new Map<string, TemplatePreviewObject[]>();
+
+interface TemplatePreviewObject {
+  category: string;
+  variant: string;
+  key: string;
+  bucket: string;
+}
+
+export interface TemplatePreview {
+  category: string;
+  variant: string;
+  url: string;
+}
 
 export const DEFAULT_TEMPLATE_COLLECTIONS = new Set([
   'templates',
@@ -25,6 +39,7 @@ export const DEFAULT_TEMPLATE_COLLECTIONS = new Set([
   'green_environment_care',
   'rmit_red_modern',
   'startup_neon_pitch',
+  'professional_focus',
 ]);
 
 export interface SlideTemplate {
@@ -112,91 +127,64 @@ export class SlideService {
   }
 
   /**
-   * Retrieves SVG slide previews for a given template collection.
-   * Checks the local filesystem templates first (for development/default templates),
-   * then falls back to S3 templates via the StorageService.
+   * Resolves the rasterized PNG preview for every category in a collection.
+   *
+   * Previews are generated and cached as PNGs by the slide service, then served
+   * as signed URLs. Sending SVG markup instead shipped hundreds of KB per
+   * collection and forced the browser to lay out one live SVG tree per slide.
    */
   static async getTemplatePreviews(
     collectionName: string
-  ): Promise<Record<string, string>> {
-    // 1. Check in-memory cache first
-    const cached = previewsCache.get(collectionName);
-    if (cached) {
-      return cached;
+  ): Promise<TemplatePreview[]> {
+    let objects = previewsCache.get(collectionName);
+
+    if (!objects) {
+      const fallbackBucket = DEFAULT_TEMPLATE_COLLECTIONS.has(
+        collectionName.toLowerCase()
+      )
+        ? FILE_DEFAULT_TEMPLATES_BUCKET_NAME
+        : FILE_TEMPLATES_BUCKET_NAME;
+
+      const response = await fetch(
+        `${SlideService.getExternalServiceUrl()}/slides/templates/${encodeURIComponent(
+          collectionName
+        )}/previews`,
+        { cache: 'no-store' }
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `Failed to load template previews: ${response.statusText}`
+        );
+      }
+
+      const payload = (await response.json()) as {
+        bucket?: string;
+        previews?: { category: string; variant: string; key: string }[];
+      };
+
+      objects = (payload.previews ?? []).map((preview) => ({
+        category: preview.category,
+        variant: preview.variant,
+        key: preview.key,
+        bucket: payload.bucket || fallbackBucket,
+      }));
+
+      if (objects.length > 0) {
+        previewsCache.set(collectionName, objects);
+      }
     }
 
-    const svgs: Record<string, string> = {};
-
-    // 2. Try local filesystem fallback first (helpful in local dev)
-    const localDir = path.join(
-      process.cwd(),
-      'external-services',
-      'app',
-      'services',
-      'templates',
-      collectionName
+    return Promise.all(
+      objects.map(async (object) => ({
+        category: object.category,
+        variant: object.variant,
+        url: await createObjectReadSignedUrl({
+          objectKey: object.key,
+          bucketName: object.bucket,
+        }),
+      }))
     );
-
-    if (fs.existsSync(localDir)) {
-      try {
-        const files = fs.readdirSync(localDir);
-        for (const file of files) {
-          if (file.endsWith('.svg')) {
-            const filePath = path.join(localDir, file);
-            const name = path.parse(file).name;
-            svgs[name] = fs.readFileSync(filePath, 'utf-8');
-          }
-        }
-      } catch (err) {
-        console.error(
-          `[SlideService] Failed to read local templates for ${collectionName}:`,
-          err
-        );
-      }
-    }
-
-    // 3. If no local templates found, try fetching from S3 via StorageService
-    if (Object.keys(svgs).length === 0) {
-      try {
-        const bucketName = DEFAULT_TEMPLATE_COLLECTIONS.has(
-          collectionName.toLowerCase()
-        )
-          ? FILE_DEFAULT_TEMPLATES_BUCKET_NAME
-          : FILE_TEMPLATES_BUCKET_NAME;
-
-        const prefix = `templates/${collectionName}/`;
-        const keys = await StorageService.listPrefixKeys(prefix, bucketName);
-
-        const svgKeys = keys.filter((key) => key.endsWith('.svg'));
-        const downloadPromises = svgKeys.map(async (key) => {
-          const body = await StorageService.getObjectString(key, bucketName);
-          if (body) {
-            const name = path.parse(key).name;
-            return { name, body };
-          }
-          return null;
-        });
-
-        const results = await Promise.all(downloadPromises);
-        for (const res of results) {
-          if (res) {
-            svgs[res.name] = res.body;
-          }
-        }
-      } catch (err) {
-        console.error(
-          `[SlideService] Failed to fetch previews from S3 for ${collectionName}:`,
-          err
-        );
-      }
-    }
-
-    // Cache the retrieved previews if we found any
-    if (Object.keys(svgs).length > 0) {
-      previewsCache.set(collectionName, svgs);
-    }
-
-    return svgs;
   }
 
   static async getTemplateCollections(): Promise<SlideTemplate[]> {
@@ -357,13 +345,15 @@ export class SlideService {
 
   static async importTemplateCollection(
     file: File,
-    name?: string | null
+    name?: string | null,
+    source: 'auto' | 'layouts' | 'slides' = 'auto'
   ): Promise<{ status: 'success'; imported: unknown }> {
     const forwardFormData = new FormData();
     forwardFormData.append('file', file, file.name || 'template');
     if (name) {
       forwardFormData.append('name', name);
     }
+    forwardFormData.append('source', source);
 
     const baseUrl = SlideService.getExternalServiceUrl();
     const response = await fetch(`${baseUrl}/slides/templates/import`, {
