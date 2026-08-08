@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getCoursePermissions } from '@/lib/permissions/course-permission';
 import { prisma } from '@/lib/prisma';
-import { GammaService } from '@/services/GammaService';
 import { GoogleDriveExportArtifactService } from '@/services/google-drive/GoogleDriveExportArtifactService';
 import { LessonPresentationService } from '@/services/LessonPresentationService';
 import { LessonService } from '@/services/LessonService';
@@ -13,9 +12,6 @@ vi.mock('@/lib/prisma', () => ({
 }));
 vi.mock('@/lib/permissions/course-permission', () => ({
   getCoursePermissions: vi.fn(),
-}));
-vi.mock('@/services/GammaService', () => ({
-  GammaService: { getPresentationExport: vi.fn() },
 }));
 vi.mock('@/services/LessonPresentationService', () => ({
   LessonPresentationService: { getDeckPptx: vi.fn() },
@@ -35,9 +31,6 @@ const prismaMock = prisma as unknown as {
 };
 const lessonService = LessonService as unknown as {
   getLessonById: ReturnType<typeof vi.fn>;
-};
-const gammaService = GammaService as unknown as {
-  getPresentationExport: ReturnType<typeof vi.fn>;
 };
 const presentationService = LessonPresentationService as unknown as {
   getDeckPptx: ReturnType<typeof vi.fn>;
@@ -176,37 +169,6 @@ describe('GoogleDriveExportArtifactService', () => {
     expect([...artifact.bytes]).toEqual([1, 2, 3]);
     expect(presentationService.getDeckPptx).toHaveBeenCalledWith(
       'native-deck-1'
-    );
-  });
-
-  it('re-queries Gamma with the stored generation ID before downloading', async () => {
-    lessonService.getLessonById.mockResolvedValue({
-      presentationDeckId: 'gamma:https://gamma.app/docs/example',
-      presentationDeckKey: 'generation-1',
-      title: 'Gamma Lesson',
-    });
-    gammaService.getPresentationExport.mockResolvedValue({
-      exportUrl: 'https://cdn.gamma.app/export.pptx',
-    });
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(new Uint8Array([4, 5, 6]), {
-        headers: { 'content-length': '3' },
-        status: 200,
-      })
-    );
-    vi.stubGlobal('fetch', fetchMock);
-
-    const artifact = await GoogleDriveExportArtifactService.resolve({
-      source: {
-        kind: 'lesson_presentation',
-        lessonId: '2b25a6da-09bc-4783-8a0d-60811389d612',
-      },
-      userId: 'user-1',
-    });
-
-    expect([...artifact.bytes]).toEqual([4, 5, 6]);
-    expect(gammaService.getPresentationExport).toHaveBeenCalledWith(
-      'generation-1'
     );
   });
 

@@ -1,10 +1,17 @@
 from pathlib import Path
-from fastapi import APIRouter, BackgroundTasks, File, UploadFile, HTTPException
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    File,
+    Form,
+    HTTPException,
+    UploadFile,
+)
 from fastapi.responses import FileResponse
 
 from app.deps import STORAGE_DIR
 from app.schemas.slide_schema import GenReq, PlanGenReq, RenderSlideReq
-from app.services.slide_service import SlideService
+from app.services.slide_service import TEMPLATE_IMPORT_SOURCES, SlideService
 from app.services.slide_job_service import SlideJobService
 
 router = APIRouter(prefix="/slides", tags=["Slides"])
@@ -16,6 +23,15 @@ slide_job_service = SlideJobService(slide_service)
 async def get_categories():
     try:
         return await slide_service.get_categories()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/templates/{collection}/previews")
+async def get_template_previews(collection: str):
+    """Returns cached PNG preview object keys, one per template category."""
+    try:
+        return await slide_service.get_template_previews(collection)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -102,10 +118,20 @@ async def import_templates(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     name: str | None = None,
+    source: str = Form("auto"),
 ):
     """Queue a template import job and return a job_id immediately.
     Poll GET /slides/templates/import/{job_id} for status.
+
+    `source` controls PPTX extraction: "auto" detects brand templates, "layouts"
+    forces reading the Slide Master's layouts, and "slides" uses the real slides.
     """
+    if source not in TEMPLATE_IMPORT_SOURCES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"source must be one of {sorted(TEMPLATE_IMPORT_SOURCES)}",
+        )
+
     filename = file.filename or ""
     if not (
         filename.lower().endswith(".zip")
@@ -122,7 +148,7 @@ async def import_templates(
         await file.close()
 
     return await slide_job_service.queue_import_job(
-        background_tasks, file_bytes, filename, name
+        background_tasks, file_bytes, filename, name, source=source
     )
 
 

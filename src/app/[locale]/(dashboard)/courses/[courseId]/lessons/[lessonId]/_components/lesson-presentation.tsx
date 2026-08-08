@@ -1,9 +1,13 @@
 'use client';
 
+import slideLayoutGuidance from '@config/slide-layout-guidance.json';
 import {
   ArrowRight,
   ChevronLeft,
   ChevronRight,
+  Eye,
+  EyeOff,
+  LayoutTemplate,
   ListPlus,
   Maximize2,
   Minimize2,
@@ -15,7 +19,7 @@ import {
 } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,8 +36,14 @@ import { sanitizeSvgMarkup } from '@/lib/html-sanitizer';
 import { cn } from '@/lib/utils';
 import type { TiptapDocument } from '@/utils/lesson-content';
 import {
+  applySlideDropRuntime,
+  removeLegacySlideDropStyles,
+  SLIDE_DROP_ATTRIBUTE,
+} from '@/utils/slide-deck-drop';
+import {
   useDownloadPptx,
   useSlideTemplateCategories,
+  useSlideTemplatePreviews,
   useSlideTemplates,
   useUpdateSlideHtml,
 } from '../use-lesson';
@@ -43,8 +53,18 @@ import {
   usePresentation,
 } from '../use-presentation';
 import { PresentationExportActions } from './presentation-export-actions';
+import { SlideAiEditDialog } from './slide-ai-edit-dialog';
+import {
+  attachSlideCanvasAiControls,
+  type SlideCanvasAiControls,
+} from './slide-canvas-ai-controls';
 import { SlideItemEditor } from './slide-item-editor';
 import { TemplateManagerDialog } from './template-manager-dialog';
+import {
+  getEditableSlideTextElements,
+  useSlideAiEdit,
+} from './use-slide-ai-edit';
+import { useSlideDrop } from './use-slide-drop';
 
 const formatLayoutName = (layout: string, t: any) => {
   const map: Record<string, string> = {
@@ -79,6 +99,203 @@ const formatLayoutName = (layout: string, t: any) => {
 
 const selectItemHighlightClassName =
   'focus:bg-primary/20 focus:text-foreground focus:**:!text-foreground data-highlighted:bg-primary/10 data-highlighted:text-foreground data-highlighted:**:!text-foreground';
+
+function RawBindingsEditor({
+  bindings,
+  onChangeBindings,
+}: {
+  bindings: any;
+  onChangeBindings: (newBindings: any) => void;
+}) {
+  const [jsonText, setJsonText] = useState(() =>
+    JSON.stringify(bindings || {}, null, 2)
+  );
+  const [isValidJson, setIsValidJson] = useState(true);
+
+  const prevBindingsRef = useRef(bindings);
+  useEffect(() => {
+    if (prevBindingsRef.current !== bindings) {
+      prevBindingsRef.current = bindings;
+      try {
+        if (JSON.stringify(JSON.parse(jsonText)) !== JSON.stringify(bindings)) {
+          setJsonText(JSON.stringify(bindings || {}, null, 2));
+          setIsValidJson(true);
+        }
+      } catch (_) {}
+    }
+  }, [bindings, jsonText]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const val = e.target.value;
+    setJsonText(val);
+    try {
+      const parsed = JSON.parse(val);
+      if (typeof parsed === 'object' && parsed !== null) {
+        setIsValidJson(true);
+        onChangeBindings(parsed);
+      } else {
+        setIsValidJson(false);
+      }
+    } catch (_) {
+      setIsValidJson(false);
+    }
+  };
+
+  return (
+    <div className="mt-2 flex flex-col gap-1.5">
+      <div className="flex items-center justify-between">
+        <span className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider">
+          Raw Bindings Data (JSON)
+        </span>
+        {!isValidJson && (
+          <span className="font-medium text-[11px] text-destructive">
+            ⚠️ Invalid JSON format (e.g.{' '}
+            <code className="font-mono text-[10px]">
+              {'{"footer_note": "Phat Huynh"}'}
+            </code>
+            )
+          </span>
+        )}
+      </div>
+      <Textarea
+        value={jsonText}
+        onChange={handleChange}
+        placeholder='{\n  "footer_note": "Phat Huynh"\n}'
+        className={cn(
+          'h-36 rounded-xl border-input bg-card px-4 py-2 font-mono text-foreground text-xs transition-colors',
+          !isValidJson &&
+            'border-destructive/60 ring-2 ring-destructive/20 focus-visible:ring-destructive/40'
+        )}
+      />
+    </div>
+  );
+}
+
+const ALL_LAYOUT_CATEGORIES = [
+  'TITLE_SLIDE',
+  'AGENDA_OUTLINE',
+  'SECTION_HEADER',
+  'TITLE_BULLETS',
+  'TWO_COLUMN_SPLIT',
+  'BIG_QUOTE_TAKEAWAY',
+  'KPI_BIG_NUMBER',
+  'CHART_INSIGHT',
+  'DATA_TABLE',
+  'MEDIA_TEXT',
+  'TIMELINE_MILESTONES',
+  'STEP_BY_STEP',
+  'CONCLUSION_SUMMARY',
+  'CALL_TO_ACTION',
+  'QA_CONTACT',
+  'REFERENCES_LIST',
+  'STATEMENT_IMAGE',
+  'PYRAMID_LEVELS',
+  'FUNNEL_STAGES',
+  'PROCESS_ARROWS',
+  'CIRCLE_CYCLE',
+];
+
+interface LayoutCategorySelectProps {
+  value: string;
+  onValueChange: (val: string) => void;
+  categories: string[];
+  previewMap: Map<string, string>;
+  t: any;
+}
+
+function LayoutCategorySelect({
+  value,
+  onValueChange,
+  categories,
+  previewMap,
+  t,
+}: LayoutCategorySelectProps) {
+  const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
+
+  const activeCategory = hoveredCategory || value;
+  const activePreviewUrl = previewMap.get(activeCategory);
+  const activeGuidance = (slideLayoutGuidance as Record<string, any>)[
+    activeCategory
+  ];
+
+  return (
+    <Select value={value} onValueChange={onValueChange}>
+      <SelectTrigger className="flex h-10 w-full justify-between rounded-xl border-input bg-muted/30 px-4 font-semibold text-foreground text-sm">
+        <SelectValue placeholder="Select Layout">
+          {formatLayoutName(value, t)}
+        </SelectValue>
+      </SelectTrigger>
+
+      <SelectContent
+        position="popper"
+        align="start"
+        sideOffset={4}
+        className="!w-[540px] z-50 max-h-80 max-w-[92vw] overflow-hidden rounded-2xl border-border bg-popover/95 p-2 text-popover-foreground shadow-2xl backdrop-blur-xl"
+        onMouseLeave={() => setHoveredCategory(null)}
+      >
+        <div className="flex h-full w-full gap-2.5 p-1">
+          {/* Left Column: Category Options List */}
+          <div className="max-h-72 w-56 shrink-0 space-y-0.5 overflow-y-auto pr-1">
+            {categories.map((layout) => (
+              <SelectItem
+                key={layout}
+                value={layout}
+                onPointerEnter={() => setHoveredCategory(layout)}
+                onFocus={() => setHoveredCategory(layout)}
+                className={cn(
+                  'cursor-pointer rounded-xl px-3 py-2 font-medium text-foreground text-xs transition-colors hover:bg-accent focus:bg-accent',
+                  selectItemHighlightClassName
+                )}
+              >
+                {formatLayoutName(layout, t)}
+              </SelectItem>
+            ))}
+          </div>
+
+          {/* Right Column: Attached Live Preview Panel */}
+          <div className="flex w-64 shrink-0 flex-col gap-2.5 rounded-xl border border-border/60 bg-muted/40 p-3">
+            {activePreviewUrl ? (
+              <>
+                <div className="relative aspect-[16/9] w-full overflow-hidden rounded-lg border border-border/60 bg-background shadow-xs">
+                  <img
+                    src={activePreviewUrl}
+                    alt={activeCategory}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+                <div className="flex flex-col gap-1 px-0.5">
+                  <div className="flex items-center justify-between gap-1.5">
+                    <span className="truncate font-bold text-foreground text-xs">
+                      {formatLayoutName(activeCategory, t)}
+                    </span>
+                    <span className="shrink-0 rounded-md bg-primary/10 px-1.5 py-0.5 font-mono font-semibold text-[9px] text-primary">
+                      {activeCategory}
+                    </span>
+                  </div>
+                  {activeGuidance?.description && (
+                    <p className="line-clamp-3 text-[11px] text-muted-foreground leading-snug">
+                      {activeGuidance.description}
+                    </p>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-1 flex-col items-center justify-center p-4 text-center">
+                <LayoutTemplate className="mb-2 h-8 w-8 text-muted-foreground/40" />
+                <p className="font-semibold text-muted-foreground text-xs">
+                  Hover over a layout
+                </p>
+                <p className="mt-0.5 text-[10px] text-muted-foreground/70">
+                  Preview will appear here
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </SelectContent>
+    </Select>
+  );
+}
 
 const QUALITATIVE_CHART_SCORES: Record<string, number> = {
   'very low': 1,
@@ -174,13 +391,29 @@ export function LessonPresentation({
     selectedCollection,
     setSelectedCollection,
     recommendedCollection,
-    generatorType,
-    setGeneratorType,
-    gammaTheme,
-    setGammaTheme,
-    exportUrl,
-    handleGenerateGamma,
   } = usePresentation({ title, content, isOpen, onClose });
+
+  const activeCollectionName =
+    selectedCollection && selectedCollection !== 'auto'
+      ? selectedCollection
+      : recommendedCollection || 'starter';
+
+  const { data: previewsData } = useSlideTemplatePreviews(
+    activeCollectionName,
+    step === 'planned'
+  );
+
+  const previewMap = useMemo(() => {
+    const map = new Map<string, string>();
+    if (previewsData && Array.isArray(previewsData)) {
+      for (const preview of previewsData) {
+        if (preview.category && preview.url) {
+          map.set(preview.category, preview.url);
+        }
+      }
+    }
+    return map;
+  }, [previewsData]);
 
   const [isDownloadingPptx, setIsDownloadingPptx] = useState(false);
   const [iframeVersion, setIframeVersion] = useState(0);
@@ -188,9 +421,30 @@ export function LessonPresentation({
   const [showItemEditor, setShowItemEditor] = useState(false);
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const canvasAiControlsRef = useRef<SlideCanvasAiControls | null>(null);
   const deckId = deckUrl ? deckUrl.split('/').pop() : undefined;
 
   const updateSlideHtml = useUpdateSlideHtml();
+  const {
+    selectedText: selectedAiText,
+    scope: aiEditScope,
+    isDialogOpen: isAiEditOpen,
+    isPending: isAiEditing,
+    selectTextElement: selectAiTextElement,
+    clearSelection: clearAiTextSelection,
+    openSelectedTextEdit,
+    openImageEdit,
+    openCurrentSlideEdit,
+    handleOpenChange: handleAiEditOpenChange,
+    submitEdit: submitAiEdit,
+  } = useSlideAiEdit({ iframeRef, deckId });
+  const {
+    isActiveSlideDropped,
+    droppedCount,
+    syncDropState,
+    toggleActiveSlideDropped,
+    focusNextDroppedSlide,
+  } = useSlideDrop({ iframeRef });
 
   const plannedSlidesRef = useRef(plannedSlides);
   useEffect(() => {
@@ -199,44 +453,53 @@ export function LessonPresentation({
 
   /** Swap a re-rendered slide SVG into the preview iframe (namespacing its
    * ids so clipPaths/gradients don't collide with other slides). */
-  const applySvgToPreviewSlide = useCallback((index: number, svg: string) => {
-    const doc = iframeRef.current?.contentDocument;
-    const target = doc?.querySelectorAll('.slide')?.[index];
-    if (!doc || !target) {
-      toast.error('Preview not ready — reload the deck and try again');
-      return;
-    }
-    const prefix = `edit${index}x${Date.now().toString(36)}_`;
-    const safe = sanitizeSvgMarkup(svg)
-      .replace(/id="([^"]+)"/g, `id="${prefix}$1"`)
-      .replace(/url\(#([^)]+)\)/g, `url(#${prefix}$1)`)
-      .replace(/href="#([^"]+)"/g, `href="#${prefix}$1"`);
-    const old = target.querySelector('svg');
-    if (old) {
-      old.outerHTML = safe;
-    } else {
-      target.innerHTML = safe;
-    }
-  }, []);
-
-  const handleEditorSlideChange = useCallback((index: number) => {
-    const doc = iframeRef.current?.contentDocument;
-    if (doc) {
-      const slides = doc.querySelectorAll('.slide');
-      slides.forEach((s, k) => {
-        s.classList.remove('active');
-        if (k === index) {
-          s.classList.add('active');
-        }
-      });
-      const counter = doc.getElementById('counter');
-      if (counter) {
-        counter.textContent = `${index + 1} / ${slides.length}`;
+  const applySvgToPreviewSlide = useCallback(
+    (index: number, svg: string) => {
+      clearAiTextSelection();
+      canvasAiControlsRef.current?.hide();
+      const doc = iframeRef.current?.contentDocument;
+      const target = doc?.querySelectorAll('.slide')?.[index];
+      if (!doc || !target) {
+        toast.error('Preview not ready — reload the deck and try again');
+        return;
       }
-    }
-  }, []);
-  const isGamma = !!deckUrl?.includes('gamma.app');
+      const prefix = `edit${index}x${Date.now().toString(36)}_`;
+      const safe = sanitizeSvgMarkup(svg)
+        .replace(/id="([^"]+)"/g, `id="${prefix}$1"`)
+        .replace(/url\(#([^)]+)\)/g, `url(#${prefix}$1)`)
+        .replace(/href="#([^"]+)"/g, `href="#${prefix}$1"`);
+      const old = target.querySelector('svg');
+      if (old) {
+        old.outerHTML = safe;
+      } else {
+        target.innerHTML = safe;
+      }
+    },
+    [clearAiTextSelection]
+  );
 
+  const handleEditorSlideChange = useCallback(
+    (index: number) => {
+      clearAiTextSelection();
+      canvasAiControlsRef.current?.hide();
+      const doc = iframeRef.current?.contentDocument;
+      if (doc) {
+        const slides = doc.querySelectorAll('.slide');
+        slides.forEach((s, k) => {
+          s.classList.remove('active');
+          if (k === index) {
+            s.classList.add('active');
+          }
+        });
+        const counter = doc.getElementById('counter');
+        if (counter) {
+          counter.textContent = `${index + 1} / ${slides.length}`;
+        }
+        syncDropState();
+      }
+    },
+    [clearAiTextSelection, syncDropState]
+  );
   const [isUploadOpen, setIsUploadOpen] = useState(false);
 
   // TanStack Query for slide templates
@@ -280,12 +543,7 @@ export function LessonPresentation({
 
   const enableVisualEditing = useCallback(() => {
     console.log('[VisualEditor] enableVisualEditing triggered');
-    if (deckUrl?.includes('gamma.app')) {
-      console.log(
-        '[VisualEditor] Gamma presentation, skipping visual editor injection'
-      );
-      return;
-    }
+    if (!iframeRef.current?.contentWindow) return;
     try {
       const iframe = iframeRef.current;
       if (!iframe) {
@@ -304,6 +562,11 @@ export function LessonPresentation({
       console.log(
         '[VisualEditor] Accessed iframe contentDocument successfully'
       );
+      clearAiTextSelection();
+      // Decks saved by the earlier implementation hid dropped slides outright,
+      // which made them impossible to restore in the editor.
+      removeLegacySlideDropStyles(doc);
+      syncDropState();
 
       // Try to load plannedSlides from script tag in S3 HTML
       const metaEl = doc.querySelector('#slide-plan-metadata');
@@ -342,12 +605,36 @@ export function LessonPresentation({
             outline: 1px dashed rgba(59, 130, 246, 0.8) !important;
             cursor: text;
           }
+          text[data-ai-selected="true"], tspan[data-ai-selected="true"] {
+            outline: 2px solid rgba(139, 92, 246, 0.95) !important;
+            outline-offset: 3px;
+          }
+          .slide[${SLIDE_DROP_ATTRIBUTE}="true"] svg {
+            outline: 3px dashed rgba(239, 68, 68, 0.9) !important;
+            opacity: 0.55;
+          }
         `;
         doc.head.appendChild(style);
         console.log('[VisualEditor] Injected hover styles into iframe head');
       }
 
-      const elements = doc.querySelectorAll('text, tspan');
+      canvasAiControlsRef.current?.cleanup();
+      canvasAiControlsRef.current = attachSlideCanvasAiControls({
+        document: doc,
+        textActionLabel: t('canvasAiTextAction'),
+        imageActionLabel: t('canvasAiImageAction'),
+        onTextAction: (element) => {
+          selectAiTextElement(element);
+          openSelectedTextEdit();
+        },
+        onImageAction: openImageEdit,
+        onActiveSlideChange: () => {
+          clearAiTextSelection();
+          syncDropState();
+        },
+      });
+
+      const elements = getEditableSlideTextElements(doc);
       console.log(
         `[VisualEditor] Found ${elements.length} text/tspan elements in iframe`
       );
@@ -370,7 +657,8 @@ export function LessonPresentation({
             activeTextarea.blur();
           }
 
-          const textEl = el as SVGTextElement;
+          const textEl = el as SVGTextContentElement;
+          selectAiTextElement(textEl);
           const rect = textEl.getBoundingClientRect();
           const scrollTop = doc.documentElement.scrollTop || doc.body.scrollTop;
           const scrollLeft =
@@ -440,7 +728,16 @@ export function LessonPresentation({
     } catch (err) {
       console.error('[VisualEditor] Error in enableVisualEditing:', err);
     }
-  }, [setPlannedSlides, deckUrl?.includes]);
+  }, [
+    clearAiTextSelection,
+    deckUrl,
+    openImageEdit,
+    openSelectedTextEdit,
+    selectAiTextElement,
+    setPlannedSlides,
+    syncDropState,
+    t,
+  ]);
 
   // Manually attach load listeners and check document status to guarantee visual editing binds
   useEffect(() => {
@@ -470,6 +767,8 @@ export function LessonPresentation({
     iframe.addEventListener('load', handleLoad);
     return () => {
       iframe.removeEventListener('load', handleLoad);
+      canvasAiControlsRef.current?.cleanup();
+      canvasAiControlsRef.current = null;
     };
   }, [enableVisualEditing]);
 
@@ -490,15 +789,22 @@ export function LessonPresentation({
     // Clone root layout
     const clone = doc.documentElement.cloneNode(true) as HTMLElement;
 
-    // Clean up our click listener attributes
+    // Clean up temporary editor and AI-control attributes
     clone.querySelectorAll('[data-has-click-listener]').forEach((el) => {
       el.removeAttribute('data-has-click-listener');
     });
-
-    // Remove the injected editor style tag
-    clone.querySelectorAll('style[data-slide-editor]').forEach((el) => {
-      el.remove();
+    clone.querySelectorAll('[data-ai-selected]').forEach((el) => {
+      el.removeAttribute('data-ai-selected');
     });
+
+    // Remove injected editor styles and contextual AI controls
+    clone
+      .querySelectorAll(
+        'style[data-slide-editor], style[data-slide-ai-controls], [data-slide-ai-action]'
+      )
+      .forEach((el) => {
+        el.remove();
+      });
 
     // Strip stray editors
     clone.querySelectorAll('textarea[data-active-editor]').forEach((el) => {
@@ -519,6 +825,9 @@ export function LessonPresentation({
       }
     }
     metaEl.textContent = JSON.stringify({ slides: plannedSlidesRef.current });
+
+    // Persist dropped-slide behavior: hide them and skip them while presenting.
+    applySlideDropRuntime(clone, doc);
 
     const html = `<!DOCTYPE html>\n${clone.outerHTML}`;
 
@@ -1583,20 +1892,21 @@ export function LessonPresentation({
 
       default:
         return (
-          <div className="mt-2 flex flex-col gap-1.5">
-            <span className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider">
-              Raw Bindings Data (JSON)
-            </span>
-            <Textarea
-              value={JSON.stringify(bindings, null, 2)}
-              onChange={(e) => {
-                try {
-                  updateBinding('bindings', JSON.parse(e.target.value));
-                } catch (_) {}
-              }}
-              className="h-28 rounded-xl border-input bg-card px-4 py-2 font-mono text-foreground text-xs"
-            />
-          </div>
+          <RawBindingsEditor
+            bindings={bindings}
+            onChangeBindings={(newBindings) => {
+              setPlannedSlides((prev) =>
+                prev.map((s, i) =>
+                  i === idx
+                    ? {
+                        ...s,
+                        bindings: newBindings,
+                      }
+                    : s
+                )
+              );
+            }}
+          />
         );
     }
   };
@@ -1634,38 +1944,89 @@ export function LessonPresentation({
             {title}
           </h2>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           {step === 'generated' && deckUrl && (
             <>
-              {!isGamma && (
+              {selectedAiText && (
                 <Button
-                  variant={showItemEditor ? 'default' : 'outline'}
+                  variant="outline"
                   size="sm"
-                  className="h-9 gap-1.5 rounded-lg"
-                  onClick={() => setShowItemEditor((v) => !v)}
+                  className="h-9 gap-1.5 rounded-lg border-primary/30 text-primary"
+                  onClick={openSelectedTextEdit}
+                  disabled={isAiEditing}
                 >
-                  <ListPlus className="h-4 w-4" />
-                  Edit items
+                  <Sparkles className="h-4 w-4" />
+                  {t('btnAiEditText')}
                 </Button>
               )}
-              {!isGamma && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9 gap-1.5 rounded-lg"
+                onClick={openCurrentSlideEdit}
+                disabled={isAiEditing}
+              >
+                <Sparkles className="h-4 w-4" />
+                {t('btnAiEditSlide')}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className={cn(
+                  'h-9 gap-1.5 rounded-lg',
+                  isActiveSlideDropped &&
+                    'border-destructive/40 text-destructive'
+                )}
+                onClick={toggleActiveSlideDropped}
+                title={
+                  droppedCount > 0
+                    ? t('droppedSlidesCount', { count: droppedCount })
+                    : undefined
+                }
+              >
+                {isActiveSlideDropped ? (
+                  <Eye className="h-4 w-4" />
+                ) : (
+                  <EyeOff className="h-4 w-4" />
+                )}
+                {isActiveSlideDropped
+                  ? t('btnRestoreSlide')
+                  : t('btnDropSlide')}
+              </Button>
+              {droppedCount > 0 && !isActiveSlideDropped && (
                 <Button
-                  variant="default"
+                  variant="ghost"
                   size="sm"
-                  className="h-9 gap-1.5 rounded-lg bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
-                  onClick={handleSaveVisualEdits}
-                  disabled={updateSlideHtml.isPending}
+                  className="h-9 gap-1.5 rounded-lg text-muted-foreground"
+                  onClick={focusNextDroppedSlide}
                 >
-                  <Save className="h-4 w-4" />
-                  {updateSlideHtml.isPending
-                    ? t('savingHtml')
-                    : t('btnSaveVisual')}
+                  <EyeOff className="h-4 w-4" />
+                  {t('btnReviewDroppedSlides', { count: droppedCount })}
                 </Button>
               )}
+              <Button
+                variant={showItemEditor ? 'default' : 'outline'}
+                size="sm"
+                className="h-9 gap-1.5 rounded-lg"
+                onClick={() => setShowItemEditor((v) => !v)}
+              >
+                <ListPlus className="h-4 w-4" />
+                {t('btnEditItems')}
+              </Button>
+              <Button
+                variant="default"
+                size="sm"
+                className="h-9 gap-1.5 rounded-lg bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
+                onClick={handleSaveVisualEdits}
+                disabled={updateSlideHtml.isPending || isAiEditing}
+              >
+                <Save className="h-4 w-4" />
+                {updateSlideHtml.isPending
+                  ? t('savingHtml')
+                  : t('btnSaveVisual')}
+              </Button>
               <PresentationExportActions
-                exportUrl={exportUrl}
                 isDownloading={isDownloadingPptx}
-                isGamma={isGamma}
                 lessonId={lessonId}
                 onDownloadNative={handleDownloadPptx}
                 t={t}
@@ -1718,34 +2079,6 @@ export function LessonPresentation({
             <p className="mb-6 text-muted-foreground text-sm leading-relaxed">
               {t('inputDesc')}
             </p>
-
-            {/* Generator Mode Tabs */}
-            <div className="mb-6 flex rounded-xl bg-muted p-1">
-              <button
-                type="button"
-                onClick={() => setGeneratorType('default')}
-                className={cn(
-                  'flex-1 rounded-lg py-2 text-center font-semibold text-xs transition-all',
-                  generatorType === 'default'
-                    ? 'bg-background text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
-              >
-                {t('tabSystem')}
-              </button>
-              <button
-                type="button"
-                onClick={() => setGeneratorType('gamma')}
-                className={cn(
-                  'flex-1 rounded-lg py-2 text-center font-semibold text-xs transition-all',
-                  generatorType === 'gamma'
-                    ? 'bg-background text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
-              >
-                {t('tabGamma')}
-              </button>
-            </div>
 
             <div className="space-y-4">
               <div className="relative">
@@ -1822,91 +2155,54 @@ export function LessonPresentation({
                 </Select>
               </div>
 
-              {generatorType === 'default' && (
-                <div className="flex flex-col gap-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold text-muted-foreground text-xs uppercase tracking-wider">
-                      Template Style
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setIsUploadOpen(true)}
-                      className="flex items-center gap-1 font-semibold text-primary text-xs hover:underline"
-                    >
-                      <Plus className="h-3 w-3" />
-                      Manage Styles
-                    </button>
-                  </div>
-                  <Select
-                    value={selectedCollection}
-                    onValueChange={setSelectedCollection}
-                  >
-                    <SelectTrigger className="flex h-11 w-full justify-between rounded-xl border-input bg-muted/30 px-4 py-2.5 text-foreground text-sm">
-                      <SelectValue placeholder="System Default (Starter)" />
-                    </SelectTrigger>
-                    <SelectContent className="border-border bg-popover text-popover-foreground">
-                      <SelectItem
-                        className={selectItemHighlightClassName}
-                        value="auto"
-                      >
-                        ✨ Auto — AI picks from content
-                      </SelectItem>
-                      <SelectItem
-                        className={selectItemHighlightClassName}
-                        value="starter"
-                      >
-                        System Default (Starter)
-                      </SelectItem>
-                      {collections
-                        .filter((c) => c.name !== 'starter')
-                        .map((c) => (
-                          <SelectItem
-                            key={c.name}
-                            className={selectItemHighlightClassName}
-                            value={c.name}
-                          >
-                            {c.name === 'neon_dark'
-                              ? 'Neon Dark Theme'
-                              : c.name}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              {generatorType === 'gamma' && (
-                <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center justify-between">
                   <span className="font-semibold text-muted-foreground text-xs uppercase tracking-wider">
-                    {t('gammaThemeLabel')}
+                    Template Style
                   </span>
-                  <Select value={gammaTheme} onValueChange={setGammaTheme}>
-                    <SelectTrigger className="flex h-11 w-full justify-between rounded-xl border-input bg-muted/30 px-4 py-2.5 text-foreground text-sm">
-                      <SelectValue placeholder={t('themeAuto')} />
-                    </SelectTrigger>
-                    <SelectContent className="border-border bg-popover text-popover-foreground">
-                      <SelectItem
-                        className={selectItemHighlightClassName}
-                        value="auto"
-                      >
-                        {t('themeAuto')}
-                      </SelectItem>
-                      <SelectItem
-                        className={selectItemHighlightClassName}
-                        value="light"
-                      >
-                        {t('themeLight')}
-                      </SelectItem>
-                      <SelectItem
-                        className={selectItemHighlightClassName}
-                        value="dark"
-                      >
-                        {t('themeDark')}
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <button
+                    type="button"
+                    onClick={() => setIsUploadOpen(true)}
+                    className="flex items-center gap-1 font-semibold text-primary text-xs hover:underline"
+                  >
+                    <Plus className="h-3 w-3" />
+                    Manage Styles
+                  </button>
                 </div>
-              )}
+                <Select
+                  value={selectedCollection}
+                  onValueChange={setSelectedCollection}
+                >
+                  <SelectTrigger className="flex h-11 w-full justify-between rounded-xl border-input bg-muted/30 px-4 py-2.5 text-foreground text-sm">
+                    <SelectValue placeholder="System Default (Starter)" />
+                  </SelectTrigger>
+                  <SelectContent className="border-border bg-popover text-popover-foreground">
+                    <SelectItem
+                      className={selectItemHighlightClassName}
+                      value="auto"
+                    >
+                      ✨ Auto — AI picks from content
+                    </SelectItem>
+                    <SelectItem
+                      className={selectItemHighlightClassName}
+                      value="starter"
+                    >
+                      System Default (Starter)
+                    </SelectItem>
+                    {collections
+                      .filter((c) => c.name !== 'starter')
+                      .map((c) => (
+                        <SelectItem
+                          key={c.name}
+                          className={selectItemHighlightClassName}
+                          value={c.name}
+                        >
+                          {c.name === 'neon_dark' ? 'Neon Dark Theme' : c.name}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
               <div>
                 <span className="mb-2 block font-semibold text-muted-foreground text-xs uppercase tracking-wider">
@@ -1946,23 +2242,13 @@ export function LessonPresentation({
               >
                 Cancel
               </Button>
-              {generatorType === 'default' ? (
-                <Button
-                  onClick={handleStartPlanning}
-                  className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2 font-semibold text-primary-foreground hover:bg-primary/90"
-                >
-                  {t('btnPlan')}
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              ) : (
-                <Button
-                  onClick={handleGenerateGamma}
-                  className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2 font-semibold text-primary-foreground hover:bg-primary/90"
-                >
-                  {t('btnGenerateGamma')}
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              )}
+              <Button
+                onClick={handleStartPlanning}
+                className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2 font-semibold text-primary-foreground hover:bg-primary/90"
+              >
+                {t('btnPlan')}
+                <ArrowRight className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         </div>
@@ -2070,7 +2356,7 @@ export function LessonPresentation({
                       <span className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider">
                         Layout Type
                       </span>
-                      <Select
+                      <LayoutCategorySelect
                         value={slide.layoutType}
                         onValueChange={(val) =>
                           changeSlideLayout(
@@ -2078,43 +2364,14 @@ export function LessonPresentation({
                             val as PlannedSlide['layoutType']
                           )
                         }
-                      >
-                        <SelectTrigger className="flex h-10 w-full justify-between rounded-xl border-input bg-muted/30 px-4 text-foreground text-sm">
-                          <SelectValue placeholder="Select Layout" />
-                        </SelectTrigger>
-                        <SelectContent className="max-h-60 border-border bg-popover text-popover-foreground">
-                          {(activeCategories.length > 0
+                        categories={
+                          activeCategories.length > 0
                             ? activeCategories
-                            : [
-                                'TITLE_SLIDE',
-                                'AGENDA_OUTLINE',
-                                'SECTION_HEADER',
-                                'TITLE_BULLETS',
-                                'TWO_COLUMN_SPLIT',
-                                'BIG_QUOTE_TAKEAWAY',
-                                'KPI_BIG_NUMBER',
-                                'CHART_INSIGHT',
-                                'DATA_TABLE',
-                                'MEDIA_TEXT',
-                                'TIMELINE_MILESTONES',
-                                'STEP_BY_STEP',
-                                'CONCLUSION_SUMMARY',
-                                'CALL_TO_ACTION',
-                                'QA_CONTACT',
-                                'REFERENCES_LIST',
-                                'STATEMENT_IMAGE',
-                                'PYRAMID_LEVELS',
-                                'FUNNEL_STAGES',
-                                'PROCESS_ARROWS',
-                                'CIRCLE_CYCLE',
-                              ]
-                          ).map((layout) => (
-                            <SelectItem key={layout} value={layout}>
-                              {formatLayoutName(layout, t)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                            : ALL_LAYOUT_CATEGORIES
+                        }
+                        previewMap={previewMap}
+                        t={t}
+                      />
                     </div>
 
                     {/* Slide Title Input */}
@@ -2168,103 +2425,52 @@ export function LessonPresentation({
             <Spinner className="h-12 w-12 animate-spin text-primary" />
           </div>
           <h3 className="mb-2 font-bold text-foreground text-xl">
-            {generatorType === 'gamma'
-              ? 'Generating Gamma Presentation'
-              : t('generatingText')}
+            {t('generatingText')}
           </h3>
 
           <div className="mt-6 w-full space-y-3 rounded-xl border border-border bg-muted/30 p-4 text-left">
-            {generatorType === 'gamma' ? (
-              <>
-                <div className="flex items-center gap-3 text-sm">
-                  <span
-                    className={cn(
-                      'flex h-5 w-5 items-center justify-center rounded-full font-semibold text-xs',
-                      loaderStep >= 1
-                        ? 'border border-primary/20 bg-primary/10 text-primary'
-                        : 'border border-border bg-muted text-muted-foreground'
-                    )}
-                  >
-                    {loaderStep >= 1 ? '✓' : '1'}
-                  </span>
-                  <span
-                    className={
-                      loaderStep >= 1
-                        ? 'font-medium text-foreground'
-                        : 'text-muted-foreground'
-                    }
-                  >
-                    Connecting to Gamma API...
-                  </span>
-                </div>
-                <div className="flex items-center gap-3 text-sm">
-                  <span
-                    className={cn(
-                      'flex h-5 w-5 items-center justify-center rounded-full font-semibold text-xs',
-                      loaderStep >= 2
-                        ? 'border border-primary/20 bg-primary/10 text-primary'
-                        : 'border border-border bg-muted text-muted-foreground'
-                    )}
-                  >
-                    {loaderStep >= 2 ? '✓' : '2'}
-                  </span>
-                  <span
-                    className={
-                      loaderStep >= 2
-                        ? 'font-medium text-foreground'
-                        : 'text-muted-foreground'
-                    }
-                  >
-                    Designing cards and layouts...
-                  </span>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="flex items-center gap-3 text-sm">
-                  <span
-                    className={cn(
-                      'flex h-5 w-5 items-center justify-center rounded-full font-semibold text-xs',
-                      loaderStep >= 1
-                        ? 'border border-primary/20 bg-primary/10 text-primary'
-                        : 'border border-border bg-muted text-muted-foreground'
-                    )}
-                  >
-                    {loaderStep >= 1 ? '✓' : '1'}
-                  </span>
-                  <span
-                    className={
-                      loaderStep >= 1
-                        ? 'font-medium text-foreground'
-                        : 'text-muted-foreground'
-                    }
-                  >
-                    Designing slide layouts...
-                  </span>
-                </div>
-                <div className="flex items-center gap-3 text-sm">
-                  <span
-                    className={cn(
-                      'flex h-5 w-5 items-center justify-center rounded-full font-semibold text-xs',
-                      loaderStep >= 2
-                        ? 'border border-primary/20 bg-primary/10 text-primary'
-                        : 'border border-border bg-muted text-muted-foreground'
-                    )}
-                  >
-                    {loaderStep >= 2 ? '✓' : '2'}
-                  </span>
-                  <span
-                    className={
-                      loaderStep >= 2
-                        ? 'font-medium text-foreground'
-                        : 'text-muted-foreground'
-                    }
-                  >
-                    Injecting slide contents...
-                  </span>
-                </div>
-              </>
-            )}
+            <div className="flex items-center gap-3 text-sm">
+              <span
+                className={cn(
+                  'flex h-5 w-5 items-center justify-center rounded-full font-semibold text-xs',
+                  loaderStep >= 1
+                    ? 'border border-primary/20 bg-primary/10 text-primary'
+                    : 'border border-border bg-muted text-muted-foreground'
+                )}
+              >
+                {loaderStep >= 1 ? '✓' : '1'}
+              </span>
+              <span
+                className={
+                  loaderStep >= 1
+                    ? 'font-medium text-foreground'
+                    : 'text-muted-foreground'
+                }
+              >
+                Designing slide layouts...
+              </span>
+            </div>
+            <div className="flex items-center gap-3 text-sm">
+              <span
+                className={cn(
+                  'flex h-5 w-5 items-center justify-center rounded-full font-semibold text-xs',
+                  loaderStep >= 2
+                    ? 'border border-primary/20 bg-primary/10 text-primary'
+                    : 'border border-border bg-muted text-muted-foreground'
+                )}
+              >
+                {loaderStep >= 2 ? '✓' : '2'}
+              </span>
+              <span
+                className={
+                  loaderStep >= 2
+                    ? 'font-medium text-foreground'
+                    : 'text-muted-foreground'
+                }
+              >
+                Injecting slide contents...
+              </span>
+            </div>
           </div>
         </div>
       )}
@@ -2286,7 +2492,7 @@ export function LessonPresentation({
                   isFullscreen ? 'h-[82vh]' : 'h-[58vh]'
                 )}
               />
-              {showItemEditor && !isGamma && (
+              {showItemEditor && (
                 <div
                   className={cn(
                     'w-80 shrink-0 overflow-hidden rounded-2xl border border-border bg-card shadow-2xl',
@@ -2412,6 +2618,14 @@ export function LessonPresentation({
           <div className="order-2 w-9 md:order-3" />
         </div>
       )}
+      <SlideAiEditDialog
+        isOpen={isAiEditOpen}
+        scope={aiEditScope}
+        previewText={selectedAiText ?? undefined}
+        isPending={isAiEditing}
+        onOpenChange={handleAiEditOpenChange}
+        onSubmit={submitAiEdit}
+      />
       <TemplateManagerDialog
         isOpen={isUploadOpen}
         onOpenChange={setIsUploadOpen}

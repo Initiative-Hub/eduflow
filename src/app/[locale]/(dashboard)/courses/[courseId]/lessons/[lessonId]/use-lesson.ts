@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { apiClient } from '@/lib/api/api-client';
 import type { TiptapDocument } from '@/utils/lesson-content';
 import { lessonService } from './lesson.service';
-import { slideService } from './slide.service';
+import { slideService, type TemplateImportSource } from './slide.service';
 
 /**
  * Fetches the full lesson record (including content) for a given lessonId.
@@ -195,8 +195,11 @@ export function useSlideTemplateCategories(
 export function useImportSlideTemplate() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: { file: File; name?: string }) =>
-      slideService.importTemplate(data.file, data.name),
+    mutationFn: (data: {
+      file: File;
+      name?: string;
+      source?: TemplateImportSource;
+    }) => slideService.importTemplate(data.file, data.name, data.source),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['slide-templates'] });
     },

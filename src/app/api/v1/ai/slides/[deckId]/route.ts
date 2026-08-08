@@ -1,6 +1,10 @@
 import { errorResponse } from '@/lib/api/error-response';
 import { withRoles } from '@/lib/api/middlewares';
-import { LessonPresentationService } from '@/services/LessonPresentationService';
+import { slideDeckIdSchema } from '@/lib/validation/slide-ai-image';
+import {
+  LessonPresentationService,
+  SlideDeckAccessError,
+} from '@/services/LessonPresentationService';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,12 +41,21 @@ export const GET = withRoles(
   ['TEACHER'],
   async (
     _req: Request,
-    _sessionData,
+    sessionData,
     { params }: { params: Promise<{ deckId: string }> }
   ) => {
     try {
-      const { deckId } = await params;
-      const html = await LessonPresentationService.getDeckHtml(deckId);
+      const routeParams = await params;
+      const deckId = slideDeckIdSchema.safeParse(routeParams.deckId);
+      if (!deckId.success) {
+        return errorResponse('VALIDATION_ERROR', 'Invalid slide deck ID', 400);
+      }
+      await LessonPresentationService.assertDeckAccess({
+        deckId: deckId.data,
+        userId: sessionData.user.id,
+        access: 'view',
+      });
+      const html = await LessonPresentationService.getDeckHtml(deckId.data);
 
       return new Response(html, {
         status: 200,
@@ -52,6 +65,13 @@ export const GET = withRoles(
         },
       });
     } catch (error) {
+      if (error instanceof SlideDeckAccessError) {
+        return errorResponse(
+          error.code,
+          error.message,
+          error.code === 'NOT_FOUND' ? 404 : 403
+        );
+      }
       console.error('AI Slide Deck Fetch Error:', error);
       if (error instanceof Error && error.message === 'Deck not found') {
         return errorResponse('NOT_FOUND', 'Deck not found', 404);
@@ -65,11 +85,20 @@ export const PUT = withRoles(
   ['TEACHER'],
   async (
     req: Request,
-    _sessionData,
+    sessionData,
     { params }: { params: Promise<{ deckId: string }> }
   ) => {
     try {
-      const { deckId } = await params;
+      const routeParams = await params;
+      const deckId = slideDeckIdSchema.safeParse(routeParams.deckId);
+      if (!deckId.success) {
+        return errorResponse('VALIDATION_ERROR', 'Invalid slide deck ID', 400);
+      }
+      await LessonPresentationService.assertDeckAccess({
+        deckId: deckId.data,
+        userId: sessionData.user.id,
+        access: 'update',
+      });
       const body = await req.json();
       const { html } = body;
 
@@ -77,7 +106,7 @@ export const PUT = withRoles(
         return errorResponse('VALIDATION_ERROR', 'Missing HTML content', 400);
       }
 
-      await LessonPresentationService.saveDeckHtml(deckId, html);
+      await LessonPresentationService.saveDeckHtml(deckId.data, html);
 
       return new Response(JSON.stringify({ status: 'success' }), {
         status: 200,
@@ -86,6 +115,13 @@ export const PUT = withRoles(
         },
       });
     } catch (error) {
+      if (error instanceof SlideDeckAccessError) {
+        return errorResponse(
+          error.code,
+          error.message,
+          error.code === 'NOT_FOUND' ? 404 : 403
+        );
+      }
       console.error('AI Slide Deck Save Error:', error);
       return errorResponse('INTERNAL_ERROR', 'Failed to save slide deck', 500);
     }
