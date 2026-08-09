@@ -1,12 +1,6 @@
 {
   "version": 1,
   "skills": {
-    "actions-and-utilities": {
-      "source": "phaserjs/phaser",
-      "sourceType": "github",
-      "skillPath": "skills/actions-and-utilities/SKILL.md",
-      "computedHash": "a222343042fd636d9eb408788b27453ebb91a18b6855864487498a590c5fb3da"
-    },
     "ai-elements": {
       "source": "vercel/ai-elements",
       "sourceType": "github",
@@ -19,28 +13,10 @@
       "skillPath": "skills/use-ai-sdk/SKILL.md",
       "computedHash": "0883204d11b055e968dee697c5858e68064c27dfd4deb6310212895daa65c5ad"
     },
-    "animations": {
-      "source": "phaserjs/phaser",
-      "sourceType": "github",
-      "skillPath": "skills/animations/SKILL.md",
-      "computedHash": "342f4448eed4b25a890793b7f14cad8b3393a16a915cf967edbcd6d2fd9d20d7"
-    },
-    "audio-and-sound": {
-      "source": "phaserjs/phaser",
-      "sourceType": "github",
-      "skillPath": "skills/audio-and-sound/SKILL.md",
-      "computedHash": "6b7e89b5fa68a551829949bf295246e9ea0050379ab1302b26564cd1082e369f"
-    },
     "better-auth-best-practices": {
       "source": "better-auth/skills",
       "sourceType": "github",
       "computedHash": "9ab075b5061be2a5f299c10505667345cc1ec76e8de4120901cfd586643e776f"
-    },
-    "cameras": {
-      "source": "phaserjs/phaser",
-      "sourceType": "github",
-      "skillPath": "skills/cameras/SKILL.md",
-      "computedHash": "4226f37eb305a91e0d005b3006665232a4f2669fd79828f1b879624e9760d2e7"
     },
     "codebase-design": {
       "source": "mattpocock/skills",
@@ -53,18 +29,6 @@
       "sourceType": "github",
       "computedHash": "393e8d2d795fa5797c9a4e0665f29183ea2e140233db59746d510340a10456e6"
     },
-    "curves-and-paths": {
-      "source": "phaserjs/phaser",
-      "sourceType": "github",
-      "skillPath": "skills/curves-and-paths/SKILL.md",
-      "computedHash": "b52bcc04fd4bd0e414192b1e0bf65cc1cf42b826f49e09b4c432815d98267ec4"
-    },
-    "data-manager": {
-      "source": "phaserjs/phaser",
-      "sourceType": "github",
-      "skillPath": "skills/data-manager/SKILL.md",
-      "computedHash": "d5e4ee7c0ed6cd24e7264bebcbcaf2b9032e5a3c42cc38c3a9fed6f81bda334b"
-    },
     "domain-modeling": {
       "source": "mattpocock/skills",
       "sourceType": "github",
@@ -76,18 +40,6 @@
       "sourceType": "github",
       "computedHash": "7786d722fa682b3d6a99793e73a9d51b59becefa595676134a993020633e068f"
     },
-    "events-system": {
-      "source": "phaserjs/phaser",
-      "sourceType": "github",
-      "skillPath": "skills/events-system/SKILL.md",
-      "computedHash": "e9f5d6b60311f3301c18de17f8414887eb1b96992e5e4461110128a74836c773"
-    },
-    "filters-and-postfx": {
-      "source": "phaserjs/phaser",
-      "sourceType": "github",
-      "skillPath": "skills/filters-and-postfx/SKILL.md",
-      "computedHash": "202a8e2f75c501d2799d16b606cf6afbcf15aa27cb1a8ad5e50705b03fa28390"
-    },
     "find-skills": {
       "source": "vercel-labs/skills",
       "sourceType": "github",
@@ -98,30 +50,6 @@
       "sourceType": "github",
       "skillPath": "skills/frontend-design/SKILL.md",
       "computedHash": "93f53fd1c0352d3d7ec17b8f73d7351bf76f4821e55d123c9d2abc2c53ba48e4"
-    },
-    "game-object-components": {
-      "source": "phaserjs/phaser",
-      "sourceType": "github",
-      "skillPath": "skills/game-object-components/SKILL.md",
-      "computedHash": "f610808358e80182b524a0ae1590f5a877d69e205d2b0fff4aad317469e8710f"
-    },
-    "game-setup-and-config": {
-      "source": "phaserjs/phaser",
-      "sourceType": "github",
-      "skillPath": "skills/game-setup-and-config/SKILL.md",
-      "computedHash": "ff373f46eef9528843a388b8fc2083b4a7aad8f50298d753ec745423706b77a0"
-    },
-    "geometry-and-math": {
-      "source": "phaserjs/phaser",
-      "sourceType": "github",
-      "skillPath": "skills/geometry-and-math/SKILL.md",
-      "computedHash": "3e606a6044353673d48958a58ad3328c38c2fe82d30cc968ce4d8edea9002fca"
-    },
-    "graphics-and-shapes": {
-      "source": "phaserjs/phaser",
-      "sourceType": "github",
-      "skillPath": "skills/graphics-and-shapes/SKILL.md",
-      "computedHash": "63c67cbf57b8338031aa762940187bf957c6144c7a56c7fc6adb303fcd9f24bd"
     },
     "grill-me": {
       "source": "mattpocock/skills",
@@ -135,77 +63,17 @@
       "skillPath": "skills/engineering/grill-with-docs/SKILL.md",
       "computedHash": "96718e0a89e48c7d76cc9759c7094a82ff34eb89ddc46a30388063fa9812356f"
     },
-    "groups-and-containers": {
-      "source": "phaserjs/phaser",
-      "sourceType": "github",
-      "skillPath": "skills/groups-and-containers/SKILL.md",
-      "computedHash": "238fc80957f8a74b127979ac45ea76a9dd13cfe2ada1f7913f4649b3db5facdf"
-    },
     "improve-codebase-architecture": {
       "source": "mattpocock/skills",
       "sourceType": "github",
       "skillPath": "skills/engineering/improve-codebase-architecture/SKILL.md",
       "computedHash": "569299a60c8e93880f3b3c1eca55578f58f7e1a4155876edb4cb814da3d6b3ea"
     },
-    "input-keyboard-mouse-touch": {
-      "source": "phaserjs/phaser",
-      "sourceType": "github",
-      "skillPath": "skills/input-keyboard-mouse-touch/SKILL.md",
-      "computedHash": "ec25f47ee3cdc6a6ed0ceaa77d62fcbe30a161f73cbc2dcf3771e12c64bee791"
-    },
-    "loading-assets": {
-      "source": "phaserjs/phaser",
-      "sourceType": "github",
-      "skillPath": "skills/loading-assets/SKILL.md",
-      "computedHash": "ad170c148ff69639aa3307879f6c392ee55f45beadbae30f724f478abf98a951"
-    },
-    "particles": {
-      "source": "phaserjs/phaser",
-      "sourceType": "github",
-      "skillPath": "skills/particles/SKILL.md",
-      "computedHash": "7bbe8f927750a78b89e39c4b8612862f974ff09a428cb33942ab8e6b6487a5d9"
-    },
-    "physics-arcade": {
-      "source": "phaserjs/phaser",
-      "sourceType": "github",
-      "skillPath": "skills/physics-arcade/SKILL.md",
-      "computedHash": "7b22c800add32504ddfa48205c99ffc0f43ff36ad09e75885cd2a8cf07b9e029"
-    },
-    "physics-matter": {
-      "source": "phaserjs/phaser",
-      "sourceType": "github",
-      "skillPath": "skills/physics-matter/SKILL.md",
-      "computedHash": "75b21cb833727aa5eab8e99b873d03b02c5783d5cd44fc42a78ffd4497915419"
-    },
-    "render-textures": {
-      "source": "phaserjs/phaser",
-      "sourceType": "github",
-      "skillPath": "skills/render-textures/SKILL.md",
-      "computedHash": "3a9d0008ba5a75c1e4f6d455ba578d640cd612d4dd64e9bc566cddec1711d3ab"
-    },
-    "scale-and-responsive": {
-      "source": "phaserjs/phaser",
-      "sourceType": "github",
-      "skillPath": "skills/scale-and-responsive/SKILL.md",
-      "computedHash": "a6d70e6e8191a7038f15ade6ac7dc9cb2c33bde8c64a3e82ae54cc84a640fa58"
-    },
-    "scenes": {
-      "source": "phaserjs/phaser",
-      "sourceType": "github",
-      "skillPath": "skills/scenes/SKILL.md",
-      "computedHash": "3074badaa83649550b218788638c4811bfa3dc9b21f1139e99661f36d1bcdc9e"
-    },
     "shadcn": {
       "source": "shadcn/ui",
       "sourceType": "github",
       "skillPath": "skills/shadcn/SKILL.md",
       "computedHash": "f99ef49d9909d380ca683ceb8dc8c25775c20ee38140112c394e037d8c11ee18"
-    },
-    "sprites-and-images": {
-      "source": "phaserjs/phaser",
-      "sourceType": "github",
-      "skillPath": "skills/sprites-and-images/SKILL.md",
-      "computedHash": "0b481bd5b02c2e997a4207ba83046770a72db599b92c22353a9bbdbad77d1cfb"
     },
     "streamdown": {
       "source": "vercel/streamdown",
@@ -219,53 +87,17 @@
       "skillPath": "skills/engineering/tdd/SKILL.md",
       "computedHash": "7ac19bf391ceb23266ed5b4f81068201eaa38dcf76d0b59850d49c2c9e426d63"
     },
-    "text-and-bitmaptext": {
-      "source": "phaserjs/phaser",
-      "sourceType": "github",
-      "skillPath": "skills/text-and-bitmaptext/SKILL.md",
-      "computedHash": "979e4655caf74ed97a7a61a7cab8b673114aa40ce356883bdaa261f727049c68"
-    },
-    "tilemaps": {
-      "source": "phaserjs/phaser",
-      "sourceType": "github",
-      "skillPath": "skills/tilemaps/SKILL.md",
-      "computedHash": "42007a40324eb14675db75b7cb9239c203c44caeefb97942ac3a6bae9fb92604"
-    },
-    "time-and-timers": {
-      "source": "phaserjs/phaser",
-      "sourceType": "github",
-      "skillPath": "skills/time-and-timers/SKILL.md",
-      "computedHash": "4889fc4150aab4ab02e1d308e1ad64e0fac646a5dc3a9a04866534fdaedde715"
-    },
     "tiptap": {
       "source": "ueberdosis/tiptap",
       "sourceType": "github",
       "skillPath": "skills/tiptap/SKILL.md",
       "computedHash": "7f5d1f17762bc7c41e305edad1491f6917da9a001b75db60f48538176fde403d"
     },
-    "tweens": {
-      "source": "phaserjs/phaser",
-      "sourceType": "github",
-      "skillPath": "skills/tweens/SKILL.md",
-      "computedHash": "e3fdd8e7017453842054744958ee032bfea2f5b1c143001c517f5888ca4d9f54"
-    },
     "ui-ux-pro-max": {
       "source": "nextlevelbuilder/ui-ux-pro-max-skill",
       "sourceType": "github",
       "skillPath": "skills/ui-ux-pro-max/SKILL.md",
       "computedHash": "6337038fe1fe6bbe1b9f252ab678ee575859190bab6f0f246f4061824eb40875"
-    },
-    "v3-to-v4-migration": {
-      "source": "phaserjs/phaser",
-      "sourceType": "github",
-      "skillPath": "skills/v3-to-v4-migration/SKILL.md",
-      "computedHash": "f924579f61b1d691209ed3299b3ae81e3d21e0e005e82182d277ece90e821866"
-    },
-    "v4-new-features": {
-      "source": "phaserjs/phaser",
-      "sourceType": "github",
-      "skillPath": "skills/v4-new-features/SKILL.md",
-      "computedHash": "cf435ba5df67acfaa55b346e0922357a0df47e232084a3b2e2a09e8fcfc60b5b"
     },
     "vercel-react-best-practices": {
       "source": "vercel-labs/agent-skills",
