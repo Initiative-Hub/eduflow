@@ -1,8 +1,5 @@
 FROM astral/uv:python3.12-bookworm-slim
 
-ENV AWS_S3_DEFAULT_TEMPLATES_BUCKET=eduflow-default-template
-ENV AWS_S3_TEMPLATES_BUCKET=eduflow-template
-
 # Install system fonts and fontconfig for resvg text rendering
 RUN apt-get update && apt-get install -y --no-install-recommends \
     fontconfig \
@@ -15,7 +12,6 @@ WORKDIR /app
 
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
-RUN mkdir -p /app/templates
 
 COPY . .
 
