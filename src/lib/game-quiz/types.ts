@@ -5,9 +5,8 @@ export const GAME_QUIZ_TEMPLATE_KEY: GameQuizTemplateKey = 'LIVE_QUIZ_RALLY';
 export const GAME_SESSION_PHASES = [
   'LOBBY',
   'QUESTION_OPEN',
-  'ANSWER_LOCKED',
   'REVEAL',
-  'PROGRESS',
+  'SCOREBOARD',
   'FINAL_CELEBRATION',
   'REPORT',
 ] as const;
@@ -50,7 +49,6 @@ export type GameQuizRecord = {
   templateKey: GameQuizTemplateKey;
   randomizeQuestionOrder: boolean;
   randomizeAnswerOrder: boolean;
-  showLeaderboard: boolean;
   revision: number;
   createdAt: Date;
   updatedAt: Date;
@@ -123,7 +121,6 @@ export type GameSessionRecord = {
   joiningLocked: boolean;
   randomizeQuestionOrder: boolean;
   randomizeAnswerOrder: boolean;
-  showLeaderboard: boolean;
   stateVersion: number;
   startedAt: Date | null;
   endedAt: Date | null;
@@ -139,6 +136,30 @@ export type SessionWithGameData = GameSessionRecord & {
   rounds: GameRoundRecord[];
   participants: GameParticipantRecord[];
   answers: GameAnswerRecord[];
+};
+
+export type GameSessionReport = {
+  session: {
+    id: string;
+    gameTitle: string;
+    joinCode: string;
+    phase: GameSessionPhase;
+    createdAt: string;
+    completedAt: string | null;
+  };
+  participants: Array<{
+    id: string;
+    displayName: string;
+    score: number;
+  }>;
+  rounds: Array<{
+    id: string;
+    order: number;
+    prompt: string;
+    responseCount: number;
+    correctCount: number;
+    averagePoints: number;
+  }>;
 };
 
 export type GameQuizWithQuestions = GameQuizRecord & {

@@ -6,9 +6,8 @@ const gameParticipantIdSchema = z.string().uuid();
 export const gameQuizSessionPhaseSchema = z.enum([
   'LOBBY',
   'QUESTION_OPEN',
-  'ANSWER_LOCKED',
   'REVEAL',
-  'PROGRESS',
+  'SCOREBOARD',
   'FINAL_CELEBRATION',
   'REPORT',
 ]);

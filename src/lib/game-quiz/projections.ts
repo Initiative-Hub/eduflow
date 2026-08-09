@@ -6,30 +6,38 @@ import type {
   GameRoundRecord,
   SessionWithGameData,
 } from './types';
+import {
+  createAvatarReadSignedUrl,
+  isAbsoluteHttpUrl,
+  isAvatarObjectKey,
+} from '@/lib/storage/avatar';
 
 const canManage = (actor: GameActor, ownerId: string) =>
   actor.role === 'ADMIN' || actor.userId === ownerId;
 
 const isRevealVisible = (phase: SessionWithGameData['phase']) =>
   phase === 'REVEAL' ||
-  phase === 'PROGRESS' ||
+  phase === 'SCOREBOARD' ||
   phase === 'FINAL_CELEBRATION' ||
   phase === 'REPORT';
 
 const projectOption = (
   option: GameRoundRecord['options'][number],
-  includeCorrectness: boolean
+  includeCorrectness: boolean,
+  answerCount?: number
 ) => ({
   id: option.id,
   orderIndex: option.orderIndex,
   text: option.text,
   ...(includeCorrectness ? { isCorrect: option.isCorrect } : {}),
+  ...(answerCount === undefined ? {} : { answerCount }),
 });
 
 const projectRound = (
   round: GameRoundRecord,
   includeCorrectness: boolean,
-  includeExplanation: boolean
+  includeExplanation: boolean,
+  answers?: GameAnswerRecord[]
 ) => ({
   id: round.id,
   orderIndex: round.orderIndex,
@@ -41,9 +49,12 @@ const projectRound = (
   openedAt: round.openedAt,
   deadlineAt: round.deadlineAt,
   revealedAt: round.revealedAt,
-  options: round.options.map((option) =>
-    projectOption(option, includeCorrectness)
-  ),
+  options: round.options.map((option) => {
+    const answerCount = answers?.filter(
+      (answer) => answer.selectedOptionId === option.id
+    ).length;
+    return projectOption(option, includeCorrectness, answerCount);
+  }),
 });
 
 export function projectGameQuizDefinition(quiz: GameQuizWithQuestions) {
@@ -55,7 +66,6 @@ export function projectGameQuizDefinition(quiz: GameQuizWithQuestions) {
     templateKey: quiz.templateKey,
     randomizeQuestionOrder: quiz.randomizeQuestionOrder,
     randomizeAnswerOrder: quiz.randomizeAnswerOrder,
-    showLeaderboard: quiz.showLeaderboard,
     revision: quiz.revision,
     createdAt: quiz.createdAt,
     updatedAt: quiz.updatedAt,
@@ -77,10 +87,27 @@ export function projectGameQuizDefinition(quiz: GameQuizWithQuestions) {
   };
 }
 
-function projectParticipant(participant: GameParticipantRecord) {
+async function projectParticipant(participant: GameParticipantRecord) {
+  const storedImage = participant.user?.image ?? null;
+  let image = storedImage;
+
+  if (
+    storedImage &&
+    !isAbsoluteHttpUrl(storedImage) &&
+    isAvatarObjectKey(storedImage)
+  ) {
+    try {
+      image = await createAvatarReadSignedUrl({ objectKey: storedImage });
+    } catch (error) {
+      console.error('Failed to sign Game Quiz participant avatar.', error);
+      image = null;
+    }
+  }
+
   return {
     id: participant.id,
     displayName: participant.displayName,
+    image,
     score: participant.score,
     joinedAt: participant.joinedAt,
     lastSeenAt: participant.lastSeenAt,
@@ -105,14 +132,17 @@ function projectPlayerAnswer(
   };
 }
 
-function projectLeaderboard(session: SessionWithGameData) {
-  return session.participants.map((participant, index) => ({
+async function projectLeaderboard(session: SessionWithGameData) {
+  const participants = await Promise.all(
+    session.participants.map(projectParticipant)
+  );
+  return participants.map((participant, index) => ({
     rank: index + 1,
-    ...projectParticipant(participant),
+    ...participant,
   }));
 }
 
-export function projectParticipantSession(
+export async function projectParticipantSession(
   session: SessionWithGameData,
   participant: GameParticipantRecord
 ) {
@@ -141,21 +171,28 @@ export function projectParticipantSession(
     currentRoundIndex: session.currentRoundIndex,
     totalRounds: session.rounds.length,
     joiningLocked: session.joiningLocked,
-    showLeaderboard: session.showLeaderboard,
     stateVersion: session.stateVersion,
     startedAt: session.startedAt,
     endedAt: session.endedAt,
-    participant: projectParticipant(participant),
+    participant: await projectParticipant(participant),
     currentRound: currentRound
-      ? projectRound(currentRound, revealed, revealed)
+      ? projectRound(
+          currentRound,
+          revealed,
+          revealed,
+          revealed
+            ? session.answers.filter(
+                (answer) => answer.roundId === currentRound.id
+              )
+            : undefined
+        )
       : null,
     answer: projectPlayerAnswer(answer, revealed),
-    leaderboard:
-      session.showLeaderboard && revealed ? projectLeaderboard(session) : null,
+    leaderboard: revealed ? await projectLeaderboard(session) : null,
   };
 }
 
-export function projectHostSession(session: SessionWithGameData) {
+export async function projectHostSession(session: SessionWithGameData) {
   const currentRound =
     session.currentRoundIndex === null
       ? null
@@ -174,23 +211,34 @@ export function projectHostSession(session: SessionWithGameData) {
     currentRoundIndex: session.currentRoundIndex,
     totalRounds: session.rounds.length,
     joiningLocked: session.joiningLocked,
-    showLeaderboard: session.showLeaderboard,
     stateVersion: session.stateVersion,
     startedAt: session.startedAt,
     endedAt: session.endedAt,
-    participants: session.participants.map(projectParticipant),
-    currentRound: currentRound ? projectRound(currentRound, true, true) : null,
+    participants: await Promise.all(
+      session.participants.map(projectParticipant)
+    ),
+    currentRound: currentRound
+      ? projectRound(
+          currentRound,
+          true,
+          true,
+          session.answers.filter((answer) => answer.roundId === currentRound.id)
+        )
+      : null,
     rounds: session.rounds.map((round) => projectRound(round, true, true)),
-    leaderboard: session.showLeaderboard ? projectLeaderboard(session) : null,
+    leaderboard: await projectLeaderboard(session),
   };
 }
 
-export function projectSessionForActor(
+export async function projectSessionForActor(
   session: SessionWithGameData,
   actor: GameActor
 ) {
   if (canManage(actor, session.hostId)) {
-    return { audience: 'HOST' as const, session: projectHostSession(session) };
+    return {
+      audience: 'HOST' as const,
+      session: await projectHostSession(session),
+    };
   }
 
   const participant = session.participants.find(
@@ -202,6 +250,6 @@ export function projectSessionForActor(
 
   return {
     audience: 'PARTICIPANT' as const,
-    session: projectParticipantSession(session, participant),
+    session: await projectParticipantSession(session, participant),
   };
 }

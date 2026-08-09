@@ -6,6 +6,7 @@ import {
   validationErrorResponse,
 } from '@/lib/game-quiz/http';
 import { gameSessionIdParamsSchema } from '@/lib/game-quiz/schemas';
+import type { GameSessionReport } from '@/lib/game-quiz/types';
 import { getGameSessionReport } from '@/services/GameQuizAnswerService';
 
 type RouteContext = { params: Promise<{ sessionId: string }> };
@@ -36,12 +37,11 @@ export const GET = withRoles(
     }
 
     try {
-      return NextResponse.json(
-        await getGameSessionReport(
-          gameActorFromSession(session),
-          parsedParams.data.sessionId
-        )
+      const report: GameSessionReport = await getGameSessionReport(
+        gameActorFromSession(session),
+        parsedParams.data.sessionId
       );
+      return NextResponse.json(report);
     } catch (error) {
       return gameQuizExceptionResponse(
         error,

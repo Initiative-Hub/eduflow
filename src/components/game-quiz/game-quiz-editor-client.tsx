@@ -4,7 +4,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ChevronLeft,
   ChevronRight,
-  CircleHelp,
   Loader2,
   Play,
   Plus,
@@ -552,12 +551,8 @@ export function GameQuizEditorClient({
           <div className="space-y-4 border-t pt-5">
             <div>
               <p className="font-medium text-sm">{copy.editor.settings}</p>
-              <p className="mt-1 text-muted-foreground text-xs">
-                {copy.editor.leaderboardHelp}
-              </p>
             </div>
             <SettingToggle
-              copy={copy}
               checked={draft.settings.randomizeQuestions}
               label={copy.editor.randomizeQuestions}
               onChange={(checked) =>
@@ -571,7 +566,6 @@ export function GameQuizEditorClient({
               }
             />
             <SettingToggle
-              copy={copy}
               checked={draft.settings.randomizeAnswers}
               label={copy.editor.randomizeAnswers}
               onChange={(checked) =>
@@ -581,24 +575,6 @@ export function GameQuizEditorClient({
                 }))
               }
             />
-            <SettingToggle
-              copy={copy}
-              checked={draft.settings.leaderboardEnabled}
-              label={copy.editor.leaderboard}
-              onChange={(checked) =>
-                setDraft((current) => ({
-                  ...current,
-                  settings: {
-                    ...current.settings,
-                    leaderboardEnabled: checked,
-                  },
-                }))
-              }
-            />
-          </div>
-          <div className="flex gap-2 border-t pt-5 text-muted-foreground text-xs">
-            <CircleHelp className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-            <p>{copy.editor.leaderboardHelp}</p>
           </div>
         </aside>
       </div>
@@ -617,12 +593,10 @@ function EditorLoading({ copy }: { copy: GameQuizCopy }) {
 
 function SettingToggle({
   checked,
-  copy: _copy,
   label,
   onChange,
 }: {
   checked: boolean;
-  copy: GameQuizCopy;
   label: string;
   onChange: (checked: boolean) => void;
 }) {

@@ -28,7 +28,6 @@ export const gameQuizSettingsSchema = z.object({
   difficulty: nullableTrimmedText(50),
   randomizeQuestionOrder: z.boolean().default(false),
   randomizeAnswerOrder: z.boolean().default(false),
-  showLeaderboard: z.boolean().default(false),
 });
 
 export const createGameQuizSchema = gameQuizSettingsSchema;
@@ -43,14 +42,12 @@ export const updateGameQuizSchema = gameQuizSettingsSchema
       difficulty,
       randomizeQuestionOrder,
       randomizeAnswerOrder,
-      showLeaderboard,
     }) =>
       title !== undefined ||
       topic !== undefined ||
       difficulty !== undefined ||
       randomizeQuestionOrder !== undefined ||
-      randomizeAnswerOrder !== undefined ||
-      showLeaderboard !== undefined,
+      randomizeAnswerOrder !== undefined,
     { message: 'At least one field must be updated' }
   );
 
@@ -102,19 +99,11 @@ export const hostCommandSchema = z.discriminatedUnion('action', [
     expectedStateVersion: z.number().int().min(1),
   }),
   z.object({
-    action: z.literal('LOCK_ANSWERS'),
+    action: z.literal('SKIP'),
     expectedStateVersion: z.number().int().min(1),
   }),
   z.object({
-    action: z.literal('REVEAL'),
-    expectedStateVersion: z.number().int().min(1),
-  }),
-  z.object({
-    action: z.literal('SHOW_PROGRESS'),
-    expectedStateVersion: z.number().int().min(1),
-  }),
-  z.object({
-    action: z.literal('OPEN_NEXT'),
+    action: z.literal('NEXT'),
     expectedStateVersion: z.number().int().min(1),
   }),
   z.object({
@@ -123,7 +112,11 @@ export const hostCommandSchema = z.discriminatedUnion('action', [
     joiningLocked: z.boolean(),
   }),
   z.object({
-    action: z.literal('END'),
+    action: z.literal('END_GAME'),
+    expectedStateVersion: z.number().int().min(1),
+  }),
+  z.object({
+    action: z.literal('END_SESSION'),
     expectedStateVersion: z.number().int().min(1),
   }),
 ]);

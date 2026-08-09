@@ -7,6 +7,7 @@ import {
 import { gameQuizError } from './errors';
 import type {
   GameActor,
+  GameSessionPhase,
   GameQuizWithQuestions,
   SessionWithGameData,
 } from './types';
@@ -127,4 +128,30 @@ export function requireGameSessionPhase(
       `This action is unavailable while the session is ${session.phase}.`
     );
   }
+}
+
+export function shouldAutoRevealGameRound({
+  answerCount,
+  deadlineAt,
+  now,
+  participantCount,
+}: {
+  answerCount: number;
+  deadlineAt: Date | null;
+  now: Date;
+  participantCount: number;
+}) {
+  return (
+    (deadlineAt !== null && now >= deadlineAt) ||
+    (participantCount > 0 && answerCount >= participantCount)
+  );
+}
+
+export function nextHostedGamePhase(
+  phase: GameSessionPhase,
+  hasNextRound: boolean
+): 'SCOREBOARD' | 'QUESTION_OPEN' | 'FINAL_CELEBRATION' | null {
+  if (phase === 'REVEAL') return 'SCOREBOARD';
+  if (phase !== 'SCOREBOARD') return null;
+  return hasNextRound ? 'QUESTION_OPEN' : 'FINAL_CELEBRATION';
 }

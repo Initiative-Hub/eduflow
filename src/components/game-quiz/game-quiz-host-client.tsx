@@ -1,36 +1,38 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Copy, Loader2, Lock, Play, Radio, Unlock, Users } from 'lucide-react';
+import {
+  Check,
+  Clock3,
+  Copy,
+  Ellipsis,
+  Loader2,
+  Play,
+  Radio,
+  SkipForward,
+  Trophy,
+} from 'lucide-react';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { type GameHostAction, gameQuizApi } from './api';
 import { type GameQuizCopy, gameQuizCopy } from './copy';
-import type { GameSessionPhase, GameSessionSnapshot } from './types';
+import { GameQuizPodium } from './game-quiz-podium';
+import type { GameQuizOption, GameSessionSnapshot } from './types';
 import { useGameQuizRealtime } from './use-game-quiz-realtime';
 
 interface GameQuizHostClientProps {
   sessionId: string;
   copy?: GameQuizCopy;
 }
-
-const phaseActions: Record<
-  GameSessionPhase,
-  {
-    action: GameHostAction;
-    label: keyof GameQuizCopy['host'];
-  } | null
-> = {
-  LOBBY: { action: 'START', label: 'start' },
-  QUESTION_OPEN: { action: 'LOCK_ANSWERS', label: 'lockAnswers' },
-  ANSWER_LOCKED: { action: 'REVEAL', label: 'reveal' },
-  REVEAL: { action: 'SHOW_PROGRESS', label: 'next' },
-  PROGRESS: { action: 'OPEN_NEXT', label: 'next' },
-  FINAL_CELEBRATION: { action: 'END', label: 'finish' },
-  REPORT: null,
-  ENDED: null,
-};
 
 export function GameQuizHostClient({
   sessionId,
@@ -40,14 +42,15 @@ export function GameQuizHostClient({
   const sessionQuery = useQuery({
     queryKey: ['game-session', sessionId, 'host'],
     queryFn: () => gameQuizApi.getSession(sessionId),
-    refetchInterval: 1500,
+    refetchInterval: 1_500,
   });
   const progressQuery = useQuery({
     queryKey: ['game-session', sessionId, 'answer-progress'],
     queryFn: () => gameQuizApi.answerProgress(sessionId),
-    refetchInterval: 1500,
+    refetchInterval: 1_500,
   });
   useGameQuizRealtime({ sessionId, audience: 'HOST' });
+
   const commandMutation = useMutation({
     mutationFn: ({
       action,
@@ -68,99 +71,169 @@ export function GameQuizHostClient({
     onSuccess: (session) => {
       queryClient.setQueryData(['game-session', sessionId, 'host'], session);
       queryClient.setQueryData(['game-session', sessionId, 'player'], session);
+      void queryClient.invalidateQueries({
+        queryKey: ['game-session', sessionId, 'answer-progress'],
+      });
     },
     onError: () => toast.error(copy.common.error),
   });
 
   if (sessionQuery.isPending) return <GameSessionLoading copy={copy} />;
-  if (sessionQuery.isError || !sessionQuery.data)
+  if (sessionQuery.isError || !sessionQuery.data) {
+    return (
+      <GameSessionError copy={copy} onRetry={() => sessionQuery.refetch()} />
+    );
+  }
+
+  const session = sessionQuery.data;
+  if (session.phase === 'LOBBY') {
+    return (
+      <HostLobby
+        copy={copy}
+        isPending={commandMutation.isPending}
+        onCommand={(action, joiningLocked) =>
+          commandMutation.mutate({ action, joiningLocked })
+        }
+        session={session}
+      />
+    );
+  }
+  if (session.phase === 'FINAL_CELEBRATION') {
+    return (
+      <HostPodium
+        copy={copy}
+        isPending={commandMutation.isPending}
+        onEndSession={() => commandMutation.mutate({ action: 'END_SESSION' })}
+        session={session}
+      />
+    );
+  }
+  if (session.phase === 'REPORT')
+    return <HostReport copy={copy} session={session} />;
+  if (!session.currentRound)
     return (
       <GameSessionError copy={copy} onRetry={() => sessionQuery.refetch()} />
     );
 
-  const session = sessionQuery.data;
+  const action: GameHostAction =
+    session.phase === 'QUESTION_OPEN' ? 'SKIP' : 'NEXT';
+  const actionLabel =
+    session.phase === 'QUESTION_OPEN' ? copy.host.skip : copy.host.next;
   const answerCount = progressQuery.data?.answerCount ?? session.answerCount;
-  const primaryAction = phaseActions[session.phase];
-  const joinPath = `/games/join?code=${session.joinCode}`;
 
   return (
-    <main className="space-y-6 pb-10">
-      <header className="flex flex-col gap-4 border-b pb-5 lg:flex-row lg:items-end lg:justify-between">
+    <main className="min-h-[calc(100vh-6rem)] bg-foreground px-3 py-3 text-background sm:px-6 sm:py-6 dark:bg-background dark:text-foreground">
+      <div className="mx-auto flex min-h-[calc(100vh-9rem)] max-w-360 flex-col">
+        <header className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-start gap-2">
+            <div className="min-w-0">
+              <p className="truncate text-background/70 text-sm dark:text-muted-foreground">
+                {session.gameTitle}
+              </p>
+              <p className="mt-1 font-medium text-xs uppercase tracking-[0.16em]">
+                {copy.player.question} {session.currentRoundIndex + 1}/
+                {session.totalRounds}
+              </p>
+            </div>
+            <SessionOverflow
+              disabled={commandMutation.isPending}
+              label={copy.host.endGame}
+              onSelect={() => commandMutation.mutate({ action: 'END_GAME' })}
+            />
+          </div>
+          <Button
+            disabled={commandMutation.isPending}
+            onClick={() => commandMutation.mutate({ action })}
+            size="sm"
+            variant="secondary"
+          >
+            {commandMutation.isPending ? (
+              <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+            ) : action === 'SKIP' ? (
+              <SkipForward className="size-4" aria-hidden="true" />
+            ) : null}
+            {actionLabel}
+          </Button>
+        </header>
+
+        {session.phase === 'SCOREBOARD' ? (
+          <ScoreboardStage copy={copy} session={session} />
+        ) : (
+          <QuestionStage
+            answerCount={answerCount}
+            copy={copy}
+            session={session}
+          />
+        )}
+      </div>
+    </main>
+  );
+}
+
+function HostLobby({
+  copy,
+  isPending,
+  onCommand,
+  session,
+}: {
+  copy: GameQuizCopy;
+  isPending: boolean;
+  onCommand: (action: GameHostAction, joiningLocked?: boolean) => void;
+  session: GameSessionSnapshot;
+}) {
+  const copyJoinLink = async () => {
+    await navigator.clipboard.writeText(
+      new URL(
+        `/games/join?code=${session.joinCode}`,
+        window.location.origin
+      ).toString()
+    );
+    toast.success(copy.common.copied);
+  };
+
+  return (
+    <main className="mx-auto max-w-5xl space-y-6 pb-10">
+      <header className="flex flex-col gap-4 border-b pb-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <div className="flex items-center gap-2 text-primary text-sm">
-            <Radio className="size-4" aria-hidden="true" /> {session.phase}
+            <Radio className="size-4" aria-hidden="true" /> LOBBY
           </div>
           <h1 className="mt-1 font-semibold text-3xl">{copy.host.title}</h1>
           <p className="mt-2 text-muted-foreground">{session.gameTitle}</p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          {primaryAction ? (
-            <Button
-              disabled={commandMutation.isPending}
-              onClick={() =>
-                commandMutation.mutate({ action: primaryAction.action })
-              }
-            >
-              {commandMutation.isPending ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <Play className="size-4" />
-              )}
-              {copy.host[primaryAction.label]}
-            </Button>
-          ) : null}
-          {session.phase !== 'ENDED' ? (
-            <Button
-              disabled={commandMutation.isPending}
-              onClick={() => commandMutation.mutate({ action: 'END' })}
-              variant="outline"
-            >
-              <Lock className="size-4" aria-hidden="true" />
-              {copy.host.end}
-            </Button>
-          ) : (
-            <Button asChild variant="outline">
-              <Link href={`/games/sessions/${sessionId}/report`}>
-                {copy.report.title}
-              </Link>
-            </Button>
-          )}
+        <div className="flex gap-2">
+          <Button
+            disabled={isPending || session.participants.length === 0}
+            onClick={() => onCommand('START')}
+          >
+            <Play className="size-4" aria-hidden="true" />
+            {copy.host.start}
+          </Button>
+          <SessionOverflow
+            disabled={isPending}
+            label={copy.host.endSession}
+            onSelect={() => onCommand('END_SESSION')}
+          />
         </div>
       </header>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
-        <section className="space-y-6">
-          <div className="grid gap-px border bg-border sm:grid-cols-3">
-            <Metric label={copy.host.joinCode} value={session.joinCode} />
-            <Metric
-              label={copy.host.players}
-              value={String(session.participants.length)}
-            />
-            <Metric
-              label={copy.host.answers}
-              value={`${answerCount}/${session.participants.length}`}
-            />
-          </div>
-
-          <section className="border bg-card p-6 sm:p-8">
-            {session.phase === 'LOBBY' ? (
-              <LobbyPanel copy={copy} session={session} joinPath={joinPath} />
-            ) : session.currentRound ? (
-              <HostRoundPanel copy={copy} session={session} />
-            ) : (
-              <div className="py-12 text-center">
-                <h2 className="font-semibold text-2xl">
-                  {copy.player.finishTitle}
-                </h2>
-                <p className="mt-2 text-muted-foreground">
-                  {copy.player.finishDescription}
-                </p>
-              </div>
-            )}
-          </section>
-        </section>
-
-        <aside className="border bg-card p-5 xl:sticky xl:top-0 xl:h-fit">
+      <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+        <div className="border bg-card p-7 sm:p-10">
+          <p className="text-muted-foreground text-sm">{copy.host.lobby}</p>
+          <p className="mt-3 font-semibold text-5xl tracking-[0.16em]">
+            {session.joinCode}
+          </p>
+          <Button className="mt-6" onClick={copyJoinLink} variant="outline">
+            <Copy className="size-4" aria-hidden="true" />
+            {copy.host.copyLink}
+          </Button>
+          {session.participants.length === 0 ? (
+            <p className="mt-6 text-muted-foreground text-sm">
+              {copy.host.noPlayers}
+            </p>
+          ) : null}
+        </div>
+        <aside className="border bg-card p-5">
           <div className="flex items-center justify-between">
             <h2 className="font-medium">{copy.host.players}</h2>
             <Button
@@ -169,154 +242,306 @@ export function GameQuizHostClient({
                   ? copy.host.unlockJoining
                   : copy.host.lockJoining
               }
-              disabled={commandMutation.isPending}
+              disabled={isPending}
               onClick={() =>
-                commandMutation.mutate({
-                  action: 'SET_JOINING_LOCKED',
-                  joiningLocked: !session.joiningLocked,
-                })
+                onCommand('SET_JOINING_LOCKED', !session.joiningLocked)
               }
-              size="icon"
+              size="sm"
               variant="ghost"
             >
-              {session.joiningLocked ? (
-                <Unlock className="size-4" aria-hidden="true" />
-              ) : (
-                <Lock className="size-4" aria-hidden="true" />
-              )}
+              {session.joiningLocked
+                ? copy.host.unlockJoining
+                : copy.host.lockJoining}
             </Button>
           </div>
-          <p className="mt-1 text-muted-foreground text-xs">
-            {session.joiningLocked ? copy.host.joinLocked : copy.host.joinOpen}
-          </p>
-          {session.participants.length === 0 ? (
-            <p className="py-8 text-muted-foreground text-sm">
-              {copy.host.noPlayers}
-            </p>
-          ) : (
-            <ul className="mt-4 space-y-2">
-              {session.participants.map((participant) => (
-                <li
-                  className="flex items-center justify-between border-b py-2 text-sm last:border-0"
-                  key={participant.id}
-                >
-                  <span className="flex min-w-0 items-center gap-2">
-                    <span
-                      className={`size-2 rounded-full ${participant.isOnline ? 'bg-success' : 'bg-muted-foreground'}`}
-                    />{' '}
-                    <span className="truncate">{participant.displayName}</span>
-                  </span>
-                  <span className="text-muted-foreground tabular-nums">
-                    {participant.score}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
+          <ul className="mt-4 space-y-2">
+            {session.participants.map((participant) => (
+              <li
+                className="flex items-center gap-3 border-b py-2 text-sm last:border-0"
+                key={participant.id}
+              >
+                <Avatar size="sm">
+                  <AvatarImage alt="" src={participant.image ?? undefined} />
+                  <AvatarFallback>
+                    {participant.displayName.slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="truncate">{participant.displayName}</span>
+              </li>
+            ))}
+          </ul>
         </aside>
-      </div>
+      </section>
     </main>
   );
 }
 
-function LobbyPanel({
-  copy,
-  joinPath,
-  session,
-}: {
-  copy: GameQuizCopy;
-  joinPath: string;
-  session: GameSessionSnapshot;
-}) {
-  const copyJoinLink = async () => {
-    await navigator.clipboard.writeText(
-      new URL(joinPath, window.location.origin).toString()
-    );
-    toast.success(copy.common.copied);
-  };
-  return (
-    <div className="grid gap-8 md:grid-cols-[1fr_auto] md:items-center">
-      <div>
-        <p className="text-muted-foreground text-sm">{copy.host.lobby}</p>
-        <h2 className="mt-2 font-semibold text-4xl tracking-[0.12em]">
-          {session.joinCode}
-        </h2>
-        <p className="mt-3 max-w-md text-muted-foreground">
-          {copy.join.description}
-        </p>
-        <Button className="mt-5" onClick={copyJoinLink} variant="outline">
-          <Copy className="size-4" aria-hidden="true" />
-          {copy.host.copyLink}
-        </Button>
-      </div>
-      <div className="grid size-36 place-items-center border-8 border-primary/15 bg-primary/5 text-primary">
-        <Users className="size-12" aria-hidden="true" />
-      </div>
-    </div>
-  );
-}
-
-function HostRoundPanel({
+function QuestionStage({
+  answerCount,
   copy,
   session,
 }: {
+  answerCount: number;
   copy: GameQuizCopy;
   session: GameSessionSnapshot;
 }) {
   const round = session.currentRound as NonNullable<
     GameSessionSnapshot['currentRound']
   >;
+  const revealed = session.phase === 'REVEAL';
+  const totalAnswers = round.options.reduce(
+    (sum, option) => sum + (option.answerCount ?? 0),
+    0
+  );
+
   return (
-    <div className="relative overflow-hidden">
+    <section className="relative mt-4 flex flex-1 flex-col justify-center overflow-hidden border border-background/20 bg-foreground px-3 py-8 sm:px-8 dark:border-border dark:bg-card">
       <div
         aria-hidden="true"
-        className="absolute inset-0 bg-[url('/images/game-quiz/learning-rally-stage.png')] bg-cover bg-center opacity-15"
+        className="absolute inset-0 bg-[url('/images/game-quiz/learning-rally-stage.png')] bg-center bg-cover opacity-25"
       />
-      <div className="relative">
-        <div className="flex items-center justify-between gap-4 text-muted-foreground text-sm">
-          <span>
-            {copy.editor.question} {session.currentRoundIndex + 1}/
-            {session.totalRounds}
-          </span>
-          <span>
-            {round.timeLimitSeconds} {copy.editor.seconds}
-          </span>
+      <div className="relative mx-auto flex w-full max-w-6xl flex-col gap-6">
+        <div className="flex items-center justify-between gap-4">
+          {!revealed ? (
+            <CountdownBadge copy={copy} deadlineAt={round.deadlineAt} />
+          ) : (
+            <div />
+          )}
+          <div className="border border-background/35 bg-foreground/75 px-3 py-2 text-right text-sm dark:border-border dark:bg-card/90">
+            <p className="font-semibold text-xl tabular-nums">{answerCount}</p>
+            <p className="text-background/70 text-xs dark:text-muted-foreground">
+              {copy.host.answers}
+            </p>
+          </div>
         </div>
-        <h2 className="mt-5 max-w-3xl font-semibold text-3xl leading-tight">
-          {round.prompt}
-        </h2>
-        {round.hint ? (
-          <p className="mt-4 border-primary border-l-2 pl-3 text-muted-foreground text-sm">
-            {copy.player.hint}: {round.hint}
-          </p>
-        ) : null}
-        <div className="mt-8 grid gap-3 sm:grid-cols-2">
-          {round.options.map((option) => (
-            <div
-              className={`border p-4 text-sm ${session.phase === 'REVEAL' && option.isCorrect ? 'border-success bg-success/10' : ''}`}
+        <div className="mx-auto w-full max-w-4xl bg-background px-5 py-6 text-center text-foreground shadow-2xl sm:px-10 sm:py-9">
+          <h1 className="font-semibold text-2xl leading-tight sm:text-4xl">
+            {round.prompt}
+          </h1>
+          {round.hint ? (
+            <p className="mt-4 text-muted-foreground text-sm">
+              {copy.player.hint}: {round.hint}
+            </p>
+          ) : null}
+        </div>
+        <div
+          className={
+            revealed
+              ? 'grid gap-3 opacity-70 sm:grid-cols-2'
+              : 'grid gap-3 sm:grid-cols-2'
+          }
+        >
+          {round.options.map((option, index) => (
+            <AnswerTile
+              answerCount={option.answerCount ?? 0}
+              index={index}
               key={option.id}
-            >
-              {option.text}
-            </div>
+              option={option}
+              revealed={revealed}
+              totalAnswers={totalAnswers}
+            />
           ))}
         </div>
-        {session.phase === 'REVEAL' && round.explanation ? (
-          <div className="mt-6 border-t pt-5">
-            <p className="font-medium">{copy.editor.explanation}</p>
-            <p className="mt-2 text-muted-foreground">{round.explanation}</p>
+        {revealed && round.explanation ? (
+          <div className="mx-auto max-w-4xl border border-background/30 bg-foreground/80 px-5 py-4 text-sm dark:border-border dark:bg-card/90">
+            <span className="font-medium">{copy.editor.explanation}: </span>
+            {round.explanation}
           </div>
         ) : null}
       </div>
+    </section>
+  );
+}
+
+function AnswerTile({
+  answerCount,
+  index,
+  option,
+  revealed,
+  totalAnswers,
+}: {
+  answerCount: number;
+  index: number;
+  option: GameQuizOption;
+  revealed: boolean;
+  totalAnswers: number;
+}) {
+  const surface =
+    [
+      'bg-primary text-primary-foreground',
+      'bg-secondary text-secondary-foreground',
+      'bg-accent text-accent-foreground',
+      'bg-muted text-foreground',
+    ][index] ?? 'bg-muted text-foreground';
+  const width =
+    totalAnswers === 0 ? 0 : Math.round((answerCount / totalAnswers) * 100);
+  return (
+    <div
+      className={`min-h-24 border border-background/25 p-4 shadow-lg ${surface} ${revealed && option.isCorrect ? 'ring-4 ring-success' : ''}`}
+    >
+      <div className="flex items-center gap-3">
+        <span className="grid size-8 shrink-0 place-items-center border border-current font-semibold text-sm">
+          {String.fromCharCode(65 + index)}
+        </span>
+        <span className="font-semibold text-lg">{option.text}</span>
+        {revealed && option.isCorrect ? (
+          <Check className="ml-auto size-6" aria-label="Correct answer" />
+        ) : null}
+      </div>
+      {revealed ? (
+        <div className="mt-4">
+          <div className="h-2 overflow-hidden bg-background/35">
+            <div
+              className="h-full bg-background"
+              style={{ width: `${width}%` }}
+            />
+          </div>
+          <p className="mt-2 text-right font-medium text-sm tabular-nums">
+            {answerCount}
+          </p>
+        </div>
+      ) : null}
     </div>
   );
 }
 
-function Metric({ label, value }: { label: string; value: string }) {
+function CountdownBadge({
+  copy,
+  deadlineAt,
+}: {
+  copy: GameQuizCopy;
+  deadlineAt?: string | null;
+}) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const interval = window.setInterval(() => setNow(Date.now()), 250);
+    return () => window.clearInterval(interval);
+  }, []);
+  const seconds = deadlineAt
+    ? Math.max(0, Math.ceil((new Date(deadlineAt).getTime() - now) / 1000))
+    : 0;
   return (
-    <div className="bg-card p-4">
-      <p className="text-muted-foreground text-xs">{label}</p>
-      <p className="mt-1 font-semibold text-2xl tabular-nums">{value}</p>
+    <div className="grid size-17.5 place-items-center rounded-full border-4 border-background bg-foreground text-center shadow-lg dark:border-border dark:bg-card">
+      <Clock3 className="size-4" aria-hidden="true" />
+      <span className="font-semibold text-lg tabular-nums leading-none">
+        {seconds}
+      </span>
+      <span className="sr-only">{copy.editor.seconds}</span>
     </div>
+  );
+}
+
+function ScoreboardStage({
+  copy,
+  session,
+}: {
+  copy: GameQuizCopy;
+  session: GameSessionSnapshot;
+}) {
+  return (
+    <section className="mt-4 flex flex-1 items-center justify-center bg-primary px-4 py-10 text-primary-foreground">
+      <div className="w-full max-w-3xl">
+        <div className="mx-auto mb-10 flex w-fit items-center gap-3 bg-background px-6 py-3 text-foreground shadow-xl">
+          <Trophy className="size-6 text-primary" aria-hidden="true" />
+          <h1 className="font-semibold text-3xl">{copy.host.scoreboard}</h1>
+        </div>
+        <ol className="space-y-3">
+          {session.leaderboard.map((participant, index) => (
+            <li
+              className="flex items-center gap-4 bg-background px-5 py-4 text-foreground shadow-lg"
+              key={participant.id}
+            >
+              <span className="w-8 font-semibold text-muted-foreground tabular-nums">
+                {index + 1}
+              </span>
+              <span className="min-w-0 flex-1 truncate font-semibold text-lg">
+                {participant.displayName}
+              </span>
+              <span className="font-semibold text-xl tabular-nums">
+                {participant.score}
+              </span>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
+  );
+}
+
+function HostPodium({
+  copy,
+  isPending,
+  onEndSession,
+  session,
+}: {
+  copy: GameQuizCopy;
+  isPending: boolean;
+  onEndSession: () => void;
+  session: GameSessionSnapshot;
+}) {
+  return (
+    <main className="min-h-[calc(100vh-6rem)] bg-primary py-3 sm:py-6">
+      <GameQuizPodium copy={copy} session={session} title={copy.host.podium}>
+        <Button disabled={isPending} onClick={onEndSession} variant="secondary">
+          {isPending ? (
+            <Loader2 className="animate-spin" data-icon="inline-start" />
+          ) : null}
+          {copy.host.endSession}
+        </Button>
+        <Button asChild variant="outline" className="text-foreground">
+          <Link href={`/games/sessions/${session.id}/report`}>
+            {copy.host.viewReport}
+          </Link>
+        </Button>
+      </GameQuizPodium>
+    </main>
+  );
+}
+
+function HostReport({
+  copy,
+  session,
+}: {
+  copy: GameQuizCopy;
+  session: GameSessionSnapshot;
+}) {
+  return (
+    <main className="mx-auto grid min-h-72 max-w-xl place-items-center text-center">
+      <Link
+        className="font-medium text-primary underline"
+        href={`/games/sessions/${session.id}/report`}
+      >
+        {copy.report.title}
+      </Link>
+    </main>
+  );
+}
+
+function SessionOverflow({
+  disabled,
+  label,
+  onSelect,
+}: {
+  disabled: boolean;
+  label: string;
+  onSelect: () => void;
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          aria-label={label}
+          disabled={disabled}
+          size="icon"
+          variant="ghost"
+        >
+          <Ellipsis className="size-5" aria-hidden="true" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onSelect={onSelect}>{label}</DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 

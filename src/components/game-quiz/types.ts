@@ -1,20 +1,21 @@
+import type { GameSessionReport } from '@/lib/game-quiz/types';
+
 export type GameQuizDifficulty = 'EASY' | 'MEDIUM' | 'HARD';
 
 export type GameSessionPhase =
   | 'LOBBY'
   | 'QUESTION_OPEN'
-  | 'ANSWER_LOCKED'
   | 'REVEAL'
-  | 'PROGRESS'
+  | 'SCOREBOARD'
   | 'FINAL_CELEBRATION'
-  | 'REPORT'
-  | 'ENDED';
+  | 'REPORT';
 
 export interface GameQuizOption {
   id: string;
   text: string;
   isCorrect: boolean;
   order: number;
+  answerCount?: number;
 }
 
 export interface GameQuizQuestion {
@@ -31,7 +32,6 @@ export interface GameQuizQuestion {
 export interface GameQuizSettings {
   randomizeQuestions: boolean;
   randomizeAnswers: boolean;
-  leaderboardEnabled: boolean;
 }
 
 export interface GameQuiz {
@@ -50,6 +50,7 @@ export interface GameQuiz {
 export interface GameParticipant {
   id: string;
   displayName: string;
+  image?: string | null;
   score: number;
   isOnline?: boolean;
   joinedAt?: string;
@@ -83,7 +84,6 @@ export interface GameSessionSnapshot {
   participants: GameParticipant[];
   answerCount: number;
   leaderboard: GameParticipant[];
-  leaderboardEnabled: boolean;
   myAnswer?: {
     optionId: string;
     isCorrect?: boolean;
@@ -91,24 +91,7 @@ export interface GameSessionSnapshot {
   } | null;
 }
 
-export interface GameQuizReport {
-  session: Pick<
-    GameSessionSnapshot,
-    'id' | 'gameTitle' | 'joinCode' | 'phase'
-  > & {
-    createdAt: string;
-    completedAt?: string | null;
-  };
-  participants: GameParticipant[];
-  rounds: Array<{
-    id: string;
-    order: number;
-    prompt: string;
-    responseCount: number;
-    correctCount: number;
-    averagePoints: number;
-  }>;
-}
+export type GameQuizReport = GameSessionReport;
 
 export interface GameQuizDraft {
   title: string;

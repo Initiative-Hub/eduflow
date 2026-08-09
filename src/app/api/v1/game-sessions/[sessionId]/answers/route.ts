@@ -15,6 +15,7 @@ import { submitGameAnswer } from '@/services/GameQuizAnswerService';
 import {
   emitGameQuizHostProgressEvent,
   emitGameQuizPlayerEvent,
+  emitGameQuizSharedEvent,
 } from '@/lib/realtime/game-quiz';
 
 type RouteContext = { params: Promise<{ sessionId: string }> };
@@ -67,7 +68,7 @@ export const POST = withAuth(
         gameActorFromSession(session),
         parsedParams.data.sessionId
       );
-      await Promise.all([
+      const events = [
         emitGameQuizPlayerEvent({
           sessionId: parsedParams.data.sessionId,
           participantId: submitted.participantId,
@@ -80,7 +81,17 @@ export const POST = withAuth(
           stateVersion: snapshot.session.stateVersion,
           kind: 'ANSWER_PROGRESS_CHANGED',
         }),
-      ]);
+      ];
+      if (snapshot.session.phase === 'REVEAL') {
+        events.push(
+          emitGameQuizSharedEvent({
+            sessionId: parsedParams.data.sessionId,
+            phase: snapshot.session.phase,
+            stateVersion: snapshot.session.stateVersion,
+          })
+        );
+      }
+      await Promise.all(events);
       return NextResponse.json(submitted);
     } catch (error) {
       return gameQuizExceptionResponse(error, 'Failed to submit Game Answer.');

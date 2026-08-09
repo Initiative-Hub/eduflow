@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { gameQuizApi } from './api';
 import { type GameQuizCopy, gameQuizCopy } from './copy';
 import { GameSessionError, GameSessionLoading } from './game-quiz-host-client';
+import { GameQuizPodium } from './game-quiz-podium';
 import type { GameSessionSnapshot } from './types';
 import { useGameQuizRealtime } from './use-game-quiz-realtime';
 
@@ -67,12 +68,20 @@ export function GameQuizPlayerClient({
   const session = sessionQuery.data;
   if (session.phase === 'LOBBY')
     return <WaitingPanel copy={copy} session={session} />;
-  if (
-    session.phase === 'FINAL_CELEBRATION' ||
-    session.phase === 'REPORT' ||
-    session.phase === 'ENDED'
-  )
+  if (session.phase === 'FINAL_CELEBRATION')
+    return <PlayerPodium copy={copy} session={session} />;
+  if (session.phase === 'REPORT')
     return <FinishedPanel copy={copy} session={session} />;
+  if (session.phase === 'SCOREBOARD') {
+    return (
+      <main className="mx-auto max-w-3xl space-y-6 py-4 sm:py-10">
+        <Leaderboard copy={copy} session={session} />
+        <p className="text-center text-muted-foreground text-sm">
+          {copy.player.waitingDescription}
+        </p>
+      </main>
+    );
+  }
   if (!session.currentRound)
     return <WaitingPanel copy={copy} session={session} />;
 
@@ -87,11 +96,16 @@ export function GameQuizPlayerClient({
           {session.totalRounds}
         </span>
       </header>
-      <QuestionTimer copy={copy} deadlineAt={session.currentRound.deadlineAt} />
+      {isOpen ? (
+        <QuestionTimer
+          copy={copy}
+          deadlineAt={session.currentRound.deadlineAt}
+        />
+      ) : null}
       <section className="relative overflow-hidden border bg-card p-5 sm:p-8">
         <div
           aria-hidden="true"
-          className="absolute inset-0 bg-[url('/images/game-quiz/learning-rally-stage.png')] bg-cover bg-center opacity-10"
+          className="absolute inset-0 bg-[url('/images/game-quiz/learning-rally-stage.png')] bg-center bg-cover opacity-10"
         />
         <div className="relative">
           <h1 className="font-semibold text-2xl leading-tight sm:text-3xl">
@@ -123,17 +137,11 @@ export function GameQuizPlayerClient({
           {submitted && session.phase !== 'REVEAL' ? (
             <SubmittedPanel copy={copy} />
           ) : null}
-          {session.phase === 'ANSWER_LOCKED' && !submitted ? (
-            <SubmittedPanel copy={copy} locked />
-          ) : null}
           {session.phase === 'REVEAL' ? (
             <RevealPanel copy={copy} session={session} />
           ) : null}
         </div>
       </section>
-      {session.leaderboardEnabled && session.phase === 'REVEAL' ? (
-        <Leaderboard copy={copy} session={session} />
-      ) : null}
     </main>
   );
 }
@@ -191,19 +199,11 @@ function WaitingPanel({
   );
 }
 
-function SubmittedPanel({
-  copy,
-  locked = false,
-}: {
-  copy: GameQuizCopy;
-  locked?: boolean;
-}) {
+function SubmittedPanel({ copy }: { copy: GameQuizCopy }) {
   return (
     <div className="mt-8 border border-primary/20 bg-primary/5 p-6 text-center">
       <Check className="mx-auto size-7 text-primary" aria-hidden="true" />
-      <h2 className="mt-3 font-semibold text-xl">
-        {locked ? copy.player.locked : copy.player.submitted}
-      </h2>
+      <h2 className="mt-3 font-semibold text-xl">{copy.player.submitted}</h2>
       <p className="mt-1 text-muted-foreground text-sm">
         {copy.player.submittedDescription}
       </p>
@@ -277,6 +277,25 @@ function FinishedPanel({
         </p>
         <p className="text-muted-foreground text-sm">{copy.player.score}</p>
       </div>
+    </main>
+  );
+}
+
+function PlayerPodium({
+  copy,
+  session,
+}: {
+  copy: GameQuizCopy;
+  session: GameSessionSnapshot;
+}) {
+  return (
+    <main className="min-h-[60vh] bg-primary py-4 sm:py-10">
+      <GameQuizPodium
+        copy={copy}
+        participant={session.participant}
+        session={session}
+        title={copy.player.podium}
+      />
     </main>
   );
 }

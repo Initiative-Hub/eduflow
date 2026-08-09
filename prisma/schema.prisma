@@ -627,9 +627,8 @@ enum GameQuizStatus {
 enum GameSessionPhase {
   LOBBY             @map("lobby")
   QUESTION_OPEN     @map("question_open")
-  ANSWER_LOCKED     @map("answer_locked")
   REVEAL            @map("reveal")
-  PROGRESS          @map("progress")
+  SCOREBOARD        @map("scoreboard")
   FINAL_CELEBRATION @map("final_celebration")
   REPORT            @map("report")
 
@@ -650,7 +649,6 @@ model GameQuiz {
 
   randomizeQuestionOrder Boolean @default(false) @map("randomize_question_order")
   randomizeAnswerOrder   Boolean @default(false) @map("randomize_answer_order")
-  showLeaderboard        Boolean @default(false) @map("show_leaderboard")
 
   createdAt  DateTime  @default(now()) @map("created_at")
   updatedAt  DateTime  @updatedAt @map("updated_at")
@@ -717,7 +715,6 @@ model GameSession {
   difficulty             String?
   randomizeQuestionOrder Boolean             @map("randomize_question_order")
   randomizeAnswerOrder   Boolean             @map("randomize_answer_order")
-  showLeaderboard        Boolean             @map("show_leaderboard")
   joinCode               String              @map("join_code")
   joiningLocked          Boolean             @default(false) @map("joining_locked")
   phase                  GameSessionPhase    @default(LOBBY)

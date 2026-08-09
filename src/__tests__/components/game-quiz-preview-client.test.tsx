@@ -22,7 +22,6 @@ const gameQuiz = {
   settings: {
     randomizeQuestions: false,
     randomizeAnswers: false,
-    leaderboardEnabled: false,
   },
   questions: [
     {

@@ -12,12 +12,11 @@ import type {
 
 type GameHostAction =
   | 'START'
-  | 'LOCK_ANSWERS'
-  | 'REVEAL'
-  | 'SHOW_PROGRESS'
-  | 'OPEN_NEXT'
+  | 'SKIP'
+  | 'NEXT'
   | 'SET_JOINING_LOCKED'
-  | 'END';
+  | 'END_GAME'
+  | 'END_SESSION';
 
 type RecordValue = Record<string, unknown>;
 
@@ -52,6 +51,7 @@ function toOption(value: unknown, order: number): GameQuizOption {
     text: stringValue(option.text),
     isCorrect: booleanValue(option.isCorrect),
     order: numberValue(option.order ?? option.orderIndex, order),
+    answerCount: numberValue(option.answerCount),
   };
 }
 
@@ -82,9 +82,6 @@ function toSettings(value: RecordValue) {
       nested.randomizeAnswers ?? value.randomizeAnswerOrder,
       true
     ),
-    leaderboardEnabled: booleanValue(
-      nested.leaderboardEnabled ?? value.showLeaderboard
-    ),
   };
 }
 
@@ -113,6 +110,7 @@ function toParticipant(value: unknown): GameParticipant {
   return {
     id: stringValue(participant.id),
     displayName: stringValue(participant.displayName),
+    image: stringValue(participant.image) || null,
     score: numberValue(participant.score),
     isOnline: booleanValue(participant.isOnline, true),
     joinedAt: stringValue(participant.joinedAt) || undefined,
@@ -155,9 +153,6 @@ function toSession(value: unknown): GameSessionSnapshot {
     participants,
     answerCount: numberValue(session.answerCount),
     leaderboard,
-    leaderboardEnabled: booleanValue(
-      session.leaderboardEnabled ?? session.showLeaderboard
-    ),
     myAnswer:
       answer.id || answer.selectedOptionId
         ? {
@@ -182,7 +177,6 @@ function toQuizSettings(draft: GameQuizDraft) {
     difficulty: draft.difficulty,
     randomizeQuestionOrder: draft.settings.randomizeQuestions,
     randomizeAnswerOrder: draft.settings.randomizeAnswers,
-    showLeaderboard: draft.settings.leaderboardEnabled,
   };
 }
 

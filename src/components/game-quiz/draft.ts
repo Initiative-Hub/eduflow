@@ -29,7 +29,6 @@ export function createDraft(): GameQuizDraft {
     settings: {
       randomizeQuestions: false,
       randomizeAnswers: true,
-      leaderboardEnabled: false,
     },
     questions: [createQuestion(0)],
   };

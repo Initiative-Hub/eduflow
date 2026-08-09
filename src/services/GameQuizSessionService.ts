@@ -23,6 +23,8 @@ import {
   requireGameSession,
   requireGameSessionHost,
   requireGameSessionPhase,
+  nextHostedGamePhase,
+  shouldAutoRevealGameRound,
 } from '@/lib/game-quiz/shared';
 import { shuffle } from '@/lib/game-quiz/shuffle';
 import type {
@@ -109,7 +111,6 @@ export async function createGameSession(
             joiningLocked: false,
             randomizeQuestionOrder: quiz.randomizeQuestionOrder,
             randomizeAnswerOrder: quiz.randomizeAnswerOrder,
-            showLeaderboard: quiz.showLeaderboard,
             stateVersion: 1,
             rounds: { create: snapshotRounds(quiz) },
           },
@@ -117,7 +118,7 @@ export async function createGameSession(
       });
 
       const database = prisma;
-      return projectSessionForActor(
+      return await projectSessionForActor(
         await requireGameSession(database, created.id),
         actor
       );
@@ -184,15 +185,16 @@ export async function joinGameSession(
     }
   }
 
-  return projectSessionForActor(
+  return await projectSessionForActor(
     await requireGameSession(database, session.id),
     actor
   );
 }
 
 export async function getGameSession(actor: GameActor, sessionId: string) {
+  await reconcileOpenGameSession(sessionId);
   const session = await requireGameSession(prisma, sessionId);
-  const projection = projectSessionForActor(session, actor);
+  const projection = await projectSessionForActor(session, actor);
   if (!projection) {
     throw gameQuizError(
       'FORBIDDEN',
@@ -201,6 +203,50 @@ export async function getGameSession(actor: GameActor, sessionId: string) {
     );
   }
   return projection;
+}
+
+/**
+ * Safely advances an open round when its deadline has passed or every joined
+ * participant has answered. It is intentionally idempotent because snapshots
+ * are polled by several clients at once.
+ */
+export async function reconcileOpenGameSession(sessionId: string) {
+  return prisma.$transaction(async (transaction) => {
+    const session = await requireGameSession(transaction, sessionId);
+    const round = currentGameRound(session);
+    const now = new Date();
+
+    if (
+      session.phase !== 'QUESTION_OPEN' ||
+      !round ||
+      !shouldAutoRevealGameRound({
+        answerCount: session.answers.filter(
+          (answer) => answer.roundId === round.id
+        ).length,
+        deadlineAt: round.deadlineAt,
+        now,
+        participantCount: session.participants.length,
+      })
+    ) {
+      return false;
+    }
+
+    const updated = await transaction.gameSession.updateMany({
+      where: {
+        id: session.id,
+        phase: 'QUESTION_OPEN',
+        stateVersion: session.stateVersion,
+      },
+      data: { phase: 'REVEAL', stateVersion: { increment: 1 } },
+    });
+    if (updated.count === 0) return false;
+
+    await transaction.gameRound.update({
+      where: { id: round.id },
+      data: { revealedAt: now },
+    });
+    return true;
+  });
 }
 
 async function openRound(
@@ -237,6 +283,7 @@ export async function controlGameSession(
     const now = new Date();
     const currentRound = currentGameRound(session);
     let data: Prisma.GameSessionUpdateManyMutationInput;
+    let roundToReveal: GameRoundRecord | null = null;
 
     switch (input.action) {
       case 'START': {
@@ -249,6 +296,13 @@ export async function controlGameSession(
             'This Game Session has no rounds.'
           );
         }
+        if (session.participants.length === 0) {
+          throw gameQuizError(
+            'GAME_SESSION_EMPTY',
+            409,
+            'At least one participant must join before the game starts.'
+          );
+        }
         await openRound(transaction, firstRound, now);
         data = {
           phase: 'QUESTION_OPEN',
@@ -257,12 +311,8 @@ export async function controlGameSession(
         };
         break;
       }
-      case 'LOCK_ANSWERS':
+      case 'SKIP':
         requireGameSessionPhase(session, ['QUESTION_OPEN']);
-        data = { phase: 'ANSWER_LOCKED' };
-        break;
-      case 'REVEAL':
-        requireGameSessionPhase(session, ['QUESTION_OPEN', 'ANSWER_LOCKED']);
         if (!currentRound) {
           throw gameQuizError(
             'GAME_ROUND_NOT_FOUND',
@@ -270,28 +320,36 @@ export async function controlGameSession(
             'There is no active round to reveal.'
           );
         }
-        await transaction.gameRound.update({
-          where: { id: currentRound.id },
-          data: { revealedAt: now },
-        });
         data = { phase: 'REVEAL' };
+        roundToReveal = currentRound;
         break;
-      case 'SHOW_PROGRESS':
-        requireGameSessionPhase(session, ['REVEAL']);
-        data = { phase: 'PROGRESS' };
-        break;
-      case 'OPEN_NEXT': {
-        requireGameSessionPhase(session, ['REVEAL', 'PROGRESS']);
+      case 'NEXT': {
         const nextRound = session.rounds.find(
           (round) => round.orderIndex === (session.currentRoundIndex ?? -1) + 1
         );
-        if (!nextRound) {
+        const nextPhase = nextHostedGamePhase(
+          session.phase,
+          Boolean(nextRound)
+        );
+        if (nextPhase === 'SCOREBOARD') {
+          data = { phase: nextPhase };
+          break;
+        }
+        if (nextPhase === 'FINAL_CELEBRATION') {
           data = {
-            phase: 'FINAL_CELEBRATION',
+            phase: nextPhase,
             joiningLocked: true,
             joinCodeReleasedAt: now,
           };
           break;
+        }
+        requireGameSessionPhase(session, ['SCOREBOARD']);
+        if (!nextRound) {
+          throw gameQuizError(
+            'GAME_ROUND_NOT_FOUND',
+            409,
+            'There is no next round to open.'
+          );
         }
         await openRound(transaction, nextRound, now);
         data = {
@@ -304,21 +362,25 @@ export async function controlGameSession(
         requireGameSessionPhase(session, [
           'LOBBY',
           'QUESTION_OPEN',
-          'ANSWER_LOCKED',
           'REVEAL',
-          'PROGRESS',
+          'SCOREBOARD',
         ]);
         data = { joiningLocked: input.joiningLocked };
         break;
-      case 'END':
+      case 'END_GAME':
         requireGameSessionPhase(session, [
-          'LOBBY',
           'QUESTION_OPEN',
-          'ANSWER_LOCKED',
           'REVEAL',
-          'PROGRESS',
-          'FINAL_CELEBRATION',
+          'SCOREBOARD',
         ]);
+        data = {
+          phase: 'FINAL_CELEBRATION',
+          joiningLocked: true,
+          joinCodeReleasedAt: now,
+        };
+        break;
+      case 'END_SESSION':
+        requireGameSessionPhase(session, ['LOBBY', 'FINAL_CELEBRATION']);
         data = {
           phase: 'REPORT',
           joiningLocked: true,
@@ -337,6 +399,13 @@ export async function controlGameSession(
       data: { ...data, stateVersion: { increment: 1 } },
     });
     requireExpectedState(updated.count);
+
+    if (roundToReveal) {
+      await transaction.gameRound.update({
+        where: { id: roundToReveal.id },
+        data: { revealedAt: now },
+      });
+    }
   });
 
   return getGameSession(actor, sessionId);

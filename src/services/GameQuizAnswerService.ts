@@ -14,7 +14,12 @@ import {
   requireGameSessionHost,
   requireGameSessionPhase,
 } from '@/lib/game-quiz/shared';
-import type { GameActor, GameAnswerRecord } from '@/lib/game-quiz/types';
+import type {
+  GameActor,
+  GameAnswerRecord,
+  GameSessionReport,
+  SessionWithGameData,
+} from '@/lib/game-quiz/types';
 import { prisma } from '@/lib/prisma';
 
 function projectSubmittedAnswer(answer: GameAnswerRecord, idempotent: boolean) {
@@ -90,6 +95,24 @@ async function submitAnswerInTransaction(
       409,
       'This round has not been opened yet.'
     );
+  }
+
+  // Claim the session row before writing an answer. A concurrent Skip or
+  // automatic reveal uses the same row transition, so only the action that
+  // acquires this guard first can complete.
+  const openState = await database.gameSession.updateMany({
+    where: { id: sessionId, phase: 'QUESTION_OPEN' },
+    data: { stateVersion: { increment: 0 } },
+  });
+  if (openState.count === 0) {
+    throw gameQuizError(
+      'ROUND_CLOSED',
+      409,
+      'This round is no longer accepting answers.'
+    );
+  }
+  if (new Date() >= currentRound.deadlineAt) {
+    throw gameQuizError('ROUND_CLOSED', 409, 'The answer deadline has passed.');
   }
 
   const submittedAt = new Date();
@@ -217,22 +240,13 @@ function average(values: number[]) {
     : values.reduce((sum, value) => sum + value, 0) / values.length;
 }
 
-export async function getGameSessionReport(
-  actor: GameActor,
-  sessionId: string
-) {
-  const session = await requireGameSession(prisma, sessionId);
-  requireGameSessionHost(actor, session);
-
+export function buildGameSessionReport(
+  session: SessionWithGameData
+): GameSessionReport {
   const answersByRound = new Map<string, GameAnswerRecord[]>();
-  const answersByParticipant = new Map<string, GameAnswerRecord[]>();
   for (const answer of session.answers) {
     answersByRound.set(answer.roundId, [
       ...(answersByRound.get(answer.roundId) ?? []),
-      answer,
-    ]);
-    answersByParticipant.set(answer.participantId, [
-      ...(answersByParticipant.get(answer.participantId) ?? []),
       answer,
     ]);
   }
@@ -240,46 +254,39 @@ export async function getGameSessionReport(
   return {
     session: {
       id: session.id,
-      title: session.title,
-      topic: session.topic,
-      difficulty: session.difficulty,
+      gameTitle: session.title,
+      joinCode: session.joinCode,
       phase: session.phase,
-      startedAt: session.startedAt,
-      endedAt: session.endedAt,
-      participantCount: session.participants.length,
-      stateVersion: session.stateVersion,
+      createdAt: session.createdAt.toISOString(),
+      completedAt: session.endedAt?.toISOString() ?? null,
     },
     rounds: session.rounds.map((round) => {
       const answers = answersByRound.get(round.id) ?? [];
       const correctCount = answers.filter((answer) => answer.isCorrect).length;
       return {
         id: round.id,
-        orderIndex: round.orderIndex,
+        order: round.orderIndex,
         prompt: round.prompt,
-        answerCount: answers.length,
+        responseCount: answers.length,
         correctCount,
-        correctRate: answers.length === 0 ? 0 : correctCount / answers.length,
-        averageResponseTimeMs: average(
-          answers.map((answer) => answer.responseTimeMs)
-        ),
         averagePoints: average(answers.map((answer) => answer.pointsAwarded)),
       };
     }),
-    participants: session.participants.map((participant, index) => {
-      const answers = answersByParticipant.get(participant.id) ?? [];
-      const correctCount = answers.filter((answer) => answer.isCorrect).length;
+    participants: session.participants.map((participant) => {
       return {
-        rank: index + 1,
         id: participant.id,
-        userId: participant.userId,
         displayName: participant.displayName,
         score: participant.score,
-        answerCount: answers.length,
-        correctCount,
-        averageResponseTimeMs: average(
-          answers.map((answer) => answer.responseTimeMs)
-        ),
       };
     }),
   };
+}
+
+export async function getGameSessionReport(
+  actor: GameActor,
+  sessionId: string
+): Promise<GameSessionReport> {
+  const session = await requireGameSession(prisma, sessionId);
+  requireGameSessionHost(actor, session);
+  return buildGameSessionReport(session);
 }

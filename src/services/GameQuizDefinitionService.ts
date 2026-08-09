@@ -33,7 +33,6 @@ export async function listGameQuizzes(actor: GameActor) {
     revision: quiz.revision,
     randomizeQuestionOrder: quiz.randomizeQuestionOrder,
     randomizeAnswerOrder: quiz.randomizeAnswerOrder,
-    showLeaderboard: quiz.showLeaderboard,
     questionCount: quiz._count.questions,
     sessionCount: quiz._count.sessions,
     createdAt: quiz.createdAt,
