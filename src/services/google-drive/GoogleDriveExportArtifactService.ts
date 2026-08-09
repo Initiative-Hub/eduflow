@@ -7,7 +7,6 @@ import {
   savedVocabularyListInclude,
   toSavedVocabularyItem,
 } from '@/services/english/wordbank/mappers';
-import { GammaService } from '@/services/GammaService';
 import { LessonPresentationService } from '@/services/LessonPresentationService';
 import { LessonService } from '@/services/LessonService';
 import { StorageService } from '@/services/StorageService';
@@ -96,45 +95,6 @@ async function resolveStudyHtml(
   };
 }
 
-async function downloadGammaPresentation(generationId: string) {
-  let exportUrl: string;
-  try {
-    ({ exportUrl } = await GammaService.getPresentationExport(generationId));
-  } catch {
-    throw new GoogleDriveExportError(
-      'SOURCE_NOT_FOUND',
-      'This Gamma presentation must be regenerated before it can be saved to Google Drive.',
-      { reason: 'LEGACY_GAMMA' }
-    );
-  }
-
-  const url = new URL(exportUrl);
-  if (url.protocol !== 'https:') {
-    throw new GoogleDriveExportError(
-      'DRIVE_UPLOAD_FAILED',
-      'Gamma returned an invalid presentation export URL.'
-    );
-  }
-  const response = await fetch(url, { cache: 'no-store' });
-  const contentLength = Number(response.headers.get('content-length'));
-  if (
-    Number.isFinite(contentLength) &&
-    contentLength > STORAGE_MAX_FILE_SIZE_BYTES
-  ) {
-    throw new GoogleDriveExportError(
-      'EXPORT_TOO_LARGE',
-      'The presentation exceeds the 50 MB export limit.'
-    );
-  }
-  if (!response.ok) {
-    throw new GoogleDriveExportError(
-      'DRIVE_UPLOAD_FAILED',
-      'Gamma could not prepare the presentation export.'
-    );
-  }
-  return new Uint8Array(await response.arrayBuffer());
-}
-
 async function resolveLessonPresentation(
   source: Extract<GoogleDriveExportSource, { kind: 'lesson_presentation' }>,
   userId: string
@@ -155,20 +115,17 @@ async function resolveLessonPresentation(
     );
   }
 
-  const isGamma = lesson.presentationDeckId.startsWith('gamma:');
-  const bytes = isGamma
-    ? lesson.presentationDeckKey
-      ? await downloadGammaPresentation(lesson.presentationDeckKey)
-      : await Promise.reject(
-          new GoogleDriveExportError(
-            'SOURCE_NOT_FOUND',
-            'This Gamma presentation must be regenerated before it can be saved to Google Drive.',
-            { reason: 'LEGACY_GAMMA' }
-          )
-        )
-    : new Uint8Array(
-        await LessonPresentationService.getDeckPptx(lesson.presentationDeckId)
-      );
+  if (lesson.presentationDeckId.startsWith('gamma:')) {
+    throw new GoogleDriveExportError(
+      'SOURCE_NOT_FOUND',
+      'This legacy Gamma presentation is no longer supported. Please regenerate using System Slides.',
+      { reason: 'LEGACY_GAMMA' }
+    );
+  }
+
+  const bytes = new Uint8Array(
+    await LessonPresentationService.getDeckPptx(lesson.presentationDeckId)
+  );
 
   return {
     bytes,

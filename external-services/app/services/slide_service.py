@@ -1,9 +1,11 @@
 import json
 import logging
+import re
 import shutil
 import tempfile
 import textwrap
 import zipfile
+from functools import partial
 from pathlib import Path
 from typing import Any, Dict, List, Union
 from fastapi.concurrency import run_in_threadpool
@@ -13,6 +15,49 @@ from app.deps import SLIDE_TEMPLATES_DIR
 from app.schemas.slide_schema import RenderSlideReq
 
 logger = logging.getLogger(__name__)
+
+BASE_TEMPLATE_COLLECTION = "templates"
+
+# "auto" detects brand templates whose designs live in the Slide Master layouts,
+# "layouts" forces that reading, and "slides" extracts the deck's real slides.
+TEMPLATE_IMPORT_SOURCES = {"auto", "layouts", "slides"}
+
+# Rasterized category previews. Serving PNGs keeps the template picker light:
+# inline SVG previews ship hundreds of KB of markup and build a live DOM tree
+# per slide, which makes the dialog lag.
+PREVIEW_FILE_NAME = "preview.png"
+PREVIEW_WIDTH_PX = 1280
+
+# Sample copy so previews look like real slides. `fill_svg` blanks any
+# placeholder missing from this map instead of printing its raw name.
+PREVIEW_SAMPLE_DATA: Dict[str, Any] = {
+    "title": "Visual Learning Slide",
+    "heading": "Concept Introduction",
+    "subtitle": "A beautiful presentation design for courses and slides.",
+    "presenter": "Presented by EduFlow",
+    "author": "Presented by EduFlow",
+    "kicker": "CHAPTER 1",
+    "quote": '"Involve me and I learn."',
+    "footer_note": "EduFlow Learning Platform",
+    "body_text": (
+        "Foundational concepts explained using modern slide layouts "
+        "designed to keep students engaged."
+    ),
+    "left_col_title": "First Concept",
+    "right_col_title": "Second Concept",
+    "left_col_text": "Key details about the first concept side.",
+    "right_col_text": "Comparison points on the second concept side.",
+    "insight_text": "Engagement rose after switching to visual explanations.",
+    "bullets": [
+        "Engaging detail or concept bullet point",
+        "Supporting evidence for the concept",
+        "A practical classroom example",
+    ],
+    "items": ["Introduction", "Core concepts", "Practice", "Summary"],
+    "steps": ["Prepare", "Explain", "Practise", "Review"],
+    "summary_points": ["Key takeaway one", "Key takeaway two"],
+    "action_items": ["Read chapter 2", "Complete the worksheet"],
+}
 
 DEFAULT_COLLECTIONS = {
     "templates",
@@ -30,6 +75,7 @@ DEFAULT_COLLECTIONS = {
     "green_environment_care",
     "rmit_red_modern",
     "startup_neon_pitch",
+    "professional_focus",
 }
 
 STANDARD_LAYOUT_TYPES = [
@@ -55,6 +101,15 @@ STANDARD_LAYOUT_TYPES = [
     "PROCESS_ARROWS",
     "CIRCLE_CYCLE",
 ]
+
+CATEGORY_ALIASES = {
+    "CHART_SLIDE": "CHART_INSIGHT",
+    "TABLE_SLIDE": "DATA_TABLE",
+    "KPI_BIG_NUMBERS": "KPI_BIG_NUMBER",
+    "IMAGE_TEXT": "MEDIA_TEXT",
+    "AGENDA_AND_OUTLINE": "AGENDA_OUTLINE",
+    "TITLE_AND_BULLETS": "TITLE_BULLETS",
+}
 
 CATEGORY_METADATA_FIELDS = (
     "description",
@@ -110,6 +165,37 @@ def _read_collection_category_metadata(library_dir: Path) -> Dict[str, Dict[str,
     return metadata
 
 
+def _read_category_capacity(library_dir: Path | None) -> Dict[str, Dict[str, int]]:
+    """Text/image slot counts per category, so planners avoid sending body copy
+    to a layout that only has room for a title.
+
+    Extracted brand templates are often sparse: a divider may expose a single
+    `title` slot, and any extra binding is dropped when the deck is filled.
+    """
+    if not library_dir or not library_dir.exists():
+        return {}
+
+    try:
+        library = slide_skills.scan_template_library(str(library_dir))
+    except Exception as error:
+        logger.warning(f"Could not read template capacity for {library_dir}: {error}")
+        return {}
+
+    capacity: Dict[str, Dict[str, int]] = {}
+    for entry in library.category_map():
+        variants = entry.get("variants") or []
+        if not variants:
+            continue
+        # Report the roomiest variant: that is what the planner can rely on.
+        capacity[entry["category"]] = {
+            "text_slots": max(int(v.get("text_slots") or 0) for v in variants),
+            "image_slots": max(int(v.get("image_slots") or 0) for v in variants),
+            "capacity": max(int(v.get("capacity") or 0) for v in variants),
+        }
+
+    return capacity
+
+
 def _build_category_metadata(
     library_dir: Path | None, categories: set[str]
 ) -> Dict[str, Dict[str, Any]]:
@@ -117,6 +203,7 @@ def _build_category_metadata(
     collection_metadata = (
         _read_collection_category_metadata(library_dir) if library_dir else {}
     )
+    capacity = _read_category_capacity(library_dir)
 
     for category in sorted(categories):
         if not library_dir:
@@ -127,6 +214,8 @@ def _build_category_metadata(
         )
         for key, value in category_metadata.items():
             merged.setdefault(key, value)
+        if category in capacity:
+            merged.update(capacity[category])
         if merged:
             metadata[category] = merged
 
@@ -151,6 +240,14 @@ def custom_select_and_fill_slide(variants, slide_content, **kwargs):
     flat_bindings = slide_content.get("bindings") or {}
 
     for key in variant.placeholders:
+        # Never clobber a value the library already resolved. It splits prose
+        # across indexed placeholders (`title_2.1`, `.2`, `.3`) as a list, and
+        # replacing that with the raw string leaves every indexed slot unfilled.
+        # Since 0.2.42 bridges caller names onto slot names, planner values are
+        # already present, so this only fills slots the library left empty.
+        existing = texts.get(key)
+        if existing not in (None, "", [], {}):
+            continue
         if key in raw_bindings:
             texts[key] = raw_bindings[key]
         elif key in flat_bindings:
@@ -354,9 +451,7 @@ class SlideService:
             collection = "templates"
 
         col_path = Path(SLIDE_TEMPLATES_DIR) / collection
-        # Check if the folder exists and has files (already downloaded)
-        if col_path.exists() and any(col_path.glob("**/*.svg")):
-            return col_path
+        has_local_layouts = col_path.exists() and any(col_path.glob("**/*.svg"))
 
         if collection.lower() in DEFAULT_COLLECTIONS:
             from app.deps import AWS_S3_DEFAULT_TEMPLATES_BUCKET as BUCKET_NAME
@@ -374,17 +469,42 @@ class SlideService:
             logger.warning(
                 f"No files found in S3 bucket {BUCKET_NAME} for template collection '{collection}' at prefix '{s3_prefix}'"
             )
+            if has_local_layouts:
+                # Keep serving a locally cached collection when S3 is empty or
+                # temporarily unreachable.
+                return col_path
+            # A missing collection must not degrade into an empty library dir,
+            # which fails later with a confusing local-path error. Fall back to
+            # the base layout collection instead.
+            if collection != BASE_TEMPLATE_COLLECTION:
+                logger.info(
+                    f"Falling back to base template collection '{BASE_TEMPLATE_COLLECTION}'"
+                )
+                return await self._ensure_collection_downloaded(
+                    BASE_TEMPLATE_COLLECTION
+                )
+            return col_path
+
+        # Reconcile the local cache with S3 so previously truncated or partial
+        # downloads are repaired instead of being treated as complete.
+        pending: list[tuple[str, Path]] = []
+        for key in s3_keys:
+            relative = key[len(s3_prefix) :]
+            if not relative or key.endswith("/"):
+                continue
+            dest = col_path / relative
+            if not dest.exists():
+                pending.append((key, dest))
+
+        if not pending:
             return col_path
 
         logger.info(
-            f"Downloading template collection '{collection}' from S3 bucket {BUCKET_NAME}..."
+            f"Downloading {len(pending)} file(s) for template collection "
+            f"'{collection}' from S3 bucket {BUCKET_NAME}..."
         )
         col_path.mkdir(parents=True, exist_ok=True)
-        for key in s3_keys:
-            relative = key[len(s3_prefix) :]
-            if not relative:
-                continue
-            dest = col_path / relative
+        for key, dest in pending:
             dest.parent.mkdir(parents=True, exist_ok=True)
             await download_file_from_s3(
                 key,
@@ -400,6 +520,156 @@ class SlideService:
             slide_skills.scan_template_library, str(library_dir)
         )
         return library.category_map()
+
+    def _template_bucket(self, collection: str) -> str:
+        from app.deps import (
+            AWS_S3_DEFAULT_TEMPLATES_BUCKET,
+            AWS_S3_TEMPLATES_BUCKET,
+        )
+
+        return (
+            AWS_S3_DEFAULT_TEMPLATES_BUCKET
+            if collection.lower() in DEFAULT_COLLECTIONS
+            else AWS_S3_TEMPLATES_BUCKET
+        )
+
+    @staticmethod
+    def _render_category_preview(svg_path: Path, destination: Path) -> None:
+        """Rasterizes one category layout to PNG, filled with sample copy."""
+        import re
+
+        import resvg_py
+
+        svg = slide_skills.fill_svg(
+            svg_path.read_text(encoding="utf-8"), PREVIEW_SAMPLE_DATA
+        )
+        # Bare ampersands break the XML parser inside resvg.
+        svg = re.sub(r"&(?!(?:[a-zA-Z0-9]+|#[0-9]+|#x[0-9a-fA-F]+);)", "&amp;", svg)
+        destination.write_bytes(
+            bytes(resvg_py.svg_to_bytes(svg_string=svg, width=PREVIEW_WIDTH_PX))
+        )
+
+    async def build_collection_previews(self, library_dir: Path) -> int:
+        """Rasterizes a preview for every category in a local collection.
+
+        Called at import time so opening the template picker never pays the
+        rasterization cost, which takes several seconds for a large collection.
+        """
+        if not library_dir.exists():
+            return 0
+
+        rendered = 0
+        for category_dir in sorted(
+            child for child in library_dir.iterdir() if child.is_dir()
+        ):
+            variants = sorted(category_dir.glob("*.svg"))
+            png_path = category_dir / PREVIEW_FILE_NAME
+            if not variants or png_path.exists():
+                continue
+            try:
+                await run_in_threadpool(
+                    SlideService._render_category_preview, variants[0], png_path
+                )
+                rendered += 1
+            except Exception as error:
+                logger.warning(
+                    f"Failed to rasterize preview for '{category_dir.name}': {error}"
+                )
+
+        return rendered
+
+    async def get_template_previews(self, collection: str) -> Dict[str, Any]:
+        """Returns one rasterized PNG preview per category, cached in S3.
+
+        Previews are generated once and reused, so the template picker can load
+        plain images instead of parsing and laying out full SVG markup.
+        """
+        from app.services.s3_service import (
+            download_file_from_s3,
+            list_files_in_s3_prefix,
+            object_exists_in_s3,
+            upload_file_to_s3,
+        )
+
+        bucket = self._template_bucket(collection)
+        prefix = f"templates/{collection}/"
+
+        # Fast path: previews already in S3 (generated at import time). Listing
+        # keys avoids downloading the whole collection just to serve thumbnails.
+        stored_keys = await list_files_in_s3_prefix(prefix, bucket_name=bucket)
+        cached_keys = [
+            key for key in stored_keys if key.endswith(f"/{PREVIEW_FILE_NAME}")
+        ]
+        categories_with_layouts = {
+            key[len(prefix) :].rsplit("/", 1)[0]
+            for key in stored_keys
+            if key.endswith(".svg") and "/" in key[len(prefix) :]
+        }
+        categories_with_previews = {
+            key[len(prefix) :].rsplit("/", 1)[0] for key in cached_keys
+        }
+        # Only skip the rebuild when every category has one, so a partially
+        # generated collection is completed rather than shown with gaps.
+        if cached_keys and categories_with_layouts <= categories_with_previews:
+            return {
+                "collection": collection,
+                "bucket": bucket,
+                "previews": [
+                    {
+                        "category": key[len(prefix) :].rsplit("/", 1)[0],
+                        "variant": "standard",
+                        "key": key,
+                    }
+                    for key in sorted(cached_keys)
+                ],
+            }
+
+        library_dir = await self._ensure_collection_downloaded(collection)
+        previews: List[Dict[str, str]] = []
+
+        if not library_dir.exists():
+            return {"collection": collection, "bucket": bucket, "previews": []}
+
+        def render_png(svg_path: Path, destination: Path) -> None:
+            SlideService._render_category_preview(svg_path, destination)
+
+        for category_dir in sorted(
+            child for child in library_dir.iterdir() if child.is_dir()
+        ):
+            variants = sorted(category_dir.glob("*.svg"))
+            if not variants:
+                continue
+
+            variant = variants[0]
+            object_key = (
+                f"templates/{collection}/{category_dir.name}/{PREVIEW_FILE_NAME}"
+            )
+            png_path = category_dir / PREVIEW_FILE_NAME
+
+            if not png_path.exists():
+                cached = await object_exists_in_s3(
+                    object_key, bucket_name=bucket
+                ) and await download_file_from_s3(object_key, png_path, bucket)
+                if not cached:
+                    try:
+                        await run_in_threadpool(render_png, variant, png_path)
+                    except Exception as error:
+                        logger.warning(
+                            f"Failed to rasterize preview for "
+                            f"'{collection}/{category_dir.name}': {error}"
+                        )
+                        continue
+                    await upload_file_to_s3(png_path, object_key, bucket_name=bucket)
+
+            previews.append(
+                {
+                    "category": category_dir.name,
+                    "variant": variant.stem,
+                    "key": object_key,
+                }
+            )
+
+        return {"collection": collection, "bucket": bucket, "previews": previews}
 
     async def get_collection_categories(self, collection: str) -> Dict[str, Any]:
         library_dir = await self._ensure_collection_downloaded(collection)
@@ -527,6 +797,7 @@ class SlideService:
                         "green_environment_care": "Modern environmental care style: cream paper, deep forest-green condensed headlines, lush nature photography, sage botanical ornaments, halftone texture, and conservation editorial layouts.",
                         "rmit_red_modern": "RMIT-inspired academic style: crisp white space, bold red geometric frames, subtle contour-line texture, black sans-serif typography, and red-washed campus photo panels.",
                         "startup_neon_pitch": "Black startup pitch style with bold white typography, electric blue and violet light trails, glossy gradient pills, contact-footer details, and high-contrast business layouts.",
+                        "professional_focus": "Calm executive presentation style with deep navy structure, precise teal signals, warm brass emphasis, generous whitespace, and business-ready editorial layouts.",
                     }
                     return well_known.get(name.lower(), default_desc)
 
@@ -595,6 +866,51 @@ class SlideService:
             base_dir=SLIDE_TEMPLATES_DIR,
         )
 
+    async def _ensure_categories_exist(
+        self, library_dir: Path, requested_categories: set[str]
+    ) -> None:
+        """Ensure all requested slide categories exist in library_dir.
+        If a custom collection is missing a category (e.g. CHART_SLIDE or CHART_INSIGHT),
+        backfill it from the base system 'templates' library so generation never fails
+        with [Errno 2] No such file or directory."""
+        if not library_dir.exists() or not library_dir.is_dir():
+            return
+
+        base_dir = await self._ensure_collection_downloaded(BASE_TEMPLATE_COLLECTION)
+
+        for cat in requested_categories:
+            if not cat:
+                continue
+            cat_dir = library_dir / cat
+            has_svgs = cat_dir.exists() and any(cat_dir.glob("*.svg"))
+            if not has_svgs:
+                cat_dir.mkdir(parents=True, exist_ok=True)
+                target_source = CATEGORY_ALIASES.get(cat, cat)
+                src_dir = base_dir / target_source
+                if not (src_dir.exists() and any(src_dir.glob("*.svg"))):
+                    src_dir = base_dir / cat
+
+                if src_dir.exists() and any(src_dir.glob("*.svg")):
+                    for item in src_dir.iterdir():
+                        if item.is_file():
+                            shutil.copy2(item, cat_dir / item.name)
+                    logger.info(
+                        f"Backfilled missing category '{cat}' in '{library_dir.name}' from base template '{src_dir.name}'"
+                    )
+                else:
+                    fallback_dirs = [
+                        d for d in base_dir.iterdir() if d.is_dir() and any(d.glob("*.svg"))
+                    ] or [
+                        d for d in library_dir.iterdir() if d.is_dir() and any(d.glob("*.svg"))
+                    ]
+                    if fallback_dirs:
+                        for item in fallback_dirs[0].iterdir():
+                            if item.is_file():
+                                shutil.copy2(item, cat_dir / item.name)
+                        logger.warning(
+                            f"Backfilled missing category '{cat}' in '{library_dir.name}' using fallback '{fallback_dirs[0].name}'"
+                        )
+
     async def generate_deck_from_plan(
         self,
         plan: Union[list, dict],
@@ -613,13 +929,17 @@ class SlideService:
         elif isinstance(plan, list):
             slides_list = plan
 
+        requested_categories: set[str] = set()
         for slide in slides_list:
             bindings = slide.get("bindings") or {}
-            category = slide.get("category") or slide.get("layoutType") or ""
+            raw_cat = slide.get("category") or slide.get("layoutType") or ""
+            category = CATEGORY_ALIASES.get(raw_cat, raw_cat)
             slide_title = slide.get("slideTitle") or ""
 
             # Ensure category field is populated for slide_skills resolver
             slide["category"] = category
+            if category:
+                requested_categories.add(category)
 
             # Diagram and list families come in per-count variants. Expose the item
             # count as talking_points so slide_skills' capacity shortlist picks the
@@ -670,8 +990,14 @@ class SlideService:
         library_dir = SLIDE_TEMPLATES_DIR
         temp_dir_context = None
 
-        col_name = collection or "templates"
+        col_name = collection or BASE_TEMPLATE_COLLECTION
         collection_path = await self._ensure_collection_downloaded(col_name)
+        if not any(collection_path.glob("**/*.svg")):
+            raise ValueError(
+                f"Template collection '{col_name}' has no .svg layouts available. "
+                "Verify it exists under the 'templates/<collection>/' prefix in the "
+                "configured template S3 bucket."
+            )
         if collection_path.exists() and collection_path.is_dir():
             # Detect format: new extract_template_smart collections have
             # category subdirectories (TITLE_SLIDE/, AGENDA_OUTLINE/, etc.)
@@ -799,6 +1125,9 @@ class SlideService:
 
                 library_dir = temp_lib_dir
 
+        if library_dir and requested_categories:
+            await self._ensure_categories_exist(library_dir, requested_categories)
+
         try:
             actual_palette = None if palette == "auto" else palette
             _set_image_style_for(library_dir)  # style-matched AI image prompts
@@ -829,6 +1158,12 @@ class SlideService:
                     logger.info(
                         f"Cleaned up downloaded S3 collection '{col_name}' after generation"
                     )
+
+        # slide-skills reports plan data that had no matching slot. Log it so a
+        # sparse template silently swallowing content is diagnosable.
+        for warning in res.get("warnings") or []:
+            if "dropped bindings" in warning:
+                logger.warning(f"[{col_name}] {warning}")
 
         return res
 
@@ -992,6 +1327,9 @@ class SlideService:
 
                 library_dir = temp_lib_dir
 
+        if library_dir and category:
+            await self._ensure_categories_exist(library_dir, {category})
+
         try:
             lib = await run_in_threadpool(
                 slide_skills.scan_template_library, library_dir
@@ -1031,11 +1369,40 @@ class SlideService:
             variant = result["variant"]
             svg = Path(variant.path).read_text(encoding="utf-8")
 
+            # Data-slot renderers need a theme-aware ink colour for labels and
+            # axes. Reuse the heading colour so dark collections receive light
+            # chart text while light collections keep their normal dark ink.
+            slot_ink = "#1A1A1A"
+            heading_tag = re.search(
+                r'<text\b[^>]*>\s*\{\{heading(?:\|[^}]*)?\}\}\s*</text>',
+                svg,
+                flags=re.IGNORECASE,
+            )
+            if heading_tag:
+                heading_fill = re.search(
+                    r'\bfill="(#[0-9A-Fa-f]{6})"', heading_tag.group(0)
+                )
+                if heading_fill:
+                    slot_ink = heading_fill.group(1)
+            slot_tag = re.search(
+                r'<rect\b[^>]*\bdata-slot="(?:chart|table)"[^>]*/?>',
+                svg,
+                flags=re.IGNORECASE,
+            )
+            if slot_tag:
+                explicit_ink = re.search(
+                    r'\bdata-ink="(#[0-9A-Fa-f]{6})"', slot_tag.group(0)
+                )
+                if explicit_ink:
+                    slot_ink = explicit_ink.group(1)
+
             from slide_skills.svg_categories import (
                 prune_empty_groups,
                 fill_svg,
                 fit_text_to_boxes,
+                reflow_text_blocks,
             )
+            from slide_skills.svg_charts import fill_data_slots
 
             svg = prune_empty_groups(svg, result["texts"])
 
@@ -1046,7 +1413,11 @@ class SlideService:
                 texts = _backfill_slots(texts, variant, slide)
 
             svg = fill_svg(svg, texts)
+            raw_binds = slide.get("raw_bindings") or slide.get("bindings") or {}
+            svg = fill_data_slots(svg, raw_binds, target, ink=slot_ink)
             svg = fit_text_to_boxes(svg)
+            # push later paragraphs down so wrapped lines can't overlap
+            svg = reflow_text_blocks(svg)
 
             if mapping:
                 svg = slide_skills.retheme_svg(svg, mapping)
@@ -1067,25 +1438,36 @@ class SlideService:
                     )
 
     async def import_template_collection(
-        self, file_bytes: bytes, filename: str, name: str | None = None
+        self,
+        file_bytes: bytes,
+        filename: str,
+        name: str | None = None,
+        source: str = "auto",
     ) -> Dict[str, Any]:
+        if source not in TEMPLATE_IMPORT_SOURCES:
+            raise ValueError(f"source must be one of {sorted(TEMPLATE_IMPORT_SOURCES)}")
+
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
             collection_name = name or Path(filename).stem
 
             if filename.lower().endswith(".pptx"):
-                # Use the new 0.2.27 extract_template_smart for PPTX files —
-                # it maps slides to categories via AI and writes proper
-                # CATEGORY/standard.svg structure directly into library_dir.
+                # extract_template_smart maps slides to categories via AI and
+                # writes a CATEGORY/standard.svg structure into library_dir.
+                # `source` lets brand templates be read from the Slide Master's
+                # layouts, where corporate designs actually live.
                 pptx_path = temp_path / filename
                 pptx_path.write_bytes(file_bytes)
 
                 res = await run_in_threadpool(
-                    slide_skills.extract_template_smart,
-                    str(pptx_path),
-                    collection_name,
-                    library_dir=SLIDE_TEMPLATES_DIR,
-                    use_ai=True,
+                    partial(
+                        slide_skills.extract_template_smart,
+                        str(pptx_path),
+                        collection_name,
+                        library_dir=SLIDE_TEMPLATES_DIR,
+                        use_ai=True,
+                        source=source,
+                    )
                 )
 
             elif filename.lower().endswith(".zip"):
@@ -1136,6 +1518,30 @@ class SlideService:
             if not dest_dir.exists() and dest_dir_with_suffix.exists():
                 dest_dir = dest_dir_with_suffix
 
+            # Two layouts classified into the same category overwrite each other,
+            # so surface the loss instead of silently importing fewer designs.
+            warnings = list(res.get("warnings", [])) if isinstance(res, dict) else []
+            if isinstance(res, dict) and res.get("categories"):
+                classified = [
+                    entry.get("category")
+                    for entry in res["categories"]
+                    if isinstance(entry, dict) and entry.get("category")
+                ]
+                folder_count = (
+                    len([child for child in dest_dir.iterdir() if child.is_dir()])
+                    if dest_dir.exists() and dest_dir.is_dir()
+                    else 0
+                )
+                if folder_count and folder_count < len(classified):
+                    message = (
+                        f"{len(classified) - folder_count} of {len(classified)} layouts "
+                        "shared a category name and were overwritten during import."
+                    )
+                    logger.warning(f"[{collection_name}] {message}")
+                    warnings.append(message)
+            if isinstance(res, dict) and warnings:
+                res["warnings"] = warnings
+
             if dest_dir.exists() and dest_dir.is_dir():
                 # Auto-create collection.json if it doesn't exist
                 meta_file = dest_dir / "collection.json"
@@ -1182,6 +1588,14 @@ class SlideService:
                             )
                     return uploaded_count
 
+                # Rasterize category previews now so they upload with the
+                # collection. Generating them on first open makes the template
+                # picker spin for seconds on a large collection.
+                rendered = await self.build_collection_previews(dest_dir)
+                logger.info(
+                    f"Rendered {rendered} preview image(s) for collection '{collection_name}'"
+                )
+
                 # Always use collection_name (without _template) as the S3 prefix
                 # so get_collections and generate_deck_from_plan can find it consistently
                 uploaded_count = await upload_dir_to_s3(
@@ -1201,14 +1615,24 @@ class SlideService:
             return res
 
     async def generate_pptx(self, deck_id: str) -> Path:
+        import base64
+        import copy
         import io
         import re
         import traceback
-        from pptx import Presentation
-        from pptx.util import Emu
+        import xml.etree.ElementTree as ET
+
         import resvg_py
+        from pptx import Presentation
+        from pptx.dml.color import RGBColor
+        from pptx.enum.text import PP_ALIGN
+        from pptx.util import Emu, Inches, Pt
+
         from app.deps import STORAGE_DIR
-        from app.services.s3_service import download_file_from_s3
+        from app.services.s3_service import (
+            download_bytes_from_s3,
+            download_file_from_s3,
+        )
 
         # Always fetch latest HTML from S3 to make sure we have visual edits
         s3_key = f"slides/{deck_id}.html"
@@ -1228,6 +1652,35 @@ class SlideService:
             traceback.print_exc()
             raise RuntimeError(f"Failed to read deck HTML: {str(e)}")
 
+        # Browser previews use authenticated application URLs for generated media.
+        # Resolve only this deck's immutable media paths directly from S3 before
+        # handing the SVG to resvg, which cannot authenticate against the app.
+        media_path_pattern = re.compile(
+            rf"/api/v1/ai/slides/{re.escape(deck_id)}/media/"
+            r"([0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-"
+            r"[89ab][0-9a-f]{3}-[0-9a-f]{12})",
+            re.IGNORECASE,
+        )
+        for media_id in set(media_path_pattern.findall(html_content)):
+            media_object = await download_bytes_from_s3(
+                f"slides/{deck_id}/media/{media_id}.png"
+            )
+            if not media_object:
+                raise RuntimeError(f"Failed to load generated slide media {media_id}")
+
+            media_bytes, content_type = media_object
+            if content_type not in {"image/png", "image/jpeg", "image/webp"}:
+                raise RuntimeError(
+                    f"Unsupported generated slide media type: {content_type}"
+                )
+
+            data_url = (
+                f"data:{content_type};base64,"
+                f"{base64.b64encode(media_bytes).decode('ascii')}"
+            )
+            media_url = f"/api/v1/ai/slides/{deck_id}/media/{media_id}"
+            html_content = html_content.replace(media_url, data_url)
+
         # Extract all SVG markup
         svgs = re.findall(r"(<svg[^>]*>.*?</svg>)", html_content, re.DOTALL)
         if not svgs:
@@ -1242,20 +1695,278 @@ class SlideService:
             prs.slide_height = Emu(int(12192000 * 9 / 16))  # 7.5 in
             blank_layout = prs.slide_layouts[6]  # Blank slide layout
 
+            def parse_svg_style(style_str: str | None) -> dict[str, str]:
+                res = {}
+                if not style_str:
+                    return res
+                for item in style_str.split(";"):
+                    if ":" in item:
+                        k, v = item.split(":", 1)
+                        res[k.strip().lower()] = v.strip()
+                return res
+
+            def parse_svg_color(color_str: str | None) -> RGBColor | None:
+                if not color_str or color_str.lower() in ("none", "transparent", "inherit"):
+                    return None
+                color_str = color_str.strip().lower()
+                if color_str.startswith("#"):
+                    c = color_str[1:]
+                    if len(c) == 3:
+                        c = "".join([x * 2 for x in c])
+                    if len(c) == 6:
+                        try:
+                            return RGBColor(
+                                int(c[0:2], 16), int(c[2:4], 16), int(c[4:6], 16)
+                            )
+                        except ValueError:
+                            pass
+                m = re.match(r"rgba?\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)", color_str)
+                if m:
+                    return RGBColor(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+                color_map = {
+                    "white": RGBColor(255, 255, 255),
+                    "black": RGBColor(0, 0, 0),
+                    "red": RGBColor(255, 0, 0),
+                    "blue": RGBColor(0, 0, 255),
+                    "green": RGBColor(0, 128, 0),
+                }
+                return color_map.get(color_str)
+
+            def parse_transform_translate(trans_str: str | None) -> tuple[float, float]:
+                if not trans_str:
+                    return 0.0, 0.0
+                m = re.search(
+                    r"translate\s*\(\s*([-0-9.]+)[,\s]+([-0-9.]+)\s*\)", trans_str
+                )
+                if m:
+                    return float(m.group(1)), float(m.group(2))
+                m1 = re.search(r"translate\s*\(\s*([-0-9.]+)\s*\)", trans_str)
+                if m1:
+                    return float(m1.group(1)), 0.0
+                return 0.0, 0.0
+
             for idx, svg_markup in enumerate(svgs):
-                # Escape bare ampersands to prevent XML parsing errors in resvg-py
                 clean_svg = re.sub(
                     r"&(?!(?:[a-zA-Z0-9]+|#[0-9]+|#x[0-9a-fA-F]+);)",
                     "&amp;",
                     svg_markup,
                 )
-                png_bytes = bytes(
-                    resvg_py.svg_to_bytes(svg_string=clean_svg, width=1920)
+
+                vb_match = re.search(r'viewBox=[\"\']([0-9.\s]+)[\"\']', clean_svg)
+                if vb_match:
+                    parts = [float(x) for x in vb_match.group(1).split()]
+                    svg_w, svg_h = parts[2], parts[3]
+                else:
+                    svg_w, svg_h = 1440.0, 810.0
+
+                try:
+                    root = ET.fromstring(clean_svg)
+                except ET.ParseError:
+                    # Fallback to rendering whole slide as picture if XML parsing fails
+                    png_bytes = bytes(
+                        resvg_py.svg_to_bytes(svg_string=clean_svg, width=1920)
+                    )
+                    slide = prs.slides.add_slide(blank_layout)
+                    slide.shapes.add_picture(
+                        io.BytesIO(png_bytes), 0, 0, prs.slide_width, prs.slide_height
+                    )
+                    continue
+
+                def remove_text_and_image_nodes(element: ET.Element) -> None:
+                    to_remove = []
+                    for child in list(element):
+                        if child.tag.endswith("text") or child.tag.endswith("image"):
+                            to_remove.append(child)
+                        else:
+                            remove_text_and_image_nodes(child)
+                    for child in to_remove:
+                        element.remove(child)
+
+                bg_root = copy.deepcopy(root)
+                remove_text_and_image_nodes(bg_root)
+                bg_svg = ET.tostring(bg_root, encoding="utf-8").decode("utf-8")
+                bg_png = bytes(
+                    resvg_py.svg_to_bytes(svg_string=bg_svg, width=1920)
                 )
+
                 slide = prs.slides.add_slide(blank_layout)
                 slide.shapes.add_picture(
-                    io.BytesIO(png_bytes), 0, 0, prs.slide_width, prs.slide_height
+                    io.BytesIO(bg_png), 0, 0, prs.slide_width, prs.slide_height
                 )
+
+                scale_x = prs.slide_width / svg_w
+                scale_y = prs.slide_height / svg_h
+                scale_pt = 540.0 / svg_h
+
+                def extract_image_bytes(href: str | None) -> bytes | None:
+                    if not href:
+                        return None
+                    if href.startswith("data:image/"):
+                        try:
+                            _, base64_str = href.split(",", 1)
+                            return base64.b64decode(base64_str)
+                        except Exception:
+                            return None
+                    return None
+
+                def process_node(
+                    node: ET.Element, parent_tx: float = 0.0, parent_ty: float = 0.0
+                ) -> None:
+                    tx, ty = parse_transform_translate(node.attrib.get("transform"))
+                    curr_tx = parent_tx + tx
+                    curr_ty = parent_ty + ty
+
+                    if node.tag.endswith("text"):
+                        style_dict = parse_svg_style(node.attrib.get("style"))
+
+                        tspans = node.findall(".//{*}tspan")
+                        lines = []
+                        if tspans:
+                            for ts in tspans:
+                                t_text = (ts.text or "").strip()
+                                if t_text:
+                                    lines.append((t_text, ts))
+                        else:
+                            t_text = "".join(node.itertext()).strip()
+                            if t_text:
+                                lines.append((t_text, node))
+
+                        if lines:
+                            full_text = " ".join([l[0] for l in lines])
+                            x = (
+                                float(
+                                    node.attrib.get("x", style_dict.get("x", 0))
+                                )
+                                + curr_tx
+                            )
+                            y = (
+                                float(
+                                    node.attrib.get("y", style_dict.get("y", 0))
+                                )
+                                + curr_ty
+                            )
+
+                            fs_str = (
+                                node.attrib.get(
+                                    "font-size", style_dict.get("font-size", "18")
+                                )
+                                .replace("px", "")
+                                .replace("pt", "")
+                            )
+                            try:
+                                font_size = float(fs_str)
+                            except ValueError:
+                                font_size = 18.0
+
+                            font_weight = node.attrib.get(
+                                "font-weight", style_dict.get("font-weight", "normal")
+                            )
+                            font_family = node.attrib.get(
+                                "font-family", style_dict.get("font-family", "Arial")
+                            )
+                            fill_str = node.attrib.get(
+                                "fill", style_dict.get("fill", "#000000")
+                            )
+                            text_anchor = node.attrib.get(
+                                "text-anchor", style_dict.get("text-anchor", "start")
+                            )
+                            data_w_str = node.attrib.get(
+                                "data-w", style_dict.get("data-w", "0")
+                            )
+                            data_w = float(data_w_str) if data_w_str else 0.0
+
+                            box_w = (
+                                data_w
+                                if data_w > 0
+                                else max(font_size * len(full_text) * 0.6, 200.0)
+                            )
+                            box_h = font_size * 1.3 * max(len(lines), 1)
+                            top_svg = y - font_size * 0.85
+
+                            if text_anchor == "middle":
+                                left_svg = x - (box_w / 2.0)
+                                align = PP_ALIGN.CENTER
+                            elif text_anchor == "end":
+                                left_svg = x - box_w
+                                align = PP_ALIGN.RIGHT
+                            else:
+                                left_svg = x
+                                align = PP_ALIGN.LEFT
+
+                            left = Emu(int(left_svg * scale_x))
+                            top = Emu(int(top_svg * scale_y))
+                            width = Emu(int(box_w * scale_x))
+                            height = Emu(int(box_h * scale_y))
+
+                            txBox = slide.shapes.add_textbox(left, top, width, height)
+                            tf = txBox.text_frame
+                            tf.word_wrap = True
+                            tf.margin_left = Inches(0.02)
+                            tf.margin_right = Inches(0.02)
+                            tf.margin_top = Inches(0.02)
+                            tf.margin_bottom = Inches(0.02)
+
+                            for line_idx, (line_text, line_elem) in enumerate(lines):
+                                p = (
+                                    tf.paragraphs[0]
+                                    if line_idx == 0
+                                    else tf.add_paragraph()
+                                )
+                                p.text = line_text
+                                p.alignment = align
+                                p.font.name = font_family.split(",")[0].strip(
+                                    " \"'"
+                                )
+                                p.font.size = Pt(font_size * scale_pt)
+                                p.font.bold = font_weight in (
+                                    "bold",
+                                    "700",
+                                    "800",
+                                    "900",
+                                )
+
+                                c = parse_svg_color(fill_str)
+                                if c:
+                                    p.font.color.rgb = c
+                    elif node.tag.endswith("image"):
+                        href = node.attrib.get("href") or node.attrib.get(
+                            "{http://www.w3.org/1999/xlink}href"
+                        )
+                        if href:
+                            img_bytes = extract_image_bytes(href)
+                            if img_bytes:
+                                try:
+                                    style_dict = parse_svg_style(node.attrib.get("style"))
+                                    x_str = str(node.attrib.get("x", style_dict.get("x", "0")))
+                                    y_str = str(node.attrib.get("y", style_dict.get("y", "0")))
+                                    w_str = str(node.attrib.get("width", style_dict.get("width", "0")))
+                                    h_str = str(node.attrib.get("height", style_dict.get("height", "0")))
+
+                                    x_val = float(x_str.replace("px", "")) + curr_tx
+                                    y_val = float(y_str.replace("px", "")) + curr_ty
+                                    w_val = float(w_str.replace("px", ""))
+                                    h_val = float(h_str.replace("px", ""))
+
+                                    if w_val > 0 and h_val > 0:
+                                        img_left = Emu(int(x_val * scale_x))
+                                        img_top = Emu(int(y_val * scale_y))
+                                        img_width = Emu(int(w_val * scale_x))
+                                        img_height = Emu(int(h_val * scale_y))
+
+                                        slide.shapes.add_picture(
+                                            io.BytesIO(img_bytes),
+                                            img_left,
+                                            img_top,
+                                            img_width,
+                                            img_height,
+                                        )
+                                except Exception as img_err:
+                                    print(f"[PPTX] Warning parsing image shape: {img_err}")
+                    else:
+                        for child in list(node):
+                            process_node(child, curr_tx, curr_ty)
+
+                process_node(root)
 
             prs.save(str(pptx_path))
         except Exception as e:

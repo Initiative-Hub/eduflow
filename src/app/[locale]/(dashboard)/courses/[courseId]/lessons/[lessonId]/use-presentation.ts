@@ -1,9 +1,11 @@
 import { useQueryClient } from '@tanstack/react-query';
 import type { JSONContent } from '@tiptap/core';
 import { useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import type { TiptapDocument } from '@/utils/lesson-content';
+import { getCriticalDeckWarnings } from '@/utils/slide-deck-warnings';
 import { getNextRecommendedCollectionForPlannerState } from './presentation-planner-state';
 import { useGenerateSlideDeck, useLesson } from './use-lesson';
 
@@ -779,6 +781,7 @@ export function usePresentation(options: {
 
   // State Machine
   const [step, setStep] = useState<Step>('input');
+  const t = useTranslations('Courses.LessonPresentation');
   const [instructions, setInstructions] = useState('');
   const [duration, setDuration] = useState('15');
   const [plannedSlides, setPlannedSlides] = useState<PlannedSlide[]>([]);
@@ -793,13 +796,6 @@ export function usePresentation(options: {
   const [recommendedCollection, setRecommendedCollection] = useState<
     string | null
   >(null);
-
-  // Gamma App state
-  const [generatorType, setGeneratorType] = useState<'default' | 'gamma'>(
-    'default'
-  );
-  const [gammaTheme, setGammaTheme] = useState('auto');
-  const [exportUrl, setExportUrl] = useState<string | null>(null);
 
   // Dynamic Outlines fallback generator
   const generateOutlines = useCallback(
@@ -1289,6 +1285,20 @@ export function usePresentation(options: {
       setDeckUsage(deck.usage ?? null);
       setCurrentSlideIndex(0);
       setStep('generated');
+
+      // Log every warning for diagnosis, but only interrupt the user for the
+      // ones that mean visible damage: a skipped slide or a failed image.
+      if (deck.warnings?.length) {
+        for (const warning of deck.warnings) {
+          console.warn('[SlideDeck]', warning);
+        }
+        const criticalWarnings = getCriticalDeckWarnings(deck.warnings);
+        if (criticalWarnings.length) {
+          toast.warning(t('deckWarnings', { count: criticalWarnings.length }), {
+            description: criticalWarnings.slice(0, 3).join('\n'),
+          });
+        }
+      }
     } catch (error) {
       console.error('Slide deck generation failed:', error);
       const message =
@@ -1303,62 +1313,10 @@ export function usePresentation(options: {
     }
   };
 
-  // Gamma slide generation handler
-  const handleGenerateGamma = async () => {
-    setStep('generating');
-    setLoaderStep(0);
-    setDeckUrl(null);
-    setDeckUsage(null);
-    setExportUrl(null);
-
-    const t1 = setTimeout(() => setLoaderStep(1), 1000);
-    const t2 = setTimeout(() => setLoaderStep(2), 5000);
-
-    try {
-      const response = await fetch('/api/v1/presentation/gamma', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          lessonId,
-          title,
-          duration,
-          context: instructions,
-          themeId: gammaTheme === 'auto' ? undefined : gammaTheme,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP ${response.status}`);
-      }
-
-      const result = await response.json();
-      setDeckUrl(result.gammaUrl);
-      setExportUrl(result.exportUrl ?? null);
-
-      queryClient.invalidateQueries({
-        queryKey: ['lesson', lessonId],
-      });
-
-      setStep('generated');
-    } catch (error) {
-      console.error('Gamma slide generation failed:', error);
-      const message =
-        (error as { message?: string })?.message ||
-        'Failed to generate Gamma presentation. Please try again.';
-      toast.error(message);
-      setStep('input');
-    } finally {
-      clearTimeout(t1);
-      clearTimeout(t2);
-    }
-  };
-
   // Discard the saved deck and return to the planner to build a new one.
   const startNewDeck = useCallback(() => {
     setDeckUrl(null);
     setDeckUsage(null);
-    setExportUrl(null);
     setRecommendedCollection(null);
     setStep('input');
   }, []);
@@ -1367,7 +1325,6 @@ export function usePresentation(options: {
   const editOutline = useCallback(() => {
     setDeckUrl(null);
     setDeckUsage(null);
-    setExportUrl(null);
     setStep('planned');
   }, []);
 
@@ -1473,12 +1430,5 @@ export function usePresentation(options: {
     selectedCollection,
     setSelectedCollection,
     recommendedCollection,
-    // Gamma App state
-    generatorType,
-    setGeneratorType,
-    gammaTheme,
-    setGammaTheme,
-    exportUrl,
-    handleGenerateGamma,
   };
 }

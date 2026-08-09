@@ -102,6 +102,41 @@ async def download_file_from_s3(
         return False
 
 
+async def object_exists_in_s3(object_key: str, bucket_name: str | None = None) -> bool:
+    """Quiet existence check, so cache misses do not log download errors."""
+    try:
+        s3 = get_s3_client()
+        if not s3:
+            return False
+
+        bucket = bucket_name or AWS_S3_BUCKET
+        await run_in_threadpool(s3.head_object, Bucket=bucket, Key=object_key)
+        return True
+    except Exception:
+        return False
+
+
+async def download_bytes_from_s3(
+    object_key: str, bucket_name: str | None = None
+) -> tuple[bytes, str] | None:
+    try:
+        s3 = get_s3_client()
+        if not s3:
+            return None
+
+        bucket = bucket_name or AWS_S3_BUCKET
+
+        def download_object() -> tuple[bytes, str]:
+            response = s3.get_object(Bucket=bucket, Key=object_key)
+            content_type = response.get("ContentType") or "application/octet-stream"
+            return response["Body"].read(), content_type
+
+        return await run_in_threadpool(download_object)
+    except Exception as e:
+        logger.error(f"Failed to download key {object_key} from S3: {e}")
+        return None
+
+
 async def list_files_in_s3_prefix(
     prefix: str, bucket_name: str | None = None
 ) -> list[str]:
@@ -113,10 +148,13 @@ async def list_files_in_s3_prefix(
         bucket = bucket_name or AWS_S3_BUCKET
 
         def list_keys():
-            response = s3.list_objects_v2(Bucket=bucket, Prefix=prefix)
-            if "Contents" not in response:
-                return []
-            return [item["Key"] for item in response["Contents"]]
+            # list_objects_v2 caps each response at 1000 keys, so paginate to
+            # avoid silently truncating large template collections.
+            paginator = s3.get_paginator("list_objects_v2")
+            keys: list[str] = []
+            for page in paginator.paginate(Bucket=bucket, Prefix=prefix):
+                keys.extend(item["Key"] for item in page.get("Contents", []))
+            return keys
 
         return await run_in_threadpool(list_keys)
     except Exception as e:

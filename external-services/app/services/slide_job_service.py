@@ -53,12 +53,16 @@ class SlideJobService:
                 html = out_path.read_text(encoding="utf-8")
                 slides_meta = []
                 for idx, s in enumerate(result.get("slides", [])):
-                    slides_meta.append({
-                        "id": f"slide-{idx}-{int(time.time() * 1000)}",
-                        "layoutType": s.get("category") or s.get("layoutType") or "",
-                        "slideTitle": s.get("slideTitle") or "",
-                        "bindings": s.get("bindings") or {},
-                    })
+                    slides_meta.append(
+                        {
+                            "id": f"slide-{idx}-{int(time.time() * 1000)}",
+                            "layoutType": s.get("category")
+                            or s.get("layoutType")
+                            or "",
+                            "slideTitle": s.get("slideTitle") or "",
+                            "bindings": s.get("bindings") or {},
+                        }
+                    )
                 metadata_script = f'<script id="slide-plan-metadata" type="application/json">{json.dumps({"slides": slides_meta})}</script>'
                 if "</body>" in html:
                     html = html.replace("</body>", f"{metadata_script}\n</body>")
@@ -113,12 +117,14 @@ class SlideJobService:
                 html = out_path.read_text(encoding="utf-8")
                 slides_meta = []
                 for idx, s in enumerate(req.slides):
-                    slides_meta.append({
-                        "id": f"slide-{idx}-{int(time.time() * 1000)}",
-                        "layoutType": s.category,
-                        "slideTitle": s.slideTitle or "",
-                        "bindings": s.bindings or {},
-                    })
+                    slides_meta.append(
+                        {
+                            "id": f"slide-{idx}-{int(time.time() * 1000)}",
+                            "layoutType": s.category,
+                            "slideTitle": s.slideTitle or "",
+                            "bindings": s.bindings or {},
+                        }
+                    )
                 metadata_script = f'<script id="slide-plan-metadata" type="application/json">{json.dumps({"slides": slides_meta})}</script>'
                 if "</body>" in html:
                     html = html.replace("</body>", f"{metadata_script}\n</body>")
@@ -144,12 +150,17 @@ class SlideJobService:
             return {"status": "error", "message": str(error)}
 
     async def _execute_import_job(
-        self, job_id: str, file_bytes: bytes, filename: str, name: str | None
+        self,
+        job_id: str,
+        file_bytes: bytes,
+        filename: str,
+        name: str | None,
+        source: str = "auto",
     ) -> None:
         try:
             self.jobs[job_id]["status"] = "running"
             result = await self.slide_service.import_template_collection(
-                file_bytes, filename, name
+                file_bytes, filename, name, source=source
             )
             self.jobs[job_id]["status"] = "done"
             self.jobs[job_id]["result"] = result
@@ -163,10 +174,11 @@ class SlideJobService:
         file_bytes: bytes,
         filename: str,
         name: str | None,
+        source: str = "auto",
     ) -> Dict[str, str]:
         job_id = self.create_job()
         background_tasks.add_task(
-            self._execute_import_job, job_id, file_bytes, filename, name
+            self._execute_import_job, job_id, file_bytes, filename, name, source
         )
         return {"job_id": job_id, "status": "queued"}
 

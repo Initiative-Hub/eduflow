@@ -20,12 +20,7 @@ Foundational mandates here take absolute precedence. **NEVER** invent ad-hoc beh
 
 - **Skill Invocation**: Before writing code, first explore the project structure, then invoke the relevant skills in `.agents/skills` for documentation (**IMPORTANT**: Prefer retrieval-led reasoning over pre-training-led reasoning 
 for any tasks.).
-- **Type Integrity**: When editing `prisma/schema.prisma`, create or apply the migration with `bun db:migrate` and refresh the Prisma client with `bun db:generate`.
-- **Bilingual Support**: ALWAYS provide translations for both English (en.json) AND Vietnamese (vi.json) for all user-facing strings.
 - **Proactive Refactoring**: Evaluate files >400 LOC and components >200 LOC for extraction into smaller, focused units.
-- **Unified Verification**: If your changes touch TypeScript/JavaScript files (or root scripts/config that affect repo-wide checks), end your session with `bun type-check`.
-- **UI Preflight Hygiene**: For newly added/edited files, format files with `bun format:fix` before running verification checks to avoid `biome` issues.
-- **Formatting Workflow**: For fixing formatting issues, try `bun format:fix` first before making manual edits.
 - **Session Retrospective**: Conduct a retrospective at the end of every session to document mistakes and update these guidelines.
 
 ## 3. Repository Structure & Semantics
@@ -38,7 +33,6 @@ for any tasks.).
 
 - **Server Components**: Default to Server Components; use 'use client' only when state or interactivity is required.
 - **Type Inference**: Prefer inferred Prisma and Zod types over handwritten duplicates. If a shape is reused across multiple files, extract a local type alias or helper near the feature instead of repeating the structure inline.
-- **Shared UI Shells**: Keep reusable UI shells in shared components such as `src/components/custom/form` and `src/components/custom/dialog` rather than duplicating layout scaffolding.
 - **Vendor UI Boundaries**: Do not edit components inside `src/components/ai-elements` or `src/components/ui` during implementation, refactoring, or bug fixes unless the user explicitly asks for changes there, because those directories are installed vendor primitives from Vercel AI Elements and shadcn/ui.
 
 ## 4. Canonical Workflows
@@ -59,11 +53,6 @@ for any tasks.).
 2. Update `messages/en.json` and `messages/vi.json` for every user-facing string.
 3. Reuse `src/components/custom/dialog` and `src/components/custom/form` for dialog and form shells; use `lucide-react` for new icons.
 
-### 4.3 Adding Dependencies
-
-- **Method**: To add a new package to the repo, run `bun add <package>` from the repository root.
-- **Constraint**: **NEVER** manually edit `package.json` to add a new package. Use the `bun add` command to ensure the lockfile remains consistent.
-
 ## 5. Engineering Standards
 
 ### 5.1 Data Fetching (TanStack Query)
@@ -71,30 +60,21 @@ for any tasks.).
 - **Mandatory Wrapper**: Use `useQuery`/`useMutation` for client-side async flows that drive UI state.
 - **Request Helpers**: Keep request plumbing in shared helpers or route handlers. The shared browser API client lives in `src/lib/api/api-client.ts`; prefer extending it over duplicating request logic in components.
 - **HTTP Cache Bypass**: Every `fetch` inside a `queryFn` MUST include `{ cache: 'no-store' }`.
-- **Legacy Fetching**: Do not introduce new `useEffect`-based data loading; if you touch a legacy imperative loader, prefer migrating it to a query hook.
 
 ## 6. Known Gotchas & Patterns
 
 ### 6.1 Database & Auth
 
 - **Authenticate First**: In server components and route handlers, call `auth()` before protected Prisma reads or writes. Redirect unauthenticated users to `/login` or return `401` before querying protected data.
-- **Explicit Role Checks**: Keep admin-only routes explicit about role checks before exposing privileged data or mutations. The current pattern in `src/app/api/admin/users/route.ts` is to load the current user, verify `ADMIN`, then proceed.
 - **Composable Auth Wrappers**: Keep `withRoles(...)` and `withPermissions(...)` self-sufficient. They must be usable directly on route handlers without wrapping them in `withAuth(...)`, while still accepting a forwarded session when composed under another auth-aware wrapper.
-- **Shared Prisma Client**: Use the shared Prisma client from `src/lib/prisma.ts` and local bootstrap data from `prisma/seed.ts`; use `bun db:reset` when you need a clean local database.
 
 ### 6.2 UI & Rendering Patterns
 
-- **Translations**: Keep user-facing copy in `messages/en.json` and `messages/vi.json`.
 - **Next-intl Components**: When extracting text-heavy components, pass plain strings or call next-intl helpers inside the component instead of threading translator functions through props.
 - **SSR Page Entries**: Keep `src/app/**/page.tsx` as Server Components by NEVER adding 'use client' on top of them. Move only interactive logic into focused local client islands.
-- **Shared Shells**: Reuse `DialogTemplate` and `FormTemplate` for modal and form shells instead of rebuilding the same structure ad hoc.
 - **Embedded Editor Shells**: Do not place full-page editor chrome with sticky bars or negative horizontal margins inside cards. Expose an embedded appearance with local borders, a non-sticky toolbar, and a constrained writing height.
-- **Pipeline Step Panels**: In generation/progress dialogs, render step-specific detail panels only while their step is active; add explicit step navigation before showing historical step details.
-- **Planner Recommendation State**: When async planning derives a secondary UI state such as `recommendedCollection`, clear that state at the start of each new run and on fallback/error paths so the UI never shows a stale result from a previous request.
-- **Dialog Success Flow**: When a dialog triggers an async mutation, close it via `onOpenChange(false)` before navigation and guard entry points with the mutation pending state to avoid duplicate opens/submits.
 - **Tabular Lists**: Use the shared `Table` components for list-style layouts instead of custom row divs to keep alignment consistent.
 - **Server Layouts**: For async server layouts that only pass through children, return a fragment instead of raw children.
-- **Icons and Styling**: Use `lucide-react` for new icons and keep styling in the existing Tailwind utility style used throughout the app.
 - **Icon Availability**: When introducing a new `lucide-react` icon, verify the installed package exports it; use a generic available icon when brand-specific icons are absent.
 - **JSX Curly Braces**: Literally render double curly braces `{{` and `}}` in JSX text by quoting them, like `{'{{placeholder}}'}`, to prevent the JSX compiler from parsing them as JS object shorthand syntax.
 - **Research Citations**: For AI research/chat responses with numbered citations, derive source metadata from AI SDK `source-url` parts and web-search tool outputs in shared helpers, then render inline citation UI from that normalized source list instead of hardcoding source parsing in components.
@@ -109,6 +89,8 @@ for any tasks.).
 - **Swagger Placement**: Keep each route handler's Swagger JSDoc block immediately above the exported `GET`/`POST`/`PUT`/`PATCH`/`DELETE` handler it documents; split multi-method route docs into one block per handler.
 - **Swagger Coverage**: Document every exported API route method with its authentication, path parameters, validated request body, and the response statuses actually returned by the handler; describe both initialization and confirmation for presigned upload flows.
 - **API Key Overrides**: When a service method accepts an `apiKey` override, prefer it over environment variables and cover the override with a focused unit test.
+- **Long Request Timeouts**: The shared browser API client aborts after 20s, which silently fails long server work (PPTX export, image generation) as `status: undefined` with an "unexpected error" message. Pass an explicit per-request `timeout` for any endpoint that rasterizes slides or calls a generative model, and set a matching `maxDuration` on the route so the server is not cut off first.
+- **Upstream Provider Errors**: Never discard an upstream provider's response body when raising an error; include the status and message so the cause is diagnosable instead of surfacing a bare status code. Image providers refuse entire regions (Google AI Studio returns 400 "User location is not supported", OpenAI 403 "Country, region, or territory not supported"), so image generation must try a fallback model chain rather than one hard-coded model.
 
 ### 6.4 Tooling & CI
 
@@ -126,7 +108,6 @@ for any tasks.).
 - **Typed JSON**: Use Zod transforms to keep JSON request payloads typed before handing them to Prisma create/update calls.
 - **Lesson Content Payloads**: Lesson editors must load and save only Tiptap JSON documents (`{"type":"doc","content":[...]}`); AI generation may emit transient lesson HTML only if it is converted to Tiptap JSON before persistence.
 - **Assignment First Upload**: In student assignment views, treat a missing submission as an upload-ready pre-draft state because the upload initialization endpoint creates the draft submission; only require an existing `DRAFT` submission for the final submit action.
-- **Inferred Types**: Prefer inferred Prisma and Zod types over handwritten duplicates; when a shape repeats, extract it into a local type alias or helper instead of retyping the structure.
 - **ICU Messages**: Use ICU-style placeholders in `next-intl` messages (`{name}`, `{count}`) when adding plurals or selects.
 - **Generated Prisma Sync**: If `src/generated/prisma` and `prisma/schema.prisma` drift, rerun `bun db:generate` before assuming a storage or Prisma-backed service is broken.
 - **Prisma Unknown Arguments**: If Prisma reports an unknown field on a model, verify the checked-in schema and regenerated client first; do not rename application code until the generated types and schema agree.
@@ -138,22 +119,8 @@ for any tasks.).
 - Upload Confirmation Fallback: When an uploaded file does not exist on the remote bucket during `confirmUpload`, explicitly delete the pending database entry to roll back the state.
 - **Bucket Initialization**: When adding new buckets to the storage config, ensure they are also added to `docker-compose.yml` initialization scripts (`minio-init` and `minio-reset`).
 - **Preview Delivery**: For inventory previews, prefer signed URLs over fetching full blobs into browser memory, and provide UI fallbacks when inline rendering fails.
+- **Signed URL Caching**: Cache object keys rather than signed URLs, and re-sign per request; caching URLs serves expired links. Responses containing signed URLs must use `Cache-Control: private, no-store`.
 - **Resilient S3 Client Initializers**: Always provide fallback checks to standard AWS environment variables (`AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`) when namespaced variables (e.g. `AWS_S3_REGION`) are missing to prevent startup failures on custom local dev configurations.
-- **S3-First Multi-Bucket Templates**: Slide templates are stored in two distinct S3 buckets under the `templates/` prefix:
-  - System default collections (e.g., `vintage`, `clean_light`, `pastel_pop`, `starter`, `neon_dark` and the base `templates` layout categories) belong in the system default templates bucket (`AWS_S3_DEFAULT_TEMPLATES_BUCKET`, i.e., `eduflow-default-template`).
-  - User-uploaded custom templates must remain isolated and persist inside the custom templates bucket (`AWS_S3_TEMPLATES_BUCKET`, i.e., `eduflow-template`).
-  - The backend slide service lists collections and downloads layouts dynamically from these buckets on demand, caching them locally under `SLIDE_TEMPLATES_DIR`. Local static layout files in `external-services/templates` are no longer required and can be deleted safely after they are uploaded to S3.
-  - Keep slide usage guidance in each `CATEGORY/category.json` as the source of truth. Top-level `collection.json` should keep collection-wide style metadata such as name, description, palette, and `image_style`, and it may also mirror a `categories` block for browsing or distribution when needed. When loading template metadata at runtime, prefer `collection.json.categories` first and fall back to each `CATEGORY/category.json` for any missing fields.
-  - For standard built-in planning in the Next.js app, prefer the checked-in `config/slide-layout-guidance.json` file. Use dynamic template category metadata only for custom collections or as a fallback when the local planning guidance is incomplete.
-  - In the presentation planner, the `auto` style picker must recommend only built-in default style collections. Never include user-uploaded custom template collections in the AI auto-pick candidate list.
-  - For built-in auto-style selection, higher-education, university lecture, student-feedback, and research-presentation topics should bias toward `rmit_red_modern` over generic light themes such as `clean_light`.
-  - When the planning prompt explicitly requests a built-in style collection by name or alias (for example, "use the RMIT template" or just `rmit_red_modern`), treat that request as authoritative in `auto` mode and override softer topic-based style heuristics.
-  - When live template inventory is missing some built-in default collections, merge it with the checked-in built-in style registry before planning or resolving `auto` recommendations so explicit built-in style requests still remain selectable.
-  - **System Template Style Registration**: When adding a new system-wide default style collection (e.g. `illustrative_culture`, `minimalist_gradient`), register it in the following places so that S3 requests are routed to the default templates bucket:
-    1. **`slide_service.py`**: Add it to `default_collections` set (in `_ensure_collection_downloaded`), the fallback descriptions dictionary, and the directory cleanup exemption whitelist.
-    2. **`slide_controller.py`**: Add it to `default_collections` set in the categories lookup controller.
-    3. **`SlideService.ts`**: Add it to `defaultCollections` Set in the template previews resolver.
-    4. **`PresentationService.ts`**: Register it in the `STYLE_COLLECTIONS` record with its prompt-optimized styling description so the AI planner can recommend it.
 
 ## 7. Continuous Improvement (Session Retrospective)
 

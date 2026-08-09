@@ -134,6 +134,25 @@ export async function createInventoryReadSignedUrl(options: {
   });
 }
 
+/**
+ * Signed read URL for any storage bucket. Used for template preview images,
+ * which live in the template buckets rather than the inventory bucket.
+ */
+export async function createObjectReadSignedUrl(options: {
+  objectKey: string;
+  bucketName: string;
+  expiresInSeconds?: number;
+}) {
+  const command = new GetObjectCommand({
+    Bucket: options.bucketName,
+    Key: options.objectKey,
+  });
+
+  return getSignedUrl(createS3Client(), command, {
+    expiresIn: options.expiresInSeconds ?? DEFAULT_READ_EXPIRES_SECONDS,
+  });
+}
+
 export async function createInventoryWriteSignedUrl(options: {
   objectKey: string;
   contentType: string;
