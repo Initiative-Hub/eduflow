@@ -138,6 +138,8 @@ services:
       - storage-network
     env_file:
       - ./external-services/.env
+    volumes:
+      - templates_data:/app/templates
 
 
 networks: 
@@ -148,3 +150,4 @@ networks:
 volumes:
   postgres_data:
   minio_data:
+  templates_data:
