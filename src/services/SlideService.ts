@@ -9,11 +9,6 @@ import {
  * request instead of cached, because they expire.
  */
 const previewsCache = new Map<string, TemplatePreviewObject[]>();
-const signedPreviewsCache = new Map<
-  string,
-  { timestamp: number; previews: TemplatePreview[] }
->();
-const SIGNED_URL_CACHE_TTL_MS = 15 * 60 * 1000;
 
 interface TemplatePreviewObject {
   category: string;
@@ -127,10 +122,8 @@ export class SlideService {
   static clearCache(collectionName?: string) {
     if (collectionName) {
       previewsCache.delete(collectionName);
-      signedPreviewsCache.delete(collectionName);
     } else {
       previewsCache.clear();
-      signedPreviewsCache.clear();
     }
   }
 
@@ -144,11 +137,6 @@ export class SlideService {
   static async getTemplatePreviews(
     collectionName: string
   ): Promise<TemplatePreview[]> {
-    const cached = signedPreviewsCache.get(collectionName);
-    if (cached && Date.now() - cached.timestamp < SIGNED_URL_CACHE_TTL_MS) {
-      return cached.previews;
-    }
-
     let objects = previewsCache.get(collectionName);
 
     if (!objects) {
@@ -188,7 +176,7 @@ export class SlideService {
       }
     }
 
-    const result = await Promise.all(
+    return Promise.all(
       objects.map(async (object) => ({
         category: object.category,
         variant: object.variant,
@@ -198,15 +186,6 @@ export class SlideService {
         }),
       }))
     );
-
-    if (result.length > 0) {
-      signedPreviewsCache.set(collectionName, {
-        timestamp: Date.now(),
-        previews: result,
-      });
-    }
-
-    return result;
   }
 
   static async getTemplateCollections(): Promise<SlideTemplate[]> {
