@@ -6,7 +6,11 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from '@/components/ui/input-otp';
 import { Label } from '@/components/ui/label';
 import { gameQuizApi } from './api';
 import { type GameQuizCopy, gameQuizCopy } from './copy';
@@ -47,17 +51,24 @@ export function GameQuizJoinClient({
           }}
         >
           <Label htmlFor="game-join-code">{copy.join.codeLabel}</Label>
-          <Input
+          <InputOTP
             autoComplete="one-time-code"
-            className="h-14 text-center font-semibold text-2xl tabular-nums tracking-[0.3em]"
             id="game-join-code"
             inputMode="numeric"
             maxLength={6}
-            onChange={(event) =>
-              setCode(event.target.value.replace(/\D/g, '').slice(0, 6))
-            }
+            onChange={(value) => setCode(value.replace(/\D/g, '').slice(0, 6))}
             value={code}
-          />
+          >
+            <InputOTPGroup className="mx-auto">
+              {Array.from({ length: 6 }, (_, index) => (
+                <InputOTPSlot
+                  className="size-12 text-xl"
+                  index={index}
+                  key={index}
+                />
+              ))}
+            </InputOTPGroup>
+          </InputOTP>
           <p className="text-muted-foreground text-xs">{copy.join.codeHint}</p>
           <Button
             className="mt-4 w-full"

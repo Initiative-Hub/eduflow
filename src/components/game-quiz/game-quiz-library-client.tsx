@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { Gamepad2, Loader2, Pencil, Play, Plus, Sparkles } from 'lucide-react';
+import { Gamepad2, Loader2, Pencil, Plus, Sparkles } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -136,12 +136,6 @@ export function GameQuizLibraryClient({
                   <Link href={`/games/${game.id}/edit`}>
                     <Pencil className="size-4" aria-hidden="true" />
                     {copy.library.edit}
-                  </Link>
-                </Button>
-                <Button asChild size="sm">
-                  <Link href={`/games/${game.id}/edit`}>
-                    <Play className="size-4" aria-hidden="true" />
-                    {copy.library.host}
                   </Link>
                 </Button>
               </div>
