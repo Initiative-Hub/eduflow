@@ -12,8 +12,8 @@ function createSession(participantCount: number): GameSessionSnapshot {
   ].slice(0, participantCount);
 
   return {
-    id: 'session-1',
     gameQuizId: 'quiz-1',
+    realtimeKey: 'session-key',
     gameTitle: 'Planet Rally',
     joinCode: '123456',
     joiningLocked: true,

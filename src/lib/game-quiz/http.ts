@@ -2,6 +2,10 @@ import * as z from 'zod';
 import { errorResponse } from '@/lib/api/error-response';
 import type { Session } from '@/lib/auth';
 import { isGameQuizError } from './errors';
+import {
+  resolveLiveGameContext,
+  type LiveGameAudience,
+} from './live-game-context';
 import type { GameActor, GameActorRole } from './types';
 
 const gameActorRoles = new Set<GameActorRole>([
@@ -20,6 +24,25 @@ export function gameActorFromSession(session: Session): GameActor {
       ? (role as GameActorRole)
       : null,
   };
+}
+
+export async function resolveRequestLiveGameContext({
+  audience,
+  expectedGameQuizId,
+  request,
+  session,
+}: {
+  audience: LiveGameAudience;
+  expectedGameQuizId?: string;
+  request: Request;
+  session: Session;
+}) {
+  return resolveLiveGameContext({
+    actor: gameActorFromSession(session),
+    audience,
+    expectedGameQuizId,
+    token: request.headers.get('x-live-game-context'),
+  });
 }
 
 export async function parseGameQuizBody<T extends z.ZodType>(

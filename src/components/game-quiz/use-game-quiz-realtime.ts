@@ -12,25 +12,23 @@ import {
 const realtime = createRealtime<typeof gameQuizRealtimeEventSchemas>();
 
 export function useGameQuizRealtime({
-  sessionId,
   audience,
-  participantId,
+  realtimeKey,
+  participantRealtimeKey,
+  queryKey,
 }: {
-  sessionId: string;
   audience: 'HOST' | 'PARTICIPANT';
-  participantId?: string;
+  realtimeKey?: string;
+  participantRealtimeKey?: string;
+  queryKey: readonly unknown[];
 }) {
   const queryClient = useQueryClient();
-  const validSessionId =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-      sessionId
-    );
-  const channels = validSessionId
+  const channels = realtimeKey
     ? [
-        gameQuizSharedChannel(sessionId),
-        audience === 'HOST' ? gameQuizHostChannel(sessionId) : undefined,
-        audience === 'PARTICIPANT' && participantId
-          ? gameQuizPlayerChannel(sessionId, participantId)
+        gameQuizSharedChannel(realtimeKey),
+        audience === 'HOST' ? gameQuizHostChannel(realtimeKey) : undefined,
+        audience === 'PARTICIPANT' && participantRealtimeKey
+          ? gameQuizPlayerChannel(participantRealtimeKey)
           : undefined,
       ]
     : [];
@@ -42,10 +40,10 @@ export function useGameQuizRealtime({
       'gameQuiz.hostProgressUpdated',
       'gameQuiz.playerUpdated',
     ],
-    enabled: validSessionId,
+    enabled: Boolean(realtimeKey),
     onData: () => {
       void queryClient.invalidateQueries({
-        queryKey: ['game-session', sessionId],
+        queryKey,
       });
     },
   });

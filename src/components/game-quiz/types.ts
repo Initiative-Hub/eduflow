@@ -49,6 +49,7 @@ export interface GameQuiz {
 
 export interface GameParticipant {
   id: string;
+  realtimeKey?: string;
   displayName: string;
   image?: string | null;
   score: number;
@@ -70,12 +71,13 @@ export interface GameRound {
 }
 
 export interface GameSessionSnapshot {
-  id: string;
   gameQuizId: string;
+  realtimeKey: string;
   gameTitle: string;
   joinCode: string;
   joiningLocked: boolean;
   phase: GameSessionPhase;
+  closedReason?: 'HOST_LEFT' | 'VIEWED_REPORT' | null;
   stateVersion: number;
   currentRound?: GameRound | null;
   currentRoundIndex: number;

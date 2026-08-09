@@ -1,7 +1,6 @@
 import * as z from 'zod';
 
-const gameSessionIdSchema = z.string().uuid();
-const gameParticipantIdSchema = z.string().uuid();
+const realtimeKeySchema = z.string().min(1).max(128);
 
 export const gameQuizSessionPhaseSchema = z.enum([
   'LOBBY',
@@ -14,7 +13,6 @@ export const gameQuizSessionPhaseSchema = z.enum([
 
 const versionedGameQuizEventSchema = z.object({
   eventId: z.string().uuid(),
-  sessionId: gameSessionIdSchema,
   stateVersion: z.number().int().nonnegative(),
   emittedAt: z.string().datetime(),
 });
@@ -30,7 +28,6 @@ export const gameQuizHostProgressEventSchema =
   });
 
 export const gameQuizPlayerEventSchema = versionedGameQuizEventSchema.extend({
-  participantId: gameParticipantIdSchema,
   kind: z.enum(['ANSWER_SUBMITTED', 'ANSWER_RESULT_READY']),
 });
 
@@ -52,31 +49,27 @@ export type GameQuizPlayerEvent = z.infer<typeof gameQuizPlayerEventSchema>;
 export type GameQuizRealtimeChannel =
   | {
       kind: 'shared';
-      sessionId: string;
+      realtimeKey: string;
     }
   | {
       kind: 'host';
-      sessionId: string;
+      realtimeKey: string;
     }
   | {
       kind: 'player';
-      participantId: string;
-      sessionId: string;
+      participantRealtimeKey: string;
     };
 
-export function gameQuizSharedChannel(sessionId: string): string {
-  return `game:${gameSessionIdSchema.parse(sessionId)}:shared`;
+export function gameQuizSharedChannel(realtimeKey: string): string {
+  return `game:${realtimeKeySchema.parse(realtimeKey)}:shared`;
 }
 
-export function gameQuizHostChannel(sessionId: string): string {
-  return `game:${gameSessionIdSchema.parse(sessionId)}:host`;
+export function gameQuizHostChannel(realtimeKey: string): string {
+  return `game:${realtimeKeySchema.parse(realtimeKey)}:host`;
 }
 
-export function gameQuizPlayerChannel(
-  sessionId: string,
-  participantId: string
-): string {
-  return `game:${gameSessionIdSchema.parse(sessionId)}:player:${gameParticipantIdSchema.parse(participantId)}`;
+export function gameQuizPlayerChannel(participantRealtimeKey: string): string {
+  return `game-player:${realtimeKeySchema.parse(participantRealtimeKey)}`;
 }
 
 export function parseGameQuizRealtimeChannel(
@@ -85,28 +78,25 @@ export function parseGameQuizRealtimeChannel(
   const parts = channel.split(':');
 
   if (parts.length === 3 && parts[0] === 'game' && parts[2] === 'shared') {
-    const sessionId = gameSessionIdSchema.safeParse(parts[1]);
-    return sessionId.success
-      ? { kind: 'shared', sessionId: sessionId.data }
+    const realtimeKey = realtimeKeySchema.safeParse(parts[1]);
+    return realtimeKey.success
+      ? { kind: 'shared', realtimeKey: realtimeKey.data }
       : null;
   }
 
   if (parts.length === 3 && parts[0] === 'game' && parts[2] === 'host') {
-    const sessionId = gameSessionIdSchema.safeParse(parts[1]);
-    return sessionId.success
-      ? { kind: 'host', sessionId: sessionId.data }
+    const realtimeKey = realtimeKeySchema.safeParse(parts[1]);
+    return realtimeKey.success
+      ? { kind: 'host', realtimeKey: realtimeKey.data }
       : null;
   }
 
-  if (parts.length === 4 && parts[0] === 'game' && parts[2] === 'player') {
-    const sessionId = gameSessionIdSchema.safeParse(parts[1]);
-    const participantId = gameParticipantIdSchema.safeParse(parts[3]);
-
-    if (sessionId.success && participantId.success) {
+  if (parts.length === 2 && parts[0] === 'game-player') {
+    const participantRealtimeKey = realtimeKeySchema.safeParse(parts[1]);
+    if (participantRealtimeKey.success) {
       return {
         kind: 'player',
-        sessionId: sessionId.data,
-        participantId: participantId.data,
+        participantRealtimeKey: participantRealtimeKey.data,
       };
     }
   }

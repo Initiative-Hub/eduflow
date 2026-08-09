@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check, Clock3, Loader2, Trophy } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { gameQuizApi } from './api';
 import { type GameQuizCopy, gameQuizCopy } from './copy';
@@ -10,33 +11,36 @@ import { GameSessionError, GameSessionLoading } from './game-quiz-host-client';
 import { GameQuizPodium } from './game-quiz-podium';
 import type { GameSessionSnapshot } from './types';
 import { useGameQuizRealtime } from './use-game-quiz-realtime';
+import { useLiveGameContext } from './use-live-game-context';
 
 interface GameQuizPlayerClientProps {
-  sessionId: string;
   copy?: GameQuizCopy;
 }
 
 export function GameQuizPlayerClient({
-  sessionId,
   copy = gameQuizCopy,
 }: GameQuizPlayerClientProps) {
   const queryClient = useQueryClient();
+  const router = useRouter();
+  const { context, isHydrated } = useLiveGameContext('PARTICIPANT');
   const sessionQuery = useQuery({
-    queryKey: ['game-session', sessionId, 'player'],
-    queryFn: () => gameQuizApi.getSession(sessionId),
+    queryKey: ['live-game', 'participant', context?.contextKey],
+    queryFn: () => gameQuizApi.getParticipantSession(context!),
+    enabled: Boolean(context),
     refetchInterval: 2000,
   });
   useGameQuizRealtime({
-    sessionId,
     audience: 'PARTICIPANT',
-    participantId: sessionQuery.data?.participant?.id,
+    realtimeKey: sessionQuery.data?.realtimeKey,
+    participantRealtimeKey: sessionQuery.data?.participant?.realtimeKey,
+    queryKey: ['live-game', 'participant', context?.contextKey],
   });
   const answerMutation = useMutation({
     mutationFn: (optionId: string) => {
       const roundId = sessionQuery.data?.currentRound?.id;
       if (!roundId) throw new Error('Round unavailable');
       return gameQuizApi.submitAnswer(
-        sessionId,
+        context!,
         roundId,
         optionId,
         crypto.randomUUID()
@@ -44,22 +48,28 @@ export function GameQuizPlayerClient({
     },
     onSuccess: () =>
       queryClient.invalidateQueries({
-        queryKey: ['game-session', sessionId, 'player'],
+        queryKey: ['live-game', 'participant', context?.contextKey],
       }),
     onError: () => toast.error(copy.common.error),
   });
   const presenceMutation = useMutation({
-    mutationFn: () => gameQuizApi.heartbeat(sessionId),
+    mutationFn: () => gameQuizApi.heartbeat(context!),
   });
   const { mutate: sendPresence } = presenceMutation;
 
   useEffect(() => {
+    if (!context) return;
     sendPresence();
     const interval = window.setInterval(sendPresence, 25_000);
     return () => window.clearInterval(interval);
-  }, [sendPresence]);
+  }, [context, sendPresence]);
 
-  if (sessionQuery.isPending) return <GameSessionLoading copy={copy} />;
+  useEffect(() => {
+    if (isHydrated && !context) router.replace('/games/join');
+  }, [context, isHydrated, router]);
+
+  if (!isHydrated || !context || sessionQuery.isPending)
+    return <GameSessionLoading copy={copy} />;
   if (sessionQuery.isError || !sessionQuery.data)
     return (
       <GameSessionError copy={copy} onRetry={() => sessionQuery.refetch()} />
@@ -71,7 +81,11 @@ export function GameQuizPlayerClient({
   if (session.phase === 'FINAL_CELEBRATION')
     return <PlayerPodium copy={copy} session={session} />;
   if (session.phase === 'REPORT')
-    return <FinishedPanel copy={copy} session={session} />;
+    return session.closedReason === 'HOST_LEFT' ? (
+      <HostEndedPanel copy={copy} />
+    ) : (
+      <FinishedPanel copy={copy} session={session} />
+    );
   if (session.phase === 'SCOREBOARD') {
     return (
       <main className="mx-auto max-w-3xl space-y-6 py-4 sm:py-10">
@@ -276,6 +290,19 @@ function FinishedPanel({
           {session.participant?.score ?? 0}
         </p>
         <p className="text-muted-foreground text-sm">{copy.player.score}</p>
+      </div>
+    </main>
+  );
+}
+
+function HostEndedPanel({ copy }: { copy: GameQuizCopy }) {
+  return (
+    <main className="mx-auto grid min-h-[60vh] max-w-xl place-items-center py-8 text-center">
+      <div>
+        <h1 className="font-semibold text-3xl">{copy.player.hostEndedTitle}</h1>
+        <p className="mt-2 text-muted-foreground">
+          {copy.player.hostEndedDescription}
+        </p>
       </div>
     </main>
   );

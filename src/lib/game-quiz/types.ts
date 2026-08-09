@@ -82,6 +82,7 @@ export type GameRoundRecord = {
 
 export type GameParticipantRecord = {
   id: string;
+  realtimeKey: string;
   sessionId: string;
   userId: string;
   displayName: string;
@@ -108,6 +109,7 @@ export type GameAnswerRecord = {
 
 export type GameSessionRecord = {
   id: string;
+  realtimeKey: string;
   gameQuizId: string;
   hostId: string;
   gameQuizRevision: number;
@@ -124,6 +126,8 @@ export type GameSessionRecord = {
   stateVersion: number;
   startedAt: Date | null;
   endedAt: Date | null;
+  lastHostSeenAt: Date | null;
+  closedReason: 'HOST_LEFT' | 'VIEWED_REPORT' | null;
   joinCodeReleasedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
@@ -140,8 +144,8 @@ export type SessionWithGameData = GameSessionRecord & {
 
 export type GameSessionReport = {
   session: {
-    id: string;
     gameTitle: string;
+    gameQuizId: string;
     joinCode: string;
     phase: GameSessionPhase;
     createdAt: string;

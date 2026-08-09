@@ -19,6 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { gameQuizApi } from './api';
+import { activateLiveGameContext } from './live-game-context';
 import { type GameQuizCopy, gameQuizCopy } from './copy';
 import {
   createDraft,
@@ -96,7 +97,8 @@ export function GameQuizEditorClient({
         toast.success(copy.editor.saved);
       }
       if (session) {
-        router.push(`/games/sessions/${session.id}/host`);
+        activateLiveGameContext(session.context);
+        router.replace(`/games/${gameQuizId}/host`);
         return;
       }
       if (!gameQuizId && game) router.replace(`/games/${game.id}/edit`);

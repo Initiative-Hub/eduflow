@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 type GameSessionAccessRow = {
   hostUserId: string;
   isParticipant: boolean;
-  participantId: string | null;
+  participantRealtimeKey: string | null;
 };
 
 /**
@@ -64,7 +64,9 @@ async function authorizeGameQuizRealtimeChannels({
     if (!channel) continue;
 
     const access = await getGameSessionAccess(
-      channel.sessionId,
+      channel.kind === 'player'
+        ? { participantRealtimeKey: channel.participantRealtimeKey }
+        : { realtimeKey: channel.realtimeKey },
       session.user.id
     );
     if (!access) {
@@ -83,7 +85,7 @@ async function authorizeGameQuizRealtimeChannels({
       (channel.kind === 'host' && !isHost) ||
       (channel.kind === 'player' &&
         (!access.isParticipant ||
-          access.participantId !== channel.participantId))
+          access.participantRealtimeKey !== channel.participantRealtimeKey))
     ) {
       return Response.json(
         { message: 'Forbidden. You cannot access this realtime channel.' },
@@ -94,16 +96,23 @@ async function authorizeGameQuizRealtimeChannels({
 }
 
 async function getGameSessionAccess(
-  sessionId: string,
+  selector: { realtimeKey: string } | { participantRealtimeKey: string },
   userId: string
 ): Promise<GameSessionAccessRow | null> {
-  const gameSession = await prisma.gameSession.findUnique({
-    where: { id: sessionId },
+  const gameSession = await prisma.gameSession.findFirst({
+    where:
+      'participantRealtimeKey' in selector
+        ? {
+            participants: {
+              some: { realtimeKey: selector.participantRealtimeKey },
+            },
+          }
+        : { realtimeKey: selector.realtimeKey },
     select: {
       hostId: true,
       participants: {
         where: { userId },
-        select: { id: true },
+        select: { realtimeKey: true },
         take: 1,
       },
     },
@@ -115,6 +124,6 @@ async function getGameSessionAccess(
   return {
     hostUserId: gameSession.hostId,
     isParticipant: Boolean(participant),
-    participantId: participant?.id ?? null,
+    participantRealtimeKey: participant?.realtimeKey ?? null,
   };
 }

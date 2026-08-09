@@ -2195,7 +2195,9 @@
       "rank": "Rank",
       "noPodium": "No final rankings are available yet.",
       "leaderboard": "Class progress",
-      "connection": "Reconnecting..."
+      "connection": "Reconnecting...",
+      "hostEndedTitle": "This game has ended",
+      "hostEndedDescription": "The host has left this Rally. You can join another game with a new code."
     },
     "report": {
       "title": "Session report",

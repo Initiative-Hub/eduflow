@@ -253,8 +253,8 @@ export function buildGameSessionReport(
 
   return {
     session: {
-      id: session.id,
       gameTitle: session.title,
+      gameQuizId: session.gameQuizId,
       joinCode: session.joinCode,
       phase: session.phase,
       createdAt: session.createdAt.toISOString(),

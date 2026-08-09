@@ -34,6 +34,7 @@ import type {
 } from '@/lib/game-quiz/types';
 
 const JOIN_CODE_ATTEMPTS = 12;
+const HOST_LEASE_MS = 30_000;
 
 function createJoinCode() {
   return String(Math.floor(100_000 + Math.random() * 900_000));
@@ -112,16 +113,21 @@ export async function createGameSession(
             randomizeQuestionOrder: quiz.randomizeQuestionOrder,
             randomizeAnswerOrder: quiz.randomizeAnswerOrder,
             stateVersion: 1,
+            lastHostSeenAt: new Date(),
             rounds: { create: snapshotRounds(quiz) },
           },
         });
       });
 
       const database = prisma;
-      return await projectSessionForActor(
+      const projection = await projectSessionForActor(
         await requireGameSession(database, created.id),
         actor
       );
+      if (!projection) {
+        throw new Error('Created Game Session is not accessible to its host.');
+      }
+      return { ...projection, sessionId: created.id };
     } catch (error) {
       if (!isUniqueConstraintError(error)) {
         throw error;
@@ -185,13 +191,18 @@ export async function joinGameSession(
     }
   }
 
-  return await projectSessionForActor(
+  const projection = await projectSessionForActor(
     await requireGameSession(database, session.id),
     actor
   );
+  if (!projection) {
+    throw gameQuizError('FORBIDDEN', 403, 'Join this Game Session first.');
+  }
+  return { ...projection, sessionId: session.id };
 }
 
 export async function getGameSession(actor: GameActor, sessionId: string) {
+  await reconcileExpiredHostLease(sessionId);
   await reconcileOpenGameSession(sessionId);
   const session = await requireGameSession(prisma, sessionId);
   const projection = await projectSessionForActor(session, actor);
@@ -203,6 +214,64 @@ export async function getGameSession(actor: GameActor, sessionId: string) {
     );
   }
   return projection;
+}
+
+export async function heartbeatGameSessionHost(
+  actor: GameActor,
+  sessionId: string
+) {
+  const session = await requireGameSession(prisma, sessionId);
+  requireGameSessionHost(actor, session);
+  await prisma.gameSession.updateMany({
+    where: { id: sessionId, phase: { not: 'REPORT' } },
+    data: { lastHostSeenAt: new Date() },
+  });
+}
+
+export async function closeGameSession(
+  actor: GameActor,
+  sessionId: string,
+  reason: 'HOST_LEFT' | 'VIEWED_REPORT'
+) {
+  await prisma.$transaction(async (transaction) => {
+    const session = await requireGameSession(transaction, sessionId);
+    requireGameSessionHost(actor, session);
+    if (session.phase === 'REPORT') return;
+    const now = new Date();
+    await transaction.gameSession.update({
+      where: { id: sessionId },
+      data: {
+        closedReason: reason,
+        endedAt: now,
+        joinCodeReleasedAt: now,
+        joiningLocked: true,
+        phase: 'REPORT',
+        stateVersion: { increment: 1 },
+      },
+    });
+  });
+  return getGameSession(actor, sessionId);
+}
+
+export async function reconcileExpiredHostLease(sessionId: string) {
+  const expiresBefore = new Date(Date.now() - HOST_LEASE_MS);
+  const now = new Date();
+  const expired = await prisma.gameSession.updateMany({
+    where: {
+      id: sessionId,
+      phase: { not: 'REPORT' },
+      OR: [{ lastHostSeenAt: null }, { lastHostSeenAt: { lt: expiresBefore } }],
+    },
+    data: {
+      closedReason: 'HOST_LEFT',
+      endedAt: now,
+      joinCodeReleasedAt: now,
+      joiningLocked: true,
+      phase: 'REPORT',
+      stateVersion: { increment: 1 },
+    },
+  });
+  return expired.count > 0;
 }
 
 /**
@@ -382,6 +451,7 @@ export async function controlGameSession(
       case 'END_SESSION':
         requireGameSessionPhase(session, ['LOBBY', 'FINAL_CELEBRATION']);
         data = {
+          closedReason: 'VIEWED_REPORT',
           phase: 'REPORT',
           joiningLocked: true,
           endedAt: now,

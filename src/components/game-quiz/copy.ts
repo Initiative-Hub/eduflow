@@ -126,6 +126,8 @@ export function getGameQuizCopy(t: Translate) {
       noPodium: t('player.noPodium'),
       leaderboard: t('player.leaderboard'),
       connection: t('player.connection'),
+      hostEndedTitle: t('player.hostEndedTitle'),
+      hostEndedDescription: t('player.hostEndedDescription'),
     },
     report: {
       title: t('report.title'),

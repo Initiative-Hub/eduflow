@@ -12,6 +12,7 @@ import {
   gameQuizSharedEventSchema,
 } from '@/lib/game-quiz/realtime-events';
 import { getUpstashRestRedisClient } from '@/lib/upstash/redis/client';
+import { prisma } from '@/lib/prisma';
 
 export type GameQuizRealtimeEvents = InferRealtimeEvents<
   ReturnType<typeof getGameQuizRealtime>
@@ -48,14 +49,19 @@ export async function emitGameQuizSharedEvent(input: {
   sessionId: string;
   stateVersion: number;
 }): Promise<GameQuizRealtimeEmitResult> {
+  const session = await prisma.gameSession.findUniqueOrThrow({
+    where: { id: input.sessionId },
+    select: { realtimeKey: true },
+  });
   const event = gameQuizSharedEventSchema.parse({
-    ...input,
+    phase: input.phase,
+    stateVersion: input.stateVersion,
     eventId: crypto.randomUUID(),
     emittedAt: new Date().toISOString(),
   });
 
   return emitGameQuizEvent(
-    gameQuizSharedChannel(event.sessionId),
+    gameQuizSharedChannel(session.realtimeKey),
     'gameQuiz.sharedUpdated',
     event
   );
@@ -67,14 +73,20 @@ export async function emitGameQuizHostProgressEvent(input: {
   sessionId: string;
   stateVersion: number;
 }): Promise<GameQuizRealtimeEmitResult> {
+  const session = await prisma.gameSession.findUniqueOrThrow({
+    where: { id: input.sessionId },
+    select: { realtimeKey: true },
+  });
   const event = gameQuizHostProgressEventSchema.parse({
-    ...input,
+    kind: input.kind,
+    phase: input.phase,
+    stateVersion: input.stateVersion,
     eventId: crypto.randomUUID(),
     emittedAt: new Date().toISOString(),
   });
 
   return emitGameQuizEvent(
-    gameQuizHostChannel(event.sessionId),
+    gameQuizHostChannel(session.realtimeKey),
     'gameQuiz.hostProgressUpdated',
     event
   );
@@ -86,14 +98,19 @@ export async function emitGameQuizPlayerEvent(input: {
   sessionId: string;
   stateVersion: number;
 }): Promise<GameQuizRealtimeEmitResult> {
+  const participant = await prisma.gameParticipant.findUniqueOrThrow({
+    where: { id: input.participantId },
+    select: { realtimeKey: true },
+  });
   const event = gameQuizPlayerEventSchema.parse({
-    ...input,
+    kind: input.kind,
+    stateVersion: input.stateVersion,
     eventId: crypto.randomUUID(),
     emittedAt: new Date().toISOString(),
   });
 
   return emitGameQuizEvent(
-    gameQuizPlayerChannel(event.sessionId, event.participantId),
+    gameQuizPlayerChannel(participant.realtimeKey),
     'gameQuiz.playerUpdated',
     event
   );

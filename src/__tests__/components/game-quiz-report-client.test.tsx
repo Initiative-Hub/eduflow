@@ -3,10 +3,25 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { GameQuizReportClient } from '@/components/game-quiz/game-quiz-report-client';
 
+vi.mock('next/navigation', () => ({ useRouter: () => ({ replace: vi.fn() }) }));
+
 const { report } = vi.hoisted(() => ({ report: vi.fn() }));
 
 vi.mock('@/components/game-quiz/api', () => ({
   gameQuizApi: { report },
+}));
+
+vi.mock('@/components/game-quiz/use-live-game-context', () => ({
+  useLiveGameContext: () => ({
+    context: {
+      audience: 'HOST',
+      contextKey: 'context-key',
+      expiresAt: '2099-01-01T00:00:00.000Z',
+      token: 'token',
+      version: 1,
+    },
+    isHydrated: true,
+  }),
 }));
 
 function renderReport() {
@@ -15,7 +30,7 @@ function renderReport() {
   });
   return render(
     <QueryClientProvider client={queryClient}>
-      <GameQuizReportClient sessionId="11111111-1111-4111-8111-111111111111" />
+      <GameQuizReportClient gameQuizId="game-quiz-1" runKey="context-key" />
     </QueryClientProvider>
   );
 }

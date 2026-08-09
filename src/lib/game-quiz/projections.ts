@@ -106,6 +106,7 @@ async function projectParticipant(participant: GameParticipantRecord) {
 
   return {
     id: participant.id,
+    realtimeKey: participant.realtimeKey,
     displayName: participant.displayName,
     image,
     score: participant.score,
@@ -162,7 +163,8 @@ export async function projectParticipantSession(
     : undefined;
 
   return {
-    id: session.id,
+    gameQuizId: session.gameQuizId,
+    realtimeKey: session.realtimeKey,
     title: session.title,
     topic: session.topic,
     difficulty: session.difficulty,
@@ -174,6 +176,7 @@ export async function projectParticipantSession(
     stateVersion: session.stateVersion,
     startedAt: session.startedAt,
     endedAt: session.endedAt,
+    closedReason: session.closedReason,
     participant: await projectParticipant(participant),
     currentRound: currentRound
       ? projectRound(
@@ -201,7 +204,8 @@ export async function projectHostSession(session: SessionWithGameData) {
         ) ?? null);
 
   return {
-    id: session.id,
+    gameQuizId: session.gameQuizId,
+    realtimeKey: session.realtimeKey,
     title: session.title,
     topic: session.topic,
     difficulty: session.difficulty,
@@ -214,6 +218,7 @@ export async function projectHostSession(session: SessionWithGameData) {
     stateVersion: session.stateVersion,
     startedAt: session.startedAt,
     endedAt: session.endedAt,
+    closedReason: session.closedReason,
     participants: await Promise.all(
       session.participants.map(projectParticipant)
     ),

@@ -1,4 +1,5 @@
 import { apiClient } from '@/lib/api/api-client';
+import type { LiveGameContext } from './live-game-context';
 import type {
   GameParticipant,
   GameQuiz,
@@ -114,6 +115,7 @@ function toParticipant(value: unknown): GameParticipant {
     score: numberValue(participant.score),
     isOnline: booleanValue(participant.isOnline, true),
     joinedAt: stringValue(participant.joinedAt) || undefined,
+    realtimeKey: stringValue(participant.realtimeKey) || undefined,
   };
 }
 
@@ -129,12 +131,18 @@ function toSession(value: unknown): GameSessionSnapshot {
   const rounds = getArray(session.rounds);
 
   return {
-    id: stringValue(session.id),
     gameQuizId: stringValue(session.gameQuizId),
+    realtimeKey: stringValue(session.realtimeKey),
     gameTitle: stringValue(session.gameTitle ?? session.title),
     joinCode: stringValue(session.joinCode),
     joiningLocked: booleanValue(session.joiningLocked),
     phase: stringValue(session.phase, 'LOBBY') as GameSessionPhase,
+    closedReason:
+      stringValue(session.closedReason) === 'HOST_LEFT'
+        ? 'HOST_LEFT'
+        : stringValue(session.closedReason) === 'VIEWED_REPORT'
+          ? 'VIEWED_REPORT'
+          : null,
     stateVersion: numberValue(session.stateVersion, 1),
     currentRound: round
       ? {
@@ -168,6 +176,21 @@ function toSession(value: unknown): GameSessionSnapshot {
           }
         : null,
   };
+}
+
+function toLiveGameContext(value: unknown): LiveGameContext {
+  const context = getRecord(value);
+  return {
+    audience: stringValue(context.audience) as LiveGameContext['audience'],
+    contextKey: stringValue(context.contextKey),
+    expiresAt: stringValue(context.expiresAt),
+    token: stringValue(context.token),
+    version: 1,
+  };
+}
+
+function liveGameConfig(context: LiveGameContext) {
+  return { headers: { 'X-Live-Game-Context': context.token } };
 }
 
 function toQuizSettings(draft: GameQuizDraft) {
@@ -221,59 +244,103 @@ export const gameQuizApi = {
         questions: toQuestionPayload(draft),
       })
     ),
-  createSession: async (gameQuizId: string, expectedRevision: number) =>
-    toSession(
+  createSession: async (gameQuizId: string, expectedRevision: number) => {
+    const response = getRecord(
       await apiClient.post<unknown>(`v1/game-quizzes/${gameQuizId}/sessions`, {
         expectedRevision,
       })
+    );
+    return {
+      context: toLiveGameContext(response.context),
+      session: toSession(response.session),
+    };
+  },
+  getHostSession: async (gameQuizId: string, context: LiveGameContext) =>
+    toSession(
+      await apiClient.get<unknown>(
+        `v1/game-quizzes/${gameQuizId}/live-game`,
+        liveGameConfig(context)
+      )
     ),
-  getSession: async (sessionId: string) =>
-    toSession(await apiClient.get<unknown>(`v1/game-sessions/${sessionId}`)),
+  getParticipantSession: async (context: LiveGameContext) =>
+    toSession(
+      await apiClient.get<unknown>('v1/live-game', liveGameConfig(context))
+    ),
   join: async (joinCode: string) => {
     const response = await apiClient.post<unknown>('v1/game-sessions/join', {
       joinCode,
     });
     const record = getRecord(response);
-    const session = getRecord(record.session ?? response);
-    return { sessionId: stringValue(record.sessionId ?? session.id) };
+    return {
+      context: toLiveGameContext(record.context),
+      session: toSession(record.session),
+    };
   },
   command: async (
-    sessionId: string,
+    gameQuizId: string,
+    context: LiveGameContext,
     action: GameHostAction,
     expectedStateVersion: number,
     joiningLocked?: boolean
   ) =>
     toSession(
-      await apiClient.post<unknown>(`v1/game-sessions/${sessionId}/host`, {
-        action,
-        expectedStateVersion,
-        ...(action === 'SET_JOINING_LOCKED' ? { joiningLocked } : {}),
-      })
+      await apiClient.post<unknown>(
+        `v1/game-quizzes/${gameQuizId}/live-game/command`,
+        {
+          action,
+          expectedStateVersion,
+          ...(action === 'SET_JOINING_LOCKED' ? { joiningLocked } : {}),
+        },
+        liveGameConfig(context)
+      )
     ),
   submitAnswer: async (
-    sessionId: string,
+    context: LiveGameContext,
     roundId: string,
     selectedOptionId: string,
     idempotencyKey: string
   ) =>
-    apiClient.post<unknown>(`v1/game-sessions/${sessionId}/answers`, {
-      roundId,
-      selectedOptionId,
-      idempotencyKey,
-    }),
-  heartbeat: (sessionId: string) =>
-    apiClient.post(`v1/game-sessions/${sessionId}/presence`, {}),
-  answerProgress: (sessionId: string) =>
+    apiClient.post<unknown>(
+      'v1/live-game/answers',
+      {
+        roundId,
+        selectedOptionId,
+        idempotencyKey,
+      },
+      liveGameConfig(context)
+    ),
+  heartbeat: (context: LiveGameContext) =>
+    apiClient.post('v1/live-game/presence', {}, liveGameConfig(context)),
+  answerProgress: (gameQuizId: string, context: LiveGameContext) =>
     apiClient.get<{
       answerCount: number;
       participantCount: number;
       pendingCount: number;
       roundId: string | null;
-      sessionId: string;
       stateVersion: number;
-    }>(`v1/game-sessions/${sessionId}/answer-progress`),
-  report: (sessionId: string) =>
-    apiClient.get<GameQuizReport>(`v1/game-sessions/${sessionId}/report`),
+    }>(
+      `v1/game-quizzes/${gameQuizId}/live-game/answer-progress`,
+      liveGameConfig(context)
+    ),
+  heartbeatHost: (gameQuizId: string, context: LiveGameContext) =>
+    apiClient.post(
+      `v1/game-quizzes/${gameQuizId}/live-game/heartbeat`,
+      {},
+      liveGameConfig(context)
+    ),
+  closeHostSession: (gameQuizId: string, context: LiveGameContext) =>
+    apiClient
+      .post<unknown>(
+        `v1/game-quizzes/${gameQuizId}/live-game/close`,
+        {},
+        liveGameConfig(context)
+      )
+      .then(toSession),
+  report: (gameQuizId: string, context: LiveGameContext) =>
+    apiClient.get<GameQuizReport>(
+      `v1/game-quizzes/${gameQuizId}/live-game/report`,
+      liveGameConfig(context)
+    ),
 };
 
 export type { GameHostAction };

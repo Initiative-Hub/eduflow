@@ -2195,7 +2195,9 @@
       "rank": "Hạng",
       "noPodium": "Chưa có xếp hạng cuối cùng.",
       "leaderboard": "Tiến độ lớp",
-      "connection": "Đang kết nối lại..."
+      "connection": "Đang kết nối lại...",
+      "hostEndedTitle": "Trò chơi đã kết thúc",
+      "hostEndedDescription": "Người chủ trì đã rời Rally này. Bạn có thể tham gia trò chơi khác bằng mã mới."
     },
     "report": {
       "title": "Báo cáo phiên",

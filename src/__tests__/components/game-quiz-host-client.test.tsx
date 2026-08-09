@@ -4,22 +4,47 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { GameQuizHostClient } from '@/components/game-quiz/game-quiz-host-client';
 
-const { answerProgress, command, getSession } = vi.hoisted(() => ({
+vi.mock('next/navigation', () => ({ useRouter: () => ({ replace: vi.fn() }) }));
+
+const {
+  answerProgress,
+  closeHostSession,
+  command,
+  getHostSession,
+  heartbeatHost,
+} = vi.hoisted(() => ({
   answerProgress: vi.fn(),
+  closeHostSession: vi.fn(),
   command: vi.fn(),
-  getSession: vi.fn(),
+  getHostSession: vi.fn(),
+  heartbeatHost: vi.fn(),
 }));
 
 vi.mock('@/components/game-quiz/api', () => ({
   gameQuizApi: {
     answerProgress,
+    closeHostSession,
     command,
-    getSession,
+    getHostSession,
+    heartbeatHost,
   },
 }));
 
 vi.mock('@/components/game-quiz/use-game-quiz-realtime', () => ({
   useGameQuizRealtime: vi.fn(),
+}));
+
+vi.mock('@/components/game-quiz/use-live-game-context', () => ({
+  useLiveGameContext: () => ({
+    context: {
+      audience: 'HOST',
+      contextKey: 'context-key',
+      expiresAt: '2099-01-01T00:00:00.000Z',
+      token: 'token',
+      version: 1,
+    },
+    isHydrated: true,
+  }),
 }));
 
 const question = {
@@ -42,8 +67,8 @@ function createSession(
   phase: 'LOBBY' | 'QUESTION_OPEN' | 'SCOREBOARD' | 'FINAL_CELEBRATION'
 ) {
   return {
-    id: '11111111-1111-4111-8111-111111111111',
     gameQuizId: 'game-quiz-1',
+    realtimeKey: 'session-key',
     gameTitle: 'Planet Rally',
     joinCode: '123456',
     joiningLocked: false,
@@ -75,14 +100,14 @@ function renderHost() {
   });
   return render(
     <QueryClientProvider client={queryClient}>
-      <GameQuizHostClient sessionId="11111111-1111-4111-8111-111111111111" />
+      <GameQuizHostClient gameQuizId="game-quiz-1" />
     </QueryClientProvider>
   );
 }
 
 describe('GameQuizHostClient', () => {
   it('renders Skip as the sole primary question action', async () => {
-    getSession.mockResolvedValue(createSession('QUESTION_OPEN'));
+    getHostSession.mockResolvedValue(createSession('QUESTION_OPEN'));
     answerProgress.mockResolvedValue({ answerCount: 1 });
 
     renderHost();
@@ -96,7 +121,7 @@ describe('GameQuizHostClient', () => {
 
   it('offers only End game from the gameplay overflow menu', async () => {
     const user = userEvent.setup();
-    getSession.mockResolvedValue(createSession('QUESTION_OPEN'));
+    getHostSession.mockResolvedValue(createSession('QUESTION_OPEN'));
     answerProgress.mockResolvedValue({ answerCount: 1 });
     command.mockResolvedValue(createSession('FINAL_CELEBRATION'));
 
@@ -110,7 +135,8 @@ describe('GameQuizHostClient', () => {
     expect(screen.queryByText('host.endSession')).not.toBeInTheDocument();
     await user.click(endGame);
     expect(command).toHaveBeenCalledWith(
-      '11111111-1111-4111-8111-111111111111',
+      'game-quiz-1',
+      expect.objectContaining({ contextKey: 'context-key' }),
       'END_GAME',
       2,
       undefined
@@ -118,7 +144,7 @@ describe('GameQuizHostClient', () => {
   });
 
   it('renders an avatar-only lobby roster without scores', async () => {
-    getSession.mockResolvedValue(createSession('LOBBY'));
+    getHostSession.mockResolvedValue(createSession('LOBBY'));
     answerProgress.mockResolvedValue({ answerCount: 0 });
 
     renderHost();
@@ -129,7 +155,7 @@ describe('GameQuizHostClient', () => {
   });
 
   it('renders the mandatory scoreboard with Next', async () => {
-    getSession.mockResolvedValue(createSession('SCOREBOARD'));
+    getHostSession.mockResolvedValue(createSession('SCOREBOARD'));
     answerProgress.mockResolvedValue({ answerCount: 1 });
 
     renderHost();
@@ -141,8 +167,8 @@ describe('GameQuizHostClient', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders the final podium with only End session and View report actions', async () => {
-    getSession.mockResolvedValue(createSession('FINAL_CELEBRATION'));
+  it('renders the final podium with only View report', async () => {
+    getHostSession.mockResolvedValue(createSession('FINAL_CELEBRATION'));
     answerProgress.mockResolvedValue({ answerCount: 1 });
 
     renderHost();
@@ -152,10 +178,7 @@ describe('GameQuizHostClient', () => {
     expect(screen.getByText('Alex')).toBeInTheDocument();
     expect(screen.getByText('Jo')).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: 'host.endSession' })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('link', { name: 'host.viewReport' })
+      screen.getByRole('button', { name: 'host.viewReport' })
     ).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: 'host.next' })

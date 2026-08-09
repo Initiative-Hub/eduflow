@@ -4,69 +4,58 @@ import {
   gameActorFromSession,
   gameQuizExceptionResponse,
   parseGameQuizBody,
+  resolveRequestLiveGameContext,
   validationErrorResponse,
 } from '@/lib/game-quiz/http';
 import {
-  gameSessionIdParamsSchema,
+  gameQuizIdParamsSchema,
   hostCommandSchema,
 } from '@/lib/game-quiz/schemas';
 import { emitGameQuizSharedEvent } from '@/lib/realtime/game-quiz';
 import { controlGameSession } from '@/services/GameQuizSessionService';
 
-type RouteContext = { params: Promise<{ sessionId: string }> };
+type RouteContext = { params: Promise<{ gameQuizId: string }> };
 
 /**
  * @swagger
- * /api/v1/game-sessions/{sessionId}/host:
+ * /api/v1/game-quizzes/{gameQuizId}/live-game/command:
  *   post:
- *     tags: [Game Sessions]
- *     summary: Apply a host-controlled live session command
+ *     summary: Apply a host command to the context-selected live game
  *     security: [{ SessionCookie: [] }]
- *     parameters: [{ in: path, name: sessionId, required: true, schema: { type: string, format: uuid } }]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema: { type: object, required: [action, expectedStateVersion] }
- *     responses:
- *       200: { description: Updated host snapshot }
- *       400: { description: Invalid command }
- *       403: { description: Session host access required }
- *       404: { description: Session not found }
- *       409: { description: Invalid phase or state version conflict }
+ *     responses: { 200: { description: Updated host snapshot }, 400: { description: Invalid request }, 401: { description: Unauthorized }, 403: { description: Forbidden }, 404: { description: Context unavailable }, 409: { description: State conflict } }
  */
 export const POST = withRoles(
   ['TEACHER', 'ADMIN'],
   async (request, session, { params }: RouteContext) => {
-    const parsedParams = gameSessionIdParamsSchema.safeParse(await params);
-    if (!parsedParams.success) {
+    const parsedParams = gameQuizIdParamsSchema.safeParse(await params);
+    if (!parsedParams.success)
       return validationErrorResponse(
         parsedParams.error,
-        'Invalid Game Session ID.'
+        'Invalid Game Quiz ID.'
       );
-    }
     const parsedBody = await parseGameQuizBody(request, hostCommandSchema);
-    if (!parsedBody.success) {
+    if (!parsedBody.success)
       return validationErrorResponse(parsedBody.error, 'Invalid host command.');
-    }
-
     try {
+      const context = await resolveRequestLiveGameContext({
+        audience: 'HOST',
+        expectedGameQuizId: parsedParams.data.gameQuizId,
+        request,
+        session,
+      });
       const updated = await controlGameSession(
         gameActorFromSession(session),
-        parsedParams.data.sessionId,
+        context.sessionId,
         parsedBody.data
       );
       await emitGameQuizSharedEvent({
-        sessionId: updated.session.id,
         phase: updated.session.phase,
+        sessionId: context.sessionId,
         stateVersion: updated.session.stateVersion,
       });
       return NextResponse.json(updated);
     } catch (error) {
-      return gameQuizExceptionResponse(
-        error,
-        'Failed to control Game Session.'
-      );
+      return gameQuizExceptionResponse(error, 'Failed to control live game.');
     }
   }
 );

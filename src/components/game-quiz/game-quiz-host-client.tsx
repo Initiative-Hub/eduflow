@@ -13,7 +13,8 @@ import {
   Trophy,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -28,28 +29,49 @@ import { type GameQuizCopy, gameQuizCopy } from './copy';
 import { GameQuizPodium } from './game-quiz-podium';
 import type { GameQuizOption, GameSessionSnapshot } from './types';
 import { useGameQuizRealtime } from './use-game-quiz-realtime';
+import { clearLiveGameContext } from './live-game-context';
+import { useLiveGameContext } from './use-live-game-context';
 
 interface GameQuizHostClientProps {
-  sessionId: string;
+  gameQuizId: string;
   copy?: GameQuizCopy;
 }
 
 export function GameQuizHostClient({
-  sessionId,
+  gameQuizId,
   copy = gameQuizCopy,
 }: GameQuizHostClientProps) {
   const queryClient = useQueryClient();
+  const router = useRouter();
+  const { context, isHydrated } = useLiveGameContext('HOST');
+  const hasCheckedTabOwnership = useRef(false);
+  const hasHandledInitialNavigation = useRef(false);
+  const isViewingReport = useRef(false);
+  const [isSessionReady, setIsSessionReady] = useState(false);
+  const closeMutation = useMutation({
+    mutationFn: () => gameQuizApi.closeHostSession(gameQuizId, context!),
+    onSettled: () => {
+      clearLiveGameContext('HOST', context?.contextKey);
+      router.replace(`/games/${gameQuizId}/edit`);
+    },
+  });
   const sessionQuery = useQuery({
-    queryKey: ['game-session', sessionId, 'host'],
-    queryFn: () => gameQuizApi.getSession(sessionId),
+    queryKey: ['live-game', 'host', context?.contextKey],
+    queryFn: () => gameQuizApi.getHostSession(gameQuizId, context!),
+    enabled: Boolean(context && isSessionReady),
     refetchInterval: 1_500,
   });
   const progressQuery = useQuery({
-    queryKey: ['game-session', sessionId, 'answer-progress'],
-    queryFn: () => gameQuizApi.answerProgress(sessionId),
+    queryKey: ['live-game', 'host-progress', context?.contextKey],
+    queryFn: () => gameQuizApi.answerProgress(gameQuizId, context!),
+    enabled: Boolean(context && isSessionReady),
     refetchInterval: 1_500,
   });
-  useGameQuizRealtime({ sessionId, audience: 'HOST' });
+  useGameQuizRealtime({
+    audience: 'HOST',
+    realtimeKey: sessionQuery.data?.realtimeKey,
+    queryKey: ['live-game', 'host', context?.contextKey],
+  });
 
   const commandMutation = useMutation({
     mutationFn: ({
@@ -62,23 +84,125 @@ export function GameQuizHostClient({
       const session = sessionQuery.data;
       if (!session) throw new Error('Session unavailable');
       return gameQuizApi.command(
-        sessionId,
+        gameQuizId,
+        context!,
         action,
         session.stateVersion,
         joiningLocked
       );
     },
     onSuccess: (session) => {
-      queryClient.setQueryData(['game-session', sessionId, 'host'], session);
-      queryClient.setQueryData(['game-session', sessionId, 'player'], session);
+      queryClient.setQueryData(
+        ['live-game', 'host', context?.contextKey],
+        session
+      );
       void queryClient.invalidateQueries({
-        queryKey: ['game-session', sessionId, 'answer-progress'],
+        queryKey: ['live-game', 'host-progress', context?.contextKey],
       });
     },
     onError: () => toast.error(copy.common.error),
   });
 
-  if (sessionQuery.isPending) return <GameSessionLoading copy={copy} />;
+  useEffect(() => {
+    if (!isHydrated || !context || hasCheckedTabOwnership.current) return;
+    if (typeof BroadcastChannel === 'undefined') return;
+    hasCheckedTabOwnership.current = true;
+    const channel = new BroadcastChannel('eduflow-live-game-host-tabs');
+    const tabId = crypto.randomUUID();
+    let isDuplicate = false;
+    channel.onmessage = (event) => {
+      const message = event.data as {
+        contextKey?: string;
+        sender?: string;
+        type?: string;
+      };
+      if (message.contextKey !== context.contextKey || message.sender === tabId)
+        return;
+      if (message.type === 'probe') {
+        channel.postMessage({
+          contextKey: context.contextKey,
+          sender: tabId,
+          type: 'active',
+        });
+      }
+      if (message.type === 'active') isDuplicate = true;
+    };
+    channel.postMessage({
+      contextKey: context.contextKey,
+      sender: tabId,
+      type: 'probe',
+    });
+    const timeout = window.setTimeout(() => {
+      if (isDuplicate) {
+        clearLiveGameContext('HOST', context.contextKey);
+        window.location.replace(`/games/${gameQuizId}/edit`);
+      }
+    }, 100);
+    return () => {
+      window.clearTimeout(timeout);
+      channel.close();
+    };
+  }, [context, gameQuizId, isHydrated]);
+
+  useEffect(() => {
+    if (!isHydrated || hasHandledInitialNavigation.current) return;
+    hasHandledInitialNavigation.current = true;
+    const navigation = performance.getEntriesByType('navigation')[0] as
+      | PerformanceNavigationTiming
+      | undefined;
+    if (!context) {
+      router.replace(`/games/${gameQuizId}/edit`);
+    } else if (navigation?.type === 'reload') {
+      closeMutation.mutate();
+    } else {
+      setIsSessionReady(true);
+    }
+  }, [closeMutation, context, gameQuizId, isHydrated, router]);
+
+  useEffect(() => {
+    if (!context || !isSessionReady) return;
+    const heartbeat = () => void gameQuizApi.heartbeatHost(gameQuizId, context);
+    heartbeat();
+    const interval = window.setInterval(heartbeat, 10_000);
+    const close = () => {
+      void fetch(`/api/v1/game-quizzes/${gameQuizId}/live-game/close`, {
+        body: '{}',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Live-Game-Context': context.token,
+        },
+        keepalive: true,
+        method: 'POST',
+      });
+    };
+    window.addEventListener('pagehide', close);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener('pagehide', close);
+    };
+  }, [context, gameQuizId, isSessionReady]);
+
+  useEffect(() => {
+    if (sessionQuery.data?.phase === 'REPORT') {
+      if (isViewingReport.current && context) {
+        router.replace(
+          `/games/${gameQuizId}/report?run=${encodeURIComponent(context.contextKey)}`
+        );
+      } else {
+        clearLiveGameContext('HOST', context?.contextKey);
+        router.replace(`/games/${gameQuizId}/edit`);
+      }
+    }
+  }, [context, gameQuizId, router, sessionQuery.data?.phase]);
+
+  useEffect(() => {
+    if (!isSessionReady || !sessionQuery.isError) return;
+    clearLiveGameContext('HOST', context?.contextKey);
+    router.replace(`/games/${gameQuizId}/edit`);
+  }, [context, gameQuizId, isSessionReady, router, sessionQuery.isError]);
+
+  if (!isHydrated || !context || !isSessionReady || sessionQuery.isPending)
+    return <GameSessionLoading copy={copy} />;
   if (sessionQuery.isError || !sessionQuery.data) {
     return (
       <GameSessionError copy={copy} onRetry={() => sessionQuery.refetch()} />
@@ -103,13 +227,16 @@ export function GameQuizHostClient({
       <HostPodium
         copy={copy}
         isPending={commandMutation.isPending}
-        onEndSession={() => commandMutation.mutate({ action: 'END_SESSION' })}
+        onViewReport={() => {
+          isViewingReport.current = true;
+          commandMutation.mutate({ action: 'END_SESSION' });
+        }}
         session={session}
       />
     );
   }
   if (session.phase === 'REPORT')
-    return <HostReport copy={copy} session={session} />;
+    return <HostReport copy={copy} gameQuizId={gameQuizId} />;
   if (!session.currentRound)
     return (
       <GameSessionError copy={copy} onRetry={() => sessionQuery.refetch()} />
@@ -209,11 +336,6 @@ function HostLobby({
             <Play className="size-4" aria-hidden="true" />
             {copy.host.start}
           </Button>
-          <SessionOverflow
-            disabled={isPending}
-            label={copy.host.endSession}
-            onSelect={() => onCommand('END_SESSION')}
-          />
         </div>
       </header>
 
@@ -471,27 +593,22 @@ function ScoreboardStage({
 function HostPodium({
   copy,
   isPending,
-  onEndSession,
+  onViewReport,
   session,
 }: {
   copy: GameQuizCopy;
   isPending: boolean;
-  onEndSession: () => void;
+  onViewReport: () => void;
   session: GameSessionSnapshot;
 }) {
   return (
     <main className="min-h-[calc(100vh-6rem)] bg-primary py-3 sm:py-6">
       <GameQuizPodium copy={copy} session={session} title={copy.host.podium}>
-        <Button disabled={isPending} onClick={onEndSession} variant="secondary">
+        <Button disabled={isPending} onClick={onViewReport} variant="secondary">
           {isPending ? (
             <Loader2 className="animate-spin" data-icon="inline-start" />
           ) : null}
-          {copy.host.endSession}
-        </Button>
-        <Button asChild variant="outline" className="text-foreground">
-          <Link href={`/games/sessions/${session.id}/report`}>
-            {copy.host.viewReport}
-          </Link>
+          {copy.host.viewReport}
         </Button>
       </GameQuizPodium>
     </main>
@@ -500,16 +617,16 @@ function HostPodium({
 
 function HostReport({
   copy,
-  session,
+  gameQuizId,
 }: {
   copy: GameQuizCopy;
-  session: GameSessionSnapshot;
+  gameQuizId: string;
 }) {
   return (
     <main className="mx-auto grid min-h-72 max-w-xl place-items-center text-center">
       <Link
         className="font-medium text-primary underline"
-        href={`/games/sessions/${session.id}/report`}
+        href={`/games/${gameQuizId}/report`}
       >
         {copy.report.title}
       </Link>

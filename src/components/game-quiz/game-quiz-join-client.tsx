@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { gameQuizApi } from './api';
 import { type GameQuizCopy, gameQuizCopy } from './copy';
+import { activateLiveGameContext } from './live-game-context';
 
 interface GameQuizJoinClientProps {
   copy?: GameQuizCopy;
@@ -25,8 +26,10 @@ export function GameQuizJoinClient({
   );
   const joinMutation = useMutation({
     mutationFn: () => gameQuizApi.join(code),
-    onSuccess: ({ sessionId }) =>
-      router.push(`/games/sessions/${sessionId}/play`),
+    onSuccess: ({ context }) => {
+      activateLiveGameContext(context);
+      router.replace('/games/live/play');
+    },
     onError: () => toast.error(copy.common.error),
   });
 
