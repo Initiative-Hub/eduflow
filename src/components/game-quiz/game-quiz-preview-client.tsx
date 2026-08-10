@@ -26,6 +26,76 @@ interface GameQuizPreviewClientProps {
 
 type PreviewDevice = 'host' | 'participant';
 
+const KAHOOT_OPTION_STYLES = [
+  {
+    bg: 'bg-red-500',
+    text: 'text-white',
+    correctRing: 'ring-white',
+    selectedBorder: 'border-red-500',
+    selectedBg: 'bg-red-50 dark:bg-red-950/30',
+  },
+  {
+    bg: 'bg-blue-600',
+    text: 'text-white',
+    correctRing: 'ring-white',
+    selectedBorder: 'border-blue-600',
+    selectedBg: 'bg-blue-50 dark:bg-blue-950/30',
+  },
+  {
+    bg: 'bg-amber-500',
+    text: 'text-white',
+    correctRing: 'ring-white',
+    selectedBorder: 'border-amber-500',
+    selectedBg: 'bg-amber-50 dark:bg-amber-950/30',
+  },
+  {
+    bg: 'bg-green-600',
+    text: 'text-white',
+    correctRing: 'ring-white',
+    selectedBorder: 'border-green-600',
+    selectedBg: 'bg-green-50 dark:bg-green-950/30',
+  },
+] as const;
+
+const KAHOOT_SHAPES = [
+  <svg
+    key="triangle"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className="size-5"
+    aria-hidden="true"
+  >
+    <polygon points="12,3 22,21 2,21" />
+  </svg>,
+  <svg
+    key="diamond"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className="size-5"
+    aria-hidden="true"
+  >
+    <polygon points="12,2 22,12 12,22 2,12" />
+  </svg>,
+  <svg
+    key="circle"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className="size-5"
+    aria-hidden="true"
+  >
+    <circle cx="12" cy="12" r="10" />
+  </svg>,
+  <svg
+    key="square"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className="size-5"
+    aria-hidden="true"
+  >
+    <rect x="2" y="2" width="20" height="20" />
+  </svg>,
+] as const;
+
 export function GameQuizPreviewClient({
   gameQuizId,
   copy = gameQuizCopy,
@@ -155,23 +225,30 @@ export function GameQuizPreviewClient({
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-2">
-                  {question.options.map((option, optionIndex) => (
-                    <div
-                      className={`flex min-h-20 items-center gap-3 border px-4 py-3 ${revealed && option.isCorrect ? 'border-success bg-success/15' : 'border-background/40 bg-foreground/70 dark:border-border dark:bg-card/80'}`}
-                      key={option.id}
-                    >
-                      <span className="flex size-8 shrink-0 items-center justify-center border border-current font-semibold text-sm">
-                        {String.fromCharCode(65 + optionIndex)}
-                      </span>
-                      <span className="font-medium">{option.text}</span>
-                      {revealed && option.isCorrect ? (
-                        <Check
-                          className="ml-auto size-5 text-success"
-                          aria-hidden="true"
-                        />
-                      ) : null}
-                    </div>
-                  ))}
+                  {question.options.map((option, optionIndex) => {
+                    const style =
+                      KAHOOT_OPTION_STYLES[optionIndex] ??
+                      KAHOOT_OPTION_STYLES[0];
+                    const shape =
+                      KAHOOT_SHAPES[optionIndex] ?? KAHOOT_SHAPES[0];
+                    return (
+                      <div
+                        className={`flex min-h-20 items-center gap-3 px-4 py-3 shadow-lg transition-colors ${style.bg} ${style.text} ${revealed && option.isCorrect ? 'ring-4 ring-white' : ''} ${revealed && !option.isCorrect ? 'opacity-60' : ''}`}
+                        key={option.id}
+                      >
+                        <span className="grid size-8 shrink-0 place-items-center">
+                          {shape}
+                        </span>
+                        <span className="font-bold">{option.text}</span>
+                        {revealed && option.isCorrect ? (
+                          <Check
+                            className="ml-auto size-5"
+                            aria-hidden="true"
+                          />
+                        ) : null}
+                      </div>
+                    );
+                  })}
                 </div>
 
                 {revealed && question.explanation ? (
@@ -210,19 +287,24 @@ export function GameQuizPreviewClient({
                 </h2>
                 <div className="mt-7 grid gap-3">
                   {question.options.map((option, optionIndex) => {
+                    const style =
+                      KAHOOT_OPTION_STYLES[optionIndex] ??
+                      KAHOOT_OPTION_STYLES[0];
+                    const shape =
+                      KAHOOT_SHAPES[optionIndex] ?? KAHOOT_SHAPES[0];
                     const selected = selectedOptionId === option.id;
                     const correct = revealed && option.isCorrect;
                     return (
                       <button
                         aria-pressed={selected}
-                        className={`min-h-16 border p-4 text-left font-medium transition-colors focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 ${correct ? 'border-success bg-success/10' : selected ? 'border-primary bg-primary/10' : 'border-border hover:bg-muted'} ${revealed ? 'cursor-default' : ''}`}
+                        className={`flex min-h-16 items-center gap-3 p-4 text-left font-bold transition-all focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 ${correct ? `${style.bg} ${style.text} ring-4 ring-white` : selected ? `${style.bg} ${style.text} scale-[1.02] shadow-lg` : `${style.bg} ${style.text} opacity-90 hover:opacity-100 hover:shadow-md`} ${revealed && !correct ? 'opacity-50' : ''} ${revealed ? 'cursor-default' : ''}`}
                         disabled={revealed}
                         key={option.id}
                         onClick={() => setSelectedOptionId(option.id)}
                         type="button"
                       >
-                        <span className="mr-3 text-muted-foreground text-sm">
-                          {String.fromCharCode(65 + optionIndex)}
+                        <span className="grid size-7 shrink-0 place-items-center">
+                          {shape}
                         </span>
                         {option.text}
                       </button>

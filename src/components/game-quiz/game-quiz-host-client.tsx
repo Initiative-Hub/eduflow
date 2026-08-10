@@ -475,6 +475,24 @@ function QuestionStage({
   );
 }
 
+const KAHOOT_OPTION_STYLES = [
+  { bg: 'bg-red-500', hover: 'hover:bg-red-600', text: 'text-white', ring: 'ring-red-300', bar: 'bg-white/40', barFill: 'bg-white' },
+  { bg: 'bg-blue-600', hover: 'hover:bg-blue-700', text: 'text-white', ring: 'ring-blue-300', bar: 'bg-white/40', barFill: 'bg-white' },
+  { bg: 'bg-amber-500', hover: 'hover:bg-amber-600', text: 'text-white', ring: 'ring-amber-300', bar: 'bg-white/40', barFill: 'bg-white' },
+  { bg: 'bg-green-600', hover: 'hover:bg-green-700', text: 'text-white', ring: 'ring-green-300', bar: 'bg-white/40', barFill: 'bg-white' },
+] as const;
+
+const KAHOOT_SHAPES = [
+  /* triangle */
+  <svg key="triangle" viewBox="0 0 24 24" fill="currentColor" className="size-5" aria-hidden="true"><polygon points="12,3 22,21 2,21" /></svg>,
+  /* diamond */
+  <svg key="diamond" viewBox="0 0 24 24" fill="currentColor" className="size-5" aria-hidden="true"><polygon points="12,2 22,12 12,22 2,12" /></svg>,
+  /* circle */
+  <svg key="circle" viewBox="0 0 24 24" fill="currentColor" className="size-5" aria-hidden="true"><circle cx="12" cy="12" r="10" /></svg>,
+  /* square */
+  <svg key="square" viewBox="0 0 24 24" fill="currentColor" className="size-5" aria-hidden="true"><rect x="2" y="2" width="20" height="20" /></svg>,
+] as const;
+
 function AnswerTile({
   answerCount,
   index,
@@ -488,33 +506,28 @@ function AnswerTile({
   revealed: boolean;
   totalAnswers: number;
 }) {
-  const surface =
-    [
-      'bg-primary text-primary-foreground',
-      'bg-secondary text-secondary-foreground',
-      'bg-accent text-accent-foreground',
-      'bg-muted text-foreground',
-    ][index] ?? 'bg-muted text-foreground';
+  const style = KAHOOT_OPTION_STYLES[index] ?? KAHOOT_OPTION_STYLES[0];
+  const shape = KAHOOT_SHAPES[index] ?? KAHOOT_SHAPES[0];
   const width =
     totalAnswers === 0 ? 0 : Math.round((answerCount / totalAnswers) * 100);
   return (
     <div
-      className={`min-h-24 border border-background/25 p-4 shadow-lg ${surface} ${revealed && option.isCorrect ? 'ring-4 ring-success' : ''}`}
+      className={`min-h-24 p-4 shadow-lg transition-colors ${style.bg} ${style.text} ${revealed && option.isCorrect ? 'ring-4 ring-white' : ''} ${revealed && !option.isCorrect ? 'opacity-60' : ''}`}
     >
       <div className="flex items-center gap-3">
-        <span className="grid size-8 shrink-0 place-items-center border border-current font-semibold text-sm">
-          {String.fromCharCode(65 + index)}
+        <span className="grid size-8 shrink-0 place-items-center">
+          {shape}
         </span>
-        <span className="font-semibold text-lg">{option.text}</span>
+        <span className="font-bold text-lg">{option.text}</span>
         {revealed && option.isCorrect ? (
           <Check className="ml-auto size-6" aria-label="Correct answer" />
         ) : null}
       </div>
       {revealed ? (
         <div className="mt-4">
-          <div className="h-2 overflow-hidden bg-background/35">
+          <div className={`h-2 overflow-hidden rounded-full ${style.bar}`}>
             <div
-              className="h-full bg-background"
+              className={`h-full rounded-full ${style.barFill}`}
               style={{ width: `${width}%` }}
             />
           </div>

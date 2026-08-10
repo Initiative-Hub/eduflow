@@ -2,8 +2,8 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check, Clock3, Loader2, Trophy } from 'lucide-react';
-import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { gameQuizApi } from './api';
 import { type GameQuizCopy, gameQuizCopy } from './copy';
@@ -16,6 +16,52 @@ import { useLiveGameContext } from './use-live-game-context';
 interface GameQuizPlayerClientProps {
   copy?: GameQuizCopy;
 }
+
+const KAHOOT_OPTION_STYLES = [
+  { bg: 'bg-red-500', text: 'text-white' },
+  { bg: 'bg-blue-600', text: 'text-white' },
+  { bg: 'bg-amber-500', text: 'text-white' },
+  { bg: 'bg-green-600', text: 'text-white' },
+] as const;
+
+const KAHOOT_SHAPES = [
+  <svg
+    key="triangle"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className="size-5"
+    aria-hidden="true"
+  >
+    <polygon points="12,3 22,21 2,21" />
+  </svg>,
+  <svg
+    key="diamond"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className="size-5"
+    aria-hidden="true"
+  >
+    <polygon points="12,2 22,12 12,22 2,12" />
+  </svg>,
+  <svg
+    key="circle"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className="size-5"
+    aria-hidden="true"
+  >
+    <circle cx="12" cy="12" r="10" />
+  </svg>,
+  <svg
+    key="square"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className="size-5"
+    aria-hidden="true"
+  >
+    <rect x="2" y="2" width="20" height="20" />
+  </svg>,
+] as const;
 
 export function GameQuizPlayerClient({
   copy = gameQuizCopy,
@@ -102,65 +148,86 @@ export function GameQuizPlayerClient({
   const isOpen = session.phase === 'QUESTION_OPEN';
   const submitted = Boolean(session.myAnswer);
   return (
-    <main className="mx-auto max-w-3xl space-y-6 py-4 sm:py-10">
-      <header className="flex items-center justify-between border-b pb-4 text-muted-foreground text-sm">
-        <span className="font-medium text-foreground">{session.gameTitle}</span>
-        <span>
-          {copy.player.question} {session.currentRoundIndex + 1}/
-          {session.totalRounds}
-        </span>
-      </header>
-      {isOpen ? (
-        <QuestionTimer
-          copy={copy}
-          deadlineAt={session.currentRound.deadlineAt}
-        />
-      ) : null}
-      <section className="relative overflow-hidden border bg-card p-5 sm:p-8">
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 bg-[url('/images/game-quiz/learning-rally-stage.png')] bg-center bg-cover opacity-10"
-        />
-        <div className="relative">
-          <h1 className="font-semibold text-2xl leading-tight sm:text-3xl">
-            {session.currentRound.prompt}
-          </h1>
-          {session.currentRound.hint ? (
-            <p className="mt-5 border-primary border-l-2 pl-3 text-muted-foreground text-sm">
-              <span className="font-medium text-foreground">
-                {copy.player.hint}
-              </span>
-              : {session.currentRound.hint}
-            </p>
-          ) : null}
-          {isOpen && !submitted ? (
-            <div className="mt-8 grid gap-3 sm:grid-cols-2">
-              {session.currentRound.options.map((option) => (
-                <button
-                  className="min-h-24 border bg-background p-5 text-left font-medium transition-colors hover:border-primary hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={answerMutation.isPending}
-                  key={option.id}
-                  onClick={() => answerMutation.mutate(option.id)}
-                  type="button"
-                >
-                  {option.text}
-                </button>
-              ))}
+    <main className="min-h-[calc(100vh-6rem)] bg-foreground px-3 py-3 text-background sm:px-6 sm:py-6 dark:bg-background dark:text-foreground">
+      <div className="mx-auto flex min-h-[calc(100vh-9rem)] max-w-360 flex-col">
+        <header className="flex items-center justify-between gap-3 pb-4">
+          <span className="truncate font-medium text-background/70 text-sm dark:text-muted-foreground">
+            {session.gameTitle}
+          </span>
+          <span className="whitespace-nowrap font-medium text-xs uppercase tracking-[0.16em]">
+            {copy.player.question} {session.currentRoundIndex + 1}/
+            {session.totalRounds}
+          </span>
+        </header>
+
+        <section className="relative flex flex-1 flex-col justify-center overflow-hidden border border-background/20 bg-foreground px-3 py-6 sm:px-8 sm:py-8 dark:border-border dark:bg-card">
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 bg-[url('/images/game-quiz/learning-rally-stage.png')] bg-center bg-cover opacity-25"
+          />
+          <div className="relative mx-auto flex w-full max-w-6xl flex-col gap-5">
+            {isOpen ? (
+              <div className="flex items-center justify-between gap-4">
+                <QuestionCountdown
+                  copy={copy}
+                  deadlineAt={session.currentRound.deadlineAt}
+                />
+                <div />
+              </div>
+            ) : null}
+
+            <div className="mx-auto w-full max-w-4xl bg-background px-5 py-6 text-center text-foreground shadow-2xl sm:px-10 sm:py-9">
+              <h1 className="font-semibold text-2xl leading-tight sm:text-4xl">
+                {session.currentRound.prompt}
+              </h1>
+              {session.currentRound.hint ? (
+                <p className="mt-4 text-muted-foreground text-sm">
+                  {copy.player.hint}: {session.currentRound.hint}
+                </p>
+              ) : null}
             </div>
-          ) : null}
-          {submitted && session.phase !== 'REVEAL' ? (
-            <SubmittedPanel copy={copy} />
-          ) : null}
-          {session.phase === 'REVEAL' ? (
-            <RevealPanel copy={copy} session={session} />
-          ) : null}
-        </div>
-      </section>
+
+            {isOpen && !submitted ? (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {session.currentRound.options.map((option, optionIndex) => {
+                  const style =
+                    KAHOOT_OPTION_STYLES[optionIndex] ??
+                    KAHOOT_OPTION_STYLES[0];
+                  const shape =
+                    KAHOOT_SHAPES[optionIndex] ?? KAHOOT_SHAPES[0];
+                  return (
+                    <button
+                      className={`flex min-h-24 items-center gap-3 p-5 text-left font-bold shadow-lg transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 ${style.bg} ${style.text} hover:scale-[1.02] hover:shadow-xl active:scale-[0.98]`}
+                      disabled={answerMutation.isPending}
+                      key={option.id}
+                      onClick={() => answerMutation.mutate(option.id)}
+                      type="button"
+                    >
+                      <span className="grid size-8 shrink-0 place-items-center">
+                        {shape}
+                      </span>
+                      <span className="text-lg">{option.text}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : null}
+
+            {submitted && session.phase !== 'REVEAL' ? (
+              <SubmittedPanel copy={copy} />
+            ) : null}
+
+            {session.phase === 'REVEAL' ? (
+              <RevealPanel copy={copy} session={session} />
+            ) : null}
+          </div>
+        </section>
+      </div>
     </main>
   );
 }
 
-function QuestionTimer({
+function QuestionCountdown({
   copy,
   deadlineAt,
 }: {
@@ -177,13 +244,16 @@ function QuestionTimer({
     0,
     Math.ceil((new Date(deadlineAt).getTime() - now) / 1000)
   );
+  const urgent = seconds <= 5;
   return (
-    <div className="flex items-center justify-between border bg-card px-4 py-3">
-      <span className="flex items-center gap-2 text-muted-foreground text-sm">
-        <Clock3 className="size-4" aria-hidden="true" />
-        {copy.editor.timeLimit}
+    <div
+      className={`grid size-17.5 place-items-center rounded-full border-4 text-center shadow-lg transition-colors duration-300 ${urgent ? 'border-red-400 bg-red-500/90 text-white' : 'border-background bg-foreground dark:border-border dark:bg-card'}`}
+    >
+      <Clock3 className="size-4" aria-hidden="true" />
+      <span className="font-semibold text-lg tabular-nums leading-none">
+        {seconds}
       </span>
-      <span className="font-semibold text-xl tabular-nums">{seconds}</span>
+      <span className="sr-only">{copy.editor.seconds}</span>
     </div>
   );
 }
@@ -215,8 +285,8 @@ function WaitingPanel({
 
 function SubmittedPanel({ copy }: { copy: GameQuizCopy }) {
   return (
-    <div className="mt-8 border border-primary/20 bg-primary/5 p-6 text-center">
-      <Check className="mx-auto size-7 text-primary" aria-hidden="true" />
+    <div className="mx-auto w-full max-w-4xl bg-background/90 p-6 text-center text-foreground shadow-xl backdrop-blur-sm">
+      <Check className="mx-auto size-8 text-green-500" aria-hidden="true" />
       <h2 className="mt-3 font-semibold text-xl">{copy.player.submitted}</h2>
       <p className="mt-1 text-muted-foreground text-sm">
         {copy.player.submittedDescription}
@@ -238,29 +308,49 @@ function RevealPanel({
     (option) => option.isCorrect
   );
   return (
-    <div className="mt-8 space-y-5">
+    <div className="space-y-4">
       <div
-        className={`border p-5 ${correct ? 'border-success bg-success/10' : 'border-muted-foreground/20 bg-muted/40'}`}
+        className={`mx-auto w-full max-w-4xl p-6 text-foreground shadow-xl ${correct ? 'border-2 border-green-500 bg-background' : 'bg-background'}`}
       >
-        <p className="text-muted-foreground text-sm">{copy.player.reveal}</p>
-        <h2 className="mt-1 font-semibold text-xl">
-          {correct ? copy.player.correct : copy.player.notCorrect}
-        </h2>
+        <div className="flex items-center gap-3">
+          {correct ? (
+            <span className="grid size-10 shrink-0 place-items-center rounded-full bg-green-500 text-white">
+              <Check className="size-5" aria-hidden="true" />
+            </span>
+          ) : (
+            <span className="grid size-10 shrink-0 place-items-center rounded-full bg-red-500 text-white">
+              <span className="font-bold text-lg" aria-hidden="true">
+                ✕
+              </span>
+            </span>
+          )}
+          <div>
+            <h2 className="font-semibold text-xl">
+              {correct ? copy.player.correct : copy.player.notCorrect}
+            </h2>
+            <p className="text-muted-foreground text-sm">
+              {copy.player.reveal}
+            </p>
+          </div>
+          {answer ? (
+            <span className="ml-auto font-bold text-2xl tabular-nums">
+              {answer.pointsAwarded ?? 0}{' '}
+              <span className="font-normal text-muted-foreground text-sm">
+                {copy.player.points}
+              </span>
+            </span>
+          ) : null}
+        </div>
         {correctOption ? (
-          <p className="mt-3 text-sm">{correctOption.text}</p>
-        ) : null}
-        {answer ? (
-          <p className="mt-4 font-medium text-sm">
-            {answer.pointsAwarded ?? 0} {copy.player.points}
+          <p className="mt-4 border-green-500/30 border-l-2 pl-3 text-sm">
+            {correctOption.text}
           </p>
         ) : null}
       </div>
       {session.currentRound?.explanation ? (
-        <div className="border-primary border-l-2 pl-4">
-          <p className="font-medium text-sm">{copy.editor.explanation}</p>
-          <p className="mt-1 text-muted-foreground text-sm">
-            {session.currentRound.explanation}
-          </p>
+        <div className="mx-auto max-w-4xl border border-background/30 bg-foreground/80 px-5 py-4 text-sm dark:border-border dark:bg-card/90">
+          <span className="font-medium">{copy.editor.explanation}: </span>
+          {session.currentRound.explanation}
         </div>
       ) : null}
     </div>
