@@ -125,3 +125,35 @@ export async function resolveLiveGameContext({
     sessionId: context.sessionId,
   };
 }
+
+export async function resolveLiveGameReportRun({
+  actor,
+  expectedGameQuizId,
+  runKey,
+}: {
+  actor: GameActor;
+  expectedGameQuizId: string;
+  runKey: string;
+}) {
+  const context = await prisma.gameSessionContext.findFirst({
+    where: { id: runKey, audience: 'HOST' },
+  });
+  if (!context) {
+    throw gameQuizError(
+      'GAME_CONTEXT_UNAVAILABLE',
+      404,
+      'This live game report is not available.'
+    );
+  }
+
+  const session = await requireGameSession(prisma, context.sessionId);
+  if (session.gameQuizId !== expectedGameQuizId) {
+    throw gameQuizError(
+      'GAME_CONTEXT_UNAVAILABLE',
+      404,
+      'This live game report is not available.'
+    );
+  }
+  requireGameSessionHost(actor, session);
+  return { sessionId: session.id };
+}

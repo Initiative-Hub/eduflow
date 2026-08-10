@@ -631,7 +631,6 @@ enum GameSessionPhase {
   REVEAL            @map("reveal")
   SCOREBOARD        @map("scoreboard")
   FINAL_CELEBRATION @map("final_celebration")
-  REPORT            @map("report")
 
   @@map("game_session_phase")
 }

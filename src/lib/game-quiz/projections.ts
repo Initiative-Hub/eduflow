@@ -16,10 +16,7 @@ const canManage = (actor: GameActor, ownerId: string) =>
   actor.role === 'ADMIN' || actor.userId === ownerId;
 
 const isRevealVisible = (phase: SessionWithGameData['phase']) =>
-  phase === 'REVEAL' ||
-  phase === 'SCOREBOARD' ||
-  phase === 'FINAL_CELEBRATION' ||
-  phase === 'REPORT';
+  phase === 'REVEAL' || phase === 'SCOREBOARD' || phase === 'FINAL_CELEBRATION';
 
 const projectOption = (
   option: GameRoundRecord['options'][number],

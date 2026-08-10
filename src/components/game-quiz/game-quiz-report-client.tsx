@@ -2,13 +2,9 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { BarChart3, Loader2, Users } from 'lucide-react';
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { gameQuizApi } from './api';
 import { type GameQuizCopy, gameQuizCopy } from './copy';
 import { GameSessionError } from './game-quiz-host-client';
-import { clearLiveGameContext } from './live-game-context';
-import { useLiveGameContext } from './use-live-game-context';
 
 interface GameQuizReportClientProps {
   gameQuizId: string;
@@ -21,26 +17,13 @@ export function GameQuizReportClient({
   runKey,
   copy = gameQuizCopy,
 }: GameQuizReportClientProps) {
-  const router = useRouter();
-  const { context, isHydrated } = useLiveGameContext('HOST');
   const reportQuery = useQuery({
-    queryKey: ['live-game-report', context?.contextKey],
-    queryFn: () => gameQuizApi.report(gameQuizId, context!),
-    enabled: Boolean(context && runKey === context.contextKey),
+    queryKey: ['live-game-report', gameQuizId, runKey],
+    queryFn: () => gameQuizApi.report(gameQuizId, runKey!),
+    enabled: Boolean(runKey),
   });
 
-  useEffect(() => {
-    if (!isHydrated || (context && runKey === context.contextKey)) return;
-    clearLiveGameContext('HOST', context?.contextKey);
-    router.replace(`/games/${gameQuizId}/edit`);
-  }, [context, gameQuizId, isHydrated, router, runKey]);
-
-  if (
-    !isHydrated ||
-    !context ||
-    runKey !== context.contextKey ||
-    reportQuery.isPending
-  ) {
+  if (reportQuery.isPending) {
     return (
       <div className="flex min-h-72 items-center justify-center text-muted-foreground">
         <Loader2 className="mr-2 size-4 animate-spin" aria-hidden="true" />
@@ -48,7 +31,7 @@ export function GameQuizReportClient({
       </div>
     );
   }
-  if (reportQuery.isError || !reportQuery.data)
+  if (!runKey || reportQuery.isError || !reportQuery.data)
     return (
       <GameSessionError copy={copy} onRetry={() => reportQuery.refetch()} />
     );

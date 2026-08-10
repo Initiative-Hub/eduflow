@@ -3,10 +3,13 @@ import { withRoles } from '@/lib/api/middlewares';
 import {
   gameActorFromSession,
   gameQuizExceptionResponse,
-  resolveRequestLiveGameContext,
   validationErrorResponse,
 } from '@/lib/game-quiz/http';
-import { gameQuizIdParamsSchema } from '@/lib/game-quiz/schemas';
+import { resolveLiveGameReportRun } from '@/lib/game-quiz/live-game-context';
+import {
+  gameQuizIdParamsSchema,
+  gameSessionContextKeySchema,
+} from '@/lib/game-quiz/schemas';
 import { getGameSessionReport } from '@/services/GameQuizAnswerService';
 
 type RouteContext = { params: Promise<{ gameQuizId: string }> };
@@ -15,8 +18,17 @@ type RouteContext = { params: Promise<{ gameQuizId: string }> };
  * @swagger
  * /api/v1/game-quizzes/{gameQuizId}/live-game/report:
  *   get:
- *     summary: Get the current host-context live game report
+ *     summary: Get a host-authorized live game report selected by an opaque run key
  *     security: [{ SessionCookie: [] }]
+ *     parameters:
+ *       - in: path
+ *         name: gameQuizId
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *       - in: query
+ *         name: run
+ *         required: true
+ *         schema: { type: string, format: uuid }
  *     responses: { 200: { description: Game report }, 400: { description: Invalid request }, 401: { description: Unauthorized }, 403: { description: Forbidden }, 404: { description: Context unavailable } }
  */
 export const GET = withRoles(
@@ -25,17 +37,21 @@ export const GET = withRoles(
     const parsed = gameQuizIdParamsSchema.safeParse(await params);
     if (!parsed.success)
       return validationErrorResponse(parsed.error, 'Invalid Game Quiz ID.');
+    const run = gameSessionContextKeySchema.safeParse(
+      new URL(request.url).searchParams.get('run')
+    );
+    if (!run.success)
+      return validationErrorResponse(run.error, 'Invalid report run key.');
     try {
-      const context = await resolveRequestLiveGameContext({
-        audience: 'HOST',
+      const reportRun = await resolveLiveGameReportRun({
+        actor: gameActorFromSession(session),
         expectedGameQuizId: parsed.data.gameQuizId,
-        request,
-        session,
+        runKey: run.data,
       });
       return NextResponse.json(
         await getGameSessionReport(
           gameActorFromSession(session),
-          context.sessionId
+          reportRun.sessionId
         )
       );
     } catch (error) {

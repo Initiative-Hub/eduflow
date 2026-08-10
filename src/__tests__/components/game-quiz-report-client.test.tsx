@@ -3,25 +3,10 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { GameQuizReportClient } from '@/components/game-quiz/game-quiz-report-client';
 
-vi.mock('next/navigation', () => ({ useRouter: () => ({ replace: vi.fn() }) }));
-
 const { report } = vi.hoisted(() => ({ report: vi.fn() }));
 
 vi.mock('@/components/game-quiz/api', () => ({
   gameQuizApi: { report },
-}));
-
-vi.mock('@/components/game-quiz/use-live-game-context', () => ({
-  useLiveGameContext: () => ({
-    context: {
-      audience: 'HOST',
-      contextKey: 'context-key',
-      expiresAt: '2099-01-01T00:00:00.000Z',
-      token: 'token',
-      version: 1,
-    },
-    isHydrated: true,
-  }),
 }));
 
 function renderReport() {
@@ -42,7 +27,7 @@ describe('GameQuizReportClient', () => {
         id: 'session-1',
         gameTitle: 'Planet Rally',
         joinCode: '123456',
-        phase: 'REPORT',
+        phase: 'FINAL_CELEBRATION',
         createdAt: '2026-08-09T10:00:00.000Z',
         completedAt: '2026-08-09T10:05:00.000Z',
       },
@@ -66,5 +51,6 @@ describe('GameQuizReportClient', () => {
       screen.getByRole('row', { name: /1First question 0 0 0/ })
     ).toBeInTheDocument();
     expect(screen.queryByText(/NaN/)).not.toBeInTheDocument();
+    expect(report).toHaveBeenCalledWith('game-quiz-1', 'context-key');
   });
 });

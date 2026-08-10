@@ -7,8 +7,7 @@ export type GameSessionPhase =
   | 'QUESTION_OPEN'
   | 'REVEAL'
   | 'SCOREBOARD'
-  | 'FINAL_CELEBRATION'
-  | 'REPORT';
+  | 'FINAL_CELEBRATION';
 
 export interface GameQuizOption {
   id: string;
@@ -78,6 +77,7 @@ export interface GameSessionSnapshot {
   joiningLocked: boolean;
   phase: GameSessionPhase;
   closedReason?: 'HOST_LEFT' | 'VIEWED_REPORT' | null;
+  endedAt?: string | null;
   stateVersion: number;
   currentRound?: GameRound | null;
   currentRoundIndex: number;

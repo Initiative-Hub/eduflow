@@ -122,16 +122,16 @@ export function GameQuizPlayerClient({
     );
 
   const session = sessionQuery.data;
-  if (session.phase === 'LOBBY')
-    return <WaitingPanel copy={copy} session={session} />;
-  if (session.phase === 'FINAL_CELEBRATION')
-    return <PlayerPodium copy={copy} session={session} />;
-  if (session.phase === 'REPORT')
+  if (session.endedAt)
     return session.closedReason === 'HOST_LEFT' ? (
       <HostEndedPanel copy={copy} />
     ) : (
       <FinishedPanel copy={copy} session={session} />
     );
+  if (session.phase === 'LOBBY')
+    return <WaitingPanel copy={copy} session={session} />;
+  if (session.phase === 'FINAL_CELEBRATION')
+    return <PlayerPodium copy={copy} session={session} />;
   if (session.phase === 'SCOREBOARD') {
     return (
       <main className="mx-auto max-w-3xl space-y-6 py-4 sm:py-10">

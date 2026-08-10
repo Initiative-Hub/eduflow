@@ -22,6 +22,7 @@ import {
   requireGameQuizManager,
   requireGameSession,
   requireGameSessionHost,
+  requireGameSessionOpen,
   requireGameSessionPhase,
   nextHostedGamePhase,
   shouldAutoRevealGameRound,
@@ -223,7 +224,7 @@ export async function heartbeatGameSessionHost(
   const session = await requireGameSession(prisma, sessionId);
   requireGameSessionHost(actor, session);
   await prisma.gameSession.updateMany({
-    where: { id: sessionId, phase: { not: 'REPORT' } },
+    where: { id: sessionId, endedAt: null },
     data: { lastHostSeenAt: new Date() },
   });
 }
@@ -236,7 +237,7 @@ export async function closeGameSession(
   await prisma.$transaction(async (transaction) => {
     const session = await requireGameSession(transaction, sessionId);
     requireGameSessionHost(actor, session);
-    if (session.phase === 'REPORT') return;
+    if (session.endedAt) return;
     const now = new Date();
     await transaction.gameSession.update({
       where: { id: sessionId },
@@ -245,7 +246,6 @@ export async function closeGameSession(
         endedAt: now,
         joinCodeReleasedAt: now,
         joiningLocked: true,
-        phase: 'REPORT',
         stateVersion: { increment: 1 },
       },
     });
@@ -259,7 +259,7 @@ export async function reconcileExpiredHostLease(sessionId: string) {
   const expired = await prisma.gameSession.updateMany({
     where: {
       id: sessionId,
-      phase: { not: 'REPORT' },
+      endedAt: null,
       OR: [{ lastHostSeenAt: null }, { lastHostSeenAt: { lt: expiresBefore } }],
     },
     data: {
@@ -267,7 +267,6 @@ export async function reconcileExpiredHostLease(sessionId: string) {
       endedAt: now,
       joinCodeReleasedAt: now,
       joiningLocked: true,
-      phase: 'REPORT',
       stateVersion: { increment: 1 },
     },
   });
@@ -341,6 +340,7 @@ export async function controlGameSession(
   await prisma.$transaction(async (transaction) => {
     const session = await requireGameSession(transaction, sessionId);
     requireGameSessionHost(actor, session);
+    requireGameSessionOpen(session);
     if (session.stateVersion !== input.expectedStateVersion) {
       throw gameQuizError(
         'STATE_CONFLICT',
@@ -445,16 +445,6 @@ export async function controlGameSession(
         data = {
           phase: 'FINAL_CELEBRATION',
           joiningLocked: true,
-          joinCodeReleasedAt: now,
-        };
-        break;
-      case 'END_SESSION':
-        requireGameSessionPhase(session, ['LOBBY', 'FINAL_CELEBRATION']);
-        data = {
-          closedReason: 'VIEWED_REPORT',
-          phase: 'REPORT',
-          joiningLocked: true,
-          endedAt: now,
           joinCodeReleasedAt: now,
         };
         break;

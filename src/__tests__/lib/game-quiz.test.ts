@@ -83,7 +83,7 @@ describe('Live Game Quiz rules', () => {
     expect(nextHostedGamePhase('SCOREBOARD', false)).toBe('FINAL_CELEBRATION');
   });
 
-  it('accepts distinct end-game and end-session host commands', () => {
+  it('accepts end-game but rejects retired end-session host commands', () => {
     expect(
       hostCommandSchema.safeParse({
         action: 'END_GAME',
@@ -95,7 +95,7 @@ describe('Live Game Quiz rules', () => {
         action: 'END_SESSION',
         expectedStateVersion: 1,
       }).success
-    ).toBe(true);
+    ).toBe(false);
     expect(
       hostCommandSchema.safeParse({
         action: 'END',
@@ -109,7 +109,7 @@ describe('Live Game Quiz rules', () => {
       id: 'session-1',
       title: 'Planet Rally',
       joinCode: '123456',
-      phase: 'REPORT',
+      phase: 'FINAL_CELEBRATION',
       createdAt: new Date('2026-08-09T10:00:00.000Z'),
       endedAt: new Date('2026-08-09T10:05:00.000Z'),
       rounds: [

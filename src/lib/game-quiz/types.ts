@@ -8,7 +8,6 @@ export const GAME_SESSION_PHASES = [
   'REVEAL',
   'SCOREBOARD',
   'FINAL_CELEBRATION',
-  'REPORT',
 ] as const;
 
 export type GameSessionPhase = (typeof GAME_SESSION_PHASES)[number];

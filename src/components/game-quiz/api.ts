@@ -16,8 +16,7 @@ type GameHostAction =
   | 'SKIP'
   | 'NEXT'
   | 'SET_JOINING_LOCKED'
-  | 'END_GAME'
-  | 'END_SESSION';
+  | 'END_GAME';
 
 type RecordValue = Record<string, unknown>;
 
@@ -143,6 +142,7 @@ function toSession(value: unknown): GameSessionSnapshot {
         : stringValue(session.closedReason) === 'VIEWED_REPORT'
           ? 'VIEWED_REPORT'
           : null,
+    endedAt: stringValue(session.endedAt) || null,
     stateVersion: numberValue(session.stateVersion, 1),
     currentRound: round
       ? {
@@ -336,10 +336,9 @@ export const gameQuizApi = {
         liveGameConfig(context)
       )
       .then(toSession),
-  report: (gameQuizId: string, context: LiveGameContext) =>
+  report: (gameQuizId: string, runKey: string) =>
     apiClient.get<GameQuizReport>(
-      `v1/game-quizzes/${gameQuizId}/live-game/report`,
-      liveGameConfig(context)
+      `v1/game-quizzes/${gameQuizId}/live-game/report?run=${encodeURIComponent(runKey)}`
     ),
 };
 

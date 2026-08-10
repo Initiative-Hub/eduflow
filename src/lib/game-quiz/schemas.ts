@@ -115,10 +115,6 @@ export const hostCommandSchema = z.discriminatedUnion('action', [
     action: z.literal('END_GAME'),
     expectedStateVersion: z.number().int().min(1),
   }),
-  z.object({
-    action: z.literal('END_SESSION'),
-    expectedStateVersion: z.number().int().min(1),
-  }),
 ]);
 
 export const submitGameAnswerSchema = z.object({
@@ -128,6 +124,7 @@ export const submitGameAnswerSchema = z.object({
 });
 
 export const gameSessionPhaseSchema = z.enum(GAME_SESSION_PHASES);
+export const gameSessionContextKeySchema = z.uuid();
 
 export type CreateGameQuizInput = z.infer<typeof createGameQuizSchema>;
 export type UpdateGameQuizInput = z.infer<typeof updateGameQuizSchema>;

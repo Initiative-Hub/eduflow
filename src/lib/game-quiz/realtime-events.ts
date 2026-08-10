@@ -8,7 +8,6 @@ export const gameQuizSessionPhaseSchema = z.enum([
   'REVEAL',
   'SCOREBOARD',
   'FINAL_CELEBRATION',
-  'REPORT',
 ]);
 
 const versionedGameQuizEventSchema = z.object({

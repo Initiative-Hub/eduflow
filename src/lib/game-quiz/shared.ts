@@ -130,6 +130,16 @@ export function requireGameSessionPhase(
   }
 }
 
+export function requireGameSessionOpen(session: SessionWithGameData) {
+  if (session.endedAt) {
+    throw gameQuizError(
+      'GAME_SESSION_ENDED',
+      409,
+      'This Game Session has ended.'
+    );
+  }
+}
+
 export function shouldAutoRevealGameRound({
   answerCount,
   deadlineAt,

@@ -27,9 +27,9 @@ import {
 import { type GameHostAction, gameQuizApi } from './api';
 import { type GameQuizCopy, gameQuizCopy } from './copy';
 import { GameQuizPodium } from './game-quiz-podium';
+import { clearLiveGameContext } from './live-game-context';
 import type { GameQuizOption, GameSessionSnapshot } from './types';
 import { useGameQuizRealtime } from './use-game-quiz-realtime';
-import { clearLiveGameContext } from './live-game-context';
 import { useLiveGameContext } from './use-live-game-context';
 
 interface GameQuizHostClientProps {
@@ -46,7 +46,6 @@ export function GameQuizHostClient({
   const { context, isHydrated } = useLiveGameContext('HOST');
   const hasCheckedTabOwnership = useRef(false);
   const hasHandledInitialNavigation = useRef(false);
-  const isViewingReport = useRef(false);
   const [isSessionReady, setIsSessionReady] = useState(false);
   const closeMutation = useMutation({
     mutationFn: () => gameQuizApi.closeHostSession(gameQuizId, context!),
@@ -183,17 +182,11 @@ export function GameQuizHostClient({
   }, [context, gameQuizId, isSessionReady]);
 
   useEffect(() => {
-    if (sessionQuery.data?.phase === 'REPORT') {
-      if (isViewingReport.current && context) {
-        router.replace(
-          `/games/${gameQuizId}/report?run=${encodeURIComponent(context.contextKey)}`
-        );
-      } else {
-        clearLiveGameContext('HOST', context?.contextKey);
-        router.replace(`/games/${gameQuizId}/edit`);
-      }
+    if (sessionQuery.data?.endedAt) {
+      clearLiveGameContext('HOST', context?.contextKey);
+      router.replace(`/games/${gameQuizId}/edit`);
     }
-  }, [context, gameQuizId, router, sessionQuery.data?.phase]);
+  }, [context, gameQuizId, router, sessionQuery.data?.endedAt]);
 
   useEffect(() => {
     if (!isSessionReady || !sessionQuery.isError) return;
@@ -227,16 +220,11 @@ export function GameQuizHostClient({
       <HostPodium
         copy={copy}
         isPending={commandMutation.isPending}
-        onViewReport={() => {
-          isViewingReport.current = true;
-          commandMutation.mutate({ action: 'END_SESSION' });
-        }}
+        reportHref={`/games/${gameQuizId}/report?run=${encodeURIComponent(context.contextKey)}`}
         session={session}
       />
     );
   }
-  if (session.phase === 'REPORT')
-    return <HostReport copy={copy} gameQuizId={gameQuizId} />;
   if (!session.currentRound)
     return (
       <GameSessionError copy={copy} onRetry={() => sessionQuery.refetch()} />
@@ -664,43 +652,26 @@ function ScoreboardStage({
 function HostPodium({
   copy,
   isPending,
-  onViewReport,
+  reportHref,
   session,
 }: {
   copy: GameQuizCopy;
   isPending: boolean;
-  onViewReport: () => void;
+  reportHref: string;
   session: GameSessionSnapshot;
 }) {
   return (
     <main className="min-h-[calc(100vh-6rem)] bg-primary py-3 sm:py-6">
       <GameQuizPodium copy={copy} session={session} title={copy.host.podium}>
-        <Button disabled={isPending} onClick={onViewReport} variant="secondary">
-          {isPending ? (
-            <Loader2 className="animate-spin" data-icon="inline-start" />
-          ) : null}
-          {copy.host.viewReport}
+        <Button asChild disabled={isPending} variant="secondary">
+          <Link href={reportHref} target="_blank" rel="noreferrer">
+            {isPending ? (
+              <Loader2 className="animate-spin" data-icon="inline-start" />
+            ) : null}
+            {copy.host.viewReport}
+          </Link>
         </Button>
       </GameQuizPodium>
-    </main>
-  );
-}
-
-function HostReport({
-  copy,
-  gameQuizId,
-}: {
-  copy: GameQuizCopy;
-  gameQuizId: string;
-}) {
-  return (
-    <main className="mx-auto grid min-h-72 max-w-xl place-items-center text-center">
-      <Link
-        className="font-medium text-primary underline"
-        href={`/games/${gameQuizId}/report`}
-      >
-        {copy.report.title}
-      </Link>
     </main>
   );
 }

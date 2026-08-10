@@ -177,9 +177,12 @@ describe('GameQuizHostClient', () => {
     expect(screen.getByText('Sam')).toBeInTheDocument();
     expect(screen.getByText('Alex')).toBeInTheDocument();
     expect(screen.getByText('Jo')).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: 'host.viewReport' })
-    ).toBeInTheDocument();
+    const reportLink = screen.getByRole('link', { name: 'host.viewReport' });
+    expect(reportLink).toHaveAttribute(
+      'href',
+      '/games/game-quiz-1/report?run=context-key'
+    );
+    expect(reportLink).toHaveAttribute('target', '_blank');
     expect(
       screen.queryByRole('button', { name: 'host.next' })
     ).not.toBeInTheDocument();

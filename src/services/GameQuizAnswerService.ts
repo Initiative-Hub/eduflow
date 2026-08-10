@@ -12,6 +12,7 @@ import {
   currentGameRound,
   requireGameSession,
   requireGameSessionHost,
+  requireGameSessionOpen,
   requireGameSessionPhase,
 } from '@/lib/game-quiz/shared';
 import type {
@@ -80,6 +81,7 @@ async function submitAnswerInTransaction(
     );
   }
 
+  requireGameSessionOpen(session);
   requireGameSessionPhase(session, ['QUESTION_OPEN']);
   const currentRound = currentGameRound(session);
   if (!currentRound || currentRound.id !== input.roundId) {
@@ -101,7 +103,7 @@ async function submitAnswerInTransaction(
   // automatic reveal uses the same row transition, so only the action that
   // acquires this guard first can complete.
   const openState = await database.gameSession.updateMany({
-    where: { id: sessionId, phase: 'QUESTION_OPEN' },
+    where: { id: sessionId, phase: 'QUESTION_OPEN', endedAt: null },
     data: { stateVersion: { increment: 0 } },
   });
   if (openState.count === 0) {
