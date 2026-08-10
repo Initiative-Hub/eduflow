@@ -193,8 +193,7 @@ export function GameQuizPlayerClient({
                   const style =
                     KAHOOT_OPTION_STYLES[optionIndex] ??
                     KAHOOT_OPTION_STYLES[0];
-                  const shape =
-                    KAHOOT_SHAPES[optionIndex] ?? KAHOOT_SHAPES[0];
+                  const shape = KAHOOT_SHAPES[optionIndex] ?? KAHOOT_SHAPES[0];
                   return (
                     <button
                       className={`flex min-h-24 items-center gap-3 p-5 text-left font-bold shadow-lg transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 ${style.bg} ${style.text} hover:scale-[1.02] hover:shadow-xl active:scale-[0.98]`}

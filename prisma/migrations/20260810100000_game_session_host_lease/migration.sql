@@ -7,6 +7,3 @@ ALTER TABLE "game_session"
 UPDATE "game_session"
 SET "last_host_seen_at" = "updated_at"
 WHERE "phase" <> 'report';
-
-CREATE INDEX "game_session_phase_last_host_seen_at_idx"
-  ON "game_session"("phase", "last_host_seen_at");
