@@ -10,7 +10,7 @@ dependencies = [
     "modal~=1.5.3",
     "slide-skills~=0.2.43",
     "tavily-python~=0.7.27",
-    "boto3~=1.43.63",
+    "boto3~=1.43.67",
 ]
 
 [dependency-groups]

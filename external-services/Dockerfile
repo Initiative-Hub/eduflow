@@ -17,4 +17,4 @@ COPY . .
 
 EXPOSE 8000
 
-CMD [".venv/bin/fastapi", "run", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uv", "run", "fastapi", "run", "--host", "0.0.0.0", "--port", "8000"]
