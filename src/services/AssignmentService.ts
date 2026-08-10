@@ -216,24 +216,37 @@ export class AssignmentService {
       },
     });
 
-    const ownSubmissions = studentEnrollment
-      ? await prisma.assignmentSubmission.findMany({
-          where: {
-            studentId: userId,
-            assignmentId: {
-              in: assignments.map((assignment) => assignment.id),
+    const [ownSubmissions, ownPublishedResults] = studentEnrollment
+      ? await Promise.all([
+          prisma.assignmentSubmission.findMany({
+            where: {
+              studentId: userId,
+              assignmentId: {
+                in: assignments.map((assignment) => assignment.id),
+              },
             },
-          },
-          orderBy: {
-            createdAt: 'desc',
-          },
-          select: {
-            assignmentId: true,
-            status: true,
-            score: true,
-          },
-        })
-      : [];
+            orderBy: {
+              createdAt: 'desc',
+            },
+            select: {
+              assignmentId: true,
+              status: true,
+            },
+          }),
+          prisma.assignmentResult.findMany({
+            where: {
+              studentId: userId,
+              assignmentId: {
+                in: assignments.map((assignment) => assignment.id),
+              },
+            },
+            select: {
+              assignmentId: true,
+              score: true,
+            },
+          }),
+        ])
+      : [[], []];
 
     const draftSubmissionMap = new Map<
       string,
@@ -243,6 +256,9 @@ export class AssignmentService {
       string,
       (typeof ownSubmissions)[number]
     >();
+    const publishedResultMap = new Map(
+      ownPublishedResults.map((result) => [result.assignmentId, result])
+    );
 
     for (const submission of ownSubmissions) {
       const submissionMap =
@@ -255,28 +271,41 @@ export class AssignmentService {
       }
     }
 
-    return assignments.map((assignment) => ({
-      ...assignment,
-      content: isTiptapDocument(assignment.content)
-        ? assignment.content
-        : EMPTY_TIPTAP_DOCUMENT,
-      canEdit: permissions.containPermission(
-        COURSE_PERMISSION.ASSESSMENTS_UPDATE
-      ),
-      canDelete: permissions.containPermission(
-        COURSE_PERMISSION.ASSESSMENTS_DELETE
-      ),
-      canGrade,
-      submissionSummary: canGrade
-        ? (submissionSummaryByAssignment.get(assignment.id) ?? {
-            total: 0,
-            pending: 0,
-            graded: 0,
-          })
-        : null,
-      submission: finalizedSubmissionMap.get(assignment.id) ?? null,
-      draftSubmission: draftSubmissionMap.get(assignment.id) ?? null,
-    }));
+    return assignments.map((assignment) => {
+      const submission = finalizedSubmissionMap.get(assignment.id);
+      const publishedResult = publishedResultMap.get(assignment.id);
+
+      return {
+        ...assignment,
+        content: isTiptapDocument(assignment.content)
+          ? assignment.content
+          : EMPTY_TIPTAP_DOCUMENT,
+        canEdit: permissions.containPermission(
+          COURSE_PERMISSION.ASSESSMENTS_UPDATE
+        ),
+        canDelete: permissions.containPermission(
+          COURSE_PERMISSION.ASSESSMENTS_DELETE
+        ),
+        canGrade,
+        submissionSummary: canGrade
+          ? (submissionSummaryByAssignment.get(assignment.id) ?? {
+              total: 0,
+              pending: 0,
+              graded: 0,
+            })
+          : null,
+        submission: submission
+          ? {
+              ...submission,
+              status: publishedResult
+                ? AssignmentSubmissionStatus.GRADED
+                : AssignmentSubmissionStatus.SUBMITTED,
+              score: publishedResult?.score ?? null,
+            }
+          : null,
+        draftSubmission: draftSubmissionMap.get(assignment.id) ?? null,
+      };
+    });
   }
 
   static async getAssignmentById(assignmentId: string, userId: string) {
@@ -301,65 +330,92 @@ export class AssignmentService {
       },
     });
 
-    const [draftSubmission, finalizedSubmission] = studentEnrollment
-      ? await Promise.all([
-          prisma.assignmentSubmission.findFirst({
-            where: {
-              assignmentId,
-              studentId: userId,
-              status: AssignmentSubmissionStatus.DRAFT,
-            },
-            orderBy: {
-              createdAt: 'desc',
-            },
-            include: {
-              files: {
-                include: {
-                  file: {
-                    select: {
-                      id: true,
-                      name: true,
-                      fileSize: true,
-                      mimeType: true,
-                      status: true,
+    const [draftSubmission, finalizedSubmission, publishedResult] =
+      studentEnrollment
+        ? await Promise.all([
+            prisma.assignmentSubmission.findFirst({
+              where: {
+                assignmentId,
+                studentId: userId,
+                status: AssignmentSubmissionStatus.DRAFT,
+              },
+              orderBy: {
+                createdAt: 'desc',
+              },
+              include: {
+                files: {
+                  include: {
+                    file: {
+                      select: {
+                        id: true,
+                        name: true,
+                        fileSize: true,
+                        mimeType: true,
+                        status: true,
+                      },
                     },
                   },
                 },
               },
-            },
-          }),
-          prisma.assignmentSubmission.findFirst({
-            where: {
-              assignmentId,
-              studentId: userId,
-              status: {
-                in: [
-                  AssignmentSubmissionStatus.SUBMITTED,
-                  AssignmentSubmissionStatus.GRADED,
-                ],
+            }),
+            prisma.assignmentSubmission.findFirst({
+              where: {
+                assignmentId,
+                studentId: userId,
+                status: {
+                  in: [
+                    AssignmentSubmissionStatus.SUBMITTED,
+                    AssignmentSubmissionStatus.GRADED,
+                  ],
+                },
               },
-            },
-            orderBy: {
-              createdAt: 'desc',
-            },
-            include: {
-              files: {
-                include: {
-                  file: {
-                    select: {
-                      id: true,
-                      name: true,
-                      fileSize: true,
-                      mimeType: true,
-                      status: true,
+              orderBy: {
+                createdAt: 'desc',
+              },
+              include: {
+                files: {
+                  include: {
+                    file: {
+                      select: {
+                        id: true,
+                        name: true,
+                        fileSize: true,
+                        mimeType: true,
+                        status: true,
+                      },
                     },
                   },
                 },
               },
-            },
-          }),
-        ])
-      : [null, null];
+            }),
+            prisma.assignmentResult.findUnique({
+              where: {
+                assignmentId_studentId: {
+                  assignmentId,
+                  studentId: userId,
+                },
+              },
+              select: {
+                score: true,
+                feedback: true,
+                publishedAt: true,
+              },
+            }),
+          ])
+        : [null, null, null];
+
+    const visibleSubmission = finalizedSubmission
+      ? {
+          ...serializeSubmission(finalizedSubmission),
+          status: publishedResult
+            ? AssignmentSubmissionStatus.GRADED
+            : AssignmentSubmissionStatus.SUBMITTED,
+          score: publishedResult?.score ?? null,
+          feedback: publishedResult?.feedback ?? null,
+          gradedAt: publishedResult?.publishedAt ?? null,
+          gradedById: null,
+        }
+      : null;
 
     return {
       ...assignment,
@@ -375,9 +431,7 @@ export class AssignmentService {
       canGrade: permissions.containPermission(
         COURSE_PERMISSION.ASSESSMENTS_GRADE
       ),
-      submission: finalizedSubmission
-        ? serializeSubmission(finalizedSubmission)
-        : null,
+      submission: visibleSubmission,
       draftSubmission: draftSubmission
         ? serializeSubmission(draftSubmission)
         : null,
