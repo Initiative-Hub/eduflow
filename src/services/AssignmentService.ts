@@ -701,72 +701,86 @@ export class AssignmentService {
       COURSE_PERMISSION.ASSESSMENTS_GRADE
     );
 
-    const [studentEnrollments, finalizedSubmissions] = await Promise.all([
-      prisma.enrollment.findMany({
-        where: {
-          courseId: assignment.courseId,
-          status: CourseEnrollmentStatus.ACTIVE,
-          role: {
-            name: CourseRoleName.STUDENT,
+    const [studentEnrollments, finalizedSubmissions, publishedResults] =
+      await Promise.all([
+        prisma.enrollment.findMany({
+          where: {
+            courseId: assignment.courseId,
+            status: CourseEnrollmentStatus.ACTIVE,
+            role: {
+              name: CourseRoleName.STUDENT,
+            },
           },
-        },
-        orderBy: [
-          {
+          orderBy: [
+            {
+              member: {
+                name: 'asc',
+              },
+            },
+            {
+              memberId: 'asc',
+            },
+          ],
+          select: {
             member: {
-              name: 'asc',
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                image: true,
+              },
             },
           },
-          {
-            memberId: 'asc',
-          },
-        ],
-        select: {
-          member: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              image: true,
-            },
-          },
-        },
-      }),
+        }),
 
-      prisma.assignmentSubmission.findMany({
-        where: {
-          assignmentId,
-          status: {
-            in: [
-              AssignmentSubmissionStatus.SUBMITTED,
-              AssignmentSubmissionStatus.GRADED,
-            ],
+        prisma.assignmentSubmission.findMany({
+          where: {
+            assignmentId,
+            status: {
+              in: [
+                AssignmentSubmissionStatus.SUBMITTED,
+                AssignmentSubmissionStatus.GRADED,
+              ],
+            },
           },
-        },
-        orderBy: [
-          {
-            studentId: 'asc',
-          },
-          {
-            createdAt: 'desc',
-          },
-        ],
-        include: {
-          files: {
-            include: {
-              file: {
-                select: {
-                  id: true,
-                  name: true,
-                  fileSize: true,
-                  mimeType: true,
-                  status: true,
+          orderBy: [
+            {
+              studentId: 'asc',
+            },
+            {
+              createdAt: 'desc',
+            },
+          ],
+          include: {
+            files: {
+              include: {
+                file: {
+                  select: {
+                    id: true,
+                    name: true,
+                    fileSize: true,
+                    mimeType: true,
+                    status: true,
+                  },
                 },
               },
             },
           },
-        },
-      }),
-    ]);
+        }),
+
+        prisma.assignmentResult.findMany({
+          where: {
+            assignmentId,
+          },
+          select: {
+            studentId: true,
+            sourceSubmissionId: true,
+            score: true,
+            feedback: true,
+            publishedAt: true,
+          },
+        }),
+      ]);
 
     const latestSubmissionByStudent = new Map<
       string,
@@ -779,12 +793,18 @@ export class AssignmentService {
       }
     }
 
+    const publishedResultByStudent = new Map(
+      publishedResults.map((result) => [result.studentId, result])
+    );
+
     return studentEnrollments.map(({ member }) => {
       const submission = latestSubmissionByStudent.get(member.id);
+      const publishedResult = publishedResultByStudent.get(member.id) ?? null;
 
       return {
         student: member,
         submission: submission ? serializeSubmission(submission) : null,
+        publishedResult,
       };
     });
   }

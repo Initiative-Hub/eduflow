@@ -29,6 +29,13 @@ export type FinalizedAssignmentSubmission = Omit<
 export type TeacherSubmissionRosterItem = {
   student: TeacherAssignmentStudent;
   submission: FinalizedAssignmentSubmission | null;
+
+  publishedResult: {
+    sourceSubmissionId: string | null;
+    score: number;
+    feedback: string | null;
+    publishedAt: string;
+  } | null;
 };
 
 export type AssignmentSubmission = {
