@@ -23,4 +23,6 @@ export const ASSIGNMENT_API_ROUTES = {
     `/api${API_PREFIX}/assignment-files/${fileId}/download`,
   REWRITE_FEEDBACK: (submissionId: string) =>
     `${API_PREFIX}/ai/assignment-submissions/${submissionId}/feedback/rewrite`,
+  PUBLISH_RESULTS: (assignmentId: string) =>
+    `${assignmentPath(assignmentId)}/results/publish`,
 } as const;

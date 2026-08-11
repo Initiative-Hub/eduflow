@@ -179,3 +179,44 @@ export function useRewriteAssignmentFeedback() {
     },
   });
 }
+
+export function usePublishAssignmentResults(
+  courseId: string,
+  assignmentId: string
+) {
+  const queryClient = useQueryClient();
+  const t = useTranslations('Courses.AssignmentTeacher');
+
+  return useMutation({
+    mutationFn: () => assignmentService.publishResults(assignmentId),
+
+    onSuccess: ({ data }) => {
+      queryClient.invalidateQueries({
+        queryKey: ['assignment-submission-roster', assignmentId],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ['assignment', assignmentId],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ['assignments', courseId],
+      });
+
+      if (data.publishedCount === 0) {
+        toast.info(t('noResultsToPublish'));
+        return;
+      }
+
+      toast.success(
+        t('resultsPublished', {
+          count: data.publishedCount,
+        })
+      );
+    },
+
+    onError: (error: { message?: string }) => {
+      toast.error(error.message || t('publishResultsError'));
+    },
+  });
+}

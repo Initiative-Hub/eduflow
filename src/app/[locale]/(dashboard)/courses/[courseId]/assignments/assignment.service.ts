@@ -72,6 +72,13 @@ export type AssignmentListItem = Omit<
   submissionSummary: AssignmentSubmissionSummary | null;
 };
 
+export type PublishAssignmentResultsResponse = {
+  data: {
+    publishedCount: number;
+    publishedAt: string | null;
+  };
+};
+
 export const assignmentService = {
   list: (courseId: string) =>
     apiClient.get<AssignmentListItem[]>(
@@ -184,5 +191,10 @@ export const assignmentService = {
     apiClient.post<{ suggestion: string }>(
       ASSIGNMENT_API_ROUTES.REWRITE_FEEDBACK(submissionId),
       data
+    ),
+
+  publishResults: (assignmentId: string) =>
+    apiClient.post<PublishAssignmentResultsResponse>(
+      ASSIGNMENT_API_ROUTES.PUBLISH_RESULTS(assignmentId)
     ),
 };
