@@ -38,7 +38,7 @@ const paramsSchema = z.object({
  *       500:
  *         description: Failed to publish results
  */
-export const POST = withAuth(async (_request, session { params }) => {
+export const POST = withAuth(async (_request, session, { params }) => {
   const parsedParams = paramsSchema.safeParse(await params);
 
   if (!parsedParams.success) {
