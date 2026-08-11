@@ -16,6 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { PublishAssignmentResultDialog } from './publish-assignment-results-dialog';
 
 export function TeacherSubmissionsPanel({
   assignment,
@@ -70,6 +71,10 @@ export function TeacherSubmissionsPanel({
     }
   );
 
+  const hasPublishedResults = roster.some(
+    (item) => item.publishedResult !== null
+  );
+
   return (
     <section className="overflow-hidden rounded-xl border bg-card shadow-sm">
       <div className="flex flex-col gap-4 border-b px-5 py-5 sm:flex-row sm:items-center sm:justify-between md:px-6">
@@ -80,19 +85,28 @@ export function TeacherSubmissionsPanel({
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          <Badge variant="outline" className="gap-1.5">
-            <Inbox />
-            {t('notSubmittedCount', { count: summary.notSubmitted })}
-          </Badge>
-          <Badge variant="outline" className="gap-1.5">
-            <Clock3 />
-            {t('pendingCount', { count: summary.pending })}
-          </Badge>
-          <Badge variant="secondary" className="gap-1.5">
-            <CheckCircle2 />
-            {t('gradedCount', { count: summary.graded })}
-          </Badge>
+        <div className="flex flex-col items-start gap-3 sm:items-end">
+          <PublishAssignmentResultDialog
+            assignmentId={assignment.id}
+            courseId={assignment.courseId}
+            gradedCount={summary.graded}
+            hasPublishedResults={hasPublishedResults}
+          />
+
+          <div className="flex flex-wrap gap-2 sm:justify-end">
+            <Badge variant="outline" className="gap-1.5">
+              <Inbox />
+              {t('notSubmittedCount', { count: summary.notSubmitted })}
+            </Badge>
+            <Badge variant="outline" className="gap-1.5">
+              <Clock3 />
+              {t('pendingCount', { count: summary.pending })}
+            </Badge>
+            <Badge variant="secondary" className="gap-1.5">
+              <CheckCircle2 />
+              {t('gradedCount', { count: summary.graded })}
+            </Badge>
+          </div>
         </div>
       </div>
 
