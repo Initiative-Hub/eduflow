@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withAuth } from '@/lib/api/middlewares';
-import { AssignmentService } from '@/services/AssignmentService';
+import { AssignmentGradingService } from '@/services/assignments/AssignmentGradingService';
 
 /**
  * @swagger
@@ -9,8 +9,8 @@ import { AssignmentService } from '@/services/AssignmentService';
  *   get:
  *     tags:
  *       - Assignment submissions
- *     summary: List assignment submissions
- *     description: Returns the latest finalized submission for each student, including student identity, attached file metadata, score, and feedback. Requires assessment-grading permission.
+ *     summary: List the assignment submission roster
+ *     description: Returns every active student in the course with their latest finalized submission, or a null submission when they have not submitted. Draft attempts remain private. Requires assessment-grading permission.
  *     security:
  *       - SessionCookie: []
  *     parameters:
@@ -23,7 +23,7 @@ import { AssignmentService } from '@/services/AssignmentService';
  *           format: uuid
  *     responses:
  *       200:
- *         description: Assignment submissions returned successfully.
+ *         description: Assignment submission roster returned successfully.
  *         content:
  *           application/json:
  *             schema:
@@ -50,12 +50,12 @@ export const GET = withAuth(async (_request, session, { params }) => {
   }
 
   try {
-    const submissions = await AssignmentService.listSubmissions(
+    const roster = await AssignmentGradingService.listSubmissionRoster(
       parsed.data.assignmentId,
       session.user.id
     );
 
-    return NextResponse.json(submissions);
+    return NextResponse.json(roster);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Internal error';
 

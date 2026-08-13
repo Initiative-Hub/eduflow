@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withAuth } from '@/lib/api/middlewares';
-import { AssignmentService } from '@/services/AssignmentService';
+import { AssignmentGradingService } from '@/services/assignments/AssignmentGradingService';
 
 const bodySchema = z.object({
   score: z.number().min(0),
@@ -66,7 +66,7 @@ export const PATCH = withAuth(async (request, session, { params }) => {
   }
 
   try {
-    const result = await AssignmentService.gradeSubmission({
+    const result = await AssignmentGradingService.grade({
       submissionId: parsedParams.data.submissionId,
       userId: session.user.id,
       ...parsedBody.data,

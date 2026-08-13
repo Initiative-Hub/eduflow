@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withAuth } from '@/lib/api/middlewares';
-import { AssignmentService } from '@/services/AssignmentService';
+import { AssignmentSubmissionService } from '@/services/assignments/AssignmentSubmissionService';
 
 /**
  * @swagger
@@ -62,6 +62,12 @@ import { AssignmentService } from '@/services/AssignmentService';
  *         description: The assignment identifier or file identifier is invalid.
  *       401:
  *         description: Authentication is required.
+ *       403:
+ *         description: The user is not an active student in the course.
+ *       404:
+ *         description: The assignment or submission file was not found.
+ *       409:
+ *         description: The file belongs to a submission that is no longer a draft.
  *       500:
  *         description: The upload could not be confirmed.
  */
@@ -79,7 +85,7 @@ export const POST = withAuth(async (request, session, { params }) => {
         { status: 400 }
       );
     }
-    const result = await AssignmentService.confirmSubmissionUpload({
+    const result = await AssignmentSubmissionService.confirmUpload({
       assignmentId: parsedParams.data.assignmentId,
       userId: session.user.id,
       fileId: body.data.fileId,
@@ -88,6 +94,22 @@ export const POST = withAuth(async (request, session, { params }) => {
     return NextResponse.json({ data: result });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Internal error';
+
+    if (message === 'Only students can submit this assignment') {
+      return NextResponse.json({ message }, { status: 403 });
+    }
+
+    if (
+      message === 'Assignment not found' ||
+      message === 'Submission file not found'
+    ) {
+      return NextResponse.json({ message }, { status: 404 });
+    }
+
+    if (message === 'Only draft submission files can be confirmed') {
+      return NextResponse.json({ message }, { status: 409 });
+    }
+
     return NextResponse.json({ message }, { status: 500 });
   }
 });

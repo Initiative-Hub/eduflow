@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withAuth } from '@/lib/api/middlewares';
-import { AssignmentService } from '@/services/AssignmentService';
+import { AssignmentCommandService } from '@/services/assignments/AssignmentCommandService';
+import { AssignmentQueryService } from '@/services/assignments/AssignmentQueryService';
 import { isTiptapDocument, type TiptapDocument } from '@/utils/lesson-content';
 
 const paramsSchema = z.object({
@@ -62,7 +63,7 @@ export const GET = withAuth(async (_request, session, { params }) => {
       );
     }
 
-    const assignments = await AssignmentService.listAssignments(
+    const assignments = await AssignmentQueryService.list(
       parsedParams.data.courseId,
       session.user.id
     );
@@ -150,7 +151,7 @@ export const POST = withAuth(async (request, session, { params }) => {
       );
     }
 
-    const assignment = await AssignmentService.createAssignment({
+    const assignment = await AssignmentCommandService.create({
       courseId: parsedParams.data.courseId,
       userId: session.user.id,
       ...parsedBody.data,
