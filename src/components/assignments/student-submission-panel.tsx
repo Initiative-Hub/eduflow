@@ -3,7 +3,7 @@
 import { CheckCircle2, LoaderCircle, Send, UploadCloud } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { type ChangeEvent, type DragEvent, useRef, useState } from 'react';
-import type { Assignment } from '@/app/[locale]/(dashboard)/courses/[courseId]/assignments/assignment.service';
+import type { Assignment } from '@/app/[locale]/(dashboard)/courses/[courseId]/assignments/assignment.types';
 import { useAssignmentSubmission } from '@/app/[locale]/(dashboard)/courses/[courseId]/assignments/use-assignment';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

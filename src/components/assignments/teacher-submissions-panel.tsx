@@ -6,7 +6,7 @@ import { useState } from 'react';
 import type {
   Assignment,
   TeacherAssignmentStudent,
-} from '@/app/[locale]/(dashboard)/courses/[courseId]/assignments/assignment.service';
+} from '@/app/[locale]/(dashboard)/courses/[courseId]/assignments/assignment.types';
 import {
   useAssignmentSubmissionRoster,
   useGradeSubmission,

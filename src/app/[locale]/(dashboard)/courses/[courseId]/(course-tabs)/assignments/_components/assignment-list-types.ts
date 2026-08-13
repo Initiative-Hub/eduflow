@@ -1,4 +1,4 @@
-import type { AssignmentListItem } from '@/app/[locale]/(dashboard)/courses/[courseId]/assignments/assignment.service';
+import type { AssignmentListItem } from '@/app/[locale]/(dashboard)/courses/[courseId]/assignments/assignment.types';
 
 export type AssignmentFilter = 'all' | 'pending' | 'completed';
 

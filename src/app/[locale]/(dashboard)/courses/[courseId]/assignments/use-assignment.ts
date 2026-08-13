@@ -4,11 +4,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import type { TiptapDocument } from '@/utils/lesson-content';
-import {
-  type Assignment,
-  assignmentService,
-  type FeedbackTone,
-} from './assignment.service';
+import { assignmentService } from './assignment.service';
+import type { Assignment, FeedbackTone } from './assignment.types';
 
 export function useAssignments(courseId: string) {
   return useQuery({

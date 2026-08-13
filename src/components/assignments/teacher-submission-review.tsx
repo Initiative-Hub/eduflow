@@ -3,13 +3,13 @@
 import { Download, FileText, Save, Sparkles, Undo2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
+import { assignmentService } from '@/app/[locale]/(dashboard)/courses/[courseId]/assignments/assignment.service';
 import type {
   Assignment,
   FeedbackTone,
   FinalizedAssignmentSubmission,
   TeacherAssignmentStudent,
-} from '@/app/[locale]/(dashboard)/courses/[courseId]/assignments/assignment.service';
-import { assignmentService } from '@/app/[locale]/(dashboard)/courses/[courseId]/assignments/assignment.service';
+} from '@/app/[locale]/(dashboard)/courses/[courseId]/assignments/assignment.types';
 import { useRewriteAssignmentFeedback } from '@/app/[locale]/(dashboard)/courses/[courseId]/assignments/use-assignment';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { getStudentStatus } from '@/app/[locale]/(dashboard)/courses/[courseId]/(course-tabs)/assignments/_components/assignment-list-types';
-import type { AssignmentListItem } from '@/app/[locale]/(dashboard)/courses/[courseId]/assignments/assignment.service';
+import type { AssignmentListItem } from '@/app/[locale]/(dashboard)/courses/[courseId]/assignments/assignment.types';
 
 describe('getStudentStatus', () => {
   it('shows an active draft as in progress when there is no finalized attempt', () => {

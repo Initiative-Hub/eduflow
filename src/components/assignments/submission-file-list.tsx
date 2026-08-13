@@ -2,8 +2,8 @@
 
 import { Download, FileText } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import type { AssignmentSubmission } from '@/app/[locale]/(dashboard)/courses/[courseId]/assignments/assignment.service';
 import { assignmentService } from '@/app/[locale]/(dashboard)/courses/[courseId]/assignments/assignment.service';
+import type { AssignmentSubmission } from '@/app/[locale]/(dashboard)/courses/[courseId]/assignments/assignment.types';
 import { Button } from '@/components/ui/button';
 import { RemoveSubmissionFileDialog } from './remove-submission-file-dialog';
 
