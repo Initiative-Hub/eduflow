@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withAuth } from '@/lib/api/middlewares';
-import { AssignmentService } from '@/services/AssignmentService';
+import { AssignmentGradingService } from '@/services/assignments/AssignmentGradingService';
 
 /**
  * @swagger
@@ -50,7 +50,7 @@ export const GET = withAuth(async (_request, session, { params }) => {
   }
 
   try {
-    const roster = await AssignmentService.listSubmissionRoster(
+    const roster = await AssignmentGradingService.listSubmissionRoster(
       parsed.data.assignmentId,
       session.user.id
     );

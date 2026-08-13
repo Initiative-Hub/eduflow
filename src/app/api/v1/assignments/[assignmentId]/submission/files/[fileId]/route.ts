@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withAuth } from '@/lib/api/middlewares';
 import { isStorageError } from '@/lib/storage/inventory-errors';
-import { AssignmentService } from '@/services/AssignmentService';
+import { AssignmentSubmissionService } from '@/services/assignments/AssignmentSubmissionService';
 
 const paramsSchema = z.object({
   assignmentId: z.uuid(),
@@ -61,7 +61,7 @@ export const DELETE = withAuth(async (_request, session, { params }) => {
   }
 
   try {
-    await AssignmentService.removeDraftSubmissionFile({
+    await AssignmentSubmissionService.removeDraftFile({
       assignmentId: parsedParams.data.assignmentId,
       fileId: parsedParams.data.fileId,
       userId: session.user.id,

@@ -6,13 +6,17 @@ import {
   FileInventoryStatus,
 } from '@/generated/prisma';
 import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
-import { AssignmentService } from '@/services/AssignmentService';
+import { AssignmentGradingService } from '@/services/assignments/AssignmentGradingService';
+import { AssignmentSubmissionService } from '@/services/assignments/AssignmentSubmissionService';
 
 const mocks = vi.hoisted(() => ({
   assignment: {
     findFirst: vi.fn(),
   },
   assignmentSubmission: {
+    findMany: vi.fn(),
+  },
+  assignmentResult: {
     findMany: vi.fn(),
   },
   enrollment: {
@@ -32,6 +36,7 @@ vi.mock('@/lib/permissions/course-permission', () => ({
 vi.mock('@/lib/prisma', () => ({
   prisma: {
     assignment: mocks.assignment,
+    assignmentResult: mocks.assignmentResult,
     assignmentSubmission: mocks.assignmentSubmission,
     assignmentSubmissionFile: mocks.assignmentSubmissionFile,
     enrollment: mocks.enrollment,
@@ -84,7 +89,7 @@ function createAttachment(options: {
   };
 }
 
-describe('AssignmentService submission authorization', () => {
+describe('assignment submission authorization', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.assignment.findFirst.mockResolvedValue({
@@ -93,6 +98,7 @@ describe('AssignmentService submission authorization', () => {
       id: 'assignment-1',
     });
     mocks.assignmentSubmission.findMany.mockResolvedValue([]);
+    mocks.assignmentResult.findMany.mockResolvedValue([]);
     mocks.enrollment.findMany.mockResolvedValue([]);
     mocks.createInventoryReadSignedUrl.mockResolvedValue(
       'https://storage.example.test/file-1'
@@ -103,7 +109,10 @@ describe('AssignmentService submission authorization', () => {
     setPermissions(COURSE_PERMISSION.ASSESSMENTS_RESULTS_VIEW);
 
     await expect(
-      AssignmentService.listSubmissionRoster('assignment-1', 'student-viewer')
+      AssignmentGradingService.listSubmissionRoster(
+        'assignment-1',
+        'student-viewer'
+      )
     ).rejects.toThrow('Forbidden');
 
     expect(mocks.assignmentSubmission.findMany).not.toHaveBeenCalled();
@@ -114,7 +123,7 @@ describe('AssignmentService submission authorization', () => {
     setPermissions(COURSE_PERMISSION.ASSESSMENTS_GRADE);
 
     await expect(
-      AssignmentService.listSubmissionRoster('assignment-1', 'teacher-1')
+      AssignmentGradingService.listSubmissionRoster('assignment-1', 'teacher-1')
     ).resolves.toEqual([]);
 
     expect(mocks.enrollment.findMany).toHaveBeenCalledWith(
@@ -194,7 +203,7 @@ describe('AssignmentService submission authorization', () => {
       },
     ]);
 
-    const result = await AssignmentService.listSubmissionRoster(
+    const result = await AssignmentGradingService.listSubmissionRoster(
       'assignment-1',
       'teacher-1'
     );
@@ -209,6 +218,7 @@ describe('AssignmentService submission authorization', () => {
           id: 'submission-new',
           status: AssignmentSubmissionStatus.SUBMITTED,
         }),
+        publishedResult: null,
       },
       {
         student: expect.objectContaining({
@@ -216,6 +226,7 @@ describe('AssignmentService submission authorization', () => {
           name: 'Bob',
         }),
         submission: null,
+        publishedResult: null,
       },
     ]);
   });
@@ -229,7 +240,10 @@ describe('AssignmentService submission authorization', () => {
     );
 
     await expect(
-      AssignmentService.createFileDownloadUrl('file-1', 'student-owner')
+      AssignmentSubmissionService.createFileDownloadUrl(
+        'file-1',
+        'student-owner'
+      )
     ).resolves.toBe('https://storage.example.test/file-1');
   });
 
@@ -242,7 +256,10 @@ describe('AssignmentService submission authorization', () => {
     );
 
     await expect(
-      AssignmentService.createFileDownloadUrl('file-1', 'student-viewer')
+      AssignmentSubmissionService.createFileDownloadUrl(
+        'file-1',
+        'student-viewer'
+      )
     ).rejects.toThrow('Forbidden');
   });
 
@@ -255,7 +272,7 @@ describe('AssignmentService submission authorization', () => {
     );
 
     await expect(
-      AssignmentService.createFileDownloadUrl('file-1', 'teacher-1')
+      AssignmentSubmissionService.createFileDownloadUrl('file-1', 'teacher-1')
     ).resolves.toBe('https://storage.example.test/file-1');
   });
 
@@ -268,7 +285,7 @@ describe('AssignmentService submission authorization', () => {
     );
 
     await expect(
-      AssignmentService.createFileDownloadUrl('file-1', 'teacher-1')
+      AssignmentSubmissionService.createFileDownloadUrl('file-1', 'teacher-1')
     ).rejects.toThrow('Forbidden');
   });
 });
