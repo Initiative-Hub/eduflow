@@ -637,6 +637,78 @@ export class AssignmentService {
     return serializeFile(file);
   }
 
+  static async removeDraftSubmissionFile(input: {
+    assignmentId: string;
+    userId: string;
+    fileId: string;
+  }) {
+    await AssignmentService.assertStudent(input.assignmentId, input.userId);
+
+    const attachment = await prisma.assignmentSubmissionFile.findFirst({
+      where: {
+        fileId: input.fileId,
+        submission: {
+          assignmentId: input.assignmentId,
+          studentId: input.userId,
+        },
+        file: {
+          userId: input.userId,
+          deletedAt: null,
+        },
+      },
+      select: {
+        id: true,
+        fileId: true,
+        submissionId: true,
+        submission: {
+          select: {
+            status: true,
+          },
+        },
+      },
+    });
+
+    if (!attachment) {
+      throw new Error('Submission file not found');
+    }
+
+    if (attachment.submission.status !== AssignmentSubmissionStatus.DRAFT) {
+      throw new Error('Only draft submission files can be removed');
+    }
+
+    const removedAttachment = await prisma.assignmentSubmissionFile.deleteMany({
+      where: {
+        id: attachment.id,
+        fileId: attachment.fileId,
+        submission: {
+          is: {
+            id: attachment.submissionId,
+            assignmentId: input.assignmentId,
+            studentId: input.userId,
+            status: AssignmentSubmissionStatus.DRAFT,
+          },
+        },
+      },
+    });
+
+    if (removedAttachment.count !== 1) {
+      throw new Error('Only draft submission files can be removed');
+    }
+
+    const deletion = await StorageService.deleteEntries({
+      userId: input.userId,
+      fileIds: [attachment.fileId],
+    });
+    
+    if (deletion.deletedCount !== 1) {
+      throw new Error('Submission file could not be deleted');
+    }
+
+    return {
+      removedFileId: attachment.fileId,
+    };
+  }
+
   static async submitAssignment(assignmentId: string, userId: string) {
     const assignment = await AssignmentService.assertStudent(
       assignmentId,
