@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withAuth } from '@/lib/api/middlewares';
-import { AssignmentService } from '@/services/AssignmentService';
+import { AssignmentSubmissionService } from '@/services/assignments/AssignmentSubmissionService';
 
 const paramsSchema = z.object({
   assignmentId: z.uuid(),
@@ -102,7 +102,7 @@ export const POST = withAuth(async (request, session, { params }) => {
       );
     }
 
-    const result = await AssignmentService.initializeSubmissionUpload({
+    const result = await AssignmentSubmissionService.initializeUpload({
       assignmentId: parsedParams.data.assignmentId,
       userId: session.user.id,
       ...parsedBody.data,

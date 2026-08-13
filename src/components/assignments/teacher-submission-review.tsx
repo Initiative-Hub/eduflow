@@ -1,28 +1,40 @@
 'use client';
 
-import { Download, FileText, Save } from 'lucide-react';
+import { Download, FileText, Save, Sparkles, Undo2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
+import { assignmentService } from '@/app/[locale]/(dashboard)/courses/[courseId]/assignments/assignment.service';
 import type {
   Assignment,
-  TeacherAssignmentSubmission,
-} from '@/app/[locale]/(dashboard)/courses/[courseId]/assignments/assignment.service';
-import { assignmentService } from '@/app/[locale]/(dashboard)/courses/[courseId]/assignments/assignment.service';
+  FeedbackTone,
+  FinalizedAssignmentSubmission,
+  TeacherAssignmentStudent,
+} from '@/app/[locale]/(dashboard)/courses/[courseId]/assignments/assignment.types';
+import { useRewriteAssignmentFeedback } from '@/app/[locale]/(dashboard)/courses/[courseId]/assignments/use-assignment';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 
 type TeacherSubmissionReviewProps = {
   assignment: Assignment;
-  submission: TeacherAssignmentSubmission;
+  student: TeacherAssignmentStudent;
+  submission: FinalizedAssignmentSubmission;
   isSaving: boolean;
   onGrade: (data: { score: number; feedback?: string }) => void;
 };
 
 export function TeacherSubmissionReview({
   assignment,
+  student,
   submission,
   isSaving,
   onGrade,
@@ -31,7 +43,6 @@ export function TeacherSubmissionReview({
   const locale = useLocale();
   const [score, setScore] = useState(submission.score?.toString() ?? '');
   const [feedback, setFeedback] = useState(submission.feedback ?? '');
-  const studentName = submission.student?.name ?? t('student');
   const parsedScore = Number(score);
   const scoreIsValid =
     score.trim() !== '' &&
@@ -39,13 +50,38 @@ export function TeacherSubmissionReview({
     parsedScore >= 0 &&
     parsedScore <= assignment.maxPoints;
 
+  const rewriteFeedback = useRewriteAssignmentFeedback();
+  const [feedbackBeforeAi, setFeedbackBeforeAi] = useState<string | null>(null);
+
+  const [feedbackTone, setFeedbackTone] =
+    useState<FeedbackTone>('constructive');
+
+  const handleEnhanceFeedback = () => {
+    const draft = feedback.trim();
+
+    if (!draft) return;
+
+    rewriteFeedback.mutate(
+      {
+        submissionId: submission.id,
+        feedback: draft,
+        tone: feedbackTone,
+      },
+      {
+        onSuccess: ({ suggestion }) => {
+          setFeedbackBeforeAi(feedback);
+          setFeedback(suggestion);
+        },
+      }
+    );
+  };
   return (
     <article className="min-w-0 bg-muted/10">
       <div className="flex flex-col gap-3 border-b bg-card px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <p className="truncate font-semibold">{studentName}</p>
+          <p className="truncate font-semibold">{student.name}</p>
           <p className="mt-0.5 truncate text-muted-foreground text-sm">
-            {submission.student?.email}
+            {student.email}
           </p>
         </div>
         <Badge
@@ -142,16 +178,82 @@ export function TeacherSubmissionReview({
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor={`feedback-${submission.id}`}>
-                {t('feedback')}
-              </Label>
+            <div className="min-w-0 space-y-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <Label htmlFor={`feedback-${submission.id}`}>
+                  {t('feedback')}
+                </Label>
+
+                <div className="ml-auto flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto">
+                  {feedbackBeforeAi !== null && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setFeedback(feedbackBeforeAi);
+                        setFeedbackBeforeAi(null);
+                      }}
+                    >
+                      <Undo2 data-icon="inline-start" />
+                      {t('undoAiFeedback')}
+                    </Button>
+                  )}
+
+                  <Select
+                    value={feedbackTone}
+                    onValueChange={(value) =>
+                      setFeedbackTone(value as FeedbackTone)
+                    }
+                    disabled={rewriteFeedback.isPending || isSaving}
+                  >
+                    <SelectTrigger
+                      size="sm"
+                      aria-label={t('feedbackTone')}
+                      className="w-full min-w-0 sm:w-52"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      <SelectItem value="constructive">
+                        {t('toneConstructive')}
+                      </SelectItem>
+                      <SelectItem value="concise">
+                        {t('toneConcise')}
+                      </SelectItem>
+                      <SelectItem value="encouraging">
+                        {t('toneEncouraging')}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleEnhanceFeedback}
+                    disabled={
+                      !feedback.trim() || rewriteFeedback.isPending || isSaving
+                    }
+                  >
+                    <Sparkles data-icon="inline-start" />
+                    {rewriteFeedback.isPending
+                      ? t('enhancingFeedback')
+                      : t('enhanceFeedback')}
+                  </Button>
+                </div>
+              </div>
+
               <Textarea
                 id={`feedback-${submission.id}`}
                 value={feedback}
                 onChange={(event) => setFeedback(event.target.value)}
-                placeholder={t('feedbackPlaceholder', { name: studentName })}
-                rows={4}
+                placeholder={t('feedbackPlaceholder', { name: student.name })}
+                rows={6}
+                readOnly={rewriteFeedback.isPending || isSaving}
+                aria-busy={rewriteFeedback.isPending}
+                className="min-h-32 resize-y bg-background leading-relaxed"
               />
             </div>
           </div>
@@ -164,7 +266,7 @@ export function TeacherSubmissionReview({
                   feedback: feedback.trim() || undefined,
                 })
               }
-              disabled={isSaving || !scoreIsValid}
+              disabled={isSaving || rewriteFeedback.isPending || !scoreIsValid}
             >
               <Save data-icon="inline-start" />
               {isSaving ? t('savingGrade') : t('saveGrade')}

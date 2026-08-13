@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withAuth } from '@/lib/api/middlewares';
-import { AssignmentService } from '@/services/AssignmentService';
+import { AssignmentSubmissionService } from '@/services/assignments/AssignmentSubmissionService';
 
 /**
  * @swagger
@@ -47,7 +47,7 @@ export const GET = withAuth(async (_request, session, { params }) => {
   }
 
   try {
-    const url = await AssignmentService.createFileDownloadUrl(
+    const url = await AssignmentSubmissionService.createFileDownloadUrl(
       parsed.data.fileId,
       session.user.id
     );

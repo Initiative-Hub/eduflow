@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withAuth } from '@/lib/api/middlewares';
-import { AssignmentService } from '@/services/AssignmentService';
+import { AssignmentCommandService } from '@/services/assignments/AssignmentCommandService';
+import { AssignmentQueryService } from '@/services/assignments/AssignmentQueryService';
 import { isTiptapDocument, type TiptapDocument } from '@/utils/lesson-content';
 
 const paramsSchema = z.object({
@@ -58,7 +59,7 @@ export const GET = withAuth(async (_request, session, { params }) => {
       );
     }
 
-    const assignment = await AssignmentService.getAssignmentById(
+    const assignment = await AssignmentQueryService.getById(
       parsed.data.assignmentId,
       session.user.id
     );
@@ -147,13 +148,13 @@ export const PATCH = withAuth(async (request, session, { params }) => {
       );
     }
 
-    await AssignmentService.updateAssignment(
+    await AssignmentCommandService.update(
       parsedParams.data.assignmentId,
       session.user.id,
       parsedBody.data
     );
 
-    const updatedAssignment = await AssignmentService.getAssignmentById(
+    const updatedAssignment = await AssignmentQueryService.getById(
       parsedParams.data.assignmentId,
       session.user.id
     );
@@ -217,7 +218,7 @@ export const DELETE = withAuth(async (_request, session, { params }) => {
       );
     }
 
-    await AssignmentService.deleteAssignment(
+    await AssignmentCommandService.delete(
       parsed.data.assignmentId,
       session.user.id
     );
