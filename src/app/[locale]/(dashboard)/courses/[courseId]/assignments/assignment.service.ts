@@ -174,6 +174,11 @@ export const assignmentService = {
       ASSIGNMENT_API_ROUTES.SUBMIT(assignmentId)
     ),
 
+  removeDraftFile: (assignmentId: string, fileId: string) =>
+    apiClient.delete<void>(
+      ASSIGNMENT_API_ROUTES.REMOVE_DRAFT_FILE(assignmentId, fileId)
+    ),
+
   listSubmissionRoster: (assignmentId: string) =>
     apiClient.get<TeacherSubmissionRosterItem[]>(
       ASSIGNMENT_API_ROUTES.SUBMISSIONS(assignmentId)

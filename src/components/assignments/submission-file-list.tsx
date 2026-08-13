@@ -5,13 +5,20 @@ import { useTranslations } from 'next-intl';
 import type { AssignmentSubmission } from '@/app/[locale]/(dashboard)/courses/[courseId]/assignments/assignment.service';
 import { assignmentService } from '@/app/[locale]/(dashboard)/courses/[courseId]/assignments/assignment.service';
 import { Button } from '@/components/ui/button';
+import { RemoveSubmissionFileDialog } from './remove-submission-file-dialog';
 
 export function SubmissionFileList({
   files,
   label,
+  onRemove,
+  removeDisabled = false,
+  removingFileId,
 }: {
   files: AssignmentSubmission['files'];
   label: string;
+  onRemove?: (fileId: string) => Promise<void>;
+  removeDisabled?: boolean;
+  removingFileId?: string;
 }) {
   const t = useTranslations('Courses.AssignmentStudent');
 
@@ -32,16 +39,29 @@ export function SubmissionFileList({
               {formatFileSize(entry.file.fileSize)}
             </p>
           </div>
-          <Button variant="ghost" size="icon-sm" asChild>
-            <a
-              href={assignmentService.fileDownloadUrl(entry.file.id)}
-              target="_blank"
-              rel="noreferrer"
-              aria-label={t('downloadFile', { name: entry.file.name })}
-            >
-              <Download />
-            </a>
-          </Button>
+          <div className="flex shrink-0 items-center gap-1">
+            <Button variant="ghost" size="icon-sm" asChild>
+              <a
+                href={assignmentService.fileDownloadUrl(entry.file.id)}
+                target="_blank"
+                rel="noreferrer"
+                aria-label={t('downloadFile', {
+                  name: entry.file.name,
+                })}
+              >
+                <Download />
+              </a>
+            </Button>
+
+            {onRemove ? (
+              <RemoveSubmissionFileDialog
+                disabled={removeDisabled}
+                fileName={entry.file.name}
+                isPending={removingFileId === entry.file.id}
+                onRemove={() => onRemove(entry.file.id)}
+              />
+            ) : null}
+          </div>
         </div>
       ))}
     </div>

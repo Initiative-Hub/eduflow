@@ -115,9 +115,27 @@ export function useAssignmentSubmission(assignmentId: string) {
     },
   });
 
+  const removeFile = useMutation({
+    mutationFn: (fileId: string) =>
+      assignmentService.removeDraftFile(assignmentId, fileId),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['assignment', assignmentId],
+      });
+
+      toast.success(t('removeFileSuccess'));
+    },
+
+    onError: (error: { message?: string }) => {
+      toast.error(error.message || t('removeFileError'));
+    },
+  });
+
   return {
     upload,
     submit,
+    removeFile,
   };
 }
 
