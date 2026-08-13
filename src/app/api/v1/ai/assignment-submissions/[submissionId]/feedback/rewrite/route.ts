@@ -11,6 +11,8 @@ import { getPlatformPermissions } from '@/lib/permissions/platform-permission';
 import { prisma } from '@/lib/prisma';
 import { AssignmentFeedbackAIService } from '@/services/ai/AssignmentFeedbackAIService';
 
+export const maxDuration = 60;
+
 const paramsSchema = z.object({
   submissionId: z.uuid(),
 });

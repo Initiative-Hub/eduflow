@@ -12,6 +12,7 @@ import {
   requireStudentAssignment,
 } from './assignment-access';
 import { serializeFile } from './assignment-projections';
+import { runSerializableAssignmentTransaction } from './assignment-transaction';
 
 type SubmissionFileReference = {
   id: string;
@@ -22,12 +23,28 @@ type SubmissionFileReference = {
 async function restoreSubmissionFileReference(
   attachment: SubmissionFileReference
 ) {
-  await prisma.assignmentSubmissionFile.create({
-    data: {
-      id: attachment.id,
-      submissionId: attachment.submissionId,
-      fileId: attachment.fileId,
-    },
+  await runSerializableAssignmentTransaction(async (tx) => {
+    const draftSubmission = await tx.assignmentSubmission.findFirst({
+      where: {
+        id: attachment.submissionId,
+        status: AssignmentSubmissionStatus.DRAFT,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!draftSubmission) {
+      return;
+    }
+
+    await tx.assignmentSubmissionFile.create({
+      data: {
+        id: attachment.id,
+        submissionId: attachment.submissionId,
+        fileId: attachment.fileId,
+      },
+    });
   });
 }
 
@@ -170,56 +187,64 @@ export class AssignmentSubmissionService {
   }) {
     await requireStudentAssignment(input.assignmentId, input.userId);
 
-    const attachment = await prisma.assignmentSubmissionFile.findFirst({
-      where: {
-        fileId: input.fileId,
-        submission: {
-          assignmentId: input.assignmentId,
-          studentId: input.userId,
-        },
-        file: {
-          userId: input.userId,
-          deletedAt: null,
-        },
-      },
-      select: {
-        id: true,
-        fileId: true,
-        submissionId: true,
-        submission: {
+    const attachment = await runSerializableAssignmentTransaction(
+      async (tx) => {
+        const draftAttachment = await tx.assignmentSubmissionFile.findFirst({
+          where: {
+            fileId: input.fileId,
+            submission: {
+              assignmentId: input.assignmentId,
+              studentId: input.userId,
+            },
+            file: {
+              userId: input.userId,
+              deletedAt: null,
+            },
+          },
           select: {
-            status: true,
+            id: true,
+            fileId: true,
+            submissionId: true,
+            submission: {
+              select: {
+                status: true,
+              },
+            },
           },
-        },
-      },
-    });
+        });
 
-    if (!attachment) {
-      throw new Error('Submission file not found');
-    }
+        if (!draftAttachment) {
+          throw new Error('Submission file not found');
+        }
 
-    if (attachment.submission.status !== AssignmentSubmissionStatus.DRAFT) {
-      throw new Error('Only draft submission files can be removed');
-    }
+        if (
+          draftAttachment.submission.status !== AssignmentSubmissionStatus.DRAFT
+        ) {
+          throw new Error('Only draft submission files can be removed');
+        }
 
-    const removedAttachment = await prisma.assignmentSubmissionFile.deleteMany({
-      where: {
-        id: attachment.id,
-        fileId: attachment.fileId,
-        submission: {
-          is: {
-            id: attachment.submissionId,
-            assignmentId: input.assignmentId,
-            studentId: input.userId,
-            status: AssignmentSubmissionStatus.DRAFT,
+        const removedAttachment = await tx.assignmentSubmissionFile.deleteMany({
+          where: {
+            id: draftAttachment.id,
+            fileId: draftAttachment.fileId,
+            submission: {
+              is: {
+                id: draftAttachment.submissionId,
+                assignmentId: input.assignmentId,
+                studentId: input.userId,
+                status: AssignmentSubmissionStatus.DRAFT,
+              },
+            },
           },
-        },
-      },
-    });
+        });
 
-    if (removedAttachment.count !== 1) {
-      throw new Error('Only draft submission files can be removed');
-    }
+        if (removedAttachment.count !== 1) {
+          throw new Error('Only draft submission files can be removed');
+        }
+
+        return draftAttachment;
+      }
+    );
 
     try {
       const deletion = await StorageService.deleteEntries({
@@ -243,52 +268,72 @@ export class AssignmentSubmissionService {
   static async submit(assignmentId: string, userId: string) {
     const assignment = await requireStudentAssignment(assignmentId, userId);
 
-    const submission = await prisma.assignmentSubmission.findFirst({
-      where: {
-        assignmentId,
-        studentId: userId,
-        status: AssignmentSubmissionStatus.DRAFT,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-      include: {
-        files: {
-          include: {
-            file: {
-              select: {
-                status: true,
-              },
-            },
-          },
-        },
-      },
-    });
-
-    if (!submission) {
-      throw new Error('Upload at least one file before submitting');
-    }
-
-    const readyFiles = submission.files.filter(
-      (entry) => entry.file.status === FileInventoryStatus.READY
-    );
-
-    if (readyFiles.length === 0) {
-      throw new Error('Upload at least one file before submitting');
-    }
-
     if (assignment.dueAt && new Date() > assignment.dueAt) {
       throw new Error('The assignment deadline has passed');
     }
 
-    return prisma.assignmentSubmission.update({
-      where: {
-        id: submission.id,
-      },
-      data: {
-        status: AssignmentSubmissionStatus.SUBMITTED,
-        submittedAt: new Date(),
-      },
+    return runSerializableAssignmentTransaction(async (tx) => {
+      const submission = await tx.assignmentSubmission.findFirst({
+        where: {
+          assignmentId,
+          studentId: userId,
+          status: AssignmentSubmissionStatus.DRAFT,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        include: {
+          files: {
+            include: {
+              file: {
+                select: {
+                  deletedAt: true,
+                  status: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      const hasReadyFile = submission?.files.some(
+        (entry) =>
+          entry.file.status === FileInventoryStatus.READY &&
+          entry.file.deletedAt === null
+      );
+
+      if (!submission || !hasReadyFile) {
+        throw new Error('Upload at least one file before submitting');
+      }
+
+      const finalized = await tx.assignmentSubmission.updateMany({
+        where: {
+          id: submission.id,
+          status: AssignmentSubmissionStatus.DRAFT,
+          files: {
+            some: {
+              file: {
+                deletedAt: null,
+                status: FileInventoryStatus.READY,
+              },
+            },
+          },
+        },
+        data: {
+          status: AssignmentSubmissionStatus.SUBMITTED,
+          submittedAt: new Date(),
+        },
+      });
+
+      if (finalized.count !== 1) {
+        throw new Error('Submission changed before it could be finalized');
+      }
+
+      return tx.assignmentSubmission.findUniqueOrThrow({
+        where: {
+          id: submission.id,
+        },
+      });
     });
   }
 

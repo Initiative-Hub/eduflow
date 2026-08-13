@@ -15,6 +15,8 @@ const feedbackOutputSchema = z.object({
   suggestion: z.string().trim().min(1).max(10_000),
 });
 
+const FEEDBACK_REWRITE_PROVIDER_TIMEOUT_MS = 55_000;
+
 const INSTRUCTION = `
 You improve feedback written by a teacher.
 
@@ -45,6 +47,7 @@ export class AssignmentFeedbackAIService {
         schema: feedbackOutputSchema,
       }),
       maxOutputTokens: 2_000,
+      timeout: FEEDBACK_REWRITE_PROVIDER_TIMEOUT_MS,
       instructions: INSTRUCTION,
       prompt: JSON.stringify({
         assignmentTitle: input.assignmentTitle,

@@ -142,6 +142,7 @@ export class AssignmentQueryService {
               createdAt: 'desc',
             },
             select: {
+              id: true,
               assignmentId: true,
               status: true,
             },
@@ -155,6 +156,7 @@ export class AssignmentQueryService {
             },
             select: {
               assignmentId: true,
+              sourceSubmissionId: true,
               score: true,
             },
           }),
@@ -169,6 +171,7 @@ export class AssignmentQueryService {
       string,
       (typeof ownSubmissions)[number]
     >();
+
     const publishedResultMap = new Map(
       ownPublishedResults.map((result) => [result.assignmentId, result])
     );
@@ -187,6 +190,10 @@ export class AssignmentQueryService {
     return assignments.map((assignment) => {
       const submission = finalizedSubmissionMap.get(assignment.id);
       const publishedResult = publishedResultMap.get(assignment.id);
+      const matchingPublishedResult =
+        submission && publishedResult?.sourceSubmissionId === submission.id
+          ? publishedResult
+          : null;
 
       return {
         ...assignment,
@@ -206,7 +213,10 @@ export class AssignmentQueryService {
             })
           : null,
         submission: submission
-          ? toStudentVisibleSubmissionSummary(submission, publishedResult)
+          ? toStudentVisibleSubmissionSummary(
+              submission,
+              matchingPublishedResult
+            )
           : null,
         draftSubmission: draftSubmissionMap.get(assignment.id) ?? null,
       };
@@ -299,6 +309,7 @@ export class AssignmentQueryService {
                 },
               },
               select: {
+                sourceSubmissionId: true,
                 score: true,
                 feedback: true,
                 publishedAt: true,
@@ -306,6 +317,12 @@ export class AssignmentQueryService {
             }),
           ])
         : [null, null, null];
+
+    const matchingPublishedResult =
+      finalizedSubmission &&
+      publishedResult?.sourceSubmissionId === finalizedSubmission.id
+        ? publishedResult
+        : null;
 
     return {
       ...assignment,
@@ -320,7 +337,10 @@ export class AssignmentQueryService {
         COURSE_PERMISSION.ASSESSMENTS_GRADE
       ),
       submission: finalizedSubmission
-        ? toStudentVisibleSubmission(finalizedSubmission, publishedResult)
+        ? toStudentVisibleSubmission(
+            finalizedSubmission,
+            matchingPublishedResult
+          )
         : null,
       draftSubmission: draftSubmission
         ? serializeSubmission(draftSubmission)

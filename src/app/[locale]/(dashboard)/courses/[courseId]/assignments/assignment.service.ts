@@ -27,6 +27,8 @@ type PublishAssignmentResultsResponse = {
   };
 };
 
+const FEEDBACK_REWRITE_REQUEST_TIMEOUT_MS = 70_000;
+
 export const assignmentService = {
   list: (courseId: string) =>
     apiClient.get<AssignmentListItem[]>(
@@ -139,7 +141,8 @@ export const assignmentService = {
   ) =>
     apiClient.post<{ suggestion: string }>(
       ASSIGNMENT_API_ROUTES.REWRITE_FEEDBACK(submissionId),
-      data
+      data,
+      { timeout: FEEDBACK_REWRITE_REQUEST_TIMEOUT_MS }
     ),
 
   publishResults: (assignmentId: string) =>
