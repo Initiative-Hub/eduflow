@@ -1,0 +1,18 @@
+#!/usr/bin/env sh
+
+set -eu
+
+hook_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+. "$hook_dir/lib/validate-conventional-commit.sh"
+
+# Git keeps MERGE_HEAD while it prepares the merge commit, including after a
+# conflict has been resolved. Its generated subject is intentionally exempt
+# from the Conventional Commit rule.
+if git rev-parse -q --verify MERGE_HEAD >/dev/null 2>&1; then
+  exit 0
+fi
+
+message_file=$1
+subject=$(sed -n '/^[[:space:]]*#/d; /^[[:space:]]*$/d; {p; q;}' "$message_file")
+
+validate_conventional_subject "$subject"
