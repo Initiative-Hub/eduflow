@@ -1,0 +1,56 @@
+name: PR Title Check
+
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+  workflow_dispatch:
+    inputs:
+      pull_request_number:
+        description: Pull request number to validate
+        required: true
+        type: string
+
+permissions:
+  pull-requests: read
+
+jobs:
+  check-pr-title:
+    name: Check PR title
+    runs-on: self-hosted
+    timeout-minutes: 15
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.action == 'opened' ||
+      (github.event.action == 'edited' && github.event.changes.title != null)
+    steps:
+      - name: Check Conventional Commit format
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pullNumber = context.eventName === 'workflow_dispatch'
+              ? Number(core.getInput('pull_request_number'))
+              : context.payload.pull_request.number;
+
+            const { data: pullRequest } = context.eventName === 'workflow_dispatch'
+              ? await github.rest.pulls.get({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: pullNumber,
+                })
+              : { data: context.payload.pull_request };
+
+            const title = pullRequest.title;
+            const conventionalCommitPattern = /^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([A-Za-z0-9_.\/-]+\))?!?: [^\s].*$/;
+
+            if (!conventionalCommitPattern.test(title)) {
+              core.setFailed(
+                `Invalid PR title: ${title}\n` +
+                'Use Conventional Commits, for example: fix(something): fix the issue\n' +
+                'Allowed types: build, chore, ci, docs, feat, fix, perf, refactor, revert, style, test.',
+              );
+              return;
+            }
+
+            core.info(`PR title follows Conventional Commits: ${title}`);
