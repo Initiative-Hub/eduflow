@@ -7,10 +7,10 @@ requires-python = "==3.12.0"
 dependencies = [
     "fastapi[standard]~=0.141.1",
     "markitdown[pdf]~=0.1.7",
-    "modal~=1.5.3",
+    "modal~=1.5.4",
     "slide-skills~=0.2.43",
     "tavily-python~=0.7.27",
-    "boto3~=1.43.63",
+    "boto3~=1.43.71",
 ]
 
 [dependency-groups]

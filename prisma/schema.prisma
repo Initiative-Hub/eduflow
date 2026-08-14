@@ -50,6 +50,8 @@ model User {
   assignmentsCreated          Assignment[]           @relation("AssignmentCreatedBy")
   assignmentSubmissions       AssignmentSubmission[] @relation("AssignmentStudent")
   assignmentGradedSubmissions AssignmentSubmission[] @relation("AssignmentGradedBy")
+  assignmentResultsReceived   AssignmentResult[]     @relation("AssignmentResultStudent")
+  assignmentResultsPublished  AssignmentResult[]     @relation("AssignmentResultPublishedBy")
 
   @@map("user")
 }
@@ -765,6 +767,7 @@ model Assignment {
   createdBy User   @relation("AssignmentCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
 
   submissions AssignmentSubmission[]
+  results     AssignmentResult[]
 
   @@index([courseId, deletedAt])
   @@index([createdById])
@@ -790,12 +793,38 @@ model AssignmentSubmission {
   student    User       @relation("AssignmentStudent", fields: [studentId], references: [id], onDelete: Cascade)
   gradedBy   User?      @relation("AssignmentGradedBy", fields: [gradedById], references: [id], onDelete: SetNull)
 
-  files AssignmentSubmissionFile[]
+  files            AssignmentSubmissionFile[]
+  publishedResults AssignmentResult[]
 
   @@index([assignmentId, studentId, createdAt(sort: Desc)], map: "assignment_submission_assignment_student_created_idx")
   @@index([assignmentId, status])
   @@index([studentId])
   @@map("assignment_submission")
+}
+
+model AssignmentResult {
+  id                 String  @id @default(uuid())
+  assignmentId       String  @map("assignment_id")
+  studentId          String  @map("student_id")
+  sourceSubmissionId String? @map("source_submission_id")
+  publishedById      String? @map("published_by_id")
+
+  score       Float
+  feedback    String?  @db.Text
+  publishedAt DateTime @map("published_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  assignment       Assignment            @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  student          User                  @relation("AssignmentResultStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  sourceSubmission AssignmentSubmission? @relation(fields: [sourceSubmissionId], references: [id], onDelete: SetNull)
+  publishedBy      User?                 @relation("AssignmentResultPublishedBy", fields: [publishedById], references: [id], onDelete: SetNull)
+
+  @@unique([assignmentId, studentId], map: "assignment_result_assignment_student_key")
+  @@index([sourceSubmissionId], map: "assignment_result_source_submission_idx")
+  @@index([publishedById], map: "assignment_result_published_by_idx")
+  @@map("assignment_result")
 }
 
 model AssignmentSubmissionFile {

@@ -1,0 +1,45 @@
+#!/usr/bin/env sh
+
+set -eu
+
+hook_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+. "$hook_dir/lib/validate-branch-name.sh"
+. "$hook_dir/lib/validate-conventional-commit.sh"
+
+zero_oid=0000000000000000000000000000000000000000
+updates_file=$(mktemp)
+trap 'rm -f "$updates_file"' EXIT HUP INT TERM
+cat >"$updates_file"
+
+# Validate every branch name before inspecting any commit. This prevents an
+# invalid branch from being hidden behind a commit-message failure.
+while read -r local_ref local_oid remote_ref remote_oid; do
+  case "$local_ref" in
+    refs/heads/*) ;;
+    *) continue ;;
+  esac
+
+  # A zero local object ID represents a branch deletion.
+  [ "$local_oid" = "$zero_oid" ] && continue
+
+  validate_branch_name "$local_ref"
+done <"$updates_file"
+
+while read -r local_ref local_oid remote_ref remote_oid; do
+  case "$local_ref" in
+    refs/heads/*) ;;
+    *) continue ;;
+  esac
+
+  [ "$local_oid" = "$zero_oid" ] && continue
+
+  if [ "$remote_oid" = "$zero_oid" ]; then
+    commits=$(git rev-list "$local_oid")
+  else
+    commits=$(git rev-list "$remote_oid..$local_oid")
+  fi
+
+  for commit in $commits; do
+    validate_conventional_commit "$commit"
+  done
+done <"$updates_file"

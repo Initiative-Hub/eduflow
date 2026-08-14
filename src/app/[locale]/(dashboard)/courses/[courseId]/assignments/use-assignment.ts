@@ -4,7 +4,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import type { TiptapDocument } from '@/utils/lesson-content';
-import { type Assignment, assignmentService } from './assignment.service';
+import { assignmentService } from './assignment.service';
+import type { Assignment, FeedbackTone } from './assignment.types';
 
 export function useAssignments(courseId: string) {
   return useQuery({
@@ -111,16 +112,34 @@ export function useAssignmentSubmission(assignmentId: string) {
     },
   });
 
+  const removeFile = useMutation({
+    mutationFn: (fileId: string) =>
+      assignmentService.removeDraftFile(assignmentId, fileId),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['assignment', assignmentId],
+      });
+
+      toast.success(t('removeFileSuccess'));
+    },
+
+    onError: (error: { message?: string }) => {
+      toast.error(error.message || t('removeFileError'));
+    },
+  });
+
   return {
     upload,
     submit,
+    removeFile,
   };
 }
 
-export function useAssignmentSubmissions(assignmentId: string) {
+export function useAssignmentSubmissionRoster(assignmentId: string) {
   return useQuery({
-    queryKey: ['assignment-submissions', assignmentId],
-    queryFn: () => assignmentService.listSubmissions(assignmentId),
+    queryKey: ['assignment-submission-roster', assignmentId],
+    queryFn: () => assignmentService.listSubmissionRoster(assignmentId),
     enabled: Boolean(assignmentId),
   });
 }
@@ -142,7 +161,7 @@ export function useGradeSubmission(assignmentId: string) {
 
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ['assignment-submissions', assignmentId],
+        queryKey: ['assignment-submission-roster', assignmentId],
       });
       queryClient.invalidateQueries({
         queryKey: ['assignment', assignmentId],
@@ -152,6 +171,67 @@ export function useGradeSubmission(assignmentId: string) {
 
     onError: (error: { message?: string }) => {
       toast.error(error.message || t('gradeError'));
+    },
+  });
+}
+
+export function useRewriteAssignmentFeedback() {
+  const t = useTranslations('Courses.AssignmentTeacher');
+
+  return useMutation({
+    mutationFn: (input: {
+      submissionId: string;
+      feedback: string;
+      tone: FeedbackTone;
+    }) =>
+      assignmentService.rewriteFeedback(input.submissionId, {
+        feedback: input.feedback,
+        tone: input.tone,
+      }),
+
+    onError: (error: { message?: string }) => {
+      toast.error(error.message || t('enhanceFeedbackError'));
+    },
+  });
+}
+
+export function usePublishAssignmentResults(
+  courseId: string,
+  assignmentId: string
+) {
+  const queryClient = useQueryClient();
+  const t = useTranslations('Courses.AssignmentTeacher');
+
+  return useMutation({
+    mutationFn: () => assignmentService.publishResults(assignmentId),
+
+    onSuccess: ({ data }) => {
+      queryClient.invalidateQueries({
+        queryKey: ['assignment-submission-roster', assignmentId],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ['assignment', assignmentId],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ['assignments', courseId],
+      });
+
+      if (data.publishedCount === 0) {
+        toast.info(t('noResultsToPublish'));
+        return;
+      }
+
+      toast.success(
+        t('resultsPublished', {
+          count: data.publishedCount,
+        })
+      );
+    },
+
+    onError: (error: { message?: string }) => {
+      toast.error(error.message || t('publishResultsError'));
     },
   });
 }
