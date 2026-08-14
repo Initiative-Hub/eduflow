@@ -1,10 +1,13 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Check, Clock3, Loader2, Trophy } from 'lucide-react';
+import { Check, Loader2, Star, Trophy } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { cn } from '@/lib/utils';
 import { gameQuizApi } from './api';
 import { type GameQuizCopy, gameQuizCopy } from './copy';
 import { GameSessionError, GameSessionLoading } from './game-quiz-host-client';
@@ -17,11 +20,27 @@ interface GameQuizPlayerClientProps {
   copy?: GameQuizCopy;
 }
 
-const KAHOOT_OPTION_STYLES = [
-  { bg: 'bg-red-500', text: 'text-white' },
-  { bg: 'bg-blue-600', text: 'text-white' },
-  { bg: 'bg-amber-500', text: 'text-white' },
-  { bg: 'bg-green-600', text: 'text-white' },
+const PLAYER_OPTION_STYLES = [
+  {
+    border: 'border-l-red-500',
+    accent: 'text-red-500',
+    accentBg: 'bg-red-50 dark:bg-red-950/20',
+  },
+  {
+    border: 'border-l-blue-600',
+    accent: 'text-blue-600',
+    accentBg: 'bg-blue-50 dark:bg-blue-950/20',
+  },
+  {
+    border: 'border-l-amber-500',
+    accent: 'text-amber-500',
+    accentBg: 'bg-amber-50 dark:bg-amber-950/20',
+  },
+  {
+    border: 'border-l-green-600',
+    accent: 'text-green-600',
+    accentBg: 'bg-green-50 dark:bg-green-950/20',
+  },
 ] as const;
 
 const KAHOOT_SHAPES = [
@@ -148,111 +167,109 @@ export function GameQuizPlayerClient({
   const isOpen = session.phase === 'QUESTION_OPEN';
   const submitted = Boolean(session.myAnswer);
   return (
-    <main className="min-h-[calc(100vh-6rem)] bg-foreground px-3 py-3 text-background sm:px-6 sm:py-6 dark:bg-background dark:text-foreground">
-      <div className="mx-auto flex min-h-[calc(100vh-9rem)] max-w-360 flex-col">
-        <header className="flex items-center justify-between gap-3 pb-4">
-          <span className="truncate font-medium text-background/70 text-sm dark:text-muted-foreground">
-            {session.gameTitle}
-          </span>
-          <span className="whitespace-nowrap font-medium text-xs uppercase tracking-[0.16em]">
-            {copy.player.question} {session.currentRoundIndex + 1}/
-            {session.totalRounds}
-          </span>
-        </header>
+    <main className="flex min-h-[calc(100vh-6rem)] flex-col bg-muted/40 px-3 py-3 sm:px-6 sm:py-6 dark:bg-muted/10">
+      <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col">
+        <PlayerScoreBadge score={session.participant?.score ?? 0} />
 
-        <section className="relative flex flex-1 flex-col justify-center overflow-hidden border border-background/20 bg-foreground px-3 py-6 sm:px-8 sm:py-8 dark:border-border dark:bg-card">
-          <div
-            aria-hidden="true"
-            className="absolute inset-0 bg-[url('/images/game-quiz/learning-rally-stage.png')] bg-center bg-cover opacity-25"
-          />
-          <div className="relative mx-auto flex w-full max-w-6xl flex-col gap-5">
-            {isOpen ? (
-              <div className="flex items-center justify-between gap-4">
-                <QuestionCountdown
-                  copy={copy}
-                  deadlineAt={session.currentRound.deadlineAt}
-                />
-                <div />
-              </div>
-            ) : null}
+        <PlayerProgressBar
+          copy={copy}
+          currentIndex={session.currentRoundIndex}
+          joinCode={session.joinCode}
+          totalRounds={session.totalRounds}
+        />
 
-            <div className="mx-auto w-full max-w-4xl bg-background px-5 py-6 text-center text-foreground shadow-2xl sm:px-10 sm:py-9">
-              <h1 className="font-semibold text-2xl leading-tight sm:text-4xl">
-                {session.currentRound.prompt}
-              </h1>
-              {session.currentRound.hint ? (
-                <p className="mt-4 text-muted-foreground text-sm">
-                  {copy.player.hint}: {session.currentRound.hint}
-                </p>
-              ) : null}
-            </div>
+        {isOpen && !submitted ? (
+          <div className="grid flex-1 grid-cols-2 gap-3">
+            {session.currentRound.options.map((option, optionIndex) => {
+              const style =
+                PLAYER_OPTION_STYLES[optionIndex] ?? PLAYER_OPTION_STYLES[0];
+              const shape = KAHOOT_SHAPES[optionIndex] ?? KAHOOT_SHAPES[0];
 
-            {isOpen && !submitted ? (
-              <div className="grid gap-3 sm:grid-cols-2">
-                {session.currentRound.options.map((option, optionIndex) => {
-                  const style =
-                    KAHOOT_OPTION_STYLES[optionIndex] ??
-                    KAHOOT_OPTION_STYLES[0];
-                  const shape = KAHOOT_SHAPES[optionIndex] ?? KAHOOT_SHAPES[0];
-                  return (
-                    <button
-                      className={`flex min-h-24 items-center gap-3 p-5 text-left font-bold shadow-lg transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 ${style.bg} ${style.text} hover:scale-[1.02] hover:shadow-xl active:scale-[0.98]`}
-                      disabled={answerMutation.isPending}
-                      key={option.id}
-                      onClick={() => answerMutation.mutate(option.id)}
-                      type="button"
-                    >
-                      <span className="grid size-8 shrink-0 place-items-center">
-                        {shape}
-                      </span>
-                      <span className="text-lg">{option.text}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            ) : null}
-
-            {submitted && session.phase !== 'REVEAL' ? (
-              <SubmittedPanel copy={copy} />
-            ) : null}
-
-            {session.phase === 'REVEAL' ? (
-              <RevealPanel copy={copy} session={session} />
-            ) : null}
+              return (
+                <button
+                  className={cn(
+                    'flex flex-col items-center justify-center gap-3 border-l-4 bg-background p-4 shadow-md transition-all',
+                    'hover:scale-[1.01] hover:shadow-lg active:scale-[0.98]',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
+                    'disabled:cursor-not-allowed disabled:opacity-60',
+                    style.border
+                  )}
+                  disabled={answerMutation.isPending}
+                  key={option.id}
+                  onClick={() => answerMutation.mutate(option.id)}
+                  type="button"
+                >
+                  <span
+                    className={cn(
+                      'grid size-12 place-items-center rounded-full',
+                      style.accentBg,
+                      style.accent
+                    )}
+                  >
+                    {shape}
+                  </span>
+                  <span className="text-center font-semibold text-foreground text-sm">
+                    {option.text}
+                  </span>
+                </button>
+              );
+            })}
           </div>
-        </section>
+        ) : null}
+
+        {submitted && session.phase !== 'REVEAL' ? (
+          <SubmittedPanel copy={copy} />
+        ) : null}
+
+        {session.phase === 'REVEAL' ? (
+          <RevealPanel copy={copy} session={session} />
+        ) : null}
       </div>
     </main>
   );
 }
 
-function QuestionCountdown({
+function PlayerScoreBadge({ score }: { score: number }) {
+  return (
+    <div className="flex items-center justify-end pb-2">
+      <Badge
+        variant="outline"
+        className="h-auto gap-1.5 border-amber-300/40 bg-amber-50 px-3 py-1.5 text-amber-700 shadow-sm dark:border-amber-500/30 dark:bg-amber-950/40 dark:text-amber-300"
+      >
+        <Star className="size-4 fill-current" aria-hidden="true" />
+        <span className="font-semibold tabular-nums">
+          {score.toLocaleString()}
+        </span>
+      </Badge>
+    </div>
+  );
+}
+
+function PlayerProgressBar({
   copy,
-  deadlineAt,
+  currentIndex,
+  joinCode,
+  totalRounds,
 }: {
   copy: GameQuizCopy;
-  deadlineAt?: string | null;
+  currentIndex: number;
+  joinCode: string;
+  totalRounds: number;
 }) {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const interval = window.setInterval(() => setNow(Date.now()), 250);
-    return () => window.clearInterval(interval);
-  }, []);
-  if (!deadlineAt) return null;
-  const seconds = Math.max(
-    0,
-    Math.ceil((new Date(deadlineAt).getTime() - now) / 1000)
-  );
-  const urgent = seconds <= 5;
+  const progress =
+    totalRounds > 0 ? ((currentIndex + 1) / totalRounds) * 100 : 0;
+
   return (
-    <div
-      className={`grid size-17.5 place-items-center rounded-full border-4 text-center shadow-lg transition-colors duration-300 ${urgent ? 'border-red-400 bg-red-500/90 text-white' : 'border-background bg-foreground dark:border-border dark:bg-card'}`}
-    >
-      <Clock3 className="size-4" aria-hidden="true" />
-      <span className="font-semibold text-lg tabular-nums leading-none">
-        {seconds}
-      </span>
-      <span className="sr-only">{copy.editor.seconds}</span>
+    <div className="space-y-2 pb-3">
+      <div className="flex items-center justify-between gap-4">
+        <Badge variant="secondary" className="font-medium text-xs">
+          {copy.player.pin}: {joinCode || '-'}
+        </Badge>
+        <span className="font-medium text-sm">
+          {copy.player.question} {currentIndex + 1}/{totalRounds}
+        </span>
+      </div>
+      <Progress value={progress} className="h-1.5" />
     </div>
   );
 }
@@ -405,12 +422,12 @@ function PlayerPodium({
   session: GameSessionSnapshot;
 }) {
   return (
-    <main className="min-h-[60vh] bg-primary py-4 sm:py-10">
+    <main className="min-h-[60vh] py-4 sm:py-10">
       <GameQuizPodium
         copy={copy}
         participant={session.participant}
         session={session}
-        title={copy.player.podium}
+        title={copy.host.congratulations}
       />
     </main>
   );

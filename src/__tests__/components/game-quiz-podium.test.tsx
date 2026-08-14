@@ -1,8 +1,10 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { gameQuizCopy } from '@/components/game-quiz/copy';
 import { GameQuizPodium } from '@/components/game-quiz/game-quiz-podium';
 import type { GameSessionSnapshot } from '@/components/game-quiz/types';
+
+vi.mock('react-confetti', () => ({ default: () => null }));
 
 function createSession(participantCount: number): GameSessionSnapshot {
   const participants = [

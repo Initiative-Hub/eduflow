@@ -2,7 +2,6 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { Gamepad2, Loader2, Pencil, Plus, Sparkles } from 'lucide-react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { gameQuizApi } from './api';
@@ -82,14 +81,6 @@ export function GameQuizLibraryClient({
       {games.length === 0 ? (
         <section className="grid min-h-80 place-items-center border border-dashed p-8 text-center">
           <div className="max-w-sm">
-            <Image
-              alt=""
-              className="mb-6 aspect-video w-full border object-cover"
-              height={720}
-              priority
-              src="/images/game-quiz/learning-rally-stage.png"
-              width={1280}
-            />
             <span className="mx-auto flex size-12 items-center justify-center bg-primary/10 text-primary">
               <Sparkles className="size-5" aria-hidden="true" />
             </span>

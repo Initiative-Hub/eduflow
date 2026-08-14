@@ -190,11 +190,7 @@ export function GameQuizPreviewClient({
               <MonitorUp className="size-5" aria-hidden="true" />
               {copy.preview.host}
             </div>
-            <div className="relative min-h-142.5 overflow-hidden border border-background/25 bg-foreground p-5 sm:p-8 dark:border-border dark:bg-card">
-              <div
-                aria-hidden="true"
-                className="absolute inset-0 bg-[url('/images/game-quiz/learning-rally-stage.png')] bg-center bg-cover opacity-35"
-              />
+            <div className="relative min-h-142.5 overflow-hidden border bg-muted/20 p-5 sm:p-8 dark:border-border dark:bg-card">
               <div className="relative flex min-h-125 flex-col justify-between gap-8">
                 <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
                   <span className="border border-background/40 bg-foreground/70 px-3 py-1.5 font-medium dark:border-border dark:bg-card/80">

@@ -1,6 +1,12 @@
+'use client';
+
+import { Award, Trophy } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { Medal, Trophy } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import ReactConfetti from 'react-confetti';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
 import {
   Empty,
   EmptyDescription,
@@ -8,17 +14,8 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty';
-import { cn } from '@/lib/utils';
 import type { GameQuizCopy } from './copy';
 import type { GameParticipant, GameSessionSnapshot } from './types';
-
-type PodiumParticipant = GameParticipant & { rank: number };
-
-const podiumPlacementStyles: Record<number, string> = {
-  1: 'min-h-72 border-primary-foreground/60 bg-primary-foreground text-primary shadow-2xl md:-translate-y-8',
-  2: 'min-h-56 border-primary-foreground/35 bg-primary-foreground/15',
-  3: 'min-h-48 border-primary-foreground/25 bg-primary-foreground/10',
-};
 
 function initials(displayName: string) {
   return displayName
@@ -30,51 +27,49 @@ function initials(displayName: string) {
     .toUpperCase();
 }
 
-function podiumParticipants(leaderboard: GameParticipant[]) {
-  const ranked = leaderboard.slice(0, 3).map((participant, index) => ({
-    ...participant,
-    rank: index + 1,
-  }));
+function CelebrationConfetti() {
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const [recycle, setRecycle] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
-  return [ranked[1], ranked[0], ranked[2]].filter(
-    (participant): participant is PodiumParticipant => Boolean(participant)
-  );
-}
+  useEffect(() => {
+    setMounted(true);
+    const update = () =>
+      setDimensions({ width: window.innerWidth, height: window.innerHeight });
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
 
-function PodiumPlacement({
-  copy,
-  participant,
-}: {
-  copy: GameQuizCopy;
-  participant: PodiumParticipant;
-}) {
-  const winner = participant.rank === 1;
+  // Stop recycling after 5s so confetti naturally fades out
+  useEffect(() => {
+    const timeout = window.setTimeout(() => setRecycle(false), 5000);
+    return () => window.clearTimeout(timeout);
+  }, []);
+
+  // Respect prefers-reduced-motion
+  if (!mounted) return null;
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)
+    return null;
+
   return (
-    <li
-      className={cn(
-        'flex flex-col items-center justify-end border px-5 py-6 text-center shadow-lg',
-        podiumPlacementStyles[participant.rank]
-      )}
-    >
-      {winner ? (
-        <Trophy className="mb-3 size-7" aria-label={copy.host.podium} />
-      ) : (
-        <Medal className="mb-3 size-6" aria-hidden="true" />
-      )}
-      <Avatar className="size-20">
-        <AvatarImage alt="" src={participant.image ?? undefined} />
-        <AvatarFallback>{initials(participant.displayName)}</AvatarFallback>
-      </Avatar>
-      <p className="mt-4 text-sm opacity-75">
-        {copy.player.rank} {participant.rank}
-      </p>
-      <p className="mt-1 max-w-full truncate font-semibold text-xl">
-        {participant.displayName}
-      </p>
-      <p className="mt-2 font-semibold text-lg tabular-nums">
-        {participant.score}
-      </p>
-    </li>
+    <ReactConfetti
+      className="fixed! pointer-events-none inset-0 z-50"
+      colors={[
+        '#8b5cf6',
+        '#a78bfa',
+        '#c4b5fd',
+        '#f59e0b',
+        '#fbbf24',
+        '#e879f9',
+        '#38bdf8',
+        '#ffffff',
+      ]}
+      height={dimensions.height}
+      numberOfPieces={200}
+      recycle={recycle}
+      width={dimensions.width}
+    />
   );
 }
 
@@ -91,62 +86,136 @@ export function GameQuizPodium({
   session: GameSessionSnapshot;
   title: string;
 }) {
-  const podium = podiumParticipants(session.leaderboard);
+  const leaderboard = session.leaderboard;
+  const first = leaderboard[0] ?? null;
+  const second = leaderboard[1] ?? null;
+  const third = leaderboard[2] ?? null;
+
   const participantRank = participant
     ? session.leaderboard.findIndex((entry) => entry.id === participant.id) + 1
     : 0;
 
   return (
-    <section className="relative overflow-hidden bg-primary px-4 py-10 text-primary-foreground sm:px-8 sm:py-14">
-      <div aria-hidden="true" className="absolute inset-0 overflow-hidden">
-        <span className="absolute top-8 left-[12%] size-3 rotate-12 bg-primary-foreground/30 motion-safe:animate-bounce" />
-        <span className="absolute top-20 right-[16%] size-2 rotate-45 bg-primary-foreground/40 motion-safe:animate-bounce" />
-        <span className="absolute right-[30%] bottom-12 size-4 -rotate-12 bg-primary-foreground/20 motion-safe:animate-bounce" />
-      </div>
-      <div className="relative mx-auto flex w-full max-w-5xl flex-col items-center gap-8 text-center">
+    <section className="relative overflow-hidden px-4 py-8 text-foreground sm:py-12">
+      <CelebrationConfetti />
+      <div className="relative mx-auto flex w-full max-w-4xl flex-col items-center gap-6 text-center">
+        {/* Header Section */}
         <div>
-          <p className="font-medium text-primary-foreground/75 text-sm uppercase tracking-[0.2em]">
-            {session.gameTitle}
+          <h1 className="font-extrabold text-3xl text-purple-600 sm:text-4xl dark:text-purple-400">
+            {title}
+          </h1>
+          <p className="mt-1 font-medium text-slate-600 text-sm sm:text-base dark:text-slate-400">
+            {copy.host.congratulationsDescription}
           </p>
-          <h1 className="mt-2 font-semibold text-3xl sm:text-4xl">{title}</h1>
+          <Award
+            className="mx-auto mt-3 size-10 text-amber-500"
+            aria-hidden="true"
+          />
         </div>
 
-        {podium.length > 0 ? (
-          <ol className="grid w-full items-end gap-4 md:grid-cols-3">
-            {podium.map((entry) => (
-              <PodiumPlacement copy={copy} key={entry.id} participant={entry} />
-            ))}
-          </ol>
+        {/* Podium Backdrop Container */}
+        {leaderboard.length > 0 ? (
+          <div className="mx-auto w-full max-w-2xl rounded-3xl bg-linear-to-b from-purple-100/40 via-purple-50/20 to-transparent p-6 sm:p-10 dark:from-purple-950/20">
+            <ol className="flex items-end justify-center gap-3 sm:gap-6">
+              {/* 2nd Place (Left Column) */}
+              {second ? (
+                <li className="flex flex-col items-center">
+                  <Avatar className="size-16 border-3 border-slate-300 shadow-xs sm:size-20 dark:border-slate-600">
+                    <AvatarImage alt="" src={second.image ?? undefined} />
+                    <AvatarFallback className="font-bold text-lg text-slate-700">
+                      {initials(second.displayName)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <p className="mt-2 mb-3 max-w-24 truncate font-extrabold text-primary-foreground text-xs sm:max-w-28 sm:text-sm">
+                    {second.displayName}
+                  </p>
+                  <div className="flex h-32 w-20 items-center justify-center rounded-t-2xl border-slate-200 border-t-2 bg-linear-to-b from-slate-100 via-slate-50 to-slate-50/40 shadow-xs sm:h-40 sm:w-28 dark:border-slate-700 dark:from-slate-800/60 dark:to-slate-900/30">
+                    <span className="font-extrabold text-4xl text-slate-300 sm:text-5xl dark:text-slate-600">
+                      2
+                    </span>
+                  </div>
+                </li>
+              ) : null}
+
+              {/* 1st Place (Center Column - Winner) */}
+              {first ? (
+                <li className="flex flex-col items-center">
+                  <Badge
+                    variant="outline"
+                    className="mb-2.5 rounded-full border-purple-100 bg-card px-3 py-1 font-extrabold text-purple-600 text-xs shadow-xs sm:text-sm dark:border-purple-900 dark:text-purple-300"
+                  >
+                    {first.score.toLocaleString()} {copy.player.pts}
+                  </Badge>
+                  <Avatar className="size-20 border-4 border-amber-500 shadow-md sm:size-24">
+                    <AvatarImage alt="" src={first.image ?? undefined} />
+                    <AvatarFallback className="font-bold text-amber-600 text-xl">
+                      {initials(first.displayName)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <p className="mt-2 mb-3 max-w-28 truncate font-extrabold text-purple-600 text-sm sm:max-w-36 sm:text-base dark:text-purple-300">
+                    {first.displayName}
+                  </p>
+                  <div className="flex h-44 w-24 items-center justify-center rounded-t-2xl border-purple-300 border-t-2 bg-linear-to-b from-purple-200/90 via-purple-100/60 to-purple-50/30 shadow-xs sm:h-52 sm:w-32 dark:border-purple-700 dark:from-purple-900/60 dark:to-purple-950/30">
+                    <span className="font-extrabold text-5xl text-amber-500 sm:text-6xl">
+                      1
+                    </span>
+                  </div>
+                </li>
+              ) : null}
+
+              {/* 3rd Place (Right Column) */}
+              {third ? (
+                <li className="flex flex-col items-center">
+                  <Avatar className="size-16 border-3 border-amber-600/50 shadow-xs sm:size-20 dark:border-amber-700/60">
+                    <AvatarImage alt="" src={third.image ?? undefined} />
+                    <AvatarFallback className="font-bold text-amber-800 text-lg">
+                      {initials(third.displayName)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <p className="mt-2 mb-3 max-w-24 truncate font-extrabold text-slate-800 text-xs sm:max-w-28 sm:text-sm dark:text-slate-200">
+                    {third.displayName}
+                  </p>
+                  <div className="flex h-24 w-20 items-center justify-center rounded-t-2xl border-amber-200/80 border-t-2 bg-linear-to-b from-amber-100/70 via-amber-50/40 to-amber-50/10 shadow-xs sm:h-32 sm:w-28 dark:border-amber-900/60 dark:from-amber-950/40 dark:to-amber-950/10">
+                    <span className="font-extrabold text-3xl text-amber-600/70 sm:text-4xl dark:text-amber-500/70">
+                      3
+                    </span>
+                  </div>
+                </li>
+              ) : null}
+            </ol>
+          </div>
         ) : (
-          <Empty className="border-primary-foreground/35 bg-primary-foreground/10 text-primary-foreground">
+          <Empty className="border-border bg-card text-foreground">
             <EmptyHeader>
               <EmptyMedia variant="icon">
                 <Trophy aria-hidden="true" />
               </EmptyMedia>
               <EmptyTitle>{title}</EmptyTitle>
-              <EmptyDescription className="text-primary-foreground/75">
+              <EmptyDescription className="text-muted-foreground">
                 {copy.player.noPodium}
               </EmptyDescription>
             </EmptyHeader>
           </Empty>
         )}
 
+        {/* Player Personal Rank Summary Card */}
         {participant ? (
-          <div className="border border-primary-foreground/35 bg-primary-foreground/10 px-5 py-4">
-            <p className="text-primary-foreground/75 text-sm">
+          <Card className="px-6 py-4 text-center shadow-xs">
+            <p className="text-muted-foreground text-sm">
               {copy.player.rank} {participantRank || '–'}
             </p>
-            <p className="mt-1 font-semibold text-2xl tabular-nums">
-              {participant.score}
+            <p className="mt-1 font-extrabold text-2xl tabular-nums">
+              {participant.score.toLocaleString()}
             </p>
-            <p className="text-primary-foreground/75 text-sm">
-              {copy.player.score}
-            </p>
-          </div>
+            <p className="text-muted-foreground text-sm">{copy.player.score}</p>
+          </Card>
         ) : null}
 
+        {/* Action Buttons Container */}
         {children ? (
-          <div className="flex flex-wrap justify-center gap-3">{children}</div>
+          <div className="mt-4 flex flex-wrap justify-center gap-4">
+            {children}
+          </div>
         ) : null}
       </div>
     </section>

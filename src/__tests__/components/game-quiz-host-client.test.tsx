@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { GameQuizHostClient } from '@/components/game-quiz/game-quiz-host-client';
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ replace: vi.fn() }) }));
+vi.mock('react-confetti', () => ({ default: () => null }));
 
 const {
   answerProgress,
@@ -119,7 +120,7 @@ describe('GameQuizHostClient', () => {
     expect(screen.queryByText('host.reveal')).not.toBeInTheDocument();
   });
 
-  it('offers only End game from the gameplay overflow menu', async () => {
+  it('offers End game confirmation dialog during gameplay', async () => {
     const user = userEvent.setup();
     getHostSession.mockResolvedValue(createSession('QUESTION_OPEN'));
     answerProgress.mockResolvedValue({ answerCount: 1 });
@@ -127,13 +128,18 @@ describe('GameQuizHostClient', () => {
 
     renderHost();
 
-    await user.click(
-      await screen.findByRole('button', { name: 'host.endGame' })
-    );
-    const endGame = screen.getByRole('menuitem', { name: 'host.endGame' });
-    expect(endGame).toBeInTheDocument();
-    expect(screen.queryByText('host.endSession')).not.toBeInTheDocument();
-    await user.click(endGame);
+    const endGameButton = await screen.findByRole('button', {
+      name: 'host.endGame',
+    });
+    expect(endGameButton).toBeInTheDocument();
+    await user.click(endGameButton);
+
+    expect(await screen.findByText('host.endGameConfirmTitle')).toBeInTheDocument();
+    const confirmButtons = screen.getAllByRole('button', { name: 'host.endGame' });
+    const confirmButton = confirmButtons[confirmButtons.length - 1];
+    expect(confirmButton).toBeInTheDocument();
+    await user.click(confirmButton!);
+
     expect(command).toHaveBeenCalledWith(
       'game-quiz-1',
       expect.objectContaining({ contextKey: 'context-key' }),
@@ -173,7 +179,7 @@ describe('GameQuizHostClient', () => {
 
     renderHost();
 
-    expect(await screen.findByText('host.podium')).toBeInTheDocument();
+    expect(await screen.findByText('host.congratulations')).toBeInTheDocument();
     expect(screen.getByText('Sam')).toBeInTheDocument();
     expect(screen.getByText('Alex')).toBeInTheDocument();
     expect(screen.getByText('Jo')).toBeInTheDocument();

@@ -165,6 +165,7 @@ export async function projectParticipantSession(
     title: session.title,
     topic: session.topic,
     difficulty: session.difficulty,
+    joinCode: session.joinCode,
     templateKey: session.templateKey,
     phase: session.phase,
     currentRoundIndex: session.currentRoundIndex,

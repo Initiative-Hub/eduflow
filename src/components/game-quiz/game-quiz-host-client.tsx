@@ -3,27 +3,41 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Check,
-  Clock3,
   Copy,
-  Ellipsis,
+  Link as LinkIcon,
   Loader2,
+  Lock,
   Play,
-  Radio,
-  SkipForward,
   Trophy,
+  Users,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 import { type GameHostAction, gameQuizApi } from './api';
 import { type GameQuizCopy, gameQuizCopy } from './copy';
 import { GameQuizPodium } from './game-quiz-podium';
@@ -236,52 +250,42 @@ export function GameQuizHostClient({
     session.phase === 'QUESTION_OPEN' ? copy.host.skip : copy.host.next;
   const answerCount = progressQuery.data?.answerCount ?? session.answerCount;
 
-  return (
-    <main className="min-h-[calc(100vh-6rem)] bg-foreground px-3 py-3 text-background sm:px-6 sm:py-6 dark:bg-background dark:text-foreground">
-      <div className="mx-auto flex min-h-[calc(100vh-9rem)] max-w-360 flex-col">
-        <header className="flex items-center justify-between gap-3">
-          <div className="flex min-w-0 items-start gap-2">
-            <div className="min-w-0">
-              <p className="truncate text-background/70 text-sm dark:text-muted-foreground">
-                {session.gameTitle}
-              </p>
-              <p className="mt-1 font-medium text-xs uppercase tracking-[0.16em]">
-                {copy.player.question} {session.currentRoundIndex + 1}/
-                {session.totalRounds}
-              </p>
-            </div>
-            <SessionOverflow
+  if (session.phase === 'SCOREBOARD') {
+    return (
+      <main className="min-h-[calc(100vh-6rem)] px-4 py-8">
+        <div className="mx-auto flex max-w-4xl flex-col gap-6">
+          <div className="flex items-center justify-between gap-4">
+            <p className="font-medium text-muted-foreground text-sm uppercase tracking-[0.2em]">
+              {session.gameTitle}
+            </p>
+            <div />
+            <Button
+              className="rounded-full bg-primary px-4 py-3 font-medium text-sm shadow-xs hover:bg-primary/90"
               disabled={commandMutation.isPending}
-              label={copy.host.endGame}
-              onSelect={() => commandMutation.mutate({ action: 'END_GAME' })}
-            />
+              onClick={() => commandMutation.mutate({ action })}
+            >
+              {commandMutation.isPending ? (
+                <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+              ) : null}
+              {actionLabel}
+            </Button>
           </div>
-          <Button
-            disabled={commandMutation.isPending}
-            onClick={() => commandMutation.mutate({ action })}
-            size="sm"
-            variant="secondary"
-          >
-            {commandMutation.isPending ? (
-              <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-            ) : action === 'SKIP' ? (
-              <SkipForward className="size-4" aria-hidden="true" />
-            ) : null}
-            {actionLabel}
-          </Button>
-        </header>
-
-        {session.phase === 'SCOREBOARD' ? (
           <ScoreboardStage copy={copy} session={session} />
-        ) : (
-          <QuestionStage
-            answerCount={answerCount}
-            copy={copy}
-            session={session}
-          />
-        )}
-      </div>
-    </main>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <QuestionStage
+      answerCount={answerCount}
+      copy={copy}
+      isPending={commandMutation.isPending}
+      onCommand={(actionToRun) =>
+        commandMutation.mutate({ action: actionToRun })
+      }
+      session={session}
+    />
   );
 }
 
@@ -296,6 +300,11 @@ function HostLobby({
   onCommand: (action: GameHostAction, joiningLocked?: boolean) => void;
   session: GameSessionSnapshot;
 }) {
+  const copyCode = async () => {
+    await navigator.clipboard.writeText(session.joinCode);
+    toast.success(copy.common.copied);
+  };
+
   const copyJoinLink = async () => {
     await navigator.clipboard.writeText(
       new URL(
@@ -307,45 +316,82 @@ function HostLobby({
   };
 
   return (
-    <main className="mx-auto max-w-5xl space-y-6 pb-10">
-      <header className="flex flex-col gap-4 border-b pb-5 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <div className="flex items-center gap-2 text-primary text-sm">
-            <Radio className="size-4" aria-hidden="true" /> LOBBY
+    <main className="mx-auto max-w-4xl px-4 py-8 sm:py-12">
+      {/* PIN Section */}
+      <section className="flex flex-col items-center gap-4 text-center">
+        <p className="font-medium text-muted-foreground text-xs uppercase tracking-[0.2em]">
+          {copy.host.joinAt}
+        </p>
+        <Card className="group relative border border-border/60 px-10 py-6 text-center shadow-lg transition-shadow hover:shadow-xl sm:px-16 sm:py-8">
+          <div className="absolute top-3 right-3 flex items-center gap-1 opacity-0 transition-opacity duration-200 focus-within:opacity-100 group-hover:opacity-100">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    aria-label={copy.host.joinCode}
+                    onClick={copyCode}
+                    size="icon-sm"
+                    variant="ghost"
+                  >
+                    <Copy className="size-4" aria-hidden="true" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  <p>{copy.host.joinCode}</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    aria-label={copy.host.copyLink}
+                    onClick={copyJoinLink}
+                    size="icon-sm"
+                    variant="ghost"
+                  >
+                    <LinkIcon className="size-4" aria-hidden="true" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  <p>{copy.host.copyLink}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
-          <h1 className="mt-1 font-semibold text-3xl">{copy.host.title}</h1>
-          <p className="mt-2 text-muted-foreground">{session.gameTitle}</p>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            disabled={isPending || session.participants.length === 0}
-            onClick={() => onCommand('START')}
-          >
-            <Play className="size-4" aria-hidden="true" />
-            {copy.host.start}
-          </Button>
-        </div>
-      </header>
 
-      <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
-        <div className="border bg-card p-7 sm:p-10">
-          <p className="text-muted-foreground text-sm">{copy.host.lobby}</p>
-          <p className="mt-3 font-semibold text-5xl tracking-[0.16em]">
+          <span className="font-extrabold text-5xl tracking-widest sm:text-7xl">
             {session.joinCode}
-          </p>
-          <Button className="mt-6" onClick={copyJoinLink} variant="outline">
-            <Copy className="size-4" aria-hidden="true" />
-            {copy.host.copyLink}
-          </Button>
-          {session.participants.length === 0 ? (
-            <p className="mt-6 text-muted-foreground text-sm">
-              {copy.host.noPlayers}
-            </p>
-          ) : null}
-        </div>
-        <aside className="border bg-card p-5">
-          <div className="flex items-center justify-between">
-            <h2 className="font-medium">{copy.host.players}</h2>
+          </span>
+        </Card>
+
+        {/* Status badge */}
+        <Badge
+          variant="outline"
+          className="h-auto gap-2 border-border/60 bg-card px-4 py-2 font-medium text-sm shadow-sm"
+        >
+          <span className="size-2 rounded-full bg-primary" aria-hidden="true" />
+          <span>{copy.host.readyToStart}</span>
+          <div className="flex items-center gap-1 rounded-full bg-muted px-2 py-1">
+            <Users
+              className="size-4 text-muted-foreground"
+              aria-hidden="true"
+            />
+            <span className="text-muted-foreground">
+              {session.participants.length}
+            </span>
+          </div>
+        </Badge>
+      </section>
+
+      {/* Joined Players */}
+      <section className="mt-10">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="font-semibold text-lg">
+            {copy.host.joinedPlayers}{' '}
+            <span className="font-normal text-base text-muted-foreground">
+              ({session.participants.length})
+            </span>
+          </h2>
+          <div className="flex gap-2">
             <Button
               aria-label={
                 session.joiningLocked
@@ -357,30 +403,48 @@ function HostLobby({
                 onCommand('SET_JOINING_LOCKED', !session.joiningLocked)
               }
               size="sm"
-              variant="ghost"
+              variant="outline"
             >
+              <Lock className="size-4" aria-hidden="true" />
               {session.joiningLocked
                 ? copy.host.unlockJoining
                 : copy.host.lockJoining}
             </Button>
+            <Button
+              disabled={isPending || session.participants.length === 0}
+              onClick={() => onCommand('START')}
+              size="sm"
+            >
+              <Play className="size-4" aria-hidden="true" />
+              {copy.host.start}
+            </Button>
           </div>
-          <ul className="mt-4 space-y-2">
+        </div>
+
+        {session.participants.length === 0 ? (
+          <p className="mt-8 text-center text-muted-foreground text-sm">
+            {copy.host.noPlayers}
+          </p>
+        ) : (
+          <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
             {session.participants.map((participant) => (
-              <li
-                className="flex items-center gap-3 border-b py-2 text-sm last:border-0"
+              <Card
+                className="flex flex-col items-center gap-2 px-4 py-5 text-center shadow-sm"
                 key={participant.id}
               >
-                <Avatar size="sm">
+                <Avatar className="size-16">
                   <AvatarImage alt="" src={participant.image ?? undefined} />
                   <AvatarFallback>
                     {participant.displayName.slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                <span className="truncate">{participant.displayName}</span>
-              </li>
+                <span className="max-w-full truncate font-medium text-sm">
+                  {participant.displayName}
+                </span>
+              </Card>
             ))}
-          </ul>
-        </aside>
+          </div>
+        )}
       </section>
     </main>
   );
@@ -389,57 +453,113 @@ function HostLobby({
 function QuestionStage({
   answerCount,
   copy,
+  isPending,
+  onCommand,
   session,
 }: {
   answerCount: number;
   copy: GameQuizCopy;
+  isPending: boolean;
+  onCommand: (action: GameHostAction) => void;
   session: GameSessionSnapshot;
 }) {
   const round = session.currentRound as NonNullable<
     GameSessionSnapshot['currentRound']
   >;
   const revealed = session.phase === 'REVEAL';
-  const totalAnswers = round.options.reduce(
-    (sum, option) => sum + (option.answerCount ?? 0),
-    0
-  );
+  const totalAnswers = session.participants.length || session.answerCount || 1;
+  const action: GameHostAction =
+    session.phase === 'QUESTION_OPEN' ? 'SKIP' : 'NEXT';
+  const actionLabel =
+    session.phase === 'QUESTION_OPEN' ? copy.host.skip : copy.host.next;
 
   return (
-    <section className="relative mt-4 flex flex-1 flex-col justify-center overflow-hidden border border-background/20 bg-foreground px-3 py-8 sm:px-8 dark:border-border dark:bg-card">
-      <div
-        aria-hidden="true"
-        className="absolute inset-0 bg-[url('/images/game-quiz/learning-rally-stage.png')] bg-center bg-cover opacity-25"
-      />
-      <div className="relative mx-auto flex w-full max-w-6xl flex-col gap-6">
+    <main className="min-h-[calc(100vh-6rem)] px-4 py-8">
+      <div className="mx-auto flex max-w-4xl flex-col gap-8">
+        {/* Top Control Bar */}
         <div className="flex items-center justify-between gap-4">
+          {/* Answers Pill (Left) */}
+          <div className="flex items-center gap-2.5 rounded-full border border-border/40 bg-card px-4 py-2 shadow-xs">
+            <Users className="size-4 text-purple-600" aria-hidden="true" />
+            <span className="font-extrabold text-base text-foreground tabular-nums">
+              {answerCount}/{totalAnswers}
+            </span>
+            <span className="font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+              {copy.host.answersCount}
+            </span>
+          </div>
+
+          {/* Timer Circle (Center) */}
           {!revealed ? (
-            <CountdownBadge copy={copy} deadlineAt={round.deadlineAt} />
+            <CountdownBadge deadlineAt={round.deadlineAt} />
           ) : (
-            <div />
+            <div className="size-16" />
           )}
-          <div className="border border-background/35 bg-foreground/75 px-3 py-2 text-right text-sm dark:border-border dark:bg-card/90">
-            <p className="font-semibold text-xl tabular-nums">{answerCount}</p>
-            <p className="text-background/70 text-xs dark:text-muted-foreground">
-              {copy.host.answers}
-            </p>
+
+          {/* Action Pill Buttons (Right) */}
+          <div className="flex items-center gap-2">
+            <Button
+              className="rounded-full border-border/60 bg-card px-4 py-3 font-medium text-foreground text-sm shadow-xs hover:bg-muted"
+              disabled={isPending}
+              onClick={() => onCommand(action)}
+              size="sm"
+              variant="outline"
+            >
+              {isPending ? (
+                <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+              ) : null}
+              {actionLabel}
+            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  className="rounded-full bg-primary px-4 py-3 font-medium text-sm shadow-xs hover:bg-primary/90"
+                  disabled={isPending}
+                >
+                  {copy.host.endGame}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    {copy.host.endGameConfirmTitle}
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {copy.host.endGameConfirmDescription}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>{copy.common.cancel}</AlertDialogCancel>
+                  <AlertDialogAction
+                    variant="destructive"
+                    onClick={() => onCommand('END_GAME')}
+                  >
+                    {copy.host.endGame}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
-        <div className="mx-auto w-full max-w-4xl bg-background px-5 py-6 text-center text-foreground shadow-2xl sm:px-10 sm:py-9">
-          <h1 className="font-semibold text-2xl leading-tight sm:text-4xl">
+
+        {/* Question Prompt Card */}
+        <Card className="mx-auto w-full rounded-2xl border border-slate-100 bg-card p-8 text-center shadow-xs sm:p-12 dark:border-border">
+          <h1 className="font-extrabold text-3xl text-slate-900 leading-snug sm:text-4xl dark:text-foreground">
             {round.prompt}
           </h1>
           {round.hint ? (
-            <p className="mt-4 text-muted-foreground text-sm">
+            <p className="mt-4 font-medium text-muted-foreground text-sm">
               {copy.player.hint}: {round.hint}
             </p>
           ) : null}
-        </div>
+        </Card>
+
+        {/* Answer Tiles 2x2 Grid */}
         <div
-          className={
-            revealed
-              ? 'grid gap-3 opacity-70 sm:grid-cols-2'
-              : 'grid gap-3 sm:grid-cols-2'
-          }
+          className={cn(
+            'grid grid-cols-1 gap-4 sm:grid-cols-2',
+            revealed ? 'opacity-90' : ''
+          )}
         >
           {round.options.map((option, index) => (
             <AnswerTile
@@ -452,49 +572,41 @@ function QuestionStage({
             />
           ))}
         </div>
+
+        {/* Explanation Card */}
         {revealed && round.explanation ? (
-          <div className="mx-auto max-w-4xl border border-background/30 bg-foreground/80 px-5 py-4 text-sm dark:border-border dark:bg-card/90">
-            <span className="font-medium">{copy.editor.explanation}: </span>
-            {round.explanation}
-          </div>
+          <Card className="rounded-xl p-5 text-sm shadow-xs">
+            <span className="font-semibold text-foreground">
+              {copy.editor.explanation}:{' '}
+            </span>
+            <span className="text-muted-foreground">{round.explanation}</span>
+          </Card>
         ) : null}
       </div>
-    </section>
+    </main>
   );
 }
 
 const KAHOOT_OPTION_STYLES = [
   {
-    bg: 'bg-red-500',
-    hover: 'hover:bg-red-600',
-    text: 'text-white',
-    ring: 'ring-red-300',
-    bar: 'bg-white/40',
-    barFill: 'bg-white',
+    border: 'border-l-red-500',
+    accent: 'text-red-500',
+    accentBg: 'bg-red-50 dark:bg-red-950/40',
   },
   {
-    bg: 'bg-blue-600',
-    hover: 'hover:bg-blue-700',
-    text: 'text-white',
-    ring: 'ring-blue-300',
-    bar: 'bg-white/40',
-    barFill: 'bg-white',
+    border: 'border-l-blue-500',
+    accent: 'text-blue-500',
+    accentBg: 'bg-blue-50 dark:bg-blue-950/40',
   },
   {
-    bg: 'bg-amber-500',
-    hover: 'hover:bg-amber-600',
-    text: 'text-white',
-    ring: 'ring-amber-300',
-    bar: 'bg-white/40',
-    barFill: 'bg-white',
+    border: 'border-l-amber-500',
+    accent: 'text-amber-500',
+    accentBg: 'bg-amber-50 dark:bg-amber-950/40',
   },
   {
-    bg: 'bg-green-600',
-    hover: 'hover:bg-green-700',
-    text: 'text-white',
-    ring: 'ring-green-300',
-    bar: 'bg-white/40',
-    barFill: 'bg-white',
+    border: 'border-l-emerald-500',
+    accent: 'text-emerald-500',
+    accentBg: 'bg-emerald-50 dark:bg-emerald-950/40',
   },
 ] as const;
 
@@ -559,55 +671,75 @@ function AnswerTile({
   const width =
     totalAnswers === 0 ? 0 : Math.round((answerCount / totalAnswers) * 100);
   return (
-    <div
-      className={`min-h-24 p-4 shadow-lg transition-colors ${style.bg} ${style.text} ${revealed && option.isCorrect ? 'ring-4 ring-white' : ''} ${revealed && !option.isCorrect ? 'opacity-60' : ''}`}
+    <Card
+      className={cn(
+        'flex flex-col justify-between rounded-xl border border-slate-100 border-l-4 bg-card p-5 shadow-xs transition-all dark:border-border',
+        style.border,
+        revealed && option.isCorrect
+          ? 'bg-emerald-50/60 ring-2 ring-emerald-500 dark:bg-emerald-950/20'
+          : '',
+        revealed && !option.isCorrect ? 'opacity-50' : ''
+      )}
     >
-      <div className="flex items-center gap-3">
-        <span className="grid size-8 shrink-0 place-items-center">{shape}</span>
-        <span className="font-bold text-lg">{option.text}</span>
+      <div className="flex items-center gap-4">
+        <span
+          className={cn(
+            'grid size-12 shrink-0 place-items-center rounded-lg',
+            style.accentBg,
+            style.accent
+          )}
+        >
+          {shape}
+        </span>
+        <span className="font-bold text-base text-slate-800 sm:text-lg dark:text-foreground">
+          {option.text}
+        </span>
         {revealed && option.isCorrect ? (
-          <Check className="ml-auto size-6" aria-label="Correct answer" />
+          <Check
+            className="ml-auto size-6 text-emerald-600"
+            aria-label="Correct answer"
+          />
         ) : null}
       </div>
       {revealed ? (
         <div className="mt-4">
-          <div className={`h-2 overflow-hidden rounded-full ${style.bar}`}>
-            <div
-              className={`h-full rounded-full ${style.barFill}`}
-              style={{ width: `${width}%` }}
-            />
-          </div>
-          <p className="mt-2 text-right font-medium text-sm tabular-nums">
+          <Progress value={width} className="h-2" />
+          <p className="mt-2 text-right font-medium text-muted-foreground text-sm tabular-nums">
             {answerCount}
           </p>
         </div>
       ) : null}
-    </div>
+    </Card>
   );
 }
 
-function CountdownBadge({
-  copy,
-  deadlineAt,
-}: {
-  copy: GameQuizCopy;
-  deadlineAt?: string | null;
-}) {
+function CountdownBadge({ deadlineAt }: { deadlineAt?: string | null }) {
   const [now, setNow] = useState(() => Date.now());
+
   useEffect(() => {
     const interval = window.setInterval(() => setNow(Date.now()), 250);
     return () => window.clearInterval(interval);
   }, []);
+
   const seconds = deadlineAt
     ? Math.max(0, Math.ceil((new Date(deadlineAt).getTime() - now) / 1000))
     : 0;
+
   return (
-    <div className="grid size-17.5 place-items-center rounded-full border-4 border-background bg-foreground text-center shadow-lg dark:border-border dark:bg-card">
-      <Clock3 className="size-4" aria-hidden="true" />
-      <span className="font-semibold text-lg tabular-nums leading-none">
+    <div
+      className={cn(
+        'flex size-16 items-center justify-center rounded-full border-4 bg-card text-center shadow-md',
+        seconds <= 5 ? 'border-red-500' : 'border-primary'
+      )}
+    >
+      <span
+        className={cn(
+          'font-extrabold text-2xl tabular-nums',
+          seconds <= 5 ? 'text-red-500' : 'text-primary'
+        )}
+      >
         {seconds}
       </span>
-      <span className="sr-only">{copy.editor.seconds}</span>
     </div>
   );
 }
@@ -661,9 +793,23 @@ function HostPodium({
   session: GameSessionSnapshot;
 }) {
   return (
-    <main className="min-h-[calc(100vh-6rem)] bg-primary py-3 sm:py-6">
-      <GameQuizPodium copy={copy} session={session} title={copy.host.podium}>
-        <Button asChild disabled={isPending} variant="secondary">
+    <main className="min-h-[calc(100vh-6rem)] py-3 sm:py-6">
+      <GameQuizPodium
+        copy={copy}
+        session={session}
+        title={copy.host.congratulations}
+      >
+        <Button asChild className="rounded-full px-4 py-3">
+          <Link href={reportHref} target="_blank" rel="noreferrer">
+            {copy.host.viewFullLeaderboard}
+          </Link>
+        </Button>
+        <Button
+          asChild
+          disabled={isPending}
+          className="rounded-full bg-primary-foreground px-4 py-3"
+          variant="outline"
+        >
           <Link href={reportHref} target="_blank" rel="noreferrer">
             {isPending ? (
               <Loader2 className="animate-spin" data-icon="inline-start" />
@@ -673,34 +819,6 @@ function HostPodium({
         </Button>
       </GameQuizPodium>
     </main>
-  );
-}
-
-function SessionOverflow({
-  disabled,
-  label,
-  onSelect,
-}: {
-  disabled: boolean;
-  label: string;
-  onSelect: () => void;
-}) {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          aria-label={label}
-          disabled={disabled}
-          size="icon"
-          variant="ghost"
-        >
-          <Ellipsis className="size-5" aria-hidden="true" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onSelect={onSelect}>{label}</DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
   );
 }
 
