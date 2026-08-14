@@ -1,0 +1,28 @@
+#!/usr/bin/env sh
+
+set -eu
+
+hook_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+. "$hook_dir/lib/validate-conventional-commit.sh"
+
+zero_oid=0000000000000000000000000000000000000000
+
+while read -r old_oid new_oid ref_name; do
+  case "$ref_name" in
+    refs/heads/*) ;;
+    *) continue ;;
+  esac
+
+  # A zero new object ID represents a branch deletion.
+  [ "$new_oid" = "$zero_oid" ] && continue
+
+  if [ "$old_oid" = "$zero_oid" ]; then
+    commits=$(git rev-list "$new_oid")
+  else
+    commits=$(git rev-list "$old_oid..$new_oid")
+  fi
+
+  for commit in $commits; do
+    validate_conventional_commit "$commit"
+  done
+done
