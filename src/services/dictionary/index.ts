@@ -6,6 +6,8 @@ import {
   MWLearnersProvider,
 } from './providers';
 import {
+  type AutocompleteResult,
+  type AutocompleteSuggestion,
   type DictionaryEntry,
   type DictionaryMeaning,
   type DictionaryProvider,
@@ -13,7 +15,13 @@ import {
   DictionaryRateLimitError,
 } from './types';
 
-export type { DictionaryEntry, DictionaryMeaning, DictionaryProviderId };
+export type {
+  AutocompleteResult,
+  AutocompleteSuggestion,
+  DictionaryEntry,
+  DictionaryMeaning,
+  DictionaryProviderId,
+};
 export { DictionaryRateLimitError };
 
 /**
@@ -171,5 +179,86 @@ export class DictionaryService {
     } catch {
       return null;
     }
+  }
+
+  /**
+   * Fetch English-Vietnamese vocabulary autocomplete suggestions from Laban Dict API.
+   */
+  static async autocomplete(rawQuery: string): Promise<AutocompleteResult> {
+    const query = rawQuery.trim();
+    if (!query) {
+      return { query: '', suggestions: [] };
+    }
+
+    const targetUrl = `https://dict.laban.vn/ajax/autocomplete?type=1&site=dictionary&query=${encodeURIComponent(query)}`;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+    try {
+      const res = await fetch(targetUrl, {
+        method: 'GET',
+        headers: {
+          'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          Accept: 'application/json, text/javascript, */*; q=0.01',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        signal: controller.signal,
+        cache: 'no-store',
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!res.ok) {
+        throw new Error(
+          `Upstream dictionary provider returned status ${res.status}`
+        );
+      }
+
+      const rawData = (await res.json()) as {
+        query?: string;
+        suggestions?: Array<{
+          select: string;
+          link?: string;
+          data?: string;
+          value?: string;
+        }>;
+      };
+
+      const rawSuggestions = rawData.suggestions ?? [];
+
+      const suggestions: AutocompleteSuggestion[] = rawSuggestions.map(
+        (item) => ({
+          select: item.select,
+          link: item.link,
+          value: item.value,
+          phonetic: DictionaryService.parsePhonetic(item.data),
+          definition: DictionaryService.parseDefinition(item.data),
+          data: item.data,
+        })
+      );
+
+      return {
+        query: rawData.query || query,
+        suggestions,
+      };
+    } catch (error) {
+      clearTimeout(timeoutId);
+      throw error;
+    }
+  }
+
+  private static parsePhonetic(dataHtml?: string): string | undefined {
+    if (!dataHtml) return undefined;
+    const match = dataHtml.match(/\/([^/<>]+)\//);
+    return match ? `/${match[1].trim()}/` : undefined;
+  }
+
+  private static parseDefinition(dataHtml?: string): string | undefined {
+    if (!dataHtml) return undefined;
+    const match = dataHtml.match(/<p>(.*?)<\/p>/i);
+    if (!match) return undefined;
+    return match[1].replace(/<[^>]+>/g, '').trim();
   }
 }

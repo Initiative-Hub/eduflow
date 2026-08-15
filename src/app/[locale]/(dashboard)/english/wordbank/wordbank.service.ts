@@ -38,10 +38,29 @@ function buildWordbankParams(params: WordbankQueryParams = {}) {
   return queryParams;
 }
 
+export interface AutocompleteSuggestion {
+  select: string;
+  link?: string;
+  value?: string;
+  phonetic?: string;
+  definition?: string;
+  data?: string;
+}
+
+export interface AutocompleteResult {
+  query: string;
+  suggestions: AutocompleteSuggestion[];
+}
+
 export const wordbankApi = {
   list(params: WordbankQueryParams = {}) {
     return apiClient.get<SavedVocabularyListResult>('v1/english/wordbank', {
       params: buildWordbankParams(params),
+    });
+  },
+  autocomplete(query: string) {
+    return apiClient.get<AutocompleteResult>('v1/dictionary/autocomplete', {
+      params: { query },
     });
   },
   save(vocabulary: VocabularyItem[]) {

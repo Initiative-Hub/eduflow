@@ -34,3 +34,17 @@ export class DictionaryRateLimitError extends Error {
     this.name = 'DictionaryRateLimitError';
   }
 }
+
+export interface AutocompleteSuggestion {
+  select: string;
+  link?: string;
+  value?: string;
+  phonetic?: string;
+  definition?: string;
+  data?: string;
+}
+
+export interface AutocompleteResult {
+  query: string;
+  suggestions: AutocompleteSuggestion[];
+}

@@ -55,9 +55,8 @@ export function WordbankCard({
         <CardAction className="flex items-center gap-1">
           <button
             type="button"
-            onClick={() => item.audioUrl && playWordbankAudio(item.audioUrl)}
-            disabled={!item.audioUrl}
-            className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary transition-all hover:bg-primary hover:text-primary-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+            onClick={() => playWordbankAudio(item.audioUrl, item.word)}
+            className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary transition-all hover:bg-primary hover:text-primary-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
             aria-label={t('playPronunciation', { word: item.word })}
           >
             <Volume2 className="size-4" />

@@ -21,6 +21,7 @@ import {
   useCreateReviewSessionMutation,
   useCreateVocabularyListMutation,
   useRemoveVocabularyMutation,
+  useSaveVocabularyMutation,
   useUpdateVocabularyItemsMutation,
   useWordbankQuery,
   WORDBANK_QUERY_KEY,
@@ -29,6 +30,8 @@ import {
   useWordbankDisplayPreferences,
   type WordbankView,
 } from './use-wordbank-display-preferences';
+import type { AutocompleteSuggestion } from './wordbank.service';
+import { WordbankAutocompleteSearch } from './wordbank-autocomplete-search';
 import {
   BulkActionBar,
   CreateWordListDialog,
@@ -87,6 +90,32 @@ export function WordbankClient() {
   const updateItemsMutation = useUpdateVocabularyItemsMutation();
   const createListMutation = useCreateVocabularyListMutation();
   const createReviewSessionMutation = useCreateReviewSessionMutation();
+  const saveVocabularyMutation = useSaveVocabularyMutation();
+
+  const handleSaveNewVocab = (suggestion: AutocompleteSuggestion) => {
+    const word = suggestion.select;
+    saveVocabularyMutation.mutate(
+      [
+        {
+          word,
+          partOfSpeech: 'vocabulary',
+          ipa: suggestion.phonetic ?? null,
+          audioUrl: null,
+          englishDefinition: word,
+          vietnameseTranslation: suggestion.definition || word,
+          exampleSentence: `Example sentence for "${word}".`,
+        },
+      ],
+      {
+        onSuccess: () => {
+          toast.success(t('addWordSuccessToast', { word }));
+        },
+        onError: () => {
+          toast.error(t('addWordFailedToast', { word }));
+        },
+      }
+    );
+  };
 
   const items = wordbankQuery.data?.items ?? [];
   const selectedItems = useMemo(
@@ -317,7 +346,17 @@ export function WordbankClient() {
         onGenerateReview={handleGenerateReview}
         t={t}
       />
-
+      <div className="flex flex-col gap-2 rounded-2xl border border-primary/20 bg-primary/5 p-4 shadow-xs backdrop-blur">
+        <div className="flex items-center gap-2 font-semibold text-primary text-sm">
+          <span>{t('searchNewVocabLabel')}</span>
+        </div>
+        <WordbankAutocompleteSearch
+          onSelectSuggestion={handleSaveNewVocab}
+          placeholder={t('searchNewVocabPlaceholder')}
+          ariaLabel={t('searchNewVocabLabel')}
+          isSaving={saveVocabularyMutation.isPending}
+        />
+      </div>
       {wordbankQuery.isLoading ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 6 }, (_, index) => (
