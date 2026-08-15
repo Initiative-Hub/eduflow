@@ -481,26 +481,30 @@ function TemplateStyleSelect({
           '#3b82f6',
         ];
 
-  const defaultCollections = collections.filter(
-    (c) =>
-      c.name !== 'starter' &&
-      c.name !== 'default' &&
-      isDefaultTemplateCollection(c.name, c.is_custom)
+  const defaultCollections = useMemo(
+    () =>
+      collections.filter(
+        (c) =>
+          c.name !== 'starter' &&
+          c.name !== 'default' &&
+          isDefaultTemplateCollection(c.name, c.is_custom)
+      ),
+    [collections]
   );
 
-  // Prefetch previews for all default collections in parallel when the dropdown opens
+  // Prefetch previews for all default collections when the dropdown opens
   useEffect(() => {
-    if (isOpen) {
-      for (const col of defaultCollections) {
-        queryClient.prefetchQuery({
-          queryKey: ['slide-template-previews', col.name],
-          queryFn: () => slideService.getTemplatePreviews(col.name),
-          staleTime: 1000 * 60 * 30,
-        });
-      }
+    if (!isOpen) return;
+
+    for (const col of defaultCollections) {
+      queryClient.prefetchQuery({
+        queryKey: ['slide-template-previews', col.name],
+        queryFn: () => slideService.getTemplatePreviews(col.name),
+        staleTime: 1000 * 60 * 30,
+        gcTime: 1000 * 60 * 60,
+      });
     }
   }, [isOpen, defaultCollections, queryClient]);
-
   const isSelectedCustom =
     value &&
     value !== 'auto' &&
