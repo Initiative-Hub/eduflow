@@ -134,8 +134,12 @@ describe('GameQuizHostClient', () => {
     expect(endGameButton).toBeInTheDocument();
     await user.click(endGameButton);
 
-    expect(await screen.findByText('host.endGameConfirmTitle')).toBeInTheDocument();
-    const confirmButtons = screen.getAllByRole('button', { name: 'host.endGame' });
+    expect(
+      await screen.findByText('host.endGameConfirmTitle')
+    ).toBeInTheDocument();
+    const confirmButtons = screen.getAllByRole('button', {
+      name: 'host.endGame',
+    });
     const confirmButton = confirmButtons[confirmButtons.length - 1];
     expect(confirmButton).toBeInTheDocument();
     await user.click(confirmButton!);
