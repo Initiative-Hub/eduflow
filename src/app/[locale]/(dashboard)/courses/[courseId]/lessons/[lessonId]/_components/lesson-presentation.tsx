@@ -593,7 +593,7 @@ function TemplateStyleSelect({
           </div>
 
           {/* Right Column: Attached Live Preview Panel */}
-          <div className="flex w-68 shrink-0 flex-col gap-2.5 rounded-xl border border-border/60 bg-muted/40 p-3">
+          <div className="flex w-[17rem] shrink-0 flex-col gap-2.5 rounded-xl border border-border/60 bg-muted/40 p-3">
             {activeStyle === 'auto' ? (
               <div className="flex flex-1 flex-col items-center justify-center p-3 text-center">
                 <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
