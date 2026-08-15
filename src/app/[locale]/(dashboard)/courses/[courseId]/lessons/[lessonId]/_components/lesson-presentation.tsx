@@ -532,7 +532,7 @@ function TemplateStyleSelect({
         position="popper"
         align="start"
         sideOffset={4}
-        className="!w-[560px] z-50 max-h-84 max-w-[92vw] overflow-hidden rounded-2xl border-border bg-popover/95 p-2 text-popover-foreground shadow-2xl backdrop-blur-xl"
+        className="!w-[560px] z-50 max-h-[21rem] max-w-[92vw] overflow-hidden rounded-2xl border-border bg-popover/95 p-2 text-popover-foreground shadow-2xl backdrop-blur-xl"
         onMouseLeave={() => setHoveredStyle(null)}
       >
         <div className="flex h-full w-full gap-2.5 p-1">
