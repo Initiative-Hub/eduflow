@@ -36,10 +36,10 @@ while read -r old_oid new_oid ref_name; do
   if [ "$old_oid" = "$zero_oid" ]; then
     # For a new branch, only inspect commits not reachable from another local
     # branch in the receiving repository.
-    commits=$(git rev-list "$new_oid" --not --branches)
+    commits=$(git rev-list "$new_oid" --not --branches --no-merges)
   else
     # For an existing branch, inspect only the commits introduced by this push.
-    commits=$(git rev-list "$old_oid..$new_oid")
+    commits=$(git rev-list "$old_oid..$new_oid" --not --branches --no-merges)
   fi
 
   for commit in $commits; do
