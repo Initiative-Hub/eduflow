@@ -43,48 +43,160 @@ function rotateCorrectAnswerAwayFromFirst(
   return [...options.slice(shift), ...options.slice(0, shift)];
 }
 
+function getMeaningText(item: SavedVocabularyItem): string {
+  const eng = item.englishDefinition?.trim();
+  const vn = item.vietnameseTranslation?.trim();
+  if (eng && eng.toLowerCase() !== item.word.toLowerCase() && vn) {
+    return `${vn} (${eng})`;
+  }
+  return vn || eng || item.word;
+}
+
+function getExampleText(item: SavedVocabularyItem): string | null {
+  if (
+    item.exampleSentence &&
+    !item.exampleSentence.startsWith('Example sentence for')
+  ) {
+    return item.exampleSentence;
+  }
+  if (item.examples && item.examples.length > 0) {
+    return item.examples[0];
+  }
+  return null;
+}
+
 function buildReviewQuiz(items: SavedVocabularyItem[]): {
   quiz: QuizContent;
   wordMap: ReviewWordMapItem[];
 } {
   const questions: MultipleChoiceQuestion[] = items.map((item, index) => {
+    const rawExample = getExampleText(item);
+    const hasValidExample = Boolean(rawExample && rawExample.trim().length > 5);
+
+    // Alternate question types: If item has an example, alternate between Example test and Meaning test
+    const testExample = hasValidExample && index % 2 === 1;
+
+    if (testExample && rawExample) {
+      const wordRegex = new RegExp(`\\b${item.word}\\b`, 'gi');
+      const containsWord = wordRegex.test(rawExample);
+
+      if (containsWord) {
+        // Masked fill-in-the-blank example question
+        const maskedPrompt = rawExample.replace(wordRegex, '_____');
+        const distractors = items
+          .filter((candidate) => candidate.id !== item.id)
+          .map((candidate) => candidate.word)
+          .filter(Boolean)
+          .slice(0, 3);
+
+        const fallbackWords = [
+          'acquire',
+          'comprehend',
+          'express',
+          'demonstrate',
+        ];
+        const options = rotateCorrectAnswerAwayFromFirst(
+          [
+            { text: item.word, isCorrect: true },
+            ...[...distractors, ...fallbackWords].map((text) => ({
+              text,
+              isCorrect: false,
+            })),
+          ].slice(0, 4),
+          `${item.word}:ex:${index}`
+        );
+
+        return {
+          type: 'multiple_choice',
+          prompt: `Complete the example sentence: "${maskedPrompt}"`,
+          options: options.map((option, optionIndex) => ({
+            id: `q${index + 1}-option-${optionIndex + 1}`,
+            text: option.text,
+            isCorrect: option.isCorrect,
+          })),
+          explanation: `${item.word}\nMeaning: ${item.vietnameseTranslation}\nExample: "${rawExample}"`,
+        };
+      }
+
+      // Match example sentence question
+      const distractors = items
+        .filter((candidate) => candidate.id !== item.id)
+        .map(
+          (candidate) => getExampleText(candidate) || getMeaningText(candidate)
+        )
+        .filter(Boolean)
+        .slice(0, 3);
+
+      const fallbackExamples = [
+        'She practiced speaking English every morning.',
+        'They completed the assignment before the deadline.',
+        'The teacher explained the concept with clarity.',
+      ];
+
+      const options = rotateCorrectAnswerAwayFromFirst(
+        [
+          { text: rawExample, isCorrect: true },
+          ...[...distractors, ...fallbackExamples].map((text) => ({
+            text,
+            isCorrect: false,
+          })),
+        ].slice(0, 4),
+        `${item.word}:exmatch:${index}`
+      );
+
+      return {
+        type: 'multiple_choice',
+        prompt: `Which example sentence matches "${item.word}"?`,
+        options: options.map((option, optionIndex) => ({
+          id: `q${index + 1}-option-${optionIndex + 1}`,
+          text: option.text,
+          isCorrect: option.isCorrect,
+        })),
+        explanation: `${item.word}\nMeaning: ${item.vietnameseTranslation}\nExample: "${rawExample}"`,
+      };
+    }
+
+    // Default Question Type: Meaning / Translation test
+    const itemMeaning = getMeaningText(item);
     const distractors = items
       .filter((candidate) => candidate.id !== item.id)
-      .map((candidate) => candidate.englishDefinition)
-      .filter(Boolean)
+      .map((candidate) => getMeaningText(candidate))
+      .filter((text) => Boolean(text) && text !== itemMeaning)
       .slice(0, 3);
-    const fallbackDistractors = [
-      'A grammar marker used to connect sentence parts.',
-      'A short expression used only in casual conversation.',
-      'A punctuation rule for separating independent clauses.',
+
+    const fallbackMeanings = [
+      'Một quy tắc ngữ pháp trong tiếng Anh',
+      'Từ chỉ hành động hoặc trạng thái',
+      'Cụm từ dùng trong giao tiếp hằng ngày',
     ];
+
     const options = rotateCorrectAnswerAwayFromFirst(
       [
-        { text: item.englishDefinition, isCorrect: true },
-        ...[...distractors, ...fallbackDistractors].map((text) => ({
+        { text: itemMeaning, isCorrect: true },
+        ...[...distractors, ...fallbackMeanings].map((text) => ({
           text,
           isCorrect: false,
         })),
       ].slice(0, 4),
-      `${item.word}:${index}`
+      `${item.word}:meaning:${index}`
     );
 
     return {
       type: 'multiple_choice',
-      prompt: `Which definition matches "${item.word}"?`,
+      prompt: `Which meaning matches "${item.word}"?`,
       options: options.map((option, optionIndex) => ({
         id: `q${index + 1}-option-${optionIndex + 1}`,
         text: option.text,
         isCorrect: option.isCorrect,
       })),
-      explanation: `${item.word}\n${item.vietnameseTranslation}\n${item.englishDefinition}`,
+      explanation: `${item.word} (${item.ipa ?? ''})\nNghĩa: ${item.vietnameseTranslation}\n${item.englishDefinition}`,
     };
   });
 
   return {
     quiz: {
       title: 'Wordbank Review',
-      description: 'Review due words from your Wordbank.',
+      description: 'Review due words and example sentences from your Wordbank.',
       type: 'multiple_choice',
       questions,
     },
