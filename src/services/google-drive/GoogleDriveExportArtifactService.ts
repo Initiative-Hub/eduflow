@@ -1,7 +1,6 @@
 import { getCoursePermissions } from '@/lib/permissions/course-permission';
 import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
 import { prisma } from '@/lib/prisma';
-import { STORAGE_MAX_FILE_SIZE_BYTES } from '@/lib/storage/file-storage';
 import type { GoogleDriveExportSource } from '@/lib/validations/google-drive-export.schema';
 import {
   savedVocabularyListInclude,

@@ -19,7 +19,6 @@ export const GET = withAuth(async (req, session) => {
       redirectUri: getGoogleDriveRedirectUri(req),
       state: state.nonce,
     });
-    console.log('authorizationUrl', authorizationUrl);
     const response = NextResponse.redirect(authorizationUrl);
 
     response.cookies.set(GOOGLE_DRIVE_OAUTH_STATE_COOKIE, state.cookieValue, {
