@@ -49,7 +49,6 @@ model User {
   gameQuizzesOwned       GameQuiz[]              @relation("GameQuizOwner")
   gameSessionsHosted     GameSession[]           @relation("GameSessionHost")
   gameParticipants       GameParticipant[]
-  gameSessionContexts    GameSessionContext[]
 
   assignmentsCreated          Assignment[]           @relation("AssignmentCreatedBy")
   assignmentSubmissions       AssignmentSubmission[] @relation("AssignmentStudent")
@@ -637,15 +636,8 @@ enum GameSessionPhase {
   @@map("game_session_phase")
 }
 
-enum GameSessionContextAudience {
-  HOST        @map("host")
-  PARTICIPANT @map("participant")
-
-  @@map("game_session_context_audience")
-}
-
 enum GameSessionCloseReason {
-  HOST_LEFT    @map("host_left")
+  HOST_LEFT     @map("host_left")
   VIEWED_REPORT @map("viewed_report")
 
   @@map("game_session_close_reason")
@@ -724,57 +716,35 @@ model GameSession {
   hostId     String   @map("host_id")
   host       User     @relation("GameSessionHost", fields: [hostId], references: [id], onDelete: Restrict)
 
-  templateKey            GameQuizTemplateKey @map("template_key")
-  gameQuizRevision       Int                 @map("game_quiz_revision")
+  templateKey            GameQuizTemplateKey     @map("template_key")
+  gameQuizRevision       Int                     @map("game_quiz_revision")
   title                  String
   topic                  String?
   difficulty             String?
-  randomizeQuestionOrder Boolean             @map("randomize_question_order")
-  randomizeAnswerOrder   Boolean             @map("randomize_answer_order")
-  joinCode               String              @map("join_code")
-  realtimeKey            String              @unique @default(cuid()) @map("realtime_key")
-  joiningLocked          Boolean             @default(false) @map("joining_locked")
-  phase                  GameSessionPhase    @default(LOBBY)
-  currentRoundIndex      Int?                @map("current_round_index")
-  stateVersion           Int                 @default(1) @map("state_version")
-  startedAt              DateTime?           @map("started_at")
-  endedAt                DateTime?           @map("ended_at")
-  lastHostSeenAt         DateTime?           @map("last_host_seen_at")
+  randomizeQuestionOrder Boolean                 @map("randomize_question_order")
+  randomizeAnswerOrder   Boolean                 @map("randomize_answer_order")
+  joinCode               String                  @map("join_code")
+  realtimeKey            String                  @unique @default(cuid()) @map("realtime_key")
+  joiningLocked          Boolean                 @default(false) @map("joining_locked")
+  phase                  GameSessionPhase        @default(LOBBY)
+  currentRoundIndex      Int?                    @map("current_round_index")
+  stateVersion           Int                     @default(1) @map("state_version")
+  startedAt              DateTime?               @map("started_at")
+  endedAt                DateTime?               @map("ended_at")
+  lastHostSeenAt         DateTime?               @map("last_host_seen_at")
   closedReason           GameSessionCloseReason? @map("closed_reason")
-  joinCodeReleasedAt     DateTime?           @map("join_code_released_at")
-  createdAt              DateTime            @default(now()) @map("created_at")
-  updatedAt              DateTime            @updatedAt @map("updated_at")
+  joinCodeReleasedAt     DateTime?               @map("join_code_released_at")
+  createdAt              DateTime                @default(now()) @map("created_at")
+  updatedAt              DateTime                @updatedAt @map("updated_at")
 
   rounds       GameRound[]
   participants GameParticipant[]
   answers      GameAnswer[]
-  contexts     GameSessionContext[]
 
   @@index([gameQuizId, createdAt(sort: Desc)], map: "game_session_game_quiz_id_created_at_idx")
   @@index([hostId, createdAt(sort: Desc)], map: "game_session_host_id_created_at_idx")
   @@index([phase, createdAt(sort: Desc)], map: "game_session_phase_created_at_idx")
   @@map("game_session")
-}
-
-model GameSessionContext {
-  id            String                     @id @default(uuid())
-  tokenHash     String                     @unique @map("token_hash")
-  sessionId     String                     @map("session_id")
-  session       GameSession                @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  userId        String                     @map("user_id")
-  user          User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  audience      GameSessionContextAudience
-  participantId String?                    @map("participant_id")
-  participant   GameParticipant?           @relation("GameSessionContextParticipant", fields: [participantId], references: [id], onDelete: SetNull)
-  expiresAt     DateTime                   @map("expires_at")
-  revokedAt     DateTime?                  @map("revoked_at")
-  createdAt     DateTime                   @default(now()) @map("created_at")
-  updatedAt     DateTime                   @updatedAt @map("updated_at")
-
-  @@index([sessionId, audience, expiresAt], map: "game_session_context_session_id_audience_expires_at_idx")
-  @@index([userId, audience, expiresAt], map: "game_session_context_user_id_audience_expires_at_idx")
-  @@index([participantId], map: "game_session_context_participant_id_idx")
-  @@map("game_session_context")
 }
 
 model GameRound {
@@ -837,8 +807,7 @@ model GameParticipant {
   joinedAt    DateTime  @default(now()) @map("joined_at")
   lastSeenAt  DateTime? @map("last_seen_at")
 
-  answers  GameAnswer[]
-  contexts GameSessionContext[] @relation("GameSessionContextParticipant")
+  answers GameAnswer[]
 
   @@unique([sessionId, userId], map: "game_participant_session_id_user_id_key")
   @@unique([id, sessionId], map: "game_participant_id_session_id_key")

@@ -6,7 +6,6 @@ import {
   parseGameQuizBody,
   validationErrorResponse,
 } from '@/lib/game-quiz/http';
-import { issueLiveGameContext } from '@/lib/game-quiz/live-game-context';
 import {
   createGameSessionSchema,
   gameQuizIdParamsSchema,
@@ -68,14 +67,8 @@ export const POST = withRoles(
         phase: created.session.phase,
         stateVersion: created.session.stateVersion,
       });
-      const actor = gameActorFromSession(session);
-      const context = await issueLiveGameContext({
-        actor,
-        audience: 'HOST',
-        sessionId: created.sessionId,
-      });
       return NextResponse.json(
-        { context, session: created.session },
+        { sessionId: created.sessionId, session: created.session },
         { status: 201 }
       );
     } catch (error) {
