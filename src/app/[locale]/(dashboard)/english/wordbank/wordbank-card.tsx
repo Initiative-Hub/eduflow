@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Loader2, Plus, Sparkles, Volume2, X } from 'lucide-react';
+import { Loader2, Mic, Plus, Sparkles, Volume2, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,6 +21,7 @@ import {
   type WordbankListUpdate,
 } from './wordbank-list-manager';
 import { MasteryBadge, type WordbankTranslator } from './wordbank-mastery';
+import { WordbankPronunciationModal } from './wordbank-pronunciation-modal';
 
 export function WordbankCard({
   item,
@@ -48,6 +49,7 @@ export function WordbankCard({
   t: WordbankTranslator;
 }) {
   const [exampleDialogOpen, setExampleDialogOpen] = useState(false);
+  const [pronunciationModalOpen, setPronunciationModalOpen] = useState(false);
   const itemListIds = new Set(item.lists.map((list) => list.id));
 
   return (
@@ -160,6 +162,18 @@ export function WordbankCard({
               <Sparkles className="size-3 text-primary" />
               <span>Examples</span>
             </Button>
+
+            {/* Pronunciation Practice Button (reference UI) */}
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() => setPronunciationModalOpen(true)}
+              className="h-8 rounded-lg text-xs gap-1 bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground font-medium"
+            >
+              <Mic className="size-3.5" />
+              <span>Practice</span>
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -172,6 +186,13 @@ export function WordbankCard({
         onUpdateExample={(exampleSentence, examples) => {
           onUpdateExample?.(item.id, exampleSentence, examples);
         }}
+        t={t}
+      />
+
+      <WordbankPronunciationModal
+        open={pronunciationModalOpen}
+        onOpenChange={setPronunciationModalOpen}
+        item={item}
         t={t}
       />
     </>

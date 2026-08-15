@@ -62,6 +62,15 @@ export interface CrawledExamplesResult {
   examples: WordExample[];
 }
 
+export interface PronunciationAssessmentResult {
+  transcript: string;
+  targetText: string;
+  score: number;
+  matchedWords: string[];
+  missingWords: string[];
+  feedback: string;
+}
+
 export const wordbankApi = {
   list(params: WordbankQueryParams = {}) {
     return apiClient.get<SavedVocabularyListResult>('v1/english/wordbank', {
@@ -77,6 +86,19 @@ export const wordbankApi = {
     return apiClient.get<CrawledExamplesResult>('v1/dictionary/examples', {
       params: { word },
     });
+  },
+  assessPronunciation(audioBlob: Blob, targetText: string) {
+    const formData = new FormData();
+    formData.append('audio', audioBlob, 'recording.webm');
+    formData.append('targetText', targetText);
+
+    return apiClient.post<PronunciationAssessmentResult>(
+      'v1/english/pronunciation/assess',
+      formData,
+      {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      }
+    );
   },
   save(vocabulary: VocabularyItem[]) {
     return apiClient.post<SaveVocabularyResult>('v1/english/wordbank', {
