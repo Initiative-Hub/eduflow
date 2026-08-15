@@ -8,6 +8,7 @@ import {
   ClipboardList,
   Cloud,
   Files,
+  Gamepad2,
   GraduationCap,
   Languages,
   LineChart,
@@ -113,6 +114,12 @@ export function getAssistantNavItems(
       url: '/study',
       icon: <BookOpen className={sidebarIconClassName} />,
       isActive: (pathname) => isPrefixMatch(pathname, '/study'),
+    },
+    {
+      name: t('interactiveGames'),
+      url: '/games',
+      icon: <Gamepad2 className={sidebarIconClassName} />,
+      isActive: (pathname) => isPrefixMatch(pathname, '/games'),
     },
   ];
 }

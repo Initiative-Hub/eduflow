@@ -59,6 +59,10 @@ import {
   type SlideCanvasAiControls,
 } from './slide-canvas-ai-controls';
 import { SlideItemEditor } from './slide-item-editor';
+import {
+  formatCollectionLabel,
+  TemplateStyleSelect,
+} from './template-style-select';
 import { TemplateManagerDialog } from './template-manager-dialog';
 import {
   getEditableSlideTextElements,
@@ -2169,39 +2173,13 @@ export function LessonPresentation({
                     Manage Styles
                   </button>
                 </div>
-                <Select
+                <TemplateStyleSelect
                   value={selectedCollection}
                   onValueChange={setSelectedCollection}
-                >
-                  <SelectTrigger className="flex h-11 w-full justify-between rounded-xl border-input bg-muted/30 px-4 py-2.5 text-foreground text-sm">
-                    <SelectValue placeholder="System Default (Starter)" />
-                  </SelectTrigger>
-                  <SelectContent className="border-border bg-popover text-popover-foreground">
-                    <SelectItem
-                      className={selectItemHighlightClassName}
-                      value="auto"
-                    >
-                      ✨ Auto — AI picks from content
-                    </SelectItem>
-                    <SelectItem
-                      className={selectItemHighlightClassName}
-                      value="starter"
-                    >
-                      System Default (Starter)
-                    </SelectItem>
-                    {collections
-                      .filter((c) => c.name !== 'starter')
-                      .map((c) => (
-                        <SelectItem
-                          key={c.name}
-                          className={selectItemHighlightClassName}
-                          value={c.name}
-                        >
-                          {c.name === 'neon_dark' ? 'Neon Dark Theme' : c.name}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
+                  collections={collections}
+                  recommendedCollection={recommendedCollection}
+                  selectItemHighlightClassName={selectItemHighlightClassName}
+                />
               </div>
 
               <div>
@@ -2291,20 +2269,12 @@ export function LessonPresentation({
                   title={
                     selectedCollection === 'auto'
                       ? `Auto — AI picked${recommendedCollection ? `: ${recommendedCollection}` : ' (decided at planning)'}`
-                      : selectedCollection === 'starter'
-                        ? 'Default Starter'
-                        : selectedCollection === 'neon_dark'
-                          ? 'Neon Dark Theme'
-                          : selectedCollection
+                      : formatCollectionLabel(selectedCollection)
                   }
                 >
                   {selectedCollection === 'auto'
                     ? `✨ Auto${recommendedCollection ? ` → ${recommendedCollection}` : ''}`
-                    : selectedCollection === 'starter'
-                      ? 'Default Starter'
-                      : selectedCollection === 'neon_dark'
-                        ? 'Neon Dark Theme'
-                        : selectedCollection}
+                    : formatCollectionLabel(selectedCollection)}
                 </span>
               </div>
               <Button

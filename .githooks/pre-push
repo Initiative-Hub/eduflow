@@ -34,9 +34,12 @@ while read -r local_ref local_oid remote_ref remote_oid; do
   [ "$local_oid" = "$zero_oid" ] && continue
 
   if [ "$remote_oid" = "$zero_oid" ]; then
-    commits=$(git rev-list "$local_oid")
+    # For a new branch, only inspect commits that have not already been
+    # published to any configured remote-tracking branch.
+    commits=$(git rev-list "$local_oid" --not --remotes --no-merges)
   else
-    commits=$(git rev-list "$remote_oid..$local_oid")
+    # For an existing branch, inspect only the commits introduced by this push.
+    commits=$(git rev-list "$remote_oid..$local_oid" --not --remotes --no-merges)
   fi
 
   for commit in $commits; do
