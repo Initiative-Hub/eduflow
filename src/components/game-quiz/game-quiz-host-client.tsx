@@ -34,7 +34,6 @@ import { Progress } from '@/components/ui/progress';
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
@@ -314,38 +313,36 @@ function HostLobby({
         </p>
         <Card className="group relative border border-border/60 px-10 py-6 text-center shadow-lg transition-shadow hover:shadow-xl sm:px-16 sm:py-8">
           <div className="absolute top-3 right-3 flex items-center gap-1 opacity-0 transition-opacity duration-200 focus-within:opacity-100 group-hover:opacity-100">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    aria-label={copy.host.joinCode}
-                    onClick={copyCode}
-                    size="icon-sm"
-                    variant="ghost"
-                  >
-                    <Copy className="size-4" aria-hidden="true" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="top">
-                  <p>{copy.host.joinCode}</p>
-                </TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    aria-label={copy.host.copyLink}
-                    onClick={copyJoinLink}
-                    size="icon-sm"
-                    variant="ghost"
-                  >
-                    <LinkIcon className="size-4" aria-hidden="true" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="top">
-                  <p>{copy.host.copyLink}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  aria-label={copy.host.joinCode}
+                  onClick={copyCode}
+                  size="icon-sm"
+                  variant="ghost"
+                >
+                  <Copy className="size-4" aria-hidden="true" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                <p>{copy.host.joinCode}</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  aria-label={copy.host.copyLink}
+                  onClick={copyJoinLink}
+                  size="icon-sm"
+                  variant="ghost"
+                >
+                  <LinkIcon className="size-4" aria-hidden="true" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                <p>{copy.host.copyLink}</p>
+              </TooltipContent>
+            </Tooltip>
           </div>
 
           <span className="font-extrabold text-5xl tracking-widest sm:text-7xl">

@@ -17,6 +17,11 @@ import { useEffect, useState } from 'react';
 import { HorizontalRule } from '@/components/tiptap-node/horizontal-rule-node/horizontal-rule-node-extension';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { LessonAiReview } from '@/lib/lesson-ai-review';
 import {
   isTiptapDocumentEmpty,
@@ -172,8 +177,8 @@ export function LessonEditor({
 
   return (
     <EditorContext.Provider value={{ editor }}>
-      <div className="sticky top-14 z-30 -mx-6 flex min-h-16 items-center justify-between gap-4 border-foreground/20 border-b bg-background/95 px-6 py-3 backdrop-blur-sm md:-mx-10 md:px-10 lg:-mx-12 lg:px-12">
-        <div className="min-w-0 flex-1">
+      <div className="sticky top-14 z-30 -mx-6 flex min-h-16 items-center justify-between gap-4 border-foreground/20 border-b bg-background/95 px-6 py-3 backdrop-blur-sm md:-mx-10 md:px-10">
+        <div className="min-w-0 max-w-xs flex-1 sm:max-w-md md:max-w-lg lg:max-w-xl">
           {isEditing ? (
             <Input
               id="lesson-title"
@@ -184,9 +189,20 @@ export function LessonEditor({
               disabled={isUpdatingLesson}
             />
           ) : (
-            <h1 className="truncate font-bold text-xl tracking-tight md:text-2xl">
-              {title}
-            </h1>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <h1 className="cursor-default truncate font-bold text-xl tracking-tight md:text-2xl">
+                  {title}
+                </h1>
+              </TooltipTrigger>
+              <TooltipContent
+                side="bottom"
+                align="start"
+                className="wrap-break-word max-w-md"
+              >
+                {title}
+              </TooltipContent>
+            </Tooltip>
           )}
         </div>
 
@@ -244,7 +260,7 @@ export function LessonEditor({
       </div>
 
       {isEditing && (
-        <div className="lesson-toolbar-bar sticky top-30 z-20 -mx-6 border-foreground/20 border-b bg-background/95 px-6 py-2 backdrop-blur-sm md:-mx-10 md:px-10 lg:-mx-12 lg:px-12">
+        <div className="lesson-toolbar-bar sticky top-30 z-20 -mx-6 border-foreground/20 border-b bg-background/95 px-6 py-2 backdrop-blur-sm md:-mx-10 md:px-10">
           <LessonEditorToolbar
             lessonId={lessonId}
             canUseLessonAI={canUseLessonAI}
