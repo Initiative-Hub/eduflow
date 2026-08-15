@@ -15,6 +15,7 @@ import type { ChatProvider } from '@/services/ai/chat-provider.types';
 import { createChatTools } from '@/services/ai/chat-tools';
 import { CacheService } from '@/services/CacheService';
 import { ChatPersistenceService } from '@/services/ChatPersistenceService';
+import { UserAiPreferencesService } from '@/services/UserAiPreferencesService';
 import {
   hasChatFileParts,
   hydrateChatAttachmentDataUrls,
@@ -374,6 +375,8 @@ export async function POST(
     const providerName = parsedBody.data.provider ?? DEFAULT_PROVIDER;
     const provider = ChatProviderFactory.create(providerName);
     const systemPrompt = getAiChatSystemPrompt();
+    const customInstructions =
+      await UserAiPreferencesService.getCustomInstructions(userId);
     const chatTools = createChatTools(userId);
 
     const result = await provider.streamChat(
@@ -385,6 +388,7 @@ export async function POST(
       },
       {
         prompt: systemPrompt,
+        customInstructions,
         tools: chatTools,
         maxSteps: 5,
       }
