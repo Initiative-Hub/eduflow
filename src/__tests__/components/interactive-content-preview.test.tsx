@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import InteractiveContentPreview from '@/app/[locale]/(dashboard)/(ai)/study/_components/interactive-content-preview';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { createInteractiveContentInventoryFile } from '@/utils/study-interactive-content';
 
 vi.mock('next-intl', () => ({
@@ -18,12 +19,14 @@ const renderPreviewMarkup = (
 
   return renderToStaticMarkup(
     <QueryClientProvider client={queryClient}>
-      <InteractiveContentPreview
-        description="Arrange the stages"
-        html="<main>Water cycle activity</main>"
-        title="Water cycle"
-        {...props}
-      />
+      <TooltipProvider>
+        <InteractiveContentPreview
+          description="Arrange the stages"
+          html="<main>Water cycle activity</main>"
+          title="Water cycle"
+          {...props}
+        />
+      </TooltipProvider>
     </QueryClientProvider>
   );
 };

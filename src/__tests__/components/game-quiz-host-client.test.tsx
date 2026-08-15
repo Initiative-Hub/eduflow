@@ -7,6 +7,7 @@ import {
   activateLiveGameSession,
   readLiveGameSession,
 } from '@/components/game-quiz/live-game-session';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 const { replace } = vi.hoisted(() => ({ replace: vi.fn() }));
 
@@ -108,7 +109,9 @@ function renderHost() {
   });
   return render(
     <QueryClientProvider client={queryClient}>
-      <GameQuizHostClient gameQuizId="game-quiz-1" />
+      <TooltipProvider>
+        <GameQuizHostClient gameQuizId="game-quiz-1" />
+      </TooltipProvider>
     </QueryClientProvider>
   );
 }
