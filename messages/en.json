@@ -2908,6 +2908,7 @@
     "savedWordsStat": "{count, plural, =1 {1 saved} other {# saved}}",
     "addWordSuccessToast": "Saved '{word}' to Wordbank",
     "addWordFailedToast": "Could not save '{word}' to Wordbank",
+    "exampleUpdatedToast": "Updated example successfully",
     "savingToDrive": "Saving to Drive...",
     "searchLabel": "Search Wordbank",
     "searchNewVocabLabel": "Search & Learn New Vocabulary",

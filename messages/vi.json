@@ -2908,6 +2908,7 @@
     "savedWordsStat": "{count, plural, =1 {1 từ đã lưu} other {# từ đã lưu}}",
     "addWordSuccessToast": "Đã lưu '{word}' vào Wordbank",
     "addWordFailedToast": "Không thể lưu '{word}' vào Wordbank",
+    "exampleUpdatedToast": "Đã cập nhật ví dụ thành công",
     "savingToDrive": "Đang lưu vào Drive...",
     "searchLabel": "Tìm trong Wordbank",
     "searchNewVocabLabel": "Tìm & Học Từ Vựng Mới",

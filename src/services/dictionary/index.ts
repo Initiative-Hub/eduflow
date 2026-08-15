@@ -12,6 +12,7 @@ import {
   type DictionaryMeaning,
   type DictionaryProvider,
   type DictionaryProviderId,
+  type WordExample,
   DictionaryRateLimitError,
 } from './types';
 
@@ -21,6 +22,7 @@ export type {
   DictionaryEntry,
   DictionaryMeaning,
   DictionaryProviderId,
+  WordExample,
 };
 export { DictionaryRateLimitError };
 
@@ -260,5 +262,74 @@ export class DictionaryService {
     const match = dataHtml.match(/<p>(.*?)<\/p>/i);
     if (!match) return undefined;
     return match[1].replace(/<[^>]+>/g, '').trim();
+  }
+
+  /**
+   * Crawl Laban Dict web page (https://dict.laban.vn/find?type=1&query={word})
+   * to extract example sentences and Vietnamese translations.
+   */
+  static async fetchExamples(rawWord: string): Promise<WordExample[]> {
+    const word = rawWord.trim();
+    if (!word) return [];
+
+    const targetUrl = `https://dict.laban.vn/find?type=1&query=${encodeURIComponent(word)}`;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+    try {
+      const res = await fetch(targetUrl, {
+        method: 'GET',
+        headers: {
+          'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        },
+        signal: controller.signal,
+        cache: 'no-store',
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!res.ok) return [];
+
+      const html = await res.text();
+      const results: WordExample[] = [];
+
+      const blockRegex =
+        /<div\s+class="color-light-blue[^"]*">([\s\S]*?)<\/div>(?:\s*<div\s+class="margin25">([\s\S]*?)<\/div>)?/gi;
+
+      let match: RegExpExecArray | null;
+      const seen = new Set<string>();
+
+      while ((match = blockRegex.exec(html)) !== null) {
+        const rawEnglish = match[1] || '';
+        const rawVietnamese = match[2] || '';
+
+        const english = rawEnglish
+          .replace(/<[^>]+>/g, '')
+          .replace(/&nbsp;/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+
+        const vietnamese = rawVietnamese
+          .replace(/<[^>]+>/g, '')
+          .replace(/&nbsp;/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+
+        if (english && english.length > 2 && !seen.has(english.toLowerCase())) {
+          seen.add(english.toLowerCase());
+          results.push({ english, vietnamese });
+        }
+
+        if (results.length >= 10) break;
+      }
+
+      return results;
+    } catch {
+      clearTimeout(timeoutId);
+      return [];
+    }
   }
 }

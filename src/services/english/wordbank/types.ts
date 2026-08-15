@@ -86,6 +86,8 @@ export interface UpdateSavedVocabularyItemsInput {
   addListIds?: string[];
   removeListIds?: string[];
   masteryLevel?: number;
+  exampleSentence?: string;
+  examples?: string[];
 }
 
 export type UpdateSavedVocabularyItemsResult = Partial<

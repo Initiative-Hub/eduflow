@@ -48,3 +48,8 @@ export interface AutocompleteResult {
   query: string;
   suggestions: AutocompleteSuggestion[];
 }
+
+export interface WordExample {
+  english: string;
+  vietnamese: string;
+}

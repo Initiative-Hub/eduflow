@@ -52,6 +52,16 @@ export interface AutocompleteResult {
   suggestions: AutocompleteSuggestion[];
 }
 
+export interface WordExample {
+  english: string;
+  vietnamese: string;
+}
+
+export interface CrawledExamplesResult {
+  word: string;
+  examples: WordExample[];
+}
+
 export const wordbankApi = {
   list(params: WordbankQueryParams = {}) {
     return apiClient.get<SavedVocabularyListResult>('v1/english/wordbank', {
@@ -61,6 +71,11 @@ export const wordbankApi = {
   autocomplete(query: string) {
     return apiClient.get<AutocompleteResult>('v1/dictionary/autocomplete', {
       params: { query },
+    });
+  },
+  fetchExamples(word: string) {
+    return apiClient.get<CrawledExamplesResult>('v1/dictionary/examples', {
+      params: { word },
     });
   },
   save(vocabulary: VocabularyItem[]) {

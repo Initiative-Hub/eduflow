@@ -45,6 +45,7 @@ export const toSavedVocabularyItem = (item: {
   englishDefinition: string;
   vietnameseTranslation: string;
   exampleSentence: string;
+  examples?: string[];
   sourceSnippet: string | null;
   masteryLevel?: number;
   nextReviewAt?: Date;
@@ -65,6 +66,7 @@ export const toSavedVocabularyItem = (item: {
   englishDefinition: item.englishDefinition,
   vietnameseTranslation: item.vietnameseTranslation,
   exampleSentence: item.exampleSentence,
+  examples: item.examples ?? [],
   sourceSnippet: item.sourceSnippet,
   masteryLevel: item.masteryLevel ?? 0,
   nextReviewAt: (item.nextReviewAt ?? item.savedAt).toISOString(),

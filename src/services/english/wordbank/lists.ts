@@ -101,6 +101,14 @@ export async function updateSavedVocabularyItems(
     updateData.nextReviewAt = getNextReviewDate(masteryLevel);
   }
 
+  if (typeof input.exampleSentence === 'string') {
+    updateData.exampleSentence = input.exampleSentence.trim();
+  }
+
+  if (Array.isArray(input.examples)) {
+    updateData.examples = input.examples;
+  }
+
   const updateResult =
     Object.keys(updateData).length > 0
       ? await prisma.savedVocabulary.updateMany({

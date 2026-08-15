@@ -277,6 +277,25 @@ export function WordbankClient() {
     );
   }
 
+  const handleUpdateExamples = (
+    vocabularyId: string,
+    exampleSentence: string,
+    examples: string[]
+  ) => {
+    updateItemsMutation.mutate(
+      {
+        vocabularyIds: [vocabularyId],
+        exampleSentence,
+        examples,
+      },
+      {
+        onSuccess: () => {
+          toast.success(t('exampleUpdatedToast') || 'Example updated!');
+        },
+      }
+    );
+  };
+
   return (
     <div className="flex flex-col gap-6 pb-16">
       <header className="flex items-start gap-4">
@@ -378,6 +397,7 @@ export function WordbankClient() {
                 onUpdateLists={(vocabularyIds, update) =>
                   void handleUpdateLists(vocabularyIds, update)
                 }
+                onUpdateExample={handleUpdateExamples}
                 t={t}
               />
             ))}
