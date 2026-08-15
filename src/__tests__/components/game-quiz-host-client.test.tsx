@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { GameQuizHostClient } from '@/components/game-quiz/game-quiz-host-client';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ replace: vi.fn() }) }));
 vi.mock('react-confetti', () => ({ default: () => null }));
@@ -101,7 +102,9 @@ function renderHost() {
   });
   return render(
     <QueryClientProvider client={queryClient}>
-      <GameQuizHostClient gameQuizId="game-quiz-1" />
+      <TooltipProvider>
+        <GameQuizHostClient gameQuizId="game-quiz-1" />
+      </TooltipProvider>
     </QueryClientProvider>
   );
 }
