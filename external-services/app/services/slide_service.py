@@ -837,7 +837,11 @@ class SlideService:
             descriptions = await asyncio.gather(*tasks)
 
             return [
-                {"name": name, "description": desc}
+                {
+                    "name": name,
+                    "description": desc,
+                    "is_custom": name.lower() not in DEFAULT_COLLECTIONS,
+                }
                 for name, desc in zip(sorted(valid_collections), descriptions)
             ]
         except Exception as e:
