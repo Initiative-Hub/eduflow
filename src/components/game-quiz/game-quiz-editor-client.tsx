@@ -19,7 +19,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { gameQuizApi } from './api';
-import { activateLiveGameContext } from './live-game-context';
 import { type GameQuizCopy, gameQuizCopy } from './copy';
 import {
   createDraft,
@@ -27,6 +26,7 @@ import {
   isDraftValid,
   isGameQuizDraftDirty,
 } from './draft';
+import { activateLiveGameSession } from './live-game-session';
 import type { GameQuizDraft, GameQuizQuestion } from './types';
 
 interface GameQuizEditorClientProps {
@@ -71,47 +71,50 @@ export function GameQuizEditorClient({
     setLoadedId(gameQuizId);
   }
 
-  const saveMutation = useMutation({
-    mutationFn: async ({ shouldHost }: { shouldHost: boolean }) => {
-      if (shouldHost && gameQuizId && originalDraft?.revision) {
-        return {
-          game: null,
-          session: await gameQuizApi.createSession(
-            gameQuizId,
-            originalDraft.revision
-          ),
-        };
-      }
+  const showMutationError = (error: unknown) => {
+    const code =
+      error && typeof error === 'object' && 'code' in error
+        ? error.code
+        : undefined;
+    toast.error(
+      code === 'REVISION_CONFLICT' ? copy.editor.conflict : copy.common.error
+    );
+  };
 
-      const game = gameQuizId
-        ? await gameQuizApi.saveQuestions(gameQuizId, draft)
-        : await gameQuizApi.create(draft);
-      return { game, session: null };
+  const createMutation = useMutation({
+    mutationFn: () => gameQuizApi.create(draft),
+    onSuccess: (game) => {
+      queryClient.setQueryData(['game-quiz', game.id], game);
+      toast.success(copy.editor.saved);
+      router.replace(`/games/${game.id}/edit`);
     },
-    onSuccess: ({ game, session }) => {
-      if (game) {
-        const savedDraft = asDraft(game);
-        setDraft(savedDraft);
-        setOriginalDraft(asDraft(game));
-        queryClient.setQueryData(['game-quiz', game.id], game);
-        toast.success(copy.editor.saved);
-      }
-      if (session) {
-        activateLiveGameContext(session.context);
-        router.replace(`/games/${gameQuizId}/host`);
-        return;
-      }
-      if (!gameQuizId && game) router.replace(`/games/${game.id}/edit`);
+    onError: showMutationError,
+  });
+
+  const saveMutation = useMutation({
+    mutationFn: () => gameQuizApi.saveQuestions(gameQuizId!, draft),
+    onSuccess: (game) => {
+      const savedDraft = asDraft(game);
+      setDraft(savedDraft);
+      setOriginalDraft(savedDraft);
+      queryClient.setQueryData(['game-quiz', game.id], game);
+      toast.success(copy.editor.saved);
     },
-    onError: (error) => {
-      const code =
-        error && typeof error === 'object' && 'code' in error
-          ? error.code
-          : undefined;
-      toast.error(
-        code === 'REVISION_CONFLICT' ? copy.editor.conflict : copy.common.error
-      );
+    onError: showMutationError,
+  });
+
+  const hostMutation = useMutation({
+    mutationFn: (expectedRevision: number) =>
+      gameQuizApi.createSession(gameQuizId!, expectedRevision),
+    onSuccess: (session) => {
+      activateLiveGameSession({
+        audience: 'HOST',
+        sessionId: session.sessionId,
+        version: 2,
+      });
+      router.push(`/games/${gameQuizId}/host`);
     },
+    onError: showMutationError,
   });
 
   const activeQuestion = draft.questions[activeQuestionIndex];
@@ -226,7 +229,9 @@ export function GameQuizEditorClient({
           {gameQuizId ? (
             <>
               <Button
-                disabled={isDirty || saveMutation.isPending}
+                disabled={
+                  isDirty || saveMutation.isPending || hostMutation.isPending
+                }
                 onClick={() => router.push(`/games/${gameQuizId}/preview`)}
                 variant="outline"
               >
@@ -234,8 +239,13 @@ export function GameQuizEditorClient({
                 {copy.editor.preview}
               </Button>
               <Button
-                disabled={!valid || !isDirty || saveMutation.isPending}
-                onClick={() => saveMutation.mutate({ shouldHost: false })}
+                disabled={
+                  !valid ||
+                  !isDirty ||
+                  saveMutation.isPending ||
+                  hostMutation.isPending
+                }
+                onClick={() => saveMutation.mutate()}
               >
                 {saveMutation.isPending ? (
                   <Loader2 className="size-4 animate-spin" />
@@ -249,9 +259,14 @@ export function GameQuizEditorClient({
                   !valid ||
                   isDirty ||
                   !originalDraft?.revision ||
+                  hostMutation.isPending ||
                   saveMutation.isPending
                 }
-                onClick={() => saveMutation.mutate({ shouldHost: true })}
+                onClick={() => {
+                  if (originalDraft?.revision) {
+                    hostMutation.mutate(originalDraft.revision);
+                  }
+                }}
                 variant="secondary"
               >
                 {copy.editor.host}
@@ -259,10 +274,10 @@ export function GameQuizEditorClient({
             </>
           ) : (
             <Button
-              disabled={!valid || saveMutation.isPending}
-              onClick={() => saveMutation.mutate({ shouldHost: false })}
+              disabled={!valid || createMutation.isPending}
+              onClick={() => createMutation.mutate()}
             >
-              {saveMutation.isPending ? (
+              {createMutation.isPending ? (
                 <Loader2 className="size-4 animate-spin" />
               ) : (
                 <Plus className="size-4" />

@@ -7,7 +7,6 @@ import {
   validationErrorResponse,
 } from '@/lib/game-quiz/http';
 import { joinGameSessionSchema } from '@/lib/game-quiz/schemas';
-import { issueLiveGameContext } from '@/lib/game-quiz/live-game-context';
 import {
   emitGameQuizHostProgressEvent,
   emitGameQuizSharedEvent,
@@ -52,14 +51,6 @@ export const POST = withAuth(async (request, session) => {
         'Joined Game Session is not accessible to its participant.'
       );
     }
-    const actor = gameActorFromSession(session);
-    const participantId =
-      joined.audience === 'PARTICIPANT' ? joined.session.participant?.id : null;
-    if (!participantId) {
-      throw new Error(
-        'Joined Game Session is missing its participant context.'
-      );
-    }
     await Promise.all([
       emitGameQuizSharedEvent({
         sessionId: joined.sessionId,
@@ -73,13 +64,10 @@ export const POST = withAuth(async (request, session) => {
         kind: 'ROSTER_CHANGED',
       }),
     ]);
-    const context = await issueLiveGameContext({
-      actor,
-      audience: 'PARTICIPANT',
-      participantId,
+    return NextResponse.json({
       sessionId: joined.sessionId,
+      session: joined.session,
     });
-    return NextResponse.json({ context, session: joined.session });
   } catch (error) {
     return gameQuizExceptionResponse(error, 'Failed to join Game Session.');
   }

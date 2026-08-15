@@ -1,5 +1,4 @@
 import { apiClient } from '@/lib/api/api-client';
-import type { LiveGameContext } from './live-game-context';
 import type {
   GameParticipant,
   GameQuiz,
@@ -178,19 +177,8 @@ function toSession(value: unknown): GameSessionSnapshot {
   };
 }
 
-function toLiveGameContext(value: unknown): LiveGameContext {
-  const context = getRecord(value);
-  return {
-    audience: stringValue(context.audience) as LiveGameContext['audience'],
-    contextKey: stringValue(context.contextKey),
-    expiresAt: stringValue(context.expiresAt),
-    token: stringValue(context.token),
-    version: 1,
-  };
-}
-
-function liveGameConfig(context: LiveGameContext) {
-  return { headers: { 'X-Live-Game-Context': context.token } };
+function liveGameConfig(sessionId: string) {
+  return { headers: { 'X-Live-Game-Session': sessionId } };
 }
 
 function toQuizSettings(draft: GameQuizDraft) {
@@ -251,20 +239,20 @@ export const gameQuizApi = {
       })
     );
     return {
-      context: toLiveGameContext(response.context),
+      sessionId: stringValue(response.sessionId),
       session: toSession(response.session),
     };
   },
-  getHostSession: async (gameQuizId: string, context: LiveGameContext) =>
+  getHostSession: async (gameQuizId: string, sessionId: string) =>
     toSession(
       await apiClient.get<unknown>(
         `v1/game-quizzes/${gameQuizId}/live-game`,
-        liveGameConfig(context)
+        liveGameConfig(sessionId)
       )
     ),
-  getParticipantSession: async (context: LiveGameContext) =>
+  getParticipantSession: async (sessionId: string) =>
     toSession(
-      await apiClient.get<unknown>('v1/live-game', liveGameConfig(context))
+      await apiClient.get<unknown>('v1/live-game', liveGameConfig(sessionId))
     ),
   join: async (joinCode: string) => {
     const response = await apiClient.post<unknown>('v1/game-sessions/join', {
@@ -272,13 +260,13 @@ export const gameQuizApi = {
     });
     const record = getRecord(response);
     return {
-      context: toLiveGameContext(record.context),
+      sessionId: stringValue(record.sessionId),
       session: toSession(record.session),
     };
   },
   command: async (
     gameQuizId: string,
-    context: LiveGameContext,
+    sessionId: string,
     action: GameHostAction,
     expectedStateVersion: number,
     joiningLocked?: boolean
@@ -291,11 +279,11 @@ export const gameQuizApi = {
           expectedStateVersion,
           ...(action === 'SET_JOINING_LOCKED' ? { joiningLocked } : {}),
         },
-        liveGameConfig(context)
+        liveGameConfig(sessionId)
       )
     ),
   submitAnswer: async (
-    context: LiveGameContext,
+    sessionId: string,
     roundId: string,
     selectedOptionId: string,
     idempotencyKey: string
@@ -307,11 +295,11 @@ export const gameQuizApi = {
         selectedOptionId,
         idempotencyKey,
       },
-      liveGameConfig(context)
+      liveGameConfig(sessionId)
     ),
-  heartbeat: (context: LiveGameContext) =>
-    apiClient.post('v1/live-game/presence', {}, liveGameConfig(context)),
-  answerProgress: (gameQuizId: string, context: LiveGameContext) =>
+  heartbeat: (sessionId: string) =>
+    apiClient.post('v1/live-game/presence', {}, liveGameConfig(sessionId)),
+  answerProgress: (gameQuizId: string, sessionId: string) =>
     apiClient.get<{
       answerCount: number;
       participantCount: number;
@@ -320,25 +308,17 @@ export const gameQuizApi = {
       stateVersion: number;
     }>(
       `v1/game-quizzes/${gameQuizId}/live-game/answer-progress`,
-      liveGameConfig(context)
+      liveGameConfig(sessionId)
     ),
-  heartbeatHost: (gameQuizId: string, context: LiveGameContext) =>
+  heartbeatHost: (gameQuizId: string, sessionId: string) =>
     apiClient.post(
       `v1/game-quizzes/${gameQuizId}/live-game/heartbeat`,
       {},
-      liveGameConfig(context)
+      liveGameConfig(sessionId)
     ),
-  closeHostSession: (gameQuizId: string, context: LiveGameContext) =>
-    apiClient
-      .post<unknown>(
-        `v1/game-quizzes/${gameQuizId}/live-game/close`,
-        {},
-        liveGameConfig(context)
-      )
-      .then(toSession),
-  report: (gameQuizId: string, runKey: string) =>
+  report: (gameQuizId: string, sessionId: string) =>
     apiClient.get<GameQuizReport>(
-      `v1/game-quizzes/${gameQuizId}/live-game/report?run=${encodeURIComponent(runKey)}`
+      `v1/game-quizzes/${gameQuizId}/live-game/report?sessionId=${encodeURIComponent(sessionId)}`
     ),
 };
 
