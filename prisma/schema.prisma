@@ -57,6 +57,8 @@ model User {
   assignmentResultsReceived   AssignmentResult[]     @relation("AssignmentResultStudent")
   assignmentResultsPublished  AssignmentResult[]     @relation("AssignmentResultPublishedBy")
 
+  aiPreference UserAiPreference?
+
   @@map("user")
 }
 
@@ -645,7 +647,7 @@ enum GameSessionContextAudience {
 }
 
 enum GameSessionCloseReason {
-  HOST_LEFT    @map("host_left")
+  HOST_LEFT     @map("host_left")
   VIEWED_REPORT @map("viewed_report")
 
   @@map("game_session_close_reason")
@@ -724,26 +726,26 @@ model GameSession {
   hostId     String   @map("host_id")
   host       User     @relation("GameSessionHost", fields: [hostId], references: [id], onDelete: Restrict)
 
-  templateKey            GameQuizTemplateKey @map("template_key")
-  gameQuizRevision       Int                 @map("game_quiz_revision")
+  templateKey            GameQuizTemplateKey     @map("template_key")
+  gameQuizRevision       Int                     @map("game_quiz_revision")
   title                  String
   topic                  String?
   difficulty             String?
-  randomizeQuestionOrder Boolean             @map("randomize_question_order")
-  randomizeAnswerOrder   Boolean             @map("randomize_answer_order")
-  joinCode               String              @map("join_code")
-  realtimeKey            String              @unique @default(cuid()) @map("realtime_key")
-  joiningLocked          Boolean             @default(false) @map("joining_locked")
-  phase                  GameSessionPhase    @default(LOBBY)
-  currentRoundIndex      Int?                @map("current_round_index")
-  stateVersion           Int                 @default(1) @map("state_version")
-  startedAt              DateTime?           @map("started_at")
-  endedAt                DateTime?           @map("ended_at")
-  lastHostSeenAt         DateTime?           @map("last_host_seen_at")
+  randomizeQuestionOrder Boolean                 @map("randomize_question_order")
+  randomizeAnswerOrder   Boolean                 @map("randomize_answer_order")
+  joinCode               String                  @map("join_code")
+  realtimeKey            String                  @unique @default(cuid()) @map("realtime_key")
+  joiningLocked          Boolean                 @default(false) @map("joining_locked")
+  phase                  GameSessionPhase        @default(LOBBY)
+  currentRoundIndex      Int?                    @map("current_round_index")
+  stateVersion           Int                     @default(1) @map("state_version")
+  startedAt              DateTime?               @map("started_at")
+  endedAt                DateTime?               @map("ended_at")
+  lastHostSeenAt         DateTime?               @map("last_host_seen_at")
   closedReason           GameSessionCloseReason? @map("closed_reason")
-  joinCodeReleasedAt     DateTime?           @map("join_code_released_at")
-  createdAt              DateTime            @default(now()) @map("created_at")
-  updatedAt              DateTime            @updatedAt @map("updated_at")
+  joinCodeReleasedAt     DateTime?               @map("join_code_released_at")
+  createdAt              DateTime                @default(now()) @map("created_at")
+  updatedAt              DateTime                @updatedAt @map("updated_at")
 
   rounds       GameRound[]
   participants GameParticipant[]
@@ -1104,4 +1106,16 @@ model AssignmentSubmissionFile {
   @@unique([submissionId, fileId], map: "assignment_submission_file_submission_file_key")
   @@index([fileId])
   @@map("assignment_submission_file")
+}
+
+model UserAiPreference {
+  userId String @id @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  customInstructions String? @map("custom_instructions") @db.VarChar(2000)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("user_ai_preference")
 }
