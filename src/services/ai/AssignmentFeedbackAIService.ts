@@ -1,6 +1,7 @@
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { generateText, Output } from 'ai';
 import { z } from 'zod';
+import { composeAiInstructions } from './ai-instructions';
 import { DEFAULT_MODELS } from './chat-provider.constants';
 
 export type FeedbackTone = 'constructive' | 'concise' | 'encouraging';
@@ -9,6 +10,7 @@ type RewriteFeedbackInput = {
   assignmentTitle: string;
   draftFeedback: string;
   tone: FeedbackTone;
+  customInstructions?: string | null;
 };
 
 const feedbackOutputSchema = z.object({
@@ -48,7 +50,10 @@ export class AssignmentFeedbackAIService {
       }),
       maxOutputTokens: 2_000,
       timeout: FEEDBACK_REWRITE_PROVIDER_TIMEOUT_MS,
-      instructions: INSTRUCTION,
+      instructions: composeAiInstructions({
+        featureInstructions: INSTRUCTION,
+        customInstructions: input.customInstructions,
+      }),
       prompt: JSON.stringify({
         assignmentTitle: input.assignmentTitle,
         draftFeedback: input.draftFeedback,
