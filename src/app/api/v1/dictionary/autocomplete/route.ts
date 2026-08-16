@@ -37,8 +37,8 @@ export async function GET(req: NextRequest) {
     const validation = autocompleteQuerySchema.safeParse({ query: rawQuery });
     if (!validation.success) {
       return NextResponse.json(
-        { query: rawQuery, suggestions: [] },
-        { status: 200 }
+        { message: 'Missing or empty query parameter', suggestions: [] },
+        { status: 400 }
       );
     }
 
