@@ -37,8 +37,8 @@ export async function GET(req: NextRequest) {
     const validation = querySchema.safeParse({ word: rawWord });
     if (!validation.success) {
       return NextResponse.json(
-        { word: rawWord, examples: [] },
-        { status: 200 }
+        { message: 'Missing or empty word parameter', word: rawWord, examples: [] },
+        { status: 400 }
       );
     }
 
