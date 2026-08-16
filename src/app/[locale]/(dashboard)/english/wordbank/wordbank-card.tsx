@@ -1,5 +1,5 @@
-import { useState } from 'react';
 import { Loader2, Mic, Plus, Sparkles, Volume2, X } from 'lucide-react';
+import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -54,11 +54,11 @@ export function WordbankCard({
 
   return (
     <>
-      <Card className="min-h-80 rounded-xl flex flex-col justify-between">
-        <div>
+      <Card className="flex h-[640px] flex-col justify-between overflow-hidden rounded-xl shadow-xs">
+        <div className="flex-1 overflow-y-auto pr-1">
           <CardHeader>
             <CardTitle className="flex flex-col gap-2">
-              <span className="wrap-break-word text-2xl text-primary font-bold">
+              <span className="wrap-break-word font-bold text-2xl text-primary">
                 {item.word}
               </span>
               <MasteryBadge level={item.masteryLevel} t={t} />
@@ -85,13 +85,13 @@ export function WordbankCard({
             </CardAction>
           </CardHeader>
 
-          <CardContent className="flex flex-col gap-4">
+          <CardContent className="flex flex-col gap-3">
             <p className="font-mono text-base text-muted-foreground">
               {item.ipa ?? t('missingIpa')}
             </p>
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-1.5">
               <PracticeReveal enabled={practiceMode} label={t('revealAnswer')}>
-                <p className="text-base text-foreground leading-relaxed">
+                <p className="font-medium text-base text-foreground leading-relaxed">
                   {item.englishDefinition}
                 </p>
               </PracticeReveal>
@@ -103,21 +103,26 @@ export function WordbankCard({
             </div>
 
             {/* Main Example Sentence */}
-            <blockquote className="mb-1 border-primary/30 border-l-2 pl-4 text-base text-muted-foreground leading-relaxed">
+            <blockquote className="border-primary/30 border-l-2 pl-3 text-muted-foreground text-sm leading-relaxed">
               &ldquo;{item.exampleSentence}&rdquo;
             </blockquote>
 
-            {/* Additional Stored Examples */}
+            {/* Additional Stored Examples (Scrollable Box) */}
             {item.examples && item.examples.length > 0 && (
-              <div className="flex flex-col gap-1.5 pt-1">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              <div className="flex flex-col gap-1 pt-1">
+                <span className="font-semibold text-[11px] text-muted-foreground uppercase tracking-wider">
                   More Examples:
                 </span>
-                {item.examples.map((ex, i) => (
-                  <p key={i} className="text-xs text-muted-foreground/90 italic pl-2 border-l border-border">
-                    {ex}
-                  </p>
-                ))}
+                <div className="flex max-h-64 flex-col gap-1.5 overflow-y-auto rounded-lg border border-border/50 bg-muted/20 p-2 pr-1">
+                  {item.examples.map((ex, i) => (
+                    <p
+                      key={i}
+                      className="border-primary/20 border-l-2 pl-2 text-muted-foreground/90 text-xs italic leading-relaxed"
+                    >
+                      {ex}
+                    </p>
+                  ))}
+                </div>
               </div>
             )}
           </CardContent>
@@ -157,7 +162,7 @@ export function WordbankCard({
               variant="outline"
               size="sm"
               onClick={() => setExampleDialogOpen(true)}
-              className="h-8 rounded-lg text-xs gap-1 border-primary/30 hover:bg-primary/10 hover:text-primary"
+              className="h-8 gap-1 rounded-lg border-primary/30 text-xs hover:bg-primary/10 hover:text-primary"
             >
               <Sparkles className="size-3 text-primary" />
               <span>Examples</span>
@@ -169,7 +174,7 @@ export function WordbankCard({
               variant="secondary"
               size="sm"
               onClick={() => setPronunciationModalOpen(true)}
-              className="h-8 rounded-lg text-xs gap-1 bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground font-medium"
+              className="h-8 gap-1 rounded-lg bg-primary/10 font-medium text-primary text-xs hover:bg-primary hover:text-primary-foreground"
             >
               <Mic className="size-3.5" />
               <span>Practice</span>
