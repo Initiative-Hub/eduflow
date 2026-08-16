@@ -20,7 +20,6 @@ import { Input } from '@/components/ui/input';
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { LessonAiReview } from '@/lib/lesson-ai-review';
@@ -190,22 +189,20 @@ export function LessonEditor({
               disabled={isUpdatingLesson}
             />
           ) : (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <h1 className="cursor-default truncate font-bold text-xl tracking-tight md:text-2xl">
-                    {title}
-                  </h1>
-                </TooltipTrigger>
-                <TooltipContent
-                  side="bottom"
-                  align="start"
-                  className="max-w-md break-words"
-                >
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <h1 className="cursor-default truncate font-bold text-xl tracking-tight md:text-2xl">
                   {title}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+                </h1>
+              </TooltipTrigger>
+              <TooltipContent
+                side="bottom"
+                align="start"
+                className="wrap-break-word max-w-md"
+              >
+                {title}
+              </TooltipContent>
+            </Tooltip>
           )}
         </div>
 

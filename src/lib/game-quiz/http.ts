@@ -1,12 +1,12 @@
 import * as z from 'zod';
 import { errorResponse } from '@/lib/api/error-response';
 import type { Session } from '@/lib/auth';
-import { isGameQuizError } from './errors';
-import {
-  resolveLiveGameContext,
-  type LiveGameAudience,
-} from './live-game-context';
+import { prisma } from '@/lib/prisma';
+import { gameQuizError, isGameQuizError } from './errors';
+import { requireGameSession, requireGameSessionHost } from './shared';
 import type { GameActor, GameActorRole } from './types';
+
+type LiveGameAudience = 'HOST' | 'PARTICIPANT';
 
 const gameActorRoles = new Set<GameActorRole>([
   'ADMIN',
@@ -26,7 +26,45 @@ export function gameActorFromSession(session: Session): GameActor {
   };
 }
 
-export async function resolveRequestLiveGameContext({
+export async function resolveLiveGameSession({
+  actor,
+  audience,
+  expectedGameQuizId,
+  sessionId,
+}: {
+  actor: GameActor;
+  audience: LiveGameAudience;
+  expectedGameQuizId?: string;
+  sessionId: string;
+}) {
+  const gameSession = await requireGameSession(prisma, sessionId);
+  if (expectedGameQuizId && gameSession.gameQuizId !== expectedGameQuizId) {
+    throw gameQuizError(
+      'GAME_SESSION_NOT_FOUND',
+      404,
+      'Game Session not found for this Game Quiz.'
+    );
+  }
+
+  if (audience === 'HOST') {
+    requireGameSessionHost(actor, gameSession);
+    return { participantId: null, sessionId: gameSession.id };
+  }
+
+  const participant = gameSession.participants.find(
+    (candidate) => candidate.userId === actor.userId
+  );
+  if (!participant) {
+    throw gameQuizError(
+      'FORBIDDEN',
+      403,
+      'Join this Game Session before accessing it.'
+    );
+  }
+  return { participantId: participant.id, sessionId: gameSession.id };
+}
+
+export async function resolveRequestLiveGameSession({
   audience,
   expectedGameQuizId,
   request,
@@ -37,11 +75,22 @@ export async function resolveRequestLiveGameContext({
   request: Request;
   session: Session;
 }) {
-  return resolveLiveGameContext({
+  const parsedSessionId = z
+    .uuid()
+    .safeParse(request.headers.get('x-live-game-session'));
+  if (!parsedSessionId.success) {
+    throw gameQuizError(
+      'GAME_SESSION_REQUIRED',
+      400,
+      'A live Game Session ID is required.'
+    );
+  }
+
+  return resolveLiveGameSession({
     actor: gameActorFromSession(session),
     audience,
     expectedGameQuizId,
-    token: request.headers.get('x-live-game-context'),
+    sessionId: parsedSessionId.data,
   });
 }
 

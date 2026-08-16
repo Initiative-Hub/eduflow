@@ -1,14 +1,10 @@
 import { IntegrationProvider } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
 import { GoogleDriveOAuthTokenService } from './GoogleDriveOAuthTokenService';
-import { fetchGoogleJson } from './google-drive-http';
 import {
   type GoogleDriveDestination,
-  type GoogleDriveFileMetadata,
   parseGoogleDriveDestination,
 } from './google-drive-types';
-
-const GOOGLE_DRIVE_FILES_URL = 'https://www.googleapis.com/drive/v3/files';
 
 export class GoogleDriveDestinationService {
   static async getStatus(userId: string) {
@@ -40,20 +36,20 @@ export class GoogleDriveDestinationService {
   }
 
   static async getExportContext(userId: string) {
-    const token =
-      await GoogleDriveOAuthTokenService.getAccessTokenDetails(userId);
-    if (!token.destination) {
+    const context =
+      await GoogleDriveOAuthTokenService.getAuthorizedContext(userId);
+    if (!context.destination) {
       throw new Error('Google Drive export destination is not configured.');
     }
-    return { accessToken: token.accessToken, destination: token.destination };
+    return { ...context, destination: context.destination };
   }
 
   static async setDestination(
     userId: string,
     input: { kind: 'my_drive' } | { folderId: string; kind: 'folder' }
   ): Promise<GoogleDriveDestination> {
-    const token =
-      await GoogleDriveOAuthTokenService.getAccessTokenDetails(userId);
+    const context =
+      await GoogleDriveOAuthTokenService.getAuthorizedContext(userId);
     let destination: GoogleDriveDestination;
     if (input.kind === 'my_drive') {
       destination = {
@@ -64,22 +60,23 @@ export class GoogleDriveDestinationService {
         webViewLink: 'https://drive.google.com/drive/my-drive',
       };
     } else {
-      const params = new URLSearchParams({
-        fields:
-          'id,name,mimeType,trashed,driveId,webViewLink,capabilities/canAddChildren',
-        supportsAllDrives: 'true',
-      });
-      let folder: GoogleDriveFileMetadata;
-      try {
-        folder = await fetchGoogleJson<GoogleDriveFileMetadata>(
-          `${GOOGLE_DRIVE_FILES_URL}/${encodeURIComponent(input.folderId)}?${params}`,
-          token.accessToken
-        );
-      } catch {
-        throw new Error('Google Drive destination is not a writable folder.');
-      }
+      const folder = await (async () => {
+        try {
+          return (
+            await context.drive.files.get({
+              fields:
+                'id,name,mimeType,trashed,driveId,webViewLink,capabilities/canAddChildren',
+              fileId: input.folderId,
+              supportsAllDrives: true,
+            })
+          ).data;
+        } catch {
+          throw new Error('Google Drive destination is not a writable folder.');
+        }
+      })();
       if (
         folder.mimeType !== 'application/vnd.google-apps.folder' ||
+        !folder.id ||
         folder.trashed ||
         folder.capabilities?.canAddChildren !== true
       ) {
@@ -95,7 +92,7 @@ export class GoogleDriveDestinationService {
     }
 
     await prisma.connectedIntegration.update({
-      data: { metadata: { ...token.metadata, destination } },
+      data: { metadata: { ...context.metadata, destination } },
       where: {
         userId_provider: { provider: IntegrationProvider.GOOGLE_DRIVE, userId },
       },

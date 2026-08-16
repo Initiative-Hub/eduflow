@@ -15,6 +15,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
+import { GoogleDrivePickerHost } from '@/components/google-drive-picker/google-drive-picker-host';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -81,7 +82,6 @@ export default function IntegrationsClient({
       connectRequired: t('googleDrive.pickerConnectRequired'),
       notConfigured: t('googleDrive.pickerUnavailable'),
       sessionChanged: t('googleDrive.pickerSessionChanged'),
-      stillLoading: t('googleDrive.pickerStillLoading'),
       tokenFailed: t('googleDrive.pickerTokenFailed'),
       unavailable: t('googleDrive.pickerUnavailable'),
     },
@@ -101,6 +101,9 @@ export default function IntegrationsClient({
     status?.destination?.name ?? t('googleDrive.noDestination');
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
+      {googleDrivePicker.pickerProps && (
+        <GoogleDrivePickerHost {...googleDrivePicker.pickerProps} />
+      )}
       <div className="space-y-1">
         <h1 className="font-heading font-semibold text-2xl">{t('title')}</h1>
         <p className="max-w-2xl text-muted-foreground text-sm">

@@ -4,7 +4,7 @@ import {
   gameActorFromSession,
   gameQuizExceptionResponse,
   parseGameQuizBody,
-  resolveRequestLiveGameContext,
+  resolveRequestLiveGameSession,
   validationErrorResponse,
 } from '@/lib/game-quiz/http';
 import {
@@ -20,9 +20,14 @@ type RouteContext = { params: Promise<{ gameQuizId: string }> };
  * @swagger
  * /api/v1/game-quizzes/{gameQuizId}/live-game/command:
  *   post:
- *     summary: Apply a host command to the context-selected live game
+ *     summary: Apply a host command to the selected live game
  *     security: [{ SessionCookie: [] }]
- *     responses: { 200: { description: Updated host snapshot }, 400: { description: Invalid request }, 401: { description: Unauthorized }, 403: { description: Forbidden }, 404: { description: Context unavailable }, 409: { description: State conflict } }
+ *     parameters:
+ *       - in: header
+ *         name: X-Live-Game-Session
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     responses: { 200: { description: Updated host snapshot }, 400: { description: Invalid request or live session ID }, 401: { description: Unauthorized }, 403: { description: Forbidden }, 404: { description: Game Session not found }, 409: { description: State conflict } }
  */
 export const POST = withRoles(
   ['TEACHER', 'ADMIN'],
@@ -37,7 +42,7 @@ export const POST = withRoles(
     if (!parsedBody.success)
       return validationErrorResponse(parsedBody.error, 'Invalid host command.');
     try {
-      const context = await resolveRequestLiveGameContext({
+      const liveSession = await resolveRequestLiveGameSession({
         audience: 'HOST',
         expectedGameQuizId: parsedParams.data.gameQuizId,
         request,
@@ -45,12 +50,12 @@ export const POST = withRoles(
       });
       const updated = await controlGameSession(
         gameActorFromSession(session),
-        context.sessionId,
+        liveSession.sessionId,
         parsedBody.data
       );
       await emitGameQuizSharedEvent({
         phase: updated.session.phase,
-        sessionId: context.sessionId,
+        sessionId: liveSession.sessionId,
         stateVersion: updated.session.stateVersion,
       });
       return NextResponse.json(updated);

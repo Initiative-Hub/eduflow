@@ -34,17 +34,17 @@ import { Progress } from '@/components/ui/progress';
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { type GameHostAction, gameQuizApi } from './api';
 import { type GameQuizCopy, gameQuizCopy } from './copy';
 import { GameQuizPodium } from './game-quiz-podium';
-import { clearLiveGameContext } from './live-game-context';
+import { clearLiveGameSession } from './live-game-session';
 import type { GameQuizOption, GameSessionSnapshot } from './types';
 import { useGameQuizRealtime } from './use-game-quiz-realtime';
-import { useLiveGameContext } from './use-live-game-context';
+import { useHostSessionLifecycle } from './use-host-session-lifecycle';
+import { useLiveGameSession } from './use-live-game-session';
 
 interface GameQuizHostClientProps {
   gameQuizId: string;
@@ -57,33 +57,28 @@ export function GameQuizHostClient({
 }: GameQuizHostClientProps) {
   const queryClient = useQueryClient();
   const router = useRouter();
-  const { context, isHydrated } = useLiveGameContext('HOST');
+  const { session: liveSession, isHydrated } = useLiveGameSession('HOST');
   const hasCheckedTabOwnership = useRef(false);
-  const hasHandledInitialNavigation = useRef(false);
   const [isSessionReady, setIsSessionReady] = useState(false);
-  const closeMutation = useMutation({
-    mutationFn: () => gameQuizApi.closeHostSession(gameQuizId, context!),
-    onSettled: () => {
-      clearLiveGameContext('HOST', context?.contextKey);
-      router.replace(`/games/${gameQuizId}/edit`);
-    },
-  });
+
   const sessionQuery = useQuery({
-    queryKey: ['live-game', 'host', context?.contextKey],
-    queryFn: () => gameQuizApi.getHostSession(gameQuizId, context!),
-    enabled: Boolean(context && isSessionReady),
+    queryKey: ['live-game', 'host', liveSession?.sessionId],
+    queryFn: () =>
+      gameQuizApi.getHostSession(gameQuizId, liveSession!.sessionId),
+    enabled: Boolean(liveSession && isSessionReady),
     refetchInterval: 1_500,
   });
   const progressQuery = useQuery({
-    queryKey: ['live-game', 'host-progress', context?.contextKey],
-    queryFn: () => gameQuizApi.answerProgress(gameQuizId, context!),
-    enabled: Boolean(context && isSessionReady),
+    queryKey: ['live-game', 'host-progress', liveSession?.sessionId],
+    queryFn: () =>
+      gameQuizApi.answerProgress(gameQuizId, liveSession!.sessionId),
+    enabled: Boolean(liveSession && isSessionReady),
     refetchInterval: 1_500,
   });
   useGameQuizRealtime({
     audience: 'HOST',
     realtimeKey: sessionQuery.data?.realtimeKey,
-    queryKey: ['live-game', 'host', context?.contextKey],
+    queryKey: ['live-game', 'host', liveSession?.sessionId],
   });
 
   const commandMutation = useMutation({
@@ -98,7 +93,7 @@ export function GameQuizHostClient({
       if (!session) throw new Error('Session unavailable');
       return gameQuizApi.command(
         gameQuizId,
-        context!,
+        liveSession!.sessionId,
         action,
         session.stateVersion,
         joiningLocked
@@ -106,18 +101,18 @@ export function GameQuizHostClient({
     },
     onSuccess: (session) => {
       queryClient.setQueryData(
-        ['live-game', 'host', context?.contextKey],
+        ['live-game', 'host', liveSession?.sessionId],
         session
       );
       void queryClient.invalidateQueries({
-        queryKey: ['live-game', 'host-progress', context?.contextKey],
+        queryKey: ['live-game', 'host-progress', liveSession?.sessionId],
       });
     },
     onError: () => toast.error(copy.common.error),
   });
 
   useEffect(() => {
-    if (!isHydrated || !context || hasCheckedTabOwnership.current) return;
+    if (!isHydrated || !liveSession || hasCheckedTabOwnership.current) return;
     if (typeof BroadcastChannel === 'undefined') return;
     hasCheckedTabOwnership.current = true;
     const channel = new BroadcastChannel('eduflow-live-game-host-tabs');
@@ -125,15 +120,18 @@ export function GameQuizHostClient({
     let isDuplicate = false;
     channel.onmessage = (event) => {
       const message = event.data as {
-        contextKey?: string;
+        sessionId?: string;
         sender?: string;
         type?: string;
       };
-      if (message.contextKey !== context.contextKey || message.sender === tabId)
+      if (
+        message.sessionId !== liveSession.sessionId ||
+        message.sender === tabId
+      )
         return;
       if (message.type === 'probe') {
         channel.postMessage({
-          contextKey: context.contextKey,
+          sessionId: liveSession.sessionId,
           sender: tabId,
           type: 'active',
         });
@@ -141,13 +139,13 @@ export function GameQuizHostClient({
       if (message.type === 'active') isDuplicate = true;
     };
     channel.postMessage({
-      contextKey: context.contextKey,
+      sessionId: liveSession.sessionId,
       sender: tabId,
       type: 'probe',
     });
     const timeout = window.setTimeout(() => {
       if (isDuplicate) {
-        clearLiveGameContext('HOST', context.contextKey);
+        clearLiveGameSession('HOST', liveSession.sessionId);
         window.location.replace(`/games/${gameQuizId}/edit`);
       }
     }, 100);
@@ -155,60 +153,51 @@ export function GameQuizHostClient({
       window.clearTimeout(timeout);
       channel.close();
     };
-  }, [context, gameQuizId, isHydrated]);
+  }, [gameQuizId, isHydrated, liveSession]);
 
   useEffect(() => {
-    if (!isHydrated || hasHandledInitialNavigation.current) return;
-    hasHandledInitialNavigation.current = true;
-    const navigation = performance.getEntriesByType('navigation')[0] as
-      | PerformanceNavigationTiming
-      | undefined;
-    if (!context) {
+    if (!isHydrated) return;
+
+    if (!liveSession) {
       router.replace(`/games/${gameQuizId}/edit`);
-    } else if (navigation?.type === 'reload') {
-      closeMutation.mutate();
     } else {
       setIsSessionReady(true);
     }
-  }, [closeMutation, context, gameQuizId, isHydrated, router]);
+  }, [gameQuizId, isHydrated, liveSession, router]);
+
+  useHostSessionLifecycle({
+    gameQuizId,
+    isSessionReady,
+    sessionId: liveSession?.sessionId,
+  });
 
   useEffect(() => {
-    if (!context || !isSessionReady) return;
-    const heartbeat = () => void gameQuizApi.heartbeatHost(gameQuizId, context);
-    heartbeat();
-    const interval = window.setInterval(heartbeat, 10_000);
-    const close = () => {
-      void fetch(`/api/v1/game-quizzes/${gameQuizId}/live-game/close`, {
-        body: '{}',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Live-Game-Context': context.token,
-        },
-        keepalive: true,
-        method: 'POST',
-      });
-    };
-    window.addEventListener('pagehide', close);
-    return () => {
-      window.clearInterval(interval);
-      window.removeEventListener('pagehide', close);
-    };
-  }, [context, gameQuizId, isSessionReady]);
+    if (
+      !isSessionReady ||
+      sessionQuery.isPending ||
+      (!sessionQuery.isError && sessionQuery.data && !sessionQuery.data.endedAt)
+    )
+      return;
 
-  useEffect(() => {
-    if (sessionQuery.data?.endedAt) {
-      clearLiveGameContext('HOST', context?.contextKey);
+    if (
+      sessionQuery.isError ||
+      !sessionQuery.data ||
+      sessionQuery.data.endedAt
+    ) {
+      clearLiveGameSession('HOST', liveSession?.sessionId);
       router.replace(`/games/${gameQuizId}/edit`);
     }
-  }, [context, gameQuizId, router, sessionQuery.data?.endedAt]);
+  }, [
+    gameQuizId,
+    isSessionReady,
+    liveSession,
+    router,
+    sessionQuery.data,
+    sessionQuery.isError,
+    sessionQuery.isPending,
+  ]);
 
-  useEffect(() => {
-    if (!isSessionReady || !sessionQuery.isError) return;
-    clearLiveGameContext('HOST', context?.contextKey);
-    router.replace(`/games/${gameQuizId}/edit`);
-  }, [context, gameQuizId, isSessionReady, router, sessionQuery.isError]);
-
-  if (!isHydrated || !context || !isSessionReady || sessionQuery.isPending)
+  if (!isHydrated || !liveSession || !isSessionReady || sessionQuery.isPending)
     return <GameSessionLoading copy={copy} />;
   if (sessionQuery.isError || !sessionQuery.data) {
     return (
@@ -234,7 +223,7 @@ export function GameQuizHostClient({
       <HostPodium
         copy={copy}
         isPending={commandMutation.isPending}
-        reportHref={`/games/${gameQuizId}/report?run=${encodeURIComponent(context.contextKey)}`}
+        reportHref={`/games/${gameQuizId}/report?sessionId=${encodeURIComponent(liveSession.sessionId)}`}
         session={session}
       />
     );
@@ -324,38 +313,36 @@ function HostLobby({
         </p>
         <Card className="group relative border border-border/60 px-10 py-6 text-center shadow-lg transition-shadow hover:shadow-xl sm:px-16 sm:py-8">
           <div className="absolute top-3 right-3 flex items-center gap-1 opacity-0 transition-opacity duration-200 focus-within:opacity-100 group-hover:opacity-100">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    aria-label={copy.host.joinCode}
-                    onClick={copyCode}
-                    size="icon-sm"
-                    variant="ghost"
-                  >
-                    <Copy className="size-4" aria-hidden="true" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="top">
-                  <p>{copy.host.joinCode}</p>
-                </TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    aria-label={copy.host.copyLink}
-                    onClick={copyJoinLink}
-                    size="icon-sm"
-                    variant="ghost"
-                  >
-                    <LinkIcon className="size-4" aria-hidden="true" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="top">
-                  <p>{copy.host.copyLink}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  aria-label={copy.host.joinCode}
+                  onClick={copyCode}
+                  size="icon-sm"
+                  variant="ghost"
+                >
+                  <Copy className="size-4" aria-hidden="true" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                <p>{copy.host.joinCode}</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  aria-label={copy.host.copyLink}
+                  onClick={copyJoinLink}
+                  size="icon-sm"
+                  variant="ghost"
+                >
+                  <LinkIcon className="size-4" aria-hidden="true" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                <p>{copy.host.copyLink}</p>
+              </TooltipContent>
+            </Tooltip>
           </div>
 
           <span className="font-extrabold text-5xl tracking-widest sm:text-7xl">

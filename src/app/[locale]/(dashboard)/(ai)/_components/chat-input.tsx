@@ -27,6 +27,7 @@ import {
   PromptInputTools,
 } from '@/components/ai-elements/prompt-input';
 import { DropdownTemplate, type MenuItem } from '@/components/custom/dropdown';
+import { GoogleDrivePickerHost } from '@/components/google-drive-picker/google-drive-picker-host';
 import { Button } from '@/components/ui/button';
 import { useGoogleDrivePicker } from '@/hooks/use-google-drive-picker';
 import type { ChatModel } from '@/services/ai/chat-provider.constants';
@@ -302,7 +303,6 @@ export function ChatInput({
       connectRequired: t('attachments.googleDriveConnectRequired'),
       notConfigured: t('attachments.googleDriveUnavailable'),
       sessionChanged: t('attachments.googleDriveSessionChanged'),
-      stillLoading: t('attachments.googleDriveStillLoading'),
       tokenFailed: t('attachments.googleDriveTokenFailed'),
       unavailable: t('attachments.googleDrivePickerUnavailable'),
     },
@@ -400,6 +400,9 @@ export function ChatInput({
 
   return (
     <div className="space-y-4 transition-all duration-200">
+      {googleDrivePicker.pickerProps && (
+        <GoogleDrivePickerHost {...googleDrivePicker.pickerProps} />
+      )}
       <div className="group mx-auto max-w-3xl">
         <input
           aria-label={t('actionMenu.uploadFiles')}
