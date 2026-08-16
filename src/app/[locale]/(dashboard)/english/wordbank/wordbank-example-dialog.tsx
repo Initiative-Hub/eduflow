@@ -15,8 +15,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { SavedVocabularyItem } from '@/services/english/SavedVocabularyService';
-import type { WordbankTranslator } from './wordbank-mastery';
 import { type WordExample, wordbankApi } from './wordbank.service';
+import type { WordbankTranslator } from './wordbank-mastery';
 
 interface WordbankExampleDialogProps {
   open: boolean;

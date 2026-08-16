@@ -1,3 +1,8 @@
+import {
+  createAvatarReadSignedUrl,
+  isAbsoluteHttpUrl,
+  isAvatarObjectKey,
+} from '@/lib/storage/avatar';
 import type {
   GameActor,
   GameAnswerRecord,
@@ -6,11 +11,6 @@ import type {
   GameRoundRecord,
   SessionWithGameData,
 } from './types';
-import {
-  createAvatarReadSignedUrl,
-  isAbsoluteHttpUrl,
-  isAvatarObjectKey,
-} from '@/lib/storage/avatar';
 
 const canManage = (actor: GameActor, ownerId: string) =>
   actor.role === 'ADMIN' || actor.userId === ownerId;

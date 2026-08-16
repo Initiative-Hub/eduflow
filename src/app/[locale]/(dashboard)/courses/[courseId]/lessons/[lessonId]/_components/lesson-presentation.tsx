@@ -59,11 +59,11 @@ import {
   type SlideCanvasAiControls,
 } from './slide-canvas-ai-controls';
 import { SlideItemEditor } from './slide-item-editor';
+import { TemplateManagerDialog } from './template-manager-dialog';
 import {
   formatCollectionLabel,
   TemplateStyleSelect,
 } from './template-style-select';
-import { TemplateManagerDialog } from './template-manager-dialog';
 import {
   getEditableSlideTextElements,
   useSlideAiEdit,

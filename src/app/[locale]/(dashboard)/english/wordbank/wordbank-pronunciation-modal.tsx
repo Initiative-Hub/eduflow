@@ -111,8 +111,9 @@ export function WordbankPronunciationModal({
           type: mediaRecorder.mimeType,
         });
 
-        // biome-ignore lint/suspicious/useIterableCallbackReturn: <explanation>
-        stream.getTracks().forEach((track) => track.stop());
+        stream.getTracks().forEach((track) => {
+          track.stop();
+        });
 
         setAnalyzingTipWord(tipWord);
         try {
@@ -193,8 +194,9 @@ export function WordbankPronunciationModal({
         setRecordedAudioUrl(url);
 
         // Release mic stream
-        // biome-ignore lint/suspicious/useIterableCallbackReturn: <explanation>
-        stream.getTracks().forEach((track) => track.stop());
+        stream.getTracks().forEach((track) => {
+          track.stop();
+        });
 
         // Send recorded audio to OpenRouter Whisper STT assessment endpoint
         handleAnalyzePronunciation(audioBlob);

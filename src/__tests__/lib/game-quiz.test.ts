@@ -5,12 +5,12 @@ import {
   hostCommandSchema,
 } from '@/lib/game-quiz/schemas';
 import { calculateGamePoints } from '@/lib/game-quiz/scoring';
-import { shuffle } from '@/lib/game-quiz/shuffle';
-import { buildGameSessionReport } from '@/services/GameQuizAnswerService';
 import {
   nextHostedGamePhase,
   shouldAutoRevealGameRound,
 } from '@/lib/game-quiz/shared';
+import { shuffle } from '@/lib/game-quiz/shuffle';
+import { buildGameSessionReport } from '@/services/GameQuizAnswerService';
 
 describe('Live Game Quiz rules', () => {
   it('requires two to four options with exactly one correct answer', () => {

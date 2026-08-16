@@ -1,5 +1,5 @@
 import type { Prisma } from '@/generated/prisma';
-import { prisma } from '@/lib/prisma';
+import type { prisma } from '@/lib/prisma';
 import type {
   GameAnswerRecord,
   GameParticipantRecord,

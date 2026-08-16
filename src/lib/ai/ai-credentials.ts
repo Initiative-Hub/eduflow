@@ -14,9 +14,7 @@ export interface AICredentials {
  */
 export function getSpeechApiKey(overrideKey?: string): AICredentials {
   const apiKey =
-    overrideKey ||
-    process.env.OPENROUTER_API_KEY ||
-    process.env.OPENAI_API_KEY;
+    overrideKey || process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY;
 
   if (!apiKey) {
     throw new Error(

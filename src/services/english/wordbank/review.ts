@@ -79,7 +79,9 @@ function buildReviewQuiz(items: SavedVocabularyItem[]): {
     if (testExample && rawExample) {
       const escapedWord = item.word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const wordRegex = new RegExp(`\\b${escapedWord}\\b`, 'gi');
-      const containsWord = new RegExp(`\\b${escapedWord}\\b`, 'i').test(rawExample);
+      const containsWord = new RegExp(`\\b${escapedWord}\\b`, 'i').test(
+        rawExample
+      );
 
       if (containsWord) {
         // Masked fill-in-the-blank example question

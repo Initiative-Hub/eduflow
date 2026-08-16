@@ -68,7 +68,9 @@ export function attachSlideCanvasAiControls({
     .querySelectorAll(
       `[${CONTROL_ATTRIBUTE}], style[${CONTROL_STYLE_ATTRIBUTE}]`
     )
-    .forEach((element) => element.remove());
+    .forEach((element) => {
+      element.remove();
+    });
 
   const style = document.createElement('style');
   style.setAttribute(CONTROL_STYLE_ATTRIBUTE, 'true');

@@ -12,8 +12,8 @@ import {
   type DictionaryMeaning,
   type DictionaryProvider,
   type DictionaryProviderId,
-  type WordExample,
   DictionaryRateLimitError,
+  type WordExample,
 } from './types';
 
 export type {
@@ -283,7 +283,8 @@ export class DictionaryService {
         headers: {
           'User-Agent':
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          Accept:
+            'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         },
         signal: controller.signal,
         cache: 'no-store',
@@ -299,10 +300,10 @@ export class DictionaryService {
       const blockRegex =
         /<div\s+class="color-light-blue[^"]*">([\s\S]*?)<\/div>(?:\s*<div\s+class="margin25">([\s\S]*?)<\/div>)?/gi;
 
-      let match: RegExpExecArray | null;
+      let match = blockRegex.exec(html);
       const seen = new Set<string>();
 
-      while ((match = blockRegex.exec(html)) !== null) {
+      while (match !== null) {
         const rawEnglish = match[1] || '';
         const rawVietnamese = match[2] || '';
 
@@ -324,6 +325,7 @@ export class DictionaryService {
         }
 
         if (results.length >= 10) break;
+        match = blockRegex.exec(html);
       }
 
       return results;
