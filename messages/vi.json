@@ -2320,6 +2320,22 @@
       "setPassword": "Thiết lập mật khẩu"
     },
     "aiPreferences": {
+      "customInstructions": {
+        "characterCount": "{count} / {max}",
+        "description": "Mô tả cách bạn muốn các trợ lý AI của Eduflow phản hồi.",
+        "label": "Hướng dẫn",
+        "loadFailed": "Không thể tải hướng dẫn AI",
+        "loadFailedDescription": "Hãy kiểm tra kết nối và thử tải lại cài đặt.",
+        "placeholder": "Ví dụ: Giải thích ngắn gọn. Tránh dùng danh sách có dấu gạch nối trong nội dung hiển thị.",
+        "priorityNote": "Quy tắc an toàn, định dạng bắt buộc, trích dẫn, mã hợp lệ và đầu ra có cấu trúc được ưu tiên.",
+        "retry": "Thử lại",
+        "save": "Lưu hướng dẫn",
+        "saved": "Đã lưu hướng dẫn AI",
+        "saveFailed": "Không thể lưu hướng dẫn AI.",
+        "saving": "Đang lưu...",
+        "summary": "Các tùy chọn này được áp dụng cho những cuộc trò chuyện AI được hỗ trợ.",
+        "title": "Hướng dẫn AI tùy chỉnh"
+      },
       "insightFeedback": {
         "description": "Đánh giá hiệu suất học tập AI hai tuần một lần",
         "label": "Phản hồi Thông minh"

@@ -14,6 +14,7 @@ import { DEFAULT_PROVIDER } from '@/services/ai/chat-provider.constants';
 import type { ChatProvider } from '@/services/ai/chat-provider.types';
 import { CacheService } from '@/services/CacheService';
 import { ChatPersistenceService } from '@/services/ChatPersistenceService';
+import { UserAiPreferencesService } from '@/services/UserAiPreferencesService';
 import {
   generateWritingSuggestions,
   getWritingSystemPrompt,
@@ -287,6 +288,8 @@ export async function POST(
     const provider = ChatProviderFactory.create(providerName);
     const writingTool = parsedBody.data.tool;
     const systemPrompt = getWritingSystemPrompt(writingTool);
+    const customInstructions =
+      await UserAiPreferencesService.getCustomInstructions(userId);
 
     const result = await provider.streamChat(
       {
@@ -295,7 +298,7 @@ export async function POST(
         model: parsedBody.data.model,
         apiKey: parsedBody.data.apiKey,
       },
-      { prompt: systemPrompt }
+      { prompt: systemPrompt, customInstructions }
     );
 
     result.consumeStream();

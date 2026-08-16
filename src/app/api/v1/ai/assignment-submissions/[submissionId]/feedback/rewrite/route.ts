@@ -10,6 +10,7 @@ import {
 import { getPlatformPermissions } from '@/lib/permissions/platform-permission';
 import { prisma } from '@/lib/prisma';
 import { AssignmentFeedbackAIService } from '@/services/ai/AssignmentFeedbackAIService';
+import { UserAiPreferencesService } from '@/services/UserAiPreferencesService';
 
 export const maxDuration = 60;
 
@@ -154,6 +155,9 @@ export const POST = withAuth(async (request, session, { params }) => {
     return NextResponse.json({ message: 'Forbidden.' }, { status: 403 });
   }
 
+  const customInstructions =
+    await UserAiPreferencesService.getCustomInstructions(session.user.id);
+
   const apiKey = process.env.OPENROUTER_API_KEY;
 
   if (!apiKey) {
@@ -169,6 +173,7 @@ export const POST = withAuth(async (request, session, { params }) => {
         assignmentTitle: submission.assignment.title,
         draftFeedback: parsedBody.data.feedback,
         tone: parsedBody.data.tone,
+        customInstructions,
       },
       apiKey
     );
