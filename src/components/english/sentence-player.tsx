@@ -38,13 +38,10 @@ export function SentencePlayer({
 
   const ttsMutation = useMutation({
     mutationFn: async (text: string) => {
-      const res = await fetch('/api/v1/english/tts', {
+      const res = await fetch('/api/v1/english/pronunciation/tts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          text,
-          provider: 'polly', // Switch to 'openai' or 'polly' to use Amazon Polly
-        }),
+        body: JSON.stringify({ text }),
         cache: 'no-store',
       });
       if (!res.ok) throw new Error('TTS request failed');

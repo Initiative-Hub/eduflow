@@ -105,7 +105,7 @@ interface TTSParams {
 export function useTextToSpeechMutation() {
   return useMutation({
     mutationFn: async (params: TTSParams) => {
-      const res = await fetch('/api/v1/english/tts', {
+      const res = await fetch('/api/v1/english/pronunciation/tts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(params),
