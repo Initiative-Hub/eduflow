@@ -77,8 +77,9 @@ function buildReviewQuiz(items: SavedVocabularyItem[]): {
     const testExample = hasValidExample && index % 2 === 1;
 
     if (testExample && rawExample) {
-      const wordRegex = new RegExp(`\\b${item.word}\\b`, 'gi');
-      const containsWord = wordRegex.test(rawExample);
+      const escapedWord = item.word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const wordRegex = new RegExp(`\\b${escapedWord}\\b`, 'gi');
+      const containsWord = new RegExp(`\\b${escapedWord}\\b`, 'i').test(rawExample);
 
       if (containsWord) {
         // Masked fill-in-the-blank example question
