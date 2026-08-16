@@ -333,9 +333,8 @@
     "title": "API Reference"
   },
   "AuthFooter": {
-    "brand": "EduFlow",
     "cookieSettings": "Cookie Settings",
-    "copyright": "© 2026 EduFlow Academic Atelier. All rights reserved.",
+    "copyright": "Copyright © 2026 EduFlow – All rights reserved.",
     "helpCenter": "Help Center",
     "privacyPolicy": "Privacy Policy",
     "termsOfService": "Terms of Service"
