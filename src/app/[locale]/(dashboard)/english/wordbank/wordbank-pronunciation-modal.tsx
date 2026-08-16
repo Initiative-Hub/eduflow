@@ -628,7 +628,7 @@ export function WordbankPronunciationModal({
                           </p>
                           <p className="text-foreground">
                             <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-                              💡 Tip:
+                              Tip:
                             </span>{' '}
                             {tip.tip}
                           </p>
