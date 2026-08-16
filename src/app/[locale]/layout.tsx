@@ -3,9 +3,7 @@ import '../globals.css';
 import { Analytics as VercelAnalytics } from '@vercel/analytics/next';
 import { SpeedInsights as VercelInsights } from '@vercel/speed-insights/next';
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
-import { hasLocale } from 'next-intl';
-import { setRequestLocale } from 'next-intl/server';
+import { getLocale } from 'next-intl/server';
 import type { ReactNode } from 'react';
 import { Toaster } from 'sonner';
 import Locator from '@/components/locator';
@@ -23,13 +21,6 @@ const lexend = Lexend({
   variable: '--font-lexend',
   subsets: ['latin'],
 });
-
-interface RootLayoutProps {
-  children: ReactNode;
-  params: Promise<{
-    locale: string;
-  }>;
-}
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
 
@@ -83,15 +74,10 @@ export function generateStaticParams() {
 
 export default async function RootLayout({
   children,
-  params,
-}: RootLayoutProps) {
-  // Ensure that the incoming `locale` is valid
-  const { locale } = await params;
-  if (!hasLocale(routing.locales, locale)) {
-    notFound();
-  }
-
-  setRequestLocale(locale);
+}: {
+  children: ReactNode;
+}) {
+  const locale = await getLocale();
 
   return (
     <html lang={locale} suppressHydrationWarning>
