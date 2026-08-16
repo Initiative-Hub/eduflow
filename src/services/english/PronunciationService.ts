@@ -94,15 +94,20 @@ export class PronunciationService {
       .map(cleanWord)
       .filter(Boolean);
 
-    const transcriptSet = new Set(transcriptClean);
+    const transcriptCounts = new Map<string, number>();
+    for (const token of transcriptClean) {
+      transcriptCounts.set(token, (transcriptCounts.get(token) ?? 0) + 1);
+    }
 
     const matchedWords: string[] = [];
     const missingWords: string[] = [];
 
     targetTokens.forEach((originalToken, idx) => {
       const cleaned = targetClean[idx];
-      if (cleaned && transcriptSet.has(cleaned)) {
+      const remaining = cleaned ? (transcriptCounts.get(cleaned) ?? 0) : 0;
+      if (cleaned && remaining > 0) {
         matchedWords.push(originalToken);
+        transcriptCounts.set(cleaned, remaining - 1);
       } else {
         missingWords.push(originalToken);
       }
