@@ -110,6 +110,18 @@ model Verification {
 
 // ---- END BETTER AUTH CORE TABLES ----
 
+model UserAiPreference {
+  userId String @id @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  customInstructions String? @map("custom_instructions") @db.VarChar(2000)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("user_ai_preference")
+}
+
 enum PlatformRoleName {
   ADMIN
   TEACHER
@@ -1075,16 +1087,4 @@ model AssignmentSubmissionFile {
   @@unique([submissionId, fileId], map: "assignment_submission_file_submission_file_key")
   @@index([fileId])
   @@map("assignment_submission_file")
-}
-
-model UserAiPreference {
-  userId String @id @map("user_id")
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  customInstructions String? @map("custom_instructions") @db.VarChar(2000)
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  @@map("user_ai_preference")
 }

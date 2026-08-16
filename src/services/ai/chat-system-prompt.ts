@@ -5,9 +5,15 @@ export function resolveChatSystemPrompt(
   specificSystemPrompt: string,
   customInstructions?: string | null
 ): string {
+  const featureInstructions = [
+    GENERAL_AI_TOOL_SYSTEM_PROMPT.trim(),
+    specificSystemPrompt.trim(),
+  ]
+    .filter(Boolean)
+    .join('\n\n');
+
   return composeAiInstructions({
-    generalInstructions: GENERAL_AI_TOOL_SYSTEM_PROMPT,
-    featureInstructions: specificSystemPrompt,
-    customInstructions,
+    featureInstructions,
+    customInstructions: customInstructions ?? undefined,
   });
 }
