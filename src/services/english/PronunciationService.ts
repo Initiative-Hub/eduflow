@@ -114,7 +114,7 @@ export class PronunciationService {
         : 100;
 
     let feedback = 'Keep practicing!';
-    if (score >= 90) feedback = '🌟 Excellent! Perfect pronunciation!';
+    if (score >= 90) feedback = 'Excellent! Perfect pronunciation!';
     else if (score >= 75) feedback = 'Great job! Very clear pronunciation.';
     else if (score >= 50)
       feedback = 'Good attempt! Try speaking a bit clearer.';
