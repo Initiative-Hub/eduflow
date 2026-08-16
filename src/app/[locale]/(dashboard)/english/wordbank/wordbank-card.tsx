@@ -1,3 +1,5 @@
+'use client';
+
 import { Loader2, Mic, Plus, Sparkles, Volume2, X } from 'lucide-react';
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
