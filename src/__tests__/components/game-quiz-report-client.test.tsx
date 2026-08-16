@@ -15,7 +15,7 @@ function renderReport() {
   });
   return render(
     <QueryClientProvider client={queryClient}>
-      <GameQuizReportClient gameQuizId="game-quiz-1" runKey="context-key" />
+      <GameQuizReportClient gameQuizId="game-quiz-1" sessionId="session-1" />
     </QueryClientProvider>
   );
 }
@@ -51,6 +51,6 @@ describe('GameQuizReportClient', () => {
       screen.getByRole('row', { name: /1First question 0 0 0/ })
     ).toBeInTheDocument();
     expect(screen.queryByText(/NaN/)).not.toBeInTheDocument();
-    expect(report).toHaveBeenCalledWith('game-quiz-1', 'context-key');
+    expect(report).toHaveBeenCalledWith('game-quiz-1', 'session-1');
   });
 });

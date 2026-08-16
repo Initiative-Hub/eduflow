@@ -8,19 +8,19 @@ import { GameSessionError } from './game-quiz-host-client';
 
 interface GameQuizReportClientProps {
   gameQuizId: string;
-  runKey?: string;
+  sessionId?: string;
   copy?: GameQuizCopy;
 }
 
 export function GameQuizReportClient({
   gameQuizId,
-  runKey,
+  sessionId,
   copy = gameQuizCopy,
 }: GameQuizReportClientProps) {
   const reportQuery = useQuery({
-    queryKey: ['live-game-report', gameQuizId, runKey],
-    queryFn: () => gameQuizApi.report(gameQuizId, runKey!),
-    enabled: Boolean(runKey),
+    queryKey: ['live-game-report', gameQuizId, sessionId],
+    queryFn: () => gameQuizApi.report(gameQuizId, sessionId!),
+    enabled: Boolean(sessionId),
   });
 
   if (reportQuery.isPending) {
@@ -31,7 +31,7 @@ export function GameQuizReportClient({
       </div>
     );
   }
-  if (!runKey || reportQuery.isError || !reportQuery.data)
+  if (!sessionId || reportQuery.isError || !reportQuery.data)
     return (
       <GameSessionError copy={copy} onRetry={() => reportQuery.refetch()} />
     );

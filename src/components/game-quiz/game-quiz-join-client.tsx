@@ -14,7 +14,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { gameQuizApi } from './api';
 import { type GameQuizCopy, gameQuizCopy } from './copy';
-import { activateLiveGameContext } from './live-game-context';
+import { activateLiveGameSession } from './live-game-session';
 
 interface GameQuizJoinClientProps {
   copy?: GameQuizCopy;
@@ -30,8 +30,12 @@ export function GameQuizJoinClient({
   );
   const joinMutation = useMutation({
     mutationFn: () => gameQuizApi.join(code),
-    onSuccess: ({ context }) => {
-      activateLiveGameContext(context);
+    onSuccess: ({ sessionId }) => {
+      activateLiveGameSession({
+        audience: 'PARTICIPANT',
+        sessionId,
+        version: 2,
+      });
       router.replace('/games/live/play');
     },
     onError: () => toast.error(copy.common.error),

@@ -1,11 +1,9 @@
+import type { Readable } from 'node:stream';
 import type { Prisma } from '@/generated/prisma';
 import { STORAGE_MAX_FILE_SIZE_BYTES } from '@/lib/storage/file-storage';
 import { StorageService } from '@/services/StorageService';
 import { GoogleDriveOAuthTokenService } from './GoogleDriveOAuthTokenService';
-import { fetchGoogleJson } from './google-drive-http';
-import type { GoogleDriveFileMetadata } from './google-drive-types';
 
-const GOOGLE_DRIVE_FILES_URL = 'https://www.googleapis.com/drive/v3/files';
 const GOOGLE_WORKSPACE_EXPORTS: Record<
   string,
   { extension: string; mimeType: string }
@@ -36,6 +34,21 @@ function appendExtension(name: string, extension: string) {
     : `${name}.${extension}`;
 }
 
+async function readLimitedBytes(stream: Readable) {
+  const chunks: Buffer[] = [];
+  let size = 0;
+  for await (const chunk of stream) {
+    const bytes = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+    size += bytes.byteLength;
+    if (size > STORAGE_MAX_FILE_SIZE_BYTES) {
+      stream.destroy();
+      throw new Error('File size exceeds storage upload limit');
+    }
+    chunks.push(bytes);
+  }
+  return new Uint8Array(Buffer.concat(chunks, size));
+}
+
 export class GoogleDriveImportService {
   static async importFile(options: {
     courseId?: string | null;
@@ -43,16 +56,16 @@ export class GoogleDriveImportService {
     parentId?: string | null;
     userId: string;
   }) {
-    const { accessToken } =
-      await GoogleDriveOAuthTokenService.getAccessTokenDetails(options.userId);
-    const metadataParams = new URLSearchParams({
-      fields: 'id,name,mimeType,size,capabilities/canDownload,exportLinks',
-      supportsAllDrives: 'true',
-    });
-    const metadata = await fetchGoogleJson<GoogleDriveFileMetadata>(
-      `${GOOGLE_DRIVE_FILES_URL}/${encodeURIComponent(options.fileId)}?${metadataParams}`,
-      accessToken
+    const { drive } = await GoogleDriveOAuthTokenService.getAuthorizedContext(
+      options.userId
     );
+    const metadata = (
+      await drive.files.get({
+        fields: 'id,name,mimeType,size,capabilities/canDownload,exportLinks',
+        fileId: options.fileId,
+        supportsAllDrives: true,
+      })
+    ).data;
     if (!metadata.name) {
       throw new Error('Selected Google Drive file is missing a name.');
     }
@@ -76,25 +89,32 @@ export class GoogleDriveImportService {
     ) {
       throw new Error('File size exceeds storage upload limit');
     }
-    const downloadUrl = exportTarget
-      ? `${GOOGLE_DRIVE_FILES_URL}/${encodeURIComponent(metadata.id)}/export?${new URLSearchParams({ mimeType: exportTarget.mimeType })}`
-      : `${GOOGLE_DRIVE_FILES_URL}/${encodeURIComponent(metadata.id)}?${new URLSearchParams({ alt: 'media', supportsAllDrives: 'true' })}`;
-    const response = await fetch(downloadUrl, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-    if (!response.ok) {
-      throw new Error('Could not download the selected Google Drive file.');
-    }
-    const bytes = new Uint8Array(await response.arrayBuffer());
-    if (bytes.byteLength > STORAGE_MAX_FILE_SIZE_BYTES) {
-      throw new Error('File size exceeds storage upload limit');
-    }
+    const response = await (async () => {
+      try {
+        return exportTarget
+          ? await drive.files.export(
+              { fileId: options.fileId, mimeType: exportTarget.mimeType },
+              { responseType: 'stream' }
+            )
+          : await drive.files.get(
+              {
+                alt: 'media',
+                fileId: options.fileId,
+                supportsAllDrives: true,
+              },
+              { responseType: 'stream' }
+            );
+      } catch {
+        throw new Error('Could not download the selected Google Drive file.');
+      }
+    })();
+    const bytes = await readLimitedBytes(response.data);
     const importedAt = new Date().toISOString();
     return StorageService.createFileFromBytes({
       bytes,
       contentType:
         exportTarget?.mimeType ||
-        response.headers.get('content-type') ||
+        String(response.headers['content-type'] ?? '') ||
         metadata.mimeType ||
         'application/octet-stream',
       courseId: options.courseId ?? null,
@@ -104,7 +124,7 @@ export class GoogleDriveImportService {
       metadata: {
         googleDrive: {
           exportMimeType: exportTarget?.mimeType ?? null,
-          fileId: metadata.id,
+          fileId: metadata.id ?? options.fileId,
           mimeType: metadata.mimeType ?? null,
           name: metadata.name,
         },

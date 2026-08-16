@@ -5,18 +5,15 @@ import {
   randomBytes,
   timingSafeEqual,
 } from 'node:crypto';
+import { type Auth, type drive_v3, google } from 'googleapis';
 import { IntegrationProvider } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
-import { fetchGoogleJson, readGoogleJson } from './google-drive-http';
 import {
+  type GoogleDriveDestination,
   getGoogleDriveMetadataRecord,
   parseGoogleDriveDestination,
 } from './google-drive-types';
 
-const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
-const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
-const GOOGLE_REVOKE_URL = 'https://oauth2.googleapis.com/revoke';
-const GOOGLE_USERINFO_URL = 'https://www.googleapis.com/oauth2/v3/userinfo';
 const DRIVE_SCOPES = [
   'https://www.googleapis.com/auth/drive.file',
   'openid',
@@ -26,19 +23,14 @@ const DRIVE_SCOPES = [
 const TOKEN_REFRESH_SKEW_MS = 60_000;
 const ENCRYPTION_PREFIX = 'v1';
 
-type GoogleTokenResponse = {
-  access_token?: string;
-  expires_in?: number;
-  refresh_token?: string;
-  scope?: string;
-  token_type?: string;
-};
+type GoogleDriveMetadata = ReturnType<typeof getGoogleDriveMetadataRecord>;
 
-type GoogleUserInfoResponse = {
-  email?: string;
-  name?: string;
-  picture?: string;
-  sub?: string;
+export type GoogleDriveAuthorizedContext = {
+  accountEmail: string | null;
+  auth: Auth.OAuth2Client;
+  destination: GoogleDriveDestination | null;
+  drive: drive_v3.Drive;
+  metadata: GoogleDriveMetadata;
 };
 
 function getConfig() {
@@ -48,6 +40,16 @@ function getConfig() {
     throw new Error('Google Drive OAuth credentials are not configured.');
   }
   return { clientId, clientSecret };
+}
+
+function createOAuthClient(redirectUri?: string) {
+  const { clientId, clientSecret } = getConfig();
+  return new google.auth.OAuth2({
+    clientId,
+    clientSecret,
+    eagerRefreshThresholdMillis: TOKEN_REFRESH_SKEW_MS,
+    redirectUri,
+  });
 }
 
 function getEncryptionSecret() {
@@ -95,8 +97,30 @@ function decryptToken(value: string) {
   ]).toString('utf8');
 }
 
-function getExpiresAt(expiresIn?: number) {
-  return expiresIn ? new Date(Date.now() + expiresIn * 1000) : null;
+function toDate(expiryDate?: number | null) {
+  return expiryDate ? new Date(expiryDate) : null;
+}
+
+function hasCredentialChanged(
+  integration: {
+    accessToken: string | null;
+    expiresAt: Date | null;
+    scope: string | null;
+    tokenType: string | null;
+  },
+  credentials: Auth.Credentials
+) {
+  return (
+    Boolean(credentials.access_token) &&
+    (credentials.access_token !==
+      (integration.accessToken
+        ? decryptToken(integration.accessToken)
+        : null) ||
+      credentials.expiry_date !== integration.expiresAt?.getTime() ||
+      (credentials.scope ?? integration.scope) !== integration.scope ||
+      (credentials.token_type ?? integration.tokenType) !==
+        integration.tokenType)
+  );
 }
 
 export class GoogleDriveOAuthTokenService {
@@ -116,17 +140,13 @@ export class GoogleDriveOAuthTokenService {
   }
 
   static getAuthorizationUrl(options: { redirectUri: string; state: string }) {
-    const { clientId } = getConfig();
-    return `${GOOGLE_AUTH_URL}?${new URLSearchParams({
+    return createOAuthClient(options.redirectUri).generateAuthUrl({
       access_type: 'offline',
-      client_id: clientId,
-      include_granted_scopes: 'true',
+      include_granted_scopes: true,
       prompt: 'consent select_account',
-      redirect_uri: options.redirectUri,
-      response_type: 'code',
-      scope: DRIVE_SCOPES.join(' '),
+      scope: DRIVE_SCOPES,
       state: options.state,
-    })}`;
+    });
   }
 
   static async connect(options: {
@@ -134,23 +154,15 @@ export class GoogleDriveOAuthTokenService {
     redirectUri: string;
     userId: string;
   }) {
-    const { clientId, clientSecret } = getConfig();
-    const token = await readGoogleJson<GoogleTokenResponse>(
-      await fetch(GOOGLE_TOKEN_URL, {
-        body: new URLSearchParams({
-          client_id: clientId,
-          client_secret: clientSecret,
-          code: options.code,
-          grant_type: 'authorization_code',
-          redirect_uri: options.redirectUri,
-        }),
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        method: 'POST',
-      })
-    );
-    if (!token.access_token) {
+    const auth = createOAuthClient(options.redirectUri);
+    const { tokens } = await auth.getToken({
+      code: options.code,
+      redirect_uri: options.redirectUri,
+    });
+    if (!tokens.access_token) {
       throw new Error('Google did not return an access token.');
     }
+
     const existing = await prisma.connectedIntegration.findUnique({
       select: { refreshToken: true },
       where: {
@@ -160,28 +172,29 @@ export class GoogleDriveOAuthTokenService {
         },
       },
     });
-    const refreshToken = token.refresh_token
-      ? encryptToken(token.refresh_token)
+    const refreshToken = tokens.refresh_token
+      ? encryptToken(tokens.refresh_token)
       : existing?.refreshToken;
-    if (!refreshToken)
+    if (!refreshToken) {
       throw new Error('Google did not return a refresh token.');
+    }
 
-    const userInfo = await fetchGoogleJson<GoogleUserInfoResponse>(
-      GOOGLE_USERINFO_URL,
-      token.access_token
-    );
+    auth.setCredentials(tokens);
+    const userInfo = (
+      await google.oauth2({ auth, version: 'v2' }).userinfo.get()
+    ).data;
     const values = {
-      accessToken: encryptToken(token.access_token),
-      expiresAt: getExpiresAt(token.expires_in),
+      accessToken: encryptToken(tokens.access_token),
+      expiresAt: toDate(tokens.expiry_date),
       metadata: {
         accountName: userInfo.name ?? null,
         accountPicture: userInfo.picture ?? null,
-        googleSubject: userInfo.sub ?? null,
+        googleSubject: userInfo.id ?? null,
       },
       providerAccount: userInfo.email ?? null,
       refreshToken,
-      scope: token.scope,
-      tokenType: token.token_type,
+      scope: tokens.scope,
+      tokenType: tokens.token_type,
     };
     await prisma.connectedIntegration.upsert({
       create: {
@@ -207,13 +220,12 @@ export class GoogleDriveOAuthTokenService {
       },
     });
     if (!integration) return;
+
     const storedToken = integration.refreshToken ?? integration.accessToken;
     if (storedToken) {
-      await fetch(GOOGLE_REVOKE_URL, {
-        body: new URLSearchParams({ token: decryptToken(storedToken) }),
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        method: 'POST',
-      }).catch(() => undefined);
+      await createOAuthClient()
+        .revokeToken(decryptToken(storedToken))
+        .catch(() => undefined);
     }
     await prisma.connectedIntegration.delete({
       where: {
@@ -222,7 +234,9 @@ export class GoogleDriveOAuthTokenService {
     });
   }
 
-  static async getAccessTokenDetails(userId: string) {
+  static async getAuthorizedContext(
+    userId: string
+  ): Promise<GoogleDriveAuthorizedContext> {
     const integration = await prisma.connectedIntegration.findUnique({
       where: {
         userId_provider: { provider: IntegrationProvider.GOOGLE_DRIVE, userId },
@@ -230,61 +244,54 @@ export class GoogleDriveOAuthTokenService {
     });
     if (!integration) throw new Error('Google Drive is not connected.');
 
-    const common = {
-      accountEmail: integration.providerAccount ?? null,
-      destination: parseGoogleDriveDestination(integration.metadata),
-      metadata: getGoogleDriveMetadataRecord(integration.metadata),
-    };
-    if (
-      integration.accessToken &&
-      integration.expiresAt &&
-      integration.expiresAt.getTime() - TOKEN_REFRESH_SKEW_MS > Date.now()
-    ) {
-      return {
-        ...common,
-        accessToken: decryptToken(integration.accessToken),
-        expiresAt: integration.expiresAt,
-      };
-    }
-
-    const { clientId, clientSecret } = getConfig();
-    const token = await readGoogleJson<GoogleTokenResponse>(
-      await fetch(GOOGLE_TOKEN_URL, {
-        body: new URLSearchParams({
-          client_id: clientId,
-          client_secret: clientSecret,
-          grant_type: 'refresh_token',
-          refresh_token: decryptToken(integration.refreshToken),
-        }),
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        method: 'POST',
-      })
-    );
-    if (!token.access_token) {
+    const auth = createOAuthClient();
+    auth.setCredentials({
+      access_token: integration.accessToken
+        ? decryptToken(integration.accessToken)
+        : null,
+      expiry_date: integration.expiresAt?.getTime() ?? null,
+      refresh_token: decryptToken(integration.refreshToken),
+      scope: integration.scope ?? undefined,
+      token_type: integration.tokenType ?? undefined,
+    });
+    const accessToken = await auth.getAccessToken();
+    if (!accessToken.token || !auth.credentials.access_token) {
       throw new Error('Google did not return an access token.');
     }
-    const expiresAt = getExpiresAt(token.expires_in);
-    await prisma.connectedIntegration.update({
-      data: {
-        accessToken: encryptToken(token.access_token),
-        expiresAt,
-        scope: token.scope ?? integration.scope,
-        tokenType: token.token_type ?? integration.tokenType,
-      },
-      where: {
-        userId_provider: { provider: IntegrationProvider.GOOGLE_DRIVE, userId },
-      },
-    });
-    return { ...common, accessToken: token.access_token, expiresAt };
+
+    if (hasCredentialChanged(integration, auth.credentials)) {
+      await prisma.connectedIntegration.update({
+        data: {
+          accessToken: encryptToken(auth.credentials.access_token),
+          expiresAt: toDate(auth.credentials.expiry_date),
+          scope: auth.credentials.scope ?? integration.scope,
+          tokenType: auth.credentials.token_type ?? integration.tokenType,
+        },
+        where: {
+          userId_provider: {
+            provider: IntegrationProvider.GOOGLE_DRIVE,
+            userId,
+          },
+        },
+      });
+    }
+
+    return {
+      accountEmail: integration.providerAccount ?? null,
+      auth,
+      destination: parseGoogleDriveDestination(integration.metadata),
+      drive: google.drive({ auth, version: 'v3' }),
+      metadata: getGoogleDriveMetadataRecord(integration.metadata),
+    };
   }
 
   static async getPickerToken(userId: string) {
-    const token =
-      await GoogleDriveOAuthTokenService.getAccessTokenDetails(userId);
+    const context =
+      await GoogleDriveOAuthTokenService.getAuthorizedContext(userId);
     return {
-      accessToken: token.accessToken,
-      accountEmail: token.accountEmail,
-      expiresAt: token.expiresAt,
+      accessToken: context.auth.credentials.access_token as string,
+      accountEmail: context.accountEmail,
+      expiresAt: toDate(context.auth.credentials.expiry_date),
     };
   }
 }

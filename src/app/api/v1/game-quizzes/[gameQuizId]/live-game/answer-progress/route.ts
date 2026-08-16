@@ -3,7 +3,7 @@ import { withRoles } from '@/lib/api/middlewares';
 import {
   gameActorFromSession,
   gameQuizExceptionResponse,
-  resolveRequestLiveGameContext,
+  resolveRequestLiveGameSession,
   validationErrorResponse,
 } from '@/lib/game-quiz/http';
 import { gameQuizIdParamsSchema } from '@/lib/game-quiz/schemas';
@@ -15,9 +15,14 @@ type RouteContext = { params: Promise<{ gameQuizId: string }> };
  * @swagger
  * /api/v1/game-quizzes/{gameQuizId}/live-game/answer-progress:
  *   get:
- *     summary: Get answer progress for the context-selected host game
+ *     summary: Get answer progress for the selected host game
  *     security: [{ SessionCookie: [] }]
- *     responses: { 200: { description: Answer progress }, 400: { description: Invalid request }, 401: { description: Unauthorized }, 403: { description: Forbidden }, 404: { description: Context unavailable } }
+ *     parameters:
+ *       - in: header
+ *         name: X-Live-Game-Session
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     responses: { 200: { description: Answer progress }, 400: { description: Invalid request or live session ID }, 401: { description: Unauthorized }, 403: { description: Forbidden }, 404: { description: Game Session not found } }
  */
 export const GET = withRoles(
   ['TEACHER', 'ADMIN'],
@@ -26,7 +31,7 @@ export const GET = withRoles(
     if (!parsed.success)
       return validationErrorResponse(parsed.error, 'Invalid Game Quiz ID.');
     try {
-      const context = await resolveRequestLiveGameContext({
+      const liveSession = await resolveRequestLiveGameSession({
         audience: 'HOST',
         expectedGameQuizId: parsed.data.gameQuizId,
         request,
@@ -34,7 +39,7 @@ export const GET = withRoles(
       });
       const progress = await getHostAnswerProgress(
         gameActorFromSession(session),
-        context.sessionId
+        liveSession.sessionId
       );
       return NextResponse.json({ ...progress, sessionId: undefined });
     } catch (error) {

@@ -14,7 +14,7 @@ import { GameSessionError, GameSessionLoading } from './game-quiz-host-client';
 import { GameQuizPodium } from './game-quiz-podium';
 import type { GameSessionSnapshot } from './types';
 import { useGameQuizRealtime } from './use-game-quiz-realtime';
-import { useLiveGameContext } from './use-live-game-context';
+import { useLiveGameSession } from './use-live-game-session';
 
 interface GameQuizPlayerClientProps {
   copy?: GameQuizCopy;
@@ -87,25 +87,26 @@ export function GameQuizPlayerClient({
 }: GameQuizPlayerClientProps) {
   const queryClient = useQueryClient();
   const router = useRouter();
-  const { context, isHydrated } = useLiveGameContext('PARTICIPANT');
+  const { session: liveSession, isHydrated } =
+    useLiveGameSession('PARTICIPANT');
   const sessionQuery = useQuery({
-    queryKey: ['live-game', 'participant', context?.contextKey],
-    queryFn: () => gameQuizApi.getParticipantSession(context!),
-    enabled: Boolean(context),
+    queryKey: ['live-game', 'participant', liveSession?.sessionId],
+    queryFn: () => gameQuizApi.getParticipantSession(liveSession!.sessionId),
+    enabled: Boolean(liveSession),
     refetchInterval: 2000,
   });
   useGameQuizRealtime({
     audience: 'PARTICIPANT',
     realtimeKey: sessionQuery.data?.realtimeKey,
     participantRealtimeKey: sessionQuery.data?.participant?.realtimeKey,
-    queryKey: ['live-game', 'participant', context?.contextKey],
+    queryKey: ['live-game', 'participant', liveSession?.sessionId],
   });
   const answerMutation = useMutation({
     mutationFn: (optionId: string) => {
       const roundId = sessionQuery.data?.currentRound?.id;
       if (!roundId) throw new Error('Round unavailable');
       return gameQuizApi.submitAnswer(
-        context!,
+        liveSession!.sessionId,
         roundId,
         optionId,
         crypto.randomUUID()
@@ -113,27 +114,27 @@ export function GameQuizPlayerClient({
     },
     onSuccess: () =>
       queryClient.invalidateQueries({
-        queryKey: ['live-game', 'participant', context?.contextKey],
+        queryKey: ['live-game', 'participant', liveSession?.sessionId],
       }),
     onError: () => toast.error(copy.common.error),
   });
   const presenceMutation = useMutation({
-    mutationFn: () => gameQuizApi.heartbeat(context!),
+    mutationFn: () => gameQuizApi.heartbeat(liveSession!.sessionId),
   });
   const { mutate: sendPresence } = presenceMutation;
 
   useEffect(() => {
-    if (!context) return;
+    if (!liveSession) return;
     sendPresence();
     const interval = window.setInterval(sendPresence, 25_000);
     return () => window.clearInterval(interval);
-  }, [context, sendPresence]);
+  }, [liveSession, sendPresence]);
 
   useEffect(() => {
-    if (isHydrated && !context) router.replace('/games/join');
-  }, [context, isHydrated, router]);
+    if (isHydrated && !liveSession) router.replace('/games/join');
+  }, [isHydrated, liveSession, router]);
 
-  if (!isHydrated || !context || sessionQuery.isPending)
+  if (!isHydrated || !liveSession || sessionQuery.isPending)
     return <GameSessionLoading copy={copy} />;
   if (sessionQuery.isError || !sessionQuery.data)
     return (

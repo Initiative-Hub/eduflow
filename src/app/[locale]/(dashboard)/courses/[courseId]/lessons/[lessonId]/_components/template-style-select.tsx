@@ -113,7 +113,10 @@ export function TemplateStyleSelect({
   const queryClient = useQueryClient();
 
   const { data: previewsData, isLoading: isLoadingPreviews } =
-    useSlideTemplatePreviews(targetCollectionKey, isOpen && activeStyle !== 'auto');
+    useSlideTemplatePreviews(
+      targetCollectionKey,
+      isOpen && activeStyle !== 'auto'
+    );
   const previews = previewsData || [];
 
   useEffect(() => {
@@ -137,7 +140,11 @@ export function TemplateStyleSelect({
   const activePalette =
     activeCollectionMeta?.palette && activeCollectionMeta.palette.length > 0
       ? activeCollectionMeta.palette
-      : DEFAULT_COLLECTION_PALETTES[activeStyle] || ['#ffffff', '#0f172a', '#3b82f6'];
+      : DEFAULT_COLLECTION_PALETTES[activeStyle] || [
+          '#ffffff',
+          '#0f172a',
+          '#3b82f6',
+        ];
 
   const defaultCollections = useMemo(
     () =>
@@ -259,8 +266,8 @@ export function TemplateStyleSelect({
                   ✨ Automatic Theme Selection
                 </h4>
                 <p className="mt-1 text-[11px] text-muted-foreground leading-snug">
-                  AI dynamically analyzes your lesson content, tone, and domain to
-                  pick the best visual style.
+                  AI dynamically analyzes your lesson content, tone, and domain
+                  to pick the best visual style.
                 </p>
                 {recommendedCollection && (
                   <span className="mt-2 rounded-full border border-primary/20 bg-primary/5 px-2.5 py-0.5 font-semibold text-[10px] text-primary">

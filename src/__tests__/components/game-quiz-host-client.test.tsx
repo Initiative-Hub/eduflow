@@ -1,30 +1,31 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { GameQuizHostClient } from '@/components/game-quiz/game-quiz-host-client';
+import {
+  activateLiveGameSession,
+  readLiveGameSession,
+} from '@/components/game-quiz/live-game-session';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
-vi.mock('next/navigation', () => ({ useRouter: () => ({ replace: vi.fn() }) }));
+const { replace } = vi.hoisted(() => ({ replace: vi.fn() }));
+
+vi.mock('next/navigation', () => ({ useRouter: () => ({ replace }) }));
 vi.mock('react-confetti', () => ({ default: () => null }));
 
-const {
-  answerProgress,
-  closeHostSession,
-  command,
-  getHostSession,
-  heartbeatHost,
-} = vi.hoisted(() => ({
-  answerProgress: vi.fn(),
-  closeHostSession: vi.fn(),
-  command: vi.fn(),
-  getHostSession: vi.fn(),
-  heartbeatHost: vi.fn(),
-}));
+const { answerProgress, command, getHostSession, heartbeatHost } = vi.hoisted(
+  () => ({
+    answerProgress: vi.fn(),
+    command: vi.fn(),
+    getHostSession: vi.fn(),
+    heartbeatHost: vi.fn(),
+  })
+);
 
 vi.mock('@/components/game-quiz/api', () => ({
   gameQuizApi: {
     answerProgress,
-    closeHostSession,
     command,
     getHostSession,
     heartbeatHost,
@@ -35,18 +36,23 @@ vi.mock('@/components/game-quiz/use-game-quiz-realtime', () => ({
   useGameQuizRealtime: vi.fn(),
 }));
 
-vi.mock('@/components/game-quiz/use-live-game-context', () => ({
-  useLiveGameContext: () => ({
-    context: {
-      audience: 'HOST',
-      contextKey: 'context-key',
-      expiresAt: '2099-01-01T00:00:00.000Z',
-      token: 'token',
-      version: 1,
-    },
-    isHydrated: true,
-  }),
+vi.mock('@/components/game-quiz/use-host-session-lifecycle', () => ({
+  useHostSessionLifecycle: vi.fn(),
 }));
+
+const { useLiveGameSession } = vi.hoisted(() => ({
+  useLiveGameSession: vi.fn(),
+}));
+
+vi.mock('@/components/game-quiz/use-live-game-session', () => ({
+  useLiveGameSession,
+}));
+
+const hostSelection = {
+  audience: 'HOST' as const,
+  sessionId: '00000000-0000-4000-8000-000000000001',
+  version: 2 as const,
+};
 
 const question = {
   id: 'round-1',
@@ -65,7 +71,8 @@ const question = {
 };
 
 function createSession(
-  phase: 'LOBBY' | 'QUESTION_OPEN' | 'SCOREBOARD' | 'FINAL_CELEBRATION'
+  phase: 'LOBBY' | 'QUESTION_OPEN' | 'SCOREBOARD' | 'FINAL_CELEBRATION',
+  endedAt: string | null = null
 ) {
   return {
     gameQuizId: 'game-quiz-1',
@@ -73,6 +80,7 @@ function createSession(
     gameTitle: 'Planet Rally',
     joinCode: '123456',
     joiningLocked: false,
+    endedAt,
     phase,
     stateVersion: 2,
     currentRound: question,
@@ -101,12 +109,83 @@ function renderHost() {
   });
   return render(
     <QueryClientProvider client={queryClient}>
-      <GameQuizHostClient gameQuizId="game-quiz-1" />
+      <TooltipProvider>
+        <GameQuizHostClient gameQuizId="game-quiz-1" />
+      </TooltipProvider>
     </QueryClientProvider>
   );
 }
 
+afterEach(() => {
+  sessionStorage.clear();
+  vi.restoreAllMocks();
+});
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  useLiveGameSession.mockReturnValue({
+    session: hostSelection,
+    isHydrated: true,
+  });
+});
+
 describe('GameQuizHostClient', () => {
+  it('starts a fresh host session without closing it', async () => {
+    getHostSession.mockResolvedValue(createSession('LOBBY'));
+    answerProgress.mockResolvedValue({ answerCount: 0 });
+
+    renderHost();
+
+    await waitFor(() =>
+      expect(getHostSession).toHaveBeenCalledWith(
+        'game-quiz-1',
+        '00000000-0000-4000-8000-000000000001'
+      )
+    );
+  });
+
+  it('redirects to editing when no host session is stored', async () => {
+    useLiveGameSession.mockReturnValue({ session: null, isHydrated: true });
+
+    renderHost();
+
+    await waitFor(() =>
+      expect(replace).toHaveBeenCalledWith('/games/game-quiz-1/edit')
+    );
+    expect(getHostSession).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [
+      'the server cannot load it',
+      () => getHostSession.mockRejectedValue(new Error('Missing session')),
+    ],
+    [
+      'the server returns no snapshot',
+      () => getHostSession.mockResolvedValue(undefined),
+    ],
+    [
+      'the server reports it ended',
+      () =>
+        getHostSession.mockResolvedValue(
+          createSession('LOBBY', '2026-08-15T10:00:00.000Z')
+        ),
+    ],
+  ])(
+    'clears the stored session and redirects when %s',
+    async (_scenario, arrange) => {
+      activateLiveGameSession(hostSelection);
+      arrange();
+
+      renderHost();
+
+      await waitFor(() =>
+        expect(replace).toHaveBeenCalledWith('/games/game-quiz-1/edit')
+      );
+      expect(readLiveGameSession('HOST')).toBeNull();
+    }
+  );
+
   it('renders Skip as the sole primary question action', async () => {
     getHostSession.mockResolvedValue(createSession('QUESTION_OPEN'));
     answerProgress.mockResolvedValue({ answerCount: 1 });
@@ -146,7 +225,7 @@ describe('GameQuizHostClient', () => {
 
     expect(command).toHaveBeenCalledWith(
       'game-quiz-1',
-      expect.objectContaining({ contextKey: 'context-key' }),
+      '00000000-0000-4000-8000-000000000001',
       'END_GAME',
       2,
       undefined
@@ -190,7 +269,7 @@ describe('GameQuizHostClient', () => {
     const reportLink = screen.getByRole('link', { name: 'host.viewReport' });
     expect(reportLink).toHaveAttribute(
       'href',
-      '/games/game-quiz-1/report?run=context-key'
+      '/games/game-quiz-1/report?sessionId=00000000-0000-4000-8000-000000000001'
     );
     expect(reportLink).toHaveAttribute('target', '_blank');
     expect(

@@ -7,16 +7,16 @@ export default async function GameQuizReportPage({
   searchParams,
 }: {
   params: Promise<{ gameQuizId: string }>;
-  searchParams: Promise<{ run?: string }>;
+  searchParams: Promise<{ sessionId?: string }>;
 }) {
   const { gameQuizId } = await params;
-  const { run } = await searchParams;
+  const { sessionId } = await searchParams;
   const t = await getTranslations('GameQuiz');
   return (
     <GameQuizReportClient
       copy={getGameQuizCopy(t)}
       gameQuizId={gameQuizId}
-      runKey={run}
+      sessionId={sessionId}
     />
   );
 }

@@ -124,7 +124,7 @@ export const submitGameAnswerSchema = z.object({
 });
 
 export const gameSessionPhaseSchema = z.enum(GAME_SESSION_PHASES);
-export const gameSessionContextKeySchema = z.uuid();
+export const gameSessionIdSchema = z.uuid();
 
 export type CreateGameQuizInput = z.infer<typeof createGameQuizSchema>;
 export type UpdateGameQuizInput = z.infer<typeof updateGameQuizSchema>;

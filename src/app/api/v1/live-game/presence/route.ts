@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { withAuth } from '@/lib/api/middlewares';
 import {
   gameQuizExceptionResponse,
-  resolveRequestLiveGameContext,
+  resolveRequestLiveGameSession,
 } from '@/lib/game-quiz/http';
 import { touchGameParticipantPresence } from '@/lib/game-quiz/presence';
 
@@ -10,20 +10,25 @@ import { touchGameParticipantPresence } from '@/lib/game-quiz/presence';
  * @swagger
  * /api/v1/live-game/presence:
  *   post:
- *     summary: Refresh participant presence for the context-selected game
+ *     summary: Refresh participant presence for the selected game
  *     security: [{ SessionCookie: [] }]
- *     responses: { 204: { description: Presence refreshed }, 400: { description: Missing context }, 401: { description: Unauthorized }, 404: { description: Context unavailable } }
+ *     parameters:
+ *       - in: header
+ *         name: X-Live-Game-Session
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     responses: { 204: { description: Presence refreshed }, 400: { description: Missing or invalid live session ID }, 401: { description: Unauthorized }, 403: { description: Not a participant }, 404: { description: Game Session not found } }
  */
 export const POST = withAuth(async (request, session) => {
   try {
-    const context = await resolveRequestLiveGameContext({
+    const liveSession = await resolveRequestLiveGameSession({
       audience: 'PARTICIPANT',
       request,
       session,
     });
     await touchGameParticipantPresence(
-      context.sessionId,
-      context.participantId!
+      liveSession.sessionId,
+      liveSession.participantId!
     );
     return new NextResponse(null, { status: 204 });
   } catch (error) {
