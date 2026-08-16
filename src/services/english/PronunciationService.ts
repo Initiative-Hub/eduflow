@@ -142,17 +142,20 @@ export class PronunciationService {
       transcribedText
     );
 
-    let apiKey: string;
+    let creds: ReturnType<typeof getSpeechApiKey>;
     try {
-      apiKey = getSpeechApiKey().apiKey;
+      creds = getSpeechApiKey();
     } catch {
       return baseAssessment;
     }
 
-    try {
-      const provider = createOpenRouter({ apiKey });
-      const model = provider(DEFAULT_MODELS.openrouter);
+    if (creds.provider !== 'openrouter') {
+      return baseAssessment;
+    }
 
+    try {
+      const provider = createOpenRouter({ apiKey: creds.apiKey });
+      const model = provider(DEFAULT_MODELS.openrouter);
       const phoneticAnalysisSchema = z.object({
         score: z
           .number()
