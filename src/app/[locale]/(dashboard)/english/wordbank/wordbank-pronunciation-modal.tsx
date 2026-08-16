@@ -8,6 +8,7 @@ import {
   Loader2,
   Mic,
   MicOff,
+  Sparkles,
   Volume2,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -21,11 +22,12 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import type { SavedVocabularyItem } from '@/services/english/SavedVocabularyService';
+import { playWordbankAudio } from './wordbank-audio';
+import type { WordbankTranslator } from './wordbank-mastery';
 import {
   type PronunciationAssessmentResult,
   wordbankApi,
 } from './wordbank.service';
-import type { WordbankTranslator } from './wordbank-mastery';
 
 interface WordbankPronunciationModalProps {
   open: boolean;
@@ -38,7 +40,6 @@ export function WordbankPronunciationModal({
   open,
   onOpenChange,
   item,
-  t,
 }: WordbankPronunciationModalProps) {
   // Extract sentence choices (avoid duplicates and fallback to main word)
   const sentences = [
@@ -111,6 +112,7 @@ export function WordbankPronunciationModal({
         setRecordedAudioUrl(url);
 
         // Release mic stream
+        // biome-ignore lint/suspicious/useIterableCallbackReturn: <explanation>
         stream.getTracks().forEach((track) => track.stop());
 
         // Send recorded audio to OpenRouter Whisper STT assessment endpoint
@@ -124,7 +126,7 @@ export function WordbankPronunciationModal({
       timerRef.current = setInterval(() => {
         setRecordingTime((prev) => prev + 1);
       }, 1000);
-    } catch (err) {
+    } catch {
       setErrorMsg(
         'Microphone permission denied or unsupported in your browser.'
       );
@@ -151,10 +153,11 @@ export function WordbankPronunciationModal({
     try {
       const result = await wordbankApi.assessPronunciation(
         blob,
-        currentTargetSentence
+        currentTargetSentence,
+        item.ipa ?? undefined
       );
       setAssessment(result);
-    } catch (err) {
+    } catch {
       setErrorMsg(
         'Could not analyze your recording. Please speak clearly and try again.'
       );
@@ -225,9 +228,9 @@ export function WordbankPronunciationModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl max-w-[95vw] w-full max-h-[90vh] flex flex-col rounded-2xl p-6 sm:p-7 bg-background text-foreground border-border shadow-xl overflow-hidden">
+      <DialogContent className="flex max-h-[90vh] w-full max-w-[95vw] flex-col overflow-hidden rounded-2xl border-border bg-background p-6 text-foreground shadow-xl sm:max-w-3xl sm:p-7">
         {/* Modal Header */}
-        <DialogHeader className="gap-1.5 text-left shrink-0 pb-1">
+        <DialogHeader className="shrink-0 gap-1.5 pb-1 text-left">
           <DialogTitle className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <span className="font-extrabold text-3xl text-primary tracking-tight">
@@ -249,7 +252,7 @@ export function WordbankPronunciationModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto pr-1.5 flex flex-col gap-5 my-2">
+        <div className="my-2 flex flex-1 flex-col gap-5 overflow-y-auto pr-1.5">
           {/* Main Target Card */}
           <div className="flex flex-col gap-4 rounded-2xl border border-border/80 bg-card p-5 shadow-xs">
             {/* Sentence Header + Navigation */}
@@ -433,16 +436,91 @@ export function WordbankPronunciationModal({
               </div>
 
               {assessment.transcript && (
-                <div className="mt-1 border-border/80 border-t pt-2 text-muted-foreground text-xs italic">
-                  Recognized Speech: &ldquo;{assessment.transcript}&rdquo;
+                <div className="mt-1 flex flex-wrap items-center justify-between gap-2 border-border/80 border-t pt-2 text-xs">
+                  <div className="text-muted-foreground italic">
+                    Recognized Speech: &ldquo;{assessment.transcript}&rdquo;
+                  </div>
+                  {assessment.spokenIpa && (
+                    <div className="font-mono font-medium text-primary">
+                      Spoken IPA: /{assessment.spokenIpa.replace(/\//g, '')}/
+                    </div>
+                  )}
                 </div>
               )}
+
+              {/* AI Phonetic Pronunciation Coaching Tips */}
+              {(() => {
+                const tips =
+                  assessment.phoneticTips && assessment.phoneticTips.length > 0
+                    ? assessment.phoneticTips
+                    : assessment.missingWords.map((word) => ({
+                        word,
+                        ipa: item.ipa ?? undefined,
+                        issue: `The word "${word}" was not clearly recognized in your spoken audio.`,
+                        tip: `Practice articulating "${word}" slowly, focusing on clear vowel and consonant sounds.`,
+                      }));
+
+                if (tips.length === 0) return null;
+
+                return (
+                  <div className="mt-2 flex flex-col gap-2.5 rounded-xl border border-primary/20 bg-primary/5 p-4">
+                    <div className="flex items-center gap-2 font-semibold text-primary text-xs uppercase tracking-wider">
+                      <Sparkles className="size-4 text-primary" />
+                      <span>AI Phonetic Pronunciation Tips</span>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      {tips.map((tip, idx) => (
+                        <div
+                          key={`${tip.word}-${idx}`}
+                          className="flex flex-col gap-1 rounded-lg border border-border/60 bg-background/80 p-3 text-xs"
+                        >
+                          <div className="flex items-center justify-between font-bold text-foreground">
+                            <div className="flex items-center gap-2">
+                              <span className="font-extrabold text-base text-primary">
+                                {tip.word}
+                              </span>
+                              {tip.ipa && (
+                                <span className="font-mono font-normal text-muted-foreground">
+                                  /{tip.ipa.replace(/\//g, '')}/
+                                </span>
+                              )}
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => playWordbankAudio(null, tip.word)}
+                              className="h-7 gap-1.5 rounded-lg border border-primary/20 px-2.5 font-medium text-xs text-primary hover:bg-primary/10"
+                              title={`Listen to "${tip.word}"`}
+                            >
+                              <Volume2 className="size-3.5 text-primary" />
+                              <span>Listen</span>
+                            </Button>
+                          </div>
+                          <p className="text-muted-foreground font-medium">
+                            <span className="font-semibold text-destructive">
+                              Sound Issue:
+                            </span>{' '}
+                            {tip.issue}
+                          </p>
+                          <p className="text-foreground">
+                            <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                              💡 Tip:
+                            </span>{' '}
+                            {tip.tip}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           )}
         </div>
 
         {/* Clean Footer */}
-        <DialogFooter className="flex justify-end shrink-0 border-t border-border/50 pt-3 mt-1">
+        <DialogFooter className="mt-1 flex shrink-0 justify-end border-border/50 border-t pt-3">
           <Button
             type="button"
             variant="outline"

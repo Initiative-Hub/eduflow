@@ -1,3 +1,16 @@
+import { createOpenRouter } from '@openrouter/ai-sdk-provider';
+import { generateText, Output } from 'ai';
+import * as z from 'zod';
+import { getSpeechApiKey } from '@/lib/ai/ai-credentials';
+import { DEFAULT_MODELS } from '@/services/ai/chat-provider.constants';
+
+export interface PhoneticTip {
+  word: string;
+  ipa?: string;
+  issue: string;
+  tip: string;
+}
+
 export interface PronunciationAssessmentResult {
   transcript: string;
   targetText: string;
@@ -5,6 +18,8 @@ export interface PronunciationAssessmentResult {
   matchedWords: string[];
   missingWords: string[];
   feedback: string;
+  spokenIpa?: string;
+  phoneticTips?: PhoneticTip[];
 }
 
 export class PronunciationService {
@@ -15,17 +30,8 @@ export class PronunciationService {
     audioBuffer: Buffer,
     mimeType = 'audio/webm'
   ): Promise<string> {
-    const openRouterKey = process.env.OPENROUTER_API_KEY;
-    const openAiKey = process.env.OPENAI_API_KEY;
-    const apiKey = openRouterKey || openAiKey;
-
-    if (!apiKey) {
-      throw new Error(
-        'Missing OPENROUTER_API_KEY or OPENAI_API_KEY for speech transcription'
-      );
-    }
-
-    const isOpenRouter = Boolean(openRouterKey);
+    const { apiKey, provider } = getSpeechApiKey();
+    const isOpenRouter = provider === 'openrouter';
     const endpoint = isOpenRouter
       ? 'https://openrouter.ai/api/v1/audio/transcriptions'
       : 'https://api.openai.com/v1/audio/transcriptions';
@@ -75,7 +81,10 @@ export class PronunciationService {
     transcribedText: string
   ): PronunciationAssessmentResult {
     const cleanWord = (w: string) =>
-      w.toLowerCase().replace(/[^a-z0-9']/g, '').trim();
+      w
+        .toLowerCase()
+        .replace(/[^a-z0-9']/g, '')
+        .trim();
 
     const targetTokens = targetText.split(/\s+/).filter(Boolean);
     const targetClean = targetTokens.map(cleanWord).filter(Boolean);
@@ -107,7 +116,8 @@ export class PronunciationService {
     let feedback = 'Keep practicing!';
     if (score >= 90) feedback = '🌟 Excellent! Perfect pronunciation!';
     else if (score >= 75) feedback = 'Great job! Very clear pronunciation.';
-    else if (score >= 50) feedback = 'Good attempt! Try speaking a bit clearer.';
+    else if (score >= 50)
+      feedback = 'Good attempt! Try speaking a bit clearer.';
 
     return {
       transcript: transcribedText,
@@ -120,28 +130,149 @@ export class PronunciationService {
   }
 
   /**
-   * Synthesize text into ultra-natural human speech using OpenRouter GPT-Audio model (openai/gpt-audio-mini).
+   * Deep AI phonetic pronunciation analysis using Vercel AI SDK (generateText + Output.object).
    */
-  static async synthesizeSpeech(
-    text: string,
-    voice = 'nova'
-  ): Promise<Buffer> {
-    const openRouterKey = process.env.OPENROUTER_API_KEY;
-    const openAiKey = process.env.OPENAI_API_KEY;
+  static async assessPronunciationWithAI(
+    targetText: string,
+    transcribedText: string,
+    targetIpa?: string
+  ): Promise<PronunciationAssessmentResult> {
+    const baseAssessment = PronunciationService.assessPronunciation(
+      targetText,
+      transcribedText
+    );
 
-    if (!openRouterKey && !openAiKey) {
-      throw new Error(
-        'Missing OPENROUTER_API_KEY or OPENAI_API_KEY for speech synthesis'
-      );
+    let apiKey: string;
+    try {
+      apiKey = getSpeechApiKey().apiKey;
+    } catch {
+      return baseAssessment;
     }
 
-    if (openRouterKey) {
+    try {
+      const provider = createOpenRouter({ apiKey });
+      const model = provider(DEFAULT_MODELS.openrouter);
+
+      const phoneticAnalysisSchema = z.object({
+        score: z
+          .number()
+          .describe('Overall match score percentage from 0 to 100'),
+        matchedWords: z
+          .array(z.string())
+          .describe('Words from target sentence correctly spoken'),
+        missingWords: z
+          .array(z.string())
+          .describe('Words from target sentence mispronounced or skipped'),
+        feedback: z
+          .string()
+          .describe('Encouraging 1-sentence feedback note for speaker'),
+        spokenIpa: z
+          .string()
+          .optional()
+          .describe(
+            'IPA phonemic transcription of what the user actually pronounced in slashes e.g. /ˈhiː wɒz ɪl iːt/'
+          ),
+        phoneticTips: z
+          .array(
+            z.object({
+              word: z
+                .string()
+                .describe('The mispronounced or challenging target word'),
+              ipa: z
+                .string()
+                .optional()
+                .describe('IPA phonemic notation if known'),
+              issue: z
+                .string()
+                .describe('Explanation of what sound was missed'),
+              tip: z
+                .string()
+                .describe(
+                  'Actionable tip on mouth/tongue position to pronounce it accurately'
+                ),
+            })
+          )
+          .describe('Phonetic coaching tips for mispronounced words'),
+      });
+
+      const { output } = await generateText({
+        model,
+        output: Output.object({ schema: phoneticAnalysisSchema }),
+        system: `You are an expert English pronunciation coach and phonetician.
+Analyze the user's spoken audio transcript against the target sentence.
+
+Target Sentence: "${targetText}"
+Target Word IPA: "${targetIpa ?? ''}"
+Spoken Recognized Speech: "${transcribedText}"
+
+Determine:
+1. Which words were correctly spoken vs mispronounced/dropped.
+2. An accuracy percentage score (0-100%).
+3. The IPA phonemic transcription of what the user actually pronounced (spokenIpa).
+4. Actionable phonetic tips for any mispronounced or omitted words.
+5. Encouraging overall feedback.`,
+        prompt: `Evaluate pronunciation accuracy for target: "${targetText}" with recognized speech: "${transcribedText}".`,
+      });
+
+      const missingWords =
+        output?.missingWords?.length > 0
+          ? output.missingWords
+          : baseAssessment.missingWords;
+
+      const matchedWords =
+        output?.matchedWords?.length > 0
+          ? output.matchedWords
+          : baseAssessment.matchedWords;
+
+      const phoneticTips =
+        output?.phoneticTips && output.phoneticTips.length > 0
+          ? output.phoneticTips
+          : missingWords.map((word) => ({
+              word,
+              ipa: targetIpa ?? undefined,
+              issue: `The word "${word}" was mispronounced or not clearly recognized in your spoken audio.`,
+              tip: `Practice pronouncing "${word}" slowly, focusing on clear articulation of each syllable.`,
+            }));
+
+      return {
+        transcript: transcribedText,
+        targetText,
+        score: output?.score ?? baseAssessment.score,
+        matchedWords,
+        missingWords,
+        feedback: output?.feedback || baseAssessment.feedback,
+        spokenIpa: output?.spokenIpa,
+        phoneticTips,
+      };
+    } catch {
+      // Fallback cleanly to base assessment with generated tips for missing words
+      const fallbackTips = baseAssessment.missingWords.map((word) => ({
+        word,
+        ipa: targetIpa ?? undefined,
+        issue: `The word "${word}" was mispronounced or not clearly recognized in your spoken audio.`,
+        tip: `Practice pronouncing "${word}" slowly, focusing on clear articulation of each syllable.`,
+      }));
+
+      return {
+        ...baseAssessment,
+        phoneticTips: fallbackTips,
+      };
+    }
+  }
+
+  /**
+   * Synthesize text into ultra-natural human speech using OpenRouter GPT-Audio model (openai/gpt-audio-mini).
+   */
+  static async synthesizeSpeech(text: string, voice = 'nova'): Promise<Buffer> {
+    const { apiKey, provider } = getSpeechApiKey();
+
+    if (provider === 'openrouter') {
       const response = await fetch(
         'https://openrouter.ai/api/v1/chat/completions',
         {
           method: 'POST',
           headers: {
-            Authorization: `Bearer ${openRouterKey}`,
+            Authorization: `Bearer ${apiKey}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
@@ -201,7 +332,7 @@ export class PronunciationService {
     const response = await fetch('https://api.openai.com/v1/audio/speech', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${openAiKey}`,
+        Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({

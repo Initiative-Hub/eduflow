@@ -59,9 +59,12 @@ export const POST = withAuth(async (req) => {
       mimeType
     );
 
-    const assessment = PronunciationService.assessPronunciation(
+    const targetIpa = (formData.get('targetIpa') as string) || undefined;
+
+    const assessment = await PronunciationService.assessPronunciationWithAI(
       targetText,
-      transcript
+      transcript,
+      targetIpa
     );
 
     return NextResponse.json(assessment);

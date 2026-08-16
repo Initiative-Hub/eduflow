@@ -62,6 +62,13 @@ export interface CrawledExamplesResult {
   examples: WordExample[];
 }
 
+export interface PhoneticTip {
+  word: string;
+  ipa?: string;
+  issue: string;
+  tip: string;
+}
+
 export interface PronunciationAssessmentResult {
   transcript: string;
   targetText: string;
@@ -69,6 +76,8 @@ export interface PronunciationAssessmentResult {
   matchedWords: string[];
   missingWords: string[];
   feedback: string;
+  spokenIpa?: string;
+  phoneticTips?: PhoneticTip[];
 }
 
 export const wordbankApi = {
@@ -87,10 +96,11 @@ export const wordbankApi = {
       params: { word },
     });
   },
-  assessPronunciation(audioBlob: Blob, targetText: string) {
+  assessPronunciation(audioBlob: Blob, targetText: string, targetIpa?: string) {
     const formData = new FormData();
     formData.append('audio', audioBlob, 'recording.webm');
     formData.append('targetText', targetText);
+    if (targetIpa) formData.append('targetIpa', targetIpa);
 
     return apiClient.post<PronunciationAssessmentResult>(
       'v1/english/pronunciation/assess',
