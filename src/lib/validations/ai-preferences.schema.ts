@@ -6,6 +6,6 @@ export const updateAiPreferencesSchema = z
   })
   .strict();
 
-export type updateAiPreferencesSchema = z.infer<
+export type UpdateAiPreferencesInput = z.infer<
   typeof updateAiPreferencesSchema
 >;
