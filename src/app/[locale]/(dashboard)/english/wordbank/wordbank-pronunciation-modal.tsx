@@ -22,12 +22,12 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import type { SavedVocabularyItem } from '@/services/english/SavedVocabularyService';
-import { playWordbankAudio } from './wordbank-audio';
-import type { WordbankTranslator } from './wordbank-mastery';
 import {
   type PronunciationAssessmentResult,
   wordbankApi,
 } from './wordbank.service';
+import { playWordbankAudio } from './wordbank-audio';
+import type { WordbankTranslator } from './wordbank-mastery';
 
 interface WordbankPronunciationModalProps {
   open: boolean;
@@ -65,12 +65,93 @@ export function WordbankPronunciationModal({
     useState<PronunciationAssessmentResult | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  // Tip word single-recording & scoring state
+  const [activeTipWord, setActiveTipWord] = useState<string | null>(null);
+  const [isRecordingTip, setIsRecordingTip] = useState(false);
+  const [analyzingTipWord, setAnalyzingTipWord] = useState<string | null>(null);
+  const [tipResults, setTipResults] = useState<
+    Record<string, { score: number; isCorrect: boolean }>
+  >({});
+
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
+  const tipMediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const tipAudioChunksRef = useRef<Blob[]>([]);
+
   const currentTargetSentence =
     uniqueSentences[selectedSentenceIndex] || item.word;
+
+  const handleStartTipRecording = async (
+    tipWord: string,
+    targetIpa?: string
+  ) => {
+    setActiveTipWord(tipWord);
+    tipAudioChunksRef.current = [];
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: MediaRecorder.isTypeSupported('audio/webm')
+          ? 'audio/webm'
+          : 'audio/mp4',
+      });
+
+      tipMediaRecorderRef.current = mediaRecorder;
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          tipAudioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(tipAudioChunksRef.current, {
+          type: mediaRecorder.mimeType,
+        });
+
+        // biome-ignore lint/suspicious/useIterableCallbackReturn: <explanation>
+        stream.getTracks().forEach((track) => track.stop());
+
+        setAnalyzingTipWord(tipWord);
+        try {
+          const result = await wordbankApi.assessPronunciation(
+            audioBlob,
+            tipWord,
+            targetIpa
+          );
+          const isCorrect = result.score >= 70;
+          setTipResults((prev) => ({
+            ...prev,
+            [tipWord]: { score: result.score, isCorrect },
+          }));
+        } catch {
+          // Ignore tip score failure
+        } finally {
+          setAnalyzingTipWord(null);
+          setActiveTipWord(null);
+          setIsRecordingTip(false);
+        }
+      };
+
+      mediaRecorder.start(100);
+      setIsRecordingTip(true);
+    } catch {
+      setActiveTipWord(null);
+      setIsRecordingTip(false);
+    }
+  };
+
+  const handleStopTipRecording = () => {
+    if (
+      tipMediaRecorderRef.current &&
+      tipMediaRecorderRef.current.state !== 'inactive'
+    ) {
+      tipMediaRecorderRef.current.stop();
+      setIsRecordingTip(false);
+    }
+  };
 
   useEffect(() => {
     return () => {
@@ -441,7 +522,7 @@ export function WordbankPronunciationModal({
                     Recognized Speech: &ldquo;{assessment.transcript}&rdquo;
                   </div>
                   {assessment.spokenIpa && (
-                    <div className="font-mono font-medium text-primary">
+                    <div className="font-medium font-mono text-primary">
                       Spoken IPA: /{assessment.spokenIpa.replace(/\//g, '')}/
                     </div>
                   )}
@@ -485,19 +566,61 @@ export function WordbankPronunciationModal({
                                 </span>
                               )}
                             </div>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => playWordbankAudio(null, tip.word)}
-                              className="h-7 gap-1.5 rounded-lg border border-primary/20 px-2.5 font-medium text-xs text-primary hover:bg-primary/10"
-                              title={`Listen to "${tip.word}"`}
-                            >
-                              <Volume2 className="size-3.5 text-primary" />
-                              <span>Listen</span>
-                            </Button>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() =>
+                                  playWordbankAudio(null, tip.word)
+                                }
+                                className="h-7 gap-1.5 rounded-lg border border-primary/20 px-2.5 font-medium text-primary text-xs hover:bg-primary/10"
+                                title={`Listen to "${tip.word}"`}
+                              >
+                                <Volume2 className="size-3.5 text-primary" />
+                                <span>Listen</span>
+                              </Button>
+
+                              {isRecordingTip && activeTipWord === tip.word ? (
+                                <Button
+                                  type="button"
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={handleStopTipRecording}
+                                  className="h-7 animate-pulse gap-1.5 rounded-lg px-2.5 font-semibold text-xs shadow-sm"
+                                >
+                                  <MicOff className="size-3.5" />
+                                  <span>Stop</span>
+                                </Button>
+                              ) : analyzingTipWord === tip.word ? (
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  disabled
+                                  className="h-7 gap-1.5 rounded-lg px-2.5 text-xs"
+                                >
+                                  <Loader2 className="size-3.5 animate-spin text-primary" />
+                                  <span>Evaluating...</span>
+                                </Button>
+                              ) : (
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() =>
+                                    handleStartTipRecording(tip.word, tip.ipa)
+                                  }
+                                  className="h-7 gap-1.5 rounded-lg border border-purple-500/30 bg-purple-500/10 px-2.5 font-semibold text-purple-600 text-xs hover:bg-purple-500/20 dark:text-purple-300"
+                                  title={`Practice pronouncing "${tip.word}"`}
+                                >
+                                  <Mic className="size-3.5 text-purple-500" />
+                                  <span>Practice</span>
+                                </Button>
+                              )}
+                            </div>
                           </div>
-                          <p className="text-muted-foreground font-medium">
+                          <p className="font-medium text-muted-foreground">
                             <span className="font-semibold text-destructive">
                               Sound Issue:
                             </span>{' '}
@@ -509,6 +632,28 @@ export function WordbankPronunciationModal({
                             </span>{' '}
                             {tip.tip}
                           </p>
+
+                          {/* Tip Practice Result Badge */}
+                          {tipResults[tip.word] && (
+                            <div className="mt-1 flex items-center justify-between border-border/50 border-t pt-1.5">
+                              <span className="font-medium text-[11px] text-muted-foreground">
+                                Practice Result:
+                              </span>
+                              <span
+                                className={`flex items-center gap-1.5 rounded-full px-2.5 py-0.5 font-extrabold text-xs ${
+                                  tipResults[tip.word].isCorrect
+                                    ? 'border border-emerald-500/40 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
+                                    : 'border border-amber-500/40 bg-amber-500/15 text-amber-700 dark:text-amber-300'
+                                }`}
+                              >
+                                <CheckCircle2 className="size-3.5" />
+                                {tipResults[tip.word].score}%{' '}
+                                {tipResults[tip.word].isCorrect
+                                  ? 'Passed!'
+                                  : 'Try Again'}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
