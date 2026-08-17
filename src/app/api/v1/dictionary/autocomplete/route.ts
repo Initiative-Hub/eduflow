@@ -45,8 +45,11 @@ export async function GET(req: NextRequest) {
     const result = await DictionaryService.autocomplete(validation.data.query);
     return NextResponse.json(result);
   } catch (error: unknown) {
-    const message =
-      error instanceof Error ? error.message : 'Internal Server Error';
-    return NextResponse.json({ message, suggestions: [] }, { status: 500 });
+    const { searchParams } = new URL(req.url);
+    const rawQuery = searchParams.get('query') || searchParams.get('q') || '';
+    return NextResponse.json(
+      { query: rawQuery, suggestions: [] },
+      { status: 200 }
+    );
   }
 }

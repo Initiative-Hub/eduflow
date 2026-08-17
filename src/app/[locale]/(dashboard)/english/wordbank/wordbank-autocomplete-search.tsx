@@ -8,6 +8,7 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from '@/components/ui/input-group';
+import { useDebounce } from '@/hooks/use-debounce';
 import { type AutocompleteSuggestion, wordbankApi } from './wordbank.service';
 
 interface WordbankAutocompleteSearchProps {
@@ -27,12 +28,13 @@ export function WordbankAutocompleteSearch({
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const trimmedQuery = query.trim();
+  const debouncedQuery = useDebounce(query.trim(), 300);
+  const isDebouncing = query.trim() !== debouncedQuery;
 
   const { data, isLoading } = useQuery({
-    queryKey: ['vocab-autocomplete', trimmedQuery],
-    queryFn: () => wordbankApi.autocomplete(trimmedQuery),
-    enabled: trimmedQuery.length >= 1,
+    queryKey: ['vocab-autocomplete', debouncedQuery],
+    queryFn: () => wordbankApi.autocomplete(debouncedQuery),
+    enabled: debouncedQuery.length >= 1,
     staleTime: 1000 * 60 * 5, // 5 minutes cache
   });
 
@@ -64,7 +66,7 @@ export function WordbankAutocompleteSearch({
     <div ref={containerRef} className="relative w-full">
       <InputGroup className="h-12 rounded-2xl border-primary/30 bg-background/90 shadow-sm backdrop-blur focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
         <InputGroupAddon>
-          {isSaving || isLoading ? (
+          {isSaving || isLoading || isDebouncing ? (
             <Loader2 className="size-5 animate-spin text-primary" />
           ) : (
             <Sparkles className="size-5 text-primary" />

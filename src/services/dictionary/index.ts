@@ -184,7 +184,7 @@ export class DictionaryService {
   }
 
   /**
-   * Fetch English-Vietnamese vocabulary autocomplete suggestions from Laban Dict API.
+   * Fetch English-Vietnamese vocabulary autocomplete suggestions from Laban Dict API with Datamuse fallback.
    */
   static async autocomplete(rawQuery: string): Promise<AutocompleteResult> {
     const query = rawQuery.trim();
@@ -192,12 +192,12 @@ export class DictionaryService {
       return { query: '', suggestions: [] };
     }
 
-    const targetUrl = `https://dict.laban.vn/ajax/autocomplete?type=1&site=dictionary&query=${encodeURIComponent(query)}`;
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
-
+    // Try Laban Dict first
     try {
+      const targetUrl = `https://dict.laban.vn/ajax/autocomplete?type=1&site=dictionary&query=${encodeURIComponent(query)}`;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
+
       const res = await fetch(targetUrl, {
         method: 'GET',
         headers: {
@@ -212,43 +212,75 @@ export class DictionaryService {
 
       clearTimeout(timeoutId);
 
-      if (!res.ok) {
-        throw new Error(
-          `Upstream dictionary provider returned status ${res.status}`
-        );
+      const contentType = res.headers.get('content-type') || '';
+      if (res.ok && contentType.includes('application/json')) {
+        const rawData = (await res.json()) as {
+          query?: string;
+          suggestions?: Array<{
+            select: string;
+            link?: string;
+            data?: string;
+            value?: string;
+          }>;
+        };
+
+        const rawSuggestions = rawData.suggestions ?? [];
+        if (rawSuggestions.length > 0) {
+          const suggestions: AutocompleteSuggestion[] = rawSuggestions.map(
+            (item) => ({
+              select: item.select,
+              link: item.link,
+              value: item.value,
+              phonetic: DictionaryService.parsePhonetic(item.data),
+              definition: DictionaryService.parseDefinition(item.data),
+              data: item.data,
+            })
+          );
+
+          return {
+            query: rawData.query || query,
+            suggestions,
+          };
+        }
       }
-
-      const rawData = (await res.json()) as {
-        query?: string;
-        suggestions?: Array<{
-          select: string;
-          link?: string;
-          data?: string;
-          value?: string;
-        }>;
-      };
-
-      const rawSuggestions = rawData.suggestions ?? [];
-
-      const suggestions: AutocompleteSuggestion[] = rawSuggestions.map(
-        (item) => ({
-          select: item.select,
-          link: item.link,
-          value: item.value,
-          phonetic: DictionaryService.parsePhonetic(item.data),
-          definition: DictionaryService.parseDefinition(item.data),
-          data: item.data,
-        })
-      );
-
-      return {
-        query: rawData.query || query,
-        suggestions,
-      };
-    } catch (error) {
-      clearTimeout(timeoutId);
-      throw error;
+    } catch {
+      // Laban Dict unavailable or redirected to HTML, fall through to Datamuse
     }
+
+    // Datamuse API fallback (Free, fast, global autocomplete endpoint)
+    try {
+      const datamuseUrl = `https://api.datamuse.com/sug?s=${encodeURIComponent(query)}`;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
+
+      const res = await fetch(datamuseUrl, {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json',
+        },
+        signal: controller.signal,
+        cache: 'no-store',
+      });
+
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        const data = (await res.json()) as Array<{ word: string }>;
+        const suggestions: AutocompleteSuggestion[] = data.map((item) => ({
+          select: item.word,
+          value: item.word,
+        }));
+
+        return {
+          query,
+          suggestions,
+        };
+      }
+    } catch {
+      // Datamuse failed, return empty suggestions cleanly
+    }
+
+    return { query, suggestions: [] };
   }
 
   private static parsePhonetic(dataHtml?: string): string | undefined {

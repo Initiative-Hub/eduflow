@@ -25,6 +25,9 @@ const LEGACY_DROP_STYLE_ATTRIBUTE = 'data-slide-drop-style';
  *
  * Kept as a plain string because it is serialized into the persisted deck HTML
  * and runs inside the deck document, not in the application bundle.
+ *
+ *
+ * Valication on slide extraction
  */
 const DROP_RUNTIME_SCRIPT = `
 (function () {
