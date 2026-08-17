@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { Loader2, Plus, Search, Sparkles } from 'lucide-react';
+import { Loader2, Plus, Sparkles } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import {
   InputGroup,

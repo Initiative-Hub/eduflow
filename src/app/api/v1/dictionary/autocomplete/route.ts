@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
 
     const result = await DictionaryService.autocomplete(validation.data.query);
     return NextResponse.json(result);
-  } catch (error: unknown) {
+  } catch (_error: unknown) {
     const { searchParams } = new URL(req.url);
     const rawQuery = searchParams.get('query') || searchParams.get('q') || '';
     return NextResponse.json(
