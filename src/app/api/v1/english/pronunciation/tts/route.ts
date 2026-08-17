@@ -4,11 +4,11 @@ import { PronunciationService } from '@/services/english/PronunciationService';
 
 /**
  * @swagger
- * /api/v1/english/tts:
+ * /api/v1/english/pronunciation/tts:
  *   post:
  *     tags:
  *       - English
- *     summary: Synthesize text to speech audio for English sentences
+ *     summary: Synthesize target text speech audio for pronunciation practice using OpenRouter TTS
  *     security:
  *       - SessionCookie: []
  *     requestBody:
@@ -26,11 +26,11 @@ import { PronunciationService } from '@/services/english/PronunciationService';
  *                 type: string
  *     responses:
  *       200:
- *         description: Audio stream (audio/wav)
+ *         description: Audio stream (audio/mpeg)
  *       400:
- *         description: Missing text parameter
+ *         description: Missing text
  *       500:
- *         description: Speech synthesis failed
+ *         description: Server error
  */
 export const POST = withAuth(async (req) => {
   try {

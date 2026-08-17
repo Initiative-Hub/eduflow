@@ -1,8 +1,8 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
 import { LayoutTemplate, Sparkles } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import {
   Select,
   SelectContent,
@@ -14,8 +14,8 @@ import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 import {
   isDefaultTemplateCollection,
-  slideService,
   type SlideTemplate,
+  slideService,
 } from '../slide.service';
 import { useSlideTemplatePreviews } from '../use-lesson';
 

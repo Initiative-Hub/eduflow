@@ -6,14 +6,24 @@ import {
   MWLearnersProvider,
 } from './providers';
 import {
+  type AutocompleteResult,
+  type AutocompleteSuggestion,
   type DictionaryEntry,
   type DictionaryMeaning,
   type DictionaryProvider,
   type DictionaryProviderId,
   DictionaryRateLimitError,
+  type WordExample,
 } from './types';
 
-export type { DictionaryEntry, DictionaryMeaning, DictionaryProviderId };
+export type {
+  AutocompleteResult,
+  AutocompleteSuggestion,
+  DictionaryEntry,
+  DictionaryMeaning,
+  DictionaryProviderId,
+  WordExample,
+};
 export { DictionaryRateLimitError };
 
 /**
@@ -170,6 +180,190 @@ export class DictionaryService {
       return phonetic;
     } catch {
       return null;
+    }
+  }
+
+  /**
+   * Fetch English-Vietnamese vocabulary autocomplete suggestions from Laban Dict API with Datamuse fallback.
+   */
+  static async autocomplete(rawQuery: string): Promise<AutocompleteResult> {
+    const query = rawQuery.trim();
+    if (!query) {
+      return { query: '', suggestions: [] };
+    }
+
+    // Try Laban Dict first
+    try {
+      const targetUrl = `https://dict.laban.vn/ajax/autocomplete?type=1&site=dictionary&query=${encodeURIComponent(query)}`;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+      const res = await fetch(targetUrl, {
+        method: 'GET',
+        headers: {
+          'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          Accept: 'application/json, text/javascript, */*; q=0.01',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        signal: controller.signal,
+        cache: 'no-store',
+      });
+
+      clearTimeout(timeoutId);
+
+      const contentType = res.headers.get('content-type') || '';
+      if (res.ok && contentType.includes('application/json')) {
+        const rawData = (await res.json()) as {
+          query?: string;
+          suggestions?: Array<{
+            select: string;
+            link?: string;
+            data?: string;
+            value?: string;
+          }>;
+        };
+
+        const rawSuggestions = rawData.suggestions ?? [];
+        if (rawSuggestions.length > 0) {
+          const suggestions: AutocompleteSuggestion[] = rawSuggestions.map(
+            (item) => ({
+              select: item.select,
+              link: item.link,
+              value: item.value,
+              phonetic: DictionaryService.parsePhonetic(item.data),
+              definition: DictionaryService.parseDefinition(item.data),
+              data: item.data,
+            })
+          );
+
+          return {
+            query: rawData.query || query,
+            suggestions,
+          };
+        }
+      }
+    } catch {
+      // Laban Dict unavailable or redirected to HTML, fall through to Datamuse
+    }
+
+    // Datamuse API fallback (Free, fast, global autocomplete endpoint)
+    try {
+      const datamuseUrl = `https://api.datamuse.com/sug?s=${encodeURIComponent(query)}`;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
+
+      const res = await fetch(datamuseUrl, {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json',
+        },
+        signal: controller.signal,
+        cache: 'no-store',
+      });
+
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        const data = (await res.json()) as Array<{ word: string }>;
+        const suggestions: AutocompleteSuggestion[] = data.map((item) => ({
+          select: item.word,
+          value: item.word,
+        }));
+
+        return {
+          query,
+          suggestions,
+        };
+      }
+    } catch {
+      // Datamuse failed, return empty suggestions cleanly
+    }
+
+    return { query, suggestions: [] };
+  }
+
+  private static parsePhonetic(dataHtml?: string): string | undefined {
+    if (!dataHtml) return undefined;
+    const match = dataHtml.match(/\/([^/<>]+)\//);
+    return match ? `/${match[1].trim()}/` : undefined;
+  }
+
+  private static parseDefinition(dataHtml?: string): string | undefined {
+    if (!dataHtml) return undefined;
+    const match = dataHtml.match(/<p>(.*?)<\/p>/i);
+    if (!match) return undefined;
+    return match[1].replace(/<[^>]+>/g, '').trim();
+  }
+
+  /**
+   * Crawl Laban Dict web page (https://dict.laban.vn/find?type=1&query={word})
+   * to extract example sentences and Vietnamese translations.
+   */
+  static async fetchExamples(rawWord: string): Promise<WordExample[]> {
+    const word = rawWord.trim();
+    if (!word) return [];
+
+    const targetUrl = `https://dict.laban.vn/find?type=1&query=${encodeURIComponent(word)}`;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+    try {
+      const res = await fetch(targetUrl, {
+        method: 'GET',
+        headers: {
+          'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          Accept:
+            'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        },
+        signal: controller.signal,
+        cache: 'no-store',
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!res.ok) return [];
+
+      const html = await res.text();
+      const results: WordExample[] = [];
+
+      const blockRegex =
+        /<div\s+class="color-light-blue[^"]*">([\s\S]*?)<\/div>(?:\s*<div\s+class="margin25">([\s\S]*?)<\/div>)?/gi;
+
+      let match = blockRegex.exec(html);
+      const seen = new Set<string>();
+
+      while (match !== null) {
+        const rawEnglish = match[1] || '';
+        const rawVietnamese = match[2] || '';
+
+        const english = rawEnglish
+          .replace(/<[^>]+>/g, '')
+          .replace(/&nbsp;/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+
+        const vietnamese = rawVietnamese
+          .replace(/<[^>]+>/g, '')
+          .replace(/&nbsp;/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+
+        if (english && english.length > 2 && !seen.has(english.toLowerCase())) {
+          seen.add(english.toLowerCase());
+          results.push({ english, vietnamese });
+        }
+
+        if (results.length >= 10) break;
+        match = blockRegex.exec(html);
+      }
+
+      return results;
+    } catch {
+      clearTimeout(timeoutId);
+      return [];
     }
   }
 }

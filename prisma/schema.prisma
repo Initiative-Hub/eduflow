@@ -869,6 +869,7 @@ model SavedVocabulary {
   englishDefinition     String   @map("english_definition")
   vietnameseTranslation String   @map("vietnamese_translation")
   exampleSentence       String   @map("example_sentence")
+  examples              String[] @default([])
   sourceSnippet         String?  @map("source_snippet")
   masteryLevel          Int      @default(0) @map("mastery_level")
   nextReviewAt          DateTime @default(now()) @map("next_review_at")

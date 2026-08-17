@@ -7,8 +7,8 @@ import {
 import { gameQuizError } from './errors';
 import type {
   GameActor,
-  GameSessionPhase,
   GameQuizWithQuestions,
+  GameSessionPhase,
   SessionWithGameData,
 } from './types';
 

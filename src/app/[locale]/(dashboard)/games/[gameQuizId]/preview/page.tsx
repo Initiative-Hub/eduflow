@@ -1,6 +1,6 @@
-import { GameQuizPreviewClient } from '@/components/game-quiz/game-quiz-preview-client';
-import { getGameQuizCopy } from '@/components/game-quiz/copy';
 import { getTranslations } from 'next-intl/server';
+import { getGameQuizCopy } from '@/components/game-quiz/copy';
+import { GameQuizPreviewClient } from '@/components/game-quiz/game-quiz-preview-client';
 
 interface GameQuizPreviewPageProps {
   params: Promise<{ gameQuizId: string }>;

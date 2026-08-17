@@ -106,10 +106,7 @@ export function WordbankListView({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  onClick={() =>
-                    item.audioUrl && playWordbankAudio(item.audioUrl)
-                  }
-                  disabled={!item.audioUrl}
+                  onClick={() => playWordbankAudio(item.audioUrl, item.word)}
                   aria-label={t('playPronunciation', { word: item.word })}
                 >
                   <Volume2 />

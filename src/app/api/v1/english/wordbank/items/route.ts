@@ -8,6 +8,8 @@ const updateItemsBodySchema = z.object({
   addListIds: z.array(z.string().uuid()).max(50).optional(),
   removeListIds: z.array(z.string().uuid()).max(50).optional(),
   masteryLevel: z.number().int().min(0).max(2).optional(),
+  exampleSentence: z.string().max(1000).optional(),
+  examples: z.array(z.string().max(1000)).max(50).optional(),
 });
 
 /**

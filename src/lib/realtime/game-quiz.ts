@@ -1,18 +1,18 @@
 import 'server-only';
 
-import { Realtime, type InferRealtimeEvents } from '@upstash/realtime';
-import * as z from 'zod';
+import { type InferRealtimeEvents, Realtime } from '@upstash/realtime';
+import type * as z from 'zod';
 import {
-  gameQuizHostProgressEventSchema,
   gameQuizHostChannel,
+  gameQuizHostProgressEventSchema,
   gameQuizPlayerChannel,
   gameQuizPlayerEventSchema,
   gameQuizRealtimeEventSchemas,
   gameQuizSharedChannel,
   gameQuizSharedEventSchema,
 } from '@/lib/game-quiz/realtime-events';
-import { getUpstashRestRedisClient } from '@/lib/upstash/redis/client';
 import { prisma } from '@/lib/prisma';
+import { getUpstashRestRedisClient } from '@/lib/upstash/redis/client';
 
 export type GameQuizRealtimeEvents = InferRealtimeEvents<
   ReturnType<typeof getGameQuizRealtime>

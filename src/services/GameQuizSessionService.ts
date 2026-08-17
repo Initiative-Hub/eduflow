@@ -2,10 +2,9 @@ import type { Prisma } from '@/generated/prisma';
 import {
   findParticipant,
   findSessionByJoinCode,
-  isUniqueConstraintError,
   type GameQuizDatabase,
+  isUniqueConstraintError,
 } from '@/lib/game-quiz/database';
-import { prisma } from '@/lib/prisma';
 import { gameQuizError } from '@/lib/game-quiz/errors';
 import { projectSessionForActor } from '@/lib/game-quiz/projections';
 import type {
@@ -17,6 +16,7 @@ import { GAME_QUIZ_TEMPLATE_KEY } from '@/lib/game-quiz/schemas';
 import {
   currentGameRound,
   gameSessionStateWhere,
+  nextHostedGamePhase,
   requireExpectedState,
   requireGameQuiz,
   requireGameQuizManager,
@@ -24,7 +24,6 @@ import {
   requireGameSessionHost,
   requireGameSessionOpen,
   requireGameSessionPhase,
-  nextHostedGamePhase,
   shouldAutoRevealGameRound,
 } from '@/lib/game-quiz/shared';
 import { shuffle } from '@/lib/game-quiz/shuffle';
@@ -33,6 +32,7 @@ import type {
   GameQuizWithQuestions,
   GameRoundRecord,
 } from '@/lib/game-quiz/types';
+import { prisma } from '@/lib/prisma';
 
 const JOIN_CODE_ATTEMPTS = 12;
 const HOST_LEASE_MS = 30_000;

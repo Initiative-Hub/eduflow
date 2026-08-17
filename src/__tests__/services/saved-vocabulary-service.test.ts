@@ -143,6 +143,7 @@ describe('SavedVocabularyService', () => {
           vietnameseTranslation: 'Sao chổi.',
           exampleSentence:
             'Along with asteroids and comets, the planets orbit the Sun.',
+          examples: [],
           sourceSnippet: null,
           masteryLevel: 0,
           nextReviewAt: expect.any(Date),
@@ -458,7 +459,7 @@ describe('SavedVocabularyService', () => {
       { questionIndex: 1, savedVocabularyId: 'saved-1' },
     ]);
     expect(createInput?.data.quiz.questions[0].explanation).toBe(
-      'asteroid\nTiểu hành tinh.\nA small rocky body orbiting the sun.'
+      'asteroid (/ˈæstərɔɪd/)\nNghĩa: Tiểu hành tinh.\nA small rocky body orbiting the sun.'
     );
   });
 
