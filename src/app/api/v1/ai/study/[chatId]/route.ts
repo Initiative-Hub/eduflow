@@ -19,6 +19,7 @@ import type { ChatProvider } from '@/services/ai/chat-provider.types';
 import { createChatTools } from '@/services/ai/chat-tools';
 import { CacheService } from '@/services/CacheService';
 import { ChatPersistenceService } from '@/services/ChatPersistenceService';
+import { UserAiPreferencesService } from '@/services/UserAiPreferencesService';
 import type { StudyUIMessage } from '@/types/study-ui-message';
 import {
   hasChatFileParts,
@@ -329,6 +330,8 @@ export async function POST(
     const providerName = parsedBody.data.provider ?? DEFAULT_PROVIDER;
     const provider = ChatProviderFactory.create(providerName);
     const systemPrompt = getStudySystemPrompt(parsedBody.data.mode);
+    const customInstructions =
+      await UserAiPreferencesService.getCustomInstructions(userId);
     const courseTools = createChatTools(userId);
 
     const tools =
@@ -477,7 +480,7 @@ export async function POST(
         model: parsedBody.data.model,
         apiKey: parsedBody.data.apiKey,
       },
-      { prompt: systemPrompt, tools, maxSteps }
+      { prompt: systemPrompt, customInstructions, tools, maxSteps }
     );
 
     result.consumeStream();

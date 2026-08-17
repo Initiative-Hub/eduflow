@@ -33,11 +33,7 @@ import { integrationsService } from './integrations.service';
 
 const GOOGLE_DRIVE_STATUS_QUERY_KEY = ['integrations', 'google-drive'] as const;
 
-export default function IntegrationsClient({
-  eduflowAccountEmail,
-}: {
-  eduflowAccountEmail: string;
-}) {
+export default function IntegrationsClient({ email }: { email: string }) {
   const t = useTranslations('IntegrationsPage');
   const locale = useLocale();
   const searchParams = useSearchParams();
@@ -161,9 +157,7 @@ export default function IntegrationsClient({
                 <div className="text-muted-foreground text-xs">
                   {t('googleDrive.eduflowAccount')}
                 </div>
-                <div className="mt-1 truncate font-medium">
-                  {eduflowAccountEmail}
-                </div>
+                <div className="mt-1 truncate font-medium">{email}</div>
               </div>
               <div className="rounded-lg border bg-muted/30 p-3">
                 <div className="text-muted-foreground text-xs">

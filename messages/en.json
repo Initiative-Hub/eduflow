@@ -333,9 +333,8 @@
     "title": "API Reference"
   },
   "AuthFooter": {
-    "brand": "EduFlow",
     "cookieSettings": "Cookie Settings",
-    "copyright": "© 2026 EduFlow Academic Atelier. All rights reserved.",
+    "copyright": "Copyright © 2026 EduFlow – All rights reserved.",
     "helpCenter": "Help Center",
     "privacyPolicy": "Privacy Policy",
     "termsOfService": "Terms of Service"
@@ -2320,6 +2319,22 @@
       "setPassword": "Set password"
     },
     "aiPreferences": {
+      "customInstructions": {
+        "characterCount": "{count} / {max}",
+        "description": "Describe how you want Eduflow's AI assistants to respond.",
+        "label": "Instructions",
+        "loadFailed": "AI instructions could not be loaded",
+        "loadFailedDescription": "Check your connection and try loading the settings again.",
+        "placeholder": "For example: Keep explanations concise. Avoid hyphenated lists in user-visible prose.",
+        "priorityNote": "Safety rules, required formats, citations, valid code, and structured output take priority.",
+        "retry": "Try again",
+        "save": "Save instructions",
+        "saved": "AI instructions saved",
+        "saveFailed": "AI instructions could not be saved.",
+        "saving": "Saving...",
+        "summary": "These preferences are used across supported AI conversations.",
+        "title": "Custom AI instructions"
+      },
       "insightFeedback": {
         "description": "Bi-weekly AI academic performance review",
         "label": "Insight Feedback"

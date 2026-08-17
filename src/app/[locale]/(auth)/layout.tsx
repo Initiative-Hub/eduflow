@@ -17,12 +17,9 @@ export default async function AuthLayout({
         <div className="w-full max-w-md space-y-6">
           <main className="w-full rounded-4xl bg-card px-6 py-8 shadow-2xl md:px-8 md:py-10">
             <div className="text-center">
-              <h1 className="font-black text-4xl text-primary leading-none">
+              <h1 className="font-black font-heading text-4xl text-primary">
                 EduFlow
               </h1>
-              <p className="mt-2 font-semibold text-muted-foreground text-xs uppercase tracking-widest">
-                Academic Atelier
-              </p>
             </div>
 
             <div className="mt-8">{children}</div>
