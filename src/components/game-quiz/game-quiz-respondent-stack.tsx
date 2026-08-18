@@ -50,7 +50,7 @@ export function GameQuizRespondentStack({
   return (
     <div className="flex -space-x-2" data-testid="respondent-stack">
       {visible.map((answerer) => (
-        <Tooltip key={answerer.id}>
+        <Tooltip key={answerer.id} disableHoverableContent>
           <TooltipTrigger asChild>
             <button
               type="button"
@@ -60,11 +60,13 @@ export function GameQuizRespondentStack({
               <RespondentAvatar answerer={answerer} />
             </button>
           </TooltipTrigger>
-          <TooltipContent side="top">{answerer.displayName}</TooltipContent>
+          <TooltipContent className="animate-none!" side="top">
+            {answerer.displayName}
+          </TooltipContent>
         </Tooltip>
       ))}
       {remaining.length > 0 ? (
-        <Tooltip>
+        <Tooltip disableHoverableContent>
           <TooltipTrigger asChild>
             <button
               type="button"
@@ -76,7 +78,7 @@ export function GameQuizRespondentStack({
               </Avatar>
             </button>
           </TooltipTrigger>
-          <TooltipContent side="top" className="block p-2">
+          <TooltipContent side="top" className="block animate-none! p-2">
             <ScrollArea className="max-h-48 w-56">
               <div className="space-y-2 pr-3">
                 {remaining.map((answerer) => (

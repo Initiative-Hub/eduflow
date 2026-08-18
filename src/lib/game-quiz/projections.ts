@@ -252,7 +252,9 @@ export async function projectHostSession(session: SessionWithGameData) {
           currentRound,
           true,
           true,
-          session.answers.filter((answer) => answer.roundId === currentRound.id),
+          session.answers.filter(
+            (answer) => answer.roundId === currentRound.id
+          ),
           session.phase === 'REVEAL' ? answerersByParticipantId : undefined
         )
       : null,

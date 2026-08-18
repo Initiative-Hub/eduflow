@@ -72,7 +72,12 @@ const question = {
 };
 
 function createSession(
-  phase: 'LOBBY' | 'QUESTION_OPEN' | 'REVEAL' | 'SCOREBOARD' | 'FINAL_CELEBRATION',
+  phase:
+    | 'LOBBY'
+    | 'QUESTION_OPEN'
+    | 'REVEAL'
+    | 'SCOREBOARD'
+    | 'FINAL_CELEBRATION',
   endedAt: string | null = null
 ): GameSessionSnapshot {
   return {

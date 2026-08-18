@@ -134,9 +134,7 @@ describe('Live Game Quiz rules', () => {
       },
     ]);
     expect(
-      player.currentRound?.options.every(
-        (option) => !('answerers' in option)
-      )
+      player.currentRound?.options.every((option) => !('answerers' in option))
     ).toBe(true);
   });
 
