@@ -51,6 +51,18 @@ function toOption(value: unknown, order: number): GameQuizOption {
     isCorrect: booleanValue(option.isCorrect),
     order: numberValue(option.order ?? option.orderIndex, order),
     answerCount: numberValue(option.answerCount),
+    answerers: getArray(option.answerers).filter(isRecord).map(toAnswerer),
+  };
+}
+
+function toAnswerer(
+  value: unknown
+): NonNullable<GameQuizOption['answerers']>[number] {
+  const answerer = getRecord(value);
+  return {
+    id: stringValue(answerer.id),
+    displayName: stringValue(answerer.displayName),
+    image: stringValue(answerer.image) || null,
   };
 }
 

@@ -7,6 +7,7 @@ import {
   activateLiveGameSession,
   readLiveGameSession,
 } from '@/components/game-quiz/live-game-session';
+import type { GameSessionSnapshot } from '@/components/game-quiz/types';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
 const { replace } = vi.hoisted(() => ({ replace: vi.fn() }));
@@ -71,9 +72,9 @@ const question = {
 };
 
 function createSession(
-  phase: 'LOBBY' | 'QUESTION_OPEN' | 'SCOREBOARD' | 'FINAL_CELEBRATION',
+  phase: 'LOBBY' | 'QUESTION_OPEN' | 'REVEAL' | 'SCOREBOARD' | 'FINAL_CELEBRATION',
   endedAt: string | null = null
-) {
+): GameSessionSnapshot {
   return {
     gameQuizId: 'game-quiz-1',
     realtimeKey: 'session-key',
@@ -130,6 +131,78 @@ beforeEach(() => {
 });
 
 describe('GameQuizHostClient', () => {
+  it('shows two named respondents and a scrollable overflow during reveal', async () => {
+    const user = userEvent.setup();
+    const session = createSession('REVEAL');
+    session.currentRound!.options[0] = {
+      ...session.currentRound!.options[0]!,
+      answerCount: 4,
+      answerers: [
+        { id: 'p1', displayName: 'Sam Rivera', image: null },
+        {
+          id: 'p2',
+          displayName: 'Alex Kim',
+          image: 'https://example.com/alex.png',
+        },
+        { id: 'p3', displayName: 'Jo Lee', image: null },
+        { id: 'p4', displayName: 'Taylor Chen', image: null },
+      ],
+    };
+    getHostSession.mockResolvedValue(session);
+    answerProgress.mockResolvedValue({ answerCount: 4 });
+
+    renderHost();
+
+    expect((await screen.findAllByText('4')).length).toBeGreaterThan(0);
+    const sam = screen.getByRole('button', { name: 'Sam Rivera' });
+    const alex = screen.getByRole('button', { name: 'Alex Kim' });
+    expect(sam).toBeInTheDocument();
+    expect(alex).toBeInTheDocument();
+    await user.hover(sam);
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Sam Rivera');
+    await user.unhover(sam);
+    await user.hover(alex);
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Alex Kim');
+    await user.unhover(alex);
+
+    const overflow = screen.getByRole('button', { name: '2 more respondents' });
+    expect(overflow).toHaveTextContent('+2');
+    await user.hover(overflow);
+    const tooltip = await screen.findByRole('tooltip');
+    expect(tooltip).toHaveTextContent('Jo Lee');
+    expect(tooltip).toHaveTextContent('Taylor Chen');
+    expect(tooltip.querySelectorAll('[data-slot="avatar"]')).toHaveLength(2);
+  });
+
+  it.each([0, 1, 2])(
+    'does not show overflow for %i respondents',
+    async (count) => {
+      const session = createSession('REVEAL');
+      session.currentRound!.options[0] = {
+        ...session.currentRound!.options[0]!,
+        answerCount: count,
+        answerers: [
+          { id: 'p1', displayName: 'Sam Rivera', image: null },
+          { id: 'p2', displayName: 'Alex Kim', image: null },
+        ].slice(0, count),
+      };
+      getHostSession.mockResolvedValue(session);
+      answerProgress.mockResolvedValue({ answerCount: count });
+
+      renderHost();
+
+      await screen.findByText('Which planet is red?');
+      expect(
+        screen.queryByRole('button', { name: /more respondents/ })
+      ).not.toBeInTheDocument();
+      expect(
+        screen
+          .queryAllByTestId('respondent-stack')[0]
+          ?.querySelectorAll('button')
+      ).toHaveLength(count);
+    }
+  );
+
   it('starts a fresh host session without closing it', async () => {
     getHostSession.mockResolvedValue(createSession('LOBBY'));
     answerProgress.mockResolvedValue({ answerCount: 0 });

@@ -15,6 +15,7 @@ export interface GameQuizOption {
   isCorrect: boolean;
   order: number;
   answerCount?: number;
+  answerers?: Array<Pick<GameParticipant, 'id' | 'displayName' | 'image'>>;
 }
 
 export interface GameQuizQuestion {

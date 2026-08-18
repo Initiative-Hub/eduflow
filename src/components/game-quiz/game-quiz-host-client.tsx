@@ -40,6 +40,7 @@ import { cn } from '@/lib/utils';
 import { type GameHostAction, gameQuizApi } from './api';
 import { type GameQuizCopy, gameQuizCopy } from './copy';
 import { GameQuizPodium } from './game-quiz-podium';
+import { GameQuizRespondentStack } from './game-quiz-respondent-stack';
 import { clearLiveGameSession } from './live-game-session';
 import type { GameQuizOption, GameSessionSnapshot } from './types';
 import { useGameQuizRealtime } from './use-game-quiz-realtime';
@@ -691,9 +692,12 @@ function AnswerTile({
       {revealed ? (
         <div className="mt-4">
           <Progress value={width} className="h-2" />
-          <p className="mt-2 text-right font-medium text-muted-foreground text-sm tabular-nums">
-            {answerCount}
-          </p>
+          <div className="mt-2 flex min-h-8 items-center justify-between gap-3">
+            <GameQuizRespondentStack answerers={option.answerers ?? []} />
+            <p className="ml-auto font-medium text-muted-foreground text-sm tabular-nums">
+              {answerCount}
+            </p>
+          </div>
         </div>
       ) : null}
     </Card>
