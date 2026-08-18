@@ -2848,6 +2848,7 @@
     "providerMyMemoryInfo": "✓ Không cần API key · 10M ký tự/tháng · Cộng đồng"
   },
   "WordbankPage": {
+    "audioFailed": "Không thể phát âm thanh",
     "actionsColumn": "Thao tác",
     "addToWordList": "Thêm vào Danh sách từ",
     "addWordFailedToast": "Không thể lưu '{word}' vào Wordbank",

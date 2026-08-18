@@ -2848,6 +2848,7 @@
     "providerMyMemoryInfo": "✓ No API key · 10M chars/month · Crowd-sourced"
   },
   "WordbankPage": {
+    "audioFailed": "Could not play audio",
     "actionsColumn": "Actions",
     "addToWordList": "Add to Word List",
     "addWordFailedToast": "Could not save '{word}' to Wordbank",

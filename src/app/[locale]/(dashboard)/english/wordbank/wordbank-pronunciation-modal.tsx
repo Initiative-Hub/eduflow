@@ -21,6 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { apiClient } from '@/lib/api/api-client';
 import type { SavedVocabularyItem } from '@/services/english/SavedVocabularyService';
 import {
   type PronunciationAssessmentResult,
@@ -40,6 +41,7 @@ export function WordbankPronunciationModal({
   open,
   onOpenChange,
   item,
+  t,
 }: WordbankPronunciationModalProps) {
   // Extract sentence choices (avoid duplicates and fallback to main word)
   const sentences = [
@@ -198,7 +200,7 @@ export function WordbankPronunciationModal({
           track.stop();
         });
 
-        // Send recorded audio to OpenRouter Whisper STT assessment endpoint
+        // Send recorded audio to OpenRouter STT assessment endpoint
         handleAnalyzePronunciation(audioBlob);
       };
 
@@ -254,14 +256,14 @@ export function WordbankPronunciationModal({
     setIsPlayingTarget(true);
 
     try {
-      const response = await fetch('/api/v1/english/pronunciation/tts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: currentTargetSentence }),
-      });
-
-      if (!response.ok) throw new Error('Practice TTS failed');
-      const blob = await response.blob();
+      const blob = await apiClient.post<Blob>(
+        'v1/english/tts',
+        { text: currentTargetSentence },
+        {
+          responseType: 'blob',
+          timeout: 60_000,
+        }
+      );
       const url = URL.createObjectURL(blob);
       const audio = new Audio(url);
       audio.onended = () => {
@@ -270,35 +272,12 @@ export function WordbankPronunciationModal({
       };
       audio.onerror = () => {
         URL.revokeObjectURL(url);
-        fallbackPracticeSpeech();
+        setErrorMsg(t('audioFailed'));
+        setIsPlayingTarget(false);
       };
       await audio.play();
     } catch {
-      fallbackPracticeSpeech();
-    }
-  };
-
-  const fallbackPracticeSpeech = () => {
-    if (item.audioUrl && currentTargetSentence === item.word) {
-      const audio = new Audio(item.audioUrl);
-      audio.onended = () => setIsPlayingTarget(false);
-      audio.onerror = () => speakBrowserUtterance();
-      audio.play().catch(() => speakBrowserUtterance());
-    } else {
-      speakBrowserUtterance();
-    }
-  };
-
-  const speakBrowserUtterance = () => {
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(currentTargetSentence);
-      utterance.lang = 'en-US';
-      utterance.rate = 0.9;
-      utterance.onend = () => setIsPlayingTarget(false);
-      utterance.onerror = () => setIsPlayingTarget(false);
-      window.speechSynthesis.speak(utterance);
-    } else {
+      setErrorMsg(t('audioFailed'));
       setIsPlayingTarget(false);
     }
   };
@@ -442,9 +421,7 @@ export function WordbankPronunciationModal({
           {isAnalyzing && (
             <div className="flex items-center justify-center gap-2.5 py-4 font-medium text-primary text-sm">
               <Loader2 className="size-5 animate-spin" />
-              <span>
-                Evaluating pronunciation with OpenRouter Whisper STT...
-              </span>
+              <span>Evaluating pronunciation...</span>
             </div>
           )}
 
@@ -574,7 +551,9 @@ export function WordbankPronunciationModal({
                                 variant="ghost"
                                 size="sm"
                                 onClick={() =>
-                                  playWordbankAudio(null, tip.word)
+                                  void playWordbankAudio(tip.word).catch(() => {
+                                    setErrorMsg(t('audioFailed'));
+                                  })
                                 }
                                 className="h-7 gap-1.5 rounded-lg border border-primary/20 px-2.5 font-medium text-primary text-xs hover:bg-primary/10"
                                 title={`Listen to "${tip.word}"`}

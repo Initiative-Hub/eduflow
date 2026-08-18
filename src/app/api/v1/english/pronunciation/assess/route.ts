@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
+import { errorResponse } from '@/lib/api/error-response';
 import { withAuth } from '@/lib/api/middlewares';
+import { pronunciationAssessmentRequestSchema } from '@/lib/validations/english-speech.schema';
 import { PronunciationService } from '@/services/english/PronunciationService';
+
+export const maxDuration = 60;
 
 /**
  * @swagger
@@ -33,23 +37,22 @@ import { PronunciationService } from '@/services/english/PronunciationService';
 export const POST = withAuth(async (req) => {
   try {
     const formData = await req.formData();
-    const audioFile = formData.get('audio') as File | null;
-    const targetText = (formData.get('targetText') as string) || '';
+    const parsed = pronunciationAssessmentRequestSchema.safeParse({
+      audio: formData.get('audio'),
+      targetText: formData.get('targetText'),
+      targetIpa: formData.get('targetIpa') || undefined,
+    });
 
-    if (!audioFile) {
-      return NextResponse.json(
-        { message: 'Missing audio file in request' },
-        { status: 400 }
+    if (!parsed.success) {
+      return errorResponse(
+        'INVALID_PRONUNCIATION_ASSESSMENT_REQUEST',
+        'A non-empty audio file and target text are required.',
+        400,
+        parsed.error.flatten()
       );
     }
 
-    if (!targetText.trim()) {
-      return NextResponse.json(
-        { message: 'Missing targetText in request' },
-        { status: 400 }
-      );
-    }
-
+    const { audio: audioFile, targetIpa, targetText } = parsed.data;
     const arrayBuffer = await audioFile.arrayBuffer();
     const audioBuffer = Buffer.from(arrayBuffer);
     const mimeType = audioFile.type || 'audio/webm';
@@ -58,8 +61,6 @@ export const POST = withAuth(async (req) => {
       audioBuffer,
       mimeType
     );
-
-    const targetIpa = (formData.get('targetIpa') as string) || undefined;
 
     const assessment = await PronunciationService.assessPronunciationWithAI(
       targetText,

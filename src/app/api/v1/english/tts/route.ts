@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
+import { errorResponse } from '@/lib/api/error-response';
 import { withAuth } from '@/lib/api/middlewares';
+import { englishTTSRequestSchema } from '@/lib/validations/english-speech.schema';
 import { PronunciationService } from '@/services/english/PronunciationService';
+
+export const maxDuration = 60;
 
 /**
  * @swagger
@@ -26,7 +30,7 @@ import { PronunciationService } from '@/services/english/PronunciationService';
  *                 type: string
  *     responses:
  *       200:
- *         description: Audio stream (audio/wav)
+ *         description: Audio stream (audio/mpeg)
  *       400:
  *         description: Missing text parameter
  *       500:
@@ -34,28 +38,27 @@ import { PronunciationService } from '@/services/english/PronunciationService';
  */
 export const POST = withAuth(async (req) => {
   try {
-    const { text, voice } = (await req.json()) as {
-      text?: string;
-      voice?: string;
-    };
+    const body = await req.json().catch(() => null);
+    const parsed = englishTTSRequestSchema.safeParse(body);
 
-    if (!text?.trim()) {
-      return NextResponse.json(
-        { message: 'Missing text parameter' },
-        { status: 400 }
+    if (!parsed.success) {
+      return errorResponse(
+        'INVALID_TTS_REQUEST',
+        'Text must be between 1 and 3000 characters and voice must be supported.',
+        400,
+        parsed.error.flatten()
       );
     }
 
-    const audioBuffer = await PronunciationService.synthesizeSpeech(
-      text,
-      voice || 'alloy'
-    );
+    const { text } = parsed.data;
+
+    const audioBuffer = await PronunciationService.synthesizeSpeech(text);
 
     return new Response(new Uint8Array(audioBuffer), {
       status: 200,
       headers: {
-        'Content-Type': 'audio/wav',
-        'Cache-Control': 'public, max-age=86400',
+        'Content-Type': 'audio/mpeg',
+        'Cache-Control': 'private, no-store',
       },
     });
   } catch (error: unknown) {

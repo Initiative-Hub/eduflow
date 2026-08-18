@@ -1,8 +1,13 @@
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
+import { OpenRouter } from '@openrouter/sdk';
 import { generateText, Output } from 'ai';
 import * as z from 'zod';
-import { getSpeechApiKey } from '@/lib/ai/ai-credentials';
 import { DEFAULT_MODELS } from '@/services/ai/chat-provider.constants';
+
+const OPENROUTER_STT_MODEL = 'openai/whisper-large-v3';
+const OPENROUTER_TTS_MODEL = 'mistralai/voxtral-mini-tts-2603';
+const OPENROUTER_TTS_MODEL_VOICE = 'en_paul_excited';
+const OPENROUTER_SPEECH_TIMEOUT_MS = 60_000;
 
 export interface PhoneticTip {
   word: string;
@@ -23,53 +28,38 @@ export interface PronunciationAssessmentResult {
 }
 
 export class PronunciationService {
-  /**
-   * Transcribe recorded audio buffer using OpenRouter / OpenAI Whisper model.
-   */
   static async transcribeAudio(
     audioBuffer: Buffer,
     mimeType = 'audio/webm'
   ): Promise<string> {
-    const { apiKey, provider } = getSpeechApiKey();
-    const isOpenRouter = provider === 'openrouter';
-    const endpoint = isOpenRouter
-      ? 'https://openrouter.ai/api/v1/audio/transcriptions'
-      : 'https://api.openai.com/v1/audio/transcriptions';
+    const apiKey = process.env.OPENROUTER_API_KEY;
 
-    const ext = mimeType.includes('webm')
-      ? 'webm'
-      : mimeType.includes('mp3')
-        ? 'mp3'
-        : 'wav';
-
-    const formData = new FormData();
-    const file = new File([new Uint8Array(audioBuffer)], `speech.${ext}`, {
-      type: mimeType,
-    });
-    formData.append('file', file);
-    formData.append(
-      'model',
-      isOpenRouter ? 'openai/whisper-large-v3-turbo' : 'whisper-1'
-    );
-    formData.append('language', 'en');
-
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: formData,
-    });
-
-    if (!response.ok) {
-      const errBody = await response.text().catch(() => '');
-      throw new Error(
-        `Speech-to-text API failed (${response.status}): ${errBody}`
-      );
+    if (!apiKey) {
+      throw new Error('Missing OPENROUTER_API_KEY for speech services');
     }
 
-    const data = (await response.json()) as { text?: string };
-    return data.text?.trim() ?? '';
+    const client = new OpenRouter({
+      apiKey,
+      appTitle: 'EduFlow',
+      timeoutMs: OPENROUTER_SPEECH_TIMEOUT_MS,
+    });
+
+    try {
+      const response = await client.stt.createTranscription({
+        sttRequest: {
+          inputAudio: {
+            data: audioBuffer.toString('base64'),
+            format: getAudioFormat(mimeType),
+          },
+          language: 'en',
+          model: OPENROUTER_STT_MODEL,
+        },
+      });
+
+      return response.text.trim();
+    } catch (error) {
+      throw createOpenRouterSpeechError('Speech-to-text', error);
+    }
   }
 
   /**
@@ -147,19 +137,14 @@ export class PronunciationService {
       transcribedText
     );
 
-    let creds: ReturnType<typeof getSpeechApiKey>;
-    try {
-      creds = getSpeechApiKey();
-    } catch {
-      return baseAssessment;
-    }
+    const apiKey = process.env.OPENROUTER_API_KEY;
 
-    if (creds.provider !== 'openrouter') {
+    if (!apiKey) {
       return baseAssessment;
     }
 
     try {
-      const provider = createOpenRouter({ apiKey: creds.apiKey });
+      const provider = createOpenRouter({ apiKey });
       const model = provider(DEFAULT_MODELS.openrouter);
       const phoneticAnalysisSchema = z.object({
         score: z
@@ -206,19 +191,21 @@ export class PronunciationService {
       const { output } = await generateText({
         model,
         output: Output.object({ schema: phoneticAnalysisSchema }),
-        system: `You are an expert English pronunciation coach and phonetician.
-Analyze the user's spoken audio transcript against the target sentence.
+        system: `
+          You are an expert English pronunciation coach and phonetician.
+          Analyze the user's spoken audio transcript against the target sentence.
 
-Target Sentence: "${targetText}"
-Target Word IPA: "${targetIpa ?? ''}"
-Spoken Recognized Speech: "${transcribedText}"
+          Target Sentence: "${targetText}"
+          Target Word IPA: "${targetIpa ?? ''}"
+          Spoken Recognized Speech: "${transcribedText}"
 
-Determine:
-1. Which words were correctly spoken vs mispronounced/dropped.
-2. An accuracy percentage score (0-100%).
-3. The IPA phonemic transcription of what the user actually pronounced (spokenIpa).
-4. Actionable phonetic tips for any mispronounced or omitted words.
-5. Encouraging overall feedback.`,
+          Determine:
+          1. Which words were correctly spoken vs mispronounced/dropped.
+          2. An accuracy percentage score (0-100%).
+          3. The IPA phonemic transcription of what the user actually pronounced (spokenIpa).
+          4. Actionable phonetic tips for any mispronounced or omitted words.
+          5. Encouraging overall feedback.
+        `,
         prompt: `Evaluate pronunciation accuracy for target: "${targetText}" with recognized speech: "${transcribedText}".`,
       });
 
@@ -268,117 +255,83 @@ Determine:
     }
   }
 
-  /**
-   * Synthesize text into ultra-natural human speech using OpenRouter GPT-Audio model (openai/gpt-audio-mini).
-   */
-  static async synthesizeSpeech(text: string, voice = 'nova'): Promise<Buffer> {
-    const { apiKey, provider } = getSpeechApiKey();
+  /** Synthesizes English speech through OpenRouter. */
+  static async synthesizeSpeech(text: string): Promise<Buffer> {
+    const apiKey = process.env.OPENROUTER_API_KEY;
 
-    if (provider === 'openrouter') {
-      const response = await fetch(
-        'https://openrouter.ai/api/v1/chat/completions',
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'openai/gpt-audio-mini',
-            modalities: ['text', 'audio'],
-            audio: { voice, format: 'pcm16' },
-            stream: true,
-            messages: [
-              {
-                role: 'user',
-                content: `Read the following text out loud with clear, natural, human English pronunciation. Do not add any extra commentary or words: "${text}"`,
-              },
-            ],
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        const errText = await response.text().catch(() => '');
-        throw new Error(
-          `OpenRouter speech synthesis failed (${response.status}): ${errText}`
-        );
-      }
-
-      const streamText = await response.text();
-      const lines = streamText.split('\n');
-      const audioChunks: Buffer[] = [];
-
-      for (const line of lines) {
-        if (!line.startsWith('data: ')) continue;
-        const jsonStr = line.slice(6).trim();
-        if (jsonStr === '[DONE]') break;
-        try {
-          const parsed = JSON.parse(jsonStr) as {
-            choices?: Array<{
-              delta?: { audio?: { data?: string } };
-            }>;
-          };
-          const base64Data = parsed.choices?.[0]?.delta?.audio?.data;
-          if (base64Data) {
-            audioChunks.push(Buffer.from(base64Data, 'base64'));
-          }
-        } catch {
-          // Ignore SSE chunk parse errors
-        }
-      }
-
-      const pcmBuffer = Buffer.concat(audioChunks);
-      if (pcmBuffer.length === 0) {
-        throw new Error('OpenRouter speech synthesis produced empty audio');
-      }
-
-      return createWavBuffer(pcmBuffer, 24000, 1, 16);
+    if (!apiKey) {
+      throw new Error('Missing OPENROUTER_API_KEY for speech services');
     }
 
-    // Direct OpenAI API fallback if OPENAI_API_KEY is provided
-    const response = await fetch('https://api.openai.com/v1/audio/speech', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'tts-1',
-        input: text,
-        voice,
-      }),
+    const client = new OpenRouter({
+      apiKey,
+      appTitle: 'EduFlow',
+      timeoutMs: OPENROUTER_SPEECH_TIMEOUT_MS,
     });
 
-    if (!response.ok) {
-      const errBody = await response.text().catch(() => '');
-      throw new Error(`OpenAI TTS failed (${response.status}): ${errBody}`);
-    }
+    try {
+      const audioStream = await client.tts.createSpeech({
+        speechRequest: {
+          input: text,
+          model: OPENROUTER_TTS_MODEL,
+          voice: OPENROUTER_TTS_MODEL_VOICE,
+          responseFormat: 'mp3',
+        },
+      });
 
-    const arrayBuffer = await response.arrayBuffer();
-    return Buffer.from(arrayBuffer);
+      const audioBuffer = Buffer.from(
+        await new Response(audioStream).arrayBuffer()
+      );
+
+      if (audioBuffer.length === 0) {
+        throw new Error('OpenRouter text-to-speech produced empty audio');
+      }
+
+      console.log(
+        `[PronunciationService] Synthesized speech for text: "${text}" (size: ${audioBuffer.length} bytes)`
+      );
+
+      return audioBuffer;
+    } catch (error) {
+      console.error('Error synthesizing speech:', error);
+      if (
+        error instanceof Error &&
+        error.message === 'OpenRouter text-to-speech produced empty audio'
+      ) {
+        throw error;
+      }
+
+      throw createOpenRouterSpeechError('Text-to-speech', error);
+    }
   }
 }
 
-function createWavBuffer(
-  pcm: Buffer,
-  sampleRate = 24000,
-  numChannels = 1,
-  bitsPerSample = 16
-): Buffer {
-  const header = Buffer.alloc(44);
-  header.write('RIFF', 0);
-  header.writeUInt32LE(36 + pcm.length, 4);
-  header.write('WAVE', 8);
-  header.write('fmt ', 12);
-  header.writeUInt32LE(16, 16);
-  header.writeUInt16LE(1, 20);
-  header.writeUInt16LE(numChannels, 22);
-  header.writeUInt32LE(sampleRate, 24);
-  header.writeUInt32LE(sampleRate * numChannels * (bitsPerSample / 8), 28);
-  header.writeUInt16LE(numChannels * (bitsPerSample / 8), 32);
-  header.writeUInt16LE(bitsPerSample, 34);
-  header.write('data', 36);
-  header.writeUInt32LE(pcm.length, 40);
-  return Buffer.concat([header, pcm]);
+function getAudioFormat(mimeType: string) {
+  if (mimeType.includes('webm')) return 'webm';
+  if (mimeType.includes('mpeg') || mimeType.includes('mp3')) return 'mp3';
+  if (mimeType.includes('mp4') || mimeType.includes('m4a')) return 'm4a';
+  if (mimeType.includes('ogg')) return 'ogg';
+  if (mimeType.includes('aac')) return 'aac';
+  return 'wav';
+}
+
+function createOpenRouterSpeechError(operation: string, error: unknown): Error {
+  const details = error instanceof Error ? error.message : String(error);
+  const statusCode =
+    typeof error === 'object' &&
+    error !== null &&
+    'statusCode' in error &&
+    typeof error.statusCode === 'number'
+      ? ` (${error.statusCode})`
+      : '';
+  const providerMessage =
+    typeof error === 'object' &&
+    error !== null &&
+    'body' in error &&
+    typeof error.body === 'string' &&
+    error.body
+      ? `: ${error.body}`
+      : `: ${details}`;
+
+  return new Error(`${operation} failed${statusCode}${providerMessage}`);
 }

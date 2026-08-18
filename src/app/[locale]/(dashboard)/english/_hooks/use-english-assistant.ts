@@ -2,6 +2,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { apiClient } from '@/lib/api/api-client';
 import type { GrammarAnalysis } from '@/services/english/GrammarService';
 import type { TranslationProvider } from '@/services/english/TranslationService';
 import type { VocabularyItem } from '@/services/english/VocabularyService';
@@ -97,24 +98,18 @@ export function useGrammarAnalysisMutation() {
   });
 }
 
-interface TTSParams {
-  text: string;
-  provider?: 'openai' | 'polly';
-}
-
 export function useTextToSpeechMutation() {
   return useMutation({
-    mutationFn: async (params: TTSParams) => {
-      const res = await fetch('/api/v1/english/pronunciation/tts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(params),
-        cache: 'no-store',
-      });
+    mutationFn: async (text: string) => {
+      const blob = await apiClient.post<Blob>(
+        'v1/english/tts',
+        { text },
+        {
+          responseType: 'blob',
+          timeout: 60_000,
+        }
+      );
 
-      if (!res.ok) throw new Error('TTS failed');
-
-      const blob = await res.blob();
       return URL.createObjectURL(blob);
     },
   });
@@ -210,10 +205,7 @@ export function useEnglishAssistantController() {
 
     try {
       const text = englishText.slice(0, 2999);
-      const url = await ttsMutation.mutateAsync({
-        text,
-        provider: 'polly',
-      });
+      const url = await ttsMutation.mutateAsync(text);
 
       const audio = new Audio(url);
       paragraphAudioRef.current = audio;

@@ -1,7 +1,8 @@
 'use client';
 
-import { Loader2, Mic, Plus, Sparkles, Volume2, X } from 'lucide-react';
+import { Loader2, Mic, Sparkles, Volume2, X } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -56,7 +57,7 @@ export function WordbankCard({
 
   return (
     <>
-      <Card className="flex h-[640px] flex-col justify-between overflow-hidden rounded-xl shadow-xs">
+      <Card className="flex h-160 flex-col justify-between overflow-hidden rounded-xl shadow-xs">
         <div className="flex-1 overflow-y-auto pr-1">
           <CardHeader>
             <CardTitle className="flex flex-col gap-2">
@@ -68,7 +69,11 @@ export function WordbankCard({
             <CardAction className="flex items-center gap-1">
               <button
                 type="button"
-                onClick={() => playWordbankAudio(item.audioUrl, item.word)}
+                onClick={() => {
+                  void playWordbankAudio(item.word).catch(() => {
+                    toast.error(t('audioFailed'));
+                  });
+                }}
                 className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary transition-all hover:bg-primary hover:text-primary-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
                 aria-label={t('playPronunciation', { word: item.word })}
               >

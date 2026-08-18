@@ -40,9 +40,7 @@
   },
   "dependencies": {
     "@ai-sdk/google": "^4.0.44",
-    "@ai-sdk/openai": "^4.0.42",
     "@ai-sdk/react": "^4.0.69",
-    "@aws-sdk/client-polly": "^3.1111.0",
     "@aws-sdk/client-s3": "^3.1111.0",
     "@aws-sdk/client-translate": "^3.1111.0",
     "@aws-sdk/s3-request-presigner": "^3.1111.0",
@@ -55,6 +53,7 @@
     "@hookform/resolvers": "^5.9.1",
     "@napi-rs/canvas": "^1.0.6",
     "@openrouter/ai-sdk-provider": "^3.0.0",
+    "@openrouter/sdk": "^1.2.42",
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.1",
     "@radix-ui/react-dropdown-menu": "^2.1.24",
