@@ -2848,7 +2848,6 @@
     "providerMyMemoryInfo": "✓ Không cần API key · 10M ký tự/tháng · Cộng đồng"
   },
   "WordbankPage": {
-    "audioFailed": "Không thể phát âm thanh",
     "actionsColumn": "Thao tác",
     "addToWordList": "Thêm vào Danh sách từ",
     "addWordFailedToast": "Không thể lưu '{word}' vào Wordbank",
@@ -2857,6 +2856,7 @@
     "answerTimingEnd": "Sau bài quiz",
     "answerTimingInstant": "Sau mỗi câu hỏi",
     "answerTimingLabel": "Hiện phản hồi",
+    "audioFailed": "Không thể phát âm thanh",
     "backToEnglish": "Quay lại Trợ lý Tiếng Anh",
     "bulkSelected": "{count, plural, =1 {Đã chọn 1 từ} other {Đã chọn # từ}}",
     "columnEnglishDefinition": "Định nghĩa tiếng Anh",

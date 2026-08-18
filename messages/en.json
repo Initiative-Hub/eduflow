@@ -2848,7 +2848,6 @@
     "providerMyMemoryInfo": "✓ No API key · 10M chars/month · Crowd-sourced"
   },
   "WordbankPage": {
-    "audioFailed": "Could not play audio",
     "actionsColumn": "Actions",
     "addToWordList": "Add to Word List",
     "addWordFailedToast": "Could not save '{word}' to Wordbank",
@@ -2857,6 +2856,7 @@
     "answerTimingEnd": "After the quiz",
     "answerTimingInstant": "After each question",
     "answerTimingLabel": "Show feedback",
+    "audioFailed": "Could not play audio",
     "backToEnglish": "Back to English Assistant",
     "bulkSelected": "{count, plural, =1 {1 selected} other {# selected}}",
     "columnEnglishDefinition": "English definition",
