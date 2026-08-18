@@ -149,7 +149,7 @@ export function TemplateManagerDialog({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
-        <DialogContent className="flex w-full flex-col border-border bg-background px-6 py-5 text-foreground sm:max-w-lg">
+        <DialogContent className="flex max-h-[85vh] w-full flex-col overflow-hidden border-border bg-background px-6 py-5 text-foreground sm:max-w-lg">
           <DialogHeader className="shrink-0">
             <DialogTitle className="font-bold text-foreground text-lg">
               Presentation Templates Manager
@@ -162,9 +162,9 @@ export function TemplateManagerDialog({
 
           <form
             onSubmit={handleUploadTemplate}
-            className="flex min-h-0 flex-1 flex-col gap-6 overflow-hidden"
+            className="flex min-h-0 flex-1 flex-col overflow-hidden"
           >
-            <div className="flex flex-1 flex-col gap-6 overflow-y-auto px-1">
+            <div className="flex flex-1 flex-col gap-5 overflow-y-auto px-1 py-1">
               {/* Choose Template Style */}
               <div className="space-y-3">
                 <span className="font-semibold text-muted-foreground text-xs uppercase tracking-wider">
