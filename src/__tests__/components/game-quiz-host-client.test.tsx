@@ -172,11 +172,12 @@ describe('GameQuizHostClient', () => {
 
     const overflow = screen.getByRole('button', { name: '2 more respondents' });
     expect(overflow).toHaveTextContent('+2');
-    await user.hover(overflow);
-    const tooltip = await screen.findByRole('tooltip');
-    expect(tooltip).toHaveTextContent('Jo Lee');
-    expect(tooltip).toHaveTextContent('Taylor Chen');
-    expect(tooltip.querySelectorAll('[data-slot="avatar"]')).toHaveLength(2);
+    await user.click(overflow);
+    expect(await screen.findByText('Jo Lee')).toBeVisible();
+    const popover = screen.getByRole('dialog');
+    expect(popover).toHaveTextContent('Jo Lee');
+    expect(popover).toHaveTextContent('Taylor Chen');
+    expect(popover.querySelectorAll('[data-slot="avatar"]')).toHaveLength(2);
   });
 
   it.each([0, 1, 2])(

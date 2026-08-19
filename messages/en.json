@@ -1907,6 +1907,7 @@
       "joinOpen": "Joining is open",
       "lobby": "Waiting room",
       "lockJoining": "Lock joining",
+      "moreRespondents": "{count, plural, one {more respondent} other {more respondents}}",
       "next": "Next question",
       "noPlayers": "Players will appear here as they join.",
       "offline": "Away",

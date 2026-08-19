@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { gameQuizApi } from './api';
@@ -365,10 +366,10 @@ function RevealPanel({
         ) : null}
       </div>
       {session.currentRound?.explanation ? (
-        <div className="mx-auto max-w-4xl border border-background/30 bg-foreground/80 px-5 py-4 text-sm dark:border-border dark:bg-card/90">
+        <Card className="rounded-xl p-5 text-sm shadow-xs">
           <span className="font-medium">{copy.editor.explanation}: </span>
           {session.currentRound.explanation}
-        </div>
+        </Card>
       ) : null}
     </div>
   );

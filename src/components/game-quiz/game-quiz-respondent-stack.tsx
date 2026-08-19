@@ -1,15 +1,18 @@
 'use client';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import type { GameQuizOption } from './types';
-
-type Answerer = NonNullable<GameQuizOption['answerers']>[number];
+import type { Answerer } from './types';
 
 function initials(name: string) {
   return name
@@ -41,8 +44,10 @@ function RespondentAvatar({
 
 export function GameQuizRespondentStack({
   answerers,
+  moreRespondentsLabels,
 }: {
   answerers: Answerer[];
+  moreRespondentsLabels: { one: string; other: string };
 }) {
   const visible = answerers.slice(0, 2);
   const remaining = answerers.slice(2);
@@ -66,21 +71,25 @@ export function GameQuizRespondentStack({
         </Tooltip>
       ))}
       {remaining.length > 0 ? (
-        <Tooltip disableHoverableContent>
-          <TooltipTrigger asChild>
+        <Popover>
+          <PopoverTrigger asChild>
             <button
               type="button"
               className="relative rounded-full ring-2 ring-background focus-visible:outline-none focus-visible:ring-ring"
-              aria-label={`${remaining.length} more respondents`}
+              aria-label={`${remaining.length} ${
+                remaining.length === 1
+                  ? moreRespondentsLabels.one
+                  : moreRespondentsLabels.other
+              }`}
             >
               <Avatar className="border-background bg-muted">
                 <AvatarFallback>+{remaining.length}</AvatarFallback>
               </Avatar>
             </button>
-          </TooltipTrigger>
-          <TooltipContent side="top" className="block animate-none! p-2">
-            <ScrollArea className="max-h-48 w-56">
-              <div className="space-y-2 pr-3">
+          </PopoverTrigger>
+          <PopoverContent side="top" className="w-60 p-0">
+            <ScrollArea className="h-48">
+              <div className="space-y-4 p-2">
                 {remaining.map((answerer) => (
                   <div key={answerer.id} className="flex items-center gap-2">
                     <RespondentAvatar answerer={answerer} small />
@@ -89,8 +98,8 @@ export function GameQuizRespondentStack({
                 ))}
               </div>
             </ScrollArea>
-          </TooltipContent>
-        </Tooltip>
+          </PopoverContent>
+        </Popover>
       ) : null}
     </div>
   );

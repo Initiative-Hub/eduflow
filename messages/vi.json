@@ -1907,6 +1907,7 @@
       "joinOpen": "Đang mở tham gia",
       "lobby": "Phòng chờ",
       "lockJoining": "Khóa tham gia",
+      "moreRespondents": "{count, plural, other {người trả lời khác}}",
       "next": "Câu tiếp theo",
       "noPlayers": "Người chơi sẽ xuất hiện ở đây khi tham gia.",
       "offline": "Tạm vắng",

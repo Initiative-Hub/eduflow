@@ -1,4 +1,4 @@
-type Translate = (key: string) => string;
+type Translate = (key: string, values?: { count: number }) => string;
 
 export function getGameQuizCopy(t: Translate) {
   return {
@@ -90,6 +90,10 @@ export function getGameQuizCopy(t: Translate) {
       joinLocked: t('host.joinLocked'),
       lockJoining: t('host.lockJoining'),
       unlockJoining: t('host.unlockJoining'),
+      moreRespondents: {
+        one: t('host.moreRespondents', { count: 1 }),
+        other: t('host.moreRespondents', { count: 2 }),
+      },
       start: t('host.start'),
       skip: t('host.skip'),
       next: t('host.next'),
@@ -157,4 +161,10 @@ export function getGameQuizCopy(t: Translate) {
 export type GameQuizCopy = ReturnType<typeof getGameQuizCopy>;
 
 // Server pages always provide localized copy. This fallback keeps isolated UI tests deterministic.
-export const gameQuizCopy = getGameQuizCopy((key) => key);
+export const gameQuizCopy = getGameQuizCopy((key, values) => {
+  if (key === 'host.moreRespondents' && values) {
+    return `more respondent${values.count === 1 ? '' : 's'}`;
+  }
+
+  return key;
+});

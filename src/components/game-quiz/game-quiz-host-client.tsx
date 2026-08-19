@@ -552,6 +552,7 @@ function QuestionStage({
           {round.options.map((option, index) => (
             <AnswerTile
               answerCount={option.answerCount ?? 0}
+              copy={copy}
               index={index}
               key={option.id}
               option={option}
@@ -643,12 +644,14 @@ const KAHOOT_SHAPES = [
 
 function AnswerTile({
   answerCount,
+  copy,
   index,
   option,
   revealed,
   totalAnswers,
 }: {
   answerCount: number;
+  copy: GameQuizCopy;
   index: number;
   option: GameQuizOption;
   revealed: boolean;
@@ -693,7 +696,10 @@ function AnswerTile({
         <div className="mt-4">
           <Progress value={width} className="h-2" />
           <div className="mt-2 flex min-h-8 items-center justify-between gap-3">
-            <GameQuizRespondentStack answerers={option.answerers ?? []} />
+            <GameQuizRespondentStack
+              answerers={option.answerers ?? []}
+              moreRespondentsLabels={copy.host.moreRespondents}
+            />
             <p className="ml-auto font-medium text-muted-foreground text-sm tabular-nums">
               {answerCount}
             </p>

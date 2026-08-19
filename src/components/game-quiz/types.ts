@@ -9,13 +9,19 @@ export type GameSessionPhase =
   | 'SCOREBOARD'
   | 'FINAL_CELEBRATION';
 
+export interface Answerer {
+  id: string;
+  displayName: string;
+  image?: string | null;
+}
+
 export interface GameQuizOption {
   id: string;
   text: string;
   isCorrect: boolean;
   order: number;
   answerCount?: number;
-  answerers?: Array<Pick<GameParticipant, 'id' | 'displayName' | 'image'>>;
+  answerers?: Answerer[];
 }
 
 export interface GameQuizQuestion {
