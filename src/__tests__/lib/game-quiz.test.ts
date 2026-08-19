@@ -6,6 +6,11 @@ import {
 } from '@/lib/game-quiz/schemas';
 import { calculateGamePoints } from '@/lib/game-quiz/scoring';
 import {
+  projectHostSession,
+  projectParticipantSession,
+} from '@/lib/game-quiz/projections';
+import type { SessionWithGameData } from '@/lib/game-quiz/types';
+import {
   nextHostedGamePhase,
   shouldAutoRevealGameRound,
 } from '@/lib/game-quiz/shared';
@@ -13,6 +18,126 @@ import { shuffle } from '@/lib/game-quiz/shuffle';
 import { buildGameSessionReport } from '@/services/GameQuizAnswerService';
 
 describe('Live Game Quiz rules', () => {
+  it('groups reveal answerers by option for hosts but not participants', async () => {
+    const participants = ['Sam Rivera', 'Alex Kim', 'Jo Lee'].map(
+      (displayName, index) => ({
+        id: `participant-${index + 1}`,
+        realtimeKey: `participant-key-${index + 1}`,
+        sessionId: 'session-1',
+        userId: `user-${index + 1}`,
+        displayName,
+        score: 0,
+        joinedAt: new Date('2026-08-09T10:00:00.000Z'),
+        lastSeenAt: null,
+        user: {
+          id: `user-${index + 1}`,
+          name: displayName,
+          image: index === 0 ? 'https://example.com/sam.png' : null,
+        },
+      })
+    );
+    const session = {
+      id: 'session-1',
+      realtimeKey: 'session-key',
+      gameQuizId: 'quiz-1',
+      hostId: 'host-1',
+      gameQuizRevision: 1,
+      templateKey: 'LIVE_QUIZ_RALLY',
+      title: 'Planet Rally',
+      topic: null,
+      difficulty: 'MEDIUM',
+      joinCode: '123456',
+      phase: 'REVEAL',
+      currentRoundIndex: 0,
+      joiningLocked: true,
+      randomizeQuestionOrder: false,
+      randomizeAnswerOrder: false,
+      stateVersion: 2,
+      startedAt: null,
+      endedAt: null,
+      lastHostSeenAt: null,
+      closedReason: null,
+      joinCodeReleasedAt: null,
+      createdAt: new Date('2026-08-09T10:00:00.000Z'),
+      updatedAt: new Date('2026-08-09T10:00:00.000Z'),
+      participants,
+      rounds: [
+        {
+          id: 'round-1',
+          sessionId: 'session-1',
+          sourceQuestionId: null,
+          orderIndex: 0,
+          prompt: 'Which planet is red?',
+          hint: null,
+          explanation: null,
+          timerSeconds: 20,
+          maxPoints: 1000,
+          openedAt: null,
+          deadlineAt: null,
+          revealedAt: new Date(),
+          options: [
+            {
+              id: 'mars',
+              roundId: 'round-1',
+              sourceOptionId: null,
+              orderIndex: 0,
+              text: 'Mars',
+              isCorrect: true,
+            },
+            {
+              id: 'venus',
+              roundId: 'round-1',
+              sourceOptionId: null,
+              orderIndex: 1,
+              text: 'Venus',
+              isCorrect: false,
+            },
+          ],
+        },
+      ],
+      answers: participants.map((participant, index) => ({
+        id: `answer-${index}`,
+        sessionId: 'session-1',
+        participantId: participant.id,
+        roundId: 'round-1',
+        selectedOptionId: index < 2 ? 'mars' : 'venus',
+        idempotencyKey: `key-${index}`,
+        submittedAt: new Date(),
+        responseTimeMs: 100,
+        isCorrect: index < 2,
+        pointsAwarded: 0,
+      })),
+    } satisfies SessionWithGameData;
+
+    const host = await projectHostSession(session);
+    const player = await projectParticipantSession(session, participants[0]!);
+
+    expect(host.currentRound?.options).toMatchObject([
+      {
+        id: 'mars',
+        answerCount: 2,
+        answerers: [
+          {
+            id: 'participant-1',
+            displayName: 'Sam Rivera',
+            image: 'https://example.com/sam.png',
+          },
+          { id: 'participant-2', displayName: 'Alex Kim', image: null },
+        ],
+      },
+      {
+        id: 'venus',
+        answerCount: 1,
+        answerers: [
+          { id: 'participant-3', displayName: 'Jo Lee', image: null },
+        ],
+      },
+    ]);
+    expect(
+      player.currentRound?.options.every((option) => !('answerers' in option))
+    ).toBe(true);
+  });
+
   it('requires two to four options with exactly one correct answer', () => {
     const validQuestion = {
       prompt: 'Which planet is known as the Red Planet?',

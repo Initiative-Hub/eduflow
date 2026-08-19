@@ -21,20 +21,26 @@ const isRevealVisible = (phase: SessionWithGameData['phase']) =>
 const projectOption = (
   option: GameRoundRecord['options'][number],
   includeCorrectness: boolean,
-  answerCount?: number
+  answerCount?: number,
+  answerers?: Array<{ id: string; displayName: string; image: string | null }>
 ) => ({
   id: option.id,
   orderIndex: option.orderIndex,
   text: option.text,
   ...(includeCorrectness ? { isCorrect: option.isCorrect } : {}),
   ...(answerCount === undefined ? {} : { answerCount }),
+  ...(answerers === undefined ? {} : { answerers }),
 });
 
 const projectRound = (
   round: GameRoundRecord,
   includeCorrectness: boolean,
   includeExplanation: boolean,
-  answers?: GameAnswerRecord[]
+  answers?: GameAnswerRecord[],
+  answerersByParticipantId?: Map<
+    string,
+    { id: string; displayName: string; image: string | null }
+  >
 ) => ({
   id: round.id,
   orderIndex: round.orderIndex,
@@ -47,10 +53,23 @@ const projectRound = (
   deadlineAt: round.deadlineAt,
   revealedAt: round.revealedAt,
   options: round.options.map((option) => {
-    const answerCount = answers?.filter(
+    const optionAnswers = answers?.filter(
       (answer) => answer.selectedOptionId === option.id
-    ).length;
-    return projectOption(option, includeCorrectness, answerCount);
+    );
+    const answerers = answerersByParticipantId
+      ? (optionAnswers ?? []).flatMap((answer) => {
+          const participant = answerersByParticipantId.get(
+            answer.participantId
+          );
+          return participant ? [participant] : [];
+        })
+      : undefined;
+    return projectOption(
+      option,
+      includeCorrectness,
+      optionAnswers?.length,
+      answerers
+    );
   }),
 });
 
@@ -201,6 +220,16 @@ export async function projectHostSession(session: SessionWithGameData) {
           (round) => round.orderIndex === session.currentRoundIndex
         ) ?? null);
 
+  const participants = await Promise.all(
+    session.participants.map(projectParticipant)
+  );
+  const answerersByParticipantId = new Map(
+    participants.map(({ id, displayName, image }) => [
+      id,
+      { id, displayName, image },
+    ])
+  );
+
   return {
     gameQuizId: session.gameQuizId,
     realtimeKey: session.realtimeKey,
@@ -217,15 +246,16 @@ export async function projectHostSession(session: SessionWithGameData) {
     startedAt: session.startedAt,
     endedAt: session.endedAt,
     closedReason: session.closedReason,
-    participants: await Promise.all(
-      session.participants.map(projectParticipant)
-    ),
+    participants,
     currentRound: currentRound
       ? projectRound(
           currentRound,
           true,
           true,
-          session.answers.filter((answer) => answer.roundId === currentRound.id)
+          session.answers.filter(
+            (answer) => answer.roundId === currentRound.id
+          ),
+          session.phase === 'REVEAL' ? answerersByParticipantId : undefined
         )
       : null,
     rounds: session.rounds.map((round) => projectRound(round, true, true)),
