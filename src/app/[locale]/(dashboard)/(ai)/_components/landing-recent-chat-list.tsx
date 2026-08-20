@@ -15,8 +15,6 @@ import {
 import { Link } from '@/i18n/navigation';
 
 const DEFAULT_RECENT_CHAT_LIMIT = 3;
-const RECENT_CHAT_TITLE_MAX_LENGTH = 25;
-const RECENT_CHAT_TITLE_MIN_WORD_BOUNDARY = 12;
 
 type RecentChatListParams = {
   limit: number;
@@ -50,19 +48,6 @@ type LandingRecentChatListProps<TChat extends RecentChatListItem> = {
   getUpdatedLabel: (date: string) => string;
   limit?: number;
 };
-
-function getRecentChatDisplayTitle(title: string) {
-  if (title.length <= RECENT_CHAT_TITLE_MAX_LENGTH) return title;
-
-  const preview = title.slice(0, RECENT_CHAT_TITLE_MAX_LENGTH).trim();
-  const wordBoundary = preview.lastIndexOf(' ');
-  const trimmedPreview =
-    wordBoundary >= RECENT_CHAT_TITLE_MIN_WORD_BOUNDARY
-      ? preview.slice(0, wordBoundary)
-      : preview;
-
-  return `${trimmedPreview} ...`;
-}
 
 export function LandingRecentChatList<
   TChat extends RecentChatListItem = RecentChatListItem,
@@ -127,8 +112,6 @@ export function LandingRecentChatList<
         <div className="flex flex-col gap-3">
           {data.data.map((chat) => {
             const chatTitle = chat.title || untitledLabel;
-            const displayTitle = getRecentChatDisplayTitle(chatTitle);
-            const isTitleShortened = displayTitle !== chatTitle;
             const chatCard = (
               <Card className="group flex cursor-pointer flex-row items-center gap-3 p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md hover:ring-primary/30">
                 <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary/15">
@@ -136,8 +119,11 @@ export function LandingRecentChatList<
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <h3 className="truncate font-semibold text-foreground/90 text-sm">
-                    {displayTitle}
+                  <h3
+                    className="truncate font-semibold text-foreground/90 text-sm"
+                    title={chatTitle}
+                  >
+                    {chatTitle}
                   </h3>
                   <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-muted-foreground text-xs">
                     <span>{getMessageCountLabel(chat.messageCount)}</span>
@@ -156,7 +142,7 @@ export function LandingRecentChatList<
               </Card>
             );
 
-            if (!isTitleShortened) {
+            if (chatTitle.length <= 60) {
               return (
                 <Link
                   aria-label={getOpenChatLabel(chatTitle)}

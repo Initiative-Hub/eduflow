@@ -4,7 +4,6 @@ import {
   Download,
   Edit2,
   FileIcon,
-  FolderPlus,
   Loader2,
   Move,
   Trash2,
@@ -330,9 +329,7 @@ export function InventoryDialogs({
             >
               {createFolderPending ? (
                 <Loader2 data-icon="inline-start" className="animate-spin" />
-              ) : (
-                <FolderPlus data-icon="inline-start" />
-              )}
+              ) : null}
               {t('createFolderDialog.submit')}
             </Button>
           </DialogFooter>

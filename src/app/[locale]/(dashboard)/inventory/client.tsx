@@ -123,6 +123,8 @@ export function InventoryClient() {
   });
 
   const totalItems = listPagination?.total ?? entries.length;
+  const currentFolderName =
+    breadcrumbItems.at(-1)?.name ?? t('breadcrumbs.root');
   const currentPage = pageIndex + 1;
   const totalPages = Math.max(1, Math.ceil(totalItems / STORAGE_PAGE_SIZE));
   const startItem = totalItems === 0 ? 0 : pageIndex * STORAGE_PAGE_SIZE + 1;
@@ -207,6 +209,7 @@ export function InventoryClient() {
 
       <InventoryBrowser
         currentPage={currentPage}
+        currentFolderName={currentFolderName}
         endItem={endItem}
         entries={entries}
         files={files}

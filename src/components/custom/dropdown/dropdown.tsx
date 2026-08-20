@@ -10,6 +10,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { cn } from '@/lib/utils';
 import type { MenuItem } from './dropdown.types';
 
 interface DropdownTemplateProps {
@@ -36,9 +37,10 @@ const renderMenuItem = (item: MenuItem, index: number) => {
     return (
       <DropdownMenuSub key={index}>
         <DropdownMenuSubTrigger
-          className={`cursor-pointer gap-2 focus:bg-primary/20 focus:text-primary data-[state=open]:bg-primary/20 data-[state=open]:text-primary ${
-            item.className || ''
-          }`}
+          className={cn(
+            'cursor-pointer gap-2 data-[highlighted]:bg-primary/20 data-[highlighted]:text-primary data-[highlighted]:**:!text-primary focus:bg-primary/20 focus:text-primary focus:**:!text-primary data-[state=open]:bg-primary/20 data-[state=open]:text-primary data-[state=open]:**:!text-primary',
+            item.className
+          )}
         >
           {item.icon}
           {item.label}
@@ -58,11 +60,13 @@ const renderMenuItem = (item: MenuItem, index: number) => {
   return (
     <DropdownMenuItem
       key={index}
-      className={`cursor-pointer gap-2 ${
+      className={cn(
+        'cursor-pointer gap-2',
         item.destructive
-          ? 'text-destructive focus:bg-destructive/20 focus:text-destructive'
-          : 'focus:bg-primary/20 focus:text-primary'
-      } ${item.className || ''}`}
+          ? 'text-destructive data-[highlighted]:bg-destructive/20 data-[highlighted]:text-destructive data-[highlighted]:**:!text-destructive focus:bg-destructive/20 focus:text-destructive focus:**:!text-destructive'
+          : 'data-[highlighted]:bg-primary/20 data-[highlighted]:text-primary data-[highlighted]:**:!text-primary focus:bg-primary/20 focus:text-primary focus:**:!text-primary',
+        item.className
+      )}
       onClick={item.onClick}
     >
       {item.icon}

@@ -274,7 +274,7 @@
       "trends": "Summarize the latest trends in renewable energy"
     },
     "thinking": "EduFlow AI is reflecting...",
-    "title": "Greetings, Scholar {name}. Ready to dive deep?",
+    "title": "Welcome back, {name}. Ready to dive deep?",
     "tools": {
       "foundContent": "Found {count} relevant {count, plural, one {section} other {sections}}",
       "loadedCourses": "Loaded {count} {count, plural, one {course} other {courses}}",
@@ -514,7 +514,7 @@
       "root": "Course Files"
     },
     "browser": {
-      "description": "This course has {count} resources.",
+      "description": "{count, plural, =0 {0 items} =1 {1 item} other {# items}}",
       "pageInfo": "Page {page} of {total}",
       "range": "Showing {start}-{end} of {total}",
       "title": "Materials"
@@ -1032,9 +1032,11 @@
         },
         "courseDescription": "Access shared files within this course workspace.",
         "description": "Generate modules and lessons from your educational documents.",
+        "fileTooLarge": "This PDF is too large. Choose a file up to {size}.",
         "folder": "Folder",
         "loadingFiles": "Loading your files...",
         "personalDescription": "Select a PDF from your personal library to use as context.",
+        "pdfOnly": "Only PDF files can be used for course generation.",
         "pipeline": {
           "extract": "Extract PDF",
           "generate": "Generate Content",
@@ -1052,7 +1054,7 @@
           "upload": "Upload PDF"
         },
         "title": "Generate Course Content",
-        "uploadDescription": "Select a PDF file from your device to use as a context for AI content generation.",
+        "uploadDescription": "Select a PDF up to {size} from your device to use as context for AI content generation.",
         "uploadDifferent": "Upload Different File",
         "uploadReference": "Upload Reference Document",
         "useSelected": "Use Selected PDF"
@@ -1068,6 +1070,8 @@
         "failed": "Failed to generate course content",
         "generatingCourseContent": "Generating Course Content...",
         "identifyingModule": "Identifying Module...",
+        "fileTooLarge": "This PDF is too large for course generation. Choose a file up to {size}.",
+        "noOutput": "No course content was returned. Try again with a clearer or smaller PDF.",
         "retry": "Try Again",
         "saving": "Saving",
         "savingCourseContent": "Saving your new modules and lessons...",
@@ -1918,7 +1922,7 @@
       "root": "Storage"
     },
     "browser": {
-      "description": "The current folder contains {count} items.",
+      "description": "{count, plural, =0 {0 items} =1 {1 item} other {# items}}",
       "pageInfo": "Page {page} of {total}",
       "range": "Showing {start}-{end} of {total}",
       "title": "Folder contents"
@@ -2475,7 +2479,7 @@
       "untitled": "Untitled Socratic session"
     },
     "subtitle": "Pick a starting point or ask directly to begin a <mark>Socratic</mark> dialogue. I won't give you answers; I will ask the questions that help you find them.",
-    "title": "How can I <accent>guide</accent> your thinking today?"
+    "title": "How can I clarify your thinking today?"
   },
   "StudyPage": {
     "aiActive": "AI Processing Active",

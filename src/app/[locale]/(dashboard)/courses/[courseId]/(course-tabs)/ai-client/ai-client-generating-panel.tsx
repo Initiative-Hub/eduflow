@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import type { CourseContentPipelineState } from '@/lib/course-content/pipeline-state';
 import type { CourseContentSearchSourcesState } from '@/lib/course-content/search-source-state';
+import { STORAGE_MAX_FILE_SIZE_BYTES } from '../../../../inventory/inventory.types';
+import { formatFileSize } from '../../../../inventory/inventory.utils';
 import type {
   CourseContentDraft,
   GenerationPipelineStep,
@@ -116,6 +118,26 @@ export function AiClientGeneratingPanel({
 
   const isSearchSkipRequested =
     skipRequested || isSearchSkipRequestedFromStream;
+  const readableGenerationError = (() => {
+    if (!generationError) return null;
+
+    const normalizedError = generationError.toLowerCase();
+    if (
+      generationError.includes('413') ||
+      normalizedError.includes('content too large') ||
+      normalizedError.includes('file size exceeds')
+    ) {
+      return genT('fileTooLarge', {
+        size: formatFileSize(STORAGE_MAX_FILE_SIZE_BYTES),
+      });
+    }
+
+    if (normalizedError.includes('no output generated')) {
+      return genT('noOutput');
+    }
+
+    return generationError;
+  })();
   const handleSkipSearch = async () => {
     if (!onSkipSearch) return;
 
@@ -187,9 +209,9 @@ export function AiClientGeneratingPanel({
               <p className="font-medium text-destructive text-sm">
                 {genT('error')}
               </p>
-              {generationError && (
-                <p className="mt-0.5 break-all font-mono text-[11px] text-muted-foreground">
-                  {generationError}
+              {readableGenerationError && (
+                <p className="mt-0.5 text-muted-foreground text-sm">
+                  {readableGenerationError}
                 </p>
               )}
             </div>

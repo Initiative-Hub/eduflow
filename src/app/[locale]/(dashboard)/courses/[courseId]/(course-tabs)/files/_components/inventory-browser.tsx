@@ -25,6 +25,7 @@ import { InventoryTableView } from './inventory-table-view';
 type InventoryBrowserProps = {
   courseId: string;
   currentPage: number;
+  currentFolderName: string;
   endItem: number;
   entries: InventoryEntry[];
   files: InventoryEntry[];
@@ -63,6 +64,7 @@ type InventoryBrowserProps = {
 export function InventoryBrowser({
   courseId,
   currentPage,
+  currentFolderName,
   endItem,
   entries,
   files,
@@ -102,7 +104,7 @@ export function InventoryBrowser({
       <CardHeader className="flex flex-col gap-2 border-border/60 border-b px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1">
           <CardTitle className="font-heading text-xl">
-            {t('browser.title')}
+            {currentFolderName}
           </CardTitle>
           <CardDescription>
             {t('browser.description', { count: totalItems })}

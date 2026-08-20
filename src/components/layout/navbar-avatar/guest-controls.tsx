@@ -49,7 +49,7 @@ export function GuestControls() {
     {
       type: 'item' as const,
       label: t('menu.darkMode'),
-      icon: <Moon className="size-5 fill-primary text-primary" />,
+      icon: <Moon className="size-5" />,
       rightNode: (
         <Switch
           checked={theme === 'dark'}
@@ -65,7 +65,7 @@ export function GuestControls() {
       label: t('menu.languagePreference', {
         defaultMessage: 'Language Preference',
       }),
-      icon: <Globe className="size-5 text-primary" />,
+      icon: <Globe className="size-5" />,
       className: 'font-bold py-3 px-2',
       items: [
         {

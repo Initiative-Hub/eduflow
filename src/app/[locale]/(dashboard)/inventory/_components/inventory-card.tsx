@@ -295,7 +295,7 @@ export function InventoryCard({
               )}
               <DropdownMenuItem
                 onClick={() => onDelete(entry)}
-                className="cursor-pointer gap-2 text-destructive focus:text-destructive"
+                className="cursor-pointer gap-2"
               >
                 <Trash2 />
                 {t('actions.delete')}
