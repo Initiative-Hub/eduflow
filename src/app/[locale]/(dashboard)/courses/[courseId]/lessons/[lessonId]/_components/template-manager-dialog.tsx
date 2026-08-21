@@ -1,6 +1,12 @@
 'use client';
 
-import { ArrowRight, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
+import {
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  SlidersHorizontal,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -54,6 +60,8 @@ interface CollectionItem {
   description?: string;
   slide_types?: string[];
   palette?: string[];
+  /** false for the built-in style banks; imported templates are reviewable */
+  is_custom?: boolean;
 }
 
 interface TemplateManagerDialogProps {
@@ -65,6 +73,8 @@ interface TemplateManagerDialogProps {
   onUploadSuccess?: () => Promise<void> | void;
   isLoading?: boolean;
 }
+
+import { TemplateReviewDialog } from './template-review-dialog';
 
 export function TemplateManagerDialog({
   isOpen,
@@ -88,6 +98,8 @@ export function TemplateManagerDialog({
     null
   );
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  // review = inspect the extracted slots of a custom template and fix them
+  const [reviewCollection, setReviewCollection] = useState<string | null>(null);
   const [zoomedSlideIndex, setZoomedSlideIndex] = useState<number | null>(null);
 
   // TanStack Query for previews
@@ -240,6 +252,21 @@ export function TemplateManagerDialog({
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
+                            {col.is_custom !== false && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="size-8 rounded-lg text-muted-foreground"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setReviewCollection(col.name);
+                                }}
+                                title="Review extracted slots"
+                              >
+                                <SlidersHorizontal className="h-4 w-4" />
+                              </Button>
+                            )}
                             {isSelected && (
                               <Button
                                 type="button"
@@ -536,6 +563,13 @@ export function TemplateManagerDialog({
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Review the slots an extraction detected, and correct them */}
+      <TemplateReviewDialog
+        collection={reviewCollection}
+        onOpenChange={(nextOpen) => !nextOpen && setReviewCollection(null)}
+        open={reviewCollection !== null}
+      />
     </>
   );
 }

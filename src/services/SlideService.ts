@@ -42,6 +42,53 @@ export const DEFAULT_TEMPLATE_COLLECTIONS = new Set([
   'professional_focus',
 ]);
 
+export interface TemplateSlot {
+  kind: 'text' | 'image' | 'chart' | 'table';
+  name: string;
+  type: string;
+  desc: string;
+  max_chars: number;
+  lines: number;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  font_pt: number;
+  warnings: string[];
+}
+
+export interface TemplateCategoryInspection {
+  category: string;
+  variant: string;
+  slots: TemplateSlot[];
+  warnings: string[];
+}
+
+export interface TemplateInspection {
+  collection: string;
+  categories: TemplateCategoryInspection[];
+  warning_count: number;
+}
+
+export interface SlotEditPayload {
+  category: string;
+  variant: string;
+  edits: Array<{
+    name: string;
+    rename?: string;
+    type?: string;
+    desc?: string;
+    max_chars?: number;
+    lines?: number;
+    delete?: boolean;
+    kind?: string;
+    x?: number;
+    y?: number;
+    w?: number;
+    h?: number;
+  }>;
+}
+
 export interface SlideTemplate {
   name: string;
   description?: string;
@@ -409,4 +456,61 @@ export class SlideService {
 
     throw new Error('Import job timed out');
   }
+
+  /** Detected slots + warnings per category, for the template review screen. */
+  static async inspectTemplate(
+    collectionName: string
+  ): Promise<TemplateInspection> {
+    const res = await fetch(
+      `${SlideService.getExternalServiceUrl()}/slides/templates/${encodeURIComponent(collectionName)}/inspect`,
+      { cache: 'no-store' }
+    );
+    if (!res.ok) {
+      throw new Error(`Failed to inspect template: ${res.statusText}`);
+    }
+    return res.json();
+  }
+
+  /** The category's slide with every detected slot outlined and labelled. */
+  static async getTemplateSlotOverlay(
+    collectionName: string,
+    category: string,
+    variant = 'standard',
+    boxes = true,
+    editable = false
+  ): Promise<{ svg: string }> {
+    const res = await fetch(
+      `${SlideService.getExternalServiceUrl()}/slides/templates/` +
+        `${encodeURIComponent(collectionName)}/inspect/` +
+        `${encodeURIComponent(category)}/overlay?variant=${encodeURIComponent(variant)}` +
+        `&boxes=${boxes ? 'true' : 'false'}&editable=${editable ? 'true' : 'false'}`,
+      { cache: 'no-store' }
+    );
+    if (!res.ok) {
+      throw new Error(`Failed to render slot overlay: ${res.statusText}`);
+    }
+    return res.json();
+  }
+
+  /** Apply reviewer corrections to a category's slots and sync them to S3. */
+  static async updateTemplateSlots(
+    collectionName: string,
+    payload: SlotEditPayload
+  ): Promise<{ applied: string[]; synced: boolean }> {
+    const res = await fetch(
+      `${SlideService.getExternalServiceUrl()}/slides/templates/${encodeURIComponent(collectionName)}/slots`,
+      {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        cache: 'no-store',
+      }
+    );
+    if (!res.ok) {
+      throw new Error(`Failed to update slots: ${res.statusText}`);
+    }
+    SlideService.clearCache(collectionName);
+    return res.json();
+  }
+
 }

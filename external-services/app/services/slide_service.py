@@ -1978,3 +1978,76 @@ class SlideService:
             raise RuntimeError(f"Failed to assemble PPTX: {str(e)}")
 
         return pptx_path
+
+
+# --- template review: inspect extracted slots, and correct them ---------------
+async def inspect_collection(collection: str) -> Dict[str, Any]:
+    """Every category's detected slots + warnings, for a pre-save review screen.
+
+    Extraction infers intent from geometry, so some decisions are wrong in ways
+    only a human can spot. This exposes them: what each slot is called, what the
+    planner is told to write there, how much room it has, and which slots look
+    suspicious (huge box with a tiny budget, a 'title' big enough for prose,
+    text that cannot wrap).
+    """
+    svc = SlideService()
+    library_dir = await svc._ensure_collection_downloaded(collection)
+    report = await run_in_threadpool(slide_skills.inspect_template, str(library_dir))
+    return {
+        "collection": collection,
+        "categories": report,
+        "warning_count": sum(len(c["warnings"]) for c in report),
+    }
+
+
+async def render_collection_overlay(collection: str, category: str,
+                                    variant: str = "standard",
+                                    boxes: bool = True,
+                                    editable: bool = False) -> str:
+    """The category's slide, optionally with every slot outlined and labelled.
+
+    `boxes=False` returns the bare slide. `editable=True` additionally tags every
+    element with the slot it belongs to and swaps {{placeholders}} for readable
+    sample copy, so the browser can drag the REAL text instead of an empty
+    outline over a static picture.
+    """
+    svc = SlideService()
+    library_dir = await svc._ensure_collection_downloaded(collection)
+    svg_path = Path(library_dir) / category / f"{variant}.svg"
+    if not svg_path.exists():
+        raise FileNotFoundError(f"{category}/{variant}.svg not found in {collection}")
+
+    def _build() -> str:
+        raw = svg_path.read_text(encoding="utf-8")
+        if editable:
+            info = slide_skills.inspect_variant(svg_path)
+            return slide_skills.prepare_editable_svg(
+                raw, info["slots"], PREVIEW_SAMPLE_DATA)
+        if not boxes:
+            return raw
+        info = slide_skills.inspect_variant(svg_path)
+        return slide_skills.render_slot_overlay(raw, info["slots"])
+
+    return await run_in_threadpool(_build)
+
+
+async def update_collection_slots(collection: str, category: str, variant: str,
+                                  edits: list) -> Dict[str, Any]:
+    """Apply reviewer corrections, then re-upload the changed files to S3."""
+    svc = SlideService()
+    library_dir = await svc._ensure_collection_downloaded(collection)
+    result = await run_in_threadpool(
+        slide_skills.apply_slot_edits, str(library_dir), category, variant, edits)
+
+    # push the corrected SVG + schema back so later generations use them
+    from app.services.s3_service import upload_file_to_s3
+
+    bucket = svc._template_bucket(collection)
+    for name in (f"{variant}.svg", f"{variant}.schema.json"):
+        local = Path(library_dir) / category / name
+        if local.exists():
+            await upload_file_to_s3(
+                local, f"templates/{collection}/{category}/{name}",
+                bucket_name=bucket)
+    result["synced"] = True
+    return result

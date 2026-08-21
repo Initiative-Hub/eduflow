@@ -10,7 +10,7 @@ from fastapi import (
 from fastapi.responses import FileResponse
 
 from app.deps import STORAGE_DIR
-from app.schemas.slide_schema import GenReq, PlanGenReq, RenderSlideReq
+from app.schemas.slide_schema import SlotEditsReq, GenReq, PlanGenReq, RenderSlideReq
 from app.services.slide_service import TEMPLATE_IMPORT_SOURCES, SlideService
 from app.services.slide_job_service import SlideJobService
 
@@ -155,3 +155,41 @@ async def import_templates(
 @router.get("/templates/import/{job_id}")
 async def get_import_job_status(job_id: str):
     return slide_job_service.get_job_status(job_id, detail="Import job not found")
+
+
+@router.get("/templates/{collection}/inspect")
+async def inspect_template_slots(collection: str):
+    """Detected slots + warnings per category, for the pre-save review screen."""
+    from app.services.slide_service import inspect_collection
+    try:
+        return await inspect_collection(collection)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/templates/{collection}/inspect/{category}/overlay")
+async def template_slot_overlay(collection: str, category: str,
+                                variant: str = "standard", boxes: bool = True,
+                                editable: bool = False):
+    """The category's slide with every slot outlined and labelled (SVG)."""
+    from app.services.slide_service import render_collection_overlay
+    try:
+        return {"svg": await render_collection_overlay(collection, category, variant, boxes, editable)}
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.patch("/templates/{collection}/slots")
+async def update_template_slots(collection: str, req: SlotEditsReq):
+    """Apply reviewer corrections to a category's slots and sync them to S3."""
+    from app.services.slide_service import update_collection_slots
+    try:
+        return await update_collection_slots(
+            collection, req.category, req.variant,
+            [e.model_dump(exclude_none=True) for e in req.edits])
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
