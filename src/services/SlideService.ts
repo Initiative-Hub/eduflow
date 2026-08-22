@@ -46,6 +46,7 @@ export interface SlideTemplate {
   name: string;
   description?: string;
   palette?: string[];
+  is_custom?: boolean;
 }
 
 export interface TemplateCategoryMetadata {

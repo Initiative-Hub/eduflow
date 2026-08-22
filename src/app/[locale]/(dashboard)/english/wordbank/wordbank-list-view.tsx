@@ -1,6 +1,7 @@
 'use client';
 
 import { Loader2, Volume2, X } from 'lucide-react';
+import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -106,10 +107,11 @@ export function WordbankListView({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  onClick={() =>
-                    item.audioUrl && playWordbankAudio(item.audioUrl)
-                  }
-                  disabled={!item.audioUrl}
+                  onClick={() => {
+                    void playWordbankAudio(item.word).catch(() => {
+                      toast.error(t('audioFailed'));
+                    });
+                  }}
                   aria-label={t('playPronunciation', { word: item.word })}
                 >
                   <Volume2 />

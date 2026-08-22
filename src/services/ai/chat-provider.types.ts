@@ -12,6 +12,7 @@ export type StreamChatInput = {
 
 export type StreamChatInternalOptions = {
   prompt?: string;
+  customInstructions?: string | null;
   tools?: ToolSet;
   maxSteps?: number;
 };

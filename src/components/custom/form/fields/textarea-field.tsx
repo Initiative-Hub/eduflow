@@ -11,6 +11,7 @@ export const TextareaField = ({
   <Textarea
     id={field.name}
     placeholder={field.placeholder}
+    maxLength={field.maxLength}
     className="resize-none text-sm"
     {...formField}
   />

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withAuth } from '@/lib/api/middlewares';
-import { AssignmentService } from '@/services/AssignmentService';
+import { AssignmentSubmissionService } from '@/services/assignments/AssignmentSubmissionService';
 
 /**
  * @swagger
@@ -40,7 +40,7 @@ export const POST = withAuth(async (_request, session, { params }) => {
       );
     }
 
-    const result = await AssignmentService.submitAssignment(
+    const result = await AssignmentSubmissionService.submit(
       parsed.data.assignmentId,
       session.user.id
     );

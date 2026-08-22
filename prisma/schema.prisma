@@ -46,10 +46,17 @@ model User {
   wordbankReviewAttempts WordbankReviewAttempt[]
   sharedResources        SharedResource[]
   connectedIntegrations  ConnectedIntegration[]
+  gameQuizzesOwned       GameQuiz[]              @relation("GameQuizOwner")
+  gameSessionsHosted     GameSession[]           @relation("GameSessionHost")
+  gameParticipants       GameParticipant[]
 
   assignmentsCreated          Assignment[]           @relation("AssignmentCreatedBy")
   assignmentSubmissions       AssignmentSubmission[] @relation("AssignmentStudent")
   assignmentGradedSubmissions AssignmentSubmission[] @relation("AssignmentGradedBy")
+  assignmentResultsReceived   AssignmentResult[]     @relation("AssignmentResultStudent")
+  assignmentResultsPublished  AssignmentResult[]     @relation("AssignmentResultPublishedBy")
+
+  aiPreference UserAiPreference?
 
   @@map("user")
 }
@@ -85,6 +92,9 @@ model Account {
   createdAt             DateTime  @default(now()) @map("created_at")
   updatedAt             DateTime  @updatedAt @map("updated_at")
 
+  issuer String
+
+  @@unique([issuer, accountId], map: "account_issuer_accountId_uidx")
   @@index([userId])
   @@map("account")
 }
@@ -102,6 +112,18 @@ model Verification {
 }
 
 // ---- END BETTER AUTH CORE TABLES ----
+
+model UserAiPreference {
+  userId String @id @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  customInstructions String? @map("custom_instructions") @db.VarChar(2000)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("user_ai_preference")
+}
 
 enum PlatformRoleName {
   ADMIN
@@ -605,6 +627,237 @@ model QuizAttempt {
   @@map("quiz_attempt")
 }
 
+// ---- Live Game Quiz System ---------------------------------------------------
+
+enum GameQuizTemplateKey {
+  LIVE_QUIZ_RALLY @map("live_quiz_rally")
+
+  @@map("game_quiz_template_key")
+}
+
+enum GameQuizStatus {
+  DRAFT    @map("draft")
+  READY    @map("ready")
+  ARCHIVED @map("archived")
+
+  @@map("game_quiz_status")
+}
+
+enum GameSessionPhase {
+  LOBBY             @map("lobby")
+  QUESTION_OPEN     @map("question_open")
+  REVEAL            @map("reveal")
+  SCOREBOARD        @map("scoreboard")
+  FINAL_CELEBRATION @map("final_celebration")
+
+  @@map("game_session_phase")
+}
+
+enum GameSessionCloseReason {
+  HOST_LEFT     @map("host_left")
+  VIEWED_REPORT @map("viewed_report")
+
+  @@map("game_session_close_reason")
+}
+
+model GameQuiz {
+  id      String @id @default(uuid())
+  ownerId String @map("owner_id")
+  owner   User   @relation("GameQuizOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+
+  templateKey GameQuizTemplateKey @default(LIVE_QUIZ_RALLY) @map("template_key")
+  status      GameQuizStatus      @default(DRAFT)
+  title       String
+  topic       String?
+  difficulty  String?
+  revision    Int                 @default(1)
+
+  randomizeQuestionOrder Boolean @default(false) @map("randomize_question_order")
+  randomizeAnswerOrder   Boolean @default(false) @map("randomize_answer_order")
+
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+  archivedAt DateTime? @map("archived_at")
+
+  questions GameQuizQuestion[]
+  sessions  GameSession[]
+
+  @@index([ownerId, status, updatedAt(sort: Desc)], map: "game_quiz_owner_id_status_updated_at_idx")
+  @@index([archivedAt], map: "game_quiz_archived_at_idx")
+  @@map("game_quiz")
+}
+
+model GameQuizQuestion {
+  id         String   @id @default(uuid())
+  gameQuizId String   @map("game_quiz_id")
+  gameQuiz   GameQuiz @relation(fields: [gameQuizId], references: [id], onDelete: Cascade)
+
+  prompt       String
+  hint         String?
+  explanation  String?
+  timerSeconds Int     @map("timer_seconds")
+  maxPoints    Int     @map("max_points")
+  orderIndex   Int     @map("order_index")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  options GameQuizOption[]
+
+  @@unique([gameQuizId, orderIndex], map: "game_quiz_question_game_quiz_id_order_index_key")
+  @@index([gameQuizId], map: "game_quiz_question_game_quiz_id_idx")
+  @@map("game_quiz_question")
+}
+
+model GameQuizOption {
+  id                 String           @id @default(uuid())
+  gameQuizQuestionId String           @map("game_quiz_question_id")
+  gameQuizQuestion   GameQuizQuestion @relation(fields: [gameQuizQuestionId], references: [id], onDelete: Cascade)
+
+  text       String
+  isCorrect  Boolean @default(false) @map("is_correct")
+  orderIndex Int     @map("order_index")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([gameQuizQuestionId, orderIndex], map: "game_quiz_option_game_quiz_question_id_order_index_key")
+  @@index([gameQuizQuestionId], map: "game_quiz_option_game_quiz_question_id_idx")
+  @@map("game_quiz_option")
+}
+
+model GameSession {
+  id         String   @id @default(uuid())
+  gameQuizId String   @map("game_quiz_id")
+  gameQuiz   GameQuiz @relation(fields: [gameQuizId], references: [id], onDelete: Restrict)
+  hostId     String   @map("host_id")
+  host       User     @relation("GameSessionHost", fields: [hostId], references: [id], onDelete: Restrict)
+
+  templateKey            GameQuizTemplateKey     @map("template_key")
+  gameQuizRevision       Int                     @map("game_quiz_revision")
+  title                  String
+  topic                  String?
+  difficulty             String?
+  randomizeQuestionOrder Boolean                 @map("randomize_question_order")
+  randomizeAnswerOrder   Boolean                 @map("randomize_answer_order")
+  joinCode               String                  @map("join_code")
+  realtimeKey            String                  @unique @default(cuid()) @map("realtime_key")
+  joiningLocked          Boolean                 @default(false) @map("joining_locked")
+  phase                  GameSessionPhase        @default(LOBBY)
+  currentRoundIndex      Int?                    @map("current_round_index")
+  stateVersion           Int                     @default(1) @map("state_version")
+  startedAt              DateTime?               @map("started_at")
+  endedAt                DateTime?               @map("ended_at")
+  lastHostSeenAt         DateTime?               @map("last_host_seen_at")
+  closedReason           GameSessionCloseReason? @map("closed_reason")
+  joinCodeReleasedAt     DateTime?               @map("join_code_released_at")
+  createdAt              DateTime                @default(now()) @map("created_at")
+  updatedAt              DateTime                @updatedAt @map("updated_at")
+
+  rounds       GameRound[]
+  participants GameParticipant[]
+  answers      GameAnswer[]
+
+  @@index([gameQuizId, createdAt(sort: Desc)], map: "game_session_game_quiz_id_created_at_idx")
+  @@index([hostId, createdAt(sort: Desc)], map: "game_session_host_id_created_at_idx")
+  @@index([phase, createdAt(sort: Desc)], map: "game_session_phase_created_at_idx")
+  @@map("game_session")
+}
+
+model GameRound {
+  id        String      @id @default(uuid())
+  sessionId String      @map("session_id")
+  session   GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  sourceQuestionId String?   @map("source_question_id")
+  prompt           String
+  hint             String?
+  explanation      String?
+  timerSeconds     Int       @map("timer_seconds")
+  maxPoints        Int       @map("max_points")
+  orderIndex       Int       @map("order_index")
+  openedAt         DateTime? @map("opened_at")
+  deadlineAt       DateTime? @map("deadline_at")
+  revealedAt       DateTime? @map("revealed_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  options GameRoundOption[]
+  answers GameAnswer[]      @relation("GameRoundAnswers")
+
+  @@unique([sessionId, orderIndex], map: "game_round_session_id_order_index_key")
+  @@unique([id, sessionId], map: "game_round_id_session_id_key")
+  @@index([sessionId], map: "game_round_session_id_idx")
+  @@map("game_round")
+}
+
+model GameRoundOption {
+  id      String    @id @default(uuid())
+  roundId String    @map("round_id")
+  round   GameRound @relation(fields: [roundId], references: [id], onDelete: Cascade)
+
+  sourceOptionId String?  @map("source_option_id")
+  text           String
+  isCorrect      Boolean  @map("is_correct")
+  orderIndex     Int      @map("order_index")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  selectedBy GameAnswer[]
+
+  @@unique([roundId, orderIndex], map: "game_round_option_round_id_order_index_key")
+  @@unique([id, roundId], map: "game_round_option_id_round_id_key")
+  @@index([roundId], map: "game_round_option_round_id_idx")
+  @@map("game_round_option")
+}
+
+model GameParticipant {
+  id        String      @id @default(uuid())
+  sessionId String      @map("session_id")
+  session   GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  userId    String      @map("user_id")
+  user      User        @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  displayName String    @map("display_name")
+  realtimeKey String    @unique @default(cuid()) @map("realtime_key")
+  score       Int       @default(0)
+  joinedAt    DateTime  @default(now()) @map("joined_at")
+  lastSeenAt  DateTime? @map("last_seen_at")
+
+  answers GameAnswer[]
+
+  @@unique([sessionId, userId], map: "game_participant_session_id_user_id_key")
+  @@unique([id, sessionId], map: "game_participant_id_session_id_key")
+  @@index([userId, joinedAt(sort: Desc)], map: "game_participant_user_id_joined_at_idx")
+  @@index([sessionId, score(sort: Desc)], map: "game_participant_session_id_score_idx")
+  @@map("game_participant")
+}
+
+model GameAnswer {
+  id        String      @id @default(uuid())
+  sessionId String      @map("session_id")
+  session   GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  participantId String          @map("participant_id")
+  participant   GameParticipant @relation(fields: [participantId, sessionId], references: [id, sessionId], onDelete: Cascade)
+  roundId       String          @map("round_id")
+  round         GameRound       @relation("GameRoundAnswers", fields: [roundId, sessionId], references: [id, sessionId], onDelete: Cascade)
+
+  selectedOptionId String          @map("selected_option_id")
+  selectedOption   GameRoundOption @relation(fields: [selectedOptionId, roundId], references: [id, roundId], onDelete: Restrict)
+  idempotencyKey   String          @map("idempotency_key")
+  submittedAt      DateTime        @default(now()) @map("submitted_at")
+  responseTimeMs   Int             @map("response_time_ms")
+  isCorrect        Boolean         @map("is_correct")
+  pointsAwarded    Int             @default(0) @map("points_awarded")
+
+  @@unique([participantId, roundId], map: "game_answer_participant_id_round_id_key")
+  @@unique([participantId, idempotencyKey], map: "game_answer_participant_id_idempotency_key_key")
+  @@index([sessionId, roundId], map: "game_answer_session_id_round_id_idx")
+  @@index([roundId], map: "game_answer_round_id_idx")
+  @@map("game_answer")
+}
+
 // ---- Saved Vocabulary ----
 
 model SavedVocabulary {
@@ -619,6 +872,7 @@ model SavedVocabulary {
   englishDefinition     String   @map("english_definition")
   vietnameseTranslation String   @map("vietnamese_translation")
   exampleSentence       String   @map("example_sentence")
+  examples              String[] @default([])
   sourceSnippet         String?  @map("source_snippet")
   masteryLevel          Int      @default(0) @map("mastery_level")
   nextReviewAt          DateTime @default(now()) @map("next_review_at")
@@ -765,6 +1019,7 @@ model Assignment {
   createdBy User   @relation("AssignmentCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
 
   submissions AssignmentSubmission[]
+  results     AssignmentResult[]
 
   @@index([courseId, deletedAt])
   @@index([createdById])
@@ -790,12 +1045,38 @@ model AssignmentSubmission {
   student    User       @relation("AssignmentStudent", fields: [studentId], references: [id], onDelete: Cascade)
   gradedBy   User?      @relation("AssignmentGradedBy", fields: [gradedById], references: [id], onDelete: SetNull)
 
-  files AssignmentSubmissionFile[]
+  files            AssignmentSubmissionFile[]
+  publishedResults AssignmentResult[]
 
   @@index([assignmentId, studentId, createdAt(sort: Desc)], map: "assignment_submission_assignment_student_created_idx")
   @@index([assignmentId, status])
   @@index([studentId])
   @@map("assignment_submission")
+}
+
+model AssignmentResult {
+  id                 String  @id @default(uuid())
+  assignmentId       String  @map("assignment_id")
+  studentId          String  @map("student_id")
+  sourceSubmissionId String? @map("source_submission_id")
+  publishedById      String? @map("published_by_id")
+
+  score       Float
+  feedback    String?  @db.Text
+  publishedAt DateTime @map("published_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  assignment       Assignment            @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  student          User                  @relation("AssignmentResultStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  sourceSubmission AssignmentSubmission? @relation(fields: [sourceSubmissionId], references: [id], onDelete: SetNull)
+  publishedBy      User?                 @relation("AssignmentResultPublishedBy", fields: [publishedById], references: [id], onDelete: SetNull)
+
+  @@unique([assignmentId, studentId], map: "assignment_result_assignment_student_key")
+  @@index([sourceSubmissionId], map: "assignment_result_source_submission_idx")
+  @@index([publishedById], map: "assignment_result_published_by_idx")
+  @@map("assignment_result")
 }
 
 model AssignmentSubmissionFile {

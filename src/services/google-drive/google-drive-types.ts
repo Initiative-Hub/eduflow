@@ -8,21 +8,6 @@ export type GoogleDriveDestination = {
   webViewLink: string | null;
 };
 
-export type GoogleDriveFileMetadata = {
-  capabilities?: {
-    canAddChildren?: boolean;
-    canDownload?: boolean;
-  };
-  driveId?: string;
-  exportLinks?: Record<string, string>;
-  id: string;
-  mimeType?: string;
-  name?: string;
-  size?: string;
-  trashed?: boolean;
-  webViewLink?: string;
-};
-
 export function parseGoogleDriveDestination(
   metadata: Prisma.JsonValue | null
 ): GoogleDriveDestination | null {

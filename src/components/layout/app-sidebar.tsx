@@ -108,19 +108,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
             <GraduationCap className="size-6" strokeWidth={2.5} />
           </div>
-          <div className="flex flex-col justify-center group-data-[collapsible=icon]:hidden">
-            <span className="font-bold text-primary text-xl leading-none tracking-tight">
-              EduFlow
-            </span>
-            <span className="mt-1 font-bold text-muted-foreground/80 text-xs tracking-widest">
-              ACADEMIC CURATOR
-            </span>
-          </div>
+          <span className="font-black font-heading text-2xl text-primary group-data-[collapsible=icon]:hidden">
+            EduFlow
+          </span>
         </Link>
 
         {!pathname.includes('/courses/') && canStartChat ? (
           <Button
-            className="group-data-[collapsible=icon]:justify-center! relative w-full justify-start rounded-xl bg-linear-to-br from-primary to-primary/80 px-4 py-6 font-semibold text-primary-foreground shadow-md transition-all hover:from-primary/90 hover:to-primary/70 hover:shadow-lg group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:h-12 group-data-[collapsible=icon]:w-12 group-data-[collapsible=icon]:p-0!"
+            className="group-data-[collapsible=icon]:justify-center! relative w-full justify-start rounded-xl bg-linear-to-br from-primary to-primary/80 px-4 py-6 font-semibold text-primary-foreground shadow-md transition-all hover:from-primary/90 hover:to-primary/70 hover:shadow-lg group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:p-0!"
             size="lg"
             asChild
           >

@@ -19,7 +19,6 @@ import { Button } from '@/components/ui/button';
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import type { StudyInteractiveContentData } from '@/utils/study-interactive-content';
@@ -122,72 +121,70 @@ const InteractiveContentPreview = ({
           ) : null}
         </div>
 
-        <TooltipProvider>
-          <fieldset className="m-0 flex w-full min-w-0 flex-wrap items-center gap-2 border-0 p-0">
-            <legend className="sr-only">{t('actionsLabel')}</legend>
+        <fieldset className="m-0 flex w-full min-w-0 flex-wrap items-center gap-2 border-0 p-0">
+          <legend className="sr-only">{t('actionsLabel')}</legend>
 
-            <PreviewActionButton label={t('reset')} onClick={handleReset}>
-              <RefreshCw className="size-4" />
-            </PreviewActionButton>
+          <PreviewActionButton label={t('reset')} onClick={handleReset}>
+            <RefreshCw className="size-4" />
+          </PreviewActionButton>
 
+          <PreviewActionButton
+            label={t('fullscreen')}
+            onClick={handleFullscreen}
+          >
+            <Maximize2 className="size-4" />
+          </PreviewActionButton>
+
+          <PreviewActionButton label={t('download')} onClick={handleDownload}>
+            <Download className="size-4" />
+          </PreviewActionButton>
+
+          {share ? (
             <PreviewActionButton
-              label={t('fullscreen')}
-              onClick={handleFullscreen}
+              label={isSavingToDrive ? t('savingToDrive') : t('saveToDrive')}
+              onClick={handleSaveToDrive}
+              disabled={isSavingToDrive}
             >
-              <Maximize2 className="size-4" />
+              {isSavingToDrive ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <CloudUpload className="size-4" />
+              )}
             </PreviewActionButton>
+          ) : null}
 
-            <PreviewActionButton label={t('download')} onClick={handleDownload}>
-              <Download className="size-4" />
+          {share ? (
+            <PreviewActionButton
+              label={isSharing ? t('sharing') : t('share')}
+              onClick={handleShare}
+              disabled={isSharing}
+            >
+              {isSharing ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Share2 className="size-4" />
+              )}
             </PreviewActionButton>
+          ) : null}
 
-            {share ? (
-              <PreviewActionButton
-                label={isSavingToDrive ? t('savingToDrive') : t('saveToDrive')}
-                onClick={handleSaveToDrive}
-                disabled={isSavingToDrive}
-              >
-                {isSavingToDrive ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <CloudUpload className="size-4" />
-                )}
-              </PreviewActionButton>
-            ) : null}
-
-            {share ? (
-              <PreviewActionButton
-                label={isSharing ? t('sharing') : t('share')}
-                onClick={handleShare}
-                disabled={isSharing}
-              >
-                {isSharing ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <Share2 className="size-4" />
-                )}
-              </PreviewActionButton>
-            ) : null}
-
-            {showSaveToInventory ? (
-              <PreviewActionButton
-                label={
-                  isSavingToInventory
-                    ? t('savingToInventory')
-                    : t('saveToInventory')
-                }
-                onClick={handleSaveToInventory}
-                disabled={isSavingToInventory}
-              >
-                {isSavingToInventory ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <Save className="size-4" />
-                )}
-              </PreviewActionButton>
-            ) : null}
-          </fieldset>
-        </TooltipProvider>
+          {showSaveToInventory ? (
+            <PreviewActionButton
+              label={
+                isSavingToInventory
+                  ? t('savingToInventory')
+                  : t('saveToInventory')
+              }
+              onClick={handleSaveToInventory}
+              disabled={isSavingToInventory}
+            >
+              {isSavingToInventory ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Save className="size-4" />
+              )}
+            </PreviewActionButton>
+          ) : null}
+        </fieldset>
       </header>
 
       <iframe

@@ -3,7 +3,7 @@
 import { ArrowRight, FileText } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
-import type { AssignmentListItem } from '@/app/[locale]/(dashboard)/courses/[courseId]/assignments/assignment.service';
+import type { AssignmentListItem } from '@/app/[locale]/(dashboard)/courses/[courseId]/assignments/assignment.types';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { AssignmentDueDate } from './assignment-due-date';

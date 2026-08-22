@@ -3,6 +3,19 @@
 // expect function, e.g.: expect(element).toBeInTheDocument()
 import '@testing-library/jest-dom';
 
+if (
+  typeof window !== 'undefined' &&
+  typeof window.ResizeObserver === 'undefined'
+) {
+  class ResizeObserverMock {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+
+  window.ResizeObserver = ResizeObserverMock as typeof window.ResizeObserver;
+}
+
 if (typeof document !== 'undefined' && !document.elementFromPoint) {
   Object.defineProperty(document, 'elementFromPoint', {
     configurable: true,

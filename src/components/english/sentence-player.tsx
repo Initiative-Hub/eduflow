@@ -4,6 +4,8 @@ import { useMutation } from '@tanstack/react-query';
 import { Loader2, Pause, Play, Sparkles } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useCallback, useRef, useState } from 'react';
+import { toast } from 'sonner';
+import { apiClient } from '@/lib/api/api-client';
 import { cn } from '@/lib/utils';
 
 interface SentencePlayerProps {
@@ -38,17 +40,14 @@ export function SentencePlayer({
 
   const ttsMutation = useMutation({
     mutationFn: async (text: string) => {
-      const res = await fetch('/api/v1/english/tts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          text,
-          provider: 'polly', // Switch to 'openai' or 'polly' to use Amazon Polly
-        }),
-        cache: 'no-store',
-      });
-      if (!res.ok) throw new Error('TTS request failed');
-      const blob = await res.blob();
+      const blob = await apiClient.post<Blob>(
+        'v1/english/tts',
+        { text },
+        {
+          responseType: 'blob',
+          timeout: 60_000,
+        }
+      );
       return URL.createObjectURL(blob);
     },
   });
@@ -84,6 +83,7 @@ export function SentencePlayer({
         await audio.play();
         setPlayState('playing');
       } catch {
+        toast.error(t('audioFailed'));
         setPlayState('idle');
         setActiveIdx(null);
       }
