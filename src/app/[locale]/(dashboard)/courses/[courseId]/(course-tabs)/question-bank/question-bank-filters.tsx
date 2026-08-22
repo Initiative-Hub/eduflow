@@ -48,6 +48,15 @@ export function QuestionBankFilters({
     m.lessons.some((l) => lessonFilters.has(l.id))
   ).length;
   const lessonFilterCount = lessonFilters.size + (includeNoLesson ? 1 : 0);
+  const activeFilterClassName = 'border-primary/30 bg-primary/10 text-primary';
+  const filterPopoverClassName =
+    'max-h-[min(24rem,var(--radix-popover-content-available-height))] overflow-hidden p-0';
+  const filterScrollAreaClassName =
+    'flex max-h-[inherit] flex-col gap-1 overflow-y-auto p-3';
+  const filterOptionClassName =
+    'flex cursor-pointer items-start gap-2 rounded px-2 py-1.5 transition-colors hover:bg-primary/10 hover:text-primary';
+  const filterCheckboxClassName = 'mt-0.5 shrink-0';
+  const filterLabelClassName = 'min-w-0 break-words text-sm leading-snug';
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -59,8 +68,7 @@ export function QuestionBankFilters({
             size="sm"
             className={cn(
               'h-9 gap-1.5',
-              typeFilterCount > 0 &&
-                'border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-800 dark:bg-purple-950/20 dark:text-purple-300'
+              typeFilterCount > 0 && activeFilterClassName
             )}
           >
             {typeFilterCount > 0
@@ -69,23 +77,27 @@ export function QuestionBankFilters({
             <ChevronDown className="h-3.5 w-3.5 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-64 p-3" align="start">
-          <div className="space-y-3">
+        <PopoverContent
+          className={cn('w-64', filterPopoverClassName)}
+          align="start"
+          collisionPadding={16}
+        >
+          <div className="flex max-h-[inherit] flex-col gap-3 overflow-y-auto p-3">
             <div>
               <p className="mb-1.5 font-semibold text-muted-foreground text-xs uppercase tracking-wide">
                 {t('categories.SELECTION_BASED')}
               </p>
-              <div className="space-y-1">
+              <div className="flex flex-col gap-1">
                 {QUIZ_CATEGORIES.SELECTION_BASED.subTypes.map((st) => (
-                  <label
-                    key={st}
-                    className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 hover:bg-muted/50"
-                  >
+                  <label key={st} className={filterOptionClassName}>
                     <Checkbox
+                      className={filterCheckboxClassName}
                       checked={subTypeFilters.has(st)}
                       onCheckedChange={() => toggleSubType(st)}
                     />
-                    <span className="text-sm">{t(`questionTypes.${st}`)}</span>
+                    <span className={filterLabelClassName}>
+                      {t(`questionTypes.${st}`)}
+                    </span>
                   </label>
                 ))}
               </div>
@@ -94,17 +106,17 @@ export function QuestionBankFilters({
               <p className="mb-1.5 font-semibold text-muted-foreground text-xs uppercase tracking-wide">
                 {t('categories.OPEN_ENDED')}
               </p>
-              <div className="space-y-1">
+              <div className="flex flex-col gap-1">
                 {QUIZ_CATEGORIES.OPEN_ENDED.subTypes.map((st) => (
-                  <label
-                    key={st}
-                    className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 hover:bg-muted/50"
-                  >
+                  <label key={st} className={filterOptionClassName}>
                     <Checkbox
+                      className={filterCheckboxClassName}
                       checked={subTypeFilters.has(st)}
                       onCheckedChange={() => toggleSubType(st)}
                     />
-                    <span className="text-sm">{t(`questionTypes.${st}`)}</span>
+                    <span className={filterLabelClassName}>
+                      {t(`questionTypes.${st}`)}
+                    </span>
                   </label>
                 ))}
               </div>
@@ -121,8 +133,7 @@ export function QuestionBankFilters({
             size="sm"
             className={cn(
               'h-9 gap-1.5',
-              moduleFilterCount > 0 &&
-                'border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-800 dark:bg-purple-950/20 dark:text-purple-300'
+              moduleFilterCount > 0 && activeFilterClassName
             )}
           >
             {moduleFilterCount > 0
@@ -131,8 +142,12 @@ export function QuestionBankFilters({
             <ChevronDown className="h-3.5 w-3.5 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-60 p-3" align="start">
-          <div className="space-y-1">
+        <PopoverContent
+          className={cn('w-72', filterPopoverClassName)}
+          align="start"
+          collisionPadding={16}
+        >
+          <div className={filterScrollAreaClassName}>
             {modules.map((mod) => {
               const modLessonIds = mod.lessons.map((l) => l.id);
               const allSelected = modLessonIds.every((id) =>
@@ -142,11 +157,9 @@ export function QuestionBankFilters({
                 !allSelected &&
                 modLessonIds.some((id) => lessonFilters.has(id));
               return (
-                <label
-                  key={mod.id}
-                  className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 hover:bg-muted/50"
-                >
+                <label key={mod.id} className={filterOptionClassName}>
                   <Checkbox
+                    className={filterCheckboxClassName}
                     checked={
                       allSelected
                         ? true
@@ -164,7 +177,7 @@ export function QuestionBankFilters({
                       }
                     }}
                   />
-                  <span className="text-sm">{mod.title}</span>
+                  <span className={filterLabelClassName}>{mod.title}</span>
                 </label>
               );
             })}
@@ -180,8 +193,7 @@ export function QuestionBankFilters({
             size="sm"
             className={cn(
               'h-9 gap-1.5',
-              lessonFilterCount > 0 &&
-                'border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-800 dark:bg-purple-950/20 dark:text-purple-300'
+              lessonFilterCount > 0 && activeFilterClassName
             )}
           >
             {lessonFilterCount > 0
@@ -191,29 +203,31 @@ export function QuestionBankFilters({
           </Button>
         </PopoverTrigger>
         <PopoverContent
-          className="max-h-64 w-64 overflow-y-auto p-3"
+          className={cn('w-72', filterPopoverClassName)}
           align="start"
+          collisionPadding={16}
         >
-          <div className="space-y-1">
-            <label className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 hover:bg-muted/50">
+          <div className={filterScrollAreaClassName}>
+            <label className={filterOptionClassName}>
               <Checkbox
+                className={filterCheckboxClassName}
                 checked={includeNoLesson}
                 onCheckedChange={(checked) =>
                   setIncludeNoLesson(checked === true)
                 }
               />
-              <span className="text-sm italic">{t('noLessonFilter')}</span>
+              <span className={cn(filterLabelClassName, 'italic')}>
+                {t('noLessonFilter')}
+              </span>
             </label>
             {allLessons.map((lesson) => (
-              <label
-                key={lesson.id}
-                className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 hover:bg-muted/50"
-              >
+              <label key={lesson.id} className={filterOptionClassName}>
                 <Checkbox
+                  className={filterCheckboxClassName}
                   checked={lessonFilters.has(lesson.id)}
                   onCheckedChange={() => toggleLesson(lesson.id)}
                 />
-                <span className="text-sm">{lesson.title}</span>
+                <span className={filterLabelClassName}>{lesson.title}</span>
               </label>
             ))}
           </div>

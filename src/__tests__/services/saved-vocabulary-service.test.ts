@@ -121,14 +121,22 @@ describe('SavedVocabularyService', () => {
     );
   });
 
-  it('saves normalized vocabulary once per user and skips duplicates', async () => {
+  it('saves duplicate words when their meanings differ', async () => {
+    savedVocabulary.createMany.mockResolvedValue({ count: 2 });
     const { SavedVocabularyService } = await import(
       '@/services/english/SavedVocabularyService'
     );
 
+    const alternateMeaning = {
+      ...comet,
+      word: 'comet',
+      englishDefinition: 'A bright object that moves through the night sky.',
+      vietnameseTranslation: 'Một vật thể sáng di chuyển trên bầu trời đêm.',
+    };
+
     const result = await SavedVocabularyService.saveMany('user-1', [
       comet,
-      { ...comet, word: 'comet' },
+      alternateMeaning,
     ]);
 
     expect(savedVocabulary.createMany).toHaveBeenCalledWith({
@@ -147,10 +155,25 @@ describe('SavedVocabularyService', () => {
           masteryLevel: 0,
           nextReviewAt: expect.any(Date),
         },
+        {
+          userId: 'user-1',
+          word: 'comet',
+          partOfSpeech: 'noun',
+          ipa: '/ˈkɑːmɪt/',
+          audioUrl: null,
+          englishDefinition:
+            'A bright object that moves through the night sky.',
+          vietnameseTranslation:
+            'Một vật thể sáng di chuyển trên bầu trời đêm.',
+          exampleSentence:
+            'Along with asteroids and comets, the planets orbit the Sun.',
+          sourceSnippet: null,
+          masteryLevel: 0,
+          nextReviewAt: expect.any(Date),
+        },
       ],
-      skipDuplicates: true,
     });
-    expect(result.savedCount).toBe(1);
+    expect(result.savedCount).toBe(2);
   });
 
   it('lists saved vocabulary with total and saved word lookup metadata', async () => {

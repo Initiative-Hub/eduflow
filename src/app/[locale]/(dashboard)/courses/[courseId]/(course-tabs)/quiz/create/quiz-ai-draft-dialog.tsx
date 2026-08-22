@@ -1,8 +1,8 @@
 'use client';
 
-import { Loader2, Sparkles } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -32,6 +32,7 @@ interface QuizAiDraftDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   isGenerating: boolean;
+  resetKey?: number;
   onSubmit: (data: {
     questionCounts: Partial<Record<QuestionSubType, number>>;
     context?: string;
@@ -42,6 +43,7 @@ export function QuizAiDraftDialog({
   open,
   onOpenChange,
   isGenerating,
+  resetKey,
   onSubmit,
 }: QuizAiDraftDialogProps) {
   const t = useTranslations('Courses.CreateQuiz');
@@ -56,6 +58,17 @@ export function QuizAiDraftDialog({
     (sum, value) => sum + (Number.parseInt(value ?? '', 10) || 0),
     0
   );
+
+  const resetForm = useCallback(() => {
+    setCategory('');
+    setCounts({});
+    setContext('');
+  }, []);
+
+  useEffect(() => {
+    if (resetKey === undefined) return;
+    resetForm();
+  }, [resetForm, resetKey]);
 
   const handleSubmit = () => {
     if (!category || total < 1) return;
@@ -163,10 +176,8 @@ export function QuizAiDraftDialog({
             disabled={!category || total < 1 || isGenerating}
           >
             {isGenerating ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Sparkles className="mr-2 h-4 w-4" />
-            )}
+              <Loader2 data-icon="inline-start" className="animate-spin" />
+            ) : null}
             {isGenerating ? t('generatingQuestions') : t('generate')}
           </Button>
         </DialogFooter>

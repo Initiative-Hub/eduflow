@@ -38,7 +38,7 @@ const renderMenuItem = (item: MenuItem, index: number) => {
       <DropdownMenuSub key={index}>
         <DropdownMenuSubTrigger
           className={cn(
-            'cursor-pointer gap-2 data-[highlighted]:bg-primary/20 data-[highlighted]:text-primary data-[highlighted]:**:!text-primary focus:bg-primary/20 focus:text-primary focus:**:!text-primary data-[state=open]:bg-primary/20 data-[state=open]:text-primary data-[state=open]:**:!text-primary',
+            'cursor-pointer gap-2 focus:bg-primary/15 focus:text-primary focus:**:text-primary data-[highlighted]:bg-primary/15 data-[state=open]:bg-primary/15 data-[highlighted]:text-primary data-[state=open]:text-primary data-[highlighted]:**:text-primary data-[state=open]:**:text-primary',
             item.className
           )}
         >
@@ -63,8 +63,8 @@ const renderMenuItem = (item: MenuItem, index: number) => {
       className={cn(
         'cursor-pointer gap-2',
         item.destructive
-          ? 'text-destructive data-[highlighted]:bg-destructive/20 data-[highlighted]:text-destructive data-[highlighted]:**:!text-destructive focus:bg-destructive/20 focus:text-destructive focus:**:!text-destructive'
-          : 'data-[highlighted]:bg-primary/20 data-[highlighted]:text-primary data-[highlighted]:**:!text-primary focus:bg-primary/20 focus:text-primary focus:**:!text-primary',
+          ? 'text-destructive focus:bg-destructive/10 focus:text-destructive focus:**:text-destructive data-[highlighted]:bg-destructive/10 data-[highlighted]:text-destructive data-[highlighted]:**:text-destructive'
+          : 'focus:bg-primary/15 focus:text-primary focus:**:text-primary data-[highlighted]:bg-primary/15 data-[highlighted]:text-primary data-[highlighted]:**:text-primary',
         item.className
       )}
       onClick={item.onClick}
