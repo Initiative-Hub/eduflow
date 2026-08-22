@@ -49,6 +49,8 @@ export interface TemplateSlot {
   desc: string;
   max_chars: number;
   lines: number;
+  /** true/false set by a reviewer; null = decide from the slot name */
+  bullet: boolean | null;
   x: number;
   y: number;
   w: number;
@@ -80,6 +82,7 @@ export interface SlotEditPayload {
     desc?: string;
     max_chars?: number;
     lines?: number;
+    bullet?: boolean;
     delete?: boolean;
     kind?: string;
     x?: number;

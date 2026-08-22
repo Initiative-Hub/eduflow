@@ -19,6 +19,7 @@ const slotEditsSchema = z.object({
         desc: z.string().optional(),
         max_chars: z.number().int().positive().optional(),
         lines: z.number().int().positive().optional(),
+        bullet: z.boolean().optional(),
         delete: z.boolean().optional(),
         kind: z.string().optional(),
         x: z.number().optional(),

@@ -34,6 +34,7 @@ type SlotDraft = {
   type?: string;
   desc?: string;
   max_chars?: number;
+  bullet?: boolean;
   delete?: boolean;
   kind?: string;
   x?: number;
@@ -399,6 +400,20 @@ export function TemplateReviewDialog({
                               placeholder="max chars"
                               type="number"
                             />
+                            <label className="flex items-center gap-1.5 text-[11px] text-slate-500 sm:col-span-6 dark:text-slate-400">
+                              <input
+                                defaultChecked={
+                                  draft.bullet ?? slot.bullet ?? undefined
+                                }
+                                onChange={(e) =>
+                                  setDraft(slot.name, {
+                                    bullet: e.target.checked,
+                                  })
+                                }
+                                type="checkbox"
+                              />
+                              Render as a bullet list (adds “•” to each line)
+                            </label>
                             <input
                               className={`${inputCls} sm:col-span-6`}
                               defaultValue={slot.desc}

@@ -70,6 +70,9 @@ class SlotEdit(BaseModel):
     desc: str | None = Field(default=None, description="What the planner should write here")
     max_chars: int | None = Field(default=None, description="Character budget")
     lines: int | None = Field(default=None, description="Number of repeatable lines")
+    bullet: bool | None = Field(
+        default=None,
+        description="Render this slot's lines as a bullet list (null = auto by name)")
     delete: bool = Field(default=False, description="Remove this slot entirely")
     kind: str | None = Field(default=None, description="text | image | chart | table")
     x: float | None = Field(default=None, description="Left edge on a 1440x810 slide")
