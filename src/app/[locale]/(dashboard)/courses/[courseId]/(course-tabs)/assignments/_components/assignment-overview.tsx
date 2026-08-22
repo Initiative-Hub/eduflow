@@ -2,7 +2,7 @@
 
 import { CalendarClock, ClipboardCheck, FileText } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import type { AssignmentListItem } from '@/app/[locale]/(dashboard)/courses/[courseId]/assignments/assignment.service';
+import type { AssignmentListItem } from '@/app/[locale]/(dashboard)/courses/[courseId]/assignments/assignment.types';
 
 export function TeacherOverview({
   assignments,

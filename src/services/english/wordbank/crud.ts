@@ -28,6 +28,7 @@ export async function saveVocabulary(
         englishDefinition: item.englishDefinition.trim(),
         vietnameseTranslation: item.vietnameseTranslation.trim(),
         exampleSentence: item.exampleSentence.trim(),
+        examples: item.examples ?? [],
         sourceSnippet: item.sourceSnippet?.trim() || null,
         masteryLevel: 0,
         nextReviewAt: new Date(),

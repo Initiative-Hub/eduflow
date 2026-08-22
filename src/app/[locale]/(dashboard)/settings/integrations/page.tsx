@@ -16,8 +16,8 @@ export default async function IntegrationsPage() {
   }
 
   return (
-    <Suspense fallback={null}>
-      <IntegrationsClient eduflowAccountEmail={sessionData.user.email} />
+    <Suspense>
+      <IntegrationsClient email={sessionData.user.email} />
     </Suspense>
   );
 }

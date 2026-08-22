@@ -6,7 +6,7 @@ import {
   FileInventoryStatus,
 } from '@/generated/prisma';
 import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
-import { AssignmentService } from '@/services/AssignmentService';
+import { AssignmentQueryService } from '@/services/assignments/AssignmentQueryService';
 
 const mocks = vi.hoisted(() => ({
   assignment: {
@@ -16,6 +16,10 @@ const mocks = vi.hoisted(() => ({
   assignmentSubmission: {
     findFirst: vi.fn(),
     findMany: vi.fn(),
+  },
+  assignmentResult: {
+    findMany: vi.fn(),
+    findUnique: vi.fn(),
   },
   enrollment: {
     findFirst: vi.fn(),
@@ -30,6 +34,7 @@ vi.mock('@/lib/permissions/course-permission', () => ({
 vi.mock('@/lib/prisma', () => ({
   prisma: {
     assignment: mocks.assignment,
+    assignmentResult: mocks.assignmentResult,
     assignmentSubmission: mocks.assignmentSubmission,
     enrollment: mocks.enrollment,
   },
@@ -97,7 +102,7 @@ function setStudentPermissions() {
   });
 }
 
-describe('AssignmentService student submission state', () => {
+describe('AssignmentQueryService student submission state', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     setStudentPermissions();
@@ -111,23 +116,34 @@ describe('AssignmentService student submission state', () => {
         name: CourseRoleName.STUDENT,
       },
     });
+    mocks.assignmentResult.findMany.mockResolvedValue([]);
+    mocks.assignmentResult.findUnique.mockResolvedValue(null);
   });
 
   it('lists the active draft separately from the latest finalized attempt', async () => {
     mocks.assignmentSubmission.findMany.mockResolvedValue([
       {
+        id: 'draft-2',
         assignmentId: assignment.id,
         status: AssignmentSubmissionStatus.DRAFT,
         score: null,
       },
       {
+        id: 'submission-1',
         assignmentId: assignment.id,
         status: AssignmentSubmissionStatus.GRADED,
         score: 85,
       },
     ]);
+    mocks.assignmentResult.findMany.mockResolvedValue([
+      {
+        assignmentId: assignment.id,
+        sourceSubmissionId: 'submission-1',
+        score: 85,
+      },
+    ]);
 
-    const result = await AssignmentService.listAssignments(
+    const result = await AssignmentQueryService.list(
       assignment.courseId,
       'student-1'
     );
@@ -158,8 +174,14 @@ describe('AssignmentService student submission state', () => {
     mocks.assignmentSubmission.findFirst
       .mockResolvedValueOnce(draft)
       .mockResolvedValueOnce(finalized);
+    mocks.assignmentResult.findUnique.mockResolvedValue({
+      sourceSubmissionId: finalized.id,
+      score: 85,
+      feedback: 'Well done',
+      publishedAt: new Date('2026-07-24T01:00:00.000Z'),
+    });
 
-    const result = await AssignmentService.getAssignmentById(
+    const result = await AssignmentQueryService.getById(
       assignment.id,
       'student-1'
     );
@@ -171,6 +193,66 @@ describe('AssignmentService student submission state', () => {
     expect(result.submission).toMatchObject({
       id: finalized.id,
       status: AssignmentSubmissionStatus.GRADED,
+    });
+  });
+
+  it('does not apply a published result to a newer submission in the assignment list', async () => {
+    mocks.assignmentSubmission.findMany.mockResolvedValue([
+      {
+        id: 'submission-new',
+        assignmentId: assignment.id,
+        status: AssignmentSubmissionStatus.SUBMITTED,
+      },
+    ]);
+    mocks.assignmentResult.findMany.mockResolvedValue([
+      {
+        assignmentId: assignment.id,
+        sourceSubmissionId: 'submission-old',
+        score: 85,
+      },
+    ]);
+
+    const result = await AssignmentQueryService.list(
+      assignment.courseId,
+      'student-1'
+    );
+
+    expect(result[0]?.submission).toEqual({
+      id: 'submission-new',
+      assignmentId: assignment.id,
+      status: AssignmentSubmissionStatus.SUBMITTED,
+      score: null,
+    });
+  });
+
+  it('does not apply a published result to a newer submission in assignment details', async () => {
+    const finalized = createSubmission(
+      'submission-new',
+      AssignmentSubmissionStatus.SUBMITTED,
+      new Date('2026-07-25T00:00:00.000Z')
+    );
+
+    mocks.assignmentSubmission.findFirst
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(finalized);
+    mocks.assignmentResult.findUnique.mockResolvedValue({
+      sourceSubmissionId: 'submission-old',
+      score: 85,
+      feedback: 'Feedback for the previous attempt',
+      publishedAt: new Date('2026-07-24T01:00:00.000Z'),
+    });
+
+    const result = await AssignmentQueryService.getById(
+      assignment.id,
+      'student-1'
+    );
+
+    expect(result.submission).toMatchObject({
+      id: finalized.id,
+      status: AssignmentSubmissionStatus.SUBMITTED,
+      score: null,
+      feedback: null,
+      gradedAt: null,
     });
   });
 });

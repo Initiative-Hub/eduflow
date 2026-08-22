@@ -25,6 +25,9 @@ const LEGACY_DROP_STYLE_ATTRIBUTE = 'data-slide-drop-style';
  *
  * Kept as a plain string because it is serialized into the persisted deck HTML
  * and runs inside the deck document, not in the application bundle.
+ *
+ *
+ * Valication on slide extraction
  */
 const DROP_RUNTIME_SCRIPT = `
 (function () {
@@ -106,7 +109,9 @@ export function removeLegacySlideDropStyles(doc: Document): void {
   doc.body?.removeAttribute(LEGACY_EDITING_ATTRIBUTE);
   doc
     .querySelectorAll(`style[${LEGACY_DROP_STYLE_ATTRIBUTE}]`)
-    .forEach((element) => element.remove());
+    .forEach((element) => {
+      element.remove();
+    });
 }
 
 /**
@@ -139,10 +144,12 @@ export function applySlideDropRuntime(root: HTMLElement, doc: Document): void {
     .querySelectorAll(
       `script[${SLIDE_DROP_RUNTIME_ATTRIBUTE}], style[${LEGACY_DROP_STYLE_ATTRIBUTE}]`
     )
-    .forEach((element) => element.remove());
-  root
-    .querySelectorAll(`[${LEGACY_EDITING_ATTRIBUTE}]`)
-    .forEach((element) => element.removeAttribute(LEGACY_EDITING_ATTRIBUTE));
+    .forEach((element) => {
+      element.remove();
+    });
+  root.querySelectorAll(`[${LEGACY_EDITING_ATTRIBUTE}]`).forEach((element) => {
+    element.removeAttribute(LEGACY_EDITING_ATTRIBUTE);
+  });
   root.removeAttribute(LEGACY_EDITING_ATTRIBUTE);
 
   const body = root.querySelector('body') ?? root;

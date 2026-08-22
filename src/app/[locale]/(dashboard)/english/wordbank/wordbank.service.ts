@@ -38,11 +38,77 @@ function buildWordbankParams(params: WordbankQueryParams = {}) {
   return queryParams;
 }
 
+export interface AutocompleteSuggestion {
+  select: string;
+  link?: string;
+  value?: string;
+  phonetic?: string;
+  definition?: string;
+  data?: string;
+}
+
+export interface AutocompleteResult {
+  query: string;
+  suggestions: AutocompleteSuggestion[];
+}
+
+export interface WordExample {
+  english: string;
+  vietnamese: string;
+}
+
+export interface CrawledExamplesResult {
+  word: string;
+  examples: WordExample[];
+}
+
+export interface PhoneticTip {
+  word: string;
+  ipa?: string;
+  issue: string;
+  tip: string;
+}
+
+export interface PronunciationAssessmentResult {
+  transcript: string;
+  targetText: string;
+  score: number;
+  matchedWords: string[];
+  missingWords: string[];
+  feedback: string;
+  spokenIpa?: string;
+  phoneticTips?: PhoneticTip[];
+}
+
 export const wordbankApi = {
   list(params: WordbankQueryParams = {}) {
     return apiClient.get<SavedVocabularyListResult>('v1/english/wordbank', {
       params: buildWordbankParams(params),
     });
+  },
+  autocomplete(query: string) {
+    return apiClient.get<AutocompleteResult>('v1/dictionary/autocomplete', {
+      params: { query },
+    });
+  },
+  fetchExamples(word: string) {
+    return apiClient.get<CrawledExamplesResult>('v1/dictionary/examples', {
+      params: { word },
+    });
+  },
+  assessPronunciation(audioBlob: Blob, targetText: string, targetIpa?: string) {
+    const formData = new FormData();
+    formData.append('audio', audioBlob, 'recording.webm');
+    formData.append('targetText', targetText);
+    if (targetIpa) formData.append('targetIpa', targetIpa);
+
+    return apiClient.post<PronunciationAssessmentResult>(
+      'v1/english/pronunciation/assess',
+      formData,
+      {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      }
+    );
   },
   save(vocabulary: VocabularyItem[]) {
     return apiClient.post<SaveVocabularyResult>('v1/english/wordbank', {

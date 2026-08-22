@@ -3,7 +3,7 @@
 import { CheckCircle2, LoaderCircle, Send, UploadCloud } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { type ChangeEvent, type DragEvent, useRef, useState } from 'react';
-import type { Assignment } from '@/app/[locale]/(dashboard)/courses/[courseId]/assignments/assignment.service';
+import type { Assignment } from '@/app/[locale]/(dashboard)/courses/[courseId]/assignments/assignment.types';
 import { useAssignmentSubmission } from '@/app/[locale]/(dashboard)/courses/[courseId]/assignments/use-assignment';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -18,7 +18,11 @@ export function StudentSubmissionPanel({
   const t = useTranslations('Courses.AssignmentStudent');
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const { upload, submit } = useAssignmentSubmission(assignment.id);
+  const { upload, submit, removeFile } = useAssignmentSubmission(assignment.id);
+
+  const removingFileId = removeFile.isPending
+    ? removeFile.variables
+    : undefined;
 
   const submission = assignment.submission;
   const draftSubmission = assignment.draftSubmission;
@@ -116,6 +120,13 @@ export function StudentSubmissionPanel({
           <SubmissionFileList
             files={draftSubmission.files}
             label={t('draftFiles')}
+            removingFileId={removingFileId}
+            removeDisabled={
+              upload.isPending || submit.isPending || removeFile.isPending
+            }
+            onRemove={async (fileId) => {
+              await removeFile.mutateAsync(fileId);
+            }}
           />
         ) : null}
 

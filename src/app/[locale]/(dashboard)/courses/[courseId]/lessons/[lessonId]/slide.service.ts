@@ -5,6 +5,36 @@ export interface SlideTemplate {
   name: string;
   description?: string;
   palette?: string[];
+  is_custom?: boolean;
+}
+
+export const DEFAULT_TEMPLATE_COLLECTIONS = new Set([
+  'templates',
+  'default',
+  'starter',
+  'neon_dark',
+  'vintage',
+  'clean_light',
+  'pastel_pop',
+  'illustrative_culture',
+  'minimalist_gradient',
+  'cultural_folk',
+  'organic_streets',
+  'electric_green_white',
+  'green_environment_care',
+  'rmit_red_modern',
+  'startup_neon_pitch',
+  'professional_focus',
+]);
+
+export function isDefaultTemplateCollection(
+  name: string,
+  isCustomProp?: boolean
+): boolean {
+  if (typeof isCustomProp === 'boolean') {
+    return !isCustomProp;
+  }
+  return DEFAULT_TEMPLATE_COLLECTIONS.has(name.toLowerCase());
 }
 
 /**

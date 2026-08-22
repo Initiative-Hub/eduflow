@@ -3,162 +3,133 @@ import { GoogleDriveDestinationService } from '@/services/google-drive/GoogleDri
 import { GoogleDriveExportService } from '@/services/google-drive/GoogleDriveExportService';
 
 vi.mock('@/services/google-drive/GoogleDriveDestinationService', () => ({
-  GoogleDriveDestinationService: {
-    getExportContext: vi.fn(),
-  },
+  GoogleDriveDestinationService: { getExportContext: vi.fn() },
 }));
 
 const destinationService = GoogleDriveDestinationService as unknown as {
   getExportContext: ReturnType<typeof vi.fn>;
 };
 
+const filesList = vi.fn();
+const filesCreate = vi.fn();
+const getRequestHeaders = vi.fn();
+
+function createContext(options?: { myDrive?: boolean }) {
+  return {
+    accountEmail: 'drive-account@example.com',
+    auth: { getRequestHeaders },
+    destination: options?.myDrive
+      ? {
+          driveId: null,
+          folderId: null,
+          kind: 'my_drive',
+          name: 'My Drive',
+          webViewLink: 'https://drive.google.com/drive/my-drive',
+        }
+      : {
+          driveId: 'shared-drive-1',
+          folderId: 'folder-1',
+          kind: 'folder',
+          name: 'Eduflow Exports',
+          webViewLink: 'https://drive.google.com/drive/folders/folder-1',
+        },
+    drive: { files: { create: filesCreate, list: filesList } },
+    metadata: {},
+  };
+}
+
+const artifact = {
+  bytes: new TextEncoder().encode('word,meaning'),
+  fileName: 'wordbank.csv',
+  mimeType: 'text/csv',
+  sourceKind: 'wordbank_csv',
+};
+const requestId = '9ed2dd42-989f-42d2-99ec-c01269108257';
+
 describe('GoogleDriveExportService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.unstubAllGlobals();
-    destinationService.getExportContext.mockResolvedValue({
-      accessToken: 'access-token',
-      destination: {
-        driveId: 'shared-drive-1',
-        folderId: 'folder-1',
-        kind: 'folder',
-        name: 'Eduflow Exports',
-        webViewLink: 'https://drive.google.com/drive/folders/folder-1',
+    filesList.mockResolvedValue({ data: { files: [] } });
+    filesCreate.mockResolvedValue({
+      data: {
+        id: 'drive-file-1',
+        mimeType: 'text/csv',
+        name: 'wordbank.csv',
+        size: '12',
+        webViewLink: 'https://drive.google.com/file/d/drive-file-1/view',
       },
     });
+    getRequestHeaders.mockResolvedValue(
+      new Headers({ Authorization: 'Bearer access-token' })
+    );
+    destinationService.getExportContext.mockResolvedValue(createContext());
   });
 
-  it('uploads a small artifact to the configured folder with idempotency metadata', async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify({ files: [] }), { status: 200 })
-      )
-      .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({
-            id: 'drive-file-1',
-            mimeType: 'text/csv',
-            name: 'wordbank.csv',
-            size: '12',
-            webViewLink: 'https://drive.google.com/file/d/drive-file-1/view',
-          }),
-          { status: 200 }
-        )
-      );
-    vi.stubGlobal('fetch', fetchMock);
-
+  it('uploads a small artifact with typed Drive parameters and idempotency metadata', async () => {
     const result = await GoogleDriveExportService.uploadArtifact({
-      artifact: {
-        bytes: new TextEncoder().encode('word,meaning'),
-        fileName: 'wordbank.csv',
-        mimeType: 'text/csv',
-        sourceKind: 'wordbank_csv',
-      },
-      requestId: '9ed2dd42-989f-42d2-99ec-c01269108257',
+      artifact,
+      requestId,
       userId: 'user-1',
     });
 
-    expect(result.reused).toBe(false);
-    expect(result.fileId).toBe('drive-file-1');
-    expect(fetchMock.mock.calls[0]?.[0]).toContain(
-      'includeItemsFromAllDrives=true'
+    expect(result).toMatchObject({ fileId: 'drive-file-1', reused: false });
+    expect(filesList).toHaveBeenCalledWith(
+      expect.objectContaining({
+        corpora: 'drive',
+        driveId: 'shared-drive-1',
+        includeItemsFromAllDrives: true,
+        supportsAllDrives: true,
+      })
     );
-    expect(fetchMock.mock.calls[0]?.[0]).toContain('driveId=shared-drive-1');
-    expect(fetchMock.mock.calls[1]?.[0]).toContain('uploadType=multipart');
-    const uploadInit = fetchMock.mock.calls[1]?.[1] as RequestInit;
-    const uploadBody = await (uploadInit.body as Blob).text();
-    expect(uploadBody).toContain('"parents":["folder-1"]');
-    expect(uploadBody).toContain(
-      '"eduflow_export_request_id":"9ed2dd42-989f-42d2-99ec-c01269108257"'
+    expect(filesCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        requestBody: expect.objectContaining({
+          appProperties: expect.objectContaining({
+            eduflow_export_request_id: requestId,
+          }),
+          parents: ['folder-1'],
+        }),
+        supportsAllDrives: true,
+      })
     );
   });
 
   it('omits parents when My Drive root is the explicit destination', async () => {
-    destinationService.getExportContext.mockResolvedValue({
-      accessToken: 'access-token',
-      destination: {
-        driveId: null,
-        folderId: null,
-        kind: 'my_drive',
-        name: 'My Drive',
-        webViewLink: 'https://drive.google.com/drive/my-drive',
-      },
-    });
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify({ files: [] }), { status: 200 })
-      )
-      .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({
-            id: 'root-file',
-            mimeType: 'text/csv',
-            name: 'wordbank.csv',
-          }),
-          { status: 200 }
-        )
-      );
-    vi.stubGlobal('fetch', fetchMock);
+    destinationService.getExportContext.mockResolvedValue(
+      createContext({ myDrive: true })
+    );
 
     await GoogleDriveExportService.uploadArtifact({
-      artifact: {
-        bytes: new TextEncoder().encode('word,meaning'),
-        fileName: 'wordbank.csv',
-        mimeType: 'text/csv',
-        sourceKind: 'wordbank_csv',
-      },
-      requestId: '9ed2dd42-989f-42d2-99ec-c01269108257',
+      artifact,
+      requestId,
       userId: 'user-1',
     });
 
-    const uploadInit = fetchMock.mock.calls[1]?.[1] as RequestInit;
-    const uploadBody = uploadInit.body as Blob;
-    expect(await uploadBody.text()).not.toContain('"parents"');
+    expect(filesCreate.mock.calls[0]?.[0].requestBody).not.toHaveProperty(
+      'parents'
+    );
   });
 
   it('reuses a file created for the same export request', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          files: [
-            {
-              id: 'existing-file',
-              mimeType: 'text/html',
-              name: 'activity.html',
-              size: '20',
-              webViewLink: 'https://drive.google.com/file/d/existing-file/view',
-            },
-          ],
-        }),
-        { status: 200 }
-      )
-    );
-    vi.stubGlobal('fetch', fetchMock);
+    filesList.mockResolvedValue({
+      data: { files: [{ id: 'existing-file', name: 'activity.html' }] },
+    });
 
     const result = await GoogleDriveExportService.uploadArtifact({
-      artifact: {
-        bytes: new TextEncoder().encode('<!doctype html>'),
-        fileName: 'activity.html',
-        mimeType: 'text/html',
-        sourceKind: 'study_interactive_html',
-      },
-      requestId: 'ec74539b-da9f-47e6-85b7-ea3cd6c4809a',
+      artifact: { ...artifact, fileName: 'activity.html' },
+      requestId,
       userId: 'user-1',
     });
 
-    expect(result.reused).toBe(true);
-    expect(result.fileId).toBe('existing-file');
-    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(result).toMatchObject({ fileId: 'existing-file', reused: true });
+    expect(filesCreate).not.toHaveBeenCalled();
   });
 
-  it('uses a resumable upload for artifacts larger than five megabytes', async () => {
+  it('uses the isolated resumable transport above five megabytes', async () => {
+    const bytes = new Uint8Array(5 * 1024 * 1024 + 1);
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify({ files: [] }), { status: 200 })
-      )
       .mockResolvedValueOnce(
         new Response(null, {
           headers: { Location: 'https://upload.example.test/session-1' },
@@ -167,14 +138,7 @@ describe('GoogleDriveExportService', () => {
       )
       .mockResolvedValueOnce(
         new Response(
-          JSON.stringify({
-            id: 'large-file',
-            mimeType:
-              'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-            name: 'lesson.pptx',
-            size: String(5 * 1024 * 1024 + 1),
-            webViewLink: 'https://drive.google.com/file/d/large-file/view',
-          }),
+          JSON.stringify({ id: 'large-file', name: 'lesson.pptx' }),
           { status: 200 }
         )
       );
@@ -182,23 +146,28 @@ describe('GoogleDriveExportService', () => {
 
     const result = await GoogleDriveExportService.uploadArtifact({
       artifact: {
-        bytes: new Uint8Array(5 * 1024 * 1024 + 1),
+        bytes,
         fileName: 'lesson.pptx',
         mimeType:
           'application/vnd.openxmlformats-officedocument.presentationml.presentation',
         sourceKind: 'lesson_presentation',
       },
-      requestId: '234d2d31-b954-42bc-b723-5f0cba08a71d',
+      requestId,
       userId: 'user-1',
     });
 
     expect(result.fileId).toBe('large-file');
-    expect(fetchMock.mock.calls[1]?.[0]).toContain('uploadType=resumable');
-    expect(fetchMock.mock.calls[2]?.[0]).toBe(
+    expect(filesCreate).not.toHaveBeenCalled();
+    expect(fetchMock.mock.calls[0]?.[0]).toContain('uploadType=resumable');
+    expect(fetchMock.mock.calls[1]?.[0]).toBe(
       'https://upload.example.test/session-1'
     );
-    expect(fetchMock.mock.calls[2]?.[1]).toEqual(
-      expect.objectContaining({ method: 'PUT' })
+    expect(fetchMock.mock.calls[0]?.[1]).toEqual(
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          authorization: 'Bearer access-token',
+        }),
+      })
     );
   });
 
@@ -206,9 +175,6 @@ describe('GoogleDriveExportService', () => {
     const bytes = new Uint8Array(5 * 1024 * 1024 + 2);
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify({ files: [] }), { status: 200 })
-      )
       .mockResolvedValueOnce(
         new Response(null, {
           headers: { Location: 'https://upload.example.test/session-recovery' },
@@ -223,10 +189,7 @@ describe('GoogleDriveExportService', () => {
         })
       )
       .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({ id: 'recovered-file', name: 'lesson.pptx' }),
-          { status: 200 }
-        )
+        new Response(JSON.stringify({ id: 'recovered-file' }), { status: 200 })
       );
     vi.stubGlobal('fetch', fetchMock);
 
@@ -238,17 +201,71 @@ describe('GoogleDriveExportService', () => {
           'application/vnd.openxmlformats-officedocument.presentationml.presentation',
         sourceKind: 'lesson_presentation',
       },
-      requestId: '234d2d31-b954-42bc-b723-5f0cba08a71d',
+      requestId,
       userId: 'user-1',
     });
 
     expect(result.fileId).toBe('recovered-file');
-    expect(fetchMock.mock.calls[4]?.[1]).toEqual(
+    expect(fetchMock.mock.calls[3]?.[1]).toEqual(
       expect.objectContaining({
         headers: expect.objectContaining({
           'Content-Range': `bytes 1024-${bytes.byteLength - 1}/${bytes.byteLength}`,
         }),
       })
     );
+  });
+
+  it('rejects a resumable session without a location header', async () => {
+    const bytes = new Uint8Array(5 * 1024 * 1024 + 1);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(new Response(null, { status: 200 }))
+    );
+
+    await expect(
+      GoogleDriveExportService.uploadArtifact({
+        artifact: { ...artifact, bytes },
+        requestId,
+        userId: 'user-1',
+      })
+    ).rejects.toMatchObject({ code: 'DRIVE_UPLOAD_FAILED' });
+  });
+
+  it('fails after Google Drive leaves every resumable attempt incomplete', async () => {
+    const bytes = new Uint8Array(5 * 1024 * 1024 + 1);
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(null, {
+          headers: { Location: 'https://upload.example.test/incomplete' },
+          status: 200,
+        })
+      )
+      .mockResolvedValue(new Response(null, { status: 308 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      GoogleDriveExportService.uploadArtifact({
+        artifact: { ...artifact, bytes },
+        requestId,
+        userId: 'user-1',
+      })
+    ).rejects.toMatchObject({ code: 'DRIVE_UPLOAD_FAILED' });
+    expect(fetchMock).toHaveBeenCalledTimes(5);
+  });
+
+  it('maps typed Drive permission failures to a destination error', async () => {
+    filesCreate.mockRejectedValue({
+      message: 'The caller does not have permission',
+      response: { status: 403 },
+    });
+
+    await expect(
+      GoogleDriveExportService.uploadArtifact({
+        artifact,
+        requestId,
+        userId: 'user-1',
+      })
+    ).rejects.toMatchObject({ code: 'DRIVE_DESTINATION_UNAVAILABLE' });
   });
 });

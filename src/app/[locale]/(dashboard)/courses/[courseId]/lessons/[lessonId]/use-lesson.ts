@@ -178,6 +178,8 @@ export function useSlideTemplatePreviews(
     queryKey: ['slide-template-previews', collectionName],
     queryFn: () => slideService.getTemplatePreviews(collectionName!),
     enabled: enabled && !!collectionName,
+    staleTime: 1000 * 60 * 30,
+    gcTime: 1000 * 60 * 60,
   });
 }
 

@@ -21,6 +21,7 @@ interface BaseFieldConfig {
   name: string; // matched with Zod Schema
   label: string;
   type: FieldType; // input type
+  maxLength?: number;
   placeholder?: string;
   description?: string;
   colSpan?: number; // 1 or 2 (default)

@@ -75,6 +75,7 @@ for any tasks.).
 - **Embedded Editor Shells**: Do not place full-page editor chrome with sticky bars or negative horizontal margins inside cards. Expose an embedded appearance with local borders, a non-sticky toolbar, and a constrained writing height.
 - **Tabular Lists**: Use the shared `Table` components for list-style layouts instead of custom row divs to keep alignment consistent.
 - **Server Layouts**: For async server layouts that only pass through children, return a fragment instead of raw children.
+- **Tooltip Provider**: When using `Tooltip` from `src/components/ui/tooltip.tsx`, do not wrap it in another `TooltipProvider`; `src/providers/client-providers.tsx` already provides the app-wide wrapper.
 - **Icon Availability**: When introducing a new `lucide-react` icon, verify the installed package exports it; use a generic available icon when brand-specific icons are absent.
 - **JSX Curly Braces**: Literally render double curly braces `{{` and `}}` in JSX text by quoting them, like `{'{{placeholder}}'}`, to prevent the JSX compiler from parsing them as JS object shorthand syntax.
 - **Research Citations**: For AI research/chat responses with numbered citations, derive source metadata from AI SDK `source-url` parts and web-search tool outputs in shared helpers, then render inline citation UI from that normalized source list instead of hardcoding source parsing in components.

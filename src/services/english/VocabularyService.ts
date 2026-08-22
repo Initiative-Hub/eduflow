@@ -47,6 +47,7 @@ export type VocabularyItem = {
   englishDefinition: string;
   vietnameseTranslation: string;
   exampleSentence: string;
+  examples?: string[];
 };
 
 export type AnalyzeResult = {

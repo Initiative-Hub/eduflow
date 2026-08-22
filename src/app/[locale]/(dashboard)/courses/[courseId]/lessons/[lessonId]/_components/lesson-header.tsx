@@ -9,6 +9,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { LessonOutline } from './lesson-outline';
 
 interface LessonHeaderProps {
@@ -31,8 +36,8 @@ export function LessonHeader({
   const router = useRouter();
 
   return (
-    <div className="sticky top-0 z-40 -mx-6 -mt-6 flex items-center justify-between border-foreground/20 border-b bg-background/95 px-6 py-3 backdrop-blur-sm md:-mx-10 md:-mt-10 md:px-10 lg:-mx-12 lg:-mt-12 lg:px-12">
-      <div className="mr-4 flex items-center gap-2 text-muted-foreground text-sm">
+    <div className="sticky top-0 z-40 -mx-6 -mt-6 flex items-center justify-between border-foreground/20 border-b bg-background/95 px-6 py-3 backdrop-blur-sm md:-mx-10 md:-mt-10 md:px-10">
+      <div className="mr-4 flex min-w-0 items-center gap-2 text-muted-foreground text-sm">
         <Popover open={showOutline} onOpenChange={setShowOutline}>
           <PopoverTrigger asChild>
             <Button
@@ -58,16 +63,41 @@ export function LessonHeader({
             />
           </PopoverContent>
         </Popover>
-        <Link
-          href={`/courses/${courseId}`}
-          className="max-w-30 truncate transition-colors hover:text-primary md:max-w-50"
-        >
-          {currentModuleTitle}
-        </Link>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Link
+              href={`/courses/${courseId}`}
+              className="max-w-30 truncate transition-colors hover:text-primary md:max-w-50"
+            >
+              {currentModuleTitle}
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent
+            side="bottom"
+            align="start"
+            className="wrap-break-word max-w-xs"
+          >
+            {currentModuleTitle}
+          </TooltipContent>
+        </Tooltip>
+
         <ChevronRight className="h-4 w-4 shrink-0 opacity-50" />
-        <span className="max-w-37.5 truncate font-medium text-foreground md:max-w-xs">
-          {currentLessonTitle}
-        </span>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="max-w-37.5 cursor-default truncate font-medium text-foreground md:max-w-xs">
+              {currentLessonTitle}
+            </span>
+          </TooltipTrigger>
+          <TooltipContent
+            side="bottom"
+            align="start"
+            className="wrap-break-word max-w-xs"
+          >
+            {currentLessonTitle}
+          </TooltipContent>
+        </Tooltip>
       </div>
     </div>
   );

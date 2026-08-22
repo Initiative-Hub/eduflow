@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { type Dispatch, type SetStateAction, useCallback } from 'react';
 import { toast } from 'sonner';
+import { GoogleDrivePickerHost } from '@/components/google-drive-picker/google-drive-picker-host';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -169,7 +170,6 @@ export function InventoryDialogs({
       connectRequired: t('uploadDialog.googleDriveConnectRequired'),
       notConfigured: t('uploadDialog.googleDriveUnavailable'),
       sessionChanged: t('uploadDialog.googleDriveSessionChanged'),
-      stillLoading: t('uploadDialog.googleDriveStillLoading'),
       tokenFailed: t('uploadDialog.googleDriveTokenFailed'),
       unavailable: t('uploadDialog.googleDrivePickerUnavailable'),
     },
@@ -185,6 +185,9 @@ export function InventoryDialogs({
 
   return (
     <>
+      {googleDrivePicker.pickerProps && (
+        <GoogleDrivePickerHost {...googleDrivePicker.pickerProps} />
+      )}
       <Dialog open={uploadOpen} onOpenChange={(open) => setUploadOpen(open)}>
         <DialogContent className="sm:max-w-xl">
           <DialogHeader>

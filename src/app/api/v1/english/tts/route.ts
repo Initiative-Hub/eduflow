@@ -1,35 +1,10 @@
-import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { z } from 'zod';
-import {
-  type OpenAITTSVoice,
-  type PollyVoiceId,
-  type TTSProvider,
-  TTSService,
-} from '@/services/english/TTSService';
+import { errorResponse } from '@/lib/api/error-response';
+import { withAuth } from '@/lib/api/middlewares';
+import { englishTTSRequestSchema } from '@/lib/validations/english-speech.schema';
+import { PronunciationService } from '@/services/english/PronunciationService';
 
-const bodySchema = z.object({
-  text: z.string().min(1).max(3000),
-  provider: z.enum(['openai', 'polly']).optional().default('openai'),
-  voice: z
-    .enum([
-      'alloy',
-      'ash',
-      'coral',
-      'echo',
-      'fable',
-      'onyx',
-      'nova',
-      'sage',
-      'shimmer',
-    ])
-    .optional()
-    .default('alloy'),
-  voiceId: z
-    .enum(['Joanna', 'Matthew', 'Ruth', 'Stephen'])
-    .optional()
-    .default('Joanna'),
-});
+export const maxDuration = 60;
 
 /**
  * @swagger
@@ -37,73 +12,58 @@ const bodySchema = z.object({
  *   post:
  *     tags:
  *       - English
- *     summary: Synthesize English text to speech using OpenAI tts-1 by default
+ *     summary: Synthesize text to speech audio for English sentences
+ *     security:
+ *       - SessionCookie: []
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
- *             required: [text]
+ *             required:
+ *               - text
  *             properties:
  *               text:
  *                 type: string
- *               voiceId:
- *                 type: string
- *                 enum: [Joanna, Matthew, Ruth, Stephen]
- *                 default: Joanna
- *               provider:
- *                 type: string
- *                 enum: [openai, polly]
- *                 default: openai
  *               voice:
  *                 type: string
- *                 enum: [alloy, ash, coral, echo, fable, onyx, nova, sage, shimmer]
- *                 default: alloy
  *     responses:
  *       200:
- *         description: MP3 audio stream
- *         content:
- *           audio/mpeg:
- *             schema:
- *               type: string
- *               format: binary
+ *         description: Audio stream (audio/mpeg)
  *       400:
- *         description: Invalid request body
+ *         description: Missing text parameter
  *       500:
- *         description: TTS synthesis failed
+ *         description: Speech synthesis failed
  */
-export async function POST(req: NextRequest) {
+export const POST = withAuth(async (req) => {
   try {
-    const raw = await req.json();
-    const parsed = bodySchema.safeParse(raw);
+    const body = await req.json().catch(() => null);
+    const parsed = englishTTSRequestSchema.safeParse(body);
 
     if (!parsed.success) {
-      return NextResponse.json(
-        { message: 'Invalid request', errors: parsed.error.flatten() },
-        { status: 400 }
+      return errorResponse(
+        'INVALID_TTS_REQUEST',
+        'Text must be between 1 and 3000 characters and voice must be supported.',
+        400,
+        parsed.error.flatten()
       );
     }
 
-    const audioBuffer = await TTSService.synthesize({
-      text: parsed.data.text,
-      provider: parsed.data.provider as TTSProvider,
-      voice: parsed.data.voice as OpenAITTSVoice,
-      voiceId: parsed.data.voiceId as PollyVoiceId,
-    });
+    const { text } = parsed.data;
 
-    return new NextResponse(audioBuffer as unknown as BodyInit, {
+    const audioBuffer = await PronunciationService.synthesizeSpeech(text);
+
+    return new Response(new Uint8Array(audioBuffer), {
       status: 200,
       headers: {
         'Content-Type': 'audio/mpeg',
-        'Content-Length': audioBuffer.length.toString(),
-        'Cache-Control': 'public, max-age=3600',
+        'Cache-Control': 'private, no-store',
       },
     });
-  } catch (error) {
+  } catch (error: unknown) {
     const message =
-      error instanceof Error ? error.message : 'TTS synthesis failed';
-    console.error('[english tts route]', error);
+      error instanceof Error ? error.message : 'Speech synthesis failed';
     return NextResponse.json({ message }, { status: 500 });
   }
-}
+});

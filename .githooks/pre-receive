@@ -1,0 +1,48 @@
+#!/usr/bin/env sh
+
+set -eu
+
+hook_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+. "$hook_dir/lib/validate-branch-name.sh"
+. "$hook_dir/lib/validate-conventional-commit.sh"
+
+zero_oid=0000000000000000000000000000000000000000
+updates_file=$(mktemp)
+trap 'rm -f "$updates_file"' EXIT HUP INT TERM
+cat >"$updates_file"
+
+# Validate every branch name before inspecting any commit. This keeps the
+# server-side failure order consistent with the client hook.
+while read -r old_oid new_oid ref_name; do
+  case "$ref_name" in
+    refs/heads/*) ;;
+    *) continue ;;
+  esac
+
+  # A zero new object ID represents a branch deletion.
+  [ "$new_oid" = "$zero_oid" ] && continue
+
+  validate_branch_name "$ref_name"
+done <"$updates_file"
+
+while read -r old_oid new_oid ref_name; do
+  case "$ref_name" in
+    refs/heads/*) ;;
+    *) continue ;;
+  esac
+
+  [ "$new_oid" = "$zero_oid" ] && continue
+
+  if [ "$old_oid" = "$zero_oid" ]; then
+    # For a new branch, only inspect commits not reachable from another local
+    # branch in the receiving repository.
+    commits=$(git rev-list "$new_oid" --not --branches --no-merges)
+  else
+    # For an existing branch, inspect only the commits introduced by this push.
+    commits=$(git rev-list "$old_oid..$new_oid" --not --branches --no-merges)
+  fi
+
+  for commit in $commits; do
+    validate_conventional_commit "$commit"
+  done
+done <"$updates_file"

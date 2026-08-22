@@ -3,6 +3,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../src/generated/prisma';
 import { seedDemoChats } from './seeds/chat';
 import { seedDemoCourses } from './seeds/course';
+import { seedDemoGameQuizzes } from './seeds/game-quiz';
 import {
   seedCoursePermissions,
   seedPlatformPermissions,
@@ -34,6 +35,12 @@ async function main() {
     teacherUser: users.teacher,
     studentUser: users.student,
   });
+
+  const gameQuizCount = await seedDemoGameQuizzes({
+    prisma,
+    teacherUserId: users.teacher[0].id,
+  });
+  console.log(`Seeded ${gameQuizCount} live game quizzes`);
 
   const courseRoles = await seedCourseRoles({ prisma });
   console.log(

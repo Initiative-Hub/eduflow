@@ -28,7 +28,10 @@ export class OpenRouterService implements ChatProviderService {
     return streamText({
       experimental_transform: smoothStream(),
       model: provider(model),
-      instructions: resolveChatSystemPrompt(options?.prompt ?? ''),
+      instructions: resolveChatSystemPrompt(
+        options?.prompt ?? '',
+        options?.customInstructions
+      ),
       messages: await convertToModelMessages(input.messages, {
         convertDataPart: convertLessonReferenceDataPart,
       }),

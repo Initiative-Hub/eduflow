@@ -84,9 +84,7 @@ describe('IntegrationsClient', () => {
       },
     });
 
-    renderWithQueryClient(
-      <IntegrationsClient eduflowAccountEmail="user@example.com" />
-    );
+    renderWithQueryClient(<IntegrationsClient email="user@example.com" />);
 
     await waitFor(() => {
       expect(screen.getByText('drive@example.com')).toBeInTheDocument();
@@ -128,9 +126,7 @@ describe('IntegrationsClient', () => {
       },
     });
 
-    renderWithQueryClient(
-      <IntegrationsClient eduflowAccountEmail="user@example.com" />
-    );
+    renderWithQueryClient(<IntegrationsClient email="user@example.com" />);
 
     const destinationLink = await screen.findByRole('link', {
       name: 'Eduflow',
