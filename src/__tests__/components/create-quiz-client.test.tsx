@@ -89,7 +89,7 @@ describe('CreateQuizClient', () => {
   it('keeps quiz details and all three question sources on one page', () => {
     render(<CreateQuizClient courseId="course-1" />);
 
-    expect(screen.getByLabelText('Quiz Title *')).toBeInTheDocument();
+    expect(screen.getByLabelText('Quiz Title')).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /Create with AI/ })
     ).toBeInTheDocument();
@@ -101,10 +101,10 @@ describe('CreateQuizClient', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders corrected required and optional detail labels', () => {
+  it('renders corrected title and optional detail labels', () => {
     render(<CreateQuizClient courseId="course-1" />);
 
-    expect(screen.getByLabelText('Quiz Title *')).toBeInTheDocument();
+    expect(screen.getByLabelText('Quiz Title')).toBeInTheDocument();
     expect(screen.getByLabelText('Description')).toBeInTheDocument();
     expect(
       screen.queryByText('Description (optional)')
@@ -151,7 +151,7 @@ describe('CreateQuizClient', () => {
     const user = userEvent.setup();
     render(<CreateQuizClient courseId="course-1" />);
 
-    await user.type(screen.getByLabelText('Quiz Title *'), 'Module review');
+    await user.type(screen.getByLabelText('Quiz Title'), 'Module review');
     await user.click(screen.getByRole('checkbox', { name: 'Lesson one' }));
     await user.click(screen.getByRole('button', { name: 'Save quiz' }));
 

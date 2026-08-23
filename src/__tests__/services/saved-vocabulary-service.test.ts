@@ -168,6 +168,7 @@ describe('SavedVocabularyService', () => {
             'Một vật thể sáng di chuyển trên bầu trời đêm.',
           exampleSentence:
             'Along with asteroids and comets, the planets orbit the Sun.',
+          examples: [],
           sourceSnippet: null,
           masteryLevel: 0,
           nextReviewAt: expect.any(Date),
