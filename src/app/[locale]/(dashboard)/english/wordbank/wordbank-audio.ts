@@ -1,6 +1,9 @@
 import { apiClient } from '@/lib/api/api-client';
 
-export async function playWordbankAudio(text: string): Promise<void> {
+export async function playWordbankAudio(
+  text: string,
+  onPlaybackStart?: () => void
+): Promise<void> {
   const blob = await apiClient.post<Blob>(
     'v1/english/tts',
     { text },
@@ -28,6 +31,6 @@ export async function playWordbankAudio(text: string): Promise<void> {
       { once: true }
     );
     audio.addEventListener('error', fail, { once: true });
-    void audio.play().catch(fail);
+    void audio.play().then(onPlaybackStart).catch(fail);
   });
 }

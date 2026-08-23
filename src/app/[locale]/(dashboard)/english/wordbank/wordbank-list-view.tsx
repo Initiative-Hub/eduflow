@@ -1,10 +1,12 @@
 'use client';
 
 import { Loader2, Volume2, X } from 'lucide-react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Spinner } from '@/components/ui/spinner';
 import {
   Table,
   TableBody,
@@ -36,6 +38,7 @@ export function WordbankListView({
 }) {
   const allSelected =
     items.length > 0 && items.every((item) => selectedIds.has(item.id));
+  const [loadingAudioWord, setLoadingAudioWord] = useState<string | null>(null);
 
   return (
     <div className="rounded-xl border bg-background">
@@ -106,20 +109,36 @@ export function WordbankListView({
                 <Button
                   type="button"
                   variant="ghost"
-                  size="icon"
                   onClick={() => {
-                    void playWordbankAudio(item.word).catch(() => {
+                    setLoadingAudioWord(item.word);
+                    void playWordbankAudio(item.word, () => {
+                      setLoadingAudioWord(null);
+                    }).catch(() => {
+                      setLoadingAudioWord(null);
                       toast.error(t('audioFailed'));
                     });
                   }}
-                  aria-label={t('playPronunciation', { word: item.word })}
+                  disabled={loadingAudioWord === item.word}
+                  className={
+                    loadingAudioWord === item.word
+                      ? 'h-9 w-auto gap-1 px-3 text-xs'
+                      : ''
+                  }
+                  aria-label={
+                    loadingAudioWord === item.word
+                      ? t('loadingVoice')
+                      : t('playPronunciation', { word: item.word })
+                  }
                 >
-                  <Volume2 />
+                  {loadingAudioWord === item.word ? (
+                    <Spinner className="size-4" />
+                  ) : (
+                    <Volume2 />
+                  )}
                 </Button>
                 <Button
                   type="button"
                   variant="ghost"
-                  size="icon"
                   disabled={isRemoving}
                   onClick={() => onRemoveWord(item.word)}
                   aria-label={t('removeWord', { word: item.word })}
