@@ -1,6 +1,6 @@
 import type { DemoGameQuiz } from './types';
 
-const gameQuestionTimers = [15, 20, 25, 30, 30];
+const gameQuestionTimers = [10, 15, 20, 25, 30];
 const gameQuestionPoints = [500, 750, 1000, 1250, 1500];
 
 function question({
@@ -38,7 +38,7 @@ export const demoGameQuizzes: DemoGameQuiz[] = [
     id: '30000000-0000-4000-8000-000000000001',
     title: 'Web Foundations Rally',
     topic: 'HTTP, semantic HTML, and responsive design',
-    difficulty: null,
+    difficulty: 'EASY',
     questions: [
       question({
         id: '31000000-0000-4000-8000-000000000001',
@@ -197,7 +197,7 @@ export const demoGameQuizzes: DemoGameQuiz[] = [
     id: '30000000-0000-4000-8000-000000000002',
     title: 'Practical English Rally',
     topic: 'Clear questions, professional messages, and clear speech',
-    difficulty: null,
+    difficulty: 'EASY',
     questions: [
       question({
         id: '31000000-0000-4000-8000-000000000006',

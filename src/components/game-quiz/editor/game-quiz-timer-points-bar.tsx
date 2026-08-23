@@ -6,8 +6,8 @@ import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import type { GameQuizCopy } from '../copy';
 
-const TIME_PRESETS = [10, 20, 30, 60, 90] as const;
-const POINT_PRESETS = [500, 1000, 2000] as const;
+const TIME_PRESETS = [10, 20, 30];
+const POINT_PRESETS = [500, 1000, 1500];
 
 interface GameQuizTimerPointsBarProps {
   copy: GameQuizCopy;

@@ -41,17 +41,6 @@ export function GameQuizQuestionSidebar({
             {draft.questions.length}
           </span>
         </div>
-        <Button
-          type="button"
-          aria-label={copy.editor.addQuestion}
-          className="size-7"
-          disabled={!canAddQuestions}
-          onClick={onAddQuestion}
-          size="icon"
-          variant="ghost"
-        >
-          <Plus className="size-4" aria-hidden="true" />
-        </Button>
       </div>
 
       {/* Simplified Questions List */}
@@ -88,7 +77,7 @@ export function GameQuizQuestionSidebar({
           disabled={!canAddQuestions}
           onClick={onAddQuestion}
           size="sm"
-          variant="outline"
+          variant="secondary"
         >
           <Plus data-icon="inline-start" aria-hidden="true" />
           {copy.editor.addQuestion}
@@ -99,7 +88,7 @@ export function GameQuizQuestionSidebar({
           onClick={onGenerateWithAi}
           size="sm"
           title={!canAddQuestions ? copy.aiGenerate.capacityReached : undefined}
-          variant="secondary"
+          variant="outline"
         >
           <Sparkles data-icon="inline-start" aria-hidden="true" />
           {copy.aiGenerate.action}
