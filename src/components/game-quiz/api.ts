@@ -2,12 +2,18 @@ import { apiClient } from '@/lib/api/api-client';
 import type {
   GameParticipant,
   GameQuiz,
+  GameQuizAiSourceCourse,
+  GameQuizAiSourceLesson,
+  GameQuizAiSourceModule,
+  GameQuizAiSources,
   GameQuizDraft,
   GameQuizOption,
   GameQuizQuestion,
   GameQuizReport,
   GameSessionPhase,
   GameSessionSnapshot,
+  GeneratedGameQuizQuestion,
+  GenerateGameQuizQuestionsInput,
 } from './types';
 
 type GameHostAction =
@@ -116,6 +122,53 @@ function toGameQuiz(value: unknown): GameQuiz {
   };
 }
 
+function toAiSourceLesson(value: unknown): GameQuizAiSourceLesson {
+  const lesson = getRecord(value);
+  return {
+    id: stringValue(lesson.id),
+    title: stringValue(lesson.title),
+  };
+}
+
+function toAiSourceModule(value: unknown): GameQuizAiSourceModule {
+  const module = getRecord(value);
+  return {
+    id: stringValue(module.id),
+    title: stringValue(module.title),
+    lessons: getArray(module.lessons).map(toAiSourceLesson),
+  };
+}
+
+function toAiSourceCourse(value: unknown): GameQuizAiSourceCourse {
+  const course = getRecord(value);
+  return {
+    id: stringValue(course.id),
+    title: stringValue(course.title),
+    modules: getArray(course.modules).map(toAiSourceModule),
+  };
+}
+
+function toGeneratedQuestion(value: unknown): GeneratedGameQuizQuestion {
+  const question = getRecord(value);
+  return {
+    prompt: stringValue(question.prompt),
+    hint: stringValue(question.hint),
+    explanation: stringValue(question.explanation),
+    timerSeconds: numberValue(
+      question.timerSeconds ?? question.timeLimitSeconds,
+      20
+    ),
+    maxPoints: numberValue(question.maxPoints, 1000),
+    options: getArray(question.options).map((value) => {
+      const option = getRecord(value);
+      return {
+        text: stringValue(option.text),
+        isCorrect: booleanValue(option.isCorrect),
+      };
+    }),
+  };
+}
+
 function toParticipant(value: unknown): GameParticipant {
   const participant = getRecord(value);
   return {
@@ -218,6 +271,22 @@ function toQuestionPayload(draft: GameQuizDraft) {
 }
 
 export const gameQuizApi = {
+  getAiSources: async (): Promise<GameQuizAiSources> => {
+    const response = getRecord(
+      await apiClient.get<unknown>('v1/ai/game-quiz/sources')
+    );
+    return {
+      courses: getArray(response.courses).map(toAiSourceCourse),
+    };
+  },
+  generateAiQuestions: async (input: GenerateGameQuizQuestionsInput) => {
+    const response = getRecord(
+      await apiClient.post<unknown>('v1/ai/game-quiz/questions', input)
+    );
+    return {
+      questions: getArray(response.questions).map(toGeneratedQuestion),
+    };
+  },
   list: async () => {
     const response = await apiClient.get<unknown>('v1/game-quizzes');
     return getArray(response).map(toGameQuiz);

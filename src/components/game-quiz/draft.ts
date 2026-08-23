@@ -1,6 +1,11 @@
-import type { GameQuizDraft, GameQuizQuestion } from './types';
+import type {
+  GameQuizDraft,
+  GameQuizQuestion,
+  GeneratedGameQuizQuestion,
+} from './types';
 
 const optionLabels = ['A', 'B', 'C', 'D'];
+export const MAX_GAME_QUIZ_QUESTIONS = 100;
 
 export function createQuestion(order: number): GameQuizQuestion {
   const base = `draft-${crypto.randomUUID()}`;
@@ -31,6 +36,98 @@ export function createDraft(): GameQuizDraft {
       randomizeAnswers: true,
     },
     questions: [createQuestion(0)],
+  };
+}
+
+export function isPristineStarterQuestion(
+  question: GameQuizQuestion | undefined
+): boolean {
+  return Boolean(
+    question &&
+      !question.prompt.trim() &&
+      !question.hint?.trim() &&
+      !question.explanation?.trim() &&
+      question.timeLimitSeconds === 20 &&
+      question.maxPoints === 1000 &&
+      question.options.length === optionLabels.length &&
+      question.options.every(
+        (option, index) =>
+          !option.text.trim() && option.isCorrect === (index === 0)
+      )
+  );
+}
+
+export function getAiQuestionCapacity(
+  draft: GameQuizDraft,
+  replacePristineStarter: boolean
+): number {
+  const replaceStarter =
+    replacePristineStarter &&
+    draft.questions.length === 1 &&
+    isPristineStarterQuestion(draft.questions[0]);
+  return Math.max(
+    0,
+    MAX_GAME_QUIZ_QUESTIONS - draft.questions.length + (replaceStarter ? 1 : 0)
+  );
+}
+
+export function appendGeneratedQuestions(
+  draft: GameQuizDraft,
+  generatedQuestions: GeneratedGameQuizQuestion[],
+  options: {
+    replacePristineStarter: boolean;
+    idFactory?: () => string;
+  }
+): {
+  draft: GameQuizDraft;
+  firstGeneratedIndex: number;
+  appendedCount: number;
+} {
+  const idFactory = options.idFactory ?? (() => crypto.randomUUID());
+  const replaceStarter =
+    options.replacePristineStarter &&
+    draft.questions.length === 1 &&
+    isPristineStarterQuestion(draft.questions[0]);
+  const existingQuestions = replaceStarter ? [] : draft.questions;
+  const availableCapacity = Math.max(
+    0,
+    MAX_GAME_QUIZ_QUESTIONS - existingQuestions.length
+  );
+  const acceptedQuestions = generatedQuestions.slice(0, availableCapacity);
+  const mappedQuestions = acceptedQuestions.map((question, questionIndex) => {
+    const questionId = `draft-ai-${idFactory()}`;
+    return {
+      id: questionId,
+      prompt: question.prompt,
+      hint: question.hint,
+      explanation: question.explanation,
+      timeLimitSeconds: question.timerSeconds,
+      maxPoints: question.maxPoints,
+      order: existingQuestions.length + questionIndex,
+      options: question.options.map((option, optionIndex) => ({
+        id: `${questionId}-${optionIndex}`,
+        text: option.text,
+        isCorrect: option.isCorrect,
+        order: optionIndex,
+      })),
+    } satisfies GameQuizQuestion;
+  });
+
+  if (mappedQuestions.length === 0) {
+    return {
+      draft,
+      firstGeneratedIndex: Math.max(0, draft.questions.length - 1),
+      appendedCount: 0,
+    };
+  }
+
+  const questions = [...existingQuestions, ...mappedQuestions].map(
+    (question, order) => ({ ...question, order })
+  );
+  return {
+    draft: { ...draft, questions },
+    firstGeneratedIndex: existingQuestions.length,
+    appendedCount: mappedQuestions.length,
   };
 }
 

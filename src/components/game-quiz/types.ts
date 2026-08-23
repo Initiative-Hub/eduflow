@@ -1,3 +1,8 @@
+import type {
+  GameQuizAIGeneratedQuestion,
+  GameQuizAIGenerationInput,
+  GameQuizAISourcesResponse,
+} from '@/lib/game-quiz/ai-schemas';
 import type { GameSessionReport } from '@/lib/game-quiz/types';
 
 export type GameQuizDifficulty = 'EASY' | 'MEDIUM' | 'HARD';
@@ -110,3 +115,10 @@ export interface GameQuizDraft {
   revision?: number;
   questions: GameQuizQuestion[];
 }
+
+export type GameQuizAiSources = GameQuizAISourcesResponse;
+export type GameQuizAiSourceCourse = GameQuizAiSources['courses'][number];
+export type GameQuizAiSourceModule = GameQuizAiSourceCourse['modules'][number];
+export type GameQuizAiSourceLesson = GameQuizAiSourceModule['lessons'][number];
+export type GeneratedGameQuizQuestion = GameQuizAIGeneratedQuestion;
+export type GenerateGameQuizQuestionsInput = GameQuizAIGenerationInput;

@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus } from 'lucide-react';
+import { Plus, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
@@ -12,6 +12,8 @@ interface GameQuizQuestionSidebarProps {
   copy: GameQuizCopy;
   draft: GameQuizDraft;
   onAddQuestion: () => void;
+  onGenerateWithAi: () => void;
+  canAddQuestions: boolean;
   onDuplicateQuestion?: (index: number) => void;
   onMoveQuestion?: (fromIndex: number, toIndex: number) => void;
   onRemoveQuestion?: (index: number) => void;
@@ -23,6 +25,8 @@ export function GameQuizQuestionSidebar({
   copy,
   draft,
   onAddQuestion,
+  onGenerateWithAi,
+  canAddQuestions,
   onSelectIndex,
 }: GameQuizQuestionSidebarProps) {
   return (
@@ -41,6 +45,7 @@ export function GameQuizQuestionSidebar({
           type="button"
           aria-label={copy.editor.addQuestion}
           className="size-7"
+          disabled={!canAddQuestions}
           onClick={onAddQuestion}
           size="icon"
           variant="ghost"
@@ -77,16 +82,29 @@ export function GameQuizQuestionSidebar({
       </ScrollArea>
 
       {/* Add Question Button */}
-      <Button
-        type="button"
-        className="mt-3 w-full rounded-xl"
-        onClick={onAddQuestion}
-        size="sm"
-        variant="outline"
-      >
-        <Plus className="size-4" aria-hidden="true" />
-        {copy.editor.addQuestion}
-      </Button>
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <Button
+          type="button"
+          disabled={!canAddQuestions}
+          onClick={onAddQuestion}
+          size="sm"
+          variant="outline"
+        >
+          <Plus data-icon="inline-start" aria-hidden="true" />
+          {copy.editor.addQuestion}
+        </Button>
+        <Button
+          type="button"
+          disabled={!canAddQuestions}
+          onClick={onGenerateWithAi}
+          size="sm"
+          title={!canAddQuestions ? copy.aiGenerate.capacityReached : undefined}
+          variant="secondary"
+        >
+          <Sparkles data-icon="inline-start" aria-hidden="true" />
+          {copy.aiGenerate.action}
+        </Button>
+      </div>
     </aside>
   );
 }

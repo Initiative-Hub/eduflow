@@ -1,4 +1,7 @@
-type Translate = (key: string, values?: { count: number }) => string;
+type Translate = (
+  key: string,
+  values?: Record<string, string | number>
+) => string;
 
 export function getGameQuizCopy(t: Translate) {
   return {
@@ -70,6 +73,43 @@ export function getGameQuizCopy(t: Translate) {
       rallyOverview: t('editor.rallyOverview'),
       totalPossiblePoints: t('editor.totalPossiblePoints'),
       unsavedChanges: t('editor.unsavedChanges'),
+    },
+    aiGenerate: {
+      action: t('aiGenerate.action'),
+      title: t('aiGenerate.title'),
+      description: t('aiGenerate.description'),
+      sourcesStep: t('aiGenerate.sourcesStep'),
+      guidanceStep: t('aiGenerate.guidanceStep'),
+      reviewStep: t('aiGenerate.reviewStep'),
+      courseLabel: t('aiGenerate.courseLabel'),
+      coursePlaceholder: t('aiGenerate.coursePlaceholder'),
+      lessonsLabel: t('aiGenerate.lessonsLabel'),
+      lessonsDescription: t('aiGenerate.lessonsDescription'),
+      lessonsSelected: t('aiGenerate.lessonsSelected'),
+      lessonSelectionLimit: t('aiGenerate.lessonSelectionLimit', { count: 20 }),
+      noSourcesTitle: t('aiGenerate.noSourcesTitle'),
+      noSourcesDescription: t('aiGenerate.noSourcesDescription'),
+      noLessonsTitle: t('aiGenerate.noLessonsTitle'),
+      noLessonsDescription: t('aiGenerate.noLessonsDescription'),
+      sourceLoadErrorTitle: t('aiGenerate.sourceLoadErrorTitle'),
+      sourceLoadErrorDescription: t('aiGenerate.sourceLoadErrorDescription'),
+      questionCountLabel: t('aiGenerate.questionCountLabel'),
+      questionCountDescription: t('aiGenerate.questionCountDescription'),
+      additionalPromptLabel: t('aiGenerate.additionalPromptLabel'),
+      additionalPromptPlaceholder: t('aiGenerate.additionalPromptPlaceholder'),
+      additionalPromptDescription: t('aiGenerate.additionalPromptDescription'),
+      generate: t('aiGenerate.generate'),
+      generating: t('aiGenerate.generating'),
+      generationErrorTitle: t('aiGenerate.generationErrorTitle'),
+      generationErrorDescription: t('aiGenerate.generationErrorDescription'),
+      reviewDescription: t('aiGenerate.reviewDescription'),
+      correctAnswer: t('aiGenerate.correctAnswer'),
+      previousQuestion: t('aiGenerate.previousQuestion'),
+      nextQuestion: t('aiGenerate.nextQuestion'),
+      reject: t('aiGenerate.reject'),
+      accept: t('aiGenerate.accept'),
+      continue: t('aiGenerate.continue'),
+      capacityReached: t('aiGenerate.capacityReached'),
     },
     preview: {
       title: t('preview.title'),

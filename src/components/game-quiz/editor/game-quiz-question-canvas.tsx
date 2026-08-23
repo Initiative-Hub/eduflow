@@ -15,6 +15,7 @@ interface GameQuizQuestionCanvasProps {
   copy: GameQuizCopy;
   onAddOption: () => void;
   onDuplicateQuestion: () => void;
+  canDuplicateQuestion?: boolean;
   onMarkCorrect: (optionIndex: number) => void;
   onNextQuestion: () => void;
   onPrevQuestion: () => void;
@@ -34,6 +35,7 @@ export function GameQuizQuestionCanvas({
   copy,
   onAddOption,
   onDuplicateQuestion,
+  canDuplicateQuestion = true,
   onMarkCorrect,
   onNextQuestion,
   onPrevQuestion,
@@ -65,6 +67,7 @@ export function GameQuizQuestionCanvas({
         <div className="flex items-center gap-1.5">
           <Button
             type="button"
+            disabled={!canDuplicateQuestion}
             variant="ghost"
             size="sm"
             onClick={onDuplicateQuestion}

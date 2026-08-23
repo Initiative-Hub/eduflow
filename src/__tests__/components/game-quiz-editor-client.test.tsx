@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import userEvent from '@testing-library/user-event';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { gameQuizApi } from '@/components/game-quiz/api';
 import { gameQuizCopy } from '@/components/game-quiz/copy';
 import { GameQuizEditorClient } from '@/components/game-quiz/game-quiz-editor-client';
@@ -11,6 +12,8 @@ vi.mock('@/components/game-quiz/api', () => ({
     create: vi.fn(),
     saveQuestions: vi.fn(),
     createSession: vi.fn(),
+    getAiSources: vi.fn(),
+    generateAiQuestions: vi.fn(),
   },
 }));
 
@@ -40,8 +43,47 @@ function renderEditor(gameQuizId?: string) {
 }
 
 describe('GameQuizEditorClient', () => {
+  beforeAll(() => {
+    HTMLElement.prototype.scrollIntoView = vi.fn();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(gameQuizApi.getAiSources).mockResolvedValue({
+      courses: [
+        {
+          id: '11111111-1111-4111-8111-111111111111',
+          title: 'Astronomy',
+          modules: [
+            {
+              id: '22222222-2222-4222-8222-222222222222',
+              title: 'Module 1',
+              lessons: [
+                {
+                  id: '33333333-3333-4333-8333-333333333333',
+                  title: 'Planets',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+    vi.mocked(gameQuizApi.generateAiQuestions).mockResolvedValue({
+      questions: [
+        {
+          prompt: 'Which planet is known as the Red Planet?',
+          hint: 'Think about its surface color.',
+          explanation: 'Iron oxides make Mars appear red.',
+          timerSeconds: 30,
+          maxPoints: 1500,
+          options: [
+            { text: 'Mars', isCorrect: true },
+            { text: 'Venus', isCorrect: false },
+          ],
+        },
+      ],
+    });
   });
 
   it('renders creation mode with initial question and handles prompt and option editing', () => {
@@ -123,5 +165,37 @@ describe('GameQuizEditorClient', () => {
 
     const pointsInput = screen.getByLabelText('editor.maxPoints');
     expect(pointsInput).toHaveValue(2000);
+  });
+
+  it('replaces the pristine starter on AI accept and makes it editable without persisting', async () => {
+    const user = userEvent.setup();
+    renderEditor();
+
+    await user.click(screen.getByRole('button', { name: 'aiGenerate.action' }));
+    const courseSelect = await screen.findByRole('combobox', {
+      name: 'aiGenerate.courseLabel',
+    });
+    courseSelect.focus();
+    await user.keyboard('{ArrowDown}{Enter}');
+    await user.click(screen.getByRole('checkbox', { name: 'Planets' }));
+    await user.click(
+      screen.getByRole('button', { name: /aiGenerate\.continue/i })
+    );
+    await user.click(
+      screen.getByRole('button', { name: 'aiGenerate.generate' })
+    );
+    await screen.findByText('Which planet is known as the Red Planet?');
+    await user.click(
+      screen.getByRole('button', { name: /aiGenerate\.accept/i })
+    );
+
+    const promptInput = screen.getByPlaceholderText('editor.prompt...');
+    expect(promptInput).toHaveValue('Which planet is known as the Red Planet?');
+    expect(screen.getByText('1 of 1')).toBeInTheDocument();
+    await user.clear(promptInput);
+    await user.type(promptInput, 'Which world is called the Red Planet?');
+    expect(promptInput).toHaveValue('Which world is called the Red Planet?');
+    expect(gameQuizApi.create).not.toHaveBeenCalled();
+    expect(gameQuizApi.saveQuestions).not.toHaveBeenCalled();
   });
 });

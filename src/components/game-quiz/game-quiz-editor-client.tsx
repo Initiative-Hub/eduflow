@@ -6,14 +6,18 @@ import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { GameQuizAiDialog } from './ai/game-quiz-ai-dialog';
 import { gameQuizApi } from './api';
 import { type GameQuizCopy, gameQuizCopy } from './copy';
 import {
+  appendGeneratedQuestions,
   createDraft,
   createQuestion,
   duplicateQuestion,
+  getAiQuestionCapacity,
   isDraftValid,
   isGameQuizDraftDirty,
+  MAX_GAME_QUIZ_QUESTIONS,
   moveQuestion,
 } from './draft';
 import { GameQuizEditorHeader } from './editor/game-quiz-editor-header';
@@ -21,7 +25,11 @@ import { GameQuizEditorSettings } from './editor/game-quiz-editor-settings';
 import { GameQuizQuestionCanvas } from './editor/game-quiz-question-canvas';
 import { GameQuizQuestionSidebar } from './editor/game-quiz-question-sidebar';
 import { activateLiveGameSession } from './live-game-session';
-import type { GameQuizDraft, GameQuizQuestion } from './types';
+import type {
+  GameQuizDraft,
+  GameQuizQuestion,
+  GeneratedGameQuizQuestion,
+} from './types';
 
 interface GameQuizEditorClientProps {
   copy?: GameQuizCopy;
@@ -58,6 +66,7 @@ export function GameQuizEditorClient({
     GameQuizDraft | undefined
   >();
   const [activeQuestionIndex, setActiveQuestionIndex] = useState(0);
+  const [isAiDialogOpen, setIsAiDialogOpen] = useState(false);
   const [loadedId, setLoadedId] = useState<string | undefined>();
 
   if (gameQuizId && gameQuery.data && loadedId !== gameQuizId) {
@@ -204,6 +213,7 @@ export function GameQuizEditorClient({
   };
 
   const addQuestion = () => {
+    if (draft.questions.length >= MAX_GAME_QUIZ_QUESTIONS) return;
     setDraft((current) => ({
       ...current,
       questions: [
@@ -215,6 +225,7 @@ export function GameQuizEditorClient({
   };
 
   const handleDuplicateQuestion = (index: number) => {
+    if (draft.questions.length >= MAX_GAME_QUIZ_QUESTIONS) return;
     const result = duplicateQuestion(draft, index);
     setDraft(result.draft);
     setActiveQuestionIndex(result.newIndex);
@@ -238,6 +249,22 @@ export function GameQuizEditorClient({
       current >= indexToRemove ? Math.max(0, current - 1) : current
     );
   };
+
+  const handleAcceptGeneratedQuestions = (
+    questions: GeneratedGameQuizQuestion[]
+  ) => {
+    const result = appendGeneratedQuestions(draft, questions, {
+      replacePristineStarter: !gameQuizId,
+    });
+    if (result.appendedCount === 0) return;
+    setDraft(result.draft);
+    setActiveQuestionIndex(result.firstGeneratedIndex);
+  };
+
+  const aiQuestionCapacity = Math.min(
+    20,
+    getAiQuestionCapacity(draft, !gameQuizId)
+  );
 
   if (gameQuizId && gameQuery.isPending) {
     return (
@@ -307,13 +334,15 @@ export function GameQuizEditorClient({
       />
 
       {/* 2-Column Responsive Grid Layout */}
-      <div className="grid gap-6 xl:grid-cols-[280px_minmax(0,1fr)]">
+      <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
         {/* Left: Question Navigator */}
         <GameQuizQuestionSidebar
           activeIndex={activeQuestionIndex}
+          canAddQuestions={draft.questions.length < MAX_GAME_QUIZ_QUESTIONS}
           copy={copy}
           draft={draft}
           onAddQuestion={addQuestion}
+          onGenerateWithAi={() => setIsAiDialogOpen(true)}
           onDuplicateQuestion={handleDuplicateQuestion}
           onMoveQuestion={handleMoveQuestion}
           onRemoveQuestion={removeQuestion}
@@ -324,6 +353,9 @@ export function GameQuizEditorClient({
         {activeQuestion ? (
           <GameQuizQuestionCanvas
             activeIndex={activeQuestionIndex}
+            canDuplicateQuestion={
+              draft.questions.length < MAX_GAME_QUIZ_QUESTIONS
+            }
             copy={copy}
             onAddOption={addOption}
             onDuplicateQuestion={() =>
@@ -347,6 +379,16 @@ export function GameQuizEditorClient({
           />
         ) : null}
       </div>
+
+      <GameQuizAiDialog
+        copy={copy}
+        difficulty={draft.difficulty}
+        isOpen={isAiDialogOpen}
+        maxQuestionCount={aiQuestionCapacity}
+        onAccept={handleAcceptGeneratedQuestions}
+        onOpenChange={setIsAiDialogOpen}
+        topic={draft.topic}
+      />
     </main>
   );
 }
