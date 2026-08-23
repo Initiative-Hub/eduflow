@@ -97,11 +97,14 @@ export function GameQuizEditorSettings({
             {copy.editor.difficultyLabel}
           </Label>
           <Select
-            value={draft.difficulty}
+            value={draft.difficulty ?? 'UNSPECIFIED'}
             onValueChange={(val) =>
               onUpdateDraft((current) => ({
                 ...current,
-                difficulty: val as GameQuizDraft['difficulty'],
+                difficulty:
+                  val === 'UNSPECIFIED'
+                    ? null
+                    : (val as NonNullable<GameQuizDraft['difficulty']>),
               }))
             }
           >
@@ -109,6 +112,19 @@ export function GameQuizEditorSettings({
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="rounded-xl">
+              <SelectItem
+                value="UNSPECIFIED"
+                className="focus:bg-primary/20 focus:**:text-muted-foreground!"
+              >
+                <div className="flex items-center gap-2">
+                  <Badge
+                    variant="outline"
+                    className="border-muted-foreground/30 bg-muted/50 text-muted-foreground text-xs"
+                  >
+                    {copy.editor.unspecified}
+                  </Badge>
+                </div>
+              </SelectItem>
               <SelectItem
                 value="EASY"
                 className="focus:bg-primary/20 focus:**:text-emerald-600!"

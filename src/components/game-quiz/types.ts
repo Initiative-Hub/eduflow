@@ -49,7 +49,7 @@ export interface GameQuiz {
   id: string;
   title: string;
   topic: string;
-  difficulty: GameQuizDifficulty;
+  difficulty: GameQuizDifficulty | null;
   templateKey: 'LIVE_QUIZ_RALLY';
   revision: number;
   updatedAt: string;
@@ -110,7 +110,7 @@ export type GameQuizReport = GameSessionReport;
 export interface GameQuizDraft {
   title: string;
   topic: string;
-  difficulty: GameQuizDifficulty;
+  difficulty: GameQuizDifficulty | null;
   settings: GameQuizSettings;
   revision?: number;
   questions: GameQuizQuestion[];

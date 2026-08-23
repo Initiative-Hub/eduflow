@@ -109,10 +109,12 @@ function toGameQuiz(value: unknown): GameQuiz {
     id: stringValue(game.id),
     title: stringValue(game.title),
     topic: stringValue(game.topic),
-    difficulty: stringValue(
-      game.difficulty,
-      'MEDIUM'
-    ).toUpperCase() as GameQuiz['difficulty'],
+    difficulty:
+      typeof game.difficulty === 'string' && game.difficulty.trim()
+        ? (game.difficulty.trim().toUpperCase() as NonNullable<
+            GameQuiz['difficulty']
+          >)
+        : null,
     templateKey: 'LIVE_QUIZ_RALLY',
     revision: numberValue(game.revision, 1),
     updatedAt: stringValue(game.updatedAt, new Date(0).toISOString()),

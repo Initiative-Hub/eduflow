@@ -38,7 +38,7 @@ export const demoGameQuizzes: DemoGameQuiz[] = [
     id: '30000000-0000-4000-8000-000000000001',
     title: 'Web Foundations Rally',
     topic: 'HTTP, semantic HTML, and responsive design',
-    difficulty: 'Beginner',
+    difficulty: null,
     questions: [
       question({
         id: '31000000-0000-4000-8000-000000000001',
@@ -197,7 +197,7 @@ export const demoGameQuizzes: DemoGameQuiz[] = [
     id: '30000000-0000-4000-8000-000000000002',
     title: 'Practical English Rally',
     topic: 'Clear questions, professional messages, and clear speech',
-    difficulty: 'Beginner',
+    difficulty: null,
     questions: [
       question({
         id: '31000000-0000-4000-8000-000000000006',

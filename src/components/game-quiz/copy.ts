@@ -73,6 +73,7 @@ export function getGameQuizCopy(t: Translate) {
       rallyOverview: t('editor.rallyOverview'),
       totalPossiblePoints: t('editor.totalPossiblePoints'),
       unsavedChanges: t('editor.unsavedChanges'),
+      unspecified: t('editor.unspecified'),
     },
     aiGenerate: {
       action: t('aiGenerate.action'),

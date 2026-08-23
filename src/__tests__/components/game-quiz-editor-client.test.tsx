@@ -198,4 +198,41 @@ describe('GameQuizEditorClient', () => {
     expect(gameQuizApi.create).not.toHaveBeenCalled();
     expect(gameQuizApi.saveQuestions).not.toHaveBeenCalled();
   });
+
+  it('renders Unspecified badge in difficulty field when game quiz difficulty is null', async () => {
+    vi.mocked(gameQuizApi.get).mockResolvedValue({
+      id: 'quiz-null-diff',
+      title: 'Trivia Game',
+      topic: 'Science',
+      difficulty: null,
+      templateKey: 'LIVE_QUIZ_RALLY',
+      revision: 1,
+      updatedAt: new Date().toISOString(),
+      questionCount: 1,
+      settings: {
+        randomizeQuestions: false,
+        randomizeAnswers: true,
+      },
+      questions: [
+        {
+          id: 'q-1',
+          prompt: 'What is H2O?',
+          hint: null,
+          explanation: null,
+          timeLimitSeconds: 20,
+          maxPoints: 1000,
+          order: 0,
+          options: [
+            { id: 'opt-1', text: 'Water', isCorrect: true, order: 0 },
+            { id: 'opt-2', text: 'Oxygen', isCorrect: false, order: 1 },
+          ],
+        },
+      ],
+    });
+
+    renderEditor('quiz-null-diff');
+
+    await screen.findByDisplayValue('Trivia Game');
+    expect(screen.getByText('editor.unspecified')).toBeInTheDocument();
+  });
 });
