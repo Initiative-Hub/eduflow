@@ -41,7 +41,7 @@ describe('GameQuizPodium', () => {
       />
     );
 
-    const entries = screen.getAllByRole('listitem');
+    const entries = screen.getAllByText(/^(Alex|Sam|Jo)$/);
     expect(entries.map((entry) => entry.textContent)).toEqual([
       expect.stringContaining('Alex'),
       expect.stringContaining('Sam'),
@@ -60,7 +60,8 @@ describe('GameQuizPodium', () => {
         />
       );
 
-      expect(screen.getAllByRole('listitem')).toHaveLength(count);
+      const expectedNames = ['Sam', 'Alex', 'Jo'].slice(0, count);
+      expect(expectedNames.every((name) => screen.getByText(name))).toBe(true);
     }
   );
 

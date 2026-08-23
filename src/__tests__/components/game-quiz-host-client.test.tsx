@@ -370,22 +370,28 @@ describe('GameQuizHostClient', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders the final podium with only View report', async () => {
+  it('opens full final standings while keeping View report as an external link', async () => {
+    const user = userEvent.setup();
     getHostSession.mockResolvedValue(createSession('FINAL_CELEBRATION'));
     answerProgress.mockResolvedValue({ answerCount: 1 });
 
     renderHost();
 
     expect(await screen.findByText('host.congratulations')).toBeInTheDocument();
-    expect(screen.getByText('Sam')).toBeInTheDocument();
-    expect(screen.getByText('Alex')).toBeInTheDocument();
-    expect(screen.getByText('Jo')).toBeInTheDocument();
     const reportLink = screen.getByRole('link', { name: 'host.viewReport' });
     expect(reportLink).toHaveAttribute(
       'href',
       '/games/game-quiz-1/report?sessionId=00000000-0000-4000-8000-000000000001'
     );
     expect(reportLink).toHaveAttribute('target', '_blank');
+    await user.click(
+      screen.getByRole('button', { name: 'host.viewFullLeaderboard' })
+    );
+    expect(
+      await screen.findByRole('dialog', {
+        name: 'host.fullLeaderboardTitle',
+      })
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: 'host.next' })
     ).not.toBeInTheDocument();

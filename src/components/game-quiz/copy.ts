@@ -108,6 +108,8 @@ export function getGameQuizCopy(t: Translate) {
       endSession: t('host.endSession'),
       viewReport: t('host.viewReport'),
       viewFullLeaderboard: t('host.viewFullLeaderboard'),
+      fullLeaderboardTitle: t('host.fullLeaderboardTitle'),
+      emptyLeaderboard: t('host.emptyLeaderboard'),
       congratulations: t('host.congratulations'),
       congratulationsDescription: t('host.congratulationsDescription'),
       lobby: t('host.lobby'),

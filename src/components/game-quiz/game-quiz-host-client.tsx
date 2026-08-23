@@ -39,6 +39,7 @@ import {
 import { cn } from '@/lib/utils';
 import { type GameHostAction, gameQuizApi } from './api';
 import { type GameQuizCopy, gameQuizCopy } from './copy';
+import { GameQuizFullLeaderboardDialog } from './game-quiz-full-leaderboard-dialog';
 import { GameQuizJoinQrCode } from './game-quiz-join-qr-code';
 import { GameQuizPodium } from './game-quiz-podium';
 import { GameQuizRespondentStack } from './game-quiz-respondent-stack';
@@ -817,11 +818,10 @@ function HostPodium({
         session={session}
         title={copy.host.congratulations}
       >
-        <Button asChild className="rounded-full px-4 py-3">
-          <Link href={reportHref} target="_blank" rel="noreferrer">
-            {copy.host.viewFullLeaderboard}
-          </Link>
-        </Button>
+        <GameQuizFullLeaderboardDialog
+          copy={copy}
+          leaderboard={session.leaderboard}
+        />
         <Button
           asChild
           disabled={isPending}
