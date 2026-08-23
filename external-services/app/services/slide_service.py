@@ -136,6 +136,69 @@ CATEGORY_ALIASES = {
     "TITLE_AND_BULLETS": "TITLE_BULLETS",
 }
 
+# A customer deck names its layouts for its own designers — "Chart slide",
+# "Content_option 2", "Section divider_option 1" — while the planner speaks the
+# standard vocabulary. Nothing matched, so every category was backfilled from
+# the base library and the deck came out in a foreign style even though the
+# template had the layout all along. These keywords recognise an equivalent
+# local layout so the customer's own design is used instead.
+CATEGORY_EQUIVALENTS: Dict[str, tuple] = {
+    "CHART_INSIGHT": ("chartslide", "chart", "graph", "barchart", "piechart"),
+    "DATA_TABLE": ("tableslide", "table", "grid", "matrix"),
+    "MEDIA_TEXT": ("contentwithimage", "imagetext", "picturetext", "imageandtext"),
+    "IMAGE_GALLERY": ("imagegallery", "images", "gallery", "photogrid"),
+    "TITLE_SLIDE": ("titleoption", "titleonly", "titleslide", "cover", "opening"),
+    "SECTION_HEADER": ("sectiondivider", "section", "divider", "chapter"),
+    "TITLE_BULLETS": ("titlebullets", "contentoption", "content", "bullet", "body"),
+    "AGENDA_OUTLINE": ("agenda", "outline", "overview", "tableofcontents"),
+    "CONCLUSION_SUMMARY": ("conclusion", "summary", "takeaway", "keypoints"),
+    "QA_CONTACT": ("qacontact", "endslide", "thankyou", "question", "contact"),
+    "KPI_BIG_NUMBER": ("kpi", "bignumber", "metric", "statistic"),
+    "BIG_QUOTE_TAKEAWAY": ("quote", "testimonial"),
+    "TIMELINE_MILESTONES": ("timeline", "milestone", "roadmap"),
+    "STEP_BY_STEP": ("stepbystep", "process", "howto", "step"),
+    "TWO_COLUMN_SPLIT": ("twocolumn", "comparison", "versus", "split"),
+    "CALL_TO_ACTION": ("calltoaction", "nextstep", "cta"),
+    "STATEMENT_IMAGE": ("statement", "hero", "impact"),
+    "REFERENCES_LIST": ("reference", "source", "citation", "bibliography"),
+}
+
+
+def _canon_category(name: str) -> str:
+    return re.sub(r"[^a-z0-9]", "", str(name).lower())
+
+
+def _best_standard_category(folder_name: str) -> tuple:
+    """(category, keyword_length) this layout folder most specifically matches.
+
+    Scored by the LONGEST matching keyword so "Content with image_option 1"
+    lands on MEDIA_TEXT ("contentwithimage") rather than TITLE_BULLETS
+    ("content"), which merely shares a prefix.
+    """
+    canon = _canon_category(folder_name)
+    best, best_len = None, 0
+    for category, keywords in CATEGORY_EQUIVALENTS.items():
+        for keyword in keywords:
+            if keyword in canon and len(keyword) > best_len:
+                best, best_len = category, len(keyword)
+    return best, best_len
+
+
+def _find_equivalent_layout(library_dir: Path, category: str) -> Path | None:
+    """A local layout folder that serves `category` under a different name."""
+    matches = [
+        child
+        for child in sorted(library_dir.iterdir())
+        if child.is_dir()
+        and any(child.glob("*.svg"))
+        and _best_standard_category(child.name)[0] == category
+    ]
+    if not matches:
+        return None
+    # Shortest name first: "Chart slide" over "Chart slide with commentary".
+    return sorted(matches, key=lambda p: (len(p.name), p.name))[0]
+
+
 CATEGORY_METADATA_FIELDS = (
     "description",
     "when_to_use",
@@ -974,13 +1037,27 @@ class SlideService:
             return
 
         base_dir = await self._ensure_collection_downloaded(BASE_TEMPLATE_COLLECTION)
-
         for cat in requested_categories:
             if not cat:
                 continue
             cat_dir = library_dir / cat
             has_svgs = cat_dir.exists() and any(cat_dir.glob("*.svg"))
             if not has_svgs:
+                # The collection's own design for this category, under the
+                # deck's naming, beats anything from the base library: matching
+                # the rest of the deck matters more than matching the name.
+                local_equivalent = _find_equivalent_layout(library_dir, cat)
+                if local_equivalent is not None:
+                    cat_dir.mkdir(parents=True, exist_ok=True)
+                    for item in local_equivalent.iterdir():
+                        if item.is_file():
+                            shutil.copy2(item, cat_dir / item.name)
+                    logger.info(
+                        f"Served '{cat}' from this collection's own "
+                        f"'{local_equivalent.name}' layout instead of backfilling"
+                    )
+                    continue
+
                 cat_dir.mkdir(parents=True, exist_ok=True)
                 target_source = CATEGORY_ALIASES.get(cat, cat)
                 src_dir = base_dir / target_source
@@ -992,7 +1069,8 @@ class SlideService:
                         if item.is_file():
                             shutil.copy2(item, cat_dir / item.name)
                     logger.info(
-                        f"Backfilled missing category '{cat}' in '{library_dir.name}' from base template '{src_dir.name}'"
+                        f"Backfilled missing category '{cat}' in '{library_dir.name}' "
+                        f"from base template '{src_dir.name}'"
                     )
                 else:
                     fallback_dirs = [
