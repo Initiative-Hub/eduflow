@@ -2,9 +2,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { GameQuizAiDialog } from '@/components/game-quiz/ai/game-quiz-ai-dialog';
 import { gameQuizApi } from '@/components/game-quiz/api';
 import { gameQuizCopy } from '@/components/game-quiz/copy';
-import { GameQuizAiDialog } from '@/components/game-quiz/ai/game-quiz-ai-dialog';
 import type { GeneratedGameQuizQuestion } from '@/components/game-quiz/types';
 
 vi.mock('@/components/game-quiz/api', () => ({
@@ -48,7 +48,6 @@ function renderDialog(overrides?: {
     <QueryClientProvider client={queryClient}>
       <GameQuizAiDialog
         copy={gameQuizCopy}
-        difficulty="HARD"
         isOpen
         maxQuestionCount={8}
         onAccept={onAccept}
@@ -139,7 +138,6 @@ describe('GameQuizAiDialog', () => {
       questionCount: 5,
       additionalPrompt: 'Focus on causes.',
       topic: 'Solar system',
-      difficulty: 'HARD',
     });
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
     expect(screen.getByText(generatedQuestion.hint)).toBeInTheDocument();

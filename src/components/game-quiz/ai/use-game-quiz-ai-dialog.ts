@@ -4,7 +4,6 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { useRef, useState } from 'react';
 import { gameQuizApi } from '../api';
 import type {
-  GameQuizDifficulty,
   GeneratedGameQuizQuestion,
   GenerateGameQuizQuestionsInput,
 } from '../types';
@@ -15,7 +14,6 @@ interface UseGameQuizAiDialogOptions {
   isOpen: boolean;
   maxQuestionCount: number;
   topic: string;
-  difficulty: GameQuizDifficulty;
   onOpenChange: (open: boolean) => void;
   onAccept: (questions: GeneratedGameQuizQuestion[]) => void;
 }
@@ -24,7 +22,6 @@ export function useGameQuizAiDialog({
   isOpen,
   maxQuestionCount,
   topic,
-  difficulty,
   onOpenChange,
   onAccept,
 }: UseGameQuizAiDialogOptions) {
@@ -108,7 +105,6 @@ export function useGameQuizAiDialog({
         questionCount,
         additionalPrompt: additionalPrompt.trim() || undefined,
         topic: topic.trim() || undefined,
-        difficulty,
       });
       if (generationEpoch.current !== epoch) return;
       setGeneratedQuestions(response.questions);

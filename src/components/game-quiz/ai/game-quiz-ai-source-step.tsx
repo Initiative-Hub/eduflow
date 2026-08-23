@@ -144,13 +144,10 @@ export function GameQuizAiSourceStep({
               {lessonIds.length} {copy.aiGenerate.lessonsSelected}
             </Badge>
           </div>
-          <FieldDescription>
-            {copy.aiGenerate.lessonsDescription}
-          </FieldDescription>
 
           {lessonCount ? (
-            <ScrollArea className="h-72 rounded-xl border p-3">
-              <div className="flex flex-col gap-5 pr-3">
+            <ScrollArea className="h-60 rounded-xl border p-3">
+              <div className="flex flex-col gap-5">
                 {selectedCourse.modules.map((module) =>
                   module.lessons.length > 0 ? (
                     <FieldSet key={module.id}>

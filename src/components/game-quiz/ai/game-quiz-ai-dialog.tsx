@@ -11,7 +11,7 @@ import { DialogTemplate } from '@/components/custom/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { GameQuizCopy } from '../copy';
-import type { GameQuizDifficulty, GeneratedGameQuizQuestion } from '../types';
+import type { GeneratedGameQuizQuestion } from '../types';
 import { GameQuizAiGuidanceStep } from './game-quiz-ai-guidance-step';
 import { GameQuizAiReviewStep } from './game-quiz-ai-review-step';
 import { GameQuizAiSourceStep } from './game-quiz-ai-source-step';
@@ -22,7 +22,6 @@ import {
 
 interface GameQuizAiDialogProps {
   copy: GameQuizCopy;
-  difficulty: GameQuizDifficulty;
   isOpen: boolean;
   maxQuestionCount: number;
   topic: string;
@@ -47,7 +46,6 @@ function getErrorMessage(error: unknown, fallback: string): string {
 
 export function GameQuizAiDialog({
   copy,
-  difficulty,
   isOpen,
   maxQuestionCount,
   topic,
@@ -58,7 +56,6 @@ export function GameQuizAiDialog({
     isOpen,
     maxQuestionCount,
     topic,
-    difficulty,
     onOpenChange,
     onAccept,
   });
@@ -188,7 +185,7 @@ export function GameQuizAiDialog({
 
   return (
     <DialogTemplate
-      className="max-h-[90dvh] w-[calc(100%-2rem)] sm:max-w-2xl"
+      className="max-h-[90vh] w-[calc(100%-2rem)] sm:max-w-2xl"
       description={copy.aiGenerate.description}
       footer={footer}
       isOpen={isOpen}
@@ -216,38 +213,36 @@ export function GameQuizAiDialog({
           ))}
         </nav>
 
-        <div className="max-h-[58dvh] overflow-y-auto px-0.5 py-1">
-          {dialog.step === 'sources' ? (
-            <GameQuizAiSourceStep
-              copy={copy}
-              courseId={dialog.courseId}
-              courses={courses}
-              isError={dialog.sourcesQuery.isError}
-              isPending={dialog.sourcesQuery.isPending}
-              lessonIds={dialog.lessonIds}
-              onCourseChange={dialog.setCourseId}
-              onLessonToggle={dialog.toggleLesson}
-              onRetry={() => dialog.sourcesQuery.refetch()}
-            />
-          ) : dialog.step === 'guidance' ? (
-            <GameQuizAiGuidanceStep
-              additionalPrompt={dialog.additionalPrompt}
-              copy={copy}
-              generationError={generationError}
-              maxQuestionCount={maxQuestionCount}
-              onAdditionalPromptChange={dialog.setAdditionalPrompt}
-              onQuestionCountChange={dialog.setQuestionCount}
-              questionCount={dialog.questionCount}
-            />
-          ) : (
-            <GameQuizAiReviewStep
-              copy={copy}
-              currentIndex={dialog.reviewIndex}
-              question={currentQuestion}
-              totalQuestions={dialog.generatedQuestions.length}
-            />
-          )}
-        </div>
+        {dialog.step === 'sources' ? (
+          <GameQuizAiSourceStep
+            copy={copy}
+            courseId={dialog.courseId}
+            courses={courses}
+            isError={dialog.sourcesQuery.isError}
+            isPending={dialog.sourcesQuery.isPending}
+            lessonIds={dialog.lessonIds}
+            onCourseChange={dialog.setCourseId}
+            onLessonToggle={dialog.toggleLesson}
+            onRetry={() => dialog.sourcesQuery.refetch()}
+          />
+        ) : dialog.step === 'guidance' ? (
+          <GameQuizAiGuidanceStep
+            additionalPrompt={dialog.additionalPrompt}
+            copy={copy}
+            generationError={generationError}
+            maxQuestionCount={maxQuestionCount}
+            onAdditionalPromptChange={dialog.setAdditionalPrompt}
+            onQuestionCountChange={dialog.setQuestionCount}
+            questionCount={dialog.questionCount}
+          />
+        ) : (
+          <GameQuizAiReviewStep
+            copy={copy}
+            currentIndex={dialog.reviewIndex}
+            question={currentQuestion}
+            totalQuestions={dialog.generatedQuestions.length}
+          />
+        )}
       </div>
     </DialogTemplate>
   );

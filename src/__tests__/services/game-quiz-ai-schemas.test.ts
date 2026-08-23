@@ -14,7 +14,6 @@ function validInput() {
     questionCount: 5,
     additionalPrompt: '  Emphasize practical examples.  ',
     topic: '  Photosynthesis  ',
-    difficulty: 'MEDIUM' as const,
   };
 }
 
@@ -62,7 +61,6 @@ describe('Game Quiz AI schemas', () => {
       'prompt longer than 500 characters',
       { additionalPrompt: 'x'.repeat(501) },
     ],
-    ['unsupported difficulty', { difficulty: 'EXPERT' }],
   ])('rejects %s', (_name, override) => {
     expect(
       gameQuizAIGenerationInputSchema.safeParse({

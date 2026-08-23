@@ -43,7 +43,6 @@ function validRequest(overrides: Record<string, unknown> = {}) {
     questionCount: 3,
     additionalPrompt: '  Focus on applications.  ',
     topic: '  Photosynthesis  ',
-    difficulty: 'MEDIUM',
     ...overrides,
   };
 }
@@ -163,7 +162,6 @@ describe('Game Quiz AI routes', () => {
     ['zero questions', { questionCount: 0 }],
     ['more than twenty questions', { questionCount: 21 }],
     ['an oversized prompt', { additionalPrompt: 'x'.repeat(501) }],
-    ['an unsupported difficulty', { difficulty: 'EXPERT' }],
   ])('rejects %s before calling the service', async (_name, override) => {
     const { POST } = await import('@/app/api/v1/ai/game-quiz/questions/route');
 

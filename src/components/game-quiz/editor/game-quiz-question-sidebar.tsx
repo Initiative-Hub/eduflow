@@ -55,7 +55,7 @@ export function GameQuizQuestionSidebar({
       </div>
 
       {/* Simplified Questions List */}
-      <ScrollArea className="max-h-[50dvh] pr-1 xl:max-h-[calc(100vh-14rem)]">
+      <ScrollArea className="max-h-[50vh] pr-1 xl:max-h-[calc(100vh-14rem)]">
         <div className="space-y-1 py-1">
           {draft.questions.map((question, index) => {
             const isActive = activeIndex === index;

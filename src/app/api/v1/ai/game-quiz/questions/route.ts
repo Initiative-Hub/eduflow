@@ -25,7 +25,7 @@ export const maxDuration = 90;
  *         application/json:
  *           schema:
  *             type: object
- *             required: [courseId, lessonIds, questionCount, difficulty]
+ *             required: [courseId, lessonIds, questionCount]
  *             properties:
  *               courseId:
  *                 type: string
@@ -48,9 +48,6 @@ export const maxDuration = 90;
  *               topic:
  *                 type: string
  *                 maxLength: 120
- *               difficulty:
- *                 type: string
- *                 enum: [EASY, MEDIUM, HARD]
  *     responses:
  *       200:
  *         description: Generated questions; no Game Quiz records are persisted
@@ -71,7 +68,6 @@ export const POST = withAuth(async (request: Request, sessionData) => {
   let body: unknown;
   try {
     body = await request.json();
-    console.log('AI Game Quiz generation request body:', body);
   } catch {
     return errorResponse('VALIDATION_ERROR', 'Invalid JSON request body', 400);
   }

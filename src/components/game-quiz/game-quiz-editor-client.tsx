@@ -382,7 +382,6 @@ export function GameQuizEditorClient({
 
       <GameQuizAiDialog
         copy={copy}
-        difficulty={draft.difficulty}
         isOpen={isAiDialogOpen}
         maxQuestionCount={aiQuestionCapacity}
         onAccept={handleAcceptGeneratedQuestions}

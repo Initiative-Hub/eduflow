@@ -114,7 +114,6 @@ function generationInput(overrides: Record<string, unknown> = {}) {
     questionCount: 2,
     additionalPrompt: 'Use practical examples.',
     topic: 'Energy in cells',
-    difficulty: 'HARD' as const,
     ...overrides,
   };
 }
@@ -264,7 +263,6 @@ describe('GameQuizAIService', () => {
         })
       );
       const prompt = mockGenerateText.mock.calls[0][0].prompt as string;
-      expect(prompt).toContain('- Difficulty: HARD');
       expect(prompt).toContain('- Draft topic: Energy in cells');
       expect(prompt).toContain(
         '- Additional teacher guidance: Use practical examples.'
