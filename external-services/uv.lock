@@ -401,7 +401,7 @@ requires-dist = [
     { name = "fastapi", extras = ["standard"], specifier = "~=0.141.1" },
     { name = "markitdown", extras = ["pdf"], specifier = "~=0.1.7" },
     { name = "modal", specifier = "~=1.5.4" },
-    { name = "slide-skills", extras = ["svg-convert"], specifier = "~=0.2.51" },
+    { name = "slide-skills", extras = ["svg-convert"], specifier = "~=0.2.54" },
     { name = "tavily-python", specifier = "~=0.7.27" },
 ]
 
@@ -1592,7 +1592,7 @@ wheels = [
 
 [[package]]
 name = "slide-skills"
-version = "0.2.51"
+version = "0.2.54"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "lxml" },
@@ -1602,9 +1602,9 @@ dependencies = [
     { name = "python-pptx" },
     { name = "resvg-py" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ce/07/8cb4ccdb756a3f5a5ca30593442c8f0955c52ee1ae3e78307fb53558f16f/slide_skills-0.2.51.tar.gz", hash = "sha256:0d22cfc89fb806e2f4e76e4e003c8e8c8a6ed1b24d88fd670e1441c94734ddbb", size = 115202, upload-time = "2026-08-22T06:37:43.409Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d1/dc/00e92dfdab5eaf5a26e2742b5159de6d15d65552c0a888e41b6c8df4e077/slide_skills-0.2.54.tar.gz", hash = "sha256:16091435d03a92d569c3db05021cc6465c8cb7c56661cac9e9c1f801d960e992", size = 121710, upload-time = "2026-08-23T18:39:48.686Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/50/b1/7581a06098cbcc7d3619fa650e805027f88aa2d3e34bbef56c94f5449e8b/slide_skills-0.2.51-py3-none-any.whl", hash = "sha256:8bfb91aa5cf32f9b705ba743335ae23b71f9336c42778cfbb5ebdc36d82effd0", size = 118461, upload-time = "2026-08-22T06:37:41.708Z" },
+    { url = "https://files.pythonhosted.org/packages/38/4c/5ed726c6e1874b50a238acef3be6499fc71672297032c18f624cb8c43ce0/slide_skills-0.2.54-py3-none-any.whl", hash = "sha256:a4415ddba1b4910d23511d1fb80b3a8da5f911df529055f96902fc0676d966e6", size = 124742, upload-time = "2026-08-23T18:39:47.258Z" },
 ]
 
 [package.optional-dependencies]

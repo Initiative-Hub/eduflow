@@ -282,7 +282,11 @@ export function TemplateReviewDialog({
       toast.error('Waiting for the slide to load — try again in a moment');
       return;
     }
-    const { proposals, notes: advice } = proposeFixes(current.slots, canvasW);
+    const { proposals, notes: advice } = proposeFixes(
+      current.slots,
+      canvasW,
+      current.category
+    );
     setNotes(advice);
     if (proposals.length === 0) {
       toast.info(

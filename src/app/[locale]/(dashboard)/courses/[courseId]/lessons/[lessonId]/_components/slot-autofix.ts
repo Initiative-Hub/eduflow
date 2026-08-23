@@ -43,10 +43,24 @@ const MIN_USABLE_CHARS = 12;
 /** Left/right breathing room given to a slot that has no wrap width at all. */
 const MARGIN_SHARE = 0.05;
 
+/**
+ * Categories that are covers, dividers or closers by convention.
+ *
+ * Their body slot holds a standfirst under a big title, not a list of points,
+ * so it must never be bulleted. The category name is the only reliable signal —
+ * geometry cannot tell a two-line standfirst from a two-point list.
+ */
+const DIVIDER_CATEGORY_PATTERN =
+  /(^|_)(TITLE|COVER|SECTION|DIVIDER|INTRO|END|CLOSING|THANK|QA|BLANK)(_|$)/i;
+
+/** Types the renderer refuses to bullet, whatever the schema flag says. */
+const UNBULLETABLE_TYPES = new Set(['title', 'subtitle']);
+
 export interface SlotPatch {
   type?: string;
   max_chars?: number;
   w?: number;
+  bullet?: boolean;
   delete?: boolean;
 }
 
@@ -99,8 +113,10 @@ function overlapArea(a: TemplateSlot, b: TemplateSlot): number {
  */
 export function proposeFixes(
   slots: TemplateSlot[],
-  canvasW: number
+  canvasW: number,
+  category = ''
 ): AutofixResult {
+  const isDivider = DIVIDER_CATEGORY_PATTERN.test(category);
   const proposals: SlotProposal[] = [];
   const notes: SlotNote[] = [];
   // Charts and tables only. A full-bleed image is a background, and text over
@@ -165,13 +181,33 @@ export function proposeFixes(
 
     // A slot repeated over three or more lines is body copy, whatever the
     // extractor typed it as; a real title does not run to three lines.
-    if (
-      (slot.type === 'title' || slot.type === 'subtitle') &&
-      slot.lines >= 3
-    ) {
+    if (UNBULLETABLE_TYPES.has(slot.type) && slot.lines >= 3) {
       patch.type = 'text';
       reasons.push(
         `typed '${slot.type}' but repeats over ${slot.lines} lines — retyped as text`
+      );
+    }
+
+    // A multi-line slot on a content layout is a list of discrete points: the
+    // template gives it one placeholder per line and the filler writes a
+    // separate string into each. The renderer only draws the markers when the
+    // schema asks for it, and extraction names these slots `body_2` rather than
+    // `bullets`, so the name-based default never fires — set the flag outright.
+    if (
+      !isDivider &&
+      slot.lines > 1 &&
+      slot.bullet !== true &&
+      // an explicit `false` is the reviewer saying no; never override that
+      slot.bullet !== false
+    ) {
+      patch.bullet = true;
+      // The renderer skips markers on title/subtitle slots whatever the flag
+      // says, so without the retype the flag would be inert.
+      const needsRetype = UNBULLETABLE_TYPES.has(slot.type);
+      if (needsRetype) patch.type = 'text';
+      reasons.push(
+        `${slot.lines} separate lines — rendered as a bullet list` +
+          (needsRetype ? `, retyped from '${slot.type}' so markers apply` : '')
       );
     }
 

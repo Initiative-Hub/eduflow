@@ -220,6 +220,78 @@ describe('proposeFixes', () => {
     expect(notes[0].note).toContain('only ~10 characters fit');
   });
 
+  it('bullets a multi-line content slot, retyping it so the markers apply', () => {
+    // CONTENT_SLIDE body_2: three separate placeholders, one string each — a
+    // list of points that extraction named `body_2` and typed 'title', so the
+    // renderer's name-based default never fires.
+    const { proposals } = proposeFixes(
+      [
+        slot({
+          name: 'body_2',
+          w: 481,
+          h: 261,
+          font_pt: 28,
+          max_chars: 34,
+          lines: 3,
+          type: 'title',
+        }),
+      ],
+      720,
+      'CONTENT_SLIDE'
+    );
+    expect(proposals[0].patch.bullet).toBe(true);
+    expect(proposals[0].patch.type).toBe('text');
+  });
+
+  it('never bullets a divider or cover, whose body is a standfirst', () => {
+    for (const category of ['SECTION_HEADER_2', 'TITLE_SLIDE', 'QA_CONTACT']) {
+      const { proposals } = proposeFixes(
+        [
+          slot({
+            name: 'body_2',
+            w: 481,
+            font_pt: 28,
+            max_chars: 34,
+            lines: 3,
+          }),
+        ],
+        720,
+        category
+      );
+      expect(
+        proposals.some((p) => p.patch.bullet),
+        `${category} should not be bulleted`
+      ).toBe(false);
+    }
+  });
+
+  it('respects a reviewer who explicitly turned bullets off', () => {
+    const { proposals } = proposeFixes(
+      [
+        slot({
+          name: 'body_2',
+          w: 481,
+          font_pt: 28,
+          max_chars: 34,
+          lines: 3,
+          bullet: false,
+        }),
+      ],
+      720,
+      'CONTENT_SLIDE'
+    );
+    expect(proposals.some((p) => p.patch.bullet)).toBe(false);
+  });
+
+  it('leaves single-line slots unbulleted', () => {
+    const { proposals } = proposeFixes(
+      [slot({ name: 'body', w: 481, font_pt: 28, max_chars: 34, lines: 1 })],
+      720,
+      'CONTENT_SLIDE'
+    );
+    expect(proposals.some((p) => p.patch.bullet)).toBe(false);
+  });
+
   it('never touches image, chart or table slots', () => {
     const { proposals, notes } = proposeFixes(
       [slot({ name: 'photo', kind: 'image', w: 0, h: 0, font_pt: 0 })],

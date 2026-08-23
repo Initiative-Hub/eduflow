@@ -1,8 +1,10 @@
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { generateText, Output } from 'ai';
 import * as z from 'zod';
+import { tiptapDocumentToMarkdown } from '@/lib/tiptap-markdown';
 import { DEFAULT_MODELS } from '@/services/ai/chat-provider.constants';
 import { LessonService } from '@/services/LessonService';
+import { isTiptapDocument } from '@/utils/lesson-content';
 
 const STANDARD_LAYOUT_TYPES = [
   'TITLE_SLIDE',
@@ -88,25 +90,82 @@ const TITLE_ONLY_CAPACITY = 1;
 const MIN_SLIDE_CONTENT_CHARS = 90;
 const MIN_SLIDE_LIST_ITEMS = 2;
 
+/** How much lesson text the planner is given. Prose, not serialized nodes. */
+const CONTENT_SNIPPET_LIMIT = 16000;
+
+/**
+ * Characters of explanation each content item should carry.
+ *
+ * A slide can clear the "not empty" bar and still say nothing: three cards
+ * reading "Real exposure beats guesswork every time" are full by character
+ * count and hollow to an audience. This is the floor for an item that actually
+ * explains something — roughly a sentence of mechanism plus a specific.
+ */
+const MIN_ITEM_DEPTH_CHARS = 60;
+
+/** Below this many items, an average is too noisy to judge depth from. */
+const MIN_ITEMS_TO_JUDGE_DEPTH = 2;
+
+/**
+ * Binding fields whose entries are explanation the audience reads.
+ *
+ * Deliberately excludes `metrics`, `chart_data`, `headers` and `rows`: a KPI
+ * label or a table cell is supposed to be terse, and "deepening" it would wreck
+ * the layout it was written for.
+ */
+const EXPLANATORY_LIST_FIELDS = new Set([
+  'bullets',
+  'items',
+  'steps',
+  'summary_points',
+  'action_items',
+  'left_col_text',
+  'right_col_text',
+  'levels',
+  'stages',
+  'phases',
+  'process_steps',
+  'events',
+  'sources',
+]);
+
+/** Prose fields that carry a slide's explanation in one block. */
+const EXPLANATORY_PROSE_FIELDS = new Set([
+  'body_text',
+  'insight_text',
+  'statement',
+]);
+
+/** Keys inside an item object that hold the explanation, not its label. */
+const ITEM_DESCRIPTION_KEYS = new Set(['description', 'summary']);
+
 /** Layout names that are dividers or covers by convention, so a bare title is correct. */
 const TITLE_ONLY_LAYOUT_PATTERN =
   /(^|_)(TITLE|COVER|SECTION|DIVIDER|INTRO|END|CLOSING|THANK|QA|BLANK)(_|$)/i;
 
 type TemplateCategoryMetadataMap = Record<string, TemplateCategoryMetadata>;
 
+const listPointSchema = z.union([
+  z.string(),
+  z.object({
+    title: z.string(),
+    description: z.string(),
+  }),
+]);
+
 const slideBindingsSchema = z.object({
   subtitle: z.string().optional(),
   author: z.string().optional(),
   sub_module_name: z.string().optional(),
-  bullets: z.array(z.string()).optional(),
-  items: z.array(z.string()).optional(),
-  steps: z.array(z.string()).optional(),
-  summary_points: z.array(z.string()).optional(),
-  action_items: z.array(z.string()).optional(),
+  bullets: z.array(listPointSchema).optional(),
+  items: z.array(listPointSchema).optional(),
+  steps: z.array(listPointSchema).optional(),
+  summary_points: z.array(listPointSchema).optional(),
+  action_items: z.array(listPointSchema).optional(),
   left_col_title: z.string().optional(),
-  left_col_text: z.array(z.string()).optional(),
+  left_col_text: z.array(listPointSchema).optional(),
   right_col_title: z.string().optional(),
-  right_col_text: z.array(z.string()).optional(),
+  right_col_text: z.array(listPointSchema).optional(),
   quote: z.string().optional(),
   author_or_source: z.string().optional(),
   metrics: z
@@ -117,7 +176,7 @@ const slideBindingsSchema = z.object({
       })
     )
     .optional(),
-  chart_type: z.enum(['bar', 'line', 'pie']).optional(),
+  chart_type: z.enum(['bar', 'hbar', 'line', 'pie']).optional(),
   chart_data: z
     .array(
       z.object({
@@ -493,6 +552,80 @@ export class PresentationService {
     return items < MIN_SLIDE_LIST_ITEMS && chars < MIN_SLIDE_CONTENT_CHARS;
   }
 
+  /**
+   * How much explanation each content item carries, on average.
+   *
+   * Separate from `measureSlideContent`, which asks whether a slide has any
+   * copy at all. This asks whether that copy says anything: three one-line
+   * assertions pass the first test and fail this one.
+   */
+  private static measureItemDepth(bindings: Record<string, unknown>): {
+    items: number;
+    avgChars: number;
+  } {
+    let items = 0;
+    let chars = 0;
+
+    for (const [key, value] of Object.entries(bindings)) {
+      if (EXPLANATORY_PROSE_FIELDS.has(key) && typeof value === 'string') {
+        const text = value.trim();
+        if (text) {
+          items += 1;
+          chars += text.length;
+        }
+        continue;
+      }
+      if (!EXPLANATORY_LIST_FIELDS.has(key) || !Array.isArray(value)) continue;
+
+      for (const entry of value) {
+        if (typeof entry === 'string') {
+          const text = entry.trim();
+          if (!text) continue;
+          items += 1;
+          chars += text.length;
+          continue;
+        }
+        if (!entry || typeof entry !== 'object') continue;
+        // Title + description items are judged on the description alone; a
+        // three-word heading is correct and says nothing about depth.
+        items += 1;
+        for (const [nestedKey, nested] of Object.entries(entry)) {
+          if (
+            ITEM_DESCRIPTION_KEYS.has(nestedKey) &&
+            typeof nested === 'string'
+          ) {
+            chars += nested.trim().length;
+          }
+        }
+      }
+    }
+
+    return { items, avgChars: items > 0 ? Math.round(chars / items) : 0 };
+  }
+
+  /**
+   * True when a slide is populated but its copy only asserts.
+   *
+   * This is the "looks finished, reads hollow" case: every field filled, every
+   * line a slogan. Underfilled slides are excluded because they need content
+   * written from scratch, which is a different instruction to the model.
+   */
+  private static isShallowSlide(
+    slide: { layoutType: string; bindings: Record<string, unknown> },
+    metadata?: TemplateCategoryMetadataMap
+  ): boolean {
+    if (PresentationService.isTitleOnlyLayout(slide.layoutType, metadata)) {
+      return false;
+    }
+    if (PresentationService.isUnderfilledSlide(slide, metadata)) return false;
+
+    const { items, avgChars } = PresentationService.measureItemDepth(
+      slide.bindings ?? {}
+    );
+    if (items < MIN_ITEMS_TO_JUDGE_DEPTH) return false;
+    return avgChars < MIN_ITEM_DEPTH_CHARS;
+  }
+
   private static buildCategoryGuidanceBlock(
     categories: readonly string[] | string[],
     metadata?: TemplateCategoryMetadataMap
@@ -545,13 +678,28 @@ export class PresentationService {
     }
   }
 
-  /** Normalizes lesson content (Tiptap JSON or string) into a prompt snippet. */
+  /**
+   * Normalizes lesson content (Tiptap JSON or string) into a prompt snippet.
+   *
+   * Lessons are stored as Tiptap JSON, where only about a third of the
+   * characters are the lesson's own words — the rest is node scaffolding
+   * (`{"type":"text","text":...}`, attrs, marks). Serializing that raw spent
+   * most of the budget on structure the planner cannot use, and truncation cut
+   * mid-node into malformed JSON. Markdown keeps the headings, lists and code
+   * blocks the planner needs to find sections, and spends the budget on prose.
+   */
   private static buildContentSnippet(lessonContent: unknown): string {
+    if (isTiptapDocument(lessonContent)) {
+      return tiptapDocumentToMarkdown(lessonContent).slice(
+        0,
+        CONTENT_SNIPPET_LIMIT
+      );
+    }
     const raw =
       typeof lessonContent === 'object'
         ? JSON.stringify(lessonContent)
         : String(lessonContent || '');
-    return raw.slice(0, 16000);
+    return raw.slice(0, CONTENT_SNIPPET_LIMIT);
   }
 
   /**
@@ -625,7 +773,11 @@ CONTENT DEPTH (this is what "detailed" means):
 - Extract the SPECIFICS from the lesson: real figures, names, dates, examples, and comparisons. If the lesson says "2.4 billion USD market, 18M students, 32% growth", surface those exact numbers on a KPI/CHART slide.
 - Write complete, self-contained sentences and labels — copy that reads well on screen. No "TODO", no "Lorem ipsum", no "etc.", no empty fields.
 - On number-heavy slides, do not leave bare numerals without context. Use labels, ranges, scales, units, compact 'display_value' badges, and 'insight_text' to explain what the numbers mean.
-- Give each slide enough substance to fill it (see the per-layout counts above), but keep bullets tight and scannable.
+- EXPLAIN, DO NOT ASSERT. Every bullet, level, stage, phase and step must add something its own heading does not already say: the mechanism behind it, a worked example, a figure, a consequence, or the condition under which it holds. "Real exposure beats guesswork every time" is an empty slogan; "Two weeks shadowing a data team shows how much of the job is cleaning inputs, not modelling" earns its space.
+- For layouts whose items are { title, description } pairs, the title is the label and the description is where the substance goes — aim for roughly ${MIN_ITEM_DEPTH_CHARS}-${MIN_ITEM_DEPTH_CHARS * 2} characters of real explanation per item.
+- WHAT "SHORT" MEANS IN A LAYOUT NOTE. When a layout note above says "tight", "short", "concise" or "extremely short", it is describing the TITLE half of an item and the number of items — never the description. A note that says "tight bullets" still wants ${MIN_ITEM_DEPTH_CHARS}+ characters of explanation attached to each bullet's title. The only cap you must respect literally is the item COUNT ("3 to 5 points"), and an explicit "TITLE ONLY" marker. Text that overflows one line wraps onto the next automatically, so a full sentence per item is safe — write the explanation.
+- Give each slide enough substance to fill it (see the per-layout counts above). Prefer fewer, more substantial items over many thin ones.
+- LIST SLIDES CARRY THE SAME BURDEN. 'bullets', 'items', 'steps', 'summary_points' and 'action_items' accept { title, description } entries — use that form so each point states its claim AND explains it. "Test your career fit" is a headline; "Test your career fit — a 12-week placement tells you whether you actually enjoy the day-to-day work before you commit years to it" is a point worth a slide.
 - Every slideTitle must be a specific, descriptive headline (e.g. "Market by the Numbers"), not a generic label like "Slide 4".
 - Match the lesson's language (e.g. write the deck in Vietnamese if the lesson is in Vietnamese).
 
@@ -633,17 +785,19 @@ Layout Binding Specifications (use these EXACT keys in each slide's 'bindings' o
 - 'TITLE_SLIDE': { "subtitle": string, "author": string }
 - 'AGENDA_OUTLINE': { "items": string[] }
 - 'SECTION_HEADER': { "sub_module_name": string }
-- 'TITLE_BULLETS': { "bullets": string[] }
-- 'TWO_COLUMN_SPLIT': { "left_col_title": string, "left_col_text": string[], "right_col_title": string, "right_col_text": string[] }
+- 'TITLE_BULLETS': { "bullets": Array<string | { "title": string, "description": string }> }
+    Prefer the { title, description } form: the title names the point, the description
+    explains it. A list of bare headlines is what makes a deck read as surface-level.
+- 'TWO_COLUMN_SPLIT': { "left_col_title": string, "left_col_text": Array<string | { "title": string, "description": string }>, "right_col_title": string, "right_col_text": Array<string | { "title": string, "description": string }> }
 - 'BIG_QUOTE_TAKEAWAY': { "quote": string, "author_or_source": string }
 - 'KPI_BIG_NUMBER': { "metrics": Array<{ "value": string, "label": string }> }
-- 'CHART_INSIGHT': { "chart_type": "bar" | "line" | "pie", "chart_data": Array<{ "label": string, "value": number, "display_value"?: string }>, "insight_text": string }
+- 'CHART_INSIGHT': { "chart_type": "bar" | "hbar" | "line" | "pie", "chart_data": Array<{ "label": string, "value": number, "display_value"?: string }>, "insight_text": string }
 - 'DATA_TABLE': { "headers": string[], "rows": string[][] }
 - 'MEDIA_TEXT': { "image_prompt_description": string, "body_text": string }
 - 'TIMELINE_MILESTONES': { "events": Array<{ "date_or_step": string, "description": string }> }
-- 'STEP_BY_STEP': { "steps": string[] }
-- 'CONCLUSION_SUMMARY': { "summary_points": string[] }
-- 'CALL_TO_ACTION': { "action_items": string[] }
+- 'STEP_BY_STEP': { "steps": Array<string | { "title": string, "description": string }> }
+- 'CONCLUSION_SUMMARY': { "summary_points": Array<string | { "title": string, "description": string }> }
+- 'CALL_TO_ACTION': { "action_items": Array<string | { "title": string, "description": string }> }
 - 'QA_CONTACT': { "footer_note": string }
 - 'REFERENCES_LIST': { "sources": Array<{ "title": string, "url": string, "summary"?: string }> } (If the lesson content does not explicitly contain reference links, generate 2-3 highly relevant, reputable external references, books, or online articles on this topic)
 - 'STATEMENT_IMAGE': { "statement": string, "body_text": string, "image_prompt_description": string }
@@ -840,24 +994,36 @@ HARD CONSTRAINTS:
     metadata?: TemplateCategoryMetadataMap;
   }): Promise<PresentationPlan> {
     const { plan, metadata } = opts;
-    const underfilled = plan.slides
+    const targets = plan.slides
       .map((slide, index) => ({ slide, index }))
-      .filter(({ slide }) =>
-        PresentationService.isUnderfilledSlide(
-          slide as { layoutType: string; bindings: Record<string, unknown> },
-          metadata
-        )
-      );
-
-    if (underfilled.length === 0) return plan;
-
-    const budgets = underfilled
       .map(({ slide, index }) => {
+        const typed = slide as {
+          layoutType: string;
+          bindings: Record<string, unknown>;
+        };
+        if (PresentationService.isUnderfilledSlide(typed, metadata)) {
+          return { slide, index, mode: 'fill' as const };
+        }
+        if (PresentationService.isShallowSlide(typed, metadata)) {
+          return { slide, index, mode: 'deepen' as const };
+        }
+        return null;
+      })
+      .filter((entry) => entry !== null);
+
+    if (targets.length === 0) return plan;
+
+    const budgets = targets
+      .map(({ slide, index, mode }) => {
         const capacity = metadata?.[slide.layoutType]?.capacity;
         const budget = capacity
           ? ` (fills about ${capacity} content item(s))`
           : '';
-        return `${index}: layoutType '${slide.layoutType}'${budget} — title "${slide.slideTitle}"`;
+        const task =
+          mode === 'fill'
+            ? 'WRITE FROM SCRATCH (renders as a bare title today)'
+            : 'DEEPEN (has copy, but it only asserts)';
+        return `${index}: [${task}] layoutType '${slide.layoutType}'${budget} — title "${slide.slideTitle}"`;
       })
       .join('\n');
 
@@ -875,20 +1041,25 @@ HARD CONSTRAINTS:
           }),
         }),
         instructions: PLANNER_SYSTEM_PROMPT,
-        prompt: `These slides were planned with too little content and would render as a title on an empty slide. Write full, presentation-ready content for each one, drawn from the lesson below.
+        prompt: `These slides are not carrying their weight. Some are nearly empty; others are filled with copy that states a position without explaining it. Rewrite their content from the lesson below so a presenter could talk to each one.
 
 Lesson Title: "${opts.lessonTitle}"
 Core Lesson Content:
 ${opts.contentSnippet}
 
-SLIDES TO ENRICH (return the same index for each):
+SLIDES TO REWRITE (return the same index for each):
 ${budgets}
 
 RULES:
 - Return bindings only; do not change layoutType or the slide title.
-- Use the binding fields that match the layout's purpose (bullets/items/steps for lists, body_text for prose, metrics for figures, left_col_*/right_col_* for comparisons).
-- Provide at least ${MIN_SLIDE_LIST_ITEMS} list entries, or at least ${MIN_SLIDE_CONTENT_CHARS} characters of prose, staying within the layout's stated budget.
-- Use concrete facts from the lesson (names, numbers, definitions, examples). Never placeholders or generic filler.
+- Use the binding fields that match the layout's purpose (bullets/items/steps for lists, body_text for prose, metrics for figures, left_col_*/right_col_* for comparisons, levels/stages/phases/process_steps for diagram items).
+- WRITE FROM SCRATCH slides need at least ${MIN_SLIDE_LIST_ITEMS} list entries, or at least ${MIN_SLIDE_CONTENT_CHARS} characters of prose.
+- DEEPEN slides keep the same field names and the same number of items — expand the text inside them. Aim for about ${MIN_ITEM_DEPTH_CHARS}-${MIN_ITEM_DEPTH_CHARS * 2} characters of explanation per item.
+- To deepen a list of bare strings, rewrite each entry as { "title": string, "description": string } — the old string becomes the title and the explanation goes in the description. That keeps the field name and the item count while adding the substance.
+- Every item must carry something the audience did not already know from its own heading: the mechanism, a worked example, a figure, a consequence, or the condition under which it applies. A restatement of the heading is a failure.
+- Ban assertion-only copy. "Real exposure beats guesswork" says nothing; "Two weeks shadowing a data team shows you how much of the job is cleaning inputs, not modelling" says something.
+- Draw every specific from the lesson. Do not invent figures, names or dates that are not in it.
+- Respect the layout's item COUNT, but not its adjectives: long text wraps onto extra lines and the following items shift down, so a full sentence per item renders correctly. Thin copy is the failure mode here, not long copy.
 - Write in the same language as the lesson content.`,
         temperature: 0.6,
         maxOutputTokens: 6000,

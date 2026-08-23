@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import re
@@ -17,6 +18,30 @@ from app.schemas.slide_schema import RenderSlideReq
 logger = logging.getLogger(__name__)
 
 BASE_TEMPLATE_COLLECTION = "templates"
+
+# A custom collection is pulled from S3 into SLIDE_TEMPLATES_DIR and swept once
+# the request that pulled it is done. That directory is shared, so a request
+# finishing first used to delete the layouts a slower one was still reading —
+# surfacing as "[Errno 2] No such file or directory: .../<variant>.svg" partway
+# through a deck. Requests register here and only the last one out sweeps.
+_COLLECTION_USERS: Dict[str, int] = {}
+_COLLECTION_USERS_LOCK = asyncio.Lock()
+
+
+async def _acquire_collection(name: str) -> None:
+    async with _COLLECTION_USERS_LOCK:
+        _COLLECTION_USERS[name] = _COLLECTION_USERS.get(name, 0) + 1
+
+
+async def _release_collection(name: str) -> bool:
+    """Drop this request's claim; True when nobody else is using the cache."""
+    async with _COLLECTION_USERS_LOCK:
+        remaining = _COLLECTION_USERS.get(name, 1) - 1
+        if remaining > 0:
+            _COLLECTION_USERS[name] = remaining
+            return False
+        _COLLECTION_USERS.pop(name, None)
+        return True
 
 # "auto" detects brand templates whose designs live in the Slide Master layouts,
 # "layouts" forces that reading, and "slides" extracts the deck's real slides.
@@ -259,6 +284,57 @@ def custom_select_and_fill_slide(variants, slide_content, **kwargs):
 
 slide_skills.svg_categories.select_and_fill_slide = custom_select_and_fill_slide
 
+
+# --- depth of the written copy -------------------------------------------------
+# `select_and_fill_slide` writes the final text that lands on every slide, so it
+# decides how substantial the deck reads — whatever the planner produced upstream
+# is rewritten here to fit the template's slots.
+#
+# The library's own prompt gives that rewrite a ceiling ("NEVER exceed a
+# placeholder's max_chars") and no floor. With nothing pushing the other way the
+# model settles far under budget and pads the space with assertions: three cards
+# each holding one slogan that restates its own heading. These rules add the
+# missing floor and say what the words have to earn.
+#
+# Appended rather than replaced, so the library's hard rules — clipping, empty
+# slots rendering as broken boxes, stat slots needing real figures, language
+# matching — keep working and keep tracking upstream changes.
+_DEPTH_RULES = """
+DEPTH — what separates a usable slide from a hollow one:
+- max_chars is a budget to SPEND, not merely a ceiling. For prose slots, land
+  between 70% and 100% of it. Copy far under budget leaves the design looking
+  empty and leaves the audience with nothing to take away.
+- Explain, do not assert. Every prose slot must add something its own label and
+  the slide title do not already say: the mechanism, a worked example, a figure,
+  a consequence, or the condition under which it applies.
+  Weak:   "Real exposure beats guesswork every time."
+  Strong: "Two weeks shadowing a data team shows how much of the job is
+           cleaning inputs, not modelling."
+- Never restate the slide title, or the placeholder's own name, as its content.
+- The supplied slide content is the source of truth. Carry its specifics through
+  — names, numbers, dates, examples. Never trade a concrete detail for a generic
+  phrase to save characters; drop a weaker clause instead.
+- These rules govern prose slots only. Headings, labels, stats and figures stay
+  as short as they are.
+"""
+
+
+def _with_depth_rules(system_prompt: str) -> str:
+    """Insert the depth rules ahead of the prompt's output-format block."""
+    if "DEPTH — what separates" in system_prompt:
+        return system_prompt  # already applied; module re-imported
+    marker = "Return ONLY JSON:"
+    if marker in system_prompt:
+        head, _, tail = system_prompt.partition(marker)
+        return f"{head}{_DEPTH_RULES}\n{marker}{tail}"
+    # Upstream reworded the output block — appending still reaches the model.
+    return f"{system_prompt}\n{_DEPTH_RULES}"
+
+
+slide_skills.svg_categories._SELECT_SYSTEM = _with_depth_rules(
+    slide_skills.svg_categories._SELECT_SYSTEM
+)
+
 # --- style-aware image prompts -------------------------------------------------
 # Generated images should match the collection's illustration style. The active
 # collection's collection.json may define "image_style"; we set it here before
@@ -299,6 +375,23 @@ def _set_image_style_for(library_dir) -> None:
         pass
 
 
+def _point_text(item: Any) -> str:
+    """One list entry as a single line of slide copy.
+
+    The planner may return a bare string, or a {title, description} pair when a
+    point carries a claim AND its explanation. A slide slot is one line, so the
+    pair is joined rather than dropped — losing the description is what made
+    generated decks read as headline-only.
+    """
+    if isinstance(item, dict):
+        title = str(item.get("title") or item.get("label") or "").strip()
+        desc = str(item.get("description") or item.get("desc") or "").strip()
+        if title and desc:
+            return f"{title} — {desc}"
+        return title or desc
+    return str(item)
+
+
 def flatten_slide_bindings(category: str, slide_title: str, bindings: dict) -> dict:
     flat = bindings.copy()
 
@@ -321,22 +414,22 @@ def flatten_slide_bindings(category: str, slide_title: str, bindings: dict) -> d
     # 1. Flatten AGENDA_OUTLINE: items -> items.1, items.2, etc.
     if "items" in bindings and isinstance(bindings["items"], list):
         for idx, item in enumerate(bindings["items"][:10], 1):
-            flat[f"items.{idx}"] = str(item)
-            flat[f"item_{idx}"] = str(item)
+            flat[f"items.{idx}"] = _point_text(item)
+            flat[f"item_{idx}"] = _point_text(item)
 
     # 2. Flatten TITLE_BULLETS: bullets -> bullets.1, bullets.2, etc.
     if "bullets" in bindings and isinstance(bindings["bullets"], list):
         for idx, item in enumerate(bindings["bullets"][:10], 1):
-            flat[f"bullets.{idx}"] = str(item)
-            flat[f"bullet_{idx}"] = str(item)
+            flat[f"bullets.{idx}"] = _point_text(item)
+            flat[f"bullet_{idx}"] = _point_text(item)
 
     # 3. Flatten TWO_COLUMN_SPLIT: left_col_text and right_col_text arrays
     if "left_col_text" in bindings and isinstance(bindings["left_col_text"], list):
         for idx, item in enumerate(bindings["left_col_text"][:10], 1):
-            flat[f"left_col_text.{idx}"] = str(item)
+            flat[f"left_col_text.{idx}"] = _point_text(item)
     if "right_col_text" in bindings and isinstance(bindings["right_col_text"], list):
         for idx, item in enumerate(bindings["right_col_text"][:10], 1):
-            flat[f"right_col_text.{idx}"] = str(item)
+            flat[f"right_col_text.{idx}"] = _point_text(item)
 
     # 4. Flatten BIG_QUOTE_TAKEAWAY: quote textwrap
     if "quote" in bindings and isinstance(bindings["quote"], str):
@@ -399,7 +492,7 @@ def flatten_slide_bindings(category: str, slide_title: str, bindings: dict) -> d
     # 11. Flatten CALL_TO_ACTION: action_items -> action_items.1, etc.
     if "action_items" in bindings and isinstance(bindings["action_items"], list):
         for idx, item in enumerate(bindings["action_items"][:10], 1):
-            flat[f"action_items.{idx}"] = str(item)
+            flat[f"action_items.{idx}"] = _point_text(item)
 
     # 12. Flatten QA_CONTACT: footer_note
     if "footer_note" in bindings and isinstance(bindings["footer_note"], str):
@@ -995,8 +1088,12 @@ class SlideService:
         temp_dir_context = None
 
         col_name = collection or BASE_TEMPLATE_COLLECTION
+        # Claim the cache before the download, so a request finishing now cannot
+        # sweep the directory out from under this one.
+        await _acquire_collection(col_name)
         collection_path = await self._ensure_collection_downloaded(col_name)
         if not any(collection_path.glob("**/*.svg")):
+            await _release_collection(col_name)
             raise ValueError(
                 f"Template collection '{col_name}' has no .svg layouts available. "
                 "Verify it exists under the 'templates/<collection>/' prefix in the "
@@ -1154,8 +1251,10 @@ class SlideService:
                     temp_dir_context.cleanup()
                 except Exception:
                     pass
-            # Remove the S3-downloaded collection from local disk after use
-            if col_name and col_name not in DEFAULT_COLLECTIONS:
+            # Remove the S3-downloaded collection from local disk after use,
+            # but only once every concurrent request has finished with it.
+            last_user = await _release_collection(col_name) if col_name else True
+            if col_name and col_name not in DEFAULT_COLLECTIONS and last_user:
                 col_path = Path(SLIDE_TEMPLATES_DIR) / col_name
                 if col_path.exists() and col_path.is_dir():
                     shutil.rmtree(col_path, ignore_errors=True)
@@ -1230,6 +1329,7 @@ class SlideService:
         slide["bindings"] = bindings
 
         col_name = req.collection or "templates"
+        await _acquire_collection(col_name)
         collection_path = await self._ensure_collection_downloaded(col_name)
 
         library_dir = SLIDE_TEMPLATES_DIR
@@ -1433,7 +1533,8 @@ class SlideService:
                     temp_dir_context.cleanup()
                 except Exception:
                     pass
-            if col_name and col_name not in DEFAULT_COLLECTIONS:
+            last_user = await _release_collection(col_name) if col_name else True
+            if col_name and col_name not in DEFAULT_COLLECTIONS and last_user:
                 col_path = Path(SLIDE_TEMPLATES_DIR) / col_name
                 if col_path.exists() and col_path.is_dir():
                     shutil.rmtree(col_path, ignore_errors=True)
