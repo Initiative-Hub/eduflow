@@ -83,6 +83,8 @@ export function getGameQuizCopy(t: Translate) {
       readyToStart: t('host.readyToStart'),
       shareLink: t('host.shareLink'),
       copyLink: t('host.copyLink'),
+      openQrCode: t('host.openQrCode'),
+      qrCodeDialogTitle: t('host.qrCodeDialogTitle'),
       players: t('host.players'),
       answers: t('host.answers'),
       answersCount: t('host.answersCount'),

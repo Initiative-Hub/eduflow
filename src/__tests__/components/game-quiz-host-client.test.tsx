@@ -14,6 +14,11 @@ const { replace } = vi.hoisted(() => ({ replace: vi.fn() }));
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ replace }) }));
 vi.mock('react-confetti', () => ({ default: () => null }));
+vi.mock('qrcode.react', () => ({
+  QRCodeSVG: ({ title, value }: { title: string; value: string }) => (
+    <svg aria-label={title} data-qr-value={value} role="img" />
+  ),
+}));
 
 const { answerProgress, command, getHostSession, heartbeatHost } = vi.hoisted(
   () => ({
@@ -320,6 +325,34 @@ describe('GameQuizHostClient', () => {
     expect(await screen.findByText('Sam')).toBeInTheDocument();
     expect(screen.getByText('SA')).toBeInTheDocument();
     expect(screen.queryByText('934')).not.toBeInTheDocument();
+  });
+
+  it('shares the join URL through an expandable QR code', async () => {
+    const user = userEvent.setup();
+    getHostSession.mockResolvedValue(createSession('LOBBY'));
+    answerProgress.mockResolvedValue({ answerCount: 0 });
+
+    renderHost();
+
+    const qrTrigger = await screen.findByRole('button', {
+      name: 'host.openQrCode',
+    });
+    expect(qrTrigger.querySelector('[data-qr-value]')).toHaveAttribute(
+      'data-qr-value',
+      'http://localhost:3000/games/join?code=123456'
+    );
+
+    await user.click(qrTrigger);
+
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog).toHaveAccessibleName('host.qrCodeDialogTitle');
+    expect(dialog.querySelector('[data-qr-value]')).toHaveAttribute(
+      'data-qr-value',
+      'http://localhost:3000/games/join?code=123456'
+    );
+
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('renders the mandatory scoreboard with Next', async () => {

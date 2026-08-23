@@ -39,6 +39,7 @@ import {
 import { cn } from '@/lib/utils';
 import { type GameHostAction, gameQuizApi } from './api';
 import { type GameQuizCopy, gameQuizCopy } from './copy';
+import { GameQuizJoinQrCode } from './game-quiz-join-qr-code';
 import { GameQuizPodium } from './game-quiz-podium';
 import { GameQuizRespondentStack } from './game-quiz-respondent-stack';
 import { clearLiveGameSession } from './live-game-session';
@@ -290,18 +291,18 @@ function HostLobby({
   onCommand: (action: GameHostAction, joiningLocked?: boolean) => void;
   session: GameSessionSnapshot;
 }) {
+  const joinUrl = new URL(
+    `/games/join?code=${session.joinCode}`,
+    window.location.origin
+  ).toString();
+
   const copyCode = async () => {
     await navigator.clipboard.writeText(session.joinCode);
     toast.success(copy.common.copied);
   };
 
   const copyJoinLink = async () => {
-    await navigator.clipboard.writeText(
-      new URL(
-        `/games/join?code=${session.joinCode}`,
-        window.location.origin
-      ).toString()
-    );
+    await navigator.clipboard.writeText(joinUrl);
     toast.success(copy.common.copied);
   };
 
@@ -312,44 +313,51 @@ function HostLobby({
         <p className="font-medium text-muted-foreground text-xs uppercase tracking-[0.2em]">
           {copy.host.joinAt}
         </p>
-        <Card className="group relative border border-border/60 px-10 py-6 text-center shadow-lg transition-shadow hover:shadow-xl sm:px-16 sm:py-8">
-          <div className="absolute top-3 right-3 flex items-center gap-1 opacity-0 transition-opacity duration-200 focus-within:opacity-100 group-hover:opacity-100">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  aria-label={copy.host.joinCode}
-                  onClick={copyCode}
-                  size="icon-sm"
-                  variant="ghost"
-                >
-                  <Copy className="size-4" aria-hidden="true" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top">
-                <p>{copy.host.joinCode}</p>
-              </TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  aria-label={copy.host.copyLink}
-                  onClick={copyJoinLink}
-                  size="icon-sm"
-                  variant="ghost"
-                >
-                  <LinkIcon className="size-4" aria-hidden="true" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top">
-                <p>{copy.host.copyLink}</p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
+        <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-stretch">
+          <Card className="group relative flex items-center justify-center border border-border/60 px-10 py-6 shadow-lg transition-shadow hover:shadow-xl">
+            <div className="absolute top-3 right-3 flex items-center gap-1 opacity-0 transition-opacity duration-200 focus-within:opacity-100 group-hover:opacity-100">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    aria-label={copy.host.joinCode}
+                    onClick={copyCode}
+                    size="icon-sm"
+                    variant="ghost"
+                  >
+                    <Copy className="size-4" aria-hidden="true" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  <p>{copy.host.joinCode}</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    aria-label={copy.host.copyLink}
+                    onClick={copyJoinLink}
+                    size="icon-sm"
+                    variant="ghost"
+                  >
+                    <LinkIcon className="size-4" aria-hidden="true" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  <p>{copy.host.copyLink}</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
 
-          <span className="font-extrabold text-5xl tracking-widest sm:text-7xl">
-            {session.joinCode}
-          </span>
-        </Card>
+            <span className="text-center font-extrabold text-5xl tracking-widest sm:text-7xl">
+              {session.joinCode}
+            </span>
+          </Card>
+          <GameQuizJoinQrCode
+            dialogTitle={copy.host.qrCodeDialogTitle}
+            joinUrl={joinUrl}
+            openLabel={copy.host.openQrCode}
+          />
+        </div>
 
         {/* Status badge */}
         <Badge
