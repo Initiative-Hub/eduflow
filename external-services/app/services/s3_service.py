@@ -160,3 +160,37 @@ async def list_files_in_s3_prefix(
     except Exception as e:
         logger.error(f"Failed to list S3 prefix {prefix}: {e}")
         return []
+
+
+async def delete_s3_prefix(prefix: str, bucket_name: str | None = None) -> int:
+    """Delete every object under a prefix. Returns how many keys were removed.
+
+    Used to drop a template layout, so the deleted design cannot come back the
+    next time the collection is pulled from S3.
+    """
+    try:
+        s3 = get_s3_client()
+        if not s3:
+            return 0
+
+        bucket = bucket_name or AWS_S3_BUCKET
+        keys = await list_files_in_s3_prefix(prefix, bucket_name)
+        if not keys:
+            return 0
+
+        def delete_keys() -> int:
+            removed = 0
+            # delete_objects takes at most 1000 keys per call
+            for start in range(0, len(keys), 1000):
+                batch = keys[start : start + 1000]
+                s3.delete_objects(
+                    Bucket=bucket,
+                    Delete={"Objects": [{"Key": k} for k in batch]},
+                )
+                removed += len(batch)
+            return removed
+
+        return await run_in_threadpool(delete_keys)
+    except Exception as e:
+        logger.error(f"Failed to delete S3 prefix {prefix}: {e}")
+        return 0

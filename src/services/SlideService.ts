@@ -516,4 +516,30 @@ export class SlideService {
     return res.json();
   }
 
+  /**
+   * Permanently remove one layout from a collection, locally and in S3.
+   *
+   * The service refuses to remove the last layout, which surfaces as a 400 —
+   * pass the message through so the reviewer sees why rather than a generic
+   * failure.
+   */
+  static async deleteTemplateCategory(
+    collectionName: string,
+    category: string
+  ): Promise<{ deleted: boolean; remaining: number }> {
+    const res = await fetch(
+      `${SlideService.getExternalServiceUrl()}/slides/templates/${encodeURIComponent(collectionName)}/categories/${encodeURIComponent(category)}`,
+      { method: 'DELETE', cache: 'no-store' }
+    );
+    if (!res.ok) {
+      const detail = await res
+        .json()
+        .then((body) => body?.detail)
+        .catch(() => null);
+      throw new Error(detail || `Failed to delete layout: ${res.statusText}`);
+    }
+    SlideService.clearCache(collectionName);
+    return res.json();
+  }
+
 }

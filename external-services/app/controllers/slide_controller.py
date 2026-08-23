@@ -193,3 +193,17 @@ async def update_template_slots(collection: str, req: SlotEditsReq):
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/templates/{collection}/categories/{category}")
+async def delete_template_category(collection: str, category: str):
+    """Permanently remove one layout from a collection, locally and in S3."""
+    from app.services.slide_service import delete_collection_category
+    try:
+        return await delete_collection_category(collection, category)
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

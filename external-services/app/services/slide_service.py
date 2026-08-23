@@ -2051,3 +2051,55 @@ async def update_collection_slots(collection: str, category: str, variant: str,
                 bucket_name=bucket)
     result["synced"] = True
     return result
+
+
+async def delete_collection_category(collection: str, category: str) -> Dict[str, Any]:
+    """Drop one layout from a collection, locally and in S3.
+
+    Extraction turns every slide or master layout into a category, so a deck
+    imported as a template brings along duplicates and dividers nobody wants to
+    generate onto. Removing one here stops the planner ever selecting it.
+
+    The last remaining layout is refused: a collection with no categories is not
+    an empty collection, it is a broken one that fails at generation time.
+    """
+    # `category` reaches this from a URL path, so it must not be able to climb
+    # out of the collection directory.
+    if not category or category in (".", "..") or "/" in category or "\\" in category:
+        raise ValueError(f"Invalid category name: {category!r}")
+
+    svc = SlideService()
+    library_dir = await svc._ensure_collection_downloaded(collection)
+    target = Path(library_dir) / category
+    if not target.exists() or not target.is_dir():
+        raise FileNotFoundError(f"{category} not found in {collection}")
+
+    siblings = [
+        child
+        for child in Path(library_dir).iterdir()
+        if child.is_dir() and any(child.glob("*.svg"))
+    ]
+    if len(siblings) <= 1:
+        raise ValueError(
+            f"'{category}' is the only layout left in '{collection}' — "
+            "delete the whole collection instead of emptying it"
+        )
+
+    from app.services.s3_service import delete_s3_prefix
+
+    removed_keys = await delete_s3_prefix(
+        f"templates/{collection}/{category}/",
+        bucket_name=svc._template_bucket(collection),
+    )
+    await run_in_threadpool(shutil.rmtree, target)
+    logger.info(
+        f"Deleted layout '{category}' from '{collection}' "
+        f"({removed_keys} S3 object(s) removed)"
+    )
+    return {
+        "collection": collection,
+        "category": category,
+        "deleted": True,
+        "s3_objects_removed": removed_keys,
+        "remaining": len(siblings) - 1,
+    }

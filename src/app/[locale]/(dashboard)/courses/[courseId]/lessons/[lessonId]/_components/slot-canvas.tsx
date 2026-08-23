@@ -3,9 +3,32 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { TemplateSlot } from '@/services/SlideService';
 
-/** Slides are authored on a fixed 1440x810 canvas. */
-const SLIDE_W = 1440;
-const SLIDE_H = 810;
+/**
+ * Fallback canvas, used only when the SVG declares no size at all.
+ *
+ * Slot coordinates are in the template SVG's own user units, and extraction
+ * emits several sizes depending on the source deck (720x405, 960x540 and
+ * 1440x810 all occur in one library). Assuming one of them would draw every
+ * box at the wrong scale, so the real viewBox is read off the SVG instead.
+ */
+const FALLBACK_W = 1440;
+const FALLBACK_H = 810;
+
+/** Parse the user-unit canvas the slot coordinates are expressed in. */
+function readViewBox(svg: SVGSVGElement): { w: number; h: number } | null {
+  const vb = svg.getAttribute('viewBox');
+  if (vb) {
+    // "min-x min-y width height", separated by whitespace and/or commas
+    const parts = vb.trim().split(/[\s,]+/).map(Number);
+    if (parts.length === 4 && parts[2] > 0 && parts[3] > 0) {
+      return { w: parts[2], h: parts[3] };
+    }
+  }
+  const w = Number.parseFloat(svg.getAttribute('width') ?? '');
+  const h = Number.parseFloat(svg.getAttribute('height') ?? '');
+  if (w > 0 && h > 0) return { w, h };
+  return null;
+}
 
 const KIND_COLOR: Record<string, string> = {
   text: '#2F6FEB',
@@ -57,6 +80,30 @@ export function SlotCanvas({
     startY: number;
     box: SlotBox;
   } | null>(null);
+  /** The injected slide's own coordinate space; null until it has been read. */
+  const [canvas, setCanvas] = useState<{ w: number; h: number } | null>(null);
+
+  // Read the coordinate space off the SVG each time one is injected. Every
+  // percentage below divides by this, so an outline lands exactly where the
+  // element it describes is painted.
+  useEffect(() => {
+    if (!backdrop) {
+      setCanvas(null);
+      return;
+    }
+    const svg = svgHost.current?.querySelector('svg');
+    if (!svg) {
+      setCanvas(null);
+      return;
+    }
+    // An SVG with no declared size still gets boxes, on the fallback canvas;
+    // null is reserved for "no slide injected yet" so the outlines can be held
+    // back until they can be placed correctly.
+    setCanvas(readViewBox(svg) ?? { w: FALLBACK_W, h: FALLBACK_H });
+  }, [backdrop]);
+
+  const slideW = canvas?.w ?? FALLBACK_W;
+  const slideH = canvas?.h ?? FALLBACK_H;
 
   const boxFor = useCallback(
     (slot: TemplateSlot): SlotBox => {
@@ -64,11 +111,14 @@ export function SlotCanvas({
       return {
         x: o.x ?? slot.x,
         y: o.y ?? slot.y,
-        w: o.w ?? slot.w ?? 240,
-        h: o.h ?? slot.h ?? Math.max(slot.font_pt * 1.4, 24),
+        // Defaults for slots extraction left unsized are a fraction of the
+        // canvas, not pixels — a literal 240 is a sixth of a 1440 slide but a
+        // third of a 720 one.
+        w: o.w ?? slot.w ?? slideW / 6,
+        h: o.h ?? slot.h ?? Math.max(slot.font_pt * 1.4, slideH / 34),
       };
     },
-    [overrides]
+    [overrides, slideW, slideH]
   );
 
   /**
@@ -121,14 +171,17 @@ export function SlotCanvas({
     }
   }, [backdrop, overrides, slots, nudgeElements]);
 
-  const toSlideUnits = useCallback((dxPx: number, dyPx: number) => {
-    const rect = ref.current?.getBoundingClientRect();
-    if (!rect || rect.width === 0) return { dx: 0, dy: 0 };
-    return {
-      dx: (dxPx / rect.width) * SLIDE_W,
-      dy: (dyPx / rect.height) * SLIDE_H,
-    };
-  }, []);
+  const toSlideUnits = useCallback(
+    (dxPx: number, dyPx: number) => {
+      const rect = ref.current?.getBoundingClientRect();
+      if (!rect || rect.width === 0) return { dx: 0, dy: 0 };
+      return {
+        dx: (dxPx / rect.width) * slideW,
+        dy: (dyPx / rect.height) * slideH,
+      };
+    },
+    [slideW, slideH]
+  );
 
   const onPointerMove = useCallback(
     (e: React.PointerEvent) => {
@@ -147,8 +200,8 @@ export function SlotCanvas({
             }
           : {
               ...drag.box,
-              w: Math.max(24, Math.round(drag.box.w + dx)),
-              h: Math.max(16, Math.round(drag.box.h + dy)),
+              w: Math.max(slideW / 60, Math.round(drag.box.w + dx)),
+              h: Math.max(slideH / 50, Math.round(drag.box.h + dy)),
             };
       if (slot) {
         nudgeElements(
@@ -161,11 +214,14 @@ export function SlotCanvas({
       }
       onChange(drag.name, next);
     },
-    [drag, onChange, toSlideUnits, slots, nudgeElements]
+    [drag, onChange, toSlideUnits, slots, nudgeElements, slideW, slideH]
   );
 
   const endDrag = useCallback(() => setDrag(null), []);
 
+  // The frame takes the slide's own aspect, so `[&>svg]:h-full [&>svg]:w-full`
+  // scales the SVG uniformly and one user unit covers the same fraction of the
+  // frame on both axes — which is what makes the percentages below line up.
   return (
     <div
       className="relative w-full select-none overflow-hidden rounded-lg bg-white"
@@ -173,7 +229,7 @@ export function SlotCanvas({
       onPointerMove={onPointerMove}
       onPointerUp={endDrag}
       ref={ref}
-      style={{ aspectRatio: `${SLIDE_W} / ${SLIDE_H}` }}
+      style={{ aspectRatio: `${slideW} / ${slideH}` }}
     >
       {backdrop ? (
         // biome-ignore lint/security/noDangerouslySetInnerHtml: server-rendered template SVG
@@ -186,7 +242,7 @@ export function SlotCanvas({
         <div className="absolute inset-0 bg-slate-100 dark:bg-slate-800" />
       )}
 
-      {slots.map((slot) => {
+      {(canvas ? slots : []).map((slot) => {
         const box = boxFor(slot);
         const top = box.y - (slot.kind === 'text' ? slot.font_pt * 0.85 : 0);
         const colour = KIND_COLOR[slot.kind] ?? '#888888';
@@ -208,10 +264,10 @@ export function SlotCanvas({
               });
             }}
             style={{
-              left: `${(box.x / SLIDE_W) * 100}%`,
-              top: `${(top / SLIDE_H) * 100}%`,
-              width: `${(box.w / SLIDE_W) * 100}%`,
-              height: `${(box.h / SLIDE_H) * 100}%`,
+              left: `${(box.x / slideW) * 100}%`,
+              top: `${(top / slideH) * 100}%`,
+              width: `${(box.w / slideW) * 100}%`,
+              height: `${(box.h / slideH) * 100}%`,
               // only outline while selected/dragging, so the slide stays readable
               border: isActive
                 ? `2px solid ${colour}`
