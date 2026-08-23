@@ -196,6 +196,9 @@ const ALL_LAYOUT_CATEGORIES = [
   'CIRCLE_CYCLE',
 ];
 
+const selectItemHighlightClassName =
+  'focus:bg-primary/20 focus:text-foreground focus:**:!text-foreground data-highlighted:bg-primary/10 data-highlighted:text-foreground data-highlighted:**:!text-foreground';
+
 interface LayoutCategorySelectProps {
   value: string;
   onValueChange: (val: string) => void;
