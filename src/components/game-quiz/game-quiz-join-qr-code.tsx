@@ -28,7 +28,7 @@ export function GameQuizJoinQrCode({
         variant="outline"
       >
         <QRCodeSVG
-          className="block size-[132px]"
+          className="block size-33"
           level="M"
           marginSize={4}
           size={132}
