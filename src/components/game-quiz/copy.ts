@@ -88,6 +88,7 @@ export function getGameQuizCopy(t: Translate) {
       players: t('host.players'),
       answers: t('host.answers'),
       answersCount: t('host.answersCount'),
+      question: t('host.question'),
       joinOpen: t('host.joinOpen'),
       joinLocked: t('host.joinLocked'),
       lockJoining: t('host.lockJoining'),

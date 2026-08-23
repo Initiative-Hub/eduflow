@@ -464,6 +464,7 @@ function QuestionStage({
   >;
   const revealed = session.phase === 'REVEAL';
   const totalAnswers = session.participants.length || session.answerCount || 1;
+  const questionNumber = session.currentRoundIndex + 1;
   const action: GameHostAction =
     session.phase === 'QUESTION_OPEN' ? 'SKIP' : 'NEXT';
   const actionLabel =
@@ -473,68 +474,80 @@ function QuestionStage({
     <main className="min-h-[calc(100vh-6rem)] px-4 py-8">
       <div className="mx-auto flex max-w-4xl flex-col gap-8">
         {/* Top Control Bar */}
-        <div className="flex items-center justify-between gap-4">
-          {/* Answers Pill (Left) */}
-          <div className="flex items-center gap-2.5 rounded-full border border-border/40 bg-card px-4 py-2 shadow-xs">
-            <Users className="size-4 text-purple-600" aria-hidden="true" />
-            <span className="font-extrabold text-base text-foreground tabular-nums">
-              {answerCount}/{totalAnswers}
-            </span>
-            <span className="font-semibold text-muted-foreground text-xs uppercase tracking-wider">
-              {copy.host.answersCount}
-            </span>
+        <div className="space-y-4">
+          <div className="flex items-center justify-center">
+            <div className="flex w-fit items-center gap-2 rounded-full border border-primary/20 bg-primary/10 py-1 pr-1 pl-3 shadow-xs">
+              <span className="font-semibold text-primary text-sm uppercase tracking-[0.16em]">
+                {copy.host.question}
+              </span>
+              <span className="rounded-full bg-primary px-2 py-0.5 font-bold text-primary-foreground text-sm tabular-nums">
+                {questionNumber} / {session.totalRounds}
+              </span>
+            </div>
           </div>
+          <div className="flex items-center justify-between gap-4">
+            {/* Answers Pill (Left) */}
+            <div className="flex items-center gap-2.5 rounded-full border border-border/40 bg-card px-4 py-2 shadow-xs">
+              <Users className="size-4 text-purple-600" aria-hidden="true" />
+              <span className="font-extrabold text-base text-foreground tabular-nums">
+                {answerCount}/{totalAnswers}
+              </span>
+              <span className="font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+                {copy.host.answersCount}
+              </span>
+            </div>
 
-          {/* Timer Circle (Center) */}
-          {!revealed ? (
-            <CountdownBadge deadlineAt={round.deadlineAt} />
-          ) : (
-            <div className="size-16" />
-          )}
+            {/* Timer and question progress (Center) */}
+            {!revealed ? (
+              <CountdownBadge deadlineAt={round.deadlineAt} />
+            ) : (
+              <div className="size-16" />
+            )}
 
-          {/* Action Pill Buttons (Right) */}
-          <div className="flex items-center gap-2">
-            <Button
-              className="rounded-full border-border/60 bg-card px-4 py-3 font-medium text-foreground text-sm shadow-xs hover:bg-muted"
-              disabled={isPending}
-              onClick={() => onCommand(action)}
-              size="sm"
-              variant="outline"
-            >
-              {isPending ? (
-                <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-              ) : null}
-              {actionLabel}
-            </Button>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  className="rounded-full bg-primary px-4 py-3 font-medium text-sm shadow-xs hover:bg-primary/90"
-                  disabled={isPending}
-                >
-                  {copy.host.endGame}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>
-                    {copy.host.endGameConfirmTitle}
-                  </AlertDialogTitle>
-                  <AlertDialogDescription>
-                    {copy.host.endGameConfirmDescription}
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>{copy.common.cancel}</AlertDialogCancel>
-                  <AlertDialogAction
-                    variant="destructive"
-                    onClick={() => onCommand('END_GAME')}
+            {/* Action Pill Buttons (Right) */}
+            <div className="flex items-center gap-2">
+              <Button
+                className="rounded-full border-border/60 bg-card px-4 py-3 font-medium text-foreground text-sm shadow-xs hover:bg-muted"
+                disabled={isPending}
+                onClick={() => onCommand(action)}
+                size="sm"
+                variant="outline"
+              >
+                {isPending ? (
+                  <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                ) : null}
+                {actionLabel}
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    className="rounded-full bg-primary px-4 py-3 font-medium text-sm shadow-xs hover:bg-primary/90"
+                    disabled={isPending}
                   >
                     {copy.host.endGame}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      {copy.host.endGameConfirmTitle}
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {copy.host.endGameConfirmDescription}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>{copy.common.cancel}</AlertDialogCancel>
+                    <AlertDialogAction
+                      variant="destructive"
+                      onClick={() => onCommand('END_GAME')}
+                    >
+                      {copy.host.endGame}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
           </div>
         </div>
 

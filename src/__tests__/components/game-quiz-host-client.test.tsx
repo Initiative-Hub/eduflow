@@ -279,6 +279,8 @@ describe('GameQuizHostClient', () => {
     expect(
       await screen.findByRole('button', { name: 'host.skip' })
     ).toBeInTheDocument();
+    expect(screen.getByText('host.question')).toBeInTheDocument();
+    expect(screen.getByText('1 / 2')).toBeInTheDocument();
     expect(screen.queryByText('host.lockAnswers')).not.toBeInTheDocument();
     expect(screen.queryByText('host.reveal')).not.toBeInTheDocument();
   });
