@@ -58,6 +58,7 @@ export default function CourseFilesClient() {
     closePreview,
     createFolderDialog,
     createFolderPending,
+    currentFolderName,
     deleteDialog,
     deletePending,
     entries,
@@ -215,6 +216,7 @@ export default function CourseFilesClient() {
         currentPage={currentPage}
         endItem={endItem}
         entries={entries}
+        currentFolderName={currentFolderName}
         files={files}
         folders={folders}
         isLoading={isLoading}

@@ -11,6 +11,7 @@ import type { CourseContentPipelineState } from '@/lib/course-content/pipeline-s
 import type { CourseContentSearchSourcesState } from '@/lib/course-content/search-source-state';
 import { inventoryService } from '../../../../inventory/inventory.service';
 import type { InventoryEntry } from '../../../../inventory/inventory.types';
+import { STORAGE_MAX_FILE_SIZE_BYTES } from '../../../../inventory/inventory.types';
 import { formatFileSize } from '../../../../inventory/inventory.utils';
 import { useInventory } from '../../../../inventory/use-inventory';
 import type {
@@ -96,6 +97,7 @@ export function AiClientDialog({
     string | null
   >(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [context, setContext] = useState('');
   const [lastSelection, setLastSelection] = useState<{
@@ -178,7 +180,28 @@ export function AiClientDialog({
 
   const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file?.type !== 'application/pdf') return;
+
+    if (!file) return;
+
+    if (file.type !== 'application/pdf') {
+      setUploadedFile(null);
+      setUploadError(t('pdfOnly'));
+      e.target.value = '';
+      return;
+    }
+
+    if (file.size > STORAGE_MAX_FILE_SIZE_BYTES) {
+      setUploadedFile(null);
+      setUploadError(
+        t('fileTooLarge', {
+          size: formatFileSize(STORAGE_MAX_FILE_SIZE_BYTES),
+        })
+      );
+      e.target.value = '';
+      return;
+    }
+
+    setUploadError(null);
     setIsProcessing(true);
     setSelectedPersonalId(null);
     setSelectedCourseId(null);
@@ -231,6 +254,7 @@ export function AiClientDialog({
       setPhase('select');
       setContext('');
       setLastSelection(null);
+      setUploadError(null);
     }
     onOpenChange(open);
   };
@@ -400,9 +424,14 @@ export function AiClientDialog({
           onCourseBack={handleCourseBack}
           onCourseEntryClick={handleCourseEntryClick}
           uploadedFile={uploadedFile}
+          uploadError={uploadError}
+          maxFileSizeLabel={formatFileSize(STORAGE_MAX_FILE_SIZE_BYTES)}
           isProcessing={isProcessing}
           onFileUpload={handleFileUpload}
-          onClearUpload={() => setUploadedFile(null)}
+          onClearUpload={() => {
+            setUploadedFile(null);
+            setUploadError(null);
+          }}
         />
       )}
     </DialogTemplate>

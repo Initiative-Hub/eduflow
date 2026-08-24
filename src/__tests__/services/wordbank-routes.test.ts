@@ -1,5 +1,5 @@
 import type { NextRequest } from 'next/server';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const updateList = vi.hoisted(() => vi.fn());
 const saveMany = vi.hoisted(() => vi.fn());
@@ -25,6 +25,10 @@ function jsonRequest(body: unknown): NextRequest {
 }
 
 describe('Wordbank routes', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('accepts a full source sentence as a saved vocabulary example', async () => {
     const fullSentence = `${'A'.repeat(798)}.`;
     saveMany.mockResolvedValue({
@@ -53,6 +57,52 @@ describe('Wordbank routes', () => {
     expect(response.status).toBe(200);
     expect(saveMany).toHaveBeenCalledWith('user-1', [
       expect.objectContaining({ exampleSentence: fullSentence }),
+    ]);
+  });
+
+  it('accepts duplicate words in one save request', async () => {
+    saveMany.mockResolvedValue({
+      savedCount: 2,
+      savedWords: ['run', 'run'],
+      total: 2,
+    });
+    const { POST } = await import('@/app/api/v1/english/wordbank/route');
+
+    const response = await POST(
+      jsonRequest({
+        vocabulary: [
+          {
+            word: 'run',
+            partOfSpeech: 'verb',
+            ipa: null,
+            audioUrl: null,
+            englishDefinition: 'To move quickly on foot.',
+            vietnameseTranslation: 'Chạy.',
+            exampleSentence: 'I run every morning.',
+          },
+          {
+            word: 'run',
+            partOfSpeech: 'noun',
+            ipa: null,
+            audioUrl: null,
+            englishDefinition: 'A period of continuous operation.',
+            vietnameseTranslation: 'Một giai đoạn vận hành liên tục.',
+            exampleSentence: 'The machine had a long run.',
+          },
+        ],
+      })
+    );
+
+    expect(response.status).toBe(200);
+    expect(saveMany).toHaveBeenCalledWith('user-1', [
+      expect.objectContaining({
+        word: 'run',
+        englishDefinition: 'To move quickly on foot.',
+      }),
+      expect.objectContaining({
+        word: 'run',
+        englishDefinition: 'A period of continuous operation.',
+      }),
     ]);
   });
 

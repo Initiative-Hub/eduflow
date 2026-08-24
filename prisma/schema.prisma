@@ -881,7 +881,6 @@ model SavedVocabulary {
 
   listItems SavedVocabularyListItem[]
 
-  @@unique([userId, word])
   @@index([userId, savedAt(sort: Desc)])
   @@index([userId, masteryLevel, nextReviewAt])
   @@map("saved_vocabulary")

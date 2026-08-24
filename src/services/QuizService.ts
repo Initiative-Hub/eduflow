@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { generateText, Output } from 'ai';
 import type { z } from 'zod';
@@ -404,35 +405,58 @@ export class QuizService {
 
     const quiz = await prisma.$transaction(async (tx) => {
       if (data.questions?.length) {
-        selectedQuestionIds = [];
-        for (const [index, questionData] of data.questions.entries()) {
-          const existingQuestionId = data.questionIds?.[index];
-          if (existingQuestionId) {
-            const existing = await tx.question.findFirst({
-              where: { id: existingQuestionId, courseId },
-              select: { id: true },
-            });
-            if (!existing) throw new Error('Question not found');
-            selectedQuestionIds.push(existing.id);
-            continue;
-          }
+        const existingQuestionIds = data.questionIds?.filter(
+          (questionId): questionId is string => Boolean(questionId)
+        );
 
-          const taxonomy = getQuestionTaxonomy(questionData.type);
-          const created = await tx.question.create({
-            data: {
-              courseId,
-              ...taxonomy,
-              prompt: getQuestionPrompt(questionData),
-              answerData: questionToJson(questionData),
-              explanation: getQuestionExplanation(questionData),
-            },
+        if (existingQuestionIds?.length) {
+          const existingQuestions = await tx.question.findMany({
+            where: { id: { in: existingQuestionIds }, courseId },
             select: { id: true },
           });
-          selectedQuestionIds.push(created.id);
+          const foundQuestionIds = new Set(
+            existingQuestions.map(({ id }) => id)
+          );
+          const allQuestionIdsExist = existingQuestionIds.every((questionId) =>
+            foundQuestionIds.has(questionId)
+          );
+          if (!allQuestionIdsExist) throw new Error('Question not found');
         }
+
+        const generatedQuestionIds = new Map<number, string>();
+        const questionsToCreate: Prisma.QuestionCreateManyInput[] = [];
+
+        for (const [index, questionData] of data.questions.entries()) {
+          if (data.questionIds?.[index]) continue;
+          const taxonomy = getQuestionTaxonomy(questionData.type);
+          const questionId = randomUUID();
+          generatedQuestionIds.set(index, questionId);
+          questionsToCreate.push({
+            id: questionId,
+            courseId,
+            ...taxonomy,
+            prompt: getQuestionPrompt(questionData),
+            answerData: questionToJson(questionData),
+            explanation: getQuestionExplanation(questionData),
+          });
+        }
+
+        if (questionsToCreate.length > 0) {
+          await tx.question.createMany({
+            data: questionsToCreate,
+          });
+        }
+
+        selectedQuestionIds = data.questions.map((_, index) => {
+          const existingQuestionId = data.questionIds?.[index];
+          if (existingQuestionId) return existingQuestionId;
+          const generatedQuestionId = generatedQuestionIds.get(index);
+          if (!generatedQuestionId) throw new Error('Question not found');
+          return generatedQuestionId;
+        });
       }
 
-      return tx.quiz.create({
+      const createdQuiz = await tx.quiz.create({
         data: {
           courseId,
           title: data.title,
@@ -442,18 +466,36 @@ export class QuizService {
           questionCount: selectedQuestionIds.length,
           questionCounts: data.questionCounts,
           questions: [],
-          lessonQuizzes: {
-            create: data.lessonIds.map((lessonId) => ({ lessonId })),
-          },
-          quizQuestions: {
-            create: selectedQuestionIds.map((questionId, orderIndex) => ({
-              questionId,
-              orderIndex,
-            })),
-          },
         },
+        select: { id: true },
+      });
+
+      if (data.lessonIds.length > 0) {
+        await tx.lessonQuiz.createMany({
+          data: data.lessonIds.map((lessonId) => ({
+            quizId: createdQuiz.id,
+            lessonId,
+          })),
+        });
+      }
+
+      if (selectedQuestionIds.length > 0) {
+        await tx.quizQuestion.createMany({
+          data: selectedQuestionIds.map((questionId, orderIndex) => ({
+            quizId: createdQuiz.id,
+            questionId,
+            orderIndex,
+          })),
+        });
+      }
+
+      const persistedQuiz = await tx.quiz.findUnique({
+        where: { id: createdQuiz.id },
         include: quizRelations,
       });
+      if (!persistedQuiz) throw new Error('Quiz not found');
+
+      return persistedQuiz;
     });
 
     return withLessonIds(quiz);
@@ -483,40 +525,58 @@ export class QuizService {
       throw new Error('Forbidden');
     }
 
+    const persistedQuestionIds = questions.map(
+      (_, index) => questionIds[index] ?? randomUUID()
+    );
+    const questionWrites = questions.map((questionData, index) => {
+      const explanation =
+        typeof questionData.explanation === 'string'
+          ? questionData.explanation
+          : null;
+      const taxonomy = getQuestionTaxonomy(questionData.type);
+      const data = {
+        ...taxonomy,
+        prompt: getQuestionPrompt(questionData),
+        answerData: questionToJson(questionData),
+        explanation,
+      };
+
+      return {
+        existingQuestionId: questionIds[index],
+        persistedQuestionId: persistedQuestionIds[index],
+        data,
+      };
+    });
+    const questionsToCreate: Prisma.QuestionCreateManyInput[] = questionWrites
+      .filter(({ existingQuestionId }) => !existingQuestionId)
+      .map(({ persistedQuestionId, data }) => ({
+        id: persistedQuestionId,
+        courseId: quiz.courseId,
+        ...data,
+      }));
+    const questionsToUpdate = questionWrites.filter(
+      (
+        write
+      ): write is typeof write & {
+        existingQuestionId: string;
+      } => Boolean(write.existingQuestionId)
+    );
+
     const updatedQuiz = await prisma.$transaction(async (tx) => {
-      const persistedQuestionIds: string[] = [];
-
-      for (const [orderIndex, questionData] of questions.entries()) {
-        const questionId = questionIds[orderIndex];
-        const explanation =
-          typeof questionData.explanation === 'string'
-            ? questionData.explanation
-            : null;
-        const taxonomy = getQuestionTaxonomy(questionData.type);
-        const data = {
-          ...taxonomy,
-          prompt: getQuestionPrompt(questionData),
-          answerData: questionToJson(questionData),
-          explanation,
-        };
-
-        if (questionId) {
+      await Promise.all(
+        questionsToUpdate.map(async ({ existingQuestionId, data }) => {
           const updated = await tx.question.updateMany({
-            where: { id: questionId, courseId: quiz.courseId },
+            where: { id: existingQuestionId, courseId: quiz.courseId },
             data,
           });
           if (updated.count !== 1) throw new Error('Question not found');
-          persistedQuestionIds.push(questionId);
-        } else {
-          const created = await tx.question.create({
-            data: {
-              courseId: quiz.courseId,
-              ...data,
-            },
-            select: { id: true },
-          });
-          persistedQuestionIds.push(created.id);
-        }
+        })
+      );
+
+      if (questionsToCreate.length > 0) {
+        await tx.question.createMany({
+          data: questionsToCreate,
+        });
       }
 
       await tx.quizQuestion.deleteMany({ where: { quizId } });

@@ -101,9 +101,6 @@ const formatLayoutName = (layout: string, t: any) => {
     .join(' ');
 };
 
-const selectItemHighlightClassName =
-  'focus:bg-primary/20 focus:text-foreground focus:**:!text-foreground data-highlighted:bg-primary/10 data-highlighted:text-foreground data-highlighted:**:!text-foreground';
-
 function RawBindingsEditor({
   bindings,
   onChangeBindings,
@@ -199,6 +196,9 @@ const ALL_LAYOUT_CATEGORIES = [
   'CIRCLE_CYCLE',
 ];
 
+const selectItemHighlightClassName =
+  'focus:bg-primary/20 focus:text-foreground focus:**:!text-foreground data-highlighted:bg-primary/10 data-highlighted:text-foreground data-highlighted:**:!text-foreground';
+
 interface LayoutCategorySelectProps {
   value: string;
   onValueChange: (val: string) => void;
@@ -247,8 +247,7 @@ function LayoutCategorySelect({
                 onPointerEnter={() => setHoveredCategory(layout)}
                 onFocus={() => setHoveredCategory(layout)}
                 className={cn(
-                  'cursor-pointer rounded-xl px-3 py-2 font-medium text-foreground text-xs transition-colors hover:bg-accent focus:bg-accent',
-                  selectItemHighlightClassName
+                  'cursor-pointer rounded-xl px-3 py-2 font-medium text-foreground text-xs transition-colors hover:bg-primary/10 hover:text-primary focus:bg-primary/15 focus:text-primary'
                 )}
               >
                 {formatLayoutName(layout, t)}
@@ -454,6 +453,20 @@ export function LessonPresentation({
   useEffect(() => {
     plannedSlidesRef.current = plannedSlides;
   }, [plannedSlides]);
+
+  const handlePlannerCancel = useCallback(() => {
+    if (plannedSlides.length > 0) {
+      setStep('planned');
+      return;
+    }
+
+    if (deckUrl) {
+      setStep('generated');
+      return;
+    }
+
+    onClose();
+  }, [deckUrl, onClose, plannedSlides.length, setStep]);
 
   /** Swap a re-rendered slide SVG into the preview iframe (namespacing its
    * ids so clipPaths/gradients don't collide with other slides). */
@@ -1921,7 +1934,7 @@ export function LessonPresentation({
     <div
       ref={containerRef}
       className={cn(
-        'relative m-0 flex min-h-[75vh] w-full select-none flex-col justify-between overflow-hidden rounded-2xl border border-border bg-linear-to-br from-background via-muted/30 to-accent/10 p-6 text-foreground shadow-xl md:p-10',
+        'relative m-0 flex min-h-[calc(100vh-8rem)] w-full select-none flex-col justify-between overflow-hidden rounded-2xl border border-border bg-linear-to-br from-background via-primary/5 to-primary/10 p-6 text-foreground shadow-xl backdrop-blur-sm md:p-10',
         isFullscreen &&
           'fixed inset-0 z-99 m-0 h-screen w-screen rounded-none border-none'
       )}
@@ -2107,54 +2120,14 @@ export function LessonPresentation({
                     <SelectValue placeholder={t('duration15')} />
                   </SelectTrigger>
                   <SelectContent className="border-border bg-popover text-popover-foreground">
-                    <SelectItem
-                      className={selectItemHighlightClassName}
-                      value="5"
-                    >
-                      {t('duration5')}
-                    </SelectItem>
-                    <SelectItem
-                      className={selectItemHighlightClassName}
-                      value="10"
-                    >
-                      {t('duration10')}
-                    </SelectItem>
-                    <SelectItem
-                      className={selectItemHighlightClassName}
-                      value="15"
-                    >
-                      {t('duration15')}
-                    </SelectItem>
-                    <SelectItem
-                      className={selectItemHighlightClassName}
-                      value="30"
-                    >
-                      {t('duration30')}
-                    </SelectItem>
-                    <SelectItem
-                      className={selectItemHighlightClassName}
-                      value="45"
-                    >
-                      {t('duration45')}
-                    </SelectItem>
-                    <SelectItem
-                      className={selectItemHighlightClassName}
-                      value="60"
-                    >
-                      {t('duration60')}
-                    </SelectItem>
-                    <SelectItem
-                      className={selectItemHighlightClassName}
-                      value="90"
-                    >
-                      {t('duration90')}
-                    </SelectItem>
-                    <SelectItem
-                      className={selectItemHighlightClassName}
-                      value="120"
-                    >
-                      {t('duration120')}
-                    </SelectItem>
+                    <SelectItem value="5">{t('duration5')}</SelectItem>
+                    <SelectItem value="10">{t('duration10')}</SelectItem>
+                    <SelectItem value="15">{t('duration15')}</SelectItem>
+                    <SelectItem value="30">{t('duration30')}</SelectItem>
+                    <SelectItem value="45">{t('duration45')}</SelectItem>
+                    <SelectItem value="60">{t('duration60')}</SelectItem>
+                    <SelectItem value="90">{t('duration90')}</SelectItem>
+                    <SelectItem value="120">{t('duration120')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -2167,7 +2140,7 @@ export function LessonPresentation({
                   <button
                     type="button"
                     onClick={() => setIsUploadOpen(true)}
-                    className="flex items-center gap-1 font-semibold text-primary text-xs hover:underline"
+                    className="flex cursor-pointer items-center gap-1 rounded-md px-1.5 py-1 font-semibold text-primary text-xs transition-colors hover:bg-primary/10 hover:text-primary/80"
                   >
                     <Plus className="h-3 w-3" />
                     Manage Styles
@@ -2215,7 +2188,7 @@ export function LessonPresentation({
             <div className="mt-8 flex items-center justify-end gap-3 border-border border-t pt-6">
               <Button
                 variant="ghost"
-                onClick={onClose}
+                onClick={handlePlannerCancel}
                 className="rounded-xl px-4 py-2 text-muted-foreground"
               >
                 Cancel

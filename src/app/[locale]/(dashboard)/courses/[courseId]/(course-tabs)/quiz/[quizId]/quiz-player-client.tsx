@@ -87,6 +87,7 @@ export function QuizPlayerClient({ courseId, quizId }: QuizPlayerClientProps) {
   const [showOutline, setShowOutline] = useState(false);
   const [isRetaking, setIsRetaking] = useState(false);
   const [isAiDialogOpen, setIsAiDialogOpen] = useState(false);
+  const [aiDialogResetKey, setAiDialogResetKey] = useState(0);
   const [editTitle, setEditTitle] = useState('');
   const [editDescription, setEditDescription] = useState('');
   const [editLessonIds, setEditLessonIds] = useState<string[]>([]);
@@ -260,6 +261,7 @@ export function QuizPlayerClient({ courseId, quizId }: QuizPlayerClientProps) {
           onSuccess: ({ questions }) => {
             appendGeneratedRef.current?.(questions);
             setIsAiDialogOpen(false);
+            setAiDialogResetKey((current) => current + 1);
           },
         }
       );
@@ -497,6 +499,7 @@ export function QuizPlayerClient({ courseId, quizId }: QuizPlayerClientProps) {
         onOpenChange={setIsAiDialogOpen}
         onSubmit={handleGenerateDraft}
         isGenerating={isGeneratingDraftQuiz}
+        resetKey={aiDialogResetKey}
       />
     </>
   );

@@ -122,14 +122,63 @@ export function useCourses(
       apiClient.patch<Course>(`v1/courses/${data.courseId}`, {
         isPublished: data.isPublished,
       }),
+    onMutate: async (variables) => {
+      await queryClient.cancelQueries({ queryKey: ['courses'] });
+      await queryClient.cancelQueries({
+        queryKey: ['course', variables.courseId],
+      });
+
+      const previousCourseLists =
+        queryClient.getQueriesData<CourseListResponse>({
+          queryKey: ['courses'],
+        });
+      const previousCourse = queryClient.getQueryData<Course>([
+        'course',
+        variables.courseId,
+      ]);
+
+      queryClient.setQueriesData<CourseListResponse>(
+        { queryKey: ['courses'] },
+        (current) =>
+          current
+            ? {
+                ...current,
+                items: current.items.map((course) =>
+                  course.id === variables.courseId
+                    ? { ...course, isPublished: variables.isPublished }
+                    : course
+                ),
+              }
+            : current
+      );
+      queryClient.setQueryData<Course>(
+        ['course', variables.courseId],
+        (course) =>
+          course ? { ...course, isPublished: variables.isPublished } : course
+      );
+
+      return { previousCourse, previousCourseLists };
+    },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['courses'] });
       toast.success(
         variables.isPublished ? t('toast.published') : t('toast.unpublished')
       );
     },
-    onError: () => {
+    onError: (_, variables, context) => {
+      context?.previousCourseLists.forEach(([queryKey, data]) => {
+        queryClient.setQueryData(queryKey, data);
+      });
+      queryClient.setQueryData(
+        ['course', variables.courseId],
+        context?.previousCourse
+      );
       toast.error(t('toast.updateFailed'));
+    },
+    onSettled: (_, __, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['courses'] });
+      queryClient.invalidateQueries({
+        queryKey: ['course', variables.courseId],
+      });
     },
   });
 

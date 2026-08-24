@@ -15,6 +15,26 @@ import {
 } from '@/lib/course-content/search-source-state';
 import type { CourseContentStreamEvent } from '@/types/course-content-stream-event';
 
+async function getStreamResponseErrorMessage(response: Response) {
+  try {
+    const payload = (await response.clone().json()) as {
+      error?: string;
+      message?: string;
+    };
+    const serverMessage = payload.message ?? payload.error;
+    if (serverMessage) return `HTTP ${response.status}: ${serverMessage}`;
+  } catch {
+    try {
+      const text = await response.clone().text();
+      if (text.trim()) return `HTTP ${response.status}: ${text.trim()}`;
+    } catch {
+      // Fall through to the status-only message below.
+    }
+  }
+
+  return `HTTP ${response.status}`;
+}
+
 export type GenerationStep =
   | 'extract'
   | 'search'
@@ -223,10 +243,11 @@ export function useGenerateCourseContent(
           headers,
           body,
           credentials: 'include',
+          cache: 'no-store',
         });
 
         if (!response.ok || !response.body) {
-          throw new Error(`HTTP ${response.status}`);
+          throw new Error(await getStreamResponseErrorMessage(response));
         }
 
         setControlId(
