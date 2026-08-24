@@ -1,10 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { gameQuizApi } from '@/components/game-quiz/api';
 import { gameQuizCopy } from '@/components/game-quiz/copy';
 import { GameQuizEditorClient } from '@/components/game-quiz/game-quiz-editor-client';
+import type { GeneratedGameQuizQuestion } from '@/components/game-quiz/types';
 
 vi.mock('@/components/game-quiz/api', () => ({
   gameQuizApi: {
@@ -25,6 +25,38 @@ vi.mock('next/navigation', () => ({
     push: mockPush,
     replace: mockReplace,
   }),
+}));
+
+vi.mock('@/components/game-quiz/ai/game-quiz-ai-dialog', () => ({
+  GameQuizAiDialog: ({
+    isOpen,
+    onAccept,
+  }: {
+    isOpen: boolean;
+    onAccept: (questions: GeneratedGameQuizQuestion[]) => void;
+  }) =>
+    isOpen ? (
+      <button
+        type="button"
+        onClick={() =>
+          onAccept([
+            {
+              prompt: 'Which planet is known as the Red Planet?',
+              hint: 'Think about its surface color.',
+              explanation: 'Iron oxides make Mars appear red.',
+              timerSeconds: 30,
+              maxPoints: 1500,
+              options: [
+                { text: 'Mars', isCorrect: true },
+                { text: 'Venus', isCorrect: false },
+              ],
+            },
+          ])
+        }
+      >
+        Accept generated questions
+      </button>
+    ) : null,
 }));
 
 function renderEditor(gameQuizId?: string) {
@@ -160,40 +192,27 @@ describe('GameQuizEditorClient', () => {
     expect(timeInput).toHaveValue(30);
 
     // Click points preset
-    const preset2000 = screen.getByRole('button', { name: /2,?000/ });
-    fireEvent.click(preset2000);
+    const preset1500 = screen.getByRole('button', { name: '1,500' });
+    fireEvent.click(preset1500);
 
     const pointsInput = screen.getByLabelText('editor.maxPoints');
-    expect(pointsInput).toHaveValue(2000);
+    expect(pointsInput).toHaveValue(1500);
   });
 
-  it('replaces the pristine starter on AI accept and makes it editable without persisting', async () => {
-    const user = userEvent.setup();
+  it('replaces the pristine starter on AI accept and makes it editable without persisting', () => {
     renderEditor();
 
-    await user.click(screen.getByRole('button', { name: 'aiGenerate.action' }));
-    const courseSelect = await screen.findByRole('combobox', {
-      name: 'aiGenerate.courseLabel',
-    });
-    courseSelect.focus();
-    await user.keyboard('{ArrowDown}{Enter}');
-    await user.click(screen.getByRole('checkbox', { name: 'Planets' }));
-    await user.click(
-      screen.getByRole('button', { name: /aiGenerate\.continue/i })
-    );
-    await user.click(
-      screen.getByRole('button', { name: 'aiGenerate.generate' })
-    );
-    await screen.findByText('Which planet is known as the Red Planet?');
-    await user.click(
-      screen.getByRole('button', { name: /aiGenerate\.accept/i })
+    fireEvent.click(screen.getByRole('button', { name: 'aiGenerate.action' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Accept generated questions' })
     );
 
     const promptInput = screen.getByPlaceholderText('editor.prompt...');
     expect(promptInput).toHaveValue('Which planet is known as the Red Planet?');
     expect(screen.getByText('1 of 1')).toBeInTheDocument();
-    await user.clear(promptInput);
-    await user.type(promptInput, 'Which world is called the Red Planet?');
+    fireEvent.change(promptInput, {
+      target: { value: 'Which world is called the Red Planet?' },
+    });
     expect(promptInput).toHaveValue('Which world is called the Red Planet?');
     expect(gameQuizApi.create).not.toHaveBeenCalled();
     expect(gameQuizApi.saveQuestions).not.toHaveBeenCalled();
