@@ -11,17 +11,15 @@ export async function saveVocabulary(
   userId: string,
   vocabulary: SaveVocabularyInput[]
 ): Promise<SaveVocabularyResult> {
-  const uniqueVocabulary = new Map<string, SaveVocabularyInput>();
+  const normalizedVocabulary = vocabulary
+    .map((item) => ({ item, word: normalizeWord(item.word) }))
+    .filter(({ word }) => Boolean(word));
 
-  for (const item of vocabulary) {
-    const word = normalizeWord(item.word);
-    if (!word || uniqueVocabulary.has(word)) continue;
-    uniqueVocabulary.set(word, item);
-  }
+  let savedCount = 0;
 
-  if (uniqueVocabulary.size > 0) {
-    await prisma.savedVocabulary.createMany({
-      data: Array.from(uniqueVocabulary, ([word, item]) => ({
+  if (normalizedVocabulary.length > 0) {
+    const result = await prisma.savedVocabulary.createMany({
+      data: normalizedVocabulary.map(({ word, item }) => ({
         userId,
         word,
         partOfSpeech: item.partOfSpeech.trim(),
@@ -35,14 +33,14 @@ export async function saveVocabulary(
         masteryLevel: 0,
         nextReviewAt: new Date(),
       })),
-      skipDuplicates: true,
     });
+    savedCount = result.count;
   }
 
   const { total, savedWords } = await listSavedVocabulary(userId);
 
   return {
-    savedCount: uniqueVocabulary.size,
+    savedCount,
     total,
     savedWords,
   };

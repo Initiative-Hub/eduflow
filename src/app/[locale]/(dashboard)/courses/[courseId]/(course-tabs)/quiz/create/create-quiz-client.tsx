@@ -56,6 +56,7 @@ export function CreateQuizClient({
     useState<DeliveryMode>('INSTANT_FEEDBACK');
   const [showErrors, setShowErrors] = useState(false);
   const [isAiDialogOpen, setIsAiDialogOpen] = useState(false);
+  const [aiDialogResetKey, setAiDialogResetKey] = useState(0);
   const appendGeneratedRef = useRef<
     ((questions: QuestionBlock[]) => void) | null
   >(null);
@@ -81,6 +82,7 @@ export function CreateQuizClient({
         onSuccess: ({ questions }) => {
           appendGeneratedRef.current?.(questions);
           setIsAiDialogOpen(false);
+          setAiDialogResetKey((current) => current + 1);
         },
       }
     );
@@ -173,6 +175,7 @@ export function CreateQuizClient({
         open={isAiDialogOpen}
         onOpenChange={setIsAiDialogOpen}
         isGenerating={isGeneratingDraftQuiz}
+        resetKey={aiDialogResetKey}
         onSubmit={handleGenerate}
       />
     </div>

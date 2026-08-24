@@ -4,6 +4,7 @@ import { withAuth } from '@/lib/api/middlewares';
 import { createCourseContentGenerationControl } from '@/lib/course-content/generation-control';
 import { getCoursePermissions } from '@/lib/permissions/course-permission';
 import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
+import { STORAGE_MAX_FILE_SIZE_BYTES } from '@/lib/storage/file-storage';
 import { hasUpstashRestEnv } from '@/lib/upstash/redis/client';
 import { CourseService } from '@/services/CourseService';
 
@@ -114,6 +115,13 @@ export const POST = withAuth(async (request: Request, sessionData) => {
         return NextResponse.json(
           { error: 'Only PDF files are allowed' },
           { status: 400 }
+        );
+      }
+
+      if (file.size > STORAGE_MAX_FILE_SIZE_BYTES) {
+        return NextResponse.json(
+          { error: 'File size exceeds storage upload limit' },
+          { status: 413 }
         );
       }
     }

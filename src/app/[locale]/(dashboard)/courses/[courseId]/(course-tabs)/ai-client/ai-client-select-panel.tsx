@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { ChangeEvent } from 'react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -32,6 +33,8 @@ type SelectPanelProps = {
   onCourseBack: () => void;
   onCourseEntryClick: (entry: InventoryEntry) => void;
   uploadedFile: File | null;
+  uploadError: string | null;
+  maxFileSizeLabel: string;
   isProcessing: boolean;
   onFileUpload: (e: ChangeEvent<HTMLInputElement>) => void;
   onClearUpload: () => void;
@@ -55,6 +58,8 @@ export function AiClientSelectPanel({
   onCourseBack,
   onCourseEntryClick,
   uploadedFile,
+  uploadError,
+  maxFileSizeLabel,
   isProcessing,
   onFileUpload,
   onClearUpload,
@@ -167,9 +172,17 @@ export function AiClientSelectPanel({
                 <div className="space-y-2 px-6">
                   <h3 className="font-bold text-xl">{t('uploadReference')}</h3>
                   <p className="mx-auto max-w-[320px] text-muted-foreground text-sm">
-                    {t('uploadDescription')}
+                    {t('uploadDescription', { size: maxFileSizeLabel })}
                   </p>
                 </div>
+                {uploadError ? (
+                  <Alert
+                    variant="destructive"
+                    className="max-w-md bg-background/80 text-left"
+                  >
+                    <AlertDescription>{uploadError}</AlertDescription>
+                  </Alert>
+                ) : null}
                 <div className="flex items-center gap-2 rounded-full bg-muted/50 px-4 py-1.5 font-bold text-[10px] text-muted-foreground uppercase tracking-widest transition-colors group-hover:bg-primary/20 group-hover:text-primary">
                   {t('clickToBrowse')}
                 </div>

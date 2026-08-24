@@ -302,7 +302,7 @@ export function InventoryTableView({
                       )}
                       <DropdownMenuItem
                         onClick={() => onDeleteEntry(entry)}
-                        className="cursor-pointer gap-2 text-destructive focus:text-destructive"
+                        className="cursor-pointer gap-2"
                       >
                         <Trash2 />
                         {t('actions.delete')}

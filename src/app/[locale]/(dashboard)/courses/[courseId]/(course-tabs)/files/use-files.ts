@@ -86,6 +86,7 @@ export function useFiles({
   const deferredSearch = useDeferredValue(search.trim());
   const currentFolder = folderTrail.at(-1) ?? null;
   const currentFolderId = currentFolder?.id ?? null;
+  const currentFolderName = currentFolder?.name ?? t('browser.title');
 
   const listQuery = useQuery({
     queryKey: [
@@ -557,6 +558,7 @@ export function useFiles({
     createFolderDialog,
     createFolderPending: createFolderMutation.isPending,
     currentFolderId,
+    currentFolderName,
     currentPathLabel,
     deleteDialog,
     deletePending: deleteMutation.isPending,

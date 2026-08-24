@@ -63,6 +63,7 @@ export function ChatModelSelectControl({
           <ModelSelectorGroup heading={heading}>
             {CHAT_MODEL_OPTIONS.map((model) => (
               <ModelSelectorItem
+                className="hover:bg-muted/60 data-[checked=true]:bg-muted data-selected:bg-transparent data-[checked=true]:text-foreground"
                 data-checked={model.id === selectedModel}
                 key={model.id}
                 onSelect={() => {

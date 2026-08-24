@@ -273,7 +273,7 @@
       "trends": "Tóm tắt các xu hướng mới nhất về năng lượng tái tạo"
     },
     "thinking": "EduFlow AI đang suy nghĩ...",
-    "title": "Chào học giả {name}. Bạn đã sẵn sàng đào sâu kiến thức chưa?",
+    "title": "Chào {name}. Bạn đã sẵn sàng đào sâu kiến thức chưa?",
     "tools": {
       "foundContent": "Tìm thấy {count} {count, plural, one {đoạn} other {đoạn}} liên quan",
       "loadedCourses": "Đã tải {count} khoá học",
@@ -512,7 +512,7 @@
       "root": "Tài liệu khóa học"
     },
     "browser": {
-      "description": "Khóa học này có {count} tài nguyên.",
+      "description": "{count} mục",
       "pageInfo": "Trang {page}/{total}",
       "range": "Đang hiển thị {start}-{end}/{total}",
       "title": "Tài liệu"
@@ -1058,8 +1058,10 @@
         },
         "courseDescription": "Truy cập các tệp được chia sẻ trong không gian khóa học này.",
         "description": "Tạo các mô-đun và bài học từ tài liệu học tập của bạn.",
+        "fileTooLarge": "PDF này quá lớn. Hãy chọn tệp tối đa {size}.",
         "folder": "Thư mục",
         "loadingFiles": "Đang tải các tệp của bạn...",
+        "pdfOnly": "Chỉ có thể dùng tệp PDF để tạo nội dung khóa học.",
         "personalDescription": "Chọn một tệp PDF từ thư viện cá nhân của bạn để làm ngữ cảnh.",
         "pipeline": {
           "extract": "Trích xuất PDF",
@@ -1078,7 +1080,7 @@
           "upload": "Tải PDF lên"
         },
         "title": "Tạo nội dung khóa học bằng AI",
-        "uploadDescription": "Chọn một tệp PDF từ thiết bị của bạn để làm ngữ cảnh cho việc tạo nội dung AI.",
+        "uploadDescription": "Chọn một tệp PDF tối đa {size} từ thiết bị của bạn để làm ngữ cảnh cho việc tạo nội dung AI.",
         "uploadDifferent": "Tải lên tệp khác",
         "uploadReference": "Tải lên tài liệu tham khảo",
         "useSelected": "Sử dụng PDF đã chọn"
@@ -1092,8 +1094,10 @@
         "draftingLesson": "Đang soạn thảo bài học...",
         "error": "Đã xảy ra lỗi. Vui lòng thử lại.",
         "failed": "Không thể tạo nội dung khóa học",
+        "fileTooLarge": "PDF này quá lớn để tạo nội dung khóa học. Hãy chọn tệp tối đa {size}.",
         "generatingCourseContent": "Đang tạo nội dung khóa học...",
         "identifyingModule": "Đang xác định mô-đun...",
+        "noOutput": "AI chưa trả về nội dung khóa học. Hãy thử lại với PDF rõ ràng hơn hoặc nhỏ hơn.",
         "retry": "Thử lại",
         "saving": "Đang lưu",
         "savingCourseContent": "Đang lưu các mô-đun và bài học mới của bạn...",
@@ -1251,7 +1255,7 @@
         "ORDERING": "Sắp xếp",
         "TRUE_FALSE": "Đúng / Sai"
       },
-      "quizDescription": "Mô tả (tùy chọn)",
+      "quizDescription": "Mô tả",
       "quizDescriptionPlaceholder": "Mô tả ngắn về bài kiểm tra...",
       "quizTitle": "Tiêu đề bài kiểm tra",
       "quizTitlePlaceholder": "VD: Ôn tập Chương 1",
@@ -1588,7 +1592,7 @@
       "allowTeacherRubricDescription": "Định nghĩa tệp hoặc mô tả tiêu chí chấm điểm tùy chỉnh.",
       "blanksConfiguration": "Cấu hình chỗ trống",
       "blankTemplateHint": "Dùng hai dấu ngoặc nhọn để đánh dấu chỗ trống, ví dụ {placeholder}.",
-      "blankTemplatePlaceholder": "Ví dụ: Thủ đô của Pháp là {{capital}}.",
+      "blankTemplatePlaceholder": "Ví dụ: Thủ đô của Pháp là '{{capital}}'.",
       "cancel": "Hủy",
       "completed": "Hoàn thành bài kiểm tra! Điểm: {score}%",
       "confirmDelete": "Bạn có chắc chắn muốn xóa câu hỏi này? Hành động này không thể hoàn tác.",
@@ -1602,7 +1606,7 @@
       "deliveryTeacherReview": "Giữ lại để giáo viên duyệt",
       "dragAndDropSentenceTemplate": "Mẫu câu (sử dụng {{zoneId}} cho các vùng thả)",
       "dragAndDropTemplateHint": "Chỉ định vùng thả bằng placeholder, ví dụ {zone1} và {zone2}.",
-      "dragAndDropTemplatePlaceholder": "Ví dụ: Đỏ là màu {{zone1}}, còn xanh là {{zone2}}.",
+      "dragAndDropTemplatePlaceholder": "Ví dụ: Đỏ là màu '{{zone1}}', còn xanh là '{{zone2}}'.",
       "draggableItem": "Mục có thể kéo",
       "draggableItemPlaceholder": "Nhãn mục có thể kéo",
       "draggableItems": "Mục có thể kéo",
@@ -2150,7 +2154,7 @@
       "root": "Kho lưu trữ"
     },
     "browser": {
-      "description": "Thư mục hiện tại có {count} mục.",
+      "description": "{count} mục",
       "pageInfo": "Trang {page}/{total}",
       "range": "Đang hiển thị {start}-{end}/{total}",
       "title": "Nội dung thư mục"
@@ -2723,7 +2727,7 @@
       "untitled": "Phiên Socratic chưa đặt tên"
     },
     "subtitle": "Hãy chọn một gợi ý bắt đầu hoặc hỏi trực tiếp để mở đối thoại <mark>Socratic</mark>. Tôi sẽ không đưa đáp án; tôi sẽ đặt những câu hỏi giúp bạn tự tìm ra chúng.",
-    "title": "Hôm nay tôi có thể <accent>gợi mở</accent> tư duy của bạn như thế nào?"
+    "title": "Hôm nay tôi có thể giúp bạn làm rõ suy nghĩ như thế nào?"
   },
   "StudyPage": {
     "aiActive": "AI Đang Hoạt Động",
