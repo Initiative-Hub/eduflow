@@ -1,3 +1,8 @@
+import type {
+  GameQuizAIGeneratedQuestion,
+  GameQuizAIGenerationInput,
+  GameQuizAISourcesResponse,
+} from '@/lib/game-quiz/ai-schemas';
 import type { GameSessionReport } from '@/lib/game-quiz/types';
 
 export type GameQuizDifficulty = 'EASY' | 'MEDIUM' | 'HARD';
@@ -44,7 +49,7 @@ export interface GameQuiz {
   id: string;
   title: string;
   topic: string;
-  difficulty: GameQuizDifficulty;
+  difficulty: GameQuizDifficulty | null;
   templateKey: 'LIVE_QUIZ_RALLY';
   revision: number;
   updatedAt: string;
@@ -105,8 +110,15 @@ export type GameQuizReport = GameSessionReport;
 export interface GameQuizDraft {
   title: string;
   topic: string;
-  difficulty: GameQuizDifficulty;
+  difficulty: GameQuizDifficulty | null;
   settings: GameQuizSettings;
   revision?: number;
   questions: GameQuizQuestion[];
 }
+
+export type GameQuizAiSources = GameQuizAISourcesResponse;
+export type GameQuizAiSourceCourse = GameQuizAiSources['courses'][number];
+export type GameQuizAiSourceModule = GameQuizAiSourceCourse['modules'][number];
+export type GameQuizAiSourceLesson = GameQuizAiSourceModule['lessons'][number];
+export type GeneratedGameQuizQuestion = GameQuizAIGeneratedQuestion;
+export type GenerateGameQuizQuestionsInput = GameQuizAIGenerationInput;

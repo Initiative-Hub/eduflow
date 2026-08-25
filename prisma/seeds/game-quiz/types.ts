@@ -22,7 +22,7 @@ export type DemoGameQuiz = {
   id: string;
   title: string;
   topic: string;
-  difficulty: string;
+  difficulty: string | null;
   questions: DemoGameQuizQuestion[];
 };
 
