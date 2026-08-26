@@ -74,7 +74,6 @@ export function useModules(courseId: string) {
       fileId: selection.fileId,
       file: selection.file,
       context: selection.context,
-      model: 'gemini-3.6-flash',
     });
   };
 

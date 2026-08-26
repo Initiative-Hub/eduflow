@@ -21,6 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Spinner } from '@/components/ui/spinner';
 import { apiClient } from '@/lib/api/api-client';
 import type { SavedVocabularyItem } from '@/services/english/SavedVocabularyService';
 import {
@@ -62,6 +63,7 @@ export function WordbankPronunciationModal({
   const [recordingTime, setRecordingTime] = useState(0);
   const [recordedAudioUrl, setRecordedAudioUrl] = useState<string | null>(null);
   const [isPlayingTarget, setIsPlayingTarget] = useState(false);
+  const [isGeneratingTarget, setIsGeneratingTarget] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [assessment, setAssessment] =
     useState<PronunciationAssessmentResult | null>(null);
@@ -71,6 +73,7 @@ export function WordbankPronunciationModal({
   const [activeTipWord, setActiveTipWord] = useState<string | null>(null);
   const [isRecordingTip, setIsRecordingTip] = useState(false);
   const [analyzingTipWord, setAnalyzingTipWord] = useState<string | null>(null);
+  const [loadingTipWord, setLoadingTipWord] = useState<string | null>(null);
   const [tipResults, setTipResults] = useState<
     Record<string, { score: number; isCorrect: boolean }>
   >({});
@@ -254,6 +257,7 @@ export function WordbankPronunciationModal({
   const handlePlayTarget = async () => {
     if (isPlayingTarget) return;
     setIsPlayingTarget(true);
+    setIsGeneratingTarget(true);
 
     try {
       const blob = await apiClient.post<Blob>(
@@ -273,11 +277,14 @@ export function WordbankPronunciationModal({
       audio.onerror = () => {
         URL.revokeObjectURL(url);
         setErrorMsg(t('audioFailed'));
+        setIsGeneratingTarget(false);
         setIsPlayingTarget(false);
       };
       await audio.play();
+      setIsGeneratingTarget(false);
     } catch {
       setErrorMsg(t('audioFailed'));
+      setIsGeneratingTarget(false);
       setIsPlayingTarget(false);
     }
   };
@@ -341,7 +348,6 @@ export function WordbankPronunciationModal({
                   <Button
                     type="button"
                     variant="ghost"
-                    size="sm"
                     disabled={
                       selectedSentenceIndex === uniqueSentences.length - 1
                     }
@@ -372,12 +378,18 @@ export function WordbankPronunciationModal({
                 onClick={handlePlayTarget}
                 className="gap-2 rounded-xl border-border bg-background px-4 py-2.5 font-medium text-foreground shadow-2xs hover:bg-muted"
               >
-                {isPlayingTarget ? (
-                  <Loader2 className="size-4 animate-spin text-primary" />
+                {isGeneratingTarget ? (
+                  <Spinner className="size-4 text-primary" />
                 ) : (
                   <Volume2 className="size-4 text-primary" />
                 )}
-                <span>{isPlayingTarget ? 'Playing...' : 'Play target'}</span>
+                <span>
+                  {isGeneratingTarget
+                    ? t('loadingVoice')
+                    : isPlayingTarget
+                      ? 'Playing...'
+                      : 'Play target'}
+                </span>
               </Button>
 
               {isRecording ? (
@@ -549,24 +561,36 @@ export function WordbankPronunciationModal({
                               <Button
                                 type="button"
                                 variant="ghost"
-                                size="sm"
-                                onClick={() =>
-                                  void playWordbankAudio(tip.word).catch(() => {
+                                disabled={loadingTipWord !== null}
+                                onClick={() => {
+                                  setLoadingTipWord(tip.word);
+                                  void playWordbankAudio(tip.word, () => {
+                                    setLoadingTipWord(null);
+                                  }).catch(() => {
+                                    setLoadingTipWord(null);
                                     setErrorMsg(t('audioFailed'));
-                                  })
-                                }
+                                  });
+                                }}
                                 className="h-7 gap-1.5 rounded-lg border border-primary/20 px-2.5 font-medium text-primary text-xs hover:bg-primary/10"
                                 title={`Listen to "${tip.word}"`}
                               >
-                                <Volume2 className="size-3.5 text-primary" />
-                                <span>Listen</span>
+                                {loadingTipWord === tip.word ? (
+                                  <>
+                                    <Spinner className="size-3.5 text-primary" />
+                                    <span>{t('loadingVoice')}</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Volume2 className="size-3.5 text-primary" />
+                                    <span>{t('listen')}</span>
+                                  </>
+                                )}
                               </Button>
 
                               {isRecordingTip && activeTipWord === tip.word ? (
                                 <Button
                                   type="button"
                                   variant="destructive"
-                                  size="sm"
                                   onClick={handleStopTipRecording}
                                   className="h-7 animate-pulse gap-1.5 rounded-lg px-2.5 font-semibold text-xs shadow-sm"
                                 >
@@ -577,7 +601,6 @@ export function WordbankPronunciationModal({
                                 <Button
                                   type="button"
                                   variant="outline"
-                                  size="sm"
                                   disabled
                                   className="h-7 gap-1.5 rounded-lg px-2.5 text-xs"
                                 >
@@ -588,7 +611,6 @@ export function WordbankPronunciationModal({
                                 <Button
                                   type="button"
                                   variant="outline"
-                                  size="sm"
                                   onClick={() =>
                                     handleStartTipRecording(tip.word, tip.ipa)
                                   }

@@ -180,6 +180,19 @@ export function GameQuizPlayerClient({
           totalRounds={session.totalRounds}
         />
 
+        {session.phase !== 'REVEAL' ? (
+          <Card className="mb-3 border-border/60 bg-background px-5 py-4 text-center shadow-sm sm:px-7">
+            <h1 className="font-bold text-lg text-foreground leading-snug sm:text-2xl">
+              {session.currentRound.prompt}
+            </h1>
+            {session.currentRound.hint ? (
+              <p className="mt-2 text-muted-foreground text-sm">
+                {copy.player.hint}: {session.currentRound.hint}
+              </p>
+            ) : null}
+          </Card>
+        ) : null}
+
         {isOpen && !submitted ? (
           <div className="grid flex-1 grid-cols-2 gap-3">
             {session.currentRound.options.map((option, optionIndex) => {

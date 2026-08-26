@@ -1,16 +1,12 @@
 'use client';
 
-import {
-  ArrowRightLeft,
-  Check,
-  ClipboardCopy,
-  Loader2,
-  Volume2,
-} from 'lucide-react';
+import { ArrowRightLeft, Check, ClipboardCopy, Volume2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { DictionaryEnabledEditor } from '@/components/dictionary/dictionary-enabled-editor';
 import { DictionaryEnabledText } from '@/components/dictionary/dictionary-enabled-text';
+import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 import type {
   TranslationPanelActions,
@@ -61,34 +57,40 @@ function SwapDirectionButton({
 
 interface PlayParagraphButtonProps {
   label: string;
+  loadingLabel: string;
   playState: TranslationPanelState['paragraphPlayState'];
   onPlayParagraph: () => void;
 }
 
 function PlayParagraphButton({
   label,
+  loadingLabel,
   playState,
   onPlayParagraph,
 }: PlayParagraphButtonProps) {
+  const isLoading = playState === 'loading';
+
   return (
-    <button
+    <Button
       type="button"
+      variant="outline"
       onClick={onPlayParagraph}
-      disabled={playState === 'loading'}
+      disabled={isLoading}
       className={cn(
-        'flex size-8 items-center justify-center rounded-lg border transition-all',
+        'h-8 transition-all',
+        isLoading ? 'gap-1 px-2 text-xs' : '',
         playState === 'playing'
           ? 'border-primary bg-primary/10 text-primary'
           : 'border-border bg-background text-muted-foreground hover:border-primary/50 hover:text-primary'
       )}
-      aria-label={label}
+      aria-label={isLoading ? loadingLabel : label}
     >
-      {playState === 'loading' ? (
-        <Loader2 className="size-3.5 animate-spin" />
+      {isLoading ? (
+        <Spinner className="size-3.5" />
       ) : (
         <Volume2 className="size-3.5" />
       )}
-    </button>
+    </Button>
   );
 }
 
@@ -168,6 +170,7 @@ function SourcePane({
           {direction === 'en-vi' && Boolean(sourceText.trim()) && (
             <PlayParagraphButton
               label={t('listenTooltip')}
+              loadingLabel={t('loadingVoice')}
               onPlayParagraph={onPlayParagraph}
               playState={paragraphPlayState}
             />
@@ -195,7 +198,7 @@ function SourcePane({
           placeholder={t('inputPlaceholder')}
           language={direction === 'en-vi' ? 'en' : 'vi'}
           className={cn(
-            'min-h-[200px] border-0 bg-transparent p-0 shadow-none focus-visible:outline-none',
+            'min-h-50 border-0 bg-transparent p-0 shadow-none focus-visible:outline-none',
             READING_TEXT_CLASS
           )}
         />
@@ -255,6 +258,7 @@ function TranslationResultPane({
           {direction === 'vi-en' && Boolean(translatedText.trim()) && (
             <PlayParagraphButton
               label={t('listenTooltip')}
+              loadingLabel={t('loadingVoice')}
               onPlayParagraph={actions.onPlayParagraph}
               playState={paragraphPlayState}
             />
@@ -280,7 +284,7 @@ function TranslationResultPane({
         ) : (
           <p
             className={cn(
-              'min-h-[200px] text-muted-foreground/60',
+              'min-h-50 text-muted-foreground/60',
               READING_TEXT_CLASS
             )}
           >

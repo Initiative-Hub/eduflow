@@ -93,7 +93,7 @@
   --secondary-foreground: #ffffff;
   --muted: #f1f5f9;
   --muted-foreground: #64748b;
-  --accent: #c05177;
+  --accent: #8b5cf6;
   --accent-foreground: #ffffff;
   --destructive: #b93868;
   --destructive-foreground: #f8fafc;
@@ -128,7 +128,7 @@
   --secondary-foreground: #ffffff;
   --muted: #334155;
   --muted-foreground: #cbd5e1;
-  --accent: #d47c9d;
+  --accent: #a78bfa;
   --accent-foreground: #ffffff;
   --destructive: #d35d85;
   --destructive-foreground: #f8fafc;
@@ -151,11 +151,87 @@
 }
 
 @layer base {
+  html {
+    --scrollbar-thumb: color-mix(in srgb, var(--foreground) 40%, transparent);
+  }
+
   * {
     @apply border-border outline-ring/50;
+    scrollbar-color: transparent transparent;
+    scrollbar-width: none;
+  }
+
+  html,
+  body {
+    scrollbar-color: transparent transparent;
+    scrollbar-width: none;
+  }
+
+  *::-webkit-scrollbar,
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+
+  *::-webkit-scrollbar-track,
+  html::-webkit-scrollbar-track,
+  body::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb,
+  html::-webkit-scrollbar-thumb,
+  body::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background-color: transparent;
+  }
+
+  html.is-scrolling *,
+  html.is-scrolling,
+  html.is-scrolling body {
+    scrollbar-color: var(--scrollbar-thumb) transparent;
+    scrollbar-width: thin;
+  }
+
+  html.is-scrolling *::-webkit-scrollbar,
+  html.is-scrolling::-webkit-scrollbar,
+  html.is-scrolling body::-webkit-scrollbar {
+    width: 0.5rem;
+    height: 0.5rem;
+  }
+
+  html.is-scrolling *::-webkit-scrollbar-thumb,
+  html.is-scrolling::-webkit-scrollbar-thumb,
+  html.is-scrolling body::-webkit-scrollbar-thumb {
+    border: 2px solid transparent;
+    background-color: var(--scrollbar-thumb);
+    background-clip: content-box;
   }
 
   body {
     @apply bg-background text-foreground;
+  }
+
+  @media (forced-colors: active) {
+    *,
+    html.is-scrolling *,
+    html,
+    html.is-scrolling,
+    html.is-scrolling body,
+    body {
+      scrollbar-color: auto;
+      scrollbar-width: auto;
+    }
+
+    *::-webkit-scrollbar,
+    html.is-scrolling *::-webkit-scrollbar,
+    html::-webkit-scrollbar,
+    html.is-scrolling::-webkit-scrollbar,
+    html.is-scrolling body::-webkit-scrollbar,
+    body::-webkit-scrollbar {
+      width: auto;
+      height: auto;
+    }
   }
 }

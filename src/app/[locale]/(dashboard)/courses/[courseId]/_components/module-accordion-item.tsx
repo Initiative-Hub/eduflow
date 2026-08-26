@@ -32,6 +32,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import { Button } from '@/components/ui/button';
 import type { QuizDefinition } from '@/lib/quiz-template';
 import { cn } from '@/lib/utils';
 import DeleteLessonDialog from '../lessons/[lessonId]/_components/delete-lesson-dialog';
@@ -290,7 +291,7 @@ export function ModuleAccordionItem({
       className="overflow-hidden rounded-md border bg-card shadow-sm"
     >
       <div className="group/module-row relative">
-        <AccordionTrigger className="flex items-center justify-between border-b bg-muted/40 p-4 font-medium text-foreground transition-colors hover:bg-muted/60">
+        <AccordionTrigger className="flex cursor-pointer items-center justify-between border-b bg-muted/40 p-4 font-medium text-foreground transition-colors hover:bg-muted/60 hover:text-primary hover:no-underline">
           <div className="flex w-full items-center justify-between pr-12">
             <span className="text-lg">{moduleItem.title}</span>
           </div>
@@ -310,23 +311,25 @@ export function ModuleAccordionItem({
           {moduleActions.length > 0 ? (
             <DropdownTemplate
               trigger={
-                <button
+                <Button
                   type="button"
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-100 text-violet-600 transition-colors hover:bg-violet-200 dark:bg-violet-900/30 dark:text-violet-400 dark:hover:bg-violet-900/50"
+                  variant="ghost"
+                  size="icon-sm"
+                  className="bg-primary/10 text-primary hover:bg-primary/15"
                   onClick={(e) => {
                     e.stopPropagation();
                     e.preventDefault();
                   }}
                 >
-                  <Plus className="h-4 w-4" strokeWidth={2.5} />
-                </button>
+                  <Plus strokeWidth={2.5} />
+                </Button>
               }
               items={moduleActions}
             />
           ) : null}
         </div>
 
-        <AccordionContent className="m-0 h-auto border-none bg-card p-0 text-sm">
+        <AccordionContent className="m-0 h-auto border-none bg-card p-0 text-sm [&_a]:no-underline [&_a]:hover:no-underline">
           <div className="divide-y">
             {items.length === 0 ? (
               <div className="p-4 text-center text-muted-foreground italic">
@@ -426,10 +429,10 @@ function SortableAccordionRow({
       >
         <Link
           href={`/courses/${courseId}/lessons/${item.id}`}
-          className="flex flex-1 items-center gap-3"
+          className="flex flex-1 cursor-pointer items-center gap-3 transition-colors hover:text-primary hover:no-underline"
           style={{ paddingLeft: `${indentPadding}px` }}
         >
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors duration-300 group-hover:bg-primary group-hover:text-primary-foreground">
+          <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors duration-300 group-hover:bg-primary group-hover:text-primary-foreground">
             <BookOpen className="h-4 w-4" strokeWidth={2} />
           </div>
           <span className="font-medium">{item.title}</span>
@@ -490,10 +493,10 @@ function SortableAccordionRow({
     >
       <Link
         href={`/courses/${courseId}/quiz/${item.id}`}
-        className="flex flex-1 items-center gap-3"
+        className="flex flex-1 cursor-pointer items-center gap-3 transition-colors hover:text-primary hover:no-underline"
         style={{ paddingLeft: `${indentPadding}px` }}
       >
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-100 text-violet-600 transition-colors duration-300 group-hover:bg-violet-600 group-hover:text-white dark:bg-violet-900/30 dark:text-violet-400 dark:group-hover:bg-violet-600">
+        <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors duration-300 group-hover:bg-primary group-hover:text-primary-foreground">
           <ClipboardList className="h-4 w-4" strokeWidth={2} />
         </div>
         <div>

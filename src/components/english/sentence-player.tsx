@@ -1,10 +1,12 @@
 'use client';
 
 import { useMutation } from '@tanstack/react-query';
-import { Loader2, Pause, Play, Sparkles } from 'lucide-react';
+import { Pause, Play, Sparkles } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useCallback, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import { apiClient } from '@/lib/api/api-client';
 import { cn } from '@/lib/utils';
 
@@ -111,27 +113,34 @@ export function SentencePlayer({
             )}
           >
             {/* Play button */}
-            <button
+            <Button
               type="button"
               id={`sentence-play-${idx}`}
               onClick={() => playSentence(sentence, idx)}
-              disabled={playState === 'loading' && !isActive}
+              disabled={playState === 'loading'}
               className={cn(
-                'mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full transition-all',
+                'mt-0.5 rounded-full transition-all',
+                isLoading ? 'gap-1 px-2 text-xs' : '',
                 isActive
                   ? 'bg-primary text-primary-foreground shadow-sm'
-                  : 'bg-muted text-muted-foreground group-hover:bg-primary/15 group-hover:text-primary'
+                  : 'bg-muted text-muted-foreground'
               )}
-              aria-label={isPlaying ? t('pauseSentence') : t('playSentence')}
+              aria-label={
+                isLoading
+                  ? t('loadingVoice')
+                  : isPlaying
+                    ? t('pauseSentence')
+                    : t('playSentence')
+              }
             >
               {isLoading ? (
-                <Loader2 className="size-3.5 animate-spin" />
+                <Spinner className="size-3.5" />
               ) : isPlaying ? (
                 <Pause className="size-3.5" />
               ) : (
                 <Play className="size-3.5 translate-x-px" />
               )}
-            </button>
+            </Button>
 
             <p
               className={cn(
