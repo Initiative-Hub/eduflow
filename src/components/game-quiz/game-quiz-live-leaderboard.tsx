@@ -39,7 +39,7 @@ function LeaderboardRow({
   return (
     <li
       className={cn(
-        'relative flex min-h-17 items-center gap-3 overflow-hidden rounded-2xl border bg-card px-3 py-3 shadow-sm sm:min-h-20 sm:gap-4 sm:px-5',
+        'relative flex min-h-18 items-center gap-3 overflow-hidden rounded-2xl border bg-card px-4 py-3.5 shadow-sm sm:min-h-24 sm:gap-5 sm:px-6 sm:py-4',
         isFirst && 'border-primary/25 bg-primary/6 shadow-md',
         isCurrentPlayer &&
           'border-primary/30 bg-primary/10 ring-1 ring-primary/10'
@@ -54,14 +54,14 @@ function LeaderboardRow({
       />
       <span
         className={cn(
-          'grid size-8 shrink-0 place-items-center rounded-full bg-muted font-bold text-muted-foreground text-sm tabular-nums sm:size-9',
+          'grid size-9 shrink-0 place-items-center rounded-full bg-muted font-bold text-muted-foreground text-sm tabular-nums sm:size-11 sm:text-base',
           (isFirst || isCurrentPlayer) && 'bg-primary text-primary-foreground'
         )}
       >
         <span className="sr-only">{copy.player.rank} </span>
         {rank}
       </span>
-      <Avatar className="size-10 shrink-0 sm:size-11">
+      <Avatar className="size-11 shrink-0 sm:size-13">
         <AvatarImage alt="" src={participant.image ?? undefined} />
         <AvatarFallback className="bg-muted font-bold text-muted-foreground text-xs">
           {initials(participant.displayName)}
@@ -69,7 +69,7 @@ function LeaderboardRow({
       </Avatar>
       <div className="min-w-0 flex-1">
         <div className="flex min-w-0 items-center gap-1.5">
-          <span className="truncate font-bold text-foreground text-sm sm:text-base">
+          <span className="truncate font-bold text-base text-foreground sm:text-lg">
             {isCurrentPlayer ? copy.player.you : participant.displayName}
           </span>
           {isFirst ? (
@@ -88,7 +88,7 @@ function LeaderboardRow({
       <div className="shrink-0 text-right">
         <p
           className={cn(
-            'font-extrabold text-foreground text-lg tabular-nums sm:text-xl',
+            'font-extrabold text-foreground text-xl tabular-nums sm:text-2xl',
             (isFirst || isCurrentPlayer) && 'text-primary'
           )}
         >
@@ -122,12 +122,8 @@ export function GameQuizLiveLeaderboard({
       : null;
 
   return (
-    <section className="relative overflow-hidden rounded-3xl border border-border/60 bg-background shadow-primary/5 shadow-xl">
-      <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-36 bg-linear-to-b from-primary/10 to-transparent"
-        aria-hidden="true"
-      />
-      <div className="relative px-4 pt-7 pb-5 sm:px-8 sm:pt-9 sm:pb-7">
+    <section className="w-full">
+      <div className="py-3 sm:py-5">
         <div className="text-center">
           <p className="font-bold text-primary text-xs uppercase tracking-[0.18em]">
             {formatGameQuizRankingProgress(
@@ -136,7 +132,7 @@ export function GameQuizLiveLeaderboard({
               session.totalRounds
             )}
           </p>
-          <h1 className="mt-2 font-extrabold text-2xl text-foreground tracking-tight sm:text-4xl">
+          <h1 className="mt-2 font-extrabold text-3xl text-foreground tracking-tight sm:text-5xl">
             {copy.player.leaderboard}
           </h1>
           {variant === 'host' ? (
@@ -151,7 +147,7 @@ export function GameQuizLiveLeaderboard({
         </div>
 
         {visibleStandings.length > 0 ? (
-          <ol className="mx-auto mt-7 max-w-2xl space-y-3 sm:mt-9">
+          <ol className="mx-auto mt-8 max-w-5xl space-y-3 sm:mt-11 sm:space-y-4">
             {visibleStandings.map((participant, index) => (
               <LeaderboardRow
                 copy={copy}
@@ -163,7 +159,7 @@ export function GameQuizLiveLeaderboard({
             ))}
           </ol>
         ) : (
-          <div className="mx-auto mt-8 max-w-2xl rounded-2xl border border-dashed p-8 text-center">
+          <div className="mx-auto mt-8 max-w-5xl rounded-2xl border border-dashed p-8 text-center">
             <Trophy
               className="mx-auto size-7 text-muted-foreground/50"
               aria-hidden="true"
@@ -177,7 +173,7 @@ export function GameQuizLiveLeaderboard({
         )}
 
         {pinnedParticipant ? (
-          <div className="mx-auto mt-7 max-w-2xl border-primary/15 border-t pt-5">
+          <div className="mx-auto mt-8 max-w-5xl border-primary/15 border-t pt-6">
             <ol>
               <LeaderboardRow
                 copy={copy}
@@ -190,7 +186,7 @@ export function GameQuizLiveLeaderboard({
         ) : null}
 
         {actions ? (
-          <div className="mx-auto mt-6 flex max-w-2xl flex-col-reverse items-stretch justify-center gap-3 sm:flex-row sm:items-center">
+          <div className="mx-auto mt-8 flex max-w-5xl flex-col-reverse items-stretch justify-center gap-3 sm:flex-row sm:items-center">
             {actions}
           </div>
         ) : null}

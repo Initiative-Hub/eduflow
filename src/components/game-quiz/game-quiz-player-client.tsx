@@ -156,8 +156,8 @@ export function GameQuizPlayerClient({
     return <PlayerPodium copy={copy} session={session} />;
   if (session.phase === 'SCOREBOARD') {
     return (
-      <main className="min-h-[calc(100vh-6rem)] bg-linear-to-b from-primary/5 via-background to-muted/30 px-3 py-4 sm:px-6 sm:py-10">
-        <div className="mx-auto max-w-3xl">
+      <main className="min-h-[calc(100vh-6rem)] bg-background px-4 py-6 sm:px-8 sm:py-12">
+        <div className="mx-auto max-w-5xl">
           <GameQuizLiveLeaderboard
             actions={
               <div className="flex items-center justify-center gap-2 rounded-full bg-muted px-4 py-2.5 text-muted-foreground text-sm">
