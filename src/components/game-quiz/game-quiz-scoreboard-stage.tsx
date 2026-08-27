@@ -17,33 +17,37 @@ export function GameQuizHostScoreboard({
   session: GameSessionSnapshot;
 }) {
   return (
-    <GameQuizLiveLeaderboard
-      actions={
-        <>
-          <GameQuizFullLeaderboardDialog
-            copy={copy}
-            leaderboard={session.leaderboard}
-          />
-          <Button
-            className="rounded-full px-6 shadow-sm sm:min-w-48"
-            disabled={isPending}
-            onClick={onNext}
-            size="lg"
-          >
-            {isPending ? (
-              <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-            ) : null}
-            {copy.host.next}
-            {!isPending ? (
-              <ArrowRight className="size-4" aria-hidden="true" />
-            ) : null}
-          </Button>
-        </>
-      }
-      copy={copy}
-      session={session}
-      variant="host"
-    />
+    <main className="min-h-[calc(100vh-6rem)] bg-background px-4 py-6 sm:px-8 sm:py-12">
+      <div className="mx-auto max-w-6xl">
+        <GameQuizLiveLeaderboard
+          actions={
+            <>
+              <GameQuizFullLeaderboardDialog
+                copy={copy}
+                leaderboard={session.leaderboard}
+              />
+              <Button
+                className="rounded-full px-6 shadow-sm sm:min-w-48"
+                disabled={isPending}
+                onClick={onNext}
+                size="lg"
+              >
+                {isPending ? (
+                  <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                ) : null}
+                {copy.host.next}
+                {!isPending ? (
+                  <ArrowRight className="size-4" aria-hidden="true" />
+                ) : null}
+              </Button>
+            </>
+          }
+          copy={copy}
+          session={session}
+          variant="host"
+        />
+      </div>
+    </main>
   );
 }
 
@@ -55,19 +59,23 @@ export function GameQuizPlayerScoreboard({
   session: GameSessionSnapshot;
 }) {
   return (
-    <GameQuizLiveLeaderboard
-      actions={
-        <div className="flex items-center justify-center gap-2 rounded-full bg-muted px-4 py-2.5 text-muted-foreground text-sm">
-          <span
-            className="size-2 rounded-full bg-primary motion-safe:animate-pulse"
-            aria-hidden="true"
-          />
-          {copy.player.waitingForNext}
-        </div>
-      }
-      copy={copy}
-      session={session}
-      variant="player"
-    />
+    <main className="min-h-[calc(100vh-6rem)] bg-background px-4 py-6 sm:px-8 sm:py-12">
+      <div className="mx-auto max-w-5xl">
+        <GameQuizLiveLeaderboard
+          actions={
+            <div className="flex items-center justify-center gap-2 rounded-full bg-muted px-4 py-2.5 text-muted-foreground text-sm">
+              <span
+                className="size-2 rounded-full bg-primary motion-safe:animate-pulse"
+                aria-hidden="true"
+              />
+              {copy.player.waitingForNext}
+            </div>
+          }
+          copy={copy}
+          session={session}
+          variant="player"
+        />
+      </div>
+    </main>
   );
 }

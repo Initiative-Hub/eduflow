@@ -81,10 +81,12 @@ describe('GameQuizPreviewClient', () => {
 
     const marsButton = screen.getByRole('button', { name: /Mars/ });
     await user.click(marsButton);
-    expect(screen.getByText('preview.answerSelected')).toBeInTheDocument();
+    expect(screen.getByText('player.submitted')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'preview.reveal' }));
-    expect(marsButton).toBeDisabled();
+    expect(
+      screen.queryByRole('button', { name: /Mars/ })
+    ).not.toBeInTheDocument();
     expect(
       screen.getByText('Mars has iron oxide on its surface.')
     ).toBeInTheDocument();
@@ -111,9 +113,7 @@ describe('GameQuizPreviewClient', () => {
 
     await user.click(screen.getByRole('button', { name: 'preview.next' }));
     expect(screen.getByText('Which planet is largest?')).toBeInTheDocument();
-    expect(
-      screen.queryByText('preview.answerSelected')
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText('player.submitted')).not.toBeInTheDocument();
     expect(getGameQuiz).toHaveBeenCalledTimes(1);
   });
 });

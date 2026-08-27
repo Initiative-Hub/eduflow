@@ -16,14 +16,12 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { gameQuizApi } from './api';
 import { type GameQuizCopy, gameQuizCopy } from './copy';
+import { GameQuizHostQuestionStage } from './game-quiz-host-question-stage';
+import { GameQuizPlayerQuestionStage } from './game-quiz-player-question-stage';
 import {
   GameQuizHostScoreboard,
   GameQuizPlayerScoreboard,
 } from './game-quiz-scoreboard-stage';
-import {
-  type GameQuizPreviewDevice,
-  GameQuizPreviewQuestionStage,
-} from './preview/game-quiz-preview-question-stage';
 import {
   createGameQuizPreviewSession,
   type PreviewParticipantRank,
@@ -35,6 +33,7 @@ interface GameQuizPreviewClientProps {
 }
 
 type PreviewStage = 'question' | 'reveal' | 'rankings';
+type GameQuizPreviewDevice = 'host' | 'participant';
 
 function PreviewToggle({
   active,
@@ -101,16 +100,22 @@ export function GameQuizPreviewClient({
     setSelectedOptionId(undefined);
     setStage('question');
   };
+  const isRankings = stage === 'rankings';
   const previewSession = createGameQuizPreviewSession({
     gameQuizId,
     gameTitle: gameQuiz.title,
     participantName: copy.preview.samplePlayer,
     participantRank,
+    phase: isRankings
+      ? 'SCOREBOARD'
+      : stage === 'reveal'
+        ? 'REVEAL'
+        : 'QUESTION_OPEN',
     question,
     questionIndex,
+    selectedOptionId,
     totalRounds: questions.length,
   });
-  const isRankings = stage === 'rankings';
 
   return (
     <main className="min-h-[calc(100vh-6rem)] bg-muted/30 px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
@@ -209,19 +214,19 @@ export function GameQuizPreviewClient({
             device === 'participant' && 'max-w-md'
           )}
         >
-          {isRankings ? (
-            <section
-              aria-label={
-                device === 'host' ? copy.preview.host : copy.preview.participant
-              }
-              className={cn(
-                'overflow-hidden bg-background',
-                device === 'host'
-                  ? 'rounded-2xl border p-5 shadow-lg sm:p-8'
-                  : 'rounded-[2rem] border-[6px] border-foreground/80 p-4 shadow-2xl sm:p-5'
-              )}
-            >
-              {device === 'host' ? (
+          <section
+            aria-label={
+              device === 'host' ? copy.preview.host : copy.preview.participant
+            }
+            className={cn(
+              'overflow-hidden bg-background',
+              device === 'host'
+                ? 'rounded-2xl border shadow-lg'
+                : 'rounded-[2rem] border-[6px] border-foreground/80 shadow-2xl'
+            )}
+          >
+            {isRankings ? (
+              device === 'host' ? (
                 <GameQuizHostScoreboard
                   copy={copy}
                   isPending={false}
@@ -237,20 +242,27 @@ export function GameQuizPreviewClient({
                   copy={copy}
                   session={previewSession}
                 />
-              )}
-            </section>
-          ) : (
-            <GameQuizPreviewQuestionStage
-              copy={copy}
-              device={device}
-              onSelectOption={setSelectedOptionId}
-              question={question}
-              questionIndex={questionIndex}
-              revealed={stage === 'reveal'}
-              selectedOptionId={selectedOptionId}
-              totalQuestions={questions.length}
-            />
-          )}
+              )
+            ) : device === 'host' ? (
+              <GameQuizHostQuestionStage
+                answerCount={previewSession.answerCount}
+                copy={copy}
+                isPending={false}
+                onCommand={(action) => {
+                  if (action === 'SKIP') setStage('reveal');
+                  if (action === 'NEXT') setStage('rankings');
+                }}
+                session={previewSession}
+              />
+            ) : (
+              <GameQuizPlayerQuestionStage
+                copy={copy}
+                isAnswerPending={false}
+                onAnswer={setSelectedOptionId}
+                session={previewSession}
+              />
+            )}
+          </section>
         </div>
 
         {!isRankings ? (

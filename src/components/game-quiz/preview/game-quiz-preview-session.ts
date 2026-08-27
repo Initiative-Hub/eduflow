@@ -1,6 +1,7 @@
 import type {
   GameParticipant,
   GameQuizQuestion,
+  GameSessionPhase,
   GameSessionSnapshot,
 } from '../types';
 
@@ -44,16 +45,20 @@ export function createGameQuizPreviewSession({
   gameTitle,
   participantName,
   participantRank,
+  phase,
   question,
   questionIndex,
+  selectedOptionId,
   totalRounds,
 }: {
   gameQuizId: string;
   gameTitle: string;
   participantName: string;
   participantRank: PreviewParticipantRank;
+  phase: Extract<GameSessionPhase, 'QUESTION_OPEN' | 'REVEAL' | 'SCOREBOARD'>;
   question: GameQuizQuestion;
   questionIndex: number;
+  selectedOptionId?: string;
   totalRounds: number;
 }): GameSessionSnapshot {
   const previewParticipant: GameParticipant = {
@@ -63,6 +68,29 @@ export function createGameQuizPreviewSession({
     score: participantRank === 1 ? 2450 : 1250,
   };
   const participants = [previewParticipant, ...SAMPLE_PARTICIPANTS];
+  const revealedOptionId =
+    selectedOptionId ??
+    (phase === 'REVEAL'
+      ? question.options.find((option) => option.isCorrect)?.id
+      : undefined);
+  const answeredOption = question.options.find(
+    (option) => option.id === revealedOptionId
+  );
+  const answerCount = phase === 'QUESTION_OPEN' ? 2 : participants.length;
+  const currentRound = {
+    ...question,
+    deadlineAt:
+      phase === 'QUESTION_OPEN'
+        ? new Date(Date.now() + 20_000).toISOString()
+        : null,
+    options: question.options.map((option, index) => ({
+      ...option,
+      answerCount: [3, 1, 1, 1][index] ?? 0,
+      answerers: participants
+        .slice(index, index + (index === 0 ? 3 : 1))
+        .map(({ displayName, id, image }) => ({ displayName, id, image })),
+    })),
+  };
 
   return {
     gameQuizId,
@@ -70,15 +98,22 @@ export function createGameQuizPreviewSession({
     gameTitle,
     joinCode: '123456',
     joiningLocked: true,
-    phase: 'SCOREBOARD',
+    phase,
     stateVersion: 1,
-    currentRound: question,
+    currentRound,
     currentRoundIndex: questionIndex,
     totalRounds,
     participant: previewParticipant,
     participants,
-    answerCount: participants.length,
+    answerCount,
     leaderboard: participants,
-    myAnswer: null,
+    myAnswer: revealedOptionId
+      ? {
+          optionId: revealedOptionId,
+          isCorrect: phase === 'REVEAL' ? answeredOption?.isCorrect : undefined,
+          pointsAwarded:
+            phase === 'REVEAL' && answeredOption?.isCorrect ? 850 : 0,
+        }
+      : null,
   };
 }
