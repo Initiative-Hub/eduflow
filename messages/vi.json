@@ -2012,7 +2012,8 @@
       "hint": "Gợi ý",
       "hostEndedDescription": "Người chủ trì đã rời Rally này. Bạn có thể tham gia trò chơi khác bằng mã mới.",
       "hostEndedTitle": "Trò chơi đã kết thúc",
-      "leaderboard": "Tiến độ lớp",
+      "keepGoing": "Tiếp tục nhé — mỗi điểm đều quan trọng",
+      "leaderboard": "Bảng xếp hạng hiện tại",
       "noPodium": "Chưa có xếp hạng cuối cùng.",
       "notCorrect": "Tiếp tục nhé",
       "pin": "MÃ",
@@ -2021,12 +2022,15 @@
       "pts": "đ",
       "question": "Câu hỏi",
       "rank": "Hạng",
+      "rankingProgress": "Đã hoàn thành câu {current} / {total}",
       "reveal": "Công bố đáp án",
       "score": "Điểm của bạn",
       "submitted": "Đã gửi đáp án",
       "submittedDescription": "Câu trả lời hay. Hãy chờ đến lúc công bố.",
       "waiting": "Sẵn sàng nhé",
-      "waitingDescription": "Giáo viên sẽ bắt đầu Rally trong giây lát."
+      "waitingDescription": "Giáo viên sẽ bắt đầu Rally trong giây lát.",
+      "waitingForNext": "Đang chờ câu hỏi tiếp theo",
+      "you": "Bạn"
     },
     "preview": {
       "answerSelected": "Đã chọn đáp án",

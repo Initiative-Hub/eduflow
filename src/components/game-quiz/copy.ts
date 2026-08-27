@@ -3,6 +3,19 @@ type Translate = (
   values?: Record<string, string | number>
 ) => string;
 
+const RANKING_CURRENT_TOKEN = '__GAME_QUIZ_CURRENT__';
+const RANKING_TOTAL_TOKEN = '__GAME_QUIZ_TOTAL__';
+
+export function formatGameQuizRankingProgress(
+  template: string,
+  current: number,
+  total: number
+) {
+  return template
+    .replace(RANKING_CURRENT_TOKEN, String(current))
+    .replace(RANKING_TOTAL_TOKEN, String(total));
+}
+
 export function getGameQuizCopy(t: Translate) {
   return {
     common: {
@@ -196,6 +209,13 @@ export function getGameQuizCopy(t: Translate) {
       rank: t('player.rank'),
       noPodium: t('player.noPodium'),
       leaderboard: t('player.leaderboard'),
+      rankingProgress: t('player.rankingProgress', {
+        current: RANKING_CURRENT_TOKEN,
+        total: RANKING_TOTAL_TOKEN,
+      }),
+      you: t('player.you'),
+      keepGoing: t('player.keepGoing'),
+      waitingForNext: t('player.waitingForNext'),
       connection: t('player.connection'),
       hostEndedTitle: t('player.hostEndedTitle'),
       hostEndedDescription: t('player.hostEndedDescription'),

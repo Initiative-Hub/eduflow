@@ -2012,7 +2012,8 @@
       "hint": "Hint",
       "hostEndedDescription": "The host has left this Rally. You can join another game with a new code.",
       "hostEndedTitle": "This game has ended",
-      "leaderboard": "Class progress",
+      "keepGoing": "Keep going — every point counts",
+      "leaderboard": "Current rankings",
       "noPodium": "No final rankings are available yet.",
       "notCorrect": "Keep going",
       "pin": "PIN",
@@ -2021,12 +2022,15 @@
       "pts": "pts",
       "question": "Question",
       "rank": "Rank",
+      "rankingProgress": "Question {current} of {total} completed",
       "reveal": "Answer reveal",
       "score": "Your score",
       "submitted": "Answer submitted",
       "submittedDescription": "Nice thinking. Hold tight for the reveal.",
       "waiting": "Get ready",
-      "waitingDescription": "Your teacher will begin the Rally shortly."
+      "waitingDescription": "Your teacher will begin the Rally shortly.",
+      "waitingForNext": "Waiting for the next question",
+      "you": "You"
     },
     "preview": {
       "answerSelected": "Answer selected",

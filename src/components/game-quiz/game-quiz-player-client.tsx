@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 import { gameQuizApi } from './api';
 import { type GameQuizCopy, gameQuizCopy } from './copy';
 import { GameSessionError, GameSessionLoading } from './game-quiz-host-client';
+import { GameQuizLiveLeaderboard } from './game-quiz-live-leaderboard';
 import { GameQuizPodium } from './game-quiz-podium';
 import type { GameSessionSnapshot } from './types';
 import { useGameQuizRealtime } from './use-game-quiz-realtime';
@@ -155,11 +156,23 @@ export function GameQuizPlayerClient({
     return <PlayerPodium copy={copy} session={session} />;
   if (session.phase === 'SCOREBOARD') {
     return (
-      <main className="mx-auto max-w-3xl space-y-6 py-4 sm:py-10">
-        <Leaderboard copy={copy} session={session} />
-        <p className="text-center text-muted-foreground text-sm">
-          {copy.player.waitingDescription}
-        </p>
+      <main className="min-h-[calc(100vh-6rem)] bg-linear-to-b from-primary/5 via-background to-muted/30 px-3 py-4 sm:px-6 sm:py-10">
+        <div className="mx-auto max-w-3xl">
+          <GameQuizLiveLeaderboard
+            actions={
+              <div className="flex items-center justify-center gap-2 rounded-full bg-muted px-4 py-2.5 text-muted-foreground text-sm">
+                <span
+                  className="size-2 rounded-full bg-primary motion-safe:animate-pulse"
+                  aria-hidden="true"
+                />
+                {copy.player.waitingForNext}
+              </div>
+            }
+            copy={copy}
+            session={session}
+            variant="player"
+          />
+        </div>
       </main>
     );
   }
@@ -182,7 +195,7 @@ export function GameQuizPlayerClient({
 
         {session.phase !== 'REVEAL' ? (
           <Card className="mb-3 border-border/60 bg-background px-5 py-4 text-center shadow-sm sm:px-7">
-            <h1 className="font-bold text-lg text-foreground leading-snug sm:text-2xl">
+            <h1 className="font-bold text-foreground text-lg leading-snug sm:text-2xl">
               {session.currentRound.prompt}
             </h1>
             {session.currentRound.hint ? (
@@ -445,34 +458,5 @@ function PlayerPodium({
         title={copy.host.congratulations}
       />
     </main>
-  );
-}
-
-function Leaderboard({
-  copy,
-  session,
-}: {
-  copy: GameQuizCopy;
-  session: GameSessionSnapshot;
-}) {
-  return (
-    <section className="border bg-card p-5">
-      <h2 className="font-semibold">{copy.player.leaderboard}</h2>
-      <ol className="mt-4 space-y-2">
-        {session.leaderboard.map((participant, index) => (
-          <li
-            className="flex items-center justify-between border-b pb-2 text-sm last:border-0"
-            key={participant.id}
-          >
-            <span>
-              {index + 1}. {participant.displayName}
-            </span>
-            <span className="font-medium tabular-nums">
-              {participant.score}
-            </span>
-          </li>
-        ))}
-      </ol>
-    </section>
   );
 }

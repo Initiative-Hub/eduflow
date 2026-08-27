@@ -2,13 +2,13 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  ArrowRight,
   Check,
   Copy,
   Link as LinkIcon,
   Loader2,
   Lock,
   Play,
-  Trophy,
   Users,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -41,6 +41,7 @@ import { type GameHostAction, gameQuizApi } from './api';
 import { type GameQuizCopy, gameQuizCopy } from './copy';
 import { GameQuizFullLeaderboardDialog } from './game-quiz-full-leaderboard-dialog';
 import { GameQuizJoinQrCode } from './game-quiz-join-qr-code';
+import { GameQuizLiveLeaderboard } from './game-quiz-live-leaderboard';
 import { GameQuizPodium } from './game-quiz-podium';
 import { GameQuizRespondentStack } from './game-quiz-respondent-stack';
 import { clearLiveGameSession } from './live-game-session';
@@ -244,25 +245,38 @@ export function GameQuizHostClient({
 
   if (session.phase === 'SCOREBOARD') {
     return (
-      <main className="min-h-[calc(100vh-6rem)] px-4 py-8">
-        <div className="mx-auto flex max-w-4xl flex-col gap-6">
-          <div className="flex items-center justify-between gap-4">
-            <p className="font-medium text-muted-foreground text-sm uppercase tracking-[0.2em]">
-              {session.gameTitle}
-            </p>
-            <div />
-            <Button
-              className="rounded-full bg-primary px-4 py-3 font-medium text-sm shadow-xs hover:bg-primary/90"
-              disabled={commandMutation.isPending}
-              onClick={() => commandMutation.mutate({ action })}
-            >
-              {commandMutation.isPending ? (
-                <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-              ) : null}
-              {actionLabel}
-            </Button>
-          </div>
-          <ScoreboardStage copy={copy} session={session} />
+      <main className="min-h-[calc(100vh-6rem)] bg-linear-to-b from-primary/5 via-background to-muted/30 px-4 py-6 sm:py-10">
+        <div className="mx-auto max-w-4xl">
+          <GameQuizLiveLeaderboard
+            actions={
+              <>
+                <GameQuizFullLeaderboardDialog
+                  copy={copy}
+                  leaderboard={session.leaderboard}
+                />
+                <Button
+                  className="rounded-full px-6 shadow-sm sm:min-w-48"
+                  disabled={commandMutation.isPending}
+                  onClick={() => commandMutation.mutate({ action })}
+                  size="lg"
+                >
+                  {commandMutation.isPending ? (
+                    <Loader2
+                      className="size-4 animate-spin"
+                      aria-hidden="true"
+                    />
+                  ) : null}
+                  {actionLabel}
+                  {!commandMutation.isPending ? (
+                    <ArrowRight className="size-4" aria-hidden="true" />
+                  ) : null}
+                </Button>
+              </>
+            }
+            copy={copy}
+            session={session}
+            variant="host"
+          />
         </div>
       </main>
     );
@@ -760,43 +774,6 @@ function CountdownBadge({ deadlineAt }: { deadlineAt?: string | null }) {
         {seconds}
       </span>
     </div>
-  );
-}
-
-function ScoreboardStage({
-  copy,
-  session,
-}: {
-  copy: GameQuizCopy;
-  session: GameSessionSnapshot;
-}) {
-  return (
-    <section className="mt-4 flex flex-1 items-center justify-center bg-primary px-4 py-10 text-primary-foreground">
-      <div className="w-full max-w-3xl">
-        <div className="mx-auto mb-10 flex w-fit items-center gap-3 bg-background px-6 py-3 text-foreground shadow-xl">
-          <Trophy className="size-6 text-primary" aria-hidden="true" />
-          <h1 className="font-semibold text-3xl">{copy.host.scoreboard}</h1>
-        </div>
-        <ol className="space-y-3">
-          {session.leaderboard.map((participant, index) => (
-            <li
-              className="flex items-center gap-4 bg-background px-5 py-4 text-foreground shadow-lg"
-              key={participant.id}
-            >
-              <span className="w-8 font-semibold text-muted-foreground tabular-nums">
-                {index + 1}
-              </span>
-              <span className="min-w-0 flex-1 truncate font-semibold text-lg">
-                {participant.displayName}
-              </span>
-              <span className="font-semibold text-xl tabular-nums">
-                {participant.score}
-              </span>
-            </li>
-          ))}
-        </ol>
-      </div>
-    </section>
   );
 }
 
