@@ -138,6 +138,7 @@ export function getGameQuizCopy(t: Translate) {
       next: t('preview.next'),
       reveal: t('preview.reveal'),
       reset: t('preview.reset'),
+      samplePlayer: t('preview.samplePlayer'),
     },
     host: {
       title: t('host.title'),

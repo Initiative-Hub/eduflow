@@ -12,8 +12,8 @@ import { cn } from '@/lib/utils';
 import { gameQuizApi } from './api';
 import { type GameQuizCopy, gameQuizCopy } from './copy';
 import { GameSessionError, GameSessionLoading } from './game-quiz-host-client';
-import { GameQuizLiveLeaderboard } from './game-quiz-live-leaderboard';
 import { GameQuizPodium } from './game-quiz-podium';
+import { GameQuizPlayerScoreboard } from './game-quiz-scoreboard-stage';
 import type { GameSessionSnapshot } from './types';
 import { useGameQuizRealtime } from './use-game-quiz-realtime';
 import { useLiveGameSession } from './use-live-game-session';
@@ -158,20 +158,7 @@ export function GameQuizPlayerClient({
     return (
       <main className="min-h-[calc(100vh-6rem)] bg-background px-4 py-6 sm:px-8 sm:py-12">
         <div className="mx-auto max-w-5xl">
-          <GameQuizLiveLeaderboard
-            actions={
-              <div className="flex items-center justify-center gap-2 rounded-full bg-muted px-4 py-2.5 text-muted-foreground text-sm">
-                <span
-                  className="size-2 rounded-full bg-primary motion-safe:animate-pulse"
-                  aria-hidden="true"
-                />
-                {copy.player.waitingForNext}
-              </div>
-            }
-            copy={copy}
-            session={session}
-            variant="player"
-          />
+          <GameQuizPlayerScoreboard copy={copy} session={session} />
         </div>
       </main>
     );

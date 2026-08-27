@@ -111,7 +111,8 @@ export function GameQuizLiveLeaderboard({
   const standings = [...session.leaderboard].sort(
     (first, second) => second.score - first.score
   );
-  const participantId = session.participant?.id;
+  const participantId =
+    variant === 'player' ? session.participant?.id : undefined;
   const participantRank = participantId
     ? standings.findIndex((entry) => entry.id === participantId) + 1
     : 0;

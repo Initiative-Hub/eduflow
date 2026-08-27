@@ -2,7 +2,6 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  ArrowRight,
   Check,
   Copy,
   Link as LinkIcon,
@@ -41,9 +40,9 @@ import { type GameHostAction, gameQuizApi } from './api';
 import { type GameQuizCopy, gameQuizCopy } from './copy';
 import { GameQuizFullLeaderboardDialog } from './game-quiz-full-leaderboard-dialog';
 import { GameQuizJoinQrCode } from './game-quiz-join-qr-code';
-import { GameQuizLiveLeaderboard } from './game-quiz-live-leaderboard';
 import { GameQuizPodium } from './game-quiz-podium';
 import { GameQuizRespondentStack } from './game-quiz-respondent-stack';
+import { GameQuizHostScoreboard } from './game-quiz-scoreboard-stage';
 import { clearLiveGameSession } from './live-game-session';
 import type { GameQuizOption, GameSessionSnapshot } from './types';
 import { useGameQuizRealtime } from './use-game-quiz-realtime';
@@ -237,45 +236,17 @@ export function GameQuizHostClient({
       <GameSessionError copy={copy} onRetry={() => sessionQuery.refetch()} />
     );
 
-  const action: GameHostAction =
-    session.phase === 'QUESTION_OPEN' ? 'SKIP' : 'NEXT';
-  const actionLabel =
-    session.phase === 'QUESTION_OPEN' ? copy.host.skip : copy.host.next;
   const answerCount = progressQuery.data?.answerCount ?? session.answerCount;
 
   if (session.phase === 'SCOREBOARD') {
     return (
       <main className="min-h-[calc(100vh-6rem)] bg-background px-4 py-6 sm:px-8 sm:py-12">
         <div className="mx-auto max-w-6xl">
-          <GameQuizLiveLeaderboard
-            actions={
-              <>
-                <GameQuizFullLeaderboardDialog
-                  copy={copy}
-                  leaderboard={session.leaderboard}
-                />
-                <Button
-                  className="rounded-full px-6 shadow-sm sm:min-w-48"
-                  disabled={commandMutation.isPending}
-                  onClick={() => commandMutation.mutate({ action })}
-                  size="lg"
-                >
-                  {commandMutation.isPending ? (
-                    <Loader2
-                      className="size-4 animate-spin"
-                      aria-hidden="true"
-                    />
-                  ) : null}
-                  {actionLabel}
-                  {!commandMutation.isPending ? (
-                    <ArrowRight className="size-4" aria-hidden="true" />
-                  ) : null}
-                </Button>
-              </>
-            }
+          <GameQuizHostScoreboard
             copy={copy}
+            isPending={commandMutation.isPending}
+            onNext={() => commandMutation.mutate({ action: 'NEXT' })}
             session={session}
-            variant="host"
           />
         </div>
       </main>
