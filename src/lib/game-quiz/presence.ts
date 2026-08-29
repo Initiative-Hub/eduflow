@@ -1,5 +1,3 @@
-import 'server-only';
-
 import { getUpstashRestRedisClient } from '@/lib/upstash/redis/client';
 
 const PRESENCE_TTL_SECONDS = 45;
