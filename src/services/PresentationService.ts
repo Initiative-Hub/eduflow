@@ -145,13 +145,20 @@ const TITLE_ONLY_LAYOUT_PATTERN =
 
 type TemplateCategoryMetadataMap = Record<string, TemplateCategoryMetadata>;
 
-const listPointSchema = z.union([
-  z.string(),
-  z.object({
-    title: z.string(),
-    description: z.string(),
-  }),
-]);
+/**
+ * One point in a bulleted list, as a single string.
+ *
+ * This was briefly a union of string and { title, description } to make the
+ * "state the claim, then explain it" shape explicit. That compiles to `anyOf`,
+ * which the planner model's structured-output schema handles badly — the call
+ * ran for 40s and came back with nothing parseable ("No output generated").
+ *
+ * Nothing was lost by going back to a string: the renderer joins a pair as
+ * "title — description" anyway, so an item written as "Claim — explanation"
+ * produces byte-identical slides. The depth is carried by the prompt instead
+ * of by the schema.
+ */
+const listPointSchema = z.string();
 
 const slideBindingsSchema = z.object({
   subtitle: z.string().optional(),
@@ -774,10 +781,10 @@ CONTENT DEPTH (this is what "detailed" means):
 - Write complete, self-contained sentences and labels — copy that reads well on screen. No "TODO", no "Lorem ipsum", no "etc.", no empty fields.
 - On number-heavy slides, do not leave bare numerals without context. Use labels, ranges, scales, units, compact 'display_value' badges, and 'insight_text' to explain what the numbers mean.
 - EXPLAIN, DO NOT ASSERT. Every bullet, level, stage, phase and step must add something its own heading does not already say: the mechanism behind it, a worked example, a figure, a consequence, or the condition under which it holds. "Real exposure beats guesswork every time" is an empty slogan; "Two weeks shadowing a data team shows how much of the job is cleaning inputs, not modelling" earns its space.
-- For layouts whose items are { title, description } pairs, the title is the label and the description is where the substance goes — aim for roughly ${MIN_ITEM_DEPTH_CHARS}-${MIN_ITEM_DEPTH_CHARS * 2} characters of real explanation per item.
+- For diagram layouts whose items are { title, description } pairs (levels, stages, phases, process_steps), the title is the label and the description is where the substance goes — aim for roughly ${MIN_ITEM_DEPTH_CHARS}-${MIN_ITEM_DEPTH_CHARS * 2} characters of real explanation per item.
 - WHAT "SHORT" MEANS IN A LAYOUT NOTE. When a layout note above says "tight", "short", "concise" or "extremely short", it is describing the TITLE half of an item and the number of items — never the description. A note that says "tight bullets" still wants ${MIN_ITEM_DEPTH_CHARS}+ characters of explanation attached to each bullet's title. The only cap you must respect literally is the item COUNT ("3 to 5 points"), and an explicit "TITLE ONLY" marker. Text that overflows one line wraps onto the next automatically, so a full sentence per item is safe — write the explanation.
 - Give each slide enough substance to fill it (see the per-layout counts above). Prefer fewer, more substantial items over many thin ones.
-- LIST SLIDES CARRY THE SAME BURDEN. 'bullets', 'items', 'steps', 'summary_points' and 'action_items' accept { title, description } entries — use that form so each point states its claim AND explains it. "Test your career fit" is a headline; "Test your career fit — a 12-week placement tells you whether you actually enjoy the day-to-day work before you commit years to it" is a point worth a slide.
+- LIST SLIDES CARRY THE SAME BURDEN. Every entry in 'bullets', 'items', 'steps', 'summary_points' and 'action_items' is written as "Claim — explanation": a short claim, an em dash, then the substance behind it. "Test your career fit" is a headline; "Test your career fit — a 12-week placement tells you whether you actually enjoy the day-to-day work before you commit years to it" is a point worth a slide.
 - Every slideTitle must be a specific, descriptive headline (e.g. "Market by the Numbers"), not a generic label like "Slide 4".
 - Match the lesson's language (e.g. write the deck in Vietnamese if the lesson is in Vietnamese).
 
@@ -785,19 +792,19 @@ Layout Binding Specifications (use these EXACT keys in each slide's 'bindings' o
 - 'TITLE_SLIDE': { "subtitle": string, "author": string }
 - 'AGENDA_OUTLINE': { "items": string[] }
 - 'SECTION_HEADER': { "sub_module_name": string }
-- 'TITLE_BULLETS': { "bullets": Array<string | { "title": string, "description": string }> }
-    Prefer the { title, description } form: the title names the point, the description
-    explains it. A list of bare headlines is what makes a deck read as surface-level.
-- 'TWO_COLUMN_SPLIT': { "left_col_title": string, "left_col_text": Array<string | { "title": string, "description": string }>, "right_col_title": string, "right_col_text": Array<string | { "title": string, "description": string }> }
+- 'TITLE_BULLETS': { "bullets": string[] }
+    Write each bullet as "Claim — explanation": a short bold-able claim, an em dash,
+    then the substance. A list of bare headlines is what makes a deck read as surface-level.
+- 'TWO_COLUMN_SPLIT': { "left_col_title": string, "left_col_text": string[], "right_col_title": string, "right_col_text": string[] }
 - 'BIG_QUOTE_TAKEAWAY': { "quote": string, "author_or_source": string }
 - 'KPI_BIG_NUMBER': { "metrics": Array<{ "value": string, "label": string }> }
 - 'CHART_INSIGHT': { "chart_type": "bar" | "hbar" | "line" | "pie", "chart_data": Array<{ "label": string, "value": number, "display_value"?: string }>, "insight_text": string }
 - 'DATA_TABLE': { "headers": string[], "rows": string[][] }
 - 'MEDIA_TEXT': { "image_prompt_description": string, "body_text": string }
 - 'TIMELINE_MILESTONES': { "events": Array<{ "date_or_step": string, "description": string }> }
-- 'STEP_BY_STEP': { "steps": Array<string | { "title": string, "description": string }> }
-- 'CONCLUSION_SUMMARY': { "summary_points": Array<string | { "title": string, "description": string }> }
-- 'CALL_TO_ACTION': { "action_items": Array<string | { "title": string, "description": string }> }
+- 'STEP_BY_STEP': { "steps": string[] }
+- 'CONCLUSION_SUMMARY': { "summary_points": string[] }
+- 'CALL_TO_ACTION': { "action_items": string[] }
 - 'QA_CONTACT': { "footer_note": string }
 - 'REFERENCES_LIST': { "sources": Array<{ "title": string, "url": string, "summary"?: string }> } (If the lesson content does not explicitly contain reference links, generate 2-3 highly relevant, reputable external references, books, or online articles on this topic)
 - 'STATEMENT_IMAGE': { "statement": string, "body_text": string, "image_prompt_description": string }
@@ -1055,7 +1062,7 @@ RULES:
 - Use the binding fields that match the layout's purpose (bullets/items/steps for lists, body_text for prose, metrics for figures, left_col_*/right_col_* for comparisons, levels/stages/phases/process_steps for diagram items).
 - WRITE FROM SCRATCH slides need at least ${MIN_SLIDE_LIST_ITEMS} list entries, or at least ${MIN_SLIDE_CONTENT_CHARS} characters of prose.
 - DEEPEN slides keep the same field names and the same number of items — expand the text inside them. Aim for about ${MIN_ITEM_DEPTH_CHARS}-${MIN_ITEM_DEPTH_CHARS * 2} characters of explanation per item.
-- To deepen a list of bare strings, rewrite each entry as { "title": string, "description": string } — the old string becomes the title and the explanation goes in the description. That keeps the field name and the item count while adding the substance.
+- To deepen a thin list entry, keep it a single string and extend it to "Claim — explanation": the old text becomes the claim and the explanation follows the em dash. That keeps the field name and the item count while adding the substance.
 - Every item must carry something the audience did not already know from its own heading: the mechanism, a worked example, a figure, a consequence, or the condition under which it applies. A restatement of the heading is a failure.
 - Ban assertion-only copy. "Real exposure beats guesswork" says nothing; "Two weeks shadowing a data team shows you how much of the job is cleaning inputs, not modelling" says something.
 - Draw every specific from the lesson. Do not invent figures, names or dates that are not in it.

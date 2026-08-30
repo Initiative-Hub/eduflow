@@ -94,9 +94,45 @@ class SlideJobService:
         background_tasks.add_task(self._execute_generation_job, job_id, req, out_path)
         return {"job_id": job_id, "status": "queued"}
 
-    async def generate_deck_from_plan(self, req: PlanGenReq) -> Dict[str, Any]:
-        job_id = uuid.uuid4().hex[:12]
+    async def queue_plan_generation_job(
+        self, background_tasks: BackgroundTasks, req: PlanGenReq
+    ) -> Dict[str, str]:
+        """Start a plan-based deck build and return immediately.
+
+        Building a deck runs one model call per slide to choose a layout plus
+        one image generation per picture slot, all in sequence, so a 13-slide
+        deck routinely takes longer than five minutes. Holding the HTTP request
+        open for that long meant the caller's client hit its own headers
+        timeout (undici gives up at 300s) and the work was thrown away even
+        though the server went on to finish it. The caller now polls
+        /slides/jobs/{job_id} instead, the same way template import does.
+        """
+        job_id = self.create_job()
         out_path = STORAGE_DIR / f"{job_id}.html"
+        background_tasks.add_task(
+            self._execute_plan_generation_job, job_id, req, out_path
+        )
+        return {"job_id": job_id, "status": "queued"}
+
+    async def _execute_plan_generation_job(
+        self, job_id: str, req: PlanGenReq, out_path: Path
+    ) -> None:
+        outcome = await self.generate_deck_from_plan(req, job_id=job_id)
+        if outcome.get("status") == "done":
+            self.jobs[job_id]["status"] = "done"
+            self.jobs[job_id]["result"] = outcome.get("result")
+        else:
+            self.jobs[job_id]["status"] = "error"
+            self.jobs[job_id]["message"] = outcome.get("message")
+
+    async def generate_deck_from_plan(
+        self, req: PlanGenReq, job_id: str | None = None
+    ) -> Dict[str, Any]:
+        job_id = job_id or uuid.uuid4().hex[:12]
+        out_path = STORAGE_DIR / f"{job_id}.html"
+
+        if job_id in self.jobs:
+            self.jobs[job_id]["status"] = "running"
 
         try:
             plan_dict = {

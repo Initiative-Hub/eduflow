@@ -496,8 +496,20 @@ def flatten_slide_bindings(category: str, slide_title: str, bindings: dict) -> d
 
     # 4. Flatten BIG_QUOTE_TAKEAWAY: quote textwrap
     if "quote" in bindings and isinstance(bindings["quote"], str):
-        wrapped = textwrap.wrap(bindings["quote"], width=50)
-        for idx, line in enumerate(wrapped[:3], 1):
+        # A fixed width guessed at a frame that does not exist. Chunks of 50
+        # characters were far wider than the quote panel, so the renderer
+        # wrapped each one a second time and a three-line quote sprawled into
+        # nine, straight through the rule drawn beneath it — and `[:3]` threw
+        # the tail away without saying so. Widen until the whole quote fits the
+        # three lines the design has, keeping every word; fit_text_to_boxes then
+        # shrinks the type for any line still wider than the panel.
+        quote = bindings["quote"].strip()
+        wrap_width = max(16, -(-len(quote) // 3))       # ceil(len / 3)
+        lines = textwrap.wrap(quote, width=wrap_width)
+        while len(lines) > 3:
+            wrap_width += 2
+            lines = textwrap.wrap(quote, width=wrap_width)
+        for idx, line in enumerate(lines, 1):
             flat[f"quote.{idx}"] = line
 
     # 5. Flatten KPI_BIG_NUMBER: metrics -> stat_1, label_1, etc.
@@ -815,7 +827,15 @@ class SlideService:
                             f"'{collection}/{category_dir.name}': {error}"
                         )
                         continue
-                    await upload_file_to_s3(png_path, object_key, bucket_name=bucket)
+
+            # The key below is handed to the picker to sign and load, so the
+            # object has to be there. Uploading only when the PNG had to be
+            # rendered meant a collection whose previews already sat on local
+            # disk — seeded into the image, or left over from an earlier run —
+            # advertised keys that were never in the bucket, and every thumbnail
+            # in the picker came back 404.
+            if not await object_exists_in_s3(object_key, bucket_name=bucket):
+                await upload_file_to_s3(png_path, object_key, bucket_name=bucket)
 
             previews.append(
                 {

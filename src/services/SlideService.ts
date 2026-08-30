@@ -349,36 +349,80 @@ export class SlideService {
       })),
     };
 
-    const response = await fetch(
-      `${SlideService.getExternalServiceUrl()}/slides/generate-from-plan`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      }
-    );
+    const baseUrl = SlideService.getExternalServiceUrl();
+    const response = await fetch(`${baseUrl}/slides/generate-from-plan`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
 
     if (!response.ok) {
       throw new Error(`Failed to generate slides: ${response.statusText}`);
     }
 
-    const job = (await response.json()) as JobResponse;
+    const queued = (await response.json()) as JobResponse & { job_id?: string };
 
-    if (job.status === 'done' && job.result) {
-      return {
-        deckId: job.result.deck_id,
-        slides: job.result.slides ?? [],
-        warnings: job.result.warnings ?? [],
-        usage: job.result.usage,
-        s3Key: job.result.s3_key,
-      };
+    // A deck used to be built inside this one request, which meant holding the
+    // connection open for the whole run — one model call per slide to pick a
+    // layout, plus an image generation per picture slot, all in sequence. Past
+    // five minutes undici gave up (UND_ERR_HEADERS_TIMEOUT) and the finished
+    // deck was discarded. The build now runs as a job and is polled for, so no
+    // single request is long-lived.
+    if (queued.status === 'done' && queued.result) {
+      return SlideService.toGeneratedDeck(queued.result);
+    }
+    if (queued.status === 'error') {
+      throw new Error(queued.message || 'Slide generation failed');
+    }
+    if (!queued.job_id) {
+      throw new Error('Unexpected response status from slide service');
     }
 
-    if (job.status === 'error') {
-      throw new Error(job.message || 'Slide generation failed');
+    const pollIntervalMs = 3000;
+    // Generous: a long deck with AI art can legitimately run many minutes, and
+    // giving up early throws away work the service is still doing.
+    const maxPolls = 400;
+
+    for (let index = 0; index < maxPolls; index += 1) {
+      await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
+
+      const statusResponse = await fetch(
+        `${baseUrl}/slides/jobs/${queued.job_id}`,
+        { cache: 'no-store' }
+      );
+
+      if (!statusResponse.ok) {
+        if (statusResponse.status === 404) {
+          throw new Error(
+            'Slide generation job was lost (service restarted). Please try again.'
+          );
+        }
+        throw new Error('Failed to poll slide generation job');
+      }
+
+      const job = (await statusResponse.json()) as JobResponse;
+
+      if (job.status === 'done' && job.result) {
+        return SlideService.toGeneratedDeck(job.result);
+      }
+      if (job.status === 'error') {
+        throw new Error(job.message || 'Slide generation failed');
+      }
     }
 
-    throw new Error('Unexpected response status from slide service');
+    throw new Error('Slide generation timed out');
+  }
+
+  private static toGeneratedDeck(
+    result: NonNullable<JobResponse['result']>
+  ): GeneratedDeck {
+    return {
+      deckId: result.deck_id,
+      slides: result.slides ?? [],
+      warnings: result.warnings ?? [],
+      usage: result.usage,
+      s3Key: result.s3_key,
+    };
   }
 
   static async getDeckPptx(deckId: string): Promise<ArrayBuffer> {

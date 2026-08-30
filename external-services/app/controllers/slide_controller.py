@@ -58,8 +58,8 @@ async def generate(req: GenReq, background_tasks: BackgroundTasks):
 
 
 @router.post("/generate-from-plan")
-async def generate_from_plan(req: PlanGenReq):
-    return await slide_job_service.generate_deck_from_plan(req)
+async def generate_from_plan(req: PlanGenReq, background_tasks: BackgroundTasks):
+    return await slide_job_service.queue_plan_generation_job(background_tasks, req)
 
 
 @router.post("/render-slide")
