@@ -77,19 +77,54 @@ export function createGameQuizPreviewSession({
     (option) => option.id === revealedOptionId
   );
   const answerCount = phase === 'QUESTION_OPEN' ? 2 : participants.length;
+  const firstOptionAnswerCount = Math.min(3, participants.length);
+  const remainingAnswerCount = participants.length - firstOptionAnswerCount;
+  const remainingOptionCount = Math.max(question.options.length - 1, 1);
+  const optionAnswerCounts = question.options.map((_, index) => {
+    if (index === 0) return firstOptionAnswerCount;
+
+    const remainingOptionIndex = index - 1;
+    return (
+      Math.floor(remainingAnswerCount / remainingOptionCount) +
+      (remainingOptionIndex < remainingAnswerCount % remainingOptionCount
+        ? 1
+        : 0)
+    );
+  });
+  const responseCount = optionAnswerCounts.reduce(
+    (total, count) => total + count,
+    0
+  );
+  const correctCount = question.options.reduce(
+    (total, option, index) =>
+      option.isCorrect ? total + (optionAnswerCounts[index] ?? 0) : total,
+    0
+  );
+  let answererOffset = 0;
   const currentRound = {
     ...question,
     deadlineAt:
       phase === 'QUESTION_OPEN'
         ? new Date(Date.now() + 20_000).toISOString()
         : null,
-    options: question.options.map((option, index) => ({
-      ...option,
-      answerCount: [3, 1, 1, 1][index] ?? 0,
-      answerers: participants
-        .slice(index, index + (index === 0 ? 3 : 1))
-        .map(({ displayName, id, image }) => ({ displayName, id, image })),
-    })),
+    options: question.options.map((option, index) => {
+      const optionAnswerCount = optionAnswerCounts[index] ?? 0;
+      const answerers = participants
+        .slice(answererOffset, answererOffset + optionAnswerCount)
+        .map(({ displayName, id, image }) => ({ displayName, id, image }));
+      answererOffset += optionAnswerCount;
+
+      return {
+        ...option,
+        answerCount: optionAnswerCount,
+        answerers,
+      };
+    }),
+    statistics: {
+      responseCount,
+      correctCount,
+      averageResponseTimeMs: 7400,
+    },
   };
 
   return {

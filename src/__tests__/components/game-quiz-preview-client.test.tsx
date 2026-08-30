@@ -107,6 +107,12 @@ describe('GameQuizPreviewClient', () => {
     expect(
       screen.getByRole('button', { name: 'host.viewFullLeaderboard' })
     ).toBeInTheDocument();
+    expect(screen.getByText('host.correctRate')).toBeInTheDocument();
+    expect(screen.getByText('host.responses')).toBeInTheDocument();
+    expect(screen.getByText('host.averageResponseTime')).toBeInTheDocument();
+    expect(screen.getByText('50%')).toBeInTheDocument();
+    expect(screen.getByText('6 / 6')).toBeInTheDocument();
+    expect(screen.getByText('7.4 s')).toBeInTheDocument();
     expect(screen.queryByText('player.you')).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'preview.question' }));
