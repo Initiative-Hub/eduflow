@@ -109,7 +109,7 @@ describe('Live Game Quiz rules', () => {
         selectedOptionId: index < 2 ? 'mars' : 'venus',
         idempotencyKey: `key-${index}`,
         submittedAt: new Date(),
-        responseTimeMs: 100,
+        responseTimeMs: (index + 1) * 100,
         isCorrect: index < 2,
         pointsAwarded: 0,
       })),
@@ -142,6 +142,12 @@ describe('Live Game Quiz rules', () => {
     expect(
       player.currentRound?.options.every((option) => !('answerers' in option))
     ).toBe(true);
+    expect(host.currentRound?.statistics).toEqual({
+      responseCount: 3,
+      correctCount: 2,
+      averageResponseTimeMs: 200,
+    });
+    expect(player.currentRound).not.toHaveProperty('statistics');
   });
 
   it('requires two to four options with exactly one correct answer', () => {

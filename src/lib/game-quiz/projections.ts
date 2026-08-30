@@ -229,6 +229,23 @@ export async function projectHostSession(session: SessionWithGameData) {
       { id, displayName, image },
     ])
   );
+  const currentRoundAnswers = currentRound
+    ? session.answers.filter((answer) => answer.roundId === currentRound.id)
+    : [];
+  const currentRoundStatistics = {
+    responseCount: currentRoundAnswers.length,
+    correctCount: currentRoundAnswers.filter((answer) => answer.isCorrect)
+      .length,
+    averageResponseTimeMs:
+      currentRoundAnswers.length > 0
+        ? Math.round(
+            currentRoundAnswers.reduce(
+              (total, answer) => total + answer.responseTimeMs,
+              0
+            ) / currentRoundAnswers.length
+          )
+        : null,
+  };
 
   return {
     gameQuizId: session.gameQuizId,
@@ -248,15 +265,16 @@ export async function projectHostSession(session: SessionWithGameData) {
     closedReason: session.closedReason,
     participants,
     currentRound: currentRound
-      ? projectRound(
-          currentRound,
-          true,
-          true,
-          session.answers.filter(
-            (answer) => answer.roundId === currentRound.id
+      ? {
+          ...projectRound(
+            currentRound,
+            true,
+            true,
+            currentRoundAnswers,
+            session.phase === 'REVEAL' ? answerersByParticipantId : undefined
           ),
-          session.phase === 'REVEAL' ? answerersByParticipantId : undefined
-        )
+          statistics: currentRoundStatistics,
+        }
       : null,
     rounds: session.rounds.map((round) => projectRound(round, true, true)),
     leaderboard: await projectLeaderboard(session),

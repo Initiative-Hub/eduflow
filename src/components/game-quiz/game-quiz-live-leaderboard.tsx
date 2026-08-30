@@ -1,9 +1,9 @@
-import { Crown, Trophy, Users } from 'lucide-react';
+import { Crown, Trophy } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { formatGameQuizRankingProgress, type GameQuizCopy } from './copy';
+import { GameQuizQuestionStatistics } from './game-quiz-question-statistics';
 import type { GameParticipant, GameSessionSnapshot } from './types';
 
 interface GameQuizLiveLeaderboardProps {
@@ -136,19 +136,19 @@ export function GameQuizLiveLeaderboard({
           <h1 className="mt-2 font-extrabold text-3xl text-foreground tracking-tight sm:text-5xl">
             {copy.player.leaderboard}
           </h1>
-          {variant === 'host' ? (
-            <Badge
-              className="mt-3 gap-1.5 rounded-full px-3 py-1"
-              variant="secondary"
-            >
-              <Users className="size-3.5" aria-hidden="true" />
-              {standings.length} {copy.host.players}
-            </Badge>
-          ) : null}
         </div>
 
+        {variant === 'host' ? (
+          <GameQuizQuestionStatistics copy={copy} session={session} />
+        ) : null}
+
         {visibleStandings.length > 0 ? (
-          <ol className="mx-auto mt-8 max-w-5xl space-y-3 sm:mt-11 sm:space-y-4">
+          <ol
+            className={cn(
+              'mx-auto max-w-5xl space-y-3 sm:space-y-4',
+              variant === 'host' ? 'mt-6 sm:mt-8' : 'mt-8 sm:mt-11'
+            )}
+          >
             {visibleStandings.map((participant, index) => (
               <LeaderboardRow
                 copy={copy}
