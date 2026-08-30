@@ -10,7 +10,6 @@ import {
   createGameSessionSchema,
   gameQuizIdParamsSchema,
 } from '@/lib/game-quiz/schemas';
-import { emitGameQuizSharedEvent } from '@/lib/realtime/game-quiz';
 import { createGameSession } from '@/services/GameQuizSessionService';
 
 type RouteContext = { params: Promise<{ gameQuizId: string }> };
@@ -27,7 +26,7 @@ type RouteContext = { params: Promise<{ gameQuizId: string }> };
  *       required: true
  *       content:
  *         application/json:
- *           schema: { type: object, required: [expectedRevision] }
+ *           schema: { type: object, required: [expectedRevision, initializationKey] }
  *     responses:
  *       201: { description: Session created in lobby phase }
  *       400: { description: Invalid payload }
@@ -59,16 +58,8 @@ export const POST = withRoles(
         parsedParams.data.gameQuizId,
         parsedBody.data
       );
-      if (!created) {
-        throw new Error('Created Game Session is not accessible to its host.');
-      }
-      await emitGameQuizSharedEvent({
-        sessionId: created.sessionId,
-        phase: created.session.phase,
-        stateVersion: created.session.stateVersion,
-      });
       return NextResponse.json(
-        { sessionId: created.sessionId, session: created.session },
+        { sessionId: created.sessionId },
         { status: 201 }
       );
     } catch (error) {

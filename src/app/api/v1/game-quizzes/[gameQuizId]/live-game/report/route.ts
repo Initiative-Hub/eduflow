@@ -52,12 +52,13 @@ export const GET = withRoles(
         expectedGameQuizId: parsed.data.gameQuizId,
         sessionId: sessionId.data,
       });
-      return NextResponse.json(
-        await getGameSessionReport(
-          gameActorFromSession(session),
-          liveSession.sessionId
-        )
+      const report = await getGameSessionReport(
+        gameActorFromSession(session),
+        liveSession.sessionId
       );
+      return report
+        ? NextResponse.json(report)
+        : NextResponse.json({ status: 'PROCESSING' }, { status: 202 });
     } catch (error) {
       return gameQuizExceptionResponse(
         error,

@@ -21,9 +21,14 @@ export function GameQuizReportClient({
     queryKey: ['live-game-report', gameQuizId, sessionId],
     queryFn: () => gameQuizApi.report(gameQuizId, sessionId!),
     enabled: Boolean(sessionId),
+    refetchInterval: (query) =>
+      query.state.data && 'status' in query.state.data ? 1_000 : false,
   });
 
-  if (reportQuery.isPending) {
+  if (
+    reportQuery.isPending ||
+    (reportQuery.data && 'status' in reportQuery.data)
+  ) {
     return (
       <div className="flex min-h-72 items-center justify-center text-muted-foreground">
         <Loader2 className="mr-2 size-4 animate-spin" aria-hidden="true" />

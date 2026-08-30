@@ -1,0 +1,35 @@
+name: Partykit Websocket Server Production Deployment
+
+on:
+  push:
+    branches:
+      - production
+    paths:
+      - party/**
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: self-hosted
+    timeout-minutes: 15
+    env:
+      PARTYKIT_TOKEN: ${{ secrets.PARTYKIT_TOKEN }}
+      PARTYKIT_LOGIN: ${{ secrets.PARTYKIT_LOGIN }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4.0"
+
+      - name: Install Dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Deploy
+        run: bun ws:deploy

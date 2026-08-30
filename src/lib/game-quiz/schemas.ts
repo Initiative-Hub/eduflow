@@ -86,41 +86,7 @@ export const saveGameQuizQuestionsSchema = z.object({
 
 export const createGameSessionSchema = z.object({
   expectedRevision: z.number().int().min(1),
-});
-
-export const joinGameSessionSchema = z.object({
-  joinCode: z.string().regex(/^\d{6}$/, 'Join code must contain six digits'),
-  displayName: z.string().trim().min(1).max(80).optional(),
-});
-
-export const hostCommandSchema = z.discriminatedUnion('action', [
-  z.object({
-    action: z.literal('START'),
-    expectedStateVersion: z.number().int().min(1),
-  }),
-  z.object({
-    action: z.literal('SKIP'),
-    expectedStateVersion: z.number().int().min(1),
-  }),
-  z.object({
-    action: z.literal('NEXT'),
-    expectedStateVersion: z.number().int().min(1),
-  }),
-  z.object({
-    action: z.literal('SET_JOINING_LOCKED'),
-    expectedStateVersion: z.number().int().min(1),
-    joiningLocked: z.boolean(),
-  }),
-  z.object({
-    action: z.literal('END_GAME'),
-    expectedStateVersion: z.number().int().min(1),
-  }),
-]);
-
-export const submitGameAnswerSchema = z.object({
-  roundId: z.uuid(),
-  selectedOptionId: z.uuid(),
-  idempotencyKey: z.uuid(),
+  initializationKey: z.uuid(),
 });
 
 export const gameSessionPhaseSchema = z.enum(GAME_SESSION_PHASES);
@@ -132,8 +98,5 @@ export type SaveGameQuizQuestionsInput = z.infer<
   typeof saveGameQuizQuestionsSchema
 >;
 export type CreateGameSessionInput = z.infer<typeof createGameSessionSchema>;
-export type JoinGameSessionInput = z.infer<typeof joinGameSessionSchema>;
-export type HostCommandInput = z.infer<typeof hostCommandSchema>;
-export type SubmitGameAnswerInput = z.infer<typeof submitGameAnswerSchema>;
 
 export { GAME_QUIZ_TEMPLATE_KEY };
