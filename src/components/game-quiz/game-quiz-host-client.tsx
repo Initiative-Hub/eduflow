@@ -435,12 +435,11 @@ function HostPodium({
         <GameQuizFullLeaderboardDialog
           copy={copy}
           leaderboard={session.leaderboard}
-          triggerClassName="shadow-md shadow-primary/20"
         />
         <Button
           asChild
           disabled={isPending}
-          className="rounded-full bg-background/80 px-4 py-3 backdrop-blur-sm"
+          className="rounded-full bg-background px-4 py-3"
           variant="outline"
         >
           <Link href={reportHref} target="_blank" rel="noreferrer">

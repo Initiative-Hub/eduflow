@@ -1,4 +1,3 @@
-import { Crown } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -10,46 +9,43 @@ const PLACE_STYLES: Record<
   PodiumPlace,
   {
     avatar: string;
+    badge: string;
     column: string;
     fallback: string;
-    name: string;
     pedestal: string;
     rank: string;
-    score: string;
   }
 > = {
   first: {
     avatar:
-      'size-20 border-4 border-amber-400 bg-background shadow-lg shadow-amber-500/15 sm:size-24',
-    column: 'z-20 max-w-36 sm:max-w-44',
+      'size-20 border-4 border-amber-400 bg-background shadow-lg shadow-amber-500/15 sm:size-28',
+    badge:
+      'border-amber-400/50 text-amber-700 dark:border-amber-300/40 dark:text-amber-300',
+    column: 'z-20 max-w-36 sm:max-w-52',
     fallback: 'text-xl text-amber-700 dark:text-amber-300',
-    name: 'text-primary sm:text-base',
     pedestal:
-      'h-44 w-24 border-primary/25 bg-linear-to-b from-primary/25 via-primary/12 to-primary/5 shadow-[0_-20px_60px_-40px_var(--primary)] sm:h-52 sm:w-32',
-    rank: 'text-5xl text-primary sm:text-6xl',
-    score: 'border-primary/20 text-primary',
+      'h-36 w-28 border-amber-400/35 bg-amber-100/65 sm:h-44 sm:w-48 dark:border-amber-300/25 dark:bg-amber-300/10',
+    rank: 'text-5xl text-amber-400/70 sm:text-6xl dark:text-amber-300/70',
   },
   second: {
     avatar:
-      'size-16 border-3 border-muted-foreground/30 bg-background shadow-md sm:size-20',
-    column: 'z-10 max-w-32 sm:max-w-40',
+      'size-16 border-3 border-muted-foreground/30 bg-background shadow-md sm:size-24',
+    badge: 'border-border text-muted-foreground',
+    column: 'z-10 max-w-32 sm:max-w-48',
     fallback: 'text-lg text-foreground',
-    name: 'text-foreground',
-    pedestal:
-      'h-32 w-20 border-border bg-linear-to-b from-muted via-card/80 to-muted/35 sm:h-40 sm:w-28',
+    pedestal: 'h-28 w-24 border-border bg-muted/75 sm:h-36 sm:w-44',
     rank: 'text-4xl text-muted-foreground/55 sm:text-5xl',
-    score: 'border-border text-foreground',
   },
   third: {
     avatar:
-      'size-16 border-3 border-amber-700/35 bg-background shadow-md sm:size-20 dark:border-amber-500/40',
-    column: 'z-10 max-w-32 sm:max-w-40',
+      'size-16 border-3 border-amber-700/35 bg-background shadow-md sm:size-24 dark:border-amber-500/40',
+    badge:
+      'border-amber-700/25 text-amber-800 dark:border-amber-400/30 dark:text-amber-300',
+    column: 'z-10 max-w-32 sm:max-w-48',
     fallback: 'text-lg text-amber-800 dark:text-amber-300',
-    name: 'text-foreground',
     pedestal:
-      'h-24 w-20 border-amber-700/15 bg-linear-to-b from-amber-500/14 via-amber-500/7 to-amber-500/3 sm:h-32 sm:w-28 dark:border-amber-400/20',
+      'h-24 w-24 border-amber-700/20 bg-amber-700/10 sm:h-32 sm:w-44 dark:border-amber-400/20 dark:bg-amber-400/10',
     rank: 'text-4xl text-amber-700/65 dark:text-amber-300/80',
-    score: 'border-amber-700/15 text-foreground dark:border-amber-400/20',
   },
 };
 
@@ -85,19 +81,14 @@ export function GameQuizPodiumPlace({
       <Badge
         variant="outline"
         className={cn(
-          'mb-3 rounded-full bg-background/85 px-2.5 py-1 font-bold text-[0.6875rem] shadow-sm backdrop-blur-sm sm:px-3 sm:text-xs',
-          styles.score
+          'mb-2.5 rounded-full bg-background px-2.5 py-0.5 font-bold text-[0.6875rem] shadow-xs sm:text-xs',
+          styles.badge
         )}
       >
-        {participant.score.toLocaleString()} {pointsLabel}
+        #{rank}
       </Badge>
 
-      <div className="relative">
-        {place === 'first' ? (
-          <span className="absolute -top-5 left-1/2 z-10 grid size-8 -translate-x-1/2 place-items-center rounded-full bg-amber-400 text-amber-950 shadow-md ring-4 ring-background/80">
-            <Crown className="size-4" aria-hidden="true" />
-          </span>
-        ) : null}
+      <div>
         <Avatar className={styles.avatar}>
           <AvatarImage alt="" src={participant.image ?? undefined} />
           <AvatarFallback
@@ -109,18 +100,18 @@ export function GameQuizPodiumPlace({
       </div>
 
       <p
-        className={cn(
-          'my-3 w-full truncate px-1 font-bold font-heading text-xs sm:text-sm',
-          styles.name
-        )}
+        className="mt-3 w-full truncate px-1 font-bold font-heading text-foreground text-sm sm:text-base"
         title={participant.displayName}
       >
         {participant.displayName}
       </p>
+      <p className="mt-0.5 mb-3 font-bold text-[0.625rem] text-primary uppercase tracking-[0.12em] sm:text-xs">
+        {participant.score.toLocaleString()} {pointsLabel}
+      </p>
 
       <div
         className={cn(
-          'flex items-start justify-center rounded-t-3xl border-x border-t pt-7 shadow-sm sm:pt-8',
+          'flex items-start justify-center rounded-t-2xl border-x border-t pt-6 shadow-sm sm:pt-7',
           styles.pedestal
         )}
       >

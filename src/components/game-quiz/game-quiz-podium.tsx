@@ -85,19 +85,12 @@ export function GameQuizPodium({
     : 0;
 
   return (
-    <section className="relative isolate min-h-[inherit] overflow-hidden bg-[radial-gradient(ellipse_at_50%_16%,color-mix(in_oklab,var(--primary)_16%,transparent),transparent_42%),linear-gradient(to_bottom,color-mix(in_oklab,var(--primary)_7%,var(--background)),var(--background)_76%)] px-4 py-8 text-foreground sm:px-8 sm:py-12">
+    <section className="flex min-h-[inherit] items-center justify-center bg-background px-4 py-8 text-foreground sm:px-8 sm:py-10">
       <CelebrationConfetti />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute top-24 left-1/2 -z-10 h-80 w-64 -translate-x-1/2 rounded-full bg-primary/12 blur-3xl sm:h-96 sm:w-96"
-      />
 
-      <div className="relative mx-auto flex w-full max-w-4xl flex-col items-center gap-6 text-center sm:gap-8">
+      <div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-6 text-center sm:gap-7">
         <header className="flex max-w-2xl flex-col items-center">
-          <span className="mb-4 grid size-12 place-items-center rounded-2xl border border-amber-500/20 bg-amber-400/15 text-amber-600 shadow-sm dark:text-amber-300">
-            <Trophy className="size-6" aria-hidden="true" />
-          </span>
-          <h1 className="font-black font-heading text-3xl text-primary tracking-tight sm:text-4xl">
+          <h1 className="font-black font-heading text-3xl tracking-tight sm:text-4xl">
             {title}
           </h1>
           <p className="mt-2 text-balance font-medium text-muted-foreground text-sm sm:text-base">
@@ -106,12 +99,12 @@ export function GameQuizPodium({
         </header>
 
         {leaderboard.length > 0 ? (
-          <div className="relative mx-auto w-full max-w-2xl px-0 sm:px-6">
+          <div className="relative mx-auto w-full max-w-3xl">
             <div
               aria-hidden="true"
-              className="absolute inset-x-[6%] bottom-0 h-12 rounded-[50%] bg-foreground/5 blur-xl"
+              className="absolute inset-x-[4%] -bottom-3 h-8 rounded-[50%] bg-foreground/7 blur-xl"
             />
-            <div className="relative flex items-end justify-center gap-1 sm:gap-3">
+            <div className="relative flex items-end justify-center gap-2 sm:gap-4">
               {second ? (
                 <GameQuizPodiumPlace
                   participant={second}
@@ -136,7 +129,7 @@ export function GameQuizPodium({
                 />
               ) : null}
             </div>
-            <div className="relative h-px w-full bg-linear-to-r from-transparent via-border to-transparent" />
+            <div className="relative h-px w-full bg-border/80" />
           </div>
         ) : (
           <Empty className="border-border bg-card text-foreground">
