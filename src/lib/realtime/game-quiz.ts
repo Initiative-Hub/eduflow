@@ -1,5 +1,3 @@
-import 'server-only';
-
 import { type InferRealtimeEvents, Realtime } from '@upstash/realtime';
 import type * as z from 'zod';
 import {

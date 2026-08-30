@@ -1,6 +1,7 @@
 'use client';
 
 import { Crown, Trophy, Users } from 'lucide-react';
+import type { ComponentProps } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -86,9 +87,15 @@ function getRankStyle(rank: number) {
 export function GameQuizFullLeaderboardDialog({
   copy,
   leaderboard,
+  triggerClassName,
+  triggerSize = 'default',
+  triggerVariant = 'default',
 }: {
   copy: GameQuizCopy;
   leaderboard: GameParticipant[];
+  triggerClassName?: string;
+  triggerSize?: ComponentProps<typeof Button>['size'];
+  triggerVariant?: ComponentProps<typeof Button>['variant'];
 }) {
   const standings = [...leaderboard].sort(
     (first, second) => second.score - first.score
@@ -97,7 +104,11 @@ export function GameQuizFullLeaderboardDialog({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button className="rounded-full px-4 py-3">
+        <Button
+          className={cn('rounded-full px-4', triggerClassName)}
+          size={triggerSize}
+          variant={triggerVariant}
+        >
           {copy.host.viewFullLeaderboard}
         </Button>
       </DialogTrigger>

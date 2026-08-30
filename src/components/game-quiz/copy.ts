@@ -3,6 +3,19 @@ type Translate = (
   values?: Record<string, string | number>
 ) => string;
 
+const RANKING_CURRENT_TOKEN = '__GAME_QUIZ_CURRENT__';
+const RANKING_TOTAL_TOKEN = '__GAME_QUIZ_TOTAL__';
+
+export function formatGameQuizRankingProgress(
+  template: string,
+  current: number,
+  total: number
+) {
+  return template
+    .replace(RANKING_CURRENT_TOKEN, String(current))
+    .replace(RANKING_TOTAL_TOKEN, String(total));
+}
+
 export function getGameQuizCopy(t: Translate) {
   return {
     common: {
@@ -125,6 +138,7 @@ export function getGameQuizCopy(t: Translate) {
       next: t('preview.next'),
       reveal: t('preview.reveal'),
       reset: t('preview.reset'),
+      samplePlayer: t('preview.samplePlayer'),
     },
     host: {
       title: t('host.title'),
@@ -139,6 +153,10 @@ export function getGameQuizCopy(t: Translate) {
       players: t('host.players'),
       answers: t('host.answers'),
       answersCount: t('host.answersCount'),
+      averageResponseTime: t('host.averageResponseTime'),
+      correctRate: t('host.correctRate'),
+      responses: t('host.responses'),
+      questionStatistics: t('host.questionStatistics'),
       question: t('host.question'),
       joinOpen: t('host.joinOpen'),
       joinLocked: t('host.joinLocked'),
@@ -196,6 +214,13 @@ export function getGameQuizCopy(t: Translate) {
       rank: t('player.rank'),
       noPodium: t('player.noPodium'),
       leaderboard: t('player.leaderboard'),
+      rankingProgress: t('player.rankingProgress', {
+        current: RANKING_CURRENT_TOKEN,
+        total: RANKING_TOTAL_TOKEN,
+      }),
+      you: t('player.you'),
+      keepGoing: t('player.keepGoing'),
+      waitingForNext: t('player.waitingForNext'),
       connection: t('player.connection'),
       hostEndedTitle: t('player.hostEndedTitle'),
       hostEndedDescription: t('player.hostEndedDescription'),

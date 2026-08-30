@@ -1947,9 +1947,11 @@
     "host": {
       "answers": "Đã nhận đáp án",
       "answersCount": "Đáp án",
+      "averageResponseTime": "Thời gian trả lời trung bình",
       "congratulations": "Chúc mừng!",
       "congratulationsDescription": "Trò chơi đã kết thúc. Đây là những học giả hàng đầu.",
       "copyLink": "Sao chép liên kết",
+      "correctRate": "Tỷ lệ trả lời đúng",
       "emptyLeaderboard": "Chưa có kết quả xếp hạng cuối cùng.",
       "endGame": "Kết thúc trò chơi",
       "endGameConfirmDescription": "Bạn có chắc chắn muốn kết thúc sớm phiên chơi này không? Bục vinh danh sẽ được hiển thị ngay lập tức.",
@@ -1973,7 +1975,9 @@
       "podium": "Bục vinh danh",
       "qrCodeDialogTitle": "Mã QR tham gia trò chơi",
       "question": "Câu hỏi",
+      "questionStatistics": "Thống kê câu hỏi",
       "readyToStart": "Sẵn sàng bắt đầu!",
+      "responses": "Lượt trả lời",
       "scoreboard": "Bảng xếp hạng",
       "shareLink": "Liên kết chia sẻ",
       "skip": "Bỏ qua",
@@ -2012,7 +2016,8 @@
       "hint": "Gợi ý",
       "hostEndedDescription": "Người chủ trì đã rời Rally này. Bạn có thể tham gia trò chơi khác bằng mã mới.",
       "hostEndedTitle": "Trò chơi đã kết thúc",
-      "leaderboard": "Tiến độ lớp",
+      "keepGoing": "Tiếp tục nhé — mỗi điểm đều quan trọng",
+      "leaderboard": "Bảng xếp hạng hiện tại",
       "noPodium": "Chưa có xếp hạng cuối cùng.",
       "notCorrect": "Tiếp tục nhé",
       "pin": "MÃ",
@@ -2021,12 +2026,15 @@
       "pts": "đ",
       "question": "Câu hỏi",
       "rank": "Hạng",
+      "rankingProgress": "Đã hoàn thành câu {current} / {total}",
       "reveal": "Công bố đáp án",
       "score": "Điểm của bạn",
       "submitted": "Đã gửi đáp án",
       "submittedDescription": "Câu trả lời hay. Hãy chờ đến lúc công bố.",
       "waiting": "Sẵn sàng nhé",
-      "waitingDescription": "Giáo viên sẽ bắt đầu Rally trong giây lát."
+      "waitingDescription": "Giáo viên sẽ bắt đầu Rally trong giây lát.",
+      "waitingForNext": "Đang chờ câu hỏi tiếp theo",
+      "you": "Bạn"
     },
     "preview": {
       "answerSelected": "Đã chọn đáp án",
@@ -2040,6 +2048,7 @@
       "question": "Câu hỏi",
       "reset": "Đặt lại câu hỏi",
       "reveal": "Công bố đáp án",
+      "samplePlayer": "Người chơi xem trước",
       "title": "Xem trước Rally"
     },
     "report": {
