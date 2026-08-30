@@ -426,7 +426,7 @@ function HostPodium({
   session: GameSessionSnapshot;
 }) {
   return (
-    <main className="min-h-[calc(100vh-6rem)] py-3 sm:py-6">
+    <main className="dashboard-full-bleed min-h-[calc(100dvh-4rem)]">
       <GameQuizPodium
         copy={copy}
         session={session}
@@ -435,11 +435,12 @@ function HostPodium({
         <GameQuizFullLeaderboardDialog
           copy={copy}
           leaderboard={session.leaderboard}
+          triggerClassName="shadow-md shadow-primary/20"
         />
         <Button
           asChild
           disabled={isPending}
-          className="rounded-full bg-primary-foreground px-4 py-3"
+          className="rounded-full bg-background/80 px-4 py-3 backdrop-blur-sm"
           variant="outline"
         >
           <Link href={reportHref} target="_blank" rel="noreferrer">

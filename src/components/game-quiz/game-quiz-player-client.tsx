@@ -179,7 +179,7 @@ function PlayerPodium({
   session: GameSessionSnapshot;
 }) {
   return (
-    <main className="min-h-[60vh] py-4 sm:py-10">
+    <main className="min-h-dvh">
       <GameQuizPodium
         copy={copy}
         participant={session.participant}
