@@ -78,6 +78,11 @@ export interface GameRound {
   maxPoints: number;
   openedAt?: string | null;
   deadlineAt?: string | null;
+  statistics?: {
+    responseCount: number;
+    correctCount: number;
+    averageResponseTimeMs: number | null;
+  };
   options: GameQuizOption[];
 }
 

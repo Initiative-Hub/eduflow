@@ -77,7 +77,8 @@ describe('GameQuizPodium', () => {
     );
 
     expect(screen.getByText('player.noPodium')).toBeInTheDocument();
-    expect(screen.getByText('player.rank –')).toBeInTheDocument();
+    expect(screen.getByText('player.rank')).toBeInTheDocument();
+    expect(screen.getByText('–')).toBeInTheDocument();
     expect(screen.getByText('500')).toBeInTheDocument();
   });
 });

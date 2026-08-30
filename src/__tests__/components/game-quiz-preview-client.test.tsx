@@ -65,34 +65,61 @@ function renderPreview() {
 }
 
 describe('GameQuizPreviewClient', () => {
-  it('keeps host and participant previews synchronized without live game APIs', async () => {
+  it('switches between question, reveal, and live ranking previews without a session', async () => {
     const user = userEvent.setup();
     getGameQuiz.mockResolvedValue(gameQuiz);
 
     renderPreview();
 
-    expect(await screen.findAllByText('Which planet is red?')).toHaveLength(2);
-    expect(screen.getAllByText('preview.host')).not.toHaveLength(0);
-    expect(screen.getAllByText('preview.participant')).not.toHaveLength(0);
+    expect(await screen.findByText('Which planet is red?')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'preview.participant' })
+    ).toHaveAttribute('aria-pressed', 'true');
     expect(
       screen.getByRole('button', { name: 'preview.previous' })
     ).toBeDisabled();
 
     const marsButton = screen.getByRole('button', { name: /Mars/ });
     await user.click(marsButton);
-    expect(screen.getByText('preview.answerSelected')).toBeInTheDocument();
+    expect(screen.getByText('player.submitted')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'preview.reveal' }));
-    expect(marsButton).toBeDisabled();
     expect(
-      screen.getAllByText('Mars has iron oxide on its surface.')
-    ).toHaveLength(2);
+      screen.queryByRole('button', { name: /Mars/ })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText('Mars has iron oxide on its surface.')
+    ).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole('button', { name: 'player.leaderboard' })
+    );
+    expect(
+      screen.getByRole('heading', { name: 'player.leaderboard' })
+    ).toBeInTheDocument();
+    expect(screen.getByText('Alex Mercer')).toBeInTheDocument();
+    expect(screen.getByText('player.you')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'player.rank 1' }));
+    expect(screen.getByText('player.you')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'preview.host' }));
+    expect(
+      screen.getByRole('button', { name: 'host.viewFullLeaderboard' })
+    ).toBeInTheDocument();
+    expect(screen.getByText('host.correctRate')).toBeInTheDocument();
+    expect(screen.getByText('host.responses')).toBeInTheDocument();
+    expect(screen.getByText('host.averageResponseTime')).toBeInTheDocument();
+    expect(screen.getByText('50%')).toBeInTheDocument();
+    expect(screen.getByText('6 / 6')).toBeInTheDocument();
+    expect(screen.getByText('7.4 s')).toBeInTheDocument();
+    expect(screen.queryByText('player.you')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'preview.question' }));
 
     await user.click(screen.getByRole('button', { name: 'preview.next' }));
-    expect(screen.getAllByText('Which planet is largest?')).toHaveLength(2);
-    expect(
-      screen.queryByText('preview.answerSelected')
-    ).not.toBeInTheDocument();
+    expect(screen.getByText('Which planet is largest?')).toBeInTheDocument();
+    expect(screen.queryByText('player.submitted')).not.toBeInTheDocument();
     expect(getGameQuiz).toHaveBeenCalledTimes(1);
   });
 });

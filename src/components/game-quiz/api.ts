@@ -187,9 +187,20 @@ function toParticipant(value: unknown): GameParticipant {
 function toSession(value: unknown): GameSessionSnapshot {
   const envelope = getRecord(value);
   const session = getRecord(envelope.session ?? value);
+  const currentRound = getRecord(session.currentRound);
   const round = isRecord(session.currentRound)
-    ? toQuestion(session.currentRound, numberValue(session.currentRoundIndex))
+    ? toQuestion(currentRound, numberValue(session.currentRoundIndex))
     : null;
+  const roundStatistics = isRecord(currentRound.statistics)
+    ? {
+        responseCount: numberValue(currentRound.statistics.responseCount),
+        correctCount: numberValue(currentRound.statistics.correctCount),
+        averageResponseTimeMs:
+          typeof currentRound.statistics.averageResponseTimeMs === 'number'
+            ? currentRound.statistics.averageResponseTimeMs
+            : null,
+      }
+    : undefined;
   const participants = getArray(session.participants).map(toParticipant);
   const leaderboard = getArray(session.leaderboard).map(toParticipant);
   const answer = getRecord(session.myAnswer ?? session.answer);
@@ -217,6 +228,7 @@ function toSession(value: unknown): GameSessionSnapshot {
             stringValue(getRecord(session.currentRound).openedAt) || null,
           deadlineAt:
             stringValue(getRecord(session.currentRound).deadlineAt) || null,
+          ...(roundStatistics ? { statistics: roundStatistics } : {}),
         }
       : null,
     currentRoundIndex: numberValue(session.currentRoundIndex, 0),
