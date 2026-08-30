@@ -40,8 +40,6 @@ const STYLE_COLLECTIONS: Record<string, string> = {
     'Dark background with vivid cyan/pink neon accents — tech, coding, gaming, modern engineering topics.',
   vintage:
     'Aged cream paper, rust red and sage green, classic serif type — history, literature, arts, humanities, traditional culture.',
-  clean_light:
-    'White, minimal, one strong blue accent — business, science, data-heavy analysis, policy briefings, or formal report material.',
   pastel_pop:
     'Soft blush background, rose pink and mint accents, friendly rounded feel — younger audiences, wellbeing, creative or community topics.',
   illustrative_culture:
@@ -52,12 +50,8 @@ const STYLE_COLLECTIONS: Record<string, string> = {
     'Cream paper, deep plum script headlines, golden sun discs, slate and terracotta organic blobs, line-art European street skylines — travel, geography, history, literature, art and storytelling topics.',
   cultural_folk:
     'Warm plum-gray background, cream text, terracotta and sand accents with a grounded earth strip — culture, diversity, social studies, community, humanities and storytelling topics.',
-  electric_green_white:
-    'Clean white editorial canvas with black contrast, electric green accents, modern automotive framing, and bold geometric type — electric vehicles, sustainability, engineering, product showcases, and transportation topics.',
   green_environment_care:
     'Cream paper, deep forest-green condensed headlines, lush nature photography, sage botanical ornaments, and subtle halftone texture — conservation, climate, ecology, sustainability, biodiversity, and environmental care topics.',
-  rmit_red_modern:
-    'Crisp white academic canvas with bold RMIT-red geometric frames, subtle contour-line texture, black sans-serif typography, and red-washed campus image panels — university lectures, student learning topics, course briefings, research presentations, feedback analysis, and academic project decks.',
   startup_neon_pitch:
     'Black startup pitch deck with oversized white typography, electric blue and violet light trails, glossy gradient pills, and contact-footer details — startup pitches, business proposals, tech products, investor decks, and modern company presentations.',
   professional_focus:
@@ -298,16 +292,13 @@ const STYLE_REQUEST_TOKENS = new Set([
 const STYLE_COLLECTION_ALIASES: Partial<
   Record<keyof typeof STYLE_COLLECTIONS, readonly string[]>
 > = {
-  clean_light: ['clean light'],
   cultural_folk: ['cultural folk'],
-  electric_green_white: ['electric green white'],
   green_environment_care: ['green environment care'],
   illustrative_culture: ['illustrative culture'],
   minimalist_gradient: ['minimalist gradient'],
   organic_streets: ['organic streets'],
   pastel_pop: ['pastel pop'],
   professional_focus: ['professional focus', 'executive focus'],
-  rmit_red_modern: ['rmit', 'rmit red modern'],
   startup_neon_pitch: ['startup neon pitch'],
 };
 

@@ -90,15 +90,12 @@ DEFAULT_COLLECTIONS = {
     "starter",
     "neon_dark",
     "vintage",
-    "clean_light",
     "pastel_pop",
     "illustrative_culture",
     "minimalist_gradient",
     "cultural_folk",
     "organic_streets",
-    "electric_green_white",
     "green_environment_care",
-    "rmit_red_modern",
     "startup_neon_pitch",
     "professional_focus",
 }
@@ -961,7 +958,6 @@ class SlideService:
                 if json_key not in keys:
                     well_known = {
                         "vintage": "A classic, retro style with warm tones and elegant typography.",
-                        "clean_light": "A clean, modern light theme focusing on readability and simplicity.",
                         "pastel_pop": "A vibrant and playful theme featuring soft pastel colors.",
                         "starter": "Standard starter templates for clean presentation designs.",
                         "neon_dark": "A modern, high-contrast dark theme with glowing neon accents.",
@@ -969,9 +965,7 @@ class SlideService:
                         "minimalist_gradient": "Sleek dark theme with electric royal blue and violet gradient glows, crisp geometric typography, and ambient grid lines.",
                         "organic_streets": "Organic illustration style: cream paper, plum script headlines, golden sun discs, slate and terracotta blobs, line-art European skylines.",
                         "cultural_folk": "Rich cultural folk style: warm plum night sky over a sand earth strip, arch and temple shapes, radiant sun badges, festival bunting and stitched lines in terracotta, gold, dusty blue and rose.",
-                        "electric_green_white": "Clean white editorial EV style with black contrast, electric green accents, grayscale automotive imagery, chrome details, and bold geometric typography.",
                         "green_environment_care": "Modern environmental care style: cream paper, deep forest-green condensed headlines, lush nature photography, sage botanical ornaments, halftone texture, and conservation editorial layouts.",
-                        "rmit_red_modern": "RMIT-inspired academic style: crisp white space, bold red geometric frames, subtle contour-line texture, black sans-serif typography, and red-washed campus photo panels.",
                         "startup_neon_pitch": "Black startup pitch style with bold white typography, electric blue and violet light trails, glossy gradient pills, contact-footer details, and high-contrast business layouts.",
                         "professional_focus": "Calm executive presentation style with deep navy structure, precise teal signals, warm brass emphasis, generous whitespace, and business-ready editorial layouts.",
                     }

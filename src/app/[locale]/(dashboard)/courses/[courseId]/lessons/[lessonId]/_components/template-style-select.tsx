@@ -23,8 +23,6 @@ const DEFAULT_COLLECTION_DESCRIPTIONS: Record<string, string> = {
   starter: 'Standard starter templates for clean presentation designs.',
   neon_dark: 'A modern, high-contrast dark theme with glowing neon accents.',
   vintage: 'A classic, retro style with warm tones and elegant typography.',
-  clean_light:
-    'A clean, modern light theme focusing on readability and simplicity.',
   pastel_pop: 'A vibrant and playful theme featuring soft pastel colors.',
   illustrative_culture:
     'Warm cream paper, hand-drawn buildings & sage green accents.',
@@ -34,12 +32,8 @@ const DEFAULT_COLLECTION_DESCRIPTIONS: Record<string, string> = {
     'Rich cultural folk style with terracotta, gold, dusty blue and rose.',
   organic_streets:
     'Organic illustration style with European skylines and warm paper.',
-  electric_green_white:
-    'Clean white editorial style with electric green accents and high contrast.',
   green_environment_care:
     'Modern environmental care style with forest green headlines and nature accents.',
-  rmit_red_modern:
-    'Academic presentation style with bold red geometric frames and crisp white space.',
   startup_neon_pitch:
     'Black startup pitch style with bold typography and electric gradient trails.',
   professional_focus:
@@ -50,15 +44,12 @@ const DEFAULT_COLLECTION_PALETTES: Record<string, string[]> = {
   starter: ['#ffffff', '#0f172a', '#3b82f6'],
   neon_dark: ['#09090b', '#00f0ff', '#a855f7'],
   vintage: ['#fdf6e3', '#432818', '#ddb892'],
-  clean_light: ['#f8fafc', '#1e293b', '#0284c7'],
   pastel_pop: ['#fff7ed', '#ea580c', '#f472b6'],
   illustrative_culture: ['#fefae0', '#283618', '#606c38'],
   minimalist_gradient: ['#030712', '#3b82f6', '#8b5cf6'],
   cultural_folk: ['#2d1b2d', '#e07a5f', '#f4a261'],
   organic_streets: ['#f8f9fa', '#6c5ce7', '#fd79a8'],
-  electric_green_white: ['#ffffff', '#09090b', '#10b981'],
   green_environment_care: ['#f4f7f4', '#14532d', '#4ade80'],
-  rmit_red_modern: ['#ffffff', '#e11d48', '#0f172a'],
   startup_neon_pitch: ['#000000', '#3b82f6', '#ec4899'],
   professional_focus: ['#0f172a', '#0d9488', '#d97706'],
 };
@@ -68,15 +59,12 @@ export function formatCollectionLabel(name: string): string {
   if (name === 'starter' || name === 'default')
     return 'System Default (Starter)';
   if (name === 'neon_dark') return 'Neon Dark Theme';
-  if (name === 'clean_light') return 'Clean Light Theme';
   if (name === 'pastel_pop') return 'Pastel Pop Theme';
   if (name === 'illustrative_culture') return 'Illustrative Culture Theme';
   if (name === 'minimalist_gradient') return 'Minimalist Gradient Theme';
   if (name === 'cultural_folk') return 'Cultural Folk Theme';
   if (name === 'organic_streets') return 'Organic Streets Theme';
-  if (name === 'electric_green_white') return 'Electric Green White Theme';
   if (name === 'green_environment_care') return 'Green Environment Care Theme';
-  if (name === 'rmit_red_modern') return 'RMIT Red Modern Theme';
   if (name === 'startup_neon_pitch') return 'Startup Neon Pitch Theme';
   if (name === 'professional_focus') return 'Professional Focus Theme';
   if (name === 'vintage') return 'Vintage Theme';

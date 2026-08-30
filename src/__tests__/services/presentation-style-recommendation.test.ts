@@ -12,7 +12,7 @@ describe('presentation style recommendation', () => {
 
     expect(availableStyles).toMatchObject({
       clean_light: 'Clean light',
-      rmit_red_modern: expect.any(String),
+      professional_focus: expect.any(String),
     });
   });
 
@@ -57,14 +57,14 @@ describe('presentation style recommendation', () => {
       lessonTitle: 'Quarterly warehouse operations dashboard',
       lessonContent:
         'Operational KPIs, throughput, defect rates, cost optimization, and capacity planning.',
-      context: 'Create a metrics-focused deck and use the RMIT template.',
+      context: 'Create a metrics-focused deck and use the executive focus template.',
       styleCollections: {
         clean_light: 'Clean light',
-        rmit_red_modern: 'RMIT red modern',
+        professional_focus: 'Professional focus',
       },
     });
 
-    expect(resolved).toBe('rmit_red_modern');
+    expect(resolved).toBe('professional_focus');
   });
 
   it('prefers an explicitly requested built-in style when the context is only the style name', () => {
@@ -89,12 +89,12 @@ describe('presentation style recommendation', () => {
       lessonTitle: 'Basic filtering and pattern matching',
       lessonContent:
         'SQL WHERE clauses, filters, comparison operators, and pattern matching.',
-      context: 'use rmit_red_modern template',
+      context: 'use professional_focus template',
       styleCollections: {
         clean_light: 'Clean light',
       },
     });
 
-    expect(resolved).toBe('rmit_red_modern');
+    expect(resolved).toBe('professional_focus');
   });
 });
