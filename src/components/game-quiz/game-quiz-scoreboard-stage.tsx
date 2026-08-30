@@ -21,13 +21,16 @@ export function GameQuizHostScoreboard({
       <div className="mx-auto max-w-6xl">
         <GameQuizLiveLeaderboard
           actions={
-            <>
+            <div className="grid w-full max-w-lg gap-3 sm:grid-cols-2">
               <GameQuizFullLeaderboardDialog
                 copy={copy}
                 leaderboard={session.leaderboard}
+                triggerClassName="h-11 w-full px-6 shadow-xs sm:h-12"
+                triggerSize="lg"
+                triggerVariant="outline"
               />
               <Button
-                className="rounded-full px-6 shadow-sm sm:min-w-48"
+                className="h-11 w-full rounded-full px-6 shadow-md sm:h-12"
                 disabled={isPending}
                 onClick={onNext}
                 size="lg"
@@ -40,7 +43,7 @@ export function GameQuizHostScoreboard({
                   <ArrowRight className="size-4" aria-hidden="true" />
                 ) : null}
               </Button>
-            </>
+            </div>
           }
           copy={copy}
           session={session}

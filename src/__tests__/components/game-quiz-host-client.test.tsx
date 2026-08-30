@@ -363,11 +363,25 @@ describe('GameQuizHostClient', () => {
 
     renderHost();
 
-    expect(await screen.findByText('host.scoreboard')).toBeInTheDocument();
+    expect(await screen.findByText('player.leaderboard')).toBeInTheDocument();
     expect(screen.getByText('Sam')).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: 'host.next' })
-    ).toBeInTheDocument();
+    const fullLeaderboardButton = screen.getByRole('button', {
+      name: 'host.viewFullLeaderboard',
+    });
+    const nextButton = screen.getByRole('button', { name: 'host.next' });
+
+    expect(fullLeaderboardButton).toHaveAttribute('data-size', 'lg');
+    expect(nextButton).toHaveAttribute('data-size', 'lg');
+    expect(fullLeaderboardButton).toHaveAttribute('data-variant', 'outline');
+    expect(nextButton).toHaveAttribute('data-variant', 'default');
+    expect(fullLeaderboardButton).toHaveClass('h-11', 'w-full', 'sm:h-12');
+    expect(nextButton).toHaveClass('h-11', 'w-full', 'sm:h-12');
+    expect(nextButton.parentElement).toHaveClass(
+      'grid',
+      'w-full',
+      'max-w-lg',
+      'sm:grid-cols-2'
+    );
   });
 
   it('opens full final standings while keeping View report as an external link', async () => {
