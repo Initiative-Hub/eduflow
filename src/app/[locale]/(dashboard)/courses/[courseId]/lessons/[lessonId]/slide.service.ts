@@ -17,6 +17,7 @@ export const DEFAULT_TEMPLATE_COLLECTIONS = new Set([
   'pastel_pop',
   'illustrative_culture',
   'minimalist_gradient',
+  'eduflow_purple',
   'cultural_folk',
   'organic_streets',
   'green_environment_care',

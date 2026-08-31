@@ -48,6 +48,8 @@ const STYLE_COLLECTIONS: Record<string, string> = {
     'Sleek dark theme with electric royal blue and violet gradient glows, crisp modern typography, and ambient grid lines — technology, start-ups, product design, business pitches, and modern tech topics.',
   organic_streets:
     'Cream paper, deep plum script headlines, golden sun discs, slate and terracotta organic blobs, line-art European street skylines — travel, geography, history, literature, art and storytelling topics.',
+  eduflow_purple:
+    'Deep slate canvas with violet accents, soft bordered cards and an ambient glow, matching the EduFlow platform itself — course material, product walkthroughs, internal training, onboarding, and any deck that should feel native to the product it was made in.',
   cultural_folk:
     'Warm plum-gray background, cream text, terracotta and sand accents with a grounded earth strip — culture, diversity, social studies, community, humanities and storytelling topics.',
   green_environment_care:
@@ -293,6 +295,7 @@ const STYLE_COLLECTION_ALIASES: Partial<
   Record<keyof typeof STYLE_COLLECTIONS, readonly string[]>
 > = {
   cultural_folk: ['cultural folk'],
+  eduflow_purple: ['eduflow', 'eduflow purple', 'platform style'],
   green_environment_care: ['green environment care'],
   illustrative_culture: ['illustrative culture'],
   minimalist_gradient: ['minimalist gradient'],

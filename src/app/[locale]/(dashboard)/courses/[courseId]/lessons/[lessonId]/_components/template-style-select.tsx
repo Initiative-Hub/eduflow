@@ -28,6 +28,8 @@ const DEFAULT_COLLECTION_DESCRIPTIONS: Record<string, string> = {
     'Warm cream paper, hand-drawn buildings & sage green accents.',
   minimalist_gradient:
     'Sleek dark theme with electric royal blue and violet gradient glows.',
+  eduflow_purple:
+    'EduFlow house style — deep slate, violet accents, soft cards.',
   cultural_folk:
     'Rich cultural folk style with terracotta, gold, dusty blue and rose.',
   organic_streets:
@@ -47,6 +49,7 @@ const DEFAULT_COLLECTION_PALETTES: Record<string, string[]> = {
   pastel_pop: ['#fff7ed', '#ea580c', '#f472b6'],
   illustrative_culture: ['#fefae0', '#283618', '#606c38'],
   minimalist_gradient: ['#030712', '#3b82f6', '#8b5cf6'],
+  eduflow_purple: ['#1f2937', '#a78bfa', '#f2eafd'],
   cultural_folk: ['#2d1b2d', '#e07a5f', '#f4a261'],
   organic_streets: ['#f8f9fa', '#6c5ce7', '#fd79a8'],
   green_environment_care: ['#f4f7f4', '#14532d', '#4ade80'],
@@ -62,6 +65,7 @@ export function formatCollectionLabel(name: string): string {
   if (name === 'pastel_pop') return 'Pastel Pop Theme';
   if (name === 'illustrative_culture') return 'Illustrative Culture Theme';
   if (name === 'minimalist_gradient') return 'Minimalist Gradient Theme';
+  if (name === 'eduflow_purple') return 'EduFlow Purple Theme';
   if (name === 'cultural_folk') return 'Cultural Folk Theme';
   if (name === 'organic_streets') return 'Organic Streets Theme';
   if (name === 'green_environment_care') return 'Green Environment Care Theme';
