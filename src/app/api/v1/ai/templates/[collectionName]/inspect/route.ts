@@ -37,7 +37,11 @@ const slotEditsSchema = z.object({
  */
 export const GET = withRoles(
   ['TEACHER'],
-  async (_req, _session, ctx: { params: Promise<{ collectionName: string }> }) => {
+  async (
+    _req,
+    _session,
+    ctx: { params: Promise<{ collectionName: string }> }
+  ) => {
     try {
       const { collectionName } = await ctx.params;
       return NextResponse.json(
@@ -57,7 +61,11 @@ export const GET = withRoles(
  */
 export const PATCH = withRoles(
   ['TEACHER'],
-  async (req, _session, ctx: { params: Promise<{ collectionName: string }> }) => {
+  async (
+    req,
+    _session,
+    ctx: { params: Promise<{ collectionName: string }> }
+  ) => {
     try {
       const { collectionName } = await ctx.params;
       const parsed = slotEditsSchema.safeParse(await req.json());

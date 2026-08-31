@@ -57,7 +57,8 @@ describe('presentation style recommendation', () => {
       lessonTitle: 'Quarterly warehouse operations dashboard',
       lessonContent:
         'Operational KPIs, throughput, defect rates, cost optimization, and capacity planning.',
-      context: 'Create a metrics-focused deck and use the executive focus template.',
+      context:
+        'Create a metrics-focused deck and use the executive focus template.',
       styleCollections: {
         clean_light: 'Clean light',
         professional_focus: 'Professional focus',

@@ -631,11 +631,10 @@ export function TemplateReviewDialog({
             <AlertDialogHeader>
               <AlertDialogTitle>Delete {pendingDelete}?</AlertDialogTitle>
               <AlertDialogDescription>
-                This removes the layout from{' '}
-                <strong>{collection}</strong> for good — the slide design, its
-                slot schema, and its copy in storage. Decks already generated
-                keep their slides; new ones can no longer use this layout. There
-                is no undo.
+                This removes the layout from <strong>{collection}</strong> for
+                good — the slide design, its slot schema, and its copy in
+                storage. Decks already generated keep their slides; new ones can
+                no longer use this layout. There is no undo.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

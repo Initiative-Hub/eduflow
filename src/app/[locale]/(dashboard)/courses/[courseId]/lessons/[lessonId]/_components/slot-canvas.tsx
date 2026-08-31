@@ -19,7 +19,10 @@ function readViewBox(svg: SVGSVGElement): { w: number; h: number } | null {
   const vb = svg.getAttribute('viewBox');
   if (vb) {
     // "min-x min-y width height", separated by whitespace and/or commas
-    const parts = vb.trim().split(/[\s,]+/).map(Number);
+    const parts = vb
+      .trim()
+      .split(/[\s,]+/)
+      .map(Number);
     if (parts.length === 4 && parts[2] > 0 && parts[3] > 0) {
       return { w: parts[2], h: parts[3] };
     }
@@ -131,10 +134,16 @@ export function SlotCanvas({
     (name: string, dx: number, dy: number, w?: number, h?: number) => {
       const host = svgHost.current?.querySelector('svg');
       if (!host) return;
-      const els = host.querySelectorAll(`[data-slot-name="${CSS.escape(name)}"]`);
+      const els = host.querySelectorAll(
+        `[data-slot-name="${CSS.escape(name)}"]`
+      );
       for (const el of els) {
-        const baseX = Number(el.getAttribute('data-ox') ?? el.getAttribute('x') ?? 0);
-        const baseY = Number(el.getAttribute('data-oy') ?? el.getAttribute('y') ?? 0);
+        const baseX = Number(
+          el.getAttribute('data-ox') ?? el.getAttribute('x') ?? 0
+        );
+        const baseY = Number(
+          el.getAttribute('data-oy') ?? el.getAttribute('y') ?? 0
+        );
         // remember the authored position once, so repeated drags stay absolute
         if (!el.hasAttribute('data-ox')) {
           el.setAttribute('data-ox', String(baseX));

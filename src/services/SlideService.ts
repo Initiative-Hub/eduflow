@@ -583,5 +583,4 @@ export class SlideService {
     SlideService.clearCache(collectionName);
     return res.json();
   }
-
 }
