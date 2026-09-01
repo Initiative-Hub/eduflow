@@ -42,7 +42,11 @@ describe('live-game authentication', () => {
       pathname,
       secret: serviceSecret,
     });
-    const verify = (overrides: Partial<Parameters<typeof verifyLiveGameServiceRequest>[0]> = {}) =>
+    const verify = (
+      overrides: Partial<
+        Parameters<typeof verifyLiveGameServiceRequest>[0]
+      > = {}
+    ) =>
       verifyLiveGameServiceRequest({
         body,
         direction: 'partykit-to-next',
@@ -57,11 +61,12 @@ describe('live-game authentication', () => {
 
     await expect(verify()).resolves.toBe(true);
     await expect(verify({ body: `${body} ` })).resolves.toBe(false);
-    await expect(verify({ direction: 'next-to-partykit' })).resolves.toBe(false);
+    await expect(verify({ direction: 'next-to-partykit' })).resolves.toBe(
+      false
+    );
     await expect(verify({ pathname: '/different' })).resolves.toBe(false);
     await expect(
       verify({ timestamp: String(Date.now() - 120_000) })
     ).resolves.toBe(false);
   });
 });
-
