@@ -18,7 +18,7 @@ permissions:
 jobs:
   check-pr-title:
     name: Check PR title
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     if: >-
       github.event_name == 'workflow_dispatch' ||
