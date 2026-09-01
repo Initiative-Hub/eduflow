@@ -48,6 +48,8 @@ const STYLE_COLLECTIONS: Record<string, string> = {
     'Sleek dark theme with electric royal blue and violet gradient glows, crisp modern typography, and ambient grid lines — technology, start-ups, product design, business pitches, and modern tech topics.',
   organic_streets:
     'Cream paper, deep plum script headlines, golden sun discs, slate and terracotta organic blobs, line-art European street skylines — travel, geography, history, literature, art and storytelling topics.',
+  eduflow_light:
+    'Soft white canvas with violet accents and crisp bordered cards, from the EduFlow light theme - printed handouts, lectures projected in a bright room, and any deck that should look like EduFlow without going dark.',
   eduflow_purple:
     'Deep slate canvas with violet accents, soft bordered cards and an ambient glow, matching the EduFlow platform itself — course material, product walkthroughs, internal training, onboarding, and any deck that should feel native to the product it was made in.',
   cultural_folk:
@@ -295,7 +297,8 @@ const STYLE_COLLECTION_ALIASES: Partial<
   Record<keyof typeof STYLE_COLLECTIONS, readonly string[]>
 > = {
   cultural_folk: ['cultural folk'],
-  eduflow_purple: ['eduflow', 'eduflow purple', 'platform style'],
+  eduflow_purple: ['eduflow purple', 'platform style'],
+  eduflow_light: ['eduflow light', 'eduflow'],
   green_environment_care: ['green environment care'],
   illustrative_culture: ['illustrative culture'],
   minimalist_gradient: ['minimalist gradient'],
@@ -956,18 +959,61 @@ HARD CONSTRAINTS:
           styleCollections: opts.styleCollections,
         });
 
-    const { output } = await generateText({
-      model: provider(model),
-      output: Output.object({ schema: presentationPlanSchema }),
-      prompt: masterPrompt,
-      instructions: PLANNER_SYSTEM_PROMPT,
-      temperature: 0.7,
-      // Detailed decks (up to 20 fully-populated slides) need plenty of room.
-      maxOutputTokens: 16000,
-    });
+    // `result.output` throws when the model returned nothing parseable, and it
+    // throws away the one thing that explains why — the finish reason. Every
+    // "No output generated." this planner has produced has been diagnosed by
+    // guesswork for want of these three values, so they are captured and
+    // logged, and the two recoverable causes are retried rather than surfaced.
+    const attempt = async (maxOutputTokens: number, temperature: number) => {
+      const result = await generateText({
+        model: provider(model),
+        output: Output.object({ schema: presentationPlanSchema }),
+        prompt: masterPrompt,
+        instructions: PLANNER_SYSTEM_PROMPT,
+        temperature,
+        maxOutputTokens,
+      });
+      try {
+        return { plan: result.output, result };
+      } catch (error) {
+        return { plan: undefined, result, error };
+      }
+    };
+
+    let { plan, result, error } = await attempt(16000, 0.7);
+
+    if (!plan) {
+      const finish = result?.finishReason;
+      console.error('Presentation planner produced no usable output', {
+        finishReason: finish,
+        usage: result?.usage,
+        textLength: result?.text?.length ?? 0,
+        textPreview: result?.text?.slice(0, 400),
+      });
+      // 'length' means the object was cut mid-JSON — more room can finish it.
+      // Anything else is usually a one-off malformed emission, where a colder
+      // second pass is more likely to produce valid JSON than the same one.
+      const retry =
+        finish === 'length'
+          ? await attempt(32000, 0.7)
+          : await attempt(16000, 0.2);
+      if (retry.plan) {
+        plan = retry.plan;
+      } else {
+        console.error('Presentation planner retry also failed', {
+          finishReason: retry.result?.finishReason,
+          textLength: retry.result?.text?.length ?? 0,
+        });
+        throw new Error(
+          `The planner returned no usable plan (finish reason: ${
+            retry.result?.finishReason ?? finish ?? 'unknown'
+          }). Please try again.`
+        );
+      }
+    }
 
     return PresentationService.enrichUnderfilledSlides({
-      plan: output,
+      plan,
       lessonTitle: opts.lessonTitle,
       contentSnippet,
       provider,
