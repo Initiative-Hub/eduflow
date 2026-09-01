@@ -16,7 +16,7 @@ on:
 jobs:
   ssr-page-check:
     name: SSR Page Check
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     if: |
       github.event_name != 'pull_request' || 
