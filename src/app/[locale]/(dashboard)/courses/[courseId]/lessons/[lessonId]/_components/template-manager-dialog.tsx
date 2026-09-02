@@ -1,6 +1,12 @@
 'use client';
 
-import { ArrowRight, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
+import {
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  SlidersHorizontal,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -54,6 +60,8 @@ interface CollectionItem {
   description?: string;
   slide_types?: string[];
   palette?: string[];
+  /** false for the built-in style banks; imported templates are reviewable */
+  is_custom?: boolean;
 }
 
 interface TemplateManagerDialogProps {
@@ -65,6 +73,8 @@ interface TemplateManagerDialogProps {
   onUploadSuccess?: () => Promise<void> | void;
   isLoading?: boolean;
 }
+
+import { TemplateReviewDialog } from './template-review-dialog';
 
 export function TemplateManagerDialog({
   isOpen,
@@ -88,6 +98,8 @@ export function TemplateManagerDialog({
     null
   );
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  // review = inspect the extracted slots of a custom template and fix them
+  const [reviewCollection, setReviewCollection] = useState<string | null>(null);
   const [zoomedSlideIndex, setZoomedSlideIndex] = useState<number | null>(null);
 
   // TanStack Query for previews
@@ -138,6 +150,7 @@ export function TemplateManagerDialog({
             await onUploadSuccess();
           }
           onSelectCollection(importedName);
+          onOpenChange(false);
         },
         onError: (err: any) => {
           toast.error(err.message || 'Failed to import templates.');
@@ -239,6 +252,35 @@ export function TemplateManagerDialog({
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
+                            {col.is_custom !== false && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="size-8 rounded-lg text-muted-foreground"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setReviewCollection(col.name);
+                                }}
+                                title="Review extracted slots"
+                              >
+                                <SlidersHorizontal className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {isSelected && (
+                              <Button
+                                type="button"
+                                size="sm"
+                                className="h-7 rounded-lg bg-primary px-2.5 font-semibold text-primary-foreground text-xs hover:bg-primary/90"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onSelectCollection(col.name);
+                                  onOpenChange(false);
+                                }}
+                              >
+                                Choose
+                              </Button>
+                            )}
                           </div>
                         </div>
                       );
@@ -356,23 +398,39 @@ export function TemplateManagerDialog({
               >
                 Close
               </Button>
-              <Button
-                type="submit"
-                disabled={isUploading || !uploadFile}
-                className="flex items-center gap-2 rounded-xl bg-primary px-5 font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-              >
-                {isUploading ? (
-                  <>
-                    <Spinner className="h-4 w-4" />
-                    Uploading...
-                  </>
-                ) : (
-                  <>
-                    Import Templates
-                    <ArrowRight className="h-4 w-4" />
-                  </>
-                )}
-              </Button>
+              {selectedCollection && !uploadFile && (
+                <Button
+                  type="button"
+                  onClick={() => {
+                    onSelectCollection(selectedCollection);
+                    onOpenChange(false);
+                  }}
+                  disabled={isUploading}
+                  className="flex items-center gap-2 rounded-xl bg-primary px-5 font-semibold text-primary-foreground hover:bg-primary/90"
+                >
+                  Choose Template
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              )}
+              {uploadFile && (
+                <Button
+                  type="submit"
+                  disabled={isUploading || !uploadFile}
+                  className="flex items-center gap-2 rounded-xl bg-primary px-5 font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                >
+                  {isUploading ? (
+                    <>
+                      <Spinner className="h-4 w-4" />
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      Import Templates
+                      <ArrowRight className="h-4 w-4" />
+                    </>
+                  )}
+                </Button>
+              )}
             </div>
           </form>
         </DialogContent>
@@ -381,7 +439,7 @@ export function TemplateManagerDialog({
       {/* Larger Canva-like Slide Previews Pop-up Dialog */}
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
         <DialogContent className="flex max-h-[85vh] w-full flex-col rounded-2xl border border-border bg-background p-6 sm:max-w-5xl">
-          <DialogHeader>
+          <DialogHeader className="flex flex-row items-center justify-between pr-6">
             <DialogTitle className="font-bold text-foreground text-lg capitalize">
               Style Preview:{' '}
               {previewCollection === 'starter'
@@ -390,6 +448,20 @@ export function TemplateManagerDialog({
                   ? 'Neon Dark Theme'
                   : previewCollection}
             </DialogTitle>
+            {previewCollection && (
+              <Button
+                type="button"
+                size="sm"
+                className="rounded-xl bg-primary px-4 font-semibold text-primary-foreground hover:bg-primary/90"
+                onClick={() => {
+                  onSelectCollection(previewCollection);
+                  setIsPreviewOpen(false);
+                  onOpenChange(false);
+                }}
+              >
+                Choose This Template
+              </Button>
+            )}
           </DialogHeader>
 
           {isLoadingPreviews ? (
@@ -491,6 +563,13 @@ export function TemplateManagerDialog({
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Review the slots an extraction detected, and correct them */}
+      <TemplateReviewDialog
+        collection={reviewCollection}
+        onOpenChange={(nextOpen) => !nextOpen && setReviewCollection(null)}
+        open={reviewCollection !== null}
+      />
     </>
   );
 }

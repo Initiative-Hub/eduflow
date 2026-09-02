@@ -1,3 +1,5 @@
+import time
+
 import requests
 
 BASE_URL = "http://localhost:8000"
@@ -216,6 +218,20 @@ def test_complex_deck_generation():
         return
 
     job_data = resp.json()
+
+    # The endpoint queues the build and returns a job id; poll until it settles.
+    if job_data.get("status") in ("queued", "running") and job_data.get("job_id"):
+        job_id = job_data["job_id"]
+        for _ in range(400):
+            time.sleep(3)
+            poll = requests.get(f"{BASE_URL}/slides/jobs/{job_id}")
+            assert poll.status_code == 200, f"Poll failed: {poll.status_code}"
+            job_data = poll.json()
+            if job_data.get("status") in ("done", "error"):
+                break
+        else:
+            assert False, "Generation timed out"
+
     if job_data.get("status") == "error":
         print(f"Job failed with error: {job_data.get('message')}")
         assert False, f"Generation failed: {job_data.get('message')}"
