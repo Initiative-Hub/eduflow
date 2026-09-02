@@ -42,7 +42,7 @@ async function authorizeGameQuizRealtimeChannels({
 }: {
   request: Request;
   channels: string[];
-}): Promise<Response | void> {
+}): Promise<Response | undefined> {
   const session = await auth.api.getSession({ headers: request.headers });
 
   if (!session) {

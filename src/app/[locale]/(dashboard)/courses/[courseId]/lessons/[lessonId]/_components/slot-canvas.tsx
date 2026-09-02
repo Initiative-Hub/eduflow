@@ -288,7 +288,7 @@ export function SlotCanvas({
           >
             {isActive && (
               <span
-                className="-top-[18px] pointer-events-none absolute left-0 whitespace-nowrap rounded px-1.5 py-px font-mono text-[10px] text-white"
+                className="pointer-events-none absolute -top-[18px] left-0 whitespace-nowrap rounded px-1.5 py-px font-mono text-[10px] text-white"
                 style={{ background: colour }}
               >
                 {slot.name}

@@ -24,7 +24,9 @@ import { PresentationService } from '@/services/PresentationService';
  */
 const generatePlan = (
   PresentationService as unknown as {
-    generatePlan: (o: Record<string, unknown>) => Promise<{ slides: unknown[] }>;
+    generatePlan: (
+      o: Record<string, unknown>
+    ) => Promise<{ slides: unknown[] }>;
   }
 ).generatePlan.bind(PresentationService);
 
@@ -58,7 +60,8 @@ function withOutput(slideCount: number) {
 
 const opts = {
   lessonTitle: 'Independent Samples T-Tests',
-  lessonContent: 'Sample sizes, group means, t-value and p-value for two platforms.',
+  lessonContent:
+    'Sample sizes, group means, t-value and p-value for two platforms.',
   duration: '15',
 };
 
@@ -103,9 +106,7 @@ describe('presentation planner retry', () => {
       .mockResolvedValueOnce(noOutput('length'))
       .mockResolvedValueOnce(noOutput('length'));
 
-    await expect(generatePlan(opts)).rejects.toThrow(
-      /finish reason: length/
-    );
+    await expect(generatePlan(opts)).rejects.toThrow(/finish reason: length/);
   });
 
   it('does not retry when the first attempt succeeded', async () => {

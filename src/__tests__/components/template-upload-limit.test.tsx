@@ -15,6 +15,10 @@ vi.mock(
   () => ({
     useImportSlideTemplate: () => ({ mutate: vi.fn(), isPending: false }),
     useSlideTemplatePreviews: () => ({ data: [], isLoading: false }),
+    useTemplateInspection: () => ({ data: null, isLoading: false }),
+    useTemplateOverlay: () => ({ data: null, isLoading: false }),
+    useDeleteTemplateCategory: () => ({ mutateAsync: vi.fn(), isPending: false }),
+    useUpdateTemplateSlots: () => ({ mutateAsync: vi.fn(), isPending: false }),
   })
 );
 

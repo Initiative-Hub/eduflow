@@ -188,9 +188,7 @@ export function TemplateReviewDialog({
         setNotes([]);
       }
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : t('deleteError')
-      );
+      toast.error(error instanceof Error ? error.message : t('deleteError'));
     } finally {
       setPendingDelete(null);
     }
@@ -291,12 +289,12 @@ export function TemplateReviewDialog({
           <>
             <div className="flex items-center gap-3">
               {data.warning_count > 0 ? (
-                <span className="flex items-center gap-1.5 rounded-full bg-amber-500/10 px-3 py-1 font-medium text-amber-600 dark:text-amber-400 text-xs">
+                <span className="flex items-center gap-1.5 rounded-full bg-amber-500/10 px-3 py-1 font-medium text-amber-600 text-xs dark:text-amber-400">
                   <AlertTriangle className="h-3.5 w-3.5" />
                   {t('warningCount', { count: data.warning_count })}
                 </span>
               ) : (
-                <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 font-medium text-emerald-600 dark:text-emerald-400 text-xs">
+                <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 font-medium text-emerald-600 text-xs dark:text-emerald-400">
                   <Check className="h-3.5 w-3.5" /> {t('noProblems')}
                 </span>
               )}
@@ -384,7 +382,7 @@ export function TemplateReviewDialog({
                   </div>
 
                   {current?.warnings.length ? (
-                    <ul className="space-y-1 rounded-lg bg-amber-500/10 p-3 text-amber-700 dark:text-amber-300 text-xs">
+                    <ul className="space-y-1 rounded-lg bg-amber-500/10 p-3 text-amber-700 text-xs dark:text-amber-300">
                       {current.warnings.map((w) => (
                         <li className="flex gap-1.5" key={w}>
                           <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />

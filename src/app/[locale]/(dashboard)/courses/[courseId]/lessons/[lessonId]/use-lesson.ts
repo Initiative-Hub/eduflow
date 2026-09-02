@@ -249,7 +249,11 @@ export function useDeleteTemplateCategory() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: { collection: string; category: string }) =>
-      apiClient.delete<{ collection: string; category: string; deleted: boolean }>(
+      apiClient.delete<{
+        collection: string;
+        category: string;
+        deleted: boolean;
+      }>(
         `/v1/ai/templates/${encodeURIComponent(data.collection)}/inspect/${encodeURIComponent(data.category)}`
       ),
     onSuccess: (_, variables) => {
@@ -285,9 +289,12 @@ export function useUpdateTemplateSlots() {
         queryKey: ['template-inspection', variables.collection],
       });
       queryClient.invalidateQueries({
-        queryKey: ['template-overlay', variables.collection, variables.category],
+        queryKey: [
+          'template-overlay',
+          variables.collection,
+          variables.category,
+        ],
       });
     },
   });
 }
-

@@ -980,7 +980,7 @@ HARD CONSTRAINTS:
       }
     };
 
-    let { plan, result, error } = await attempt(16000, 0.7);
+    let { plan, result } = await attempt(16000, 0.7);
 
     if (!plan) {
       const finish = result?.finishReason;
