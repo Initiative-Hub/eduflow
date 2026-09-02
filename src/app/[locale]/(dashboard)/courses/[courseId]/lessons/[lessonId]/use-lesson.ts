@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/api/api-client';
+import type { TemplateInspection } from '@/services/SlideService';
 import type { TiptapDocument } from '@/utils/lesson-content';
 import { lessonService } from './lesson.service';
 import { slideService, type TemplateImportSource } from './slide.service';
@@ -213,3 +214,80 @@ export function useDownloadPptx() {
     mutationFn: (deckId: string) => slideService.downloadPptxBlob(deckId),
   });
 }
+
+export function useTemplateInspection(
+  collection: string | null,
+  enabled: boolean
+) {
+  return useQuery({
+    queryKey: ['template-inspection', collection],
+    queryFn: () =>
+      apiClient.get<TemplateInspection>(
+        `/v1/ai/templates/${encodeURIComponent(collection!)}/inspect`
+      ),
+    enabled: enabled && !!collection,
+  });
+}
+
+export function useTemplateOverlay(
+  collection: string | null,
+  category: string | null,
+  variant: string | undefined,
+  enabled: boolean
+) {
+  return useQuery({
+    queryKey: ['template-overlay', collection, category, variant],
+    queryFn: () =>
+      apiClient.get<{ svg: string }>(
+        `/v1/ai/templates/${encodeURIComponent(collection!)}/inspect/${encodeURIComponent(category!)}/overlay?variant=${encodeURIComponent(variant || 'standard')}&boxes=false&editable=true`
+      ),
+    enabled: enabled && !!collection && !!category,
+  });
+}
+
+export function useDeleteTemplateCategory() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { collection: string; category: string }) =>
+      apiClient.delete<{ collection: string; category: string; deleted: boolean }>(
+        `/v1/ai/templates/${encodeURIComponent(data.collection)}/inspect/${encodeURIComponent(data.category)}`
+      ),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['template-inspection', variables.collection],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['slide-template-categories', variables.collection],
+      });
+    },
+  });
+}
+
+export function useUpdateTemplateSlots() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: {
+      collection: string;
+      category: string;
+      variant: string;
+      edits: Array<Record<string, unknown>>;
+    }) =>
+      apiClient.patch<{ applied: string[]; synced: boolean }>(
+        `/v1/ai/templates/${encodeURIComponent(data.collection)}/inspect`,
+        {
+          category: data.category,
+          variant: data.variant,
+          edits: data.edits,
+        }
+      ),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['template-inspection', variables.collection],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['template-overlay', variables.collection, variables.category],
+      });
+    },
+  });
+}
+

@@ -1345,6 +1345,43 @@
       "title": "Lesson Title",
       "writeReview": "Write/Review"
     },
+    "TemplateReview": {
+      "autofix": "Auto-fix",
+      "bulletCheckbox": "Render as a bullet list (adds “•” to each line)",
+      "canvasInstruction": "Drag a box to move it, or its corner to resize. Changes show here immediately and are saved with the rest.",
+      "deleteCategoryDialog": {
+        "action": "Delete layout",
+        "cancel": "Cancel",
+        "description": "This removes the layout from {collection} for good — the slide design, its slot schema, and its copy in storage. Decks already generated keep their slides; new ones can no longer use this layout. There is no undo.",
+        "title": "Delete {category}?"
+      },
+      "deleteError": "Could not delete the layout",
+      "deletedSuccess": "Deleted {category}",
+      "descPlaceholder": "What should the AI write here?",
+      "description": "Extraction guesses each slot from the slide’s geometry. Check what it found and correct anything wrong before generating decks with it.",
+      "fixedCount": "Fixed {count} thing(s) in {category}",
+      "inspectError": "Could not inspect this template",
+      "inspecting": "Inspecting template…",
+      "maxCharsPlaceholder": "max chars",
+      "noChanges": "No changes",
+      "noProblems": "No problems detected",
+      "nothingToInspect": "Nothing to inspect for this collection.",
+      "nothingToFix": "Nothing to fix in this category",
+      "nothingToFixAdvice": "Nothing to fix automatically — see the notes below the slide",
+      "remove": "remove",
+      "reset": "Reset",
+      "saveChanges": "Save changes",
+      "saveError": "Could not save the slot changes",
+      "savedCount": "Saved {count} change(s) to {category}",
+      "showAll": "Show all {count} categories",
+      "showOnlyWarnings": "Show only categories with warnings",
+      "slotNamePlaceholder": "slot name",
+      "title": "Review extracted template",
+      "undoRemove": "undo remove",
+      "unsavedChanges": "{count} unsaved change(s)",
+      "waitingForSlide": "Waiting for the slide to load — try again in a moment",
+      "warningCount": "{count} slot(s) need a look"
+    },
     "LessonHeader": {
       "delete": "Delete lesson",
       "deleteDialog": {

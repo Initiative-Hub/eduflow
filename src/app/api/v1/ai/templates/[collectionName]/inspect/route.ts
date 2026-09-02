@@ -32,8 +32,26 @@ const slotEditsSchema = z.object({
 });
 
 /**
- * GET /api/v1/ai/templates/{collectionName}/inspect
- * Detected slots + warnings per category, for the template review screen.
+ * @swagger
+ * /api/v1/ai/templates/{collectionName}/inspect:
+ *   get:
+ *     tags:
+ *       - AI Templates
+ *     summary: Inspect detected layout slots and warnings for a template collection
+ *     security:
+ *       - SessionCookie: []
+ *     parameters:
+ *       - in: path
+ *         name: collectionName
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Name of the template collection
+ *     responses:
+ *       200:
+ *         description: Collection inspection report with categories and detected slot metadata
+ *       500:
+ *         description: Internal server error
  */
 export const GET = withRoles(
   ['TEACHER'],
@@ -56,8 +74,73 @@ export const GET = withRoles(
 );
 
 /**
- * PATCH /api/v1/ai/templates/{collectionName}/inspect
- * Apply reviewer corrections to a category's slots, then sync them to S3.
+ * @swagger
+ * /api/v1/ai/templates/{collectionName}/inspect:
+ *   patch:
+ *     tags:
+ *       - AI Templates
+ *     summary: Apply reviewer corrections to a category's slots and sync to S3
+ *     security:
+ *       - SessionCookie: []
+ *     parameters:
+ *       - in: path
+ *         name: collectionName
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Name of the template collection
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [category, edits]
+ *             properties:
+ *               category:
+ *                 type: string
+ *               variant:
+ *                 type: string
+ *                 default: standard
+ *               edits:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   required: [name]
+ *                   properties:
+ *                     name:
+ *                       type: string
+ *                     rename:
+ *                       type: string
+ *                     type:
+ *                       type: string
+ *                     desc:
+ *                       type: string
+ *                     max_chars:
+ *                       type: integer
+ *                     lines:
+ *                       type: integer
+ *                     bullet:
+ *                       type: boolean
+ *                     delete:
+ *                       type: boolean
+ *                     kind:
+ *                       type: string
+ *                     x:
+ *                       type: number
+ *                     y:
+ *                       type: number
+ *                     w:
+ *                       type: number
+ *                     h:
+ *                       type: number
+ *     responses:
+ *       200:
+ *         description: Slot edits applied and synchronized successfully
+ *       400:
+ *         description: Invalid request body
+ *       500:
+ *         description: Internal server error
  */
 export const PATCH = withRoles(
   ['TEACHER'],

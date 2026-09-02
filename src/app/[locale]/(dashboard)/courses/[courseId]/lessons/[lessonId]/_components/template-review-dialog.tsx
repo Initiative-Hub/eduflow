@@ -3,7 +3,6 @@
 import {
   AlertTriangle,
   Check,
-  ChevronDown,
   Image as ImageIcon,
   Loader2,
   RotateCcw,
@@ -13,6 +12,7 @@ import {
   Type,
   Wand2,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import {
@@ -35,9 +35,14 @@ import {
 } from '@/components/ui/dialog';
 import type {
   TemplateCategoryInspection,
-  TemplateInspection,
   TemplateSlot,
 } from '@/services/SlideService';
+import {
+  useDeleteTemplateCategory,
+  useTemplateInspection,
+  useTemplateOverlay,
+  useUpdateTemplateSlots,
+} from '../use-lesson';
 import {
   canvasWidthFromSvg,
   proposeFixes,
@@ -95,39 +100,34 @@ export function TemplateReviewDialog({
   open,
   onOpenChange,
 }: TemplateReviewDialogProps) {
-  const [data, setData] = useState<TemplateInspection | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const t = useTranslations('Courses.TemplateReview');
   const [selected, setSelected] = useState<string | null>(null);
-  const [overlay, setOverlay] = useState<string | null>(null);
-  const [isOverlayLoading, setIsOverlayLoading] = useState(false);
   const [drafts, setDrafts] = useState<Record<string, SlotDraft>>({});
-  const [isSaving, setIsSaving] = useState(false);
   const [onlyWarnings, setOnlyWarnings] = useState(true);
+  const [activeSlot, setActiveSlot] = useState<string | null>(null);
+  const [notes, setNotes] = useState<SlotNote[]>([]);
+  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
 
-  // load the inspection report whenever the dialog opens for a collection
+  const { data, isLoading } = useTemplateInspection(collection, open);
+
+  // Set default selected category when data is loaded
   useEffect(() => {
-    if (!open || !collection) return;
-    let cancelled = false;
-    setIsLoading(true);
-    setData(null);
-    setDrafts({});
-    fetch(`/api/v1/ai/templates/${encodeURIComponent(collection)}/inspect`)
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(r.statusText))))
-      .then((json: TemplateInspection) => {
-        if (cancelled) return;
-        setData(json);
+    if (data?.categories?.length) {
+      if (!selected || !data.categories.some((c) => c.category === selected)) {
         const first =
-          json.categories.find((c) => c.warnings.length > 0) ??
-          json.categories[0];
+          data.categories.find((c) => c.warnings.length > 0) ??
+          data.categories[0];
         setSelected(first ? first.category : null);
-      })
-      .catch(() => {
-        if (!cancelled) toast.error('Could not inspect this template');
-      })
-      .finally(() => !cancelled && setIsLoading(false));
-    return () => {
-      cancelled = true;
-    };
+      }
+    }
+  }, [data, selected]);
+
+  // Reset drafts when dialog opens or collection changes
+  useEffect(() => {
+    if (open) {
+      setDrafts({});
+      setNotes([]);
+    }
   }, [open, collection]);
 
   const current: TemplateCategoryInspection | undefined = useMemo(
@@ -135,26 +135,19 @@ export function TemplateReviewDialog({
     [data, selected]
   );
 
-  // fetch the labelled slide overlay for whichever category is selected
-  useEffect(() => {
-    if (!open || !collection || !current) {
-      setOverlay(null);
-      return;
-    }
-    let cancelled = false;
-    setIsOverlayLoading(true);
-    fetch(
-      `/api/v1/ai/templates/${encodeURIComponent(collection)}/inspect/` +
-        `${encodeURIComponent(current.category)}/overlay?variant=${encodeURIComponent(current.variant)}&boxes=false&editable=true`
-    )
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(r.statusText))))
-      .then((json: { svg: string }) => !cancelled && setOverlay(json.svg))
-      .catch(() => !cancelled && setOverlay(null))
-      .finally(() => !cancelled && setIsOverlayLoading(false));
-    return () => {
-      cancelled = true;
-    };
-  }, [open, collection, current]);
+  const { data: overlayData, isLoading: isOverlayLoading } = useTemplateOverlay(
+    collection,
+    current?.category ?? null,
+    current?.variant,
+    open
+  );
+
+  const overlay = overlayData?.svg ?? null;
+
+  const deleteMutation = useDeleteTemplateCategory();
+  const updateMutation = useUpdateTemplateSlots();
+
+  const isSaving = deleteMutation.isPending || updateMutation.isPending;
 
   const setDraft = useCallback((name: string, patch: SlotDraft) => {
     setDrafts((prev) => ({ ...prev, [name]: { ...prev[name], ...patch } }));
@@ -178,59 +171,33 @@ export function TemplateReviewDialog({
     return out;
   }, [drafts]);
 
-  const [activeSlot, setActiveSlot] = useState<string | null>(null);
-  /** Things auto-fix deliberately would not decide, for the reviewer to judge. */
-  const [notes, setNotes] = useState<SlotNote[]>([]);
-  /** Layout awaiting the reviewer's confirmation to be deleted. */
-  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
-
   // clear last category's advice when the reviewer moves on
   useEffect(() => setNotes([]), [selected]);
 
   /**
-   * Delete one layout for good, then reload the report.
-   *
-   * Deleting the selected layout leaves nothing selected, so selection moves to
-   * whatever the refreshed report leads with rather than pointing at a category
-   * that no longer exists.
+   * Delete one layout for good, then reload the report via TanStack Query invalidation.
    */
   const deleteCategory = async (category: string) => {
     if (!collection) return;
-    setIsSaving(true);
     try {
-      const res = await fetch(
-        `/api/v1/ai/templates/${encodeURIComponent(collection)}/inspect/${encodeURIComponent(category)}`,
-        { method: 'DELETE' }
-      );
-      const body = await res.json().catch(() => null);
-      if (!res.ok) {
-        throw new Error(body?.message || body?.error || 'Delete failed');
-      }
-      toast.success(`Deleted ${category}`);
-      const fresh: TemplateInspection = await fetch(
-        `/api/v1/ai/templates/${encodeURIComponent(collection)}/inspect`
-      ).then((r) => r.json());
-      setData(fresh);
+      await deleteMutation.mutateAsync({ collection, category });
+      toast.success(t('deletedSuccess', { category }));
       if (selected === category) {
-        setSelected(fresh.categories[0]?.category ?? null);
+        setSelected(null);
         setDrafts({});
         setNotes([]);
       }
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : 'Could not delete the layout'
+        error instanceof Error ? error.message : t('deleteError')
       );
     } finally {
-      setIsSaving(false);
       setPendingDelete(null);
     }
   };
 
   /**
-   * Write a set of slot edits to the template and reload the report.
-   *
-   * The write is not reversible from here — it rewrites the category's SVG and
-   * schema and syncs them to S3 — so callers must have a reason to commit.
+   * Write a set of slot edits to the template and reload the report via TanStack Query invalidation.
    */
   const applyEdits = useCallback(
     async (
@@ -238,36 +205,20 @@ export function TemplateReviewDialog({
       describe: (applied: number) => string
     ) => {
       if (!collection || !current || edits.length === 0) return;
-      setIsSaving(true);
       try {
-        const res = await fetch(
-          `/api/v1/ai/templates/${encodeURIComponent(collection)}/inspect`,
-          {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              category: current.category,
-              variant: current.variant,
-              edits,
-            }),
-          }
-        );
-        if (!res.ok) throw new Error(await res.text());
-        const json = (await res.json()) as { applied: string[] };
+        const json = await updateMutation.mutateAsync({
+          collection,
+          category: current.category,
+          variant: current.variant,
+          edits,
+        });
         toast.success(describe(json.applied.length));
         setDrafts({});
-        // refresh so the table and overlay show the corrected slots
-        const fresh = await fetch(
-          `/api/v1/ai/templates/${encodeURIComponent(collection)}/inspect`
-        ).then((r) => r.json());
-        setData(fresh);
       } catch {
-        toast.error('Could not save the slot changes');
-      } finally {
-        setIsSaving(false);
+        toast.error(t('saveError'));
       }
     },
-    [collection, current]
+    [collection, current, updateMutation, t]
   );
 
   /**
@@ -279,7 +230,7 @@ export function TemplateReviewDialog({
     if (!current) return;
     const canvasW = canvasWidthFromSvg(overlay);
     if (!canvasW) {
-      toast.error('Waiting for the slide to load — try again in a moment');
+      toast.error(t('waitingForSlide'));
       return;
     }
     const { proposals, notes: advice } = proposeFixes(
@@ -290,9 +241,7 @@ export function TemplateReviewDialog({
     setNotes(advice);
     if (proposals.length === 0) {
       toast.info(
-        advice.length > 0
-          ? 'Nothing to fix automatically — see the notes below the slide'
-          : 'Nothing to fix in this category'
+        advice.length > 0 ? t('nothingToFixAdvice') : t('nothingToFix')
       );
       return;
     }
@@ -302,14 +251,14 @@ export function TemplateReviewDialog({
     }
     await applyEdits(
       Object.entries(merged).map(([name, d]) => ({ name, ...d })),
-      (n) => `Fixed ${n} thing${n === 1 ? '' : 's'} in ${current.category}`
+      (n) => t('fixedCount', { count: n, category: current.category })
     );
   };
 
   const save = () =>
     applyEdits(
       Object.entries(drafts).map(([name, d]) => ({ name, ...d })),
-      (n) => `Saved ${n} change(s) to ${current?.category}`
+      (n) => t('savedCount', { count: n, category: current?.category ?? '' })
     );
 
   const categories = useMemo(() => {
@@ -320,63 +269,59 @@ export function TemplateReviewDialog({
   }, [data, onlyWarnings]);
 
   const inputCls =
-    'w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-slate-900 text-xs dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100';
+    'w-full rounded-md border border-input bg-background px-2 py-1 text-foreground text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring';
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="flex max-h-[92vh] w-full flex-col gap-4 overflow-hidden p-6 sm:max-w-[94vw] lg:max-w-[1180px] xl:max-w-[1320px]">
         <DialogHeader>
-          <DialogTitle>Review extracted template</DialogTitle>
-          <DialogDescription>
-            Extraction guesses each slot from the slide’s geometry. Check what
-            it found and correct anything wrong before generating decks with it.
-          </DialogDescription>
+          <DialogTitle>{t('title')}</DialogTitle>
+          <DialogDescription>{t('description')}</DialogDescription>
         </DialogHeader>
 
         {isLoading ? (
-          <div className="flex h-64 items-center justify-center gap-2 text-slate-500 text-sm">
-            <Loader2 className="h-4 w-4 animate-spin" /> Inspecting template…
+          <div className="flex h-64 items-center justify-center gap-2 text-muted-foreground text-sm">
+            <Loader2 className="h-4 w-4 animate-spin" /> {t('inspecting')}
           </div>
         ) : !data ? (
-          <p className="p-6 text-slate-500 text-sm">
-            Nothing to inspect for this collection.
+          <p className="p-6 text-muted-foreground text-sm">
+            {t('nothingToInspect')}
           </p>
         ) : (
           <>
             <div className="flex items-center gap-3">
               {data.warning_count > 0 ? (
-                <span className="flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 font-medium text-amber-900 text-xs dark:bg-amber-950 dark:text-amber-200">
+                <span className="flex items-center gap-1.5 rounded-full bg-amber-500/10 px-3 py-1 font-medium text-amber-600 dark:text-amber-400 text-xs">
                   <AlertTriangle className="h-3.5 w-3.5" />
-                  {data.warning_count} slot
-                  {data.warning_count === 1 ? '' : 's'} need a look
+                  {t('warningCount', { count: data.warning_count })}
                 </span>
               ) : (
-                <span className="flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 font-medium text-emerald-900 text-xs dark:bg-emerald-950 dark:text-emerald-200">
-                  <Check className="h-3.5 w-3.5" /> No problems detected
+                <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 font-medium text-emerald-600 dark:text-emerald-400 text-xs">
+                  <Check className="h-3.5 w-3.5" /> {t('noProblems')}
                 </span>
               )}
               {data.categories.some((c) => c.warnings.length > 0) && (
                 <button
-                  className="text-slate-500 text-xs underline-offset-2 hover:underline"
+                  className="text-muted-foreground text-xs underline-offset-2 hover:underline"
                   onClick={() => setOnlyWarnings((v) => !v)}
                   type="button"
                 >
                   {onlyWarnings
-                    ? `Show all ${data.categories.length} categories`
-                    : 'Show only categories with warnings'}
+                    ? t('showAll', { count: data.categories.length })
+                    : t('showOnlyWarnings')}
                 </button>
               )}
             </div>
 
             <div className="flex min-h-0 flex-1 gap-4 overflow-hidden">
               {/* category list */}
-              <div className="w-60 shrink-0 overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-800">
+              <div className="w-60 shrink-0 overflow-y-auto rounded-xl border border-border">
                 {categories.map((c) => (
                   <div
-                    className={`group flex items-center border-slate-100 border-b text-xs last:border-0 dark:border-slate-800 ${
+                    className={`group flex items-center border-border border-b text-xs last:border-0 ${
                       c.category === selected
                         ? 'bg-primary/10 font-semibold text-primary'
-                        : 'hover:bg-slate-50 dark:hover:bg-slate-900'
+                        : 'hover:bg-accent hover:text-accent-foreground'
                     }`}
                     key={`${c.category}-${c.variant}`}
                   >
@@ -391,11 +336,13 @@ export function TemplateReviewDialog({
                       )}
                     </button>
                     <button
-                      aria-label={`Delete layout ${c.category}`}
-                      className="shrink-0 px-2 py-2 text-slate-300 opacity-0 transition hover:text-red-500 focus-visible:opacity-100 group-hover:opacity-100 dark:text-slate-600"
+                      aria-label={t('deleteCategoryDialog.title', {
+                        category: c.category,
+                      })}
+                      className="shrink-0 px-2 py-2 text-muted-foreground opacity-0 transition hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100"
                       disabled={isSaving}
                       onClick={() => setPendingDelete(c.category)}
-                      title={`Delete ${c.category} from this collection`}
+                      title={`Delete ${c.category}`}
                       type="button"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -407,9 +354,9 @@ export function TemplateReviewDialog({
               {/* overlay + slot editor */}
               <div className="grid min-w-0 flex-1 gap-4 overflow-hidden lg:grid-cols-[minmax(0,1fr)_minmax(380px,460px)]">
                 <div className="flex min-w-0 flex-col gap-3 overflow-y-auto">
-                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-2 dark:border-slate-800 dark:bg-slate-900">
+                  <div className="rounded-xl border border-border bg-muted/30 p-2">
                     {isOverlayLoading ? (
-                      <div className="flex h-48 items-center justify-center text-slate-400">
+                      <div className="flex h-48 items-center justify-center text-muted-foreground">
                         <Loader2 className="h-4 w-4 animate-spin" />
                       </div>
                     ) : (
@@ -431,14 +378,13 @@ export function TemplateReviewDialog({
                         )}
                       />
                     )}
-                    <p className="mt-1.5 text-[11px] text-slate-400">
-                      Drag a box to move it, or its corner to resize. Changes
-                      show here immediately and are saved with the rest.
+                    <p className="mt-1.5 text-[11px] text-muted-foreground">
+                      {t('canvasInstruction')}
                     </p>
                   </div>
 
                   {current?.warnings.length ? (
-                    <ul className="space-y-1 rounded-lg bg-amber-50 p-3 text-amber-900 text-xs dark:bg-amber-950/40 dark:text-amber-200">
+                    <ul className="space-y-1 rounded-lg bg-amber-500/10 p-3 text-amber-700 dark:text-amber-300 text-xs">
                       {current.warnings.map((w) => (
                         <li className="flex gap-1.5" key={w}>
                           <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
@@ -449,10 +395,8 @@ export function TemplateReviewDialog({
                   ) : null}
 
                   {notes.length > 0 && (
-                    <ul className="mt-2 space-y-1 rounded-lg bg-slate-100 p-3 text-slate-600 text-xs dark:bg-slate-800/60 dark:text-slate-300">
+                    <ul className="mt-2 space-y-1 rounded-lg bg-muted p-3 text-muted-foreground text-xs">
                       {notes.map((n) => (
-                        // a slot can raise more than one note, so the name alone
-                        // is not a unique key
                         <li key={`${n.name}:${n.note}`}>
                           <code className="font-semibold">{n.name}</code>:{' '}
                           {n.note}
@@ -471,10 +415,10 @@ export function TemplateReviewDialog({
                       <div
                         className={`rounded-lg border p-2.5 ${
                           removed
-                            ? 'border-red-200 bg-red-50/60 opacity-60 dark:border-red-900 dark:bg-red-950/30'
+                            ? 'border-destructive/40 bg-destructive/10 text-muted-foreground opacity-60'
                             : activeSlot === slot.name
                               ? 'border-primary bg-primary/5'
-                              : 'border-slate-200 dark:border-slate-800'
+                              : 'border-border bg-card text-card-foreground'
                         }`}
                         key={slot.name}
                         onClick={() => setActiveSlot(slot.name)}
@@ -486,26 +430,26 @@ export function TemplateReviewDialog({
                           <code className="font-semibold text-xs">
                             {slot.name}
                           </code>
-                          <span className="text-[11px] text-slate-400">
+                          <span className="text-[11px] text-muted-foreground">
                             {Math.round(slot.w)}×{Math.round(slot.h)}px
                             {slot.lines > 1 ? ` · ${slot.lines} lines` : ''}
                           </span>
                           {slot.warnings.map((w) => (
                             <span
-                              className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] text-amber-900 dark:bg-amber-950 dark:text-amber-200"
+                              className="rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] text-amber-700 dark:text-amber-300"
                               key={w}
                             >
                               {w}
                             </span>
                           ))}
                           <button
-                            className="ml-auto text-[11px] text-slate-400 hover:text-red-500"
+                            className="ml-auto text-[11px] text-muted-foreground hover:text-destructive"
                             onClick={() =>
                               setDraft(slot.name, { delete: !removed })
                             }
                             type="button"
                           >
-                            {removed ? 'undo remove' : 'remove'}
+                            {removed ? t('undoRemove') : t('remove')}
                           </button>
                         </div>
 
@@ -518,7 +462,7 @@ export function TemplateReviewDialog({
                                   rename: e.target.value.trim(),
                                 })
                               }
-                              placeholder="slot name"
+                              placeholder={t('slotNamePlaceholder')}
                               value={draft.rename ?? slot.name}
                             />
                             <select
@@ -528,9 +472,9 @@ export function TemplateReviewDialog({
                               }
                               value={draft.type ?? slot.type}
                             >
-                              {SLOT_TYPES.map((t) => (
-                                <option key={t} value={t}>
-                                  {t}
+                              {SLOT_TYPES.map((tVal) => (
+                                <option key={tVal} value={tVal}>
+                                  {tVal}
                                 </option>
                               ))}
                             </select>
@@ -542,11 +486,11 @@ export function TemplateReviewDialog({
                                     Number(e.target.value) || undefined,
                                 })
                               }
-                              placeholder="max chars"
+                              placeholder={t('maxCharsPlaceholder')}
                               type="number"
                               value={draft.max_chars ?? (slot.max_chars || '')}
                             />
-                            <label className="flex items-center gap-1.5 text-[11px] text-slate-500 sm:col-span-6 dark:text-slate-400">
+                            <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground sm:col-span-6">
                               <input
                                 checked={draft.bullet ?? slot.bullet ?? false}
                                 onChange={(e) =>
@@ -556,14 +500,14 @@ export function TemplateReviewDialog({
                                 }
                                 type="checkbox"
                               />
-                              Render as a bullet list (adds “•” to each line)
+                              {t('bulletCheckbox')}
                             </label>
                             <input
                               className={`${inputCls} sm:col-span-6`}
                               onChange={(e) =>
                                 setDraft(slot.name, { desc: e.target.value })
                               }
-                              placeholder="What should the AI write here?"
+                              placeholder={t('descPlaceholder')}
                               value={draft.desc ?? slot.desc}
                             />
                           </div>
@@ -575,17 +519,16 @@ export function TemplateReviewDialog({
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 border-slate-200 border-t pt-3 dark:border-slate-800">
-              <span className="mr-auto text-slate-400 text-xs">
+            <div className="flex items-center justify-end gap-2 border-border border-t pt-3">
+              <span className="mr-auto text-muted-foreground text-xs">
                 {dirtyCount > 0
-                  ? `${dirtyCount} unsaved change${dirtyCount === 1 ? '' : 's'}`
-                  : 'No changes'}
+                  ? t('unsavedChanges', { count: dirtyCount })
+                  : t('noChanges')}
               </span>
               <Button
                 disabled={!current || isSaving}
                 onClick={autofix}
                 size="sm"
-                title="Correct this category's slots and save straight away"
                 variant="outline"
               >
                 {isSaving ? (
@@ -593,7 +536,7 @@ export function TemplateReviewDialog({
                 ) : (
                   <Wand2 className="mr-1.5 h-3.5 w-3.5" />
                 )}
-                Auto-fix
+                {t('autofix')}
               </Button>
               <Button
                 disabled={dirtyCount === 0 || isSaving}
@@ -605,7 +548,7 @@ export function TemplateReviewDialog({
                 variant="ghost"
               >
                 <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
-                Reset
+                {t('reset')}
               </Button>
               <Button
                 disabled={dirtyCount === 0 || isSaving}
@@ -617,7 +560,7 @@ export function TemplateReviewDialog({
                 ) : (
                   <Save className="mr-1.5 h-3.5 w-3.5" />
                 )}
-                Save changes
+                {t('saveChanges')}
               </Button>
             </div>
           </>
@@ -629,22 +572,25 @@ export function TemplateReviewDialog({
         >
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Delete {pendingDelete}?</AlertDialogTitle>
+              <AlertDialogTitle>
+                {t('deleteCategoryDialog.title', {
+                  category: pendingDelete ?? '',
+                })}
+              </AlertDialogTitle>
               <AlertDialogDescription>
-                This removes the layout from <strong>{collection}</strong> for
-                good — the slide design, its slot schema, and its copy in
-                storage. Decks already generated keep their slides; new ones can
-                no longer use this layout. There is no undo.
+                {t('deleteCategoryDialog.description', {
+                  collection: collection ?? '',
+                })}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel disabled={isSaving}>Cancel</AlertDialogCancel>
+              <AlertDialogCancel disabled={isSaving}>
+                {t('deleteCategoryDialog.cancel')}
+              </AlertDialogCancel>
               <AlertDialogAction
-                className="bg-red-600 text-white hover:bg-red-700"
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 disabled={isSaving}
                 onClick={(e) => {
-                  // keep the dialog up while the delete is in flight, so the
-                  // reviewer is not left wondering whether it took
                   e.preventDefault();
                   if (pendingDelete) deleteCategory(pendingDelete);
                 }}
@@ -654,7 +600,7 @@ export function TemplateReviewDialog({
                 ) : (
                   <Trash2 className="mr-1.5 h-3.5 w-3.5" />
                 )}
-                Delete layout
+                {t('deleteCategoryDialog.action')}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

@@ -2240,12 +2240,17 @@ async def update_collection_slots(collection: str, category: str, variant: str,
     from app.services.s3_service import upload_file_to_s3
 
     bucket = svc._template_bucket(collection)
+    synced_all = True
     for name in (f"{variant}.svg", f"{variant}.schema.json"):
         local = Path(library_dir) / category / name
         if local.exists():
-            await upload_file_to_s3(
+            uploaded = await upload_file_to_s3(
                 local, f"templates/{collection}/{category}/{name}",
                 bucket_name=bucket)
+            if not uploaded:
+                synced_all = False
+    if not synced_all:
+        raise RuntimeError(f"Failed to sync updated template slots for {category} to S3")
     result["synced"] = True
     return result
 
@@ -2288,6 +2293,9 @@ async def delete_collection_category(collection: str, category: str) -> Dict[str
         f"templates/{collection}/{category}/",
         bucket_name=svc._template_bucket(collection),
     )
+    if removed_keys < 0:
+        raise RuntimeError(f"Failed to delete S3 objects for layout '{category}' from '{collection}'")
+
     await run_in_threadpool(shutil.rmtree, target)
     logger.info(
         f"Deleted layout '{category}' from '{collection}' "

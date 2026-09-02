@@ -378,9 +378,9 @@ export class SlideService {
     }
 
     const pollIntervalMs = 3000;
-    // Generous: a long deck with AI art can legitimately run many minutes, and
-    // giving up early throws away work the service is still doing.
-    const maxPolls = 400;
+    // Bounded to fit within Next.js route maxDuration (300s). 80 polls * 3s = 240s
+    // which leaves safety headroom before the route timeout terminates the request.
+    const maxPolls = 80;
 
     for (let index = 0; index < maxPolls; index += 1) {
       await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));

@@ -1345,6 +1345,43 @@
       "title": "Tiêu đề bài học",
       "writeReview": "Soạn/Xem lại"
     },
+    "TemplateReview": {
+      "autofix": "Tự động sửa",
+      "bulletCheckbox": "Hiển thị dạng danh sách gạch đầu dòng (thêm “•” ở mỗi dòng)",
+      "canvasInstruction": "Kéo thả hộp để di chuyển hoặc kéo góc để đổi kích thước. Thay đổi hiển thị ngay lập tức và được lưu cùng các thiết lập khác.",
+      "deleteCategoryDialog": {
+        "action": "Xóa bố cục",
+        "cancel": "Hủy",
+        "description": "Thao tác này sẽ xóa vĩnh viễn bố cục khỏi bộ mẫu {collection}. Các bài trình chiếu đã tạo vẫn giữ nguyên; các bài mới sẽ không thể dùng bố cục này nữa. Thao tác không thể hoàn tác.",
+        "title": "Xóa bố cục {category}?"
+      },
+      "deleteError": "Không thể xóa bố cục",
+      "deletedSuccess": "Đã xóa bố cục {category}",
+      "descPlaceholder": "AI nên viết nội dung gì ở đây?",
+      "description": "Hệ thống tự động nhận diện các vị trí nội dung từ hình học trang trình chiếu. Hãy kiểm tra và điều chỉnh các lỗi trước khi tạo bài giảng.",
+      "fixedCount": "Đã sửa {count} lỗi trong {category}",
+      "inspectError": "Không thể kiểm tra mẫu này",
+      "inspecting": "Đang kiểm tra mẫu…",
+      "maxCharsPlaceholder": "số ký tự tối đa",
+      "noChanges": "Không có thay đổi",
+      "noProblems": "Không phát hiện lỗi",
+      "nothingToInspect": "Không có nội dung nào để kiểm tra cho bộ mẫu này.",
+      "nothingToFix": "Không có lỗi cần sửa trong bố cục này",
+      "nothingToFixAdvice": "Không có lỗi để tự động sửa — xem ghi chú bên dưới trang trình chiếu",
+      "remove": "Xóa",
+      "reset": "Đặt lại",
+      "saveChanges": "Lưu thay đổi",
+      "saveError": "Không thể lưu thay đổi ô nội dung",
+      "savedCount": "Đã lưu {count} thay đổi cho {category}",
+      "showAll": "Hiển thị tất cả {count} loại bố cục",
+      "showOnlyWarnings": "Chỉ hiển thị các loại bố cục có cảnh báo",
+      "slotNamePlaceholder": "tên ô nội dung",
+      "title": "Kiểm tra mẫu đã trích xuất",
+      "undoRemove": "Hoàn tác xóa",
+      "unsavedChanges": "{count} thay đổi chưa lưu",
+      "waitingForSlide": "Đang chờ tải trang trình chiếu — thử lại sau giây lát",
+      "warningCount": "{count} ô nội dung cần kiểm tra"
+    },
     "LessonHeader": {
       "delete": "Xóa bài học",
       "deleteDialog": {

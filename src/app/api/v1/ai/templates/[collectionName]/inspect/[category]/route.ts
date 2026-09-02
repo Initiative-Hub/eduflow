@@ -7,8 +7,34 @@ export const dynamic = 'force-dynamic';
 export const maxDuration = 120;
 
 /**
- * DELETE /api/v1/ai/templates/{collectionName}/inspect/{category}
- * Permanently remove one layout from a collection, locally and in S3.
+ * @swagger
+ * /api/v1/ai/templates/{collectionName}/inspect/{category}:
+ *   delete:
+ *     tags:
+ *       - AI Templates
+ *     summary: Permanently remove a layout category from a collection locally and in S3
+ *     security:
+ *       - SessionCookie: []
+ *     parameters:
+ *       - in: path
+ *         name: collectionName
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Name of the template collection
+ *       - in: path
+ *         name: category
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Template category / layout name to delete
+ *     responses:
+ *       200:
+ *         description: Layout category deleted successfully
+ *       400:
+ *         description: Bad request (e.g. attempting to delete the only layout left in collection)
+ *       500:
+ *         description: Internal server error
  */
 export const DELETE = withRoles(
   ['TEACHER'],

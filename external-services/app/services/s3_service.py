@@ -139,11 +139,11 @@ async def download_bytes_from_s3(
 
 async def list_files_in_s3_prefix(
     prefix: str, bucket_name: str | None = None
-) -> list[str]:
+) -> list[str] | None:
     try:
         s3 = get_s3_client()
         if not s3:
-            return []
+            return None
 
         bucket = bucket_name or AWS_S3_BUCKET
 
@@ -159,11 +159,11 @@ async def list_files_in_s3_prefix(
         return await run_in_threadpool(list_keys)
     except Exception as e:
         logger.error(f"Failed to list S3 prefix {prefix}: {e}")
-        return []
+        return None
 
 
 async def delete_s3_prefix(prefix: str, bucket_name: str | None = None) -> int:
-    """Delete every object under a prefix. Returns how many keys were removed.
+    """Delete every object under a prefix. Returns how many keys were removed, or -1 on failure.
 
     Used to drop a template layout, so the deleted design cannot come back the
     next time the collection is pulled from S3.
@@ -171,10 +171,12 @@ async def delete_s3_prefix(prefix: str, bucket_name: str | None = None) -> int:
     try:
         s3 = get_s3_client()
         if not s3:
-            return 0
+            return -1
 
         bucket = bucket_name or AWS_S3_BUCKET
         keys = await list_files_in_s3_prefix(prefix, bucket_name)
+        if keys is None:
+            return -1
         if not keys:
             return 0
 
@@ -193,4 +195,4 @@ async def delete_s3_prefix(prefix: str, bucket_name: str | None = None) -> int:
         return await run_in_threadpool(delete_keys)
     except Exception as e:
         logger.error(f"Failed to delete S3 prefix {prefix}: {e}")
-        return 0
+        return -1
