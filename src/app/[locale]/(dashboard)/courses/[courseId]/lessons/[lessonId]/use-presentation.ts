@@ -1,4 +1,3 @@
-import { useQueryClient } from '@tanstack/react-query';
 import type { JSONContent } from '@tiptap/core';
 import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -777,7 +776,6 @@ export function usePresentation(options: {
   const { generateSlideDeck } = useGenerateSlideDeck();
   const { lesson, isLoading: isLessonLoading } = useLesson(lessonId);
   const savedDeckId = lesson?.presentationDeckId;
-  const queryClient = useQueryClient();
 
   // State Machine
   const [step, setStep] = useState<Step>('input');

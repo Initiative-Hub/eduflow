@@ -46,7 +46,7 @@ function planResponse(slides: unknown[]) {
   return { output: { slides } };
 }
 
-async function generate(firstPassSlides: unknown[], metadata = METADATA) {
+async function generate(metadata = METADATA) {
   return (
     PresentationService as unknown as {
       generatePlan: (opts: unknown) => Promise<{
@@ -60,7 +60,7 @@ async function generate(firstPassSlides: unknown[], metadata = METADATA) {
   });
 }
 
-describe('planner enriches underfilled slides', () => {
+describe('planner fills empty slides and deepens shallow ones', () => {
   beforeEach(() => {
     mockGenerateText.mockReset();
     process.env.OPENROUTER_API_KEY = 'test-key';
@@ -92,7 +92,7 @@ describe('planner enriches underfilled slides', () => {
         ])
       );
 
-    const plan = await generate([]);
+    const plan = await generate();
 
     expect(mockGenerateText).toHaveBeenCalledTimes(2);
     expect(plan.slides[0].bindings.bullets).toHaveLength(3);
@@ -111,13 +111,52 @@ describe('planner enriches underfilled slides', () => {
       ])
     );
 
-    const plan = await generate([]);
+    const plan = await generate();
 
     expect(mockGenerateText).toHaveBeenCalledTimes(1);
     expect(plan.slides[0].bindings).toEqual({});
   });
 
-  it('skips the second pass when every content slide is already full', async () => {
+  it('deepens a slide whose bullets are one-line assertions', async () => {
+    // Full by character count, hollow to an audience: each bullet restates its
+    // own heading and explains nothing.
+    mockGenerateText
+      .mockResolvedValueOnce(
+        planResponse([
+          {
+            layoutType: 'CONTENT_SLIDE',
+            slideTitle: 'Mục tiêu',
+            bindings: {
+              bullets: [
+                'Tự động hóa quy trình',
+                'Phân tích dữ liệu thời gian thực',
+              ],
+            },
+          },
+        ])
+      )
+      .mockResolvedValueOnce(
+        planResponse([
+          {
+            index: 0,
+            bindings: {
+              bullets: [
+                'Tự động hóa quy trình phân tích yêu cầu, cắt thời gian bàn giao từ hai tuần xuống ba ngày.',
+                'Phân tích dữ liệu thời gian thực để phát hiện lỗi hạ tầng trước khi kiểm thử hệ thống.',
+              ],
+            },
+          },
+        ])
+      );
+
+    const plan = await generate();
+
+    expect(mockGenerateText).toHaveBeenCalledTimes(2);
+    const [bullet] = plan.slides[0].bindings.bullets as string[];
+    expect(bullet.length).toBeGreaterThan(60);
+  });
+
+  it('leaves a slide alone once its items actually explain something', async () => {
     mockGenerateText.mockResolvedValueOnce(
       planResponse([
         {
@@ -125,15 +164,71 @@ describe('planner enriches underfilled slides', () => {
           slideTitle: 'Mục tiêu',
           bindings: {
             bullets: [
-              'Tự động hóa quy trình',
-              'Phân tích dữ liệu thời gian thực',
+              'Tự động hóa quy trình phân tích yêu cầu, cắt thời gian bàn giao từ hai tuần xuống ba ngày.',
+              'Phân tích dữ liệu thời gian thực để phát hiện lỗi hạ tầng trước khi kiểm thử hệ thống.',
             ],
           },
         },
       ])
     );
 
-    await generate([]);
+    await generate();
+
+    expect(mockGenerateText).toHaveBeenCalledTimes(1);
+  });
+
+  it('judges title+description items on the description, not the label', async () => {
+    // Three-word titles are correct for a diagram layout; the descriptions are
+    // where the substance has to be, so that is what decides depth.
+    mockGenerateText.mockResolvedValueOnce(
+      planResponse([
+        {
+          layoutType: 'CONTENT_SLIDE',
+          slideTitle: 'Các giai đoạn',
+          bindings: {
+            levels: [
+              {
+                title: 'Phân tích',
+                description:
+                  'Thu thập yêu cầu từ các bên liên quan và chốt phạm vi trước khi viết dòng mã đầu tiên.',
+              },
+              {
+                title: 'Hạ tầng',
+                description:
+                  'Dựng môi trường triển khai tự động để mỗi thay đổi đều được kiểm thử trên bản sao của production.',
+              },
+            ],
+          },
+        },
+      ])
+    );
+
+    await generate();
+
+    expect(mockGenerateText).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not try to deepen KPI figures or table cells', async () => {
+    // A metric label is supposed to be terse — expanding it would wreck the
+    // layout it was written for.
+    mockGenerateText.mockResolvedValueOnce(
+      planResponse([
+        {
+          layoutType: 'CONTENT_SLIDE',
+          slideTitle: 'Kết quả',
+          bindings: {
+            metrics: [
+              { value: '32%', label: 'Tăng trưởng' },
+              { value: '18M', label: 'Người dùng' },
+            ],
+            body_text:
+              'Tăng trưởng đến từ việc tự động hóa khâu kiểm thử, giúp rút ngắn chu kỳ phát hành xuống còn ba ngày.',
+          },
+        },
+      ])
+    );
+
+    await generate();
 
     expect(mockGenerateText).toHaveBeenCalledTimes(1);
   });
@@ -149,7 +244,7 @@ describe('planner enriches underfilled slides', () => {
       ])
     );
 
-    await generate([], { SECTION_HEADER: {} } as never);
+    await generate({ SECTION_HEADER: {} } as never);
 
     expect(mockGenerateText).toHaveBeenCalledTimes(1);
   });
@@ -167,7 +262,7 @@ describe('planner enriches underfilled slides', () => {
       )
       .mockRejectedValueOnce(new Error('model unavailable'));
 
-    const plan = await generate([]);
+    const plan = await generate();
 
     expect(plan.slides).toHaveLength(1);
     expect(plan.slides[0].bindings.body_text).toBe('short');

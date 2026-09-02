@@ -59,3 +59,29 @@ class RenderSlideReq(BaseModel):
     palette: str | None = Field(
         default="auto", description="The color palette selection"
     )
+
+
+class SlotEdit(BaseModel):
+    """One reviewer correction to an extracted template slot."""
+
+    name: str = Field(..., description="Current slot name, e.g. 'title_2'")
+    rename: str | None = Field(default=None, description="New slot name, e.g. 'body'")
+    type: str | None = Field(default=None, description="title | subtitle | text | stat | caption")
+    desc: str | None = Field(default=None, description="What the planner should write here")
+    max_chars: int | None = Field(default=None, description="Character budget")
+    lines: int | None = Field(default=None, description="Number of repeatable lines")
+    bullet: bool | None = Field(
+        default=None,
+        description="Render this slot's lines as a bullet list (null = auto by name)")
+    delete: bool = Field(default=False, description="Remove this slot entirely")
+    kind: str | None = Field(default=None, description="text | image | chart | table")
+    x: float | None = Field(default=None, description="Left edge on a 1440x810 slide")
+    y: float | None = Field(default=None, description="Baseline (text) or top edge")
+    w: float | None = Field(default=None, description="Wrap width / frame width")
+    h: float | None = Field(default=None, description="Wrap height / frame height")
+
+
+class SlotEditsReq(BaseModel):
+    category: str = Field(..., description="Template category, e.g. 'CONTENT_SLIDE'")
+    variant: str = Field(default="standard", description="Variant stem")
+    edits: list[SlotEdit] = Field(default_factory=list)
