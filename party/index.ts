@@ -21,6 +21,10 @@ import {
   liveGameClientMessageSchema,
   roomInitializationSchema,
 } from '../src/lib/game-quiz/runtime-protocol';
+import {
+  createAvatarReadSignedUrl,
+  isAvatarObjectKey,
+} from '../src/lib/storage/avatar';
 import { createFinalization, deliverFinalization } from './finalization';
 import {
   emptyTimers,
@@ -107,10 +111,6 @@ export default class LiveGameParty implements Party.Server {
     this.timers = stored.timers;
     this.finalization = stored.finalization;
     this.updateRoundTimer();
-    if (this.timers.disposeWhenFinalized && this.finalization?.committed) {
-      await this.disposeRoom();
-      return;
-    }
     if (this.finalization && !this.finalization.committed) {
       this.timers.finalizationRetryAt = Date.now();
     }
@@ -156,12 +156,6 @@ export default class LiveGameParty implements Party.Server {
     if (!data) return;
     if (data.audience === 'HOST' && !this.hostConnected()) {
       if (this.state?.session.endedAt) {
-        this.timers.disposeWhenFinalized = true;
-        await persistTimers(this.room.storage, this.timers);
-        if (this.finalization?.committed) {
-          await this.disposeRoom();
-          return;
-        }
         if (this.finalization) {
           this.timers.finalizationRetryAt = Date.now();
           await this.attemptFinalization();
@@ -378,21 +372,91 @@ export default class LiveGameParty implements Party.Server {
   private async broadcastSnapshots() {
     if (!this.state) return;
     const online = this.onlineUserIds();
+    const imageUrls = new Map<string, string | null>();
     for (const connection of this.room.getConnections<ConnectionData>()) {
       if (!connection.state?.synced) continue;
       try {
         send(connection, {
           type: 'session.snapshot',
-          snapshot: projectLiveGameSnapshot(
-            this.state,
+          snapshot: await this.projectSnapshot(
             connection.state,
-            online
+            online,
+            imageUrls
           ),
         });
       } catch (error) {
         if (!(error instanceof LiveGameRuntimeError)) throw error;
       }
     }
+  }
+
+  private async projectSnapshot(
+    actor: RuntimeActor,
+    online: ReadonlySet<string>,
+    imageUrls: Map<string, string | null>
+  ) {
+    if (!this.state) throw new Error('The game room is not initialized.');
+    const snapshot = projectLiveGameSnapshot(this.state, actor, online);
+    const resolveImage = async (image: string | null | undefined) => {
+      if (!image || !isAvatarObjectKey(image)) return image ?? null;
+      const cached = imageUrls.get(image);
+      if (cached !== undefined) return cached;
+      try {
+        const signedUrl = await createAvatarReadSignedUrl({ objectKey: image });
+        imageUrls.set(image, signedUrl);
+        return signedUrl;
+      } catch (error) {
+        console.error('Failed to create avatar signed URL:', error);
+        imageUrls.set(image, null);
+        return null;
+      }
+    };
+    const participants = await Promise.all(
+      snapshot.participants.map(async (participant) => ({
+        ...participant,
+        image: await resolveImage(participant.image),
+      }))
+    );
+    const leaderboard = await Promise.all(
+      snapshot.leaderboard.map(async (participant) => ({
+        ...participant,
+        image: await resolveImage(participant.image),
+      }))
+    );
+    const participant = snapshot.participant
+      ? {
+          ...snapshot.participant,
+          image: await resolveImage(snapshot.participant.image),
+        }
+      : null;
+    const currentRound = snapshot.currentRound
+      ? {
+          ...snapshot.currentRound,
+          options: await Promise.all(
+            snapshot.currentRound.options.map(async (option) => ({
+              ...option,
+              ...(option.answerers
+                ? {
+                    answerers: await Promise.all(
+                      option.answerers.map(async (answerer) => ({
+                        ...answerer,
+                        image: await resolveImage(answerer.image),
+                      }))
+                    ),
+                  }
+                : {}),
+            }))
+          ),
+        }
+      : null;
+
+    return {
+      ...snapshot,
+      currentRound,
+      leaderboard,
+      participant,
+      participants,
+    };
   }
 
   private hostConnected() {
@@ -445,10 +509,6 @@ export default class LiveGameParty implements Party.Server {
           type: 'session.finalized',
         } satisfies LiveGameServerMessage)
       );
-      if (this.timers.disposeWhenFinalized) {
-        await this.disposeRoom();
-        return;
-      }
     } catch {
       this.finalization.attempts += 1;
       this.timers.finalizationRetryAt =
@@ -471,17 +531,6 @@ export default class LiveGameParty implements Party.Server {
       .sort((a, b) => a - b)[0];
     if (next) await this.room.storage.setAlarm(next);
     else await this.room.storage.deleteAlarm();
-  }
-
-  private async disposeRoom() {
-    for (const connection of this.room.getConnections<ConnectionData>()) {
-      connection.close(1001, 'The live game has ended.');
-    }
-    await this.room.storage.deleteAll();
-    this.finalization = null;
-    this.initialized = false;
-    this.state = null;
-    this.timers = emptyTimers();
   }
 }
 

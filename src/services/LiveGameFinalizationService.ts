@@ -259,19 +259,33 @@ async function acceptAnswers(message: AnswerMessage) {
       where: { sessionId: message.sessionId },
       include: { options: true },
     });
+    const participants = await transaction.gameParticipant.findMany({
+      where: {
+        id: { in: message.items.map((answer) => answer.participantId) },
+        sessionId: message.sessionId,
+      },
+      select: { id: true },
+    });
+    const participantIds = new Set(
+      participants.map((participant) => participant.id)
+    );
+    const roundsById = new Map(rounds.map((round) => [round.id, round]));
+    const timingsByRoundId = new Map(
+      receipt.terminal.rounds.map((round) => [round.id, round])
+    );
+    const answers = [];
     for (const answer of message.items) {
-      const participant = await transaction.gameParticipant.findFirst({
-        where: { id: answer.participantId, sessionId: message.sessionId },
-        select: { id: true },
-      });
-      const round = rounds.find((candidate) => candidate.id === answer.roundId);
+      const round = roundsById.get(answer.roundId);
       const option = round?.options.find(
         (candidate) => candidate.id === answer.selectedOptionId
       );
-      const timing = receipt.terminal.rounds.find(
-        (candidate) => candidate.id === answer.roundId
-      );
-      if (!participant || !round || !option || !timing?.openedAt) {
+      const timing = timingsByRoundId.get(answer.roundId);
+      if (
+        !participantIds.has(answer.participantId) ||
+        !round ||
+        !option ||
+        !timing?.openedAt
+      ) {
         throw new LiveGameFinalizationError(
           'CANONICAL_REFERENCE_MISMATCH',
           400,
@@ -296,28 +310,24 @@ async function acceptAnswers(message: AnswerMessage) {
         round.timerSeconds,
         option.isCorrect
       );
-      await transaction.gameAnswer.upsert({
-        where: {
-          participantId_roundId: {
-            participantId: participant.id,
-            roundId: round.id,
-          },
-        },
-        create: {
-          id: answer.id,
-          sessionId: message.sessionId,
-          participantId: participant.id,
-          roundId: round.id,
-          selectedOptionId: option.id,
-          idempotencyKey: answer.idempotencyKey,
-          submittedAt,
-          responseTimeMs,
-          isCorrect: option.isCorrect,
-          pointsAwarded,
-        },
-        update: {},
+      answers.push({
+        id: answer.id,
+        sessionId: message.sessionId,
+        participantId: answer.participantId,
+        roundId: round.id,
+        selectedOptionId: option.id,
+        idempotencyKey: answer.idempotencyKey,
+        submittedAt,
+        responseTimeMs,
+        isCorrect: option.isCorrect,
+        pointsAwarded,
       });
     }
+    if (answers.length > 0)
+      await transaction.gameAnswer.createMany({
+        data: answers,
+        skipDuplicates: true,
+      });
     await transaction.gameSession.update({
       where: { id: message.sessionId },
       data: { finalizationReceipt: json(receipt) },

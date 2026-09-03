@@ -16,7 +16,6 @@ export type StoredRoomMetadata = {
 
 export type StoredTimers = {
   cleanupAt: number | null;
-  disposeWhenFinalized: boolean;
   finalizationRetryAt: number | null;
   hostDisconnectAt: number | null;
   roundDeadlineAt: number | null;
@@ -42,7 +41,6 @@ const keys = {
 
 export const emptyTimers = (): StoredTimers => ({
   cleanupAt: null,
-  disposeWhenFinalized: false,
   finalizationRetryAt: null,
   hostDisconnectAt: null,
   roundDeadlineAt: null,
