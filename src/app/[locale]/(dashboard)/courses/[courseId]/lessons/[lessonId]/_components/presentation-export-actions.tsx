@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useGoogleDriveExport } from '@/hooks/use-google-drive-export';
+import { useOneDriveExport } from '@/hooks/use-onedrive-export';
 
 type PresentationExportActionsProps = {
   isDownloading: boolean;
@@ -24,7 +25,9 @@ export function PresentationExportActions({
   t,
 }: PresentationExportActionsProps) {
   const googleDriveExport = useGoogleDriveExport();
-  const isPending = isDownloading || googleDriveExport.isPending;
+  const oneDriveExport = useOneDriveExport();
+  const isPending =
+    isDownloading || googleDriveExport.isPending || oneDriveExport.isPending;
 
   return (
     <DropdownMenu>
@@ -40,7 +43,7 @@ export function PresentationExportActions({
           ) : (
             <Download className="size-4" />
           )}
-          {googleDriveExport.isPending
+          {googleDriveExport.isPending || oneDriveExport.isPending
             ? t('savingToDrive')
             : isDownloading
               ? t('pptxDownloading')
@@ -64,6 +67,18 @@ export function PresentationExportActions({
         >
           <CloudUpload aria-hidden="true" />
           {t('savePptxToDrive')}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          className="min-h-11"
+          onSelect={() =>
+            oneDriveExport.mutate({
+              kind: 'lesson_presentation',
+              lessonId,
+            })
+          }
+        >
+          <CloudUpload aria-hidden="true" />
+          {t('savePptxToOneDrive')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

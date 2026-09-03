@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useGoogleDriveExport } from '@/hooks/use-google-drive-export';
+import { useOneDriveExport } from '@/hooks/use-onedrive-export';
 import { cn } from '@/lib/utils';
 import { InventoryBrowser } from './_components/inventory-browser';
 import { InventoryDialogs } from './_components/inventory-dialogs';
@@ -48,6 +49,7 @@ export function InventoryClient() {
   const t = useTranslations('InventoryPage');
   const locale = useLocale();
   const googleDriveExport = useGoogleDriveExport();
+  const oneDriveExport = useOneDriveExport();
   const {
     analytics,
     breadcrumbItems,
@@ -81,6 +83,7 @@ export function InventoryClient() {
     handleShareSelected,
     handleUploadFiles,
     handleImportGoogleDriveFile,
+    handleImportOneDriveFile,
     isFetching,
     isLoading,
     maxFileSizeBytes,
@@ -106,6 +109,7 @@ export function InventoryClient() {
     uploadOpen,
     uploadPending,
     googleDriveImportPending,
+    oneDriveImportPending,
     viewType,
   } = useInventory({
     maxFileSizeBytes: STORAGE_MAX_FILE_SIZE_BYTES,
@@ -139,6 +143,14 @@ export function InventoryClient() {
   function saveEntryToDrive(entry: InventoryEntry) {
     if (entry.isFolder || entry.status !== 'READY') return;
     googleDriveExport.mutate({
+      kind: 'inventory_file',
+      fileId: entry.id,
+    });
+  }
+
+  function saveEntryToOneDrive(entry: InventoryEntry) {
+    if (entry.isFolder || entry.status !== 'READY') return;
+    oneDriveExport.mutate({
       kind: 'inventory_file',
       fileId: entry.id,
     });
@@ -229,11 +241,14 @@ export function InventoryClient() {
         onPreview={handlePreviewEntry}
         onRename={handleOpenRenameDialog}
         onSaveToDrive={saveEntryToDrive}
+        onSaveToOneDrive={saveEntryToOneDrive}
         onSelectAll={handleSelectAll}
         onSelectEntry={handleSelectEntry}
         onSelectSingleEntry={handleSelectSingleEntry}
         onShare={handleShareEntry}
-        isSavingToDrive={googleDriveExport.isPending}
+        isSavingToDrive={
+          googleDriveExport.isPending || oneDriveExport.isPending
+        }
         onUploadOpen={() => setUploadOpen(true)}
         getUploadProgress={getUploadProgress}
         pageIndex={pageIndex}
@@ -261,10 +276,14 @@ export function InventoryClient() {
         moveOptions={moveOptions}
         movePending={movePending}
         onImportGoogleDriveFile={handleImportGoogleDriveFile}
+        onImportOneDriveFile={handleImportOneDriveFile}
         onSaveToDrive={saveEntryToDrive}
+        onSaveToOneDrive={saveEntryToOneDrive}
         onUploadFiles={handleUploadFiles}
         googleDriveImportPending={googleDriveImportPending}
+        oneDriveImportPending={oneDriveImportPending}
         googleDriveExportPending={googleDriveExport.isPending}
+        oneDriveExportPending={oneDriveExport.isPending}
         previewDialog={previewDialog}
         renameDialog={renameDialog}
         renamePending={renamePending}

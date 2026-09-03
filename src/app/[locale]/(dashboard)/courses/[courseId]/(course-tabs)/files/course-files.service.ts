@@ -49,6 +49,13 @@ interface ImportGoogleDriveInput {
   parentId?: string | null;
 }
 
+interface ImportOneDriveInput {
+  courseId: string;
+  driveId: string;
+  itemId: string;
+  parentId?: string | null;
+}
+
 const buildSearchParams = (
   params: Record<string, string | number | null | undefined>
 ) => {
@@ -136,6 +143,19 @@ export const courseFilesService = {
       `v1/courses/${input.courseId}/storage/import/google-drive`,
       {
         fileId: input.fileId,
+        parentId: input.parentId ?? null,
+      }
+    );
+  },
+
+  importFromOneDrive: async (
+    input: ImportOneDriveInput
+  ): Promise<InventoryResponse<InventoryEntry>> => {
+    return apiClient.post<InventoryResponse<InventoryEntry>>(
+      `v1/courses/${input.courseId}/storage/import/onedrive`,
+      {
+        driveId: input.driveId,
+        itemId: input.itemId,
         parentId: input.parentId ?? null,
       }
     );

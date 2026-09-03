@@ -30,6 +30,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { useGoogleDrivePicker } from '@/hooks/use-google-drive-picker';
 import { integrationsService } from './integrations.service';
+import { OneDriveIntegrationCard } from './onedrive-integration-card';
 
 const GOOGLE_DRIVE_STATUS_QUERY_KEY = ['integrations', 'google-drive'] as const;
 
@@ -39,6 +40,7 @@ export default function IntegrationsClient({ email }: { email: string }) {
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const result = searchParams.get('googleDrive');
+  const oneDriveResult = searchParams.get('oneDrive');
   const connectHref = `/api/v1/integrations/google-drive/connect?returnTo=/${locale}/settings/integrations`;
 
   const statusQuery = useQuery({
@@ -121,6 +123,24 @@ export default function IntegrationsClient({ email }: { email: string }) {
           <AlertCircle />
           <AlertTitle>{t('notice.errorTitle')}</AlertTitle>
           <AlertDescription>{t('notice.errorDescription')}</AlertDescription>
+        </Alert>
+      )}
+      {oneDriveResult === 'connected' && (
+        <Alert>
+          <CheckCircle2 />
+          <AlertTitle>{t('notice.oneDriveConnectedTitle')}</AlertTitle>
+          <AlertDescription>
+            {t('notice.oneDriveConnectedDescription')}
+          </AlertDescription>
+        </Alert>
+      )}
+      {oneDriveResult === 'error' && (
+        <Alert variant="destructive">
+          <AlertCircle />
+          <AlertTitle>{t('notice.errorTitle')}</AlertTitle>
+          <AlertDescription>
+            {t('notice.oneDriveErrorDescription')}
+          </AlertDescription>
         </Alert>
       )}
 
@@ -291,6 +311,7 @@ export default function IntegrationsClient({ email }: { email: string }) {
           </div>
         </CardContent>
       </Card>
+      <OneDriveIntegrationCard email={email} />
     </div>
   );
 }

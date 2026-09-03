@@ -28,8 +28,13 @@ import {
 } from '@/components/ai-elements/prompt-input';
 import { DropdownTemplate, type MenuItem } from '@/components/custom/dropdown';
 import { GoogleDrivePickerHost } from '@/components/google-drive-picker/google-drive-picker-host';
+import {
+  type OneDrivePickedItem,
+  OneDrivePickerHost,
+} from '@/components/onedrive-picker/onedrive-picker-host';
 import { Button } from '@/components/ui/button';
 import { useGoogleDrivePicker } from '@/hooks/use-google-drive-picker';
+import { useOneDrivePicker } from '@/hooks/use-onedrive-picker';
 import type { ChatModel } from '@/services/ai/chat-provider.constants';
 import type {
   ChatFileUIPart,
@@ -281,6 +286,27 @@ export function ChatInput({
       addReferenceFiles([file]);
     },
   });
+  const oneDriveImportMutation = useMutation({
+    mutationFn: async (item: OneDrivePickedItem) => {
+      const importResponse = await inventoryService.importFromOneDrive({
+        driveId: item.driveId,
+        itemId: item.itemId,
+      });
+      const entry = importResponse.data;
+      const shareResponse = await inventoryService.shareEntry(entry.id);
+
+      return toChatFilePart({
+        entry,
+        signedUrl: shareResponse.data.signedUrl,
+      });
+    },
+    onError: (error: { message?: string }) => {
+      toast.error(error.message ?? t('attachments.uploadError'));
+    },
+    onSuccess: (file) => {
+      addReferenceFiles([file]);
+    },
+  });
   const handleGoogleDrivePickerError = useCallback((message: string) => {
     toast.error(message);
   }, []);
@@ -309,6 +335,30 @@ export function ChatInput({
     onError: handleGoogleDrivePickerError,
     onPicked: handleGoogleDrivePicked,
   });
+  const handleOneDrivePicked = useCallback(
+    (items: OneDrivePickedItem[]) => {
+      if (remainingAttachmentSlots === 0) {
+        toast.error(t('attachments.tooMany', { count: MAX_CHAT_ATTACHMENTS }));
+        return;
+      }
+
+      const [item] = items;
+      if (!item) return;
+
+      oneDriveImportMutation.mutate(item);
+    },
+    [oneDriveImportMutation, remainingAttachmentSlots, t]
+  );
+  const oneDrivePicker = useOneDrivePicker({
+    messages: {
+      connectRequired: t('attachments.oneDriveConnectRequired'),
+      sessionChanged: t('attachments.oneDriveSessionChanged'),
+      tokenFailed: t('attachments.oneDriveTokenFailed'),
+      unavailable: t('attachments.oneDrivePickerUnavailable'),
+    },
+    onError: handleGoogleDrivePickerError,
+    onPicked: handleOneDrivePicked,
+  });
   const openGoogleDrivePicker = () => {
     if (remainingAttachmentSlots === 0) {
       toast.error(t('attachments.tooMany', { count: MAX_CHAT_ATTACHMENTS }));
@@ -321,6 +371,14 @@ export function ChatInput({
     }
 
     googleDrivePicker.openPicker();
+  };
+  const openOneDrivePicker = () => {
+    if (remainingAttachmentSlots === 0) {
+      toast.error(t('attachments.tooMany', { count: MAX_CHAT_ATTACHMENTS }));
+      return;
+    }
+
+    oneDrivePicker.openPicker();
   };
 
   const disabledLessonIds = selectedReferenceLessons.flatMap((item) =>
@@ -364,6 +422,16 @@ export function ChatInput({
           onClick: openGoogleDrivePicker,
         },
         {
+          label: t('actionMenu.fromOneDrive'),
+          icon:
+            oneDriveImportMutation.isPending || oneDrivePicker.isLoading ? (
+              <Loader2 className="animate-spin" />
+            ) : (
+              <Cloud />
+            ),
+          onClick: openOneDrivePicker,
+        },
+        {
           label: t('actionMenu.fromDevice'),
           icon: <HardDrive />,
           onClick: () => fileInputRef.current?.click(),
@@ -402,6 +470,9 @@ export function ChatInput({
     <div className="space-y-4 transition-all duration-200">
       {googleDrivePicker.pickerProps && (
         <GoogleDrivePickerHost {...googleDrivePicker.pickerProps} />
+      )}
+      {oneDrivePicker.pickerProps && (
+        <OneDrivePickerHost {...oneDrivePicker.pickerProps} />
       )}
       <div className="group mx-auto max-w-3xl">
         <input

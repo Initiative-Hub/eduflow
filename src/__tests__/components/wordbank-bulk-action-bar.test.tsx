@@ -49,10 +49,12 @@ describe('BulkActionBar', () => {
       <BulkActionBar
         isGeneratingQuiz={false}
         isExportingCsvToDrive={false}
+        isExportingCsvToOneDrive={false}
         isUpdating={false}
         lists={[]}
         onExportCsv={vi.fn()}
         onExportCsvToDrive={vi.fn()}
+        onExportCsvToOneDrive={vi.fn()}
         onGenerateQuiz={onGenerateQuiz}
         onMarkMastery={vi.fn()}
         onUpdateLists={vi.fn()}

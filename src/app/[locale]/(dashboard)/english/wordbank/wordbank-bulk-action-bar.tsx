@@ -37,7 +37,9 @@ export function BulkActionBar({
   onGenerateQuiz,
   onExportCsv,
   onExportCsvToDrive,
+  onExportCsvToOneDrive,
   isExportingCsvToDrive,
+  isExportingCsvToOneDrive,
   t,
 }: {
   selectedCount: number;
@@ -50,7 +52,9 @@ export function BulkActionBar({
   onGenerateQuiz: () => void;
   onExportCsv: () => void;
   onExportCsvToDrive: () => void;
+  onExportCsvToOneDrive: () => void;
   isExportingCsvToDrive: boolean;
+  isExportingCsvToOneDrive: boolean;
   t: WordbankTranslator;
 }) {
   if (selectedCount === 0 || selectedItems.length === 0) return null;
@@ -117,14 +121,16 @@ export function BulkActionBar({
             type="button"
             variant="outline"
             size="sm"
-            disabled={isExportingCsvToDrive}
+            disabled={isExportingCsvToDrive || isExportingCsvToOneDrive}
           >
-            {isExportingCsvToDrive ? (
+            {isExportingCsvToDrive || isExportingCsvToOneDrive ? (
               <Loader2 data-icon="inline-start" className="animate-spin" />
             ) : (
               <FileDown data-icon="inline-start" />
             )}
-            {isExportingCsvToDrive ? t('savingToDrive') : t('exportCsv')}
+            {isExportingCsvToDrive || isExportingCsvToOneDrive
+              ? t('savingToDrive')
+              : t('exportCsv')}
             <ChevronDown className="size-4" />
           </Button>
         </DropdownMenuTrigger>
@@ -139,6 +145,13 @@ export function BulkActionBar({
           >
             <CloudUpload />
             {t('saveCsvToDrive')}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="min-h-11 gap-2"
+            onSelect={onExportCsvToOneDrive}
+          >
+            <CloudUpload />
+            {t('saveCsvToOneDrive')}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

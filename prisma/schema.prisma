@@ -196,6 +196,7 @@ enum FileInventoryStatus {
 
 enum IntegrationProvider {
   GOOGLE_DRIVE @map("google_drive")
+  ONEDRIVE     @map("onedrive")
 
   @@map("integration_provider")
 }

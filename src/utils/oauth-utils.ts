@@ -6,13 +6,21 @@ export const GOOGLE_DRIVE_OAUTH_STATE_COOKIE = 'eduflow_google_drive_state';
 export const GOOGLE_DRIVE_OAUTH_RETURN_COOKIE = 'eduflow_google_drive_return';
 export const GOOGLE_DRIVE_OAUTH_CALLBACK_PATH =
   '/api/v1/integrations/google-drive/callback';
+export const ONEDRIVE_OAUTH_STATE_COOKIE = 'eduflow_onedrive_state';
+export const ONEDRIVE_OAUTH_RETURN_COOKIE = 'eduflow_onedrive_return';
+export const ONEDRIVE_OAUTH_CALLBACK_PATH =
+  '/api/v1/integrations/onedrive/callback';
 
 type GoogleDriveOAuthStateCookie = {
   nonce: string;
   userId: string;
 };
 
-function assertMatchingValue(receivedValue: string, expectedValue: string) {
+function assertMatchingValue(
+  receivedValue: string,
+  expectedValue: string,
+  providerName = 'Google Drive'
+) {
   const received = Buffer.from(receivedValue);
   const expected = Buffer.from(expectedValue);
 
@@ -20,23 +28,27 @@ function assertMatchingValue(receivedValue: string, expectedValue: string) {
     received.length !== expected.length ||
     !timingSafeEqual(received, expected)
   ) {
-    throw new Error('Invalid Google Drive OAuth state.');
+    throw new Error(`Invalid ${providerName} OAuth state.`);
   }
 }
 
 function parseGoogleDriveOAuthStateCookie(cookieValue: string) {
+  return parseOAuthStateCookie(cookieValue, 'Google Drive');
+}
+
+function parseOAuthStateCookie(cookieValue: string, providerName: string) {
   try {
     const parsed = JSON.parse(
       cookieValue
     ) as Partial<GoogleDriveOAuthStateCookie>;
 
     if (!parsed.nonce || !parsed.userId) {
-      throw new Error('Invalid Google Drive OAuth state.');
+      throw new Error(`Invalid ${providerName} OAuth state.`);
     }
 
     return parsed as GoogleDriveOAuthStateCookie;
   } catch {
-    throw new Error('Invalid Google Drive OAuth state.');
+    throw new Error(`Invalid ${providerName} OAuth state.`);
   }
 }
 
@@ -46,6 +58,8 @@ export function createGoogleDriveOAuthState({ userId }: { userId: string }) {
 
   return { cookieValue, nonce };
 }
+
+export const createOneDriveOAuthState = createGoogleDriveOAuthState;
 
 export function assertGoogleDriveOAuthState(
   receivedNonce: string,
@@ -61,6 +75,20 @@ export function assertGoogleDriveOAuthState(
   }
 }
 
+export function assertOneDriveOAuthState(
+  receivedNonce: string,
+  cookieValue: string,
+  currentUserId: string
+) {
+  const expectedState = parseOAuthStateCookie(cookieValue, 'OneDrive');
+
+  assertMatchingValue(receivedNonce, expectedState.nonce, 'OneDrive');
+
+  if (expectedState.userId !== currentUserId) {
+    throw new Error('OneDrive OAuth session changed.');
+  }
+}
+
 export function getBaseUrl(req: Request) {
   return process.env.NEXT_PUBLIC_APP_URL || new URL(req.url).origin;
 }
@@ -69,6 +97,13 @@ export function getGoogleDriveRedirectUri(req: Request) {
   return (
     process.env.GOOGLE_DRIVE_REDIRECT_URI ||
     `${getBaseUrl(req)}/api/v1/integrations/google-drive/callback`
+  );
+}
+
+export function getOneDriveRedirectUri(req: Request) {
+  return (
+    process.env.ONEDRIVE_REDIRECT_URI ||
+    `${getBaseUrl(req)}/api/v1/integrations/onedrive/callback`
   );
 }
 
@@ -83,5 +118,16 @@ export function sanitizeReturnTo(value?: string | null) {
 export function buildReturnUrl(req: Request, returnTo: string, status: string) {
   const url = new URL(returnTo, getBaseUrl(req));
   url.searchParams.set('googleDrive', status);
+  return url;
+}
+
+export function buildIntegrationReturnUrl(
+  req: Request,
+  returnTo: string,
+  provider: 'googleDrive' | 'oneDrive',
+  status: string
+) {
+  const url = new URL(returnTo, getBaseUrl(req));
+  url.searchParams.set(provider, status);
   return url;
 }

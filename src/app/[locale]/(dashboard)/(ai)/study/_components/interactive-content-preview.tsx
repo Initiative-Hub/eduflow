@@ -83,6 +83,7 @@ const InteractiveContentPreview = ({
     handleReset,
     handleSaveToDrive,
     handleSaveToInventory,
+    handleSaveToOneDrive,
     handleShare,
     isSavingToInventory,
     isSavingToDrive,
@@ -143,6 +144,20 @@ const InteractiveContentPreview = ({
             <PreviewActionButton
               label={isSavingToDrive ? t('savingToDrive') : t('saveToDrive')}
               onClick={handleSaveToDrive}
+              disabled={isSavingToDrive}
+            >
+              {isSavingToDrive ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <CloudUpload className="size-4" />
+              )}
+            </PreviewActionButton>
+          ) : null}
+
+          {share ? (
+            <PreviewActionButton
+              label={isSavingToDrive ? t('savingToDrive') : t('saveToOneDrive')}
+              onClick={handleSaveToOneDrive}
               disabled={isSavingToDrive}
             >
               {isSavingToDrive ? (

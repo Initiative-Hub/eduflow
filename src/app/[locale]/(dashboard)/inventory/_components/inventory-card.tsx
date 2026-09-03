@@ -66,6 +66,7 @@ interface FileCardProps {
   onPreview?: (entry: InventoryEntry) => void;
   onDownload?: (entry: InventoryEntry) => void;
   onSaveToDrive?: (entry: InventoryEntry) => void;
+  onSaveToOneDrive?: (entry: InventoryEntry) => void;
   onDelete: (entry: InventoryEntry) => void;
   onNavigateIntoFolder?: (entry: InventoryEntry) => void;
   onSelectEntry?: (entryId: string) => void;
@@ -119,6 +120,7 @@ export function InventoryCard({
   onPreview,
   onDownload,
   onSaveToDrive,
+  onSaveToOneDrive,
   onDelete,
   onNavigateIntoFolder,
   onSelectEntry,
@@ -289,6 +291,13 @@ export function InventoryCard({
                     >
                       <CloudUpload />
                       {t('actions.saveToDrive')}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => onSaveToOneDrive?.(entry)}
+                      className="cursor-pointer gap-2"
+                    >
+                      <CloudUpload />
+                      {t('actions.saveToOneDrive')}
                     </DropdownMenuItem>
                   </>
                 )
