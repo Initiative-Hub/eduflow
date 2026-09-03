@@ -350,9 +350,7 @@ export class DictionaryService {
         // Extract IPA
         let ipa: string | undefined;
         const ipaMatch =
-          html.match(
-            /<span class="color-black">\s*\/([^/<]+)\/\s*<\/span>/i
-          ) ||
+          html.match(/<span class="color-black">\s*\/([^/<]+)\/\s*<\/span>/i) ||
           html.match(
             /<h2[^>]*>[\s\S]*?<span class="color-black">([^<]+)<\/span>/i
           );
@@ -407,7 +405,7 @@ export class DictionaryService {
           examples: results,
         };
       } catch {
-        continue;
+        // Ignore and try next endpoint
       }
     }
 
