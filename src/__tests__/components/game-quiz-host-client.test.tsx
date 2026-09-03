@@ -14,6 +14,11 @@ const { replace } = vi.hoisted(() => ({ replace: vi.fn() }));
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ replace }) }));
 vi.mock('react-confetti', () => ({ default: () => null }));
+vi.mock('qrcode.react', () => ({
+  QRCodeSVG: ({ title, value }: { title: string; value: string }) => (
+    <svg aria-label={title} data-qr-value={value} role="img" />
+  ),
+}));
 
 const { answerProgress, command, getHostSession, heartbeatHost } = vi.hoisted(
   () => ({
@@ -65,6 +70,11 @@ const question = {
   maxPoints: 1000,
   openedAt: '2026-08-09T10:00:00.000Z',
   deadlineAt: '2026-08-09T10:00:20.000Z',
+  statistics: {
+    responseCount: 1,
+    correctCount: 1,
+    averageResponseTimeMs: 7400,
+  },
   options: [
     { id: 'mars', text: 'Mars', isCorrect: true, order: 0, answerCount: 1 },
     { id: 'venus', text: 'Venus', isCorrect: false, order: 1, answerCount: 0 },
@@ -274,6 +284,8 @@ describe('GameQuizHostClient', () => {
     expect(
       await screen.findByRole('button', { name: 'host.skip' })
     ).toBeInTheDocument();
+    expect(screen.getByText('host.question')).toBeInTheDocument();
+    expect(screen.getByText('1 / 2')).toBeInTheDocument();
     expect(screen.queryByText('host.lockAnswers')).not.toBeInTheDocument();
     expect(screen.queryByText('host.reveal')).not.toBeInTheDocument();
   });
@@ -322,35 +334,89 @@ describe('GameQuizHostClient', () => {
     expect(screen.queryByText('934')).not.toBeInTheDocument();
   });
 
+  it('shares the join URL through an expandable QR code', async () => {
+    const user = userEvent.setup();
+    getHostSession.mockResolvedValue(createSession('LOBBY'));
+    answerProgress.mockResolvedValue({ answerCount: 0 });
+
+    renderHost();
+
+    const qrTrigger = await screen.findByRole('button', {
+      name: 'host.openQrCode',
+    });
+    expect(qrTrigger.querySelector('[data-qr-value]')).toHaveAttribute(
+      'data-qr-value',
+      'http://localhost:3000/games/join?code=123456'
+    );
+
+    await user.click(qrTrigger);
+
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog).toHaveAccessibleName('host.qrCodeDialogTitle');
+    expect(dialog.querySelector('[data-qr-value]')).toHaveAttribute(
+      'data-qr-value',
+      'http://localhost:3000/games/join?code=123456'
+    );
+
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
   it('renders the mandatory scoreboard with Next', async () => {
     getHostSession.mockResolvedValue(createSession('SCOREBOARD'));
     answerProgress.mockResolvedValue({ answerCount: 1 });
 
     renderHost();
 
-    expect(await screen.findByText('host.scoreboard')).toBeInTheDocument();
+    expect(await screen.findByText('player.leaderboard')).toBeInTheDocument();
+    expect(screen.getByText('host.correctRate')).toBeInTheDocument();
+    expect(screen.getByText('host.responses')).toBeInTheDocument();
+    expect(screen.getByText('host.averageResponseTime')).toBeInTheDocument();
+    expect(screen.getByText('100%')).toBeInTheDocument();
+    expect(screen.getByText('1 / 1')).toBeInTheDocument();
+    expect(screen.getByText('7.4 s')).toBeInTheDocument();
     expect(screen.getByText('Sam')).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: 'host.next' })
-    ).toBeInTheDocument();
+    const fullLeaderboardButton = screen.getByRole('button', {
+      name: 'host.viewFullLeaderboard',
+    });
+    const nextButton = screen.getByRole('button', { name: 'host.next' });
+
+    expect(fullLeaderboardButton).toHaveAttribute('data-size', 'lg');
+    expect(nextButton).toHaveAttribute('data-size', 'lg');
+    expect(fullLeaderboardButton).toHaveAttribute('data-variant', 'outline');
+    expect(nextButton).toHaveAttribute('data-variant', 'default');
+    expect(fullLeaderboardButton).toHaveClass('h-11', 'w-full', 'sm:h-12');
+    expect(nextButton).toHaveClass('h-11', 'w-full', 'sm:h-12');
+    expect(nextButton.parentElement).toHaveClass(
+      'grid',
+      'w-full',
+      'max-w-lg',
+      'sm:grid-cols-2'
+    );
   });
 
-  it('renders the final podium with only View report', async () => {
+  it('opens full final standings while keeping View report as an external link', async () => {
+    const user = userEvent.setup();
     getHostSession.mockResolvedValue(createSession('FINAL_CELEBRATION'));
     answerProgress.mockResolvedValue({ answerCount: 1 });
 
     renderHost();
 
     expect(await screen.findByText('host.congratulations')).toBeInTheDocument();
-    expect(screen.getByText('Sam')).toBeInTheDocument();
-    expect(screen.getByText('Alex')).toBeInTheDocument();
-    expect(screen.getByText('Jo')).toBeInTheDocument();
     const reportLink = screen.getByRole('link', { name: 'host.viewReport' });
     expect(reportLink).toHaveAttribute(
       'href',
       '/games/game-quiz-1/report?sessionId=00000000-0000-4000-8000-000000000001'
     );
     expect(reportLink).toHaveAttribute('target', '_blank');
+    await user.click(
+      screen.getByRole('button', { name: 'host.viewFullLeaderboard' })
+    );
+    expect(
+      await screen.findByRole('dialog', {
+        name: 'host.fullLeaderboardTitle',
+      })
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: 'host.next' })
     ).not.toBeInTheDocument();

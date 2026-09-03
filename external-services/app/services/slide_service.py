@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import re
@@ -17,6 +18,30 @@ from app.schemas.slide_schema import RenderSlideReq
 logger = logging.getLogger(__name__)
 
 BASE_TEMPLATE_COLLECTION = "templates"
+
+# A custom collection is pulled from S3 into SLIDE_TEMPLATES_DIR and swept once
+# the request that pulled it is done. That directory is shared, so a request
+# finishing first used to delete the layouts a slower one was still reading —
+# surfacing as "[Errno 2] No such file or directory: .../<variant>.svg" partway
+# through a deck. Requests register here and only the last one out sweeps.
+_COLLECTION_USERS: Dict[str, int] = {}
+_COLLECTION_USERS_LOCK = asyncio.Lock()
+
+
+async def _acquire_collection(name: str) -> None:
+    async with _COLLECTION_USERS_LOCK:
+        _COLLECTION_USERS[name] = _COLLECTION_USERS.get(name, 0) + 1
+
+
+async def _release_collection(name: str) -> bool:
+    """Drop this request's claim; True when nobody else is using the cache."""
+    async with _COLLECTION_USERS_LOCK:
+        remaining = _COLLECTION_USERS.get(name, 1) - 1
+        if remaining > 0:
+            _COLLECTION_USERS[name] = remaining
+            return False
+        _COLLECTION_USERS.pop(name, None)
+        return True
 
 # "auto" detects brand templates whose designs live in the Slide Master layouts,
 # "layouts" forces that reading, and "slides" extracts the deck's real slides.
@@ -65,15 +90,14 @@ DEFAULT_COLLECTIONS = {
     "starter",
     "neon_dark",
     "vintage",
-    "clean_light",
     "pastel_pop",
     "illustrative_culture",
     "minimalist_gradient",
+    "eduflow_light",
+    "eduflow_purple",
     "cultural_folk",
     "organic_streets",
-    "electric_green_white",
     "green_environment_care",
-    "rmit_red_modern",
     "startup_neon_pitch",
     "professional_focus",
 }
@@ -110,6 +134,69 @@ CATEGORY_ALIASES = {
     "AGENDA_AND_OUTLINE": "AGENDA_OUTLINE",
     "TITLE_AND_BULLETS": "TITLE_BULLETS",
 }
+
+# A customer deck names its layouts for its own designers — "Chart slide",
+# "Content_option 2", "Section divider_option 1" — while the planner speaks the
+# standard vocabulary. Nothing matched, so every category was backfilled from
+# the base library and the deck came out in a foreign style even though the
+# template had the layout all along. These keywords recognise an equivalent
+# local layout so the customer's own design is used instead.
+CATEGORY_EQUIVALENTS: Dict[str, tuple] = {
+    "CHART_INSIGHT": ("chartslide", "chart", "graph", "barchart", "piechart"),
+    "DATA_TABLE": ("tableslide", "table", "grid", "matrix"),
+    "MEDIA_TEXT": ("contentwithimage", "imagetext", "picturetext", "imageandtext"),
+    "IMAGE_GALLERY": ("imagegallery", "images", "gallery", "photogrid"),
+    "TITLE_SLIDE": ("titleoption", "titleonly", "titleslide", "cover", "opening"),
+    "SECTION_HEADER": ("sectiondivider", "section", "divider", "chapter"),
+    "TITLE_BULLETS": ("titlebullets", "contentoption", "content", "bullet", "body"),
+    "AGENDA_OUTLINE": ("agenda", "outline", "overview", "tableofcontents"),
+    "CONCLUSION_SUMMARY": ("conclusion", "summary", "takeaway", "keypoints"),
+    "QA_CONTACT": ("qacontact", "endslide", "thankyou", "question", "contact"),
+    "KPI_BIG_NUMBER": ("kpi", "bignumber", "metric", "statistic"),
+    "BIG_QUOTE_TAKEAWAY": ("quote", "testimonial"),
+    "TIMELINE_MILESTONES": ("timeline", "milestone", "roadmap"),
+    "STEP_BY_STEP": ("stepbystep", "process", "howto", "step"),
+    "TWO_COLUMN_SPLIT": ("twocolumn", "comparison", "versus", "split"),
+    "CALL_TO_ACTION": ("calltoaction", "nextstep", "cta"),
+    "STATEMENT_IMAGE": ("statement", "hero", "impact"),
+    "REFERENCES_LIST": ("reference", "source", "citation", "bibliography"),
+}
+
+
+def _canon_category(name: str) -> str:
+    return re.sub(r"[^a-z0-9]", "", str(name).lower())
+
+
+def _best_standard_category(folder_name: str) -> tuple:
+    """(category, keyword_length) this layout folder most specifically matches.
+
+    Scored by the LONGEST matching keyword so "Content with image_option 1"
+    lands on MEDIA_TEXT ("contentwithimage") rather than TITLE_BULLETS
+    ("content"), which merely shares a prefix.
+    """
+    canon = _canon_category(folder_name)
+    best, best_len = None, 0
+    for category, keywords in CATEGORY_EQUIVALENTS.items():
+        for keyword in keywords:
+            if keyword in canon and len(keyword) > best_len:
+                best, best_len = category, len(keyword)
+    return best, best_len
+
+
+def _find_equivalent_layout(library_dir: Path, category: str) -> Path | None:
+    """A local layout folder that serves `category` under a different name."""
+    matches = [
+        child
+        for child in sorted(library_dir.iterdir())
+        if child.is_dir()
+        and any(child.glob("*.svg"))
+        and _best_standard_category(child.name)[0] == category
+    ]
+    if not matches:
+        return None
+    # Shortest name first: "Chart slide" over "Chart slide with commentary".
+    return sorted(matches, key=lambda p: (len(p.name), p.name))[0]
+
 
 CATEGORY_METADATA_FIELDS = (
     "description",
@@ -259,6 +346,57 @@ def custom_select_and_fill_slide(variants, slide_content, **kwargs):
 
 slide_skills.svg_categories.select_and_fill_slide = custom_select_and_fill_slide
 
+
+# --- depth of the written copy -------------------------------------------------
+# `select_and_fill_slide` writes the final text that lands on every slide, so it
+# decides how substantial the deck reads — whatever the planner produced upstream
+# is rewritten here to fit the template's slots.
+#
+# The library's own prompt gives that rewrite a ceiling ("NEVER exceed a
+# placeholder's max_chars") and no floor. With nothing pushing the other way the
+# model settles far under budget and pads the space with assertions: three cards
+# each holding one slogan that restates its own heading. These rules add the
+# missing floor and say what the words have to earn.
+#
+# Appended rather than replaced, so the library's hard rules — clipping, empty
+# slots rendering as broken boxes, stat slots needing real figures, language
+# matching — keep working and keep tracking upstream changes.
+_DEPTH_RULES = """
+DEPTH — what separates a usable slide from a hollow one:
+- max_chars is a budget to SPEND, not merely a ceiling. For prose slots, land
+  between 70% and 100% of it. Copy far under budget leaves the design looking
+  empty and leaves the audience with nothing to take away.
+- Explain, do not assert. Every prose slot must add something its own label and
+  the slide title do not already say: the mechanism, a worked example, a figure,
+  a consequence, or the condition under which it applies.
+  Weak:   "Real exposure beats guesswork every time."
+  Strong: "Two weeks shadowing a data team shows how much of the job is
+           cleaning inputs, not modelling."
+- Never restate the slide title, or the placeholder's own name, as its content.
+- The supplied slide content is the source of truth. Carry its specifics through
+  — names, numbers, dates, examples. Never trade a concrete detail for a generic
+  phrase to save characters; drop a weaker clause instead.
+- These rules govern prose slots only. Headings, labels, stats and figures stay
+  as short as they are.
+"""
+
+
+def _with_depth_rules(system_prompt: str) -> str:
+    """Insert the depth rules ahead of the prompt's output-format block."""
+    if "DEPTH — what separates" in system_prompt:
+        return system_prompt  # already applied; module re-imported
+    marker = "Return ONLY JSON:"
+    if marker in system_prompt:
+        head, _, tail = system_prompt.partition(marker)
+        return f"{head}{_DEPTH_RULES}\n{marker}{tail}"
+    # Upstream reworded the output block — appending still reaches the model.
+    return f"{system_prompt}\n{_DEPTH_RULES}"
+
+
+slide_skills.svg_categories._SELECT_SYSTEM = _with_depth_rules(
+    slide_skills.svg_categories._SELECT_SYSTEM
+)
+
 # --- style-aware image prompts -------------------------------------------------
 # Generated images should match the collection's illustration style. The active
 # collection's collection.json may define "image_style"; we set it here before
@@ -299,6 +437,23 @@ def _set_image_style_for(library_dir) -> None:
         pass
 
 
+def _point_text(item: Any) -> str:
+    """One list entry as a single line of slide copy.
+
+    The planner may return a bare string, or a {title, description} pair when a
+    point carries a claim AND its explanation. A slide slot is one line, so the
+    pair is joined rather than dropped — losing the description is what made
+    generated decks read as headline-only.
+    """
+    if isinstance(item, dict):
+        title = str(item.get("title") or item.get("label") or "").strip()
+        desc = str(item.get("description") or item.get("desc") or "").strip()
+        if title and desc:
+            return f"{title} — {desc}"
+        return title or desc
+    return str(item)
+
+
 def flatten_slide_bindings(category: str, slide_title: str, bindings: dict) -> dict:
     flat = bindings.copy()
 
@@ -321,27 +476,39 @@ def flatten_slide_bindings(category: str, slide_title: str, bindings: dict) -> d
     # 1. Flatten AGENDA_OUTLINE: items -> items.1, items.2, etc.
     if "items" in bindings and isinstance(bindings["items"], list):
         for idx, item in enumerate(bindings["items"][:10], 1):
-            flat[f"items.{idx}"] = str(item)
-            flat[f"item_{idx}"] = str(item)
+            flat[f"items.{idx}"] = _point_text(item)
+            flat[f"item_{idx}"] = _point_text(item)
 
     # 2. Flatten TITLE_BULLETS: bullets -> bullets.1, bullets.2, etc.
     if "bullets" in bindings and isinstance(bindings["bullets"], list):
         for idx, item in enumerate(bindings["bullets"][:10], 1):
-            flat[f"bullets.{idx}"] = str(item)
-            flat[f"bullet_{idx}"] = str(item)
+            flat[f"bullets.{idx}"] = _point_text(item)
+            flat[f"bullet_{idx}"] = _point_text(item)
 
     # 3. Flatten TWO_COLUMN_SPLIT: left_col_text and right_col_text arrays
     if "left_col_text" in bindings and isinstance(bindings["left_col_text"], list):
         for idx, item in enumerate(bindings["left_col_text"][:10], 1):
-            flat[f"left_col_text.{idx}"] = str(item)
+            flat[f"left_col_text.{idx}"] = _point_text(item)
     if "right_col_text" in bindings and isinstance(bindings["right_col_text"], list):
         for idx, item in enumerate(bindings["right_col_text"][:10], 1):
-            flat[f"right_col_text.{idx}"] = str(item)
+            flat[f"right_col_text.{idx}"] = _point_text(item)
 
     # 4. Flatten BIG_QUOTE_TAKEAWAY: quote textwrap
     if "quote" in bindings and isinstance(bindings["quote"], str):
-        wrapped = textwrap.wrap(bindings["quote"], width=50)
-        for idx, line in enumerate(wrapped[:3], 1):
+        # A fixed width guessed at a frame that does not exist. Chunks of 50
+        # characters were far wider than the quote panel, so the renderer
+        # wrapped each one a second time and a three-line quote sprawled into
+        # nine, straight through the rule drawn beneath it — and `[:3]` threw
+        # the tail away without saying so. Widen until the whole quote fits the
+        # three lines the design has, keeping every word; fit_text_to_boxes then
+        # shrinks the type for any line still wider than the panel.
+        quote = bindings["quote"].strip()
+        wrap_width = max(16, -(-len(quote) // 3))       # ceil(len / 3)
+        lines = textwrap.wrap(quote, width=wrap_width)
+        while len(lines) > 3:
+            wrap_width += 2
+            lines = textwrap.wrap(quote, width=wrap_width)
+        for idx, line in enumerate(lines, 1):
             flat[f"quote.{idx}"] = line
 
     # 5. Flatten KPI_BIG_NUMBER: metrics -> stat_1, label_1, etc.
@@ -399,7 +566,7 @@ def flatten_slide_bindings(category: str, slide_title: str, bindings: dict) -> d
     # 11. Flatten CALL_TO_ACTION: action_items -> action_items.1, etc.
     if "action_items" in bindings and isinstance(bindings["action_items"], list):
         for idx, item in enumerate(bindings["action_items"][:10], 1):
-            flat[f"action_items.{idx}"] = str(item)
+            flat[f"action_items.{idx}"] = _point_text(item)
 
     # 12. Flatten QA_CONTACT: footer_note
     if "footer_note" in bindings and isinstance(bindings["footer_note"], str):
@@ -659,7 +826,15 @@ class SlideService:
                             f"'{collection}/{category_dir.name}': {error}"
                         )
                         continue
-                    await upload_file_to_s3(png_path, object_key, bucket_name=bucket)
+
+            # The key below is handed to the picker to sign and load, so the
+            # object has to be there. Uploading only when the PNG had to be
+            # rendered meant a collection whose previews already sat on local
+            # disk — seeded into the image, or left over from an earlier run —
+            # advertised keys that were never in the bucket, and every thumbnail
+            # in the picker came back 404.
+            if not await object_exists_in_s3(object_key, bucket_name=bucket):
+                await upload_file_to_s3(png_path, object_key, bucket_name=bucket)
 
             previews.append(
                 {
@@ -785,17 +960,16 @@ class SlideService:
                 if json_key not in keys:
                     well_known = {
                         "vintage": "A classic, retro style with warm tones and elegant typography.",
-                        "clean_light": "A clean, modern light theme focusing on readability and simplicity.",
                         "pastel_pop": "A vibrant and playful theme featuring soft pastel colors.",
                         "starter": "Standard starter templates for clean presentation designs.",
                         "neon_dark": "A modern, high-contrast dark theme with glowing neon accents.",
                         "illustrative_culture": "Warm cream paper, hand-drawn buildings & clouds, Yogyakarta street aesthetic, sage green accents.",
                         "minimalist_gradient": "Sleek dark theme with electric royal blue and violet gradient glows, crisp geometric typography, and ambient grid lines.",
                         "organic_streets": "Organic illustration style: cream paper, plum script headlines, golden sun discs, slate and terracotta blobs, line-art European skylines.",
+                        "eduflow_light": "Soft white canvas with violet accents and crisp bordered cards, from the EduFlow light theme - printed handouts, lectures projected in a bright room, and any deck that should look like EduFlow without going dark.",
+                        "eduflow_purple": "Deep slate canvas with violet accents, soft bordered cards and an ambient glow — the EduFlow platform's own look. Course material, product walkthroughs, internal training, onboarding, and any deck that should feel native to the product it was made in.",
                         "cultural_folk": "Rich cultural folk style: warm plum night sky over a sand earth strip, arch and temple shapes, radiant sun badges, festival bunting and stitched lines in terracotta, gold, dusty blue and rose.",
-                        "electric_green_white": "Clean white editorial EV style with black contrast, electric green accents, grayscale automotive imagery, chrome details, and bold geometric typography.",
                         "green_environment_care": "Modern environmental care style: cream paper, deep forest-green condensed headlines, lush nature photography, sage botanical ornaments, halftone texture, and conservation editorial layouts.",
-                        "rmit_red_modern": "RMIT-inspired academic style: crisp white space, bold red geometric frames, subtle contour-line texture, black sans-serif typography, and red-washed campus photo panels.",
                         "startup_neon_pitch": "Black startup pitch style with bold white typography, electric blue and violet light trails, glossy gradient pills, contact-footer details, and high-contrast business layouts.",
                         "professional_focus": "Calm executive presentation style with deep navy structure, precise teal signals, warm brass emphasis, generous whitespace, and business-ready editorial layouts.",
                     }
@@ -881,13 +1055,27 @@ class SlideService:
             return
 
         base_dir = await self._ensure_collection_downloaded(BASE_TEMPLATE_COLLECTION)
-
         for cat in requested_categories:
             if not cat:
                 continue
             cat_dir = library_dir / cat
             has_svgs = cat_dir.exists() and any(cat_dir.glob("*.svg"))
             if not has_svgs:
+                # The collection's own design for this category, under the
+                # deck's naming, beats anything from the base library: matching
+                # the rest of the deck matters more than matching the name.
+                local_equivalent = _find_equivalent_layout(library_dir, cat)
+                if local_equivalent is not None:
+                    cat_dir.mkdir(parents=True, exist_ok=True)
+                    for item in local_equivalent.iterdir():
+                        if item.is_file():
+                            shutil.copy2(item, cat_dir / item.name)
+                    logger.info(
+                        f"Served '{cat}' from this collection's own "
+                        f"'{local_equivalent.name}' layout instead of backfilling"
+                    )
+                    continue
+
                 cat_dir.mkdir(parents=True, exist_ok=True)
                 target_source = CATEGORY_ALIASES.get(cat, cat)
                 src_dir = base_dir / target_source
@@ -899,7 +1087,8 @@ class SlideService:
                         if item.is_file():
                             shutil.copy2(item, cat_dir / item.name)
                     logger.info(
-                        f"Backfilled missing category '{cat}' in '{library_dir.name}' from base template '{src_dir.name}'"
+                        f"Backfilled missing category '{cat}' in '{library_dir.name}' "
+                        f"from base template '{src_dir.name}'"
                     )
                 else:
                     fallback_dirs = [
@@ -995,8 +1184,12 @@ class SlideService:
         temp_dir_context = None
 
         col_name = collection or BASE_TEMPLATE_COLLECTION
+        # Claim the cache before the download, so a request finishing now cannot
+        # sweep the directory out from under this one.
+        await _acquire_collection(col_name)
         collection_path = await self._ensure_collection_downloaded(col_name)
         if not any(collection_path.glob("**/*.svg")):
+            await _release_collection(col_name)
             raise ValueError(
                 f"Template collection '{col_name}' has no .svg layouts available. "
                 "Verify it exists under the 'templates/<collection>/' prefix in the "
@@ -1154,8 +1347,10 @@ class SlideService:
                     temp_dir_context.cleanup()
                 except Exception:
                     pass
-            # Remove the S3-downloaded collection from local disk after use
-            if col_name and col_name not in DEFAULT_COLLECTIONS:
+            # Remove the S3-downloaded collection from local disk after use,
+            # but only once every concurrent request has finished with it.
+            last_user = await _release_collection(col_name) if col_name else True
+            if col_name and col_name not in DEFAULT_COLLECTIONS and last_user:
                 col_path = Path(SLIDE_TEMPLATES_DIR) / col_name
                 if col_path.exists() and col_path.is_dir():
                     shutil.rmtree(col_path, ignore_errors=True)
@@ -1230,6 +1425,7 @@ class SlideService:
         slide["bindings"] = bindings
 
         col_name = req.collection or "templates"
+        await _acquire_collection(col_name)
         collection_path = await self._ensure_collection_downloaded(col_name)
 
         library_dir = SLIDE_TEMPLATES_DIR
@@ -1433,7 +1629,8 @@ class SlideService:
                     temp_dir_context.cleanup()
                 except Exception:
                     pass
-            if col_name and col_name not in DEFAULT_COLLECTIONS:
+            last_user = await _release_collection(col_name) if col_name else True
+            if col_name and col_name not in DEFAULT_COLLECTIONS and last_user:
                 col_path = Path(SLIDE_TEMPLATES_DIR) / col_name
                 if col_path.exists() and col_path.is_dir():
                     shutil.rmtree(col_path, ignore_errors=True)
@@ -1978,3 +2175,136 @@ class SlideService:
             raise RuntimeError(f"Failed to assemble PPTX: {str(e)}")
 
         return pptx_path
+
+
+# --- template review: inspect extracted slots, and correct them ---------------
+async def inspect_collection(collection: str) -> Dict[str, Any]:
+    """Every category's detected slots + warnings, for a pre-save review screen.
+
+    Extraction infers intent from geometry, so some decisions are wrong in ways
+    only a human can spot. This exposes them: what each slot is called, what the
+    planner is told to write there, how much room it has, and which slots look
+    suspicious (huge box with a tiny budget, a 'title' big enough for prose,
+    text that cannot wrap).
+    """
+    svc = SlideService()
+    library_dir = await svc._ensure_collection_downloaded(collection)
+    report = await run_in_threadpool(slide_skills.inspect_template, str(library_dir))
+    return {
+        "collection": collection,
+        "categories": report,
+        "warning_count": sum(len(c["warnings"]) for c in report),
+    }
+
+
+async def render_collection_overlay(collection: str, category: str,
+                                    variant: str = "standard",
+                                    boxes: bool = True,
+                                    editable: bool = False) -> str:
+    """The category's slide, optionally with every slot outlined and labelled.
+
+    `boxes=False` returns the bare slide. `editable=True` additionally tags every
+    element with the slot it belongs to and swaps {{placeholders}} for readable
+    sample copy, so the browser can drag the REAL text instead of an empty
+    outline over a static picture.
+    """
+    svc = SlideService()
+    library_dir = await svc._ensure_collection_downloaded(collection)
+    svg_path = Path(library_dir) / category / f"{variant}.svg"
+    if not svg_path.exists():
+        raise FileNotFoundError(f"{category}/{variant}.svg not found in {collection}")
+
+    def _build() -> str:
+        raw = svg_path.read_text(encoding="utf-8")
+        if editable:
+            info = slide_skills.inspect_variant(svg_path)
+            return slide_skills.prepare_editable_svg(
+                raw, info["slots"], PREVIEW_SAMPLE_DATA)
+        if not boxes:
+            return raw
+        info = slide_skills.inspect_variant(svg_path)
+        return slide_skills.render_slot_overlay(raw, info["slots"])
+
+    return await run_in_threadpool(_build)
+
+
+async def update_collection_slots(collection: str, category: str, variant: str,
+                                  edits: list) -> Dict[str, Any]:
+    """Apply reviewer corrections, then re-upload the changed files to S3."""
+    svc = SlideService()
+    library_dir = await svc._ensure_collection_downloaded(collection)
+    result = await run_in_threadpool(
+        slide_skills.apply_slot_edits, str(library_dir), category, variant, edits)
+
+    # push the corrected SVG + schema back so later generations use them
+    from app.services.s3_service import upload_file_to_s3
+
+    bucket = svc._template_bucket(collection)
+    synced_all = True
+    for name in (f"{variant}.svg", f"{variant}.schema.json"):
+        local = Path(library_dir) / category / name
+        if local.exists():
+            uploaded = await upload_file_to_s3(
+                local, f"templates/{collection}/{category}/{name}",
+                bucket_name=bucket)
+            if not uploaded:
+                synced_all = False
+    if not synced_all:
+        raise RuntimeError(f"Failed to sync updated template slots for {category} to S3")
+    result["synced"] = True
+    return result
+
+
+async def delete_collection_category(collection: str, category: str) -> Dict[str, Any]:
+    """Drop one layout from a collection, locally and in S3.
+
+    Extraction turns every slide or master layout into a category, so a deck
+    imported as a template brings along duplicates and dividers nobody wants to
+    generate onto. Removing one here stops the planner ever selecting it.
+
+    The last remaining layout is refused: a collection with no categories is not
+    an empty collection, it is a broken one that fails at generation time.
+    """
+    # `category` reaches this from a URL path, so it must not be able to climb
+    # out of the collection directory.
+    if not category or category in (".", "..") or "/" in category or "\\" in category:
+        raise ValueError(f"Invalid category name: {category!r}")
+
+    svc = SlideService()
+    library_dir = await svc._ensure_collection_downloaded(collection)
+    target = Path(library_dir) / category
+    if not target.exists() or not target.is_dir():
+        raise FileNotFoundError(f"{category} not found in {collection}")
+
+    siblings = [
+        child
+        for child in Path(library_dir).iterdir()
+        if child.is_dir() and any(child.glob("*.svg"))
+    ]
+    if len(siblings) <= 1:
+        raise ValueError(
+            f"'{category}' is the only layout left in '{collection}' — "
+            "delete the whole collection instead of emptying it"
+        )
+
+    from app.services.s3_service import delete_s3_prefix
+
+    removed_keys = await delete_s3_prefix(
+        f"templates/{collection}/{category}/",
+        bucket_name=svc._template_bucket(collection),
+    )
+    if removed_keys < 0:
+        raise RuntimeError(f"Failed to delete S3 objects for layout '{category}' from '{collection}'")
+
+    await run_in_threadpool(shutil.rmtree, target)
+    logger.info(
+        f"Deleted layout '{category}' from '{collection}' "
+        f"({removed_keys} S3 object(s) removed)"
+    )
+    return {
+        "collection": collection,
+        "category": category,
+        "deleted": True,
+        "s3_objects_removed": removed_keys,
+        "remaining": len(siblings) - 1,
+    }

@@ -59,6 +59,8 @@ export interface WordExample {
 
 export interface CrawledExamplesResult {
   word: string;
+  ipa?: string;
+  audioUrl?: string;
   examples: WordExample[];
 }
 

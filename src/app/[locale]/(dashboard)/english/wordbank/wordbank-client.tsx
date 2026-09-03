@@ -31,7 +31,11 @@ import {
   useWordbankDisplayPreferences,
   type WordbankView,
 } from './use-wordbank-display-preferences';
-import type { AutocompleteSuggestion } from './wordbank.service';
+import {
+  type AutocompleteSuggestion,
+  type WordExample,
+  wordbankApi,
+} from './wordbank.service';
 import { WordbankAutocompleteSearch } from './wordbank-autocomplete-search';
 import {
   BulkActionBar,
@@ -94,18 +98,49 @@ export function WordbankClient() {
   const createReviewSessionMutation = useCreateReviewSessionMutation();
   const saveVocabularyMutation = useSaveVocabularyMutation();
 
-  const handleSaveNewVocab = (suggestion: AutocompleteSuggestion) => {
+  const handleSaveNewVocab = async (suggestion: AutocompleteSuggestion) => {
     const word = suggestion.select;
+    let ipa = suggestion.phonetic ?? null;
+    let vietnameseTranslation = suggestion.definition || word;
+    let exampleSentence = `Example sentence for "${word}".`;
+    let examples: string[] = [];
+    let audioUrl: string | null = null;
+
+    try {
+      const crawled = await wordbankApi.fetchExamples(word);
+      if (crawled.ipa && !ipa) {
+        ipa = crawled.ipa;
+      }
+      if (crawled.audioUrl) {
+        audioUrl = crawled.audioUrl;
+      }
+      if (crawled.examples && crawled.examples.length > 0) {
+        const formattedList = crawled.examples.map((ex: WordExample) =>
+          ex.vietnamese
+            ? `"${ex.english}" — ${ex.vietnamese}`
+            : `"${ex.english}"`
+        );
+        examples = formattedList;
+        exampleSentence = formattedList[0];
+        if (!suggestion.definition && crawled.examples[0].vietnamese) {
+          vietnameseTranslation = crawled.examples[0].vietnamese;
+        }
+      }
+    } catch {
+      // Fallback gracefully
+    }
+
     saveVocabularyMutation.mutate(
       [
         {
           word,
           partOfSpeech: 'vocabulary',
-          ipa: suggestion.phonetic ?? null,
-          audioUrl: null,
+          ipa,
+          audioUrl,
           englishDefinition: word,
-          vietnameseTranslation: suggestion.definition || word,
-          exampleSentence: `Example sentence for "${word}".`,
+          vietnameseTranslation,
+          exampleSentence,
+          examples,
         },
       ],
       {

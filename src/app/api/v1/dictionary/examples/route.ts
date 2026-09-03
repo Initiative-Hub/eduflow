@@ -46,12 +46,14 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const examples = await DictionaryService.fetchExamples(
+    const details = await DictionaryService.fetchLabanDetails(
       validation.data.word
     );
     return NextResponse.json({
       word: validation.data.word,
-      examples,
+      ipa: details.ipa,
+      audioUrl: details.audioUrl,
+      examples: details.examples,
     });
   } catch (error: unknown) {
     const message =

@@ -12,6 +12,8 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { Spinner } from '@/components/ui/spinner';
+import { cn } from '@/lib/utils';
 import type {
   SavedVocabularyItem,
   VocabularyListSummary,
@@ -53,6 +55,7 @@ export function WordbankCard({
 }) {
   const [exampleDialogOpen, setExampleDialogOpen] = useState(false);
   const [pronunciationModalOpen, setPronunciationModalOpen] = useState(false);
+  const [isLoadingAudio, setIsLoadingAudio] = useState(false);
   const itemListIds = new Set(item.lists.map((list) => list.id));
 
   return (
@@ -67,22 +70,38 @@ export function WordbankCard({
               <MasteryBadge level={item.masteryLevel} t={t} />
             </CardTitle>
             <CardAction className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={() => {
-                  void playWordbankAudio(item.word).catch(() => {
-                    toast.error(t('audioFailed'));
-                  });
-                }}
-                className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary transition-all hover:bg-primary hover:text-primary-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                aria-label={t('playPronunciation', { word: item.word })}
-              >
-                <Volume2 className="size-4" />
-              </button>
               <Button
                 type="button"
                 variant="ghost"
-                size="icon"
+                onClick={() => {
+                  setIsLoadingAudio(true);
+                  void playWordbankAudio(item.word, () => {
+                    setIsLoadingAudio(false);
+                  }).catch(() => {
+                    setIsLoadingAudio(false);
+                    toast.error(t('audioFailed'));
+                  });
+                }}
+                disabled={isLoadingAudio}
+                className={cn(
+                  'h-9 rounded-full bg-primary/10 text-primary transition-all hover:bg-primary hover:text-primary-foreground',
+                  isLoadingAudio ? 'gap-1 px-3 text-xs' : ''
+                )}
+                aria-label={
+                  isLoadingAudio
+                    ? t('loadingVoice')
+                    : t('playPronunciation', { word: item.word })
+                }
+              >
+                {isLoadingAudio ? (
+                  <Spinner className="size-4" />
+                ) : (
+                  <Volume2 className="size-4" />
+                )}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
                 disabled={isRemoving}
                 onClick={() => onRemoveWord(item.word)}
                 aria-label={t('removeWord', { word: item.word })}
@@ -167,7 +186,6 @@ export function WordbankCard({
             <Button
               type="button"
               variant="outline"
-              size="sm"
               onClick={() => setExampleDialogOpen(true)}
               className="h-8 gap-1 rounded-lg border-primary/30 text-xs hover:bg-primary/10 hover:text-primary"
             >
@@ -179,7 +197,6 @@ export function WordbankCard({
             <Button
               type="button"
               variant="secondary"
-              size="sm"
               onClick={() => setPronunciationModalOpen(true)}
               className="h-8 gap-1 rounded-lg bg-primary/10 font-medium text-primary text-xs hover:bg-primary hover:text-primary-foreground"
             >

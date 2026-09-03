@@ -2,12 +2,18 @@ import { apiClient } from '@/lib/api/api-client';
 import type {
   GameParticipant,
   GameQuiz,
+  GameQuizAiSourceCourse,
+  GameQuizAiSourceLesson,
+  GameQuizAiSourceModule,
+  GameQuizAiSources,
   GameQuizDraft,
   GameQuizOption,
   GameQuizQuestion,
   GameQuizReport,
   GameSessionPhase,
   GameSessionSnapshot,
+  GeneratedGameQuizQuestion,
+  GenerateGameQuizQuestionsInput,
 } from './types';
 
 type GameHostAction =
@@ -103,16 +109,65 @@ function toGameQuiz(value: unknown): GameQuiz {
     id: stringValue(game.id),
     title: stringValue(game.title),
     topic: stringValue(game.topic),
-    difficulty: stringValue(
-      game.difficulty,
-      'MEDIUM'
-    ).toUpperCase() as GameQuiz['difficulty'],
+    difficulty:
+      typeof game.difficulty === 'string' && game.difficulty.trim()
+        ? (game.difficulty.trim().toUpperCase() as NonNullable<
+            GameQuiz['difficulty']
+          >)
+        : null,
     templateKey: 'LIVE_QUIZ_RALLY',
     revision: numberValue(game.revision, 1),
     updatedAt: stringValue(game.updatedAt, new Date(0).toISOString()),
     questionCount: numberValue(game.questionCount, questions.length),
     settings: toSettings(game),
     questions,
+  };
+}
+
+function toAiSourceLesson(value: unknown): GameQuizAiSourceLesson {
+  const lesson = getRecord(value);
+  return {
+    id: stringValue(lesson.id),
+    title: stringValue(lesson.title),
+  };
+}
+
+function toAiSourceModule(value: unknown): GameQuizAiSourceModule {
+  const module = getRecord(value);
+  return {
+    id: stringValue(module.id),
+    title: stringValue(module.title),
+    lessons: getArray(module.lessons).map(toAiSourceLesson),
+  };
+}
+
+function toAiSourceCourse(value: unknown): GameQuizAiSourceCourse {
+  const course = getRecord(value);
+  return {
+    id: stringValue(course.id),
+    title: stringValue(course.title),
+    modules: getArray(course.modules).map(toAiSourceModule),
+  };
+}
+
+function toGeneratedQuestion(value: unknown): GeneratedGameQuizQuestion {
+  const question = getRecord(value);
+  return {
+    prompt: stringValue(question.prompt),
+    hint: stringValue(question.hint),
+    explanation: stringValue(question.explanation),
+    timerSeconds: numberValue(
+      question.timerSeconds ?? question.timeLimitSeconds,
+      20
+    ),
+    maxPoints: numberValue(question.maxPoints, 1000),
+    options: getArray(question.options).map((value) => {
+      const option = getRecord(value);
+      return {
+        text: stringValue(option.text),
+        isCorrect: booleanValue(option.isCorrect),
+      };
+    }),
   };
 }
 
@@ -132,9 +187,20 @@ function toParticipant(value: unknown): GameParticipant {
 function toSession(value: unknown): GameSessionSnapshot {
   const envelope = getRecord(value);
   const session = getRecord(envelope.session ?? value);
+  const currentRound = getRecord(session.currentRound);
   const round = isRecord(session.currentRound)
-    ? toQuestion(session.currentRound, numberValue(session.currentRoundIndex))
+    ? toQuestion(currentRound, numberValue(session.currentRoundIndex))
     : null;
+  const roundStatistics = isRecord(currentRound.statistics)
+    ? {
+        responseCount: numberValue(currentRound.statistics.responseCount),
+        correctCount: numberValue(currentRound.statistics.correctCount),
+        averageResponseTimeMs:
+          typeof currentRound.statistics.averageResponseTimeMs === 'number'
+            ? currentRound.statistics.averageResponseTimeMs
+            : null,
+      }
+    : undefined;
   const participants = getArray(session.participants).map(toParticipant);
   const leaderboard = getArray(session.leaderboard).map(toParticipant);
   const answer = getRecord(session.myAnswer ?? session.answer);
@@ -162,6 +228,7 @@ function toSession(value: unknown): GameSessionSnapshot {
             stringValue(getRecord(session.currentRound).openedAt) || null,
           deadlineAt:
             stringValue(getRecord(session.currentRound).deadlineAt) || null,
+          ...(roundStatistics ? { statistics: roundStatistics } : {}),
         }
       : null,
     currentRoundIndex: numberValue(session.currentRoundIndex, 0),
@@ -218,6 +285,22 @@ function toQuestionPayload(draft: GameQuizDraft) {
 }
 
 export const gameQuizApi = {
+  getAiSources: async (): Promise<GameQuizAiSources> => {
+    const response = getRecord(
+      await apiClient.get<unknown>('v1/ai/game-quiz/sources')
+    );
+    return {
+      courses: getArray(response.courses).map(toAiSourceCourse),
+    };
+  },
+  generateAiQuestions: async (input: GenerateGameQuizQuestionsInput) => {
+    const response = getRecord(
+      await apiClient.post<unknown>('v1/ai/game-quiz/questions', input)
+    );
+    return {
+      questions: getArray(response.questions).map(toGeneratedQuestion),
+    };
+  },
   list: async () => {
     const response = await apiClient.get<unknown>('v1/game-quizzes');
     return getArray(response).map(toGameQuiz);

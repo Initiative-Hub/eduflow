@@ -1,20 +1,26 @@
 import { describe, expect, it, vi } from 'vitest';
-import { isGameQuizDraftDirty } from '@/components/game-quiz/draft';
+import {
+  appendGeneratedQuestions,
+  createDraft,
+  getAiQuestionCapacity,
+  isGameQuizDraftDirty,
+  MAX_GAME_QUIZ_QUESTIONS,
+} from '@/components/game-quiz/draft';
+import {
+  projectHostSession,
+  projectParticipantSession,
+} from '@/lib/game-quiz/projections';
 import {
   gameQuizQuestionSchema,
   hostCommandSchema,
 } from '@/lib/game-quiz/schemas';
 import { calculateGamePoints } from '@/lib/game-quiz/scoring';
 import {
-  projectHostSession,
-  projectParticipantSession,
-} from '@/lib/game-quiz/projections';
-import type { SessionWithGameData } from '@/lib/game-quiz/types';
-import {
   nextHostedGamePhase,
   shouldAutoRevealGameRound,
 } from '@/lib/game-quiz/shared';
 import { shuffle } from '@/lib/game-quiz/shuffle';
+import type { SessionWithGameData } from '@/lib/game-quiz/types';
 import { buildGameSessionReport } from '@/services/GameQuizAnswerService';
 
 describe('Live Game Quiz rules', () => {
@@ -103,7 +109,7 @@ describe('Live Game Quiz rules', () => {
         selectedOptionId: index < 2 ? 'mars' : 'venus',
         idempotencyKey: `key-${index}`,
         submittedAt: new Date(),
-        responseTimeMs: 100,
+        responseTimeMs: (index + 1) * 100,
         isCorrect: index < 2,
         pointsAwarded: 0,
       })),
@@ -136,6 +142,12 @@ describe('Live Game Quiz rules', () => {
     expect(
       player.currentRound?.options.every((option) => !('answerers' in option))
     ).toBe(true);
+    expect(host.currentRound?.statistics).toEqual({
+      responseCount: 3,
+      correctCount: 2,
+      averageResponseTimeMs: 200,
+    });
+    expect(player.currentRound).not.toHaveProperty('statistics');
   });
 
   it('requires two to four options with exactly one correct answer', () => {
@@ -343,5 +355,94 @@ describe('Live Game Quiz rules', () => {
         original
       )
     ).toBe(true);
+  });
+
+  it('replaces only the pristine starter when accepting generated questions', () => {
+    const generated = [
+      {
+        prompt: 'Which planet is known as the Red Planet?',
+        hint: 'Think about its surface color.',
+        explanation: 'Iron oxides make Mars appear red.',
+        timerSeconds: 25,
+        maxPoints: 1200,
+        options: [
+          { text: 'Mars', isCorrect: true },
+          { text: 'Venus', isCorrect: false },
+        ],
+      },
+    ];
+    const pristineResult = appendGeneratedQuestions(createDraft(), generated, {
+      replacePristineStarter: true,
+      idFactory: () => 'generated-1',
+    });
+
+    expect(pristineResult.firstGeneratedIndex).toBe(0);
+    expect(pristineResult.appendedCount).toBe(1);
+    expect(pristineResult.draft.questions).toEqual([
+      expect.objectContaining({
+        id: 'draft-ai-generated-1',
+        order: 0,
+        prompt: generated[0]?.prompt,
+        hint: generated[0]?.hint,
+        explanation: generated[0]?.explanation,
+        timeLimitSeconds: 25,
+        maxPoints: 1200,
+      }),
+    ]);
+
+    const editedDraft = createDraft();
+    editedDraft.questions[0] = {
+      ...editedDraft.questions[0]!,
+      prompt: 'Keep this question',
+    };
+    const appendedResult = appendGeneratedQuestions(editedDraft, generated, {
+      replacePristineStarter: true,
+      idFactory: () => 'generated-2',
+    });
+
+    expect(appendedResult.firstGeneratedIndex).toBe(1);
+    expect(appendedResult.draft.questions.map(({ prompt }) => prompt)).toEqual([
+      'Keep this question',
+      generated[0]?.prompt,
+    ]);
+    expect(appendedResult.draft.questions.map(({ order }) => order)).toEqual([
+      0, 1,
+    ]);
+  });
+
+  it('never accepts generated questions beyond the 100-question limit', () => {
+    const draft = createDraft();
+    draft.questions = Array.from(
+      { length: MAX_GAME_QUIZ_QUESTIONS },
+      (_, index) => ({
+        ...draft.questions[0]!,
+        id: `question-${index}`,
+        prompt: `Question ${index + 1}`,
+        order: index,
+      })
+    );
+
+    expect(getAiQuestionCapacity(draft, false)).toBe(0);
+    const result = appendGeneratedQuestions(
+      draft,
+      [
+        {
+          prompt: 'Overflow',
+          hint: 'Hint',
+          explanation: 'Explanation',
+          timerSeconds: 20,
+          maxPoints: 1000,
+          options: [
+            { text: 'A', isCorrect: true },
+            { text: 'B', isCorrect: false },
+          ],
+        },
+      ],
+      { replacePristineStarter: false }
+    );
+
+    expect(result.appendedCount).toBe(0);
+    expect(result.draft).toBe(draft);
+    expect(result.draft.questions).toHaveLength(MAX_GAME_QUIZ_QUESTIONS);
   });
 });

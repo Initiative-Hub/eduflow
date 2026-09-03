@@ -33,7 +33,7 @@ export function WordbankExampleDialog({
   item,
   isUpdating,
   onUpdateExample,
-  t,
+  t: _t,
 }: WordbankExampleDialogProps) {
   const [customExample, setCustomExample] = useState('');
 

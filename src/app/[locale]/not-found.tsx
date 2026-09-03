@@ -34,7 +34,7 @@ export default async function GlobalNotFoundPage() {
         <Button
           asChild
           size="lg"
-          className="h-12 rounded-full px-10 shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95"
+          className="h-12 rounded-full px-10 shadow-lg shadow-primary/20 transition-all"
         >
           <Link href="/">{t('goBack')}</Link>
         </Button>

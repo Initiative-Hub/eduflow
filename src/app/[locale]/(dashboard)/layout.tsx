@@ -21,7 +21,7 @@ export default async function DashboardLayout({
             <div className="absolute right-[20%] bottom-[-20%] size-112.5 rounded-full bg-primary/10 blur-[120px]" />
           </div>
           <div className="relative z-10 h-full overflow-y-auto">
-            <div className="mx-auto min-h-full max-w-7xl px-6 py-6 md:px-10">
+            <div className="mx-auto min-h-full max-w-7xl px-6 py-6 has-[.dashboard-full-bleed]:max-w-none has-[.dashboard-full-bleed]:p-0 md:px-10 md:has-[.dashboard-full-bleed]:px-0">
               {children}
             </div>
           </div>

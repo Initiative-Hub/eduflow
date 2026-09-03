@@ -16,7 +16,7 @@ on:
 jobs:
   deploy:
     name: Deploy to Vercel Preview
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     if: |
       github.event_name != 'pull_request' || 
@@ -56,7 +56,7 @@ jobs:
         if: steps.check_commits.outputs.skip_build != 'true'
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: "1.3.14"
+          bun-version: "1.4.0"
 
       - name: Install dependencies
         if: steps.check_commits.outputs.skip_build != 'true'

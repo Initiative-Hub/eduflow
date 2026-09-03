@@ -1,4 +1,20 @@
-type Translate = (key: string, values?: { count: number }) => string;
+type Translate = (
+  key: string,
+  values?: Record<string, string | number>
+) => string;
+
+const RANKING_CURRENT_TOKEN = '__GAME_QUIZ_CURRENT__';
+const RANKING_TOTAL_TOKEN = '__GAME_QUIZ_TOTAL__';
+
+export function formatGameQuizRankingProgress(
+  template: string,
+  current: number,
+  total: number
+) {
+  return template
+    .replace(RANKING_CURRENT_TOKEN, String(current))
+    .replace(RANKING_TOTAL_TOKEN, String(total));
+}
 
 export function getGameQuizCopy(t: Translate) {
   return {
@@ -60,6 +76,54 @@ export function getGameQuizCopy(t: Translate) {
       easy: t('editor.easy'),
       medium: t('editor.medium'),
       hard: t('editor.hard'),
+      allSaved: t('editor.allSaved'),
+      duplicateQuestion: t('editor.duplicateQuestion'),
+      estimatedDuration: t('editor.estimatedDuration'),
+      learningDetails: t('editor.learningDetails'),
+      markCorrect: t('editor.markCorrect'),
+      moveDown: t('editor.moveDown'),
+      moveUp: t('editor.moveUp'),
+      rallyOverview: t('editor.rallyOverview'),
+      totalPossiblePoints: t('editor.totalPossiblePoints'),
+      unsavedChanges: t('editor.unsavedChanges'),
+      unspecified: t('editor.unspecified'),
+    },
+    aiGenerate: {
+      action: t('aiGenerate.action'),
+      title: t('aiGenerate.title'),
+      description: t('aiGenerate.description'),
+      sourcesStep: t('aiGenerate.sourcesStep'),
+      guidanceStep: t('aiGenerate.guidanceStep'),
+      reviewStep: t('aiGenerate.reviewStep'),
+      courseLabel: t('aiGenerate.courseLabel'),
+      coursePlaceholder: t('aiGenerate.coursePlaceholder'),
+      lessonsLabel: t('aiGenerate.lessonsLabel'),
+      lessonsDescription: t('aiGenerate.lessonsDescription'),
+      lessonsSelected: t('aiGenerate.lessonsSelected'),
+      lessonSelectionLimit: t('aiGenerate.lessonSelectionLimit', { count: 20 }),
+      noSourcesTitle: t('aiGenerate.noSourcesTitle'),
+      noSourcesDescription: t('aiGenerate.noSourcesDescription'),
+      noLessonsTitle: t('aiGenerate.noLessonsTitle'),
+      noLessonsDescription: t('aiGenerate.noLessonsDescription'),
+      sourceLoadErrorTitle: t('aiGenerate.sourceLoadErrorTitle'),
+      sourceLoadErrorDescription: t('aiGenerate.sourceLoadErrorDescription'),
+      questionCountLabel: t('aiGenerate.questionCountLabel'),
+      questionCountDescription: t('aiGenerate.questionCountDescription'),
+      additionalPromptLabel: t('aiGenerate.additionalPromptLabel'),
+      additionalPromptPlaceholder: t('aiGenerate.additionalPromptPlaceholder'),
+      additionalPromptDescription: t('aiGenerate.additionalPromptDescription'),
+      generate: t('aiGenerate.generate'),
+      generating: t('aiGenerate.generating'),
+      generationErrorTitle: t('aiGenerate.generationErrorTitle'),
+      generationErrorDescription: t('aiGenerate.generationErrorDescription'),
+      reviewDescription: t('aiGenerate.reviewDescription'),
+      correctAnswer: t('aiGenerate.correctAnswer'),
+      previousQuestion: t('aiGenerate.previousQuestion'),
+      nextQuestion: t('aiGenerate.nextQuestion'),
+      reject: t('aiGenerate.reject'),
+      accept: t('aiGenerate.accept'),
+      continue: t('aiGenerate.continue'),
+      capacityReached: t('aiGenerate.capacityReached'),
     },
     preview: {
       title: t('preview.title'),
@@ -74,6 +138,7 @@ export function getGameQuizCopy(t: Translate) {
       next: t('preview.next'),
       reveal: t('preview.reveal'),
       reset: t('preview.reset'),
+      samplePlayer: t('preview.samplePlayer'),
     },
     host: {
       title: t('host.title'),
@@ -83,9 +148,16 @@ export function getGameQuizCopy(t: Translate) {
       readyToStart: t('host.readyToStart'),
       shareLink: t('host.shareLink'),
       copyLink: t('host.copyLink'),
+      openQrCode: t('host.openQrCode'),
+      qrCodeDialogTitle: t('host.qrCodeDialogTitle'),
       players: t('host.players'),
       answers: t('host.answers'),
       answersCount: t('host.answersCount'),
+      averageResponseTime: t('host.averageResponseTime'),
+      correctRate: t('host.correctRate'),
+      responses: t('host.responses'),
+      questionStatistics: t('host.questionStatistics'),
+      question: t('host.question'),
       joinOpen: t('host.joinOpen'),
       joinLocked: t('host.joinLocked'),
       lockJoining: t('host.lockJoining'),
@@ -105,6 +177,8 @@ export function getGameQuizCopy(t: Translate) {
       endSession: t('host.endSession'),
       viewReport: t('host.viewReport'),
       viewFullLeaderboard: t('host.viewFullLeaderboard'),
+      fullLeaderboardTitle: t('host.fullLeaderboardTitle'),
+      emptyLeaderboard: t('host.emptyLeaderboard'),
       congratulations: t('host.congratulations'),
       congratulationsDescription: t('host.congratulationsDescription'),
       lobby: t('host.lobby'),
@@ -140,6 +214,13 @@ export function getGameQuizCopy(t: Translate) {
       rank: t('player.rank'),
       noPodium: t('player.noPodium'),
       leaderboard: t('player.leaderboard'),
+      rankingProgress: t('player.rankingProgress', {
+        current: RANKING_CURRENT_TOKEN,
+        total: RANKING_TOTAL_TOKEN,
+      }),
+      you: t('player.you'),
+      keepGoing: t('player.keepGoing'),
+      waitingForNext: t('player.waitingForNext'),
       connection: t('player.connection'),
       hostEndedTitle: t('player.hostEndedTitle'),
       hostEndedDescription: t('player.hostEndedDescription'),

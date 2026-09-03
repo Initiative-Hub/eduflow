@@ -1,37 +1,39 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  ChevronLeft,
-  ChevronRight,
-  Loader2,
-  Play,
-  Plus,
-  Save,
-  Trash2,
-} from 'lucide-react';
+import { AlertCircle, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { GameQuizAiDialog } from './ai/game-quiz-ai-dialog';
 import { gameQuizApi } from './api';
 import { type GameQuizCopy, gameQuizCopy } from './copy';
 import {
+  appendGeneratedQuestions,
   createDraft,
   createQuestion,
+  duplicateQuestion,
+  getAiQuestionCapacity,
   isDraftValid,
   isGameQuizDraftDirty,
+  MAX_GAME_QUIZ_QUESTIONS,
+  moveQuestion,
 } from './draft';
+import { GameQuizEditorHeader } from './editor/game-quiz-editor-header';
+import { GameQuizEditorSettings } from './editor/game-quiz-editor-settings';
+import { GameQuizQuestionCanvas } from './editor/game-quiz-question-canvas';
+import { GameQuizQuestionSidebar } from './editor/game-quiz-question-sidebar';
 import { activateLiveGameSession } from './live-game-session';
-import type { GameQuizDraft, GameQuizQuestion } from './types';
+import type {
+  GameQuizDraft,
+  GameQuizQuestion,
+  GeneratedGameQuizQuestion,
+} from './types';
 
 interface GameQuizEditorClientProps {
-  gameQuizId?: string;
   copy?: GameQuizCopy;
+  gameQuizId?: string;
 }
 
 function asDraft(
@@ -48,8 +50,8 @@ function asDraft(
 }
 
 export function GameQuizEditorClient({
-  gameQuizId,
   copy = gameQuizCopy,
+  gameQuizId,
 }: GameQuizEditorClientProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -58,11 +60,13 @@ export function GameQuizEditorClient({
     queryFn: () => gameQuizApi.get(gameQuizId as string),
     enabled: Boolean(gameQuizId),
   });
+
   const [draft, setDraft] = useState<GameQuizDraft>(createDraft);
   const [originalDraft, setOriginalDraft] = useState<
     GameQuizDraft | undefined
   >();
   const [activeQuestionIndex, setActiveQuestionIndex] = useState(0);
+  const [isAiDialogOpen, setIsAiDialogOpen] = useState(false);
   const [loadedId, setLoadedId] = useState<string | undefined>();
 
   if (gameQuizId && gameQuery.data && loadedId !== gameQuizId) {
@@ -117,7 +121,8 @@ export function GameQuizEditorClient({
     onError: showMutationError,
   });
 
-  const activeQuestion = draft.questions[activeQuestionIndex];
+  const activeQuestion =
+    draft.questions[activeQuestionIndex] ?? draft.questions[0];
   const valid = useMemo(() => isDraftValid(draft), [draft]);
   const isDirty = useMemo(
     () => isGameQuizDraftDirty(draft, originalDraft),
@@ -169,7 +174,46 @@ export function GameQuizEditorClient({
     }));
   };
 
+  const addOption = () => {
+    setDraft((current) => ({
+      ...current,
+      questions: current.questions.map((question, questionIndex) =>
+        questionIndex === activeQuestionIndex
+          ? {
+              ...question,
+              options: [
+                ...question.options,
+                {
+                  id: `draft-option-${crypto.randomUUID()}`,
+                  text: '',
+                  isCorrect: false,
+                  order: question.options.length,
+                },
+              ],
+            }
+          : question
+      ),
+    }));
+  };
+
+  const removeOption = (optionIndex: number) => {
+    setDraft((current) => ({
+      ...current,
+      questions: current.questions.map((question, questionIndex) =>
+        questionIndex === activeQuestionIndex
+          ? {
+              ...question,
+              options: question.options
+                .filter((_, index) => index !== optionIndex)
+                .map((item, order) => ({ ...item, order })),
+            }
+          : question
+      ),
+    }));
+  };
+
   const addQuestion = () => {
+    if (draft.questions.length >= MAX_GAME_QUIZ_QUESTIONS) return;
     setDraft((current) => ({
       ...current,
       questions: [
@@ -180,30 +224,68 @@ export function GameQuizEditorClient({
     setActiveQuestionIndex(draft.questions.length);
   };
 
-  const removeQuestion = () => {
+  const handleDuplicateQuestion = (index: number) => {
+    if (draft.questions.length >= MAX_GAME_QUIZ_QUESTIONS) return;
+    const result = duplicateQuestion(draft, index);
+    setDraft(result.draft);
+    setActiveQuestionIndex(result.newIndex);
+  };
+
+  const handleMoveQuestion = (fromIndex: number, toIndex: number) => {
+    const result = moveQuestion(draft, fromIndex, toIndex);
+    setDraft(result.draft);
+    setActiveQuestionIndex(result.newIndex);
+  };
+
+  const removeQuestion = (indexToRemove: number) => {
     if (draft.questions.length === 1) return;
     setDraft((current) => ({
       ...current,
       questions: current.questions
-        .filter((_, index) => index !== activeQuestionIndex)
+        .filter((_, index) => index !== indexToRemove)
         .map((question, order) => ({ ...question, order })),
     }));
-    setActiveQuestionIndex((index) => Math.max(0, index - 1));
+    setActiveQuestionIndex((current) =>
+      current >= indexToRemove ? Math.max(0, current - 1) : current
+    );
   };
 
+  const handleAcceptGeneratedQuestions = (
+    questions: GeneratedGameQuizQuestion[]
+  ) => {
+    const result = appendGeneratedQuestions(draft, questions, {
+      replacePristineStarter: !gameQuizId,
+    });
+    if (result.appendedCount === 0) return;
+    setDraft(result.draft);
+    setActiveQuestionIndex(result.firstGeneratedIndex);
+  };
+
+  const aiQuestionCapacity = Math.min(
+    20,
+    getAiQuestionCapacity(draft, !gameQuizId)
+  );
+
   if (gameQuizId && gameQuery.isPending) {
-    return <EditorLoading copy={copy} />;
+    return (
+      <div className="flex min-h-72 items-center justify-center text-muted-foreground">
+        <Loader2 className="mr-2 size-4 animate-spin" aria-hidden="true" />
+        {copy.common.loading}
+      </div>
+    );
   }
 
   if (gameQuizId && gameQuery.isError) {
     return (
       <section
-        className="border border-destructive/30 bg-destructive/5 p-6"
+        className="rounded-2xl border border-destructive/30 bg-destructive/5 p-6"
         role="alert"
       >
-        <p className="text-destructive">{copy.common.error}</p>
+        <p className="font-semibold text-destructive text-sm">
+          {copy.common.error}
+        </p>
         <Button
-          className="mt-4"
+          className="mt-4 rounded-xl"
           onClick={() => gameQuery.refetch()}
           variant="outline"
         >
@@ -214,416 +296,98 @@ export function GameQuizEditorClient({
   }
 
   return (
-    <main className="space-y-6 pb-10">
-      <header className="flex flex-col gap-4 border-b pb-5 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <p className="text-muted-foreground text-sm">
-            {copy.editor.template}
-          </p>
-          <h1 className="mt-1 font-semibold text-3xl">{copy.editor.title}</h1>
-          <p className="mt-2 text-muted-foreground">
-            {copy.editor.description}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {gameQuizId ? (
-            <>
-              <Button
-                disabled={
-                  isDirty || saveMutation.isPending || hostMutation.isPending
-                }
-                onClick={() => router.push(`/games/${gameQuizId}/preview`)}
-                variant="outline"
-              >
-                <Play className="size-4" aria-hidden="true" />
-                {copy.editor.preview}
-              </Button>
-              <Button
-                disabled={
-                  !valid ||
-                  !isDirty ||
-                  saveMutation.isPending ||
-                  hostMutation.isPending
-                }
-                onClick={() => saveMutation.mutate()}
-              >
-                {saveMutation.isPending ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <Save className="size-4" />
-                )}
-                {copy.common.save}
-              </Button>
-              <Button
-                disabled={
-                  !valid ||
-                  isDirty ||
-                  !originalDraft?.revision ||
-                  hostMutation.isPending ||
-                  saveMutation.isPending
-                }
-                onClick={() => {
-                  if (originalDraft?.revision) {
-                    hostMutation.mutate(originalDraft.revision);
-                  }
-                }}
-                variant="secondary"
-              >
-                {copy.editor.host}
-              </Button>
-            </>
-          ) : (
-            <Button
-              disabled={!valid || createMutation.isPending}
-              onClick={() => createMutation.mutate()}
-            >
-              {createMutation.isPending ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <Plus className="size-4" />
-              )}
-              {copy.editor.create}
-            </Button>
-          )}
-        </div>
-      </header>
+    <main className="space-y-6 pb-12">
+      {/* Header with status and actions */}
+      <GameQuizEditorHeader
+        copy={copy}
+        gameQuizId={gameQuizId}
+        isCreatePending={createMutation.isPending}
+        isDirty={isDirty}
+        isHostPending={hostMutation.isPending}
+        isSavePending={saveMutation.isPending}
+        isValid={valid}
+        onBrowsePreview={() => router.push(`/games/${gameQuizId}/preview`)}
+        onCreateGame={() => createMutation.mutate()}
+        onHostGame={() => {
+          if (originalDraft?.revision) {
+            hostMutation.mutate(originalDraft.revision);
+          }
+        }}
+        onSaveDraft={() => saveMutation.mutate()}
+      />
 
+      {/* Validation status notification */}
       {!valid ? (
-        <p
-          className="border border-warning/30 bg-warning/10 px-4 py-3 text-sm"
+        <div
+          className="flex items-center gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-amber-800 text-sm shadow-xs dark:text-amber-300"
           role="status"
         >
-          {copy.editor.validation}
-        </p>
+          <AlertCircle className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+          <span>{copy.editor.validation}</span>
+        </div>
       ) : null}
 
-      <div className="grid gap-6 xl:grid-cols-[260px_minmax(0,1fr)_280px]">
-        <aside className="border bg-card p-3 xl:sticky xl:top-0 xl:h-fit">
-          <div className="mb-3 flex items-center justify-between px-2">
-            <p className="font-medium text-sm">{copy.editor.question}</p>
-            <Button
-              aria-label={copy.editor.addQuestion}
-              onClick={addQuestion}
-              size="icon"
-              variant="ghost"
-            >
-              <Plus className="size-4" aria-hidden="true" />
-            </Button>
-          </div>
-          <div className="space-y-1">
-            {draft.questions.map((question, index) => (
-              <button
-                className={`w-full border-l-2 px-3 py-3 text-left text-sm transition-colors ${
-                  activeQuestionIndex === index
-                    ? 'border-primary bg-primary/10 text-foreground'
-                    : 'border-transparent text-muted-foreground hover:bg-muted'
-                }`}
-                key={question.id}
-                onClick={() => setActiveQuestionIndex(index)}
-                type="button"
-              >
-                <span className="mr-2 font-medium">{index + 1}</span>
-                <span className="line-clamp-1">
-                  {question.prompt || copy.editor.question}
-                </span>
-              </button>
-            ))}
-          </div>
-          <Button
-            className="mt-3 w-full"
-            onClick={addQuestion}
-            size="sm"
-            variant="outline"
-          >
-            <Plus className="size-4" aria-hidden="true" />
-            {copy.editor.addQuestion}
-          </Button>
-        </aside>
-
-        <section className="space-y-5 border bg-card p-5 sm:p-6">
-          <div className="flex items-center justify-between gap-4">
-            <p className="font-medium text-sm">
-              {copy.editor.question} {activeQuestionIndex + 1}
-            </p>
-            <Button
-              disabled={draft.questions.length === 1}
-              onClick={removeQuestion}
-              size="sm"
-              variant="ghost"
-            >
-              <Trash2 className="size-4" aria-hidden="true" />
-              {copy.editor.removeQuestion}
-            </Button>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="game-question-prompt">{copy.editor.prompt}</Label>
-            <Textarea
-              id="game-question-prompt"
-              onChange={(event) => updateQuestion('prompt', event.target.value)}
-              placeholder={copy.editor.prompt}
-              rows={3}
-              value={activeQuestion.prompt}
-            />
-          </div>
-
-          <fieldset className="space-y-3">
-            <Label asChild>
-              <legend>{copy.editor.answer}</legend>
-            </Label>
-            {activeQuestion.options.map((option, optionIndex) => (
-              <div className="flex items-center gap-3" key={option.id}>
-                <input
-                  aria-label={`${copy.editor.correct}: ${optionIndex + 1}`}
-                  checked={option.isCorrect}
-                  className="size-4 accent-primary"
-                  name={`correct-${activeQuestion.id}`}
-                  onChange={() => markCorrect(optionIndex)}
-                  type="radio"
-                />
-                <Input
-                  aria-label={`${copy.editor.answer} ${optionIndex + 1}`}
-                  onChange={(event) =>
-                    updateOption(optionIndex, event.target.value)
-                  }
-                  placeholder={`${copy.editor.answer} ${optionIndex + 1}`}
-                  value={option.text}
-                />
-                {activeQuestion.options.length > 2 ? (
-                  <Button
-                    aria-label={copy.editor.removeAnswer}
-                    onClick={() => {
-                      setDraft((current) => ({
-                        ...current,
-                        questions: current.questions.map(
-                          (question, questionIndex) =>
-                            questionIndex === activeQuestionIndex
-                              ? {
-                                  ...question,
-                                  options: question.options
-                                    .filter((_, index) => index !== optionIndex)
-                                    .map((item, order) => ({ ...item, order })),
-                                }
-                              : question
-                        ),
-                      }));
-                    }}
-                    size="icon"
-                    type="button"
-                    variant="ghost"
-                  >
-                    <Trash2 className="size-4" aria-hidden="true" />
-                  </Button>
-                ) : null}
-              </div>
-            ))}
-          </fieldset>
-          {activeQuestion.options.length < 4 ? (
-            <Button
-              onClick={() => {
-                setDraft((current) => ({
-                  ...current,
-                  questions: current.questions.map((question, questionIndex) =>
-                    questionIndex === activeQuestionIndex
-                      ? {
-                          ...question,
-                          options: [
-                            ...question.options,
-                            {
-                              id: `draft-option-${crypto.randomUUID()}`,
-                              text: '',
-                              isCorrect: false,
-                              order: question.options.length,
-                            },
-                          ],
-                        }
-                      : question
-                  ),
-                }));
-              }}
-              size="sm"
-              variant="outline"
-            >
-              <Plus className="size-4" aria-hidden="true" />
-              {copy.editor.addAnswer}
-            </Button>
-          ) : null}
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="game-time-limit">{copy.editor.timeLimit}</Label>
-              <Input
-                id="game-time-limit"
-                max={300}
-                min={5}
-                onChange={(event) =>
-                  updateQuestion('timeLimitSeconds', Number(event.target.value))
-                }
-                type="number"
-                value={activeQuestion.timeLimitSeconds}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="game-max-points">{copy.editor.maxPoints}</Label>
-              <Input
-                id="game-max-points"
-                min={1}
-                onChange={(event) =>
-                  updateQuestion('maxPoints', Number(event.target.value))
-                }
-                type="number"
-                value={activeQuestion.maxPoints}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="game-hint">{copy.editor.hint}</Label>
-            <Input
-              id="game-hint"
-              onChange={(event) => updateQuestion('hint', event.target.value)}
-              value={activeQuestion.hint ?? ''}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="game-explanation">{copy.editor.explanation}</Label>
-            <Textarea
-              id="game-explanation"
-              onChange={(event) =>
-                updateQuestion('explanation', event.target.value)
-              }
-              rows={3}
-              value={activeQuestion.explanation ?? ''}
-            />
-          </div>
-
-          <div className="flex justify-between border-t pt-5">
-            <Button
-              disabled={activeQuestionIndex === 0}
-              onClick={() => setActiveQuestionIndex((index) => index - 1)}
-              variant="outline"
-            >
-              <ChevronLeft className="size-4" aria-hidden="true" />
-              {copy.common.back}
-            </Button>
-            <Button
-              disabled={activeQuestionIndex === draft.questions.length - 1}
-              onClick={() => setActiveQuestionIndex((index) => index + 1)}
-              variant="outline"
-            >
-              {copy.preview.next}
-              <ChevronRight className="size-4" aria-hidden="true" />
-            </Button>
-          </div>
-        </section>
-
-        <aside className="space-y-5 border bg-card p-5 xl:sticky xl:top-0 xl:h-fit">
-          <p className="font-medium text-sm">{copy.editor.details}</p>
-          <div className="space-y-2">
-            <Label htmlFor="game-title">{copy.editor.titleLabel}</Label>
-            <Input
-              id="game-title"
-              onChange={(event) =>
-                setDraft((current) => ({
-                  ...current,
-                  title: event.target.value,
-                }))
-              }
-              value={draft.title}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="game-topic">{copy.editor.topicLabel}</Label>
-            <Input
-              id="game-topic"
-              onChange={(event) =>
-                setDraft((current) => ({
-                  ...current,
-                  topic: event.target.value,
-                }))
-              }
-              value={draft.topic}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="game-difficulty">
-              {copy.editor.difficultyLabel}
-            </Label>
-            <select
-              className="h-9 w-full border bg-background px-3 text-sm"
-              id="game-difficulty"
-              onChange={(event) =>
-                setDraft((current) => ({
-                  ...current,
-                  difficulty: event.target.value as GameQuizDraft['difficulty'],
-                }))
-              }
-              value={draft.difficulty}
-            >
-              <option value="EASY">{copy.editor.easy}</option>
-              <option value="MEDIUM">{copy.editor.medium}</option>
-              <option value="HARD">{copy.editor.hard}</option>
-            </select>
-          </div>
-          <div className="space-y-4 border-t pt-5">
-            <div>
-              <p className="font-medium text-sm">{copy.editor.settings}</p>
-            </div>
-            <SettingToggle
-              checked={draft.settings.randomizeQuestions}
-              label={copy.editor.randomizeQuestions}
-              onChange={(checked) =>
-                setDraft((current) => ({
-                  ...current,
-                  settings: {
-                    ...current.settings,
-                    randomizeQuestions: checked,
-                  },
-                }))
-              }
-            />
-            <SettingToggle
-              checked={draft.settings.randomizeAnswers}
-              label={copy.editor.randomizeAnswers}
-              onChange={(checked) =>
-                setDraft((current) => ({
-                  ...current,
-                  settings: { ...current.settings, randomizeAnswers: checked },
-                }))
-              }
-            />
-          </div>
-        </aside>
-      </div>
-    </main>
-  );
-}
-
-function EditorLoading({ copy }: { copy: GameQuizCopy }) {
-  return (
-    <div className="flex min-h-72 items-center justify-center text-muted-foreground">
-      <Loader2 className="mr-2 size-4 animate-spin" aria-hidden="true" />
-      {copy.common.loading}
-    </div>
-  );
-}
-
-function SettingToggle({
-  checked,
-  label,
-  onChange,
-}: {
-  checked: boolean;
-  label: string;
-  onChange: (checked: boolean) => void;
-}) {
-  return (
-    <label className="flex cursor-pointer items-center gap-3 text-sm">
-      <Checkbox
-        checked={checked}
-        onCheckedChange={(value) => onChange(value === true)}
+      <GameQuizEditorSettings
+        copy={copy}
+        draft={draft}
+        onUpdateDraft={setDraft}
       />
-      <span>{label}</span>
-    </label>
+
+      {/* 2-Column Responsive Grid Layout */}
+      <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
+        {/* Left: Question Navigator */}
+        <GameQuizQuestionSidebar
+          activeIndex={activeQuestionIndex}
+          canAddQuestions={draft.questions.length < MAX_GAME_QUIZ_QUESTIONS}
+          copy={copy}
+          draft={draft}
+          onAddQuestion={addQuestion}
+          onGenerateWithAi={() => setIsAiDialogOpen(true)}
+          onDuplicateQuestion={handleDuplicateQuestion}
+          onMoveQuestion={handleMoveQuestion}
+          onRemoveQuestion={removeQuestion}
+          onSelectIndex={setActiveQuestionIndex}
+        />
+
+        {/* Right: Main Question Canvas */}
+        {activeQuestion ? (
+          <GameQuizQuestionCanvas
+            activeIndex={activeQuestionIndex}
+            canDuplicateQuestion={
+              draft.questions.length < MAX_GAME_QUIZ_QUESTIONS
+            }
+            copy={copy}
+            onAddOption={addOption}
+            onDuplicateQuestion={() =>
+              handleDuplicateQuestion(activeQuestionIndex)
+            }
+            onMarkCorrect={markCorrect}
+            onNextQuestion={() =>
+              setActiveQuestionIndex((prev) =>
+                Math.min(draft.questions.length - 1, prev + 1)
+              )
+            }
+            onPrevQuestion={() =>
+              setActiveQuestionIndex((prev) => Math.max(0, prev - 1))
+            }
+            onRemoveOption={removeOption}
+            onRemoveQuestion={() => removeQuestion(activeQuestionIndex)}
+            onUpdateOption={updateOption}
+            onUpdateQuestion={updateQuestion}
+            question={activeQuestion}
+            totalQuestions={draft.questions.length}
+          />
+        ) : null}
+      </div>
+
+      <GameQuizAiDialog
+        copy={copy}
+        isOpen={isAiDialogOpen}
+        maxQuestionCount={aiQuestionCapacity}
+        onAccept={handleAcceptGeneratedQuestions}
+        onOpenChange={setIsAiDialogOpen}
+        topic={draft.topic}
+      />
+    </main>
   );
 }
