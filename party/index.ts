@@ -49,16 +49,6 @@ function envString(env: Record<string, unknown>, name: string) {
   return value;
 }
 
-function send(connection: Party.Connection, message: LiveGameServerMessage) {
-  connection.send(JSON.stringify(message));
-}
-
-function connectionData(connection: Party.Connection<ConnectionData>) {
-  if (!connection.state)
-    throw new Error('Connection authentication is missing.');
-  return connection.state;
-}
-
 export default class LiveGameParty implements Party.Server {
   readonly options = { hibernate: false };
   private finalization: StoredFinalization | null = null;
@@ -296,7 +286,9 @@ export default class LiveGameParty implements Party.Server {
         );
       const parsed = liveGameClientMessageSchema.parse(JSON.parse(text));
       requestId = parsed.requestId;
-      const actor = connectionData(sender);
+      const actor = sender.state;
+      if (!actor) throw new Error('Connection authentication is missing.');
+
       if (parsed.type === 'session.sync') {
         const participant = joinLiveGame(this.state, actor, parsed, new Date());
         sender.setState({ ...actor, synced: true });
@@ -316,11 +308,13 @@ export default class LiveGameParty implements Party.Server {
         });
         this.updateRoundTimer();
         await persistTimers(this.room.storage, this.timers);
-        send(sender, {
-          type: 'operation.result',
-          requestId,
-          stateVersion: this.state.session.stateVersion,
-        });
+        sender.send(
+          JSON.stringify({
+            type: 'operation.result',
+            requestId,
+            stateVersion: this.state.session.stateVersion,
+          })
+        );
         await this.broadcastSnapshots();
         if (result.terminal) await this.beginFinalization();
       } else {
@@ -340,24 +334,29 @@ export default class LiveGameParty implements Party.Server {
             roundIds: result.revealed ? [result.answer.roundId] : [],
           });
         if (result.revealed) this.timers.roundDeadlineAt = null;
-        send(sender, {
-          type: 'operation.result',
-          requestId,
-          stateVersion: this.state.session.stateVersion,
-        });
+        sender.send(
+          JSON.stringify({
+            type: 'operation.result',
+            requestId,
+            stateVersion: this.state.session.stateVersion,
+          })
+        );
         await this.broadcastSnapshots();
       }
       await this.scheduleAlarm();
     } catch (error) {
       const runtimeError = error instanceof LiveGameRuntimeError ? error : null;
-      send(sender, {
-        type: 'error',
-        code: runtimeError?.code ?? 'INVALID_MESSAGE',
-        message: runtimeError?.message ?? 'The message could not be processed.',
-        requestId,
-        retryable: runtimeError?.retryable ?? false,
-        stateVersion: this.state?.session.stateVersion,
-      });
+      sender.send(
+        JSON.stringify({
+          type: 'error',
+          code: runtimeError?.code ?? 'INVALID_MESSAGE',
+          message:
+            runtimeError?.message ?? 'The message could not be processed.',
+          requestId,
+          retryable: runtimeError?.retryable ?? false,
+          stateVersion: this.state?.session.stateVersion,
+        })
+      );
     }
   }
 
@@ -376,14 +375,16 @@ export default class LiveGameParty implements Party.Server {
     for (const connection of this.room.getConnections<ConnectionData>()) {
       if (!connection.state?.synced) continue;
       try {
-        send(connection, {
-          type: 'session.snapshot',
-          snapshot: await this.projectSnapshot(
-            connection.state,
-            online,
-            imageUrls
-          ),
-        });
+        connection.send(
+          JSON.stringify({
+            type: 'session.snapshot',
+            snapshot: await this.projectSnapshot(
+              connection.state,
+              online,
+              imageUrls
+            ),
+          })
+        );
       } catch (error) {
         if (!(error instanceof LiveGameRuntimeError)) throw error;
       }
