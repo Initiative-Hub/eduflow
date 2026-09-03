@@ -186,65 +186,73 @@ export class DictionaryService {
   /**
    * Fetch English-Vietnamese vocabulary autocomplete suggestions from Laban Dict API with Datamuse fallback.
    */
+  /**
+   * Fetch English-Vietnamese vocabulary autocomplete suggestions from Laban Dict API with Datamuse fallback.
+   */
   static async autocomplete(rawQuery: string): Promise<AutocompleteResult> {
     const query = rawQuery.trim();
     if (!query) {
       return { query: '', suggestions: [] };
     }
 
-    // Try Laban Dict first
-    try {
-      const targetUrl = `https://dict.laban.vn/ajax/autocomplete?type=1&site=dictionary&query=${encodeURIComponent(query)}`;
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
+    const targetUrls = [
+      `https://dict.zlb.zapps.me/ajax/autocomplete?type=1&site=dictionary&query=${encodeURIComponent(query)}`,
+      `https://dict.laban.vn/ajax/autocomplete?type=1&site=dictionary&query=${encodeURIComponent(query)}`,
+    ];
 
-      const res = await fetch(targetUrl, {
-        method: 'GET',
-        headers: {
-          'User-Agent':
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          Accept: 'application/json, text/javascript, */*; q=0.01',
-          'X-Requested-With': 'XMLHttpRequest',
-        },
-        signal: controller.signal,
-        cache: 'no-store',
-      });
+    for (const targetUrl of targetUrls) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3500);
 
-      clearTimeout(timeoutId);
+        const res = await fetch(targetUrl, {
+          method: 'GET',
+          headers: {
+            'User-Agent':
+              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            Accept: 'application/json, text/javascript, */*; q=0.01',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+          signal: controller.signal,
+          cache: 'no-store',
+        });
 
-      const contentType = res.headers.get('content-type') || '';
-      if (res.ok && contentType.includes('application/json')) {
-        const rawData = (await res.json()) as {
-          query?: string;
-          suggestions?: Array<{
-            select: string;
-            link?: string;
-            data?: string;
-            value?: string;
-          }>;
-        };
+        clearTimeout(timeoutId);
 
-        const rawSuggestions = rawData.suggestions ?? [];
-        if (rawSuggestions.length > 0) {
-          const suggestions: AutocompleteSuggestion[] = rawSuggestions.map(
-            (item) => ({
-              select: item.select,
-              link: item.link,
-              value: item.value,
-              phonetic: DictionaryService.parsePhonetic(item.data),
-              definition: DictionaryService.parseDefinition(item.data),
-              data: item.data,
-            })
-          );
-
-          return {
-            query: rawData.query || query,
-            suggestions,
+        const contentType = res.headers.get('content-type') || '';
+        if (res.ok && contentType.includes('application/json')) {
+          const rawData = (await res.json()) as {
+            query?: string;
+            suggestions?: Array<{
+              select: string;
+              link?: string;
+              data?: string;
+              value?: string;
+            }>;
           };
+
+          const rawSuggestions = rawData.suggestions ?? [];
+          if (rawSuggestions.length > 0) {
+            const suggestions: AutocompleteSuggestion[] = rawSuggestions.map(
+              (item) => ({
+                select: item.select,
+                link: item.link,
+                value: item.value,
+                phonetic: DictionaryService.parsePhonetic(item.data),
+                definition: DictionaryService.parseDefinition(item.data),
+                data: item.data,
+              })
+            );
+
+            return {
+              query: rawData.query || query,
+              suggestions,
+            };
+          }
         }
+      } catch {
+        // Try next endpoint
       }
-    } catch {
-      // Laban Dict unavailable or redirected to HTML, fall through to Datamuse
     }
 
     // Datamuse API fallback (Free, fast, global autocomplete endpoint)
@@ -297,73 +305,118 @@ export class DictionaryService {
   }
 
   /**
-   * Crawl Laban Dict web page (https://dict.laban.vn/find?type=1&query={word})
-   * to extract example sentences and Vietnamese translations.
+   * Crawl Laban Dict web page to extract IPA, audio URL, and example sentences.
    */
-  static async fetchExamples(rawWord: string): Promise<WordExample[]> {
+  static async fetchLabanDetails(rawWord: string): Promise<{
+    word: string;
+    ipa?: string;
+    audioUrl?: string;
+    examples: WordExample[];
+  }> {
     const word = rawWord.trim();
-    if (!word) return [];
+    if (!word) return { word: '', examples: [] };
 
-    const targetUrl = `https://dict.laban.vn/find?type=1&query=${encodeURIComponent(word)}`;
+    const targetUrls = [
+      `https://dict.zlb.zapps.me/find?type=1&query=${encodeURIComponent(word)}`,
+      `https://dict.laban.vn/find?type=1&query=${encodeURIComponent(word)}`,
+    ];
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    for (const targetUrl of targetUrls) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
 
-    try {
-      const res = await fetch(targetUrl, {
-        method: 'GET',
-        headers: {
-          'User-Agent':
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          Accept:
-            'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        },
-        signal: controller.signal,
-        cache: 'no-store',
-      });
+        const res = await fetch(targetUrl, {
+          method: 'GET',
+          headers: {
+            'User-Agent':
+              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            Accept:
+              'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          },
+          signal: controller.signal,
+          cache: 'no-store',
+        });
 
-      clearTimeout(timeoutId);
+        clearTimeout(timeoutId);
 
-      if (!res.ok) return [];
+        if (!res.ok) continue;
 
-      const html = await res.text();
-      const results: WordExample[] = [];
-
-      const blockRegex =
-        /<div\s+class="color-light-blue[^"]*">([\s\S]*?)<\/div>(?:\s*<div\s+class="margin25">([\s\S]*?)<\/div>)?/gi;
-
-      let match = blockRegex.exec(html);
-      const seen = new Set<string>();
-
-      while (match !== null) {
-        const rawEnglish = match[1] || '';
-        const rawVietnamese = match[2] || '';
-
-        const english = rawEnglish
-          .replace(/<[^>]+>/g, '')
-          .replace(/&nbsp;/g, ' ')
-          .replace(/\s+/g, ' ')
-          .trim();
-
-        const vietnamese = rawVietnamese
-          .replace(/<[^>]+>/g, '')
-          .replace(/&nbsp;/g, ' ')
-          .replace(/\s+/g, ' ')
-          .trim();
-
-        if (english && english.length > 2 && !seen.has(english.toLowerCase())) {
-          seen.add(english.toLowerCase());
-          results.push({ english, vietnamese });
+        const html = await res.text();
+        if (html.length < 3000 || !html.includes('id="content_selectable"')) {
+          continue;
         }
 
-        if (results.length >= 10) break;
-        match = blockRegex.exec(html);
-      }
+        // Extract IPA
+        let ipa: string | undefined;
+        const ipaMatch =
+          html.match(/<span class="color-black">\s*\/([^/<]+)\/\s*<\/span>/i) ||
+          html.match(
+            /<h2[^>]*>[\s\S]*?<span class="color-black">([^<]+)<\/span>/i
+          );
+        if (ipaMatch) {
+          const rawIpa = ipaMatch[1].trim();
+          ipa = rawIpa.startsWith('/') ? rawIpa : `/${rawIpa}/`;
+        }
 
-      return results;
-    } catch {
-      clearTimeout(timeoutId);
-      return [];
+        // Extract examples
+        const results: WordExample[] = [];
+        const blockRegex =
+          /<div\s+class="color-light-blue[^"]*">([\s\S]*?)<\/div>(?:\s*<div\s+class="margin25">([\s\S]*?)<\/div>)?/gi;
+
+        let match = blockRegex.exec(html);
+        const seen = new Set<string>();
+
+        while (match !== null) {
+          const rawEnglish = match[1] || '';
+          const rawVietnamese = match[2] || '';
+
+          const english = rawEnglish
+            .replace(/<[^>]+>/g, '')
+            .replace(/&nbsp;/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+
+          const vietnamese = rawVietnamese
+            .replace(/<[^>]+>/g, '')
+            .replace(/&nbsp;/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+
+          if (
+            english &&
+            english.length > 2 &&
+            !seen.has(english.toLowerCase())
+          ) {
+            seen.add(english.toLowerCase());
+            results.push({ english, vietnamese });
+          }
+
+          if (results.length >= 15) break;
+          match = blockRegex.exec(html);
+        }
+
+        const audioUrl = `https://dict.zlb.zapps.me/ajax/getsound?accent=us&word=${encodeURIComponent(word)}`;
+
+        return {
+          word,
+          ipa,
+          audioUrl,
+          examples: results,
+        };
+      } catch {
+        // Ignore and try next endpoint
+      }
     }
+
+    return { word, examples: [] };
+  }
+
+  /**
+   * Crawl Laban Dict web page to extract example sentences and Vietnamese translations.
+   */
+  static async fetchExamples(rawWord: string): Promise<WordExample[]> {
+    const details = await DictionaryService.fetchLabanDetails(rawWord);
+    return details.examples;
   }
 }
