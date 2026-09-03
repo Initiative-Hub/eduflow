@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
+  issueLiveGameAvatarAccessToken,
   issueLiveGameTicket,
   signLiveGameServiceRequest,
+  verifyLiveGameAvatarAccessToken,
   verifyLiveGameServiceRequest,
   verifyLiveGameTicket,
 } from '@/lib/game-quiz/live-game-security';
@@ -68,5 +70,26 @@ describe('live-game authentication', () => {
     await expect(
       verify({ timestamp: String(Date.now() - 120_000) })
     ).resolves.toBe(false);
+  });
+
+  it('issues avatar access tokens with a distinct, session-bound audience', async () => {
+    const access = await issueLiveGameAvatarAccessToken({
+      audience: 'PARTICIPANT',
+      secret: ticketSecret,
+      sessionId,
+      userId,
+    });
+    const claims = await verifyLiveGameAvatarAccessToken(
+      access.token,
+      ticketSecret
+    );
+    expect(claims).toMatchObject({
+      audience: 'PARTICIPANT',
+      sessionId,
+      sub: userId,
+    });
+    await expect(
+      verifyLiveGameTicket(access.token, ticketSecret)
+    ).rejects.toThrow();
   });
 });

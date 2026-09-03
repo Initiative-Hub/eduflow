@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server';
 import { withAuth } from '@/lib/api/middlewares';
 import { validationErrorResponse } from '@/lib/game-quiz/http';
-import { issueLiveGameTicket } from '@/lib/game-quiz/live-game-security';
+import {
+  issueLiveGameAvatarAccessToken,
+  issueLiveGameTicket,
+} from '@/lib/game-quiz/live-game-security';
 import { liveGameTicketRequestSchema } from '@/lib/game-quiz/runtime-protocol';
 import { prisma } from '@/lib/prisma';
 
@@ -114,17 +117,27 @@ export const POST = withAuth(async (request, session) => {
   const secret = process.env.LIVE_GAME_TICKET_SECRET;
   if (!secret) throw new Error('LIVE_GAME_TICKET_SECRET is required.');
 
-  const ticket = await issueLiveGameTicket({
-    audience: parsed.data.audience,
-    role: session.user.role,
-    secret,
-    sessionId: gameSession.id,
-    userId: session.user.id,
-  });
+  const [ticket, avatarAccess] = await Promise.all([
+    issueLiveGameTicket({
+      audience: parsed.data.audience,
+      role: session.user.role,
+      secret,
+      sessionId: gameSession.id,
+      userId: session.user.id,
+    }),
+    issueLiveGameAvatarAccessToken({
+      audience: parsed.data.audience,
+      secret,
+      sessionId: gameSession.id,
+      userId: session.user.id,
+    }),
+  ]);
 
   return NextResponse.json({
     roomId: gameSession.id,
     ...ticket,
+    avatarAccessExpiresAt: avatarAccess.expiresAt,
+    avatarAccessToken: avatarAccess.token,
     profile: {
       displayName: session.user.name,
       image: session.user.image ?? null,

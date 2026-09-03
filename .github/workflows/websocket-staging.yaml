@@ -6,6 +6,7 @@ on:
       - staging
     paths:
       - party/**
+      - partykit.json
   workflow_dispatch:
 
 jobs:
@@ -36,7 +37,7 @@ jobs:
 
       - name: Deploy
         run: |
-          partykit deploy \
+          partykit deploy -n eduflow-party-staging \
             --var NEXT_APP_URL="$NEXT_APP_URL" \
             --var LIVE_GAME_TICKET_SECRET="$LIVE_GAME_TICKET_SECRET" \
             --var LIVE_GAME_S2S_SECRET="$LIVE_GAME_S2S_SECRET"

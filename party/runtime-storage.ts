@@ -1,12 +1,12 @@
 import type * as Party from 'partykit/server';
-import type { LiveGameRuntimeState } from '../src/lib/game-quiz/runtime-engine';
+import type { LiveGameRuntimeState } from './runtime-engine';
 import type {
   RoomInitialization,
   RuntimeAnswer,
   RuntimeParticipant,
   RuntimeRound,
   RuntimeSession,
-} from '../src/lib/game-quiz/runtime-protocol';
+} from './runtime-protocol';
 
 export type StoredRoomMetadata = {
   initializationKey: string;

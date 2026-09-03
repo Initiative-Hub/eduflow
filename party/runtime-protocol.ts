@@ -96,15 +96,6 @@ export type RuntimeRound = z.infer<typeof runtimeRoundSchema>;
 export type RuntimeParticipant = z.infer<typeof runtimeParticipantSchema>;
 export type RuntimeAnswer = z.infer<typeof runtimeAnswerSchema>;
 
-export const liveGameTicketRequestSchema = z.discriminatedUnion('audience', [
-  z.object({ audience: z.literal('HOST'), sessionId: z.uuid() }),
-  z.object({
-    audience: z.literal('PARTICIPANT'),
-    joinCode: z.string().regex(/^\d{6}$/),
-    expectedSessionId: z.uuid().optional(),
-  }),
-]);
-
 export const liveGameTicketClaimsSchema = z.object({
   iss: z.literal('eduflow-next'),
   aud: z.union([z.literal('eduflow-partykit'), z.array(z.string())]),
@@ -119,22 +110,6 @@ export const liveGameTicketClaimsSchema = z.object({
 });
 
 export type LiveGameTicketClaims = z.infer<typeof liveGameTicketClaimsSchema>;
-
-export const liveGameAvatarAccessClaimsSchema = z.object({
-  iss: z.literal('eduflow-next'),
-  aud: z.literal('eduflow-live-game-avatar'),
-  sub: z.uuid(),
-  sessionId: z.uuid(),
-  audience: liveGameAudienceSchema,
-  jti: z.uuid(),
-  iat: z.number().int(),
-  nbf: z.number().int(),
-  exp: z.number().int(),
-});
-
-export type LiveGameAvatarAccessClaims = z.infer<
-  typeof liveGameAvatarAccessClaimsSchema
->;
 
 export const hostCommandMessageSchema = z.object({
   type: z.literal('host.command'),
@@ -164,8 +139,6 @@ export const liveGameClientMessageSchema = z.discriminatedUnion('type', [
   hostCommandMessageSchema,
   playerAnswerMessageSchema,
 ]);
-
-export type LiveGameClientMessage = z.infer<typeof liveGameClientMessageSchema>;
 
 const projectedOptionSchema = z.object({
   id: z.uuid(),

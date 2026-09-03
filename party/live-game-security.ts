@@ -1,17 +1,12 @@
-import { jwtVerify, SignJWT } from 'jose';
+import { jwtVerify } from 'jose';
 import {
-  type LiveGameAudience,
-  type LiveGameAvatarAccessClaims,
   type LiveGameTicketClaims,
-  liveGameAvatarAccessClaimsSchema,
   liveGameTicketClaimsSchema,
 } from './runtime-protocol';
 
 const encoder = new TextEncoder();
 const TICKET_ISSUER = 'eduflow-next';
 const TICKET_AUDIENCE = 'eduflow-partykit';
-const AVATAR_ACCESS_AUDIENCE = 'eduflow-live-game-avatar';
-const AVATAR_ACCESS_TTL_SECONDS = 24 * 60 * 60;
 const SERVICE_CLOCK_SKEW_MS = 60_000;
 
 function secretBytes(secret: string) {
@@ -31,33 +26,6 @@ function secretKey(secret: string, usages: KeyUsage[]) {
   );
 }
 
-export async function issueLiveGameTicket(input: {
-  audience: LiveGameAudience;
-  role: string | null;
-  secret: string;
-  sessionId: string;
-  userId: string;
-}) {
-  const now = Math.floor(Date.now() / 1_000);
-  const expiresAt = now + 60;
-  const token = await new SignJWT({
-    audience: input.audience,
-    role: input.role,
-    sessionId: input.sessionId,
-  })
-    .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
-    .setSubject(input.userId)
-    .setIssuer(TICKET_ISSUER)
-    .setAudience(TICKET_AUDIENCE)
-    .setJti(crypto.randomUUID())
-    .setIssuedAt(now)
-    .setNotBefore(now - 5)
-    .setExpirationTime(expiresAt)
-    .sign(await secretKey(input.secret, ['sign']));
-
-  return { token, expiresAt: new Date(expiresAt * 1_000).toISOString() };
-}
-
 export async function verifyLiveGameTicket(
   token: string,
   secret: string
@@ -72,50 +40,6 @@ export async function verifyLiveGameTicket(
     }
   );
   return liveGameTicketClaimsSchema.parse({
-    ...payload,
-    audience: payload.audience,
-  });
-}
-
-export async function issueLiveGameAvatarAccessToken(input: {
-  audience: LiveGameAudience;
-  secret: string;
-  sessionId: string;
-  userId: string;
-}) {
-  const now = Math.floor(Date.now() / 1_000);
-  const expiresAt = now + AVATAR_ACCESS_TTL_SECONDS;
-  const token = await new SignJWT({
-    audience: input.audience,
-    sessionId: input.sessionId,
-  })
-    .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
-    .setSubject(input.userId)
-    .setIssuer(TICKET_ISSUER)
-    .setAudience(AVATAR_ACCESS_AUDIENCE)
-    .setJti(crypto.randomUUID())
-    .setIssuedAt(now)
-    .setNotBefore(now - 5)
-    .setExpirationTime(expiresAt)
-    .sign(await secretKey(input.secret, ['sign']));
-
-  return { token, expiresAt: new Date(expiresAt * 1_000).toISOString() };
-}
-
-export async function verifyLiveGameAvatarAccessToken(
-  token: string,
-  secret: string
-): Promise<LiveGameAvatarAccessClaims> {
-  const { payload } = await jwtVerify(
-    token,
-    await secretKey(secret, ['verify']),
-    {
-      algorithms: ['HS256'],
-      audience: AVATAR_ACCESS_AUDIENCE,
-      issuer: TICKET_ISSUER,
-    }
-  );
-  return liveGameAvatarAccessClaimsSchema.parse({
     ...payload,
     audience: payload.audience,
   });

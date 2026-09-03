@@ -15,6 +15,8 @@ export type LiveGameTicketRequest =
     };
 
 export type LiveGameTicket = {
+  avatarAccessExpiresAt: string;
+  avatarAccessToken: string;
   expiresAt: string;
   profile: { displayName: string; image: string | null };
   roomId: string;
@@ -36,3 +38,16 @@ export type LiveGameOperation =
 
 export const requestLiveGameTicket = (request: LiveGameTicketRequest) =>
   apiClient.post<LiveGameTicket>('v1/live-game/ticket', request);
+
+export type LiveGameAvatarUrl = { objectKey: string; signedUrl: string };
+
+export const requestLiveGameAvatarUrls = (input: {
+  avatarAccessToken: string;
+  objectKeys: string[];
+  sessionId: string;
+}) =>
+  apiClient.post<{ data: LiveGameAvatarUrl[] }>(
+    'v1/live-game/avatar-urls',
+    { objectKeys: input.objectKeys, sessionId: input.sessionId },
+    { headers: { Authorization: `Bearer ${input.avatarAccessToken}` } }
+  );

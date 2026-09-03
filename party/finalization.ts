@@ -1,10 +1,7 @@
 import type * as Party from 'partykit/server';
-import {
-  sha256Hex,
-  signLiveGameServiceRequest,
-} from '../src/lib/game-quiz/live-game-security';
-import type { LiveGameRuntimeState } from '../src/lib/game-quiz/runtime-engine';
-import type { LiveGameFinalization } from '../src/lib/game-quiz/runtime-protocol';
+import { sha256Hex, signLiveGameServiceRequest } from './live-game-security';
+import type { LiveGameRuntimeState } from './runtime-engine';
+import type { LiveGameFinalization } from './runtime-protocol';
 import type { StoredFinalization } from './runtime-storage';
 
 const CALLBACK_PATH = '/api/v1/internal/live-game/finalize';

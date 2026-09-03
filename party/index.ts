@@ -1,9 +1,10 @@
 import type * as Party from 'partykit/server';
+import { createFinalization, deliverFinalization } from './finalization';
 import {
   sha256Hex,
   verifyLiveGameServiceRequest,
   verifyLiveGameTicket,
-} from '../src/lib/game-quiz/live-game-security';
+} from './live-game-security';
 import {
   applyHostCommand,
   createLiveGameRuntime,
@@ -15,17 +16,12 @@ import {
   reconcileLiveGameDeadline,
   submitLiveGameAnswer,
   terminateForMissingHost,
-} from '../src/lib/game-quiz/runtime-engine';
+} from './runtime-engine';
 import {
   type LiveGameServerMessage,
   liveGameClientMessageSchema,
   roomInitializationSchema,
-} from '../src/lib/game-quiz/runtime-protocol';
-import {
-  createAvatarReadSignedUrl,
-  isAvatarObjectKey,
-} from '../src/lib/storage/avatar';
-import { createFinalization, deliverFinalization } from './finalization';
+} from './runtime-protocol';
 import {
   emptyTimers,
   initializeRoom,
@@ -363,17 +359,16 @@ export default class LiveGameParty implements Party.Server {
   private async broadcastSnapshots() {
     if (!this.state) return;
     const online = this.onlineUserIds();
-    const imageUrls = new Map<string, string | null>();
     for (const connection of this.room.getConnections<ConnectionData>()) {
       if (!connection.state?.synced) continue;
       try {
         connection.send(
           JSON.stringify({
             type: 'session.snapshot',
-            snapshot: await this.projectSnapshot(
+            snapshot: projectLiveGameSnapshot(
+              this.state,
               connection.state,
-              online,
-              imageUrls
+              online
             ),
           })
         );
@@ -381,75 +376,6 @@ export default class LiveGameParty implements Party.Server {
         if (!(error instanceof LiveGameRuntimeError)) throw error;
       }
     }
-  }
-
-  private async projectSnapshot(
-    actor: RuntimeActor,
-    online: ReadonlySet<string>,
-    imageUrls: Map<string, string | null>
-  ) {
-    if (!this.state) throw new Error('The game room is not initialized.');
-    const snapshot = projectLiveGameSnapshot(this.state, actor, online);
-    const resolveImage = async (image: string | null | undefined) => {
-      if (!image || !isAvatarObjectKey(image)) return image ?? null;
-      const cached = imageUrls.get(image);
-      if (cached !== undefined) return cached;
-      try {
-        const signedUrl = await createAvatarReadSignedUrl({ objectKey: image });
-        imageUrls.set(image, signedUrl);
-        return signedUrl;
-      } catch (error) {
-        console.error('Failed to create avatar signed URL:', error);
-        imageUrls.set(image, null);
-        return null;
-      }
-    };
-    const participants = await Promise.all(
-      snapshot.participants.map(async (participant) => ({
-        ...participant,
-        image: await resolveImage(participant.image),
-      }))
-    );
-    const leaderboard = await Promise.all(
-      snapshot.leaderboard.map(async (participant) => ({
-        ...participant,
-        image: await resolveImage(participant.image),
-      }))
-    );
-    const participant = snapshot.participant
-      ? {
-          ...snapshot.participant,
-          image: await resolveImage(snapshot.participant.image),
-        }
-      : null;
-    const currentRound = snapshot.currentRound
-      ? {
-          ...snapshot.currentRound,
-          options: await Promise.all(
-            snapshot.currentRound.options.map(async (option) => ({
-              ...option,
-              ...(option.answerers
-                ? {
-                    answerers: await Promise.all(
-                      option.answerers.map(async (answerer) => ({
-                        ...answerer,
-                        image: await resolveImage(answerer.image),
-                      }))
-                    ),
-                  }
-                : {}),
-            }))
-          ),
-        }
-      : null;
-
-    return {
-      ...snapshot,
-      currentRound,
-      leaderboard,
-      participant,
-      participants,
-    };
   }
 
   private hostConnected() {

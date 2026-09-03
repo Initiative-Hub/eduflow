@@ -1,16 +1,22 @@
 'use client';
 
+import { useQuery } from '@tanstack/react-query';
 import usePartySocket from 'partysocket/react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   type LiveGameClientMessage,
   liveGameServerMessageSchema,
   liveGameSnapshotSchema,
 } from '@/lib/game-quiz/runtime-protocol';
 import {
+  hydrateLiveGameSnapshotAvatars,
+  liveGameAvatarObjectKeys,
+} from './live-game-avatar-hydration';
+import {
   type LiveGameClientState,
   type LiveGameOperation,
   type LiveGameTicket,
+  requestLiveGameAvatarUrls,
   requestLiveGameTicket,
 } from './live-game-client';
 import type { LiveGameSession } from './live-game-session';
@@ -29,6 +35,7 @@ type PendingOperation = {
 
 export function useLiveGameClient(selection: LiveGameSession | null) {
   const pending = useRef(new Map<string, PendingOperation>());
+  const avatarAccessToken = useRef<string | null>(null);
   const profile = useRef<LiveGameTicket['profile'] | null>(null);
   const [state, setState] = useState(initialState);
   const audience = selection?.audience;
@@ -53,6 +60,7 @@ export function useLiveGameClient(selection: LiveGameSession | null) {
             joinCode: joinCode!,
           });
     profile.current = ticket.profile;
+    avatarAccessToken.current = ticket.avatarAccessToken;
     return { token: ticket.token };
   }, [audience, joinCode, sessionId]);
 
@@ -135,6 +143,7 @@ export function useLiveGameClient(selection: LiveGameSession | null) {
 
   useEffect(() => {
     profile.current = null;
+    avatarAccessToken.current = null;
     setState(initialState);
     return () => {
       for (const operation of pending.current.values()) {
@@ -180,5 +189,39 @@ export function useLiveGameClient(selection: LiveGameSession | null) {
     socket.reconnect();
   }, [sessionId, socket]);
 
-  return { reconnect, send, ...state };
+  const rawSnapshot = state.snapshot;
+  const objectKeys = useMemo(
+    () => liveGameAvatarObjectKeys(rawSnapshot),
+    [rawSnapshot]
+  );
+  const avatarUrlsQuery = useQuery({
+    enabled: Boolean(
+      sessionId && avatarAccessToken.current && objectKeys.length
+    ),
+    queryFn: () =>
+      requestLiveGameAvatarUrls({
+        avatarAccessToken: avatarAccessToken.current!,
+        objectKeys,
+        sessionId: sessionId!,
+      }),
+    queryKey: ['live-game-avatar-urls', sessionId, objectKeys],
+    refetchInterval: 25 * 60 * 1_000,
+    staleTime: 25 * 60 * 1_000,
+  });
+  const signedUrls = useMemo(
+    () =>
+      new Map(
+        (avatarUrlsQuery.data?.data ?? []).map(({ objectKey, signedUrl }) => [
+          objectKey,
+          signedUrl,
+        ])
+      ),
+    [avatarUrlsQuery.data]
+  );
+  const snapshot = useMemo(
+    () => hydrateLiveGameSnapshotAvatars(rawSnapshot, signedUrls),
+    [rawSnapshot, signedUrls]
+  );
+
+  return { ...state, reconnect, send, snapshot };
 }
