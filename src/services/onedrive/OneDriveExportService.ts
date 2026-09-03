@@ -1,25 +1,18 @@
+import type { Client } from '@microsoft/microsoft-graph-client';
+import type * as MicrosoftGraph from '@microsoft/microsoft-graph-types';
 import { STORAGE_MAX_FILE_SIZE_BYTES } from '@/lib/storage/file-storage';
 import type { CloudDriveExportArtifact } from '@/services/cloud-drive/cloud-drive-export-types';
 import { OneDriveDestinationService } from './OneDriveDestinationService';
 import { OneDriveExportError } from './OneDriveExportError';
+import {
+  getGraphErrorMessage,
+  getGraphErrorStatus,
+} from './OneDriveMicrosoftSdkAdapter';
 import type { OneDriveAuthorizedContext } from './OneDriveOAuthTokenService';
 import type { OneDriveDestination } from './onedrive-types';
 
-const GRAPH_BASE_URL = 'https://graph.microsoft.com/v1.0';
 const SMALL_UPLOAD_MAX_BYTES = 4 * 1024 * 1024;
 const UPLOAD_SESSION_CHUNK_BYTES = 5 * 1024 * 1024;
-
-type DriveItem = {
-  id?: string | null;
-  name?: string | null;
-  size?: number | null;
-  webUrl?: string | null;
-  file?: { mimeType?: string | null } | null;
-};
-
-type UploadSession = {
-  uploadUrl?: string | null;
-};
 
 export type OneDriveExportContext = Omit<
   OneDriveAuthorizedContext,
@@ -52,7 +45,7 @@ function toUploadBlob(bytes: Uint8Array) {
   return new Blob([copy.buffer]);
 }
 
-async function parseGraphJson<T>(response: Response): Promise<T> {
+async function parseUploadSessionJson<T>(response: Response): Promise<T> {
   const text = await response.text();
   const data = text ? JSON.parse(text) : {};
   if (!response.ok) {
@@ -68,9 +61,9 @@ async function parseGraphJson<T>(response: Response): Promise<T> {
 }
 
 function throwExportError(error: unknown): never {
-  const message =
-    error instanceof Error ? error.message : 'OneDrive request failed.';
-  if (message.includes('(403)') || message.includes('(404)')) {
+  const status = getGraphErrorStatus(error);
+  const message = getGraphErrorMessage(error);
+  if (status === 403 || status === 404) {
     throw new OneDriveExportError(
       'DRIVE_DESTINATION_UNAVAILABLE',
       'The OneDrive destination is no longer available or writable.'
@@ -94,61 +87,45 @@ function getDestinationPath(
 
 async function uploadSmall(options: {
   artifact: CloudDriveExportArtifact;
-  accessToken: string;
   destination: OneDriveDestination;
   fileName: string;
+  graph: Client;
 }) {
   try {
     const body = toUploadBlob(options.artifact.bytes);
-    const response = await fetch(
-      `${GRAPH_BASE_URL}${getDestinationPath(
-        options.destination,
-        options.fileName
-      )}:/content`,
-      {
-        body,
-        headers: {
-          Authorization: `Bearer ${options.accessToken}`,
-          'Content-Type': options.artifact.mimeType,
-        },
-        method: 'PUT',
-      }
-    );
-    return parseGraphJson<DriveItem>(response);
+    return (await options.graph
+      .api(
+        `${getDestinationPath(options.destination, options.fileName)}:/content`
+      )
+      .header('Content-Type', options.artifact.mimeType)
+      .put(body)) as MicrosoftGraph.DriveItem;
   } catch (error) {
     throwExportError(error);
   }
 }
 
 async function createUploadSession(options: {
-  accessToken: string;
   destination: OneDriveDestination;
   fileName: string;
+  graph: Client;
 }) {
-  const response = await fetch(
-    `${GRAPH_BASE_URL}${getDestinationPath(
-      options.destination,
-      options.fileName
-    )}:/createUploadSession`,
-    {
-      body: JSON.stringify({
-        item: { '@microsoft.graph.conflictBehavior': 'rename' },
-      }),
-      headers: {
-        Authorization: `Bearer ${options.accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      method: 'POST',
-    }
-  );
-  return parseGraphJson<UploadSession>(response);
+  return (await options.graph
+    .api(
+      `${getDestinationPath(
+        options.destination,
+        options.fileName
+      )}:/createUploadSession`
+    )
+    .post({
+      item: { '@microsoft.graph.conflictBehavior': 'rename' },
+    })) as MicrosoftGraph.UploadSession;
 }
 
 async function uploadLarge(options: {
   artifact: CloudDriveExportArtifact;
-  accessToken: string;
   destination: OneDriveDestination;
   fileName: string;
+  graph: Client;
 }) {
   try {
     const session = await createUploadSession(options);
@@ -157,7 +134,7 @@ async function uploadLarge(options: {
     }
     const bytes = options.artifact.bytes;
     let uploaded = 0;
-    let latest: DriveItem | null = null;
+    let latest: MicrosoftGraph.DriveItem | null = null;
 
     while (uploaded < bytes.byteLength) {
       const endExclusive = Math.min(
@@ -176,7 +153,8 @@ async function uploadLarge(options: {
         },
         method: 'PUT',
       });
-      const data = await parseGraphJson<DriveItem>(response);
+      const data =
+        await parseUploadSessionJson<MicrosoftGraph.DriveItem>(response);
       latest = data;
       uploaded = endExclusive;
     }
@@ -192,7 +170,7 @@ async function uploadLarge(options: {
 
 function mapResult(options: {
   destination: OneDriveDestination;
-  file: DriveItem;
+  file: MicrosoftGraph.DriveItem;
 }) {
   if (!options.file.id) {
     throw new OneDriveExportError(
@@ -232,16 +210,16 @@ export class OneDriveExportService {
     const file =
       options.artifact.bytes.byteLength <= SMALL_UPLOAD_MAX_BYTES
         ? await uploadSmall({
-            accessToken: context.accessToken,
             artifact: options.artifact,
             destination: context.destination,
             fileName,
+            graph: context.graph,
           })
         : await uploadLarge({
-            accessToken: context.accessToken,
             artifact: options.artifact,
             destination: context.destination,
             fileName,
+            graph: context.graph,
           });
 
     return mapResult({ destination: context.destination, file });

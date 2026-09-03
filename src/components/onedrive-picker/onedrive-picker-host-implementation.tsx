@@ -92,7 +92,7 @@ export function OneDrivePickerHostImplementation({
       },
       typesAndSources: {
         filters: mode === 'folder' ? ['folder'] : ['file'],
-        mode: 'files',
+        mode: mode === 'folder' ? 'folders' : 'files',
       },
     };
 

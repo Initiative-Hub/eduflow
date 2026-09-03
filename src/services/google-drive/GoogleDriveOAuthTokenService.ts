@@ -201,12 +201,18 @@ export class GoogleDriveOAuthTokenService {
     if (!integration) throw new Error('Google Drive is not connected.');
 
     const auth = createOAuthClient();
+    const refreshToken = integration.refreshToken
+      ? decryptToken(integration.refreshToken)
+      : null;
+    if (!refreshToken) {
+      throw new Error('Google Drive refresh token is not configured.');
+    }
     auth.setCredentials({
       access_token: integration.accessToken
         ? decryptToken(integration.accessToken)
         : null,
       expiry_date: integration.expiresAt?.getTime() ?? null,
-      refresh_token: decryptToken(integration.refreshToken),
+      refresh_token: refreshToken,
       scope: integration.scope ?? undefined,
       token_type: integration.tokenType ?? undefined,
     });

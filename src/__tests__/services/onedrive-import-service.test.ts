@@ -18,38 +18,42 @@ const storageService = StorageService as unknown as {
   createFileFromBytes: ReturnType<typeof vi.fn>;
 };
 
-function jsonResponse(data: unknown, status = 200) {
-  return new Response(JSON.stringify(data), {
-    headers: { 'Content-Type': 'application/json' },
-    status,
-  });
+const itemGet = vi.fn();
+const contentGet = vi.fn();
+const select = vi.fn().mockReturnThis();
+const responseType = vi.fn().mockReturnThis();
+
+function createGraph() {
+  return {
+    api: vi.fn((path: string) =>
+      path.endsWith('/content')
+        ? { get: contentGet, responseType }
+        : { get: itemGet, select }
+    ),
+  };
 }
 
 describe('OneDriveImportService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     tokenService.getAuthorizedContext.mockResolvedValue({
-      accessToken: 'one-access-token',
+      graph: createGraph(),
     });
-    vi.stubGlobal('fetch', vi.fn());
+    itemGet.mockResolvedValue({
+      file: { mimeType: 'application/pdf' },
+      id: 'item-1',
+      name: 'lesson.pdf',
+      size: 12,
+      webUrl: 'https://onedrive.test/item-1',
+    });
+    contentGet.mockResolvedValue(
+      new Response(new Uint8Array([1, 2, 3]), {
+        headers: { 'Content-Type': 'application/pdf' },
+      })
+    );
   });
 
-  it('downloads a selected OneDrive file into storage', async () => {
-    vi.mocked(fetch)
-      .mockResolvedValueOnce(
-        jsonResponse({
-          file: { mimeType: 'application/pdf' },
-          id: 'item-1',
-          name: 'lesson.pdf',
-          size: 12,
-          webUrl: 'https://onedrive.test/item-1',
-        })
-      )
-      .mockResolvedValueOnce(
-        new Response(new Uint8Array([1, 2, 3]), {
-          headers: { 'Content-Type': 'application/pdf' },
-        })
-      );
+  it('downloads a selected OneDrive file into storage through Graph SDK context', async () => {
     storageService.createFileFromBytes.mockResolvedValue({ id: 'file-1' });
 
     const result = await OneDriveImportService.importFile({
@@ -60,6 +64,8 @@ describe('OneDriveImportService', () => {
     });
 
     expect(result).toEqual({ id: 'file-1' });
+    expect(select).toHaveBeenCalledWith('id,name,size,file,folder,webUrl');
+    expect(responseType).toHaveBeenCalled();
     expect(storageService.createFileFromBytes).toHaveBeenCalledWith(
       expect.objectContaining({
         contentType: 'application/pdf',
@@ -70,13 +76,11 @@ describe('OneDriveImportService', () => {
   });
 
   it('rejects folders', async () => {
-    vi.mocked(fetch).mockResolvedValueOnce(
-      jsonResponse({
-        folder: {},
-        id: 'folder-1',
-        name: 'Folder',
-      })
-    );
+    itemGet.mockResolvedValue({
+      folder: {},
+      id: 'folder-1',
+      name: 'Folder',
+    });
 
     await expect(
       OneDriveImportService.importFile({

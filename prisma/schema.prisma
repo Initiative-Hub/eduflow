@@ -209,7 +209,8 @@ model ConnectedIntegration {
   provider        IntegrationProvider
   providerAccount String?             @map("provider_account")
   accessToken     String?             @map("access_token")
-  refreshToken    String              @map("refresh_token")
+  refreshToken    String?             @map("refresh_token")
+  tokenCache      String?             @map("token_cache")
   scope           String?
   tokenType       String?             @map("token_type")
   expiresAt       DateTime?           @map("expires_at")

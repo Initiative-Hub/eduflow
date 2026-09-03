@@ -12,6 +12,9 @@ export type OneDriveMetadata = {
   accountName?: string | null;
   defaultDriveId?: string | null;
   driveType?: string | null;
+  msalHomeAccountId?: string | null;
+  msalLocalAccountId?: string | null;
+  msalTenantId?: string | null;
   microsoftSubject?: string | null;
   pickerBaseUrl?: string | null;
   destination?: OneDriveDestination | null;

@@ -1,3 +1,4 @@
+import type * as MicrosoftGraph from '@microsoft/microsoft-graph-types';
 import { IntegrationProvider } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
 import { OneDriveOAuthTokenService } from './OneDriveOAuthTokenService';
@@ -6,38 +7,6 @@ import {
   parseOneDriveDestination,
   parseOneDriveMetadata,
 } from './onedrive-types';
-
-const GRAPH_BASE_URL = 'https://graph.microsoft.com/v1.0';
-
-type DriveItem = {
-  folder?: Record<string, unknown> | null;
-  id?: string | null;
-  name?: string | null;
-  webUrl?: string | null;
-};
-
-type Drive = {
-  id?: string | null;
-  webUrl?: string | null;
-};
-
-async function graphGet<T>(accessToken: string, path: string) {
-  const response = await fetch(`${GRAPH_BASE_URL}${path}`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-  const text = await response.text();
-  const data = text ? JSON.parse(text) : {};
-  if (!response.ok) {
-    const message =
-      typeof data.error?.message === 'string'
-        ? data.error.message
-        : text || response.statusText;
-    throw new Error(
-      `Microsoft Graph request failed (${response.status}): ${message}`
-    );
-  }
-  return data as T;
-}
 
 function encodeGraphId(value: string) {
   return encodeURIComponent(value);
@@ -90,10 +59,10 @@ export class OneDriveDestinationService {
     let destination: OneDriveDestination;
 
     if (input.kind === 'my_drive') {
-      const drive = await graphGet<Drive>(
-        context.accessToken,
-        '/me/drive?$select=id,webUrl'
-      );
+      const drive = (await context.graph
+        .api('/me/drive')
+        .select('id,webUrl')
+        .get()) as MicrosoftGraph.Drive;
       if (!drive.id) {
         throw new Error('OneDrive destination is not available.');
       }
@@ -105,14 +74,17 @@ export class OneDriveDestinationService {
         webViewLink: drive.webUrl ?? null,
       };
     } else {
-      const folder = await graphGet<DriveItem>(
-        context.accessToken,
-        `/drives/${encodeGraphId(input.driveId)}/items/${encodeGraphId(
-          input.folderId
-        )}?$select=id,name,folder,webUrl`
-      ).catch(() => {
-        throw new Error('OneDrive destination is not a writable folder.');
-      });
+      const folder = (await context.graph
+        .api(
+          `/drives/${encodeGraphId(input.driveId)}/items/${encodeGraphId(
+            input.folderId
+          )}`
+        )
+        .select('id,name,folder,webUrl')
+        .get()
+        .catch(() => {
+          throw new Error('OneDrive destination is not a writable folder.');
+        })) as MicrosoftGraph.DriveItem;
       if (!folder.id || !folder.folder) {
         throw new Error('OneDrive destination is not a writable folder.');
       }

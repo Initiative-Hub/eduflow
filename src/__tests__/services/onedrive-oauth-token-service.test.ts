@@ -1,6 +1,12 @@
-import { createCipheriv, createHash, randomBytes } from 'node:crypto';
+import {
+  createCipheriv,
+  createDecipheriv,
+  createHash,
+  randomBytes,
+} from 'node:crypto';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { prisma } from '@/lib/prisma';
+import { OneDriveMicrosoftSdkAdapter } from '@/services/onedrive/OneDriveMicrosoftSdkAdapter';
 import { OneDriveOAuthTokenService } from '@/services/onedrive/OneDriveOAuthTokenService';
 
 vi.mock('@/lib/prisma', () => ({
@@ -14,11 +20,41 @@ vi.mock('@/lib/prisma', () => ({
   },
 }));
 
+vi.mock('@/services/onedrive/OneDriveMicrosoftSdkAdapter', () => ({
+  getAccountMetadata: vi.fn((account) => ({
+    msalHomeAccountId: account?.homeAccountId ?? null,
+    msalLocalAccountId: account?.localAccountId ?? null,
+    msalTenantId: account?.tenantId ?? null,
+  })),
+  getScopeForResource: vi.fn(() => [
+    'openid',
+    'email',
+    'profile',
+    'offline_access',
+    'User.Read',
+    'Files.ReadWrite',
+  ]),
+  OneDriveMicrosoftSdkAdapter: {
+    createWithCache: vi.fn(),
+    getAuthorizationUrl: vi.fn(),
+  },
+}));
+
 const connectedIntegration = prisma.connectedIntegration as unknown as {
   delete: ReturnType<typeof vi.fn>;
   findUnique: ReturnType<typeof vi.fn>;
   update: ReturnType<typeof vi.fn>;
   upsert: ReturnType<typeof vi.fn>;
+};
+const sdkAdapter = OneDriveMicrosoftSdkAdapter as unknown as {
+  createWithCache: ReturnType<typeof vi.fn>;
+  getAuthorizationUrl: ReturnType<typeof vi.fn>;
+};
+
+const msalAccount = {
+  homeAccountId: 'home-account-1',
+  localAccountId: 'local-account-1',
+  tenantId: 'tenant-1',
 };
 
 function encryptTokenForTest(value: string) {
@@ -39,65 +75,104 @@ function encryptTokenForTest(value: string) {
   ].join(':');
 }
 
-function jsonResponse(data: unknown, status = 200) {
-  return new Response(JSON.stringify(data), {
-    headers: { 'Content-Type': 'application/json' },
-    status,
+function decryptTokenForTest(value: string) {
+  const [version, ivValue, tagValue, encryptedValue] = value.split(':');
+  expect(version).toBe('v1');
+  const key = createHash('sha256')
+    .update(process.env.BETTER_AUTH_SECRET || '')
+    .digest();
+  const decipher = createDecipheriv(
+    'aes-256-gcm',
+    key,
+    Buffer.from(ivValue ?? '', 'base64url')
+  );
+  decipher.setAuthTag(Buffer.from(tagValue ?? '', 'base64url'));
+  return Buffer.concat([
+    decipher.update(Buffer.from(encryptedValue ?? '', 'base64url')),
+    decipher.final(),
+  ]).toString('utf8');
+}
+
+function createGraphMock() {
+  const getProfile = vi.fn().mockResolvedValue({
+    displayName: 'One User',
+    id: 'microsoft-subject',
+    mail: 'one@example.com',
   });
+  const getDrive = vi.fn().mockResolvedValue({
+    driveType: 'business',
+    id: 'drive-1',
+    webUrl: 'https://tenant-my.sharepoint.com/personal/user/Documents',
+  });
+  const graph = {
+    api: vi.fn((path: string) => ({
+      get: path === '/me' ? getProfile : getDrive,
+      select: vi.fn().mockReturnThis(),
+    })),
+  };
+  return { getDrive, getProfile, graph };
+}
+
+function createSdkMock() {
+  const graph = createGraphMock();
+  return {
+    acquireTokenByRefreshToken: vi.fn().mockResolvedValue({
+      accessToken: 'legacy-migrated-token',
+      account: msalAccount,
+      expiresAt: new Date('2026-08-24T01:00:00.000Z'),
+      scope: 'Files.ReadWrite',
+      tokenType: 'Bearer',
+    }),
+    acquireTokenSilent: vi.fn().mockResolvedValue({
+      accessToken: 'silent-access-token',
+      account: msalAccount,
+      expiresAt: new Date('2026-08-24T02:00:00.000Z'),
+      scope: 'Files.ReadWrite',
+      tokenType: 'Bearer',
+    }),
+    createGraphClient: vi.fn(() => graph.graph),
+    exchangeCode: vi.fn().mockResolvedValue({
+      accessToken: 'new-access-token',
+      account: msalAccount,
+      expiresAt: new Date('2026-08-24T00:30:00.000Z'),
+      scope: 'Files.ReadWrite',
+      tokenType: 'Bearer',
+    }),
+    findAccount: vi.fn().mockResolvedValue(msalAccount),
+    graph,
+    serializeCache: vi.fn().mockReturnValue('serialized-msal-cache'),
+  };
 }
 
 describe('OneDriveOAuthTokenService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.MICROSOFT_CLIENT_ID = 'microsoft-client-id';
-    process.env.MICROSOFT_CLIENT_SECRET = 'microsoft-client-secret';
-    process.env.MICROSOFT_TENANT_ID = 'common';
     process.env.BETTER_AUTH_SECRET = 'test-encryption-secret';
-    vi.stubGlobal('fetch', vi.fn());
   });
 
-  it('builds an authorization URL with offline OneDrive scopes', () => {
-    const result = OneDriveOAuthTokenService.getAuthorizationUrl({
+  it('builds an authorization URL through the Microsoft SDK adapter', async () => {
+    sdkAdapter.getAuthorizationUrl.mockResolvedValue(
+      'https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=microsoft-client-id'
+    );
+
+    const result = await OneDriveOAuthTokenService.getAuthorizationUrl({
       redirectUri: 'https://eduflow.test/api/v1/integrations/onedrive/callback',
       state: 'oauth-state',
     });
 
-    const url = new URL(result);
-    expect(url.origin).toBe('https://login.microsoftonline.com');
-    expect(url.pathname).toBe('/common/oauth2/v2.0/authorize');
-    expect(url.searchParams.get('client_id')).toBe('microsoft-client-id');
-    expect(url.searchParams.get('response_type')).toBe('code');
-    expect(url.searchParams.get('scope')).toContain('offline_access');
-    expect(url.searchParams.get('scope')).toContain('Files.ReadWrite');
-    expect(url.searchParams.get('state')).toBe('oauth-state');
+    expect(result).toContain('microsoft-client-id');
+    expect(sdkAdapter.getAuthorizationUrl).toHaveBeenCalledWith({
+      redirectUri: 'https://eduflow.test/api/v1/integrations/onedrive/callback',
+      state: 'oauth-state',
+    });
   });
 
-  it('stores encrypted tokens and account metadata on connect', async () => {
-    const fetchMock = vi.mocked(fetch);
-    fetchMock
-      .mockResolvedValueOnce(
-        jsonResponse({
-          access_token: 'new-access-token',
-          expires_in: 3600,
-          refresh_token: 'new-refresh-token',
-          scope: 'Files.ReadWrite',
-          token_type: 'Bearer',
-        })
-      )
-      .mockResolvedValueOnce(
-        jsonResponse({
-          displayName: 'One User',
-          id: 'microsoft-subject',
-          mail: 'one@example.com',
-        })
-      )
-      .mockResolvedValueOnce(
-        jsonResponse({
-          driveType: 'business',
-          id: 'drive-1',
-          webUrl: 'https://tenant-my.sharepoint.com/personal/user/Documents',
-        })
-      );
+  it('stores encrypted MSAL cache and account metadata on connect', async () => {
+    const sdk = createSdkMock();
+    sdkAdapter.createWithCache.mockReturnValue(sdk);
+    connectedIntegration.findUnique.mockResolvedValue({
+      refreshToken: encryptTokenForTest('legacy-refresh-token'),
+    });
 
     await OneDriveOAuthTokenService.connect({
       code: 'authorization-code',
@@ -105,6 +180,10 @@ describe('OneDriveOAuthTokenService', () => {
       userId: 'user-1',
     });
 
+    expect(sdk.exchangeCode).toHaveBeenCalledWith({
+      code: 'authorization-code',
+      redirectUri: 'https://eduflow.test/api/v1/integrations/onedrive/callback',
+    });
     expect(connectedIntegration.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
         create: expect.objectContaining({
@@ -113,74 +192,174 @@ describe('OneDriveOAuthTokenService', () => {
           userId: 'user-1',
         }),
         update: expect.objectContaining({
-          providerAccount: 'one@example.com',
+          metadata: expect.objectContaining({
+            defaultDriveId: 'drive-1',
+            msalHomeAccountId: 'home-account-1',
+            pickerBaseUrl: 'https://tenant-my.sharepoint.com',
+          }),
         }),
       })
     );
+    const upsertArg = connectedIntegration.upsert.mock.calls[0]?.[0];
+    expect(decryptTokenForTest(upsertArg.create.tokenCache)).toBe(
+      'serialized-msal-cache'
+    );
+    expect(decryptTokenForTest(upsertArg.create.refreshToken)).toBe(
+      'legacy-refresh-token'
+    );
   });
 
-  it('refreshes stored credentials and replaces returned refresh tokens', async () => {
-    vi.setSystemTime(new Date('2026-08-24T00:00:00.000Z'));
+  it('acquires Graph tokens from the encrypted MSAL cache', async () => {
+    const sdk = createSdkMock();
+    sdkAdapter.createWithCache.mockReturnValue(sdk);
     connectedIntegration.findUnique.mockResolvedValue({
-      accessToken: encryptTokenForTest('expired-access-token'),
-      expiresAt: new Date('2026-08-23T00:00:00.000Z'),
-      metadata: {},
+      accessToken: encryptTokenForTest('stored-access-token'),
+      expiresAt: new Date('2026-08-24T00:00:00.000Z'),
+      metadata: {
+        msalHomeAccountId: 'home-account-1',
+        pickerBaseUrl: 'https://tenant-my.sharepoint.com',
+      },
       providerAccount: 'one@example.com',
-      refreshToken: encryptTokenForTest('stored-refresh-token'),
+      refreshToken: null,
       scope: 'Files.ReadWrite',
+      tokenCache: encryptTokenForTest('stored-msal-cache'),
       tokenType: 'Bearer',
     });
-    vi.mocked(fetch).mockResolvedValueOnce(
-      jsonResponse({
-        access_token: 'refreshed-access-token',
-        expires_in: 3600,
-        refresh_token: 'replacement-refresh-token',
-        scope: 'Files.ReadWrite',
-        token_type: 'Bearer',
-      })
+
+    const result =
+      await OneDriveOAuthTokenService.getAuthorizedContext('user-1');
+
+    expect(sdkAdapter.createWithCache).toHaveBeenCalledWith(
+      'stored-msal-cache'
     );
-
-    const result = await OneDriveOAuthTokenService.getPickerToken('user-1');
-
-    expect(result.accessToken).toBe('refreshed-access-token');
+    expect(sdk.findAccount).toHaveBeenCalledWith({
+      homeAccountId: 'home-account-1',
+      localAccountId: undefined,
+    });
+    expect(sdk.acquireTokenSilent).toHaveBeenCalledWith({
+      account: msalAccount,
+      resource: undefined,
+    });
+    expect(result.accessToken).toBe('silent-access-token');
+    expect(result.graph).toBe(sdk.graph.graph);
     expect(connectedIntegration.update).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
-          scope: 'Files.ReadWrite',
-          tokenType: 'Bearer',
+          accessToken: expect.any(String),
+          tokenCache: expect.any(String),
         }),
       })
     );
   });
 
-  it('requests resource-specific picker tokens without persisting them', async () => {
+  it('migrates legacy refresh-token integrations into the MSAL cache', async () => {
+    const sdk = createSdkMock();
+    sdk.findAccount.mockResolvedValue(null);
+    sdkAdapter.createWithCache.mockReturnValue(sdk);
+    connectedIntegration.findUnique.mockResolvedValue({
+      accessToken: encryptTokenForTest('stored-access-token'),
+      expiresAt: new Date('2026-08-24T00:00:00.000Z'),
+      metadata: { pickerBaseUrl: 'https://tenant-my.sharepoint.com' },
+      providerAccount: 'one@example.com',
+      refreshToken: encryptTokenForTest('legacy-refresh-token'),
+      scope: 'Files.ReadWrite',
+      tokenCache: null,
+      tokenType: 'Bearer',
+    });
+
+    const result =
+      await OneDriveOAuthTokenService.getAuthorizedContext('user-1');
+
+    expect(sdk.acquireTokenByRefreshToken).toHaveBeenCalledWith({
+      refreshToken: 'legacy-refresh-token',
+      resource: undefined,
+    });
+    expect(result.accessToken).toBe('legacy-migrated-token');
+    const updateArg = connectedIntegration.update.mock.calls[0]?.[0];
+    expect(decryptTokenForTest(updateArg.data.tokenCache)).toBe(
+      'serialized-msal-cache'
+    );
+  });
+
+  it('requests resource-specific picker tokens without replacing the Graph access token fields', async () => {
+    const sdk = createSdkMock();
+    sdk.acquireTokenSilent.mockResolvedValue({
+      accessToken: 'sharepoint-access-token',
+      account: msalAccount,
+      expiresAt: new Date('2026-08-24T02:00:00.000Z'),
+      scope: 'https://tenant-my.sharepoint.com/.default',
+      tokenType: 'Bearer',
+    });
+    sdkAdapter.createWithCache.mockReturnValue(sdk);
+    connectedIntegration.findUnique.mockResolvedValue({
+      accessToken: encryptTokenForTest('stored-access-token'),
+      expiresAt: new Date('2026-08-24T00:00:00.000Z'),
+      metadata: { msalHomeAccountId: 'home-account-1' },
+      providerAccount: 'one@example.com',
+      refreshToken: null,
+      scope: 'Files.ReadWrite',
+      tokenCache: encryptTokenForTest('stored-msal-cache'),
+      tokenType: 'Bearer',
+    });
+
+    const result = await OneDriveOAuthTokenService.getAuthorizedContext(
+      'user-1',
+      { resource: 'https://tenant-my.sharepoint.com' }
+    );
+
+    expect(result.accessToken).toBe('sharepoint-access-token');
+    expect(sdk.acquireTokenSilent).toHaveBeenCalledWith({
+      account: msalAccount,
+      resource: 'https://tenant-my.sharepoint.com',
+    });
+    expect(
+      connectedIntegration.update.mock.calls[0]?.[0].data
+    ).not.toHaveProperty('accessToken');
+  });
+
+  it('uses the stored picker base URL for the initial picker token', async () => {
+    const sdk = createSdkMock();
+    sdk.acquireTokenSilent
+      .mockResolvedValueOnce({
+        accessToken: 'graph-access-token',
+        account: msalAccount,
+        expiresAt: new Date('2026-08-24T02:00:00.000Z'),
+        scope: 'Files.ReadWrite',
+        tokenType: 'Bearer',
+      })
+      .mockResolvedValueOnce({
+        accessToken: 'initial-sharepoint-picker-token',
+        account: msalAccount,
+        expiresAt: new Date('2026-08-24T03:00:00.000Z'),
+        scope: 'https://tenant-my.sharepoint.com/.default',
+        tokenType: 'Bearer',
+      });
+    sdkAdapter.createWithCache.mockReturnValue(sdk);
     connectedIntegration.findUnique.mockResolvedValue({
       accessToken: encryptTokenForTest('stored-access-token'),
       expiresAt: new Date(Date.now() + 10 * 60 * 1000),
-      metadata: { pickerBaseUrl: 'https://tenant-my.sharepoint.com' },
+      metadata: {
+        msalHomeAccountId: 'home-account-1',
+        pickerBaseUrl: 'https://tenant-my.sharepoint.com',
+      },
       providerAccount: 'one@example.com',
-      refreshToken: encryptTokenForTest('stored-refresh-token'),
+      refreshToken: null,
       scope: 'Files.ReadWrite',
+      tokenCache: encryptTokenForTest('stored-msal-cache'),
       tokenType: 'Bearer',
     });
-    vi.mocked(fetch).mockResolvedValueOnce(
-      jsonResponse({
-        access_token: 'sharepoint-access-token',
-        expires_in: 3600,
-        scope: 'https://tenant-my.sharepoint.com/.default',
-        token_type: 'Bearer',
-      })
-    );
 
-    const result = await OneDriveOAuthTokenService.getPickerToken('user-1', {
+    const result = await OneDriveOAuthTokenService.getPickerToken('user-1');
+
+    expect(result).toEqual({
+      accessToken: 'initial-sharepoint-picker-token',
+      accountEmail: 'one@example.com',
+      baseUrl: 'https://tenant-my.sharepoint.com',
+      expiresAt: null,
+    });
+    expect(sdk.acquireTokenSilent.mock.calls[1]?.[0]).toEqual({
+      account: msalAccount,
       resource: 'https://tenant-my.sharepoint.com',
     });
-
-    expect(result.accessToken).toBe('sharepoint-access-token');
-    expect(connectedIntegration.update).not.toHaveBeenCalled();
-    const [, init] = vi.mocked(fetch).mock.calls[0];
-    expect(String(init?.body)).toContain(
-      'scope=https%3A%2F%2Ftenant-my.sharepoint.com%2F.default'
-    );
   });
 });

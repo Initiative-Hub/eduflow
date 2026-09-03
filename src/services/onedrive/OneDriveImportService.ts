@@ -1,49 +1,15 @@
+import { ResponseType } from '@microsoft/microsoft-graph-client';
+import type * as MicrosoftGraph from '@microsoft/microsoft-graph-types';
 import type { Prisma } from '@/generated/prisma';
 import { STORAGE_MAX_FILE_SIZE_BYTES } from '@/lib/storage/file-storage';
 import { StorageService } from '@/services/StorageService';
 import { OneDriveOAuthTokenService } from './OneDriveOAuthTokenService';
 
-const GRAPH_BASE_URL = 'https://graph.microsoft.com/v1.0';
-
-type DriveItem = {
-  file?: { mimeType?: string | null } | null;
-  folder?: Record<string, unknown> | null;
-  id?: string | null;
-  name?: string | null;
-  size?: number | null;
-  webUrl?: string | null;
-};
-
 function encodeGraphId(value: string) {
   return encodeURIComponent(value);
 }
 
-async function parseGraphJson<T>(response: Response): Promise<T> {
-  const text = await response.text();
-  const data = text ? JSON.parse(text) : {};
-  if (!response.ok) {
-    const message =
-      typeof data.error?.message === 'string'
-        ? data.error.message
-        : text || response.statusText;
-    throw new Error(
-      `Microsoft Graph request failed (${response.status}): ${message}`
-    );
-  }
-  return data as T;
-}
-
-async function graphGet<T>(accessToken: string, path: string) {
-  const response = await fetch(`${GRAPH_BASE_URL}${path}`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-  return parseGraphJson<T>(response);
-}
-
-async function graphBytes(accessToken: string, path: string) {
-  const response = await fetch(`${GRAPH_BASE_URL}${path}`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
+async function readDownloadResponse(response: Response) {
   if (!response.ok) {
     const message = await response.text();
     throw new Error(
@@ -71,14 +37,17 @@ export class OneDriveImportService {
     parentId?: string | null;
     userId: string;
   }) {
-    const { accessToken } =
-      await OneDriveOAuthTokenService.getAuthorizedContext(options.userId);
-    const item = await graphGet<DriveItem>(
-      accessToken,
-      `/drives/${encodeGraphId(options.driveId)}/items/${encodeGraphId(
-        options.itemId
-      )}?$select=id,name,size,file,folder,webUrl`
+    const { graph } = await OneDriveOAuthTokenService.getAuthorizedContext(
+      options.userId
     );
+    const item = (await graph
+      .api(
+        `/drives/${encodeGraphId(options.driveId)}/items/${encodeGraphId(
+          options.itemId
+        )}`
+      )
+      .select('id,name,size,file,folder,webUrl')
+      .get()) as MicrosoftGraph.DriveItem;
 
     if (!item.name) {
       throw new Error('Selected OneDrive file is missing a name.');
@@ -93,12 +62,15 @@ export class OneDriveImportService {
       throw new Error('File size exceeds storage upload limit');
     }
 
-    const downloaded = await graphBytes(
-      accessToken,
-      `/drives/${encodeGraphId(options.driveId)}/items/${encodeGraphId(
-        options.itemId
-      )}/content`
-    );
+    const response = (await graph
+      .api(
+        `/drives/${encodeGraphId(options.driveId)}/items/${encodeGraphId(
+          options.itemId
+        )}/content`
+      )
+      .responseType(ResponseType.RAW)
+      .get()) as Response;
+    const downloaded = await readDownloadResponse(response);
     const importedAt = new Date().toISOString();
     return StorageService.createFileFromBytes({
       bytes: downloaded.bytes,
