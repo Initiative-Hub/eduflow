@@ -12,9 +12,12 @@ on:
 jobs:
   deploy:
     name: Deploy
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
+      NEXT_APP_URL: ${{ secrets.NEXT_APP_URL }}
+      LIVE_GAME_TICKET_SECRET: ${{ secrets.LIVE_GAME_TICKET_SECRET }}
+      LIVE_GAME_S2S_SECRET: ${{ secrets.LIVE_GAME_S2S_SECRET }}
       PARTYKIT_TOKEN: ${{ secrets.PARTYKIT_TOKEN }}
       PARTYKIT_LOGIN: ${{ secrets.PARTYKIT_LOGIN }}
 
@@ -33,4 +36,8 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Deploy
-        run: bun ws:deploy
+        run: |
+          partykit deploy \
+            --var NEXT_APP_URL="$NEXT_APP_URL" \
+            --var LIVE_GAME_TICKET_SECRET="$LIVE_GAME_TICKET_SECRET" \
+            --var LIVE_GAME_S2S_SECRET="$LIVE_GAME_S2S_SECRET"
