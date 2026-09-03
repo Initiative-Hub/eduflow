@@ -1,9 +1,9 @@
-name: Partykit Websocket Server Production Deployment
+name: Partykit Websocket Server Staging Deployment
 
 on:
   push:
     branches:
-      - production
+      - staging
     paths:
       - party/**
   workflow_dispatch:
@@ -14,9 +14,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      NEXT_APP_URL: ${{ secrets.PRODUCTION_NEXT_APP_URL }}
-      LIVE_GAME_TICKET_SECRET: ${{ secrets.PRODUCTION_LIVE_GAME_TICKET_SECRET }}
-      LIVE_GAME_S2S_SECRET: ${{ secrets.PRODUCTION_LIVE_GAME_S2S_SECRET }}
+      NEXT_APP_URL: ${{ secrets.STAGING_NEXT_APP_URL }}
+      LIVE_GAME_TICKET_SECRET: ${{ secrets.STAGING_LIVE_GAME_TICKET_SECRET }}
+      LIVE_GAME_S2S_SECRET: ${{ secrets.STAGING_LIVE_GAME_S2S_SECRET }}
       PARTYKIT_TOKEN: ${{ secrets.PARTYKIT_TOKEN }}
       PARTYKIT_LOGIN: ${{ secrets.PARTYKIT_LOGIN }}
 

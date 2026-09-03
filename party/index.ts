@@ -61,14 +61,6 @@ export default class LiveGameParty implements Party.Server {
 
   static async onBeforeConnect(request: Party.Request, lobby: Party.Lobby) {
     try {
-      const origin = request.headers.get('Origin');
-      const allowedOrigins = envString(lobby.env, 'LIVE_GAME_ALLOWED_ORIGINS')
-        .split(',')
-        .map((value) => value.trim())
-        .filter(Boolean);
-      if (!origin || !allowedOrigins.includes(origin)) {
-        return new Response('Origin is not allowed.', { status: 403 });
-      }
       const token = new URL(request.url).searchParams.get('token');
       if (!token)
         return new Response('A connection ticket is required.', {
