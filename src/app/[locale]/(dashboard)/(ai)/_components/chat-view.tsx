@@ -78,6 +78,20 @@ export function ChatView({
 
   const [isAtBottom, setIsAtBottom] = useState(true);
 
+  const lastMessage = messages.at(-1);
+  const lastMessageHasVisibleContent =
+    lastMessage?.role === 'assistant' &&
+    (Boolean(getMessageText(lastMessage)) ||
+      Boolean(getMessageReasoning(lastMessage)) ||
+      lastMessage.parts.some(
+        (part) =>
+          part.type === 'file' ||
+          part.type === 'tool-invocation' ||
+          part.type === 'data-lesson-reference'
+      ));
+  const showThinkingIndicator =
+    isStreaming && (!lastMessage || !lastMessageHasVisibleContent);
+
   // Monitor scroll position to see if user is scrolled to bottom
   useEffect(() => {
     const root = scrollContainerRef?.current;
@@ -334,14 +348,16 @@ export function ChatView({
                       >
                         {message.role === 'assistant' ? (
                           <>
-                            <Reasoning
-                              className="mb-3 w-full"
-                              defaultOpen={false}
-                              isStreaming={isReasoningStreaming}
-                            >
-                              <ReasoningTrigger />
-                              <ReasoningContent>{reasoning}</ReasoningContent>
-                            </Reasoning>
+                            {Boolean(reasoning) && (
+                              <Reasoning
+                                className="mb-3 w-full"
+                                defaultOpen={false}
+                                isStreaming={isReasoningStreaming}
+                              >
+                                <ReasoningTrigger />
+                                <ReasoningContent>{reasoning}</ReasoningContent>
+                              </Reasoning>
+                            )}
                             <ChatToolInvocations parts={message.parts} />
                             <MessageResponse
                               caret="block"
@@ -438,7 +454,7 @@ export function ChatView({
             );
           })}
 
-          {isStreaming && messages.at(-1)?.role !== 'assistant' && (
+          {showThinkingIndicator && (
             <div className="flex items-start gap-4">
               <div className="flex size-10 shrink-0 animate-pulse items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
                 <Bot className="size-5" />

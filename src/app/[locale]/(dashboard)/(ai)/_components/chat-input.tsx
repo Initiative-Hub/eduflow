@@ -131,6 +131,7 @@ export function ChatInput({
     handleFileInputChange,
     removeSelectedFile,
     selectedFiles,
+    setSelectedFiles,
   } = useChatInputFiles({
     isAuthenticated,
     maxFiles: MAX_CHAT_ATTACHMENTS,
@@ -160,22 +161,34 @@ export function ChatInput({
       return;
     }
 
+    const previousInput = inputValue;
+    const previousSelectedFiles = [...selectedFiles];
+    const previousReferenceFiles = [...selectedReferenceFiles];
+    const previousReferenceLessons = [...selectedReferenceLessons];
+
+    setInputValue('');
+    clearSelectedFiles();
+    setSelectedReferenceFiles([]);
+    setSelectedReferenceLessons([]);
+
     try {
       await handleSubmit(undefined, message.text, {
-        files: selectedFiles.flatMap((item) => (item.file ? [item.file] : [])),
-        referencedFiles: selectedReferenceFiles.flatMap((item) =>
+        files: previousSelectedFiles.flatMap((item) =>
+          item.file ? [item.file] : []
+        ),
+        referencedFiles: previousReferenceFiles.flatMap((item) =>
           item.filePart ? [item.filePart] : []
         ),
-        referencedLessons: selectedReferenceLessons.flatMap((item) =>
+        referencedLessons: previousReferenceLessons.flatMap((item) =>
           item.lessonPart ? [item.lessonPart] : []
         ),
       });
-      setInputValue('');
-      clearSelectedFiles();
-      setSelectedReferenceFiles([]);
-      setSelectedReferenceLessons([]);
     } catch {
       // Keep the draft and attachments so the user can retry.
+      setInputValue(previousInput);
+      setSelectedFiles(previousSelectedFiles);
+      setSelectedReferenceFiles(previousReferenceFiles);
+      setSelectedReferenceLessons(previousReferenceLessons);
     }
   };
   const removeSelectedAttachment = (fileId: string) => {

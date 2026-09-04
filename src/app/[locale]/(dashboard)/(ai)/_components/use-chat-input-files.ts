@@ -99,5 +99,6 @@ export function useChatInputFiles({
     handleFileInputChange,
     removeSelectedFile,
     selectedFiles,
+    setSelectedFiles,
   };
 }
