@@ -1,0 +1,43 @@
+name: Partykit Websocket Server Production Deployment
+
+on:
+  push:
+    branches:
+      - production
+    paths:
+      - party/**
+      - partykit.json
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NEXT_APP_URL: ${{ secrets.PRODUCTION_NEXT_APP_URL }}
+      LIVE_GAME_TICKET_SECRET: ${{ secrets.PRODUCTION_LIVE_GAME_TICKET_SECRET }}
+      LIVE_GAME_S2S_SECRET: ${{ secrets.PRODUCTION_LIVE_GAME_S2S_SECRET }}
+      PARTYKIT_TOKEN: ${{ secrets.PARTYKIT_TOKEN }}
+      PARTYKIT_LOGIN: ${{ secrets.PARTYKIT_LOGIN }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4.0"
+
+      - name: Install Dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Deploy
+        run: |
+          partykit deploy -n eduflow-party-production \
+            --var NEXT_APP_URL="$NEXT_APP_URL" \
+            --var LIVE_GAME_TICKET_SECRET="$LIVE_GAME_TICKET_SECRET" \
+            --var LIVE_GAME_S2S_SECRET="$LIVE_GAME_S2S_SECRET"

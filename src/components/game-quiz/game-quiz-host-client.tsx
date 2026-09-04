@@ -1,6 +1,5 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Copy,
   Link as LinkIcon,
@@ -22,7 +21,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { type GameHostAction, gameQuizApi } from './api';
+import type { GameHostAction } from './api';
 import { type GameQuizCopy, gameQuizCopy } from './copy';
 import { GameQuizFullLeaderboardDialog } from './game-quiz-full-leaderboard-dialog';
 import { GameQuizHostQuestionStage } from './game-quiz-host-question-stage';
@@ -31,8 +30,7 @@ import { GameQuizPodium } from './game-quiz-podium';
 import { GameQuizHostScoreboard } from './game-quiz-scoreboard-stage';
 import { clearLiveGameSession } from './live-game-session';
 import type { GameSessionSnapshot } from './types';
-import { useGameQuizRealtime } from './use-game-quiz-realtime';
-import { useHostSessionLifecycle } from './use-host-session-lifecycle';
+import { useLiveGameClient } from './use-live-game-client';
 import { useLiveGameSession } from './use-live-game-session';
 
 interface GameQuizHostClientProps {
@@ -44,61 +42,33 @@ export function GameQuizHostClient({
   gameQuizId,
   copy = gameQuizCopy,
 }: GameQuizHostClientProps) {
-  const queryClient = useQueryClient();
   const router = useRouter();
   const { session: liveSession, isHydrated } = useLiveGameSession('HOST');
   const hasCheckedTabOwnership = useRef(false);
   const [isSessionReady, setIsSessionReady] = useState(false);
+  const [isCommandPending, setIsCommandPending] = useState(false);
+  const { error, reconnect, send, snapshot, status } =
+    useLiveGameClient(liveSession);
 
-  const sessionQuery = useQuery({
-    queryKey: ['live-game', 'host', liveSession?.sessionId],
-    queryFn: () =>
-      gameQuizApi.getHostSession(gameQuizId, liveSession!.sessionId),
-    enabled: Boolean(liveSession && isSessionReady),
-    refetchInterval: 1_500,
-  });
-  const progressQuery = useQuery({
-    queryKey: ['live-game', 'host-progress', liveSession?.sessionId],
-    queryFn: () =>
-      gameQuizApi.answerProgress(gameQuizId, liveSession!.sessionId),
-    enabled: Boolean(liveSession && isSessionReady),
-    refetchInterval: 1_500,
-  });
-  useGameQuizRealtime({
-    audience: 'HOST',
-    realtimeKey: sessionQuery.data?.realtimeKey,
-    queryKey: ['live-game', 'host', liveSession?.sessionId],
-  });
-
-  const commandMutation = useMutation({
-    mutationFn: ({
-      action,
-      joiningLocked,
-    }: {
-      action: GameHostAction;
-      joiningLocked?: boolean;
-    }) => {
-      const session = sessionQuery.data;
-      if (!session) throw new Error('Session unavailable');
-      return gameQuizApi.command(
-        gameQuizId,
-        liveSession!.sessionId,
+  const runCommand = async (
+    action: GameHostAction,
+    joiningLocked?: boolean
+  ) => {
+    if (!snapshot) return;
+    setIsCommandPending(true);
+    try {
+      await send({
+        type: 'host.command',
         action,
-        session.stateVersion,
-        joiningLocked
-      );
-    },
-    onSuccess: (session) => {
-      queryClient.setQueryData(
-        ['live-game', 'host', liveSession?.sessionId],
-        session
-      );
-      void queryClient.invalidateQueries({
-        queryKey: ['live-game', 'host-progress', liveSession?.sessionId],
+        expectedStateVersion: snapshot.stateVersion,
+        ...(action === 'SET_JOINING_LOCKED' ? { joiningLocked } : {}),
       });
-    },
-    onError: () => toast.error(copy.common.error),
-  });
+    } catch {
+      toast.error(copy.common.error);
+    } finally {
+      setIsCommandPending(false);
+    }
+  };
 
   useEffect(() => {
     if (!isHydrated || !liveSession || hasCheckedTabOwnership.current) return;
@@ -154,55 +124,24 @@ export function GameQuizHostClient({
     }
   }, [gameQuizId, isHydrated, liveSession, router]);
 
-  useHostSessionLifecycle({
-    gameQuizId,
-    isSessionReady,
-    sessionId: liveSession?.sessionId,
-  });
-
-  useEffect(() => {
-    if (
-      !isSessionReady ||
-      sessionQuery.isPending ||
-      (!sessionQuery.isError && sessionQuery.data && !sessionQuery.data.endedAt)
-    )
-      return;
-
-    if (
-      sessionQuery.isError ||
-      !sessionQuery.data ||
-      sessionQuery.data.endedAt
-    ) {
-      clearLiveGameSession('HOST', liveSession?.sessionId);
-      router.replace(`/games/${gameQuizId}/edit`);
-    }
-  }, [
-    gameQuizId,
-    isSessionReady,
-    liveSession,
-    router,
-    sessionQuery.data,
-    sessionQuery.isError,
-    sessionQuery.isPending,
-  ]);
-
-  if (!isHydrated || !liveSession || !isSessionReady || sessionQuery.isPending)
+  if (
+    !isHydrated ||
+    !liveSession ||
+    !isSessionReady ||
+    (status === 'CONNECTING' && !snapshot)
+  )
     return <GameSessionLoading copy={copy} />;
-  if (sessionQuery.isError || !sessionQuery.data) {
-    return (
-      <GameSessionError copy={copy} onRetry={() => sessionQuery.refetch()} />
-    );
+  if (error || !snapshot) {
+    return <GameSessionError copy={copy} onRetry={reconnect} />;
   }
 
-  const session = sessionQuery.data;
+  const session = snapshot as GameSessionSnapshot;
   if (session.phase === 'LOBBY') {
     return (
       <HostLobby
         copy={copy}
-        isPending={commandMutation.isPending}
-        onCommand={(action, joiningLocked) =>
-          commandMutation.mutate({ action, joiningLocked })
-        }
+        isPending={isCommandPending}
+        onCommand={runCommand}
         session={session}
       />
     );
@@ -211,25 +150,23 @@ export function GameQuizHostClient({
     return (
       <HostPodium
         copy={copy}
-        isPending={commandMutation.isPending}
+        isPending={isCommandPending}
         reportHref={`/games/${gameQuizId}/report?sessionId=${encodeURIComponent(liveSession.sessionId)}`}
         session={session}
       />
     );
   }
   if (!session.currentRound)
-    return (
-      <GameSessionError copy={copy} onRetry={() => sessionQuery.refetch()} />
-    );
+    return <GameSessionError copy={copy} onRetry={reconnect} />;
 
-  const answerCount = progressQuery.data?.answerCount ?? session.answerCount;
+  const answerCount = session.answerCount;
 
   if (session.phase === 'SCOREBOARD') {
     return (
       <GameQuizHostScoreboard
         copy={copy}
-        isPending={commandMutation.isPending}
-        onNext={() => commandMutation.mutate({ action: 'NEXT' })}
+        isPending={isCommandPending}
+        onNext={() => void runCommand('NEXT')}
         session={session}
       />
     );
@@ -239,10 +176,8 @@ export function GameQuizHostClient({
     <GameQuizHostQuestionStage
       answerCount={answerCount}
       copy={copy}
-      isPending={commandMutation.isPending}
-      onCommand={(actionToRun) =>
-        commandMutation.mutate({ action: actionToRun })
-      }
+      isPending={isCommandPending}
+      onCommand={(actionToRun) => void runCommand(actionToRun)}
       session={session}
     />
   );

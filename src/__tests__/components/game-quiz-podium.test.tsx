@@ -15,7 +15,6 @@ function createSession(participantCount: number): GameSessionSnapshot {
 
   return {
     gameQuizId: 'quiz-1',
-    realtimeKey: 'session-key',
     gameTitle: 'Planet Rally',
     joinCode: '123456',
     joiningLocked: true,

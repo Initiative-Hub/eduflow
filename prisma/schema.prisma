@@ -655,9 +655,20 @@ enum GameSessionPhase {
 
 enum GameSessionCloseReason {
   HOST_LEFT     @map("host_left")
-  VIEWED_REPORT @map("viewed_report")
+  COMPLETED     @map("completed")
+  HOST_ENDED    @map("host_ended")
 
   @@map("game_session_close_reason")
+}
+
+enum GameRuntimeStatus {
+  INITIALIZING @map("initializing")
+  ACTIVE       @map("active")
+  FINALIZING   @map("finalizing")
+  FINALIZED    @map("finalized")
+  ABORTED      @map("aborted")
+
+  @@map("game_runtime_status")
 }
 
 model GameQuiz {
@@ -741,16 +752,17 @@ model GameSession {
   randomizeQuestionOrder Boolean                 @map("randomize_question_order")
   randomizeAnswerOrder   Boolean                 @map("randomize_answer_order")
   joinCode               String                  @map("join_code")
-  realtimeKey            String                  @unique @default(cuid()) @map("realtime_key")
   joiningLocked          Boolean                 @default(false) @map("joining_locked")
   phase                  GameSessionPhase        @default(LOBBY)
   currentRoundIndex      Int?                    @map("current_round_index")
   stateVersion           Int                     @default(1) @map("state_version")
   startedAt              DateTime?               @map("started_at")
   endedAt                DateTime?               @map("ended_at")
-  lastHostSeenAt         DateTime?               @map("last_host_seen_at")
   closedReason           GameSessionCloseReason? @map("closed_reason")
   joinCodeReleasedAt     DateTime?               @map("join_code_released_at")
+  runtimeStatus          GameRuntimeStatus       @default(INITIALIZING) @map("runtime_status")
+  initializationKey      String                  @unique @default(uuid()) @map("initialization_key")
+  finalizationReceipt    Json?                   @map("finalization_receipt")
   createdAt              DateTime                @default(now()) @map("created_at")
   updatedAt              DateTime                @updatedAt @map("updated_at")
 
@@ -819,11 +831,8 @@ model GameParticipant {
   user      User        @relation(fields: [userId], references: [id], onDelete: Restrict)
 
   displayName String    @map("display_name")
-  realtimeKey String    @unique @default(cuid()) @map("realtime_key")
   score       Int       @default(0)
   joinedAt    DateTime  @default(now()) @map("joined_at")
-  lastSeenAt  DateTime? @map("last_seen_at")
-
   answers GameAnswer[]
 
   @@unique([sessionId, userId], map: "game_participant_session_id_user_id_key")

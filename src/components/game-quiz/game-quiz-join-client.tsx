@@ -12,8 +12,8 @@ import {
   InputOTPSlot,
 } from '@/components/ui/input-otp';
 import { Label } from '@/components/ui/label';
-import { gameQuizApi } from './api';
 import { type GameQuizCopy, gameQuizCopy } from './copy';
+import { requestLiveGameTicket } from './live-game-client';
 import { activateLiveGameSession } from './live-game-session';
 
 interface GameQuizJoinClientProps {
@@ -29,12 +29,14 @@ export function GameQuizJoinClient({
     () => searchParams.get('code')?.replace(/\D/g, '').slice(0, 6) ?? ''
   );
   const joinMutation = useMutation({
-    mutationFn: () => gameQuizApi.join(code),
-    onSuccess: ({ sessionId }) => {
+    mutationFn: () =>
+      requestLiveGameTicket({ audience: 'PARTICIPANT', joinCode: code }),
+    onSuccess: ({ roomId }) => {
       activateLiveGameSession({
         audience: 'PARTICIPANT',
-        sessionId,
-        version: 2,
+        joinCode: code,
+        sessionId: roomId,
+        version: 3,
       });
       router.replace('/games/live/play');
     },
