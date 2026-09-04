@@ -142,7 +142,10 @@ export const useChatController = ({
     ? false
     : hasReachedUserMessageLimit(displayMessages, MAX_USER_MESSAGES);
   const isStreaming =
-    status === 'streaming' || status === 'submitted' || isStartingChat;
+    status === 'streaming' ||
+    status === 'submitted' ||
+    isStartingChat ||
+    pendingForChat.length > 0;
 
   useEffect(() => {
     if (!pendingMessage || !pendingChatId || !initialChatId) return;
