@@ -81,6 +81,7 @@ for any tasks.).
 - **Research Citations**: For AI research/chat responses with numbered citations, derive source metadata from AI SDK `source-url` parts and web-search tool outputs in shared helpers, then render inline citation UI from that normalized source list instead of hardcoding source parsing in components.
 - **Study Modes**: When adding or removing a Study mode, update the shared Zod mode schema, mode selector cards, mode-specific system prompts, and both locale files together so the UI, API validation, and prompt behavior stay synchronized.
 - **Interactive Content Prompts**: Keep generated activity instructions aligned with the structured output schema and sandbox CSP; do not advertise CDNs or external libraries unless the renderer, sanitizer, and CSP are deliberately updated together.
+- **Optimistic Chat Submission**: On chat submission from the landing view or active chat, immediately clear the composer and render the user's message with an active thinking indicator before awaiting chat creation or attachment uploads, rolling back with toast feedback only if the request rejects.
 
 ### 6.3 Security & Validation
 
