@@ -131,14 +131,20 @@ export function InventoryCard({
   const canShowBodyPreview = canShowCardBodyPreview(entry);
   const FileTypeIcon = getInventoryCardIcon(entry);
 
-  const canOpenFromCard = entry.isFolder || canPreviewInventoryEntry(entry);
-  const hasCardInteraction = canOpenFromCard || Boolean(onSelectEntry);
+  const isUploading = entry.status === 'UPLOADING';
+  const canOpenFromCard =
+    !isUploading && (entry.isFolder || canPreviewInventoryEntry(entry));
+  const hasCardInteraction =
+    !isUploading && (canOpenFromCard || Boolean(onSelectEntry));
 
   const handleCardClick = () => {
+    if (isUploading) return;
     onSelectEntry?.(entry.id);
   };
 
   const handleCardDoubleClick = () => {
+    if (isUploading) return;
+
     if (entry.isFolder) {
       onNavigateIntoFolder?.(entry);
       return;
@@ -168,9 +174,9 @@ export function InventoryCard({
   return (
     <Card
       aria-selected={isSelected}
-      className={`h-fit border-border/70 bg-card/90 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg ${
-        hasCardInteraction ? 'cursor-pointer' : ''
-      } ${
+      className={`h-fit border-border/70 bg-card/90 shadow-sm transition-all duration-200 ${
+        isUploading ? 'opacity-85' : 'hover:-translate-y-0.5 hover:shadow-lg'
+      } ${hasCardInteraction ? 'cursor-pointer' : ''} ${
         isSelected
           ? 'border-primary/60 bg-primary/5 shadow-md ring-2 ring-primary/30'
           : ''
@@ -183,12 +189,13 @@ export function InventoryCard({
         <div className="flex items-start justify-between gap-3 overflow-hidden">
           <button
             type="button"
+            disabled={isUploading}
             className={cn(
               'flex flex-1 gap-3 overflow-hidden text-left',
               hasCardInteraction && 'cursor-pointer'
             )}
             onClick={(event) => {
-              if (!entry.isFolder) return;
+              if (isUploading || !entry.isFolder) return;
 
               event.stopPropagation();
               onOpen?.(entry);
@@ -229,6 +236,7 @@ export function InventoryCard({
                 variant="ghost"
                 size="icon-sm"
                 className="shrink-0"
+                disabled={isUploading}
                 onClick={(event) => event.stopPropagation()}
                 onDoubleClick={(event) => event.stopPropagation()}
               >
@@ -350,7 +358,7 @@ export function InventoryCard({
           {!entry.isFolder && entry.status === 'UPLOADING' && (
             <div className="min-w-36 space-y-1">
               <Progress value={uploadProgress} className="h-2 animate-pulse" />
-              {uploadProgress && (
+              {typeof uploadProgress === 'number' && (
                 <div className="text-[11px] text-muted-foreground">
                   {t('fileCard.uploadProgress', {
                     progress: uploadProgress,

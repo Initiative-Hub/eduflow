@@ -33,6 +33,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { cn } from '@/lib/utils';
 import { inventoryService } from '../inventory.service';
 import type { InventoryEntry, InventoryTranslations } from '../inventory.types';
 import {
@@ -160,11 +161,16 @@ export function InventoryTableView({
         <TableBody>
           {entries.map((entry) => {
             const uploadProgress = getUploadProgress(entry.id);
+            const isUploading = entry.status === 'UPLOADING';
             return (
-              <TableRow key={entry.id}>
+              <TableRow
+                key={entry.id}
+                className={cn(isUploading && 'opacity-85')}
+              >
                 <TableCell>
                   <Checkbox
                     checked={selectedIds.includes(entry.id)}
+                    disabled={isUploading}
                     onCheckedChange={(checked) =>
                       onSelectEntry(entry.id, Boolean(checked))
                     }
@@ -174,10 +180,13 @@ export function InventoryTableView({
                 <TableCell>
                   <button
                     type="button"
+                    disabled={isUploading}
                     onClick={() => {
+                      if (isUploading) return;
                       if (entry.isFolder) onOpen(entry);
                     }}
                     onDoubleClick={() => {
+                      if (isUploading) return;
                       if (entry.isFolder) {
                         onNavigateIntoFolder(entry);
                         return;
@@ -187,7 +196,10 @@ export function InventoryTableView({
                         onPreview(entry);
                       }
                     }}
-                    className="flex items-center gap-3 text-left"
+                    className={cn(
+                      'flex items-center gap-3 text-left',
+                      isUploading && 'cursor-wait'
+                    )}
                   >
                     <div className="flex size-9 items-center justify-center rounded-md bg-muted text-muted-foreground">
                       <InventoryEntryPreview entry={entry} />
@@ -220,7 +232,7 @@ export function InventoryTableView({
                           value={uploadProgress}
                           className="h-2 animate-pulse"
                         />
-                        {uploadProgress && (
+                        {typeof uploadProgress === 'number' && (
                           <div className="text-[11px] text-muted-foreground">
                             {t('fileCard.uploadProgress', {
                               progress: uploadProgress,
@@ -234,7 +246,11 @@ export function InventoryTableView({
                 <TableCell className="text-right">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon-sm">
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        disabled={isUploading}
+                      >
                         <MoreVertical />
                       </Button>
                     </DropdownMenuTrigger>
