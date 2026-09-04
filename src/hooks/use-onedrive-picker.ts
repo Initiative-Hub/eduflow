@@ -24,17 +24,36 @@ type OneDrivePickerMessages = {
   unavailable: string;
 };
 
+type OneDrivePickerApiError = {
+  code?: string;
+  message?: string;
+  status?: number;
+};
+
 function getPickerErrorMessage(
-  error: { message?: string; status?: number },
+  error: OneDrivePickerApiError,
   messages: OneDrivePickerMessages
 ) {
-  if (error.status === 409 || error.message === 'OneDrive is not connected.') {
-    return messages.connectRequired;
-  }
-  if (error.message === 'OneDrive OAuth session changed.') {
+  if (error.code === 'ONEDRIVE_RECONNECT_REQUIRED') {
     return messages.sessionChanged;
   }
+  if (error.code === 'ONEDRIVE_NOT_CONNECTED') {
+    return messages.connectRequired;
+  }
   return messages.tokenFailed;
+}
+
+export function buildOneDrivePickerAuthorizationUrl(location: {
+  pathname: string;
+  search: string;
+}) {
+  const returnParams = new URLSearchParams(location.search);
+  returnParams.delete('oneDrive');
+  returnParams.delete('oneDriveReason');
+  const query = returnParams.toString();
+  const returnTo = `${location.pathname}${query ? `?${query}` : ''}`;
+  const params = new URLSearchParams({ returnTo });
+  return `/api/v1/integrations/onedrive/picker-authorize?${params.toString()}`;
 }
 
 export function useOneDrivePicker({
@@ -59,8 +78,18 @@ export function useOneDrivePicker({
     accessToken: string;
     baseUrl: string;
   } | null>(null);
+  const [authorizationRequired, setAuthorizationRequired] = useState(false);
 
   const closePicker = useCallback(() => setTokenContext(null), []);
+  const dismissAuthorization = useCallback(
+    () => setAuthorizationRequired(false),
+    []
+  );
+  const authorizePicker = useCallback(() => {
+    window.location.assign(
+      buildOneDrivePickerAuthorizationUrl(window.location)
+    );
+  }, []);
   const handlePicked = useCallback(
     (items: OneDrivePickedItem[]) => {
       closePicker();
@@ -82,13 +111,22 @@ export function useOneDrivePicker({
     []
   );
 
+  const handleTokenError = useCallback(
+    (error: OneDrivePickerApiError) => {
+      closePicker();
+      if (error.code === 'ONEDRIVE_PICKER_AUTHORIZATION_REQUIRED') {
+        setAuthorizationRequired(true);
+        return;
+      }
+      onError?.(getPickerErrorMessage(error, messages));
+    },
+    [closePicker, messages, onError]
+  );
+
   const { isPending: isPickerTokenPending, mutate: openWithToken } =
     useMutation({
       mutationFn: async () => fetchPickerToken(),
-      onError: (error: { message?: string; status?: number }) => {
-        closePicker();
-        onError?.(getPickerErrorMessage(error, messages));
-      },
+      onError: handleTokenError,
       onSuccess: (response) => {
         setTokenContext({
           accessToken: response.data.accessToken,
@@ -98,9 +136,10 @@ export function useOneDrivePicker({
     });
 
   const openPicker = useCallback(() => {
+    dismissAuthorization();
     onBeforeOpen?.();
     openWithToken();
-  }, [onBeforeOpen, openWithToken]);
+  }, [dismissAuthorization, onBeforeOpen, openWithToken]);
 
   const pickerProps = useMemo<OneDrivePickerHostProps | null>(() => {
     if (!tokenContext) return null;
@@ -109,8 +148,13 @@ export function useOneDrivePicker({
       baseUrl: tokenContext.baseUrl,
       mode,
       onAuthenticate: async (input) => {
-        const response = await fetchPickerToken(input);
-        return response.data.accessToken;
+        try {
+          const response = await fetchPickerToken(input);
+          return response.data.accessToken;
+        } catch (error) {
+          handleTokenError(error as OneDrivePickerApiError);
+          throw error;
+        }
       },
       onCanceled: closePicker,
       onError: handlePickerError,
@@ -119,6 +163,7 @@ export function useOneDrivePicker({
   }, [
     closePicker,
     fetchPickerToken,
+    handleTokenError,
     handlePicked,
     handlePickerError,
     mode,
@@ -126,6 +171,9 @@ export function useOneDrivePicker({
   ]);
 
   return {
+    authorizationRequired,
+    authorizePicker,
+    dismissAuthorization,
     isConfigured: true,
     isLoading: isPickerTokenPending || Boolean(tokenContext),
     openPicker,

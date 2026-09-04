@@ -29,6 +29,7 @@ export type OneDriveStatus = {
   } | null;
   expiresAt: string | null;
   metadata: Record<string, unknown> | null;
+  requiresReconnect: boolean;
   scope: string | null;
   setupComplete: boolean;
   updatedAt: string | null;

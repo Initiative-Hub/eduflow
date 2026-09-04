@@ -28,6 +28,7 @@ import {
   getEntryTypeLabel,
 } from '@/app/[locale]/(dashboard)/inventory/inventory.utils';
 import { GoogleDrivePickerHost } from '@/components/google-drive-picker/google-drive-picker-host';
+import { OneDrivePickerAuthorizationDialog } from '@/components/onedrive-picker/onedrive-picker-authorization-dialog';
 import {
   type OneDrivePickedItem,
   OneDrivePickerHost,
@@ -243,6 +244,11 @@ export function InventoryDialogs({
       {oneDrivePicker.pickerProps && (
         <OneDrivePickerHost {...oneDrivePicker.pickerProps} />
       )}
+      <OneDrivePickerAuthorizationDialog
+        isOpen={oneDrivePicker.authorizationRequired}
+        onAuthorize={oneDrivePicker.authorizePicker}
+        onDismiss={oneDrivePicker.dismissAuthorization}
+      />
       <Dialog open={uploadOpen} onOpenChange={(open) => setUploadOpen(open)}>
         <DialogContent className="sm:max-w-xl">
           <DialogHeader>

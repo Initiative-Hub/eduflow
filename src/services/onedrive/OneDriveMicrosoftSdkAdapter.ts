@@ -1,22 +1,20 @@
 import {
-  ConfidentialClientApplication,
   type AccountInfo,
   type AuthenticationResult,
+  ConfidentialClientApplication,
 } from '@azure/msal-node';
 import {
+  type AuthenticationProvider,
   Client,
   GraphError,
-  type AuthenticationProvider,
 } from '@microsoft/microsoft-graph-client';
+import {
+  getTokenTargetAuthority,
+  getTokenTargetScopes,
+  type OneDriveTokenTarget,
+} from './OneDriveTokenTarget';
 
-export const ONEDRIVE_SCOPES = [
-  'openid',
-  'email',
-  'profile',
-  'offline_access',
-  'User.Read',
-  'Files.ReadWrite',
-];
+export const ONEDRIVE_SCOPES = getTokenTargetScopes({ kind: 'graph' });
 
 type OneDriveSdkConfig = {
   clientId: string;
@@ -71,38 +69,6 @@ function createClient() {
   });
 }
 
-export function assertAllowedPickerResource(resource: string) {
-  let url: URL;
-  try {
-    url = new URL(resource);
-  } catch {
-    throw new Error('Invalid OneDrive picker resource.');
-  }
-
-  const host = url.hostname.toLowerCase();
-  if (
-    host === 'graph.microsoft.com' ||
-    host === 'onedrive.live.com' ||
-    host.endsWith('.sharepoint.com') ||
-    host.endsWith('.sharepoint-df.com')
-  ) {
-    return url.origin;
-  }
-  throw new Error('Unsupported OneDrive picker resource.');
-}
-
-export function getScopeForResource(resource?: string) {
-  if (!resource) return ONEDRIVE_SCOPES;
-  const origin = assertAllowedPickerResource(resource);
-  if (origin === 'https://graph.microsoft.com') {
-    return ONEDRIVE_SCOPES;
-  }
-  if (origin === 'https://onedrive.live.com') {
-    return ['OneDrive.ReadWrite'];
-  }
-  return [`${origin}/.default`];
-}
-
 function mapTokenResult(result: AuthenticationResult): OneDriveTokenResult {
   return {
     accessToken: result.accessToken,
@@ -147,14 +113,21 @@ export class OneDriveMicrosoftSdkAdapter {
   }
 
   static async getAuthorizationUrl(options: {
+    loginHint?: string | null;
+    prompt?: 'consent' | 'select_account';
     redirectUri: string;
     state: string;
+    target?: OneDriveTokenTarget;
   }) {
+    const target = options.target ?? { kind: 'graph' };
+    const authority = getTokenTargetAuthority(target) ?? undefined;
     return OneDriveMicrosoftSdkAdapter.createWithCache().client.getAuthCodeUrl({
-      prompt: 'select_account',
+      authority,
+      loginHint: options.loginHint ?? undefined,
+      prompt: options.prompt ?? 'select_account',
       redirectUri: options.redirectUri,
       responseMode: 'query',
-      scopes: ONEDRIVE_SCOPES,
+      scopes: getTokenTargetScopes(target),
       state: options.state,
     });
   }
@@ -172,11 +145,17 @@ export class OneDriveMicrosoftSdkAdapter {
     return Client.initWithMiddleware({ authProvider });
   }
 
-  async exchangeCode(options: { code: string; redirectUri: string }) {
+  async exchangeCode(options: {
+    code: string;
+    redirectUri: string;
+    target?: OneDriveTokenTarget;
+  }) {
+    const target = options.target ?? { kind: 'graph' };
     const result = await this.client.acquireTokenByCode({
+      authority: getTokenTargetAuthority(target) ?? undefined,
       code: options.code,
       redirectUri: options.redirectUri,
-      scopes: ONEDRIVE_SCOPES,
+      scopes: getTokenTargetScopes(target),
     });
     if (!result?.accessToken) {
       throw new Error('Microsoft did not return an access token.');
@@ -186,11 +165,12 @@ export class OneDriveMicrosoftSdkAdapter {
 
   async acquireTokenSilent(options: {
     account: AccountInfo;
-    resource?: string | null;
+    target: OneDriveTokenTarget;
   }) {
     const result = await this.client.acquireTokenSilent({
       account: options.account,
-      scopes: getScopeForResource(options.resource ?? undefined),
+      authority: getTokenTargetAuthority(options.target) ?? undefined,
+      scopes: getTokenTargetScopes(options.target),
     });
     if (!result?.accessToken) {
       throw new Error('Microsoft did not return an access token.');
@@ -200,12 +180,14 @@ export class OneDriveMicrosoftSdkAdapter {
 
   async acquireTokenByRefreshToken(options: {
     refreshToken: string;
-    resource?: string | null;
+    target?: OneDriveTokenTarget;
   }) {
+    const target = options.target ?? { kind: 'graph' };
     const result = await this.client.acquireTokenByRefreshToken({
+      authority: getTokenTargetAuthority(target) ?? undefined,
       forceCache: true,
       refreshToken: options.refreshToken,
-      scopes: getScopeForResource(options.resource ?? undefined),
+      scopes: getTokenTargetScopes(target),
     });
     if (!result?.accessToken) {
       throw new Error('Microsoft did not return an access token.');

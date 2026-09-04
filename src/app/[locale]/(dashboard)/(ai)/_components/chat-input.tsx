@@ -28,6 +28,7 @@ import {
 } from '@/components/ai-elements/prompt-input';
 import { DropdownTemplate, type MenuItem } from '@/components/custom/dropdown';
 import { GoogleDrivePickerHost } from '@/components/google-drive-picker/google-drive-picker-host';
+import { OneDrivePickerAuthorizationDialog } from '@/components/onedrive-picker/onedrive-picker-authorization-dialog';
 import {
   type OneDrivePickedItem,
   OneDrivePickerHost,
@@ -474,6 +475,11 @@ export function ChatInput({
       {oneDrivePicker.pickerProps && (
         <OneDrivePickerHost {...oneDrivePicker.pickerProps} />
       )}
+      <OneDrivePickerAuthorizationDialog
+        isOpen={oneDrivePicker.authorizationRequired}
+        onAuthorize={oneDrivePicker.authorizePicker}
+        onDismiss={oneDrivePicker.dismissAuthorization}
+      />
       <div className="group mx-auto max-w-3xl">
         <input
           aria-label={t('actionMenu.uploadFiles')}

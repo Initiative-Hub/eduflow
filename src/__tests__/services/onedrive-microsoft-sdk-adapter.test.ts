@@ -50,14 +50,16 @@ vi.mock('@microsoft/microsoft-graph-client', () => ({
 
 import {
   getGraphErrorStatus,
-  getScopeForResource,
   OneDriveMicrosoftSdkAdapter,
 } from '@/services/onedrive/OneDriveMicrosoftSdkAdapter';
+import { getTokenTargetScopes } from '@/services/onedrive/OneDriveTokenTarget';
 
 const account = {
+  environment: 'login.microsoftonline.com',
   homeAccountId: 'home-account-1',
   localAccountId: 'local-account-1',
   tenantId: 'tenant-1',
+  username: 'one@example.com',
 };
 
 describe('OneDriveMicrosoftSdkAdapter', () => {
@@ -131,7 +133,11 @@ describe('OneDriveMicrosoftSdkAdapter', () => {
     await expect(
       adapter.acquireTokenByRefreshToken({
         refreshToken: 'legacy-refresh-token',
-        resource: 'https://tenant-my.sharepoint.com',
+        target: {
+          kind: 'sharepoint-picker',
+          resourceOrigin: 'https://tenant-my.sharepoint.com',
+          tenantId: 'tenant-1',
+        },
       })
     ).resolves.toMatchObject({ account, accessToken: 'access-token' });
     expect(msalMocks.client.acquireTokenByRefreshToken).toHaveBeenCalledWith(
@@ -139,6 +145,36 @@ describe('OneDriveMicrosoftSdkAdapter', () => {
         forceCache: true,
         refreshToken: 'legacy-refresh-token',
         scopes: ['https://tenant-my.sharepoint.com/.default'],
+      })
+    );
+  });
+
+  it('uses the consumers authority for personal OneDrive picker tokens', async () => {
+    const tokenResult = {
+      accessToken: 'picker-token',
+      account,
+      expiresOn: new Date('2026-08-24T00:00:00.000Z'),
+      scopes: ['OneDrive.ReadWrite'],
+      tokenType: 'Bearer',
+    };
+    msalMocks.client.acquireTokenSilent.mockResolvedValue(tokenResult);
+    const adapter = OneDriveMicrosoftSdkAdapter.createWithCache();
+
+    await expect(
+      adapter.acquireTokenSilent({
+        account,
+        target: {
+          kind: 'personal-picker',
+          resourceOrigin: 'https://onedrive.live.com',
+        },
+      })
+    ).resolves.toMatchObject({ accessToken: 'picker-token' });
+
+    expect(msalMocks.client.acquireTokenSilent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        account,
+        authority: 'https://login.microsoftonline.com/consumers',
+        scopes: ['OneDrive.ReadWrite'],
       })
     );
   });
@@ -159,13 +195,22 @@ describe('OneDriveMicrosoftSdkAdapter', () => {
   });
 
   it('normalizes picker scopes and Graph SDK error status', () => {
-    expect(getScopeForResource()).toContain('Files.ReadWrite');
-    expect(getScopeForResource('https://onedrive.live.com/picker')).toEqual([
-      'OneDrive.ReadWrite',
-    ]);
-    expect(getScopeForResource('https://tenant-my.sharepoint.com')).toEqual([
-      'https://tenant-my.sharepoint.com/.default',
-    ]);
+    expect(getTokenTargetScopes({ kind: 'graph' })).toContain(
+      'Files.ReadWrite'
+    );
+    expect(
+      getTokenTargetScopes({
+        kind: 'personal-picker',
+        resourceOrigin: 'https://onedrive.live.com',
+      })
+    ).toEqual(['OneDrive.ReadWrite']);
+    expect(
+      getTokenTargetScopes({
+        kind: 'sharepoint-picker',
+        resourceOrigin: 'https://tenant-my.sharepoint.com',
+        tenantId: 'tenant-1',
+      })
+    ).toEqual(['https://tenant-my.sharepoint.com/.default']);
     expect(getGraphErrorStatus(new graphMocks.GraphError(404, 'missing'))).toBe(
       404
     );

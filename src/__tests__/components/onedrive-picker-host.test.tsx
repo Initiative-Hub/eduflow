@@ -70,12 +70,94 @@ describe('OneDrivePickerHostImplementation', () => {
       'filePicker'
     );
     expect(filePicker).toBeTruthy();
-    expect(JSON.parse(filePicker ?? '{}')).toMatchObject({
+    const pickerOptions = JSON.parse(filePicker ?? '{}');
+    expect(pickerOptions).toMatchObject({
+      commands: {
+        pick: {
+          action: 'select',
+          select: {},
+        },
+      },
       sdk: '8.0',
+      selection: {
+        mode: 'single',
+      },
       typesAndSources: {
         filters: ['folder'],
         mode: 'folders',
       },
     });
+    expect(pickerOptions.commands.pick.select).not.toHaveProperty('mode');
+  });
+
+  it('posts personal Picker requests directly to the consumer endpoint', async () => {
+    const pickerWindow = createPickerWindow();
+    vi.spyOn(window, 'open').mockReturnValue(pickerWindow);
+
+    render(
+      <OneDrivePickerHostImplementation
+        accessToken="personal-picker-token"
+        baseUrl="https://onedrive.live.com/picker"
+        mode="folder"
+        onAuthenticate={vi.fn()}
+        onCanceled={vi.fn()}
+        onError={vi.fn()}
+        onPicked={vi.fn()}
+      />
+    );
+
+    await waitFor(() => expect(pickerWindow.submittedForm).toBeDefined());
+
+    const action = new URL(pickerWindow.submittedForm?.action ?? '');
+    expect(action.origin).toBe('https://onedrive.live.com');
+    expect(action.pathname).toBe('/picker');
+    expect(action.searchParams.get('filePicker')).toBeTruthy();
+  });
+
+  it('accepts initialization only from the normalized Picker origin', async () => {
+    const pickerWindow = createPickerWindow();
+    vi.spyOn(window, 'open').mockReturnValue(pickerWindow);
+    const port = {
+      addEventListener: vi.fn(),
+      close: vi.fn(),
+      postMessage: vi.fn(),
+      removeEventListener: vi.fn(),
+      start: vi.fn(),
+    } as unknown as MessagePort;
+
+    render(
+      <OneDrivePickerHostImplementation
+        accessToken="sharepoint-token"
+        baseUrl="https://tenant-my.sharepoint.com/personal/user"
+        mode="folder"
+        onAuthenticate={vi.fn()}
+        onCanceled={vi.fn()}
+        onError={vi.fn()}
+        onPicked={vi.fn()}
+      />
+    );
+    await waitFor(() => expect(pickerWindow.submittedForm).toBeDefined());
+
+    const data = { channelId: 'channel-1', type: 'initialize' };
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        data,
+        origin: 'https://other-tenant.sharepoint.com',
+        ports: [port],
+        source: pickerWindow,
+      })
+    );
+    expect(port.start).not.toHaveBeenCalled();
+
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        data,
+        origin: 'https://tenant-my.sharepoint.com',
+        ports: [port],
+        source: pickerWindow,
+      })
+    );
+    expect(port.start).toHaveBeenCalledOnce();
+    expect(port.postMessage).toHaveBeenCalledWith({ type: 'activate' });
   });
 });

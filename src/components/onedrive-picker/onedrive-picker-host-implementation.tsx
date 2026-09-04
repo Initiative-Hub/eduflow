@@ -17,9 +17,12 @@ type PickerCommandMessage = {
 };
 
 function getPickerUrl(baseUrl: string, options: unknown) {
-  const url = new URL(
-    `${baseUrl.replace(/\/$/, '')}/_layouts/15/FilePicker.aspx`
-  );
+  const normalizedBaseUrl = baseUrl.replace(/\/$/, '');
+  const base = new URL(normalizedBaseUrl);
+  const url =
+    base.origin === 'https://onedrive.live.com' && base.pathname === '/picker'
+      ? base
+      : new URL(`${normalizedBaseUrl}/_layouts/15/FilePicker.aspx`);
   url.searchParams.set('filePicker', JSON.stringify(options));
   url.searchParams.set('locale', navigator.language || 'en-us');
   return url.toString();
@@ -57,6 +60,14 @@ export function OneDrivePickerHostImplementation({
     if (openedRef.current) return;
     openedRef.current = true;
 
+    let pickerOrigin: string;
+    try {
+      pickerOrigin = new URL(baseUrl).origin;
+    } catch {
+      onError();
+      return;
+    }
+
     const channelId = crypto.randomUUID();
     const pickerWindow = window.open(
       '',
@@ -75,9 +86,7 @@ export function OneDrivePickerHostImplementation({
       commands: {
         pick: {
           action: 'select',
-          select: {
-            mode: 'single',
-          },
+          select: {},
         },
       },
       entry: {
@@ -89,6 +98,9 @@ export function OneDrivePickerHostImplementation({
       },
       search: {
         enabled: true,
+      },
+      selection: {
+        mode: 'single',
       },
       typesAndSources: {
         filters: mode === 'folder' ? ['folder'] : ['file'],
@@ -144,7 +156,14 @@ export function OneDrivePickerHostImplementation({
             id: payload.id,
             type: 'result',
           });
-          onError();
+          if (
+            !error ||
+            typeof error !== 'object' ||
+            !('code' in error) ||
+            error.code !== 'ONEDRIVE_PICKER_AUTHORIZATION_REQUIRED'
+          ) {
+            onError();
+          }
         }
         return;
       }
@@ -186,6 +205,7 @@ export function OneDrivePickerHostImplementation({
 
     const handleInitialize = (event: MessageEvent<PickerCommandMessage>) => {
       if (event.source !== pickerWindow) return;
+      if (event.origin !== pickerOrigin) return;
       const message = event.data;
       if (message.type !== 'initialize' || message.id !== undefined) return;
       if ((message as { channelId?: string }).channelId !== channelId) return;

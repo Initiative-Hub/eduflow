@@ -16,6 +16,12 @@ type GoogleDriveOAuthStateCookie = {
   userId: string;
 };
 
+export type OneDriveOAuthFlow = 'connect' | 'picker';
+
+type OneDriveOAuthStateCookie = GoogleDriveOAuthStateCookie & {
+  flow?: OneDriveOAuthFlow;
+};
+
 function assertMatchingValue(
   receivedValue: string,
   expectedValue: string,
@@ -59,7 +65,18 @@ export function createGoogleDriveOAuthState({ userId }: { userId: string }) {
   return { cookieValue, nonce };
 }
 
-export const createOneDriveOAuthState = createGoogleDriveOAuthState;
+export function createOneDriveOAuthState({
+  flow = 'connect',
+  userId,
+}: {
+  flow?: OneDriveOAuthFlow;
+  userId: string;
+}) {
+  const nonce = randomBytes(32).toString('base64url');
+  const cookieValue = JSON.stringify({ flow, nonce, userId });
+
+  return { cookieValue, nonce };
+}
 
 export function assertGoogleDriveOAuthState(
   receivedNonce: string,
@@ -80,13 +97,26 @@ export function assertOneDriveOAuthState(
   cookieValue: string,
   currentUserId: string
 ) {
-  const expectedState = parseOAuthStateCookie(cookieValue, 'OneDrive');
+  const expectedState = parseOAuthStateCookie(
+    cookieValue,
+    'OneDrive'
+  ) as OneDriveOAuthStateCookie;
 
   assertMatchingValue(receivedNonce, expectedState.nonce, 'OneDrive');
 
   if (expectedState.userId !== currentUserId) {
     throw new Error('OneDrive OAuth session changed.');
   }
+
+  if (
+    expectedState.flow !== undefined &&
+    expectedState.flow !== 'connect' &&
+    expectedState.flow !== 'picker'
+  ) {
+    throw new Error('Invalid OneDrive OAuth state.');
+  }
+
+  return expectedState.flow ?? 'connect';
 }
 
 export function getBaseUrl(req: Request) {
@@ -108,11 +138,22 @@ export function getOneDriveRedirectUri(req: Request) {
 }
 
 export function sanitizeReturnTo(value?: string | null) {
-  if (!value?.startsWith('/') || value.startsWith('//')) {
+  if (
+    !value?.startsWith('/') ||
+    value.startsWith('//') ||
+    value.includes('\\')
+  ) {
     return DEFAULT_RETURN_TO;
   }
 
-  return value;
+  try {
+    const base = new URL('https://eduflow.local');
+    const parsed = new URL(value, base);
+    if (parsed.origin !== base.origin) return DEFAULT_RETURN_TO;
+    return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+  } catch {
+    return DEFAULT_RETURN_TO;
+  }
 }
 
 export function buildReturnUrl(req: Request, returnTo: string, status: string) {

@@ -12,6 +12,7 @@ import {
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
+import { OneDrivePickerAuthorizationDialog } from '@/components/onedrive-picker/onedrive-picker-authorization-dialog';
 import { OneDrivePickerHost } from '@/components/onedrive-picker/onedrive-picker-host';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -89,6 +90,8 @@ export function OneDriveIntegrationCard({ email }: { email: string }) {
 
   const status = statusQuery.data?.data;
   const isConnected = Boolean(status?.connected);
+  const requiresReconnect = Boolean(status?.requiresReconnect);
+  const canUseOneDrive = isConnected && !requiresReconnect;
   const isDestinationPending = destinationMutation.isPending;
   const destinationName =
     status?.destination?.name ?? t('oneDrive.noDestination');
@@ -98,6 +101,11 @@ export function OneDriveIntegrationCard({ email }: { email: string }) {
       {oneDrivePicker.pickerProps && (
         <OneDrivePickerHost {...oneDrivePicker.pickerProps} />
       )}
+      <OneDrivePickerAuthorizationDialog
+        isOpen={oneDrivePicker.authorizationRequired}
+        onAuthorize={oneDrivePicker.authorizePicker}
+        onDismiss={oneDrivePicker.dismissAuthorization}
+      />
       <CardHeader>
         <div className="flex size-10 items-center justify-center rounded-lg bg-muted text-muted-foreground">
           <Cloud />
@@ -107,14 +115,16 @@ export function OneDriveIntegrationCard({ email }: { email: string }) {
         <CardAction>
           <Badge
             variant={
-              isConnected && status?.setupComplete ? 'default' : 'outline'
+              canUseOneDrive && status?.setupComplete ? 'default' : 'outline'
             }
           >
-            {isConnected && status?.setupComplete
-              ? t('oneDrive.ready')
-              : isConnected
-                ? t('oneDrive.exportSetupRequired')
-                : t('oneDrive.notConnected')}
+            {requiresReconnect
+              ? t('oneDrive.reconnectRequired')
+              : canUseOneDrive && status?.setupComplete
+                ? t('oneDrive.ready')
+                : isConnected
+                  ? t('oneDrive.exportSetupRequired')
+                  : t('oneDrive.notConnected')}
           </Badge>
         </CardAction>
       </CardHeader>
@@ -143,7 +153,7 @@ export function OneDriveIntegrationCard({ email }: { email: string }) {
           </div>
         )}
 
-        {isConnected && (
+        {canUseOneDrive && (
           <div className="rounded-lg border bg-background p-4">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex min-w-0 items-start gap-3">
@@ -217,6 +227,32 @@ export function OneDriveIntegrationCard({ email }: { email: string }) {
                     : t('oneDrive.chooseDestination')}
                 </Button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {requiresReconnect && (
+          <div className="rounded-lg border bg-background p-4">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex min-w-0 items-start gap-3">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                  <Cloud />
+                </div>
+                <div className="min-w-0">
+                  <div className="font-medium text-sm">
+                    {t('oneDrive.reconnectRequired')}
+                  </div>
+                  <p className="text-muted-foreground text-sm">
+                    {t('oneDrive.reconnectDescription')}
+                  </p>
+                </div>
+              </div>
+              <Button asChild>
+                <Link href={connectHref}>
+                  <ExternalLink data-icon="inline-start" />
+                  {t('oneDrive.reconnect')}
+                </Link>
+              </Button>
             </div>
           </div>
         )}

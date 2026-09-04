@@ -2206,6 +2206,9 @@
       "pickerTokenFailed": "Không thể chuẩn bị OneDrive Picker.",
       "pickerUnavailable": "Không thể mở OneDrive Picker.",
       "ready": "Sẵn sàng",
+      "reconnect": "Kết nối lại",
+      "reconnectDescription": "Kết nối lại OneDrive để cấp quyền picker cần dùng khi chọn thư mục xuất tệp.",
+      "reconnectRequired": "Cần kết nối lại",
       "scope": "EduFlow yêu cầu quyền tệp OneDrive cho các tệp bạn chọn hoặc tạo qua ứng dụng.",
       "title": "OneDrive",
       "useMyDrive": "Dùng My files"
@@ -2217,7 +2220,15 @@
       "errorTitle": "Kết nối thất bại",
       "oneDriveConnectedDescription": "Bạn có thể chọn tệp OneDrive từ menu tải lên và đính kèm.",
       "oneDriveConnectedTitle": "Đã kết nối OneDrive",
-      "oneDriveErrorDescription": "Microsoft chưa hoàn tất luồng cấp quyền. Hãy thử kết nối lại."
+      "oneDriveErrorDescription": "Microsoft chưa hoàn tất luồng cấp quyền. Hãy thử kết nối lại.",
+      "oneDrivePickerAuthorizedDescription": "Hãy nhấn Chọn nơi lưu lần nữa để duyệt và chọn thư mục OneDrive.",
+      "oneDrivePickerAuthorizedTitle": "Đã cấp quyền OneDrive Picker",
+      "oneDrivePickerCanceledDescription": "Bạn đã hủy cấp quyền Microsoft Picker. Bạn có thể cấp quyền khi chọn nơi lưu lần nữa.",
+      "oneDrivePickerCanceledTitle": "Đã hủy cấp quyền Picker",
+      "oneDrivePickerErrorDescription": "Microsoft không thể cấp quyền OneDrive Picker. Hãy thử chọn nơi lưu lần nữa.",
+      "oneDrivePickerErrorTitle": "Cấp quyền Picker thất bại",
+      "oneDrivePickerMismatchDescription": "Hãy đăng nhập bằng đúng tài khoản Microsoft đang kết nối với EduFlow.",
+      "oneDrivePickerMismatchTitle": "Tài khoản Microsoft không khớp"
     },
     "title": "Tích hợp",
     "toast": {
@@ -2230,6 +2241,13 @@
       "oneDriveDisconnected": "Đã ngắt kết nối OneDrive.",
       "oneDriveDisconnectFailed": "Không thể ngắt kết nối OneDrive."
     }
+  },
+  "OneDrivePickerAuthorization": {
+    "authorize": "Cấp quyền với Microsoft",
+    "cancel": "Hủy",
+    "description": "Microsoft yêu cầu thêm một quyền trước khi EduFlow có thể duyệt các thư mục OneDrive của bạn.",
+    "detail": "Quyền này chỉ được Microsoft folder picker sử dụng. EduFlow vẫn xác thực và tải tệp xuất lên qua kết nối Microsoft Graph hiện có.",
+    "title": "Cấp quyền OneDrive Picker"
   },
   "InventoryPage": {
     "actions": {

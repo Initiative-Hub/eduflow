@@ -10,11 +10,33 @@ import {
   sanitizeReturnTo,
 } from '@/utils/oauth-utils';
 
+/**
+ * @swagger
+ * /api/v1/integrations/onedrive/connect:
+ *   get:
+ *     summary: Start the Microsoft Graph connection flow
+ *     security:
+ *       - sessionAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: returnTo
+ *         schema:
+ *           type: string
+ *         description: Local EduFlow path to return to after authorization.
+ *     responses:
+ *       307:
+ *         description: Redirects to Microsoft authorization.
+ *       500:
+ *         description: OneDrive authorization could not be started.
+ */
 export const GET = withAuth(async (req, session) => {
   try {
     const url = new URL(req.url);
     const returnTo = sanitizeReturnTo(url.searchParams.get('returnTo'));
-    const state = createOneDriveOAuthState({ userId: session.user.id });
+    const state = createOneDriveOAuthState({
+      flow: 'connect',
+      userId: session.user.id,
+    });
     const authorizationUrl =
       await OneDriveOAuthTokenService.getAuthorizationUrl({
         redirectUri: getOneDriveRedirectUri(req),

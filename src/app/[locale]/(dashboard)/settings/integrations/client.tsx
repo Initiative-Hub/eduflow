@@ -41,6 +41,7 @@ export default function IntegrationsClient({ email }: { email: string }) {
   const queryClient = useQueryClient();
   const result = searchParams.get('googleDrive');
   const oneDriveResult = searchParams.get('oneDrive');
+  const oneDriveReason = searchParams.get('oneDriveReason');
   const connectHref = `/api/v1/integrations/google-drive/connect?returnTo=/${locale}/settings/integrations`;
 
   const statusQuery = useQuery({
@@ -140,6 +141,44 @@ export default function IntegrationsClient({ email }: { email: string }) {
           <AlertTitle>{t('notice.errorTitle')}</AlertTitle>
           <AlertDescription>
             {t('notice.oneDriveErrorDescription')}
+          </AlertDescription>
+        </Alert>
+      )}
+      {oneDriveResult === 'picker-authorized' && (
+        <Alert>
+          <CheckCircle2 />
+          <AlertTitle>{t('notice.oneDrivePickerAuthorizedTitle')}</AlertTitle>
+          <AlertDescription>
+            {t('notice.oneDrivePickerAuthorizedDescription')}
+          </AlertDescription>
+        </Alert>
+      )}
+      {oneDriveResult === 'picker-error' &&
+        oneDriveReason === 'consent-canceled' && (
+          <Alert>
+            <AlertCircle />
+            <AlertTitle>{t('notice.oneDrivePickerCanceledTitle')}</AlertTitle>
+            <AlertDescription>
+              {t('notice.oneDrivePickerCanceledDescription')}
+            </AlertDescription>
+          </Alert>
+        )}
+      {oneDriveResult === 'picker-error' &&
+        oneDriveReason !== 'consent-canceled' && (
+          <Alert variant="destructive">
+            <AlertCircle />
+            <AlertTitle>{t('notice.oneDrivePickerErrorTitle')}</AlertTitle>
+            <AlertDescription>
+              {t('notice.oneDrivePickerErrorDescription')}
+            </AlertDescription>
+          </Alert>
+        )}
+      {oneDriveResult === 'account-mismatch' && (
+        <Alert variant="destructive">
+          <AlertCircle />
+          <AlertTitle>{t('notice.oneDrivePickerMismatchTitle')}</AlertTitle>
+          <AlertDescription>
+            {t('notice.oneDrivePickerMismatchDescription')}
           </AlertDescription>
         </Alert>
       )}

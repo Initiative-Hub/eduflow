@@ -2,7 +2,10 @@ import type * as MicrosoftGraph from '@microsoft/microsoft-graph-types';
 import { IntegrationProvider } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
 import { OneDriveOAuthTokenService } from './OneDriveOAuthTokenService';
+import { resolvePickerTokenTarget } from './OneDriveTokenTarget';
 import {
+  getPersonalOneDriveRootUrl,
+  normalizeOneDriveRootWebViewLink,
   type OneDriveDestination,
   parseOneDriveDestination,
   parseOneDriveMetadata,
@@ -10,6 +13,21 @@ import {
 
 function encodeGraphId(value: string) {
   return encodeURIComponent(value);
+}
+
+function getMyDriveWebViewLink(options: {
+  drive: MicrosoftGraph.Drive;
+  root: MicrosoftGraph.DriveItem;
+}) {
+  const rootWebUrl = normalizeOneDriveRootWebViewLink(options.root.webUrl);
+  if (rootWebUrl) return rootWebUrl;
+
+  const driveWebUrl = normalizeOneDriveRootWebViewLink(options.drive.webUrl);
+  if (driveWebUrl) return driveWebUrl;
+
+  return options.drive.driveType === 'personal'
+    ? getPersonalOneDriveRootUrl(options.root.webUrl ?? options.drive.webUrl)
+    : null;
 }
 
 export class OneDriveDestinationService {
@@ -20,21 +38,32 @@ export class OneDriveDestinationService {
         metadata: true,
         providerAccount: true,
         scope: true,
+        tokenCache: true,
         updatedAt: true,
       },
       where: {
         userId_provider: { provider: IntegrationProvider.ONEDRIVE, userId },
       },
     });
-    const destination = parseOneDriveDestination(integration?.metadata ?? null);
+    const metadata = parseOneDriveMetadata(integration?.metadata ?? null);
+    const destination = parseOneDriveDestination(metadata);
+    let requiresReconnect = Boolean(integration && !integration.tokenCache);
+    if (integration && !requiresReconnect) {
+      try {
+        resolvePickerTokenTarget(metadata);
+      } catch {
+        requiresReconnect = true;
+      }
+    }
     return {
       accountEmail: integration?.providerAccount ?? null,
       connected: Boolean(integration),
       destination,
       expiresAt: integration?.expiresAt ?? null,
       metadata: integration?.metadata ?? null,
+      requiresReconnect,
       scope: integration?.scope ?? null,
-      setupComplete: Boolean(integration && destination),
+      setupComplete: Boolean(integration && destination && !requiresReconnect),
       updatedAt: integration?.updatedAt ?? null,
     };
   }
@@ -59,10 +88,10 @@ export class OneDriveDestinationService {
     let destination: OneDriveDestination;
 
     if (input.kind === 'my_drive') {
-      const drive = (await context.graph
-        .api('/me/drive')
-        .select('id,webUrl')
-        .get()) as MicrosoftGraph.Drive;
+      const [drive, root] = (await Promise.all([
+        context.graph.api('/me/drive').select('id,webUrl,driveType').get(),
+        context.graph.api('/me/drive/root').select('id,webUrl').get(),
+      ])) as [MicrosoftGraph.Drive, MicrosoftGraph.DriveItem];
       if (!drive.id) {
         throw new Error('OneDrive destination is not available.');
       }
@@ -71,7 +100,7 @@ export class OneDriveDestinationService {
         folderId: null,
         kind: 'my_drive',
         name: 'My files',
-        webViewLink: drive.webUrl ?? null,
+        webViewLink: getMyDriveWebViewLink({ drive, root }),
       };
     } else {
       const folder = (await context.graph

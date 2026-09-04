@@ -4,6 +4,7 @@ import {
   createHash,
   randomBytes,
 } from 'node:crypto';
+import { InteractionRequiredAuthError } from '@azure/msal-node';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { prisma } from '@/lib/prisma';
 import { OneDriveMicrosoftSdkAdapter } from '@/services/onedrive/OneDriveMicrosoftSdkAdapter';
@@ -26,14 +27,6 @@ vi.mock('@/services/onedrive/OneDriveMicrosoftSdkAdapter', () => ({
     msalLocalAccountId: account?.localAccountId ?? null,
     msalTenantId: account?.tenantId ?? null,
   })),
-  getScopeForResource: vi.fn(() => [
-    'openid',
-    'email',
-    'profile',
-    'offline_access',
-    'User.Read',
-    'Files.ReadWrite',
-  ]),
   OneDriveMicrosoftSdkAdapter: {
     createWithCache: vi.fn(),
     getAuthorizationUrl: vi.fn(),
@@ -55,6 +48,22 @@ const msalAccount = {
   homeAccountId: 'home-account-1',
   localAccountId: 'local-account-1',
   tenantId: 'tenant-1',
+};
+
+const businessMetadata = {
+  driveType: 'business',
+  msalHomeAccountId: 'home-account-1',
+  msalLocalAccountId: 'local-account-1',
+  msalTenantId: 'tenant-1',
+  pickerBaseUrl: 'https://tenant-my.sharepoint.com',
+};
+
+const personalMetadata = {
+  driveType: 'personal',
+  msalHomeAccountId: 'home-account-1',
+  msalLocalAccountId: 'local-account-1',
+  msalTenantId: 'tenant-1',
+  pickerBaseUrl: 'https://onedrive.live.com/picker',
 };
 
 function encryptTokenForTest(value: string) {
@@ -167,6 +176,40 @@ describe('OneDriveOAuthTokenService', () => {
     });
   });
 
+  it('builds explicit Picker consent for the connected account and resource', async () => {
+    sdkAdapter.getAuthorizationUrl.mockResolvedValue(
+      'https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize'
+    );
+    connectedIntegration.findUnique.mockResolvedValue({
+      metadata: {
+        driveType: 'personal',
+        msalHomeAccountId: 'home-account-1',
+        msalLocalAccountId: 'local-account-1',
+        msalTenantId: 'tenant-1',
+        pickerBaseUrl: 'https://onedrive.live.com/picker',
+      },
+      providerAccount: 'one@example.com',
+      tokenCache: encryptTokenForTest('stored-msal-cache'),
+    });
+
+    await OneDriveOAuthTokenService.getPickerAuthorizationUrl({
+      redirectUri: 'https://eduflow.test/api/v1/integrations/onedrive/callback',
+      state: 'picker-state',
+      userId: 'user-1',
+    });
+
+    expect(sdkAdapter.getAuthorizationUrl).toHaveBeenCalledWith({
+      loginHint: 'one@example.com',
+      prompt: 'consent',
+      redirectUri: 'https://eduflow.test/api/v1/integrations/onedrive/callback',
+      state: 'picker-state',
+      target: {
+        kind: 'personal-picker',
+        resourceOrigin: 'https://onedrive.live.com',
+      },
+    });
+  });
+
   it('stores encrypted MSAL cache and account metadata on connect', async () => {
     const sdk = createSdkMock();
     sdkAdapter.createWithCache.mockReturnValue(sdk);
@@ -183,6 +226,7 @@ describe('OneDriveOAuthTokenService', () => {
     expect(sdk.exchangeCode).toHaveBeenCalledWith({
       code: 'authorization-code',
       redirectUri: 'https://eduflow.test/api/v1/integrations/onedrive/callback',
+      target: { kind: 'graph' },
     });
     expect(connectedIntegration.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -216,8 +260,7 @@ describe('OneDriveOAuthTokenService', () => {
       accessToken: encryptTokenForTest('stored-access-token'),
       expiresAt: new Date('2026-08-24T00:00:00.000Z'),
       metadata: {
-        msalHomeAccountId: 'home-account-1',
-        pickerBaseUrl: 'https://tenant-my.sharepoint.com',
+        ...businessMetadata,
       },
       providerAccount: 'one@example.com',
       refreshToken: null,
@@ -234,11 +277,11 @@ describe('OneDriveOAuthTokenService', () => {
     );
     expect(sdk.findAccount).toHaveBeenCalledWith({
       homeAccountId: 'home-account-1',
-      localAccountId: undefined,
+      localAccountId: 'local-account-1',
     });
     expect(sdk.acquireTokenSilent).toHaveBeenCalledWith({
       account: msalAccount,
-      resource: undefined,
+      target: { kind: 'graph' },
     });
     expect(result.accessToken).toBe('silent-access-token');
     expect(result.graph).toBe(sdk.graph.graph);
@@ -272,13 +315,48 @@ describe('OneDriveOAuthTokenService', () => {
 
     expect(sdk.acquireTokenByRefreshToken).toHaveBeenCalledWith({
       refreshToken: 'legacy-refresh-token',
-      resource: undefined,
+      target: { kind: 'graph' },
     });
     expect(result.accessToken).toBe('legacy-migrated-token');
     const updateArg = connectedIntegration.update.mock.calls[0]?.[0];
     expect(decryptTokenForTest(updateArg.data.tokenCache)).toBe(
       'serialized-msal-cache'
     );
+  });
+
+  it('does not classify a Graph invalid_grant as Picker authorization', async () => {
+    const sdk = createSdkMock();
+    const consoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => {});
+    sdk.acquireTokenSilent.mockRejectedValue({
+      correlationId: 'correlation-graph-1',
+      errorCode: 'invalid_grant',
+      subError: '',
+    });
+    sdkAdapter.createWithCache.mockReturnValue(sdk);
+    connectedIntegration.findUnique.mockResolvedValue({
+      accessToken: encryptTokenForTest('stored-access-token'),
+      metadata: businessMetadata,
+      providerAccount: 'one@example.com',
+      refreshToken: null,
+      scope: 'Files.ReadWrite',
+      tokenCache: encryptTokenForTest('stored-msal-cache'),
+      tokenType: 'Bearer',
+    });
+
+    await expect(
+      OneDriveOAuthTokenService.getAuthorizedContext('user-1')
+    ).rejects.toMatchObject({
+      code: 'ONEDRIVE_PROVIDER_ERROR',
+      diagnostics: {
+        correlationId: 'correlation-graph-1',
+        errorCode: 'invalid_grant',
+        errorNo: null,
+        subError: '',
+      },
+    });
+    consoleError.mockRestore();
   });
 
   it('requests resource-specific picker tokens without replacing the Graph access token fields', async () => {
@@ -294,7 +372,7 @@ describe('OneDriveOAuthTokenService', () => {
     connectedIntegration.findUnique.mockResolvedValue({
       accessToken: encryptTokenForTest('stored-access-token'),
       expiresAt: new Date('2026-08-24T00:00:00.000Z'),
-      metadata: { msalHomeAccountId: 'home-account-1' },
+      metadata: businessMetadata,
       providerAccount: 'one@example.com',
       refreshToken: null,
       scope: 'Files.ReadWrite',
@@ -302,45 +380,172 @@ describe('OneDriveOAuthTokenService', () => {
       tokenType: 'Bearer',
     });
 
-    const result = await OneDriveOAuthTokenService.getAuthorizedContext(
-      'user-1',
-      { resource: 'https://tenant-my.sharepoint.com' }
-    );
+    const result = await OneDriveOAuthTokenService.getPickerToken('user-1', {
+      resource: 'https://tenant-my.sharepoint.com',
+    });
 
     expect(result.accessToken).toBe('sharepoint-access-token');
     expect(sdk.acquireTokenSilent).toHaveBeenCalledWith({
       account: msalAccount,
-      resource: 'https://tenant-my.sharepoint.com',
+      target: {
+        kind: 'sharepoint-picker',
+        resourceOrigin: 'https://tenant-my.sharepoint.com',
+        tenantId: 'tenant-1',
+      },
     });
     expect(
       connectedIntegration.update.mock.calls[0]?.[0].data
     ).not.toHaveProperty('accessToken');
   });
 
+  it('reports missing resource-specific picker consent separately from expired sessions', async () => {
+    const sdk = createSdkMock();
+    sdk.acquireTokenSilent.mockRejectedValue(
+      new InteractionRequiredAuthError(
+        'invalid_grant',
+        'correlation-1',
+        'Additional consent is required.',
+        'consent_required'
+      )
+    );
+    sdkAdapter.createWithCache.mockReturnValue(sdk);
+    connectedIntegration.findUnique.mockResolvedValue({
+      accessToken: encryptTokenForTest('stored-access-token'),
+      expiresAt: new Date('2026-08-24T00:00:00.000Z'),
+      metadata: businessMetadata,
+      providerAccount: 'one@example.com',
+      refreshToken: null,
+      scope: 'Files.ReadWrite',
+      tokenCache: encryptTokenForTest('stored-msal-cache'),
+      tokenType: 'Bearer',
+    });
+
+    await expect(
+      OneDriveOAuthTokenService.getPickerToken('user-1', {
+        resource: 'https://tenant-my.sharepoint.com',
+      })
+    ).rejects.toMatchObject({
+      code: 'ONEDRIVE_PICKER_AUTHORIZATION_REQUIRED',
+    });
+  });
+
+  it('requires personal Picker authorization when silent acquisition returns invalid_grant without a suberror', async () => {
+    const sdk = createSdkMock();
+    const consoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => {});
+    sdk.acquireTokenSilent.mockRejectedValue({
+      correlationId: 'correlation-personal-picker-1',
+      errorCode: 'invalid_grant',
+      subError: '',
+    });
+    sdkAdapter.createWithCache.mockReturnValue(sdk);
+    connectedIntegration.findUnique.mockResolvedValue({
+      accessToken: encryptTokenForTest('stored-graph-access-token'),
+      metadata: personalMetadata,
+      providerAccount: 'one@example.com',
+      tokenCache: encryptTokenForTest('stored-msal-cache'),
+    });
+
+    await expect(
+      OneDriveOAuthTokenService.getPickerToken('user-1')
+    ).rejects.toMatchObject({
+      code: 'ONEDRIVE_PICKER_AUTHORIZATION_REQUIRED',
+    });
+    expect(sdk.acquireTokenSilent).toHaveBeenCalledWith({
+      account: msalAccount,
+      target: {
+        kind: 'personal-picker',
+        resourceOrigin: 'https://onedrive.live.com',
+      },
+    });
+    consoleError.mockRestore();
+  });
+
+  it('retains provider diagnostics without classifying failures as consent', async () => {
+    const sdk = createSdkMock();
+    const consoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => {});
+    sdk.acquireTokenSilent.mockRejectedValue({
+      correlationId: 'correlation-provider-1',
+      errorCode: 'temporarily_unavailable',
+      errorNo: '500011',
+    });
+    sdkAdapter.createWithCache.mockReturnValue(sdk);
+    connectedIntegration.findUnique.mockResolvedValue({
+      metadata: businessMetadata,
+      providerAccount: 'one@example.com',
+      tokenCache: encryptTokenForTest('stored-msal-cache'),
+    });
+
+    await expect(
+      OneDriveOAuthTokenService.getPickerToken('user-1')
+    ).rejects.toMatchObject({
+      code: 'ONEDRIVE_PROVIDER_ERROR',
+      diagnostics: {
+        correlationId: 'correlation-provider-1',
+        errorCode: 'temporarily_unavailable',
+        errorNo: '500011',
+        subError: null,
+      },
+    });
+    expect(consoleError).toHaveBeenCalledWith(
+      'OneDrive Microsoft authorization failed.',
+      {
+        correlationId: 'correlation-provider-1',
+        errorCode: 'temporarily_unavailable',
+        errorNo: '500011',
+        operation: 'picker_silent_token',
+        subError: null,
+      }
+    );
+    consoleError.mockRestore();
+  });
+
+  it.each(['network_error', 'invalid_client', 'invalid_request'])(
+    'keeps %s Picker failures classified as provider errors',
+    async (errorCode) => {
+      const sdk = createSdkMock();
+      const consoleError = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+      sdk.acquireTokenSilent.mockRejectedValue({
+        correlationId: `correlation-${errorCode}`,
+        errorCode,
+      });
+      sdkAdapter.createWithCache.mockReturnValue(sdk);
+      connectedIntegration.findUnique.mockResolvedValue({
+        metadata: personalMetadata,
+        providerAccount: 'one@example.com',
+        tokenCache: encryptTokenForTest('stored-msal-cache'),
+      });
+
+      await expect(
+        OneDriveOAuthTokenService.getPickerToken('user-1')
+      ).rejects.toMatchObject({
+        code: 'ONEDRIVE_PROVIDER_ERROR',
+        diagnostics: { errorCode },
+      });
+      consoleError.mockRestore();
+    }
+  );
+
   it('uses the stored picker base URL for the initial picker token', async () => {
     const sdk = createSdkMock();
-    sdk.acquireTokenSilent
-      .mockResolvedValueOnce({
-        accessToken: 'graph-access-token',
-        account: msalAccount,
-        expiresAt: new Date('2026-08-24T02:00:00.000Z'),
-        scope: 'Files.ReadWrite',
-        tokenType: 'Bearer',
-      })
-      .mockResolvedValueOnce({
-        accessToken: 'initial-sharepoint-picker-token',
-        account: msalAccount,
-        expiresAt: new Date('2026-08-24T03:00:00.000Z'),
-        scope: 'https://tenant-my.sharepoint.com/.default',
-        tokenType: 'Bearer',
-      });
+    sdk.acquireTokenSilent.mockResolvedValue({
+      accessToken: 'initial-sharepoint-picker-token',
+      account: msalAccount,
+      expiresAt: new Date('2026-08-24T03:00:00.000Z'),
+      scope: 'https://tenant-my.sharepoint.com/.default',
+      tokenType: 'Bearer',
+    });
     sdkAdapter.createWithCache.mockReturnValue(sdk);
     connectedIntegration.findUnique.mockResolvedValue({
       accessToken: encryptTokenForTest('stored-access-token'),
       expiresAt: new Date(Date.now() + 10 * 60 * 1000),
       metadata: {
-        msalHomeAccountId: 'home-account-1',
-        pickerBaseUrl: 'https://tenant-my.sharepoint.com',
+        ...businessMetadata,
       },
       providerAccount: 'one@example.com',
       refreshToken: null,
@@ -355,11 +560,90 @@ describe('OneDriveOAuthTokenService', () => {
       accessToken: 'initial-sharepoint-picker-token',
       accountEmail: 'one@example.com',
       baseUrl: 'https://tenant-my.sharepoint.com',
-      expiresAt: null,
+      expiresAt: '2026-08-24T03:00:00.000Z',
     });
-    expect(sdk.acquireTokenSilent.mock.calls[1]?.[0]).toEqual({
+    expect(sdk.acquireTokenSilent).toHaveBeenCalledWith({
       account: msalAccount,
-      resource: 'https://tenant-my.sharepoint.com',
+      target: {
+        kind: 'sharepoint-picker',
+        resourceOrigin: 'https://tenant-my.sharepoint.com',
+        tenantId: 'tenant-1',
+      },
     });
+  });
+
+  it('merges personal Picker consent into the cache without replacing Graph fields', async () => {
+    const sdk = createSdkMock();
+    sdkAdapter.createWithCache.mockReturnValue(sdk);
+    connectedIntegration.findUnique.mockResolvedValue({
+      accessToken: encryptTokenForTest('stored-access-token'),
+      expiresAt: new Date('2026-08-24T00:00:00.000Z'),
+      metadata: {
+        ...personalMetadata,
+        destination: {
+          driveId: 'drive-1',
+          folderId: null,
+          kind: 'my_drive',
+          name: 'My files',
+          webViewLink: null,
+        },
+      },
+      providerAccount: 'one@example.com',
+      scope: 'Files.ReadWrite',
+      tokenCache: encryptTokenForTest('stored-msal-cache'),
+      tokenType: 'Bearer',
+    });
+
+    await OneDriveOAuthTokenService.authorizePicker({
+      code: 'picker-code',
+      redirectUri: 'https://eduflow.test/api/v1/integrations/onedrive/callback',
+      userId: 'user-1',
+    });
+
+    expect(sdk.exchangeCode).toHaveBeenCalledWith({
+      code: 'picker-code',
+      redirectUri: 'https://eduflow.test/api/v1/integrations/onedrive/callback',
+      target: {
+        kind: 'personal-picker',
+        resourceOrigin: 'https://onedrive.live.com',
+      },
+    });
+    const updateData = connectedIntegration.update.mock.calls[0]?.[0].data;
+    expect(updateData).not.toHaveProperty('accessToken');
+    expect(updateData).not.toHaveProperty('expiresAt');
+    expect(updateData).not.toHaveProperty('scope');
+    expect(updateData.metadata.destination).toMatchObject({ kind: 'my_drive' });
+    expect(decryptTokenForTest(updateData.tokenCache)).toBe(
+      'serialized-msal-cache'
+    );
+  });
+
+  it('rejects a different Microsoft account without updating the integration', async () => {
+    const sdk = createSdkMock();
+    sdk.exchangeCode.mockResolvedValue({
+      accessToken: 'picker-token',
+      account: { ...msalAccount, homeAccountId: 'different-home-account' },
+      expiresAt: new Date('2026-08-24T03:00:00.000Z'),
+      scope: 'https://tenant-my.sharepoint.com/.default',
+      tokenType: 'Bearer',
+    });
+    sdkAdapter.createWithCache.mockReturnValue(sdk);
+    connectedIntegration.findUnique.mockResolvedValue({
+      metadata: businessMetadata,
+      providerAccount: 'one@example.com',
+      tokenCache: encryptTokenForTest('stored-msal-cache'),
+    });
+
+    await expect(
+      OneDriveOAuthTokenService.authorizePicker({
+        code: 'picker-code',
+        redirectUri:
+          'https://eduflow.test/api/v1/integrations/onedrive/callback',
+        userId: 'user-1',
+      })
+    ).rejects.toMatchObject({
+      code: 'ONEDRIVE_ACCOUNT_MISMATCH',
+    });
+    expect(connectedIntegration.update).not.toHaveBeenCalled();
   });
 });

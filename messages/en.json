@@ -2206,6 +2206,9 @@
       "pickerTokenFailed": "Could not prepare OneDrive Picker.",
       "pickerUnavailable": "OneDrive Picker is unavailable.",
       "ready": "Ready",
+      "reconnect": "Reconnect",
+      "reconnectDescription": "Reconnect OneDrive to grant the picker access needed for choosing an export folder.",
+      "reconnectRequired": "Reconnect required",
       "scope": "EduFlow requests OneDrive file access for files you select or create through the app.",
       "title": "OneDrive",
       "useMyDrive": "Use My files"
@@ -2217,7 +2220,15 @@
       "errorTitle": "Connection failed",
       "oneDriveConnectedDescription": "You can now choose OneDrive files from upload and attachment menus.",
       "oneDriveConnectedTitle": "OneDrive connected",
-      "oneDriveErrorDescription": "Microsoft did not complete the authorization flow. Try connecting again."
+      "oneDriveErrorDescription": "Microsoft did not complete the authorization flow. Try connecting again.",
+      "oneDrivePickerAuthorizedDescription": "Click Choose destination again to browse and select a OneDrive folder.",
+      "oneDrivePickerAuthorizedTitle": "OneDrive Picker authorized",
+      "oneDrivePickerCanceledDescription": "Microsoft Picker authorization was canceled. You can authorize it when you choose a destination again.",
+      "oneDrivePickerCanceledTitle": "Picker authorization canceled",
+      "oneDrivePickerErrorDescription": "Microsoft could not authorize OneDrive Picker. Try choosing a destination again.",
+      "oneDrivePickerErrorTitle": "Picker authorization failed",
+      "oneDrivePickerMismatchDescription": "Sign in with the same Microsoft account that is already connected to EduFlow.",
+      "oneDrivePickerMismatchTitle": "Microsoft account does not match"
     },
     "title": "Integrations",
     "toast": {
@@ -2230,6 +2241,13 @@
       "oneDriveDisconnected": "OneDrive disconnected.",
       "oneDriveDisconnectFailed": "Could not disconnect OneDrive."
     }
+  },
+  "OneDrivePickerAuthorization": {
+    "authorize": "Authorize with Microsoft",
+    "cancel": "Cancel",
+    "description": "Microsoft requires one additional permission before EduFlow can browse your OneDrive folders.",
+    "detail": "This permission is used only by the Microsoft folder picker. EduFlow continues to validate and upload exports through your existing Microsoft Graph connection.",
+    "title": "Authorize OneDrive Picker"
   },
   "InventoryPage": {
     "actions": {
