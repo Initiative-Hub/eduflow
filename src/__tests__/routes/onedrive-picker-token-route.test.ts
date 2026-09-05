@@ -68,6 +68,39 @@ describe('OneDrive picker token route', () => {
     );
   });
 
+  it.each([
+    'https://my.microsoftpersonalcontent.com',
+    'https://api.onedrive.com',
+  ])('accepts personal OneDrive authenticate resource %s', async (resource) => {
+    oneDriveOAuthTokenService.getPickerToken.mockResolvedValue({
+      accessToken: 'server-token',
+      accountEmail: 'drive@example.com',
+      baseUrl: 'https://onedrive.live.com/picker',
+      expiresAt: null,
+    });
+
+    const response = await POST(
+      createPickerTokenRequest({
+        command: 'authenticate',
+        resource,
+      })
+    );
+
+    await expect(response.json()).resolves.toMatchObject({
+      data: {
+        accessToken: 'server-token',
+      },
+    });
+    expect(response.status).toBe(200);
+    expect(oneDriveOAuthTokenService.getPickerToken).toHaveBeenCalledWith(
+      'user-1',
+      {
+        command: 'authenticate',
+        resource,
+      }
+    );
+  });
+
   it('returns a stable 409 when the OneDrive session needs reconnecting', async () => {
     oneDriveOAuthTokenService.getPickerToken.mockRejectedValue(
       new OneDriveAuthorizationError(

@@ -2,6 +2,8 @@ import { OneDriveAuthorizationError } from './OneDriveAuthorizationError';
 import type { OneDriveMetadata } from './onedrive-types';
 
 const PERSONAL_PICKER_ORIGIN = 'https://onedrive.live.com';
+const PERSONAL_PICKER_API_HOST = 'api.onedrive.com';
+const PERSONAL_PICKER_CONTENT_HOST = 'microsoftpersonalcontent.com';
 
 export type OneDriveTokenTarget =
   | { kind: 'graph' }
@@ -48,6 +50,35 @@ function requirePickerMetadata(metadata: OneDriveMetadata) {
   }
 }
 
+function isPersonalPickerLaunchUrl(resource: string) {
+  try {
+    const url = new URL(resource);
+    return (
+      url.protocol === 'https:' &&
+      url.hostname.toLowerCase() === 'onedrive.live.com' &&
+      url.pathname.replace(/\/+$/, '') === '/picker' &&
+      !url.search &&
+      !url.hash
+    );
+  } catch {
+    return false;
+  }
+}
+
+function isPersonalPickerResourceOrigin(origin: string) {
+  if (origin === PERSONAL_PICKER_ORIGIN) return true;
+  try {
+    const host = new URL(origin).hostname.toLowerCase();
+    return (
+      host === PERSONAL_PICKER_API_HOST ||
+      host === `my.${PERSONAL_PICKER_CONTENT_HOST}` ||
+      host.endsWith(`.${PERSONAL_PICKER_CONTENT_HOST}`)
+    );
+  } catch {
+    return false;
+  }
+}
+
 export function resolvePickerTokenTarget(
   metadata: OneDriveMetadata,
   requestedResource?: string | null
@@ -60,8 +91,8 @@ export function resolvePickerTokenTarget(
 
   if (metadata.driveType === 'personal') {
     if (
-      configuredOrigin !== PERSONAL_PICKER_ORIGIN ||
-      requestedOrigin !== PERSONAL_PICKER_ORIGIN
+      !isPersonalPickerLaunchUrl(metadata.pickerBaseUrl!) ||
+      !isPersonalPickerResourceOrigin(requestedOrigin)
     ) {
       throw invalidPickerResource(
         'The requested Picker resource does not match the connected personal OneDrive.'

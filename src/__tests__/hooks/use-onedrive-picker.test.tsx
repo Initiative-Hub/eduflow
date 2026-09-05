@@ -129,6 +129,68 @@ describe('useOneDrivePicker', () => {
     expect(result.current.authorizationRequired).toBe(false);
   });
 
+  it('lets the Picker host report one generic in-popup authentication failure', async () => {
+    apiClientMock.post.mockResolvedValueOnce({
+      data: {
+        accessToken: 'server-connected-token',
+        accountEmail: 'drive-account@example.com',
+        baseUrl: 'https://onedrive.live.com/picker',
+        expiresAt: null,
+      },
+    });
+    const onError = vi.fn();
+    const { result } = renderHook(
+      () =>
+        useOneDrivePicker({
+          messages: {
+            connectRequired: 'connect required',
+            sessionChanged: 'session changed',
+            tokenFailed: 'token failed',
+            unavailable: 'unavailable',
+          },
+          onError,
+          onPicked: vi.fn(),
+        }),
+      { wrapper: createWrapper() }
+    );
+
+    act(() => result.current.openPicker());
+
+    await waitFor(() => expect(result.current.pickerProps).not.toBeNull());
+    const pickerProps = result.current.pickerProps;
+    apiClientMock.post.mockRejectedValue({
+      code: 'ONEDRIVE_INVALID_PICKER_RESOURCE',
+      message: 'Invalid OneDrive picker resource.',
+      status: 400,
+    });
+
+    await expect(
+      pickerProps?.onAuthenticate({
+        command: 'authenticate',
+        resource: 'https://example.com',
+      })
+    ).rejects.toMatchObject({
+      code: 'ONEDRIVE_INVALID_PICKER_RESOURCE',
+    });
+    await expect(
+      pickerProps?.onAuthenticate({
+        command: 'authenticate',
+        resource: 'https://example.com',
+      })
+    ).rejects.toMatchObject({
+      code: 'ONEDRIVE_INVALID_PICKER_RESOURCE',
+    });
+    expect(onError).not.toHaveBeenCalled();
+
+    act(() => {
+      pickerProps?.onError();
+      pickerProps?.onError();
+    });
+
+    expect(onError).toHaveBeenCalledOnce();
+    expect(onError).toHaveBeenCalledWith('unavailable');
+  });
+
   it('builds a Picker authorization URL for the current localized route', () => {
     expect(
       buildOneDrivePickerAuthorizationUrl({

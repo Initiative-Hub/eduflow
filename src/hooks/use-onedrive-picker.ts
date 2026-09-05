@@ -1,7 +1,7 @@
 'use client';
 
 import { useMutation } from '@tanstack/react-query';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import type {
   OneDrivePickedItem,
   OneDrivePickerHostProps,
@@ -79,8 +79,17 @@ export function useOneDrivePicker({
     baseUrl: string;
   } | null>(null);
   const [authorizationRequired, setAuthorizationRequired] = useState(false);
+  const errorReportedRef = useRef(false);
 
   const closePicker = useCallback(() => setTokenContext(null), []);
+  const reportError = useCallback(
+    (message: string) => {
+      if (errorReportedRef.current) return;
+      errorReportedRef.current = true;
+      onError?.(message);
+    },
+    [onError]
+  );
   const dismissAuthorization = useCallback(
     () => setAuthorizationRequired(false),
     []
@@ -99,8 +108,8 @@ export function useOneDrivePicker({
   );
   const handlePickerError = useCallback(() => {
     closePicker();
-    onError?.(messages.unavailable);
-  }, [closePicker, messages.unavailable, onError]);
+    reportError(messages.unavailable);
+  }, [closePicker, messages.unavailable, reportError]);
 
   const fetchPickerToken = useCallback(
     (input?: { command?: string; resource?: string }) =>
@@ -111,22 +120,31 @@ export function useOneDrivePicker({
     []
   );
 
-  const handleTokenError = useCallback(
+  const handleInitialTokenError = useCallback(
     (error: OneDrivePickerApiError) => {
       closePicker();
       if (error.code === 'ONEDRIVE_PICKER_AUTHORIZATION_REQUIRED') {
         setAuthorizationRequired(true);
         return;
       }
-      onError?.(getPickerErrorMessage(error, messages));
+      reportError(getPickerErrorMessage(error, messages));
     },
-    [closePicker, messages, onError]
+    [closePicker, messages, reportError]
+  );
+
+  const handleAuthenticateError = useCallback(
+    (error: OneDrivePickerApiError) => {
+      if (error.code !== 'ONEDRIVE_PICKER_AUTHORIZATION_REQUIRED') return;
+      closePicker();
+      setAuthorizationRequired(true);
+    },
+    [closePicker]
   );
 
   const { isPending: isPickerTokenPending, mutate: openWithToken } =
     useMutation({
       mutationFn: async () => fetchPickerToken(),
-      onError: handleTokenError,
+      onError: handleInitialTokenError,
       onSuccess: (response) => {
         setTokenContext({
           accessToken: response.data.accessToken,
@@ -136,6 +154,7 @@ export function useOneDrivePicker({
     });
 
   const openPicker = useCallback(() => {
+    errorReportedRef.current = false;
     dismissAuthorization();
     onBeforeOpen?.();
     openWithToken();
@@ -152,7 +171,7 @@ export function useOneDrivePicker({
           const response = await fetchPickerToken(input);
           return response.data.accessToken;
         } catch (error) {
-          handleTokenError(error as OneDrivePickerApiError);
+          handleAuthenticateError(error as OneDrivePickerApiError);
           throw error;
         }
       },
@@ -163,7 +182,7 @@ export function useOneDrivePicker({
   }, [
     closePicker,
     fetchPickerToken,
-    handleTokenError,
+    handleAuthenticateError,
     handlePicked,
     handlePickerError,
     mode,

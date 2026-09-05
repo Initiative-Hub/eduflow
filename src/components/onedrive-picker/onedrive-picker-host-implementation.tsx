@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import type {
   OneDrivePickedItem,
   OneDrivePickerHostProps,
@@ -45,6 +45,69 @@ function extractPickedItems(command: PickerCommandMessage['data']) {
   });
 }
 
+function getPickerOptions(channelId: string, mode: 'files' | 'folder') {
+  return {
+    sdk: '8.0',
+    authentication: {
+      tokens: {
+        graph: false,
+        sharePoint: true,
+        substrate: false,
+      },
+    },
+    commands: {
+      pick: {
+        action: 'select',
+        select: {},
+      },
+    },
+    entry: {
+      oneDrive: {},
+    },
+    messaging: {
+      channelId,
+      origin: window.location.origin,
+    },
+    search: {
+      enabled: true,
+    },
+    selection: {
+      mode: 'single',
+    },
+    typesAndSources: {
+      filters: mode === 'folder' ? ['folder'] : ['file'],
+      mode: mode === 'folder' ? 'folders' : 'files',
+    },
+  };
+}
+
+function submitPickerForm(
+  pickerWindow: Window,
+  baseUrl: string,
+  accessToken: string,
+  options: unknown
+) {
+  const form = pickerWindow.document.createElement('form');
+  form.setAttribute('action', getPickerUrl(baseUrl, options));
+  form.setAttribute('method', 'POST');
+  const tokenInput = pickerWindow.document.createElement('input');
+  tokenInput.setAttribute('type', 'hidden');
+  tokenInput.setAttribute('name', 'access_token');
+  tokenInput.setAttribute('value', accessToken);
+  form.append(tokenInput);
+  pickerWindow.document.body.append(form);
+  form.submit();
+}
+
+function isPickerAuthorizationRequired(error: unknown) {
+  return Boolean(
+    error &&
+      typeof error === 'object' &&
+      'code' in error &&
+      error.code === 'ONEDRIVE_PICKER_AUTHORIZATION_REQUIRED'
+  );
+}
+
 export function OneDrivePickerHostImplementation({
   accessToken,
   baseUrl,
@@ -54,81 +117,57 @@ export function OneDrivePickerHostImplementation({
   onError,
   onPicked,
 }: OneDrivePickerHostProps) {
-  const openedRef = useRef(false);
-
   useEffect(() => {
-    if (openedRef.current) return;
-    openedRef.current = true;
-
-    let pickerOrigin: string;
+    let pickerOrigin: string | null = null;
     try {
       pickerOrigin = new URL(baseUrl).origin;
     } catch {
-      onError();
-      return;
+      pickerOrigin = null;
     }
 
     const channelId = crypto.randomUUID();
-    const pickerWindow = window.open(
-      '',
-      'OneDrivePicker',
-      'width=1080,height=680'
-    );
-    if (!pickerWindow) {
-      onError();
-      return;
+    const pickerWindowName = `OneDrivePicker-${channelId}`;
+
+    let pickerWindow: Window | null = null;
+    let port: MessagePort | null = null;
+    let closeWatcher: number | null = null;
+    let launchTimer: number | null = null;
+    let disposed = false;
+    let settled = false;
+    const options = getPickerOptions(channelId, mode);
+
+    function clearCloseWatcher() {
+      if (closeWatcher === null) return;
+      window.clearInterval(closeWatcher);
+      closeWatcher = null;
     }
 
-    let port: MessagePort | null = null;
-    const options = {
-      sdk: '8.0',
-      authentication: {},
-      commands: {
-        pick: {
-          action: 'select',
-          select: {},
-        },
-      },
-      entry: {
-        oneDrive: {},
-      },
-      messaging: {
-        channelId,
-        origin: window.location.origin,
-      },
-      search: {
-        enabled: true,
-      },
-      selection: {
-        mode: 'single',
-      },
-      typesAndSources: {
-        filters: mode === 'folder' ? ['folder'] : ['file'],
-        mode: mode === 'folder' ? 'folders' : 'files',
-      },
-    };
-
-    const form = pickerWindow.document.createElement('form');
-    form.setAttribute('action', getPickerUrl(baseUrl, options));
-    form.setAttribute('method', 'POST');
-    const tokenInput = pickerWindow.document.createElement('input');
-    tokenInput.setAttribute('type', 'hidden');
-    tokenInput.setAttribute('name', 'access_token');
-    tokenInput.setAttribute('value', accessToken);
-    form.append(tokenInput);
-    pickerWindow.document.body.append(form);
-    form.submit();
-
-    const closePicker = () => {
+    function closePicker() {
+      clearCloseWatcher();
+      window.removeEventListener('message', handleInitialize);
+      port?.removeEventListener('message', handleCommand);
       port?.close();
-      pickerWindow.close();
-    };
+      port = null;
+      pickerWindow?.close();
+      pickerWindow = null;
+    }
 
-    const handleCommand = async (event: MessageEvent<PickerCommandMessage>) => {
+    function settle(callback: () => void) {
+      if (disposed || settled) return;
+      settled = true;
+      try {
+        callback();
+      } finally {
+        closePicker();
+      }
+    }
+
+    async function handleCommand(event: MessageEvent<PickerCommandMessage>) {
       const payload = event.data;
-      if (payload.type !== 'command' || !payload.id || !port) return;
+      if (payload?.type !== 'command' || !payload.id || !port) return;
+      const activePort = port;
       const command = payload.data;
-      port.postMessage({ id: payload.id, type: 'acknowledge' });
+      activePort.postMessage({ id: payload.id, type: 'acknowledge' });
 
       if (command?.command === 'authenticate') {
         try {
@@ -136,13 +175,15 @@ export function OneDrivePickerHostImplementation({
             command: command.command,
             resource: command.resource,
           });
-          port.postMessage({
+          if (disposed || settled || port !== activePort) return;
+          activePort.postMessage({
             data: { result: 'token', token },
             id: payload.id,
             type: 'result',
           });
         } catch (error) {
-          port.postMessage({
+          if (disposed || settled || port !== activePort) return;
+          activePort.postMessage({
             data: {
               error: {
                 code: 'unableToObtainToken',
@@ -156,41 +197,35 @@ export function OneDrivePickerHostImplementation({
             id: payload.id,
             type: 'result',
           });
-          if (
-            !error ||
-            typeof error !== 'object' ||
-            !('code' in error) ||
-            error.code !== 'ONEDRIVE_PICKER_AUTHORIZATION_REQUIRED'
-          ) {
-            onError();
+          if (!isPickerAuthorizationRequired(error)) {
+            settle(onError);
           }
         }
         return;
       }
 
       if (command?.command === 'pick') {
-        onPicked(extractPickedItems(command));
-        port.postMessage({
+        const items = extractPickedItems(command);
+        activePort.postMessage({
           data: { result: 'success' },
           id: payload.id,
           type: 'result',
         });
-        closePicker();
+        settle(() => onPicked(items));
         return;
       }
 
       if (command?.command === 'close') {
-        port.postMessage({
+        activePort.postMessage({
           data: { result: 'success' },
           id: payload.id,
           type: 'result',
         });
-        onCanceled();
-        closePicker();
+        settle(onCanceled);
         return;
       }
 
-      port.postMessage({
+      activePort.postMessage({
         data: {
           error: {
             code: 'unsupportedCommand',
@@ -201,33 +236,59 @@ export function OneDrivePickerHostImplementation({
         id: payload.id,
         type: 'result',
       });
-    };
+    }
 
-    const handleInitialize = (event: MessageEvent<PickerCommandMessage>) => {
+    function handleInitialize(event: MessageEvent<PickerCommandMessage>) {
+      if (disposed || settled || port || !pickerOrigin) return;
       if (event.source !== pickerWindow) return;
       if (event.origin !== pickerOrigin) return;
       const message = event.data;
-      if (message.type !== 'initialize' || message.id !== undefined) return;
+      if (message?.type !== 'initialize') return;
       if ((message as { channelId?: string }).channelId !== channelId) return;
-      port = event.ports[0];
+      const nextPort = event.ports[0];
+      if (!nextPort) {
+        settle(onError);
+        return;
+      }
+      port = nextPort;
       port.addEventListener('message', handleCommand);
       port.start();
       port.postMessage({ type: 'activate' });
-    };
+    }
 
     window.addEventListener('message', handleInitialize);
-    const closeWatcher = window.setInterval(() => {
-      if (pickerWindow.closed) {
-        onCanceled();
-        window.clearInterval(closeWatcher);
+
+    launchTimer = window.setTimeout(() => {
+      launchTimer = null;
+      if (disposed || settled) return;
+      if (!pickerOrigin) {
+        settle(onError);
+        return;
       }
-    }, 500);
+
+      pickerWindow = window.open('', pickerWindowName, 'width=1080,height=680');
+      if (!pickerWindow) {
+        settle(onError);
+        return;
+      }
+
+      try {
+        submitPickerForm(pickerWindow, baseUrl, accessToken, options);
+      } catch {
+        settle(onError);
+        return;
+      }
+      if (disposed || settled) return;
+
+      closeWatcher = window.setInterval(() => {
+        if (pickerWindow?.closed) settle(onCanceled);
+      }, 500);
+    }, 0);
 
     return () => {
-      window.clearInterval(closeWatcher);
-      window.removeEventListener('message', handleInitialize);
-      port?.removeEventListener('message', handleCommand);
-      port?.close();
+      disposed = true;
+      if (launchTimer !== null) window.clearTimeout(launchTimer);
+      closePicker();
     };
   }, [
     accessToken,

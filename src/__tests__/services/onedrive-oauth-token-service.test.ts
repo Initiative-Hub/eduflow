@@ -398,6 +398,47 @@ describe('OneDriveOAuthTokenService', () => {
     ).not.toHaveProperty('accessToken');
   });
 
+  it.each([
+    'https://my.microsoftpersonalcontent.com',
+    'https://api.onedrive.com',
+  ])('accepts %s resources for personal Picker tokens', async (resource) => {
+    const sdk = createSdkMock();
+    sdk.acquireTokenSilent.mockResolvedValue({
+      accessToken: 'personal-picker-token',
+      account: msalAccount,
+      expiresAt: new Date('2026-08-24T02:00:00.000Z'),
+      scope: 'OneDrive.ReadWrite',
+      tokenType: 'Bearer',
+    });
+    sdkAdapter.createWithCache.mockReturnValue(sdk);
+    connectedIntegration.findUnique.mockResolvedValue({
+      accessToken: encryptTokenForTest('stored-graph-access-token'),
+      expiresAt: new Date('2026-08-24T00:00:00.000Z'),
+      metadata: personalMetadata,
+      providerAccount: 'one@example.com',
+      refreshToken: null,
+      scope: 'Files.ReadWrite',
+      tokenCache: encryptTokenForTest('stored-msal-cache'),
+      tokenType: 'Bearer',
+    });
+
+    const result = await OneDriveOAuthTokenService.getPickerToken('user-1', {
+      resource,
+    });
+
+    expect(result.accessToken).toBe('personal-picker-token');
+    expect(sdk.acquireTokenSilent).toHaveBeenCalledWith({
+      account: msalAccount,
+      target: {
+        kind: 'personal-picker',
+        resourceOrigin: 'https://onedrive.live.com',
+      },
+    });
+    expect(
+      connectedIntegration.update.mock.calls[0]?.[0].data
+    ).not.toHaveProperty('accessToken');
+  });
+
   it('reports missing resource-specific picker consent separately from expired sessions', async () => {
     const sdk = createSdkMock();
     sdk.acquireTokenSilent.mockRejectedValue(
