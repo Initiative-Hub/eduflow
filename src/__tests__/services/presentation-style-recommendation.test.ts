@@ -16,7 +16,7 @@ describe('presentation style recommendation', () => {
     });
   });
 
-  it('prefers rmit_red_modern for university research and student-learning prompts', () => {
+  it('prefers the RMIT style for university research and student-learning prompts', () => {
     const resolved = resolveRecommendedCollection({
       recommendedCollection: 'clean_light',
       lessonTitle:
@@ -27,11 +27,14 @@ describe('presentation style recommendation', () => {
         'Tạo một slide deck học thuật hiện đại, giống một bài briefing học thuật hoặc thuyết trình nghiên cứu ở đại học.',
       styleCollections: {
         clean_light: 'Clean light',
-        rmit_red_modern: 'RMIT red modern',
+        rmit_official: 'RMIT University brand template',
       },
     });
 
-    expect(resolved).toBe('rmit_red_modern');
+    // rmit_red_modern was the academic pick but is no longer offered in the
+    // picker; steering a lesson to a style a user cannot select is worse
+    // than not steering it at all.
+    expect(resolved).toBe('rmit_official');
   });
 
   it('keeps clean_light for non-academic data-heavy topics', () => {

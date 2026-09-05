@@ -18,6 +18,7 @@ import {
   slideService,
 } from '../slide.service';
 import { useSlideTemplatePreviews } from '../use-lesson';
+import { DEFAULT_TEMPLATE_COLLECTION } from '@/services/SlideService';
 
 const DEFAULT_COLLECTION_DESCRIPTIONS: Record<string, string> = {
   starter: 'Standard starter templates for clean presentation designs.',
@@ -73,7 +74,7 @@ export function formatCollectionLabel(name: string): string {
   if (name === 'minimalist_gradient') return 'Minimalist Gradient Theme';
   if (name === 'eduflow_light') return 'EduFlow Light Theme';
   if (name === 'eduflow_purple') return 'EduFlow Purple Theme';
-  if (name === 'rmit_official') return 'RMIT University';
+  if (name === 'rmit_official') return 'RMIT University (Default)';
   if (name === 'cultural_folk') return 'Cultural Folk Theme';
   if (name === 'organic_streets') return 'Organic Streets Theme';
   if (name === 'green_environment_care') return 'Green Environment Care Theme';
@@ -107,10 +108,12 @@ export function TemplateStyleSelect({
   const [hoveredStyle, setHoveredStyle] = useState<string | null>(null);
   const [activePreviewIdx, setActivePreviewIdx] = useState<number>(0);
 
-  const activeStyle = hoveredStyle || value || 'starter';
+  const activeStyle = hoveredStyle || value || DEFAULT_TEMPLATE_COLLECTION;
 
   const targetCollectionKey =
-    activeStyle === 'auto' ? recommendedCollection || 'starter' : activeStyle;
+    activeStyle === 'auto'
+      ? recommendedCollection || DEFAULT_TEMPLATE_COLLECTION
+      : activeStyle;
 
   const queryClient = useQueryClient();
 
@@ -219,18 +222,6 @@ export function TemplateStyleSelect({
               onFocus={() => setHoveredStyle('auto')}
             >
               ✨ Auto — AI picks
-            </SelectItem>
-
-            <SelectItem
-              className={cn(
-                'cursor-pointer rounded-xl px-3 py-2 font-medium text-foreground text-xs transition-colors hover:bg-accent focus:bg-accent',
-                selectItemHighlightClassName
-              )}
-              value="starter"
-              onPointerEnter={() => setHoveredStyle('starter')}
-              onFocus={() => setHoveredStyle('starter')}
-            >
-              System Default (Starter)
             </SelectItem>
 
             {defaultCollections.map((c) => (

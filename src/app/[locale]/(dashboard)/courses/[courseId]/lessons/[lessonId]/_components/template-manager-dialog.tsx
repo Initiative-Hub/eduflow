@@ -109,15 +109,6 @@ export function TemplateManagerDialog({
 
   const fullCollections: CollectionItem[] = useMemo(() => {
     const list = [...collections];
-    if (!list.some((c) => c.name === 'starter' || c.name === 'default')) {
-      list.unshift({
-        name: 'starter',
-        description:
-          'Clean, versatile system default starter deck suitable for any subject.',
-        palette: ['#ffffff', '#0f172a', '#3b82f6'],
-        is_custom: false,
-      });
-    }
     if (!list.some((c) => c.name === 'auto')) {
       list.unshift({
         name: 'auto',

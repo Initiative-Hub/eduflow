@@ -4,6 +4,7 @@ import * as z from 'zod';
 import { tiptapDocumentToMarkdown } from '@/lib/tiptap-markdown';
 import type { ChatModel } from '@/services/ai/chat-provider.constants';
 import { LessonService } from '@/services/LessonService';
+import { DEFAULT_TEMPLATE_COLLECTION } from '@/services/SlideService';
 import { isTiptapDocument } from '@/utils/lesson-content';
 
 const STANDARD_LAYOUT_TYPES = [
@@ -35,7 +36,6 @@ const STANDARD_LAYOUT_TYPES = [
  * subject and tone. Must match folder names under external-services/templates.
  */
 const STYLE_COLLECTIONS: Record<string, string> = {
-  starter: 'Neutral, professional default — safe for any subject or audience.',
   neon_dark:
     'Dark background with vivid cyan/pink neon accents — tech, coding, gaming, modern engineering topics.',
   vintage:
@@ -472,12 +472,12 @@ export function resolveRecommendedCollection(
 
   if (
     academicScore >= 2 &&
-    'rmit_red_modern' in knownStyles &&
+    DEFAULT_TEMPLATE_COLLECTION in knownStyles &&
     (!recommendedCollection ||
       recommendedCollection === 'clean_light' ||
       recommendedCollection === 'starter')
   ) {
-    return 'rmit_red_modern';
+    return DEFAULT_TEMPLATE_COLLECTION;
   }
 
   return recommendedCollection;

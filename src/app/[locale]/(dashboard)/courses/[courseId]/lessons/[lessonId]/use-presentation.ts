@@ -13,6 +13,7 @@ import {
 } from './presentation-plan-storage';
 import { getNextRecommendedCollectionForPlannerState } from './presentation-planner-state';
 import { useGenerateSlideDeck, useLesson } from './use-lesson';
+import { DEFAULT_TEMPLATE_COLLECTION } from '@/services/SlideService';
 
 type Step = 'input' | 'planning' | 'planned' | 'generating' | 'generated';
 
@@ -1353,7 +1354,7 @@ export function usePresentation(options: {
         // 'auto' = use the style the planner AI recommended for this lesson
         collection:
           selectedCollection === 'auto'
-            ? (recommendedCollection ?? 'starter')
+            ? (recommendedCollection ?? DEFAULT_TEMPLATE_COLLECTION)
             : selectedCollection,
         slides: plannedSlides.map((slide) => ({
           layoutType: slide.layoutType,
