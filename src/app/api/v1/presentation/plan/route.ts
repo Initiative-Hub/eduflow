@@ -5,6 +5,8 @@ import { PresentationService } from '@/services/PresentationService';
 import { SlideService } from '@/services/SlideService';
 import slideLayoutGuidance from '../../../../../../config/slide-layout-guidance.json';
 
+export const maxDuration = 120;
+
 const planPresentationSchema = z.object({
   lessonId: z.string().min(1, 'lessonId is required'),
   duration: z
