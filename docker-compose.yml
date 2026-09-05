@@ -138,6 +138,18 @@ services:
       - storage-network
     env_file:
       - ./external-services/.env
+    environment:
+      # Slides are built one per worker and each holds a model call open, so
+      # this is the deck's concurrency, not its CPU budget. Image generations
+      # have their own deck-wide cap, so raising this no longer widens the
+      # burst the image API sees.
+      SLIDE_SKILLS_DECK_WORKERS: "8"
+      SLIDE_SKILLS_IMAGE_CONCURRENCY: "6"
+      # Use a slide's planned bindings verbatim when they already fill every
+      # content slot, instead of paying a model call per slide to rewrite copy
+      # the planner has already written. Slides they do not cover (covers and
+      # section dividers) still go to the model.
+      SLIDE_SKILLS_TRUST_BINDINGS: "1"
     volumes:
       - templates_data:/app/templates
 
