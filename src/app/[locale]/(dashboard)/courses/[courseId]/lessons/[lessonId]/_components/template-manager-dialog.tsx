@@ -8,7 +8,7 @@ import {
   SlidersHorizontal,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -107,6 +107,29 @@ export function TemplateManagerDialog({
     useSlideTemplatePreviews(previewCollection, isPreviewOpen);
   const previews = previewsData || [];
 
+  const fullCollections: CollectionItem[] = useMemo(() => {
+    const list = [...collections];
+    if (!list.some((c) => c.name === 'starter' || c.name === 'default')) {
+      list.unshift({
+        name: 'starter',
+        description:
+          'Clean, versatile system default starter deck suitable for any subject.',
+        palette: ['#ffffff', '#0f172a', '#3b82f6'],
+        is_custom: false,
+      });
+    }
+    if (!list.some((c) => c.name === 'auto')) {
+      list.unshift({
+        name: 'auto',
+        description:
+          'Automatically analyze lesson content and choose the most suitable style.',
+        palette: ['#6366f1', '#ec4899', '#3b82f6'],
+        is_custom: false,
+      });
+    }
+    return list;
+  }, [collections]);
+
   // TanStack Query mutation for uploads
   const importSlideTemplate = useImportSlideTemplate();
   const isUploading = importSlideTemplate.isPending;
@@ -195,7 +218,7 @@ export function TemplateManagerDialog({
                   </div>
                 ) : (
                   <div className="grid max-h-65 grid-cols-1 gap-2.5 overflow-y-auto pr-1">
-                    {collections.map((col) => {
+                    {fullCollections.map((col) => {
                       const isSelected = selectedCollection === col.name;
                       return (
                         <div
@@ -214,10 +237,12 @@ export function TemplateManagerDialog({
                           >
                             <h4 className="truncate font-semibold text-foreground text-sm">
                               {col.name === 'starter'
-                                ? 'Default Starter'
-                                : col.name === 'neon_dark'
-                                  ? 'Neon Dark Theme'
-                                  : col.name}
+                                ? 'System Default (Starter)'
+                                : col.name === 'auto'
+                                  ? '✨ Auto — AI Selection'
+                                  : col.name === 'neon_dark'
+                                    ? 'Neon Dark Theme'
+                                    : col.name}
                             </h4>
                             {col.description && (
                               <p className="mt-0.5 truncate pr-2 text-muted-foreground text-xs">

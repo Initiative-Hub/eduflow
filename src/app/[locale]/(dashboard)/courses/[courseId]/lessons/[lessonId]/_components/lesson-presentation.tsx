@@ -7,6 +7,7 @@ import {
   ChevronRight,
   Eye,
   EyeOff,
+  FileText,
   LayoutTemplate,
   ListPlus,
   Maximize2,
@@ -14,6 +15,7 @@ import {
   Plus,
   Save,
   Sparkles,
+  SquarePen,
   Trash2,
   X,
 } from 'lucide-react';
@@ -52,6 +54,7 @@ import {
   type PlannedSlide,
   usePresentation,
 } from '../use-presentation';
+import { NewDeckDialog } from './new-deck-dialog';
 import { PresentationExportActions } from './presentation-export-actions';
 import { SlideAiEditDialog } from './slide-ai-edit-dialog';
 import {
@@ -60,10 +63,7 @@ import {
 } from './slide-canvas-ai-controls';
 import { SlideItemEditor } from './slide-item-editor';
 import { TemplateManagerDialog } from './template-manager-dialog';
-import {
-  formatCollectionLabel,
-  TemplateStyleSelect,
-} from './template-style-select';
+import { TemplateStyleSelect } from './template-style-select';
 import {
   getEditableSlideTextElements,
   useSlideAiEdit,
@@ -387,6 +387,7 @@ export function LessonPresentation({
     handleStartPlanning,
     handleStartGenerating,
     startNewDeck,
+    editOutline,
     updateSlideTitle,
     changeSlideLayout,
     deleteSlide,
@@ -394,6 +395,14 @@ export function LessonPresentation({
     selectedCollection,
     setSelectedCollection,
     recommendedCollection,
+    savedPlan,
+    isNewDeckDialogOpen,
+    setIsNewDeckDialogOpen,
+    handleUseExistingPlan,
+    handleUseExistingPlanWithDefaultTemplate,
+    handleStartNewPlan,
+    handleDiscardSavedPlan,
+    persistPlan,
   } = usePresentation({ title, content, isOpen, onClose });
 
   const activeCollectionName =
@@ -599,6 +608,7 @@ export function LessonPresentation({
               );
               console.log(meta.slides, 'hello');
               setPlannedSlides(meta.slides);
+              persistPlan(meta.slides);
             }
           }
         } catch (err) {
@@ -2052,6 +2062,15 @@ export function LessonPresentation({
                 variant="outline"
                 size="sm"
                 className="h-9 gap-1.5 rounded-lg"
+                onClick={editOutline}
+              >
+                <SquarePen className="h-4 w-4" />
+                {t('btnEditOutline')}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9 gap-1.5 rounded-lg"
                 onClick={startNewDeck}
               >
                 <Sparkles className="h-4 w-4" />
@@ -2089,6 +2108,45 @@ export function LessonPresentation({
       {step === 'input' && (
         <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col justify-center px-4 py-6">
           <div className="rounded-2xl border border-border/80 bg-card/80 p-6 shadow-2xl backdrop-blur-md md:p-8">
+            {savedPlan && savedPlan.plannedSlides.length > 0 && (
+              <div className="mb-6 flex flex-col gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <FileText className="size-4" />
+                  </div>
+                  <div>
+                    <span className="font-semibold text-foreground text-sm">
+                      {t('savedPlanBannerTitle', {
+                        count: savedPlan.plannedSlides.length,
+                      })}
+                    </span>
+                    <p className="text-muted-foreground text-xs">
+                      {t('savedPlanBannerDesc')}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 self-end sm:self-center">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleDiscardSavedPlan}
+                    className="h-8 text-muted-foreground text-xs hover:text-foreground"
+                  >
+                    {t('btnDiscardPlan')}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={handleUseExistingPlan}
+                    className="h-8 gap-1.5 font-semibold text-xs"
+                  >
+                    {t('btnRestorePlan')}
+                    <ArrowRight className="size-3.5" />
+                  </Button>
+                </div>
+              </div>
+            )}
             <h3 className="mb-2 flex items-center gap-2 font-bold text-foreground text-xl">
               <Sparkles className="h-5 w-5 text-primary" />
               {t('title')}
@@ -2233,32 +2291,31 @@ export function LessonPresentation({
               </p>
             </div>
             <div className="flex shrink-0 items-center gap-2">
-              <div className="flex items-center gap-1.5 rounded-lg border border-border bg-muted px-3 py-1.5">
-                <span className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider">
+              <div className="flex items-center gap-1.5">
+                <span className="hidden font-bold text-[10px] text-muted-foreground uppercase tracking-wider sm:inline-block">
                   Style:
                 </span>
-                <span
-                  className="block max-w-37.5 truncate font-bold text-foreground text-xs"
-                  title={
-                    selectedCollection === 'auto'
-                      ? `Auto — AI picked${recommendedCollection ? `: ${recommendedCollection}` : ' (decided at planning)'}`
-                      : formatCollectionLabel(selectedCollection)
-                  }
+                <TemplateStyleSelect
+                  value={selectedCollection}
+                  onValueChange={(val) => {
+                    setSelectedCollection(val);
+                    persistPlan(plannedSlides, { selectedCollection: val });
+                  }}
+                  collections={collections}
+                  recommendedCollection={recommendedCollection}
+                  triggerClassName="h-9 w-[170px] max-w-[200px] rounded-lg border-border bg-muted/60 px-3 py-1 text-xs font-medium"
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsUploadOpen(true)}
+                  className="h-9 gap-1 rounded-lg px-2.5 text-xs"
+                  title="Manage or upload template styles"
                 >
-                  {selectedCollection === 'auto'
-                    ? `✨ Auto${recommendedCollection ? ` → ${recommendedCollection}` : ''}`
-                    : formatCollectionLabel(selectedCollection)}
-                </span>
+                  <Plus className="h-3.5 w-3.5" />
+                  Manage
+                </Button>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsUploadOpen(true)}
-                className="h-9 gap-1.5 rounded-lg px-3"
-              >
-                <Plus className="h-4 w-4" />
-                Choose Template style
-              </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -2576,6 +2633,16 @@ export function LessonPresentation({
         onSelectCollection={setSelectedCollection}
         collections={collections}
         isLoading={isLoadingTemplates}
+      />
+      <NewDeckDialog
+        isOpen={isNewDeckDialogOpen}
+        onOpenChange={setIsNewDeckDialogOpen}
+        slideCount={
+          plannedSlides.length || savedPlan?.plannedSlides?.length || 0
+        }
+        onUseExisting={handleUseExistingPlan}
+        onUseExistingDefault={handleUseExistingPlanWithDefaultTemplate}
+        onCreateFresh={handleStartNewPlan}
       />
     </div>
   );

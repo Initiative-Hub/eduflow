@@ -103,6 +103,7 @@ for any tasks.).
 - **Biome Scope**: Keep repo-wide Biome checks focused on repo-owned code. Exclude checked-in skill/example bundles (such as `.agents/**`) and vendor primitive directories like `src/components/ai-elements`, `src/components/ui`, and Tiptap primitive/icon/template packages unless the team explicitly chooses to maintain those files as first-party code.
 - **Shell Paths**: Quote file paths that include `(`, `)`, `[`, or `]` when running shell or git commands.
 - **API Client Paths**: The shared browser API client already targets the `/api` base URL, so request paths should start at `v1/...` instead of `api/v1/...`.
+- **LocalStorage Spies**: When mocking or spying on `localStorage` in Vitest tests, target `window.localStorage` directly instead of `Storage.prototype` because `setup.ts` overrides `window.localStorage` via property descriptor.
 
 ### 6.5 Type Safety & Platform Details
 
