@@ -72,7 +72,7 @@ async def render_slide(req: RenderSlideReq):
 
 @router.get("/jobs/{job_id}")
 async def get_job_status(job_id: str):
-    return slide_job_service.get_job_status(job_id)
+    return await slide_job_service.get_job_status(job_id)
 
 
 @router.get("/decks/{deck_id}")
@@ -154,7 +154,9 @@ async def import_templates(
 
 @router.get("/templates/import/{job_id}")
 async def get_import_job_status(job_id: str):
-    return slide_job_service.get_job_status(job_id, detail="Import job not found")
+    return await slide_job_service.get_job_status(
+        job_id, detail="Import job not found"
+    )
 
 
 @router.get("/templates/{collection}/inspect")

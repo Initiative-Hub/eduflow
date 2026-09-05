@@ -1,10 +1,25 @@
 import time
 
+import pytest
 import requests
 
 BASE_URL = "http://localhost:8000"
 
 
+def _server_is_up() -> bool:
+    try:
+        return requests.get(f"{BASE_URL}/health", timeout=2).status_code == 200
+    except requests.exceptions.RequestException:
+        return False
+
+
+# This is an integration test against a running server, not a unit test: it
+# exercises whatever code that process has loaded, which is why it used to fail
+# with a connection error on a clean checkout and reported stale behaviour after
+# a code change. Skipped unless the server is actually up.
+@pytest.mark.skipif(
+    not _server_is_up(), reason=f"no external-services server on {BASE_URL}"
+)
 def test_complex_deck_generation():
     print("Sending complex slide plan to /slides/generate-from-plan...")
 

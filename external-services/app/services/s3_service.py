@@ -116,6 +116,32 @@ async def object_exists_in_s3(object_key: str, bucket_name: str | None = None) -
         return False
 
 
+async def upload_bytes_to_s3(
+    data: bytes,
+    object_key: str,
+    bucket_name: str | None = None,
+    content_type: str = "application/octet-stream",
+) -> bool:
+    """Put a small in-memory object without going through a temp file."""
+    try:
+        s3 = get_s3_client()
+        if not s3:
+            return False
+
+        bucket = bucket_name or AWS_S3_BUCKET
+
+        def put_object() -> None:
+            s3.put_object(
+                Bucket=bucket, Key=object_key, Body=data, ContentType=content_type
+            )
+
+        await run_in_threadpool(put_object)
+        return True
+    except Exception as e:
+        logger.error(f"Failed to upload bytes to key {object_key}: {e}")
+        return False
+
+
 async def download_bytes_from_s3(
     object_key: str, bucket_name: str | None = None
 ) -> tuple[bytes, str] | None:

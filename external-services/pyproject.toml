@@ -25,6 +25,13 @@ dev = [
     "types-requests",
 ]
 
+[tool.pytest.ini_options]
+# Without this `app` is not importable from tests, which is why the only test
+# here talked to a live server over HTTP instead of importing the code.
+pythonpath = ["."]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
 [tool.poe.tasks]
 dev = "uv run fastapi dev --reload --host 0.0.0.0 --port 8000"
 test = "pytest"

@@ -1,4 +1,5 @@
 import json
+import logging
 import time
 import uuid
 from pathlib import Path
@@ -9,36 +10,90 @@ from fastapi.responses import FileResponse
 
 from app.deps import STORAGE_DIR
 from app.schemas.slide_schema import GenReq, PlanGenReq
-from app.services.s3_service import download_file_from_s3, upload_file_to_s3
+from app.services.s3_service import (
+    download_bytes_from_s3,
+    download_file_from_s3,
+    upload_bytes_to_s3,
+    upload_file_to_s3,
+)
 from app.services.slide_service import SlideService
+
+logger = logging.getLogger(__name__)
+
+# Where a job's status lives besides this process's memory.
+JOB_STATE_PREFIX = "slides/jobs/"
 
 
 class SlideJobService:
+    """Queue a long build and let the caller poll for it.
+
+    The job table used to be a plain dict on this instance, which is correct for
+    exactly one server process. It is not correct behind an autoscaler: the POST
+    that starts a build lands on one container and creates the job in *its*
+    memory, while the caller's `GET /slides/jobs/{id}` is routed wherever there
+    is capacity. A poll that arrives at any other container found no such job and
+    returned 404, which the caller reports as "Slide generation job was lost
+    (service restarted)" — no restart involved, just a second container.
+
+    So each transition is also written to object storage, which every container
+    already shares, and a lookup falls back to it. Memory stays as the fast path
+    for the common case where the same container answers.
+    """
+
     def __init__(self, slide_service: SlideService):
         self.slide_service = slide_service
         self.jobs: Dict[str, Dict[str, Any]] = {}
 
-    def create_job(self) -> str:
+    @staticmethod
+    def _state_key(job_id: str) -> str:
+        return f"{JOB_STATE_PREFIX}{job_id}.json"
+
+    async def _publish(self, job_id: str, state: Dict[str, Any]) -> None:
+        """Mirror a job's state so any container can answer for it."""
+        self.jobs[job_id] = state
+        try:
+            await upload_bytes_to_s3(
+                json.dumps(state).encode("utf-8"),
+                self._state_key(job_id),
+                content_type="application/json",
+            )
+        except Exception as error:  # a lost mirror must not fail the build
+            logger.warning(f"Could not publish job {job_id} state: {error}")
+
+    async def _set_state(self, job_id: str, **fields: Any) -> None:
+        state = dict(self.jobs.get(job_id) or {})
+        state.update(fields)
+        await self._publish(job_id, state)
+
+    async def create_job(self) -> str:
         job_id = uuid.uuid4().hex[:12]
-        self.jobs[job_id] = {
-            "status": "queued",
-            "result": None,
-            "message": None,
-        }
+        await self._publish(
+            job_id, {"status": "queued", "result": None, "message": None}
+        )
         return job_id
 
-    def get_job_status(
+    async def get_job_status(
         self, job_id: str, detail: str = "Job not found"
     ) -> Dict[str, Any]:
-        if job_id not in self.jobs:
-            raise HTTPException(status_code=404, detail=detail)
-        return self.jobs[job_id]
+        local = self.jobs.get(job_id)
+        if local is not None:
+            return local
+        # Not ours: another container may have started it.
+        fetched = await download_bytes_from_s3(self._state_key(job_id))
+        if fetched:
+            try:
+                state = json.loads(fetched[0].decode("utf-8"))
+                self.jobs[job_id] = state
+                return state
+            except (ValueError, UnicodeDecodeError) as error:
+                logger.warning(f"Unreadable job state for {job_id}: {error}")
+        raise HTTPException(status_code=404, detail=detail)
 
     async def _execute_generation_job(
         self, job_id: str, req: GenReq, out_path: Path
     ) -> None:
         try:
-            self.jobs[job_id]["status"] = "running"
+            await self._set_state(job_id, status="running")
             result = await self.slide_service.generate_deck(
                 topic=req.topic,
                 collection=req.collection,
@@ -74,22 +129,21 @@ class SlideJobService:
             if uploaded and out_path.exists():
                 out_path.unlink()
 
-            self.jobs[job_id]["status"] = "done"
-            self.jobs[job_id]["result"] = {
+            payload = {
                 "deck_id": job_id,
                 "slides": result.get("slides", []),
                 "usage": result.get("usage", {}),
             }
             if uploaded:
-                self.jobs[job_id]["result"]["s3_key"] = s3_key
+                payload["s3_key"] = s3_key
+            await self._set_state(job_id, status="done", result=payload)
         except Exception as error:
-            self.jobs[job_id]["status"] = "error"
-            self.jobs[job_id]["message"] = str(error)
+            await self._set_state(job_id, status="error", message=str(error))
 
     async def queue_generation_job(
         self, background_tasks: BackgroundTasks, req: GenReq
     ) -> Dict[str, str]:
-        job_id = self.create_job()
+        job_id = await self.create_job()
         out_path = STORAGE_DIR / f"{job_id}.html"
         background_tasks.add_task(self._execute_generation_job, job_id, req, out_path)
         return {"job_id": job_id, "status": "queued"}
@@ -107,7 +161,7 @@ class SlideJobService:
         though the server went on to finish it. The caller now polls
         /slides/jobs/{job_id} instead, the same way template import does.
         """
-        job_id = self.create_job()
+        job_id = await self.create_job()
         out_path = STORAGE_DIR / f"{job_id}.html"
         background_tasks.add_task(
             self._execute_plan_generation_job, job_id, req, out_path
@@ -119,11 +173,13 @@ class SlideJobService:
     ) -> None:
         outcome = await self.generate_deck_from_plan(req, job_id=job_id)
         if outcome.get("status") == "done":
-            self.jobs[job_id]["status"] = "done"
-            self.jobs[job_id]["result"] = outcome.get("result")
+            await self._set_state(
+                job_id, status="done", result=outcome.get("result")
+            )
         else:
-            self.jobs[job_id]["status"] = "error"
-            self.jobs[job_id]["message"] = outcome.get("message")
+            await self._set_state(
+                job_id, status="error", message=outcome.get("message")
+            )
 
     async def generate_deck_from_plan(
         self, req: PlanGenReq, job_id: str | None = None
@@ -132,7 +188,7 @@ class SlideJobService:
         out_path = STORAGE_DIR / f"{job_id}.html"
 
         if job_id in self.jobs:
-            self.jobs[job_id]["status"] = "running"
+            await self._set_state(job_id, status="running")
 
         try:
             plan_dict = {
@@ -195,15 +251,13 @@ class SlideJobService:
         source: str = "auto",
     ) -> None:
         try:
-            self.jobs[job_id]["status"] = "running"
+            await self._set_state(job_id, status="running")
             result = await self.slide_service.import_template_collection(
                 file_bytes, filename, name, source=source
             )
-            self.jobs[job_id]["status"] = "done"
-            self.jobs[job_id]["result"] = result
+            await self._set_state(job_id, status="done", result=result)
         except Exception as error:
-            self.jobs[job_id]["status"] = "error"
-            self.jobs[job_id]["message"] = str(error)
+            await self._set_state(job_id, status="error", message=str(error))
 
     async def queue_import_job(
         self,
@@ -213,7 +267,7 @@ class SlideJobService:
         name: str | None,
         source: str = "auto",
     ) -> Dict[str, str]:
-        job_id = self.create_job()
+        job_id = await self.create_job()
         background_tasks.add_task(
             self._execute_import_job, job_id, file_bytes, filename, name, source
         )
