@@ -1,11 +1,6 @@
 'use client';
 
-import {
-  ArrowRight,
-  LayoutTemplate,
-  ListOrdered,
-  Sparkles,
-} from 'lucide-react';
+import { ArrowRight, ListOrdered, Sparkles } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { DialogTemplate } from '@/components/custom/dialog';
 import { Button } from '@/components/ui/button';
@@ -15,7 +10,6 @@ export interface NewDeckDialogProps {
   onOpenChange: (open: boolean) => void;
   slideCount: number;
   onUseExisting: () => void;
-  onUseExistingDefault?: () => void;
   onCreateFresh: () => void;
 }
 
@@ -47,7 +41,6 @@ export function NewDeckDialog({
   onOpenChange,
   slideCount,
   onUseExisting,
-  onUseExistingDefault,
   onCreateFresh,
 }: NewDeckDialogProps) {
   const t = useTranslations('Courses.LessonPresentation');
@@ -69,18 +62,6 @@ export function NewDeckDialog({
     t,
     'newDeckUseExistingDesc',
     `Keep your ${slideCount} planned slide${slideCount === 1 ? '' : 's'} to adjust layouts, edit content, or try different styles.`,
-    { count: slideCount }
-  );
-
-  const useDefaultTitle = resolveText(
-    t,
-    'newDeckUseDefaultTitle',
-    'Use Outline with Default Template'
-  );
-  const useDefaultDesc = resolveText(
-    t,
-    'newDeckUseDefaultDesc',
-    `Keep your ${slideCount} planned slide${slideCount === 1 ? '' : 's'} and reset the style to the System Default starter template.`,
     { count: slideCount }
   );
 
@@ -136,31 +117,7 @@ export function NewDeckDialog({
           </div>
         </button>
 
-        {/* Option 2: Use Existing Outline with Default Template */}
-        {onUseExistingDefault && (
-          <button
-            type="button"
-            onClick={onUseExistingDefault}
-            className="group flex w-full items-start gap-3.5 rounded-xl border border-border/70 bg-card/60 p-4 text-left transition-all duration-200 hover:border-primary/50 hover:bg-accent/40 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-          >
-            <div className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 transition-colors duration-200 group-hover:bg-blue-600 group-hover:text-white dark:text-blue-400">
-              <LayoutTemplate className="size-5" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <span className="font-semibold text-foreground text-sm">
-                {useDefaultTitle}
-              </span>
-              <p className="mt-1 text-muted-foreground text-xs leading-relaxed">
-                {useDefaultDesc}
-              </p>
-            </div>
-            <div className="mt-1 shrink-0 text-muted-foreground/50 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-primary">
-              <ArrowRight className="size-4" />
-            </div>
-          </button>
-        )}
-
-        {/* Option 3: Generate New Outline */}
+        {/* Option 2: Generate New Outline */}
         <button
           type="button"
           onClick={onCreateFresh}

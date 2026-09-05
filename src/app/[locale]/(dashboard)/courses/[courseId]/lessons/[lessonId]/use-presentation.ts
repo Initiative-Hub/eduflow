@@ -1441,24 +1441,6 @@ export function usePresentation(options: {
     setStep('planned');
   }, [plannedSlides.length, savedPlan]);
 
-  const handleUseExistingPlanWithDefaultTemplate = useCallback(() => {
-    setIsNewDeckDialogOpen(false);
-    const targetSlides =
-      plannedSlides.length > 0 ? plannedSlides : savedPlan?.plannedSlides || [];
-    if (plannedSlides.length === 0 && savedPlan?.plannedSlides?.length) {
-      setPlannedSlides(savedPlan.plannedSlides);
-      if (savedPlan.instructions) setInstructions(savedPlan.instructions);
-      if (savedPlan.duration) setDuration(savedPlan.duration);
-    }
-    setSelectedCollection('starter');
-    persistPlan(targetSlides, {
-      selectedCollection: 'starter',
-    });
-    setDeckUrl(null);
-    setDeckUsage(null);
-    setStep('planned');
-  }, [plannedSlides, savedPlan, persistPlan]);
-
   const handleStartNewPlan = useCallback(() => {
     setIsNewDeckDialogOpen(false);
     clearPresentationPlan(lessonId);
@@ -1583,7 +1565,6 @@ export function usePresentation(options: {
     isNewDeckDialogOpen,
     setIsNewDeckDialogOpen,
     handleUseExistingPlan,
-    handleUseExistingPlanWithDefaultTemplate,
     handleStartNewPlan,
     handleDiscardSavedPlan,
     persistPlan,

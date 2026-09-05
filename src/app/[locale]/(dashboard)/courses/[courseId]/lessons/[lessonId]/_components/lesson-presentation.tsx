@@ -399,7 +399,6 @@ export function LessonPresentation({
     isNewDeckDialogOpen,
     setIsNewDeckDialogOpen,
     handleUseExistingPlan,
-    handleUseExistingPlanWithDefaultTemplate,
     handleStartNewPlan,
     handleDiscardSavedPlan,
     persistPlan,
@@ -2641,7 +2640,6 @@ export function LessonPresentation({
           plannedSlides.length || savedPlan?.plannedSlides?.length || 0
         }
         onUseExisting={handleUseExistingPlan}
-        onUseExistingDefault={handleUseExistingPlanWithDefaultTemplate}
         onCreateFresh={handleStartNewPlan}
       />
     </div>
