@@ -32,6 +32,8 @@ const DEFAULT_COLLECTION_DESCRIPTIONS: Record<string, string> = {
     'EduFlow house style in daylight - white canvas, violet accents.',
   eduflow_purple:
     'EduFlow house style — deep slate, violet accents, soft cards.',
+  rmit_official:
+    'RMIT brand template — navy grounds, RMIT red rules, Arial, official lock-up.',
   cultural_folk:
     'Rich cultural folk style with terracotta, gold, dusty blue and rose.',
   organic_streets:
@@ -53,6 +55,7 @@ const DEFAULT_COLLECTION_PALETTES: Record<string, string[]> = {
   minimalist_gradient: ['#030712', '#3b82f6', '#8b5cf6'],
   eduflow_light: ['#f8fafc', '#8b5cf6', '#2f2142'],
   eduflow_purple: ['#1f2937', '#a78bfa', '#f2eafd'],
+  rmit_official: ['#000054', '#e61e2a', '#e2e5df'],
   cultural_folk: ['#2d1b2d', '#e07a5f', '#f4a261'],
   organic_streets: ['#f8f9fa', '#6c5ce7', '#fd79a8'],
   green_environment_care: ['#f4f7f4', '#14532d', '#4ade80'],
@@ -70,6 +73,7 @@ export function formatCollectionLabel(name: string): string {
   if (name === 'minimalist_gradient') return 'Minimalist Gradient Theme';
   if (name === 'eduflow_light') return 'EduFlow Light Theme';
   if (name === 'eduflow_purple') return 'EduFlow Purple Theme';
+  if (name === 'rmit_official') return 'RMIT University';
   if (name === 'cultural_folk') return 'Cultural Folk Theme';
   if (name === 'organic_streets') return 'Organic Streets Theme';
   if (name === 'green_environment_care') return 'Green Environment Care Theme';

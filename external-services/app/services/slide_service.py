@@ -73,16 +73,113 @@ PREVIEW_SAMPLE_DATA: Dict[str, Any] = {
     "left_col_text": "Key details about the first concept side.",
     "right_col_text": "Comparison points on the second concept side.",
     "insight_text": "Engagement rose after switching to visual explanations.",
+    # list_6 / points_6 variants exist, so these run to six: a short list left
+    # the last rows of the six-row variants blank in their previews
     "bullets": [
         "Engaging detail or concept bullet point",
         "Supporting evidence for the concept",
         "A practical classroom example",
+        "The mistake students make most often",
+        "How to check the idea has landed",
+        "Where it is used outside the classroom",
     ],
-    "items": ["Introduction", "Core concepts", "Practice", "Summary"],
+    "items": [
+        "Introduction",
+        "Core concepts",
+        "Practice",
+        "Summary",
+        "Assessment",
+        "Further reading",
+    ],
     "steps": ["Prepare", "Explain", "Practise", "Review"],
-    "summary_points": ["Key takeaway one", "Key takeaway two"],
-    "action_items": ["Read chapter 2", "Complete the worksheet"],
+    "summary_points": [
+        "Key takeaway one",
+        "Key takeaway two",
+        "Key takeaway three",
+        "Key takeaway four",
+        "Key takeaway five",
+        "Key takeaway six",
+    ],
+    "action_items": [
+        "Read chapter 2",
+        "Complete the worksheet",
+        "Bring a question to the next session",
+        "Review the summary notes",
+        "Try the practice quiz",
+    ],
 }
+
+# A slot named `heading.1` or `stat_2` is a different key from `heading` or
+# `stat`, and fill_svg wipes any placeholder it has no value for. Cover slides,
+# dividers, KPI cards, timelines and galleries were therefore rasterised empty,
+# and the picker showed a blank rectangle for the very layouts that sell a
+# style. Dotted and numbered keys pass through fill_svg untouched, so they are
+# listed here explicitly alongside their scalar forms.
+PREVIEW_SAMPLE_DATA.update(
+    {
+        "heading.1": "Concept",
+        "heading.2": "Introduction",
+        "heading.3": "for Learners",
+        "sub_module_name": "MODULE ONE",
+        "statement": "Great slides make the idea easier to hold on to.",
+        "quote.1": "Involve me",
+        "quote.2": "and I learn.",
+        "author_or_source": "Benjamin Franklin",
+        "media_image": "",
+        **{f"body_text.{i}": text for i, text in enumerate(
+            (
+                "Foundational concepts explained with modern slide layouts.",
+                "Each idea gets a claim and the reason it matters.",
+                "Visual structure keeps a long explanation readable.",
+                "Students leave with something they can act on.",
+            ), 1)},
+        **{f"left_col_text.{i}": t for i, t in enumerate(
+            ("Key details about the first concept.",
+             "What it looks like in practice.",
+             "Where students usually get stuck.",
+             "How to check understanding."), 1)},
+        **{f"right_col_text.{i}": t for i, t in enumerate(
+            ("Comparison points on the second concept.",
+             "How the two differ in practice.",
+             "When to prefer this approach.",
+             "What it costs to adopt."), 1)},
+        **{f"stat_{i}": v for i, v in enumerate(("87%", "3x", "1,240"), 1)},
+        **{f"label_{i}": v for i, v in enumerate(
+            ("of students stayed engaged",
+             "faster to review before an exam",
+             "lessons built this term"), 1)},
+        **{f"caption_{i}": v for i, v in enumerate(
+            ("A worked example from the lesson.",
+             "The same idea shown as a diagram.",
+             "Students applying it in class."), 1)},
+        **{f"image_{i}": "" for i in range(1, 4)},
+        **{f"date_{i}": v for i, v in enumerate(
+            ("Week 1", "Week 3", "Week 6", "Week 9", "Week 11", "Week 12"), 1)},
+        **{f"desc_{i}": v for i, v in enumerate(
+            ("Introduce the core idea and why it matters.",
+             "Work through an example together.",
+             "Students practise with feedback.",
+             "Review what stuck and what did not.",
+             "Apply it to a new problem.",
+             "Consolidate before assessment."), 1)},
+        **{f"step_{i}": v for i, v in enumerate(
+            ("Prepare the material and the question you want answered.",
+             "Explain the idea with one concrete example.",
+             "Let students practise while you watch for mistakes.",
+             "Review the mistakes as a group.",
+             "Set a short task that reuses the idea.",
+             "Check understanding before moving on."), 1)},
+        **{f"title_{i}": v for i, v in enumerate(
+            ("Foundation", "Practice", "Feedback", "Mastery",
+             "Transfer", "Assessment"), 1)},
+        **{f"source_title_{i}": v for i, v in enumerate(
+            ("Make It Stick: The Science of Successful Learning",
+             "Rethinking Assessment in Higher Education",
+             "Visible Learning for Teachers"), 1)},
+        **{f"source_url_{i}": f"https://example.edu/library/source-{i}"
+           for i in range(1, 4)},
+    }
+)
 
 DEFAULT_COLLECTIONS = {
     "templates",
@@ -95,6 +192,7 @@ DEFAULT_COLLECTIONS = {
     "minimalist_gradient",
     "eduflow_light",
     "eduflow_purple",
+    "rmit_official",
     "cultural_folk",
     "organic_streets",
     "green_environment_care",
@@ -706,10 +804,20 @@ class SlideService:
         import re
 
         import resvg_py
+        from slide_skills.svg_collections import fit_and_reflow, infer_text_bounds
 
         svg = slide_skills.fill_svg(
             svg_path.read_text(encoding="utf-8"), PREVIEW_SAMPLE_DATA
         )
+        # Filling alone is not what a real slide gets: deck generation also
+        # wraps each block to its box and pushes later blocks clear. Without
+        # those two steps the thumbnail drew every paragraph as one long
+        # unwrapped line running straight through the card beside it, so the
+        # picker misrepresented layouts that render fine in an actual deck.
+        try:
+            svg = fit_and_reflow(infer_text_bounds(svg))
+        except Exception as error:  # a preview is not worth failing over
+            logger.warning(f"Preview reflow failed for '{svg_path.name}': {error}")
         # Bare ampersands break the XML parser inside resvg.
         svg = re.sub(r"&(?!(?:[a-zA-Z0-9]+|#[0-9]+|#x[0-9a-fA-F]+);)", "&amp;", svg)
         destination.write_bytes(
@@ -968,6 +1076,7 @@ class SlideService:
                         "organic_streets": "Organic illustration style: cream paper, plum script headlines, golden sun discs, slate and terracotta blobs, line-art European skylines.",
                         "eduflow_light": "Soft white canvas with violet accents and crisp bordered cards, from the EduFlow light theme - printed handouts, lectures projected in a bright room, and any deck that should look like EduFlow without going dark.",
                         "eduflow_purple": "Deep slate canvas with violet accents, soft bordered cards and an ambient glow — the EduFlow platform's own look. Course material, product walkthroughs, internal training, onboarding, and any deck that should feel native to the product it was made in.",
+                        "rmit_official": "The official RMIT University brand template: navy grounds, RMIT red rules and headings, Arial throughout, and the university lock-up on the cover and closing slides — lectures, course material, research talks, student presentations, and anything that has to look like it came from RMIT.",
                         "cultural_folk": "Rich cultural folk style: warm plum night sky over a sand earth strip, arch and temple shapes, radiant sun badges, festival bunting and stitched lines in terracotta, gold, dusty blue and rose.",
                         "green_environment_care": "Modern environmental care style: cream paper, deep forest-green condensed headlines, lush nature photography, sage botanical ornaments, halftone texture, and conservation editorial layouts.",
                         "startup_neon_pitch": "Black startup pitch style with bold white typography, electric blue and violet light trails, glossy gradient pills, contact-footer details, and high-contrast business layouts.",

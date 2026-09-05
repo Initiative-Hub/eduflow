@@ -19,6 +19,7 @@ export const DEFAULT_TEMPLATE_COLLECTIONS = new Set([
   'minimalist_gradient',
   'eduflow_light',
   'eduflow_purple',
+  'rmit_official',
   'cultural_folk',
   'organic_streets',
   'green_environment_care',
