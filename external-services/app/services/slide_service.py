@@ -1048,9 +1048,8 @@ class SlideService:
             if cached is not None and time.monotonic() - _collections_cache["at"] < _COLLECTIONS_TTL:
                 return cached
             result = await self._load_collections()
-            if result:
-                _collections_cache["value"] = result
-                _collections_cache["at"] = time.monotonic()
+            _collections_cache["value"] = result
+            _collections_cache["at"] = time.monotonic()
             return result
 
     async def _load_collections(self) -> List[Dict[str, Any]]:

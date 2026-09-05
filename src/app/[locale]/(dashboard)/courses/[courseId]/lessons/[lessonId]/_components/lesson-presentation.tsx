@@ -595,7 +595,6 @@ export function LessonPresentation({
 
       // Try to load plannedSlides from script tag in S3 HTML
       const metaEl = doc.querySelector('#slide-plan-metadata');
-      console.log(metaEl, 'metaEl');
       if (metaEl) {
         try {
           const meta = JSON.parse(metaEl.textContent || '{}');
@@ -605,7 +604,6 @@ export function LessonPresentation({
                 '[VisualEditor] Restored plannedSlides from HTML metadata:',
                 meta.slides
               );
-              console.log(meta.slides, 'hello');
               setPlannedSlides(meta.slides);
               persistPlan(meta.slides);
             }

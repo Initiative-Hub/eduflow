@@ -236,10 +236,10 @@ export function TemplateManagerDialog({
                             className="min-w-0 flex-1 py-1 pr-2 text-left"
                           >
                             <h4 className="truncate font-semibold text-foreground text-sm">
-                              {col.name === 'starter'
+                              {col.name === 'starter' || col.name === 'default'
                                 ? 'System Default (Starter)'
                                 : col.name === 'auto'
-                                  ? '✨ Auto — AI Selection'
+                                  ? 'Auto — AI Selection'
                                   : col.name === 'neon_dark'
                                     ? 'Neon Dark Theme'
                                     : col.name}
@@ -467,11 +467,14 @@ export function TemplateManagerDialog({
           <DialogHeader className="flex flex-row items-center justify-between pr-6">
             <DialogTitle className="font-bold text-foreground text-lg capitalize">
               Style Preview:{' '}
-              {previewCollection === 'starter'
-                ? 'Default Starter'
-                : previewCollection === 'neon_dark'
-                  ? 'Neon Dark Theme'
-                  : previewCollection}
+              {previewCollection === 'starter' ||
+              previewCollection === 'default'
+                ? 'System Default (Starter)'
+                : previewCollection === 'auto'
+                  ? 'Auto — AI Selection'
+                  : previewCollection === 'neon_dark'
+                    ? 'Neon Dark Theme'
+                    : previewCollection}
             </DialogTitle>
             {previewCollection && (
               <Button
