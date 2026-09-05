@@ -44,6 +44,15 @@ class PlanGenReq(BaseModel):
         default="ai",
         description="Image generator: 'ai' (photo model) or 'svg' (cheaper GPT-4o vector)",
     )
+    research: bool = Field(
+        default=True,
+        description=(
+            "Look the topic up on the web before writing. Runs a keyword call, "
+            "a search and a synthesis call in sequence before the first slide "
+            "starts, so turning it off removes that wait for decks whose "
+            "content is already in the plan."
+        ),
+    )
 
 
 class RenderSlideReq(BaseModel):

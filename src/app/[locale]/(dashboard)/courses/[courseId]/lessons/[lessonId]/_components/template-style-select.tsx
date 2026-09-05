@@ -92,6 +92,7 @@ interface TemplateStyleSelectProps {
   collections: SlideTemplate[];
   recommendedCollection?: string | null;
   selectItemHighlightClassName?: string;
+  triggerClassName?: string;
 }
 
 export function TemplateStyleSelect({
@@ -100,6 +101,7 @@ export function TemplateStyleSelect({
   collections,
   recommendedCollection,
   selectItemHighlightClassName,
+  triggerClassName,
 }: TemplateStyleSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [hoveredStyle, setHoveredStyle] = useState<string | null>(null);
@@ -186,7 +188,12 @@ export function TemplateStyleSelect({
       open={isOpen}
       onOpenChange={setIsOpen}
     >
-      <SelectTrigger className="flex h-11 w-full justify-between rounded-xl border-input bg-muted/30 px-4 py-2.5 text-foreground text-sm">
+      <SelectTrigger
+        className={cn(
+          'flex h-11 w-full justify-between rounded-xl border-input bg-muted/30 px-4 py-2.5 text-foreground text-sm',
+          triggerClassName
+        )}
+      >
         <SelectValue placeholder="System Default (Starter)">
           {value === 'auto'
             ? '✨ Auto — AI picks from content'

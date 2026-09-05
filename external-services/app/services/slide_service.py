@@ -1,10 +1,12 @@
 import asyncio
 import json
 import logging
+import os
 import re
 import shutil
 import tempfile
 import textwrap
+import time
 import zipfile
 from functools import partial
 from pathlib import Path
@@ -42,6 +44,25 @@ async def _release_collection(name: str) -> bool:
             return False
         _COLLECTION_USERS.pop(name, None)
         return True
+
+
+# The style inventory lists every key in both template buckets and then reads a
+# collection.json per collection — a second of S3 work, repeated on every plan
+# request and every time the picker opens, for an answer that only changes when
+# somebody imports or deletes a template. Cached briefly so a burst of requests
+# pays for it once; short enough that a new import shows up on its own.
+_COLLECTIONS_TTL = float(os.environ.get("SLIDE_COLLECTIONS_CACHE_SECONDS", "60"))
+# Files fetched at once when filling a collection's local cache from S3.
+_DOWNLOAD_CONCURRENCY = max(1, int(os.environ.get("SLIDE_DOWNLOAD_CONCURRENCY", "16")))
+_collections_cache: dict[str, Any] = {"at": 0.0, "value": None}
+_COLLECTIONS_LOCK = asyncio.Lock()
+
+
+def invalidate_collections_cache() -> None:
+    """Drop the memoised style inventory after an import or a delete."""
+    _collections_cache["at"] = 0.0
+    _collections_cache["value"] = None
+
 
 # "auto" detects brand templates whose designs live in the Slide Master layouts,
 # "layouts" forces that reading, and "slides" extracts the deck's real slides.
@@ -647,9 +668,29 @@ def flatten_slide_bindings(category: str, slide_title: str, bindings: dict) -> d
                     ev.get("date_or_step", "") or ev.get("date", "")
                 )
                 desc = str(ev.get("description", ""))
-                wrapped = textwrap.wrap(desc, width=25)
-                for line_idx, line in enumerate(wrapped[:2], 1):
+                # Every timeline template declares a plain `desc_N`; only the
+                # dotted sub-lines were emitted, so the description the planner
+                # wrote reached no slot at all and the layout model invented a
+                # replacement. The wrap is a hint for designs that split the
+                # line themselves, and it no longer drops the tail.
+                flat[f"desc_{idx}"] = desc
+                for line_idx, line in enumerate(textwrap.wrap(desc, width=25), 1):
                     flat[f"desc_{idx}.{line_idx}"] = line
+
+    # 8b. Flatten IMAGE_GALLERY: items -> label_N / caption_N. Nothing mapped
+    # these before, so a gallery's own titles and captions were dropped and
+    # rewritten downstream even though the plan already carried them.
+    if category == "IMAGE_GALLERY" and isinstance(bindings.get("items"), list):
+        for idx, item in enumerate(bindings["items"][:10], 1):
+            if isinstance(item, dict):
+                label = str(item.get("title", "") or item.get("label", ""))
+                caption = str(item.get("description", "") or item.get("caption", ""))
+            else:
+                label, caption = str(item), ""
+            if label:
+                flat[f"label_{idx}"] = label
+            if caption:
+                flat[f"caption_{idx}"] = caption
 
     # 9. Flatten STEP_BY_STEP: steps -> step_1, step_2, etc.
     if "steps" in bindings and isinstance(bindings["steps"], list):
@@ -769,13 +810,20 @@ class SlideService:
             f"'{collection}' from S3 bucket {BUCKET_NAME}..."
         )
         col_path.mkdir(parents=True, exist_ok=True)
-        for key, dest in pending:
+        for _, dest in pending:
             dest.parent.mkdir(parents=True, exist_ok=True)
-            await download_file_from_s3(
-                key,
-                dest,
-                bucket_name=BUCKET_NAME,
-            )
+
+        # One await per file meant one round-trip of latency per file, and a
+        # collection is hundreds of small files. That is invisible against a
+        # local MinIO and expensive against real S3 — and on a host with
+        # ephemeral disk (Modal) every cold container pays it from scratch.
+        semaphore = asyncio.Semaphore(_DOWNLOAD_CONCURRENCY)
+
+        async def fetch(key: str, dest: Path) -> None:
+            async with semaphore:
+                await download_file_from_s3(key, dest, bucket_name=BUCKET_NAME)
+
+        await asyncio.gather(*(fetch(key, dest) for key, dest in pending))
         return col_path
 
     async def get_categories(self) -> List[Dict[str, Any]]:
@@ -992,6 +1040,19 @@ class SlideService:
         }
 
     async def get_collections(self) -> List[Dict[str, Any]]:
+        cached = _collections_cache["value"]
+        if cached is not None and time.monotonic() - _collections_cache["at"] < _COLLECTIONS_TTL:
+            return cached
+        async with _COLLECTIONS_LOCK:
+            cached = _collections_cache["value"]
+            if cached is not None and time.monotonic() - _collections_cache["at"] < _COLLECTIONS_TTL:
+                return cached
+            result = await self._load_collections()
+            _collections_cache["value"] = result
+            _collections_cache["at"] = time.monotonic()
+            return result
+
+    async def _load_collections(self) -> List[Dict[str, Any]]:
         import json as _json
         import tempfile
         import asyncio
@@ -1163,55 +1224,55 @@ class SlideService:
         if not library_dir.exists() or not library_dir.is_dir():
             return
 
+        missing = [
+            cat for cat in requested_categories
+            if cat and not any((library_dir / cat).glob("*.svg"))
+        ]
+        if not missing:
+            return
+
         base_dir = await self._ensure_collection_downloaded(BASE_TEMPLATE_COLLECTION)
-        for cat in requested_categories:
-            if not cat:
-                continue
+        for cat in missing:
             cat_dir = library_dir / cat
-            has_svgs = cat_dir.exists() and any(cat_dir.glob("*.svg"))
-            if not has_svgs:
-                # The collection's own design for this category, under the
-                # deck's naming, beats anything from the base library: matching
-                # the rest of the deck matters more than matching the name.
-                local_equivalent = _find_equivalent_layout(library_dir, cat)
-                if local_equivalent is not None:
-                    cat_dir.mkdir(parents=True, exist_ok=True)
-                    for item in local_equivalent.iterdir():
-                        if item.is_file():
-                            shutil.copy2(item, cat_dir / item.name)
-                    logger.info(
-                        f"Served '{cat}' from this collection's own "
-                        f"'{local_equivalent.name}' layout instead of backfilling"
-                    )
-                    continue
-
+            local_equivalent = _find_equivalent_layout(library_dir, cat)
+            if local_equivalent is not None:
                 cat_dir.mkdir(parents=True, exist_ok=True)
-                target_source = CATEGORY_ALIASES.get(cat, cat)
-                src_dir = base_dir / target_source
-                if not (src_dir.exists() and any(src_dir.glob("*.svg"))):
-                    src_dir = base_dir / cat
+                for item in local_equivalent.iterdir():
+                    if item.is_file():
+                        shutil.copy2(item, cat_dir / item.name)
+                logger.info(
+                    f"Served '{cat}' from this collection's own "
+                    f"'{local_equivalent.name}' layout instead of backfilling"
+                )
+                continue
 
-                if src_dir.exists() and any(src_dir.glob("*.svg")):
-                    for item in src_dir.iterdir():
+            cat_dir.mkdir(parents=True, exist_ok=True)
+            target_source = CATEGORY_ALIASES.get(cat, cat)
+            src_dir = base_dir / target_source
+            if not (src_dir.exists() and any(src_dir.glob("*.svg"))):
+                src_dir = base_dir / cat
+
+            if src_dir.exists() and any(src_dir.glob("*.svg")):
+                for item in src_dir.iterdir():
+                    if item.is_file():
+                        shutil.copy2(item, cat_dir / item.name)
+                logger.info(
+                    f"Backfilled missing category '{cat}' in '{library_dir.name}' "
+                    f"from base template '{src_dir.name}'"
+                )
+            else:
+                fallback_dirs = [
+                    d for d in base_dir.iterdir() if d.is_dir() and any(d.glob("*.svg"))
+                ] or [
+                    d for d in library_dir.iterdir() if d.is_dir() and any(d.glob("*.svg"))
+                ]
+                if fallback_dirs:
+                    for item in fallback_dirs[0].iterdir():
                         if item.is_file():
                             shutil.copy2(item, cat_dir / item.name)
-                    logger.info(
-                        f"Backfilled missing category '{cat}' in '{library_dir.name}' "
-                        f"from base template '{src_dir.name}'"
+                    logger.warning(
+                        f"Backfilled missing category '{cat}' in '{library_dir.name}' using fallback '{fallback_dirs[0].name}'"
                     )
-                else:
-                    fallback_dirs = [
-                        d for d in base_dir.iterdir() if d.is_dir() and any(d.glob("*.svg"))
-                    ] or [
-                        d for d in library_dir.iterdir() if d.is_dir() and any(d.glob("*.svg"))
-                    ]
-                    if fallback_dirs:
-                        for item in fallback_dirs[0].iterdir():
-                            if item.is_file():
-                                shutil.copy2(item, cat_dir / item.name)
-                        logger.warning(
-                            f"Backfilled missing category '{cat}' in '{library_dir.name}' using fallback '{fallback_dirs[0].name}'"
-                        )
 
     async def generate_deck_from_plan(
         self,
@@ -1224,6 +1285,7 @@ class SlideService:
         images: bool = True,
         image_source: str = "ai",
         collection: str | None = None,
+        research: bool = True,
     ) -> Dict[str, Any]:
         slides_list = []
         if isinstance(plan, dict):
@@ -1448,7 +1510,7 @@ class SlideService:
                 images=images,
                 image_source=image_source,
                 title=title,
-                research=True,
+                research=research,
             )
         finally:
             if temp_dir_context:
@@ -1922,6 +1984,8 @@ class SlideService:
                     f"Removed local template collection '{dest_dir.name}' after uploading {uploaded_count} files to S3"
                 )
 
+            # a new collection must appear in the picker now, not in a minute
+            invalidate_collections_cache()
             return res
 
     async def generate_pptx(self, deck_id: str) -> Path:
@@ -2410,6 +2474,7 @@ async def delete_collection_category(collection: str, category: str) -> Dict[str
         f"Deleted layout '{category}' from '{collection}' "
         f"({removed_keys} S3 object(s) removed)"
     )
+    invalidate_collections_cache()
     return {
         "collection": collection,
         "category": category,

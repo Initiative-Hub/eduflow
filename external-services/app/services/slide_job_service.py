@@ -146,6 +146,7 @@ class SlideJobService:
                 images=req.images,
                 image_source=req.image_source,
                 collection=req.collection,
+                research=req.research,
             )
 
             s3_key = f"slides/{job_id}.html"
