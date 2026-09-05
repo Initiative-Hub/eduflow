@@ -205,7 +205,6 @@ PREVIEW_SAMPLE_DATA.update(
 DEFAULT_COLLECTIONS = {
     "templates",
     "default",
-    "starter",
     "neon_dark",
     "vintage",
     "pastel_pop",
@@ -1130,7 +1129,6 @@ class SlideService:
                     well_known = {
                         "vintage": "A classic, retro style with warm tones and elegant typography.",
                         "pastel_pop": "A vibrant and playful theme featuring soft pastel colors.",
-                        "starter": "Standard starter templates for clean presentation designs.",
                         "neon_dark": "A modern, high-contrast dark theme with glowing neon accents.",
                         "illustrative_culture": "Warm cream paper, hand-drawn buildings & clouds, Yogyakarta street aesthetic, sage green accents.",
                         "minimalist_gradient": "Sleek dark theme with electric royal blue and violet gradient glows, crisp geometric typography, and ambient grid lines.",
@@ -1168,6 +1166,15 @@ class SlideService:
                 for name in collections_files.keys()
                 if name.lower() not in categories
                 and name.lower() not in ("templates", "default")
+                # A collection with no .svg cannot render a single slide, so
+                # offering it only produces "has no .svg layouts available" at
+                # generation time. `starter` was exactly this: 23 preview PNGs
+                # left behind by a deleted collection, still listed, still
+                # selectable, and the default every request fell back to.
+                and any(
+                    key.endswith(".svg")
+                    for key in collections_files[name]["keys"]
+                )
             ]
 
             tasks = [

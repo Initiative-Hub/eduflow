@@ -69,6 +69,7 @@ import {
   useSlideAiEdit,
 } from './use-slide-ai-edit';
 import { useSlideDrop } from './use-slide-drop';
+import { DEFAULT_TEMPLATE_COLLECTION } from '@/services/SlideService';
 
 const formatLayoutName = (layout: string, t: any) => {
   const map: Record<string, string> = {
@@ -407,7 +408,7 @@ export function LessonPresentation({
   const activeCollectionName =
     selectedCollection && selectedCollection !== 'auto'
       ? selectedCollection
-      : recommendedCollection || 'starter';
+      : recommendedCollection || DEFAULT_TEMPLATE_COLLECTION;
 
   const { data: previewsData } = useSlideTemplatePreviews(
     activeCollectionName,
@@ -2500,7 +2501,7 @@ export function LessonPresentation({
                     slides={plannedSlides}
                     collection={
                       selectedCollection === 'auto'
-                        ? (recommendedCollection ?? 'starter')
+                        ? (recommendedCollection ?? DEFAULT_TEMPLATE_COLLECTION)
                         : selectedCollection
                     }
                     onBindingsChanged={(index, bindings) =>

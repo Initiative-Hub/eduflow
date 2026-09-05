@@ -8,10 +8,19 @@ export interface SlideTemplate {
   is_custom?: boolean;
 }
 
+/**
+ * Collection a deck falls back to when the caller names none.
+ *
+ * Was `starter`, which is a shell in the template bucket — 23 preview PNGs and
+ * no .svg — so every deck that fell back to it died with "has no .svg layouts
+ * available". The backend now hides collections that have no layouts, so a
+ * default that cannot render can no longer be offered in the first place.
+ */
+export const DEFAULT_TEMPLATE_COLLECTION = 'rmit_official';
+
 export const DEFAULT_TEMPLATE_COLLECTIONS = new Set([
   'templates',
   'default',
-  'starter',
   'neon_dark',
   'vintage',
   'pastel_pop',
