@@ -1,17 +1,14 @@
 'use client';
 
+import type { Editor } from '@tiptap/react';
 import { useCallback, useEffect, useState } from 'react';
-import { type Editor } from '@tiptap/react';
-
-// --- Hooks ---
-import { useTiptapEditor } from '@/hooks/use-tiptap-editor';
-
-// --- Lib ---
-import { isNodeTypeSelected } from '@/lib/tiptap-utils';
-
 // --- Icons ---
 import { Redo2Icon } from '@/components/tiptap-icons/redo2-icon';
 import { Undo2Icon } from '@/components/tiptap-icons/undo2-icon';
+// --- Hooks ---
+import { useTiptapEditor } from '@/hooks/use-tiptap-editor';
+// --- Lib ---
+import { isNodeTypeSelected } from '@/lib/tiptap-utils';
 
 export type UndoRedoAction = 'undo' | 'redo';
 
@@ -60,7 +57,7 @@ export function canExecuteUndoRedoAction(
   editor: Editor | null,
   action: UndoRedoAction
 ): boolean {
-  if (!editor || !editor.isEditable) return false;
+  if (!editor?.isEditable) return false;
   if (isNodeTypeSelected(editor, ['image'])) return false;
 
   return action === 'undo' ? editor.can().undo() : editor.can().redo();
@@ -73,7 +70,7 @@ export function executeUndoRedoAction(
   editor: Editor | null,
   action: UndoRedoAction
 ): boolean {
-  if (!editor || !editor.isEditable) return false;
+  if (!editor?.isEditable) return false;
   if (!canExecuteUndoRedoAction(editor, action)) return false;
 
   const chain = editor.chain().focus();

@@ -1,14 +1,16 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useCourseNavigation } from '@/hooks/use-course-navigation';
 import {
-  lessonContentToTiptapDocument,
+  EMPTY_TIPTAP_DOCUMENT,
   type TiptapDocument,
 } from '@/utils/lesson-content';
 import { useModules } from '../../use-modules';
+import { useQuestionBank } from '../../use-question-bank';
 import { LessonEditor } from './_components/lesson-editor';
 import { LessonHeader } from './_components/lesson-header';
-import { LessonPagination } from './_components/lesson-pagination';
+import { LessonNavigation } from './_components/lesson-navigation';
 import { useLesson, useUpdateLesson } from './use-lesson';
 
 interface LessonDetailsClientProps {
@@ -28,22 +30,23 @@ export function LessonDetailsClient({
   notFoundLabel,
   emptyContentLabel,
 }: LessonDetailsClientProps) {
-  const {
-    modules,
-    isLoading: isModulesLoading,
-    getAdjacentLessons,
-  } = useModules(courseId);
+  const { modules, isLoading: isModulesLoading } = useModules(courseId);
 
+  const { quizzes } = useQuestionBank({ courseId });
   const { lesson, isLoading: isLessonLoading } = useLesson(lessonId);
   const { isUpdatingLesson, handleUpdateLesson } = useUpdateLesson(courseId);
 
   const [showOutline, setShowOutline] = useState(false);
 
-  const lessonContent = lessonContentToTiptapDocument(lesson?.content ?? null);
+  const lessonContent = lesson?.content ?? EMPTY_TIPTAP_DOCUMENT;
 
-  const { prev, next } = useMemo(
-    () => getAdjacentLessons(lessonId),
-    [getAdjacentLessons, lessonId]
+  // Build navigation including quizzes: lesson 1 → quiz 1 → lesson 2
+  const { prev, next } = useCourseNavigation(
+    courseId,
+    lessonId,
+    'lesson',
+    modules,
+    quizzes
   );
 
   const currentModule = useMemo(
@@ -52,7 +55,7 @@ export function LessonDetailsClient({
   );
 
   const handleSave = (
-    data: { title: string; content: TiptapDocument | string },
+    data: { title: string; content: TiptapDocument },
     options: { onSuccess: () => void }
   ) => {
     handleUpdateLesson(
@@ -84,9 +87,13 @@ export function LessonDetailsClient({
         ) : (
           <LessonEditor
             key={lesson.id}
+            courseId={courseId}
+            lessonId={lesson.id}
             title={lesson.title}
             content={lessonContent}
             canEdit={lesson.canEdit}
+            canDelete={lesson.canDelete}
+            canUseLessonAI={lesson.canUseLessonAI}
             emptyContentLabel={emptyContentLabel}
             isUpdatingLesson={isUpdatingLesson}
             onSave={handleSave}
@@ -96,7 +103,7 @@ export function LessonDetailsClient({
 
       {!isLoading && lesson && (
         <div className="mt-8">
-          <LessonPagination courseId={courseId} prev={prev} next={next} />
+          <LessonNavigation courseId={courseId} prev={prev} next={next} />
         </div>
       )}
     </>

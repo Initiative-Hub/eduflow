@@ -1,0 +1,506 @@
+'use client';
+
+import { useQuery } from '@tanstack/react-query';
+import {
+  AlertTriangle,
+  ChevronLeft,
+  ChevronRight,
+  Menu,
+  RotateCcw,
+} from 'lucide-react';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
+import { Quiz, QuizQuestionsEditor } from '@/components/quiz';
+import { QuizResult } from '@/components/quiz/quiz-result';
+import { Button } from '@/components/ui/button';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { useCourseNavigation } from '@/hooks/use-course-navigation';
+import { apiClient } from '@/lib/api/api-client';
+import { useSession } from '@/lib/auth-client';
+import type {
+  DeliveryMode,
+  QuestionSubType,
+  QuizContent,
+  ScoreResult,
+  StudentAnswer,
+  StudentAnswers,
+} from '@/lib/quiz-template';
+import type { QuestionBlock } from '@/lib/quiz-template/types';
+import type { QuizAttemptSnapshot } from '@/utils/quiz-attempt-snapshot';
+import { LessonOutline } from '../../../lessons/[lessonId]/_components/lesson-outline';
+import { useModules } from '../../../use-modules';
+import { useQuestionBank } from '../../../use-question-bank';
+import { QuizAiDraftDialog } from '../create/quiz-ai-draft-dialog';
+import { QuizDetailsForm } from '../create/quiz-details-form';
+import { useQuiz } from '../use-quiz';
+
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+interface QuizAttemptResponse {
+  id: string;
+  quizId: string;
+  userId: string;
+  answers: Record<string, StudentAnswer>;
+  quizSnapshot: QuizAttemptSnapshot | null;
+  answeredCount: number;
+  score: number;
+  maxScore: number;
+  percentage: number;
+  results: Array<{
+    questionIndex: number;
+    isCorrect: boolean;
+    earnedPoints: number;
+    maxPoints: number;
+    pendingReview?: boolean;
+  }>;
+  hasPendingReview: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface QuizPlayerClientProps {
+  courseId: string;
+  quizId: string;
+}
+
+export function QuizPlayerClient({ courseId, quizId }: QuizPlayerClientProps) {
+  const t = useTranslations('Courses.QuizPlayer');
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const {
+    quizzes,
+    questions: questionBank,
+    isLoadingQuizzes,
+    isQuizzesError,
+    refetchQuizzes,
+    generateDraftQuiz,
+    isGeneratingDraftQuiz,
+  } = useQuestionBank({ courseId });
+  const { modules, isLoading: isModulesLoading } = useModules(courseId);
+  const [showOutline, setShowOutline] = useState(false);
+  const [isRetaking, setIsRetaking] = useState(false);
+  const [isAiDialogOpen, setIsAiDialogOpen] = useState(false);
+  const [aiDialogResetKey, setAiDialogResetKey] = useState(0);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editLessonIds, setEditLessonIds] = useState<string[]>([]);
+  const [editDeliveryMode, setEditDeliveryMode] =
+    useState<DeliveryMode>('INSTANT_FEEDBACK');
+  const [showEditErrors, setShowEditErrors] = useState(false);
+  const appendGeneratedRef = useRef<
+    ((questions: QuestionBlock[]) => void) | null
+  >(null);
+  const activeTab = searchParams.get('tab') === 'edit' ? 'edit' : 'take';
+  const actionParam = searchParams.get('action');
+  const initialEditorAction =
+    actionParam === 'manual' || actionParam === 'question-bank'
+      ? actionParam
+      : undefined;
+
+  const { data: sessionData } = useSession();
+
+  const isTeacher =
+    sessionData?.user.role === 'TEACHER' || sessionData?.user.role === 'ADMIN';
+
+  const { saveQuizDraft, isSavingQuizDraft } = useQuiz({ courseId, quizId });
+
+  const quiz = useMemo(
+    () => quizzes.find((q) => q.id === quizId),
+    [quizzes, quizId]
+  );
+
+  useEffect(() => {
+    if (!quiz) return;
+    setEditTitle(quiz.title);
+    setEditDescription(quiz.description ?? '');
+    setEditLessonIds(quiz.lessonIds);
+    setEditDeliveryMode(quiz.deliveryMode);
+    setShowEditErrors(false);
+  }, [quiz]);
+
+  const quizContent: QuizContent | null = useMemo(() => {
+    if (!quiz) return null;
+    return {
+      title: quiz.title,
+      description: quiz.description ?? '',
+      type: quiz.questions[0]?.type ?? 'mixed',
+      questions: quiz.questions,
+    };
+  }, [quiz]);
+
+  // Fetch previous attempts for this quiz
+  const attemptsQuery = useQuery({
+    queryKey: ['quiz-attempts', quizId],
+    queryFn: async (): Promise<QuizAttemptResponse[]> => {
+      return apiClient.get<QuizAttemptResponse[]>(
+        `v1/quizzes/${quizId}/attempts`
+      );
+    },
+    enabled: !!quizId,
+  });
+
+  const mostRecentAttempt = attemptsQuery.data?.[0] ?? null;
+
+  // Convert the most recent attempt into ScoreResult + StudentAnswers for display
+  const previousResult: ScoreResult | null = useMemo(() => {
+    if (!mostRecentAttempt) return null;
+    return {
+      totalPoints: mostRecentAttempt.maxScore,
+      earnedPoints: mostRecentAttempt.score,
+      percentage: mostRecentAttempt.percentage,
+      questionResults: mostRecentAttempt.results,
+      hasPendingReview: mostRecentAttempt.hasPendingReview,
+    };
+  }, [mostRecentAttempt]);
+
+  const previousAnswers: StudentAnswers = useMemo(() => {
+    if (!mostRecentAttempt) return new Map();
+    const map: StudentAnswers = new Map();
+    for (const [indexStr, answer] of Object.entries(
+      mostRecentAttempt.answers
+    )) {
+      const index = Number.parseInt(indexStr, 10);
+      if (!Number.isNaN(index)) {
+        map.set(index, answer);
+      }
+    }
+    return map;
+  }, [mostRecentAttempt]);
+
+  const previousQuizContent = useMemo<QuizContent | null>(() => {
+    if (mostRecentAttempt?.quizSnapshot) {
+      return {
+        title: mostRecentAttempt.quizSnapshot.title,
+        description: mostRecentAttempt.quizSnapshot.description,
+        type: mostRecentAttempt.quizSnapshot.type,
+        questions: mostRecentAttempt.quizSnapshot.questions,
+      };
+    }
+    return quizContent;
+  }, [mostRecentAttempt, quizContent]);
+
+  // Find the module title for breadcrumb
+  const currentModule = useMemo(() => {
+    if (!quiz) return null;
+    const linkedLessonIds = quiz.lessonIds;
+    return modules.find((m) =>
+      m.lessons.some((l) => linkedLessonIds.includes(l.id))
+    );
+  }, [modules, quiz]);
+
+  const availableLessons = useMemo(
+    () => modules.flatMap((module) => module.lessons),
+    [modules]
+  );
+
+  // Build navigation: prev/next considering lessons and quizzes in sequence
+  const { prev, next } = useCourseNavigation(
+    courseId,
+    quizId,
+    'quiz',
+    modules,
+    quizzes
+  );
+
+  const handleComplete = (result: ScoreResult) => {
+    toast.success(t('completed', { score: Math.round(result.percentage) }));
+    // Refetch attempts so the latest shows up
+    attemptsQuery.refetch();
+    setIsRetaking(false);
+  };
+
+  const handleRetake = useCallback(() => {
+    setIsRetaking(true);
+  }, []);
+
+  const handleOpenDraftAiDialog = useCallback(
+    (appendQuestions: (questions: QuestionBlock[]) => void) => {
+      appendGeneratedRef.current = appendQuestions;
+      if (editLessonIds.length === 0) {
+        setShowEditErrors(true);
+        return;
+      }
+      setIsAiDialogOpen(true);
+    },
+    [editLessonIds.length]
+  );
+
+  const handleTabChange = useCallback(
+    (nextTab: 'take' | 'edit') => {
+      const nextParams = new URLSearchParams(searchParams.toString());
+      if (nextTab === 'edit') {
+        nextParams.set('tab', 'edit');
+      } else {
+        nextParams.delete('tab');
+      }
+
+      const queryString = nextParams.toString();
+      router.replace(
+        `/courses/${courseId}/quiz/${quizId}${queryString ? `?${queryString}` : ''}`,
+        { scroll: false }
+      );
+    },
+    [courseId, quizId, router, searchParams]
+  );
+
+  const handleGenerateDraft = useCallback(
+    (data: {
+      questionCounts: Partial<Record<QuestionSubType, number>>;
+      context?: string;
+    }) => {
+      generateDraftQuiz(
+        { lessonIds: editLessonIds, ...data },
+        {
+          onSuccess: ({ questions }) => {
+            appendGeneratedRef.current?.(questions);
+            setIsAiDialogOpen(false);
+            setAiDialogResetKey((current) => current + 1);
+          },
+        }
+      );
+    },
+    [editLessonIds, generateDraftQuiz]
+  );
+
+  const handleSaveDraft = useCallback(
+    (questions: QuestionBlock[], questionIds: Array<string | null>) => {
+      setShowEditErrors(true);
+      if (!editTitle.trim() || editLessonIds.length === 0) return;
+
+      saveQuizDraft({
+        title: editTitle.trim(),
+        description: editDescription.trim() || undefined,
+        lessonIds: editLessonIds,
+        deliveryMode: editDeliveryMode,
+        questions,
+        questionIds,
+      });
+    },
+    [editDeliveryMode, editDescription, editLessonIds, editTitle, saveQuizDraft]
+  );
+
+  if (isLoadingQuizzes || isModulesLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="h-10 w-48 animate-pulse rounded bg-muted" />
+        <div className="h-64 animate-pulse rounded-lg bg-muted" />
+      </div>
+    );
+  }
+
+  if (isQuizzesError) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-dashed bg-card/50 p-12 text-center">
+          <AlertTriangle className="h-10 w-10 text-destructive" />
+          <div className="space-y-1">
+            <h3 className="font-semibold text-foreground text-lg">
+              {t('loadError')}
+            </h3>
+            <p className="text-muted-foreground text-sm">
+              {t('loadErrorDescription')}
+            </p>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => refetchQuizzes()}>
+            <RotateCcw className="mr-2 h-3.5 w-3.5" />
+            {t('retry')}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!quiz || !quizContent) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4 border-b pb-4">
+          <Link href={`/courses/${courseId}`}>
+            <Button variant="ghost" size="icon" className="h-9 w-9">
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+          </Link>
+          <h1 className="font-bold text-foreground text-xl">{t('notFound')}</h1>
+        </div>
+        <div className="rounded-xl border border-dashed bg-card/50 p-12 text-center text-muted-foreground">
+          {t('notFoundDescription')}
+        </div>
+      </div>
+    );
+  }
+
+  // Determine whether to show previous result or the quiz player
+  const showPreviousResult =
+    previousResult && !isRetaking && !attemptsQuery.isLoading;
+
+  return (
+    <>
+      {/* Header bar */}
+      <div className="sticky top-0 z-40 -mx-6 -mt-6 flex items-center justify-between border-foreground/20 border-b bg-background/95 px-6 py-3 backdrop-blur-sm md:-mx-10 md:-mt-10 md:px-10 lg:-mx-12 lg:-mt-12 lg:px-12">
+        <div className="mr-4 flex items-center gap-2 text-muted-foreground text-sm">
+          <Popover open={showOutline} onOpenChange={setShowOutline}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="mr-1 -ml-2 h-8 w-8 shrink-0 text-muted-foreground hover:bg-muted/60"
+              >
+                <Menu className="h-4 w-4" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent
+              align="start"
+              className="flex h-[66vh] w-80 flex-col overflow-hidden p-0"
+            >
+              <LessonOutline
+                courseId={courseId}
+                onSelectLesson={(id) => {
+                  setShowOutline(false);
+                  router.push(`/courses/${courseId}/lessons/${id}`);
+                }}
+                className="h-full w-full border-none bg-transparent"
+              />
+            </PopoverContent>
+          </Popover>
+          <Link
+            href={`/courses/${courseId}`}
+            className="max-w-30 truncate transition-colors hover:text-primary md:max-w-50"
+          >
+            {currentModule?.title ?? t('course')}
+          </Link>
+          <ChevronRight className="h-4 w-4 shrink-0 opacity-50" />
+          <span className="max-w-37.5 truncate font-medium text-foreground md:max-w-xs">
+            {quiz.title}
+          </span>
+        </div>
+
+        {isTeacher && (
+          <div className="flex items-center gap-1 rounded-lg border border-muted bg-muted/40 p-0.5">
+            <Button
+              variant={activeTab === 'take' ? 'secondary' : 'ghost'}
+              size="xs"
+              onClick={() => handleTabChange('take')}
+              className="h-7 cursor-pointer px-3 font-semibold text-xs"
+            >
+              {t('studentView')}
+            </Button>
+            <Button
+              variant={activeTab === 'edit' ? 'secondary' : 'ghost'}
+              size="xs"
+              onClick={() => handleTabChange('edit')}
+              className="h-7 cursor-pointer px-3 font-semibold text-xs"
+            >
+              {t('editQuestions')}
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* Quiz Player or Previous Result */}
+      <div
+        className={
+          activeTab === 'edit'
+            ? 'mx-auto mt-6 max-w-5xl space-y-7'
+            : 'mx-auto mt-6 max-w-2xl'
+        }
+      >
+        {activeTab === 'edit' ? (
+          <>
+            <QuizDetailsForm
+              title={editTitle}
+              description={editDescription}
+              lessonIds={editLessonIds}
+              lessons={availableLessons}
+              deliveryMode={editDeliveryMode}
+              showErrors={showEditErrors}
+              hideLessonSelector={false}
+              onTitleChange={setEditTitle}
+              onDescriptionChange={setEditDescription}
+              onLessonIdsChange={setEditLessonIds}
+              onDeliveryModeChange={setEditDeliveryMode}
+            />
+
+            <section className="rounded-2xl border bg-card p-5 md:p-6">
+              <div className="mb-5">
+                <h2 className="font-semibold text-lg">{t('questionsTitle')}</h2>
+              </div>
+              <QuizQuestionsEditor
+                key={`${quiz.updatedAt}:${quiz.questionIds?.join(',') ?? ''}`}
+                initialQuestions={quiz.questions ?? []}
+                initialQuestionIds={quiz.questionIds ?? []}
+                questionBank={questionBank}
+                onSave={handleSaveDraft}
+                isSaving={isSavingQuizDraft}
+                onGenerateAI={handleOpenDraftAiDialog}
+                isGeneratingAI={isGeneratingDraftQuiz}
+                initialAction={initialEditorAction}
+                creationMode
+              />
+            </section>
+          </>
+        ) : showPreviousResult && previousQuizContent ? (
+          <QuizResult
+            result={previousResult}
+            quiz={previousQuizContent}
+            answers={previousAnswers}
+            onRetry={handleRetake}
+          />
+        ) : (
+          <Quiz
+            quiz={quizContent}
+            quizId={quizId}
+            deliveryMode={quiz.deliveryMode}
+            onComplete={handleComplete}
+          />
+        )}
+      </div>
+
+      {/* Pagination */}
+      {activeTab !== 'edit' && (
+        <div className="flex w-full flex-col">
+          <div className="mt-12 flex items-center justify-between border-t pt-6 font-medium">
+            {prev ? (
+              <Button variant="outline" asChild className="h-auto px-4 py-3">
+                <Link href={prev.href}>
+                  <ChevronLeft className="mr-2 h-4 w-4" />
+                  <span className="max-w-37.5 truncate md:max-w-50">
+                    {prev.title}
+                  </span>
+                </Link>
+              </Button>
+            ) : (
+              <div />
+            )}
+
+            {next ? (
+              <Button variant="outline" asChild className="h-auto px-4 py-3">
+                <Link href={next.href}>
+                  <span className="max-w-37.5 truncate md:max-w-50">
+                    {next.title}
+                  </span>
+                  <ChevronRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            ) : (
+              <div />
+            )}
+          </div>
+        </div>
+      )}
+
+      <QuizAiDraftDialog
+        open={isAiDialogOpen}
+        onOpenChange={setIsAiDialogOpen}
+        onSubmit={handleGenerateDraft}
+        isGenerating={isGeneratingDraftQuiz}
+        resetKey={aiDialogResetKey}
+      />
+    </>
+  );
+}

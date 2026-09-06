@@ -1,16 +1,19 @@
+import { CourseEnrollmentStatus } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
 
 export async function getCoursePermissions(userId: string, courseId: string) {
   const enrollment = await prisma.enrollment.findFirst({
     where: {
       memberId: userId,
-      courseId: courseId,
+      courseId,
+      course: { deletedAt: null },
+      status: CourseEnrollmentStatus.ACTIVE,
     },
     select: {
       role: {
         select: {
           permissions: {
-            where: { enabled: true },
+            where: { courseId, enabled: true },
             select: { permission: true },
           },
         },

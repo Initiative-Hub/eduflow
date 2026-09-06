@@ -1,6 +1,39 @@
+import type { LucideIcon } from 'lucide-react';
 import { z } from 'zod';
 import type { FormFieldConfig } from '@/components/custom/form';
 import { passwordRegex } from '@/lib/validations/common.schema';
+
+export type InteractionStyle = 'friendly' | 'professional' | 'technical';
+export type ResponseTone = 'encouraging' | 'balanced' | 'direct';
+export type AILanguage = 'en' | 'vi';
+
+export interface AIPreferencesData {
+  interactionStyle: InteractionStyle;
+  responseTone: ResponseTone;
+  primaryLanguage: AILanguage;
+  quizScoreAlerts: boolean;
+  insightFeedback: boolean;
+}
+
+export interface InteractionStyleOption {
+  value: InteractionStyle;
+  icon: LucideIcon;
+  labelKey: string;
+}
+
+export const RESPONSE_TONE_STEPS: ResponseTone[] = [
+  'encouraging',
+  'balanced',
+  'direct',
+];
+
+export const DEFAULT_AI_PREFERENCES: AIPreferencesData = {
+  interactionStyle: 'friendly',
+  responseTone: 'balanced',
+  primaryLanguage: 'en',
+  quizScoreAlerts: true,
+  insightFeedback: false,
+};
 
 export const profileSchema = z.object({
   name: z

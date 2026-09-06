@@ -1,10 +1,163 @@
 {
-  "AccountPage": {
-    "emailLabel": "Email:",
-    "title": "Account Information",
-    "usernameLabel": "Username:"
+  "AcceptInvitationPage": {
+    "actions": {
+      "goHome": "Go home",
+      "goToCourse": "Go to course"
+    },
+    "alreadyJoined": {
+      "description": "You have already joined this course. You can continue from the course page.",
+      "title": "Already joined"
+    },
+    "capacityFull": {
+      "description": "This course is already at capacity. Ask the instructor to increase the limit or try again after a seat opens.",
+      "title": "Course is full"
+    },
+    "expired": {
+      "description": "This invitation expired on {date}. Ask the course instructor to send you a new one.",
+      "title": "Invitation expired"
+    },
+    "notPending": {
+      "acceptedDescription": "You already accepted this invitation and are enrolled in the course.",
+      "acceptedTitle": "Already enrolled",
+      "cancelledDescription": "This invitation was cancelled. Ask the course instructor to send you a new one.",
+      "cancelledTitle": "Invitation cancelled",
+      "declinedDescription": "You previously declined this invitation. Ask the course instructor to send you a new one.",
+      "declinedTitle": "Invitation declined"
+    },
+    "wrongUser": {
+      "description": "This invitation was sent to a different account. Sign in with the correct email or ask the instructor to re-invite you.",
+      "switchAccount": "Switch account",
+      "title": "Wrong account"
+    }
+  },
+  "AdminUsersPage": {
+    "actions": {
+      "addUser": "Add user",
+      "cancel": "Cancel",
+      "create": "Create user",
+      "creating": "Creating...",
+      "edit": "Edit",
+      "save": "Save"
+    },
+    "addDialog": {
+      "description": "Create an account and assign its platform role.",
+      "title": "Add new user"
+    },
+    "description": "View and manage registered platform users.",
+    "empty": {
+      "description": "Try a different search or role filter.",
+      "title": "No users found"
+    },
+    "errors": {
+      "description": "We could not load users right now.",
+      "title": "Users unavailable"
+    },
+    "fallback": {
+      "noName": "No name",
+      "notAvailable": "N/A"
+    },
+    "filters": {
+      "role": "Role filter"
+    },
+    "form": {
+      "email": "Email",
+      "emailPlaceholder": "user@example.com",
+      "name": "Name",
+      "nameOptional": "Name (optional)",
+      "namePlaceholder": "Full name",
+      "password": "Password",
+      "passwordPlaceholder": "Enter password",
+      "role": "Role"
+    },
+    "pagination": {
+      "itemsPerPage": "Items per page",
+      "next": "Next",
+      "page": "Page {page} of {total}",
+      "perPage": "{count} per page",
+      "previous": "Previous",
+      "range": "Showing {start}-{end} of {total} users"
+    },
+    "roles": {
+      "admin": "Admin",
+      "all": "All roles",
+      "student": "Student",
+      "teacher": "Teacher",
+      "unknown": "Unknown"
+    },
+    "searchPlaceholder": "Search users by name, email, or ID...",
+    "status": {
+      "unverified": "Unverified",
+      "verified": "Verified"
+    },
+    "table": {
+      "actions": "Actions",
+      "joinDate": "Join date",
+      "role": "Role",
+      "status": "Status",
+      "user": "User"
+    },
+    "title": "User Management",
+    "toast": {
+      "created": "User created.",
+      "createFailed": "Failed to create user.",
+      "updated": "User updated.",
+      "updateFailed": "Update failed."
+    },
+    "validation": {
+      "emailPasswordRequired": "Email and password are required."
+    }
   },
   "AIChat": {
+    "actionMenu": {
+      "close": "Close actions",
+      "fromCourseInventory": "From course inventory",
+      "fromDevice": "From this device",
+      "fromGoogleDrive": "From Google Drive",
+      "fromUserInventory": "From user inventory",
+      "open": "Open actions",
+      "uploadFiles": "Upload files"
+    },
+    "attachmentPicker": {
+      "alreadyAttached": "Already attached",
+      "attach": "Attach {count, plural, one {# file} other {# files}}",
+      "attachError": "Unable to attach selected files.",
+      "attaching": "Attaching...",
+      "backToCourses": "Courses",
+      "cancel": "Cancel",
+      "courseDescription": "Choose files from inventory of your joined courses",
+      "courseSelectionDescription": "Choose a joined course before browsing its files.",
+      "courseTitle": "Course Inventory",
+      "emptyCoursesDescription": "No joined courses are available.",
+      "emptyCoursesTitle": "No courses found",
+      "emptyDescription": "No files or folders match this location.",
+      "emptyTitle": "No files found",
+      "folder": "Folder",
+      "next": "Next",
+      "pageInfo": "Page {page} of {total}",
+      "personalDescription": "Choose files from your inventory",
+      "personalTitle": "User Inventory",
+      "previous": "Previous",
+      "processing": "Processing",
+      "root": "Inventory",
+      "searchPlaceholder": "Search files and folders",
+      "selectedCount": "{count}/{max} selected",
+      "selectFile": "Select {name}",
+      "tooMany": "Attachment limit reached."
+    },
+    "attachments": {
+      "add": "Attach files",
+      "defaultMessage": "Please use the attached {count, plural, one {reference} other {references}}.",
+      "fileTooLarge": "{name} exceeds the maximum upload size.",
+      "googleDriveConnectRequired": "Connect Google Drive in Integrations first.",
+      "googleDrivePickerUnavailable": "Google Drive Picker is unavailable.",
+      "googleDriveSessionChanged": "Google Drive session changed. Reconnect Google Drive.",
+      "googleDriveTokenFailed": "Could not prepare Google Drive Picker.",
+      "googleDriveUnavailable": "Google Drive import is not configured yet.",
+      "remove": "Remove {name}",
+      "signInRequired": "Sign in to upload files to chat.",
+      "tooMany": "You can attach up to {count} files.",
+      "uploadError": "Unable to upload files."
+    },
     "categories": {
       "artHistory": "ART HISTORY",
       "history": "HISTORY",
@@ -19,18 +172,43 @@
       "description": "This chat doesn't exist or has expired.",
       "title": "Chat not found"
     },
-    "criticalThinking": "Critical Thinking Active",
+    "citations": {
+      "sourceCount": "{count, plural, one {# source} other {# sources}}"
+    },
     "exploreMore": "Explore more scholarly prompts",
     "footer": {
       "academicDraft": "Lexend Academic Draft",
       "responseDisclaimer": "AI response may vary"
     },
+    "lessonReferencePicker": {
+      "alreadyAttached": "Already attached",
+      "attach": "Attach {count, plural, one {# lesson} other {# lessons}}",
+      "backToCourses": "Courses",
+      "cancel": "Cancel",
+      "description": "Choose lessons from your joined courses to reference in this chat.",
+      "emptyCoursesDescription": "No joined courses are available.",
+      "emptyCoursesTitle": "No courses found",
+      "emptyLessonsDescription": "No lessons match this course or search.",
+      "emptyLessonsTitle": "No lessons found",
+      "open": "Reference lessons",
+      "searchPlaceholder": "Search lessons",
+      "selectedCount": "{count}/{max} selected",
+      "selectLesson": "Select {name}",
+      "title": "Lesson References",
+      "tooMany": "Attachment limit reached.",
+      "trigger": "Lessons"
+    },
     "limitReachedHelper": "Limit reached: {used}/{count} messages. Start a new session to continue.",
-    "limitReachedPlaceholder": "Message limit reached ({count}). Start a new session.",
     "limitReachedToast": "You've reached the {count}-message limit. Start a new session to continue.",
-    "philosophicalLogic": "Philosophical Logic Enforced",
+    "modelSelector": {
+      "empty": "No models found.",
+      "heading": "Choose model",
+      "label": "Select AI model",
+      "placeholder": "Choose model"
+    },
     "placeholder": "Ask a scholarly question...",
     "promptLibrary": {
+      "back": "Back",
       "description": "Select a specialized inquiry framework to guide your session.",
       "hist": {
         "description": "Analyze socio-economic impacts across different regions.",
@@ -50,14 +228,104 @@
       },
       "title": "Scholarly Prompt Library"
     },
+    "recentChats": {
+      "description": "Return to your latest study threads.",
+      "empty": "No recent chats yet. Start a question above and it will appear here.",
+      "error": "Unable to load recent chats right now.",
+      "openChat": "Open chat {title}",
+      "title": "Recent chats",
+      "updated": "Updated {date}"
+    },
+    "sidebar": {
+      "actionsLabel": "Actions for {title}",
+      "cancel": "Cancel",
+      "close": "Collapse chat history",
+      "delete": "Delete",
+      "deleteDialogDescription": "Delete \"{title}\" from your chat history? This action cannot be undone.",
+      "deleteDialogTitle": "Delete chat",
+      "deleteError": "Unable to delete chat.",
+      "deleteSuccess": "Chat deleted.",
+      "description": "Search and reopen prior sessions.",
+      "editDialogDescription": "Choose a concise title for this chat.",
+      "editDialogTitle": "Edit chat title",
+      "editError": "Unable to update chat title.",
+      "editTitle": "Edit Title",
+      "editTitleLabel": "Chat title",
+      "editTitlePlaceholder": "Enter chat title",
+      "emptyDescription": "Start a new chat and it will appear here.",
+      "emptySearch": "No chats match your search.",
+      "emptyTitle": "No chats yet",
+      "loadingMore": "Loading more chats...",
+      "messageCount": "{count, plural, one {# message} other {# messages}}",
+      "newChat": "New chat",
+      "open": "Open chat history",
+      "saveTitle": "Save title",
+      "searchLabel": "Search chats",
+      "searchPlaceholder": "Search chats...",
+      "title": "Chat history",
+      "untitled": "Untitled chat"
+    },
     "subtitle": "Pick a starting point or ask anything to begin your inquiry.",
     "suggestions": {
       "brainstorm": "Help me brainstorm a thesis on Renaissance art",
+      "followUp": "Follow-up questions",
       "socratic": "Explain the Socratic method in simple terms",
       "trends": "Summarize the latest trends in renewable energy"
     },
     "thinking": "EduFlow AI is reflecting...",
-    "title": "Greetings, Scholar {name}. Ready to dive deep?"
+    "title": "Welcome back, {name}. Ready to dive deep?",
+    "tools": {
+      "foundContent": "Found {count} relevant {count, plural, one {section} other {sections}}",
+      "loadedCourses": "Loaded {count} {count, plural, one {course} other {courses}}",
+      "loadingCourses": "Loading your enrolled courses...",
+      "searchingContent": "Searching lesson content..."
+    }
+  },
+  "AiShareLinks": {
+    "actions": {
+      "cancel": "Cancel",
+      "copy": "Copy link",
+      "revoke": "Revoke link"
+    },
+    "cardDescription": "Revoking a link immediately removes public access to its shared item.",
+    "cardTitle": "Public links",
+    "description": "Review and revoke public links to your AI chats and interactive content.",
+    "empty": {
+      "description": "Public links you create from AI chats and interactive content will appear here.",
+      "title": "No shared links"
+    },
+    "error": "We could not load your shared links right now.",
+    "eyebrow": "Sharing controls",
+    "pagination": {
+      "next": "Next",
+      "page": "Page {page} of {total}",
+      "previous": "Previous",
+      "range": "Showing {start}-{end} of {total} links"
+    },
+    "revokeDialog": {
+      "description": "Anyone using this link will no longer be able to view the shared item.",
+      "title": "Revoke this public link?"
+    },
+    "summary": {
+      "active": "{count} active links"
+    },
+    "table": {
+      "actions": "Actions",
+      "conversation": "Conversation",
+      "created": "Created",
+      "type": "Type"
+    },
+    "title": "Shared links",
+    "toast": {
+      "copied": "Share link copied.",
+      "copyFailed": "Could not copy share link.",
+      "revoked": "Share link revoked.",
+      "revokeFailed": "Could not revoke share link."
+    },
+    "types": {
+      "aiChat": "AI chat",
+      "interactiveContent": "Interactive content"
+    }
   },
   "ApiDocsPage": {
     "cookieHint": "Sign in another tab to reuse your Better Auth session cookie.",
@@ -65,9 +333,8 @@
     "title": "API Reference"
   },
   "AuthFooter": {
-    "brand": "EduFlow",
     "cookieSettings": "Cookie Settings",
-    "copyright": "© 2026 EduFlow Academic Atelier. All rights reserved.",
+    "copyright": "Copyright © 2026 EduFlow – All rights reserved.",
     "helpCenter": "Help Center",
     "privacyPolicy": "Privacy Policy",
     "termsOfService": "Terms of Service"
@@ -159,7 +426,8 @@
     "actions": {
       "backToForgot": "Back to Reset Request",
       "backToLogin": "Back to Login",
-      "reset": "Update Password"
+      "reset": "Update Password",
+      "resetting": "Updating..."
     },
     "description": "Create a new strong password to secure your account.",
     "form": {
@@ -221,6 +489,331 @@
     "comingSoon": "Coming soon.",
     "logout": "Log out"
   },
+  "CourseFilesPage": {
+    "actions": {
+      "cancel": "Cancel",
+      "clearSelection": "Clear selection",
+      "delete": "Delete",
+      "deleteSelected": "Delete selected",
+      "download": "Download",
+      "move": "Move to folder",
+      "newFolder": "New folder",
+      "open": "Open",
+      "preview": "Preview",
+      "rename": "Rename",
+      "save": "Save",
+      "saveToDrive": "Save to Google Drive",
+      "savingToDrive": "Saving to Drive...",
+      "share": "Share",
+      "shareSelected": "Share selected",
+      "upload": "Upload file"
+    },
+    "breadcrumbs": {
+      "root": "Course Files"
+    },
+    "browser": {
+      "description": "{count, plural, =0 {0 items} =1 {1 item} other {# items}}",
+      "pageInfo": "Page {page} of {total}",
+      "range": "Showing {start}-{end} of {total}",
+      "title": "Materials"
+    },
+    "createFolderDialog": {
+      "description": "Create a new folder inside the current location.",
+      "label": "Folder name",
+      "placeholder": "Course notes, drafts, images...",
+      "submit": "Create folder",
+      "title": "Create folder"
+    },
+    "deleteDialog": {
+      "description": "Delete {count} items? This cannot be undone.",
+      "more": "and {count} more",
+      "title": "Delete items"
+    },
+    "empty": {
+      "action": "Upload a file",
+      "createFolder": "Create a folder",
+      "description": "Upload files or create folders to start organizing your storage.",
+      "title": "This folder is empty"
+    },
+    "emptySearch": {
+      "clear": "Clear search",
+      "description": "No files or folders match your search in this folder.",
+      "title": "No results found"
+    },
+    "errors": {
+      "description": "We could not load the course materials right now.",
+      "retry": "Retry",
+      "title": "Resources unavailable"
+    },
+    "fileCard": {
+      "folder": "Folder",
+      "processing": "Processing",
+      "ready": "Ready",
+      "size": "Size",
+      "type": "Type",
+      "uploadProgress": "Uploading {progress}%"
+    },
+    "hero": {
+      "badge": "Course Resources",
+      "description": "Access and manage files specifically for this course workspace. Upload lecture notes, assignments, and study materials."
+    },
+    "list": {
+      "columns": {
+        "actions": "Actions",
+        "name": "Name",
+        "size": "Size",
+        "status": "Status",
+        "type": "Type",
+        "updated": "Updated"
+      },
+      "uploadProgress": "Uploading {progress}%"
+    },
+    "moveDialog": {
+      "description": "Choose a destination for this item.",
+      "label": "Destination folder",
+      "placeholder": "Select a destination",
+      "submit": "Move item",
+      "title": "Move item"
+    },
+    "pagination": {
+      "next": "Next",
+      "page": "Page {page} of {total}",
+      "previous": "Previous"
+    },
+    "previewDialog": {
+      "description": "Previewing {type}",
+      "loading": "Loading preview...",
+      "placeholder": "Preview",
+      "textError": "We could not load this text preview.",
+      "title": "File preview",
+      "unsupported": "This file type cannot be previewed inline."
+    },
+    "renameDialog": {
+      "description": "Choose a new name for this item.",
+      "label": "Item name",
+      "title": "Rename item"
+    },
+    "selection": {
+      "count": "Selected {count} items",
+      "label": "Selected items",
+      "toggleAll": "Select all items on this page",
+      "toggleItem": "Select {name}"
+    },
+    "stats": {
+      "currentFolder": "Current folder",
+      "files": "Files",
+      "folders": "Folders",
+      "storage": "Storage used"
+    },
+    "status": {
+      "folder": "Folder",
+      "processing": "Processing",
+      "ready": "Ready"
+    },
+    "storage": {
+      "label": "Storage used",
+      "limitReached": "Storage limit reached. Delete files to upload more.",
+      "usage": "{used} of {total}"
+    },
+    "title": "Course Materials",
+    "toast": {
+      "deleted": "Deleted {count} items.",
+      "fileTooLarge": "File exceeds the maximum upload size of {size}.",
+      "fileUsedByAssignment": "This file is attached to an assignment submission and cannot be deleted from inventory.",
+      "folderCreated": "Folder created.",
+      "genericError": "Something went wrong. Try again.",
+      "googleDriveImported": "Google Drive file imported.",
+      "invalidMove": "You cannot move a folder into itself.",
+      "moved": "Item moved.",
+      "nameConflictCreateFolder": "A file or folder with this name already exists here.",
+      "nameConflictMove": "This destination already contains a file or folder with the same name.",
+      "nameConflictRename": "Choose a different name. Another file or folder already uses it here.",
+      "previewUnavailable": "This file cannot be previewed right now.",
+      "renamed": "Item renamed.",
+      "shareBatchDescription": "Copied {count} share links to your clipboard.",
+      "shareCopied": "Share link copied.",
+      "shareFilesOnly": "Select at least one file to share.",
+      "shareFoldersUnsupported": "Folders cannot be shared with signed links.",
+      "uploaded": "Upload complete."
+    },
+    "toolbar": {
+      "refresh": "Refresh",
+      "refreshing": "Refreshing...",
+      "searchPlaceholder": "Search files and folders"
+    },
+    "uploadDialog": {
+      "description": "Drop a file into the current folder or click to browse.",
+      "dropzoneDescription": "One file at a time, up to {size}.",
+      "dropzoneHint": "One file per upload",
+      "dropzoneTitle": "Drop a file here",
+      "googleDrive": "Google Drive",
+      "googleDriveConnectRequired": "Connect Google Drive in Integrations first.",
+      "googleDriveDescription": "Choose a Drive file and import it into this folder.",
+      "googleDrivePickerUnavailable": "Google Drive Picker is unavailable.",
+      "googleDriveSessionChanged": "Google Drive session changed. Reconnect Google Drive.",
+      "googleDriveTokenFailed": "Could not prepare Google Drive Picker.",
+      "googleDriveUnavailable": "Add Google Drive environment variables to enable Drive import.",
+      "importingGoogleDrive": "Importing...",
+      "title": "Upload file"
+    },
+    "view": {
+      "grid": "Grid",
+      "list": "List"
+    }
+  },
+  "CourseInvitePage": {
+    "description": "Confirm that you want to join {course}.",
+    "joinButton": "Join course",
+    "metadataTitle": "Course invitation",
+    "toast": {
+      "capacityFull": "This course is full.",
+      "failed": "Failed to join course.",
+      "joined": "Joined course."
+    },
+    "unavailable": {
+      "alreadyJoined": "You have already joined this course.",
+      "capacity": "This course has reached its capacity. Ask the course owner to increase the limit before joining.",
+      "expired": "This invite link has expired.",
+      "limit": "This invite link has reached its usage limit.",
+      "revoked": "This invite link has been revoked.",
+      "title": "Invite unavailable"
+    }
+  },
+  "CourseMembersPage": {
+    "actions": {
+      "add": "Add",
+      "addInviteLink": "Add invite link",
+      "addMember": "Add member",
+      "cancel": "Cancel",
+      "copyLink": "Copy link",
+      "createLink": "Create link",
+      "edit": "Edit",
+      "invite": "Invite",
+      "remove": "Remove",
+      "removeInvitation": "Remove invitation",
+      "revokeLink": "Revoke link",
+      "save": "Save"
+    },
+    "addDialog": {
+      "description": "Choose a course role, then add an existing user to this course.",
+      "emptyDescription": "Try another search term.",
+      "emptyTitle": "No users found",
+      "loadingMore": "Loading more users...",
+      "searchPlaceholder": "Search users by name, email, or ID...",
+      "title": "Add course member"
+    },
+    "capacity": {
+      "fullDescription": "Direct additions and accepted joins are paused until capacity is increased or active members are removed.",
+      "fullTitle": "Course capacity reached",
+      "label": "Capacity",
+      "unlimited": "Unlimited",
+      "value": "{active}/{capacity}"
+    },
+    "description": "View course members, roles, and enrollment dates.",
+    "editDialog": {
+      "description": "Change {name}'s course role.",
+      "title": "Edit member role"
+    },
+    "empty": {
+      "description": "Try a different search or role filter.",
+      "title": "No members found"
+    },
+    "errors": {
+      "candidatesDescription": "We could not load users right now.",
+      "candidatesTitle": "Users unavailable",
+      "description": "We could not load course members right now.",
+      "title": "Members unavailable"
+    },
+    "fallback": {
+      "noJoinDate": "Not joined yet",
+      "noName": "No name"
+    },
+    "filters": {
+      "role": "Role filter"
+    },
+    "form": {
+      "role": "Role"
+    },
+    "linkDialog": {
+      "description": "Create a reusable invite link for registered users.",
+      "expiresAt": "Expires at",
+      "maxUses": "Maximum uses",
+      "title": "Create invite link"
+    },
+    "links": {
+      "description": "Track reusable public invite links for this course.",
+      "emptyDescription": "Create a link to let registered users request course access from a confirmation screen.",
+      "emptyTitle": "No invite links",
+      "error": "We could not load invite links right now.",
+      "neverExpires": "Never",
+      "revokeDialog": {
+        "description": "This invite link will stop working for future joins. Existing course members will not be affected.",
+        "title": "Revoke invite link?"
+      },
+      "status": {
+        "active": "Active",
+        "revoked": "Revoked"
+      },
+      "table": {
+        "expires": "Expires",
+        "link": "Link",
+        "role": "Role",
+        "status": "Status",
+        "usage": "Usage"
+      },
+      "title": "Invite links",
+      "usageUnlimited": "{used} used",
+      "usageWithLimit": "{used}/{max} used"
+    },
+    "pagination": {
+      "itemsPerPage": "Items per page",
+      "next": "Next",
+      "page": "Page {page} of {total}",
+      "perPage": "{count} per page",
+      "previous": "Previous",
+      "range": "Showing {start}-{end} of {total} members"
+    },
+    "removeDialog": {
+      "description": "Remove {name} from this course? They will lose access to course resources.",
+      "title": "Remove member"
+    },
+    "roles": {
+      "all": "All roles",
+      "courseOwner": "Course Owner",
+      "student": "Student",
+      "teacher": "Teacher",
+      "unknown": "Unknown"
+    },
+    "searchLabel": "Search members",
+    "searchPlaceholder": "Search members by name, email, or ID...",
+    "status": {
+      "active": "Active",
+      "pendingInvite": "Pending invite"
+    },
+    "table": {
+      "actions": "Actions",
+      "joinDate": "Join date",
+      "role": "Role",
+      "status": "Status",
+      "user": "User"
+    },
+    "title": "Course Members",
+    "toast": {
+      "added": "Member added.",
+      "addFailed": "Failed to add member.",
+      "invited": "Invitation sent.",
+      "inviteFailed": "Failed to send invitation.",
+      "linkCopied": "Invite link copied.",
+      "linkCreated": "Invite link created.",
+      "linkCreateFailed": "Failed to create invite link.",
+      "linkRevoked": "Invite link revoked.",
+      "linkRevokeFailed": "Failed to revoke invite link.",
+      "removed": "Member removed.",
+      "removeFailed": "Failed to remove member.",
+      "updated": "Member role updated.",
+      "updateFailed": "Failed to update member role."
+    }
+  },
   "Courses": {
     "AddLessonDialog": {
       "description": "Provide a title for the new lesson within this module.",
@@ -244,58 +837,318 @@
     },
     "AnalyticsPage": "Analytics",
     "AssessmentsPage": "Assessments",
-    "Card": {
+    "AssignmentDetails": {
+      "back": "Back to assignments",
+      "briefDescription": "Review the instructions and context for this assignment.",
+      "briefTitle": "Assignment brief",
+      "due": "Due: {date}",
+      "noDeadline": "No deadline",
+      "notFound": "Assignment not found.",
+      "overdue": "Deadline passed",
+      "points": "{points} points",
+      "remaining": "{days}d {hours}h remaining",
+      "studentEyebrow": "Course assignment",
+      "teacherEyebrow": "Assignment review",
+      "timeRemaining": "Time remaining",
+      "timeRemainingDescription": "Submit your final work before the deadline."
+    },
+    "AssignmentEditor": {
+      "cancel": "Cancel",
+      "content": "Assignment content",
+      "contentDescription": "Add the instructions and context students need to complete the work.",
+      "contentPlaceholder": "Write the assignment instructions here...",
+      "dueAt": "Due date and time",
+      "dueAtDescription": "Students can submit their work until this deadline.",
+      "edit": "Edit assignment",
+      "empty": "No assignment details have been added yet.",
+      "maxPoints": "Maximum points",
+      "maxPointsRequired": "Maximum points must be greater than zero.",
+      "save": "Save",
+      "saving": "Saving...",
+      "settings": "Assignment settings",
+      "settingsDescription": "Update the deadline and maximum score.",
+      "title": "Assignment title"
+    },
+    "Assignments": {
+      "activeAssignments": "Active assignments",
+      "all": "All",
+      "awaitingGrade": "Awaiting grade",
+      "collecting": "Collecting",
+      "completed": "Completed",
+      "create": "Create assignment",
+      "created": "Assignment created.",
+      "currentGrade": "Current grade",
+      "description": "Track your coursework, deadlines, and feedback in one place.",
+      "due": "Due",
+      "dueInDays": "Due in {count} days",
+      "dueToday": "Due today",
+      "dueTomorrow": "Due tomorrow",
+      "filterAssignments": "Filter assignments",
+      "fullyGraded": "Fully graded",
+      "inProgress": "In progress",
+      "loadError": "Unable to load assignments.",
       "manage": "Manage",
+      "needsGrading": "Needs grading",
+      "needsReview": "{count} need review",
+      "nextSevenDays": "Next 7 days",
+      "noAssignments": "No assignments have been created for this course yet.",
+      "noDeadline": "No deadline",
+      "noFilteredAssignments": "No assignments match this filter.",
+      "notStarted": "Not started",
+      "overdue": "Overdue",
+      "pending": "Pending",
+      "pendingCount": "Pending",
+      "points": "points",
+      "retry": "Try again",
+      "review": "Review",
+      "saved": "Assignment saved.",
+      "saveError": "Unable to save the assignment.",
+      "searchPlaceholder": "Search assignments...",
+      "studentEyebrow": "Coursework",
+      "submissions": "submissions",
+      "teacherDescription": "Review deadlines, monitor submissions, and grade student work.",
+      "teacherEyebrow": "Course management",
+      "teacherTitle": "Manage assignments",
+      "thisTerm": "This term",
+      "title": "Assignments",
+      "upcomingDeadlines": "Upcoming deadlines"
+    },
+    "AssignmentStudent": {
+      "browseFiles": "or click to browse from your computer",
+      "cancelRemove": "Cancel",
+      "chooseFile": "Choose file",
+      "deadlinePassed": "The deadline has passed, so new uploads are unavailable.",
+      "description": "Upload your work and submit it before the deadline.",
+      "downloadFile": "Download {name}",
+      "draftFiles": "Files in this resubmission",
+      "draftInProgress": "Your latest submitted attempt remains valid until you submit this new draft.",
+      "dropFiles": "Drag and drop your file here",
+      "feedback": "Teacher feedback",
+      "graded": "Graded",
+      "latestSubmissionFiles": "Files from your latest submitted attempt",
+      "noFiles": "No files were attached to this submission.",
+      "removeFile": "Remove {name}",
+      "removeFileConfirm": "Remove file",
+      "removeFileDescription": "{name} will be permanently removed from this draft and your file storage. This action cannot be undone.",
+      "removeFileError": "Unable to remove the file.",
+      "removeFileSuccess": "File removed.",
+      "removeFileTitle": "Remove this draft file?",
+      "removingFile": "Removing...",
+      "resubmitDescription": "You can upload a new version and submit it again before the deadline.",
+      "statusDraft": "Not submitted",
+      "statusGraded": "Graded",
+      "statusSubmitted": "Submitted",
+      "submit": "Submit assignment",
+      "submitError": "Unable to submit the assignment.",
+      "submitted": "Assignment submitted.",
+      "submitting": "Submitting...",
+      "title": "Your submission",
+      "uploadedFiles": "Uploaded files",
+      "uploadError": "Unable to upload the file.",
+      "uploading": "Uploading file...",
+      "uploadSuccess": "File uploaded."
+    },
+    "AssignmentTeacher": {
+      "assessment": "Assessment",
+      "assessmentDescription": "Record a score and share constructive feedback with the student.",
+      "cancelPublish": "Cancel",
+      "description": "Track submission status for {count, plural, =1 {1 student} other {# students}}.",
+      "downloadFile": "Download {name}",
+      "enhanceFeedback": "Enhance with AI",
+      "enhanceFeedbackError": "Unable to enhance the feedback.",
+      "enhancingFeedback": "Enhancing...",
+      "feedback": "Qualitative feedback",
+      "feedbackPlaceholder": "Provide constructive feedback for {name}",
+      "feedbackTone": "Feedback tone",
+      "finalScore": "Final score",
+      "gradedCount": "{count} graded",
+      "gradeError": "Unable to save the grade.",
+      "gradeSaved": "Grade saved.",
+      "loadError": "Unable to load the student submission roster.",
+      "noFiles": "This student has not attached any files.",
+      "noResultsToPublish": "There are no new or updated results to publish.",
+      "noStudents": "No students enrolled",
+      "noStudentsDescription": "Active students will appear here.",
+      "notSubmitted": "Not submitted",
+      "notSubmittedCount": "{count} not submitted",
+      "pendingCount": "{count} pending",
+      "publishingResults": "Publishing...",
+      "publishResults": "Publish results",
+      "publishResultsDescription": "This will make saved grades and feedback visible to {count, plural, =1 {1 graded student} other {# graded students}}. Students without grades will remain ungraded.",
+      "publishResultsError": "Unable to publish results.",
+      "publishResultsTitle": "Publish assignment results?",
+      "publishUpdatedResults": "Publish updated results",
+      "resultsPublished": "{count, plural, =1 {1 result published.} other {# results published.}}",
+      "reviewStudent": "View {name}",
+      "saveGrade": "Save grade",
+      "savingGrade": "Saving grade...",
+      "statusDRAFT": "Draft",
+      "statusGRADED": "Graded",
+      "statusSUBMITTED": "Submitted",
+      "student": "Student",
+      "studentList": "Student list",
+      "studentNotSubmitted": "{name} has not submitted this assignment.",
+      "studentNotSubmittedDescription": "There is no finalized submission to review or grade.",
+      "submissionFiles": "Submission files",
+      "submittedAt": "Submitted {date}",
+      "title": "Student submissions",
+      "toneConcise": "Concise",
+      "toneConstructive": "Constructive",
+      "toneEncouraging": "Encouraging",
+      "totalCount": "{count} total",
+      "undoAiFeedback": "Undo AI change"
+    },
+    "Card": {
+      "accept": "Accept",
+      "decline": "Decline",
+      "manage": "Manage",
+      "memberCapacityLimited": "/ {count}",
+      "memberLabel": "Members",
       "members": "{count, plural, =1 {1 Member} other {# Members}}",
+      "moduleLabel": "Modules",
       "modules": "{count, plural, =1 {1 Module} other {# Modules}}",
       "noDescription": "No description provided.",
+      "open": "Open course",
+      "owned": "Owned",
+      "pendingInvite": "Pending invite",
       "togglePublish": "Toggle publish status"
     },
     "ChatPage": "Course AI Chat",
+    "controls": {
+      "filters": {
+        "ownedOnly": {
+          "description": "Limit results to courses you created.",
+          "label": "Owned courses only"
+        },
+        "publicOnly": {
+          "description": "Show published courses in your accessible list.",
+          "label": "Published courses only"
+        },
+        "reset": "Reset filters",
+        "title": "Filters",
+        "trigger": "Filter"
+      },
+      "search": {
+        "label": "Search courses",
+        "placeholder": "Search courses..."
+      },
+      "sort": {
+        "label": "Sort by",
+        "options": {
+          "created": "Newest created",
+          "members": "Most members",
+          "title": "Title A-Z",
+          "updated": "Recently updated"
+        }
+      }
+    },
     "CourseModules": {
       "addModule": "Add Module",
-      "aiAssistant": "AI Assistant",
       "AiDialog": {
         "clickToBrowse": "Click to browse files",
         "comingSoonTitle": "Advanced Generation",
+        "contextTab": {
+          "back": "Back to Document",
+          "description": "Provide additional instructions to guide the AI — e.g. target audience, focus areas, or specific topics to emphasize.",
+          "generate": "Generate Content",
+          "label": "Additional Instructions",
+          "placeholder": "e.g. Focus on beginner-friendly explanations. Emphasize practical examples. Target audience: university students.",
+          "selectedFile": "Selected document",
+          "title": "Add Context (Optional)"
+        },
         "courseDescription": "Access shared files within this course workspace.",
-        "description": "Generate a logical course structure from your educational documents.",
+        "description": "Generate modules and lessons from your educational documents.",
+        "fileTooLarge": "This PDF is too large. Choose a file up to {size}.",
         "folder": "Folder",
         "loadingFiles": "Loading your files...",
+        "pdfOnly": "Only PDF files can be used for course generation.",
         "personalDescription": "Select a PDF from your personal library to use as context.",
+        "pipeline": {
+          "extract": "Extract PDF",
+          "generate": "Generate Content",
+          "save": "Save Content",
+          "search": "Web Search"
+        },
         "preparingDocument": "Preparing your document for the AI Assistant",
         "processingPdf": "Processing PDF...",
         "readyForAi": "Ready for AI",
         "selectedPdf": "{count, plural, =1 {1 PDF selected} other {# PDFs selected}}",
         "tabs": {
+          "context": "Add Context",
           "course": "Course Files",
           "personal": "Personal Files",
           "upload": "Upload PDF"
         },
-        "title": "AI Learning Assistant",
-        "uploadDescription": "Select a PDF file from your device to use as a context for AI content generation.",
+        "title": "Generate Course Content",
+        "uploadDescription": "Select a PDF up to {size} from your device to use as context for AI content generation.",
         "uploadDifferent": "Upload Different File",
         "uploadReference": "Upload Reference Document",
         "useSelected": "Use Selected PDF"
       },
-      "AiGeneration": {
-        "craftingCurriculum": "AI is crafting your curriculum from the provided document",
+      "CourseContentGeneration": {
+        "creatingCourseContent": "AI is creating modules and lessons from the provided document",
         "creatingLessons": "Creating lessons...",
-        "documentReceived": "Document received, starting AI generation...",
+        "dismiss": "Dismiss",
+        "documentReceived": "Document received, extracting PDF content...",
+        "documentReceiving": "Receiving document...",
         "draftingLesson": "Drafting Lesson...",
         "error": "Something went wrong. Please try again.",
-        "failed": "Failed to generate course structure",
-        "generatingCourse": "Generating Course...",
+        "failed": "Failed to generate course content",
+        "fileTooLarge": "This PDF is too large for course generation. Choose a file up to {size}.",
+        "generatingCourseContent": "Generating Course Content...",
         "identifyingModule": "Identifying Module...",
-        "processingContent": "Processing Content",
+        "noOutput": "No course content was returned. Try again with a clearer or smaller PDF.",
+        "retry": "Try Again",
         "saving": "Saving",
-        "savingModules": "Saving your new modules and lessons...",
-        "startingGeneration": "Starting AI generation...",
-        "success": "Course modules generated and saved successfully!"
+        "savingCourseContent": "Saving your new modules and lessons...",
+        "skippingWebSearch": "Skipping Web Search...",
+        "skipWebSearch": "Skip Web Search",
+        "skipWebSearchFailed": "Unable to skip Web Search. It will continue in the background.",
+        "sourcePreview": {
+          "empty": "No sources found yet",
+          "foundCount": "{count, plural, =0 {No sources} =1 {1 source} other {# sources}}",
+          "searching": "Searching for sources...",
+          "title": "Found sources",
+          "web": "Web",
+          "webDescription": "Current references",
+          "youtube": "YouTube",
+          "youtubeDescription": "Video options"
+        },
+        "startingCourseContentGeneration": "Starting content generation...",
+        "success": "Course modules generated and saved successfully!",
+        "webSearchFailed": "Web Search could not finish. The sources already found will still be used.",
+        "webSearching": "Searching the web for additional context and references...",
+        "webSearchSkipped": "Web Search skipped. Any sources already found will still be used."
       },
       "description": "Organize your curriculum into modules and lessons.",
+      "generateCourseContent": "Generate Course Content",
       "noModules": "No modules yet. Create your first module to begin.",
       "title": "Course Modules"
+    },
+    "CreateAssignment": {
+      "assignmentTitle": "Assignment title",
+      "assignmentTitlePlaceholder": "e.g., Midterm Essay Analysis",
+      "assignmentTitleRequired": "Assignment title is required.",
+      "back": "Back to assignments",
+      "description": "Write the instructions and configure the submission settings.",
+      "details": "Assignment details",
+      "detailsDescription": "Set the basic information students will see.",
+      "dueAt": "Due date and time",
+      "dueAtDescription": "Students can submit their work until this deadline.",
+      "eyebrow": "Course assessment",
+      "gradingType": "Grading type",
+      "gradingTypeDescription": "Grades are entered manually by the teacher.",
+      "maxPoints": "Maximum points",
+      "maxPointsRequired": "Maximum points must be greater than zero.",
+      "pointsGrading": "Points",
+      "publish": "Publish",
+      "publishing": "Publishing...",
+      "schedule": "Schedule",
+      "scheduleDescription": "Choose when submissions close.",
+      "settings": "Settings",
+      "submissionPolicy": "Submission policy",
+      "submissionPolicyDescription": "Students can upload files and submit once for this assignment.",
+      "title": "Create assignment"
     },
     "CreateDialog": {
       "description": "Enter the basics for your new course to get started.",
@@ -310,9 +1163,179 @@
       "title": "Create New Course"
     },
     "createFirstCourse": "Create Your First Course",
+    "CreateQuiz": {
+      "aiGenerate": "AI Question Generation",
+      "aiGenerateDescription": "AI will generate questions from the selected lesson content and open the quiz for review.",
+      "aiGenerateError": "Failed to generate questions. Please try again.",
+      "allModulesSelected": "All content selected: {moduleCount} modules, {lessonCount} lessons",
+      "availableQuestions": "{count} matching questions available in bank",
+      "back": "Back",
+      "backToMethods": "Back to creation methods",
+      "cancel": "Cancel",
+      "categories": {
+        "OPEN_ENDED": {
+          "description": "Fill in the blank, drag-and-drop fill, and essay",
+          "label": "Open-ended"
+        },
+        "SELECTION_BASED": {
+          "description": "Multiple choice, true/false, matching, and ordering",
+          "label": "Selection-based"
+        }
+      },
+      "category": "Question Category",
+      "categoryPlaceholder": "Select a question category...",
+      "chooseMethodDescription": "Start with AI, write questions yourself, or build from your question bank.",
+      "chooseMethodTitle": "How would you like to build this quiz?",
+      "configureDescription": "Set up the quiz, then continue to the question editor.",
+      "configureTitle": "Configure your quiz",
+      "contentSource": "Content Source",
+      "contentSourceAllModules": "All Modules",
+      "contentSourceAllModulesHint": "Generate from all course content",
+      "contentSourceDescription": "Choose which content the quiz should be generated from.",
+      "contentSourceLessons": "Specific Lessons",
+      "contentSourceLessonsHint": "Pick one or more lessons",
+      "createQuiz": "Create Quiz",
+      "createQuizButton": "Create Quiz",
+      "createWithAI": "Create with AI",
+      "createWithAIError": "Failed to create the AI-generated quiz. Please try again.",
+      "createWithAISuccess": "AI-generated quiz created successfully.",
+      "creating": "Creating...",
+      "creatingWithAI": "Creating with AI...",
+      "deliveryMode": "Delivery Mode",
+      "description": "Create a quiz based on your module content.",
+      "deselectAll": "Deselect All",
+      "draftQuestionsTitle": "Questions",
+      "errors": {
+        "categoryRequired": "Please select a question category.",
+        "insufficientQuestions": "Only {available} questions available, but {requested} requested.",
+        "lessonRequired": "Please select at least one lesson.",
+        "questionCountMin": "At least 1 question is required.",
+        "subTypeRequired": "Please select a question sub-type.",
+        "titleRequired": "Please enter a quiz title."
+      },
+      "generate": "Generate",
+      "generateQuiz": "Generate Quiz",
+      "generatingQuestions": "Generating...",
+      "lessonsSelected": "{count, plural, =1 {1 lesson selected} other {# lessons selected}}",
+      "methods": {
+        "ai": {
+          "action": "Configure AI generation",
+          "description": "Choose a question category and set a separate question count for every format you want AI to generate.",
+          "title": "Create with AI"
+        },
+        "manual": {
+          "action": "Start writing",
+          "continue": "Open question editor",
+          "description": "Create an empty quiz, choose each question type, and write the questions and answers directly.",
+          "setupDescription": "Add the quiz details first. The question editor will open next.",
+          "setupTitle": "Create questions manually",
+          "title": "Add questions manually"
+        },
+        "question-bank": {
+          "action": "Browse question bank",
+          "continue": "Choose bank questions",
+          "description": "Create a quiz by selecting any mix of existing questions from this course.",
+          "setupDescription": "Add the quiz details first. The question bank will open next.",
+          "setupTitle": "Build from the question bank",
+          "title": "Add from question bank"
+        }
+      },
+      "next": "Next",
+      "noLessonsAvailable": "No lessons available. Add lessons to your modules first.",
+      "questionCount": "Number of Questions",
+      "questionDistribution": "Questions by type",
+      "questionDistributionDescription": "Enter the number of each question type to generate. Use 0 to skip a type.",
+      "questionTypeCount": "Number of {type} questions",
+      "questionTypes": {
+        "DRAG_AND_DROP": "Drag & Drop Fill",
+        "ESSAY": "Essay",
+        "FILL_IN_THE_BLANK": "Fill in the Blank",
+        "MATCHING": "Matching",
+        "MULTIPLE_CHOICE": "Multiple Choice",
+        "ORDERING": "Ordering",
+        "TRUE_FALSE": "True / False"
+      },
+      "quizDescription": "Description",
+      "quizDescriptionPlaceholder": "Brief description of this quiz...",
+      "quizTitle": "Quiz Title",
+      "quizTitlePlaceholder": "E.g., Chapter 1 Review",
+      "saveQuiz": "Save quiz",
+      "selectAll": "Select All",
+      "selectionMethod": "Selection Method",
+      "selectLesson": "Select Lesson",
+      "selectLessonPlaceholder": "Choose a lesson...",
+      "selectLessons": "Select Lessons",
+      "subType": "Question Type",
+      "subTypePlaceholder": "Select a question type...",
+      "title": "Create Quiz",
+      "workspaceDescription": "Set the quiz details once, then build one draft from any combination of the three question sources."
+    },
     "description": "Manage and publish your courses here.",
+    "emptySearch": {
+      "description": "Try a different search or adjust the course filters.",
+      "title": "No courses found"
+    },
+    "errors": {
+      "description": "We could not load your courses right now.",
+      "title": "Courses unavailable"
+    },
     "FilesPage": "Files",
+    "Grades": {
+      "answered": "Answered",
+      "attemptCount": "{count, plural, =1 {1 attempt} other {# attempts}}",
+      "averageScore": "Average score",
+      "backToGrades": "Back to grades",
+      "bestScore": "Best score",
+      "correct": "Correct",
+      "deliveryMode": {
+        "INSTANT_FEEDBACK": "Instant feedback",
+        "POST_QUIZ_REVIEW": "Post-quiz review"
+      },
+      "description": "Review your quiz submissions, scores, and answer history for this course.",
+      "emptyDescription": "Complete a quiz in this course and your submission will appear here.",
+      "emptyTitle": "No submissions yet",
+      "historyDescription": "Open a quiz to review all attempts and every answer, including unanswered questions.",
+      "historyTitle": "Submission history",
+      "legacyAttempt": "Legacy result",
+      "loadError": "Unable to load grades",
+      "loadErrorDescription": "Your submissions could not be loaded. Please try again.",
+      "openQuizHistory": "Open submission history for {title}, {count, plural, =1 {1 attempt} other {# attempts}}",
+      "overview": "Grade overview",
+      "pendingReview": "One or more answers are still waiting for review.",
+      "percentage": "Percentage",
+      "points": "Points",
+      "questionNumber": "Question {number}",
+      "quizHistoryDescription": "{count, plural, =1 {1 attempt submitted for this quiz.} other {# attempts submitted for this quiz.}}",
+      "retry": "Try again",
+      "reviewAnswers": "Review answers",
+      "status": {
+        "correct": "Correct",
+        "incorrect": "Incorrect",
+        "pending": "Pending review",
+        "unanswered": "Unanswered"
+      },
+      "submissions": "Submissions",
+      "title": "Grades",
+      "unansweredDescription": "No answer was submitted for this question.",
+      "viewAllAttempts": "View all attempts"
+    },
     "LessonEditor": {
+      "aiAssistant": {
+        "accept": "Accept",
+        "ariaLabel": "Ask AI to edit the selected content",
+        "description": "Only the selected lesson block is sent for this suggestion.",
+        "generate": "Generate suggestion",
+        "generating": "Generating preview...",
+        "noChanges": "AI did not propose any changes.",
+        "placeholder": "e.g. Make this clearer and more concise",
+        "promptLabel": "AI editing instruction",
+        "reject": "Reject",
+        "reviewInEditor": "Review the proposed changes in the editor.",
+        "title": "Edit selection with AI",
+        "tooltip": "Edit selection with AI",
+        "tooltipDisabled": "Select content to edit with AI",
+        "unableToPreview": "This AI change cannot be previewed safely."
+      },
       "cancel": "Cancel",
       "content": "Lesson Content",
       "save": "Save",
@@ -323,9 +1346,21 @@
       "writeReview": "Write/Review"
     },
     "LessonHeader": {
+      "delete": "Delete lesson",
+      "deleteDialog": {
+        "cancel": "Cancel",
+        "confirm": "Delete lesson",
+        "deleting": "Deleting...",
+        "description": "This permanently deletes the lesson. Questions linked to it will remain in the question bank but will no longer be associated with this lesson.",
+        "title": "Delete this lesson?"
+      },
+      "deleteError": "Failed to delete lesson",
+      "deleteSuccess": "Lesson deleted successfully",
       "edit": "Edit Lesson",
       "lesson": "Lesson",
-      "modules": "Modules"
+      "modules": "Modules",
+      "presentation": "Presentation Mode",
+      "preview": "Preview"
     },
     "LessonOutline": {
       "addFirstModule": "Add your first module",
@@ -350,21 +1385,812 @@
       "next": "Next",
       "previous": "Previous"
     },
+    "LessonPresentation": {
+      "addReference": "Add Reference",
+      "aiApplyEdit": "Apply AI edit",
+      "aiCancel": "Cancel",
+      "aiEditError": "AI could not edit this slide. Please try again.",
+      "aiEditing": "Editing...",
+      "aiEditSuccess": "AI edit applied. Review it, then save your changes.",
+      "aiGenerateImage": "Generate image",
+      "aiImageDescription": "Describe the replacement visual. AI will match the image element's shape without changing its size, position, clipping, or other layout attributes.",
+      "aiImageError": "AI could not generate this image. Please try again.",
+      "aiImageGenerating": "Generating...",
+      "aiImageHint": "AI uses the nearest supported aspect ratio and replaces only this element's image source. Press Command/Ctrl + Enter to generate.",
+      "aiImagePlaceholder": "e.g., A clean editorial illustration of students collaborating around a digital whiteboard",
+      "aiImagePromptLabel": "What image should AI create?",
+      "aiImageSuccess": "New image applied. Review it, then save your changes.",
+      "aiImageTitle": "Generate a replacement image",
+      "aiImageUnavailable": "This image is no longer available on the current slide.",
+      "aiInstructionLabel": "What should AI change?",
+      "aiLengthHint": "AI keeps each text element concise to reduce slide overflow. Press Command/Ctrl + Enter to apply.",
+      "aiSelectedText": "Selected text",
+      "aiSlideDescription": "Rewrite all text on the current slide without changing its layout, graphics, or element positions.",
+      "aiSlidePlaceholder": "e.g., Make the slide more concise and use clear executive language",
+      "aiSlideTitle": "Edit this slide with AI",
+      "aiSlideUnavailable": "No editable text was found on the current slide.",
+      "aiTextDescription": "Rewrite the selected text while keeping it within its current visual space.",
+      "aiTextPlaceholder": "e.g., Shorten this, make it clearer, or translate it to Vietnamese",
+      "aiTextTitle": "Edit selected text with AI",
+      "aiTextUnavailable": "Select a text element on the current slide first.",
+      "btnAiEditSlide": "AI Edit Slide",
+      "btnAiEditText": "AI Edit Text",
+      "btnBack": "Modify Prompt",
+      "btnDiscardPlan": "Discard",
+      "btnDownloadPptx": "Download PPTX",
+      "btnDropSlide": "Drop slide",
+      "btnEditItems": "Edit items",
+      "btnEditOutline": "Edit Outline",
+      "btnGenerate": "Generate Slide Deck",
+      "btnNewDeck": "New Deck",
+      "btnPlan": "Generate Presentation Plan",
+      "btnRestorePlan": "Use Outline",
+      "btnRestoreSlide": "Restore slide",
+      "btnReviewDroppedSlides": "{count, plural, =1 {1 dropped slide} other {# dropped slides}}",
+      "btnSaveVisual": "Save Changes",
+      "cancel": "Cancel",
+      "canvasAiImageAction": "Generate image with AI",
+      "canvasAiTextAction": "Edit text with AI",
+      "close": "Exit Planner",
+      "deckWarnings": "{count, plural, =1 {1 slide had a content issue} other {# slides had content issues}}",
+      "droppedSlidesCount": "{count, plural, =1 {1 slide dropped} other {# slides dropped}}",
+      "dropSlideLastRemaining": "You cannot drop every slide. At least one slide must stay in the presentation.",
+      "dropSlideSuccess": "Slide dropped. It is skipped when navigating the deck. Save your changes to keep it dropped.",
+      "dropSlideUnavailable": "Open a slide in the deck preview first.",
+      "duration10": "10 minutes (Brief overview)",
+      "duration120": "120 minutes (2-hour masterclass)",
+      "duration15": "15 minutes (Standard overview)",
+      "duration30": "30 minutes (In-depth cover)",
+      "duration45": "45 minutes (Detailed class)",
+      "duration5": "5 minutes (Microlearning)",
+      "duration60": "60 minutes (Comprehensive lecture)",
+      "duration90": "90 minutes (Detailed workshop)",
+      "durationLabel": "Presentation Duration",
+      "empty": "No content to display in this slide.",
+      "exportMenu": "Export",
+      "fullscreen": "Toggle Fullscreen",
+      "generatingText": "Creating final slide designs and injecting content...",
+      "inputDesc": "Provide guidelines or custom instructions for the AI on how to structure/generate your presentation slides.",
+      "inputPlaceholder": "e.g., Target audience is university students. Focus on code quality and practical implementation. Keep slides high-level and visual...",
+      "keyboardTip": "Use Left/Right arrows or Space to navigate, ESC to exit.",
+      "newDeckCreateFreshBtn": "Start Fresh",
+      "newDeckCreateFreshDesc": "Write a new prompt and set duration to generate a completely fresh slide structure.",
+      "newDeckCreateFreshTitle": "Generate New Outline",
+      "newDeckDialogDesc": "Choose whether to reuse your existing slide outline or generate a new one from scratch.",
+      "newDeckDialogTitle": "Create New Presentation",
+      "newDeckUseDefaultDesc": "Keep your {count, plural, =1 {1 planned slide} other {# planned slides}} and reset the style to the System Default starter template.",
+      "newDeckUseDefaultTitle": "Use Outline with Default Template",
+      "newDeckUseExistingBtn": "Continue with Outline",
+      "newDeckUseExistingDesc": "Keep your {count, plural, =1 {1 planned slide} other {# planned slides}} to adjust layouts, edit content, or try different styles.",
+      "newDeckUseExistingTitle": "Use Previous Outline",
+      "next": "Next Slide",
+      "plannedDesc": "Review and refine the planned slides. Click on titles or bullets to customize them before generation.",
+      "plannedTitle": "AI Presentation Slide Outline",
+      "planningText": "Compiling presentation from lesson material...",
+      "pptxDownloadError": "Failed to export PowerPoint presentation.",
+      "pptxDownloading": "Exporting PowerPoint...",
+      "pptxDownloadSuccess": "PowerPoint presentation exported successfully.",
+      "previewNotReady": "Preview is not ready. Reload the deck and try again.",
+      "previous": "Previous Slide",
+      "referencesLayout": "References & Sources",
+      "referenceSources": "Reference Sources",
+      "restoreSlideSuccess": "Slide restored. Save your changes to include it while presenting.",
+      "savedPlanBannerDesc": "You can resume editing your previous outline or start fresh.",
+      "savedPlanBannerTitle": "Previous outline available ({count, plural, =1 {1 slide} other {# slides}})",
+      "savePptxToDrive": "Save PPTX to Google Drive",
+      "savingHtml": "Saving...",
+      "savingToDrive": "Saving to Drive...",
+      "slideOutlineLabel": "Slide {number} Outline",
+      "slideProgress": "Slide {current} of {total}",
+      "suggest1": "Focus on practical exercises and examples",
+      "suggest2": "Highly visual, concise bullet points",
+      "suggest3": "Structured for a 10-minute workshop",
+      "suggestLabel": "Suggested Prompts",
+      "summaryPlaceholder": "Summary (optional)",
+      "templateFileLabel": "PPTX, ZIP or SVG file (up to {max} MB)",
+      "templateFileTooLarge": "This file is {size} MB, which exceeds the {max} MB upload limit. Please upload a smaller template.",
+      "templateUploadRejected": "This file cannot be uploaded. Use a PPTX, ZIP or SVG template.",
+      "title": "AI Presentation Planner",
+      "titlePlaceholder": "Title",
+      "urlPlaceholder": "URL",
+      "usageCost": "~${cost}",
+      "usageRequests": "{requests} AI calls",
+      "usageTokens": "{tokens} tokens used",
+      "visualSaveSuccess": "Slide changes saved successfully."
+    },
     "LessonView": {
       "empty": "Lesson content is empty."
     },
     "MembersPage": "Members",
     "ModuleAccordion": {
+      "add": "Add",
+      "addLesson": "Lesson",
+      "addQuiz": "Quiz",
+      "delete": "Delete module",
+      "deleteDialog": {
+        "cancel": "Cancel",
+        "confirm": "Delete module",
+        "deleting": "Deleting...",
+        "description": "This permanently deletes \"{title}\" and {count, plural, =0 {all of its content} =1 {its 1 lesson} other {its # lessons}}. Linked questions will remain in the question bank but will no longer belong to these lessons.",
+        "title": "Delete this module?"
+      },
+      "deleteError": "Failed to delete module",
+      "deleteSuccess": "Module deleted successfully",
       "noLessons": "No lessons yet"
     },
     "newCourse": "New Course",
     "noCourses": "No courses yet",
     "noCoursesDescription": "No courses available",
+    "pagination": {
+      "next": "Next",
+      "page": "Page {page} of {total}",
+      "previous": "Previous",
+      "range": "Showing {start}-{end} of {total} courses"
+    },
+    "QuestionBank": {
+      "allCategories": "All Categories",
+      "allLessons": "All Lessons",
+      "allSubTypes": "All Types",
+      "cancel": "Cancel",
+      "categories": {
+        "OPEN_ENDED": "Open-ended",
+        "SELECTION_BASED": "Selection-based"
+      },
+      "clearFilters": "Clear All Filters",
+      "confirmDelete": "Delete",
+      "description": "View and manage all questions for this course.",
+      "editQuestion": "Edit question",
+      "filterCategory": "Category",
+      "filterLesson": "Lesson",
+      "filterLessonActive": "Lesson: {count} selected",
+      "filterModule": "Module",
+      "filterModuleActive": "Module: {count} selected",
+      "filters": "Filters",
+      "filterSubType": "Type",
+      "filterType": "Question Type",
+      "filterTypeActive": "Type: {count} selected",
+      "noLesson": "No lesson",
+      "noLessonFilter": "No lesson linked",
+      "noQuestions": "No questions found. Add questions manually or generate them with AI.",
+      "previewTypes": "Preview Types",
+      "questionCount": "{count, plural, =1 {1 question} other {# questions}}",
+      "questionPreview": "Question Preview",
+      "questionTypes": {
+        "DRAG_AND_DROP": "Drag & Drop Fill",
+        "ESSAY": "Essay",
+        "FILL_IN_THE_BLANK": "Fill in the Blank",
+        "MATCHING": "Matching",
+        "MULTIPLE_CHOICE": "Multiple Choice",
+        "ORDERING": "Ordering",
+        "TRUE_FALSE": "True / False"
+      },
+      "questionUpdateError": "Failed to update question",
+      "questionUpdateSuccess": "Question updated successfully",
+      "searchPlaceholder": "Search questions...",
+      "title": "Question Bank",
+      "unknownLesson": "Unknown lesson"
+    },
+    "QuestionTypesPreview": {
+      "description": "Preview all available question types and how they appear to students. Use this to decide which formats work best for your assessments.",
+      "title": "Question Types Preview"
+    },
+    "QuizDelete": {
+      "cancel": "Cancel",
+      "confirm": "Delete quiz",
+      "deleting": "Deleting...",
+      "description": "This permanently deletes \"{title}\" and its attempts. Questions remain available in the question bank.",
+      "error": "Failed to delete quiz",
+      "success": "Quiz deleted successfully",
+      "title": "Delete this quiz?",
+      "trigger": "Delete quiz"
+    },
+    "QuizPlayer": {
+      "acceptableAnswers": "Acceptable Answers (comma separated)",
+      "acceptableAnswersPlaceholder": "Acceptable answers...",
+      "addFirstQuestion": "Add the first question",
+      "addFromQuestionBank": "Add from question bank",
+      "addItem": "Add Item",
+      "addOption": "Add Option",
+      "addPair": "Add Pair",
+      "addQuestion": "Add Question",
+      "addSelectedQuestions": "Add {count, plural, =1 {1 question} other {# questions}}",
+      "aiContextCancel": "Cancel",
+      "aiContextCharacters": "{current}/{max} characters",
+      "aiContextDialogDescription": "Provide optional context to guide question generation (up to 500 characters).",
+      "aiContextDialogTitle": "Add AI Context",
+      "aiContextLabel": "Context",
+      "aiContextPlaceholder": "Example: Focus on lesson 3, include more scenario-based questions, medium difficulty...",
+      "aiContextSubmit": "Generate",
+      "allowAttachments": "Allow Attachments",
+      "allowAttachmentsDescription": "Let students upload files with essay answers.",
+      "allowTeacherRubric": "Allow Teacher Rubric (AI grading helper)",
+      "allowTeacherRubricDescription": "Define custom grading rubric files or descriptions.",
+      "blanksConfiguration": "Blanks Configuration",
+      "blankTemplateHint": "Use double curly braces to indicate blanks, for example {placeholder}.",
+      "blankTemplatePlaceholder": "e.g. The capital of France is '{{capital}}'.",
+      "cancel": "Cancel",
+      "completed": "Quiz completed! Score: {score}%",
+      "confirmDelete": "Are you sure you want to delete this question? This cannot be undone.",
+      "correct": "Correct",
+      "correctAnswer": "Correct Answer",
+      "correctMapping": "Correct Mapping (Zone to Item)",
+      "course": "Course",
+      "deleteQuestion": "Delete Question",
+      "deliveryImmediate": "Immediate AI evaluation",
+      "deliveryOption": "AI Evaluation Feedback Delivery",
+      "deliveryTeacherReview": "Hold for teacher review",
+      "dragAndDropSentenceTemplate": "Sentence Template (use {{zoneId}} for drop zones)",
+      "dragAndDropTemplateHint": "Specify zone placeholders, for example {zone1} and {zone2}.",
+      "dragAndDropTemplatePlaceholder": "e.g. Red is a '{{zone1}}' color, while Blue is '{{zone2}}'.",
+      "draggableItem": "Draggable item",
+      "draggableItemPlaceholder": "Draggable label",
+      "draggableItems": "Draggable Items",
+      "editQuestion": "Edit Question",
+      "editQuestions": "Edit Questions",
+      "emptyItem": "(empty item)",
+      "emptyLeftItem": "(empty left)",
+      "emptyRightItem": "(empty right)",
+      "explanation": "Explanation (Optional)",
+      "explanationPlaceholder": "Provide context or explanation for why the answer is correct.",
+      "false": "False",
+      "generateAIQuestions": "Generate AI Questions",
+      "generatingAIQuestions": "Generating AI Questions...",
+      "leftItem": "Left Item",
+      "leftItemPlaceholder": "Left side item",
+      "leftItems": "Left Items",
+      "loadError": "Failed to Load Quiz",
+      "loadErrorDescription": "Something went wrong while loading the quiz data. Please try again.",
+      "matchingPairs": "Correct Matching Pairs",
+      "maxWords": "Max Words (Optional)",
+      "minWords": "Min Words (Optional)",
+      "noQuestionsYet": "No questions in this quiz yet.",
+      "noSolutionSummary": "No solution added yet",
+      "notFound": "Quiz Not Found",
+      "notFoundDescription": "This quiz does not exist or has been removed.",
+      "optionPlaceholder": "Option {number}",
+      "options": "Options",
+      "orderingItem": "Ordering item",
+      "orderingItemPlaceholder": "Step / item text",
+      "orderingItems": "Ordering Items (in correct order)",
+      "points": "Points",
+      "prompt": "Question",
+      "questionAdded": "Question added. Save changes to update the quiz.",
+      "questionBankEmpty": "No matching questions are available in the question bank.",
+      "questionBankPickerDescription": "Choose existing questions to link to this quiz.",
+      "questionBankPickerTitle": "Choose questions from the bank",
+      "questionBankSearch": "Search question bank...",
+      "questionLabel": "Question",
+      "questionPlaceholder": "What is the question?",
+      "questionRemoved": "Question removed from this quiz.",
+      "questionsTitle": "Questions",
+      "questionTotal": "{count, plural, =1 {1 question total} other {# questions total}}",
+      "questionType": "Question Type",
+      "questionTypes": {
+        "drag_and_drop": "Drag & Drop Fill",
+        "essay": "Essay",
+        "fill_in_the_blank": "Fill in the Blank",
+        "matching": "Matching",
+        "multiple_choice": "Multiple Choice",
+        "ordering": "Ordering",
+        "true_false": "True / False"
+      },
+      "questionUpdated": "Question updated. Save changes to update the bank.",
+      "removeQuestion": "Remove",
+      "retry": "Retry",
+      "rightItem": "Right Item",
+      "rightItemPlaceholder": "Right side item",
+      "rightItems": "Right Items",
+      "saveChanges": "Save Changes",
+      "saveError": "Failed to save quiz changes",
+      "saveSuccess": "Quiz questions saved successfully!",
+      "saving": "Saving...",
+      "selectCorrectItem": "Select correct item...",
+      "sentenceTemplate": "Sentence Template (use '{{blankId}}' for blanks)",
+      "solutionLabel": "Solution",
+      "studentView": "Student View",
+      "teacherView": "Teacher View",
+      "true": "True",
+      "zones": "Drop Zones"
+    },
     "SettingsPage": "Course Settings",
-    "title": "Courses"
+    "TemplateReview": {
+      "autofix": "Auto-fix",
+      "bulletCheckbox": "Render as a bullet list (adds “•” to each line)",
+      "canvasInstruction": "Drag a box to move it, or its corner to resize. Changes show here immediately and are saved with the rest.",
+      "deleteCategoryDialog": {
+        "action": "Delete layout",
+        "cancel": "Cancel",
+        "description": "This removes the layout from {collection} for good — the slide design, its slot schema, and its copy in storage. Decks already generated keep their slides; new ones can no longer use this layout. There is no undo.",
+        "title": "Delete {category}?"
+      },
+      "deletedSuccess": "Deleted {category}",
+      "deleteError": "Could not delete the layout",
+      "descPlaceholder": "What should the AI write here?",
+      "description": "Extraction guesses each slot from the slide’s geometry. Check what it found and correct anything wrong before generating decks with it.",
+      "fixedCount": "Fixed {count} thing(s) in {category}",
+      "inspectError": "Could not inspect this template",
+      "inspecting": "Inspecting template…",
+      "maxCharsPlaceholder": "max chars",
+      "noChanges": "No changes",
+      "noProblems": "No problems detected",
+      "nothingToFix": "Nothing to fix in this category",
+      "nothingToFixAdvice": "Nothing to fix automatically — see the notes below the slide",
+      "nothingToInspect": "Nothing to inspect for this collection.",
+      "remove": "remove",
+      "reset": "Reset",
+      "saveChanges": "Save changes",
+      "savedCount": "Saved {count} change(s) to {category}",
+      "saveError": "Could not save the slot changes",
+      "showAll": "Show all {count} categories",
+      "showOnlyWarnings": "Show only categories with warnings",
+      "slotNamePlaceholder": "slot name",
+      "title": "Review extracted template",
+      "undoRemove": "undo remove",
+      "unsavedChanges": "{count} unsaved change(s)",
+      "waitingForSlide": "Waiting for the slide to load — try again in a moment",
+      "warningCount": "{count} slot(s) need a look"
+    },
+    "title": "Courses",
+    "toast": {
+      "capacityFull": "This course is full.",
+      "created": "Course created.",
+      "createFailed": "Failed to create course.",
+      "invitationAccepted": "Invitation accepted.",
+      "invitationAcceptFailed": "Failed to accept invitation.",
+      "invitationDeclined": "Invitation declined.",
+      "invitationDeclineFailed": "Failed to decline invitation.",
+      "published": "Course published.",
+      "unpublished": "Course unpublished.",
+      "updateFailed": "Failed to update course status."
+    }
+  },
+  "CourseSettingsPage": {
+    "actions": {
+      "archive": "Archive",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "edit": "Edit",
+      "leave": "Leave course",
+      "save": "Save changes",
+      "transfer": "Transfer ownership",
+      "unarchive": "Unarchive"
+    },
+    "archiveDialog": {
+      "description": "Archive this course? Type the course ID to confirm.",
+      "title": "Archive course"
+    },
+    "archivedNotice": {
+      "description": "Members can still review the course, but owners should unarchive it before making it active again.",
+      "title": "This course is archived"
+    },
+    "capacity": {
+      "controlTitle": "Seat availability",
+      "limited": "Limited",
+      "limitedValue": "{count} seats",
+      "unlimited": "Unlimited",
+      "validation": {
+        "belowActive": "Capacity cannot be below the current {count} active members.",
+        "required": "Enter a valid capacity."
+      }
+    },
+    "confirmation": {
+      "description": "Type {courseId} to confirm this action.",
+      "label": "Course ID confirmation"
+    },
+    "dangerZone": {
+      "archive": {
+        "description": "Mark the course as archived without deleting course data.",
+        "title": "Archive course"
+      },
+      "delete": {
+        "description": "Soft delete the course and remove it from active course lists.",
+        "title": "Delete course"
+      },
+      "description": "Sensitive actions that affect membership, ownership, or course availability.",
+      "leave": {
+        "description": "Leave this course and remove your member access.",
+        "title": "Leave course"
+      },
+      "title": "Danger zone",
+      "transfer": {
+        "description": "Choose another member to become owner. Your role will be swapped with theirs.",
+        "title": "Transfer ownership"
+      },
+      "unarchive": {
+        "description": "Restore this course to the active course list.",
+        "title": "Unarchive course"
+      }
+    },
+    "deleteDialog": {
+      "description": "Soft delete this course? Type the course ID to confirm.",
+      "title": "Delete course"
+    },
+    "description": "Manage course identity, visibility, and high-impact course actions.",
+    "errors": {
+      "description": "We could not refresh course settings right now.",
+      "title": "Settings unavailable"
+    },
+    "fallback": {
+      "noDescription": "No description provided.",
+      "noName": "No name"
+    },
+    "fields": {
+      "capacity": "Capacity",
+      "courseId": "Course ID",
+      "description": "Description",
+      "role": "Role",
+      "title": "Title",
+      "visibility": "Visibility"
+    },
+    "form": {
+      "capacity": "Capacity",
+      "description": "Description",
+      "title": "Title",
+      "visibility": "Visibility"
+    },
+    "leaveDialog": {
+      "description": "Leave this course? You will lose access unless another owner or teacher adds you again.",
+      "title": "Leave course"
+    },
+    "roles": {
+      "courseOwner": "Course Owner",
+      "student": "Student",
+      "teacher": "Teacher"
+    },
+    "status": {
+      "archived": "Archived"
+    },
+    "title": "Course Settings",
+    "toast": {
+      "archived": "Course archived.",
+      "archiveFailed": "Failed to archive course.",
+      "deleted": "Course deleted.",
+      "deleteFailed": "Failed to delete course.",
+      "leaveFailed": "Failed to leave course.",
+      "left": "You left the course.",
+      "transferFailed": "Failed to transfer ownership.",
+      "transferred": "Ownership transferred.",
+      "unarchived": "Course unarchived.",
+      "unarchiveFailed": "Failed to unarchive course.",
+      "updated": "Course settings updated.",
+      "updateFailed": "Failed to update course settings."
+    },
+    "transferDialog": {
+      "description": "Select the member who should become the new course owner.",
+      "emptyDescription": "Add another member before transferring ownership.",
+      "emptyTitle": "No members available",
+      "memberLabel": "New owner",
+      "memberPlaceholder": "Choose a course member",
+      "title": "Transfer ownership"
+    },
+    "unarchiveDialog": {
+      "description": "Unarchive this course and make it active again?",
+      "title": "Unarchive course"
+    },
+    "visibility": {
+      "private": "Private",
+      "public": "Public"
+    }
+  },
+  "DictionaryDialog": {
+    "antonyms": "Antonyms",
+    "close": "Close dictionary",
+    "definition": "Definition",
+    "etymology": "Etymology",
+    "example": "Example",
+    "listen": "Listen to pronunciation",
+    "loading": "Loading definition...",
+    "notFound": "Word not found",
+    "partOfSpeech": "Part of Speech",
+    "pronunciation": "Pronunciation",
+    "synonyms": "Synonyms",
+    "title": "Dictionary",
+    "usageNotes": "Usage Notes",
+    "word": "Word"
+  },
+  "DictionarySettings": {
+    "active": "Active",
+    "description": "Choose which dictionary to use when you highlight a word.",
+    "freeDictionary": "Free Dictionary API",
+    "freeDictionaryDescription": "Open-source dictionary with phonetics and audio. No daily request limits.",
+    "mwCollegiate": "Merriam-Webster Collegiate",
+    "mwCollegiateDescription": "America's most trusted dictionary with 250,000+ definitions and audio pronunciations.",
+    "mwLearners": "Merriam-Webster Learner's",
+    "mwLearnersDescription": "Designed for advanced ESL/EFL students with IPA pronunciation and 160,000+ usage examples.",
+    "title": "Pop-up Dictionary"
+  },
+  "GameQuiz": {
+    "aiGenerate": {
+      "accept": "Add to game",
+      "action": "Generate with AI",
+      "additionalPromptDescription": "Add emphasis, tone, or constraints for this question set.",
+      "additionalPromptLabel": "Additional guidance (optional)",
+      "additionalPromptPlaceholder": "For example: focus on common misconceptions and keep the language concise.",
+      "capacityReached": "This game already has the maximum of 100 questions.",
+      "continue": "Continue",
+      "correctAnswer": "Correct answer",
+      "courseLabel": "Course",
+      "coursePlaceholder": "Choose a course",
+      "description": "Choose lesson material, guide the AI, and review every question before adding it to your game.",
+      "generate": "Generate questions",
+      "generating": "Generating questions...",
+      "generationErrorDescription": "The questions could not be generated. Check your lesson content and try again.",
+      "generationErrorTitle": "Generation failed",
+      "guidanceStep": "Guidance",
+      "lessonsDescription": "The AI will use the stored text from these lessons as its source.",
+      "lessonSelectionLimit": "You can select up to {count} lessons at a time.",
+      "lessonsLabel": "Lessons",
+      "lessonsSelected": "selected",
+      "nextQuestion": "Next generated question",
+      "noLessonsDescription": "Add lesson content to this course before generating questions.",
+      "noLessonsTitle": "No lessons available",
+      "noSourcesDescription": "Join a course as an owner or teacher with course-content and AI-generation access.",
+      "noSourcesTitle": "No eligible courses",
+      "previousQuestion": "Previous generated question",
+      "questionCountDescription": "Choose how many questions to add. Available capacity:",
+      "questionCountLabel": "Number of questions",
+      "reject": "Reject and start over",
+      "reviewDescription": "These questions are read-only until you add them to the game.",
+      "reviewStep": "Review",
+      "sourceLoadErrorDescription": "Eligible courses and lessons could not be loaded.",
+      "sourceLoadErrorTitle": "Sources unavailable",
+      "sourcesStep": "Sources",
+      "title": "Generate game questions with AI"
+    },
+    "common": {
+      "back": "Back",
+      "cancel": "Cancel",
+      "close": "Close",
+      "copied": "Copied to clipboard",
+      "error": "Something went wrong. Please try again.",
+      "loading": "Loading game quiz...",
+      "retry": "Try again",
+      "save": "Save all changes",
+      "saving": "Saving..."
+    },
+    "editor": {
+      "addAnswer": "Add answer",
+      "addQuestion": "Add question",
+      "allSaved": "All changes saved",
+      "answer": "Answer",
+      "conflict": "This game quiz changed elsewhere. Refresh before saving your edits.",
+      "correct": "Correct answer",
+      "create": "Create New Game",
+      "description": "A friendly, ungraded question run for your class.",
+      "details": "Game details",
+      "difficultyLabel": "Difficulty",
+      "draft": "New game quiz",
+      "duplicateQuestion": "Duplicate question",
+      "easy": "Easy",
+      "estimatedDuration": "Est. duration",
+      "explanation": "Reveal explanation",
+      "hard": "Hard",
+      "hint": "Optional hint",
+      "host": "Host Game",
+      "learningDetails": "Learning details (Hint & Explanation)",
+      "markCorrect": "Mark as correct answer",
+      "maxPoints": "Maximum points",
+      "medium": "Medium",
+      "minutesShort": "{count} min",
+      "moveDown": "Move down",
+      "moveUp": "Move up",
+      "preview": "Preview",
+      "prompt": "Question prompt",
+      "question": "Question",
+      "questionCount": "{count, plural, one {# question} other {# questions}}",
+      "rallyOverview": "Rally overview",
+      "randomizeAnswers": "Randomize answer order",
+      "randomizeQuestions": "Randomize question order",
+      "removeAnswer": "Remove answer",
+      "removeQuestion": "Remove question",
+      "saved": "Game quiz saved",
+      "seconds": "seconds",
+      "settings": "Game settings",
+      "template": "Live Quiz Rally",
+      "timeLimit": "Time limit",
+      "title": "Build a Live Quiz Rally",
+      "titleLabel": "Game title",
+      "topicLabel": "Topic",
+      "totalPossiblePoints": "Total points",
+      "unsavedChanges": "Unsaved changes",
+      "unspecified": "Unspecified",
+      "validation": "Add a title, 2-4 answers per question, and one correct answer."
+    },
+    "host": {
+      "answers": "Answers received",
+      "answersCount": "Answers",
+      "averageResponseTime": "Average response time",
+      "congratulations": "Congratulations!",
+      "congratulationsDescription": "The quiz has concluded. Here are the top scholars.",
+      "copyLink": "Copy link",
+      "correctRate": "Correct rate",
+      "emptyLeaderboard": "No final standings are available yet.",
+      "endGame": "End game",
+      "endGameConfirmDescription": "Are you sure you want to end this game session early? The final podium will be shown immediately.",
+      "endGameConfirmTitle": "End game session?",
+      "endSession": "End session",
+      "fullLeaderboardTitle": "Final standings",
+      "joinAt": "Invite players to join at",
+      "joinCode": "Copy join code",
+      "joinedPlayers": "Joined Players",
+      "joinLocked": "Joining is locked",
+      "joinOpen": "Joining is open",
+      "lobby": "Waiting room",
+      "lockJoining": "Lock joining",
+      "moreRespondents": "{count, plural, one {more respondent} other {more respondents}}",
+      "next": "Next question",
+      "noPlayers": "Players will appear here as they join.",
+      "offline": "Away",
+      "online": "Online",
+      "openQrCode": "Open join QR code",
+      "players": "Players",
+      "podium": "Podium",
+      "qrCodeDialogTitle": "Join game QR code",
+      "question": "Question",
+      "questionStatistics": "Question statistics",
+      "readyToStart": "Ready to start!",
+      "responses": "Responses",
+      "scoreboard": "Scoreboard",
+      "shareLink": "Share link",
+      "skip": "Skip",
+      "start": "Start game",
+      "title": "Host Rally",
+      "unlockJoining": "Open joining",
+      "viewFullLeaderboard": "View full leaderboard",
+      "viewReport": "View report"
+    },
+    "join": {
+      "codeHint": "Use the six-digit code from the host screen.",
+      "codeLabel": "Game code",
+      "description": "Enter the code shared by your teacher.",
+      "join": "Join game",
+      "joining": "Joining...",
+      "title": "Join a Live Quiz Rally"
+    },
+    "library": {
+      "create": "Create game quiz",
+      "description": "Reusable, low-pressure activities for a lively class.",
+      "edit": "Edit",
+      "emptyDescription": "Create a Rally to bring a quick, friendly check-in to class.",
+      "emptyTitle": "Your game shelf is ready",
+      "host": "Host",
+      "liveRally": "Live Quiz Rally",
+      "noQuestions": "No questions yet",
+      "questions": "questions",
+      "title": "Game quiz library",
+      "updated": "Updated"
+    },
+    "player": {
+      "connection": "Reconnecting...",
+      "correct": "That was correct",
+      "finishDescription": "Thanks for playing. Your points stay in this game only.",
+      "finishTitle": "Rally complete",
+      "hint": "Hint",
+      "hostEndedDescription": "The host has left this Rally. You can join another game with a new code.",
+      "hostEndedTitle": "This game has ended",
+      "keepGoing": "Keep going — every point counts",
+      "leaderboard": "Current rankings",
+      "noPodium": "No final rankings are available yet.",
+      "notCorrect": "Keep going",
+      "pin": "PIN",
+      "podium": "Final podium",
+      "points": "game points",
+      "pts": "pts",
+      "question": "Question",
+      "rank": "Rank",
+      "rankingProgress": "Question {current} of {total} completed",
+      "reveal": "Answer reveal",
+      "score": "Your score",
+      "submitted": "Answer submitted",
+      "submittedDescription": "Nice thinking. Hold tight for the reveal.",
+      "waiting": "Get ready",
+      "waitingDescription": "Your teacher will begin the Rally shortly.",
+      "waitingForNext": "Waiting for the next question",
+      "you": "You"
+    },
+    "preview": {
+      "answerSelected": "Answer selected",
+      "backToEditor": "Back to editor",
+      "deviceView": "Preview device view",
+      "host": "Host view",
+      "next": "Next question",
+      "participant": "Participant view",
+      "points": "points",
+      "previous": "Previous",
+      "question": "Question",
+      "reset": "Reset question",
+      "reveal": "Reveal answer",
+      "samplePlayer": "Preview player",
+      "title": "Preview Rally"
+    },
+    "report": {
+      "averagePoints": "Average points",
+      "correct": "Correct",
+      "description": "A light recap of how the Rally went.",
+      "finalStandings": "Final progress",
+      "noData": "No session responses yet.",
+      "players": "Participants",
+      "questions": "Question moments",
+      "responses": "Responses",
+      "title": "Session report"
+    }
+  },
+  "GoogleDriveExport": {
+    "destinationError": "Choose a Google Drive export destination first.",
+    "failed": "Could not save to Google Drive.",
+    "legacyGamma": "Regenerate this Gamma presentation before saving it to Google Drive.",
+    "openInDrive": "Open in Drive",
+    "openIntegrations": "Open Integrations",
+    "savedTo": "Saved to {destination}.",
+    "success": "Saved to Google Drive."
+  },
+  "GrammarAnalysis": {
+    "analyzedSentence": "Analyzed Sentence",
+    "analyzing": "Analyzing...",
+    "close": "Close",
+    "correctedSentence": "Corrected Sentence",
+    "explanation": "Explanation",
+    "grammarMap": "Grammar map",
+    "grammarStructure": "Grammar Structure",
+    "issues": "Issues Found",
+    "issuesFound": "Issues found",
+    "issueType": "{type, select, grammar {Grammar} spelling {Spelling} style {Style} punctuation {Punctuation} other {Issue}}",
+    "looksGood": "Looks great!",
+    "strengths": "What works well",
+    "structure": "Structure",
+    "suggestion": "Suggested correction",
+    "tense": "Tense",
+    "tenseWhy": "Why this tense:",
+    "title": "Grammar & Style Analysis",
+    "waysToSayThis": "Ways to say this"
   },
   "HomePage": {
     "title": "Hello world!"
+  },
+  "IntegrationsPage": {
+    "actions": {
+      "connect": "Connect",
+      "disconnect": "Disconnect"
+    },
+    "description": "Connect external services that can import learning materials into your EduFlow workspace and receive exported files.",
+    "googleDrive": {
+      "account": "Google account",
+      "accountNote": "Your Google Drive account can be different from your EduFlow sign-in account.",
+      "changeFolder": "Change folder",
+      "chooseDestination": "Choose destination",
+      "connected": "Connected",
+      "description": "Select files from Google Drive and save EduFlow exports back to your chosen Drive destination.",
+      "destinationChangeNotice": "Changing the destination does not move existing exported files.",
+      "destinationReady": "Export destination",
+      "destinationRequired": "Export setup required",
+      "driveAccount": "Google Drive account",
+      "eduflowAccount": "EduFlow account",
+      "exportSetupRequired": "Export setup required",
+      "noAccount": "No account connected",
+      "noDestination": "Choose a folder or use My Drive before saving exports.",
+      "notConnected": "Not connected",
+      "pickerConnectRequired": "Connect Google Drive before choosing a destination.",
+      "pickerSessionChanged": "Google Drive session changed. Reconnect Google Drive.",
+      "pickerTokenFailed": "Could not prepare Google Drive Picker.",
+      "pickerUnavailable": "Google Drive Picker is unavailable.",
+      "ready": "Ready",
+      "scope": "EduFlow requests limited Drive file access for files you select or create through the app.",
+      "title": "Google Drive",
+      "useMyDrive": "Use My Drive"
+    },
+    "notice": {
+      "connectedDescription": "You can now choose Google Drive files from upload and attachment menus.",
+      "connectedTitle": "Google Drive connected",
+      "errorDescription": "Google did not complete the authorization flow. Try connecting again.",
+      "errorTitle": "Connection failed"
+    },
+    "title": "Integrations",
+    "toast": {
+      "destinationFailed": "Could not update the Google Drive destination.",
+      "destinationSaved": "Google Drive export destination saved.",
+      "disconnected": "Google Drive disconnected.",
+      "disconnectFailed": "Could not disconnect Google Drive."
+    }
   },
   "InventoryPage": {
     "actions": {
@@ -379,6 +2205,8 @@
       "preview": "Preview",
       "rename": "Rename",
       "save": "Save",
+      "saveToDrive": "Save to Google Drive",
+      "savingToDrive": "Saving to Drive...",
       "share": "Share",
       "shareSelected": "Share selected",
       "upload": "Upload file"
@@ -387,7 +2215,7 @@
       "root": "Storage"
     },
     "browser": {
-      "description": "The current folder contains {count} items.",
+      "description": "{count, plural, =0 {0 items} =1 {1 item} other {# items}}",
       "pageInfo": "Page {page} of {total}",
       "range": "Showing {start}-{end} of {total}",
       "title": "Folder contents"
@@ -457,7 +2285,9 @@
     },
     "previewDialog": {
       "description": "Previewing {type}",
+      "loading": "Loading preview...",
       "placeholder": "Preview",
+      "textError": "We could not load this text preview.",
       "title": "File preview",
       "unsupported": "This file type cannot be previewed inline."
     },
@@ -494,7 +2324,12 @@
       "fileTooLarge": "File exceeds the maximum upload size of {size}.",
       "folderCreated": "Folder created.",
       "genericError": "Something went wrong. Try again.",
+      "googleDriveImported": "Google Drive file imported.",
+      "invalidMove": "You cannot move a folder into itself.",
       "moved": "Item moved.",
+      "nameConflictCreateFolder": "A file or folder with this name already exists here.",
+      "nameConflictMove": "This destination already contains a file or folder with the same name.",
+      "nameConflictRename": "Choose a different name. Another file or folder already uses it here.",
       "previewUnavailable": "This file cannot be previewed right now.",
       "renamed": "Item renamed.",
       "shareBatchDescription": "Copied {count} share links to your clipboard.",
@@ -513,6 +2348,14 @@
       "dropzoneDescription": "One file at a time, up to {size}.",
       "dropzoneHint": "One file per upload",
       "dropzoneTitle": "Drop a file here",
+      "googleDrive": "Google Drive",
+      "googleDriveConnectRequired": "Connect Google Drive in Integrations first.",
+      "googleDriveDescription": "Choose a Drive file and import it into this folder.",
+      "googleDrivePickerUnavailable": "Google Drive Picker is unavailable.",
+      "googleDriveSessionChanged": "Google Drive session changed. Reconnect Google Drive.",
+      "googleDriveTokenFailed": "Could not prepare Google Drive Picker.",
+      "googleDriveUnavailable": "Add Google Drive environment variables to enable Drive import.",
+      "importingGoogleDrive": "Importing...",
       "title": "Upload file"
     },
     "view": {
@@ -525,22 +2368,37 @@
     "system": "System"
   },
   "Layout": {
+    "adminHeading": "Admin",
+    "adminRoles": "Roles",
+    "adminSubheading": "Manage platform and administrative settings",
+    "adminUserManagement": "User Management",
     "aiChat": "AI Chat",
     "aiTools": "AI Tools",
+    "courseAnalytics": "Analytics",
+    "courseAssignments": "Assignments",
+    "courseFiles": "Files",
+    "courseGrades": "Grades",
+    "courseMembers": "Members",
+    "courseModules": "Modules",
+    "courseQuestionBank": "Question Bank",
+    "courseRoles": "Roles",
     "courses": "Courses",
+    "courseSettings": "Settings",
     "englishAssistant": "English Assistant",
+    "interactiveGames": "Interactive Games",
     "newSession": "New Session",
     "settingsAcademicContext": "Academic Context",
     "settingsAiPreferences": "AI Preferences",
     "settingsHeading": "EduFlow Settings",
     "settingsIntegrations": "Integrations",
     "settingsProfile": "Profile",
+    "settingsSharedLinks": "Shared links",
     "settingsSubheading": "Manage your scholarly workspace",
     "settingsSystemSettings": "System Settings",
     "socraticTutor": "Socratic Tutor",
     "studyAssistant": "Study Assistant",
     "writingAssistant": "Writing Assistant",
-    "yourInventory": "Your Inventory"
+    "yourInventory": "Your Documents"
   },
   "NavbarAvatar": {
     "actions": {
@@ -570,7 +2428,6 @@
   "NotFound": {
     "description": "It seems this page has vanished. Even our most advanced AI couldn't find it.",
     "goBack": "Go Back Home",
-    "robotSays": "OOPS... 404",
     "title": "Lost in the Digital Void"
   },
   "ProfilePage": {
@@ -581,6 +2438,51 @@
       "save": "Save settings",
       "saving": "Saving...",
       "setPassword": "Set password"
+    },
+    "aiPreferences": {
+      "customInstructions": {
+        "characterCount": "{count} / {max}",
+        "description": "Describe how you want Eduflow's AI assistants to respond.",
+        "label": "Instructions",
+        "loadFailed": "AI instructions could not be loaded",
+        "loadFailedDescription": "Check your connection and try loading the settings again.",
+        "placeholder": "For example: Keep explanations concise. Avoid hyphenated lists in user-visible prose.",
+        "priorityNote": "Safety rules, required formats, citations, valid code, and structured output take priority.",
+        "retry": "Try again",
+        "save": "Save instructions",
+        "saved": "AI instructions saved",
+        "saveFailed": "AI instructions could not be saved.",
+        "saving": "Saving...",
+        "summary": "These preferences are used across supported AI conversations.",
+        "title": "Custom AI instructions"
+      },
+      "insightFeedback": {
+        "description": "Bi-weekly AI academic performance review",
+        "label": "Insight Feedback"
+      },
+      "interactionStyle": {
+        "friendly": "Friendly",
+        "label": "AI Interaction Style",
+        "professional": "Professional",
+        "technical": "Technical"
+      },
+      "primaryLanguage": {
+        "description": "Interface and AI output language",
+        "english": "English",
+        "label": "Primary Language",
+        "vietnamese": "Tiếng Việt"
+      },
+      "quizScoreAlerts": {
+        "description": "Instant notification on grade results",
+        "label": "Quiz Score Alerts"
+      },
+      "responseTone": {
+        "balanced": "Balanced",
+        "direct": "Direct",
+        "encouraging": "Encouraging",
+        "label": "Response Tone"
+      },
+      "title": "AI & System Preferences"
     },
     "avatar": {
       "description": "Choose a new avatar image.",
@@ -674,6 +2576,88 @@
       "passwordTooShort": "Password must be at least 8 characters."
     }
   },
+  "Quiz": {
+    "checkAnswer": "Check Answer",
+    "correctAnswer": "Correct",
+    "dragAndDropAllPlaced": "All items have been placed.",
+    "dragAndDropInstruction": "Drag items from the bank below into the blanks, or click an item then click a blank to place it.",
+    "dragAndDropItemBank": "Available items",
+    "dragAndDropRemove": "Remove from blank",
+    "essayAttachments": "Attachments",
+    "essayBelowMinWords": "{count} more words needed to meet the minimum.",
+    "essayDeliveryImmediate": "AI Feedback: Immediate",
+    "essayDeliveryTeacherReview": "AI Feedback: Teacher Review",
+    "essayDeliveryTeacherReviewHint": "Your score will be released after teacher review.",
+    "essayDropzoneHint": "PDF, Word, or images up to 10 MB",
+    "essayDropzoneReplace": "Drop or click to add more files",
+    "essayDropzoneTitle": "Attach supporting files",
+    "essayFilesAttached": "{count, plural, =1 {1 file attached} other {# files attached}}",
+    "essayMaxWords": "max {count}",
+    "essayMinWords": "min {count}",
+    "essayOverLimit": "Over word limit",
+    "essayPlaceholder": "Write your answer here...",
+    "essayPoints": "pts",
+    "essayRemoveFile": "Remove file",
+    "essayRubric": "Grading Criteria",
+    "essayStudentAnswer": "Your Answer",
+    "essayTeacherRubricAttachments": "Sample answer & rubric files",
+    "essayTeacherRubricDescription": "Provide a sample answer and grading rubric for AI evaluation. You can type your sample answer and criteria or upload files.",
+    "essayTeacherRubricPlaceholder": "Enter your sample answer and grading rubric here...",
+    "essayTeacherRubricTitle": "Sample Answer & Rubric (for AI evaluation)",
+    "essayTeacherRubricUploadHint": "PDF, Word, text, or images up to 10 MB",
+    "essayTeacherRubricUploadTitle": "Upload sample answer or rubric file",
+    "essayWordCount": "{count} words",
+    "explanation": "Explanation",
+    "false": "False",
+    "flashcardBack": "Answer",
+    "flashcardFront": "Question",
+    "flashcardMode": "Flashcard mode — no scoring",
+    "flipCard": "Flip Card",
+    "gradeExcellent": "Excellent",
+    "gradeFair": "Fair",
+    "gradeGood": "Good",
+    "gradeNeedsWork": "Needs Work",
+    "incorrectAnswer": "Incorrect",
+    "matchingInstruction": "Select an item on the left, then click its match on the right.",
+    "moveDown": "Move down",
+    "moveUp": "Move up",
+    "next": "Next",
+    "orderingInstruction": "Drag items to arrange them in the correct order.",
+    "pendingReview": "Some answers are pending AI/teacher review.",
+    "points": "points",
+    "pointsEarned": "Points earned",
+    "previous": "Previous",
+    "questionBreakdown": "Question Breakdown",
+    "questionCount": "{count, plural, =1 {1 Question} other {# Questions}}",
+    "questionLabel": "Question {number}",
+    "quizComplete": "Quiz Complete",
+    "quizMode": "Quiz mode — answers are scored",
+    "quizTitle": "Quiz",
+    "retryQuiz": "Try Again",
+    "scoreDetail": "{correct} of {total} correct",
+    "startQuiz": "Start Quiz",
+    "status": {
+      "correct": "Correct",
+      "incorrect": "Incorrect",
+      "pending": "Pending review",
+      "unanswered": "Unanswered"
+    },
+    "submitError": "Failed to submit quiz. Please try again.",
+    "submitQuiz": "Submit",
+    "submitting": "Submitting...",
+    "true": "True",
+    "type": {
+      "drag_and_drop": "Drag & Drop",
+      "essay": "Essay",
+      "fill_in_the_blank": "Fill in the Blank",
+      "flashcard": "Flashcard",
+      "matching": "Matching",
+      "multiple_choice": "Multiple Choice",
+      "ordering": "Ordering",
+      "practice_test": "Practice Test",
+      "true_false": "True / False"
+    }
+  },
   "RoleSelection": {
     "actions": {
       "select": "Select"
@@ -698,5 +2682,455 @@
       "title": "Welcome aboard!"
     },
     "title": "Welcome to the <brand>EduFlow</brand> Ecosystem"
+  },
+  "SelectionDictionary": {
+    "antonyms": "Antonyms",
+    "etymology": "Etymology",
+    "fetchError": "Failed to fetch definition",
+    "firstUsed": "First used",
+    "lookingUp": "Looking up...",
+    "rateLimitDescription": "You've hit the daily request limit for this dictionary. Try switching to another provider in Settings.",
+    "rateLimitTitle": "Daily limit reached",
+    "synonyms": "Synonyms",
+    "wordNotFound": "Word not found"
+  },
+  "SharedAiChat": {
+    "close": "Close",
+    "copied": "Copied",
+    "copyError": "Could not copy share link.",
+    "copyLink": "Copy link",
+    "createdBy": "Created with EduFlow",
+    "eyebrow": "Shared EduFlow AI chat",
+    "ownerCta": "Open original chat",
+    "ownerHelper": "You are viewing your own shared conversation.",
+    "retry": "Try again",
+    "share": "Share chat",
+    "shareDialogDescription": "EduFlow is preparing a public link for this conversation.",
+    "shareDialogReadyDescription": "Anyone with this link can view this conversation without signing in.",
+    "shareDialogTitle": "Share AI chat",
+    "shareError": "Could not create share link.",
+    "shareGenerating": "Generating share link…",
+    "shareLinkLabel": "Public link",
+    "shareSuccess": "Share link copied.",
+    "visitorCta": "Try EduFlow",
+    "visitorHelper": "Create your own AI-powered conversation with EduFlow."
+  },
+  "SocraticPage": {
+    "disciplines": {
+      "biochemistry": {
+        "description": "Examine the molecular mechanics of living organisms and cellular life.",
+        "title": "Bio-Chemistry"
+      },
+      "macroeconomics": {
+        "description": "Understand the complex forces driving global markets and policy.",
+        "title": "Macro-Economics"
+      },
+      "philosophicalEthics": {
+        "description": "Deconstruct moral frameworks from Utilitarianism to Virtue Ethics.",
+        "title": "Philosophical Ethics"
+      },
+      "quantumPhysics": {
+        "description": "Explore entanglement, wave functions, and the nature of reality.",
+        "title": "Quantum Physics"
+      }
+    },
+    "input": {
+      "footer": "Socratic mode active • no direct answers provided",
+      "guidanceDepth": {
+        "balanced": "Balanced",
+        "descriptions": {
+          "balanced": "Mix probing questions with moderate structure.",
+          "guidedSteps": "Offer more structure while keeping the learner involved.",
+          "hint": "Keep the learner moving with short nudges."
+        },
+        "guidedSteps": "Guided steps",
+        "hint": "Hints",
+        "label": "Guidance depth"
+      },
+      "placeholder": "Ask a question or describe where you're stuck..."
+    },
+    "limitReachedToast": "You've reached the {count}-message Socratic limit. Start a new session to continue.",
+    "recentSessions": {
+      "description": "Return to guided questions and prior reasoning threads.",
+      "empty": "No Socratic sessions yet. Pick a prompt card or ask where you're stuck.",
+      "error": "Unable to load recent Socratic sessions right now.",
+      "openChat": "Open Socratic session {title}",
+      "title": "Recent Socratic sessions",
+      "updated": "Updated {date}"
+    },
+    "sidebar": {
+      "actionsLabel": "Actions for {title}",
+      "cancel": "Cancel",
+      "close": "Collapse Socratic history",
+      "delete": "Delete",
+      "deleteDialogDescription": "Delete \"{title}\" from your Socratic history? This action cannot be undone.",
+      "deleteDialogTitle": "Delete Socratic session",
+      "deleteError": "Unable to delete Socratic session.",
+      "deleteSuccess": "Socratic session deleted.",
+      "description": "Search and reopen prior guided sessions.",
+      "editDialogDescription": "Choose a concise title for this Socratic session.",
+      "editDialogTitle": "Edit Socratic title",
+      "editError": "Unable to update Socratic session title.",
+      "editTitle": "Edit Title",
+      "editTitleLabel": "Socratic session title",
+      "editTitlePlaceholder": "Enter Socratic session title",
+      "emptyDescription": "Start a Socratic session and it will appear here.",
+      "emptySearch": "No Socratic sessions match your search.",
+      "emptyTitle": "No Socratic sessions yet",
+      "loadingMore": "Loading more Socratic sessions...",
+      "messageCount": "{count, plural, one {# message} other {# messages}}",
+      "newChat": "New Socratic session",
+      "open": "Open Socratic history",
+      "saveTitle": "Save title",
+      "searchLabel": "Search Socratic sessions",
+      "searchPlaceholder": "Search Socratic sessions...",
+      "title": "Socratic history",
+      "untitled": "Untitled Socratic session"
+    },
+    "subtitle": "Pick a starting point or ask directly to begin a <mark>Socratic</mark> dialogue. I won't give you answers; I will ask the questions that help you find them.",
+    "title": "How can I clarify your thinking today?"
+  },
+  "StudyPage": {
+    "aiActive": "AI Processing Active",
+    "features": {
+      "interactiveContent": {
+        "actionsLabel": "Interactive activity actions",
+        "close": "Close",
+        "copied": "Copied",
+        "copyError": "Could not copy share link.",
+        "copyLink": "Copy link",
+        "description": "Create an interactive visual activity that you can explore and practice directly.",
+        "download": "Download",
+        "fullscreen": "Full screen",
+        "previewTitle": "Interactive activity: {title}",
+        "reset": "Reset activity",
+        "retry": "Try again",
+        "saveError": "Could not save this activity to inventory.",
+        "saveSuccess": "Activity saved to inventory.",
+        "saveToDrive": "Save to Google Drive",
+        "saveToInventory": "Save to Inventory",
+        "savingToDrive": "Saving to Drive...",
+        "savingToInventory": "Saving...",
+        "share": "Share link",
+        "shareDialogDescription": "EduFlow is preparing a public link for this activity.",
+        "shareDialogReadyDescription": "Anyone with this link can open the activity without signing in.",
+        "shareDialogTitle": "Share activity",
+        "shareError": "Could not create share link.",
+        "shareGenerating": "Generating share link...",
+        "shareLinkLabel": "Public link",
+        "shareSuccess": "Share link copied.",
+        "sharing": "Sharing..."
+      },
+      "practiceTest": {
+        "description": "Challenge yourself with AI-generated multiple choice, short answer, and flashcard sets."
+      },
+      "research": {
+        "description": "Find relevant news articles, videos, and academic papers using AI web search."
+      },
+      "review": {
+        "description": "Synthesize key concepts and definitions from your sources into digestible study guides."
+      }
+    },
+    "input": {
+      "examples": "Or try an example:",
+      "placeholder": "Describe a topic or paste your lesson content to get started..."
+    },
+    "limitReachedToast": "You've reached the {count}-message Study limit. Start a new session to continue.",
+    "modes": {
+      "interactiveContent": "Interactive Lab",
+      "practiceTest": "Practice Tests",
+      "research": "Research Mode",
+      "review": "Review Materials"
+    },
+    "quizOptions": {
+      "description": "Choose the question formats and total number of questions before generating.",
+      "questionCount": "Number of questions",
+      "questionCountDescription": "Defaults to 10. You can generate 1 to 30 questions.",
+      "questionTypes": "Question types",
+      "title": "Practice quiz setup",
+      "types": {
+        "fill_in_the_blank": "Fill in the blank",
+        "multiple_choice": "Multiple choice",
+        "true_false": "True/False"
+      }
+    },
+    "recentSessions": {
+      "description": "Return to study guides, practice sets, and research threads.",
+      "error": "Unable to load recent study sessions right now.",
+      "openChat": "Open study session {title}",
+      "title": "Recent Sessions",
+      "updated": "Updated {date}",
+      "viewAll": "View All"
+    },
+    "sharedInteractiveContent": {
+      "createdBy": "Created with EduFlow",
+      "eyebrow": "Shared EduFlow activity",
+      "ownerCta": "Open original session",
+      "ownerHelper": "You are viewing your own shared activity.",
+      "visitorCta": "Try EduFlow",
+      "visitorHelper": "Create your own AI-powered study activity in EduFlow."
+    },
+    "sidebar": {
+      "actionsLabel": "Actions for {title}",
+      "cancel": "Cancel",
+      "close": "Collapse study history",
+      "delete": "Delete",
+      "deleteDialogDescription": "Delete \"{title}\" from your study history? This action cannot be undone.",
+      "deleteDialogTitle": "Delete study session",
+      "deleteError": "Unable to delete study session.",
+      "deleteSuccess": "Study session deleted.",
+      "description": "Search and reopen prior study sessions.",
+      "editDialogDescription": "Choose a concise title for this study session.",
+      "editDialogTitle": "Edit study title",
+      "editError": "Unable to update study session title.",
+      "editTitle": "Edit Title",
+      "editTitleLabel": "Study session title",
+      "editTitlePlaceholder": "Enter study session title",
+      "emptyDescription": "Start a new study session and it will appear here.",
+      "emptySearch": "No study sessions match your search.",
+      "emptyTitle": "No study sessions yet",
+      "loadingMore": "Loading more study sessions...",
+      "messageCount": "{count, plural, one {# message} other {# messages}}",
+      "newChat": "New study session",
+      "open": "Open study history",
+      "saveTitle": "Save title",
+      "searchLabel": "Search study sessions",
+      "searchPlaceholder": "Search study sessions...",
+      "title": "Study history",
+      "untitled": "Untitled study session"
+    },
+    "subtitle": "Turn topics, notes, and questions into focused study support.",
+    "title": "What can I help you <accent>study</accent> today?",
+    "upload": {
+      "description": "Drag and drop PDF, Word, or Images here.",
+      "replace": "Drag and drop or click to replace",
+      "title": "Upload Materials to Start"
+    }
+  },
+  "StudyReader": {
+    "aiAnalyticsActive": "AI Analytics Active",
+    "analyzeGrammar": "Analyze grammar",
+    "analyzing": "Analyzing...",
+    "assistantTitle": "English Assistant",
+    "audioFailed": "Could not play audio",
+    "characters": "characters",
+    "columnAudio": "Audio",
+    "columnDefinition": "Definition (EN → VI)",
+    "columnExample": "Example",
+    "columnIPA": "IPA",
+    "columnWord": "Word",
+    "copiedTooltip": "Copied",
+    "copySourceTooltip": "Copy source text",
+    "copyTooltip": "Copy translation",
+    "description": "Generated by AI to help you understand this text.",
+    "emptyAnalyzedState": "No key vocabulary found in this text.",
+    "emptyState": "No vocabulary items yet. Paste English text above and click Translate & Analyze.",
+    "english": "English",
+    "exportPdf": "Export PDF",
+    "hoverLookupHint": "Hover a word to look it up.",
+    "inputPlaceholder": "Paste or type your English text here...",
+    "listenTooltip": "Listen to translation",
+    "loadingVoice": "Loading",
+    "pageSubtitle": "Refine your linguistic nuances with AI-driven translation and contextual vocabulary extraction.",
+    "pauseSentence": "Pause",
+    "playSentence": "Play sentence",
+    "removeFromWordbank": "Remove {word} from Wordbank",
+    "saveAllToWordbank": "Save all to Wordbank ({count})",
+    "saveToLibrary": "Save to Library",
+    "saveToWordbank": "Save {word} to Wordbank",
+    "sentenceAudio": "Sentence Audio",
+    "sentencesEmptyState": "No grammar analysis yet. Paste English text above and click Translate & Analyze.",
+    "sentencesTitle": "Grammar Analysis",
+    "shareTooltip": "Share",
+    "sourceContent": "Source Content",
+    "swapDirection": "Swap translation direction",
+    "title": "Key Vocabulary",
+    "translateAndAnalyze": "Translate & Analyze",
+    "translationFailed": "Translation failed",
+    "translationPlaceholder": "Translation will appear here after analysis...",
+    "vietnamese": "Vietnamese",
+    "wordbank": "Wordbank",
+    "wordbankLinkLabel": "Wordbank {count}",
+    "wordbankRemovedToast": "Removed from Wordbank",
+    "wordbankRemoveFailedToast": "Could not remove word from Wordbank",
+    "wordbankSavedToast": "Saved to Wordbank",
+    "wordbankSaveFailedToast": "Could not save to Wordbank",
+    "words": "words"
+  },
+  "TranslationSelector": {
+    "label": "Translation Engine",
+    "providerAI": "AI (Gemini)",
+    "providerAIBadge": "AI tokens",
+    "providerAIInfo": "✦ Uses AI tokens · Best quality · Context-aware",
+    "providerAmazon": "Amazon Translate",
+    "providerAmazonBadge": "2M free/mo",
+    "providerAmazonInfo": "✓ Neural MT · 2M chars/month · Requires AWS key",
+    "providerMyMemory": "MyMemory",
+    "providerMyMemoryBadge": "FREE",
+    "providerMyMemoryInfo": "✓ No API key · 10M chars/month · Crowd-sourced"
+  },
+  "WordbankPage": {
+    "actionsColumn": "Actions",
+    "addToWordList": "Add to Word List",
+    "addWordFailedToast": "Could not save '{word}' to Wordbank",
+    "addWordSuccessToast": "Saved '{word}' to Wordbank",
+    "allWordLists": "All Word Lists",
+    "answerTimingEnd": "After the quiz",
+    "answerTimingInstant": "After each question",
+    "answerTimingLabel": "Show feedback",
+    "audioFailed": "Could not play audio",
+    "backToEnglish": "Back to English Assistant",
+    "bulkSelected": "{count, plural, =1 {1 selected} other {# selected}}",
+    "columnEnglishDefinition": "English definition",
+    "columnExampleSentence": "Example sentence",
+    "columnMeaning": "Meaning",
+    "columnPronunciation": "Pronunciation",
+    "columnVietnameseTranslation": "Vietnamese translation",
+    "columnWord": "Word",
+    "create": "Create",
+    "createWordList": "Create Word List",
+    "createWordListDescription": "Group saved words into a reusable list for focused review.",
+    "createWordListTitle": "Create Word List",
+    "downloadCsv": "Download CSV",
+    "dueWordsStat": "{count, plural, =1 {1 due} other {# due}}",
+    "emptyDescription": "Save key vocabulary from English Assistant and it will appear here.",
+    "emptyFilterDescription": "Try another search, word list, mastery, or sort order.",
+    "emptyFilterTitle": "No words match",
+    "emptyTitle": "No saved words yet",
+    "exampleUpdatedToast": "Updated example successfully",
+    "exportCsv": "Export CSV",
+    "filterOptionWithCount": "{label} ({count})",
+    "generateDueQuiz": "Generate Due Quiz",
+    "generateSelectedQuiz": "Generate Quiz",
+    "gridView": "Grid view",
+    "listCreatedToast": "Word List created",
+    "listCreateFailedToast": "Could not create Word List",
+    "listen": "Listen",
+    "listView": "Compact list view",
+    "loadingVoice": "Loading",
+    "manageLists": "Manage Lists",
+    "markFamiliar": "Mark Familiar",
+    "markMastered": "Mark Mastered",
+    "markNew": "Mark New",
+    "masteryAll": "All mastery",
+    "masteryDue": "Due for review",
+    "masteryFamiliar": "Familiar",
+    "masteryLabel": "Mastery",
+    "masteryMastered": "Mastered",
+    "masteryNew": "New",
+    "missingIpa": "No IPA yet",
+    "newMasteryLabel": "New mastery",
+    "noListsAvailable": "No Word Lists yet",
+    "noWordLists": "No Word List",
+    "noWordListSelected": "Choose a Word List before removing words from it.",
+    "openEnglishAssistant": "Open English Assistant",
+    "playPronunciation": "Play pronunciation of {word}",
+    "practiceMode": "Blur meanings & Click to Reveal",
+    "removedToast": "Removed {word}",
+    "removeFailedToast": "Could not remove word",
+    "removeFromList": "Remove from {list}",
+    "removeFromWordList": "Remove from Word List",
+    "removeWord": "Remove {word}",
+    "revealAnswer": "Reveal answer",
+    "reviewCreatedToast": "Due quiz generated",
+    "reviewCreateFailedToast": "Could not generate a due quiz",
+    "reviewDialogDescription": "Review words that are due now. Correct answers move forward; missed words return to Needs Review.",
+    "reviewDialogTitle": "Wordbank Due Quiz",
+    "reviewOutcome": "Result",
+    "reviewResultCorrect": "Correct",
+    "reviewResultMissed": "Missed",
+    "reviewResultsTitle": "Word mastery updates",
+    "saveCsvToDrive": "Save CSV to Google Drive",
+    "savedToday": "Saved today",
+    "savedTodayStat": "{count, plural, =1 {1 saved today} other {# saved today}}",
+    "savedWords": "Saved words",
+    "savedWordsStat": "{count, plural, =1 {1 saved} other {# saved}}",
+    "savingToDrive": "Saving to Drive...",
+    "searchLabel": "Search Wordbank",
+    "searchNewVocabLabel": "Search & Learn New Vocabulary",
+    "searchNewVocabPlaceholder": "Search new vocabulary to learn (e.g. eat, revolve)...",
+    "searchPlaceholder": "Search words...",
+    "selectAll": "Select all words",
+    "selectWord": "Select {word}",
+    "sortAz": "A-Z",
+    "sortLabel": "Sort Wordbank",
+    "sortRecent": "Recently added",
+    "sortRecentWithSavedToday": "{count, plural, =1 {Recently added (1 today)} other {Recently added (# today)}}",
+    "sortWeakest": "Needs review first",
+    "title": "Wordbank",
+    "updatedToast": "Wordbank updated",
+    "updateFailedToast": "Could not update Wordbank",
+    "viewLabel": "Wordbank view",
+    "wordCount": "{count, plural, =1 {1 word} other {# words}}",
+    "wordListNameLabel": "Word List name",
+    "wordListNamePlaceholder": "Unit 1, Space Vocabulary...",
+    "wordLists": "Word Lists"
+  },
+  "WritingPage": {
+    "recentSessions": {
+      "description": "Return to drafts, rewrites, and polished writing sessions.",
+      "empty": "No recent writing sessions yet. Start with a writing tool and it will appear here.",
+      "error": "Unable to load recent writing sessions right now.",
+      "openChat": "Open writing session {title}",
+      "title": "Recent writing sessions",
+      "updated": "Updated {date}"
+    },
+    "sidebar": {
+      "actionsLabel": "Actions for {title}",
+      "cancel": "Cancel",
+      "close": "Collapse writing history",
+      "delete": "Delete",
+      "deleteDialogDescription": "Delete \"{title}\" from your writing history? This action cannot be undone.",
+      "deleteDialogTitle": "Delete writing session",
+      "deleteError": "Unable to delete writing session.",
+      "deleteSuccess": "Writing session deleted.",
+      "description": "Search and reopen prior writing sessions.",
+      "editDialogDescription": "Choose a concise title for this writing session.",
+      "editDialogTitle": "Edit writing title",
+      "editError": "Unable to update writing session title.",
+      "editTitle": "Edit Title",
+      "editTitleLabel": "Writing session title",
+      "editTitlePlaceholder": "Enter writing session title",
+      "emptyDescription": "Start a new writing session and it will appear here.",
+      "emptySearch": "No writing sessions match your search.",
+      "emptyTitle": "No writing sessions yet",
+      "loadingMore": "Loading more writing sessions...",
+      "messageCount": "{count, plural, one {# message} other {# messages}}",
+      "newChat": "New writing session",
+      "open": "Open writing history",
+      "saveTitle": "Save title",
+      "searchLabel": "Search writing sessions",
+      "searchPlaceholder": "Search writing sessions...",
+      "title": "Writing history",
+      "untitled": "Untitled writing session"
+    },
+    "subtitle": "Refine your academic voice with precision tools designed for scholarly clarity and impact.",
+    "title": "How can I help you <italic>write</italic> today?",
+    "tools": {
+      "caption": {
+        "description": "Craft compelling social media copy and project headlines.",
+        "title": "Caption Assistant"
+      },
+      "email": {
+        "description": "Draft professional outreach and scholarly inquiries.",
+        "title": "Email Assistant"
+      },
+      "grammar": {
+        "description": "Polish your writing with advanced syntax and punctuation analysis.",
+        "title": "Grammar Check"
+      },
+      "outline": {
+        "description": "Structure complex ideas into logical academic flows.",
+        "title": "Essay Outliner"
+      },
+      "paraphrase": {
+        "description": "Refine sentence structure while maintaining original intent.",
+        "title": "Paraphrasing"
+      },
+      "rewrite": {
+        "description": "Transform the tone and style of your paragraphs instantly.",
+        "title": "Rewrite Assistant"
+      }
+    }
   }
 }

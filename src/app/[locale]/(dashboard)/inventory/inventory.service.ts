@@ -24,6 +24,7 @@ interface CreateFolderInput {
 
 interface UploadInput {
   parentId?: string | null;
+  folderPath?: string[];
   file: File;
   onUploadStart?: (fileId: string) => void;
   onUploadProgress?: (fileId: string, progress: number) => void;
@@ -38,6 +39,11 @@ interface UpdateEntryInput {
 interface ShareBatchInput {
   fileIds: string[];
   expiresIn?: number;
+}
+
+interface ImportGoogleDriveInput {
+  fileId: string;
+  parentId?: string | null;
 }
 
 const buildSearchParams = (
@@ -93,6 +99,7 @@ export const inventoryService = {
       InventoryResponse<InventoryUploadSession>
     >('v1/storage/init-upload', {
       parentId: input.parentId ?? null,
+      folderPath: input.folderPath,
       fileName: input.file.name,
       contentType: input.file.type || 'application/octet-stream',
       size: input.file.size,
@@ -118,6 +125,18 @@ export const inventoryService = {
       'v1/storage/confirm-upload',
       {
         fileId: response.data.fileId,
+      }
+    );
+  },
+
+  importFromGoogleDrive: async (
+    input: ImportGoogleDriveInput
+  ): Promise<InventoryResponse<InventoryEntry>> => {
+    return apiClient.post<InventoryResponse<InventoryEntry>>(
+      'v1/storage/import/google-drive',
+      {
+        fileId: input.fileId,
+        parentId: input.parentId ?? null,
       }
     );
   },

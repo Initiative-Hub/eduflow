@@ -1,7 +1,10 @@
-import { render } from '@react-email/components';
 import nodemailer from 'nodemailer';
 import { createElement } from 'react';
+import { render } from 'react-email';
 import { DEV_MODE } from '@/constants/common';
+import { APP_URL } from '@/lib/api/endpoints';
+import { EduFlowCourseAddedEmail } from '@/templates/emails/eduflow-course-added';
+import { EduFlowCourseInvitationEmail } from '@/templates/emails/eduflow-course-invitation';
 import { EduFlowPasswordChangedEmail } from '@/templates/emails/eduflow-password-changed';
 import { EduFlowResetPasswordEmail } from '@/templates/emails/eduflow-reset-password';
 import { EduFlowVerifyEmail } from '@/templates/emails/eduflow-verify-email';
@@ -22,6 +25,68 @@ const transporter = nodemailer.createTransport({
 const from = process.env.EMAIL_FROM || '"EduFlow" <noreply@edu-flow.me>';
 
 export const emailService = {
+  sendCourseAddedNotification: async (input: {
+    courseName: string;
+    courseUrl: string;
+    user: { name: string; email: string };
+  }) => {
+    try {
+      const courseUrl = input.courseUrl.startsWith('http')
+        ? input.courseUrl
+        : `${APP_URL}${input.courseUrl}`;
+      const html = await render(
+        createElement(EduFlowCourseAddedEmail, {
+          courseName: input.courseName,
+          courseUrl,
+          userName: input.user.name,
+        })
+      );
+
+      await transporter.sendMail({
+        from,
+        to: input.user.email,
+        subject: `You were added to ${input.courseName}`,
+        html,
+      });
+
+      if (DEV_MODE) {
+        console.log(`Course added notification sent to ${input.user.email}`);
+      }
+    } catch (error) {
+      console.error('Failed to send course added notification:', error);
+    }
+  },
+
+  sendCourseInvitation: async (input: {
+    acceptUrl: string;
+    courseName: string;
+    user: { name: string; email: string };
+  }) => {
+    try {
+      const html = await render(
+        createElement(EduFlowCourseInvitationEmail, {
+          acceptUrl: input.acceptUrl,
+          courseName: input.courseName,
+          userName: input.user.name,
+        })
+      );
+
+      await transporter.sendMail({
+        from,
+        to: input.user.email,
+        subject: `Invitation to join ${input.courseName}`,
+        html,
+      });
+
+      if (DEV_MODE) {
+        console.log(`Course invitation sent to ${input.user.email}`);
+      }
+    } catch (error) {
+      console.error('Failed to send course invitation:', error);
+      throw error;
+    }
+  },
+
   sendPasswordReset: async (
     user: { name: string; email: string },
     url: string,

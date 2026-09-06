@@ -8,8 +8,8 @@ on:
 jobs:
   enforce-author:
     name: Enforce Vercel Deploy Author
-    timeout-minutes: 20
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: write
       pull-requests: write

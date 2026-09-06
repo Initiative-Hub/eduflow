@@ -1,0 +1,211 @@
+from pathlib import Path
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    File,
+    Form,
+    HTTPException,
+    UploadFile,
+)
+from fastapi.responses import FileResponse
+
+from app.deps import STORAGE_DIR
+from app.schemas.slide_schema import SlotEditsReq, GenReq, PlanGenReq, RenderSlideReq
+from app.services.slide_service import TEMPLATE_IMPORT_SOURCES, SlideService
+from app.services.slide_job_service import SlideJobService
+
+router = APIRouter(prefix="/slides", tags=["Slides"])
+slide_service = SlideService()
+slide_job_service = SlideJobService(slide_service)
+
+
+@router.get("/templates/categories")
+async def get_categories():
+    try:
+        return await slide_service.get_categories()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/templates/{collection}/previews")
+async def get_template_previews(collection: str):
+    """Returns cached PNG preview object keys, one per template category."""
+    try:
+        return await slide_service.get_template_previews(collection)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/templates/{collection}/categories")
+async def get_collection_categories(collection: str):
+    try:
+        return await slide_service.get_collection_categories(collection)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/templates/collections")
+async def get_collections():
+    try:
+        return await slide_service.get_collections()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/generate")
+async def generate(req: GenReq, background_tasks: BackgroundTasks):
+    return await slide_job_service.queue_generation_job(background_tasks, req)
+
+
+@router.post("/generate-from-plan")
+async def generate_from_plan(req: PlanGenReq, background_tasks: BackgroundTasks):
+    return await slide_job_service.queue_plan_generation_job(background_tasks, req)
+
+
+@router.post("/render-slide")
+async def render_slide(req: RenderSlideReq):
+    try:
+        return await slide_service.render_slide(req)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/jobs/{job_id}")
+async def get_job_status(job_id: str):
+    return await slide_job_service.get_job_status(job_id)
+
+
+@router.get("/decks/{deck_id}")
+async def get_deck(deck_id: str):
+    return await slide_job_service.get_deck_file(deck_id)
+
+
+def cleanup_temp_files(*paths: Path):
+    import logging
+
+    logger = logging.getLogger(__name__)
+    for path in paths:
+        try:
+            if path.exists():
+                path.unlink()
+                logger.info(f"Cleaned up temporary file: {path}")
+        except Exception as e:
+            logger.error(f"Failed to delete temporary file {path}: {e}")
+
+
+@router.get("/decks/{deck_id}/pptx")
+async def get_deck_pptx(deck_id: str, background_tasks: BackgroundTasks):
+    try:
+        pptx_path = await slide_job_service.get_deck_pptx(deck_id)
+        latest_html = STORAGE_DIR / f"{deck_id}_latest.html"
+        background_tasks.add_task(cleanup_temp_files, pptx_path, latest_html)
+        return FileResponse(
+            pptx_path,
+            media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            filename=f"deck-{deck_id}.pptx",
+        )
+    except ValueError as val_err:
+        raise HTTPException(
+            status_code=404 if "not found" in str(val_err).lower() else 400,
+            detail=str(val_err),
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/templates/import")
+async def import_templates(
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...),
+    name: str | None = None,
+    source: str = Form("auto"),
+):
+    """Queue a template import job and return a job_id immediately.
+    Poll GET /slides/templates/import/{job_id} for status.
+
+    `source` controls PPTX extraction: "auto" detects brand templates, "layouts"
+    forces reading the Slide Master's layouts, and "slides" uses the real slides.
+    """
+    if source not in TEMPLATE_IMPORT_SOURCES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"source must be one of {sorted(TEMPLATE_IMPORT_SOURCES)}",
+        )
+
+    filename = file.filename or ""
+    if not (
+        filename.lower().endswith(".zip")
+        or filename.lower().endswith(".svg")
+        or filename.lower().endswith(".pptx")
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="Only ZIP archive, SVG template, or PPTX files are supported",
+        )
+    try:
+        file_bytes = await file.read()
+    finally:
+        await file.close()
+
+    return await slide_job_service.queue_import_job(
+        background_tasks, file_bytes, filename, name, source=source
+    )
+
+
+@router.get("/templates/import/{job_id}")
+async def get_import_job_status(job_id: str):
+    return await slide_job_service.get_job_status(
+        job_id, detail="Import job not found"
+    )
+
+
+@router.get("/templates/{collection}/inspect")
+async def inspect_template_slots(collection: str):
+    """Detected slots + warnings per category, for the pre-save review screen."""
+    from app.services.slide_service import inspect_collection
+    try:
+        return await inspect_collection(collection)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/templates/{collection}/inspect/{category}/overlay")
+async def template_slot_overlay(collection: str, category: str,
+                                variant: str = "standard", boxes: bool = True,
+                                editable: bool = False):
+    """The category's slide with every slot outlined and labelled (SVG)."""
+    from app.services.slide_service import render_collection_overlay
+    try:
+        return {"svg": await render_collection_overlay(collection, category, variant, boxes, editable)}
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.patch("/templates/{collection}/slots")
+async def update_template_slots(collection: str, req: SlotEditsReq):
+    """Apply reviewer corrections to a category's slots and sync them to S3."""
+    from app.services.slide_service import update_collection_slots
+    try:
+        return await update_collection_slots(
+            collection, req.category, req.variant,
+            [e.model_dump(exclude_none=True) for e in req.edits])
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/templates/{collection}/categories/{category}")
+async def delete_template_category(collection: str, category: str):
+    """Permanently remove one layout from a collection, locally and in S3."""
+    from app.services.slide_service import delete_collection_category
+    try:
+        return await delete_collection_category(collection, category)
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

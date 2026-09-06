@@ -1,19 +1,22 @@
 import type { UIMessage } from 'ai';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
+import type { SocraticGuidanceDepth } from '@/lib/validations/socratic.schema';
+import type { ChatModel } from '@/services/ai/chat-provider.constants';
 
 interface ChatSessionState {
-  pendingMessage: string | null;
+  pendingMessage: UIMessage | null;
   pendingChatId: string | null;
-  optimisticChatId: string | null;
-  optimisticMessages: UIMessage[];
-  setPendingMessage: (message: string) => void;
+  pendingModel: ChatModel | null;
+  pendingSocraticGuidanceDepth: SocraticGuidanceDepth | null;
+  setPendingMessage: (message: UIMessage) => void;
   clearPendingMessage: () => void;
   setPendingChatId: (chatId: string | null) => void;
   clearPendingChatId: () => void;
-  setOptimisticChatId: (chatId: string | null) => void;
-  setOptimisticMessages: (messages: UIMessage[]) => void;
-  clearOptimisticMessages: () => void;
+  setPendingModel: (model: ChatModel) => void;
+  clearPendingModel: () => void;
+  setPendingSocraticGuidanceDepth: (depth: SocraticGuidanceDepth) => void;
+  clearPendingSocraticGuidanceDepth: () => void;
 }
 
 export const useChatSessionStore = create<ChatSessionState>()(
@@ -21,26 +24,29 @@ export const useChatSessionStore = create<ChatSessionState>()(
     (set) => ({
       pendingMessage: null,
       pendingChatId: null,
-      optimisticChatId: null,
-      optimisticMessages: [],
+      pendingModel: null,
+      pendingSocraticGuidanceDepth: null,
       setPendingMessage: (message) => set({ pendingMessage: message }),
       clearPendingMessage: () => set({ pendingMessage: null }),
       setPendingChatId: (chatId) => set({ pendingChatId: chatId }),
       clearPendingChatId: () => set({ pendingChatId: null }),
-      setOptimisticChatId: (chatId) => set({ optimisticChatId: chatId }),
-      setOptimisticMessages: (messages) =>
-        set({ optimisticMessages: messages }),
-      clearOptimisticMessages: () =>
-        set({ optimisticMessages: [], optimisticChatId: null }),
+      setPendingModel: (model) => set({ pendingModel: model }),
+      clearPendingModel: () => set({ pendingModel: null }),
+      setPendingSocraticGuidanceDepth: (depth) =>
+        set({ pendingSocraticGuidanceDepth: depth }),
+      clearPendingSocraticGuidanceDepth: () =>
+        set({
+          pendingSocraticGuidanceDepth: null,
+        }),
     }),
     {
       name: 'chat-session-store',
-      storage: createJSONStorage(() => sessionStorage),
+      storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         pendingMessage: state.pendingMessage,
         pendingChatId: state.pendingChatId,
-        optimisticChatId: state.optimisticChatId,
-        optimisticMessages: state.optimisticMessages,
+        pendingModel: state.pendingModel,
+        pendingSocraticGuidanceDepth: state.pendingSocraticGuidanceDepth,
       }),
     }
   )

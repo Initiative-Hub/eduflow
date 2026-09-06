@@ -1,14 +1,26 @@
 name: Check Database Migrations
 
 on:
+  push:
+    branches:
+      - main
   pull_request:
-    paths:
-      - 'prisma/migrations/**'
+    branches:
+      - 'main'
+    types:
+      - opened
+      - reopened
+      - synchronize
   workflow_dispatch:
 
 jobs:
   check-migrations:
-    runs-on: self-hosted
+    name: Check New Database Migrations
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: |
+      github.event_name != 'pull_request' || 
+      (github.head_ref != 'chore/trigger-vercel-deploy' && !startsWith(github.head_ref, 'fix/biome-formatting-'))
     steps:
       - name: Checkout code
         uses: actions/checkout@v6

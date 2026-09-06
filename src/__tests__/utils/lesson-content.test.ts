@@ -1,9 +1,10 @@
+import { Editor } from '@tiptap/core';
+import { StarterKit } from '@tiptap/starter-kit';
 import { describe, expect, it } from 'vitest';
 import {
   EMPTY_TIPTAP_DOCUMENT,
   isTiptapDocument,
   isTiptapDocumentEmpty,
-  lessonContentToTiptapDocument,
 } from '@/utils/lesson-content';
 
 describe('lesson content helpers', () => {
@@ -19,24 +20,6 @@ describe('lesson content helpers', () => {
     };
 
     expect(isTiptapDocument(document)).toBe(true);
-    expect(lessonContentToTiptapDocument(document)).toBe(document);
-  });
-
-  it('converts legacy text content to a Tiptap paragraph', () => {
-    expect(lessonContentToTiptapDocument({ text: 'Legacy lesson' })).toEqual({
-      type: 'doc',
-      content: [
-        {
-          type: 'paragraph',
-          content: [{ type: 'text', text: 'Legacy lesson' }],
-        },
-      ],
-    });
-  });
-
-  it('uses an empty Tiptap document for empty or unknown content', () => {
-    expect(lessonContentToTiptapDocument(null)).toEqual(EMPTY_TIPTAP_DOCUMENT);
-    expect(lessonContentToTiptapDocument({})).toEqual(EMPTY_TIPTAP_DOCUMENT);
   });
 
   it('detects documents without meaningful text content', () => {
@@ -55,5 +38,18 @@ describe('lesson content helpers', () => {
         ],
       })
     ).toBe(false);
+  });
+
+  it('provides an editable paragraph for a new Tiptap document', () => {
+    const editor = new Editor({
+      extensions: [StarterKit],
+      content: EMPTY_TIPTAP_DOCUMENT,
+    });
+
+    expect(editor.state.doc.childCount).toBe(1);
+    expect(editor.commands.insertContent('Assignment instructions')).toBe(true);
+    expect(editor.getText()).toBe('Assignment instructions');
+
+    editor.destroy();
   });
 });

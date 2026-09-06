@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto';
 import {
   DeleteObjectCommand,
   GetObjectCommand,
@@ -6,12 +5,14 @@ import {
   PutObjectCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { createS3Client } from './s3-client';
+import { createS3Client } from '../aws/s3-client';
 
 const DEFAULT_READ_EXPIRES_SECONDS = 30 * 60;
 export const STORAGE_MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024;
 
 export const FILE_INVENTORY_BUCKET_NAME = 'eduflow-inventory';
+export const FILE_TEMPLATES_BUCKET_NAME = 'eduflow-template';
+export const FILE_DEFAULT_TEMPLATES_BUCKET_NAME = 'eduflow-default-template';
 
 function sanitizeSegment(value: string) {
   return value
@@ -22,30 +23,35 @@ function sanitizeSegment(value: string) {
     .slice(0, 180);
 }
 
-function normalizeRelativePath(value?: string) {
-  if (!value) return '';
+export function buildInventoryThumbnailObjectKey(options: {
+  userId: string;
+  fileId: string;
+  courseId?: string | null;
+}) {
+  const scope = options.courseId
+    ? `courses/${options.courseId}`
+    : `users/${options.userId}`;
 
-  return value
-    .split('/')
-    .map((segment) => sanitizeSegment(segment))
-    .filter(Boolean)
-    .join('/');
+  return `${scope}/thumbnails/${options.fileId}.jpg`;
 }
 
 export function buildInventoryObjectKey(
   userId: string,
   fileName: string,
   options?: {
-    relativePath?: string;
+    courseId?: string;
   }
 ) {
   const safeName = sanitizeSegment(fileName) || 'file';
-  const safePath = normalizeRelativePath(options?.relativePath);
-  const basePrefix = safePath
-    ? `users/${userId}/${safePath}`
-    : `users/${userId}`;
 
-  return `${basePrefix}/${randomUUID()}-${safeName}`;
+  let basePrefix: string;
+  if (options?.courseId) {
+    basePrefix = `courses/${options.courseId}`;
+  } else {
+    basePrefix = `users/${userId}`;
+  }
+
+  return `${basePrefix}/${crypto.randomUUID()}-${safeName}`;
 }
 
 export async function getInventoryObjectMetadata(options: {
@@ -120,6 +126,25 @@ export async function createInventoryReadSignedUrl(options: {
 }) {
   const command = new GetObjectCommand({
     Bucket: FILE_INVENTORY_BUCKET_NAME,
+    Key: options.objectKey,
+  });
+
+  return getSignedUrl(createS3Client(), command, {
+    expiresIn: options.expiresInSeconds ?? DEFAULT_READ_EXPIRES_SECONDS,
+  });
+}
+
+/**
+ * Signed read URL for any storage bucket. Used for template preview images,
+ * which live in the template buckets rather than the inventory bucket.
+ */
+export async function createObjectReadSignedUrl(options: {
+  objectKey: string;
+  bucketName: string;
+  expiresInSeconds?: number;
+}) {
+  const command = new GetObjectCommand({
+    Bucket: options.bucketName,
     Key: options.objectKey,
   });
 

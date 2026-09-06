@@ -80,21 +80,21 @@ export function useAvatarMenu({ name, email, role }: useAvatarMenuProps) {
     {
       type: 'item',
       label: t('menu.profile'),
-      icon: <User className="size-5 fill-primary text-primary" />,
+      icon: <User className="size-5" />,
       onClick: () => router.push('/profile'),
       className: 'font-bold py-3 px-2',
     },
     {
       type: 'item',
       label: t('menu.settings'),
-      icon: <Settings className="size-5 fill-primary text-primary" />,
+      icon: <Settings className="size-5" />,
       onClick: () => router.push('/settings'),
       className: 'font-bold py-3 px-2',
     },
     {
       type: 'item',
       label: t('menu.darkMode'),
-      icon: <Moon className="size-5 fill-primary text-primary" />,
+      icon: <Moon className="size-5" />,
       rightNode: (
         <Switch
           checked={theme === 'dark'}
@@ -108,9 +108,7 @@ export function useAvatarMenu({ name, email, role }: useAvatarMenuProps) {
     {
       type: 'item',
       label: t('menu.helpCenter'),
-      icon: (
-        <CircleHelp className="size-5 fill-primary text-primary-foreground" />
-      ),
+      icon: <CircleHelp className="size-5" />,
       onClick: () => router.push('/help'),
       className: 'font-bold py-3 px-2',
     },
@@ -120,7 +118,7 @@ export function useAvatarMenu({ name, email, role }: useAvatarMenuProps) {
       label: t('menu.languagePreference', {
         defaultMessage: 'Language Preference',
       }),
-      icon: <Globe className="size-5 text-primary" />,
+      icon: <Globe className="size-5" />,
       className: 'font-bold py-3 px-2',
       items: [
         {
@@ -151,7 +149,7 @@ export function useAvatarMenu({ name, email, role }: useAvatarMenuProps) {
     {
       type: 'item',
       label: t('menu.signOut'),
-      icon: <LogOut className="size-5 text-destructive" />,
+      icon: <LogOut className="size-5" />,
       onClick: handleSignOut,
       destructive: true,
       className: 'font-bold py-3 px-2 text-destructive',

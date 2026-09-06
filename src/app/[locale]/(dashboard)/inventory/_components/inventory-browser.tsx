@@ -21,6 +21,7 @@ import { InventoryTableView } from './inventory-table-view';
 
 type InventoryBrowserProps = {
   currentPage: number;
+  currentFolderName: string;
   endItem: number;
   entries: InventoryEntry[];
   files: InventoryEntry[];
@@ -40,10 +41,13 @@ type InventoryBrowserProps = {
   onPageChange: (nextIndex: number) => void;
   onPreview: (entry: InventoryEntry) => void;
   onRename: (entry: InventoryEntry) => void;
+  onSaveToDrive: (entry: InventoryEntry) => void;
   onSelectAll: (checked: boolean) => void;
   onSelectEntry: (entryId: string, checked: boolean) => void;
+  onSelectSingleEntry: (entryId: string) => void;
   onShare: (entry: InventoryEntry) => void;
   onUploadOpen: () => void;
+  isSavingToDrive: boolean;
   pageIndex: number;
   selectedIds: string[];
   selectionCount: number;
@@ -56,6 +60,7 @@ type InventoryBrowserProps = {
 
 export function InventoryBrowser({
   currentPage,
+  currentFolderName,
   endItem,
   entries,
   files,
@@ -75,10 +80,13 @@ export function InventoryBrowser({
   onPageChange,
   onPreview,
   onRename,
+  onSaveToDrive,
   onSelectAll,
   onSelectEntry,
+  onSelectSingleEntry,
   onShare,
   onUploadOpen,
+  isSavingToDrive,
   pageIndex,
   selectedIds,
   selectionCount,
@@ -93,7 +101,7 @@ export function InventoryBrowser({
       <CardHeader className="flex flex-col gap-2 border-border/60 border-b px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1">
           <CardTitle className="font-heading text-xl">
-            {t('browser.title')}
+            {currentFolderName}
           </CardTitle>
           <CardDescription>
             {t('browser.description', { count: totalItems })}
@@ -130,12 +138,14 @@ export function InventoryBrowser({
                   <InventoryCard
                     key={entry.id}
                     entry={entry}
+                    isSelected={selectedIds.includes(entry.id)}
                     locale={locale}
                     onOpen={onOpen}
                     onRename={onRename}
                     onMove={onMove}
                     onDelete={onDeleteEntry}
                     onNavigateIntoFolder={onNavigateIntoFolder}
+                    onSelectEntry={onSelectSingleEntry}
                   />
                 ))}
               </div>
@@ -146,13 +156,16 @@ export function InventoryBrowser({
                   <InventoryCard
                     key={entry.id}
                     entry={entry}
+                    isSelected={selectedIds.includes(entry.id)}
                     locale={locale}
                     onRename={onRename}
                     onMove={onMove}
                     onShare={onShare}
                     onPreview={onPreview}
                     onDownload={onDownload}
+                    onSaveToDrive={onSaveToDrive}
                     onDelete={onDeleteEntry}
+                    onSelectEntry={onSelectSingleEntry}
                     uploadProgress={getUploadProgress(entry.id)}
                   />
                 ))}
@@ -174,9 +187,11 @@ export function InventoryBrowser({
             onOpen={onOpen}
             onPreview={onPreview}
             onRename={onRename}
+            onSaveToDrive={onSaveToDrive}
             onSelectAll={onSelectAll}
             onSelectEntry={onSelectEntry}
             onShare={onShare}
+            isSavingToDrive={isSavingToDrive}
           />
         )}
 

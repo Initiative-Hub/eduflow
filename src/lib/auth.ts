@@ -63,14 +63,24 @@ export const auth = betterAuth({
       const roleRow = roleId
         ? await prisma.platformRole.findUnique({
             where: { id: roleId },
+            include: {
+              permissions: {
+                where: { enabled: true },
+                select: { permission: true },
+              },
+            },
           })
         : null;
+
+      const permissions =
+        roleRow?.permissions.map(({ permission }) => permission) ?? [];
 
       return {
         user: {
           ...user,
           roleId,
           role: roleRow?.name || null,
+          permissions,
         },
         session,
       };

@@ -58,6 +58,7 @@ export const POST = withAuth(async (req, sessionData, { params }) => {
     const newLesson = await LessonService.createLesson({
       moduleId: resolvedParams.moduleId,
       title: parsed.data.title,
+      userId: sessionData.user.id,
     });
 
     return NextResponse.json(newLesson, { status: 201 });

@@ -1,0 +1,45 @@
+[project]
+name = "eduflow-external-services"
+version = "0.1.0"
+description = "External services for the EduFlow application."
+readme = "README.md"
+requires-python = "==3.12.0"
+dependencies = [
+    "fastapi[standard]~=0.141.1",
+    "markitdown[pdf]~=0.1.7",
+    "modal~=1.5.4",
+    "slide-skills[svg-convert]~=0.2.63",
+    "tavily-python~=0.7.27",
+    "boto3~=1.43.71",
+]
+
+[dependency-groups]
+dev = [
+    "mypy",
+    "poethepoet",
+    "pytest",
+    "pytest-asyncio",
+    "pytest-cov",
+    "ruff",
+    "types-pytz",
+    "types-requests",
+]
+
+[tool.pytest.ini_options]
+# Without this `app` is not importable from tests, which is why the only test
+# here talked to a live server over HTTP instead of importing the code.
+pythonpath = ["."]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.poe.tasks]
+dev = "uv run fastapi dev --reload --host 0.0.0.0 --port 8000"
+test = "pytest"
+test-coverage = "pytest --cov"
+type-check = "mypy ."
+format = "ruff format --check ."
+format-fix = "ruff format ."
+lint = "ruff lint --check ."
+lint-fix = "ruff lint ."
+serve = "modal serve modal_deployment.py"
+deploy = "modal deploy modal_deployment.py"

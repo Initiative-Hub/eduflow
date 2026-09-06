@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { withAuth } from '@/lib/api/middlewares';
+import { withPermissions } from '@/lib/api/middlewares';
+import { PLATFORM_PERMISSION } from '@/lib/permissions/permission-keys';
 import { StorageService } from '@/services/StorageService';
 
 /**
@@ -20,17 +21,20 @@ import { StorageService } from '@/services/StorageService';
  *         description: Internal server error
  *
  */
-export const GET = withAuth(async (_req, session) => {
-  try {
-    const analytics = await StorageService.getAnalytics({
-      userId: session.user.id,
-    });
+export const GET = withPermissions(
+  [PLATFORM_PERMISSION.PERSONAL_FILES_MANAGE],
+  async (_req, session) => {
+    try {
+      const analytics = await StorageService.getAnalytics({
+        userId: session.user.id,
+      });
 
-    return NextResponse.json({ data: analytics });
-  } catch (error: any) {
-    return NextResponse.json(
-      { message: error?.message || 'Internal Server Error' },
-      { status: 500 }
-    );
+      return NextResponse.json({ data: analytics });
+    } catch (error: any) {
+      return NextResponse.json(
+        { message: error?.message || 'Internal Server Error' },
+        { status: 500 }
+      );
+    }
   }
-});
+);

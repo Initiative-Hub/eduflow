@@ -1,15 +1,15 @@
 'use client';
 
-import { Bell, GraduationCap, Menu } from 'lucide-react';
+import { GraduationCap, Menu } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useEffect } from 'react';
-import { GuestControls } from '@/components/layout/navbar-avatar/guest-controls';
+import { useEffect, useState } from 'react';
 import { NavbarAvatar } from '@/components/layout/navbar-avatar';
+import { GuestControls } from '@/components/layout/navbar-avatar/guest-controls';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import { useSidebar } from '@/components/ui/sidebar';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useSession } from '@/lib/auth-client';
 import { cn } from '@/lib/utils';
 
@@ -17,12 +17,20 @@ export function AppNavbar() {
   const t = useTranslations();
   const pathname = usePathname();
   const { toggleSidebar } = useSidebar();
-  const { data: sessionData, refetch } = useSession();
+  const { data: sessionData, isPending } = useSession();
+
+  const [hasHydrated, setHasHydrated] = useState(false);
+  const [hasResolvedSession, setHasResolvedSession] = useState(false);
 
   useEffect(() => {
-    // Refetch session data on mount to ensure we have the latest auth state
-    refetch();
-  }, [refetch]);
+    setHasHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (isPending) return;
+
+    setHasResolvedSession(true);
+  }, [isPending]);
 
   return (
     <div className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between overflow-hidden border-border/40 border-b bg-background/95 px-3 shadow-sm backdrop-blur supports-backdrop-filter:bg-background/60 md:px-8">
@@ -33,63 +41,76 @@ export function AppNavbar() {
           </div>
         </div>
 
-        <nav className="no-scrollbar -mb-1 flex flex-1 items-center gap-4 overflow-x-auto pb-1 md:gap-8">
+        <nav className="no-scrollbar flex h-full flex-1 items-center gap-4 overflow-x-auto md:gap-8">
           <Link
             href="/"
-            className="relative flex flex-col items-center justify-center whitespace-nowrap"
+            className="group relative flex h-full flex-col items-center justify-center whitespace-nowrap"
           >
-            <span
-              className={cn(
-                `pb-1.5 text-sm transition-colors`,
-                pathname === '/' ||
-                  pathname.startsWith('/socratic') ||
-                  pathname.startsWith('/english') ||
-                  pathname.startsWith('/writing') ||
-                  pathname.startsWith('/study')
-                  ? 'font-bold text-primary'
-                  : 'font-medium text-muted-foreground hover:text-foreground'
+            <div className="relative">
+              <span
+                className={cn(
+                  `text-sm transition-colors`,
+                  pathname === '/' ||
+                    pathname.startsWith('/socratic') ||
+                    pathname.startsWith('/english') ||
+                    pathname.startsWith('/writing') ||
+                    pathname.startsWith('/study')
+                    ? 'font-bold text-primary'
+                    : 'font-medium text-muted-foreground group-hover:text-primary'
+                )}
+              >
+                {t('Layout.aiTools')}
+              </span>
+              {(pathname === '/' ||
+                pathname.startsWith('/socratic') ||
+                pathname.startsWith('/english') ||
+                pathname.startsWith('/writing') ||
+                pathname.startsWith('/study')) && (
+                <div className="absolute -bottom-1.5 left-0 h-0.5 w-full rounded-full bg-primary" />
               )}
-            >
-              {t('Layout.aiTools')}
-            </span>
-            {(pathname === '/' ||
-              pathname.startsWith('/socratic') ||
-              pathname.startsWith('/english') ||
-              pathname.startsWith('/writing') ||
-              pathname.startsWith('/study')) && (
-              <div className="absolute bottom-0 h-0.5 w-full rounded-full bg-primary" />
-            )}
+              {!(
+                pathname === '/' ||
+                pathname.startsWith('/socratic') ||
+                pathname.startsWith('/english') ||
+                pathname.startsWith('/writing') ||
+                pathname.startsWith('/study')
+              ) && (
+                <div className="absolute -bottom-1.5 left-0 h-0.5 w-full scale-x-0 rounded-full bg-primary/50 transition-transform group-hover:scale-x-100" />
+              )}
+            </div>
           </Link>
           <Link
             href="/courses"
-            className="relative flex flex-col items-center justify-center"
+            className="group relative flex h-full flex-col items-center justify-center whitespace-nowrap"
           >
-            <span
-              className={`pb-1.5 text-sm transition-colors ${pathname.startsWith('/course') ? 'font-bold text-primary' : 'font-medium text-muted-foreground hover:text-foreground'}`}
-            >
-              {t('Layout.courses')}
-            </span>
-            {pathname.startsWith('/course') && (
-              <div className="absolute bottom-0 h-0.5 w-full rounded-full bg-primary" />
-            )}
+            <div className="relative">
+              <span
+                className={cn(
+                  `text-sm transition-colors`,
+                  pathname.startsWith('/course')
+                    ? 'font-bold text-primary'
+                    : 'font-medium text-muted-foreground group-hover:text-primary'
+                )}
+              >
+                {t('Layout.courses')}
+              </span>
+              {pathname.startsWith('/course') && (
+                <div className="absolute -bottom-1.5 left-0 h-0.5 w-full rounded-full bg-primary" />
+              )}
+              {!pathname.startsWith('/course') && (
+                <div className="absolute -bottom-1.5 left-0 h-0.5 w-full scale-x-0 rounded-full bg-primary/50 transition-transform group-hover:scale-x-100" />
+              )}
+            </div>
           </Link>
         </nav>
       </div>
       <div className="flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative shrink-0 rounded-full text-muted-foreground hover:bg-muted/40 hover:text-foreground"
-          aria-label="Notifications"
-        >
-          <Bell className="size-5" />
-          <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-destructive ring-1 ring-background" />
-        </Button>
-
-        <Separator orientation="vertical" className="hidden md:block" />
-
         {/* Account Actions / Profile (Desktop Only) */}
-        {sessionData ? (
+        {!hasHydrated || (!hasResolvedSession && isPending) ? (
+          <div className="hidden md:block">
+            <Skeleton className="h-10 w-40" />
+          </div>
+        ) : sessionData ? (
           <div className="hidden md:block">
             <NavbarAvatar
               name={sessionData.user.name}
@@ -121,7 +142,7 @@ export function AppNavbar() {
             variant="ghost"
             size="icon"
             onClick={() => toggleSidebar()}
-            className="shrink-0 rounded-full text-muted-foreground"
+            className="shrink-0 cursor-pointer rounded-full text-muted-foreground"
           >
             <Menu className="size-6 text-foreground" />
             <span className="sr-only">Toggle Sidebar</span>

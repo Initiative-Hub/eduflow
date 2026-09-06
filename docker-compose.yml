@@ -2,9 +2,9 @@ name: eduflow
 
 services:
   postgres:
-    image: postgres:17-alpine
+    image: pgvector/pgvector:pg18
     container_name: eduflow_postgres
-    restart: always
+    restart: unless-stopped
     environment: 
       - POSTGRES_DB=eduflow_db
       - POSTGRES_USER=postgres
@@ -14,12 +14,12 @@ services:
     networks: 
       - db-network
     healthcheck: 
-      test: ["CMD-SHELL", "pg_isready -U prisma -d postgres"] 
+      test: ["CMD-SHELL", "pg_isready -U postgres -d eduflow_db"]
       interval: 5s
       timeout: 2s
       retries: 20
     volumes: 
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
     command: postgres -c listen_addresses='*'
     logging: 
       options: 
@@ -27,9 +27,9 @@ services:
         max-file: "3"
 
   mailpit:
-    image: axllent/mailpit
+    image: axllent/mailpit:latest
     container_name: eduflow_mailpit
-    restart: always
+    restart: unless-stopped
     ports:
       - "8025:8025"
       - "1025:1025"
@@ -39,7 +39,7 @@ services:
   minio:
     image: minio/minio:latest
     container_name: eduflow_minio
-    restart: always
+    restart: unless-stopped
     ports:
       - '9000:9000'
       - '9001:9001'
@@ -66,6 +66,10 @@ services:
       mc anonymous set none local/eduflow-avatars;
       mc mb --ignore-existing local/eduflow-inventory;
       mc anonymous set none local/eduflow-inventory;
+      mc mb --ignore-existing local/eduflow-template;
+      mc anonymous set none local/eduflow-template;
+      mc mb --ignore-existing local/eduflow-default-template;
+      mc anonymous set none local/eduflow-default-template;
       "
     networks:
       - storage-network
@@ -87,14 +91,20 @@ services:
       mc rm --force --recursive local/eduflow-inventory;
       mc mb --ignore-existing local/eduflow-inventory;
       mc anonymous set none local/eduflow-inventory;
+      mc rm --force --recursive local/eduflow-template;
+      mc mb --ignore-existing local/eduflow-template;
+      mc anonymous set none local/eduflow-template;
+      mc rm --force --recursive local/eduflow-default-template;
+      mc mb --ignore-existing local/eduflow-default-template;
+      mc anonymous set none local/eduflow-default-template;
       "
     networks:
       - storage-network
 
   redis: 
-    image: redis:alpine
+    image: redis:latest
     container_name: eduflow_redis
-    restart: always
+    restart: unless-stopped
     ports:
       - "6379:6379"
     command: redis-server --save 60 1 --loglevel warning
@@ -104,7 +114,7 @@ services:
   srh:
     image: hiett/serverless-redis-http:latest
     container_name: eduflow_srh
-    restart: always
+    restart: unless-stopped
     depends_on:
       - redis
     ports:
@@ -116,20 +126,40 @@ services:
     networks:
       - cache-network
 
-  markitdown:
+  external-services:
     build:
-      context: ./external-services/markitdown
+      context: ./external-services
       dockerfile: Dockerfile
-    container_name: eduflow_markitdown
-    restart: always
+    container_name: eduflow_external_services
+    restart: unless-stopped
     ports:
       - "8000:8000"
+    networks:
+      - storage-network
+    env_file:
+      - ./external-services/.env
+    environment:
+      # Slides are built one per worker and each holds a model call open, so
+      # this is the deck's concurrency, not its CPU budget. Image generations
+      # have their own deck-wide cap, so raising this no longer widens the
+      # burst the image API sees.
+      SLIDE_SKILLS_DECK_WORKERS: "8"
+      SLIDE_SKILLS_IMAGE_CONCURRENCY: "6"
+      # Use a slide's planned bindings verbatim when they already fill every
+      # content slot, instead of paying a model call per slide to rewrite copy
+      # the planner has already written. Slides they do not cover (covers and
+      # section dividers) still go to the model.
+      SLIDE_SKILLS_TRUST_BINDINGS: "1"
+    volumes:
+      - templates_data:/app/templates
+
 
 networks: 
   db-network:
   storage-network:
   cache-network:
 
-volumes: 
-  postgres_data: 
+volumes:
+  postgres_data:
   minio_data:
+  templates_data:

@@ -43,8 +43,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-
-/src/generated/prisma
 .claude
-/.kiro
-__pycache__/
+.mypy_cache
+/src/generated/prisma
+
+# Partykit cache
+.partykit

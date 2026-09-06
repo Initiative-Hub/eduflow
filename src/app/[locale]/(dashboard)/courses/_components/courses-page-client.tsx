@@ -2,38 +2,113 @@
 
 import { BookOpen, Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { useEffect, useState } from 'react';
 import { useDialog } from '@/components/custom/dialog/use-dialog';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { useSession } from '@/lib/auth-client';
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
+import type { CourseListSort } from '../use-courses';
 import { useCourses } from '../use-courses';
 import { CourseCard } from './course-card';
+import { CourseListPagination } from './course-list-pagination';
+import { CourseListToolbar } from './course-list-toolbar';
+import { CoursesGridSkeleton } from './courses-grid-skeleton';
 import { CreateCourseDialog } from './create-course-dialog';
 
-export function CoursesPageClient() {
+const PAGE_SIZE = 12;
+const SEARCH_DEBOUNCE_MS = 300;
+
+type CoursesPageClientProps = {
+  canCreateCourses: boolean;
+};
+
+export function CoursesPageClient({
+  canCreateCourses,
+}: CoursesPageClientProps) {
   const t = useTranslations('Courses');
-  const { data: sessionData } = useSession();
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [ownedOnly, setOwnedOnly] = useState(false);
+  const [publicOnly, setPublicOnly] = useState(false);
+  const [sort, setSort] = useState<CourseListSort>('updated-desc');
+  const [page, setPage] = useState(1);
+  const activeFilterCount = Number(ownedOnly) + Number(publicOnly);
+  const isFilteredEmpty = Boolean(debouncedSearch || activeFilterCount);
   const {
     courses,
+    courseList,
     isLoading,
+    isError,
     isCreating,
+    handleAcceptInvitation,
     handleCreateCourse,
+    handleDeclineInvitation,
     handleTogglePublish,
-  } = useCourses();
+  } = useCourses(undefined, {
+    listParams: {
+      ownedOnly,
+      page,
+      pageSize: PAGE_SIZE,
+      publicOnly,
+      search: debouncedSearch,
+      sort,
+    },
+  });
   const dialog = useDialog();
 
-  const canCreateCourses =
-    sessionData?.user.role === 'ADMIN' || sessionData?.user.role === 'TEACHER';
+  const total = courseList?.total ?? 0;
+  const totalPages = Math.max(1, courseList?.totalPages ?? 1);
+  const visibleStart = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const visibleEnd = Math.min(page * PAGE_SIZE, total);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1);
+    }, SEARCH_DEBOUNCE_MS);
+
+    return () => window.clearTimeout(timeout);
+  }, [search]);
+
+  const handleOwnedOnlyChange = (value: boolean) => {
+    setOwnedOnly(value);
+    setPage(1);
+  };
+
+  const handlePublicOnlyChange = (value: boolean) => {
+    setPublicOnly(value);
+    setPage(1);
+  };
+
+  const handleSortChange = (value: CourseListSort) => {
+    setSort(value);
+    setPage(1);
+  };
+
+  const handleResetFilters = () => {
+    setOwnedOnly(false);
+    setPublicOnly(false);
+    setPage(1);
+  };
 
   return (
-    <div className="space-y-8">
+    <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-bold text-3xl tracking-tight">{t('title')}</h1>
           <p className="mt-1 text-muted-foreground">{t('description')}</p>
         </div>
         {canCreateCourses ? (
-          <Button onClick={() => dialog.open()}>
-            <Plus className="mr-2 h-4 w-4" /> {t('newCourse')}
+          <Button onClick={() => dialog.open()} className="cursor-pointer">
+            <Plus data-icon="inline-start" />
+            {t('newCourse')}
           </Button>
         ) : null}
       </div>
@@ -49,45 +124,84 @@ export function CoursesPageClient() {
         />
       ) : null}
 
-      {isLoading ? (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="h-52 animate-pulse rounded-xl border bg-card/50 shadow-sm"
-            />
-          ))}
-        </div>
+      <CourseListToolbar
+        activeFilterCount={activeFilterCount}
+        onOwnedOnlyChange={handleOwnedOnlyChange}
+        onPublicOnlyChange={handlePublicOnlyChange}
+        onResetFilters={handleResetFilters}
+        onSearchChange={setSearch}
+        onSortChange={handleSortChange}
+        ownedOnly={ownedOnly}
+        publicOnly={publicOnly}
+        search={search}
+        sort={sort}
+      />
+
+      {isError ? (
+        <Alert variant="destructive">
+          <AlertTitle>{t('errors.title')}</AlertTitle>
+          <AlertDescription>{t('errors.description')}</AlertDescription>
+        </Alert>
+      ) : isLoading ? (
+        <CoursesGridSkeleton />
       ) : courses.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed p-12 text-center">
-          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-            <BookOpen className="h-6 w-6 text-primary" />
-          </div>
-          <h2 className="mb-2 font-semibold text-xl">{t('noCourses')}</h2>
-          <p className="mb-6 max-w-100 text-muted-foreground">
-            {t('noCoursesDescription')}
-          </p>
-          {canCreateCourses ? (
-            <Button onClick={() => dialog.open()}>
-              {t('createFirstCourse')}
-            </Button>
+        <Empty className="border">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <BookOpen />
+            </EmptyMedia>
+            <EmptyTitle>
+              {isFilteredEmpty ? t('emptySearch.title') : t('noCourses')}
+            </EmptyTitle>
+            <EmptyDescription>
+              {isFilteredEmpty
+                ? t('emptySearch.description')
+                : t('noCoursesDescription')}
+            </EmptyDescription>
+          </EmptyHeader>
+          {canCreateCourses && !isFilteredEmpty ? (
+            <EmptyContent>
+              <Button onClick={() => dialog.open()}>
+                {t('createFirstCourse')}
+              </Button>
+            </EmptyContent>
           ) : null}
-        </div>
+        </Empty>
       ) : (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {courses.map((course) => (
-            <CourseCard
-              key={course.id}
-              id={course.id}
-              title={course.title}
-              description={course.description}
-              isPublished={course.isPublished}
-              modulesCount={course._count?.modules || 0}
-              enrollmentsCount={course._count?.enrollments || 0}
-              onTogglePublish={handleTogglePublish}
-            />
-          ))}
-        </div>
+        <>
+          <p className="text-muted-foreground text-sm">
+            {t('pagination.range', {
+              start: visibleStart,
+              end: visibleEnd,
+              total,
+            })}
+          </p>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {courses.map((course) => (
+              <CourseCard
+                key={course.id}
+                id={course.id}
+                title={course.title}
+                description={course.description}
+                capacity={course.capacity}
+                isPublished={course.isPublished}
+                isOwner={Boolean(course.isOwner)}
+                modulesCount={course._count?.modules || 0}
+                enrollmentsCount={course._count?.enrollments || 0}
+                membershipStatus={course.membershipStatus}
+                pendingInvitationId={course.pendingInvitationId}
+                onAcceptInvitation={handleAcceptInvitation}
+                onDeclineInvitation={handleDeclineInvitation}
+                onTogglePublish={handleTogglePublish}
+              />
+            ))}
+          </div>
+          <CourseListPagination
+            onPageChange={setPage}
+            page={page}
+            totalPages={totalPages}
+          />
+        </>
       )}
     </div>
   );

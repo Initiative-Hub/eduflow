@@ -3,12 +3,12 @@ import '../globals.css';
 import { Analytics as VercelAnalytics } from '@vercel/analytics/next';
 import { SpeedInsights as VercelInsights } from '@vercel/speed-insights/next';
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
-import { hasLocale } from 'next-intl';
-import { setRequestLocale } from 'next-intl/server';
+import { getLocale } from 'next-intl/server';
 import type { ReactNode } from 'react';
 import { Toaster } from 'sonner';
-import { GlobalLoader } from '@/components/global-loader';
+import Locator from '@/components/locator';
+import ReactScan from '@/components/react-scan';
+import { DEV_MODE, PROD_MODE } from '@/constants/common';
 import { routing } from '@/i18n/routing';
 import Providers from '@/providers/providers';
 
@@ -21,13 +21,6 @@ const lexend = Lexend({
   variable: '--font-lexend',
   subsets: ['latin'],
 });
-
-interface RootLayoutProps {
-  children: ReactNode;
-  params: Promise<{
-    locale: string;
-  }>;
-}
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
 
@@ -81,28 +74,22 @@ export function generateStaticParams() {
 
 export default async function RootLayout({
   children,
-  params,
-}: RootLayoutProps) {
-  // Ensure that the incoming `locale` is valid
-  const { locale } = await params;
-  if (!hasLocale(routing.locales, locale)) {
-    notFound();
-  }
-
-  setRequestLocale(locale);
+}: {
+  children: ReactNode;
+}) {
+  const locale = await getLocale();
 
   return (
     <html lang={locale} suppressHydrationWarning>
       <body
         className={`${inter.variable} ${lexend.variable} font-sans antialiased`}
       >
-        <Providers>
-          <GlobalLoader />
-          {children}
-        </Providers>
-        <VercelAnalytics />
-        <VercelInsights />
+        <Providers>{children}</Providers>
         <Toaster />
+        {DEV_MODE && <Locator />}
+        {DEV_MODE && <ReactScan />}
+        {PROD_MODE && <VercelAnalytics />}
+        {PROD_MODE && <VercelInsights />}
       </body>
     </html>
   );

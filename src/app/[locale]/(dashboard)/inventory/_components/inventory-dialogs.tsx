@@ -1,16 +1,16 @@
 import {
+  Cloud,
+  CloudUpload,
   Download,
   Edit2,
-  FileIcon,
-  FolderPlus,
   Loader2,
   Move,
   Trash2,
   Upload,
 } from 'lucide-react';
-import Image from 'next/image';
-import { type Dispatch, type SetStateAction, useState } from 'react';
+import { type Dispatch, type SetStateAction, useCallback } from 'react';
 import { toast } from 'sonner';
+import { GoogleDrivePickerHost } from '@/components/google-drive-picker/google-drive-picker-host';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -48,6 +48,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useGoogleDrivePicker } from '@/hooks/use-google-drive-picker';
 import { inventoryService } from '../inventory.service';
 import type {
   InventoryEntry,
@@ -56,6 +57,7 @@ import type {
   InventoryTranslations,
 } from '../inventory.types';
 import { formatFileSize, getEntryTypeLabel } from '../inventory.utils';
+import { InventoryPreviewContent } from './inventory-preview-content';
 
 const ROOT_OPTION_VALUE = '__root__';
 
@@ -108,6 +110,10 @@ type InventoryDialogsProps = {
   uploadOpen: boolean;
   uploadPending: boolean;
   onUploadFiles: (files: File[]) => void;
+  onImportGoogleDriveFile: (fileId: string) => void;
+  onSaveToDrive: (entry: InventoryEntry) => void;
+  googleDriveImportPending: boolean;
+  googleDriveExportPending: boolean;
   maxFileSizeBytes: number;
 };
 
@@ -125,7 +131,11 @@ export function InventoryDialogs({
   moveDialog,
   moveOptions,
   movePending,
+  onImportGoogleDriveFile,
+  onSaveToDrive,
   onUploadFiles,
+  googleDriveImportPending,
+  googleDriveExportPending,
   maxFileSizeBytes,
   previewDialog,
   renameDialog,
@@ -139,10 +149,45 @@ export function InventoryDialogs({
   uploadOpen,
   uploadPending,
 }: InventoryDialogsProps) {
-  const [previewRenderFailed, setPreviewRenderFailed] = useState(false);
+  const handleGoogleDrivePickerError = useCallback((message: string) => {
+    toast.error(message);
+  }, []);
+  const closeUploadBeforeGooglePicker = useCallback(() => {
+    setUploadOpen(false);
+  }, [setUploadOpen]);
+  const handleGoogleDrivePicked = useCallback(
+    (fileIds: string[]) => {
+      const [fileId] = fileIds;
+      if (!fileId) return;
+
+      setUploadOpen(false);
+      onImportGoogleDriveFile(fileId);
+    },
+    [onImportGoogleDriveFile, setUploadOpen]
+  );
+  const googleDrivePicker = useGoogleDrivePicker({
+    messages: {
+      connectRequired: t('uploadDialog.googleDriveConnectRequired'),
+      notConfigured: t('uploadDialog.googleDriveUnavailable'),
+      sessionChanged: t('uploadDialog.googleDriveSessionChanged'),
+      tokenFailed: t('uploadDialog.googleDriveTokenFailed'),
+      unavailable: t('uploadDialog.googleDrivePickerUnavailable'),
+    },
+    onBeforeOpen: closeUploadBeforeGooglePicker,
+    onError: handleGoogleDrivePickerError,
+    onPicked: handleGoogleDrivePicked,
+  });
+  const googleDriveDisabled =
+    uploadPending ||
+    googleDriveImportPending ||
+    isStorageLimitReached ||
+    !googleDrivePicker.isConfigured;
 
   return (
     <>
+      {googleDrivePicker.pickerProps && (
+        <GoogleDrivePickerHost {...googleDrivePicker.pickerProps} />
+      )}
       <Dialog open={uploadOpen} onOpenChange={(open) => setUploadOpen(open)}>
         <DialogContent className="sm:max-w-xl">
           <DialogHeader>
@@ -194,6 +239,36 @@ export function InventoryDialogs({
               {t('storage.limitReached')}
             </p>
           )}
+          <div className="rounded-lg border bg-muted/30 p-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-1">
+                <div className="font-medium text-sm">
+                  {t('uploadDialog.googleDrive')}
+                </div>
+                <p className="text-muted-foreground text-sm">
+                  {googleDrivePicker.isConfigured
+                    ? t('uploadDialog.googleDriveDescription')
+                    : t('uploadDialog.googleDriveUnavailable')}
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={googleDriveDisabled}
+                onClick={googleDrivePicker.openPicker}
+                className="shrink-0"
+              >
+                {googleDriveImportPending || googleDrivePicker.isLoading ? (
+                  <Loader2 data-icon="inline-start" className="animate-spin" />
+                ) : (
+                  <Cloud data-icon="inline-start" />
+                )}
+                {googleDriveImportPending
+                  ? t('uploadDialog.importingGoogleDrive')
+                  : t('uploadDialog.googleDrive')}
+              </Button>
+            </div>
+          </div>
           <DialogFooter>
             <DialogClose asChild>
               <Button variant="outline">{t('actions.cancel')}</Button>
@@ -247,9 +322,7 @@ export function InventoryDialogs({
             >
               {createFolderPending ? (
                 <Loader2 data-icon="inline-start" className="animate-spin" />
-              ) : (
-                <FolderPlus data-icon="inline-start" />
-              )}
+              ) : null}
               {t('createFolderDialog.submit')}
             </Button>
           </DialogFooter>
@@ -444,59 +517,14 @@ export function InventoryDialogs({
           </DialogHeader>
           {previewDialog && (
             <div className="overflow-hidden rounded-2xl border border-border/60 bg-muted/20 p-3">
-              {!previewDialog.url || previewRenderFailed ? (
-                <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3 rounded-xl border border-border/60 border-dashed bg-background/60 p-6 text-center">
-                  <div className="space-y-1">
-                    <div className="font-medium">
-                      {previewDialog.entry.name}
-                    </div>
-                    <div className="text-muted-foreground text-sm">
-                      {t('previewDialog.unsupported')}
-                    </div>
-                  </div>
-                </div>
-              ) : previewDialog.mimeType?.startsWith('image/') ? (
-                <Image
-                  src={previewDialog.url}
-                  alt={previewDialog.entry.name}
-                  width={1600}
-                  height={1200}
-                  unoptimized
-                  onError={() => setPreviewRenderFailed(true)}
-                  className="max-h-[70vh] w-full rounded-xl object-contain"
-                />
-              ) : previewDialog.mimeType === 'application/pdf' ? (
-                <iframe
-                  src={previewDialog.url}
-                  title={previewDialog.entry.name}
-                  onError={() => setPreviewRenderFailed(true)}
-                  className="h-[70vh] w-full rounded-xl border border-border/60 bg-background"
-                />
-              ) : (
-                <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3 rounded-xl border border-border/60 border-dashed bg-background/60 p-6 text-center">
-                  <div className="flex size-12 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
-                    <FileIcon />
-                  </div>
-                  <div className="space-y-1">
-                    <div className="font-medium">
-                      {previewDialog.entry.name}
-                    </div>
-                    <div className="text-muted-foreground text-sm">
-                      {t('previewDialog.unsupported')}
-                    </div>
-                  </div>
-                  <Button asChild>
-                    <a
-                      href={inventoryService.getDownloadPayload(
-                        previewDialog.entry.id
-                      )}
-                    >
-                      <Download data-icon="inline-start" />
-                      {t('actions.download')}
-                    </a>
-                  </Button>
-                </div>
-              )}
+              <InventoryPreviewContent
+                key={previewDialog.entry.id}
+                preview={previewDialog}
+                downloadLabel={t('actions.download')}
+                unsupportedLabel={t('previewDialog.unsupported')}
+                textPreviewLoadingLabel={t('previewDialog.loading')}
+                textPreviewErrorLabel={t('previewDialog.textError')}
+              />
             </div>
           )}
           <DialogFooter>
@@ -505,6 +533,23 @@ export function InventoryDialogs({
                 {t('actions.cancel')}
               </Button>
             </DialogClose>
+            {previewDialog && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onSaveToDrive(previewDialog.entry)}
+                disabled={googleDriveExportPending}
+              >
+                {googleDriveExportPending ? (
+                  <Loader2 data-icon="inline-start" className="animate-spin" />
+                ) : (
+                  <CloudUpload data-icon="inline-start" />
+                )}
+                {googleDriveExportPending
+                  ? t('actions.savingToDrive')
+                  : t('actions.saveToDrive')}
+              </Button>
+            )}
             {previewDialog && (
               <Button asChild>
                 <a

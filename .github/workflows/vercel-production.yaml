@@ -8,7 +8,9 @@ on:
 
 jobs:
   deploy:
-    runs-on: self-hosted
+    name: Deploy to Vercel Production
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PRODUCTION_PROJECT_ID }}
@@ -32,22 +34,20 @@ jobs:
             echo "This is the latest commit. Proceeding with build."
             echo "skip_build=false" >> $GITHUB_OUTPUT
           fi
-
+      - name: Setup Node
+        if: steps.check_commits.outputs.skip_build != 'true'
+        uses: actions/setup-node@v6
+        with:
+          node-version: "26"
       - name: Setup bun
         if: steps.check_commits.outputs.skip_build != 'true'
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: "1.3.13"
-
-      - name: Use Node.js 25
-        if: steps.check_commits.outputs.skip_build != 'true'
-        uses: actions/setup-node@v6
-        with:
-          node-version: 25
+          bun-version: "1.4.0"
 
       - name: Install dependencies
         if: steps.check_commits.outputs.skip_build != 'true'
-        run: bun install
+        run: bun install --frozen-lockfile
 
       - name: Deploy Project Artifacts to Vercel
         if: steps.check_commits.outputs.skip_build != 'true'

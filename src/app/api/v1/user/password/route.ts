@@ -11,7 +11,7 @@ const setPasswordPayloadSchema = z.object({
 
 const changePasswordPayloadSchema = z
   .object({
-    currentPassword: passwordField,
+    currentPassword: z.string().min(1, 'Current password is required.'),
     newPassword: passwordField,
   })
   .refine((data) => data.newPassword !== data.currentPassword, {

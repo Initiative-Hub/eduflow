@@ -1,0 +1,560 @@
+import type { PrismaClient } from '@/generated/prisma';
+import {
+  CourseEnrollmentStatus,
+  CourseInvitationStatus,
+  CourseRoleName,
+  type CourseRoleName as CourseRoleNameType,
+  PlatformRoleName,
+  type Prisma,
+} from '@/generated/prisma';
+import { emailService } from '@/lib/email-service';
+import { getCoursePermissions } from '@/lib/permissions/course-permission';
+import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
+import { prisma } from '@/lib/prisma';
+
+const MIN_CANDIDATE_SEARCH_LENGTH = 2;
+const ELIGIBLE_COURSE_MEMBER_PLATFORM_ROLES = [
+  PlatformRoleName.TEACHER,
+  PlatformRoleName.STUDENT,
+] as const;
+
+export const ASSIGNABLE_COURSE_MEMBER_ROLES = [
+  CourseRoleName.TEACHER,
+  CourseRoleName.STUDENT,
+] as const;
+
+export type AssignableCourseMemberRole =
+  (typeof ASSIGNABLE_COURSE_MEMBER_ROLES)[number];
+
+export type CourseMemberRoleFilter = CourseRoleNameType | 'ALL';
+
+export type CourseMemberListInput = {
+  courseId: string;
+  currentUserId: string;
+  search?: string;
+  role?: CourseMemberRoleFilter;
+  limit: number;
+  offset: number;
+};
+
+export type CourseMemberCandidateListInput = {
+  courseId: string;
+  search?: string;
+  limit: number;
+  offset: number;
+};
+
+export type CourseMemberMutationResponse = {
+  message: string;
+  id: string;
+};
+
+export type CourseMemberUserView = {
+  id: string;
+  email: string;
+  image: string | null;
+  name: string;
+  role: CourseRoleNameType;
+};
+
+export type CourseMemberView = {
+  enrollmentId: string;
+  enrolledAt: string | null;
+  status: CourseEnrollmentStatus;
+  isCourseOwner: boolean;
+  isCurrentUser: boolean;
+  user: CourseMemberUserView;
+};
+
+export type CourseMemberCandidateView = {
+  id: string;
+  email: string;
+  image: string | null;
+  name: string;
+  role: PlatformRoleName;
+};
+
+function normalizeSearch(search?: string) {
+  const trimmedSearch = search?.trim();
+  return trimmedSearch ? trimmedSearch : undefined;
+}
+
+function buildCandidateUserWhere({
+  courseId,
+  search,
+}: Pick<CourseMemberCandidateListInput, 'courseId' | 'search'>) {
+  const normalizedSearch = normalizeSearch(search);
+
+  if (
+    !normalizedSearch ||
+    normalizedSearch.length < MIN_CANDIDATE_SEARCH_LENGTH
+  )
+    return null;
+
+  return {
+    emailVerified: true,
+    role: {
+      is: {
+        name: { in: [...ELIGIBLE_COURSE_MEMBER_PLATFORM_ROLES] },
+      },
+    },
+    enrollments: {
+      none: { courseId },
+    },
+    OR: [
+      { name: { contains: normalizedSearch, mode: 'insensitive' } },
+      { email: { contains: normalizedSearch, mode: 'insensitive' } },
+    ],
+  } satisfies Prisma.UserWhereInput;
+}
+
+function buildEnrollmentWhere({
+  courseId,
+  search,
+  role,
+}: Pick<CourseMemberListInput, 'courseId' | 'role' | 'search'>) {
+  const normalizedSearch = normalizeSearch(search);
+  const where: Prisma.EnrollmentWhereInput = { courseId };
+
+  if (role && role !== 'ALL') {
+    where.role = { name: role };
+  }
+
+  if (normalizedSearch) {
+    where.OR = [
+      {
+        member: {
+          name: { contains: normalizedSearch, mode: 'insensitive' },
+        },
+      },
+      {
+        member: {
+          email: { contains: normalizedSearch, mode: 'insensitive' },
+        },
+      },
+      {
+        memberId: { contains: normalizedSearch, mode: 'insensitive' },
+      },
+    ];
+  }
+
+  return where;
+}
+
+async function getCourseCapacityUsage(
+  courseId: string,
+  client: Omit<
+    PrismaClient,
+    '$connect' | '$disconnect' | '$on' | '$use' | '$extends'
+  > = prisma
+) {
+  const course = await client.course.findUnique({
+    where: { id: courseId },
+    select: { capacity: true },
+  });
+
+  if (!course) {
+    throw new Error('Course not found');
+  }
+
+  const activeMemberCount = await client.enrollment.count({
+    where: {
+      courseId,
+      status: CourseEnrollmentStatus.ACTIVE,
+    },
+  });
+
+  return {
+    activeMemberCount,
+    capacity: course.capacity,
+    isFull: course.capacity !== null && activeMemberCount >= course.capacity,
+    remaining:
+      course.capacity === null
+        ? null
+        : Math.max(course.capacity - activeMemberCount, 0),
+  };
+}
+
+export class CourseMemberService {
+  static async listMembers(input: CourseMemberListInput) {
+    const permissions = await getCoursePermissions(
+      input.currentUserId,
+      input.courseId
+    );
+    if (permissions.withoutPermission(COURSE_PERMISSION.COURSE_MEMBERS_VIEW)) {
+      throw new Error('Forbidden');
+    }
+    const where = buildEnrollmentWhere(input);
+    const [total, enrollments] = await Promise.all([
+      prisma.enrollment.count({ where }),
+      prisma.enrollment.findMany({
+        where,
+        include: {
+          member: {
+            select: {
+              id: true,
+              email: true,
+              image: true,
+              name: true,
+            },
+          },
+          role: {
+            select: {
+              name: true,
+            },
+          },
+        },
+        orderBy: { enrolledAt: 'desc' },
+        skip: input.offset,
+        take: input.limit,
+      }),
+    ]);
+    const capacity = await getCourseCapacityUsage(input.courseId, prisma);
+
+    return {
+      capacity,
+      data: enrollments.map((enrollment): CourseMemberView => {
+        const role = enrollment.role.name;
+
+        return {
+          enrollmentId: enrollment.id,
+          enrolledAt: enrollment.enrolledAt?.toISOString() ?? null,
+          status: enrollment.status,
+          isCourseOwner: role === CourseRoleName.COURSE_OWNER,
+          isCurrentUser: enrollment.member.id === input.currentUserId,
+          user: {
+            id: enrollment.member.id,
+            email: enrollment.member.email,
+            image: enrollment.member.image,
+            name: enrollment.member.name,
+            role,
+          },
+        };
+      }),
+      pagination: {
+        total,
+        limit: input.limit,
+        offset: input.offset,
+      },
+    };
+  }
+
+  static async listCandidates(
+    input: CourseMemberCandidateListInput & { currentUserId: string }
+  ) {
+    const permissions = await getCoursePermissions(
+      input.currentUserId,
+      input.courseId
+    );
+    if (
+      permissions.withoutPermission(COURSE_PERMISSION.COURSE_MEMBERS_MANAGE)
+    ) {
+      throw new Error('Forbidden');
+    }
+    const where = buildCandidateUserWhere(input);
+
+    if (!where) {
+      return {
+        data: [],
+        pagination: {
+          total: 0,
+          limit: input.limit,
+          offset: input.offset,
+        },
+      };
+    }
+
+    const [total, users] = await Promise.all([
+      prisma.user.count({ where }),
+      prisma.user.findMany({
+        where,
+        select: {
+          id: true,
+          email: true,
+          image: true,
+          name: true,
+          role: { select: { name: true } },
+        },
+        orderBy: [{ name: 'asc' }, { email: 'asc' }],
+        skip: input.offset,
+        take: input.limit,
+      }),
+    ]);
+
+    return {
+      data: users.map((user) => {
+        if (!user.role) {
+          throw new Error('Candidate user must have a platform role');
+        }
+
+        return {
+          id: user.id,
+          email: user.email,
+          image: user.image,
+          name: user.name,
+          role: user.role.name,
+        };
+      }),
+      pagination: {
+        total,
+        limit: input.limit,
+        offset: input.offset,
+      },
+    };
+  }
+
+  static async addMember(input: {
+    courseId: string;
+    userId: string;
+    role: CourseRoleNameType;
+    addedById?: string;
+  }): Promise<CourseMemberMutationResponse> {
+    if (input.addedById) {
+      const permissions = await getCoursePermissions(
+        input.addedById,
+        input.courseId
+      );
+      if (
+        permissions.withoutPermission(COURSE_PERMISSION.COURSE_MEMBERS_MANAGE)
+      ) {
+        throw new Error('Forbidden');
+      }
+    }
+    if (input.role === CourseRoleName.COURSE_OWNER) {
+      throw new Error('Cannot assign the course owner role');
+    }
+
+    if (
+      !ASSIGNABLE_COURSE_MEMBER_ROLES.includes(
+        input.role as AssignableCourseMemberRole
+      )
+    ) {
+      throw new Error('Invalid course member role');
+    }
+
+    const [course, targetUser] = await Promise.all([
+      prisma.course.findUnique({
+        where: { id: input.courseId },
+        select: { id: true, title: true, deletedAt: true },
+      }),
+      prisma.user.findUnique({
+        where: { id: input.userId },
+        select: {
+          email: true,
+          emailVerified: true,
+          name: true,
+          role: { select: { name: true } },
+        },
+      }),
+    ]);
+
+    if (!course || course.deletedAt) {
+      throw new Error('Course not found');
+    }
+
+    if (
+      !targetUser?.emailVerified ||
+      !ELIGIBLE_COURSE_MEMBER_PLATFORM_ROLES.includes(
+        targetUser.role?.name as any
+      )
+    )
+      throw Error('User cannot be added to courses');
+
+    const existingEnrollment = await prisma.enrollment.findFirst({
+      where: {
+        courseId: input.courseId,
+        memberId: input.userId,
+      },
+      select: { id: true, status: true },
+    });
+
+    if (existingEnrollment?.status === CourseEnrollmentStatus.ACTIVE) {
+      throw new Error('User is already a course member');
+    }
+
+    const enrollment = await prisma.$transaction(async (tx) => {
+      const usage = await getCourseCapacityUsage(input.courseId, tx);
+
+      if (usage.isFull) {
+        throw new Error('Course capacity reached');
+      }
+
+      const courseRole = await tx.courseRole.findUnique({
+        where: { name: input.role },
+        select: { id: true },
+      });
+
+      if (!courseRole) {
+        throw new Error('Course role not found');
+      }
+
+      return existingEnrollment
+        ? tx.enrollment.update({
+            where: { id: existingEnrollment.id },
+            data: {
+              enrolledAt: new Date(),
+              invitedAt: null,
+              roleId: courseRole.id,
+              status: CourseEnrollmentStatus.ACTIVE,
+            },
+            select: { id: true },
+          })
+        : tx.enrollment.create({
+            data: {
+              courseId: input.courseId,
+              memberId: input.userId,
+              roleId: courseRole.id,
+              status: CourseEnrollmentStatus.ACTIVE,
+            },
+            select: { id: true },
+          });
+    });
+
+    await emailService.sendCourseAddedNotification({
+      courseName: course.title,
+      courseUrl: `/courses/${course.id}`,
+      user: {
+        email: targetUser.email,
+        name: targetUser.name,
+      },
+    });
+
+    return { message: 'Member added', id: enrollment.id };
+  }
+
+  static async updateMemberRole(input: {
+    courseId: string;
+    memberId: string;
+    role: CourseRoleNameType;
+    currentUserId: string;
+  }): Promise<CourseMemberMutationResponse> {
+    const permissions = await getCoursePermissions(
+      input.currentUserId,
+      input.courseId
+    );
+    if (
+      permissions.withoutPermission(COURSE_PERMISSION.COURSE_MEMBERS_MANAGE)
+    ) {
+      throw new Error('Forbidden');
+    }
+    if (input.role === CourseRoleName.COURSE_OWNER) {
+      throw new Error('Cannot assign the course owner role');
+    }
+
+    if (
+      !ASSIGNABLE_COURSE_MEMBER_ROLES.includes(
+        input.role as AssignableCourseMemberRole
+      )
+    ) {
+      throw new Error('Invalid course member role');
+    }
+
+    const enrollment = await prisma.enrollment.findFirst({
+      where: {
+        courseId: input.courseId,
+        memberId: input.memberId,
+        status: CourseEnrollmentStatus.ACTIVE,
+      },
+      select: {
+        courseId: true,
+        id: true,
+        memberId: true,
+        role: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
+
+    if (!enrollment) {
+      throw new Error('Course member not found');
+    }
+
+    if (enrollment.role.name === CourseRoleName.COURSE_OWNER) {
+      throw new Error('Course owner role cannot be changed');
+    }
+
+    const courseRole = await prisma.courseRole.findUnique({
+      where: { name: input.role },
+      select: { id: true },
+    });
+
+    if (!courseRole) {
+      throw new Error('Course role not found');
+    }
+
+    const updatedEnrollment = await prisma.enrollment.update({
+      where: { id: enrollment.id },
+      data: { roleId: courseRole.id },
+      select: { id: true },
+    });
+
+    return { message: 'Member updated', id: updatedEnrollment.id };
+  }
+
+  static async removeMember(input: {
+    courseId: string;
+    memberId: string;
+    currentUserId: string;
+  }): Promise<CourseMemberMutationResponse> {
+    const permissions = await getCoursePermissions(
+      input.currentUserId,
+      input.courseId
+    );
+    if (
+      permissions.withoutPermission(COURSE_PERMISSION.COURSE_MEMBERS_MANAGE)
+    ) {
+      throw new Error('Forbidden');
+    }
+    const enrollment = await prisma.enrollment.findFirst({
+      where: {
+        courseId: input.courseId,
+        memberId: input.memberId,
+      },
+      select: {
+        courseId: true,
+        id: true,
+        memberId: true,
+        role: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
+
+    if (!enrollment) {
+      throw new Error('Course member not found');
+    }
+
+    if (enrollment.role.name === CourseRoleName.COURSE_OWNER) {
+      throw new Error('Course owner cannot be removed');
+    }
+
+    if (enrollment.memberId === input.currentUserId) {
+      throw new Error('You cannot remove yourself from the course');
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.courseInvitation.updateMany({
+        where: {
+          courseId: input.courseId,
+          inviteeId: input.memberId,
+          status: CourseInvitationStatus.PENDING,
+        },
+        data: {
+          cancelledAt: new Date(),
+          status: CourseInvitationStatus.CANCELLED,
+        },
+      });
+
+      await tx.enrollment.delete({
+        where: { id: enrollment.id },
+        select: { id: true },
+      });
+    });
+
+    return { message: 'Member removed', id: enrollment.id };
+  }
+}

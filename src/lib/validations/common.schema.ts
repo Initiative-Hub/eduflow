@@ -20,11 +20,3 @@ export const passwordField = z
     passwordRegex,
     'Password must contain at least 1 number, 1 special character ($#@!), and 1 capitalized letter'
   );
-
-export const authSchema = z.object({
-  email: z
-    .string()
-    .regex(emailRegex, 'Invalid email address')
-    .max(255, 'Email must be less than 255 characters'),
-  password: passwordField,
-});

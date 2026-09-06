@@ -34,7 +34,8 @@
   "[prisma]": {
     "editor.defaultFormatter": "Prisma.prisma"
   },
-  "js/ts.tsdk.path": "node_modules/typescript/lib",
+  "js/ts.autoClosingTags.enabled": true,
+  "js/ts.experimental.useTsgo": true,
   "workbench.editor.customLabels.patterns": {
     "**/app/**/page.tsx": "${dirname} - Page",
     "**/app/**/layout.tsx": "${dirname} - Layout",
@@ -42,11 +43,12 @@
     "**/components/**/index.tsx": "${dirname} - Component"
   },
   "tailwindCSS.experimental.configFile": "src/app/globals.css",
-  "js/ts.experimental.useTsgo": false,
   "vitest.disableWorkspaceWarning": true,
   "i18n-ally.enabledFrameworks": ["next-intl"],
   "i18n-ally.localesPaths": ["messages", "src/i18n"],
   "i18n-ally.autoDetection": true,
   "i18n-ally.keystyle": "nested",
-  "i18n-ally.sourceLanguage": "en"
+  "i18n-ally.sourceLanguage": "en",
+  "WillLuke.nextjs.addTypesOnSave": true,
+  "WillLuke.nextjs.hasPrompted": true
 }

@@ -5,10 +5,10 @@ export const APP_PUBLIC_PATHS = [
   '/api-docs',
   '/chat',
   '/landing',
+  '/share',
   '/course',
   '/english',
   '/socratic',
-  '/my-posts',
   '/study',
   '/writing',
 ].reduce((acc: string[], path) => {

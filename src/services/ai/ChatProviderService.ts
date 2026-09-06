@@ -1,17 +1,13 @@
-import type { streamObject, streamText } from 'ai';
-import type { StreamChatInput } from './chat-provider.types';
+import type { streamText } from 'ai';
+
+import type {
+  StreamChatInput,
+  StreamChatInternalOptions,
+} from './chat-provider.types';
 
 export interface ChatProviderService {
   streamChat: (
-    input: StreamChatInput
+    input: StreamChatInput,
+    options?: StreamChatInternalOptions
   ) => Promise<ReturnType<typeof streamText>>;
-
-  streamCourse: (options: {
-    userId: string;
-    fileId?: string;
-    file?: File;
-    model?: string;
-    apiKey?: string;
-    providerOptions?: any;
-  }) => Promise<ReturnType<typeof streamObject>>;
 }

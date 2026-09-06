@@ -1,35 +1,97 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { notFound } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useCallback } from 'react';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/api/api-client';
 
+export type CourseListSort =
+  | 'updated-desc'
+  | 'created-desc'
+  | 'title-asc'
+  | 'members-desc';
+
+export interface CourseListParams {
+  ownedOnly?: boolean;
+  page?: number;
+  pageSize?: number;
+  publicOnly?: boolean;
+  search?: string;
+  sort?: CourseListSort;
+}
+
 export interface Course {
   id: string;
+  ownerId?: string;
   title: string;
   description: string | null;
+  capacity: number | null;
   isPublished: boolean;
   createdAt: string;
-  _count: {
+  updatedAt?: string;
+  isOwner?: boolean;
+  membershipStatus?: 'ACTIVE' | 'PENDING_INVITE' | null;
+  pendingInvitationId?: string | null;
+  coursePermissions?: string[];
+  _count?: {
     modules: number;
     enrollments: number;
   };
 }
 
+export interface CourseListResponse {
+  items: Course[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+}
+
+const DEFAULT_COURSE_LIST_PARAMS = {
+  ownedOnly: false,
+  page: 1,
+  pageSize: 100,
+  publicOnly: false,
+  search: '',
+  sort: 'updated-desc' as CourseListSort,
+};
+
+function buildCoursesPath(params: CourseListParams = {}) {
+  const finalParams = { ...DEFAULT_COURSE_LIST_PARAMS, ...params };
+  const searchParams = new URLSearchParams({
+    ownedOnly: String(finalParams.ownedOnly),
+    page: String(finalParams.page),
+    pageSize: String(finalParams.pageSize),
+    publicOnly: String(finalParams.publicOnly),
+    search: finalParams.search,
+    sort: finalParams.sort,
+  });
+
+  return `v1/courses?${searchParams.toString()}`;
+}
+
 export function useCourses(
   courseId?: string,
-  options: { enabled?: boolean } = { enabled: true }
+  options: { enabled?: boolean; listParams?: CourseListParams } = {
+    enabled: true,
+  }
 ) {
+  const t = useTranslations('Courses');
   const queryClient = useQueryClient();
+  const listParams = {
+    ...DEFAULT_COURSE_LIST_PARAMS,
+    ...options.listParams,
+  };
   const query = useQuery({
-    queryKey: ['courses'],
-    queryFn: () => apiClient.get<Course[]>('/v1/courses'),
+    queryKey: ['courses', listParams],
+    queryFn: () =>
+      apiClient.get<CourseListResponse>(buildCoursesPath(listParams)),
     enabled: options.enabled,
   });
 
   const courseQuery = useQuery({
     queryKey: ['course', courseId],
-    queryFn: () => apiClient.get<Course>(`/v1/courses/${courseId}`),
+    queryFn: () => apiClient.get<Course>(`v1/courses/${courseId}`),
     enabled: !!courseId,
     retry: false,
   });
@@ -45,29 +107,113 @@ export function useCourses(
 
   const createCourseMutation = useMutation({
     mutationFn: (data: { title: string; description?: string }) =>
-      apiClient.post<Course>('/v1/courses', data),
+      apiClient.post<Course>('v1/courses', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['courses'] });
-      toast.success('Course created successfully!');
+      toast.success(t('toast.created'));
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || 'Failed to create course');
+      toast.error(err.message || t('toast.createFailed'));
     },
   });
 
   const togglePublishMutation = useMutation({
     mutationFn: (data: { courseId: string; isPublished: boolean }) =>
-      apiClient.patch<Course>(`/v1/courses/${data.courseId}`, {
+      apiClient.patch<Course>(`v1/courses/${data.courseId}`, {
         isPublished: data.isPublished,
       }),
+    onMutate: async (variables) => {
+      await queryClient.cancelQueries({ queryKey: ['courses'] });
+      await queryClient.cancelQueries({
+        queryKey: ['course', variables.courseId],
+      });
+
+      const previousCourseLists =
+        queryClient.getQueriesData<CourseListResponse>({
+          queryKey: ['courses'],
+        });
+      const previousCourse = queryClient.getQueryData<Course>([
+        'course',
+        variables.courseId,
+      ]);
+
+      queryClient.setQueriesData<CourseListResponse>(
+        { queryKey: ['courses'] },
+        (current) =>
+          current
+            ? {
+                ...current,
+                items: current.items.map((course) =>
+                  course.id === variables.courseId
+                    ? { ...course, isPublished: variables.isPublished }
+                    : course
+                ),
+              }
+            : current
+      );
+      queryClient.setQueryData<Course>(
+        ['course', variables.courseId],
+        (course) =>
+          course ? { ...course, isPublished: variables.isPublished } : course
+      );
+
+      return { previousCourse, previousCourseLists };
+    },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['courses'] });
       toast.success(
-        `Course ${variables.isPublished ? 'published' : 'unpublished'}`
+        variables.isPublished ? t('toast.published') : t('toast.unpublished')
       );
     },
-    onError: () => {
-      toast.error('Failed to update course status');
+    onError: (_, variables, context) => {
+      context?.previousCourseLists.forEach(([queryKey, data]) => {
+        queryClient.setQueryData(queryKey, data);
+      });
+      queryClient.setQueryData(
+        ['course', variables.courseId],
+        context?.previousCourse
+      );
+      toast.error(t('toast.updateFailed'));
+    },
+    onSettled: (_, __, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['courses'] });
+      queryClient.invalidateQueries({
+        queryKey: ['course', variables.courseId],
+      });
+    },
+  });
+
+  const acceptInvitationMutation = useMutation({
+    mutationFn: (invitationId: string) =>
+      apiClient.post<{ courseId: string; message: string }>(
+        `v1/course-invitations/${invitationId}/accept`,
+        {}
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['courses'] });
+      toast.success(t('toast.invitationAccepted'));
+    },
+    onError: (err: any) => {
+      toast.error(
+        err.message === 'capacity_full' ||
+          err.message === 'Course capacity reached'
+          ? t('toast.capacityFull')
+          : err.message || t('toast.invitationAcceptFailed')
+      );
+    },
+  });
+
+  const declineInvitationMutation = useMutation({
+    mutationFn: (invitationId: string) =>
+      apiClient.post<{ id: string; message: string }>(
+        `v1/course-invitations/${invitationId}/decline`,
+        {}
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['courses'] });
+      toast.success(t('toast.invitationDeclined'));
+    },
+    onError: (err: any) => {
+      toast.error(err.message || t('toast.invitationDeclineFailed'));
     },
   });
 
@@ -85,11 +231,23 @@ export function useCourses(
     [togglePublishMutation]
   );
 
+  const handleAcceptInvitation = useCallback(
+    (invitationId: string) => acceptInvitationMutation.mutate(invitationId),
+    [acceptInvitationMutation]
+  );
+
+  const handleDeclineInvitation = useCallback(
+    (invitationId: string) => declineInvitationMutation.mutate(invitationId),
+    [declineInvitationMutation]
+  );
+
   return {
     // All courses
-    courses: query.data || [],
+    courses: query.data?.items || [],
+    courseList: query.data,
     isLoading: query.isLoading,
     isError: query.isError,
+    isFetching: query.isFetching,
 
     // Single course
     course: courseQuery.data,
@@ -100,5 +258,9 @@ export function useCourses(
     isCreating: createCourseMutation.isPending,
     handleCreateCourse,
     handleTogglePublish,
+    handleAcceptInvitation,
+    handleDeclineInvitation,
+    isAcceptingInvitation: acceptInvitationMutation.isPending,
+    isDecliningInvitation: declineInvitationMutation.isPending,
   };
 }

@@ -1,12 +1,12 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { type Editor } from '@tiptap/react';
 import { NodeSelection, TextSelection } from '@tiptap/pm/state';
-
+import type { Editor } from '@tiptap/react';
+import { useCallback, useEffect, useState } from 'react';
+// --- Icons ---
+import { CodeBlockIcon } from '@/components/tiptap-icons/code-block-icon';
 // --- Hooks ---
 import { useTiptapEditor } from '@/hooks/use-tiptap-editor';
-
 // --- Lib ---
 import {
   findNodePosition,
@@ -16,9 +16,6 @@ import {
   isValidPosition,
   selectionWithinConvertibleTypes,
 } from '@/lib/tiptap-utils';
-
-// --- Icons ---
-import { CodeBlockIcon } from '@/components/tiptap-icons/code-block-icon';
 
 export const CODE_BLOCK_SHORTCUT_KEY = 'mod+alt+c';
 
@@ -48,7 +45,7 @@ export function canToggle(
   editor: Editor | null,
   turnInto: boolean = true
 ): boolean {
-  if (!editor || !editor.isEditable) return false;
+  if (!editor?.isEditable) return false;
   if (
     !isNodeInSchema('codeBlock', editor) ||
     isNodeTypeSelected(editor, ['image'])
@@ -85,7 +82,7 @@ export function canToggle(
  * Toggles code block in the editor
  */
 export function toggleCodeBlock(editor: Editor | null): boolean {
-  if (!editor || !editor.isEditable) return false;
+  if (!editor?.isEditable) return false;
   if (!canToggle(editor)) return false;
 
   try {
@@ -96,7 +93,7 @@ export function toggleCodeBlock(editor: Editor | null): boolean {
     const blocks = getSelectedBlockNodes(editor);
 
     // In case a selection contains multiple blocks, we only allow
-    // toggling to nide if there's exactly one block selected
+    // toggling to node if there's exactly one block selected
     // we also dont block the canToggle since it will fall back to the bottom logic
     const isPossibleToTurnInto =
       selectionWithinConvertibleTypes(editor, [

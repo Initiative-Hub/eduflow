@@ -1,8 +1,29 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { withAuth, withRoles } from '@/lib/api/middlewares';
-import { createCourseSchema } from '@/lib/validations/course.schema';
+import { withAuth, withPermissions } from '@/lib/api/middlewares';
+import { PLATFORM_PERMISSION } from '@/lib/permissions/permission-keys';
 import { CourseService } from '@/services/CourseService';
+
+const createCourseSchema = z.object({
+  title: z.string().min(1, 'Title is required').max(255),
+  description: z.string().max(1000).optional(),
+});
+
+const booleanQuerySchema = z
+  .enum(['true', 'false'])
+  .optional()
+  .transform((value) => value === 'true');
+
+const courseListQuerySchema = z.object({
+  ownedOnly: booleanQuerySchema.default(false),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(12),
+  publicOnly: booleanQuerySchema.default(false),
+  search: z.string().default(''),
+  sort: z
+    .enum(['updated-desc', 'created-desc', 'title-asc', 'members-desc'])
+    .default('updated-desc'),
+});
 
 /**
  * @swagger
@@ -10,7 +31,7 @@ import { CourseService } from '@/services/CourseService';
  *   get:
  *     tags:
  *       - Courses
- *     summary: List courses for the current teacher
+ *     summary: List accessible courses for the current user
  *     security:
  *       - SessionCookie: []
  *     responses:
@@ -21,10 +42,25 @@ import { CourseService } from '@/services/CourseService';
  *       500:
  *         description: Internal server error
  */
-export const GET = withAuth(async (_req, sessionData) => {
+export const GET = withAuth(async (req, sessionData) => {
   try {
     const userId = sessionData.user.id;
-    const courses = await CourseService.getCoursesByOwner(userId);
+    const { searchParams } = new URL(req.url);
+    const query = courseListQuerySchema.safeParse(
+      Object.fromEntries(searchParams)
+    );
+
+    if (!query.success) {
+      return NextResponse.json(
+        { message: 'Invalid query parameters', errors: query.error.format() },
+        { status: 400 }
+      );
+    }
+
+    const courses = await CourseService.listAccessibleCourses(
+      userId,
+      query.data
+    );
 
     return NextResponse.json(courses);
   } catch (error: any) {
@@ -69,8 +105,9 @@ export const GET = withAuth(async (_req, sessionData) => {
  *         description: Internal server error
  *
  */
-export const POST = withAuth(
-  withRoles(['TEACHER', 'ADMIN'], async (req, sessionData) => {
+export const POST = withPermissions(
+  [PLATFORM_PERMISSION.COURSES_MANAGE],
+  async (req, sessionData) => {
     try {
       const userId = sessionData.user.id;
 
@@ -87,7 +124,7 @@ export const POST = withAuth(
       const course = await CourseService.createCourse({
         ownerId: userId,
         title: parsed.data.title,
-        description: parsed.data.description ?? undefined,
+        description: parsed.data.description,
       });
 
       return NextResponse.json(course, { status: 201 });
@@ -98,5 +135,5 @@ export const POST = withAuth(
         { status: 500 }
       );
     }
-  })
+  }
 );

@@ -6,12 +6,13 @@ import {
   Selection,
   TextSelection,
 } from '@tiptap/pm/state';
-import { cellAround, CellSelection } from '@tiptap/pm/tables';
+import { CellSelection, cellAround } from '@tiptap/pm/tables';
 import {
-  findParentNodeClosestToPos,
   type Editor,
+  findParentNodeClosestToPos,
   type NodeWithPos,
 } from '@tiptap/react';
+import { type ClassValue, clsx } from 'clsx';
 
 export const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
@@ -43,10 +44,8 @@ export const SR_ONLY = {
   borderWidth: 0,
 } as const;
 
-export function cn(
-  ...classes: (string | boolean | undefined | null)[]
-): string {
-  return classes.filter(Boolean).join(' ');
+export function cn(...inputs: ClassValue[]): string {
+  return clsx(inputs);
 }
 
 /**
@@ -235,7 +234,7 @@ export function findNodePosition(props: {
 }): { pos: number; node: PMNode } | null {
   const { editor, node, nodePos } = props;
 
-  if (!editor || !editor.state?.doc) return null;
+  if (!editor?.state?.doc) return null;
 
   // Zero is valid position
   const hasValidNode = node !== undefined && node !== null;
@@ -289,7 +288,7 @@ export function isNodeTypeSelected(
   nodeTypeNames: string[] = [],
   checkAncestorNodes: boolean = false
 ): boolean {
-  if (!editor || !editor.state.selection) return false;
+  if (!editor?.state.selection) return false;
 
   const { selection } = editor.state;
   if (selection.empty) return false;
@@ -445,7 +444,7 @@ export function isAllowedUri(
     uri.replace(ATTR_WHITESPACE, '').match(
       new RegExp(
         // eslint-disable-next-line no-useless-escape
-        `^(?:(?:${allowedProtocols.join('|')}):|[^a-z]|[a-z0-9+.\-]+(?:[^a-z+.\-:]|$))`,
+        `^(?:(?:${allowedProtocols.join('|')}):|[^a-z]|[a-z0-9+.-]+(?:[^a-z+.-:]|$))`,
         'i'
       )
     )

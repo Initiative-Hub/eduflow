@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
+import { Suspense } from 'react';
 import { AuthFormHeading, AuthSocialOptions } from '@/components/auth';
 import { RegisterClient } from './client';
 import { registerFields } from './register.config';
@@ -28,7 +29,9 @@ export default async function RegisterPage() {
           </span>
         </p>
       </div>
-      <AuthSocialOptions />
+      <Suspense>
+        <AuthSocialOptions />
+      </Suspense>
     </div>
   );
 }

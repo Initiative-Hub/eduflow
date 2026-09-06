@@ -13,6 +13,7 @@ export interface PageResponse<T> {
 }
 
 export interface ApiError {
+  code?: string;
   message: string;
   details?: Record<string, any>;
   status?: number;

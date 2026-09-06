@@ -33,7 +33,7 @@ export function ResetPasswordClient({
           defaultValues={resetPasswordDefaultValues}
           fields={translatedFields}
           onSubmit={handleSubmit}
-          submitLabel={t('actions.reset')}
+          submitLabel={isLoading ? t('actions.resetting') : t('actions.reset')}
           isLoading={isLoading}
           className="gap-5"
         />

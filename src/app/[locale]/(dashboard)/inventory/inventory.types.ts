@@ -27,6 +27,9 @@ export interface InventoryEntry {
   updatedAt: string;
   uploadedAt: string;
   deletedAt: string | null;
+  thumbnailObjectKey: string | null;
+  thumbnailMimeType: string | null;
+  thumbnailUrl?: string | null;
 }
 
 export interface InventoryListPagination {
@@ -46,6 +49,7 @@ export interface InventoryResponse<T> {
 
 export interface InventoryUploadSession {
   fileId: string;
+  name: string;
   path: string;
   bucket: string;
   status: string;

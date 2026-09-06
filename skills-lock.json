@@ -4,27 +4,36 @@
     "ai-elements": {
       "source": "vercel/ai-elements",
       "sourceType": "github",
+      "skillPath": "skills/ai-elements/SKILL.md",
       "computedHash": "7e81acdd3028bb68aa4387b2bd083c5812a50e2be1bea08c76994dcfb8f6a3d3"
     },
     "ai-sdk": {
       "source": "vercel/ai",
       "sourceType": "github",
-      "computedHash": "81af098a4ce6f0e323c1bd02b8e79df3bbaed57cbf1c4060f58ddc95de5545a1"
+      "skillPath": "skills/use-ai-sdk/SKILL.md",
+      "computedHash": "0883204d11b055e968dee697c5858e68064c27dfd4deb6310212895daa65c5ad"
     },
     "better-auth-best-practices": {
       "source": "better-auth/skills",
       "sourceType": "github",
       "computedHash": "9ab075b5061be2a5f299c10505667345cc1ec76e8de4120901cfd586643e776f"
     },
-    "better-auth-security-best-practices": {
-      "source": "better-auth/skills",
+    "codebase-design": {
+      "source": "mattpocock/skills",
       "sourceType": "github",
-      "computedHash": "ed38caef4b297cc399d717258d6ea4e6ecb8894c453c83450064c7e7c6e5cc02"
+      "skillPath": "skills/engineering/codebase-design/SKILL.md",
+      "computedHash": "cdc3d683881cbe5ca367c954571e158861176aa9af8adad1b2c5edd9eb72fe05"
     },
     "create-auth-skill": {
       "source": "better-auth/skills",
       "sourceType": "github",
       "computedHash": "393e8d2d795fa5797c9a4e0665f29183ea2e140233db59746d510340a10456e6"
+    },
+    "domain-modeling": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "skillPath": "skills/engineering/domain-modeling/SKILL.md",
+      "computedHash": "b747e8b4dcd0f367ef940c290b14f858bf9576ad9961fd6684bacff5688f4a2b"
     },
     "email-and-password-best-practices": {
       "source": "better-auth/skills",
@@ -39,38 +48,56 @@
     "frontend-design": {
       "source": "anthropics/skills",
       "sourceType": "github",
-      "computedHash": "516bd2154eb843a8240e43d5b285229129853114ad7075a5e141e1c08e408c84"
+      "skillPath": "skills/frontend-design/SKILL.md",
+      "computedHash": "93f53fd1c0352d3d7ec17b8f73d7351bf76f4821e55d123c9d2abc2c53ba48e4"
     },
-    "organization-best-practices": {
-      "source": "better-auth/skills",
+    "grill-me": {
+      "source": "mattpocock/skills",
       "sourceType": "github",
-      "computedHash": "fa7a76e45a1f9632e6d63e92b476cf566e64f6e93a2c8ee00bc77b4a74008fbd"
+      "skillPath": "skills/productivity/grill-me/SKILL.md",
+      "computedHash": "7edd436132b43ea2973710f0c28a9879c9b0910651eb89a991a7e98cb6dbbacb"
+    },
+    "grill-with-docs": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "skillPath": "skills/engineering/grill-with-docs/SKILL.md",
+      "computedHash": "96718e0a89e48c7d76cc9759c7094a82ff34eb89ddc46a30388063fa9812356f"
+    },
+    "improve-codebase-architecture": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "skillPath": "skills/engineering/improve-codebase-architecture/SKILL.md",
+      "computedHash": "569299a60c8e93880f3b3c1eca55578f58f7e1a4155876edb4cb814da3d6b3ea"
     },
     "shadcn": {
       "source": "shadcn/ui",
       "sourceType": "github",
-      "computedHash": "77faba608ea949351d1757e29e6cb726f6ec5937f7595be0593038a7d2d76bb9"
+      "skillPath": "skills/shadcn/SKILL.md",
+      "computedHash": "f99ef49d9909d380ca683ceb8dc8c25775c20ee38140112c394e037d8c11ee18"
     },
     "streamdown": {
       "source": "vercel/streamdown",
       "sourceType": "github",
+      "skillPath": "skills/streamdown/SKILL.md",
       "computedHash": "c842552c75b80abb74ef8f92481d34684c709884dd2df22c2ab3b183aee582fe"
     },
-    "test-driven-development": {
-      "source": "obra/superpowers",
+    "tdd": {
+      "source": "mattpocock/skills",
       "sourceType": "github",
-      "computedHash": "126f1ebf6ccd414f42544f6e83d8cc5adb089e1108eaffb7c400701e37eecd9f"
+      "skillPath": "skills/engineering/tdd/SKILL.md",
+      "computedHash": "7ac19bf391ceb23266ed5b4f81068201eaa38dcf76d0b59850d49c2c9e426d63"
     },
     "tiptap": {
       "source": "ueberdosis/tiptap",
       "sourceType": "github",
       "skillPath": "skills/tiptap/SKILL.md",
-      "computedHash": "60765ba8cb8a71503e6f14bb3a7a6ee77b34b1d98cd04b60b1bfcbb7c41ba9c7"
+      "computedHash": "7f5d1f17762bc7c41e305edad1491f6917da9a001b75db60f48538176fde403d"
     },
-    "two-factor-authentication-best-practices": {
-      "source": "better-auth/skills",
+    "ui-ux-pro-max": {
+      "source": "nextlevelbuilder/ui-ux-pro-max-skill",
       "sourceType": "github",
-      "computedHash": "c4f3a299c62c1985b774b7c28e53b7e55c565dbf973fd52b08899e4bcfffa3f9"
+      "skillPath": "skills/ui-ux-pro-max/SKILL.md",
+      "computedHash": "6337038fe1fe6bbe1b9f252ab678ee575859190bab6f0f246f4061824eb40875"
     },
     "vercel-react-best-practices": {
       "source": "vercel-labs/agent-skills",

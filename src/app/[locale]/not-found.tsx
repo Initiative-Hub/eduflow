@@ -7,19 +7,15 @@ export default async function GlobalNotFoundPage() {
   const t = await getTranslations('NotFound');
 
   return (
-    <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-background px-4 text-center">
+    <div className="flex min-h-dvh flex-col items-center justify-center bg-background px-4 text-center">
       <div className="relative mb-8 h-64 w-64 md:h-80 md:w-80">
         <Image
           src="/images/not-found-robot.png"
           alt="404 Robot"
           fill
-          className="animate-float object-contain"
+          className="object-contain"
           priority
         />
-        {/* Digital speech bubble overlay inspired by user image */}
-        <div className="absolute top-10 right-0 rotate-12 animate-pulse rounded-lg bg-primary px-3 py-1 font-mono text-primary-foreground text-sm shadow-xl md:px-4 md:py-2 md:text-base">
-          {t('robotSays')}
-        </div>
       </div>
 
       <div className="space-y-3">
@@ -38,7 +34,7 @@ export default async function GlobalNotFoundPage() {
         <Button
           asChild
           size="lg"
-          className="h-12 rounded-full px-10 shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95"
+          className="h-12 rounded-full px-10 shadow-lg shadow-primary/20 transition-all"
         >
           <Link href="/">{t('goBack')}</Link>
         </Button>

@@ -2,14 +2,25 @@ name: Vercel EduFlow Preview Deployment
 
 on:
   push:
-    branches-ignore:
-      - staging
-      - production
+    branches:
+      - main
+  pull_request:
+    branches:
+      - 'main'
+    types:
+      - opened
+      - reopened
+      - synchronize
   workflow_dispatch:
 
 jobs:
   deploy:
-    runs-on: self-hosted
+    name: Deploy to Vercel Preview
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: |
+      github.event_name != 'pull_request' || 
+      (github.head_ref != 'chore/trigger-vercel-deploy' && !startsWith(github.head_ref, 'fix/biome-formatting-'))
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_STAGING_PROJECT_ID }}
@@ -35,21 +46,21 @@ jobs:
             echo "skip_build=false" >> $GITHUB_OUTPUT
           fi
 
+      - name: Setup Node
+        if: steps.check_commits.outputs.skip_build != 'true'
+        uses: actions/setup-node@v6
+        with:
+          node-version: "26"
+
       - name: Setup bun
         if: steps.check_commits.outputs.skip_build != 'true'
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: "1.3.13"
-
-      - name: Use Node.js 25
-        if: steps.check_commits.outputs.skip_build != 'true'
-        uses: actions/setup-node@v6
-        with:
-          node-version: 25
+          bun-version: "1.4.0"
 
       - name: Install dependencies
         if: steps.check_commits.outputs.skip_build != 'true'
-        run: bun install
+        run: bun install --frozen-lockfile
 
       - name: Pull Vercel Environment Information
         if: steps.check_commits.outputs.skip_build != 'true'

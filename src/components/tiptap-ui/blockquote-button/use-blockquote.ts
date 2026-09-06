@@ -1,14 +1,12 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import type { Editor } from '@tiptap/react';
 import { NodeSelection, TextSelection } from '@tiptap/pm/state';
-
-// --- Hooks ---
-import { useTiptapEditor } from '@/hooks/use-tiptap-editor';
-
+import type { Editor } from '@tiptap/react';
+import { useCallback, useEffect, useState } from 'react';
 // --- Icons ---
 import { BlockquoteIcon } from '@/components/tiptap-icons/blockquote-icon';
+// --- Hooks ---
+import { useTiptapEditor } from '@/hooks/use-tiptap-editor';
 
 // --- UI Utils ---
 import {
@@ -48,7 +46,7 @@ export function canToggleBlockquote(
   editor: Editor | null,
   turnInto: boolean = true
 ): boolean {
-  if (!editor || !editor.isEditable) return false;
+  if (!editor?.isEditable) return false;
   if (
     !isNodeInSchema('blockquote', editor) ||
     isNodeTypeSelected(editor, ['image'])
@@ -82,7 +80,7 @@ export function canToggleBlockquote(
  * Toggles blockquote formatting for a specific node or the current selection
  */
 export function toggleBlockquote(editor: Editor | null): boolean {
-  if (!editor || !editor.isEditable) return false;
+  if (!editor?.isEditable) return false;
   if (!canToggleBlockquote(editor)) return false;
 
   try {
@@ -93,7 +91,7 @@ export function toggleBlockquote(editor: Editor | null): boolean {
     const blocks = getSelectedBlockNodes(editor);
 
     // In case a selection contains multiple blocks, we only allow
-    // toggling to nide if there's exactly one block selected
+    // toggling to node if there's exactly one block selected
     // we also dont block the canToggle since it will fall back to the bottom logic
     const isPossibleToTurnInto =
       selectionWithinConvertibleTypes(editor, [

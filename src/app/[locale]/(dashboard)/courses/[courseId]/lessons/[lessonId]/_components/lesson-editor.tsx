@@ -7,20 +7,29 @@ import { Subscript } from '@tiptap/extension-subscript';
 import { Superscript } from '@tiptap/extension-superscript';
 import { TextAlign } from '@tiptap/extension-text-align';
 import { Typography } from '@tiptap/extension-typography';
+import { Youtube } from '@tiptap/extension-youtube';
 import { Selection } from '@tiptap/extensions';
 import { EditorContent, EditorContext, useEditor } from '@tiptap/react';
 import { StarterKit } from '@tiptap/starter-kit';
-import { Edit3, Save } from 'lucide-react';
+import { Edit3, Presentation, Save } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { HorizontalRule } from '@/components/tiptap-node/horizontal-rule-node/horizontal-rule-node-extension';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { LessonAiReview } from '@/lib/lesson-ai-review';
+import {
   isTiptapDocumentEmpty,
   type TiptapDocument,
 } from '@/utils/lesson-content';
+import DeleteLessonDialog from './delete-lesson-dialog';
 import { LessonEditorToolbar } from './lesson-editor-toolbar';
+import { LessonPresentation } from './lesson-presentation';
 import '@/components/tiptap-node/blockquote-node/blockquote-node.scss';
 import '@/components/tiptap-node/code-block-node/code-block-node.scss';
 import '@/components/tiptap-node/heading-node/heading-node.scss';
@@ -31,21 +40,29 @@ import '@/components/tiptap-node/paragraph-node/paragraph-node.scss';
 import './lesson-editor.scss';
 
 interface LessonEditorProps {
+  courseId: string;
+  lessonId: string;
   title: string;
-  content: TiptapDocument | string;
+  content: TiptapDocument;
   canEdit?: boolean;
+  canDelete?: boolean;
+  canUseLessonAI?: boolean;
   emptyContentLabel: string;
   isUpdatingLesson?: boolean;
   onSave?: (
-    data: { title: string; content: TiptapDocument | string },
+    data: { title: string; content: TiptapDocument },
     options: { onSuccess: () => void }
   ) => void;
 }
 
 export function LessonEditor({
+  courseId,
+  lessonId,
   title,
   content,
   canEdit = false,
+  canDelete = false,
+  canUseLessonAI = false,
   emptyContentLabel,
   isUpdatingLesson = false,
   onSave,
@@ -56,6 +73,7 @@ export function LessonEditor({
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(title);
   const [editContent, setEditContent] = useState(content);
+  const [showPresentation, setShowPresentation] = useState(false);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -83,14 +101,18 @@ export function LessonEditor({
       TaskItem.configure({ nested: true }),
       Highlight.configure({ multicolor: true }),
       Image,
+      Youtube.configure({
+        addPasteHandler: true,
+      }),
       Typography,
       Superscript,
       Subscript,
       Selection,
+      LessonAiReview,
     ],
     content,
     onUpdate: ({ editor }) => {
-      setEditContent(editor.getHTML());
+      setEditContent(editor.getJSON());
     },
   });
 
@@ -104,9 +126,7 @@ export function LessonEditor({
 
     if (
       !isEditing &&
-      ((typeof content === 'string' && editor.getHTML() !== content) ||
-        (typeof content !== 'string' &&
-          JSON.stringify(editor.getJSON()) !== JSON.stringify(content)))
+      JSON.stringify(editor.getJSON()) !== JSON.stringify(content)
     ) {
       editor.commands.setContent(content, { emitUpdate: false });
     }
@@ -136,7 +156,7 @@ export function LessonEditor({
     onSave?.(
       {
         title: editTitle,
-        content: (editor?.getHTML() as string | undefined) ?? editContent,
+        content: editor?.getJSON() ?? editContent,
       },
       { onSuccess: () => setIsEditing(false) }
     );
@@ -144,10 +164,21 @@ export function LessonEditor({
 
   const isEmptyContent = isTiptapDocumentEmpty(content);
 
+  if (showPresentation) {
+    return (
+      <LessonPresentation
+        isOpen={showPresentation}
+        onClose={() => setShowPresentation(false)}
+        title={title}
+        content={content}
+      />
+    );
+  }
+
   return (
     <EditorContext.Provider value={{ editor }}>
-      <div className="sticky top-14 z-30 -mx-6 flex min-h-16 items-center justify-between gap-4 border-foreground/20 border-b bg-background/95 px-6 py-3 backdrop-blur-sm md:-mx-10 md:px-10 lg:-mx-12 lg:px-12">
-        <div className="min-w-0 flex-1">
+      <div className="sticky top-14 z-30 -mx-6 flex min-h-16 items-center justify-between gap-4 border-foreground/20 border-b bg-background/95 px-6 py-3 backdrop-blur-sm md:-mx-10 md:px-10">
+        <div className="min-w-0 max-w-xs flex-1 sm:max-w-md md:max-w-lg lg:max-w-xl">
           {isEditing ? (
             <Input
               id="lesson-title"
@@ -158,9 +189,20 @@ export function LessonEditor({
               disabled={isUpdatingLesson}
             />
           ) : (
-            <h1 className="truncate font-bold text-xl tracking-tight md:text-2xl">
-              {title}
-            </h1>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <h1 className="cursor-default truncate font-bold text-xl tracking-tight md:text-2xl">
+                  {title}
+                </h1>
+              </TooltipTrigger>
+              <TooltipContent
+                side="bottom"
+                align="start"
+                className="wrap-break-word max-w-md"
+              >
+                {title}
+              </TooltipContent>
+            </Tooltip>
           )}
         </div>
 
@@ -179,26 +221,50 @@ export function LessonEditor({
               onClick={handleSave}
               disabled={isUpdatingLesson || !editor}
             >
-              <Save className="mr-2 h-4 w-4" />
+              <Save data-icon="inline-start" />
               {isUpdatingLesson ? tEditor('saving') : tEditor('save')}
             </Button>
           </div>
-        ) : canEdit ? (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleStartEditing}
-            disabled={!editor}
-          >
-            <Edit3 className="mr-2 h-4 w-4" />
-            {tHeader('edit')}
-          </Button>
+        ) : canEdit || canDelete ? (
+          <div className="flex shrink-0 items-center gap-2">
+            {canEdit ? (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowPresentation(true)}
+                  disabled={!editor}
+                  className="cursor-pointer"
+                >
+                  <Presentation data-icon="inline-start" />
+                  {tHeader('presentation')}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleStartEditing}
+                  disabled={!editor}
+                  className="cursor-pointer"
+                >
+                  <Edit3 data-icon="inline-start" />
+                  {tHeader('edit')}
+                </Button>
+              </>
+            ) : null}
+
+            {canDelete && (
+              <DeleteLessonDialog courseId={courseId} lessonId={lessonId} />
+            )}
+          </div>
         ) : null}
       </div>
 
       {isEditing && (
-        <div className="lesson-toolbar-bar sticky top-30 z-20 -mx-6 border-foreground/20 border-b bg-background/95 px-6 py-2 backdrop-blur-sm md:-mx-10 md:px-10 lg:-mx-12 lg:px-12">
-          <LessonEditorToolbar />
+        <div className="lesson-toolbar-bar sticky top-30 z-20 -mx-6 border-foreground/20 border-b bg-background/95 px-6 py-2 backdrop-blur-sm md:-mx-10 md:px-10">
+          <LessonEditorToolbar
+            lessonId={lessonId}
+            canUseLessonAI={canUseLessonAI}
+          />
         </div>
       )}
 

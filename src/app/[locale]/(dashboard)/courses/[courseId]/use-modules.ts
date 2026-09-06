@@ -1,19 +1,24 @@
 'use client';
 
-import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
-import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { apiClient } from '@/lib/api/api-client';
-import { aiCourseGenerationSchema } from '@/lib/validations/course.schema';
+import type { TiptapDocument } from '@/utils/lesson-content';
+import { useGenerateCourseContent } from './use-generate-course-content';
+
 export interface Lesson {
   id: string;
   title: string;
   orderIndex: number;
-  content: Record<string, unknown> | null;
+  content: TiptapDocument;
   canEdit?: boolean;
+  canDelete?: boolean;
+  canUseLessonAI?: boolean;
+  /** Most recently generated presentation deck reference (if any). */
+  presentationDeckId?: string | null;
+  presentationDeckKey?: string | null;
 }
 
 export interface Module {
@@ -21,81 +26,55 @@ export interface Module {
   courseId: string;
   title: string;
   orderIndex: number;
+  itemLayout: { id: string; orderIndex: number; indent: number }[] | null;
   lessons: Lesson[];
 }
 
 /**
  * Fetches modules (with lightweight lesson summaries) for a course and
  * exposes mutations for creating modules and lessons.
- *
- * Note: `useLesson` and `useUpdateLesson` live in `./use-lesson.ts` so that
- * the lesson detail page doesn't pull in the full module mutation surface.
  */
 export function useModules(courseId: string) {
   const queryClient = useQueryClient();
   const t = useTranslations('Courses.CourseModules');
 
-  const [isSaving, setIsSaving] = useState(false);
-  const fileRef = useRef<File | null>(null);
-
   const {
-    object: streamingCourse,
-    submit,
-    isLoading: isStreaming,
-  } = useObject({
-    api: '/api/v1/ai/courses',
-    schema: aiCourseGenerationSchema,
-    onFinish: async () => {
-      setIsSaving(true);
-      // Give the server time to run the database save transactions
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      await queryClient.invalidateQueries({ queryKey: ['modules', courseId] });
-      setIsSaving(false);
-      toast.success(t('AiGeneration.success'));
+    step,
+    lastStartedStep,
+    pipelineState,
+    courseContentDraft,
+    searchSources,
+    searchFailureMessage,
+    isSearchSkipAvailable,
+    isSearchSkipRequested,
+    searchSkipError,
+    isRunning,
+    error: generationError,
+    generateCourseContent: streamCourseContent,
+    skipSearch,
+    reset,
+  } = useGenerateCourseContent(
+    () => {
+      queryClient.invalidateQueries({ queryKey: ['modules', courseId] });
+      toast.success(t('CourseContentGeneration.success'));
     },
-    onError: (error) => {
-      toast.error(t('AiGeneration.failed'));
-      console.error(error);
-    },
-    fetch: async (url, init) => {
-      if (fileRef.current && init?.body) {
-        const parsedBody = JSON.parse(init.body as string);
-        const formData = new FormData();
-        formData.append('courseId', parsedBody.courseId);
-        if (parsedBody.apiKey) formData.append('apiKey', parsedBody.apiKey);
-        formData.append('file', fileRef.current);
+    (msg) => {
+      toast.error(t('CourseContentGeneration.failed'));
+      console.error(msg);
+    }
+  );
 
-        const headers = new Headers(init.headers);
-        // Remove Content-Type so browser sets it to multipart/form-data with correct boundary
-        headers.delete('Content-Type');
-
-        const newInit = { ...init, headers, body: formData };
-        // Clear the ref so we don't accidentally send it again on retries/future requests
-        fileRef.current = null;
-
-        return fetch(url, newInit);
-      }
-      return fetch(url, init);
-    },
-  });
-
-  const generateCourseModules = async (selection: {
+  const generateCourseContent = async (selection: {
     fileId?: string;
     file?: File;
+    context?: string;
   }) => {
-    try {
-      if (selection.file) {
-        fileRef.current = selection.file;
-        submit({ courseId });
-        toast.success(t('AiGeneration.documentReceived'));
-      } else if (selection.fileId) {
-        submit({ fileId: selection.fileId, courseId });
-        toast.success(t('AiGeneration.startingGeneration'));
-      }
-    } catch (error) {
-      console.error('AI selection error:', error);
-      toast.error(t('AiGeneration.error'));
-    }
+    await streamCourseContent({
+      courseId,
+      fileId: selection.fileId,
+      file: selection.file,
+      context: selection.context,
+    });
   };
 
   const query = useQuery({
@@ -125,22 +104,22 @@ export function useModules(courseId: string) {
       queryClient.invalidateQueries({ queryKey: ['modules', courseId] });
       toast.success('Lesson created successfully!');
     },
-    onError: (err: any) => {
+    onError: (err: unknown) => {
+      const e = err as {
+        response?: { data?: { message?: string } };
+        message?: string;
+      };
       toast.error(
-        err.response?.data?.message || err.message || 'Failed to create lesson'
+        e.response?.data?.message || e.message || 'Failed to create lesson'
       );
     },
   });
 
-  /** Returns the prev/next lesson relative to `currentLessonId` across all modules. */
   const getAdjacentLessons = (currentLessonId: string) => {
     if (!query.data) return { prev: null, next: null };
-
     const allLessons = query.data.flatMap((module) => module.lessons);
     const currentIndex = allLessons.findIndex((l) => l.id === currentLessonId);
-
     if (currentIndex === -1) return { prev: null, next: null };
-
     return {
       prev: currentIndex > 0 ? allLessons[currentIndex - 1] : null,
       next:
@@ -162,11 +141,55 @@ export function useModules(courseId: string) {
     isCreatingLesson: createLessonMutation.isPending,
     handleCreateLesson: createLessonMutation.mutate,
 
-    streamingCourse,
-    isStreaming,
-    isSaving,
-    generateCourseModules,
-
+    // New stream state
+    generationStep: step,
+    lastStartedGenerationStep: lastStartedStep,
+    generationPipelineState: pipelineState,
+    generationError,
+    courseContentDraft,
+    searchSources,
+    searchFailureMessage,
+    isSearchSkipAvailable,
+    isSearchSkipRequested,
+    searchSkipError,
+    isRunning,
+    resetGeneration: reset,
+    generateCourseContent,
+    skipSearch,
     getAdjacentLessons,
+  };
+}
+
+export function useDeleteModule(courseId: string) {
+  const queryClient = useQueryClient();
+  const t = useTranslations('Courses.ModuleAccordion');
+
+  const mutation = useMutation({
+    mutationFn: (moduleId: string) =>
+      apiClient.delete<void>(`/v1/modules/${moduleId}`),
+
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ['modules', courseId],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['question-bank', courseId],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['quizzes', courseId],
+        }),
+      ]);
+      toast.success(t('deleteSuccess'));
+    },
+
+    onError: (error: { message?: string }) => {
+      toast.error(error.message || t('deleteError'));
+    },
+  });
+
+  return {
+    deleteModule: mutation.mutate,
+    isDeletingModule: mutation.isPending,
   };
 }

@@ -1,0 +1,229 @@
+'use client';
+
+import { Loader2, Mic, Sparkles, Volume2, X } from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Spinner } from '@/components/ui/spinner';
+import { cn } from '@/lib/utils';
+import type {
+  SavedVocabularyItem,
+  VocabularyListSummary,
+} from '@/services/english/SavedVocabularyService';
+import { PracticeReveal } from './practice-reveal';
+import { playWordbankAudio } from './wordbank-audio';
+import { WordbankExampleDialog } from './wordbank-example-dialog';
+import {
+  WordbankListManager,
+  type WordbankListUpdate,
+} from './wordbank-list-manager';
+import { MasteryBadge, type WordbankTranslator } from './wordbank-mastery';
+import { WordbankPronunciationModal } from './wordbank-pronunciation-modal';
+
+export function WordbankCard({
+  item,
+  isRemoving,
+  isUpdating,
+  practiceMode,
+  lists,
+  onRemoveWord,
+  onUpdateLists,
+  onUpdateExample,
+  t,
+}: {
+  item: SavedVocabularyItem;
+  isRemoving: boolean;
+  isUpdating: boolean;
+  practiceMode: boolean;
+  lists: VocabularyListSummary[];
+  onRemoveWord: (word: string) => void;
+  onUpdateLists: (vocabularyIds: string[], update: WordbankListUpdate) => void;
+  onUpdateExample?: (
+    vocabularyId: string,
+    exampleSentence: string,
+    examples: string[]
+  ) => void;
+  t: WordbankTranslator;
+}) {
+  const [exampleDialogOpen, setExampleDialogOpen] = useState(false);
+  const [pronunciationModalOpen, setPronunciationModalOpen] = useState(false);
+  const [isLoadingAudio, setIsLoadingAudio] = useState(false);
+  const itemListIds = new Set(item.lists.map((list) => list.id));
+
+  return (
+    <>
+      <Card className="flex h-160 flex-col justify-between overflow-hidden rounded-xl shadow-xs">
+        <div className="flex-1 overflow-y-auto pr-1">
+          <CardHeader>
+            <CardTitle className="flex flex-col gap-2">
+              <span className="wrap-break-word font-bold text-2xl text-primary">
+                {item.word}
+              </span>
+              <MasteryBadge level={item.masteryLevel} t={t} />
+            </CardTitle>
+            <CardAction className="flex items-center gap-1">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => {
+                  setIsLoadingAudio(true);
+                  void playWordbankAudio(item.word, () => {
+                    setIsLoadingAudio(false);
+                  }).catch(() => {
+                    setIsLoadingAudio(false);
+                    toast.error(t('audioFailed'));
+                  });
+                }}
+                disabled={isLoadingAudio}
+                className={cn(
+                  'h-9 rounded-full bg-primary/10 text-primary transition-all hover:bg-primary hover:text-primary-foreground',
+                  isLoadingAudio ? 'gap-1 px-3 text-xs' : ''
+                )}
+                aria-label={
+                  isLoadingAudio
+                    ? t('loadingVoice')
+                    : t('playPronunciation', { word: item.word })
+                }
+              >
+                {isLoadingAudio ? (
+                  <Spinner className="size-4" />
+                ) : (
+                  <Volume2 className="size-4" />
+                )}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={isRemoving}
+                onClick={() => onRemoveWord(item.word)}
+                aria-label={t('removeWord', { word: item.word })}
+              >
+                {isRemoving ? <Loader2 className="animate-spin" /> : <X />}
+              </Button>
+            </CardAction>
+          </CardHeader>
+
+          <CardContent className="flex flex-col gap-3">
+            <p className="font-mono text-base text-muted-foreground">
+              {item.ipa ?? t('missingIpa')}
+            </p>
+            <div className="flex flex-col gap-1.5">
+              <PracticeReveal enabled={practiceMode} label={t('revealAnswer')}>
+                <p className="font-medium text-base text-foreground leading-relaxed">
+                  {item.englishDefinition}
+                </p>
+              </PracticeReveal>
+              <PracticeReveal enabled={practiceMode} label={t('revealAnswer')}>
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  {item.vietnameseTranslation}
+                </p>
+              </PracticeReveal>
+            </div>
+
+            {/* Main Example Sentence */}
+            <blockquote className="border-primary/30 border-l-2 pl-3 text-muted-foreground text-sm leading-relaxed">
+              &ldquo;{item.exampleSentence}&rdquo;
+            </blockquote>
+
+            {/* Additional Stored Examples (Scrollable Box) */}
+            {item.examples && item.examples.length > 0 && (
+              <div className="flex flex-col gap-1 pt-1">
+                <span className="font-semibold text-[11px] text-muted-foreground uppercase tracking-wider">
+                  More Examples:
+                </span>
+                <div className="flex max-h-64 flex-col gap-1.5 overflow-y-auto rounded-lg border border-border/50 bg-muted/20 p-2 pr-1">
+                  {item.examples.map((ex, i) => (
+                    <p
+                      key={i}
+                      className="border-primary/20 border-l-2 pl-2 text-muted-foreground/90 text-xs italic leading-relaxed"
+                    >
+                      {ex}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </div>
+
+        <CardContent className="pt-0">
+          <div className="flex flex-wrap items-center gap-2">
+            {item.lists.map((list) => (
+              <Badge key={list.id} variant="outline" className="gap-1 pr-1">
+                {list.name}
+                <button
+                  type="button"
+                  className="rounded-full text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
+                  disabled={isUpdating}
+                  onClick={() =>
+                    onUpdateLists([item.id], { removeListIds: [list.id] })
+                  }
+                  aria-label={t('removeFromList', { list: list.name })}
+                >
+                  <X className="size-3" />
+                </button>
+              </Badge>
+            ))}
+
+            <WordbankListManager
+              vocabularyIds={[item.id]}
+              lists={lists}
+              disabled={isUpdating}
+              getMembership={(listId) => itemListIds.has(listId)}
+              onUpdateLists={onUpdateLists}
+              t={t}
+            />
+
+            {/* Fetch/Add Example Button */}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setExampleDialogOpen(true)}
+              className="h-8 gap-1 rounded-lg border-primary/30 text-xs hover:bg-primary/10 hover:text-primary"
+            >
+              <Sparkles className="size-3 text-primary" />
+              <span>Examples</span>
+            </Button>
+
+            {/* Pronunciation Practice Button (reference UI) */}
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setPronunciationModalOpen(true)}
+              className="h-8 gap-1 rounded-lg bg-primary/10 font-medium text-primary text-xs hover:bg-primary hover:text-primary-foreground"
+            >
+              <Mic className="size-3.5" />
+              <span>Practice</span>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <WordbankExampleDialog
+        open={exampleDialogOpen}
+        onOpenChange={setExampleDialogOpen}
+        item={item}
+        isUpdating={isUpdating}
+        onUpdateExample={(exampleSentence, examples) => {
+          onUpdateExample?.(item.id, exampleSentence, examples);
+        }}
+        t={t}
+      />
+
+      <WordbankPronunciationModal
+        open={pronunciationModalOpen}
+        onOpenChange={setPronunciationModalOpen}
+        item={item}
+        t={t}
+      />
+    </>
+  );
+}

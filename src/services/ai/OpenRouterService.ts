@@ -1,30 +1,26 @@
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import {
   convertToModelMessages,
+  isStepCount,
   smoothStream,
-  streamObject,
   streamText,
 } from 'ai';
-import { pdfToMarkdown } from '@/lib/pdf';
-import { aiCourseGenerationSchema } from '@/lib/validations/course.schema';
-import {
-  COURSE_GENERATION_PROMPT,
-  DEFAULT_MODELS,
-  SYSTEM_PROMPT,
-} from '@/services/ai/chat-provider.constants';
-import type { StreamChatInput } from '@/services/ai/chat-provider.types';
-import { StorageService } from '../StorageService';
+import { DEFAULT_MODELS } from '@/services/ai/chat-provider.constants';
+import type {
+  StreamChatInput,
+  StreamChatInternalOptions,
+} from '@/services/ai/chat-provider.types';
+import { convertLessonReferenceDataPart } from '@/utils/chat-lesson-references';
 import type { ChatProviderService } from './ChatProviderService';
-
-const PROVIDER_NAME = 'openrouter';
+import { resolveChatSystemPrompt } from './chat-system-prompt';
 
 export class OpenRouterService implements ChatProviderService {
-  async streamChat(input: StreamChatInput) {
+  async streamChat(
+    input: StreamChatInput,
+    options?: StreamChatInternalOptions
+  ) {
     const apiKey = input.apiKey ?? process.env.OPENROUTER_API_KEY;
-
-    if (!apiKey) {
-      throw new Error(`Missing API key for provider "${PROVIDER_NAME}"`);
-    }
+    if (!apiKey) throw new Error(`Missing API key for provider "openrouter"`);
 
     const model = input.model ?? DEFAULT_MODELS.openrouter;
     const provider = createOpenRouter({ apiKey });
@@ -32,52 +28,15 @@ export class OpenRouterService implements ChatProviderService {
     return streamText({
       experimental_transform: smoothStream(),
       model: provider(model),
-      system: input.system
-        ? `${SYSTEM_PROMPT}\n\n=== ADDITIONAL CONTEXT ===\n${input.system}`
-        : SYSTEM_PROMPT,
-      messages: await convertToModelMessages(input.messages),
-      providerOptions: input.providerOptions,
-    });
-  }
-
-  async streamCourse(options: {
-    userId: string;
-    fileId?: string;
-    file?: File;
-    model?: string;
-    apiKey?: string;
-    providerOptions?: any;
-  }) {
-    let pdfBuffer: Buffer;
-
-    if (options.fileId) {
-      const payload = await StorageService.getDownloadPayload({
-        userId: options.userId,
-        fileId: options.fileId,
-      });
-      pdfBuffer = Buffer.from(payload.bytes);
-    } else if (options.file) {
-      const bytes = await options.file.arrayBuffer();
-      pdfBuffer = Buffer.from(bytes);
-    } else {
-      throw new Error('Missing file or fileId');
-    }
-
-    const markdownContent = await pdfToMarkdown(pdfBuffer);
-
-    const apiKey = options.apiKey ?? process.env.OPENROUTER_API_KEY;
-    if (!apiKey) {
-      throw new Error(`Missing API key for provider "${PROVIDER_NAME}"`);
-    }
-
-    const model = options.model ?? DEFAULT_MODELS.openrouter;
-    const provider = createOpenRouter({ apiKey });
-
-    return streamObject({
-      model: provider(model),
-      schema: aiCourseGenerationSchema,
-      system: COURSE_GENERATION_PROMPT,
-      prompt: `Content to analyze and transform into a course:\n\n${markdownContent}`,
+      instructions: resolveChatSystemPrompt(
+        options?.prompt ?? '',
+        options?.customInstructions
+      ),
+      messages: await convertToModelMessages(input.messages, {
+        convertDataPart: convertLessonReferenceDataPart,
+      }),
+      tools: options?.tools,
+      stopWhen: options?.maxSteps ? isStepCount(options.maxSteps) : undefined,
     });
   }
 }

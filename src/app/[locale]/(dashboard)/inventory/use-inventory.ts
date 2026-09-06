@@ -17,6 +17,7 @@ import {
   STORAGE_PAGE_SIZE,
 } from './inventory.types';
 import { formatFileSize } from './inventory.utils';
+import { getInventoryErrorMessage } from './inventory-error-message';
 
 const INVENTORY_QUERY_KEY = ['inventory'] as const;
 const INVENTORY_LIST_QUERY_KEY = [...INVENTORY_QUERY_KEY, 'list'] as const;
@@ -24,19 +25,6 @@ const INVENTORY_ANALYTICS_QUERY_KEY = [
   ...INVENTORY_QUERY_KEY,
   'analytics',
 ] as const;
-
-function getErrorMessage(error: unknown, fallback: string) {
-  if (
-    error &&
-    typeof error === 'object' &&
-    'message' in error &&
-    typeof error.message === 'string'
-  ) {
-    return error.message;
-  }
-
-  return fallback;
-}
 
 async function copyToClipboard(value: string) {
   if (!navigator.clipboard?.writeText) {
@@ -95,6 +83,9 @@ export function useInventory({
   const [uploadProgressById, setUploadProgressById] = useState<
     Record<string, number>
   >({});
+  const [optimisticEntries, setOptimisticEntries] = useState<InventoryEntry[]>(
+    []
+  );
   const [previewDialog, setPreviewDialog] =
     useState<InventoryPreviewState | null>(null);
 
@@ -125,7 +116,25 @@ export function useInventory({
     placeholderData: keepPreviousData,
   });
 
-  const entries = listQuery.data?.data ?? [];
+  const serverEntries = listQuery.data?.data ?? [];
+  const entries = useMemo(() => {
+    const serverIds = new Set(serverEntries.map((entry) => entry.id));
+    const activeOptimistic = optimisticEntries.filter(
+      (entry) => !serverIds.has(entry.id)
+    );
+    return [...activeOptimistic, ...serverEntries];
+  }, [serverEntries, optimisticEntries]);
+  const listPagination = useMemo(() => {
+    if (!listQuery.data?.pagination) return undefined;
+    const serverIds = new Set(serverEntries.map((entry) => entry.id));
+    const activeOptimisticCount = optimisticEntries.filter(
+      (entry) => !serverIds.has(entry.id)
+    ).length;
+    return {
+      ...listQuery.data.pagination,
+      total: listQuery.data.pagination.total + activeOptimisticCount,
+    };
+  }, [listQuery.data?.pagination, serverEntries, optimisticEntries]);
   const folders = useMemo(
     () => entries.filter((entry) => entry.isFolder),
     [entries]
@@ -202,12 +211,12 @@ export function useInventory({
       });
     },
     onError: (error: ApiError) => {
-      toast.error(getErrorMessage(error, t('toast.genericError')));
+      toast.error(getInventoryErrorMessage(error, t));
     },
   });
 
   const uploadMutation = useMutation({
-    mutationFn: async (file: File) => {
+    mutationFn: async ({ file, tempId }: { file: File; tempId: string }) => {
       let uploadFileId: string | null = null;
 
       try {
@@ -216,39 +225,37 @@ export function useInventory({
           file,
           onUploadStart: (fileId) => {
             uploadFileId = fileId;
-            queryClient.invalidateQueries({ queryKey: INVENTORY_QUERY_KEY });
+            setOptimisticEntries((curr) =>
+              curr.map((entry) =>
+                entry.id === tempId ? { ...entry, id: fileId } : entry
+              )
+            );
             setUploadProgressById((current) => ({
               ...current,
-              [fileId]: 0,
+              [fileId]: current[tempId] ?? 0,
             }));
           },
           onUploadProgress: (fileId, progress) => {
             setUploadProgressById((current) => ({
               ...current,
+              [tempId]: progress,
               [fileId]: progress,
             }));
           },
           onUploadComplete: (fileId) => {
             setUploadProgressById((current) => ({
               ...current,
+              [tempId]: 100,
               [fileId]: 100,
             }));
           },
         });
 
-        if (uploadFileId) {
-          const completedUploadFileId = uploadFileId;
-          setUploadProgressById((current) => {
-            const next = { ...current };
-            delete next[completedUploadFileId];
-            return next;
-          });
-        }
-
         return response.data;
       } catch (error) {
         if (uploadFileId) {
           const failedUploadFileId = uploadFileId;
+          inventoryService.deleteEntries([failedUploadFileId]).catch(() => {});
           setUploadProgressById((current) => {
             const next = { ...current };
             delete next[failedUploadFileId];
@@ -259,7 +266,22 @@ export function useInventory({
         throw error;
       }
     },
-    onSuccess: async (entry) => {
+    onSuccess: async (entry, variables) => {
+      setOptimisticEntries((current) =>
+        current.filter(
+          (item) =>
+            item.id !== variables.tempId &&
+            item.metadata?.tempId !== variables.tempId &&
+            item.id !== entry.id
+        )
+      );
+      setUploadProgressById((current) => {
+        const next = { ...current };
+        delete next[variables.tempId];
+        delete next[entry.id];
+        return next;
+      });
+
       await queryClient.invalidateQueries({ queryKey: INVENTORY_QUERY_KEY });
       setUploadOpen(false);
       setSelectedIds([]);
@@ -267,8 +289,43 @@ export function useInventory({
         description: entry.name,
       });
     },
+    onError: (error: ApiError, variables) => {
+      setOptimisticEntries((current) =>
+        current.filter(
+          (item) =>
+            item.id !== variables.tempId &&
+            item.metadata?.tempId !== variables.tempId
+        )
+      );
+      setUploadProgressById((current) => {
+        const next = { ...current };
+        delete next[variables.tempId];
+        return next;
+      });
+
+      toast.error(getInventoryErrorMessage(error, t));
+    },
+  });
+
+  const googleDriveImportMutation = useMutation({
+    mutationFn: async (fileId: string) => {
+      const response = await inventoryService.importFromGoogleDrive({
+        fileId,
+        parentId: currentFolderId,
+      });
+
+      return response.data;
+    },
     onError: (error: ApiError) => {
-      toast.error(getErrorMessage(error, t('toast.genericError')));
+      toast.error(getInventoryErrorMessage(error, t));
+    },
+    onSuccess: async (entry) => {
+      await queryClient.invalidateQueries({ queryKey: INVENTORY_QUERY_KEY });
+      setUploadOpen(false);
+      setSelectedIds([]);
+      toast.success(t('toast.googleDriveImported'), {
+        description: entry.name,
+      });
     },
   });
 
@@ -286,7 +343,7 @@ export function useInventory({
       });
     },
     onError: (error: ApiError) => {
-      toast.error(getErrorMessage(error, t('toast.genericError')));
+      toast.error(getInventoryErrorMessage(error, t));
     },
   });
 
@@ -310,7 +367,7 @@ export function useInventory({
       });
     },
     onError: (error: ApiError) => {
-      toast.error(getErrorMessage(error, t('toast.genericError')));
+      toast.error(getInventoryErrorMessage(error, t));
     },
   });
 
@@ -326,7 +383,7 @@ export function useInventory({
       toast.success(t('toast.deleted', { count: result.deletedCount }));
     },
     onError: (error: ApiError) => {
-      toast.error(getErrorMessage(error, t('toast.genericError')));
+      toast.error(getInventoryErrorMessage(error, t));
     },
   });
 
@@ -375,6 +432,10 @@ export function useInventory({
 
       return current.filter((id) => id !== entryId);
     });
+  };
+
+  const handleSelectSingleEntry = (entryId: string) => {
+    setSelectedIds([entryId]);
   };
 
   const handleSelectAll = (checked: boolean) => {
@@ -448,7 +509,44 @@ export function useInventory({
       return;
     }
 
-    uploadMutation.mutate(file);
+    const tempId = `optimistic-${crypto.randomUUID()}`;
+    const optimisticEntry: InventoryEntry = {
+      id: tempId,
+      userId: '',
+      parentId: currentFolderId,
+      name: file.name,
+      isFolder: false,
+      metadata: { tempId },
+      status: 'UPLOADING',
+      fileSize: file.size,
+      mimeType: file.type || 'application/octet-stream',
+      extension: file.name.includes('.')
+        ? (file.name.split('.').pop() ?? null)
+        : null,
+      bucket: null,
+      objectKey: null,
+      checksumSha256: null,
+      vectorDbId: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      uploadedAt: new Date().toISOString(),
+      deletedAt: null,
+      thumbnailObjectKey: null,
+      thumbnailMimeType: null,
+      thumbnailUrl: file.type.startsWith('image/')
+        ? URL.createObjectURL(file)
+        : null,
+    };
+
+    setOptimisticEntries((curr) => [optimisticEntry, ...curr]);
+    setUploadProgressById((curr) => ({ ...curr, [tempId]: 0 }));
+    setUploadOpen(false);
+
+    uploadMutation.mutate({ file, tempId });
+  };
+
+  const handleImportGoogleDriveFile = (fileId: string) => {
+    googleDriveImportMutation.mutate(fileId);
   };
 
   const handlePreviewEntry = async (entry: InventoryEntry) => {
@@ -461,7 +559,9 @@ export function useInventory({
         mimeType: entry.mimeType,
       });
     } catch (error) {
-      toast.error(getErrorMessage(error, t('toast.previewUnavailable')));
+      toast.error(
+        getInventoryErrorMessage(error, t, t('toast.previewUnavailable'))
+      );
     }
   };
 
@@ -491,7 +591,7 @@ export function useInventory({
         description: entry.name,
       });
     } catch (error) {
-      toast.error(getErrorMessage(error, t('toast.genericError')));
+      toast.error(getInventoryErrorMessage(error, t));
     }
   };
 
@@ -516,7 +616,7 @@ export function useInventory({
         }),
       });
     } catch (error) {
-      toast.error(getErrorMessage(error, t('toast.genericError')));
+      toast.error(getInventoryErrorMessage(error, t));
     }
   };
 
@@ -542,6 +642,7 @@ export function useInventory({
     handleDeleteConfirm,
     handleGoToBreadcrumb,
     handleUploadFiles,
+    handleImportGoogleDriveFile,
     handleMoveSubmit,
     handleNavigateIntoFolder,
     handleOpenEntry,
@@ -555,11 +656,12 @@ export function useInventory({
     handleSearchChange,
     handleSelectAll,
     handleSelectEntry,
+    handleSelectSingleEntry,
     handleShareEntry,
     handleShareSelected,
     isFetching: listQuery.isFetching,
     isLoading: listQuery.isLoading || analyticsQuery.isLoading,
-    listPagination: listQuery.data?.pagination,
+    listPagination,
     loadError: listQuery.error ?? analyticsQuery.error,
     maxFileSizeBytes,
     moveDialog,
@@ -584,6 +686,7 @@ export function useInventory({
     toggleSelection: handleSelectEntry,
     uploadOpen,
     uploadPending: uploadMutation.isPending,
+    googleDriveImportPending: googleDriveImportMutation.isPending,
     viewType,
   };
 }

@@ -1,4 +1,4 @@
-.lesson-toolbar-bar .tiptap-toolbar[data-variant='fixed'] {
+.lesson-toolbar-bar .tiptap-toolbar[data-variant="fixed"] {
   position: static;
   top: auto;
   z-index: auto;
@@ -9,12 +9,15 @@
 
 .lesson-editor-content .tiptap.ProseMirror.lesson-tiptap-editor {
   min-height: 25rem;
-  padding: 1rem 0;
+  padding: 2rem 0 1rem;
   color: var(--foreground);
   outline: none;
 }
 
-.lesson-editor-content .tiptap.ProseMirror.lesson-tiptap-editor[contenteditable='true'] {
+.lesson-editor-content
+  .tiptap.ProseMirror.lesson-tiptap-editor[contenteditable="true"],
+.lesson-editor-content
+  .tiptap.ProseMirror.lesson-tiptap-editor.lesson-ai-review-active {
   margin-top: 1rem;
   padding: 1rem;
   border: 1px solid var(--border);
@@ -22,10 +25,239 @@
   background: var(--background);
 }
 
-.lesson-editor-content .tiptap.ProseMirror.lesson-tiptap-editor p.is-editor-empty:first-child::before {
+.lesson-editor-content
+  .tiptap.ProseMirror.lesson-tiptap-editor
+  p.is-editor-empty:first-child::before {
   color: var(--muted-foreground);
   content: attr(data-placeholder);
   float: left;
   height: 0;
   pointer-events: none;
+}
+
+.lesson-editor-content .lesson-ai-review-deleted {
+  border-radius: 0.125rem;
+  background: color-mix(in oklab, var(--destructive) 14%, transparent);
+  color: var(--destructive);
+  text-decoration: line-through;
+}
+
+.lesson-editor-content .lesson-ai-review-inserted {
+  border-radius: 0.125rem;
+  background: color-mix(in oklab, var(--primary) 14%, transparent);
+  color: var(--primary);
+  text-decoration: none;
+  pointer-events: none;
+}
+
+.lesson-editor-content .lesson-ai-review-original-block {
+  border-radius: 0.5rem;
+  background: color-mix(in oklab, var(--destructive) 9%, transparent);
+  color: var(--destructive);
+  opacity: 0.82;
+  text-decoration: line-through;
+}
+
+.lesson-editor-content .lesson-ai-review-original-block,
+.lesson-editor-content .lesson-ai-review-original-block * {
+  color: var(--destructive) !important;
+  text-decoration: line-through;
+}
+
+.lesson-editor-content .lesson-ai-review-original-block iframe,
+.lesson-editor-content .lesson-ai-review-original-block img {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.lesson-editor-content .lesson-ai-review-inserted,
+.lesson-editor-content .lesson-ai-review-inserted * {
+  color: var(--primary) !important;
+}
+
+.lesson-editor-content .lesson-ai-review-inserted-block {
+  display: block;
+  margin: 0.75rem 0;
+}
+
+.lesson-editor-content .lesson-ai-review-inserted-block > :first-child {
+  margin-top: 0;
+}
+
+.lesson-editor-content .lesson-ai-review-inserted-block > :last-child {
+  margin-bottom: 0;
+}
+
+.lesson-editor-content .lesson-ai-review-deleted a[href]::after,
+.lesson-editor-content .lesson-ai-review-original-block a[href]::after,
+.lesson-editor-content .lesson-ai-review-inserted a[href]::after {
+  content: " (" attr(href) ")";
+  font-size: 0.85em;
+  text-decoration: none;
+}
+
+div[data-youtube-video] {
+  width: 50%;
+  aspect-ratio: 16 / 9;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  margin: 1.5rem 0;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+
+  iframe {
+    width: 100% !important;
+    height: 100% !important;
+    border: 0;
+  }
+}
+/* Lesson Presentation Mode Styles */
+.lesson-presentation-content {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 3px;
+  }
+
+  .tiptap.ProseMirror.lesson-tiptap-editor {
+    min-height: auto;
+    color: var(--slate-200, #e2e8f0);
+    font-size: 1.25rem;
+    line-height: 1.8;
+    outline: none;
+
+    @media (min-width: 768px) {
+      font-size: 1.5rem;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+      color: #f8fafc;
+      font-weight: 700;
+      line-height: 1.3;
+      margin-top: 0;
+    }
+
+    h1 {
+      font-size: 2.25rem;
+      margin-bottom: 1.5rem;
+      @media (min-width: 768px) {
+        font-size: 3rem;
+      }
+    }
+
+    h2 {
+      font-size: 1.875rem;
+      margin-bottom: 1.25rem;
+      @media (min-width: 768px) {
+        font-size: 2.25rem;
+      }
+    }
+
+    h3 {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      @media (min-width: 768px) {
+        font-size: 1.875rem;
+      }
+    }
+
+    p {
+      margin-bottom: 1.5rem;
+      color: #cbd5e1;
+    }
+
+    ul,
+    ol {
+      padding-left: 2rem;
+      margin-bottom: 1.5rem;
+      list-style-position: outside;
+
+      li {
+        margin-bottom: 0.75rem;
+        p {
+          margin-bottom: 0;
+          display: inline;
+        }
+      }
+    }
+
+    ul {
+      list-style-type: disc;
+    }
+
+    ol {
+      list-style-type: decimal;
+    }
+
+    blockquote {
+      border-left: 4px solid var(--primary);
+      padding-left: 1.5rem;
+      font-style: italic;
+      color: #94a3b8;
+      margin: 1.5rem 0;
+    }
+
+    code {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 0.2rem 0.4rem;
+      border-radius: 0.25rem;
+      font-size: 0.9em;
+      font-family: monospace;
+      color: #f1f5f9;
+    }
+
+    pre {
+      background: #0f172a;
+      border: 1px solid #334155;
+      padding: 1rem;
+      border-radius: 0.5rem;
+      overflow-x: auto;
+      margin-bottom: 1.5rem;
+
+      code {
+        background: transparent;
+        padding: 0;
+        border-radius: 0;
+        font-size: 0.95rem;
+        color: #e2e8f0;
+      }
+    }
+
+    img {
+      max-height: 40vh;
+      object-fit: contain;
+      border-radius: 0.75rem;
+      margin: 1.5rem auto;
+      border: 1px solid #334155;
+    }
+
+    a {
+      color: var(--primary);
+      text-decoration: underline;
+      transition: color 0.2s;
+      &:hover {
+        color: var(--primary-hover);
+      }
+    }
+  }
+
+  div[data-youtube-video] {
+    width: 100%;
+    max-width: 640px;
+    margin: 1.5rem auto;
+    border: 1px solid #334155;
+  }
 }

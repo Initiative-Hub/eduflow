@@ -1,0 +1,49 @@
+import { NextResponse } from 'next/server';
+import { z } from 'zod';
+import { withAuth } from '@/lib/api/middlewares';
+import { buildStorageErrorResponse } from '@/lib/storage/storage-error-response';
+import { CourseService } from '@/services/CourseService';
+
+const initUploadSchema = z.object({
+  parentId: z.string().uuid().nullable().optional(),
+  fileName: z.string().trim().min(1).max(255),
+  contentType: z.string().min(1),
+  fileSize: z.number().int().positive(),
+});
+
+export const POST = withAuth(async (req, session, { params }) => {
+  try {
+    const { courseId } = await params;
+    const body = await req.json();
+    const parsed = initUploadSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { message: 'Invalid payload', details: parsed.error.flatten() },
+        { status: 400 }
+      );
+    }
+
+    const upload = await CourseService.initializeUpload({
+      userId: session.user.id,
+      courseId,
+      parentId: parsed.data.parentId,
+      fileName: parsed.data.fileName,
+      contentType: parsed.data.contentType,
+      fileSize: parsed.data.fileSize,
+    });
+
+    return NextResponse.json({
+      data: {
+        fileId: upload.id,
+        name: upload.name,
+        path: upload.objectKey,
+        bucket: upload.bucket,
+        status: upload.status,
+        uploadUrl: upload.uploadUrl,
+        uploadHeaders: upload.uploadHeaders,
+      },
+    });
+  } catch (error) {
+    return buildStorageErrorResponse(error);
+  }
+});

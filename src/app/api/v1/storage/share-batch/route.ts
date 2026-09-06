@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { withAuth } from '@/lib/api/middlewares';
+import { withPermissions } from '@/lib/api/middlewares';
+import { PLATFORM_PERMISSION } from '@/lib/permissions/permission-keys';
 import { StorageService } from '@/services/StorageService';
 
 const shareBatchSchema = z.object({
@@ -52,29 +53,35 @@ const shareBatchSchema = z.object({
  *         description: Internal server error
  *
  */
-export const POST = withAuth(async (req, session) => {
-  try {
-    const body = await req.json();
-    const parsed = shareBatchSchema.safeParse(body);
+export const POST = withPermissions(
+  [PLATFORM_PERMISSION.PERSONAL_FILES_MANAGE],
+  async (req, session) => {
+    try {
+      const body = await req.json();
+      const parsed = shareBatchSchema.safeParse(body);
 
-    if (!parsed.success) {
+      if (!parsed.success) {
+        return NextResponse.json(
+          {
+            message: 'Invalid request payload',
+            details: parsed.error.flatten(),
+          },
+          { status: 400 }
+        );
+      }
+
+      const signed = await StorageService.createShareUrlsBatch({
+        userId: session.user.id,
+        fileIds: parsed.data.fileIds,
+        expiresInSeconds: parsed.data.expiresIn,
+      });
+
+      return NextResponse.json({ data: signed });
+    } catch (error: any) {
       return NextResponse.json(
-        { message: 'Invalid request payload', details: parsed.error.flatten() },
-        { status: 400 }
+        { message: error?.message || 'Internal Server Error' },
+        { status: 500 }
       );
     }
-
-    const signed = await StorageService.createShareUrlsBatch({
-      userId: session.user.id,
-      fileIds: parsed.data.fileIds,
-      expiresInSeconds: parsed.data.expiresIn,
-    });
-
-    return NextResponse.json({ data: signed });
-  } catch (error: any) {
-    return NextResponse.json(
-      { message: error?.message || 'Internal Server Error' },
-      { status: 500 }
-    );
   }
-});
+);

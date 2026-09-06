@@ -1,90 +1,45 @@
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { createGoogle } from '@ai-sdk/google';
 import {
   convertToModelMessages,
+  isStepCount,
   smoothStream,
-  streamObject,
   streamText,
 } from 'ai';
-import { pdfToMarkdown } from '@/lib/pdf';
-import { aiCourseGenerationSchema } from '@/lib/validations/course.schema';
-import {
-  COURSE_GENERATION_PROMPT,
-  DEFAULT_MODELS,
-  SYSTEM_PROMPT,
-  safetySettings,
-} from '@/services/ai/chat-provider.constants';
-import type { StreamChatInput } from '@/services/ai/chat-provider.types';
-import { StorageService } from '../StorageService';
+import { DEFAULT_MODELS } from '@/services/ai/chat-provider.constants';
+import type {
+  StreamChatInput,
+  StreamChatInternalOptions,
+} from '@/services/ai/chat-provider.types';
+import { convertLessonReferenceDataPart } from '@/utils/chat-lesson-references';
 import type { ChatProviderService } from './ChatProviderService';
-
-const PROVIDER_NAME = 'google';
+import { resolveChatSystemPrompt } from './chat-system-prompt';
 
 export class GoogleService implements ChatProviderService {
-  async streamChat(input: StreamChatInput) {
+  async streamChat(
+    input: StreamChatInput,
+    options?: StreamChatInternalOptions
+  ) {
     const apiKey = input.apiKey ?? process.env.GOOGLE_GENERATIVE_AI_API_KEY;
 
     if (!apiKey) {
-      throw new Error(`Missing API key for provider "${PROVIDER_NAME}"`);
+      throw new Error(`Missing API key for provider "google"`);
     }
 
     const model = input.model ?? DEFAULT_MODELS.google;
-    const provider = createGoogleGenerativeAI({ apiKey });
+    const provider = createGoogle({ apiKey });
 
     return streamText({
       experimental_transform: smoothStream(),
       model: provider(model),
-      providerOptions: {
-        ...input.providerOptions,
-        google: {
-          safetySettings,
-          ...(input.providerOptions?.google ?? {}),
-        },
-      },
-      system: input.system
-        ? `${SYSTEM_PROMPT}\n\n=== ADDITIONAL CONTEXT ===\n${input.system}`
-        : SYSTEM_PROMPT,
-      messages: await convertToModelMessages(input.messages),
-    });
-  }
-
-  async streamCourse(options: {
-    userId: string;
-    fileId?: string;
-    file?: File;
-    model?: string;
-    apiKey?: string;
-    providerOptions?: any;
-  }) {
-    let pdfBuffer: Buffer;
-
-    if (options.fileId) {
-      const payload = await StorageService.getDownloadPayload({
-        userId: options.userId,
-        fileId: options.fileId,
-      });
-      pdfBuffer = Buffer.from(payload.bytes);
-    } else if (options.file) {
-      const bytes = await options.file.arrayBuffer();
-      pdfBuffer = Buffer.from(bytes);
-    } else {
-      throw new Error('Missing file or fileId');
-    }
-
-    const markdownContent = await pdfToMarkdown(pdfBuffer);
-
-    const apiKey = options.apiKey ?? process.env.GOOGLE_GENERATIVE_AI_API_KEY;
-    if (!apiKey) {
-      throw new Error(`Missing API key for provider "${PROVIDER_NAME}"`);
-    }
-
-    const model = options.model ?? DEFAULT_MODELS.google;
-    const provider = createGoogleGenerativeAI({ apiKey });
-
-    return streamObject({
-      model: provider(model),
-      schema: aiCourseGenerationSchema,
-      system: COURSE_GENERATION_PROMPT,
-      prompt: `Content to analyze and transform into a course:\n\n${markdownContent}`,
+      instructions: resolveChatSystemPrompt(
+        options?.prompt ?? '',
+        options?.customInstructions
+      ),
+      messages: await convertToModelMessages(input.messages, {
+        convertDataPart: convertLessonReferenceDataPart,
+      }),
+      tools: options?.tools,
+      stopWhen: options?.maxSteps ? isStepCount(options.maxSteps) : undefined,
     });
   }
 }

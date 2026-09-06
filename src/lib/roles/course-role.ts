@@ -1,10 +1,13 @@
+import { CourseEnrollmentStatus } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
 
 export async function getCourseRole(userId: string, courseId: string) {
   const enrollment = await prisma.enrollment.findFirst({
     where: {
       memberId: userId,
-      courseId: courseId,
+      courseId,
+      course: { deletedAt: null },
+      status: CourseEnrollmentStatus.ACTIVE,
     },
     select: {
       role: true,
