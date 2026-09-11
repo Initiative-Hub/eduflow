@@ -3,6 +3,7 @@ name: EduFlow External Services Production Deployment
 on:
   push:
     branches:
+      - staging
       - production
     paths:
       - external-services/**

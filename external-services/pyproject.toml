@@ -8,7 +8,7 @@ dependencies = [
     "fastapi[standard]~=0.141.1",
     "markitdown[pdf]~=0.1.7",
     "modal~=1.5.4",
-    "slide-skills[svg-convert]~=0.2.62",
+    "slide-skills[svg-convert]~=0.2.63",
     "tavily-python~=0.7.27",
     "boto3~=1.43.71",
 ]
@@ -24,6 +24,13 @@ dev = [
     "types-pytz",
     "types-requests",
 ]
+
+[tool.pytest.ini_options]
+# Without this `app` is not importable from tests, which is why the only test
+# here talked to a live server over HTTP instead of importing the code.
+pythonpath = ["."]
+asyncio_mode = "auto"
+testpaths = ["tests"]
 
 [tool.poe.tasks]
 dev = "uv run fastapi dev --reload --host 0.0.0.0 --port 8000"

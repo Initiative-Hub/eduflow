@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { GameQuizAiDialog } from './ai/game-quiz-ai-dialog';
@@ -53,6 +53,7 @@ export function GameQuizEditorClient({
   copy = gameQuizCopy,
   gameQuizId,
 }: GameQuizEditorClientProps) {
+  const initializationKey = useRef<string | null>(null);
   const router = useRouter();
   const queryClient = useQueryClient();
   const gameQuery = useQuery({
@@ -108,13 +109,20 @@ export function GameQuizEditorClient({
   });
 
   const hostMutation = useMutation({
-    mutationFn: (expectedRevision: number) =>
-      gameQuizApi.createSession(gameQuizId!, expectedRevision),
+    mutationFn: (expectedRevision: number) => {
+      initializationKey.current ??= crypto.randomUUID();
+      return gameQuizApi.createSession(
+        gameQuizId!,
+        expectedRevision,
+        initializationKey.current
+      );
+    },
     onSuccess: (session) => {
+      initializationKey.current = null;
       activateLiveGameSession({
         audience: 'HOST',
         sessionId: session.sessionId,
-        version: 2,
+        version: 3,
       });
       router.push(`/games/${gameQuizId}/host`);
     },

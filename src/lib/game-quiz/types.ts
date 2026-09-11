@@ -81,13 +81,11 @@ export type GameRoundRecord = {
 
 export type GameParticipantRecord = {
   id: string;
-  realtimeKey: string;
   sessionId: string;
   userId: string;
   displayName: string;
   score: number;
   joinedAt: Date;
-  lastSeenAt: Date | null;
   user?: { id: string; name: string; image: string | null };
 };
 
@@ -108,7 +106,6 @@ export type GameAnswerRecord = {
 
 export type GameSessionRecord = {
   id: string;
-  realtimeKey: string;
   gameQuizId: string;
   hostId: string;
   gameQuizRevision: number;
@@ -125,9 +122,16 @@ export type GameSessionRecord = {
   stateVersion: number;
   startedAt: Date | null;
   endedAt: Date | null;
-  lastHostSeenAt: Date | null;
-  closedReason: 'HOST_LEFT' | 'VIEWED_REPORT' | null;
+  closedReason: 'HOST_LEFT' | 'COMPLETED' | 'HOST_ENDED' | null;
   joinCodeReleasedAt: Date | null;
+  runtimeStatus:
+    | 'INITIALIZING'
+    | 'ACTIVE'
+    | 'FINALIZING'
+    | 'FINALIZED'
+    | 'ABORTED';
+  initializationKey: string;
+  finalizationReceipt: unknown | null;
   createdAt: Date;
   updatedAt: Date;
   rounds?: GameRoundRecord[];

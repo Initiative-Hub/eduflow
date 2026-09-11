@@ -5,8 +5,15 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import type { TiptapDocument } from '@/utils/lesson-content';
 import { getCriticalDeckWarnings } from '@/utils/slide-deck-warnings';
+import {
+  clearPresentationPlan,
+  getSavedPresentationPlan,
+  type SavedPresentationPlan,
+  savePresentationPlan,
+} from './presentation-plan-storage';
 import { getNextRecommendedCollectionForPlannerState } from './presentation-planner-state';
 import { useGenerateSlideDeck, useLesson } from './use-lesson';
+import { DEFAULT_TEMPLATE_COLLECTION } from '@/services/SlideService';
 
 type Step = 'input' | 'planning' | 'planned' | 'generating' | 'generated';
 
@@ -794,6 +801,52 @@ export function usePresentation(options: {
   const [recommendedCollection, setRecommendedCollection] = useState<
     string | null
   >(null);
+  const [savedPlan, setSavedPlan] = useState<SavedPresentationPlan | null>(
+    null
+  );
+  const [isNewDeckDialogOpen, setIsNewDeckDialogOpen] = useState(false);
+
+  useEffect(() => {
+    if (!lessonId) return;
+    const plan = getSavedPresentationPlan(lessonId);
+    if (plan) {
+      setSavedPlan(plan);
+    }
+  }, [lessonId]);
+
+  const persistPlan = useCallback(
+    (
+      slides: PlannedSlide[],
+      overrides?: {
+        instructions?: string;
+        duration?: string;
+        selectedCollection?: string;
+        recommendedCollection?: string | null;
+      }
+    ) => {
+      if (!slides || slides.length === 0 || !lessonId) return;
+      const saved = savePresentationPlan(lessonId, {
+        plannedSlides: slides,
+        instructions: overrides?.instructions ?? instructions,
+        duration: overrides?.duration ?? duration,
+        selectedCollection: overrides?.selectedCollection ?? selectedCollection,
+        recommendedCollection:
+          overrides?.recommendedCollection !== undefined
+            ? overrides.recommendedCollection
+            : recommendedCollection,
+      });
+      if (saved) {
+        setSavedPlan(saved);
+      }
+    },
+    [
+      duration,
+      instructions,
+      lessonId,
+      recommendedCollection,
+      selectedCollection,
+    ]
+  );
 
   // Dynamic Outlines fallback generator
   const generateOutlines = useCallback(
@@ -1015,15 +1068,23 @@ export function usePresentation(options: {
                   bindings: s.bindings || {},
                 })
               );
-              setPlannedSlides(
-                normalizePlannedSlides(slidesWithIds, content, title)
+              const normalized = normalizePlannedSlides(
+                slidesWithIds,
+                content,
+                title
               );
-              setRecommendedCollection(
-                getNextRecommendedCollectionForPlannerState({
-                  phase: 'done',
-                  recommendedCollection: event.recommendedCollection,
-                })
-              );
+              setPlannedSlides(normalized);
+              const nextRec = getNextRecommendedCollectionForPlannerState({
+                phase: 'done',
+                recommendedCollection: event.recommendedCollection,
+              });
+              setRecommendedCollection(nextRec);
+              persistPlan(normalized, {
+                instructions,
+                duration,
+                selectedCollection,
+                recommendedCollection: nextRec,
+              });
               setStep('planned');
               break;
             }
@@ -1046,6 +1107,11 @@ export function usePresentation(options: {
       setTimeout(() => {
         const outlines = generateOutlines(instructions, duration);
         setPlannedSlides(outlines);
+        persistPlan(outlines, {
+          instructions,
+          duration,
+          selectedCollection,
+        });
         setStep('planned');
       }, 2000);
     }
@@ -1053,11 +1119,13 @@ export function usePresentation(options: {
 
   // Outline updates
   const updateSlideTitle = (index: number, newTitle: string) => {
-    setPlannedSlides((prev) =>
-      prev.map((slide, idx) =>
+    setPlannedSlides((prev) => {
+      const next = prev.map((slide, idx) =>
         idx === index ? { ...slide, slideTitle: newTitle } : slide
-      )
-    );
+      );
+      persistPlan(next);
+      return next;
+    });
   };
 
   const changeSlideLayout = (
@@ -1212,8 +1280,8 @@ export function usePresentation(options: {
       };
     }
 
-    setPlannedSlides((prev) =>
-      prev.map((slide, idx) =>
+    setPlannedSlides((prev) => {
+      const next = prev.map((slide, idx) =>
         idx === index
           ? {
               ...slide,
@@ -1225,35 +1293,51 @@ export function usePresentation(options: {
               ),
             }
           : slide
-      )
-    );
+      );
+      persistPlan(next);
+      return next;
+    });
   };
 
   const deleteSlide = (index: number) => {
-    setPlannedSlides((prev) => prev.filter((_, idx) => idx !== index));
+    setPlannedSlides((prev) => {
+      const next = prev.filter((_, idx) => idx !== index);
+      if (next.length > 0) {
+        persistPlan(next);
+      } else {
+        clearPresentationPlan(lessonId);
+        setSavedPlan(null);
+      }
+      return next;
+    });
   };
 
   const addSlide = () => {
-    setPlannedSlides((prev) => [
-      ...prev,
-      {
-        id: `slide-custom-${Date.now()}`,
-        layoutType: 'TITLE_BULLETS',
-        slideTitle: 'New Slide Title',
-        bindings: {
-          bullets: [
-            'First bullet point outline',
-            'Second bullet point outline',
-          ],
+    setPlannedSlides((prev) => {
+      const next: PlannedSlide[] = [
+        ...prev,
+        {
+          id: `slide-custom-${Date.now()}`,
+          layoutType: 'TITLE_BULLETS',
+          slideTitle: 'New Slide Title',
+          bindings: {
+            bullets: [
+              'First bullet point outline',
+              'Second bullet point outline',
+            ],
+          },
         },
-      },
-    ]);
+      ];
+      persistPlan(next);
+      return next;
+    });
   };
 
   // Generation trigger — renders the real HTML deck via the external service.
   const handleStartGenerating = async () => {
     if (plannedSlides.length === 0) return;
 
+    persistPlan(plannedSlides);
     setStep('generating');
     setLoaderStep(0);
     setDeckUrl(null);
@@ -1270,7 +1354,7 @@ export function usePresentation(options: {
         // 'auto' = use the style the planner AI recommended for this lesson
         collection:
           selectedCollection === 'auto'
-            ? (recommendedCollection ?? 'starter')
+            ? (recommendedCollection ?? DEFAULT_TEMPLATE_COLLECTION)
             : selectedCollection,
         slides: plannedSlides.map((slide) => ({
           layoutType: slide.layoutType,
@@ -1313,18 +1397,68 @@ export function usePresentation(options: {
 
   // Discard the saved deck and return to the planner to build a new one.
   const startNewDeck = useCallback(() => {
+    const hasExistingOutline =
+      plannedSlides.length > 0 ||
+      (savedPlan?.plannedSlides && savedPlan.plannedSlides.length > 0);
+    if (hasExistingOutline) {
+      setIsNewDeckDialogOpen(true);
+    } else {
+      setDeckUrl(null);
+      setDeckUsage(null);
+      setRecommendedCollection(null);
+      setStep('input');
+    }
+  }, [plannedSlides.length, savedPlan]);
+
+  // Return to the outline planner step to modify and regenerate the deck.
+  const editOutline = useCallback(() => {
+    if (plannedSlides.length === 0 && savedPlan?.plannedSlides?.length) {
+      setPlannedSlides(savedPlan.plannedSlides);
+      if (savedPlan.instructions) setInstructions(savedPlan.instructions);
+      if (savedPlan.duration) setDuration(savedPlan.duration);
+      if (savedPlan.selectedCollection)
+        setSelectedCollection(savedPlan.selectedCollection);
+      if (savedPlan.recommendedCollection)
+        setRecommendedCollection(savedPlan.recommendedCollection);
+    }
+    setDeckUrl(null);
+    setDeckUsage(null);
+    setStep('planned');
+  }, [plannedSlides.length, savedPlan]);
+
+  const handleUseExistingPlan = useCallback(() => {
+    setIsNewDeckDialogOpen(false);
+    if (plannedSlides.length === 0 && savedPlan?.plannedSlides?.length) {
+      setPlannedSlides(savedPlan.plannedSlides);
+      if (savedPlan.instructions) setInstructions(savedPlan.instructions);
+      if (savedPlan.duration) setDuration(savedPlan.duration);
+      if (savedPlan.selectedCollection)
+        setSelectedCollection(savedPlan.selectedCollection);
+      if (savedPlan.recommendedCollection)
+        setRecommendedCollection(savedPlan.recommendedCollection);
+    }
+    setDeckUrl(null);
+    setDeckUsage(null);
+    setStep('planned');
+  }, [plannedSlides.length, savedPlan]);
+
+  const handleStartNewPlan = useCallback(() => {
+    setIsNewDeckDialogOpen(false);
+    clearPresentationPlan(lessonId);
+    setSavedPlan(null);
+    setPlannedSlides([]);
+    setInstructions('');
+    setDuration('15');
     setDeckUrl(null);
     setDeckUsage(null);
     setRecommendedCollection(null);
     setStep('input');
-  }, []);
+  }, [lessonId]);
 
-  // Return to the outline planner step to modify and regenerate the deck.
-  const editOutline = useCallback(() => {
-    setDeckUrl(null);
-    setDeckUsage(null);
-    setStep('planned');
-  }, []);
+  const handleDiscardSavedPlan = useCallback(() => {
+    clearPresentationPlan(lessonId);
+    setSavedPlan(null);
+  }, [lessonId]);
 
   // When the modal opens, surface a previously generated deck (if one is saved
   // on the lesson) instead of starting from scratch. Runs once per open, after
@@ -1428,5 +1562,12 @@ export function usePresentation(options: {
     selectedCollection,
     setSelectedCollection,
     recommendedCollection,
+    savedPlan,
+    isNewDeckDialogOpen,
+    setIsNewDeckDialogOpen,
+    handleUseExistingPlan,
+    handleStartNewPlan,
+    handleDiscardSavedPlan,
+    persistPlan,
   };
 }

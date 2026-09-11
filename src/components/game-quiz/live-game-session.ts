@@ -2,14 +2,17 @@
 
 export type LiveGameAudience = 'HOST' | 'PARTICIPANT';
 
-export type LiveGameSession = {
-  audience: LiveGameAudience;
-  sessionId: string;
-  version: 2;
-};
+export type LiveGameSession =
+  | { audience: 'HOST'; sessionId: string; version: 3 }
+  | {
+      audience: 'PARTICIPANT';
+      joinCode: string;
+      sessionId: string;
+      version: 3;
+    };
 
 const storageKey = (audience: LiveGameAudience) =>
-  `eduflow.live-game-session.v2.${audience.toLowerCase()}`;
+  `eduflow.live-game-session.v3.${audience.toLowerCase()}`;
 
 export function activateLiveGameSession(selection: LiveGameSession) {
   sessionStorage.setItem(
@@ -24,9 +27,11 @@ export function readLiveGameSession(audience: LiveGameAudience) {
   try {
     const selection = JSON.parse(stored) as LiveGameSession;
     if (
-      selection.version !== 2 ||
+      selection.version !== 3 ||
       selection.audience !== audience ||
-      !selection.sessionId
+      !selection.sessionId ||
+      (audience === 'PARTICIPANT' &&
+        (!('joinCode' in selection) || !selection.joinCode))
     ) {
       sessionStorage.removeItem(storageKey(audience));
       return null;

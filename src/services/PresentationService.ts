@@ -1,9 +1,10 @@
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
-import { generateText, Output } from 'ai';
+import { generateText, NoObjectGeneratedError, Output } from 'ai';
 import * as z from 'zod';
 import { tiptapDocumentToMarkdown } from '@/lib/tiptap-markdown';
-import { DEFAULT_MODELS } from '@/services/ai/chat-provider.constants';
+import type { ChatModel } from '@/services/ai/chat-provider.constants';
 import { LessonService } from '@/services/LessonService';
+import { DEFAULT_TEMPLATE_COLLECTION } from '@/services/SlideService';
 import { isTiptapDocument } from '@/utils/lesson-content';
 
 const STANDARD_LAYOUT_TYPES = [
@@ -35,7 +36,6 @@ const STANDARD_LAYOUT_TYPES = [
  * subject and tone. Must match folder names under external-services/templates.
  */
 const STYLE_COLLECTIONS: Record<string, string> = {
-  starter: 'Neutral, professional default — safe for any subject or audience.',
   neon_dark:
     'Dark background with vivid cyan/pink neon accents — tech, coding, gaming, modern engineering topics.',
   vintage:
@@ -52,6 +52,8 @@ const STYLE_COLLECTIONS: Record<string, string> = {
     'Soft white canvas with violet accents and crisp bordered cards, from the EduFlow light theme - printed handouts, lectures projected in a bright room, and any deck that should look like EduFlow without going dark.',
   eduflow_purple:
     'Deep slate canvas with violet accents, soft bordered cards and an ambient glow, matching the EduFlow platform itself — course material, product walkthroughs, internal training, onboarding, and any deck that should feel native to the product it was made in.',
+  rmit_official:
+    'The official RMIT University brand template: navy grounds, RMIT red rules and headings, Arial throughout, and the university lock-up on the cover and closing slides — lectures, course material, research talks, student presentations, and anything that has to look like it came from RMIT.',
   cultural_folk:
     'Warm plum-gray background, cream text, terracotta and sand accents with a grounded earth strip — culture, diversity, social studies, community, humanities and storytelling topics.',
   green_environment_care:
@@ -90,6 +92,25 @@ const MIN_SLIDE_LIST_ITEMS = 2;
 
 /** How much lesson text the planner is given. Prose, not serialized nodes. */
 const CONTENT_SNIPPET_LIMIT = 16000;
+
+/**
+ * Model for planning, separate from the chat default.
+ *
+ * Planning is one call per deck, so this is not a throughput decision. The call
+ * has to emit a whole deck — 20 slides at a 120-minute duration — against a
+ * nested schema with 32 optional binding fields, from a prompt of roughly 8,000
+ * tokens once the layout guidance and the lesson are in it. The chat default is
+ * the lite tier, and under that load it intermittently stops honouring the
+ * structured-output format: the response comes back with nothing parseable in
+ * it, which surfaces as "No output generated." Measured output for the largest
+ * plan is ~4,300 tokens against a 16,000 cap, so this is a format failure, not
+ * truncation, and more room does not fix it.
+ *
+ * `PLANNER_FALLBACK_MODEL` is used for the retry, so a bad roll is answered by
+ * a stronger model rather than by asking the same one again.
+ */
+const PLANNER_MODEL: ChatModel = 'gemini-3.5-flash';
+const PLANNER_FALLBACK_MODEL: ChatModel = 'gemini-3.6-flash';
 
 /**
  * Characters of explanation each content item should carry.
@@ -299,6 +320,7 @@ const STYLE_COLLECTION_ALIASES: Partial<
   cultural_folk: ['cultural folk'],
   eduflow_purple: ['eduflow purple', 'platform style'],
   eduflow_light: ['eduflow light', 'eduflow'],
+  rmit_official: ['rmit', 'rmit university', 'rmit official'],
   green_environment_care: ['green environment care'],
   illustrative_culture: ['illustrative culture'],
   minimalist_gradient: ['minimalist gradient'],
@@ -450,12 +472,12 @@ export function resolveRecommendedCollection(
 
   if (
     academicScore >= 2 &&
-    'rmit_red_modern' in knownStyles &&
+    DEFAULT_TEMPLATE_COLLECTION in knownStyles &&
     (!recommendedCollection ||
       recommendedCollection === 'clean_light' ||
       recommendedCollection === 'starter')
   ) {
-    return 'rmit_red_modern';
+    return DEFAULT_TEMPLATE_COLLECTION;
   }
 
   return recommendedCollection;
@@ -822,6 +844,7 @@ HARD CONSTRAINTS:
 3. Populate every required field with real, complete content drawn from the lesson.
 4. Every agenda item MUST correspond to a topic explicitly covered by later slides.
 5. Set 'recommendedCollection' to exactly one of the style names listed above.
+6. Output raw, valid JSON only. Do not wrap in markdown code blocks or backticks.
     `.trim();
   }
 
@@ -909,6 +932,7 @@ HARD CONSTRAINTS:
 2. Use ONLY the layout types listed above — do NOT invent new ones.
 3. Every slide must have real content drawn from the lesson.
 4. The FIRST slide must be the title/cover layout described above.
+5. Output raw, valid JSON only. Do not wrap in markdown code blocks or backticks.
     `.trim();
   }
 
@@ -929,7 +953,7 @@ HARD CONSTRAINTS:
     }
 
     const provider = createOpenRouter({ apiKey });
-    const model = DEFAULT_MODELS.openrouter;
+    const model = PLANNER_MODEL;
 
     const targetSlideCount = PresentationService.getTargetSlideCount(
       opts.duration
@@ -959,24 +983,118 @@ HARD CONSTRAINTS:
           styleCollections: opts.styleCollections,
         });
 
-    // `result.output` throws when the model returned nothing parseable, and it
-    // throws away the one thing that explains why — the finish reason. Every
-    // "No output generated." this planner has produced has been diagnosed by
-    // guesswork for want of these three values, so they are captured and
-    // logged, and the two recoverable causes are retried rather than surfaced.
-    const attempt = async (maxOutputTokens: number, temperature: number) => {
-      const result = await generateText({
-        model: provider(model),
-        output: Output.object({ schema: presentationPlanSchema }),
-        prompt: masterPrompt,
-        instructions: PLANNER_SYSTEM_PROMPT,
-        temperature,
-        maxOutputTokens,
-      });
+    function tryExtractPresentationPlan(
+      text: string | undefined
+    ): PresentationPlan | null {
+      if (!text || typeof text !== 'string') return null;
+      const trimmed = text.trim();
+
+      const candidates: string[] = [
+        trimmed,
+        trimmed
+          .replace(/^```(?:json)?\s*/i, '')
+          .replace(/\s*```$/i, '')
+          .trim(),
+      ];
+
+      const firstBrace = trimmed.indexOf('{');
+      const lastBrace = trimmed.lastIndexOf('}');
+      if (firstBrace !== -1 && lastBrace > firstBrace) {
+        candidates.push(trimmed.slice(firstBrace, lastBrace + 1));
+      }
+
+      for (const candidate of candidates) {
+        try {
+          const parsed = JSON.parse(candidate);
+          const validated = presentationPlanSchema.safeParse(parsed);
+          if (validated.success) {
+            return validated.data;
+          }
+        } catch {
+          // Continue to next candidate
+        }
+      }
+
+      return null;
+    }
+
+    // AI SDK's generateText throws NoObjectGeneratedError when parsing/validating
+    // structured output fails. Capturing finishReason and raw text lets us
+    // salvage valid JSON (e.g. wrapped in markdown code fences) or retry with
+    // a larger token budget (if finishReason === 'length') or a stronger model.
+    const attempt = async (
+      maxOutputTokens: number,
+      temperature: number,
+      modelId: ChatModel = model
+    ) => {
       try {
-        return { plan: result.output, result };
-      } catch (error) {
-        return { plan: undefined, result, error };
+        const result = await generateText({
+          model: provider(modelId),
+          output: Output.object({ schema: presentationPlanSchema }),
+          prompt: masterPrompt,
+          instructions: PLANNER_SYSTEM_PROMPT,
+          temperature,
+          maxOutputTokens,
+        });
+        try {
+          return {
+            plan: result.output,
+            result: {
+              finishReason: result.finishReason,
+              usage: result.usage,
+              text: result.text,
+            },
+          };
+        } catch (outputError) {
+          const recovered = tryExtractPresentationPlan(result.text);
+          return {
+            plan: recovered ?? undefined,
+            result: {
+              finishReason: result.finishReason,
+              usage: result.usage,
+              text: result.text,
+            },
+            error: outputError,
+          };
+        }
+      } catch (error: any) {
+        const finishReason =
+          error?.finishReason ??
+          (NoObjectGeneratedError?.isInstance?.(error)
+            ? error.finishReason
+            : undefined);
+        const usage =
+          error?.usage ??
+          (NoObjectGeneratedError?.isInstance?.(error)
+            ? error.usage
+            : undefined);
+        const text =
+          error?.text ??
+          (NoObjectGeneratedError?.isInstance?.(error)
+            ? error.text
+            : undefined);
+
+        const recovered = tryExtractPresentationPlan(text);
+        if (recovered) {
+          return {
+            plan: recovered,
+            result: {
+              finishReason: finishReason ?? 'stop',
+              usage,
+              text,
+            },
+          };
+        }
+
+        return {
+          plan: undefined,
+          result: {
+            finishReason,
+            usage,
+            text,
+          },
+          error,
+        };
       }
     };
 
@@ -985,22 +1103,27 @@ HARD CONSTRAINTS:
     if (!plan) {
       const finish = result?.finishReason;
       console.error('Presentation planner produced no usable output', {
+        model,
+        slideCount: targetSlideCount,
         finishReason: finish,
         usage: result?.usage,
         textLength: result?.text?.length ?? 0,
         textPreview: result?.text?.slice(0, 400),
       });
-      // 'length' means the object was cut mid-JSON — more room can finish it.
-      // Anything else is usually a one-off malformed emission, where a colder
-      // second pass is more likely to produce valid JSON than the same one.
+      // 'length' means the object was cut mid-JSON — more room can finish it,
+      // and the same model can. Anything else is the model failing to hold the
+      // structured-output format, which asking it again rarely fixes; that goes
+      // to a stronger model at a colder temperature instead.
       const retry =
         finish === 'length'
           ? await attempt(32000, 0.7)
-          : await attempt(16000, 0.2);
+          : await attempt(16000, 0.2, PLANNER_FALLBACK_MODEL);
       if (retry.plan) {
         plan = retry.plan;
       } else {
         console.error('Presentation planner retry also failed', {
+          model,
+          retryModel: finish === 'length' ? model : PLANNER_FALLBACK_MODEL,
           finishReason: retry.result?.finishReason,
           textLength: retry.result?.text?.length ?? 0,
         });

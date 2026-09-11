@@ -129,7 +129,6 @@ export function createGameQuizPreviewSession({
 
   return {
     gameQuizId,
-    realtimeKey: 'preview-realtime-key',
     gameTitle,
     joinCode: '123456',
     joiningLocked: true,

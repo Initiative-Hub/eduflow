@@ -1,10 +1,11 @@
+from app.services.slide_defaults import DEFAULT_TEMPLATE_COLLECTION
 from pydantic import BaseModel, Field
 
 
 class GenReq(BaseModel):
     topic: str = Field(..., description="The main topic of the presentation")
     collection: str = Field(
-        default="starter", description="The slide-skills template collection name"
+        default=DEFAULT_TEMPLATE_COLLECTION, description="The slide-skills template collection name"
     )
     palette: str | None = Field(
         default="auto",
@@ -34,7 +35,7 @@ class PlanGenReq(BaseModel):
     slides: list[SlidePlanItem] = Field(..., description="Ordered list of slide plans")
     palette: str = Field(default="auto", description="The color palette selection")
     collection: str = Field(
-        default="starter", description="The chosen template collection"
+        default=DEFAULT_TEMPLATE_COLLECTION, description="The chosen template collection"
     )
     images: bool = Field(
         default=True,
@@ -43,6 +44,15 @@ class PlanGenReq(BaseModel):
     image_source: str = Field(
         default="ai",
         description="Image generator: 'ai' (photo model) or 'svg' (cheaper GPT-4o vector)",
+    )
+    research: bool = Field(
+        default=True,
+        description=(
+            "Look the topic up on the web before writing. Runs a keyword call, "
+            "a search and a synthesis call in sequence before the first slide "
+            "starts, so turning it off removes that wait for decks whose "
+            "content is already in the plan."
+        ),
     )
 
 
@@ -54,7 +64,7 @@ class RenderSlideReq(BaseModel):
         description="Key-value bindings for the slide placeholders",
     )
     collection: str | None = Field(
-        default="starter", description="The slide template collection/theme name"
+        default=DEFAULT_TEMPLATE_COLLECTION, description="The slide template collection/theme name"
     )
     palette: str | None = Field(
         default="auto", description="The color palette selection"

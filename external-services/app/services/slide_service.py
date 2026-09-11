@@ -1,10 +1,12 @@
 import asyncio
 import json
 import logging
+import os
 import re
 import shutil
 import tempfile
 import textwrap
+import time
 import zipfile
 from functools import partial
 from pathlib import Path
@@ -43,6 +45,25 @@ async def _release_collection(name: str) -> bool:
         _COLLECTION_USERS.pop(name, None)
         return True
 
+
+# The style inventory lists every key in both template buckets and then reads a
+# collection.json per collection — a second of S3 work, repeated on every plan
+# request and every time the picker opens, for an answer that only changes when
+# somebody imports or deletes a template. Cached briefly so a burst of requests
+# pays for it once; short enough that a new import shows up on its own.
+_COLLECTIONS_TTL = float(os.environ.get("SLIDE_COLLECTIONS_CACHE_SECONDS", "60"))
+# Files fetched at once when filling a collection's local cache from S3.
+_DOWNLOAD_CONCURRENCY = max(1, int(os.environ.get("SLIDE_DOWNLOAD_CONCURRENCY", "16")))
+_collections_cache: dict[str, Any] = {"at": 0.0, "value": None}
+_COLLECTIONS_LOCK = asyncio.Lock()
+
+
+def invalidate_collections_cache() -> None:
+    """Drop the memoised style inventory after an import or a delete."""
+    _collections_cache["at"] = 0.0
+    _collections_cache["value"] = None
+
+
 # "auto" detects brand templates whose designs live in the Slide Master layouts,
 # "layouts" forces that reading, and "slides" extracts the deck's real slides.
 TEMPLATE_IMPORT_SOURCES = {"auto", "layouts", "slides"}
@@ -73,21 +94,117 @@ PREVIEW_SAMPLE_DATA: Dict[str, Any] = {
     "left_col_text": "Key details about the first concept side.",
     "right_col_text": "Comparison points on the second concept side.",
     "insight_text": "Engagement rose after switching to visual explanations.",
+    # list_6 / points_6 variants exist, so these run to six: a short list left
+    # the last rows of the six-row variants blank in their previews
     "bullets": [
         "Engaging detail or concept bullet point",
         "Supporting evidence for the concept",
         "A practical classroom example",
+        "The mistake students make most often",
+        "How to check the idea has landed",
+        "Where it is used outside the classroom",
     ],
-    "items": ["Introduction", "Core concepts", "Practice", "Summary"],
+    "items": [
+        "Introduction",
+        "Core concepts",
+        "Practice",
+        "Summary",
+        "Assessment",
+        "Further reading",
+    ],
     "steps": ["Prepare", "Explain", "Practise", "Review"],
-    "summary_points": ["Key takeaway one", "Key takeaway two"],
-    "action_items": ["Read chapter 2", "Complete the worksheet"],
+    "summary_points": [
+        "Key takeaway one",
+        "Key takeaway two",
+        "Key takeaway three",
+        "Key takeaway four",
+        "Key takeaway five",
+        "Key takeaway six",
+    ],
+    "action_items": [
+        "Read chapter 2",
+        "Complete the worksheet",
+        "Bring a question to the next session",
+        "Review the summary notes",
+        "Try the practice quiz",
+    ],
 }
+
+# A slot named `heading.1` or `stat_2` is a different key from `heading` or
+# `stat`, and fill_svg wipes any placeholder it has no value for. Cover slides,
+# dividers, KPI cards, timelines and galleries were therefore rasterised empty,
+# and the picker showed a blank rectangle for the very layouts that sell a
+# style. Dotted and numbered keys pass through fill_svg untouched, so they are
+# listed here explicitly alongside their scalar forms.
+PREVIEW_SAMPLE_DATA.update(
+    {
+        "heading.1": "Concept",
+        "heading.2": "Introduction",
+        "heading.3": "for Learners",
+        "sub_module_name": "MODULE ONE",
+        "statement": "Great slides make the idea easier to hold on to.",
+        "quote.1": "Involve me",
+        "quote.2": "and I learn.",
+        "author_or_source": "Benjamin Franklin",
+        "media_image": "",
+        **{f"body_text.{i}": text for i, text in enumerate(
+            (
+                "Foundational concepts explained with modern slide layouts.",
+                "Each idea gets a claim and the reason it matters.",
+                "Visual structure keeps a long explanation readable.",
+                "Students leave with something they can act on.",
+            ), 1)},
+        **{f"left_col_text.{i}": t for i, t in enumerate(
+            ("Key details about the first concept.",
+             "What it looks like in practice.",
+             "Where students usually get stuck.",
+             "How to check understanding."), 1)},
+        **{f"right_col_text.{i}": t for i, t in enumerate(
+            ("Comparison points on the second concept.",
+             "How the two differ in practice.",
+             "When to prefer this approach.",
+             "What it costs to adopt."), 1)},
+        **{f"stat_{i}": v for i, v in enumerate(("87%", "3x", "1,240"), 1)},
+        **{f"label_{i}": v for i, v in enumerate(
+            ("of students stayed engaged",
+             "faster to review before an exam",
+             "lessons built this term"), 1)},
+        **{f"caption_{i}": v for i, v in enumerate(
+            ("A worked example from the lesson.",
+             "The same idea shown as a diagram.",
+             "Students applying it in class."), 1)},
+        **{f"image_{i}": "" for i in range(1, 4)},
+        **{f"date_{i}": v for i, v in enumerate(
+            ("Week 1", "Week 3", "Week 6", "Week 9", "Week 11", "Week 12"), 1)},
+        **{f"desc_{i}": v for i, v in enumerate(
+            ("Introduce the core idea and why it matters.",
+             "Work through an example together.",
+             "Students practise with feedback.",
+             "Review what stuck and what did not.",
+             "Apply it to a new problem.",
+             "Consolidate before assessment."), 1)},
+        **{f"step_{i}": v for i, v in enumerate(
+            ("Prepare the material and the question you want answered.",
+             "Explain the idea with one concrete example.",
+             "Let students practise while you watch for mistakes.",
+             "Review the mistakes as a group.",
+             "Set a short task that reuses the idea.",
+             "Check understanding before moving on."), 1)},
+        **{f"title_{i}": v for i, v in enumerate(
+            ("Foundation", "Practice", "Feedback", "Mastery",
+             "Transfer", "Assessment"), 1)},
+        **{f"source_title_{i}": v for i, v in enumerate(
+            ("Make It Stick: The Science of Successful Learning",
+             "Rethinking Assessment in Higher Education",
+             "Visible Learning for Teachers"), 1)},
+        **{f"source_url_{i}": f"https://example.edu/library/source-{i}"
+           for i in range(1, 4)},
+    }
+)
 
 DEFAULT_COLLECTIONS = {
     "templates",
     "default",
-    "starter",
     "neon_dark",
     "vintage",
     "pastel_pop",
@@ -95,6 +212,7 @@ DEFAULT_COLLECTIONS = {
     "minimalist_gradient",
     "eduflow_light",
     "eduflow_purple",
+    "rmit_official",
     "cultural_folk",
     "organic_streets",
     "green_environment_care",
@@ -549,9 +667,29 @@ def flatten_slide_bindings(category: str, slide_title: str, bindings: dict) -> d
                     ev.get("date_or_step", "") or ev.get("date", "")
                 )
                 desc = str(ev.get("description", ""))
-                wrapped = textwrap.wrap(desc, width=25)
-                for line_idx, line in enumerate(wrapped[:2], 1):
+                # Every timeline template declares a plain `desc_N`; only the
+                # dotted sub-lines were emitted, so the description the planner
+                # wrote reached no slot at all and the layout model invented a
+                # replacement. The wrap is a hint for designs that split the
+                # line themselves, and it no longer drops the tail.
+                flat[f"desc_{idx}"] = desc
+                for line_idx, line in enumerate(textwrap.wrap(desc, width=25), 1):
                     flat[f"desc_{idx}.{line_idx}"] = line
+
+    # 8b. Flatten IMAGE_GALLERY: items -> label_N / caption_N. Nothing mapped
+    # these before, so a gallery's own titles and captions were dropped and
+    # rewritten downstream even though the plan already carried them.
+    if category == "IMAGE_GALLERY" and isinstance(bindings.get("items"), list):
+        for idx, item in enumerate(bindings["items"][:10], 1):
+            if isinstance(item, dict):
+                label = str(item.get("title", "") or item.get("label", ""))
+                caption = str(item.get("description", "") or item.get("caption", ""))
+            else:
+                label, caption = str(item), ""
+            if label:
+                flat[f"label_{idx}"] = label
+            if caption:
+                flat[f"caption_{idx}"] = caption
 
     # 9. Flatten STEP_BY_STEP: steps -> step_1, step_2, etc.
     if "steps" in bindings and isinstance(bindings["steps"], list):
@@ -671,13 +809,20 @@ class SlideService:
             f"'{collection}' from S3 bucket {BUCKET_NAME}..."
         )
         col_path.mkdir(parents=True, exist_ok=True)
-        for key, dest in pending:
+        for _, dest in pending:
             dest.parent.mkdir(parents=True, exist_ok=True)
-            await download_file_from_s3(
-                key,
-                dest,
-                bucket_name=BUCKET_NAME,
-            )
+
+        # One await per file meant one round-trip of latency per file, and a
+        # collection is hundreds of small files. That is invisible against a
+        # local MinIO and expensive against real S3 — and on a host with
+        # ephemeral disk (Modal) every cold container pays it from scratch.
+        semaphore = asyncio.Semaphore(_DOWNLOAD_CONCURRENCY)
+
+        async def fetch(key: str, dest: Path) -> None:
+            async with semaphore:
+                await download_file_from_s3(key, dest, bucket_name=BUCKET_NAME)
+
+        await asyncio.gather(*(fetch(key, dest) for key, dest in pending))
         return col_path
 
     async def get_categories(self) -> List[Dict[str, Any]]:
@@ -706,10 +851,20 @@ class SlideService:
         import re
 
         import resvg_py
+        from slide_skills.svg_collections import fit_and_reflow, infer_text_bounds
 
         svg = slide_skills.fill_svg(
             svg_path.read_text(encoding="utf-8"), PREVIEW_SAMPLE_DATA
         )
+        # Filling alone is not what a real slide gets: deck generation also
+        # wraps each block to its box and pushes later blocks clear. Without
+        # those two steps the thumbnail drew every paragraph as one long
+        # unwrapped line running straight through the card beside it, so the
+        # picker misrepresented layouts that render fine in an actual deck.
+        try:
+            svg = fit_and_reflow(infer_text_bounds(svg))
+        except Exception as error:  # a preview is not worth failing over
+            logger.warning(f"Preview reflow failed for '{svg_path.name}': {error}")
         # Bare ampersands break the XML parser inside resvg.
         svg = re.sub(r"&(?!(?:[a-zA-Z0-9]+|#[0-9]+|#x[0-9a-fA-F]+);)", "&amp;", svg)
         destination.write_bytes(
@@ -884,6 +1039,19 @@ class SlideService:
         }
 
     async def get_collections(self) -> List[Dict[str, Any]]:
+        cached = _collections_cache["value"]
+        if cached is not None and time.monotonic() - _collections_cache["at"] < _COLLECTIONS_TTL:
+            return cached
+        async with _COLLECTIONS_LOCK:
+            cached = _collections_cache["value"]
+            if cached is not None and time.monotonic() - _collections_cache["at"] < _COLLECTIONS_TTL:
+                return cached
+            result = await self._load_collections()
+            _collections_cache["value"] = result
+            _collections_cache["at"] = time.monotonic()
+            return result
+
+    async def _load_collections(self) -> List[Dict[str, Any]]:
         import json as _json
         import tempfile
         import asyncio
@@ -961,13 +1129,13 @@ class SlideService:
                     well_known = {
                         "vintage": "A classic, retro style with warm tones and elegant typography.",
                         "pastel_pop": "A vibrant and playful theme featuring soft pastel colors.",
-                        "starter": "Standard starter templates for clean presentation designs.",
                         "neon_dark": "A modern, high-contrast dark theme with glowing neon accents.",
                         "illustrative_culture": "Warm cream paper, hand-drawn buildings & clouds, Yogyakarta street aesthetic, sage green accents.",
                         "minimalist_gradient": "Sleek dark theme with electric royal blue and violet gradient glows, crisp geometric typography, and ambient grid lines.",
                         "organic_streets": "Organic illustration style: cream paper, plum script headlines, golden sun discs, slate and terracotta blobs, line-art European skylines.",
                         "eduflow_light": "Soft white canvas with violet accents and crisp bordered cards, from the EduFlow light theme - printed handouts, lectures projected in a bright room, and any deck that should look like EduFlow without going dark.",
                         "eduflow_purple": "Deep slate canvas with violet accents, soft bordered cards and an ambient glow — the EduFlow platform's own look. Course material, product walkthroughs, internal training, onboarding, and any deck that should feel native to the product it was made in.",
+                        "rmit_official": "The official RMIT University brand template: navy grounds, RMIT red rules and headings, Arial throughout, and the university lock-up on the cover and closing slides — lectures, course material, research talks, student presentations, and anything that has to look like it came from RMIT.",
                         "cultural_folk": "Rich cultural folk style: warm plum night sky over a sand earth strip, arch and temple shapes, radiant sun badges, festival bunting and stitched lines in terracotta, gold, dusty blue and rose.",
                         "green_environment_care": "Modern environmental care style: cream paper, deep forest-green condensed headlines, lush nature photography, sage botanical ornaments, halftone texture, and conservation editorial layouts.",
                         "startup_neon_pitch": "Black startup pitch style with bold white typography, electric blue and violet light trails, glossy gradient pills, contact-footer details, and high-contrast business layouts.",
@@ -998,6 +1166,15 @@ class SlideService:
                 for name in collections_files.keys()
                 if name.lower() not in categories
                 and name.lower() not in ("templates", "default")
+                # A collection with no .svg cannot render a single slide, so
+                # offering it only produces "has no .svg layouts available" at
+                # generation time. `starter` was exactly this: 23 preview PNGs
+                # left behind by a deleted collection, still listed, still
+                # selectable, and the default every request fell back to.
+                and any(
+                    key.endswith(".svg")
+                    for key in collections_files[name]["keys"]
+                )
             ]
 
             tasks = [
@@ -1054,55 +1231,55 @@ class SlideService:
         if not library_dir.exists() or not library_dir.is_dir():
             return
 
+        missing = [
+            cat for cat in requested_categories
+            if cat and not any((library_dir / cat).glob("*.svg"))
+        ]
+        if not missing:
+            return
+
         base_dir = await self._ensure_collection_downloaded(BASE_TEMPLATE_COLLECTION)
-        for cat in requested_categories:
-            if not cat:
-                continue
+        for cat in missing:
             cat_dir = library_dir / cat
-            has_svgs = cat_dir.exists() and any(cat_dir.glob("*.svg"))
-            if not has_svgs:
-                # The collection's own design for this category, under the
-                # deck's naming, beats anything from the base library: matching
-                # the rest of the deck matters more than matching the name.
-                local_equivalent = _find_equivalent_layout(library_dir, cat)
-                if local_equivalent is not None:
-                    cat_dir.mkdir(parents=True, exist_ok=True)
-                    for item in local_equivalent.iterdir():
-                        if item.is_file():
-                            shutil.copy2(item, cat_dir / item.name)
-                    logger.info(
-                        f"Served '{cat}' from this collection's own "
-                        f"'{local_equivalent.name}' layout instead of backfilling"
-                    )
-                    continue
-
+            local_equivalent = _find_equivalent_layout(library_dir, cat)
+            if local_equivalent is not None:
                 cat_dir.mkdir(parents=True, exist_ok=True)
-                target_source = CATEGORY_ALIASES.get(cat, cat)
-                src_dir = base_dir / target_source
-                if not (src_dir.exists() and any(src_dir.glob("*.svg"))):
-                    src_dir = base_dir / cat
+                for item in local_equivalent.iterdir():
+                    if item.is_file():
+                        shutil.copy2(item, cat_dir / item.name)
+                logger.info(
+                    f"Served '{cat}' from this collection's own "
+                    f"'{local_equivalent.name}' layout instead of backfilling"
+                )
+                continue
 
-                if src_dir.exists() and any(src_dir.glob("*.svg")):
-                    for item in src_dir.iterdir():
+            cat_dir.mkdir(parents=True, exist_ok=True)
+            target_source = CATEGORY_ALIASES.get(cat, cat)
+            src_dir = base_dir / target_source
+            if not (src_dir.exists() and any(src_dir.glob("*.svg"))):
+                src_dir = base_dir / cat
+
+            if src_dir.exists() and any(src_dir.glob("*.svg")):
+                for item in src_dir.iterdir():
+                    if item.is_file():
+                        shutil.copy2(item, cat_dir / item.name)
+                logger.info(
+                    f"Backfilled missing category '{cat}' in '{library_dir.name}' "
+                    f"from base template '{src_dir.name}'"
+                )
+            else:
+                fallback_dirs = [
+                    d for d in base_dir.iterdir() if d.is_dir() and any(d.glob("*.svg"))
+                ] or [
+                    d for d in library_dir.iterdir() if d.is_dir() and any(d.glob("*.svg"))
+                ]
+                if fallback_dirs:
+                    for item in fallback_dirs[0].iterdir():
                         if item.is_file():
                             shutil.copy2(item, cat_dir / item.name)
-                    logger.info(
-                        f"Backfilled missing category '{cat}' in '{library_dir.name}' "
-                        f"from base template '{src_dir.name}'"
+                    logger.warning(
+                        f"Backfilled missing category '{cat}' in '{library_dir.name}' using fallback '{fallback_dirs[0].name}'"
                     )
-                else:
-                    fallback_dirs = [
-                        d for d in base_dir.iterdir() if d.is_dir() and any(d.glob("*.svg"))
-                    ] or [
-                        d for d in library_dir.iterdir() if d.is_dir() and any(d.glob("*.svg"))
-                    ]
-                    if fallback_dirs:
-                        for item in fallback_dirs[0].iterdir():
-                            if item.is_file():
-                                shutil.copy2(item, cat_dir / item.name)
-                        logger.warning(
-                            f"Backfilled missing category '{cat}' in '{library_dir.name}' using fallback '{fallback_dirs[0].name}'"
-                        )
 
     async def generate_deck_from_plan(
         self,
@@ -1115,6 +1292,7 @@ class SlideService:
         images: bool = True,
         image_source: str = "ai",
         collection: str | None = None,
+        research: bool = True,
     ) -> Dict[str, Any]:
         slides_list = []
         if isinstance(plan, dict):
@@ -1339,7 +1517,7 @@ class SlideService:
                 images=images,
                 image_source=image_source,
                 title=title,
-                research=True,
+                research=research,
             )
         finally:
             if temp_dir_context:
@@ -1813,6 +1991,8 @@ class SlideService:
                     f"Removed local template collection '{dest_dir.name}' after uploading {uploaded_count} files to S3"
                 )
 
+            # a new collection must appear in the picker now, not in a minute
+            invalidate_collections_cache()
             return res
 
     async def generate_pptx(self, deck_id: str) -> Path:
@@ -2301,6 +2481,7 @@ async def delete_collection_category(collection: str, category: str) -> Dict[str
         f"Deleted layout '{category}' from '{collection}' "
         f"({removed_keys} S3 object(s) removed)"
     )
+    invalidate_collections_cache()
     return {
         "collection": collection,
         "category": category,

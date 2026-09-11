@@ -1,6 +1,5 @@
 import { apiClient } from '@/lib/api/api-client';
 import type {
-  GameParticipant,
   GameQuiz,
   GameQuizAiSourceCourse,
   GameQuizAiSourceLesson,
@@ -10,8 +9,6 @@ import type {
   GameQuizOption,
   GameQuizQuestion,
   GameQuizReport,
-  GameSessionPhase,
-  GameSessionSnapshot,
   GeneratedGameQuizQuestion,
   GenerateGameQuizQuestionsInput,
 } from './types';
@@ -171,95 +168,6 @@ function toGeneratedQuestion(value: unknown): GeneratedGameQuizQuestion {
   };
 }
 
-function toParticipant(value: unknown): GameParticipant {
-  const participant = getRecord(value);
-  return {
-    id: stringValue(participant.id),
-    displayName: stringValue(participant.displayName),
-    image: stringValue(participant.image) || null,
-    score: numberValue(participant.score),
-    isOnline: booleanValue(participant.isOnline, true),
-    joinedAt: stringValue(participant.joinedAt) || undefined,
-    realtimeKey: stringValue(participant.realtimeKey) || undefined,
-  };
-}
-
-function toSession(value: unknown): GameSessionSnapshot {
-  const envelope = getRecord(value);
-  const session = getRecord(envelope.session ?? value);
-  const currentRound = getRecord(session.currentRound);
-  const round = isRecord(session.currentRound)
-    ? toQuestion(currentRound, numberValue(session.currentRoundIndex))
-    : null;
-  const roundStatistics = isRecord(currentRound.statistics)
-    ? {
-        responseCount: numberValue(currentRound.statistics.responseCount),
-        correctCount: numberValue(currentRound.statistics.correctCount),
-        averageResponseTimeMs:
-          typeof currentRound.statistics.averageResponseTimeMs === 'number'
-            ? currentRound.statistics.averageResponseTimeMs
-            : null,
-      }
-    : undefined;
-  const participants = getArray(session.participants).map(toParticipant);
-  const leaderboard = getArray(session.leaderboard).map(toParticipant);
-  const answer = getRecord(session.myAnswer ?? session.answer);
-  const rounds = getArray(session.rounds);
-
-  return {
-    gameQuizId: stringValue(session.gameQuizId),
-    realtimeKey: stringValue(session.realtimeKey),
-    gameTitle: stringValue(session.gameTitle ?? session.title),
-    joinCode: stringValue(session.joinCode),
-    joiningLocked: booleanValue(session.joiningLocked),
-    phase: stringValue(session.phase, 'LOBBY') as GameSessionPhase,
-    closedReason:
-      stringValue(session.closedReason) === 'HOST_LEFT'
-        ? 'HOST_LEFT'
-        : stringValue(session.closedReason) === 'VIEWED_REPORT'
-          ? 'VIEWED_REPORT'
-          : null,
-    endedAt: stringValue(session.endedAt) || null,
-    stateVersion: numberValue(session.stateVersion, 1),
-    currentRound: round
-      ? {
-          ...round,
-          openedAt:
-            stringValue(getRecord(session.currentRound).openedAt) || null,
-          deadlineAt:
-            stringValue(getRecord(session.currentRound).deadlineAt) || null,
-          ...(roundStatistics ? { statistics: roundStatistics } : {}),
-        }
-      : null,
-    currentRoundIndex: numberValue(session.currentRoundIndex, 0),
-    totalRounds: numberValue(session.totalRounds, rounds.length),
-    participant: isRecord(session.participant)
-      ? toParticipant(session.participant)
-      : null,
-    participants,
-    answerCount: numberValue(session.answerCount),
-    leaderboard,
-    myAnswer:
-      answer.id || answer.selectedOptionId
-        ? {
-            optionId: stringValue(answer.optionId ?? answer.selectedOptionId),
-            isCorrect:
-              typeof answer.isCorrect === 'boolean'
-                ? answer.isCorrect
-                : undefined,
-            pointsAwarded:
-              typeof answer.pointsAwarded === 'number'
-                ? answer.pointsAwarded
-                : undefined,
-          }
-        : null,
-  };
-}
-
-function liveGameConfig(sessionId: string) {
-  return { headers: { 'X-Live-Game-Session': sessionId } };
-}
-
 function toQuizSettings(draft: GameQuizDraft) {
   return {
     title: draft.title.trim(),
@@ -327,92 +235,23 @@ export const gameQuizApi = {
         questions: toQuestionPayload(draft),
       })
     ),
-  createSession: async (gameQuizId: string, expectedRevision: number) => {
+  createSession: async (
+    gameQuizId: string,
+    expectedRevision: number,
+    initializationKey: string
+  ) => {
     const response = getRecord(
       await apiClient.post<unknown>(`v1/game-quizzes/${gameQuizId}/sessions`, {
         expectedRevision,
+        initializationKey,
       })
     );
     return {
       sessionId: stringValue(response.sessionId),
-      session: toSession(response.session),
     };
   },
-  getHostSession: async (gameQuizId: string, sessionId: string) =>
-    toSession(
-      await apiClient.get<unknown>(
-        `v1/game-quizzes/${gameQuizId}/live-game`,
-        liveGameConfig(sessionId)
-      )
-    ),
-  getParticipantSession: async (sessionId: string) =>
-    toSession(
-      await apiClient.get<unknown>('v1/live-game', liveGameConfig(sessionId))
-    ),
-  join: async (joinCode: string) => {
-    const response = await apiClient.post<unknown>('v1/game-sessions/join', {
-      joinCode,
-    });
-    const record = getRecord(response);
-    return {
-      sessionId: stringValue(record.sessionId),
-      session: toSession(record.session),
-    };
-  },
-  command: async (
-    gameQuizId: string,
-    sessionId: string,
-    action: GameHostAction,
-    expectedStateVersion: number,
-    joiningLocked?: boolean
-  ) =>
-    toSession(
-      await apiClient.post<unknown>(
-        `v1/game-quizzes/${gameQuizId}/live-game/command`,
-        {
-          action,
-          expectedStateVersion,
-          ...(action === 'SET_JOINING_LOCKED' ? { joiningLocked } : {}),
-        },
-        liveGameConfig(sessionId)
-      )
-    ),
-  submitAnswer: async (
-    sessionId: string,
-    roundId: string,
-    selectedOptionId: string,
-    idempotencyKey: string
-  ) =>
-    apiClient.post<unknown>(
-      'v1/live-game/answers',
-      {
-        roundId,
-        selectedOptionId,
-        idempotencyKey,
-      },
-      liveGameConfig(sessionId)
-    ),
-  heartbeat: (sessionId: string) =>
-    apiClient.post('v1/live-game/presence', {}, liveGameConfig(sessionId)),
-  answerProgress: (gameQuizId: string, sessionId: string) =>
-    apiClient.get<{
-      answerCount: number;
-      participantCount: number;
-      pendingCount: number;
-      roundId: string | null;
-      stateVersion: number;
-    }>(
-      `v1/game-quizzes/${gameQuizId}/live-game/answer-progress`,
-      liveGameConfig(sessionId)
-    ),
-  heartbeatHost: (gameQuizId: string, sessionId: string) =>
-    apiClient.post(
-      `v1/game-quizzes/${gameQuizId}/live-game/heartbeat`,
-      {},
-      liveGameConfig(sessionId)
-    ),
   report: (gameQuizId: string, sessionId: string) =>
-    apiClient.get<GameQuizReport>(
+    apiClient.get<GameQuizReport | { status: 'PROCESSING' }>(
       `v1/game-quizzes/${gameQuizId}/live-game/report?sessionId=${encodeURIComponent(sessionId)}`
     ),
 };

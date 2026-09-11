@@ -23,10 +23,19 @@ export interface TemplatePreview {
   url: string;
 }
 
+/**
+ * Collection a deck falls back to when the caller names none.
+ *
+ * Was `starter`, which is a shell in the template bucket — 23 preview PNGs and
+ * no .svg — so every deck that fell back to it died with "has no .svg layouts
+ * available". The backend now hides collections that have no layouts, so a
+ * default that cannot render can no longer be offered in the first place.
+ */
+export const DEFAULT_TEMPLATE_COLLECTION = 'rmit_official';
+
 export const DEFAULT_TEMPLATE_COLLECTIONS = new Set([
   'templates',
   'default',
-  'starter',
   'neon_dark',
   'vintage',
   'pastel_pop',
@@ -34,6 +43,7 @@ export const DEFAULT_TEMPLATE_COLLECTIONS = new Set([
   'minimalist_gradient',
   'eduflow_light',
   'eduflow_purple',
+  'rmit_official',
   'cultural_folk',
   'organic_streets',
   'green_environment_care',
@@ -340,7 +350,7 @@ export class SlideService {
     const payload = {
       title: plan.title,
       palette: plan.palette ?? 'auto',
-      collection: plan.collection ?? 'starter',
+      collection: plan.collection ?? DEFAULT_TEMPLATE_COLLECTION,
       slides: plan.slides.map((slide) => ({
         category: slide.layoutType,
         slideTitle: slide.slideTitle,

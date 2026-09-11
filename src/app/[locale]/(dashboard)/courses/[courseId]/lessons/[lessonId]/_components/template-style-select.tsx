@@ -18,6 +18,7 @@ import {
   slideService,
 } from '../slide.service';
 import { useSlideTemplatePreviews } from '../use-lesson';
+import { DEFAULT_TEMPLATE_COLLECTION } from '@/services/SlideService';
 
 const DEFAULT_COLLECTION_DESCRIPTIONS: Record<string, string> = {
   starter: 'Standard starter templates for clean presentation designs.',
@@ -32,6 +33,8 @@ const DEFAULT_COLLECTION_DESCRIPTIONS: Record<string, string> = {
     'EduFlow house style in daylight - white canvas, violet accents.',
   eduflow_purple:
     'EduFlow house style — deep slate, violet accents, soft cards.',
+  rmit_official:
+    'RMIT brand template — navy grounds, RMIT red rules, Arial, official lock-up.',
   cultural_folk:
     'Rich cultural folk style with terracotta, gold, dusty blue and rose.',
   organic_streets:
@@ -53,6 +56,7 @@ const DEFAULT_COLLECTION_PALETTES: Record<string, string[]> = {
   minimalist_gradient: ['#030712', '#3b82f6', '#8b5cf6'],
   eduflow_light: ['#f8fafc', '#8b5cf6', '#2f2142'],
   eduflow_purple: ['#1f2937', '#a78bfa', '#f2eafd'],
+  rmit_official: ['#000054', '#e61e2a', '#e2e5df'],
   cultural_folk: ['#2d1b2d', '#e07a5f', '#f4a261'],
   organic_streets: ['#f8f9fa', '#6c5ce7', '#fd79a8'],
   green_environment_care: ['#f4f7f4', '#14532d', '#4ade80'],
@@ -70,6 +74,7 @@ export function formatCollectionLabel(name: string): string {
   if (name === 'minimalist_gradient') return 'Minimalist Gradient Theme';
   if (name === 'eduflow_light') return 'EduFlow Light Theme';
   if (name === 'eduflow_purple') return 'EduFlow Purple Theme';
+  if (name === 'rmit_official') return 'RMIT University (Default)';
   if (name === 'cultural_folk') return 'Cultural Folk Theme';
   if (name === 'organic_streets') return 'Organic Streets Theme';
   if (name === 'green_environment_care') return 'Green Environment Care Theme';
@@ -88,6 +93,7 @@ interface TemplateStyleSelectProps {
   collections: SlideTemplate[];
   recommendedCollection?: string | null;
   selectItemHighlightClassName?: string;
+  triggerClassName?: string;
 }
 
 export function TemplateStyleSelect({
@@ -96,15 +102,18 @@ export function TemplateStyleSelect({
   collections,
   recommendedCollection,
   selectItemHighlightClassName,
+  triggerClassName,
 }: TemplateStyleSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [hoveredStyle, setHoveredStyle] = useState<string | null>(null);
   const [activePreviewIdx, setActivePreviewIdx] = useState<number>(0);
 
-  const activeStyle = hoveredStyle || value || 'starter';
+  const activeStyle = hoveredStyle || value || DEFAULT_TEMPLATE_COLLECTION;
 
   const targetCollectionKey =
-    activeStyle === 'auto' ? recommendedCollection || 'starter' : activeStyle;
+    activeStyle === 'auto'
+      ? recommendedCollection || DEFAULT_TEMPLATE_COLLECTION
+      : activeStyle;
 
   const queryClient = useQueryClient();
 
@@ -182,7 +191,12 @@ export function TemplateStyleSelect({
       open={isOpen}
       onOpenChange={setIsOpen}
     >
-      <SelectTrigger className="flex h-11 w-full justify-between rounded-xl border-input bg-muted/30 px-4 py-2.5 text-foreground text-sm">
+      <SelectTrigger
+        className={cn(
+          'flex h-11 w-full justify-between rounded-xl border-input bg-muted/30 px-4 py-2.5 text-foreground text-sm',
+          triggerClassName
+        )}
+      >
         <SelectValue placeholder="System Default (Starter)">
           {value === 'auto'
             ? '✨ Auto — AI picks from content'
@@ -208,18 +222,6 @@ export function TemplateStyleSelect({
               onFocus={() => setHoveredStyle('auto')}
             >
               ✨ Auto — AI picks
-            </SelectItem>
-
-            <SelectItem
-              className={cn(
-                'cursor-pointer rounded-xl px-3 py-2 font-medium text-foreground text-xs transition-colors hover:bg-accent focus:bg-accent',
-                selectItemHighlightClassName
-              )}
-              value="starter"
-              onPointerEnter={() => setHoveredStyle('starter')}
-              onFocus={() => setHoveredStyle('starter')}
-            >
-              System Default (Starter)
             </SelectItem>
 
             {defaultCollections.map((c) => (

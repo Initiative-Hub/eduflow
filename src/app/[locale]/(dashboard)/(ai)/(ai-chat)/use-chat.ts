@@ -7,7 +7,7 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import { DefaultChatTransport, type UIMessage } from 'ai';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { DEFAULT_CHAT_MODEL } from '@/services/ai/chat-provider.constants';
@@ -120,11 +120,20 @@ export const useChatController = ({
     },
   });
 
+  const [optimisticMessage, setOptimisticMessage] = useState<UIMessage | null>(
+    null
+  );
+  const [isStartingChat, setIsStartingChat] = useState(false);
+
   const pendingForChat =
     pendingChatId && pendingChatId === initialChatId && pendingMessage
       ? [pendingMessage]
       : [];
-  const liveMessages = messages.length > 0 ? messages : pendingForChat;
+  const baseLiveMessages = messages.length > 0 ? messages : pendingForChat;
+  const liveMessages =
+    optimisticMessage && !messages.some((m) => m.id === optimisticMessage.id)
+      ? [...baseLiveMessages, optimisticMessage]
+      : baseLiveMessages;
   const displayMessages = initialChatId
     ? mergeChatMessages(historyQuery.data?.pages, liveMessages)
     : liveMessages;
@@ -132,7 +141,11 @@ export const useChatController = ({
   const isLimitReached = isAuthenticated
     ? false
     : hasReachedUserMessageLimit(displayMessages, MAX_USER_MESSAGES);
-  const isStreaming = status === 'streaming' || status === 'submitted';
+  const isStreaming =
+    status === 'streaming' ||
+    status === 'submitted' ||
+    isStartingChat ||
+    pendingForChat.length > 0;
 
   useEffect(() => {
     if (!pendingMessage || !pendingChatId || !initialChatId) return;
@@ -180,11 +193,39 @@ export const useChatController = ({
     parts: [...files, ...lessons, { type: 'text', text }],
   });
 
+  const createOptimisticFilePart = (file: File): ChatFileUIPart => ({
+    bucket: null,
+    fileId: crypto.randomUUID(),
+    fileSize: file.size,
+    filename: file.name,
+    mediaType: file.type,
+    objectKey: null,
+    type: 'file',
+    url: typeof window !== 'undefined' ? URL.createObjectURL(file) : '',
+  });
+
   const startChat = async (
     text: string,
     attachments: ChatSubmitAttachments = { files: [], referencedFiles: [] }
   ) => {
+    if (isStartingChat) return;
+
+    const optimisticFiles: ChatFileUIPart[] = [
+      ...attachments.files.map(createOptimisticFilePart),
+      ...attachments.referencedFiles,
+    ];
+    const messageLessons = attachments.referencedLessons ?? [];
+    const optimisticUserMessage = createUserMessage(
+      text,
+      optimisticFiles,
+      messageLessons
+    );
+
     if (!initialChatId) {
+      // 1. Update UI first: show user message and thinking indicator immediately
+      setOptimisticMessage(optimisticUserMessage);
+      setIsStartingChat(true);
+
       try {
         const newChatId = await createChatMutation.mutateAsync(text);
         const uploadedFiles = await uploadChatAttachments(
@@ -192,28 +233,68 @@ export const useChatController = ({
           newChatId
         );
         const messageFiles = [...uploadedFiles, ...attachments.referencedFiles];
-        const messageLessons = attachments.referencedLessons ?? [];
-        await queryClient.invalidateQueries({ queryKey: ['chat-list'] });
-        setPendingMessage(
-          createUserMessage(text, messageFiles, messageLessons)
+        const finalMessage = createUserMessage(
+          text,
+          messageFiles,
+          messageLessons
         );
+
+        await queryClient.invalidateQueries({ queryKey: ['chat-list'] });
+
+        setPendingMessage(finalMessage);
         setPendingChatId(newChatId);
         setPendingModel(pendingModel ?? DEFAULT_CHAT_MODEL);
+
         router.push(`/chat/${newChatId}`);
       } catch (error) {
+        setOptimisticMessage(null);
+        setIsStartingChat(false);
         const message =
           error instanceof Error ? error.message : 'Unable to start chat.';
         toast.error(message);
+        throw error;
       }
       return;
     }
 
-    const uploadedFiles = await uploadChatAttachments(
-      attachments.files,
-      initialChatId
-    );
-    const messageFiles = [...uploadedFiles, ...attachments.referencedFiles];
-    const messageLessons = attachments.referencedLessons ?? [];
+    if (attachments.files.length > 0) {
+      setOptimisticMessage(optimisticUserMessage);
+      setIsStartingChat(true);
+
+      try {
+        const uploadedFiles = await uploadChatAttachments(
+          attachments.files,
+          initialChatId
+        );
+        const messageFiles = [...uploadedFiles, ...attachments.referencedFiles];
+        const finalMessage = createUserMessage(
+          text,
+          messageFiles,
+          messageLessons
+        );
+        setOptimisticMessage(null);
+        setIsStartingChat(false);
+
+        sendMessage(finalMessage, {
+          body: {
+            provider: 'openrouter',
+            model: pendingModel ?? DEFAULT_CHAT_MODEL,
+          },
+        });
+      } catch (error) {
+        setOptimisticMessage(null);
+        setIsStartingChat(false);
+        const message =
+          error instanceof Error
+            ? error.message
+            : 'Unable to upload attachments.';
+        toast.error(message);
+        throw error;
+      }
+      return;
+    }
+
+    const messageFiles = attachments.referencedFiles;
     const hasMessageAttachments =
       messageFiles.length > 0 || messageLessons.length > 0;
 
@@ -230,6 +311,14 @@ export const useChatController = ({
     );
   };
 
+  const stopChat = () => {
+    if (isStartingChat) {
+      setIsStartingChat(false);
+      setOptimisticMessage(null);
+    }
+    stop();
+  };
+
   return {
     messages: displayMessages,
     hasOlderMessages: historyQuery.hasNextPage,
@@ -243,6 +332,6 @@ export const useChatController = ({
     isLimitReached,
     setPendingModel,
     startChat,
-    stop,
+    stop: stopChat,
   };
 };

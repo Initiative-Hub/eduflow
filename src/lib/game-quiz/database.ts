@@ -1,12 +1,6 @@
 import type { Prisma } from '@/generated/prisma';
 import type { prisma } from '@/lib/prisma';
-import type {
-  GameAnswerRecord,
-  GameParticipantRecord,
-  GameQuizWithQuestions,
-  GameSessionRecord,
-  SessionWithGameData,
-} from './types';
+import type { GameQuizWithQuestions, SessionWithGameData } from './types';
 
 export type GameQuizDatabase = Prisma.TransactionClient;
 export type GameQuizClient = GameQuizDatabase | typeof prisma;
@@ -53,45 +47,6 @@ export async function findGameSessionWithGameData(
     where: { id: sessionId },
     include: sessionGameDataInclude,
   })) as SessionWithGameData | null;
-}
-
-export async function findSessionByJoinCode(
-  database: GameQuizClient,
-  joinCode: string
-): Promise<GameSessionRecord | null> {
-  return (await database.gameSession.findFirst({
-    where: { joinCode, joinCodeReleasedAt: null },
-  })) as GameSessionRecord | null;
-}
-
-export async function findParticipant(
-  database: GameQuizClient,
-  sessionId: string,
-  userId: string
-): Promise<GameParticipantRecord | null> {
-  return (await database.gameParticipant.findFirst({
-    where: { sessionId, userId },
-  })) as GameParticipantRecord | null;
-}
-
-export async function findAnswerByParticipantAndRound(
-  database: GameQuizClient,
-  participantId: string,
-  roundId: string
-): Promise<GameAnswerRecord | null> {
-  return (await database.gameAnswer.findUnique({
-    where: { participantId_roundId: { participantId, roundId } },
-  })) as GameAnswerRecord | null;
-}
-
-export async function findAnswerByIdempotencyKey(
-  database: GameQuizClient,
-  participantId: string,
-  idempotencyKey: string
-): Promise<GameAnswerRecord | null> {
-  return (await database.gameAnswer.findUnique({
-    where: { participantId_idempotencyKey: { participantId, idempotencyKey } },
-  })) as GameAnswerRecord | null;
 }
 
 export function isUniqueConstraintError(error: unknown) {
