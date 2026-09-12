@@ -269,15 +269,16 @@ export function InventoryCard({
               ) : (
                 <>
                   {canPreviewInventoryEntry(entry) && (
+                    <DropdownMenuItem
+                      onClick={() => onPreview?.(entry)}
+                      className="cursor-pointer gap-2"
+                    >
+                      <Eye />
+                      {t('actions.preview')}
+                    </DropdownMenuItem>
+                  )}
+                  {entry.status === 'READY' && (
                     <>
-                      <DropdownMenuItem
-                        onClick={() => onPreview?.(entry)}
-                        className="cursor-pointer gap-2"
-                      >
-                        <Eye />
-                        {t('actions.preview')}
-                      </DropdownMenuItem>
-
                       <DropdownMenuItem
                         onClick={() => onShare?.(entry)}
                         className="cursor-pointer gap-2"
@@ -292,16 +293,14 @@ export function InventoryCard({
                         <Download />
                         {t('actions.download')}
                       </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => onSaveToDrive?.(entry)}
+                        className="cursor-pointer gap-2"
+                      >
+                        <CloudUpload />
+                        {t('actions.saveToDrive')}
+                      </DropdownMenuItem>
                     </>
-                  )}
-                  {entry.status === 'READY' && (
-                    <DropdownMenuItem
-                      onClick={() => onSaveToDrive?.(entry)}
-                      className="cursor-pointer gap-2"
-                    >
-                      <CloudUpload />
-                      {t('actions.saveToDrive')}
-                    </DropdownMenuItem>
                   )}
                 </>
               )}

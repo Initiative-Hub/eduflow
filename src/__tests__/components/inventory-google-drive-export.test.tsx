@@ -32,7 +32,14 @@ const baseEntry: InventoryEntry = {
   thumbnailMimeType: null,
 };
 
-function renderInventoryCard(entry: InventoryEntry, onSaveToDrive = vi.fn()) {
+function renderInventoryCard(
+  entry: InventoryEntry,
+  actions = {
+    onDownload: vi.fn(),
+    onSaveToDrive: vi.fn(),
+    onShare: vi.fn(),
+  }
+) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
@@ -43,9 +50,11 @@ function renderInventoryCard(entry: InventoryEntry, onSaveToDrive = vi.fn()) {
           entry={entry}
           locale="en"
           onDelete={vi.fn()}
+          onDownload={actions.onDownload}
           onMove={vi.fn()}
           onRename={vi.fn()}
-          onSaveToDrive={onSaveToDrive}
+          onSaveToDrive={actions.onSaveToDrive}
+          onShare={actions.onShare}
         />
       </NextIntlClientProvider>
     </QueryClientProvider>
@@ -58,7 +67,7 @@ function renderInventoryCard(entry: InventoryEntry, onSaveToDrive = vi.fn()) {
     throw new Error('Inventory action menu trigger was not rendered.');
   }
 
-  return { ...result, onSaveToDrive, trigger };
+  return { ...result, ...actions, trigger };
 }
 
 function InventoryTableHarness({
@@ -112,20 +121,37 @@ describe('inventory Google Drive export actions', () => {
       mimeType: 'application/x-custom-format',
       name: 'archive.custom',
     },
-  ])('exports a ready $name file that cannot be previewed', async (file) => {
-    const user = userEvent.setup();
-    const entry = { ...baseEntry, ...file };
-    const { onSaveToDrive, trigger } = renderInventoryCard(entry);
+  ])(
+    'offers ready $name files that cannot be previewed all file actions',
+    async (file) => {
+      const user = userEvent.setup();
+      const entry = { ...baseEntry, ...file };
+      const { onDownload, onSaveToDrive, onShare, trigger } =
+        renderInventoryCard(entry);
 
-    await user.click(trigger);
-    expect(screen.queryByRole('menuitem', { name: 'Preview' })).toBeNull();
+      await user.click(trigger);
+      expect(screen.queryByRole('menuitem', { name: 'Preview' })).toBeNull();
+      expect(screen.getByRole('menuitem', { name: 'Share' })).toBeDefined();
+      expect(screen.getByRole('menuitem', { name: 'Download' })).toBeDefined();
+      expect(
+        screen.getByRole('menuitem', { name: 'Save to Google Drive' })
+      ).toBeDefined();
 
-    await user.click(
-      screen.getByRole('menuitem', { name: 'Save to Google Drive' })
-    );
+      await user.click(screen.getByRole('menuitem', { name: 'Share' }));
+      expect(onShare).toHaveBeenCalledWith(entry);
 
-    expect(onSaveToDrive).toHaveBeenCalledWith(entry);
-  });
+      await user.click(trigger);
+      await user.click(screen.getByRole('menuitem', { name: 'Download' }));
+      expect(onDownload).toHaveBeenCalledWith(entry);
+
+      await user.click(trigger);
+      await user.click(
+        screen.getByRole('menuitem', { name: 'Save to Google Drive' })
+      );
+
+      expect(onSaveToDrive).toHaveBeenCalledWith(entry);
+    }
+  );
 
   it('shows the export action in the table menu for a ready PPTX', async () => {
     const user = userEvent.setup();
