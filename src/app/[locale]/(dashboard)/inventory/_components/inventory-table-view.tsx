@@ -278,30 +278,34 @@ export function InventoryTableView({
                           {t('actions.open')}
                         </DropdownMenuItem>
                       ) : (
-                        canPreviewInventoryEntry(entry) && (
-                          <>
-                            <DropdownMenuItem
-                              onClick={() => onPreview(entry)}
-                              className="cursor-pointer gap-2"
-                            >
-                              <Eye />
-                              {t('actions.preview')}
-                            </DropdownMenuItem>
+                        <>
+                          {canPreviewInventoryEntry(entry) && (
+                            <>
+                              <DropdownMenuItem
+                                onClick={() => onPreview(entry)}
+                                className="cursor-pointer gap-2"
+                              >
+                                <Eye />
+                                {t('actions.preview')}
+                              </DropdownMenuItem>
 
-                            <DropdownMenuItem
-                              onClick={() => onShare(entry)}
-                              className="cursor-pointer gap-2"
-                            >
-                              <Share2 />
-                              {t('actions.share')}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => onDownload(entry)}
-                              className="cursor-pointer gap-2"
-                            >
-                              <Download />
-                              {t('actions.download')}
-                            </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => onShare(entry)}
+                                className="cursor-pointer gap-2"
+                              >
+                                <Share2 />
+                                {t('actions.share')}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => onDownload(entry)}
+                                className="cursor-pointer gap-2"
+                              >
+                                <Download />
+                                {t('actions.download')}
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                          {entry.status === 'READY' && (
                             <DropdownMenuItem
                               onClick={() => onSaveToDrive(entry)}
                               className="cursor-pointer gap-2"
@@ -312,8 +316,8 @@ export function InventoryTableView({
                                 ? t('actions.savingToDrive')
                                 : t('actions.saveToDrive')}
                             </DropdownMenuItem>
-                          </>
-                        )
+                          )}
+                        </>
                       )}
                       <DropdownMenuItem
                         onClick={() => onDeleteEntry(entry)}
