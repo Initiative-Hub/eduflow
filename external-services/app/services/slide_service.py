@@ -280,6 +280,80 @@ CATEGORY_EQUIVALENTS: Dict[str, tuple] = {
     "REFERENCES_LIST": ("reference", "source", "citation", "bibliography"),
 }
 
+# What to serve when a collection simply HAS NO layout for a category, in
+# preference order, using only layouts from the collection itself.
+#
+# A collection extracted from a real deck carries the designs that deck had —
+# Art & Activism has 12 of the 22 standard categories — while the planner is
+# told to vary its layouts across all of them. Every category the collection
+# lacked was backfilled from the base library, so a 13-slide deck came out with
+# two slides in the chosen style and ten in a foreign one. A diagram layout
+# rendered as that collection's own bullet list is a smaller loss than a slide
+# that looks like it came from a different deck.
+#
+# CHART_INSIGHT and DATA_TABLE are deliberately absent: their content needs
+# real chart and table slots, and dropping the chart to preserve the palette is
+# the wrong trade. Those still backfill from the base library.
+CATEGORY_SUBSTITUTES: Dict[str, tuple] = {
+    "STEP_BY_STEP": ("PROCESS_ARROWS", "TITLE_BULLETS", "AGENDA_OUTLINE"),
+    "PROCESS_ARROWS": ("STEP_BY_STEP", "TITLE_BULLETS", "AGENDA_OUTLINE"),
+    "PYRAMID_LEVELS": ("FUNNEL_STAGES", "TITLE_BULLETS", "AGENDA_OUTLINE"),
+    "FUNNEL_STAGES": ("PYRAMID_LEVELS", "TITLE_BULLETS", "AGENDA_OUTLINE"),
+    "CIRCLE_CYCLE": ("PROCESS_ARROWS", "TITLE_BULLETS", "AGENDA_OUTLINE"),
+    "TIMELINE_MILESTONES": ("STEP_BY_STEP", "AGENDA_OUTLINE", "TITLE_BULLETS"),
+    "KPI_BIG_NUMBER": ("STATEMENT_IMAGE", "BIG_QUOTE_TAKEAWAY", "TITLE_BULLETS"),
+    "QA_CONTACT": ("CALL_TO_ACTION", "CONCLUSION_SUMMARY", "SECTION_HEADER"),
+    "AGENDA_OUTLINE": ("TITLE_BULLETS", "TWO_COLUMN_SPLIT"),
+    "TITLE_BULLETS": ("AGENDA_OUTLINE", "TWO_COLUMN_SPLIT", "MEDIA_TEXT"),
+    "TWO_COLUMN_SPLIT": ("TITLE_BULLETS", "AGENDA_OUTLINE"),
+    "BIG_QUOTE_TAKEAWAY": ("STATEMENT_IMAGE", "SECTION_HEADER"),
+    "STATEMENT_IMAGE": ("BIG_QUOTE_TAKEAWAY", "MEDIA_TEXT", "SECTION_HEADER"),
+    "MEDIA_TEXT": ("STATEMENT_IMAGE", "TITLE_BULLETS"),
+    "CONCLUSION_SUMMARY": ("TITLE_BULLETS", "CALL_TO_ACTION", "AGENDA_OUTLINE"),
+    "CALL_TO_ACTION": ("CONCLUSION_SUMMARY", "STATEMENT_IMAGE", "SECTION_HEADER"),
+    "REFERENCES_LIST": ("TITLE_BULLETS", "AGENDA_OUTLINE"),
+    "SECTION_HEADER": ("STATEMENT_IMAGE", "TITLE_SLIDE"),
+}
+
+
+def _find_substitute_layout(
+    library_dir: Path,
+    category: str,
+    allowed: set[str] | None = None,
+    used: Dict[str, int] | None = None,
+) -> Path | None:
+    """A layout from THIS collection that can stand in for `category`.
+
+    `allowed` is the set of layouts the collection shipped with. Without it the
+    search happily picks a folder an earlier substitution just created, so
+    TIMELINE_MILESTONES resolved to PROCESS_ARROWS which was itself a copy of
+    TITLE_BULLETS -- three consecutive slides on one design, which is exactly
+    the monotony the planner's variety rule exists to prevent.
+
+    `used` counts how often each stand-in has been handed out, so several
+    missing categories spread across the collection's layouts instead of all
+    landing on the first candidate.
+    """
+    candidates = []
+    for name in CATEGORY_SUBSTITUTES.get(category, ()):
+        if allowed is not None and name not in allowed:
+            local = _find_equivalent_layout(library_dir, name)
+            if local is None or (allowed is not None and local.name not in allowed):
+                continue
+            candidates.append(local)
+            continue
+        candidate = library_dir / name
+        if candidate.is_dir() and any(candidate.glob("*.svg")):
+            candidates.append(candidate)
+    if not candidates:
+        return None
+    if not used:
+        return candidates[0]
+    # Least-used wins; ties keep the preference order above.
+    return min(
+        enumerate(candidates), key=lambda pair: (used.get(pair[1].name, 0), pair[0])
+    )[1]
+
 
 def _canon_category(name: str) -> str:
     return re.sub(r"[^a-z0-9]", "", str(name).lower())
@@ -1238,6 +1312,16 @@ class SlideService:
         if not missing:
             return
 
+        # Snapshot what the collection actually ships, before this loop starts
+        # creating folders — a stand-in must be one of the designer's layouts,
+        # never a copy an earlier iteration just made.
+        own_layouts = {
+            child.name
+            for child in library_dir.iterdir()
+            if child.is_dir() and any(child.glob("*.svg"))
+        }
+        stand_in_uses: Dict[str, int] = {}
+
         base_dir = await self._ensure_collection_downloaded(BASE_TEMPLATE_COLLECTION)
         for cat in missing:
             cat_dir = library_dir / cat
@@ -1250,6 +1334,22 @@ class SlideService:
                 logger.info(
                     f"Served '{cat}' from this collection's own "
                     f"'{local_equivalent.name}' layout instead of backfilling"
+                )
+                continue
+
+            substitute = _find_substitute_layout(
+                library_dir, cat, own_layouts, stand_in_uses
+            )
+            if substitute is not None:
+                stand_in_uses[substitute.name] = stand_in_uses.get(substitute.name, 0) + 1
+                cat_dir.mkdir(parents=True, exist_ok=True)
+                for item in substitute.iterdir():
+                    if item.is_file():
+                        shutil.copy2(item, cat_dir / item.name)
+                logger.info(
+                    f"Stood in for missing '{cat}' with this collection's own "
+                    f"'{substitute.name}' rather than backfilling from "
+                    f"'{BASE_TEMPLATE_COLLECTION}'"
                 )
                 continue
 
