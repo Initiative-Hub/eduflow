@@ -1,6 +1,4 @@
 'use client';
-import { useActiveQuizAttempts } from '@/hooks/use-active-quiz-attempts';
-import { ChatQuizRestriction } from '@/components/quiz/chat-quiz-restriction';
 
 import { useMutation } from '@tanstack/react-query';
 import {
@@ -30,7 +28,9 @@ import {
 } from '@/components/ai-elements/prompt-input';
 import { DropdownTemplate, type MenuItem } from '@/components/custom/dropdown';
 import { GoogleDrivePickerHost } from '@/components/google-drive-picker/google-drive-picker-host';
+import { ChatQuizRestriction } from '@/components/quiz/chat-quiz-restriction';
 import { Button } from '@/components/ui/button';
+import type { useActiveQuizAttempts } from '@/hooks/use-active-quiz-attempts';
 import { useGoogleDrivePicker } from '@/hooks/use-google-drive-picker';
 import type { ChatModel } from '@/services/ai/chat-provider.constants';
 import type {
@@ -80,6 +80,7 @@ export type ChatInputToolsContext = {
 };
 
 interface ChatInputProps {
+  quizAccess: ReturnType<typeof useActiveQuizAttempts>;
   handleSubmit: (
     e?: FormEvent,
     customValue?: string,
@@ -101,6 +102,7 @@ interface ChatInputProps {
 }
 
 export function ChatInput({
+  quizAccess,
   handleSubmit,
   isStreaming,
   isUploading,
@@ -117,7 +119,6 @@ export function ChatInput({
   footer,
 }: ChatInputProps) {
   const t = useTranslations('AIChat');
-  const quizAccess = useActiveQuizAttempts();
   const [inputValue, setInputValue] = useState('');
   const [pickerSource, setPickerSource] = useState<
     'personal' | 'course' | null

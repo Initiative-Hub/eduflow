@@ -1,5 +1,4 @@
 'use client';
-import { useActiveQuizAttempts } from '@/hooks/use-active-quiz-attempts';
 
 import type { UIMessage } from 'ai';
 import {
@@ -15,6 +14,7 @@ import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { useActiveQuizAttempts } from '@/hooks/use-active-quiz-attempts';
 import { DEFAULT_CHAT_MODEL } from '@/services/ai/chat-provider.constants';
 import type { ChatSubmitAttachments } from '@/types/chat-attachments';
 import { ChatLessonReferenceTool } from '../../_components/chat-lesson-reference-tool';
@@ -221,6 +221,7 @@ export function AIClient({
 
   const composer = (
     <ChatInput
+      quizAccess={quizAccess}
       handleSubmit={handleSubmit}
       isAuthenticated={isAuthenticated}
       isStreaming={isStreaming}

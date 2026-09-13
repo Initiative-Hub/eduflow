@@ -1,6 +1,6 @@
 'use client';
 
-import { CalendarDays, ChevronDown, ChevronRight, Clock3 } from 'lucide-react';
+import { CalendarDays, ChevronRight, Clock3 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
 import {
@@ -65,9 +65,8 @@ export function GradeAttemptCard({
     >
       <GradeAttemptSummary attempt={attempt} attemptCount={attemptCount} />
 
-      <AccordionTrigger className="group min-h-12 border-t bg-muted/20 px-4 py-3 text-sm hover:bg-muted/50 hover:no-underline sm:px-6 [&>svg]:hidden">
+      <AccordionTrigger className="group min-h-12 border-t bg-muted/20 px-4 py-3 text-sm hover:bg-muted/50 hover:no-underline">
         <span>{t('reviewAnswers')}</span>
-        <ChevronDown className="ml-auto size-4 transition-transform duration-200 group-data-[state=open]:rotate-180" />
       </AccordionTrigger>
       <AccordionContent className="border-t bg-muted/10 px-4 pt-4 pb-5 sm:px-6 sm:pt-6 sm:pb-6">
         <div className="space-y-4">

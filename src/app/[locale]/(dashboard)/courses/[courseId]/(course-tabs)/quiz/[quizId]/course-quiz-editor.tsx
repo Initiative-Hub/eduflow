@@ -1,6 +1,6 @@
 'use client';
-import { useEffect, useRef, useState, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { QuizQuestionsEditor } from '@/components/quiz';
 import type {
   DeliveryMode,
@@ -10,9 +10,9 @@ import type {
 import type { QuestionBlock } from '@/lib/quiz-template/types';
 import { useModules } from '../../../use-modules';
 import { useQuestionBank } from '../../../use-question-bank';
-import { useQuiz } from '../use-quiz';
 import { QuizAiDraftDialog } from '../create/quiz-ai-draft-dialog';
 import { QuizDetailsForm } from '../create/quiz-details-form';
+import { useQuiz } from '../use-quiz';
 export function CourseQuizEditor({
   courseId,
   quizId,
@@ -104,39 +104,37 @@ export function CourseQuizEditor({
 
   return (
     <>
-      <>
-        <QuizDetailsForm
-          title={editTitle}
-          description={editDescription}
-          lessonIds={editLessonIds}
-          lessons={availableLessons}
-          deliveryMode={editDeliveryMode}
-          showErrors={showEditErrors}
-          hideLessonSelector={false}
-          onTitleChange={setEditTitle}
-          onDescriptionChange={setEditDescription}
-          onLessonIdsChange={setEditLessonIds}
-          onDeliveryModeChange={setEditDeliveryMode}
-        />
+      <QuizDetailsForm
+        title={editTitle}
+        description={editDescription}
+        lessonIds={editLessonIds}
+        lessons={availableLessons}
+        deliveryMode={editDeliveryMode}
+        showErrors={showEditErrors}
+        hideLessonSelector={false}
+        onTitleChange={setEditTitle}
+        onDescriptionChange={setEditDescription}
+        onLessonIdsChange={setEditLessonIds}
+        onDeliveryModeChange={setEditDeliveryMode}
+      />
 
-        <section className="rounded-2xl border bg-card p-5 md:p-6">
-          <div className="mb-5">
-            <h2 className="font-semibold text-lg">{t('questionsTitle')}</h2>
-          </div>
-          <QuizQuestionsEditor
-            key={`${quiz.updatedAt}:${quiz.questionIds?.join(',') ?? ''}`}
-            initialQuestions={quiz.questions ?? []}
-            initialQuestionIds={quiz.questionIds ?? []}
-            questionBank={questionBank}
-            onSave={handleSaveDraft}
-            isSaving={isSavingQuizDraft}
-            onGenerateAI={handleOpenDraftAiDialog}
-            isGeneratingAI={isGeneratingDraftQuiz}
-            initialAction={initialEditorAction}
-            creationMode
-          />
-        </section>
-      </>
+      <section className="rounded-2xl border bg-card p-5 md:p-6">
+        <div className="mb-5">
+          <h2 className="font-semibold text-lg">{t('questionsTitle')}</h2>
+        </div>
+        <QuizQuestionsEditor
+          key={`${quiz.updatedAt}:${quiz.questionIds?.join(',') ?? ''}`}
+          initialQuestions={quiz.questions ?? []}
+          initialQuestionIds={quiz.questionIds ?? []}
+          questionBank={questionBank}
+          onSave={handleSaveDraft}
+          isSaving={isSavingQuizDraft}
+          onGenerateAI={handleOpenDraftAiDialog}
+          isGeneratingAI={isGeneratingDraftQuiz}
+          initialAction={initialEditorAction}
+          creationMode
+        />
+      </section>
       <QuizAiDraftDialog
         open={isAiDialogOpen}
         onOpenChange={setIsAiDialogOpen}

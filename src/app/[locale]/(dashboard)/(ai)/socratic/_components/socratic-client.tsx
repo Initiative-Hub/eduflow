@@ -1,5 +1,4 @@
 'use client';
-import { useActiveQuizAttempts } from '@/hooks/use-active-quiz-attempts';
 
 import { GraduationCap, LockKeyhole } from 'lucide-react';
 import dynamic from 'next/dynamic';
@@ -8,6 +7,7 @@ import type React from 'react';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { useActiveQuizAttempts } from '@/hooks/use-active-quiz-attempts';
 import { DEFAULT_SOCRATIC_GUIDANCE_DEPTH } from '@/lib/validations/socratic.schema';
 import { DEFAULT_CHAT_MODEL } from '@/services/ai/chat-provider.constants';
 import type { ChatSubmitAttachments } from '@/types/chat-attachments';
@@ -157,6 +157,7 @@ export function SocraticClient({
 
   const composer = (
     <ChatInput
+      quizAccess={quizAccess}
       handleSubmit={handleSubmit}
       isAuthenticated={isAuthenticated}
       isStreaming={isStreaming}

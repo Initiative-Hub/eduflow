@@ -1,5 +1,4 @@
 'use client';
-import { useActiveQuizAttempts } from '@/hooks/use-active-quiz-attempts';
 
 import type { UIMessage } from 'ai';
 import { PenLine } from 'lucide-react';
@@ -8,6 +7,7 @@ import { useTranslations } from 'next-intl';
 import type React from 'react';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { useActiveQuizAttempts } from '@/hooks/use-active-quiz-attempts';
 import type { WritingTool } from '@/lib/validations/writing.schema';
 import { DEFAULT_CHAT_MODEL } from '@/services/ai/chat-provider.constants';
 import { ChatInput } from '../../_components/chat-input';
@@ -103,6 +103,7 @@ export default function WritingClient({
 
   const composer = (
     <ChatInput
+      quizAccess={quizAccess}
       handleSubmit={handleSubmit}
       isAuthenticated={false}
       isStreaming={isStreaming}

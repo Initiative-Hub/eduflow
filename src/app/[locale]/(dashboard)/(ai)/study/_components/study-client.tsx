@@ -1,5 +1,4 @@
 'use client';
-import { useActiveQuizAttempts } from '@/hooks/use-active-quiz-attempts';
 
 import type { UIMessage } from 'ai';
 import { GraduationCap } from 'lucide-react';
@@ -7,6 +6,7 @@ import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { useActiveQuizAttempts } from '@/hooks/use-active-quiz-attempts';
 import {
   DEFAULT_STUDY_QUIZ_OPTIONS,
   type StudyMode,
@@ -180,6 +180,7 @@ export function StudyClient({
 
   const composer = (
     <ChatInput
+      quizAccess={quizAccess}
       handleSubmit={handleSubmit}
       isAuthenticated={isAuthenticated}
       isStreaming={isStreaming}

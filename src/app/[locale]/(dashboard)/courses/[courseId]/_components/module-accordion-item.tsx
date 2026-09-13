@@ -1,6 +1,4 @@
 'use client';
-import { useActiveQuizAttempts } from '@/hooks/use-active-quiz-attempts';
-import { Badge } from '@/components/ui/badge';
 
 import {
   closestCenter,
@@ -34,6 +32,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { QuizDefinition } from '@/lib/quiz-template';
 import { cn } from '@/lib/utils';
@@ -67,6 +66,7 @@ interface ModuleAccordionItemProps {
   onCreateQuiz: (moduleId: string) => void;
   /** Quizzes associated with lessons in this module */
   quizzes?: QuizDefinition[];
+  activeQuizIds?: ReadonlySet<string>;
 }
 
 /**
@@ -121,9 +121,9 @@ export function ModuleAccordionItem({
   onAddLesson,
   onCreateQuiz,
   quizzes = [],
+  activeQuizIds,
 }: ModuleAccordionItemProps) {
   const tAccordion = useTranslations('Courses.ModuleAccordion');
-  const activeAttempts = useActiveQuizAttempts();
   const [deletedQuizIds, setDeletedQuizIds] = useState<Set<string>>(
     () => new Set()
   );
@@ -358,9 +358,7 @@ export function ModuleAccordionItem({
                       onIndent={handleIndent}
                       onOutdent={handleOutdent}
                       onQuizDeleted={handleQuizDeleted}
-                      active={activeAttempts.attempts.some(
-                        (attempt) => attempt.quizId === item.id
-                      )}
+                      active={activeQuizIds?.has(item.id) ?? false}
                     />
                   ))}
                 </SortableContext>
@@ -376,9 +374,7 @@ export function ModuleAccordionItem({
                   onIndent={handleIndent}
                   onOutdent={handleOutdent}
                   onQuizDeleted={handleQuizDeleted}
-                  active={activeAttempts.attempts.some(
-                    (attempt) => attempt.quizId === item.id
-                  )}
+                  active={activeQuizIds?.has(item.id) ?? false}
                 />
               ))
             )}

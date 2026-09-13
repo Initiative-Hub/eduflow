@@ -180,24 +180,6 @@ export const QuizAttemptService = {
   async get(userId: string, attemptId: string) {
     return presentOwned(await getOwned(userId, attemptId));
   },
-  async history(userId: string, quizId: string) {
-    await getQuiz(userId, quizId);
-    return prisma.quizAttempt.findMany({
-      where: { userId, quizId, status: 'COMPLETED' },
-      orderBy: [{ completedAt: 'desc' }, { id: 'desc' }],
-      select: {
-        id: true,
-        quizId: true,
-        completedAt: true,
-        completionReason: true,
-        answeredCount: true,
-        score: true,
-        maxScore: true,
-        percentage: true,
-        hasPendingReview: true,
-      },
-    });
-  },
   async save(userId: string, attemptId: string, input: AttemptProgress) {
     const attempt = await getOwned(userId, attemptId);
     assertActiveRevision(attempt, input.revision);

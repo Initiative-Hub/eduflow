@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { Accordion } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
+import { useActiveQuizAttempts } from '@/hooks/use-active-quiz-attempts';
 import { AddLessonDialog } from '../_components/add-lesson-dialog';
 import { AddModuleDialog } from '../_components/add-module-dialog';
 import { ModuleAccordionItem } from '../_components/module-accordion-item';
@@ -59,6 +60,10 @@ export function CourseModulesClient({
   } = useModules(courseId);
 
   const { quizzes } = useQuestionBank({ courseId, loadQuestions: false });
+  const activeAttempts = useActiveQuizAttempts();
+  const activeQuizIds = new Set(
+    activeAttempts.attempts.map((attempt) => attempt.quizId)
+  );
 
   const [isAddModuleOpen, setIsAddModuleOpen] = useState(false);
   const [isAiOpen, setIsAiOpen] = useState(false);
@@ -155,6 +160,7 @@ export function CourseModulesClient({
               onAddLesson={setActiveModuleIdForLesson}
               onCreateQuiz={handleCreateQuiz}
               quizzes={quizzes}
+              activeQuizIds={activeQuizIds}
             />
           ))}
         </Accordion>

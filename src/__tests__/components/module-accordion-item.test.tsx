@@ -1,4 +1,3 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
@@ -126,26 +125,21 @@ const staleQuiz: QuizDefinition = {
 describe('ModuleAccordionItem', () => {
   it('hides a deleted quiz row immediately even when quiz props are stale', async () => {
     const user = userEvent.setup();
-    const queryClient = new QueryClient({
-      defaultOptions: { queries: { retry: false } },
-    });
 
     render(
-      <QueryClientProvider client={queryClient}>
-        <Accordion type="multiple" defaultValue={['module-1']}>
-          <ModuleAccordionItem
-            canCreateContent={false}
-            canDeleteContent
-            canEditContent={false}
-            canCreateQuiz={false}
-            courseId="course-1"
-            moduleItem={moduleItem}
-            onAddLesson={vi.fn()}
-            onCreateQuiz={vi.fn()}
-            quizzes={[staleQuiz]}
-          />
-        </Accordion>
-      </QueryClientProvider>
+      <Accordion type="multiple" defaultValue={['module-1']}>
+        <ModuleAccordionItem
+          canCreateContent={false}
+          canDeleteContent
+          canEditContent={false}
+          canCreateQuiz={false}
+          courseId="course-1"
+          moduleItem={moduleItem}
+          onAddLesson={vi.fn()}
+          onCreateQuiz={vi.fn()}
+          quizzes={[staleQuiz]}
+        />
+      </Accordion>
     );
 
     expect(screen.getByText('Chapter 2')).toBeInTheDocument();
