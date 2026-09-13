@@ -59,14 +59,14 @@ async function getQuiz(userId: string, quizId: string) {
   return quiz;
 }
 
-async function getOwned(userId: string, attemptId: string, allowEnd = false) {
+async function getOwned(userId: string, attemptId: string) {
   const attempt = await prisma.quizAttempt.findFirst({
     where: { id: attemptId, userId },
     include: { quiz: { include: quizInclude } },
   });
   if (!attempt)
     throw new QuizAttemptError(404, 'ATTEMPT_NOT_FOUND', 'Attempt not found.');
-  if (!allowEnd) await requireCourseAccess(userId, attempt.quiz.course);
+  await requireCourseAccess(userId, attempt.quiz.course);
   return attempt;
 }
 
@@ -115,7 +115,23 @@ async function writeProgress(
 export const QuizAttemptService = {
   async active(userId: string) {
     const attempts = await prisma.quizAttempt.findMany({
-      where: { userId, status: 'IN_PROGRESS' },
+      where: {
+        userId,
+        status: 'IN_PROGRESS',
+        quiz: {
+          course: {
+            deletedAt: null,
+            OR: [
+              { ownerId: userId },
+              {
+                enrollments: {
+                  some: { memberId: userId, status: 'ACTIVE' },
+                },
+              },
+            ],
+          },
+        },
+      },
       orderBy: { startedAt: 'desc' },
       select: {
         id: true,
@@ -222,28 +238,22 @@ export const QuizAttemptService = {
     });
   },
   async complete(userId: string, attemptId: string, input: AttemptComplete) {
-    const attempt = await getOwned(
-      userId,
-      attemptId,
-      input.completionReason === 'ENDED_EARLY'
-    );
+    const attempt = await getOwned(userId, attemptId);
     if (attempt.status === 'COMPLETED') return presentOwned(attempt);
     assertActiveRevision(attempt, input.revision);
     const snapshot = snapshotSchema.parse(attempt.quizSnapshot);
     const answers = answersSchema.parse(attempt.answers);
     if (
-      input.completionReason === 'SUBMITTED' &&
       countAnsweredQuestions(answers, snapshot.questions.length) !==
-        snapshot.questions.length
+      snapshot.questions.length
     ) {
       throw new QuizAttemptError(
         400,
         'INCOMPLETE_ATTEMPT',
-        'Answer every question before submitting, or end the attempt early.'
+        'Answer every question before submitting.'
       );
     }
     if (
-      input.completionReason === 'SUBMITTED' &&
       snapshot.deliveryMode === 'INSTANT_FEEDBACK' &&
       attempt.checkedQuestionIndices.length !== snapshot.questions.length
     ) {
@@ -265,7 +275,6 @@ export const QuizAttemptService = {
         },
         data: {
           status: 'COMPLETED',
-          completionReason: input.completionReason,
           completedAt: new Date(),
           revision: { increment: 1 },
           score: result.earnedPoints,

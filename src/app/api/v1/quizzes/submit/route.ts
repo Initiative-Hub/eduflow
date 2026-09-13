@@ -23,10 +23,9 @@ const schema = attemptCompleteSchema.extend({
  *         application/json:
  *           schema:
  *             type: object
- *             required: [attemptId, revision, completionReason]
+ *             required: [attemptId, revision]
  *             properties:
  *               revision: { type: integer, minimum: 0 }
- *               completionReason: { type: string, enum: [SUBMITTED, ENDED_EARLY], description: Ending early is allowed for the owner even after course access is revoked }
  *               attemptId: { type: string, format: uuid, description: Required existing owned attempt ID }
  *               quizId: { type: string, format: uuid, description: Optional quiz consistency check }
  *     responses:

@@ -137,7 +137,6 @@ export function presentAttempt(
     revision: attempt.revision,
     startedAt: attempt.startedAt?.toISOString() ?? null,
     completedAt: attempt.completedAt?.toISOString() ?? null,
-    completionReason: attempt.completionReason,
     answeredCount: attempt.answeredCount,
     isLegacySnapshot: attempt.quizSnapshot === null,
     result: completed

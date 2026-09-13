@@ -9,6 +9,7 @@ import {
 
 const mocks = vi.hoisted(() => ({
   findFirst: vi.fn(),
+  findMany: vi.fn(),
   findUnique: vi.fn(),
   findUniqueOrThrow: vi.fn(),
   updateMany: vi.fn(),
@@ -51,7 +52,6 @@ function fixture() {
     quizSnapshot: structuredClone(snapshot),
     startedAt: new Date(),
     completedAt: null,
-    completionReason: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     answeredCount: 0,
@@ -133,28 +133,28 @@ describe('course attempt lifecycle', () => {
       expect.objectContaining({ where: { id: 'attempt', userId: 'outsider' } })
     );
   });
-  it('ends an owned attempt after access is revoked and returns the same completed result on retry', async () => {
+  it('returns the same completed result when submission is retried', async () => {
     const original = {
       ...fixture(),
-      quiz: {
-        courseId: 'course',
-        course: {
-          id: 'course',
-          title: 'Course',
-          ownerId: 'other',
-          deletedAt: null,
-        },
-      },
+      answers: { 0: { type: 'true_false' as const, selectedAnswer: true } },
+      checkedQuestionIndices: [0],
+      answeredCount: 1,
     };
     const completed = {
       ...original,
       status: 'COMPLETED',
       completedAt: new Date(),
-      completionReason: 'ENDED_EARLY',
-      score: 0,
+      score: 10,
       maxScore: 10,
-      percentage: 0,
-      results: [],
+      percentage: 100,
+      results: [
+        {
+          questionIndex: 0,
+          isCorrect: true,
+          earnedPoints: 10,
+          maxPoints: 10,
+        },
+      ],
     };
     mocks.findFirst
       .mockResolvedValueOnce(original)
@@ -163,15 +163,38 @@ describe('course attempt lifecycle', () => {
     mocks.findUniqueOrThrow.mockResolvedValue(completed);
     const first = await QuizAttemptService.complete('owner', 'attempt', {
       revision: 0,
-      completionReason: 'ENDED_EARLY',
     });
     const retry = await QuizAttemptService.complete('owner', 'attempt', {
       revision: 0,
-      completionReason: 'ENDED_EARLY',
     });
     expect(first.result).toEqual(retry.result);
     expect(mocks.updateMany).toHaveBeenCalledTimes(1);
-    expect(mocks.enrollment).not.toHaveBeenCalled();
+  });
+
+  it('only lists active attempts from courses the user can access', async () => {
+    mocks.findMany.mockResolvedValue([]);
+    await QuizAttemptService.active('owner');
+    expect(mocks.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          userId: 'owner',
+          status: 'IN_PROGRESS',
+          quiz: {
+            course: expect.objectContaining({
+              deletedAt: null,
+              OR: [
+                { ownerId: 'owner' },
+                {
+                  enrollments: {
+                    some: { memberId: 'owner', status: 'ACTIVE' },
+                  },
+                },
+              ],
+            }),
+          },
+        }),
+      })
+    );
   });
 
   it('requires complete and checked answers for normal submission', async () => {
@@ -179,7 +202,6 @@ describe('course attempt lifecycle', () => {
     await expect(
       QuizAttemptService.complete('owner', 'attempt', {
         revision: 0,
-        completionReason: 'SUBMITTED',
       })
     ).rejects.toMatchObject({ code: 'INCOMPLETE_ATTEMPT', status: 400 });
 
@@ -190,7 +212,6 @@ describe('course attempt lifecycle', () => {
     await expect(
       QuizAttemptService.complete('owner', 'attempt', {
         revision: 0,
-        completionReason: 'SUBMITTED',
       })
     ).rejects.toMatchObject({ code: 'UNCHECKED_ANSWERS', status: 400 });
     expect(mocks.updateMany).not.toHaveBeenCalled();

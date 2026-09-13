@@ -12,7 +12,6 @@ export interface StudentGradeAttempt {
   results: QuestionResult[];
   answeredCount: number;
   hasPendingReview: boolean;
-  completionReason: 'SUBMITTED' | 'ENDED_EARLY' | null;
   isLegacySnapshot: boolean;
   completedAt?: string | null;
   createdAt: string;

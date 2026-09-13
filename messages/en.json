@@ -2659,17 +2659,10 @@
     }
   },
   "QuizAttempts": {
-    "aiBlocked": "AI chat is unavailable while you have unfinished course quizzes. Finish or end your active attempts to continue.",
+    "aiBlocked": "AI chat is unavailable while you have unfinished course quizzes. Submit your active quizzes to continue.",
     "aiBlockedTitle": "Course quiz in progress",
-    "cancel": "Cancel",
     "checking": "Checking active quiz attempts?",
     "conflict": "This attempt changed in another tab or device. Reload to continue. Reloading discards unsaved changes in this tab.",
-    "endAttempt": "End attempt",
-    "endDescription": "Your answers will be saved and graded. Unanswered questions will remain unanswered. You cannot resume this attempt after ending it.",
-    "endedEarly": "Ended early",
-    "endError": "Unable to end the attempt. Its status has been refreshed; please try again.",
-    "endSavedDescription": "Your last saved answers will be graded. Unsaved changes in other tabs will not be included. You cannot resume this attempt after ending it.",
-    "endTitle": "End this attempt?",
     "inProgress": "In progress",
     "loadError": "Unable to load quiz attempts. Please try again.",
     "reload": "Reload saved attempt",
@@ -2679,7 +2672,6 @@
     "saved": "Progress saved",
     "saveError": "Unable to save progress. Please try again.",
     "saving": "Saving progress?",
-    "submitted": "Submitted",
     "takeResume": "Take / resume quiz",
     "unsaved": "Unsaved changes"
   },

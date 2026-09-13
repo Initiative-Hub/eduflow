@@ -612,36 +612,28 @@ enum QuizAttemptStatus {
   @@map("quiz_attempt_status")
 }
 
-enum QuizAttemptCompletionReason {
-  SUBMITTED   @map("submitted")
-  ENDED_EARLY @map("ended_early")
-
-  @@map("quiz_attempt_completion_reason")
-}
-
 model QuizAttempt {
-  id                     String                       @id @default(uuid())
-  quizId                 String                       @map("quiz_id")
-  quiz                   Quiz                         @relation(fields: [quizId], references: [id], onDelete: Cascade)
-  userId                 String                       @map("user_id")
-  user                   User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  status                 QuizAttemptStatus            @default(IN_PROGRESS)
-  currentQuestionIndex   Int                          @default(0) @map("current_question_index")
-  checkedQuestionIndices Int[]                        @default([]) @map("checked_question_indices")
-  revision               Int                          @default(0)
-  startedAt              DateTime?                    @map("started_at")
-  completedAt            DateTime?                    @map("completed_at")
-  completionReason       QuizAttemptCompletionReason? @map("completion_reason")
-  answers                Json                         @default("{}")
-  quizSnapshot           Json?                        @map("quiz_snapshot")
-  answeredCount          Int                          @default(0) @map("answered_count")
+  id                     String            @id @default(uuid())
+  quizId                 String            @map("quiz_id")
+  quiz                   Quiz              @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  userId                 String            @map("user_id")
+  user                   User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status                 QuizAttemptStatus @default(IN_PROGRESS)
+  currentQuestionIndex   Int               @default(0) @map("current_question_index")
+  checkedQuestionIndices Int[]             @default([]) @map("checked_question_indices")
+  revision               Int               @default(0)
+  startedAt              DateTime?         @map("started_at")
+  completedAt            DateTime?         @map("completed_at")
+  answers                Json              @default("{}")
+  quizSnapshot           Json?             @map("quiz_snapshot")
+  answeredCount          Int               @default(0) @map("answered_count")
   score                  Float?
-  maxScore               Float?                       @map("max_score")
+  maxScore               Float?            @map("max_score")
   percentage             Float?
   results                Json?
-  hasPendingReview       Boolean                      @default(false) @map("has_pending_review")
-  createdAt              DateTime                     @default(now()) @map("created_at")
-  updatedAt              DateTime                     @updatedAt @map("updated_at")
+  hasPendingReview       Boolean           @default(false) @map("has_pending_review")
+  createdAt              DateTime          @default(now()) @map("created_at")
+  updatedAt              DateTime          @updatedAt @map("updated_at")
 
   @@index([quizId, userId])
   @@index([userId])

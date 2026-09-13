@@ -1,13 +1,9 @@
 -- CreateEnum
 CREATE TYPE "quiz_attempt_status" AS ENUM ('in_progress', 'completed');
 
--- CreateEnum
-CREATE TYPE "quiz_attempt_completion_reason" AS ENUM ('submitted', 'ended_early');
-
 -- AlterTable
 ALTER TABLE "quiz_attempt" ADD COLUMN     "checked_question_indices" INTEGER[] DEFAULT ARRAY[]::INTEGER[],
 ADD COLUMN     "completed_at" TIMESTAMP(3),
-ADD COLUMN     "completion_reason" "quiz_attempt_completion_reason",
 ADD COLUMN     "current_question_index" INTEGER NOT NULL DEFAULT 0,
 ADD COLUMN     "revision" INTEGER NOT NULL DEFAULT 0,
 ADD COLUMN     "started_at" TIMESTAMP(3),
@@ -23,15 +19,14 @@ CREATE INDEX "quiz_attempt_user_id_status_idx" ON "quiz_attempt"("user_id", "sta
 
 -- Existing rows are submitted results, not unfinished attempts.
 UPDATE "quiz_attempt" SET "status" = 'completed',
-  "completed_at" = "created_at", "completion_reason" = 'submitted';
+  "completed_at" = "created_at";
 
 CREATE UNIQUE INDEX "quiz_attempt_user_id_quiz_id_active_key"
   ON "quiz_attempt" ("user_id", "quiz_id") WHERE "status" = 'in_progress';
 
 ALTER TABLE "quiz_attempt" ADD CONSTRAINT "quiz_attempt_completed_result_check"
   CHECK ("status" <> 'completed' OR (
-    "completed_at" IS NOT NULL AND "completion_reason" IS NOT NULL AND
-    "score" IS NOT NULL AND "max_score" IS NOT NULL AND
+    "completed_at" IS NOT NULL AND "score" IS NOT NULL AND "max_score" IS NOT NULL AND
     "percentage" IS NOT NULL AND "results" IS NOT NULL));
 ALTER TABLE "quiz_attempt" ADD CONSTRAINT "quiz_attempt_progress_check"
   CHECK ("current_question_index" >= 0 AND "revision" >= 0);

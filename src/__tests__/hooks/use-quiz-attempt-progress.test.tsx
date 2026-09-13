@@ -42,7 +42,6 @@ const initial: QuizAttemptView = {
   },
   startedAt: '2026-09-13T00:00:00Z',
   completedAt: null,
-  completionReason: null,
   answeredCount: 1,
   isLegacySnapshot: false,
   result: null,
@@ -111,7 +110,7 @@ describe('resumable quiz progress', () => {
       result.current.answer({ type: 'true_false', selectedAnswer: false })
     );
     await act(async () => {
-      await result.current.finish('ENDED_EARLY');
+      await result.current.finish();
     });
     expect(mocks.save).toHaveBeenCalledWith(
       'v1/quiz-attempts/attempt',
@@ -124,10 +123,7 @@ describe('resumable quiz progress', () => {
     );
     expect(mocks.complete).toHaveBeenCalledWith(
       'v1/quiz-attempts/attempt/complete',
-      {
-        revision: 4,
-        completionReason: 'ENDED_EARLY',
-      }
+      { revision: 4 }
     );
     expect(onComplete).toHaveBeenCalledOnce();
     expect(mocks.broadcast).toHaveBeenCalledOnce();

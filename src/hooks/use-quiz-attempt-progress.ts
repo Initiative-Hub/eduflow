@@ -157,14 +157,13 @@ export function useQuizAttemptProgress(
       setBusy(false);
     }
   };
-  const finish = async (completionReason: 'SUBMITTED' | 'ENDED_EARLY') => {
+  const finish = async () => {
     setBusy(true);
     try {
       await flush();
       const result = await runOperation(() =>
         complete.mutateAsync({
           revision: server.current.revision,
-          completionReason,
         })
       );
       updateServer(result);

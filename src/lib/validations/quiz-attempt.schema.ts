@@ -1,4 +1,5 @@
 import * as z from 'zod';
+
 const multipleChoiceAnswerSchema = z.object({
   type: z.literal('multiple_choice'),
   selectedOptionId: z.string(),
@@ -66,7 +67,6 @@ export const attemptCheckSchema = z.object({
 });
 export const attemptCompleteSchema = z.object({
   revision: z.number().int().nonnegative(),
-  completionReason: z.enum(['SUBMITTED', 'ENDED_EARLY']),
 });
 export type AttemptProgress = z.infer<typeof attemptProgressSchema>;
 export type AttemptCheck = z.infer<typeof attemptCheckSchema>;

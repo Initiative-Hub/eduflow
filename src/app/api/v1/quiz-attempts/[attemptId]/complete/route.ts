@@ -22,10 +22,9 @@ import { QuizAttemptError } from '@/services/quiz-attempt-data';
  *         application/json:
  *           schema:
  *             type: object
- *             required: [revision, completionReason]
+ *             required: [revision]
  *             properties:
  *               revision: { type: integer, minimum: 0 }
- *               completionReason: { type: string, enum: [SUBMITTED, ENDED_EARLY], description: Ending early is allowed for the owner even after course access is revoked }
  *     responses:
  *       200: { description: Successful operation; private and uncached }
  *       400: { description: Invalid UUID or request body }

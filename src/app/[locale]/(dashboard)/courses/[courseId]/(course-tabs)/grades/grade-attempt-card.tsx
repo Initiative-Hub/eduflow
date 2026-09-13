@@ -95,7 +95,6 @@ function GradeAttemptSummary({
   action?: ReactNode;
 }) {
   const t = useTranslations('Courses.Grades');
-  const tAttempts = useTranslations('QuizAttempts');
   const locale = useLocale();
   const totalQuestions = attempt.quizSnapshot.questions.length;
   const correctCount = attempt.results.filter(
@@ -117,11 +116,6 @@ function GradeAttemptSummary({
               </h2>
               <Badge variant="secondary">
                 {t(`deliveryMode.${attempt.quizSnapshot.deliveryMode}`)}
-              </Badge>
-              <Badge variant="outline">
-                {attempt.completionReason === 'ENDED_EARLY'
-                  ? tAttempts('endedEarly')
-                  : tAttempts('submitted')}
               </Badge>
               {attemptCount ? (
                 <Badge variant="outline">

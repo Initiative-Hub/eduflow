@@ -3,7 +3,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { useEffect } from 'react';
-import { ConfirmDialog } from '@/components/custom/dialog/confirm-dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -167,24 +166,8 @@ function AttemptWorkspace({
           onAnswer: progress.answer,
           onNavigate: (index) => void progress.navigate(index),
           onCheck: () => void progress.checkAnswer(),
-          onSubmit: () => void progress.finish('SUBMITTED'),
+          onSubmit: () => void progress.finish(),
         }}
-      />
-      <ConfirmDialog
-        title={t('endTitle')}
-        description={t('endDescription')}
-        cancelLabel={t('cancel')}
-        confirmLabel={t('endAttempt')}
-        isPending={progress.busy}
-        onConfirm={() => void progress.finish('ENDED_EARLY')}
-        trigger={
-          <Button
-            variant="outline"
-            disabled={progress.busy || progress.conflict}
-          >
-            {t('endAttempt')}
-          </Button>
-        }
       />
     </div>
   );
