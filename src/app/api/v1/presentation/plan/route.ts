@@ -113,13 +113,23 @@ export const POST = withAuth(async (req, sessionData) => {
         >
       | undefined;
     if (!collection || collection === 'auto') {
-      standardCategoryMetadata = slideLayoutGuidance;
-    } else if (SlideService.isBuiltInCollectionName(collection)) {
+      // The AI still has to pick a style, so it plans against the standard
+      // vocabulary and the collection is resolved afterwards.
       standardCategoryMetadata = slideLayoutGuidance;
     } else {
+      // A collection the user actually chose — built-in or not. Plan against
+      // the layouts it really has, not the standard 21.
+      //
+      // Built-in collections used to short-circuit to the generic guidance on
+      // the assumption that every one of them carries all 21 layouts. A
+      // collection extracted from a real deck does not: Art & Activism has 12,
+      // so most slides were planned onto layouts it lacks. The same guidance
+      // also carries each slot's real capacity, and without it the planner
+      // wrote a 41-character heading into a slot that holds 22 — which the
+      // renderer could only honour by shrinking the title to 20pt.
       const planningCollection =
         await SlideService.getPlanningCollectionData(collection);
-      if (planningCollection.is_custom) {
+      if (planningCollection.categories?.length) {
         templateCategories = planningCollection.categories;
         templateCategoryMetadata = planningCollection.metadata;
       } else {
