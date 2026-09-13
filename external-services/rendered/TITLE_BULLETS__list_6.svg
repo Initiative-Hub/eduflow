@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 810">
+  <defs>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#8B5CF6" stop-opacity=".13"/>
+      <stop offset="1" stop-color="#8B5CF6" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="rule" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#8B5CF6"/>
+      <stop offset="1" stop-color="#6B44B3"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8B5CF6"/>
+      <stop offset="0.55" stop-color="#6B44B3"/>
+      <stop offset="1" stop-color="#5A37A0"/>
+    </linearGradient>
+    <linearGradient id="sheen" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8B5CF6" stop-opacity=".16"/>
+      <stop offset="1" stop-color="#6B44B3" stop-opacity=".04"/>
+    </linearGradient>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M48 0H0V48" fill="none" stroke="#E2E8F0" stroke-width="1" opacity=".55"/>
+    </pattern>
+  </defs>
+  <rect width="1440" height="810" fill="#F8FAFC"/>
+  <rect width="1440" height="810" fill="url(#grid)"/>
+  <circle cx="1330" cy="90" r="300" fill="url(#glow)"/>
+  <rect x="80" y="80" width="150" height="34" rx="17" fill="#8B5CF6" opacity=".16"/><circle cx="99" cy="97" r="5" fill="#8B5CF6"/><text x="114" y="103" font-family="Inter, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="15" font-weight="600" fill="#8B5CF6" letter-spacing="0.06em" data-w="106" data-h="20">KEY POINTS</text><text x="80" y="182" font-family="Inter, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="35.6" font-weight="700" fill="#2F2142" data-w="1160" data-h="70">Designing Assessment That Actually Measures Understanding</text><rect x="80" y="208" width="150" height="6" rx="3" fill="url(#rule)"/><g><circle cx="98" cy="248" r="7" fill="#8B5CF6"/><text x="128" y="255" font-family="Inter, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="23" fill="#2F2142" data-w="1180" data-h="62"><tspan x="128" dy="0.0">Retrieval practice beats rereading — testing yourself forces the brain to reconstruct the</tspan><tspan x="128" dy="28.1">answer, which is what actually strengthens memory.</tspan></text><rect x="128" y="275" width="1180" height="1" fill="#E2E8F0" opacity=".55"/></g><g><circle cx="98" cy="326" r="7" fill="#925FC6"/><text x="128" y="333" font-family="Inter, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="23" fill="#2F2142" data-w="1180" data-h="62"><tspan x="128" dy="0.0">Retrieval practice beats rereading — testing yourself forces the brain to reconstruct the</tspan><tspan x="128" dy="28.1">answer, which is what actually strengthens memory.</tspan></text><rect x="128" y="353" width="1180" height="1" fill="#E2E8F0" opacity=".55"/></g><g><circle cx="98" cy="404" r="7" fill="#C05177"/><text x="128" y="411" font-family="Inter, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="23" fill="#2F2142" data-w="1180" data-h="62"><tspan x="128" dy="0.0">Retrieval practice beats rereading — testing yourself forces the brain to reconstruct the</tspan><tspan x="128" dy="28.1">answer, which is what actually strengthens memory.</tspan></text><rect x="128" y="431" width="1180" height="1" fill="#E2E8F0" opacity=".55"/></g><g><circle cx="98" cy="482" r="7" fill="#846E99"/><text x="128" y="489" font-family="Inter, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="23" fill="#2F2142" data-w="1180" data-h="62"><tspan x="128" dy="0.0">Retrieval practice beats rereading — testing yourself forces the brain to reconstruct the</tspan><tspan x="128" dy="28.1">answer, which is what actually strengthens memory.</tspan></text><rect x="128" y="509" width="1180" height="1" fill="#E2E8F0" opacity=".55"/></g><g><circle cx="98" cy="560" r="7" fill="#6B44B3"/><text x="128" y="567" font-family="Inter, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="23" fill="#2F2142" data-w="1180" data-h="62"><tspan x="128" dy="0.0">Retrieval practice beats rereading — testing yourself forces the brain to reconstruct the</tspan><tspan x="128" dy="28.1">answer, which is what actually strengthens memory.</tspan></text><rect x="128" y="587" width="1180" height="1" fill="#E2E8F0" opacity=".55"/></g><g><circle cx="98" cy="638" r="7" fill="#8B5CF6"/><text x="128" y="645" font-family="Inter, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="23" fill="#2F2142" data-w="1180" data-h="62"><tspan x="128" dy="0.0">Retrieval practice beats rereading — testing yourself forces the brain to reconstruct the</tspan><tspan x="128" dy="28.1">answer, which is what actually strengthens memory.</tspan></text><rect x="128" y="665" width="1180" height="1" fill="#E2E8F0" opacity=".55"/></g><rect x="0" y="804" width="1440" height="6" fill="url(#rule)"/></svg>

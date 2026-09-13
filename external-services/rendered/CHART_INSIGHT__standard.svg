@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 810">
+  <defs>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#8B5CF6" stop-opacity=".13"/>
+      <stop offset="1" stop-color="#8B5CF6" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="rule" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#8B5CF6"/>
+      <stop offset="1" stop-color="#6B44B3"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8B5CF6"/>
+      <stop offset="0.55" stop-color="#6B44B3"/>
+      <stop offset="1" stop-color="#5A37A0"/>
+    </linearGradient>
+    <linearGradient id="sheen" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8B5CF6" stop-opacity=".16"/>
+      <stop offset="1" stop-color="#6B44B3" stop-opacity=".04"/>
+    </linearGradient>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M48 0H0V48" fill="none" stroke="#E2E8F0" stroke-width="1" opacity=".55"/>
+    </pattern>
+  </defs>
+  <rect width="1440" height="810" fill="#F8FAFC"/>
+  <rect width="1440" height="810" fill="url(#grid)"/>
+  <circle cx="1330" cy="90" r="300" fill="url(#glow)"/>
+  <rect x="80" y="80" width="110" height="34" rx="17" fill="#8B5CF6" opacity=".16"/><circle cx="99" cy="97" r="5" fill="#8B5CF6"/><text x="114" y="103" font-family="Inter, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="15" font-weight="600" fill="#8B5CF6" letter-spacing="0.06em" data-w="66" data-h="20">DATA</text><text x="80" y="182" font-family="Inter, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="35.6" font-weight="700" fill="#2F2142" data-w="1160" data-h="70">Designing Assessment That Actually Measures Understanding</text><rect x="80" y="208" width="150" height="6" rx="3" fill="url(#rule)"/><rect x="80" y="260" width="800" height="430" rx="16" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.5"/><line x1="112" y1="624" x2="848" y2="624" stroke="#1A1A1A" stroke-opacity="0.25" stroke-width="1.5"/><rect x="149" y="406" width="110" height="218" fill="#E61E2A" rx="4"/><text data-fixed="1" x="204" y="398" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="17" font-weight="bold" fill="#E61E2A" text-anchor="middle">62%</text><text data-fixed="1" x="204" y="646" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="15" fill="#1A1A1A" fill-opacity="0.8" text-anchor="middle" data-w="178">Semester 1</text><rect x="333" y="374" width="110" height="250" fill="#000054" rx="4"/><text data-fixed="1" x="388" y="366" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="17" font-weight="bold" fill="#000054" text-anchor="middle">71%</text><text data-fixed="1" x="388" y="646" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="15" fill="#1A1A1A" fill-opacity="0.8" text-anchor="middle" data-w="178">Semester 2</text><rect x="517" y="350" width="110" height="274" fill="#5A6E9C" rx="4"/><text data-fixed="1" x="572" y="342" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="17" font-weight="bold" fill="#5A6E9C" text-anchor="middle">78%</text><text data-fixed="1" x="572" y="646" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="15" fill="#1A1A1A" fill-opacity="0.8" text-anchor="middle" data-w="178">Semester 3</text><rect x="701" y="318" width="110" height="306" fill="#E61E2A" rx="4"/><text data-fixed="1" x="756" y="310" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="17" font-weight="bold" fill="#E61E2A" text-anchor="middle">87%</text><text data-fixed="1" x="756" y="646" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="15" fill="#1A1A1A" fill-opacity="0.8" text-anchor="middle" data-w="178">Semester 4</text><rect x="920" y="260" width="440" height="430" rx="16" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.5"/><rect x="920" y="260" width="6" height="430" rx="3" fill="#8B5CF6"/><text x="956" y="320" font-family="Inter, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="15" font-weight="700" fill="#8B5CF6" letter-spacing="0.1em" data-w="370" data-h="20">INSIGHT</text><text x="956" y="372" font-family="Inter, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="21" fill="#64748B" data-w="370" data-h="280"><tspan x="956" dy="0.0">Completion rates climbed 14</tspan><tspan x="956" dy="25.6">points once weekly quizzes</tspan><tspan x="956" dy="25.6">replaced the single end-of-term</tspan><tspan x="956" dy="25.6">exam, and the gain held across</tspan><tspan x="956" dy="25.6">every cohort we tracked.</tspan></text><rect x="0" y="804" width="1440" height="6" fill="url(#rule)"/></svg>

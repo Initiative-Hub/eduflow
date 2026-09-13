@@ -54,8 +54,6 @@ const STYLE_COLLECTIONS: Record<string, string> = {
     'Deep slate canvas with violet accents, soft bordered cards and an ambient glow, matching the EduFlow platform itself — course material, product walkthroughs, internal training, onboarding, and any deck that should feel native to the product it was made in.',
   rmit_official:
     'The official RMIT University brand template: navy grounds, RMIT red rules and headings, Arial throughout, and the university lock-up on the cover and closing slides — lectures, course material, research talks, student presentations, and anything that has to look like it came from RMIT.',
-  art_activism:
-    'Hand-illustrated arts style: forest green and blush grounds, torn-paper cards, drawn figures painting and marching, photographic portraits in taped frames — art history, visual culture, humanities, social studies, and any lesson that should look made by hand rather than generated.',
   cultural_folk:
     'Warm plum-gray background, cream text, terracotta and sand accents with a grounded earth strip — culture, diversity, social studies, community, humanities and storytelling topics.',
   green_environment_care:
@@ -323,7 +321,6 @@ const STYLE_COLLECTION_ALIASES: Partial<
   eduflow_purple: ['eduflow purple', 'platform style'],
   eduflow_light: ['eduflow light', 'eduflow'],
   rmit_official: ['rmit', 'rmit university', 'rmit official'],
-  art_activism: ['art', 'activism', 'art history', 'visual culture', 'humanities'],
   green_environment_care: ['green environment care'],
   illustrative_culture: ['illustrative culture'],
   minimalist_gradient: ['minimalist gradient'],

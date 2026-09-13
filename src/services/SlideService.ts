@@ -44,7 +44,6 @@ export const DEFAULT_TEMPLATE_COLLECTIONS = new Set([
   'eduflow_light',
   'eduflow_purple',
   'rmit_official',
-  'art_activism',
   'cultural_folk',
   'organic_streets',
   'green_environment_care',
