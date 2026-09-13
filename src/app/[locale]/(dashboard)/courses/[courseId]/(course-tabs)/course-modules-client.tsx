@@ -58,7 +58,7 @@ export function CourseModulesClient({
     skipSearch,
   } = useModules(courseId);
 
-  const { quizzes } = useQuestionBank({ courseId });
+  const { quizzes } = useQuestionBank({ courseId, loadQuestions: false });
 
   const [isAddModuleOpen, setIsAddModuleOpen] = useState(false);
   const [isAiOpen, setIsAiOpen] = useState(false);

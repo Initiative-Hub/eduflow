@@ -1,4 +1,5 @@
 'use client';
+import { useActiveQuizAttempts } from '@/hooks/use-active-quiz-attempts';
 
 import type { UIMessage } from 'ai';
 import { GraduationCap } from 'lucide-react';
@@ -49,6 +50,7 @@ export function StudyClient({
   isAuthenticated,
 }: StudyClientProps) {
   const t = useTranslations('StudyPage');
+  const quizAccess = useActiveQuizAttempts();
   const tChat = useTranslations('AIChat');
 
   const [mode, setMode] = useState<StudyMode>(initialMode);
@@ -105,6 +107,7 @@ export function StudyClient({
     attachments: ChatSubmitAttachments = { files: [], referencedFiles: [] }
   ) => {
     e?.preventDefault();
+    if (quizAccess.blocked) return;
 
     const text = customValue?.trim() || '';
     const finalAttachments = {
@@ -171,7 +174,7 @@ export function StudyClient({
         void handleSubmit(undefined, suggestion)
       }
       scrollContainerRef={scrollContainerRef}
-      suggestionsDisabled={isStreaming || isLimitReached}
+      suggestionsDisabled={quizAccess.blocked || isStreaming || isLimitReached}
     />
   );
 

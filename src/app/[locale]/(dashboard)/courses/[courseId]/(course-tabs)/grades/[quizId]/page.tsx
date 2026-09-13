@@ -1,22 +1,11 @@
-import { headers } from 'next/headers';
-import { redirect } from 'next/navigation';
-import { auth } from '@/lib/auth';
-import { GradeHistoryClient } from './grade-history-client';
-
-interface GradeHistoryPageProps {
-  params: Promise<{ courseId: string; quizId: string }>;
-}
-
+import { redirect } from '@/i18n/navigation';
+import { requireQuizPage } from '@/lib/quiz-attempt-page';
 export default async function GradeHistoryPage({
   params,
-}: GradeHistoryPageProps) {
-  const [{ courseId, quizId }, requestHeaders] = await Promise.all([
-    params,
-    headers(),
-  ]);
-  const session = await auth.api.getSession({ headers: requestHeaders });
-
-  if (!session) redirect('/login');
-
-  return <GradeHistoryClient courseId={courseId} quizId={quizId} />;
+}: {
+  params: Promise<{ locale: string; courseId: string; quizId: string }>;
+}) {
+  const { locale, courseId, quizId } = await params;
+  await requireQuizPage(courseId, quizId);
+  redirect({ href: `/courses/${courseId}/quiz/${quizId}/results`, locale });
 }

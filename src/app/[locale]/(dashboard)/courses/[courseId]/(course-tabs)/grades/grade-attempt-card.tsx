@@ -104,7 +104,7 @@ function GradeAttemptSummary({
   const formattedDate = new Intl.DateTimeFormat(locale, {
     dateStyle: 'medium',
     timeStyle: 'short',
-  }).format(new Date(attempt.createdAt));
+  }).format(new Date(attempt.completedAt ?? attempt.createdAt));
 
   return (
     <>

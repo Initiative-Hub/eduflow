@@ -32,7 +32,7 @@ export function LessonDetailsClient({
 }: LessonDetailsClientProps) {
   const { modules, isLoading: isModulesLoading } = useModules(courseId);
 
-  const { quizzes } = useQuestionBank({ courseId });
+  const { quizzes } = useQuestionBank({ courseId, loadQuestions: false });
   const { lesson, isLoading: isLessonLoading } = useLesson(lessonId);
   const { isUpdatingLesson, handleUpdateLesson } = useUpdateLesson(courseId);
 

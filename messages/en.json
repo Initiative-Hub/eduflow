@@ -3132,5 +3132,40 @@
         "title": "Rewrite Assistant"
       }
     }
+  },
+  "QuizAttempts": {
+    "results": "Quiz results",
+    "backToResults": "Back to results",
+    "takeResume": "Take / resume quiz",
+    "completedAt": "Completed",
+    "score": "Score",
+    "answered": "Answered",
+    "completion": "Completion",
+    "review": "Review",
+    "viewResult": "View result",
+    "pendingReview": "Pending review",
+    "endedEarly": "Ended early",
+    "submitted": "Submitted",
+    "empty": "No completed attempts yet. Start a quiz to create your first attempt.",
+    "loadError": "Unable to load quiz attempts. Please try again.",
+    "retry": "Retry",
+    "reload": "Reload saved attempt",
+    "saving": "Saving progress?",
+    "saved": "Progress saved",
+    "unsaved": "Unsaved changes",
+    "saveError": "Unable to save progress. Please try again.",
+    "conflict": "This attempt changed in another tab or device. Reload to continue. Reloading discards unsaved changes in this tab.",
+    "endTitle": "End this attempt?",
+    "endDescription": "Your answers will be saved and graded. Unanswered questions will remain unanswered. You cannot resume this attempt after ending it.",
+    "endSavedDescription": "Your last saved answers will be graded. Unsaved changes in other tabs will not be included. You cannot resume this attempt after ending it.",
+    "endAttempt": "End attempt",
+    "cancel": "Cancel",
+    "endError": "Unable to end the attempt. Its status has been refreshed; please try again.",
+    "aiBlockedTitle": "Course quiz in progress",
+    "aiBlocked": "AI chat is unavailable while you have unfinished course quizzes. Finish or end your active attempts to continue.",
+    "checking": "Checking active quiz attempts?",
+    "resume": "Resume",
+    "inProgress": "In progress",
+    "legacySnapshot": "This older attempt has no saved question snapshot. The review uses current quiz content, which may have changed."
   }
 }

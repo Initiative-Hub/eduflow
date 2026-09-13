@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -102,35 +104,40 @@ describe('ModuleAccordionItem permissions', () => {
     const { ModuleAccordionItem } = await import(
       '@/app/[locale]/(dashboard)/courses/[courseId]/_components/module-accordion-item'
     );
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
 
     render(
-      <Accordion type="multiple">
-        <ModuleAccordionItem
-          moduleItem={{
-            id: 'module-1',
-            courseId: 'course-1',
-            title: 'Module 1',
-            orderIndex: 0,
-            itemLayout: null,
-            lessons: [
-              {
-                id: 'lesson-1',
-                title: 'Lesson 1',
-                orderIndex: 0,
-                content: { type: 'doc', content: [] },
-              },
-            ],
-          }}
-          courseId="course-1"
-          canCreateContent={false}
-          canDeleteContent={false}
-          canEditContent={false}
-          canCreateQuiz={false}
-          onAddLesson={vi.fn()}
-          onCreateQuiz={vi.fn()}
-          quizzes={[]}
-        />
-      </Accordion>
+      <QueryClientProvider client={queryClient}>
+        <Accordion type="multiple">
+          <ModuleAccordionItem
+            moduleItem={{
+              id: 'module-1',
+              courseId: 'course-1',
+              title: 'Module 1',
+              orderIndex: 0,
+              itemLayout: null,
+              lessons: [
+                {
+                  id: 'lesson-1',
+                  title: 'Lesson 1',
+                  orderIndex: 0,
+                  content: { type: 'doc', content: [] },
+                },
+              ],
+            }}
+            courseId="course-1"
+            canCreateContent={false}
+            canDeleteContent={false}
+            canEditContent={false}
+            canCreateQuiz={false}
+            onAddLesson={vi.fn()}
+            onCreateQuiz={vi.fn()}
+            quizzes={[]}
+          />
+        </Accordion>
+      </QueryClientProvider>
     );
 
     expect(screen.queryByText('Delete Module')).not.toBeInTheDocument();
@@ -147,28 +154,33 @@ describe('ModuleAccordionItem permissions', () => {
     const { ModuleAccordionItem } = await import(
       '@/app/[locale]/(dashboard)/courses/[courseId]/_components/module-accordion-item'
     );
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
 
     render(
-      <Accordion type="multiple">
-        <ModuleAccordionItem
-          moduleItem={{
-            id: 'module-1',
-            courseId: 'course-1',
-            title: 'Module 1',
-            orderIndex: 0,
-            itemLayout: null,
-            lessons: [],
-          }}
-          courseId="course-1"
-          canCreateContent={false}
-          canDeleteContent={true}
-          canEditContent={true}
-          canCreateQuiz={true}
-          onAddLesson={vi.fn()}
-          onCreateQuiz={vi.fn()}
-          quizzes={[]}
-        />
-      </Accordion>
+      <QueryClientProvider client={queryClient}>
+        <Accordion type="multiple">
+          <ModuleAccordionItem
+            moduleItem={{
+              id: 'module-1',
+              courseId: 'course-1',
+              title: 'Module 1',
+              orderIndex: 0,
+              itemLayout: null,
+              lessons: [],
+            }}
+            courseId="course-1"
+            canCreateContent={false}
+            canDeleteContent={true}
+            canEditContent={true}
+            canCreateQuiz={true}
+            onAddLesson={vi.fn()}
+            onCreateQuiz={vi.fn()}
+            quizzes={[]}
+          />
+        </Accordion>
+      </QueryClientProvider>
     );
 
     expect(

@@ -1,19 +1,18 @@
 import { withAuth } from '@/lib/api/middlewares';
 import { attemptResponse } from '@/lib/api/quiz-attempt-http';
 import { QuizAttemptService } from '@/services/QuizAttemptService';
-import * as z from 'zod';
-import { attemptCompleteSchema } from '@/lib/validations/quiz-attempt.schema';
-const schema = attemptCompleteSchema.extend({
-  attemptId: z.uuid(),
-  quizId: z.uuid().optional(),
-});
+import {
+  attemptIdParamsSchema,
+  attemptCompleteSchema,
+} from '@/lib/validations/quiz-attempt.schema';
 /**
  * @swagger
- * /api/v1/quizzes/submit:
+ * /api/v1/quiz-attempts/{attemptId}/complete:
  *   post:
  *     tags: [Quiz Attempts]
- *     summary: Complete an existing attempt; save answers through the progress endpoint first
+ *     summary: Finalize saved answers; duplicate completion returns the existing result
  *     security: [{ SessionCookie: [] }]
+ *     parameters: [{ in: path, name: attemptId, required: true, schema: { type: string, format: uuid } }]
  *     requestBody:
  *       required: true
  *       content:
@@ -24,8 +23,6 @@ const schema = attemptCompleteSchema.extend({
  *             properties:
  *               revision: { type: integer, minimum: 0 }
  *               completionReason: { type: string, enum: [SUBMITTED, ENDED_EARLY], description: Ending early is allowed for the owner even after course access is revoked }
- *               attemptId: { type: string, format: uuid, description: Required existing owned attempt ID }
- *               quizId: { type: string, format: uuid, description: Optional quiz consistency check }
  *     responses:
  *       200: { description: Successful operation; private and uncached }
  *       400: { description: Invalid UUID or request body }
@@ -35,19 +32,13 @@ const schema = attemptCompleteSchema.extend({
  *       409: { description: Stale revision, locked answer, or completed attempt }
  *       500: { description: Unexpected server error }
  */
-export const POST = withAuth(async (req, session) =>
+export const POST = withAuth(async (req, session, { params }) =>
   attemptResponse(async () => {
-    const input = schema.parse(await req.json());
-    if (input.quizId) {
-      const attempt = await QuizAttemptService.get(
-        session.user.id,
-        input.attemptId
-      );
-      if (attempt.quizId !== input.quizId)
-        throw new z.ZodError([
-          { code: 'custom', path: ['quizId'], message: 'Quiz mismatch' },
-        ]);
-    }
-    return QuizAttemptService.complete(session.user.id, input.attemptId, input);
+    const { attemptId } = attemptIdParamsSchema.parse(await params);
+    return QuizAttemptService.complete(
+      session.user.id,
+      attemptId,
+      attemptCompleteSchema.parse(await req.json())
+    );
   })
 );

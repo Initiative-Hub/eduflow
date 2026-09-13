@@ -1,4 +1,5 @@
 'use client';
+import { useActiveQuizAttempts } from '@/hooks/use-active-quiz-attempts';
 
 import { GraduationCap, LockKeyhole } from 'lucide-react';
 import dynamic from 'next/dynamic';
@@ -42,6 +43,7 @@ export function SocraticClient({
   isAuthenticated,
 }: SocraticClientProps) {
   const t = useTranslations('SocraticPage');
+  const quizAccess = useActiveQuizAttempts();
   const tChat = useTranslations('AIChat');
 
   const [isUploadingAttachments, setIsUploadingAttachments] = useState(false);
@@ -92,6 +94,7 @@ export function SocraticClient({
     text: string,
     attachments: ChatSubmitAttachments = { files: [], referencedFiles: [] }
   ) => {
+    if (quizAccess.blocked) return;
     const trimmed = text.trim();
     const attachmentCount =
       attachments.files.length + attachments.referencedFiles.length;
@@ -131,11 +134,14 @@ export function SocraticClient({
     attachments: ChatSubmitAttachments = { files: [], referencedFiles: [] }
   ) => {
     e?.preventDefault();
+    if (quizAccess.blocked) return;
     return submitText(customValue || '', attachments);
   };
 
   const viewport = !hasOutput ? (
-    <SocraticDisciplineSelector onSelectPrompt={submitText} />
+    <fieldset disabled={quizAccess.blocked}>
+      <SocraticDisciplineSelector onSelectPrompt={submitText} />
+    </fieldset>
   ) : (
     <ChatView
       messages={messages}
@@ -145,7 +151,7 @@ export function SocraticClient({
       loadOlderMessages={() => void loadOlderMessages()}
       onSuggestionSelect={(suggestion) => void submitText(suggestion)}
       scrollContainerRef={scrollContainerRef}
-      suggestionsDisabled={isStreaming || isLimitReached}
+      suggestionsDisabled={quizAccess.blocked || isStreaming || isLimitReached}
     />
   );
 

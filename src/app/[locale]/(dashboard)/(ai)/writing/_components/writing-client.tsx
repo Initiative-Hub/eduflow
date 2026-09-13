@@ -1,4 +1,5 @@
 'use client';
+import { useActiveQuizAttempts } from '@/hooks/use-active-quiz-attempts';
 
 import type { UIMessage } from 'ai';
 import { PenLine } from 'lucide-react';
@@ -39,6 +40,7 @@ export default function WritingClient({
   initialMessagesPagination,
 }: WritingClientProps) {
   const t = useTranslations('AIChat');
+  const quizAccess = useActiveQuizAttempts();
   const [selectedTool, setSelectedTool] = useState<WritingTool>(initialTool);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
@@ -69,6 +71,7 @@ export default function WritingClient({
 
   const handleSubmit = (e?: React.SyntheticEvent, customValue?: string) => {
     e?.preventDefault();
+    if (quizAccess.blocked) return;
 
     const text = customValue || '';
     if (!text.trim()) return;
@@ -94,7 +97,7 @@ export default function WritingClient({
         void handleSubmit(undefined, suggestion)
       }
       scrollContainerRef={scrollContainerRef}
-      suggestionsDisabled={isStreaming || isLimitReached}
+      suggestionsDisabled={quizAccess.blocked || isStreaming || isLimitReached}
     />
   );
 

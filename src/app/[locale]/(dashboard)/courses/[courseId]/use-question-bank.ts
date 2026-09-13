@@ -19,9 +19,10 @@ import { quizService } from './(course-tabs)/quiz/quiz.service';
 
 interface UseQuestionBankOptions {
   courseId: string;
+  loadQuestions?: boolean;
 }
 
-export function useQuestionBank({ courseId }: UseQuestionBankOptions) {
+export function useQuestionBank({ courseId, loadQuestions = true }: UseQuestionBankOptions) {
   const queryClient = useQueryClient();
   const t = useTranslations('Courses.CreateQuiz');
   const tQuestionBank = useTranslations('Courses.QuestionBank');
@@ -34,7 +35,7 @@ export function useQuestionBank({ courseId }: UseQuestionBankOptions) {
         `v1/courses/${courseId}/questions`
       );
     },
-    enabled: !!courseId,
+    enabled: !!courseId && loadQuestions,
   });
 
   // Fetch quizzes for the course via real API

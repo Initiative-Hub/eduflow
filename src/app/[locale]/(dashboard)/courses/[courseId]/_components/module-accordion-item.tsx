@@ -1,4 +1,6 @@
 'use client';
+import { useActiveQuizAttempts } from '@/hooks/use-active-quiz-attempts';
+import { Badge } from '@/components/ui/badge';
 
 import {
   closestCenter,
@@ -121,6 +123,7 @@ export function ModuleAccordionItem({
   quizzes = [],
 }: ModuleAccordionItemProps) {
   const tAccordion = useTranslations('Courses.ModuleAccordion');
+  const activeAttempts = useActiveQuizAttempts();
   const [deletedQuizIds, setDeletedQuizIds] = useState<Set<string>>(
     () => new Set()
   );
@@ -355,6 +358,9 @@ export function ModuleAccordionItem({
                       onIndent={handleIndent}
                       onOutdent={handleOutdent}
                       onQuizDeleted={handleQuizDeleted}
+                      active={activeAttempts.attempts.some(
+                        (attempt) => attempt.quizId === item.id
+                      )}
                     />
                   ))}
                 </SortableContext>
@@ -370,6 +376,9 @@ export function ModuleAccordionItem({
                   onIndent={handleIndent}
                   onOutdent={handleOutdent}
                   onQuizDeleted={handleQuizDeleted}
+                  active={activeAttempts.attempts.some(
+                    (attempt) => attempt.quizId === item.id
+                  )}
                 />
               ))
             )}
@@ -383,6 +392,7 @@ export function ModuleAccordionItem({
 // ─── Sortable Row ────────────────────────────────────────────────────────────
 
 interface SortableAccordionRowProps {
+  active: boolean;
   item: AccordionListItem;
   courseId: string;
   canDeleteContent: boolean;
@@ -393,6 +403,7 @@ interface SortableAccordionRowProps {
 }
 
 function SortableAccordionRow({
+  active,
   item,
   courseId,
   canDeleteContent,
@@ -401,6 +412,7 @@ function SortableAccordionRow({
   onOutdent,
   onQuizDeleted,
 }: SortableAccordionRowProps) {
+  const tAttempts = useTranslations('QuizAttempts');
   const {
     attributes,
     listeners,
@@ -501,6 +513,9 @@ function SortableAccordionRow({
         </div>
         <div>
           <span className="font-medium text-sm">{item.title}</span>
+          {active && (
+            <Badge variant="secondary">{tAttempts('inProgress')}</Badge>
+          )}
           <div className="mt-0.5 flex items-center gap-1.5">
             <span className="text-[10px] text-muted-foreground">
               {item.questionCount}{' '}
