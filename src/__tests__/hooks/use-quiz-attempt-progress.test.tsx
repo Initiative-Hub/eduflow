@@ -71,7 +71,7 @@ describe('resumable quiz progress', () => {
     expect(result.current.attempt.checkedQuestionIndices).toEqual([0]);
     expect(mocks.save).not.toHaveBeenCalled();
   });
-  it('waits for navigation to be saved before displaying the next question', async () => {
+  it('serializes overlapping saves before displaying the next question', async () => {
     let resolve!: (view: QuizAttemptView) => void;
     mocks.save.mockReturnValue(
       new Promise<QuizAttemptView>((done) => {
@@ -80,15 +80,19 @@ describe('resumable quiz progress', () => {
     );
     const { result } = setup();
     let navigation!: Promise<void>;
+    let overlappingFlush!: Promise<void>;
     act(() => {
       navigation = result.current.navigate(0);
+      overlappingFlush = result.current.flush(0);
     });
     await waitFor(() => expect(mocks.save).toHaveBeenCalled());
+    expect(mocks.save).toHaveBeenCalledOnce();
     expect(result.current.currentIndex).toBe(1);
     await act(async () => {
       resolve({ ...initial, revision: 4, currentQuestionIndex: 0 });
-      await navigation;
+      await Promise.all([navigation, overlappingFlush]);
     });
+    expect(mocks.save).toHaveBeenCalledOnce();
     expect(result.current.currentIndex).toBe(0);
   });
   it('flushes answers before completing and uses the acknowledged revision', async () => {

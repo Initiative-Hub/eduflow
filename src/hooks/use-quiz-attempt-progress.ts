@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { apiClient } from '@/lib/api/api-client';
 import type { StudentAnswer } from '@/lib/quiz-template';
-import { AttemptSaveQueue } from '@/lib/quiz-template/attempt-save-queue';
 import type {
   AttemptCheck,
   AttemptComplete,
@@ -41,7 +40,21 @@ export function useQuizAttemptProgress(
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const queue = useRef(new AttemptSaveQueue());
+  const operationTail = useRef<Promise<unknown>>(Promise.resolve());
+  const operationFailure = useRef<unknown>(undefined);
+  const runOperation = useCallback(<T>(operation: () => Promise<T>) => {
+    const result = operationTail.current.then(async () => {
+      if (operationFailure.current) throw operationFailure.current;
+      try {
+        return await operation();
+      } catch (failure) {
+        operationFailure.current = failure;
+        throw failure;
+      }
+    });
+    operationTail.current = result.catch(() => undefined);
+    return result;
+  }, []);
   const save = useMutation({
     mutationFn: (input: AttemptProgress) =>
       apiClient.patch<QuizAttemptView>(`v1/quiz-attempts/${initial.id}`, input),
@@ -73,7 +86,7 @@ export function useQuizAttemptProgress(
     async (targetIndex?: number) => {
       cancelTimer();
       try {
-        await queue.current.run(async () => {
+        await runOperation(async () => {
           const position = targetIndex ?? indexRef.current;
           if (
             !dirtyRef.current &&
@@ -98,7 +111,7 @@ export function useQuizAttemptProgress(
         throw failure;
       }
     },
-    [cancelTimer, save.mutateAsync, updateServer]
+    [cancelTimer, runOperation, save.mutateAsync, updateServer]
   );
 
   const answer = (value: StudentAnswer) => {
@@ -129,7 +142,7 @@ export function useQuizAttemptProgress(
     setBusy(true);
     try {
       await flush();
-      await queue.current.run(async () =>
+      await runOperation(async () =>
         updateServer(
           await check.mutateAsync({
             revision: server.current.revision,
@@ -148,7 +161,7 @@ export function useQuizAttemptProgress(
     setBusy(true);
     try {
       await flush();
-      const result = await queue.current.run(() =>
+      const result = await runOperation(() =>
         complete.mutateAsync({
           revision: server.current.revision,
           completionReason,
@@ -164,7 +177,7 @@ export function useQuizAttemptProgress(
     }
   };
   const retry = async () => {
-    queue.current.retry();
+    operationFailure.current = undefined;
     await flush().catch(() => undefined);
   };
 
