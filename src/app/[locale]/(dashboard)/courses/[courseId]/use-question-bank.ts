@@ -22,7 +22,10 @@ interface UseQuestionBankOptions {
   loadQuestions?: boolean;
 }
 
-export function useQuestionBank({ courseId, loadQuestions = true }: UseQuestionBankOptions) {
+export function useQuestionBank({
+  courseId,
+  loadQuestions = true,
+}: UseQuestionBankOptions) {
   const queryClient = useQueryClient();
   const t = useTranslations('Courses.CreateQuiz');
   const tQuestionBank = useTranslations('Courses.QuestionBank');

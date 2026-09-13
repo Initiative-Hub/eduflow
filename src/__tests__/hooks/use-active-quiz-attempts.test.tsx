@@ -4,15 +4,36 @@ import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useActiveQuizAttempts } from '@/hooks/use-active-quiz-attempts';
 
-const mocks = vi.hoisted(() => ({ session: { data: { user: { id: 'user-a' } } as { user: { id: string } } | null, isPending: false }, active: vi.fn() }));
+const mocks = vi.hoisted(() => ({
+  session: {
+    data: { user: { id: 'user-a' } } as { user: { id: string } } | null,
+    isPending: false,
+  },
+  active: vi.fn(),
+}));
 vi.mock('@/lib/auth-client', () => ({ useSession: () => mocks.session }));
-vi.mock('@/lib/api/quiz-attempt-client', () => ({ quizAttemptClient: { active: mocks.active } }));
+vi.mock('@/lib/api/quiz-attempt-client', () => ({
+  quizAttemptClient: { active: mocks.active },
+}));
 function setup() {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return { client, ...renderHook(() => useActiveQuizAttempts(), { wrapper: ({ children }: { children: ReactNode }) => <QueryClientProvider client={client}>{children}</QueryClientProvider> }) };
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return {
+    client,
+    ...renderHook(() => useActiveQuizAttempts(), {
+      wrapper: ({ children }: { children: ReactNode }) => (
+        <QueryClientProvider client={client}>{children}</QueryClientProvider>
+      ),
+    }),
+  };
 }
 describe('AI quiz input restriction', () => {
-  beforeEach(() => { vi.clearAllMocks(); mocks.session.data = { user: { id: 'user-a' } }; mocks.session.isPending = false; });
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.session.data = { user: { id: 'user-a' } };
+    mocks.session.isPending = false;
+  });
   it('blocks while checking, keeps blocking until every attempt is ended, then unlocks', async () => {
     const attempts = [{ id: 'a' }, { id: 'b' }];
     mocks.active.mockResolvedValue(attempts);
@@ -37,9 +58,12 @@ describe('AI quiz input restriction', () => {
     mocks.active.mockResolvedValue([{ id: 'a' }]);
     const { result, rerender, client } = setup();
     await waitFor(() => expect(result.current.attempts).toHaveLength(1));
-    mocks.session.data = null; rerender();
+    mocks.session.data = null;
+    rerender();
     await waitFor(() => expect(result.current.blocked).toBe(false));
     expect(result.current.attempts).toEqual([]);
-    expect(client.getQueryData(['active-quiz-attempts', 'user-a'])).toBeUndefined();
+    expect(
+      client.getQueryData(['active-quiz-attempts', 'user-a'])
+    ).toBeUndefined();
   });
 });
