@@ -2,8 +2,9 @@
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import { quizAttemptClient } from '@/lib/api/quiz-attempt-client';
+import { apiClient } from '@/lib/api/api-client';
 import { useSession } from '@/lib/auth-client';
+import type { ActiveQuizAttempt } from '@/services/QuizAttemptService';
 
 const channelName = 'course-quiz-attempts';
 export const activeAttemptsKey = (userId?: string) =>
@@ -24,7 +25,8 @@ export function useActiveQuizAttempts() {
   const queryClient = useQueryClient();
   const query = useQuery({
     queryKey: activeAttemptsKey(userId),
-    queryFn: quizAttemptClient.active,
+    queryFn: () =>
+      apiClient.get<ActiveQuizAttempt[]>('v1/quiz-attempts/active'),
     enabled: !!userId,
     staleTime: 0,
     refetchOnMount: 'always',

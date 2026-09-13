@@ -3,18 +3,29 @@
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  type AttemptView,
-  isAttemptConflict,
-  quizAttemptClient,
-} from '@/lib/api/quiz-attempt-client';
+import { apiClient } from '@/lib/api/api-client';
 import type { StudentAnswer } from '@/lib/quiz-template';
 import { AttemptSaveQueue } from '@/lib/quiz-template/attempt-save-queue';
+import type {
+  AttemptCheck,
+  AttemptComplete,
+  AttemptProgress,
+} from '@/lib/validations/quiz-attempt.schema';
+import type { QuizAttemptView } from '@/services/QuizAttemptService';
 import { broadcastAttemptChange } from './use-active-quiz-attempts';
 
+function isAttemptConflict(error: unknown) {
+  return (
+    !!error &&
+    typeof error === 'object' &&
+    'status' in error &&
+    error.status === 409
+  );
+}
+
 export function useQuizAttemptProgress(
-  initial: AttemptView,
-  onComplete: (attempt: AttemptView) => void
+  initial: QuizAttemptView,
+  onComplete: (attempt: QuizAttemptView) => void
 ) {
   const router = useRouter();
   const [attempt, setAttempt] = useState(initial);
@@ -32,19 +43,25 @@ export function useQuizAttemptProgress(
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const queue = useRef(new AttemptSaveQueue());
   const save = useMutation({
-    mutationFn: (input: Parameters<typeof quizAttemptClient.save>[1]) =>
-      quizAttemptClient.save(initial.id, input),
+    mutationFn: (input: AttemptProgress) =>
+      apiClient.patch<QuizAttemptView>(`v1/quiz-attempts/${initial.id}`, input),
   });
   const check = useMutation({
-    mutationFn: (input: Parameters<typeof quizAttemptClient.check>[1]) =>
-      quizAttemptClient.check(initial.id, input),
+    mutationFn: (input: AttemptCheck) =>
+      apiClient.post<QuizAttemptView>(
+        `v1/quiz-attempts/${initial.id}/check`,
+        input
+      ),
   });
   const complete = useMutation({
-    mutationFn: (input: Parameters<typeof quizAttemptClient.complete>[1]) =>
-      quizAttemptClient.complete(initial.id, input),
+    mutationFn: (input: AttemptComplete) =>
+      apiClient.post<QuizAttemptView>(
+        `v1/quiz-attempts/${initial.id}/complete`,
+        input
+      ),
   });
 
-  const updateServer = useCallback((next: AttemptView) => {
+  const updateServer = useCallback((next: QuizAttemptView) => {
     server.current = next;
     setAttempt(next);
   }, []);

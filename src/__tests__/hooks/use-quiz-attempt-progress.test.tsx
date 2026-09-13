@@ -3,11 +3,10 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useQuizAttemptProgress } from '@/hooks/use-quiz-attempt-progress';
-import type { AttemptView } from '@/lib/api/quiz-attempt-client';
+import type { QuizAttemptView } from '@/services/QuizAttemptService';
 
 const mocks = vi.hoisted(() => ({
   save: vi.fn(),
-  check: vi.fn(),
   complete: vi.fn(),
   broadcast: vi.fn(),
   router: { push: vi.fn() },
@@ -16,11 +15,10 @@ vi.mock('next/navigation', () => ({ useRouter: () => mocks.router }));
 vi.mock('@/hooks/use-active-quiz-attempts', () => ({
   broadcastAttemptChange: mocks.broadcast,
 }));
-vi.mock('@/lib/api/quiz-attempt-client', () => ({
-  quizAttemptClient: mocks,
-  isAttemptConflict: (e: { status?: number }) => e?.status === 409,
+vi.mock('@/lib/api/api-client', () => ({
+  apiClient: { patch: mocks.save, post: mocks.complete },
 }));
-const initial: AttemptView = {
+const initial: QuizAttemptView = {
   id: 'attempt',
   quizId: 'quiz',
   courseId: 'course',
@@ -74,9 +72,9 @@ describe('resumable quiz progress', () => {
     expect(mocks.save).not.toHaveBeenCalled();
   });
   it('waits for navigation to be saved before displaying the next question', async () => {
-    let resolve!: (view: AttemptView) => void;
+    let resolve!: (view: QuizAttemptView) => void;
     mocks.save.mockReturnValue(
-      new Promise<AttemptView>((done) => {
+      new Promise<QuizAttemptView>((done) => {
         resolve = done;
       })
     );
@@ -112,7 +110,7 @@ describe('resumable quiz progress', () => {
       await result.current.finish('ENDED_EARLY');
     });
     expect(mocks.save).toHaveBeenCalledWith(
-      'attempt',
+      'v1/quiz-attempts/attempt',
       expect.objectContaining({
         revision: 3,
         answers: expect.objectContaining({
@@ -120,10 +118,13 @@ describe('resumable quiz progress', () => {
         }),
       })
     );
-    expect(mocks.complete).toHaveBeenCalledWith('attempt', {
-      revision: 4,
-      completionReason: 'ENDED_EARLY',
-    });
+    expect(mocks.complete).toHaveBeenCalledWith(
+      'v1/quiz-attempts/attempt/complete',
+      {
+        revision: 4,
+        completionReason: 'ENDED_EARLY',
+      }
+    );
     expect(onComplete).toHaveBeenCalledOnce();
     expect(mocks.broadcast).toHaveBeenCalledOnce();
   });

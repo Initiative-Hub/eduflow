@@ -290,3 +290,10 @@ export const QuizAttemptService = {
     return presentOwned(completed);
   },
 };
+
+export type QuizAttemptView = Awaited<
+  ReturnType<typeof QuizAttemptService.get>
+>;
+export type ActiveQuizAttempt = Awaited<
+  ReturnType<typeof QuizAttemptService.active>
+>[number];

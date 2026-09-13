@@ -12,8 +12,8 @@ const mocks = vi.hoisted(() => ({
   active: vi.fn(),
 }));
 vi.mock('@/lib/auth-client', () => ({ useSession: () => mocks.session }));
-vi.mock('@/lib/api/quiz-attempt-client', () => ({
-  quizAttemptClient: { active: mocks.active },
+vi.mock('@/lib/api/api-client', () => ({
+  apiClient: { get: mocks.active },
 }));
 function setup() {
   const client = new QueryClient({

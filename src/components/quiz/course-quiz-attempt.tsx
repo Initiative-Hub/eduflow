@@ -13,14 +13,20 @@ import {
 } from '@/hooks/use-active-quiz-attempts';
 import { useQuizAttemptProgress } from '@/hooks/use-quiz-attempt-progress';
 import { Link, useRouter } from '@/i18n/navigation';
-import {
-  type AttemptView,
-  attemptErrorMessage,
-  quizAttemptClient,
-} from '@/lib/api/quiz-attempt-client';
+import { apiClient } from '@/lib/api/api-client';
 import type { QuizContent } from '@/lib/quiz-template';
+import type { QuizAttemptView } from '@/services/QuizAttemptService';
 import { Quiz } from './quiz';
 import { QuizIntro } from './quiz-intro';
+
+function getErrorMessage(error: unknown, fallback: string) {
+  return error &&
+    typeof error === 'object' &&
+    'message' in error &&
+    typeof error.message === 'string'
+    ? error.message
+    : fallback;
+}
 
 type Props = {
   courseId: string;
@@ -40,14 +46,16 @@ export function CourseQuizAttempt({
   const activeId = active.attempts.find((a) => a.quizId === quizId)?.id;
   const load = useQuery({
     queryKey: ['quiz-attempt', active.userId, activeId],
-    queryFn: () => quizAttemptClient.get(activeId!),
+    queryFn: () =>
+      apiClient.get<QuizAttemptView>(`v1/quiz-attempts/${activeId}`),
     enabled: !!activeId,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     gcTime: 0,
   });
   const start = useMutation({
-    mutationFn: () => quizAttemptClient.start(quizId),
+    mutationFn: () =>
+      apiClient.post<QuizAttemptView>(`v1/quizzes/${quizId}/attempts`),
     onSuccess: () => broadcastAttemptChange(),
   });
   const attempt = load.data ?? start.data;
@@ -89,7 +97,7 @@ export function CourseQuizAttempt({
           {start.isError && (
             <Alert variant="destructive">
               <AlertDescription>
-                {attemptErrorMessage(start.error, t('loadError'))}
+                {getErrorMessage(start.error, t('loadError'))}
               </AlertDescription>
             </Alert>
           )}
@@ -103,7 +111,7 @@ function AttemptWorkspace({
   initial,
   registerFlush,
 }: {
-  initial: AttemptView;
+  initial: QuizAttemptView;
   registerFlush?: Props['registerFlush'];
 }) {
   const t = useTranslations('QuizAttempts');
@@ -135,7 +143,7 @@ function AttemptWorkspace({
           <AlertDescription>
             {progress.conflict
               ? t('conflict')
-              : attemptErrorMessage(progress.error, t('saveError'))}
+              : getErrorMessage(progress.error, t('saveError'))}
             <Button
               variant="outline"
               onClick={() =>

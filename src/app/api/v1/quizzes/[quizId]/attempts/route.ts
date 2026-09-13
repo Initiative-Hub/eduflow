@@ -1,7 +1,10 @@
+import { NextResponse } from 'next/server';
+import * as z from 'zod';
+import { errorResponse } from '@/lib/api/error-response';
 import { withAuth } from '@/lib/api/middlewares';
-import { attemptResponse } from '@/lib/api/quiz-attempt-http';
 import { quizAttemptQuizParamsSchema } from '@/lib/validations/quiz-attempt.schema';
 import { QuizAttemptService } from '@/services/QuizAttemptService';
+import { QuizAttemptError } from '@/services/quiz-attempt-data';
 /**
  * @swagger
  * /api/v1/quizzes/{quizId}/attempts:
@@ -19,9 +22,31 @@ import { QuizAttemptService } from '@/services/QuizAttemptService';
  *       409: { description: Stale revision, locked answer, or completed attempt }
  *       500: { description: Unexpected server error }
  */
-export const POST = withAuth(async (_req, session, { params }) =>
-  attemptResponse(async () => {
+export const POST = withAuth(async (_req, session, { params }) => {
+  try {
     const { quizId } = quizAttemptQuizParamsSchema.parse(await params);
-    return QuizAttemptService.start(session.user.id, quizId);
-  })
-);
+    const attempt = await QuizAttemptService.start(session.user.id, quizId);
+
+    return NextResponse.json(attempt);
+  } catch (error) {
+    let response: Response;
+    if (error instanceof QuizAttemptError) {
+      response = errorResponse(error.code, error.message, error.status);
+    } else if (error instanceof z.ZodError) {
+      response = errorResponse(
+        'VALIDATION_ERROR',
+        'Invalid attempt request.',
+        400
+      );
+    } else {
+      console.error('Quiz attempt request failed:', error);
+      response = errorResponse(
+        'INTERNAL_ERROR',
+        'Unable to process the quiz attempt.',
+        500
+      );
+    }
+    response.headers.set('Cache-Control', 'private, no-store');
+    return response;
+  }
+});

@@ -3,8 +3,8 @@
 import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import type { AttemptView } from '@/lib/api/quiz-attempt-client';
 import type { StudentAnswer } from '@/lib/quiz-template';
+import type { QuizAttemptView as QuizAttemptData } from '@/services/QuizAttemptService';
 import {
   QuizCard,
   QuizCardContent,
@@ -15,7 +15,7 @@ import { QuizProgress } from './quiz-progress';
 import { QuestionRenderer } from './quiz-question-renderer';
 
 export interface ManagedQuizProps {
-  attempt: AttemptView;
+  attempt: QuizAttemptData;
   answers: Record<string, StudentAnswer>;
   currentIndex: number;
   disabled: boolean;
