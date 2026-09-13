@@ -82,7 +82,7 @@ export function CourseQuizAttempt({
             <QuizIntro quiz={quiz} onStart={() => start.mutate()} />
           </fieldset>
           <Button variant="outline" asChild>
-            <Link href={`/courses/${courseId}/quiz/${quizId}/results`}>
+            <Link href={`/courses/${courseId}/grades/${quizId}`}>
               {t('results')}
             </Link>
           </Button>
@@ -109,7 +109,7 @@ function AttemptWorkspace({
   const t = useTranslations('QuizAttempts');
   const router = useRouter();
   const resultHref = (id: string) =>
-    `/courses/${initial.courseId}/quiz/${initial.quizId}/results/${id}`;
+    `/courses/${initial.courseId}/grades/${initial.quizId}?attemptId=${id}`;
   const progress = useQuizAttemptProgress(initial, (result) =>
     router.push(resultHref(result.id))
   );

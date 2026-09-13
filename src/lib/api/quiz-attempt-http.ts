@@ -9,15 +9,24 @@ export async function attemptResponse(action: () => Promise<unknown>) {
       headers: { 'Cache-Control': 'private, no-store' },
     });
   } catch (error) {
-    if (error instanceof QuizAttemptError)
-      return errorResponse(error.code, error.message, error.status);
-    if (error instanceof z.ZodError || error instanceof SyntaxError)
-      return errorResponse('VALIDATION_ERROR', 'Invalid attempt request.', 400);
-    console.error('Quiz attempt request failed:', error);
-    return errorResponse(
-      'INTERNAL_ERROR',
-      'Unable to process the quiz attempt.',
-      500
-    );
+    let response: Response;
+    if (error instanceof QuizAttemptError) {
+      response = errorResponse(error.code, error.message, error.status);
+    } else if (error instanceof z.ZodError || error instanceof SyntaxError) {
+      response = errorResponse(
+        'VALIDATION_ERROR',
+        'Invalid attempt request.',
+        400
+      );
+    } else {
+      console.error('Quiz attempt request failed:', error);
+      response = errorResponse(
+        'INTERNAL_ERROR',
+        'Unable to process the quiz attempt.',
+        500
+      );
+    }
+    response.headers.set('Cache-Control', 'private, no-store');
+    return response;
   }
 }

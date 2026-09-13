@@ -38,6 +38,10 @@ export function QuizAttemptView({
   const t = useTranslations('Quiz');
   const count = attempt.quiz.questions.length;
   const revealed = attempt.checkedQuestionIndices.includes(currentIndex);
+  const canSubmit =
+    Object.keys(answers).length === count &&
+    (attempt.deliveryMode !== 'INSTANT_FEEDBACK' ||
+      attempt.checkedQuestionIndices.length === count);
   const question =
     attempt.reviewQuestions[currentIndex] ??
     attempt.quiz.questions[currentIndex];
@@ -89,7 +93,7 @@ export function QuizAttemptView({
               {t('next')}
             </Button>
           ) : (
-            <Button disabled={disabled} onClick={onSubmit}>
+            <Button disabled={disabled || !canSubmit} onClick={onSubmit}>
               {t('submitQuiz')}
             </Button>
           )}

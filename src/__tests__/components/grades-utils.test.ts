@@ -24,6 +24,7 @@ function createAttempt(
     results: [],
     answeredCount: 0,
     hasPendingReview: false,
+    completionReason: 'SUBMITTED',
     isLegacySnapshot: false,
     createdAt,
     updatedAt: createdAt,

@@ -116,7 +116,7 @@ export function GradesClient({ courseId }: GradesClientProps) {
                   key={attempt.quizId}
                   attempt={attempt}
                   attemptCount={attemptCount}
-                  href={`/courses/${courseId}/quiz/${attempt.quizId}/results`}
+                  href={`/courses/${courseId}/grades/${attempt.quizId}`}
                 />
               ))}
             </div>

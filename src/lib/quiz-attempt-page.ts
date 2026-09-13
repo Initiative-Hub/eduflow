@@ -2,22 +2,17 @@ import { headers } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
 import * as z from 'zod';
 import { auth } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
 import { getCoursePermissions } from '@/lib/permissions/course-permission';
 import { COURSE_PERMISSION } from '@/lib/permissions/permission-keys';
+import { prisma } from '@/lib/prisma';
 
-export async function requireQuizPage(
-  courseId: string,
-  quizId: string,
-  attemptId?: string
-) {
+export async function requireQuizPage(courseId: string, quizId: string) {
   const parsed = z
     .object({
       courseId: z.uuid(),
       quizId: z.uuid(),
-      attemptId: z.uuid().optional(),
     })
-    .safeParse({ courseId, quizId, attemptId });
+    .safeParse({ courseId, quizId });
   if (!parsed.success) notFound();
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) redirect('/login');
@@ -29,17 +24,4 @@ export async function requireQuizPage(
     select: { id: true },
   });
   if (!quiz) notFound();
-  if (
-    attemptId &&
-    !(await prisma.quizAttempt.findFirst({
-      where: {
-        id: attemptId,
-        quizId,
-        userId: session.user.id,
-        status: 'COMPLETED',
-      },
-      select: { id: true },
-    }))
-  )
-    notFound();
 }

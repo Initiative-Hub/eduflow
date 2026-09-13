@@ -248,7 +248,30 @@ export const QuizAttemptService = {
     if (attempt.status === 'COMPLETED') return presentOwned(attempt);
     assertActiveRevision(attempt, input.revision);
     const snapshot = snapshotSchema.parse(attempt.quizSnapshot);
-    const result = scoreAttempt(snapshot, answersSchema.parse(attempt.answers));
+    const answers = answersSchema.parse(attempt.answers);
+    if (
+      input.completionReason === 'SUBMITTED' &&
+      countAnsweredQuestions(answers, snapshot.questions.length) !==
+        snapshot.questions.length
+    ) {
+      throw new QuizAttemptError(
+        400,
+        'INCOMPLETE_ATTEMPT',
+        'Answer every question before submitting, or end the attempt early.'
+      );
+    }
+    if (
+      input.completionReason === 'SUBMITTED' &&
+      snapshot.deliveryMode === 'INSTANT_FEEDBACK' &&
+      attempt.checkedQuestionIndices.length !== snapshot.questions.length
+    ) {
+      throw new QuizAttemptError(
+        400,
+        'UNCHECKED_ANSWERS',
+        'Check every answer before submitting this quiz.'
+      );
+    }
+    const result = scoreAttempt(snapshot, answers);
     // Compare-and-swap in a transaction makes completion atomic and retry-safe.
     const completed = await prisma.$transaction(async (tx) => {
       const update = await tx.quizAttempt.updateMany({

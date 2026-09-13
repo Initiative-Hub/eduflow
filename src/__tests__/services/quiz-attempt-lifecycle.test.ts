@@ -173,4 +173,26 @@ describe('course attempt lifecycle', () => {
     expect(mocks.updateMany).toHaveBeenCalledTimes(1);
     expect(mocks.enrollment).not.toHaveBeenCalled();
   });
+
+  it('requires complete and checked answers for normal submission', async () => {
+    mocks.findFirst.mockResolvedValue(fixture());
+    await expect(
+      QuizAttemptService.complete('owner', 'attempt', {
+        revision: 0,
+        completionReason: 'SUBMITTED',
+      })
+    ).rejects.toMatchObject({ code: 'INCOMPLETE_ATTEMPT', status: 400 });
+
+    mocks.findFirst.mockResolvedValue({
+      ...fixture(),
+      answers: { 0: { type: 'true_false', selectedAnswer: true } },
+    });
+    await expect(
+      QuizAttemptService.complete('owner', 'attempt', {
+        revision: 0,
+        completionReason: 'SUBMITTED',
+      })
+    ).rejects.toMatchObject({ code: 'UNCHECKED_ANSWERS', status: 400 });
+    expect(mocks.updateMany).not.toHaveBeenCalled();
+  });
 });

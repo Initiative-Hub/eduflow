@@ -1,8 +1,9 @@
+import * as z from 'zod';
 import { withAuth } from '@/lib/api/middlewares';
 import { attemptResponse } from '@/lib/api/quiz-attempt-http';
-import { QuizAttemptService } from '@/services/QuizAttemptService';
-import * as z from 'zod';
 import { attemptCompleteSchema } from '@/lib/validations/quiz-attempt.schema';
+import { QuizAttemptService } from '@/services/QuizAttemptService';
+
 const schema = attemptCompleteSchema.extend({
   attemptId: z.uuid(),
   quizId: z.uuid().optional(),
@@ -20,7 +21,7 @@ const schema = attemptCompleteSchema.extend({
  *         application/json:
  *           schema:
  *             type: object
- *             required: [revision, completionReason]
+ *             required: [attemptId, revision, completionReason]
  *             properties:
  *               revision: { type: integer, minimum: 0 }
  *               completionReason: { type: string, enum: [SUBMITTED, ENDED_EARLY], description: Ending early is allowed for the owner even after course access is revoked }

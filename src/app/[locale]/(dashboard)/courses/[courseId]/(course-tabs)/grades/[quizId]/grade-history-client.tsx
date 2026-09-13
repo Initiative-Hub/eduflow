@@ -11,18 +11,24 @@ import { useGrades } from '../use-grades';
 interface GradeHistoryClientProps {
   courseId: string;
   quizId: string;
+  selectedAttemptId?: string;
 }
 
 export function GradeHistoryClient({
   courseId,
   quizId,
+  selectedAttemptId,
 }: GradeHistoryClientProps) {
   const t = useTranslations('Courses.Grades');
+  const tAttempts = useTranslations('QuizAttempts');
   const gradesQuery = useGrades(courseId);
   const attempts = (gradesQuery.data ?? []).filter(
     (attempt) => attempt.quizId === quizId
   );
   const quizTitle = attempts[0]?.quizSnapshot.title ?? t('historyTitle');
+  const defaultExpandedAttempt = selectedAttemptId
+    ? [selectedAttemptId]
+    : undefined;
 
   if (gradesQuery.isLoading) {
     return (
@@ -71,7 +77,7 @@ export function GradeHistoryClient({
         </Link>
       </Button>
 
-      <header className="border-b pb-5">
+      <header className="flex flex-col gap-5 border-b pb-5 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-start gap-4">
           <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <BookOpenCheck className="size-5" aria-hidden="true" />
@@ -85,6 +91,11 @@ export function GradeHistoryClient({
             </p>
           </div>
         </div>
+        <Button className="min-h-11 shrink-0" asChild>
+          <Link href={`/courses/${courseId}/quiz/${quizId}`}>
+            {tAttempts('takeResume')}
+          </Link>
+        </Button>
       </header>
 
       {attempts.length === 0 ? (
@@ -99,7 +110,11 @@ export function GradeHistoryClient({
           </p>
         </div>
       ) : (
-        <Accordion type="multiple" className="space-y-4">
+        <Accordion
+          type="multiple"
+          defaultValue={defaultExpandedAttempt}
+          className="space-y-4"
+        >
           {attempts.map((attempt) => (
             <GradeAttemptCard key={attempt.id} attempt={attempt} />
           ))}
