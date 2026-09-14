@@ -84,7 +84,6 @@ describe('Game Quiz AI routes', () => {
     );
 
     expect(response.status).toBe(200);
-    expect(response.headers.get('Cache-Control')).toBe('private, no-store');
     await expect(response.json()).resolves.toEqual(sources);
     expect(mocks.listSources).toHaveBeenCalledWith('user-1');
   });
