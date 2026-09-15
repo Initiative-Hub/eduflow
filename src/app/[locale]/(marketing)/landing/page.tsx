@@ -46,7 +46,7 @@ export default async function LandingPage() {
           >
             <Image
               className="dark:invert"
-              src="/vercel.svg"
+              src="/icons/brands/vercel.svg"
               alt="Vercel logomark"
               width={16}
               height={16}

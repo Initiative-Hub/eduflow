@@ -6,6 +6,7 @@ import {
   PanelLeftOpen,
   Plus,
 } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -108,9 +109,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
             <GraduationCap className="size-6" strokeWidth={2.5} />
           </div>
-          <span className="font-black font-heading text-2xl text-primary group-data-[collapsible=icon]:hidden">
-            EduFlow
-          </span>
+          <div className="h-6 group-data-[collapsible=icon]:hidden">
+            <Image
+              className="h-full w-auto"
+              src="/branding.png"
+              alt="EduFlow logo"
+              width={250}
+              height={50}
+              priority
+            />
+          </div>
         </Link>
 
         {!pathname.includes('/courses/') && canStartChat ? (
