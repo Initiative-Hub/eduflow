@@ -34,3 +34,5 @@ storage/
 
 # Slide templates
 templates/
+# Scratch output from local render/verify runs
+rendered/

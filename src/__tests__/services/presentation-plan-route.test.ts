@@ -96,11 +96,23 @@ describe('presentation plan route', () => {
     );
   });
 
-  it('uses the local slide guidance file for built-in collection planning', async () => {
+  it('plans a chosen built-in collection against the layouts it really has', async () => {
+    // Built-in collections used to short-circuit to the generic guidance, on
+    // the assumption that every one of them carries all 21 standard layouts.
+    // A collection extracted from a real deck does not — Art & Activism has
+    // 12 — so most slides were planned onto layouts it lacks and rendered in
+    // a foreign style, and its real per-slot capacities never reached the
+    // planner either.
     vi.mocked(SlideService.getStyleCollections).mockResolvedValue({
       clean_light: 'Clean light',
     } as never);
     vi.mocked(SlideService.isBuiltInCollectionName).mockReturnValue(true);
+    vi.mocked(SlideService.getPlanningCollectionData).mockResolvedValue({
+      collection: 'clean_light',
+      categories: ['TITLE_SLIDE', 'TITLE_BULLETS'],
+      metadata: { TITLE_SLIDE: { description: 'Cover' } },
+      is_custom: false,
+    } as never);
 
     const stream = new ReadableStream<string>({
       start(controller) {
@@ -123,12 +135,14 @@ describe('presentation plan route', () => {
     );
 
     expect(response.status).toBe(200);
-    expect(SlideService.getPlanningCollectionData).not.toHaveBeenCalled();
+    expect(SlideService.getPlanningCollectionData).toHaveBeenCalledWith(
+      'clean_light'
+    );
     expect(PresentationService.planPresentationStream).toHaveBeenCalledWith(
       expect.objectContaining({
         lessonId: 'lesson-2',
-        standardCategoryMetadata: slideLayoutGuidance,
-        templateCategories: undefined,
+        templateCategories: ['TITLE_SLIDE', 'TITLE_BULLETS'],
+        templateCategoryMetadata: { TITLE_SLIDE: { description: 'Cover' } },
       })
     );
   });
