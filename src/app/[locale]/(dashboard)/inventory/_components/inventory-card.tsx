@@ -66,6 +66,7 @@ interface FileCardProps {
   onPreview?: (entry: InventoryEntry) => void;
   onDownload?: (entry: InventoryEntry) => void;
   onSaveToDrive?: (entry: InventoryEntry) => void;
+  onSaveToOneDrive?: (entry: InventoryEntry) => void;
   onDelete: (entry: InventoryEntry) => void;
   onNavigateIntoFolder?: (entry: InventoryEntry) => void;
   onSelectEntry?: (entryId: string) => void;
@@ -119,6 +120,7 @@ export function InventoryCard({
   onPreview,
   onDownload,
   onSaveToDrive,
+  onSaveToOneDrive,
   onDelete,
   onNavigateIntoFolder,
   onSelectEntry,
@@ -267,42 +269,47 @@ export function InventoryCard({
                   {t('actions.open')}
                 </DropdownMenuItem>
               ) : (
-                <>
-                  {canPreviewInventoryEntry(entry) && (
+                entry.status === 'READY' && (
+                  <>
+                    {canPreviewInventoryEntry(entry) && (
+                      <DropdownMenuItem
+                        onClick={() => onPreview?.(entry)}
+                        className="cursor-pointer gap-2"
+                      >
+                        <Eye />
+                        {t('actions.preview')}
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem
-                      onClick={() => onPreview?.(entry)}
+                      onClick={() => onShare?.(entry)}
                       className="cursor-pointer gap-2"
                     >
-                      <Eye />
-                      {t('actions.preview')}
+                      <Share2 />
+                      {t('actions.share')}
                     </DropdownMenuItem>
-                  )}
-                  {entry.status === 'READY' && (
-                    <>
-                      <DropdownMenuItem
-                        onClick={() => onShare?.(entry)}
-                        className="cursor-pointer gap-2"
-                      >
-                        <Share2 />
-                        {t('actions.share')}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => onDownload?.(entry)}
-                        className="cursor-pointer gap-2"
-                      >
-                        <Download />
-                        {t('actions.download')}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => onSaveToDrive?.(entry)}
-                        className="cursor-pointer gap-2"
-                      >
-                        <CloudUpload />
-                        {t('actions.saveToDrive')}
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                </>
+                    <DropdownMenuItem
+                      onClick={() => onDownload?.(entry)}
+                      className="cursor-pointer gap-2"
+                    >
+                      <Download />
+                      {t('actions.download')}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => onSaveToDrive?.(entry)}
+                      className="cursor-pointer gap-2"
+                    >
+                      <CloudUpload />
+                      {t('actions.saveToDrive')}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => onSaveToOneDrive?.(entry)}
+                      className="cursor-pointer gap-2"
+                    >
+                      <CloudUpload />
+                      {t('actions.saveToOneDrive')}
+                    </DropdownMenuItem>
+                  </>
+                )
               )}
               <DropdownMenuItem
                 onClick={() => onDelete(entry)}

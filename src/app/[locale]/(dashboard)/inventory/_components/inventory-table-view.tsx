@@ -104,6 +104,7 @@ type InventoryTableViewProps = {
   onPreview: (entry: InventoryEntry) => void;
   onRename: (entry: InventoryEntry) => void;
   onSaveToDrive: (entry: InventoryEntry) => void;
+  onSaveToOneDrive: (entry: InventoryEntry) => void;
   onSelectAll: (checked: boolean) => void;
   onSelectEntry: (entryId: string, checked: boolean) => void;
   onShare: (entry: InventoryEntry) => void;
@@ -125,6 +126,7 @@ export function InventoryTableView({
   onPreview,
   onRename,
   onSaveToDrive,
+  onSaveToOneDrive,
   onSelectAll,
   onSelectEntry,
   onShare,
@@ -278,9 +280,9 @@ export function InventoryTableView({
                           {t('actions.open')}
                         </DropdownMenuItem>
                       ) : (
-                        <>
-                          {canPreviewInventoryEntry(entry) && (
-                            <>
+                        entry.status === 'READY' && (
+                          <>
+                            {canPreviewInventoryEntry(entry) && (
                               <DropdownMenuItem
                                 onClick={() => onPreview(entry)}
                                 className="cursor-pointer gap-2"
@@ -288,24 +290,22 @@ export function InventoryTableView({
                                 <Eye />
                                 {t('actions.preview')}
                               </DropdownMenuItem>
+                            )}
 
-                              <DropdownMenuItem
-                                onClick={() => onShare(entry)}
-                                className="cursor-pointer gap-2"
-                              >
-                                <Share2 />
-                                {t('actions.share')}
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => onDownload(entry)}
-                                className="cursor-pointer gap-2"
-                              >
-                                <Download />
-                                {t('actions.download')}
-                              </DropdownMenuItem>
-                            </>
-                          )}
-                          {entry.status === 'READY' && (
+                            <DropdownMenuItem
+                              onClick={() => onShare(entry)}
+                              className="cursor-pointer gap-2"
+                            >
+                              <Share2 />
+                              {t('actions.share')}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => onDownload(entry)}
+                              className="cursor-pointer gap-2"
+                            >
+                              <Download />
+                              {t('actions.download')}
+                            </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => onSaveToDrive(entry)}
                               className="cursor-pointer gap-2"
@@ -316,8 +316,18 @@ export function InventoryTableView({
                                 ? t('actions.savingToDrive')
                                 : t('actions.saveToDrive')}
                             </DropdownMenuItem>
-                          )}
-                        </>
+                            <DropdownMenuItem
+                              onClick={() => onSaveToOneDrive(entry)}
+                              className="cursor-pointer gap-2"
+                              disabled={isSavingToDrive}
+                            >
+                              <CloudUpload />
+                              {isSavingToDrive
+                                ? t('actions.savingToDrive')
+                                : t('actions.saveToOneDrive')}
+                            </DropdownMenuItem>
+                          </>
+                        )
                       )}
                       <DropdownMenuItem
                         onClick={() => onDeleteEntry(entry)}

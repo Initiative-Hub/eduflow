@@ -83,6 +83,7 @@ export default function CourseFilesClient() {
     handleSearchChange,
     handleSelectAll,
     handleSelectEntry,
+    handleSelectSingleEntry,
     handleShareEntry,
     handleShareSelected,
     handleUploadFiles,
@@ -250,6 +251,7 @@ export default function CourseFilesClient() {
         onSaveToOneDrive={saveEntryToOneDrive}
         onSelectAll={handleSelectAll}
         onSelectEntry={handleSelectEntry}
+        onSelectSingleEntry={handleSelectSingleEntry}
         onShare={handleShareEntry}
         isSavingToDrive={
           googleDriveExport.isPending || oneDriveExport.isPending

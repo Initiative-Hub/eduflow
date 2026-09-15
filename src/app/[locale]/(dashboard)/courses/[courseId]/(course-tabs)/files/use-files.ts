@@ -422,6 +422,10 @@ export function useFiles({
     });
   };
 
+  const handleSelectSingleEntry = (entryId: string) => {
+    setSelectedIds([entryId]);
+  };
+
   const handleSelectAll = (checked: boolean) => {
     setSelectedIds(checked ? entries.map((entry) => entry.id) : []);
   };
@@ -616,6 +620,7 @@ export function useFiles({
     handleSearchChange,
     handleSelectAll,
     handleSelectEntry,
+    handleSelectSingleEntry,
     handleShareEntry,
     handleShareSelected,
     isFetching: listQuery.isFetching,

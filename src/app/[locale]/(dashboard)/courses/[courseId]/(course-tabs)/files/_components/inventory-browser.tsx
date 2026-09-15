@@ -49,6 +49,7 @@ type InventoryBrowserProps = {
   onSaveToOneDrive: (entry: InventoryEntry) => void;
   onSelectAll: (checked: boolean) => void;
   onSelectEntry: (entryId: string, checked: boolean) => void;
+  onSelectSingleEntry: (entryId: string) => void;
   onShare: (entry: InventoryEntry) => void;
   onUploadOpen: () => void;
   isSavingToDrive: boolean;
@@ -89,6 +90,7 @@ export function InventoryBrowser({
   onSaveToOneDrive,
   onSelectAll,
   onSelectEntry,
+  onSelectSingleEntry,
   onShare,
   onUploadOpen,
   isSavingToDrive,
@@ -144,12 +146,14 @@ export function InventoryBrowser({
                     key={entry.id}
                     entry={entry}
                     courseId={courseId}
+                    isSelected={selectedIds.includes(entry.id)}
                     locale={locale}
                     onOpen={onOpen}
                     onRename={onRename}
                     onMove={onMove}
                     onDelete={onDeleteEntry}
                     onNavigateIntoFolder={onNavigateIntoFolder}
+                    onSelectEntry={onSelectSingleEntry}
                   />
                 ))}
               </div>
@@ -161,6 +165,7 @@ export function InventoryBrowser({
                     key={entry.id}
                     entry={entry}
                     courseId={courseId}
+                    isSelected={selectedIds.includes(entry.id)}
                     locale={locale}
                     onRename={onRename}
                     onMove={onMove}
@@ -170,6 +175,7 @@ export function InventoryBrowser({
                     onSaveToDrive={onSaveToDrive}
                     onSaveToOneDrive={onSaveToOneDrive}
                     onDelete={onDeleteEntry}
+                    onSelectEntry={onSelectSingleEntry}
                     uploadProgress={getUploadProgress(entry.id)}
                   />
                 ))}
