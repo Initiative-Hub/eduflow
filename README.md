@@ -7,8 +7,14 @@
   <p>Reduce repetitive teaching work. Give every learner personalized, inquiry-led support.</p>
   <p><strong>Built by reLearn · RMIT SSET Capstone 2026</strong></p>
 
+  <p><em>🚀 Explore the live EduFlow experience directly in your browser.</em></p>
   <p>
-    <a href="https://www.rmitvn-showcase.com/relearn"><strong>🎓 Explore EduFlow at the RMIT SSET Capstone 2026 Showcase</strong></a>
+    <a href="https://edu-flow.me">
+      <img src="https://img.shields.io/badge/OPEN_LIVE_EDUFLOW-6D28D9?style=for-the-badge&logo=vercel&logoColor=white" alt="Open the live EduFlow website" />
+    </a>
+  </p>
+  <p>
+    <a href="https://www.rmitvn-showcase.com/relearn"><strong>🎓 Discover EduFlow at the RMIT SSET Capstone 2026 Showcase →</strong></a>
   </p>
 
   <p>
@@ -138,7 +144,7 @@ bun ws:dev
 | Service | URL or address |
 | --- | --- |
 | EduFlow | [http://localhost:3000](http://localhost:3000) |
-| PostgreSQL | `localhost:5433` |
+| PostgreSQL | [postgresql://localhost:5433](postgresql://localhost:5433) |
 | Mailpit | [http://localhost:8025](http://localhost:8025) |
 | MinIO API | [http://localhost:9000](http://localhost:9000) |
 | MinIO console | [http://localhost:9001](http://localhost:9001) |
