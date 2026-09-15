@@ -1,35 +1,28 @@
+import { getTranslations } from 'next-intl/server';
 import type { ReactNode } from 'react';
-import { Link } from '@/i18n/navigation';
+import { MarketingFooter } from './_components/marketing-footer';
+import { MarketingHeader } from './_components/marketing-header';
 
-export default function MarketingLayout({ children }: { children: ReactNode }) {
+export default async function MarketingLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  const t = await getTranslations('MarketingLayout');
+
   return (
-    <>
-      <header className="flex items-center justify-between gap-4 border-b px-4 py-4">
-        <nav className="flex items-center gap-4 font-medium text-sm">
-          <Link href="/" className="transition-colors hover:text-foreground/80">
-            Home
-          </Link>
-          <Link
-            href="/about"
-            className="transition-colors hover:text-foreground/80"
-          >
-            About
-          </Link>
-          <Link
-            href="/login"
-            className="transition-colors hover:text-foreground/80"
-          >
-            Login
-          </Link>
-          <Link
-            href="/register"
-            className="transition-colors hover:text-foreground/80"
-          >
-            Register
-          </Link>
-        </nav>
-      </header>
-      <main>{children}</main>
-    </>
+    <div className="flex min-h-dvh flex-col overflow-x-clip bg-background text-foreground">
+      <a
+        href="#main-content"
+        className="sr-only top-4 left-4 rounded-lg bg-background px-4 py-2 font-medium text-foreground shadow-lg focus:not-sr-only focus:fixed focus:z-50 focus:outline-none focus:ring-2 focus:ring-ring"
+      >
+        {t('skipToContent')}
+      </a>
+      <MarketingHeader />
+      <main id="main-content" className="flex-1">
+        {children}
+      </main>
+      <MarketingFooter />
+    </div>
   );
 }

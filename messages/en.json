@@ -2364,6 +2364,223 @@
       "list": "List"
     }
   },
+  "LandingPage": {
+    "audience": {
+      "educators": {
+        "description": "Turn course materials into editable lessons, presentations, assessments, assignments, and live activities without giving up control of the final result.",
+        "title": "For educators"
+      },
+      "learners": {
+        "description": "Practice with guided tutors, focused study tools, language support, and feedback that helps you understand the next step—not just copy an answer.",
+        "title": "For learners"
+      }
+    },
+    "contact": {
+      "description": "EduFlow was created by reLearn for the RMIT School of Science, Engineering & Technology Capstone Showcase. Explore the project story or inspect the work behind the experience.",
+      "eyebrow": "Contact",
+      "repository": {
+        "cta": "View the repository",
+        "description": "Explore EduFlow's source, architecture, and ongoing development on GitHub.",
+        "title": "Explore the build"
+      },
+      "showcase": {
+        "cta": "Visit the RMIT showcase",
+        "description": "Meet the reLearn team and see the capstone context that shaped EduFlow.",
+        "title": "Meet the team"
+      },
+      "startFree": "Start free",
+      "title": "Want to see where EduFlow began?"
+    },
+    "cta": {
+      "button": "Start free",
+      "description": "Bring your next topic, document, or classroom idea. EduFlow helps you turn it into something learners can explore, practice, and remember.",
+      "eyebrow": "Your next lesson",
+      "title": "Ready to put every lesson in motion?"
+    },
+    "faq": {
+      "audience": {
+        "answer": "EduFlow is built for educators who create and manage learning experiences, and for learners who need guided, active support while they study.",
+        "question": "Who is EduFlow for?"
+      },
+      "content": {
+        "answer": "You can create editable lessons, presentation decks, quizzes, assignments, practice activities, and live quiz games from one workspace.",
+        "question": "What can I create with EduFlow?"
+      },
+      "description": "Straight answers about how the workspace supports teaching and active learning.",
+      "eyebrow": "FAQ",
+      "languages": {
+        "answer": "Yes. The interface supports English and Vietnamese, and the English Assistant includes translation, vocabulary, IPA, audio, grammar, and pronunciation tools.",
+        "question": "Does EduFlow support English and Vietnamese?"
+      },
+      "materials": {
+        "answer": "Yes. Add course files and lesson material, then use that context to draft lessons, presentations, assessments, and guided study experiences that you can review before publishing.",
+        "question": "Can I build from my own course materials?"
+      },
+      "pricing": {
+        "answer": "The Starter path is free. Educator and School options are in early access while pricing, limits, and availability are finalized.",
+        "question": "How does early-access pricing work?"
+      },
+      "sharing": {
+        "answer": "Presentation decks can be exported to PowerPoint, and supported AI conversations and interactive study content can be shared through controlled links.",
+        "question": "Can I export or share my work?"
+      },
+      "socratic": {
+        "answer": "Socratic mode is designed to guide thinking with questions, hints, and progressive support. It helps learners work through a problem instead of leading with a finished answer.",
+        "question": "Does the tutor guide learners or just give answers?"
+      },
+      "title": "Questions before you begin"
+    },
+    "features": {
+      "assessments": {
+        "description": "Build question banks, quizzes, assignments, delivery modes, and feedback workflows. Review AI suggestions before learners see the result.",
+        "label": "Assess",
+        "outcome": "Move from question creation to actionable feedback.",
+        "title": "Assess understanding without losing the human judgment"
+      },
+      "assistants": {
+        "description": "Guide problem solving with a Socratic Tutor, create focused study activities, and help learners plan, draft, rewrite, and refine their work.",
+        "label": "Guide",
+        "outcome": "Give each learner focused help between classes.",
+        "title": "Support deeper thinking with purpose-built assistants"
+      },
+      "description": "EduFlow brings the work around a lesson together, so educators can create with context and learners can stay active inside the same flow.",
+      "english": {
+        "description": "Translate between English and Vietnamese, unpack vocabulary with IPA and audio, analyze grammar, save words, and practice pronunciation.",
+        "label": "Practice",
+        "outcome": "Turn language input into repeatable practice.",
+        "title": "Make every word easier to hear, understand, and use"
+      },
+      "eyebrow": "One connected workspace",
+      "games": {
+        "description": "Generate lesson-grounded questions, host timed classroom rounds, let learners join live, and review results after the session.",
+        "label": "Engage",
+        "outcome": "Bring energy to review without losing the learning goal.",
+        "title": "Turn assessment into a live classroom moment"
+      },
+      "lessons": {
+        "description": "Bring in course files and source material, shape an AI-assisted draft, then edit modules, objectives, explanations, media, and activities before publishing.",
+        "label": "Create",
+        "outcome": "Go from scattered material to a lesson learners can use.",
+        "title": "Shape course material into an interactive lesson"
+      },
+      "presentations": {
+        "description": "Plan a slide outline, choose a visual system, refine each slide, preview the deck, and export a presentation-ready PowerPoint file.",
+        "label": "Present",
+        "outcome": "Keep the story coherent from outline to classroom.",
+        "title": "Carry the lesson into presentation mode"
+      },
+      "title": "Every learning moment, connected"
+    },
+    "hero": {
+      "description": "EduFlow helps educators turn source material into editable lessons, presentations, assessments, and live activities—then gives learners guided tools to practice and think deeper.",
+      "eyebrow": "AI workspace for teaching and active learning",
+      "primaryCta": "Start free",
+      "proof": {
+        "bilingual": "English and Vietnamese",
+        "sourceGrounded": "Grounded in course material",
+        "teacherControl": "Editable by educators"
+      },
+      "rail": {
+        "ariaLabel": "A course document flows into an editable lesson, a guided tutor, and an assessment.",
+        "assessment": {
+          "description": "Check understanding and review the result.",
+          "label": "Assess"
+        },
+        "lesson": {
+          "description": "Shape an editable lesson and presentation.",
+          "label": "Create"
+        },
+        "source": {
+          "description": "Start with the material you already trust.",
+          "label": "Bring your source"
+        },
+        "tutor": {
+          "description": "Guide practice with context-aware support.",
+          "label": "Learn"
+        }
+      },
+      "secondaryCta": "See how it works",
+      "title": "Turn course material into a learning flow"
+    },
+    "metadata": {
+      "description": "Create lessons, presentations, assessments, live games, and guided learning experiences in one bilingual AI workspace.",
+      "title": "AI teaching and learning workspace"
+    },
+    "pricing": {
+      "description": "Start with the core workspace today. Educator and School paths are being shaped for broader classroom use.",
+      "educator": {
+        "cta": "Explore early access",
+        "description": "For educators building connected classroom experiences.",
+        "feature1": "Course and lesson creation",
+        "feature2": "Presentations, quizzes, and assignments",
+        "feature3": "Live games and teacher review workflows",
+        "name": "Educator",
+        "price": "Early access"
+      },
+      "eyebrow": "Pricing",
+      "note": "Prices, usage limits, and availability for Educator and School options are still being finalized. No payment is collected from this page.",
+      "recommended": "Best for teaching",
+      "school": {
+        "cta": "Connect with us",
+        "description": "For schools exploring a shared AI learning workspace.",
+        "feature1": "Collaborative course workflows",
+        "feature2": "Role-aware access for teams",
+        "feature3": "Adoption and rollout conversations",
+        "name": "School",
+        "price": "Let's talk"
+      },
+      "starter": {
+        "cta": "Start free",
+        "description": "For individuals exploring guided learning and AI study tools.",
+        "feature1": "Socratic, study, and writing assistants",
+        "feature2": "English learning tools",
+        "feature3": "A personal learning workspace",
+        "name": "Starter",
+        "price": "Free"
+      },
+      "title": "Begin free. Grow into the classroom."
+    },
+    "trust": {
+      "bilingual": {
+        "description": "Move through the product in English or Vietnamese and use focused language-learning tools when you need them.",
+        "title": "Bilingual by design"
+      },
+      "description": "AI starts the work. Educators decide what is ready, learners stay connected to the source, and every experience remains open to review.",
+      "editable": {
+        "description": "Review and refine generated lessons, slides, questions, and feedback before they reach learners.",
+        "title": "Keep the final say"
+      },
+      "eyebrow": "Control and confidence",
+      "grounded": {
+        "description": "Use selected course material as context and help learners trace ideas back to their sources.",
+        "title": "Stay close to the source"
+      },
+      "title": "Built to support judgment, not replace it"
+    },
+    "workflow": {
+      "description": "Move from the material you already have to a connected teaching and learning experience without rebuilding the same context in separate tools.",
+      "eyebrow": "How it works",
+      "steps": {
+        "bring": {
+          "description": "Add course files, lesson content, or a topic you want to teach.",
+          "title": "Bring your material"
+        },
+        "engage": {
+          "description": "Publish lessons, present slides, assign work, or host a live quiz game.",
+          "title": "Teach and practice"
+        },
+        "shape": {
+          "description": "Generate a starting point, then edit the lesson, slides, questions, and activities.",
+          "title": "Generate and review"
+        },
+        "understand": {
+          "description": "Review attempts, results, feedback, and the learning moments that need attention.",
+          "title": "See what comes next"
+        }
+      },
+      "title": "One source. Many ways to learn."
+    }
+  },
   "LanguageSwitcher": {
     "label": "Language",
     "system": "System"
@@ -2401,6 +2618,35 @@
     "writingAssistant": "Writing Assistant",
     "yourInventory": "Your Documents"
   },
+  "MarketingLayout": {
+    "footer": {
+      "account": "Get started",
+      "accountLabel": "Account navigation",
+      "apiDocs": "API documentation",
+      "copyright": "© {year} EduFlow. All rights reserved.",
+      "description": "One bilingual AI workspace for creating lessons, guiding practice, and keeping teaching and learning in one connected flow.",
+      "explore": "Explore",
+      "exploreLabel": "Explore EduFlow",
+      "tagline": "Build better lessons. Help every learner think deeper."
+    },
+    "homeLabel": "EduFlow landing page",
+    "login": "Log in",
+    "mobile": {
+      "description": "Explore the EduFlow workspace and start when you are ready.",
+      "menu": "Open navigation menu",
+      "title": "Explore EduFlow"
+    },
+    "nav": {
+      "contact": "Contact",
+      "faq": "FAQ",
+      "features": "Features",
+      "howItWorks": "How it works",
+      "pricing": "Pricing"
+    },
+    "navLabel": "Main navigation",
+    "skipToContent": "Skip to content",
+    "startFree": "Start free"
+  },
   "NavbarAvatar": {
     "actions": {
       "login": "Login",
@@ -2416,6 +2662,7 @@
       "aiBadge": "AI",
       "darkMode": "Dark Mode",
       "english": "English",
+      "guestSettings": "Guest settings",
       "helpCenter": "Help Center",
       "language": "Language",
       "languagePreference": "Language Preference",
