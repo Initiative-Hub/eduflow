@@ -6,7 +6,7 @@ export const APP_PUBLIC_PATHS = [
   '/chat',
   '/landing',
   '/share',
-  '/course',
+  '/courses/invite',
   '/english',
   '/socratic',
   '/study',

@@ -71,7 +71,12 @@ export default async function CourseInvitePage({
             </Alert>
           ) : null}
 
-          <JoinInviteButton disabled={unavailable} inviteId={inviteId} />
+          <JoinInviteButton
+            disabled={unavailable}
+            inviteId={inviteId}
+            isAuthenticated={Boolean(sessionData)}
+            invitePath={`/courses/invite/${inviteId}`}
+          />
         </CardContent>
       </Card>
     </div>

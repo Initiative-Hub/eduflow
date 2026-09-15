@@ -12,6 +12,8 @@ import { type ApiError, apiClient } from '@/lib/api';
 type JoinInviteButtonProps = {
   disabled: boolean;
   inviteId: string;
+  invitePath: string;
+  isAuthenticated: boolean;
 };
 
 type JoinInviteResponse = {
@@ -22,6 +24,8 @@ type JoinInviteResponse = {
 export function JoinInviteButton({
   disabled,
   inviteId,
+  invitePath,
+  isAuthenticated,
 }: JoinInviteButtonProps) {
   const router = useRouter();
   const t = useTranslations('CourseInvitePage');
@@ -46,17 +50,26 @@ export function JoinInviteButton({
   });
 
   return (
-    <Button
-      type="button"
-      disabled={disabled || mutation.isPending}
-      onClick={() => mutation.mutate()}
-    >
-      {mutation.isPending ? (
-        <Spinner data-icon="inline-start" />
-      ) : (
-        <LogIn data-icon="inline-start" />
-      )}
-      {t('joinButton')}
-    </Button>
+    <div className="space-y-2">
+      <Button
+        type="button"
+        disabled={disabled || mutation.isPending}
+        onClick={() => {
+          if (!isAuthenticated) {
+            router.push(`/login?nextUrl=${encodeURIComponent(invitePath)}`);
+            return;
+          }
+
+          mutation.mutate();
+        }}
+      >
+        {mutation.isPending ? (
+          <Spinner data-icon="inline-start" />
+        ) : (
+          <LogIn data-icon="inline-start" />
+        )}
+        {isAuthenticated ? t('joinButton') : t('signInButton')}
+      </Button>
+    </div>
   );
 }
