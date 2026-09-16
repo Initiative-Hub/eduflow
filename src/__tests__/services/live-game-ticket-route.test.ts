@@ -209,4 +209,25 @@ describe('live-game ticket route', () => {
     );
     expect(forbidden.status).toBe(403);
   });
+
+  it('does not issue tickets after the host has left', async () => {
+    mocks.getSession.mockResolvedValue({
+      user: { id: userId, image: null, name: 'Sam', role: 'TEACHER' },
+    });
+    mocks.findUnique.mockResolvedValue({
+      ...activeRoom,
+      closedReason: 'HOST_LEFT',
+      runtimeStatus: 'FINALIZED',
+    });
+    const { POST } = await import('@/app/api/v1/live-game/ticket/route');
+
+    const response = await POST(
+      request({ audience: 'HOST', sessionId: roomId })
+    );
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toMatchObject({
+      code: 'GAME_SESSION_ENDED',
+    });
+  });
 });

@@ -1,6 +1,7 @@
 import { sha256Hex, signLiveGameServiceRequest } from './live-game-security';
 import {
   type RoomInitialization,
+  roomHostLeaveSchema,
   roomInitializationSchema,
 } from './runtime-protocol';
 import type { SessionWithGameData } from './types';
@@ -79,6 +80,30 @@ export async function initializePartyKitRoom(session: SessionWithGameData) {
     const detail = await response.text();
     throw new Error(
       `PartyKit room initialization failed (${response.status}): ${detail}`
+    );
+  }
+}
+
+export async function terminatePartyKitRoom(sessionId: string) {
+  const request = roomHostLeaveSchema.parse({
+    reason: 'HOST_LEFT',
+    type: 'session.terminate',
+  });
+  const body = JSON.stringify(request);
+  const base = requiredEnvironment('NEXT_PUBLIC_PARTYKIT_HOST');
+  const url = new URL(`/parties/main/${sessionId}`, base);
+  const headers = await signLiveGameServiceRequest({
+    body,
+    direction: 'next-to-partykit',
+    method: 'POST',
+    pathname: url.pathname,
+    secret: requiredEnvironment('LIVE_GAME_S2S_SECRET'),
+  });
+  const response = await fetch(url, { body, headers, method: 'POST' });
+  if (!response.ok) {
+    const detail = await response.text();
+    throw new Error(
+      `PartyKit room termination failed (${response.status}): ${detail}`
     );
   }
 }

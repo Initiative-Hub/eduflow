@@ -5,6 +5,7 @@ import {
   joinLiveGame,
   projectLiveGameSnapshot,
   submitLiveGameAnswer,
+  terminateForMissingHost,
   trustedLiveGameProfile,
 } from '@/lib/game-quiz/runtime-engine';
 import type { RoomInitialization } from '@/lib/game-quiz/runtime-protocol';
@@ -203,5 +204,18 @@ describe('PartyKit live-game engine', () => {
         { displayName: 'Other', image: null }
       )
     ).toThrowError(/locked joining/i);
+  });
+
+  it('ends an open session for a missing host exactly once', () => {
+    const state = createLiveGameRuntime(initialization);
+
+    expect(terminateForMissingHost(state)).toBe(true);
+    expect(state.session).toMatchObject({
+      closedReason: 'HOST_LEFT',
+      joiningLocked: true,
+      phase: 'FINAL_CELEBRATION',
+    });
+    expect(state.session.endedAt).not.toBeNull();
+    expect(terminateForMissingHost(state)).toBe(false);
   });
 });

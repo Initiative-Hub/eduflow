@@ -157,6 +157,7 @@ export function useLiveGameClient(selection: LiveGameSession | null) {
     party: 'main',
     query,
     room: sessionId ?? 'live-game-unavailable',
+    shouldReconnectOnClose: (event) => event.code !== 4001,
   });
 
   useEffect(() => {
@@ -207,6 +208,10 @@ export function useLiveGameClient(selection: LiveGameSession | null) {
     socket.reconnect();
   }, [sessionId, socket]);
 
+  const disconnect = useCallback(() => {
+    socket.close(4001, 'GAME_SESSION_ENDED');
+  }, [socket]);
+
   const rawSnapshot = state.snapshot;
   const objectKeys = useMemo(
     () => liveGameAvatarObjectKeys(rawSnapshot),
@@ -241,5 +246,5 @@ export function useLiveGameClient(selection: LiveGameSession | null) {
     [rawSnapshot, signedUrls]
   );
 
-  return { ...state, reconnect, send, snapshot };
+  return { ...state, disconnect, reconnect, send, snapshot };
 }

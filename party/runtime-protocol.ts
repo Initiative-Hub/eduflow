@@ -92,6 +92,13 @@ export const roomInitializationSchema = z.object({
 });
 
 export type RoomInitialization = z.infer<typeof roomInitializationSchema>;
+
+export const roomHostLeaveSchema = z.object({
+  reason: z.literal('HOST_LEFT'),
+  type: z.literal('session.terminate'),
+});
+
+export type RoomHostLeave = z.infer<typeof roomHostLeaveSchema>;
 export type RuntimeSession = z.infer<typeof runtimeSessionSchema>;
 export type RuntimeRound = z.infer<typeof runtimeRoundSchema>;
 export type RuntimeParticipant = z.infer<typeof runtimeParticipantSchema>;

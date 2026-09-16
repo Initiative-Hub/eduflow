@@ -28,10 +28,12 @@ export interface ConfirmDialogProps {
   destructive?: boolean;
   icon?: ReactNode;
   isPending?: boolean;
+  onOpenChange?: (open: boolean) => void;
   onConfirm: (controls: ConfirmDialogControls) => void;
+  open?: boolean;
   pendingLabel?: ReactNode;
   title: ReactNode;
-  trigger: ReactElement;
+  trigger?: ReactElement;
 }
 
 export function ConfirmDialog({
@@ -42,12 +44,20 @@ export function ConfirmDialog({
   destructive = false,
   icon,
   isPending = false,
+  onOpenChange,
   onConfirm,
+  open: controlledOpen,
   pendingLabel,
   title,
   trigger,
 }: ConfirmDialogProps) {
-  const [open, setOpen] = useState(false);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const open = controlledOpen ?? uncontrolledOpen;
+
+  const setOpen = (nextOpen: boolean) => {
+    if (controlledOpen === undefined) setUncontrolledOpen(nextOpen);
+    onOpenChange?.(nextOpen);
+  };
 
   const close = () => setOpen(false);
 
@@ -60,7 +70,9 @@ export function ConfirmDialog({
         }
       }}
     >
-      <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
+      {trigger ? (
+        <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
+      ) : null}
 
       <AlertDialogContent>
         <AlertDialogHeader>

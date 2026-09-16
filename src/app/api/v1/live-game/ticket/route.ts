@@ -107,7 +107,12 @@ export async function POST(request: Request) {
     input.audience === 'HOST'
       ? await prisma.gameSession.findUnique({
           where: { id: input.sessionId },
-          select: { hostId: true, id: true, runtimeStatus: true },
+          select: {
+            closedReason: true,
+            hostId: true,
+            id: true,
+            runtimeStatus: true,
+          },
         })
       : input.expectedSessionId
         ? await prisma.gameSession.findFirst({
@@ -122,7 +127,12 @@ export async function POST(request: Request) {
                 },
               ],
             },
-            select: { hostId: true, id: true, runtimeStatus: true },
+            select: {
+              closedReason: true,
+              hostId: true,
+              id: true,
+              runtimeStatus: true,
+            },
           })
         : await prisma.gameSession.findFirst({
             where: {
@@ -130,7 +140,12 @@ export async function POST(request: Request) {
               joinCodeReleasedAt: null,
               runtimeStatus: { in: ['ACTIVE', 'FINALIZING'] },
             },
-            select: { hostId: true, id: true, runtimeStatus: true },
+            select: {
+              closedReason: true,
+              hostId: true,
+              id: true,
+              runtimeStatus: true,
+            },
           });
 
   if (!gameSession) {
@@ -140,6 +155,15 @@ export async function POST(request: Request) {
         message: 'No active Game Session was found.',
       },
       { status: 404 }
+    );
+  }
+  if (gameSession.closedReason === 'HOST_LEFT') {
+    return NextResponse.json(
+      {
+        code: 'GAME_SESSION_ENDED',
+        message: 'The host has left this Game Session.',
+      },
+      { status: 409 }
     );
   }
   if (

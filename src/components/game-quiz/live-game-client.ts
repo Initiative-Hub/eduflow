@@ -42,6 +42,14 @@ export type LiveGameOperation =
 export const requestLiveGameTicket = (request: LiveGameTicketRequest) =>
   apiClient.post<LiveGameTicket>('v1/live-game/ticket', request);
 
+export const leaveLiveGameSession = (input: {
+  gameQuizId: string;
+  sessionId: string;
+}) =>
+  apiClient.post<{ ended: true }>(
+    `v1/game-quizzes/${input.gameQuizId}/sessions/${input.sessionId}/leave`
+  );
+
 export type LiveGameAvatarUrl = { objectKey: string; signedUrl: string };
 
 export const requestLiveGameAvatarUrls = (input: {

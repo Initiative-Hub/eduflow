@@ -1,6 +1,9 @@
 import { isUniqueConstraintError } from '@/lib/game-quiz/database';
 import { gameQuizError } from '@/lib/game-quiz/errors';
-import { initializePartyKitRoom } from '@/lib/game-quiz/room-init';
+import {
+  initializePartyKitRoom,
+  terminatePartyKitRoom,
+} from '@/lib/game-quiz/room-init';
 import {
   type CreateGameSessionInput,
   GAME_QUIZ_TEMPLATE_KEY,
@@ -9,6 +12,7 @@ import {
   requireGameQuiz,
   requireGameQuizManager,
   requireGameSession,
+  requireGameSessionHost,
 } from '@/lib/game-quiz/shared';
 import { shuffle } from '@/lib/game-quiz/shuffle';
 import type { GameActor, GameQuizWithQuestions } from '@/lib/game-quiz/types';
@@ -148,4 +152,24 @@ export async function createGameSession(
     503,
     'Could not allocate a join code. Please try again.'
   );
+}
+
+export async function leaveGameSession(
+  actor: GameActor,
+  gameQuizId: string,
+  sessionId: string
+) {
+  const session = await requireGameSession(prisma, sessionId);
+  if (session.gameQuizId !== gameQuizId) {
+    throw gameQuizError(
+      'GAME_SESSION_NOT_FOUND',
+      404,
+      'Game Session not found for this Game Quiz.'
+    );
+  }
+  requireGameSessionHost(actor, session);
+  if (session.endedAt) return { ended: true };
+
+  await terminatePartyKitRoom(session.id);
+  return { ended: true };
 }
