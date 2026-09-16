@@ -7,8 +7,11 @@ import {
   MessageCircleQuestion,
   Presentation,
 } from 'lucide-react';
-import { motion, useReducedMotion } from 'motion/react';
+import { motion, useInView } from 'motion/react';
+import { useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Reveal } from './reveal';
+import { useLandingReducedMotion } from './use-landing-reduced-motion';
 
 interface RailNode {
   description: string;
@@ -27,7 +30,9 @@ interface LearningRailProps {
 }
 
 export function LearningRail({ ariaLabel, nodes }: LearningRailProps) {
-  const reduceMotion = useReducedMotion();
+  const rail = useRef<HTMLDivElement>(null);
+  const inView = useInView(rail, { once: true, amount: 0.15 });
+  const reduceMotion = useLandingReducedMotion();
   const railNodes: RailNode[] = [
     { ...nodes.source, icon: FileText },
     { ...nodes.lesson, icon: Presentation },
@@ -37,6 +42,7 @@ export function LearningRail({ ariaLabel, nodes }: LearningRailProps) {
 
   return (
     <div
+      ref={rail}
       className="relative mx-auto w-full max-w-2xl rounded-3xl border bg-card/80 p-4 shadow-2xl shadow-primary/10 backdrop-blur sm:p-6"
       role="img"
       aria-label={ariaLabel}
@@ -57,37 +63,45 @@ export function LearningRail({ ariaLabel, nodes }: LearningRailProps) {
           stroke="currentColor"
           strokeWidth="3"
           strokeDasharray="8 10"
-          initial={{
-            opacity: reduceMotion ? 1 : 0,
-            pathLength: reduceMotion ? 1 : 0,
-          }}
-          animate={{ opacity: 1, pathLength: 1 }}
+          initial={false}
+          animate={
+            inView && reduceMotion === false
+              ? { pathLength: [0, 1] }
+              : { pathLength: 1 }
+          }
           transition={{ duration: reduceMotion ? 0 : 1.4, ease: 'easeInOut' }}
         />
       </svg>
       <div className="relative grid gap-4 sm:grid-cols-2 sm:gap-6">
         {railNodes.map(({ description, icon: Icon, label }, index) => (
-          <motion.div
+          <div
             key={label}
-            initial={reduceMotion ? false : { opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: reduceMotion ? 0 : 0.25 + index * 0.16 }}
             className={index % 2 === 1 ? 'sm:translate-y-16' : undefined}
           >
-            <Card className="min-h-36">
-              <CardHeader>
-                <div className="mb-2 flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                  <Icon className="size-5" aria-hidden="true" />
-                </div>
-                <CardTitle>{label}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground text-sm leading-6">
-                  {description}
-                </p>
-              </CardContent>
-            </Card>
-          </motion.div>
+            <Reveal delay={0.12 + index * 0.1} className="h-full">
+              <Card className="h-full min-h-36">
+                <CardHeader>
+                  <div className="mb-2 flex items-center justify-between gap-4">
+                    <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                      <Icon className="size-5" aria-hidden="true" />
+                    </div>
+                    <span
+                      aria-hidden="true"
+                      className="font-heading text-primary/40 text-sm tabular-nums"
+                    >
+                      0{index + 1}
+                    </span>
+                  </div>
+                  <CardTitle>{label}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground text-sm leading-6">
+                    {description}
+                  </p>
+                </CardContent>
+              </Card>
+            </Reveal>
+          </div>
         ))}
       </div>
       <div className="h-0 sm:h-16" />

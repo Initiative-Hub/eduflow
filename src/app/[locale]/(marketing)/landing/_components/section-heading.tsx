@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils';
+import { Reveal } from './reveal';
 
 interface SectionHeadingProps {
   align?: 'left' | 'center';
@@ -14,7 +15,7 @@ export function SectionHeading({
   title,
 }: SectionHeadingProps) {
   return (
-    <div
+    <Reveal
       className={cn(
         'flex max-w-3xl flex-col gap-3',
         align === 'center' && 'mx-auto items-center text-center'
@@ -29,6 +30,6 @@ export function SectionHeading({
       <p className="text-pretty text-base text-muted-foreground leading-7 sm:text-lg">
         {description}
       </p>
-    </div>
+    </Reveal>
   );
 }

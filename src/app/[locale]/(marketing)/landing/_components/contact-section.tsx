@@ -3,6 +3,7 @@ import { getTranslations } from 'next-intl/server';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from '@/i18n/navigation';
+import { Reveal } from './reveal';
 import { SectionHeading } from './section-heading';
 
 const showcaseUrl = 'https://www.rmitvn-showcase.com/relearn';
@@ -31,48 +32,52 @@ export async function ContactSection() {
           </Button>
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:col-span-7">
-          <Card>
-            <CardHeader>
-              <div className="mb-2 flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                <GraduationCap className="size-5" aria-hidden="true" />
-              </div>
-              <CardTitle>
-                <h3>{t('showcase.title')}</h3>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-1 flex-col gap-6">
-              <p className="text-muted-foreground text-sm leading-6">
-                {t('showcase.description')}
-              </p>
-              <Button asChild variant="outline" className="mt-auto w-full">
-                <a href={showcaseUrl} target="_blank" rel="noreferrer">
-                  {t('showcase.cta')}
-                  <ArrowUpRight data-icon="inline-end" />
-                </a>
-              </Button>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <div className="mb-2 flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                <CodeXml className="size-5" aria-hidden="true" />
-              </div>
-              <CardTitle>
-                <h3>{t('repository.title')}</h3>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-1 flex-col gap-6">
-              <p className="text-muted-foreground text-sm leading-6">
-                {t('repository.description')}
-              </p>
-              <Button asChild variant="outline" className="mt-auto w-full">
-                <a href={repositoryUrl} target="_blank" rel="noreferrer">
-                  {t('repository.cta')}
-                  <ArrowUpRight data-icon="inline-end" />
-                </a>
-              </Button>
-            </CardContent>
-          </Card>
+          <Reveal>
+            <Card className="h-full">
+              <CardHeader>
+                <div className="mb-2 flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <GraduationCap className="size-5" aria-hidden="true" />
+                </div>
+                <CardTitle>
+                  <h3>{t('showcase.title')}</h3>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-1 flex-col gap-6">
+                <p className="text-muted-foreground text-sm leading-6">
+                  {t('showcase.description')}
+                </p>
+                <Button asChild variant="outline" className="mt-auto w-full">
+                  <a href={showcaseUrl} target="_blank" rel="noreferrer">
+                    {t('showcase.cta')}
+                    <ArrowUpRight data-icon="inline-end" />
+                  </a>
+                </Button>
+              </CardContent>
+            </Card>
+          </Reveal>
+          <Reveal delay={0.08}>
+            <Card className="h-full">
+              <CardHeader>
+                <div className="mb-2 flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <CodeXml className="size-5" aria-hidden="true" />
+                </div>
+                <CardTitle>
+                  <h3>{t('repository.title')}</h3>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-1 flex-col gap-6">
+                <p className="text-muted-foreground text-sm leading-6">
+                  {t('repository.description')}
+                </p>
+                <Button asChild variant="outline" className="mt-auto w-full">
+                  <a href={repositoryUrl} target="_blank" rel="noreferrer">
+                    {t('repository.cta')}
+                    <ArrowUpRight data-icon="inline-end" />
+                  </a>
+                </Button>
+              </CardContent>
+            </Card>
+          </Reveal>
         </div>
       </div>
     </section>

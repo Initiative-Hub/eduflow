@@ -17,6 +17,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { Reveal } from './reveal';
 import { SectionHeading } from './section-heading';
 
 interface FeatureDefinition {
@@ -57,39 +58,42 @@ export async function FeaturesSection() {
         />
         <div className="mt-14 grid gap-5 lg:grid-cols-12">
           {features.map(({ icon: Icon, key, layout }, index) => (
-            <Card
-              key={key}
-              className={cn(
-                'min-h-72',
-                layout,
-                index % 3 === 0 && 'lg:min-h-80'
-              )}
-            >
-              <CardHeader>
-                <div className="mb-4 flex items-center justify-between gap-4">
-                  <span className="flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                    <Icon className="size-5" aria-hidden="true" />
-                  </span>
-                  <Badge variant="outline">{t(`${key}.label`)}</Badge>
-                </div>
-                <CardTitle>
-                  <h3 className="max-w-lg text-2xl">{t(`${key}.title`)}</h3>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="flex-1">
-                <p className="max-w-xl text-base text-muted-foreground leading-7">
-                  {t(`${key}.description`)}
-                </p>
-                <div className="mt-6 grid grid-cols-2 gap-3" aria-hidden="true">
-                  <div className="h-2 rounded-full bg-primary/20" />
-                  <div className="h-2 rounded-full bg-muted" />
-                  <div className="col-span-2 h-16 rounded-xl border bg-background/70" />
-                </div>
-              </CardContent>
-              <CardFooter>
-                <p className="font-medium text-sm">{t(`${key}.outcome`)}</p>
-              </CardFooter>
-            </Card>
+            <Reveal key={key} className={layout} delay={(index % 2) * 0.08}>
+              <Card
+                className={cn(
+                  'h-full min-h-72',
+                  index % 3 === 0 && 'lg:min-h-80'
+                )}
+              >
+                <CardHeader>
+                  <div className="mb-4 flex items-center justify-between gap-4">
+                    <span className="flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                      <Icon className="size-5" aria-hidden="true" />
+                    </span>
+                    <Badge variant="outline">{t(`${key}.label`)}</Badge>
+                  </div>
+                  <CardTitle>
+                    <h3 className="max-w-lg text-2xl">{t(`${key}.title`)}</h3>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="flex-1">
+                  <p className="max-w-xl text-base text-muted-foreground leading-7">
+                    {t(`${key}.description`)}
+                  </p>
+                  <div
+                    className="mt-6 grid grid-cols-2 gap-3"
+                    aria-hidden="true"
+                  >
+                    <div className="h-2 rounded-full bg-primary/20" />
+                    <div className="h-2 rounded-full bg-muted" />
+                    <div className="col-span-2 h-16 rounded-xl border bg-background/70" />
+                  </div>
+                </CardContent>
+                <CardFooter>
+                  <p className="font-medium text-sm">{t(`${key}.outcome`)}</p>
+                </CardFooter>
+              </Card>
+            </Reveal>
           ))}
         </div>
       </div>

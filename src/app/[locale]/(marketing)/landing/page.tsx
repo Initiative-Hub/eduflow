@@ -9,6 +9,7 @@ import { HeroSection } from './_components/hero-section';
 import { PricingSection } from './_components/pricing-section';
 import { TrustSection } from './_components/trust-section';
 import { WorkflowSection } from './_components/workflow-section';
+import styles from './landing.module.css';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('LandingPage.metadata');
@@ -29,7 +30,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default function LandingPage() {
   return (
-    <>
+    <div className={styles.page}>
       <HeroSection />
       <AudienceSection />
       <WorkflowSection />
@@ -39,6 +40,6 @@ export default function LandingPage() {
       <FaqSection />
       <ContactSection />
       <CtaSection />
-    </>
+    </div>
   );
 }

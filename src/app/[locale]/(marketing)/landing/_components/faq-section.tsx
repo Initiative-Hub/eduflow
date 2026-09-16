@@ -5,6 +5,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import { Reveal } from './reveal';
 import { SectionHeading } from './section-heading';
 
 const faqKeys = [
@@ -33,7 +34,7 @@ export async function FaqSection() {
             description={t('description')}
           />
         </div>
-        <div className="lg:col-span-7">
+        <Reveal className="lg:col-span-7" delay={0.08}>
           <Accordion
             type="single"
             collapsible
@@ -50,7 +51,7 @@ export async function FaqSection() {
               </AccordionItem>
             ))}
           </Accordion>
-        </div>
+        </Reveal>
       </div>
     </section>
   );

@@ -1,5 +1,6 @@
 import { getTranslations } from 'next-intl/server';
 import { Separator } from '@/components/ui/separator';
+import { Reveal } from './reveal';
 import { SectionHeading } from './section-heading';
 
 const stepKeys = ['bring', 'shape', 'engage', 'understand'] as const;
@@ -20,21 +21,23 @@ export async function WorkflowSection() {
         />
         <ol className="mt-14 grid gap-8 md:grid-cols-2 lg:grid-cols-4">
           {stepKeys.map((key, index) => (
-            <li key={key} className="flex flex-col gap-5">
-              <div className="flex items-center gap-4">
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary font-heading font-semibold text-primary-foreground">
-                  {index + 1}
-                </span>
-                <Separator />
-              </div>
-              <div className="flex flex-col gap-2">
-                <h3 className="font-heading font-semibold text-xl">
-                  {t(`steps.${key}.title`)}
-                </h3>
-                <p className="text-muted-foreground text-sm leading-6">
-                  {t(`steps.${key}.description`)}
-                </p>
-              </div>
+            <li key={key}>
+              <Reveal delay={index * 0.08} className="flex flex-col gap-5">
+                <div className="flex items-center gap-4">
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary font-heading font-semibold text-primary-foreground">
+                    {index + 1}
+                  </span>
+                  <Separator className="flex-1 bg-primary/20" />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <h3 className="font-heading font-semibold text-xl">
+                    {t(`steps.${key}.title`)}
+                  </h3>
+                  <p className="text-muted-foreground text-sm leading-6">
+                    {t(`steps.${key}.description`)}
+                  </p>
+                </div>
+              </Reveal>
             </li>
           ))}
         </ol>

@@ -1,0 +1,44 @@
+.page [data-slot="card"] {
+  transition:
+    border-color 200ms ease,
+    box-shadow 200ms ease;
+}
+
+.page [data-slot="card"]:focus-within {
+  border-color: color-mix(in oklch, var(--primary) 45%, var(--border));
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .page [data-slot="card"]:hover {
+    border-color: color-mix(in oklch, var(--primary) 35%, var(--border));
+    box-shadow: 0 12px 32px -16px
+      color-mix(in oklch, var(--primary) 25%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .page [data-slot="button"] [data-icon="inline-end"] {
+    transition: transform 200ms ease;
+  }
+
+  .page
+    [data-slot="button"]:is(:hover, :focus-visible)
+    [data-icon="inline-end"] {
+    transform: translateX(3px);
+  }
+
+  .page
+    [data-slot="button"]:is(:hover, :focus-visible)
+    [data-motion-direction="down"] {
+    transform: translateY(3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page [data-slot="card"],
+  .page [data-slot="button"],
+  .page [data-slot="accordion-content"] {
+    animation: none;
+    transition: none;
+  }
+}

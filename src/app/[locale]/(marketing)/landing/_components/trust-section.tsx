@@ -1,5 +1,6 @@
 import { Languages, PencilRuler, ScanSearch } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
+import { Reveal } from './reveal';
 
 const trustItems = [
   { icon: PencilRuler, key: 'editable' },
@@ -12,7 +13,7 @@ export async function TrustSection() {
 
   return (
     <section className="px-4 py-24 sm:px-6 lg:px-8 lg:py-32">
-      <div className="mx-auto grid w-full max-w-7xl overflow-hidden rounded-3xl bg-primary text-primary-foreground lg:grid-cols-12">
+      <Reveal className="mx-auto grid w-full max-w-7xl overflow-hidden rounded-3xl bg-primary text-primary-foreground lg:grid-cols-12">
         <div className="flex flex-col gap-4 px-6 py-10 sm:px-10 lg:col-span-5 lg:justify-center lg:px-12 lg:py-16">
           <p className="font-semibold text-primary-foreground/75 text-sm uppercase tracking-[0.18em]">
             {t('eyebrow')}
@@ -42,7 +43,7 @@ export async function TrustSection() {
             </div>
           ))}
         </div>
-      </div>
+      </Reveal>
     </section>
   );
 }
