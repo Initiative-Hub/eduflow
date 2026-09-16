@@ -94,6 +94,7 @@ for any tasks.).
 - **API Key Overrides**: When a service method accepts an `apiKey` override, prefer it over environment variables and cover the override with a focused unit test.
 - **Long Request Timeouts**: The shared browser API client aborts after 20s, which silently fails long server work (PPTX export, image generation) as `status: undefined` with an "unexpected error" message. Pass an explicit per-request `timeout` for any endpoint that rasterizes slides or calls a generative model, and set a matching `maxDuration` on the route so the server is not cut off first.
 - **Upstream Provider Errors**: Never discard an upstream provider's response body when raising an error; include the status and message so the cause is diagnosable instead of surfacing a bare status code. Image providers refuse entire regions (Google AI Studio returns 400 "User location is not supported", OpenAI 403 "Country, region, or territory not supported"), so image generation must try a fallback model chain rather than one hard-coded model.
+- **Server HTML Sanitization**: `isomorphic-dompurify` with JSDOM 27+ can fail in Vercel's CommonJS server runtime because `html-encoding-sniffer` requires ESM-only `@exodus/bytes`. Keep the root JSDOM override at `25.0.1`; when Bun's hoisted linker is used, pin its compatible `cssstyle` baseline (`4.1.0`) too.
 
 ### 6.4 Tooling & CI
 
