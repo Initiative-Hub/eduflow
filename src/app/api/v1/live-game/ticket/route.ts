@@ -196,18 +196,15 @@ export async function POST(request: Request) {
     }),
   ]);
 
-  return NextResponse.json(
-    {
-      roomId: gameSession.id,
-      ...ticket,
-      ...(guestGrant ? { guestGrant: guestGrant.token } : {}),
-      avatarAccessExpiresAt: avatarAccess.expiresAt,
-      avatarAccessToken: avatarAccess.token,
-      profile: {
-        displayName,
-        image: identityKind === 'GUEST' ? null : (session!.user.image ?? null),
-      },
+  return NextResponse.json({
+    roomId: gameSession.id,
+    ...ticket,
+    ...(guestGrant ? { guestGrant: guestGrant.token } : {}),
+    avatarAccessExpiresAt: avatarAccess.expiresAt,
+    avatarAccessToken: avatarAccess.token,
+    profile: {
+      displayName,
+      image: identityKind === 'GUEST' ? null : (session!.user.image ?? null),
     },
-    { headers: { 'Cache-Control': 'private, no-store' } }
-  );
+  });
 }

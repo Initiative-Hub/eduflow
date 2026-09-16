@@ -87,7 +87,6 @@ describe('live-game ticket route', () => {
       })
     );
     expect(response.status).toBe(200);
-    expect(response.headers.get('Cache-Control')).toBe('private, no-store');
     const body = await response.json();
     expect(body.profile).toEqual({ displayName: 'Taylor', image: null });
     const grant = await verifyLiveGameGuestGrant(body.guestGrant, secret);

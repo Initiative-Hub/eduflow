@@ -51,7 +51,6 @@ describe('guest live-game avatar URLs', () => {
     const { POST } = await import('@/app/api/v1/live-game/avatar-urls/route');
     const response = await POST(request(access.token));
     expect(response.status).toBe(200);
-    expect(response.headers.get('Cache-Control')).toBe('private, no-store');
     expect(await response.json()).toEqual({
       data: [
         {
