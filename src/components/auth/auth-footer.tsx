@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 
@@ -14,10 +15,17 @@ export async function AuthFooter() {
   return (
     <footer className="relative border-border/50 border-t bg-background/80 px-6 py-4 backdrop-blur-sm md:px-10 md:py-12">
       <div className="mx-auto flex flex-col items-center gap-6 px-2 md:flex-row md:justify-between md:gap-0">
-        <Link href="/">
-          <span className="font-black font-heading text-2xl text-primary">
-            EduFlow
-          </span>
+        <Link href="/landing">
+          <div className="h-6">
+            <Image
+              className="h-full w-auto"
+              src="/branding.png"
+              alt="EduFlow logo"
+              width={250}
+              height={50}
+              priority
+            />
+          </div>
         </Link>
 
         <nav aria-label="Footer navigation">

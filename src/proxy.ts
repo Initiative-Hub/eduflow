@@ -44,8 +44,12 @@ const handleRedirect = async ({
     return { res: NextResponse.next(), redirect: true };
   }
 
-  if (hasSession && !userRole && !isRolePath && !isAuthPath) {
+  if (hasSession && !userRole && isProtectedPath && !isRolePath) {
     const roleUrl = new URL('/role', req.nextUrl.origin);
+    roleUrl.searchParams.set(
+      'nextUrl',
+      req.nextUrl.pathname + req.nextUrl.search
+    );
     return { res: NextResponse.redirect(roleUrl), redirect: true };
   }
 
@@ -67,6 +71,7 @@ const handleRedirect = async ({
   if (hasSession && isAuthPath) {
     const nextUrl = req.nextUrl.searchParams.get('nextUrl');
     const sanitizedNextUrl = sanitizeUrl(nextUrl) || '/';
+    console.log('Redirecting to sanitized nextUrl:', sanitizedNextUrl);
     const redirectUrl = new URL(sanitizedNextUrl, req.nextUrl.origin);
 
     return { res: NextResponse.redirect(redirectUrl), redirect: true };

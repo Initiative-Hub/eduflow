@@ -31,6 +31,19 @@ function createAttempt(
 }
 
 describe('getLatestGradeAttemptsByQuiz', () => {
+  it('uses completion time instead of start time for resumed attempts', () => {
+    const resumed = {
+      ...createAttempt('resumed', 'quiz-a', '2026-07-01T00:00:00Z'),
+      completedAt: '2026-07-10T00:00:00Z',
+    };
+    const quick = {
+      ...createAttempt('quick', 'quiz-a', '2026-07-05T00:00:00Z'),
+      completedAt: '2026-07-05T01:00:00Z',
+    };
+    expect(getLatestGradeAttemptsByQuiz([quick, resumed])[0].attempt.id).toBe(
+      'resumed'
+    );
+  });
   it('keeps only the newest attempt per quiz and records attempt counts', () => {
     const latest = getLatestGradeAttemptsByQuiz([
       createAttempt('old-a', 'quiz-a', '2026-07-01T00:00:00.000Z'),

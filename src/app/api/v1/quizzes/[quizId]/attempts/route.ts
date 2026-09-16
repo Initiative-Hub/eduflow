@@ -1,87 +1,52 @@
 import { NextResponse } from 'next/server';
-import { z } from 'zod';
+import * as z from 'zod';
 import { errorResponse } from '@/lib/api/error-response';
-import { type AuthHandler, withAuth } from '@/lib/api/middlewares';
-import { prisma } from '@/lib/prisma';
-
-// ─── Validation ──────────────────────────────────────────────────────────────
-
-const routeParamsSchema = z.object({
-  quizId: z.string().min(1),
-});
-
-// ─── GET /api/v1/quizzes/:quizId/attempts ────────────────────────────────────
-
+import { withAuth } from '@/lib/api/middlewares';
+import { quizAttemptQuizParamsSchema } from '@/lib/validations/quiz-attempt.schema';
+import { QuizAttemptService } from '@/services/QuizAttemptService';
+import { QuizAttemptError } from '@/services/quiz-attempt-data';
 /**
  * @swagger
  * /api/v1/quizzes/{quizId}/attempts:
- *   get:
- *     tags:
- *       - Quiz Attempts
- *     summary: List quiz attempts for the authenticated user
- *     security:
- *       - SessionCookie: []
- *     parameters:
- *       - in: path
- *         name: quizId
- *         required: true
- *         schema:
- *           type: string
+ *   post:
+ *     tags: [Quiz Attempts]
+ *     summary: Start or resume your active attempt; no request body
+ *     security: [{ SessionCookie: [] }]
+ *     parameters: [{ in: path, name: quizId, required: true, schema: { type: string, format: uuid } }]
  *     responses:
- *       200:
- *         description: List of attempts ordered by createdAt desc
- *       400:
- *         description: Invalid quiz ID
- *       401:
- *         description: Unauthorized
- *       404:
- *         description: Quiz not found
- *       500:
- *         description: Internal server error
+ *       200: { description: Successful operation; private and uncached }
+ *       400: { description: Invalid UUID or request body }
+ *       401: { description: Authentication required }
+ *       403: { description: Course access denied or instant feedback unavailable }
+ *       404: { description: Quiz or owned attempt not found }
+ *       409: { description: Stale revision, locked answer, or completed attempt }
+ *       500: { description: Unexpected server error }
  */
-const handler: AuthHandler = async (_req, sessionData, { params }) => {
+export const POST = withAuth(async (_req, session, { params }) => {
   try {
-    const resolvedParams = await params;
-    const parsed = routeParamsSchema.safeParse(resolvedParams);
+    const { quizId } = quizAttemptQuizParamsSchema.parse(await params);
+    const attempt = await QuizAttemptService.start(session.user.id, quizId);
 
-    if (!parsed.success) {
-      return errorResponse(
+    return NextResponse.json(attempt);
+  } catch (error) {
+    let response: Response;
+    if (error instanceof QuizAttemptError) {
+      response = errorResponse(error.code, error.message, error.status);
+    } else if (error instanceof z.ZodError) {
+      response = errorResponse(
         'VALIDATION_ERROR',
-        'Invalid quiz ID',
-        400,
-        parsed.error.format()
+        'Invalid attempt request.',
+        400
+      );
+    } else {
+      console.error('Quiz attempt request failed:', error);
+      response = errorResponse(
+        'INTERNAL_ERROR',
+        'Unable to process the quiz attempt.',
+        500
       );
     }
-
-    const { quizId } = parsed.data;
-    const userId = sessionData.user.id;
-
-    // Verify quiz exists
-    const quiz = await prisma.quiz.findUnique({
-      where: { id: quizId },
-      select: { id: true },
-    });
-
-    if (!quiz) {
-      return errorResponse('QUIZ_NOT_FOUND', 'Quiz not found', 404);
-    }
-
-    // Fetch all attempts for this user and quiz, ordered by most recent first
-    const attempts = await prisma.quizAttempt.findMany({
-      where: {
-        quizId,
-        userId,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-
-    return NextResponse.json(attempts);
-  } catch (error: unknown) {
-    console.error('Error fetching quiz attempts:', error);
-    return errorResponse('INTERNAL_ERROR', 'Internal Server Error', 500);
+    response.headers.set('Cache-Control', 'private, no-store');
+    return response;
   }
-};
-
-export const GET = withAuth(handler);
+});
