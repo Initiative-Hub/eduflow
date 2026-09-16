@@ -2046,6 +2046,8 @@
       "description": "Nhập mã do giáo viên chia sẻ.",
       "join": "Tham gia",
       "joining": "Đang tham gia...",
+      "nameLabel": "Tên của bạn",
+      "nameRequired": "Nhập tên của bạn để tham gia trò chơi.",
       "title": "Tham gia Live Quiz Rally"
     },
     "library": {

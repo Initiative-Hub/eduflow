@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   issueLiveGameAvatarAccessToken,
+  issueLiveGameGuestGrant,
   issueLiveGameTicket,
   signLiveGameServiceRequest,
   verifyLiveGameAvatarAccessToken,
+  verifyLiveGameGuestGrant,
   verifyLiveGameServiceRequest,
   verifyLiveGameTicket,
 } from '@/lib/game-quiz/live-game-security';
@@ -90,6 +92,31 @@ describe('live-game authentication', () => {
     });
     await expect(
       verifyLiveGameTicket(access.token, ticketSecret)
+    ).rejects.toThrow();
+  });
+
+  it('signs a guest name and room without granting host or avatar authority', async () => {
+    const grant = await issueLiveGameGuestGrant({
+      displayName: 'Taylor',
+      guestId: userId,
+      secret: ticketSecret,
+      sessionId,
+    });
+    await expect(
+      verifyLiveGameGuestGrant(grant.token, ticketSecret)
+    ).resolves.toMatchObject({
+      displayName: 'Taylor',
+      sessionId,
+      sub: userId,
+    });
+    await expect(
+      verifyLiveGameTicket(grant.token, ticketSecret)
+    ).rejects.toThrow();
+    await expect(
+      verifyLiveGameAvatarAccessToken(grant.token, ticketSecret)
+    ).rejects.toThrow();
+    await expect(
+      verifyLiveGameGuestGrant(`${grant.token.slice(0, -1)}x`, ticketSecret)
     ).rejects.toThrow();
   });
 });

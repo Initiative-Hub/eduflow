@@ -190,6 +190,8 @@ export function getGameQuizCopy(t: Translate) {
       title: t('join.title'),
       description: t('join.description'),
       codeLabel: t('join.codeLabel'),
+      nameLabel: t('join.nameLabel'),
+      nameRequired: t('join.nameRequired'),
       join: t('join.join'),
       joining: t('join.joining'),
       codeHint: t('join.codeHint'),

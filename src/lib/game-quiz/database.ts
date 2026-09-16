@@ -19,7 +19,6 @@ const sessionGameDataInclude = {
   },
   participants: {
     orderBy: [{ score: 'desc' }, { joinedAt: 'asc' }],
-    include: { user: { select: { id: true, name: true, image: true } } },
   },
   answers: {
     include: {
