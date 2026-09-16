@@ -665,6 +665,7 @@
     "description": "Confirm that you want to join {course}.",
     "joinButton": "Join course",
     "metadataTitle": "Course invitation",
+    "signInButton": "Sign in to join",
     "toast": {
       "capacityFull": "This course is full.",
       "failed": "Failed to join course.",

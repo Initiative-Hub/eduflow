@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import { RoleClient } from './client';
 
 export const metadata: Metadata = {
@@ -6,5 +7,9 @@ export const metadata: Metadata = {
 };
 
 export default async function RoleSelectionPage() {
-  return <RoleClient />;
+  return (
+    <Suspense>
+      <RoleClient />
+    </Suspense>
+  );
 }

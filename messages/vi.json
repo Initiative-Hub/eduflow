@@ -665,6 +665,7 @@
     "description": "Xác nhận rằng bạn muốn tham gia {course}.",
     "joinButton": "Tham gia khóa học",
     "metadataTitle": "Lời mời khóa học",
+    "signInButton": "Đăng nhập để tham gia",
     "toast": {
       "capacityFull": "Khóa học này đã đầy.",
       "failed": "Không thể tham gia khóa học.",

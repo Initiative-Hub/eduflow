@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import type { ReactNode } from 'react';
 import { AuthFooter, AuthPageSwitcher } from '@/components/auth';
 
@@ -16,10 +17,15 @@ export default async function AuthLayout({
       <div className="relative z-10 flex flex-1 grow items-center justify-center px-4 py-8 md:px-8">
         <div className="w-full max-w-md space-y-6">
           <main className="w-full rounded-4xl bg-card px-6 py-8 shadow-2xl md:px-8 md:py-10">
-            <div className="text-center">
-              <h1 className="font-black font-heading text-4xl text-primary">
-                EduFlow
-              </h1>
+            <div className="h-9">
+              <Image
+                className="mx-auto h-full w-auto"
+                src="/branding.png"
+                alt="EduFlow logo"
+                width={250}
+                height={50}
+                priority
+              />
             </div>
 
             <div className="mt-8">{children}</div>
