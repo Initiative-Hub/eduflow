@@ -54,14 +54,14 @@ export function useQuizSubmission({
         let scoreResult: ScoreResult;
         let returnedQuestions: QuestionBlock[] | undefined;
 
-        if (quizId) {
+        if (quizId && submitUrl) {
           // Secure mode: send only quizId + answers to the server
           const answersRecord: Record<string, StudentAnswer> = {};
           for (const [index, answer] of answers.entries()) {
             answersRecord[index.toString()] = answer;
           }
 
-          const response = await fetch(submitUrl ?? '/api/v1/quizzes/submit', {
+          const response = await fetch(submitUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             cache: 'no-store',

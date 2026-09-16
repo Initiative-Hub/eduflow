@@ -18,14 +18,17 @@ export function getLatestGradeAttemptsByQuiz(
     }
 
     existing.attemptCount += 1;
-    if (new Date(attempt.createdAt) > new Date(existing.attempt.createdAt)) {
+    if (
+      new Date(attempt.completedAt ?? attempt.createdAt) >
+      new Date(existing.attempt.completedAt ?? existing.attempt.createdAt)
+    ) {
       existing.attempt = attempt;
     }
   }
 
   return Array.from(grouped.values()).toSorted(
     (left, right) =>
-      new Date(right.attempt.createdAt).getTime() -
-      new Date(left.attempt.createdAt).getTime()
+      new Date(right.attempt.completedAt ?? right.attempt.createdAt).getTime() -
+      new Date(left.attempt.completedAt ?? left.attempt.createdAt).getTime()
   );
 }

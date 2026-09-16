@@ -100,8 +100,5 @@ export const POST = withAuth(async (request, session) => {
       signedUrl: await createAvatarReadSignedUrl({ objectKey }),
     }))
   );
-  return NextResponse.json(
-    { data },
-    { headers: { 'Cache-Control': 'private, no-store' } }
-  );
+  return NextResponse.json({ data });
 });

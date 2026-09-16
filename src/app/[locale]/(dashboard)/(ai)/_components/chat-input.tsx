@@ -28,7 +28,9 @@ import {
 } from '@/components/ai-elements/prompt-input';
 import { DropdownTemplate, type MenuItem } from '@/components/custom/dropdown';
 import { GoogleDrivePickerHost } from '@/components/google-drive-picker/google-drive-picker-host';
+import { ChatQuizRestriction } from '@/components/quiz/chat-quiz-restriction';
 import { Button } from '@/components/ui/button';
+import type { useActiveQuizAttempts } from '@/hooks/use-active-quiz-attempts';
 import { useGoogleDrivePicker } from '@/hooks/use-google-drive-picker';
 import type { ChatModel } from '@/services/ai/chat-provider.constants';
 import type {
@@ -78,6 +80,7 @@ export type ChatInputToolsContext = {
 };
 
 interface ChatInputProps {
+  quizAccess: ReturnType<typeof useActiveQuizAttempts>;
   handleSubmit: (
     e?: FormEvent,
     customValue?: string,
@@ -99,6 +102,7 @@ interface ChatInputProps {
 }
 
 export function ChatInput({
+  quizAccess,
   handleSubmit,
   isStreaming,
   isUploading,
@@ -152,6 +156,7 @@ export function ChatInput({
 
   const onPromptSubmit = async (message: PromptInputMessage) => {
     if (
+      quizAccess.blocked ||
       isStreaming ||
       isUploading ||
       googleDriveImportMutation.isPending ||
@@ -342,7 +347,8 @@ export function ChatInput({
   const renderedTools =
     typeof tools === 'function'
       ? tools({
-          disabled: isStreaming || isUploading || isLimitReached,
+          disabled:
+            quizAccess.blocked || isStreaming || isUploading || isLimitReached,
           disabledLessonIds,
           maxSelectable: remainingAttachmentSlots,
           onAttachLessonReferences: addReferenceLessons,
@@ -413,113 +419,130 @@ export function ChatInput({
 
   return (
     <div className="space-y-4 transition-all duration-200">
-      {googleDrivePicker.pickerProps && (
+      <ChatQuizRestriction access={quizAccess} />
+      {!quizAccess.blocked && googleDrivePicker.pickerProps && (
         <GoogleDrivePickerHost {...googleDrivePicker.pickerProps} />
       )}
       <div className="group mx-auto max-w-3xl">
         <input
           aria-label={t('actionMenu.uploadFiles')}
           className="hidden"
-          disabled={isStreaming || isUploading || isLimitReached}
+          disabled={
+            quizAccess.blocked || isStreaming || isUploading || isLimitReached
+          }
           multiple
           onChange={handleFileInputChange}
           ref={fileInputRef}
           title={t('actionMenu.uploadFiles')}
           type="file"
         />
-        <PromptInput
-          className="*:data-[slot=input-group]:rounded-4xl *:data-[slot=input-group]:border *:data-[slot=input-group]:border-border/80 *:data-[slot=input-group]:bg-white *:data-[slot=input-group]:px-2.5 *:data-[slot=input-group]:py-2 *:data-[slot=input-group]:shadow-sm *:data-[slot=input-group]:transition-all *:data-[slot=input-group]:group-focus-within:border-primary/70 *:data-[slot=input-group]:group-focus-within:shadow-md *:data-[slot=input-group]:group-focus-within:ring-4 *:data-[slot=input-group]:group-focus-within:ring-primary/10 dark:*:data-[slot=input-group]:bg-zinc-950"
-          maxFiles={0}
-          onSubmit={onPromptSubmit}
-        >
-          {selectedAttachments.length > 0 && (
-            <PromptInputHeader>
-              <ChatInputAttachments
-                files={selectedAttachments}
-                getRemoveLabel={(fileName) =>
-                  t('attachments.remove', { name: fileName })
-                }
-                onRemove={removeSelectedAttachment}
-              />
-            </PromptInputHeader>
-          )}
-
-          <PromptInputBody>
-            <PromptInputTextarea
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              placeholder={placeholder ?? t('placeholder')}
-              className="min-h-11 px-2 py-2.5 text-base leading-normal placeholder:text-foreground sm:text-lg"
-              disabled={isLimitReached}
-            />
-          </PromptInputBody>
-
-          <PromptInputFooter className="flex items-center justify-between gap-2 px-1 pb-0.5">
-            <div className="flex min-w-0 flex-1 items-center gap-1.5">
-              {isAuthenticated ? (
-                <DropdownTemplate
-                  align="start"
-                  className="w-56 rounded-2xl p-1.5"
-                  items={actionMenuItems}
-                  trigger={
-                    <Button
-                      aria-label={t('actionMenu.open')}
-                      className="size-9 rounded-full text-foreground transition-colors hover:bg-muted"
-                      disabled={isStreaming || isUploading || isLimitReached}
-                      size="icon-sm"
-                      type="button"
-                      variant="ghost"
-                    >
-                      <Plus className="size-4.5" />
-                    </Button>
+        <fieldset disabled={quizAccess.blocked}>
+          <PromptInput
+            className="*:data-[slot=input-group]:rounded-4xl *:data-[slot=input-group]:border *:data-[slot=input-group]:border-border/80 *:data-[slot=input-group]:bg-white *:data-[slot=input-group]:px-2.5 *:data-[slot=input-group]:py-2 *:data-[slot=input-group]:shadow-sm *:data-[slot=input-group]:transition-all *:data-[slot=input-group]:group-focus-within:border-primary/70 *:data-[slot=input-group]:group-focus-within:shadow-md *:data-[slot=input-group]:group-focus-within:ring-4 *:data-[slot=input-group]:group-focus-within:ring-primary/10 dark:*:data-[slot=input-group]:bg-zinc-950"
+            maxFiles={0}
+            onSubmit={onPromptSubmit}
+          >
+            {selectedAttachments.length > 0 && (
+              <PromptInputHeader>
+                <ChatInputAttachments
+                  files={selectedAttachments}
+                  getRemoveLabel={(fileName) =>
+                    t('attachments.remove', { name: fileName })
                   }
+                  onRemove={removeSelectedAttachment}
                 />
-              ) : null}
-              {renderedTools ? (
-                <PromptInputTools className="min-w-0 gap-1.5">
-                  {renderedTools}
-                </PromptInputTools>
-              ) : null}
-              {selectedModel && onModelChange ? (
-                <div className="ml-auto min-w-0">
-                  <ChatModelSelectControl
-                    disabled={isStreaming || isUploading}
-                    emptyLabel={t('modelSelector.empty')}
-                    heading={t('modelSelector.heading')}
-                    label={t('modelSelector.label')}
-                    onModelChange={onModelChange}
-                    selectedModel={selectedModel}
-                  />
-                </div>
-              ) : null}
-            </div>
+              </PromptInputHeader>
+            )}
 
-            <PromptInputSubmit
-              className="size-9 shrink-0 cursor-pointer rounded-full transition-all hover:scale-105"
-              disabled={
-                isLimitReached ||
-                isUploading ||
-                googleDriveImportMutation.isPending ||
-                (!isStreaming &&
-                  !inputValue.trim() &&
-                  selectedAttachments.length === 0)
-              }
-              onStop={onStop}
-              status={
-                isUploading ? 'submitted' : isStreaming ? 'streaming' : 'ready'
-              }
-              variant={isStreaming ? 'destructive' : 'default'}
-            >
-              {isUploading ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : isStreaming ? (
-                <Square className="size-4" />
-              ) : (
-                <ArrowUp className="size-5" />
-              )}
-            </PromptInputSubmit>
-          </PromptInputFooter>
-        </PromptInput>
+            <PromptInputBody>
+              <PromptInputTextarea
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                placeholder={placeholder ?? t('placeholder')}
+                className="min-h-11 px-2 py-2.5 text-base leading-normal placeholder:text-foreground sm:text-lg"
+                disabled={quizAccess.blocked || isLimitReached}
+              />
+            </PromptInputBody>
+
+            <PromptInputFooter className="flex items-center justify-between gap-2 px-1 pb-0.5">
+              <div className="flex min-w-0 flex-1 items-center gap-1.5">
+                {isAuthenticated ? (
+                  <DropdownTemplate
+                    align="start"
+                    className="w-56 rounded-2xl p-1.5"
+                    items={actionMenuItems}
+                    trigger={
+                      <Button
+                        aria-label={t('actionMenu.open')}
+                        className="size-9 rounded-full text-foreground transition-colors hover:bg-muted"
+                        disabled={
+                          quizAccess.blocked ||
+                          isStreaming ||
+                          isUploading ||
+                          isLimitReached
+                        }
+                        size="icon-sm"
+                        type="button"
+                        variant="ghost"
+                      >
+                        <Plus className="size-4.5" />
+                      </Button>
+                    }
+                  />
+                ) : null}
+                {renderedTools ? (
+                  <PromptInputTools className="min-w-0 gap-1.5">
+                    {renderedTools}
+                  </PromptInputTools>
+                ) : null}
+                {selectedModel && onModelChange ? (
+                  <div className="ml-auto min-w-0">
+                    <ChatModelSelectControl
+                      disabled={
+                        quizAccess.blocked || isStreaming || isUploading
+                      }
+                      emptyLabel={t('modelSelector.empty')}
+                      heading={t('modelSelector.heading')}
+                      label={t('modelSelector.label')}
+                      onModelChange={onModelChange}
+                      selectedModel={selectedModel}
+                    />
+                  </div>
+                ) : null}
+              </div>
+
+              <PromptInputSubmit
+                className="size-9 shrink-0 cursor-pointer rounded-full transition-all hover:scale-105"
+                disabled={
+                  quizAccess.blocked ||
+                  isLimitReached ||
+                  isUploading ||
+                  googleDriveImportMutation.isPending ||
+                  (!isStreaming &&
+                    !inputValue.trim() &&
+                    selectedAttachments.length === 0)
+                }
+                onStop={onStop}
+                status={
+                  isUploading
+                    ? 'submitted'
+                    : isStreaming
+                      ? 'streaming'
+                      : 'ready'
+                }
+                variant={isStreaming ? 'destructive' : 'default'}
+              >
+                {isUploading ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : isStreaming ? (
+                  <Square className="size-4" />
+                ) : (
+                  <ArrowUp className="size-5" />
+                )}
+              </PromptInputSubmit>
+            </PromptInputFooter>
+          </PromptInput>
+        </fieldset>
       </div>
 
       {!isChatting && (footer ?? defaultFooter)}
@@ -540,7 +563,7 @@ export function ChatInput({
         maxSelectable={remainingAttachmentSlots}
         onAttach={addReferenceFiles}
         onOpenChange={(open) => setPickerSource(open ? pickerSource : null)}
-        open={pickerSource === 'personal'}
+        open={!quizAccess.blocked && pickerSource === 'personal'}
         source="personal"
       />
       <ChatInventoryAttachmentDialog
@@ -550,7 +573,7 @@ export function ChatInput({
         maxSelectable={remainingAttachmentSlots}
         onAttach={addReferenceFiles}
         onOpenChange={(open) => setPickerSource(open ? pickerSource : null)}
-        open={pickerSource === 'course'}
+        open={!quizAccess.blocked && pickerSource === 'course'}
         source="course"
       />
     </div>
