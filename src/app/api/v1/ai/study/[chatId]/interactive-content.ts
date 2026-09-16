@@ -220,7 +220,7 @@ export async function generateInteractiveContent({
     convertDataPart: convertLessonReferenceDataPart,
   });
 
-  const { finalStep } = await generateText({
+  const { responseMessages } = await generateText({
     model: provider(model ?? DEFAULT_MODELS.openrouter),
     instructions: INTERACTIVE_TOOL_SYSTEM_PROMPT,
     messages: modelMessages,
@@ -237,7 +237,14 @@ export async function generateInteractiveContent({
         'A self-contained interactive educational HTML activity for EduFlow.',
     }),
     instructions: INTERACTIVE_CONTENT_SYSTEM_PROMPT,
-    messages: [...modelMessages, ...finalStep.response.messages],
+    messages: [
+      ...modelMessages,
+      ...responseMessages,
+      {
+        role: 'user',
+        content: 'Now generate the requested interactive activity.',
+      },
+    ],
   });
 
   return output;

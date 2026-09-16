@@ -94,6 +94,7 @@ for any tasks.).
 - **API Key Overrides**: When a service method accepts an `apiKey` override, prefer it over environment variables and cover the override with a focused unit test.
 - **Long Request Timeouts**: The shared browser API client aborts after 20s, which silently fails long server work (PPTX export, image generation) as `status: undefined` with an "unexpected error" message. Pass an explicit per-request `timeout` for any endpoint that rasterizes slides or calls a generative model, and set a matching `maxDuration` on the route so the server is not cut off first.
 - **Upstream Provider Errors**: Never discard an upstream provider's response body when raising an error; include the status and message so the cause is diagnosable instead of surfacing a bare status code. Image providers refuse entire regions (Google AI Studio returns 400 "User location is not supported", OpenAI 403 "Country, region, or territory not supported"), so image generation must try a fallback model chain rather than one hard-coded model.
+- **Two-Phase AI Generation**: When a second model request reuses `responseMessages` from a tool-gathering request, append an explicit final `user` message that asks for the second-phase output. Google Gemini rejects histories ending in an assistant/model turn; use accumulated `responseMessages` rather than only `finalStep.response.messages` so tool calls and results are preserved.
 
 ### 6.4 Tooling & CI
 

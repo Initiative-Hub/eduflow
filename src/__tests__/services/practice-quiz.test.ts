@@ -57,6 +57,31 @@ const mockConvertToModelMessages =
   convertToModelMessages as unknown as ReturnType<typeof vi.fn>;
 const mockGenerateText = generateText as unknown as ReturnType<typeof vi.fn>;
 
+const toolResponseMessages = [
+  {
+    role: 'assistant',
+    content: [
+      {
+        type: 'tool-call',
+        toolCallId: 'tool-call-1',
+        toolName: 'searchLessonContent',
+        input: '{"query":"photosynthesis"}',
+      },
+    ],
+  },
+  {
+    role: 'tool',
+    content: [
+      {
+        type: 'tool-result',
+        toolCallId: 'tool-call-1',
+        toolName: 'searchLessonContent',
+        output: { type: 'text', value: 'Lesson context' },
+      },
+    ],
+  },
+];
+
 describe('study practice quiz generation', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -70,11 +95,7 @@ describe('study practice quiz generation', () => {
         },
       })
       .mockResolvedValueOnce({
-        finalStep: {
-          response: {
-            messages: [],
-          },
-        },
+        responseMessages: toolResponseMessages,
       })
       .mockResolvedValueOnce({
         output: {
@@ -144,5 +165,18 @@ describe('study practice quiz generation', () => {
       output: expect.any(Object),
       instructions: expect.any(String),
     });
+    expect(mockGenerateText.mock.calls[2][0].messages).toEqual([
+      {
+        id: 'message-1',
+        parts: [{ text: 'Make a quiz about photosynthesis', type: 'text' }],
+        role: 'user',
+      },
+      ...toolResponseMessages,
+      {
+        role: 'user',
+        content:
+          'Using the gathered context above, now generate the requested practice quiz as the required structured output.',
+      },
+    ]);
   });
 });
