@@ -48,7 +48,7 @@ describe('GameQuizReportClient', () => {
 
     expect(await screen.findByText('Planet Rally')).toBeInTheDocument();
     expect(
-      screen.getByRole('row', { name: /1First question 0 0 0/ })
+      screen.getByRole('row', { name: /1 First question 0 0 0/ })
     ).toBeInTheDocument();
     expect(screen.queryByText(/NaN/)).not.toBeInTheDocument();
     expect(report).toHaveBeenCalledWith('game-quiz-1', 'session-1');
