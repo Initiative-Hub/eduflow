@@ -44,7 +44,8 @@ export const runtimeRoundSchema = z.object({
 
 export const runtimeParticipantSchema = z.object({
   id: z.uuid(),
-  userId: z.uuid(),
+  userId: z.uuid().nullable(),
+  guestId: z.uuid().nullable().optional(),
   displayName: z.string().trim().min(1).max(80),
   image: z.string().nullable(),
   score: z.number().int().min(0),
@@ -103,6 +104,8 @@ export const liveGameTicketClaimsSchema = z.object({
   sessionId: z.uuid(),
   audience: liveGameAudienceSchema,
   role: z.string().nullable(),
+  identityKind: z.enum(['USER', 'GUEST']).default('USER'),
+  guestDisplayName: z.string().trim().min(1).max(80).optional(),
   jti: z.uuid(),
   iat: z.number().int(),
   nbf: z.number().int(),
@@ -247,6 +250,7 @@ const finalRoundSchema = z.object({
 export const finalizationParticipantSchema = runtimeParticipantSchema.pick({
   id: true,
   userId: true,
+  guestId: true,
   displayName: true,
   joinedAt: true,
 });

@@ -40,9 +40,10 @@ async function createMessages(
   finalization: StoredFinalization
 ): Promise<LiveGameFinalization[]> {
   const participants = state.participants.map(
-    ({ id, userId, displayName, joinedAt }) => ({
+    ({ id, userId, guestId, displayName, joinedAt }) => ({
       id,
       userId,
+      ...(guestId ? { guestId } : {}),
       displayName,
       joinedAt,
     })

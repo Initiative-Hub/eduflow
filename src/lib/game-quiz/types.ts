@@ -82,7 +82,8 @@ export type GameRoundRecord = {
 export type GameParticipantRecord = {
   id: string;
   sessionId: string;
-  userId: string;
+  userId: string | null;
+  guestId: string | null;
   displayName: string;
   score: number;
   joinedAt: Date;

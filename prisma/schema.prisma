@@ -827,8 +827,9 @@ model GameParticipant {
   id        String      @id @default(uuid())
   sessionId String      @map("session_id")
   session   GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  userId    String      @map("user_id")
-  user      User        @relation(fields: [userId], references: [id], onDelete: Restrict)
+  userId    String?     @map("user_id")
+  user      User?       @relation(fields: [userId], references: [id], onDelete: Restrict)
+  guestId   String?     @map("guest_id")
 
   displayName String    @map("display_name")
   score       Int       @default(0)
@@ -836,6 +837,7 @@ model GameParticipant {
   answers GameAnswer[]
 
   @@unique([sessionId, userId], map: "game_participant_session_id_user_id_key")
+  @@unique([sessionId, guestId], map: "game_participant_session_id_guest_id_key")
   @@unique([id, sessionId], map: "game_participant_id_session_id_key")
   @@index([userId, joinedAt(sort: Desc)], map: "game_participant_user_id_joined_at_idx")
   @@index([sessionId, score(sort: Desc)], map: "game_participant_session_id_score_idx")

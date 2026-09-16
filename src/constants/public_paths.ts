@@ -8,6 +8,8 @@ export const APP_PUBLIC_PATHS = [
   '/share',
   '/course',
   '/english',
+  '/games/join',
+  '/games/live/play',
   '/socratic',
   '/study',
   '/writing',

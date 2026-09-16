@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   InputOTP,
   InputOTPGroup,
@@ -18,22 +19,33 @@ import { activateLiveGameSession } from './live-game-session';
 
 interface GameQuizJoinClientProps {
   copy?: GameQuizCopy;
+  isAuthenticated?: boolean;
 }
 
 export function GameQuizJoinClient({
   copy = gameQuizCopy,
+  isAuthenticated = false,
 }: GameQuizJoinClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [code, setCode] = useState(
     () => searchParams.get('code')?.replace(/\D/g, '').slice(0, 6) ?? ''
   );
+  const [name, setName] = useState('');
+  const [nameError, setNameError] = useState(false);
   const joinMutation = useMutation({
     mutationFn: () =>
-      requestLiveGameTicket({ audience: 'PARTICIPANT', joinCode: code }),
-    onSuccess: ({ roomId }) => {
+      requestLiveGameTicket({
+        audience: 'PARTICIPANT',
+        ...(isAuthenticated ? {} : { displayName: name.trim() }),
+        joinCode: code,
+      }),
+    onSuccess: ({ guestGrant, roomId }) => {
       activateLiveGameSession({
         audience: 'PARTICIPANT',
+        ...(guestGrant
+          ? { guestGrant, identityKind: 'GUEST' as const }
+          : { identityKind: 'USER' as const }),
         joinCode: code,
         sessionId: roomId,
         version: 3,
@@ -53,6 +65,10 @@ export function GameQuizJoinClient({
           className="mt-8 space-y-3"
           onSubmit={(event) => {
             event.preventDefault();
+            if (!isAuthenticated && !name.trim()) {
+              setNameError(true);
+              return;
+            }
             if (code.length === 6) joinMutation.mutate();
           }}
         >
@@ -76,6 +92,27 @@ export function GameQuizJoinClient({
             </InputOTPGroup>
           </InputOTP>
           <p className="text-muted-foreground text-xs">{copy.join.codeHint}</p>
+          {!isAuthenticated && (
+            <div className="space-y-2">
+              <Label htmlFor="game-join-name">{copy.join.nameLabel}</Label>
+              <Input
+                aria-invalid={nameError}
+                autoComplete="name"
+                id="game-join-name"
+                maxLength={80}
+                onChange={(event) => {
+                  setName(event.target.value);
+                  setNameError(false);
+                }}
+                value={name}
+              />
+              {nameError && (
+                <p className="text-destructive text-sm" role="alert">
+                  {copy.join.nameRequired}
+                </p>
+              )}
+            </div>
+          )}
           <Button
             className="mt-4 w-full"
             disabled={code.length !== 6 || joinMutation.isPending}
