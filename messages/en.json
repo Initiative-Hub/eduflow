@@ -2046,6 +2046,8 @@
       "description": "Enter the code shared by your teacher.",
       "join": "Join game",
       "joining": "Joining...",
+      "nameLabel": "Your name",
+      "nameRequired": "Enter your name to join the game.",
       "title": "Join a Live Quiz Rally"
     },
     "library": {

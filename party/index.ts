@@ -16,6 +16,7 @@ import {
   reconcileLiveGameDeadline,
   submitLiveGameAnswer,
   terminateForMissingHost,
+  trustedLiveGameProfile,
 } from './runtime-engine';
 import {
   type LiveGameServerMessage,
@@ -69,8 +70,21 @@ export default class LiveGameParty implements Party.Server {
       if (claims.sessionId !== lobby.id) {
         return new Response('The ticket is for another room.', { status: 403 });
       }
+      if (
+        (claims.identityKind === 'GUEST' &&
+          (claims.audience !== 'PARTICIPANT' ||
+            !claims.guestDisplayName ||
+            claims.role !== null)) ||
+        (claims.identityKind === 'USER' && claims.guestDisplayName)
+      ) {
+        return new Response('The connection ticket is invalid.', {
+          status: 401,
+        });
+      }
       const headers = new globalThis.Headers([...request.headers.entries()]);
       headers.set('X-Eduflow-Audience', claims.audience);
+      headers.set('X-Eduflow-Identity-Kind', claims.identityKind);
+      headers.set('X-Eduflow-Guest-Name', claims.guestDisplayName ?? '');
       headers.set('X-Eduflow-Role', claims.role ?? '');
       headers.set('X-Eduflow-User-Id', claims.sub);
       return new globalThis.Request(request.url, {
@@ -112,6 +126,12 @@ export default class LiveGameParty implements Party.Server {
     }
     connection.setState({
       audience,
+      guestDisplayName:
+        context.request.headers.get('X-Eduflow-Guest-Name') || undefined,
+      identityKind:
+        context.request.headers.get('X-Eduflow-Identity-Kind') === 'GUEST'
+          ? 'GUEST'
+          : 'USER',
       role: context.request.headers.get('X-Eduflow-Role') || null,
       synced: false,
       userId,
@@ -278,7 +298,13 @@ export default class LiveGameParty implements Party.Server {
       if (!actor) throw new Error('Connection authentication is missing.');
 
       if (parsed.type === 'session.sync') {
-        const participant = joinLiveGame(this.state, actor, parsed, new Date());
+        const profile = trustedLiveGameProfile(actor, parsed);
+        const participant = joinLiveGame(
+          this.state,
+          actor,
+          profile,
+          new Date()
+        );
         sender.setState({ ...actor, synced: true });
         if (participant)
           await persistMutation(this.room.storage, this.state, { participant });
