@@ -14,6 +14,7 @@ import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { useActiveQuizAttempts } from '@/hooks/use-active-quiz-attempts';
 import { DEFAULT_CHAT_MODEL } from '@/services/ai/chat-provider.constants';
 import type { ChatSubmitAttachments } from '@/types/chat-attachments';
 import { ChatLessonReferenceTool } from '../../_components/chat-lesson-reference-tool';
@@ -55,6 +56,7 @@ export function AIClient({
   isAuthenticated,
 }: AIClientProps) {
   const t = useTranslations('AIChat');
+  const quizAccess = useActiveQuizAttempts();
 
   const [view, setView] = useState<ViewState>('home');
   const [isUploadingAttachments, setIsUploadingAttachments] = useState(false);
@@ -105,6 +107,7 @@ export function AIClient({
     attachments: ChatSubmitAttachments = { files: [], referencedFiles: [] }
   ) => {
     e?.preventDefault();
+    if (quizAccess.blocked) return;
 
     const text = customValue?.trim() || '';
     const attachmentCount =
@@ -184,20 +187,23 @@ export function AIClient({
   ];
 
   const viewport = !hasOutput ? (
-    <LandingView
-      userName={userName ?? 'Guest'}
-      view={view}
-      setView={setView}
-      suggestions={suggestions}
-      extendedPrompts={extendedPrompts}
-      onSelectPrompt={(text) => {
-        if (isLimitReached) {
-          notifyLimitReached();
-          return;
-        }
-        startChat(text);
-      }}
-    />
+    <fieldset disabled={quizAccess.blocked}>
+      <LandingView
+        userName={userName ?? 'Guest'}
+        view={view}
+        setView={setView}
+        suggestions={suggestions}
+        extendedPrompts={extendedPrompts}
+        onSelectPrompt={(text) => {
+          if (quizAccess.blocked) return;
+          if (isLimitReached) {
+            notifyLimitReached();
+            return;
+          }
+          startChat(text);
+        }}
+      />
+    </fieldset>
   ) : (
     <ChatView
       messages={messages}
@@ -209,12 +215,13 @@ export function AIClient({
         void handleSubmit(undefined, suggestion)
       }
       scrollContainerRef={scrollContainerRef}
-      suggestionsDisabled={isStreaming || isLimitReached}
+      suggestionsDisabled={quizAccess.blocked || isStreaming || isLimitReached}
     />
   );
 
   const composer = (
     <ChatInput
+      quizAccess={quizAccess}
       handleSubmit={handleSubmit}
       isAuthenticated={isAuthenticated}
       isStreaming={isStreaming}

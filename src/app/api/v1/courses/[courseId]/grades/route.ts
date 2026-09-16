@@ -51,8 +51,8 @@ const handler: AuthHandler = async (_req, sessionData, { params }) => {
   }
 
   const attempts = await prisma.quizAttempt.findMany({
-    where: { userId, quiz: { courseId } },
-    orderBy: { createdAt: 'desc' },
+    where: { userId, quiz: { courseId }, status: 'COMPLETED' },
+    orderBy: { completedAt: 'desc' },
     take: 100,
     include: {
       quiz: {

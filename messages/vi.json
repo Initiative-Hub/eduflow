@@ -2906,6 +2906,23 @@
       "true_false": "Đúng / Sai"
     }
   },
+  "QuizAttempts": {
+    "aiBlocked": "Không thể sử dụng trò chuyện AI khi bạn còn bài kiểm tra khóa học chưa hoàn thành. Hãy nộp các bài kiểm tra đang làm để tiếp tục.",
+    "aiBlockedTitle": "Đang làm bài kiểm tra khóa học",
+    "checking": "Đang kiểm tra các lượt làm bài đang hoạt động…",
+    "conflict": "Lượt làm bài này đã thay đổi trong một thẻ hoặc thiết bị khác. Hãy tải lại để tiếp tục. Việc tải lại sẽ bỏ các thay đổi chưa lưu trong thẻ này.",
+    "inProgress": "Đang làm",
+    "loadError": "Không thể tải các lượt làm bài. Vui lòng thử lại.",
+    "reload": "Tải lại lượt làm bài đã lưu",
+    "results": "Kết quả bài kiểm tra",
+    "resume": "Tiếp tục",
+    "retry": "Thử lại",
+    "saved": "Đã lưu tiến độ",
+    "saveError": "Không thể lưu tiến độ. Vui lòng thử lại.",
+    "saving": "Đang lưu tiến độ…",
+    "takeResume": "Làm / tiếp tục bài kiểm tra",
+    "unsaved": "Thay đổi chưa lưu"
+  },
   "RoleSelection": {
     "actions": {
       "select": "Lựa chọn"

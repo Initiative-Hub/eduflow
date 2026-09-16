@@ -67,9 +67,8 @@ export const dynamic = 'force-dynamic';
 export const GET = withAuth(async (_request: Request, sessionData) => {
   try {
     const sources = await GameQuizAIService.listSources(sessionData.user.id);
-    return NextResponse.json(sources, {
-      headers: { 'Cache-Control': 'private, no-store' },
-    });
+
+    return NextResponse.json(sources);
   } catch (error) {
     console.error('Game Quiz AI source discovery error:', error);
     if (error instanceof GameQuizAIServiceError) {

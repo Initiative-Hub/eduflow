@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { useActiveQuizAttempts } from '@/hooks/use-active-quiz-attempts';
 import {
   DEFAULT_STUDY_QUIZ_OPTIONS,
   type StudyMode,
@@ -49,6 +50,7 @@ export function StudyClient({
   isAuthenticated,
 }: StudyClientProps) {
   const t = useTranslations('StudyPage');
+  const quizAccess = useActiveQuizAttempts();
   const tChat = useTranslations('AIChat');
 
   const [mode, setMode] = useState<StudyMode>(initialMode);
@@ -105,6 +107,7 @@ export function StudyClient({
     attachments: ChatSubmitAttachments = { files: [], referencedFiles: [] }
   ) => {
     e?.preventDefault();
+    if (quizAccess.blocked) return;
 
     const text = customValue?.trim() || '';
     const finalAttachments = {
@@ -171,12 +174,13 @@ export function StudyClient({
         void handleSubmit(undefined, suggestion)
       }
       scrollContainerRef={scrollContainerRef}
-      suggestionsDisabled={isStreaming || isLimitReached}
+      suggestionsDisabled={quizAccess.blocked || isStreaming || isLimitReached}
     />
   );
 
   const composer = (
     <ChatInput
+      quizAccess={quizAccess}
       handleSubmit={handleSubmit}
       isAuthenticated={isAuthenticated}
       isStreaming={isStreaming}

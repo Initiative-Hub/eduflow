@@ -2,17 +2,31 @@ import { NextResponse } from 'next/server';
 import * as z from 'zod';
 import { errorResponse } from '@/lib/api/error-response';
 import { withAuth } from '@/lib/api/middlewares';
-import { quizAttemptQuizParamsSchema } from '@/lib/validations/quiz-attempt.schema';
+import {
+  attemptCheckSchema,
+  attemptIdParamsSchema,
+} from '@/lib/validations/quiz-attempt.schema';
 import { QuizAttemptService } from '@/services/QuizAttemptService';
 import { QuizAttemptError } from '@/services/quiz-attempt-data';
 /**
  * @swagger
- * /api/v1/quizzes/{quizId}/attempts:
+ * /api/v1/quiz-attempts/{attemptId}/check:
  *   post:
  *     tags: [Quiz Attempts]
- *     summary: Start or resume your active attempt; no request body
+ *     summary: Check and lock an instant-feedback answer
  *     security: [{ SessionCookie: [] }]
- *     parameters: [{ in: path, name: quizId, required: true, schema: { type: string, format: uuid } }]
+ *     parameters: [{ in: path, name: attemptId, required: true, schema: { type: string, format: uuid } }]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [revision, questionIndex, answer]
+ *             properties:
+ *               revision: { type: integer, minimum: 0 }
+ *               questionIndex: { type: integer, minimum: 0 }
+ *               answer: { type: object, required: [type], description: Validated StudentAnswer matching the frozen question type }
  *     responses:
  *       200: { description: Successful operation; private and uncached }
  *       400: { description: Invalid UUID or request body }
@@ -22,17 +36,22 @@ import { QuizAttemptError } from '@/services/quiz-attempt-data';
  *       409: { description: Stale revision, locked answer, or completed attempt }
  *       500: { description: Unexpected server error }
  */
-export const POST = withAuth(async (_req, session, { params }) => {
+export const POST = withAuth(async (req, session, { params }) => {
   try {
-    const { quizId } = quizAttemptQuizParamsSchema.parse(await params);
-    const attempt = await QuizAttemptService.start(session.user.id, quizId);
+    const { attemptId } = attemptIdParamsSchema.parse(await params);
+    const input = attemptCheckSchema.parse(await req.json());
+    const attempt = await QuizAttemptService.check(
+      session.user.id,
+      attemptId,
+      input
+    );
 
     return NextResponse.json(attempt);
   } catch (error) {
     let response: Response;
     if (error instanceof QuizAttemptError) {
       response = errorResponse(error.code, error.message, error.status);
-    } else if (error instanceof z.ZodError) {
+    } else if (error instanceof z.ZodError || error instanceof SyntaxError) {
       response = errorResponse(
         'VALIDATION_ERROR',
         'Invalid attempt request.',

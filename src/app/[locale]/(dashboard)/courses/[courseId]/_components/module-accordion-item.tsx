@@ -32,6 +32,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { QuizDefinition } from '@/lib/quiz-template';
 import { cn } from '@/lib/utils';
@@ -65,6 +66,7 @@ interface ModuleAccordionItemProps {
   onCreateQuiz: (moduleId: string) => void;
   /** Quizzes associated with lessons in this module */
   quizzes?: QuizDefinition[];
+  activeQuizIds?: ReadonlySet<string>;
 }
 
 /**
@@ -119,6 +121,7 @@ export function ModuleAccordionItem({
   onAddLesson,
   onCreateQuiz,
   quizzes = [],
+  activeQuizIds,
 }: ModuleAccordionItemProps) {
   const tAccordion = useTranslations('Courses.ModuleAccordion');
   const [deletedQuizIds, setDeletedQuizIds] = useState<Set<string>>(
@@ -355,6 +358,7 @@ export function ModuleAccordionItem({
                       onIndent={handleIndent}
                       onOutdent={handleOutdent}
                       onQuizDeleted={handleQuizDeleted}
+                      active={activeQuizIds?.has(item.id) ?? false}
                     />
                   ))}
                 </SortableContext>
@@ -370,6 +374,7 @@ export function ModuleAccordionItem({
                   onIndent={handleIndent}
                   onOutdent={handleOutdent}
                   onQuizDeleted={handleQuizDeleted}
+                  active={activeQuizIds?.has(item.id) ?? false}
                 />
               ))
             )}
@@ -383,6 +388,7 @@ export function ModuleAccordionItem({
 // ─── Sortable Row ────────────────────────────────────────────────────────────
 
 interface SortableAccordionRowProps {
+  active: boolean;
   item: AccordionListItem;
   courseId: string;
   canDeleteContent: boolean;
@@ -393,6 +399,7 @@ interface SortableAccordionRowProps {
 }
 
 function SortableAccordionRow({
+  active,
   item,
   courseId,
   canDeleteContent,
@@ -401,6 +408,7 @@ function SortableAccordionRow({
   onOutdent,
   onQuizDeleted,
 }: SortableAccordionRowProps) {
+  const tAttempts = useTranslations('QuizAttempts');
   const {
     attributes,
     listeners,
@@ -501,6 +509,9 @@ function SortableAccordionRow({
         </div>
         <div>
           <span className="font-medium text-sm">{item.title}</span>
+          {active && (
+            <Badge variant="secondary">{tAttempts('inProgress')}</Badge>
+          )}
           <div className="mt-0.5 flex items-center gap-1.5">
             <span className="text-[10px] text-muted-foreground">
               {item.questionCount}{' '}

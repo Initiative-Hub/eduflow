@@ -1,3 +1,4 @@
+import { stripQuestionBlock } from '@/lib/quiz-template/strip-answers';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { errorResponse } from '@/lib/api/error-response';
@@ -103,6 +104,9 @@ export const GET = withAuth(async (_req, sessionData, { params }) => {
       orderBy: { createdAt: 'desc' },
     });
 
+    const canViewAnswers =
+      permissions.containPermission(COURSE_PERMISSION.ASSESSMENTS_UPDATE) ||
+      permissions.containPermission(COURSE_PERMISSION.ASSESSMENTS_CREATE);
     const populatedQuizzes = quizzes.map((quiz) => {
       const { lessonQuizzes, quizQuestions, ...quizData } = quiz;
       const resolved = resolveReferencedQuestions(
@@ -113,10 +117,15 @@ export const GET = withAuth(async (_req, sessionData, { params }) => {
         ...quizData,
         lessonIds: lessonQuizzes.map(({ lesson }) => lesson.id),
         ...resolved,
+        questions: canViewAnswers
+          ? resolved.questions
+          : resolved.questions.map(stripQuestionBlock),
       };
     });
 
-    return NextResponse.json(populatedQuizzes);
+    return NextResponse.json(populatedQuizzes, {
+      headers: { 'Cache-Control': 'private, no-store' },
+    });
   } catch (error: unknown) {
     if (error instanceof Error && error.message === 'Forbidden') {
       return errorResponse('FORBIDDEN', 'Forbidden', 403);

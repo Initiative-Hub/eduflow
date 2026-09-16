@@ -13,6 +13,7 @@ export interface StudentGradeAttempt {
   answeredCount: number;
   hasPendingReview: boolean;
   isLegacySnapshot: boolean;
+  completedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }

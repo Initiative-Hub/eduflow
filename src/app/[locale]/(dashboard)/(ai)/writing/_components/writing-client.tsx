@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl';
 import type React from 'react';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { useActiveQuizAttempts } from '@/hooks/use-active-quiz-attempts';
 import type { WritingTool } from '@/lib/validations/writing.schema';
 import { DEFAULT_CHAT_MODEL } from '@/services/ai/chat-provider.constants';
 import { ChatInput } from '../../_components/chat-input';
@@ -39,6 +40,7 @@ export default function WritingClient({
   initialMessagesPagination,
 }: WritingClientProps) {
   const t = useTranslations('AIChat');
+  const quizAccess = useActiveQuizAttempts();
   const [selectedTool, setSelectedTool] = useState<WritingTool>(initialTool);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
@@ -69,6 +71,7 @@ export default function WritingClient({
 
   const handleSubmit = (e?: React.SyntheticEvent, customValue?: string) => {
     e?.preventDefault();
+    if (quizAccess.blocked) return;
 
     const text = customValue || '';
     if (!text.trim()) return;
@@ -94,12 +97,13 @@ export default function WritingClient({
         void handleSubmit(undefined, suggestion)
       }
       scrollContainerRef={scrollContainerRef}
-      suggestionsDisabled={isStreaming || isLimitReached}
+      suggestionsDisabled={quizAccess.blocked || isStreaming || isLimitReached}
     />
   );
 
   const composer = (
     <ChatInput
+      quizAccess={quizAccess}
       handleSubmit={handleSubmit}
       isAuthenticated={false}
       isStreaming={isStreaming}

@@ -13,6 +13,10 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
 }));
 
+vi.mock('@/hooks/use-active-quiz-attempts', () => ({
+  useActiveQuizAttempts: () => ({ attempts: [] }),
+}));
+
 vi.mock('@/app/[locale]/(dashboard)/courses/[courseId]/use-modules', () => ({
   useModules: useModulesMock,
 }));
