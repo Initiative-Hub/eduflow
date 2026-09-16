@@ -2432,42 +2432,105 @@
     },
     "features": {
       "assessments": {
-        "description": "Xây dựng ngân hàng câu hỏi, bài kiểm tra, bài tập, chế độ phân phối và quy trình phản hồi. Xem lại gợi ý của AI trước khi người học nhận kết quả.",
+        "description": "Tạo bài kiểm tra và bài tập từ nội dung bài học. Duyệt câu hỏi và gợi ý của AI trước khi gửi phản hồi cho người học.",
         "label": "Đánh giá",
-        "outcome": "Đi từ tạo câu hỏi đến phản hồi có thể hành động.",
-        "title": "Đánh giá mức độ hiểu mà không bỏ qua nhận định của giáo viên"
+        "outcome": "Phản hồi hữu ích, dưới sự kiểm soát của giáo viên.",
+        "title": "Hiểu rõ người học đã nắm được gì"
       },
       "assistants": {
-        "description": "Hướng dẫn giải quyết vấn đề bằng Gia sư Socratic, tạo hoạt động ôn tập tập trung và hỗ trợ người học lên ý, soạn thảo, viết lại và hoàn thiện bài làm.",
-        "label": "Hướng dẫn",
-        "outcome": "Trao cho mỗi người học sự hỗ trợ đúng trọng tâm giữa các buổi học.",
-        "title": "Nuôi dưỡng tư duy sâu với các trợ lý chuyên biệt"
+        "description": "Cho người học không gian để hỏi, lập luận và thử lại. Gia sư Socratic cùng trợ lý học tập và viết dẫn dắt bước tiếp theo.",
+        "label": "Trợ lý AI",
+        "outcome": "Tiếp tục hiểu sâu hơn sau mỗi buổi học.",
+        "title": "Gợi mở từng bước tư duy"
       },
-      "description": "EduFlow kết nối mọi công việc quanh một bài học để nhà giáo dục sáng tạo theo đúng ngữ cảnh và người học luôn chủ động trong cùng một mạch trải nghiệm.",
+      "cta": "Trải nghiệm miễn phí",
+      "description": "Khám phá những cách một bài học có thể mở ra. Chọn công cụ để xem ví dụ.",
       "english": {
-        "description": "Dịch giữa tiếng Anh và tiếng Việt, khám phá từ vựng với IPA và âm thanh, phân tích ngữ pháp, lưu từ mới và luyện phát âm.",
-        "label": "Luyện tập",
-        "outcome": "Biến ngôn ngữ đầu vào thành thói quen luyện tập lặp lại được.",
-        "title": "Giúp mỗi từ dễ nghe, dễ hiểu và dễ vận dụng hơn"
+        "description": "Kết nối tiếng Anh và tiếng Việt qua dịch thuật, phát âm và ngữ pháp. Lưu từ hữu ích và luyện tập mỗi ngày.",
+        "label": "Tiếng Anh",
+        "outcome": "Hiểu nghĩa. Nghe rõ. Tự tin sử dụng.",
+        "title": "Từ một từ mới đến kỹ năng mới"
       },
       "eyebrow": "Một không gian liền mạch",
       "games": {
-        "description": "Tạo câu hỏi dựa trên bài học, tổ chức vòng chơi có tính giờ, để người học tham gia trực tiếp và xem lại kết quả sau phiên.",
-        "label": "Tương tác",
-        "outcome": "Tạo năng lượng cho giờ ôn tập mà vẫn giữ đúng mục tiêu học tập.",
-        "title": "Biến đánh giá thành khoảnh khắc sôi động trong lớp"
+        "description": "Đưa câu hỏi từ bài học vào các vòng chơi có tính giờ. Cả lớp cùng tham gia, suy nghĩ và học hỏi từ kết quả.",
+        "label": "Trò chơi",
+        "outcome": "Lớp học sôi nổi, mục tiêu học tập luôn rõ ràng.",
+        "title": "Cùng biến giờ ôn tập thành cuộc chơi"
       },
       "lessons": {
-        "description": "Đưa tệp khóa học và học liệu vào, tạo bản nháp với AI rồi chỉnh sửa mô-đun, mục tiêu, phần giải thích, nội dung đa phương tiện và hoạt động trước khi xuất bản.",
-        "label": "Biên soạn",
-        "outcome": "Đi từ học liệu rời rạc đến một bài học người học có thể sử dụng.",
-        "title": "Biến học liệu thành bài học tương tác"
+        "description": "Bắt đầu từ tài liệu khóa học. Xây dựng mục tiêu, nội dung và hoạt động, rồi chỉnh sửa từng chi tiết trước khi xuất bản.",
+        "label": "Bài học",
+        "outcome": "Học liệu của bạn. Quyết định cuối cùng vẫn là của bạn.",
+        "title": "Biến học liệu thành bài học sinh động"
       },
+      "navigationLabel": "Khám phá tính năng EduFlow",
       "presentations": {
-        "description": "Lập dàn ý trang chiếu, chọn phong cách trực quan, tinh chỉnh từng trang, xem trước toàn bộ và xuất tệp PowerPoint sẵn sàng để trình bày.",
-        "label": "Trình bày",
-        "outcome": "Giữ mạch nội dung nhất quán từ dàn ý đến lớp học.",
-        "title": "Đưa bài học liền mạch vào chế độ trình chiếu"
+        "description": "Lập dàn ý, chọn phong cách và hoàn thiện mạch nội dung. Xem trước bài trình chiếu rồi xuất sang PowerPoint.",
+        "label": "Trình chiếu",
+        "outcome": "Mạch nội dung nhất quán, từ dàn ý đến lớp học.",
+        "title": "Đưa bài học lên màn hình lớn"
+      },
+      "preview": {
+        "assessments": {
+          "feedback": "Nhiệt cung cấp năng lượng để các phân tử nước chuyển thành hơi.",
+          "question": "Quá trình nào biến nước lỏng thành hơi nước?",
+          "questionNumber": "Câu 1 / 5",
+          "reviewed": "Giáo viên đã duyệt",
+          "workspace": "Soạn bài đánh giá"
+        },
+        "assistants": {
+          "hint": "Kết nối điều bạn từng thấy với kiến thức đang học.",
+          "response": "Hãy nghĩ về chiếc khăn ướt được phơi ngoài trời. Nhiệt có thể tác động thế nào đến các phân tử nước trên bề mặt?",
+          "source": "Ngữ cảnh: Vòng tuần hoàn của nước",
+          "student": "Tại sao vũng nước biến mất dù nước không sôi?",
+          "tutor": "Gia sư Socratic",
+          "workspace": "Học có hướng dẫn"
+        },
+        "condensation": "Ngưng tụ",
+        "english": {
+          "example": "“The sun speeds up the evaporation of water.”",
+          "phonetic": "/ɪˌvæpəˈreɪʃən/",
+          "practice": "Nghe và luyện tập",
+          "translation": "Tiếng Việt: sự bay hơi",
+          "word": "evaporation",
+          "wordType": "Danh từ · Tiếng Anh",
+          "workspace": "Luyện ngôn ngữ"
+        },
+        "evaporation": "Bay hơi",
+        "games": {
+          "footer": "Một câu hỏi. Cả lớp cùng suy nghĩ.",
+          "players": "24 người học",
+          "question": "Điều gì cung cấp năng lượng cho vòng tuần hoàn của nước?",
+          "rain": "Mưa",
+          "round": "Vòng 1",
+          "snow": "Tuyết",
+          "sun": "Mặt trời",
+          "timer": "20s",
+          "wind": "Gió",
+          "workspace": "Lớp học trực tiếp"
+        },
+        "lessons": {
+          "activity": "Thử sức: mô tả hành trình của một giọt nước.",
+          "editable": "Bản nháp chỉnh sửa được",
+          "module": "Khoa học · Bài 01",
+          "objective": "Khám phá cách nước di chuyển giữa mặt đất và bầu trời.",
+          "workspace": "Soạn bài học"
+        },
+        "precipitation": "Giáng thủy",
+        "presentations": {
+          "chapter": "Khoa học Trái Đất",
+          "cycle": "Vòng tuần hoàn",
+          "export": "Xuất PowerPoint",
+          "intro": "Giới thiệu",
+          "ready": "Sẵn sàng trình bày",
+          "reflection": "Suy ngẫm",
+          "subtitle": "Một giọt nước nhỏ. Một hành trình không ngừng.",
+          "workspace": "Soạn trình chiếu"
+        },
+        "sample": "Ví dụ minh họa",
+        "source": "Ghi chép khoa học.pdf",
+        "topic": "Vòng tuần hoàn của nước"
       },
       "title": "Kết nối mọi khoảnh khắc học tập"
     },
