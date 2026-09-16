@@ -605,25 +605,39 @@ model QuizQuestion {
   @@map("quiz_question")
 }
 
+enum QuizAttemptStatus {
+  IN_PROGRESS @map("in_progress")
+  COMPLETED   @map("completed")
+
+  @@map("quiz_attempt_status")
+}
+
 model QuizAttempt {
-  id               String   @id @default(uuid())
-  quizId           String   @map("quiz_id")
-  quiz             Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
-  userId           String   @map("user_id")
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  answers          Json
-  quizSnapshot     Json?    @map("quiz_snapshot")
-  answeredCount    Int      @default(0) @map("answered_count")
-  score            Float
-  maxScore         Float    @map("max_score")
-  percentage       Float
-  results          Json
-  hasPendingReview Boolean  @default(false) @map("has_pending_review")
-  createdAt        DateTime @default(now()) @map("created_at")
-  updatedAt        DateTime @updatedAt @map("updated_at")
+  id                     String            @id @default(uuid())
+  quizId                 String            @map("quiz_id")
+  quiz                   Quiz              @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  userId                 String            @map("user_id")
+  user                   User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status                 QuizAttemptStatus @default(IN_PROGRESS)
+  currentQuestionIndex   Int               @default(0) @map("current_question_index")
+  checkedQuestionIndices Int[]             @default([]) @map("checked_question_indices")
+  revision               Int               @default(0)
+  startedAt              DateTime?         @map("started_at")
+  completedAt            DateTime?         @map("completed_at")
+  answers                Json              @default("{}")
+  quizSnapshot           Json?             @map("quiz_snapshot")
+  answeredCount          Int               @default(0) @map("answered_count")
+  score                  Float?
+  maxScore               Float?            @map("max_score")
+  percentage             Float?
+  results                Json?
+  hasPendingReview       Boolean           @default(false) @map("has_pending_review")
+  createdAt              DateTime          @default(now()) @map("created_at")
+  updatedAt              DateTime          @updatedAt @map("updated_at")
 
   @@index([quizId, userId])
   @@index([userId])
+  @@index([userId, status], map: "quiz_attempt_user_id_status_idx")
   @@map("quiz_attempt")
 }
 
@@ -654,9 +668,9 @@ enum GameSessionPhase {
 }
 
 enum GameSessionCloseReason {
-  HOST_LEFT     @map("host_left")
-  COMPLETED     @map("completed")
-  HOST_ENDED    @map("host_ended")
+  HOST_LEFT  @map("host_left")
+  COMPLETED  @map("completed")
+  HOST_ENDED @map("host_ended")
 
   @@map("game_session_close_reason")
 }
@@ -831,10 +845,10 @@ model GameParticipant {
   user      User?       @relation(fields: [userId], references: [id], onDelete: Restrict)
   guestId   String?     @map("guest_id")
 
-  displayName String    @map("display_name")
-  score       Int       @default(0)
-  joinedAt    DateTime  @default(now()) @map("joined_at")
-  answers GameAnswer[]
+  displayName String       @map("display_name")
+  score       Int          @default(0)
+  joinedAt    DateTime     @default(now()) @map("joined_at")
+  answers     GameAnswer[]
 
   @@unique([sessionId, userId], map: "game_participant_session_id_user_id_key")
   @@unique([sessionId, guestId], map: "game_participant_session_id_guest_id_key")

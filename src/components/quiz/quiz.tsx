@@ -16,6 +16,7 @@ import { useInstantFeedback } from './hooks/use-instant-feedback';
 import { useQuizNavigation } from './hooks/use-quiz-navigation';
 import { useQuizReducer } from './hooks/use-quiz-reducer';
 import { useQuizSubmission } from './hooks/use-quiz-submission';
+import { type ManagedQuizProps, QuizAttemptView } from './quiz-attempt-view';
 import {
   QuizCard,
   QuizCardContent,
@@ -29,6 +30,7 @@ import { QuestionRenderer } from './quiz-question-renderer';
 import { QuizResult } from './quiz-result';
 
 interface QuizProps {
+  managed?: ManagedQuizProps;
   quiz: ClientQuizContent | QuizContent;
   quizId?: string;
   submitUrl?: string;
@@ -40,7 +42,12 @@ interface QuizProps {
   className?: string;
 }
 
-export function Quiz({
+export function Quiz({ managed, ...props }: QuizProps) {
+  if (managed) return <QuizAttemptView {...managed} />;
+  return <LocalQuiz {...props} />;
+}
+
+function LocalQuiz({
   quiz,
   quizId,
   submitUrl,

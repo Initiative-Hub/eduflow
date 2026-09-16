@@ -103,8 +103,6 @@ export async function POST(request: Request) {
       signedUrl: await createAvatarReadSignedUrl({ objectKey }),
     }))
   );
-  return NextResponse.json(
-    { data },
-    { headers: { 'Cache-Control': 'private, no-store' } }
-  );
+
+  return NextResponse.json({ data });
 }
