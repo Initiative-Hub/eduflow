@@ -41,22 +41,22 @@ export async function EnglishPreview() {
   return (
     <PreviewFrame title={t('english.workspace')}>
       <div className="flex flex-col gap-5">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <Badge variant="outline">{t('english.wordType')}</Badge>
-            <p className="mt-3 break-words font-heading font-semibold text-3xl">
-              {t('english.word')}
-            </p>
-            <p className="mt-1 text-muted-foreground text-sm">
-              {t('english.phonetic')}
-            </p>
-          </div>
+        <div className="flex items-center justify-between gap-3">
+          <Badge variant="outline">{t('english.wordType')}</Badge>
           <span
             className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary"
             aria-hidden="true"
           >
             <Volume2 className="size-5" />
           </span>
+        </div>
+        <div>
+          <p className="break-words font-heading font-semibold text-3xl">
+            {t('english.word')}
+          </p>
+          <p className="mt-1 text-muted-foreground text-sm">
+            {t('english.phonetic')}
+          </p>
         </div>
         <p className="font-medium text-primary text-sm">
           {t('english.translation')}
