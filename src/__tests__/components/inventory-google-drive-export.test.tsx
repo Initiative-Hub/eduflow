@@ -1,12 +1,74 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { NextIntlClientProvider, useTranslations } from 'next-intl';
 import { describe, expect, it, vi } from 'vitest';
 import { InventoryCard } from '@/app/[locale]/(dashboard)/inventory/_components/inventory-card';
 import { InventoryTableView } from '@/app/[locale]/(dashboard)/inventory/_components/inventory-table-view';
 import type { InventoryEntry } from '@/app/[locale]/(dashboard)/inventory/inventory.types';
 import enMessages from '../../../messages/en.json';
+
+vi.mock('@/components/ui/dropdown-menu', async () => {
+  const React = await import('react');
+  const DropdownMenuContext = React.createContext<{
+    open: boolean;
+    setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  } | null>(null);
+
+  return {
+    DropdownMenu: ({ children }: { children: React.ReactNode }) => {
+      const [open, setOpen] = React.useState(false);
+
+      return (
+        <DropdownMenuContext.Provider value={{ open, setOpen }}>
+          {children}
+        </DropdownMenuContext.Provider>
+      );
+    },
+    DropdownMenuContent: ({
+      children,
+      ...props
+    }: React.HTMLAttributes<HTMLDivElement>) => {
+      const context = React.useContext(DropdownMenuContext);
+      return context?.open ? <div {...props}>{children}</div> : null;
+    },
+    DropdownMenuItem: ({
+      children,
+      onClick,
+      ...props
+    }: React.ButtonHTMLAttributes<HTMLButtonElement>) => {
+      const context = React.useContext(DropdownMenuContext);
+
+      return (
+        <button
+          {...props}
+          onClick={(event) => {
+            onClick?.(event);
+            context?.setOpen(false);
+          }}
+          role="menuitem"
+          type="button"
+        >
+          {children}
+        </button>
+      );
+    },
+    DropdownMenuTrigger: ({ children }: { children: React.ReactNode }) => {
+      const context = React.useContext(DropdownMenuContext);
+      const trigger = React.Children.only(children) as React.ReactElement<{
+        'data-slot'?: string;
+        onClick?: React.MouseEventHandler;
+      }>;
+
+      return React.cloneElement(trigger, {
+        'data-slot': 'dropdown-menu-trigger',
+        onClick: (event) => {
+          trigger.props.onClick?.(event);
+          context?.setOpen((open) => !open);
+        },
+      });
+    },
+  };
+});
 
 const baseEntry: InventoryEntry = {
   id: '2b25a6da-09bc-4783-8a0d-60811389d612',
@@ -130,7 +192,7 @@ describe('inventory Google Drive export actions', () => {
       const { onDownload, onSaveToDrive, onShare, trigger } =
         renderInventoryCard(entry);
 
-      await user.click(trigger);
+      fireEvent.click(trigger);
       expect(screen.queryByRole('menuitem', { name: 'Preview' })).toBeNull();
       expect(screen.getByRole('menuitem', { name: 'Share' })).toBeDefined();
       expect(screen.getByRole('menuitem', { name: 'Download' })).toBeDefined();
@@ -138,15 +200,15 @@ describe('inventory Google Drive export actions', () => {
         screen.getByRole('menuitem', { name: 'Save to Google Drive' })
       ).toBeDefined();
 
-      await user.click(screen.getByRole('menuitem', { name: 'Share' }));
+      fireEvent.click(screen.getByRole('menuitem', { name: 'Share' }));
       expect(onShare).toHaveBeenCalledWith(entry);
 
-      await user.click(trigger);
-      await user.click(screen.getByRole('menuitem', { name: 'Download' }));
+      fireEvent.click(trigger);
+      fireEvent.click(screen.getByRole('menuitem', { name: 'Download' }));
       expect(onDownload).toHaveBeenCalledWith(entry);
 
-      await user.click(trigger);
-      await user.click(
+      fireEvent.click(trigger);
+      fireEvent.click(
         screen.getByRole('menuitem', { name: 'Save to Google Drive' })
       );
 
@@ -154,8 +216,7 @@ describe('inventory Google Drive export actions', () => {
     }
   );
 
-  it('shows the export action in the table menu for a ready PPTX', async () => {
-    const user = userEvent.setup();
+  it('shows the export action in the table menu for a ready PPTX', () => {
     const onSaveToDrive = vi.fn();
     const result = render(
       <QueryClientProvider client={new QueryClient()}>
@@ -174,23 +235,22 @@ describe('inventory Google Drive export actions', () => {
       throw new Error('Inventory table action menu trigger was not rendered.');
     }
 
-    await user.click(trigger);
-    await user.click(
+    fireEvent.click(trigger);
+    fireEvent.click(
       screen.getByRole('menuitem', { name: 'Save to Google Drive' })
     );
 
     expect(onSaveToDrive).toHaveBeenCalledWith(baseEntry);
   });
 
-  it('does not expose Drive export for folders or files still uploading', async () => {
-    const user = userEvent.setup();
+  it('does not expose Drive export for folders or files still uploading', () => {
     const { rerender, trigger } = renderInventoryCard({
       ...baseEntry,
       isFolder: true,
       name: 'Course materials',
     });
 
-    await user.click(trigger);
+    fireEvent.click(trigger);
     expect(
       screen.queryByRole('menuitem', { name: 'Save to Google Drive' })
     ).toBeNull();

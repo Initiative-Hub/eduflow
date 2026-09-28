@@ -192,13 +192,28 @@ async function acceptParticipants(message: ParticipantMessage) {
       return { accepted: true };
     }
     for (const participant of message.items) {
+      const guestId = participant.guestId ?? null;
+      if ((participant.userId === null) === (guestId === null)) {
+        throw new LiveGameFinalizationError(
+          'INVALID_PARTICIPANT_IDENTITY',
+          400,
+          'A participant must have exactly one user or guest identity.'
+        );
+      }
       const existing = await transaction.gameParticipant.findUnique({
-        where: {
-          sessionId_userId: {
-            sessionId: message.sessionId,
-            userId: participant.userId,
-          },
-        },
+        where: participant.userId
+          ? {
+              sessionId_userId: {
+                sessionId: message.sessionId,
+                userId: participant.userId,
+              },
+            }
+          : {
+              sessionId_guestId: {
+                sessionId: message.sessionId,
+                guestId: guestId!,
+              },
+            },
         select: { id: true },
       });
       if (existing && existing.id !== participant.id) {
@@ -209,16 +224,24 @@ async function acceptParticipants(message: ParticipantMessage) {
         );
       }
       await transaction.gameParticipant.upsert({
-        where: {
-          sessionId_userId: {
-            sessionId: message.sessionId,
-            userId: participant.userId,
-          },
-        },
+        where: participant.userId
+          ? {
+              sessionId_userId: {
+                sessionId: message.sessionId,
+                userId: participant.userId,
+              },
+            }
+          : {
+              sessionId_guestId: {
+                sessionId: message.sessionId,
+                guestId: guestId!,
+              },
+            },
         create: {
           id: participant.id,
           sessionId: message.sessionId,
           userId: participant.userId,
+          guestId,
           displayName: participant.displayName,
           joinedAt: new Date(participant.joinedAt),
           score: 0,

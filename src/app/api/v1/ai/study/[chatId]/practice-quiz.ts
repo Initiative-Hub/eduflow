@@ -304,7 +304,7 @@ export async function generatePracticeQuiz({
   // Output.object and tools are incompatible in a single generateText call —
   // structured output requires the final response to be the schema JSON, but
   // tool-call steps produce intermediate messages that leave output undefined.
-  const toolCallResult = await generateText({
+  const { responseMessages } = await generateText({
     model: provider(model ?? DEFAULT_MODELS.openrouter),
     instructions: toolSystemPrompt,
     messages: modelMessages,
@@ -314,7 +314,6 @@ export async function generatePracticeQuiz({
 
   // Phase 2: generate the structured quiz from the enriched message history.
   // No tools here so Output.object resolves correctly.
-  const toolResponseMessages = toolCallResult.finalStep.response.messages;
   const result = await generateText({
     model: provider(model ?? DEFAULT_MODELS.openrouter),
     output: Output.object({
@@ -323,7 +322,15 @@ export async function generatePracticeQuiz({
       description: 'A mixed interactive practice quiz for self-study.',
     }),
     instructions: quizSystemPrompt,
-    messages: [...modelMessages, ...toolResponseMessages],
+    messages: [
+      ...modelMessages,
+      ...responseMessages,
+      {
+        role: 'user',
+        content:
+          'Using the gathered context above, now generate the requested practice quiz as the required structured output.',
+      },
+    ],
   });
 
   return buildPracticeQuizContent(result.output);

@@ -1,7 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { fireEvent, render, screen } from '@testing-library/react';
 import type React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { createChatCitationComponents } from '@/app/[locale]/(dashboard)/(ai)/_components/chat-citations';
@@ -42,6 +41,17 @@ vi.mock('@/components/ui/carousel', async () => {
   };
 });
 
+vi.mock('@/components/ui/hover-card', () => ({
+  HoverCard: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  HoverCardContent: ({
+    children,
+    ...props
+  }: React.HTMLAttributes<HTMLDivElement>) => <div {...props}>{children}</div>,
+  HoverCardTrigger: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
+  ),
+}));
+
 describe('chat citations', () => {
   it('keeps the reusable inline citation component free of app-specific favicon rendering', () => {
     const source = readFileSync(
@@ -71,9 +81,7 @@ describe('chat citations', () => {
 
     render(<Anchor href="#citation-1-2">[1, 2]</Anchor>);
 
-    expect(
-      screen.getByText((content) => content.includes('example.edu'))
-    ).toBeInTheDocument();
+    expect(screen.getByText('example.edu +1')).toBeInTheDocument();
     expect(
       screen.getByText((content) => content.includes('+1'))
     ).toBeInTheDocument();
@@ -92,11 +100,14 @@ describe('chat citations', () => {
 
     render(<Anchor href="#citation-1">[1]</Anchor>);
 
-    expect(screen.getByText('vi.wikipedia.org')).toBeInTheDocument();
+    expect(
+      screen.getByText('vi.wikipedia.org', {
+        selector: '[data-slot="badge"]',
+      })
+    ).toBeInTheDocument();
   });
 
-  it('updates the carousel header favicon when navigating citation sources', async () => {
-    const user = userEvent.setup();
+  it('updates the carousel header favicon when navigating citation sources', () => {
     const components = createChatCitationComponents([
       {
         favicon: 'https://example.edu/favicon.ico',
@@ -115,23 +126,17 @@ describe('chat citations', () => {
 
     render(<Anchor href="#citation-1-2">[1, 2]</Anchor>);
 
-    await user.hover(
-      screen.getByText((content) => content.includes('example.edu'))
-    );
-
-    const headerLogo = await screen.findByTestId('chat-citation-header-logo');
+    const headerLogo = screen.getByTestId('chat-citation-header-logo');
     expect(headerLogo.querySelector('img')).toHaveAttribute(
       'src',
       'https://example.edu/favicon.ico'
     );
 
-    await user.click(screen.getByRole('button', { name: 'Next' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
 
-    await waitFor(() => {
-      expect(headerLogo.querySelector('img')).toHaveAttribute(
-        'src',
-        'https://journal.example/favicon.ico'
-      );
-    });
+    expect(headerLogo.querySelector('img')).toHaveAttribute(
+      'src',
+      'https://journal.example/favicon.ico'
+    );
   });
 });

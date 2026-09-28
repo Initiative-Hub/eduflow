@@ -38,10 +38,10 @@ export function GuestControls() {
       variant="ghost"
       size="icon"
       className="shrink-0 cursor-pointer rounded-full text-muted-foreground hover:bg-muted/40 hover:text-foreground"
-      aria-label="Guest settings"
+      aria-label={t('menu.guestSettings')}
       id="guest-controls-trigger"
     >
-      <Settings2 className="size-5" />
+      <Settings2 />
     </Button>
   );
 

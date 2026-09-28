@@ -10,7 +10,9 @@ export type LiveGameTicketRequest =
   | { audience: 'HOST'; sessionId: string }
   | {
       audience: 'PARTICIPANT';
+      displayName?: string;
       expectedSessionId?: string;
+      guestGrant?: string;
       joinCode: string;
     };
 
@@ -18,6 +20,7 @@ export type LiveGameTicket = {
   avatarAccessExpiresAt: string;
   avatarAccessToken: string;
   expiresAt: string;
+  guestGrant?: string;
   profile: { displayName: string; image: string | null };
   roomId: string;
   token: string;
@@ -38,6 +41,14 @@ export type LiveGameOperation =
 
 export const requestLiveGameTicket = (request: LiveGameTicketRequest) =>
   apiClient.post<LiveGameTicket>('v1/live-game/ticket', request);
+
+export const leaveLiveGameSession = (input: {
+  gameQuizId: string;
+  sessionId: string;
+}) =>
+  apiClient.post<{ ended: true }>(
+    `v1/game-quizzes/${input.gameQuizId}/sessions/${input.sessionId}/leave`
+  );
 
 export type LiveGameAvatarUrl = { objectKey: string; signedUrl: string };
 

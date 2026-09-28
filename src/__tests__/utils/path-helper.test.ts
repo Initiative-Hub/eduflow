@@ -50,6 +50,15 @@ describe('isPathMatched', () => {
   });
 
   describe('public application paths', () => {
+    it('allows localized guest join and play without exposing dashboard games', () => {
+      expect(isPathMatched('/vi', PUBLIC_PATHS)).toBe(true);
+      expect(isPathMatched('/games/join', PUBLIC_PATHS)).toBe(true);
+      expect(isPathMatched('/vi/games/live/play', PUBLIC_PATHS)).toBe(true);
+      expect(isPathMatched('/games/create', PUBLIC_PATHS)).toBe(false);
+      expect(isPathMatched('/vi/games/quiz-id/report', PUBLIC_PATHS)).toBe(
+        false
+      );
+    });
     it('treats shared study activity links as public paths', () => {
       expect(
         isPathMatched(

@@ -29,6 +29,17 @@ const item: SavedVocabularyItem = {
   word: 'resign',
 };
 
+function readBlobAsArrayBuffer(blob: Blob) {
+  return new Promise<ArrayBuffer>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.addEventListener('error', () => reject(reader.error));
+    reader.addEventListener('load', () =>
+      resolve(reader.result as ArrayBuffer)
+    );
+    reader.readAsArrayBuffer(blob);
+  });
+}
+
 describe('downloadWordbankCsv', () => {
   it('exports UTF-8 CSV content with a timestamped filename', async () => {
     vi.useFakeTimers();
@@ -48,8 +59,9 @@ describe('downloadWordbankCsv', () => {
       downloadWordbankCsv([item], labels);
 
       const blob = createObjectURL.mock.calls[0]?.[0] as Blob;
-      const bytes = new Uint8Array(await blob.arrayBuffer());
-      const csv = await blob.text();
+      vi.useRealTimers();
+      const bytes = new Uint8Array(await readBlobAsArrayBuffer(blob));
+      const csv = new TextDecoder().decode(bytes);
 
       expect(Array.from(bytes.slice(0, 3))).toEqual([0xef, 0xbb, 0xbf]);
       expect(csv).toContain('/rɪˈzaɪn/');

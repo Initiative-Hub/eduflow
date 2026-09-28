@@ -5,6 +5,8 @@ import {
   joinLiveGame,
   projectLiveGameSnapshot,
   submitLiveGameAnswer,
+  terminateForMissingHost,
+  trustedLiveGameProfile,
 } from '@/lib/game-quiz/runtime-engine';
 import type { RoomInitialization } from '@/lib/game-quiz/runtime-protocol';
 
@@ -123,5 +125,97 @@ describe('PartyKit live-game engine', () => {
     expect(snapshot.leaderboard).toEqual([]);
     expect(snapshot.currentRound?.options[0]).not.toHaveProperty('isCorrect');
     expect(snapshot.currentRound).not.toHaveProperty('explanation');
+  });
+
+  it('keeps a guest player and score on reconnect without accepting a forged name', () => {
+    const state = createLiveGameRuntime(initialization);
+    const guest = {
+      audience: 'PARTICIPANT' as const,
+      guestDisplayName: 'Taylor',
+      identityKind: 'GUEST' as const,
+      role: null,
+      userId: ids.player,
+    };
+    const initial = joinLiveGame(
+      state,
+      guest,
+      trustedLiveGameProfile(guest, { displayName: 'Imposter', image: 'fake' })
+    );
+    expect(initial).toMatchObject({
+      guestId: ids.player,
+      userId: null,
+      displayName: 'Taylor',
+      image: null,
+    });
+    applyHostCommand(
+      state,
+      { audience: 'HOST', userId: ids.host, role: 'TEACHER' },
+      { action: 'START', expectedStateVersion: 1 }
+    );
+    submitLiveGameAnswer(state, guest, {
+      roundId: ids.round,
+      selectedOptionId: ids.correct,
+      idempotencyKey: ids.answer,
+    });
+    const score = initial!.score;
+    const resumed = joinLiveGame(
+      state,
+      guest,
+      trustedLiveGameProfile(guest, { displayName: 'Changed', image: null })
+    );
+    expect(resumed?.id).toBe(initial?.id);
+    expect(resumed?.score).toBe(score);
+    expect(resumed?.displayName).toBe('Taylor');
+    expect(state.participants).toHaveLength(1);
+    expect(() =>
+      applyHostCommand(
+        state,
+        { ...guest, audience: 'HOST', role: 'ADMIN' },
+        { action: 'END_GAME', expectedStateVersion: state.session.stateVersion }
+      )
+    ).toThrowError(/Only the Game Session host/i);
+  });
+
+  it('applies joining locks to a new guest but lets an existing guest reconnect', () => {
+    const state = createLiveGameRuntime(initialization);
+    const guest = {
+      audience: 'PARTICIPANT' as const,
+      identityKind: 'GUEST' as const,
+      role: null,
+      userId: ids.player,
+    };
+    joinLiveGame(state, guest, { displayName: 'Taylor', image: null });
+    applyHostCommand(
+      state,
+      { audience: 'HOST', userId: ids.host, role: 'TEACHER' },
+      {
+        action: 'SET_JOINING_LOCKED',
+        expectedStateVersion: 1,
+        joiningLocked: true,
+      }
+    );
+    expect(
+      joinLiveGame(state, guest, { displayName: 'Taylor', image: null })
+    ).toMatchObject({ guestId: ids.player });
+    expect(() =>
+      joinLiveGame(
+        state,
+        { ...guest, userId: crypto.randomUUID() },
+        { displayName: 'Other', image: null }
+      )
+    ).toThrowError(/locked joining/i);
+  });
+
+  it('ends an open session for a missing host exactly once', () => {
+    const state = createLiveGameRuntime(initialization);
+
+    expect(terminateForMissingHost(state)).toBe(true);
+    expect(state.session).toMatchObject({
+      closedReason: 'HOST_LEFT',
+      joiningLocked: true,
+      phase: 'FINAL_CELEBRATION',
+    });
+    expect(state.session.endedAt).not.toBeNull();
+    expect(terminateForMissingHost(state)).toBe(false);
   });
 });

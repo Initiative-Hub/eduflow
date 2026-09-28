@@ -1,3 +1,5 @@
+import { supportedLocales } from '@/i18n/routing';
+
 export function isPathMatched(pathname: string, paths: string[]): boolean {
   // Normalize pathname: remove trailing slash except for root
   const normalizedPathname =
@@ -10,8 +12,11 @@ export function isPathMatched(pathname: string, paths: string[]): boolean {
     const normalizedPath =
       path.length > 1 && path.endsWith('/') ? path.slice(0, -1) : path;
 
-    if (normalizedPath === '/') {
-      return normalizedPathname === '/';
+    if (
+      normalizedPath === '/' ||
+      supportedLocales.some((locale) => normalizedPath === `/${locale}`)
+    ) {
+      return normalizedPathname === normalizedPath;
     }
 
     return (

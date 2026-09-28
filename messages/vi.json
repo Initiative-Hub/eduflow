@@ -2031,6 +2031,11 @@
       "joinedPlayers": "Người chơi đã tham gia",
       "joinLocked": "Đã khóa tham gia",
       "joinOpen": "Đang mở tham gia",
+      "leaveGameConfirm": "Rời trò chơi",
+      "leaveGameDescription": "Rời đi sẽ kết thúc trò chơi trực tiếp này với mọi người chơi. Thao tác này không thể hoàn tác.",
+      "leaveGameError": "Không thể kết thúc trò chơi. Vui lòng thử lại trước khi rời đi.",
+      "leaveGamePending": "Đang kết thúc trò chơi…",
+      "leaveGameTitle": "Rời trò chơi trực tiếp này?",
       "lobby": "Phòng chờ",
       "lockJoining": "Khóa tham gia",
       "moreRespondents": "{count, plural, other {người trả lời khác}}",
@@ -2061,6 +2066,8 @@
       "description": "Nhập mã do giáo viên chia sẻ.",
       "join": "Tham gia",
       "joining": "Đang tham gia...",
+      "nameLabel": "Tên của bạn",
+      "nameRequired": "Nhập tên của bạn để tham gia trò chơi.",
       "title": "Tham gia Live Quiz Rally"
     },
     "library": {
@@ -2445,6 +2452,286 @@
       "list": "Danh sách"
     }
   },
+  "LandingPage": {
+    "audience": {
+      "educators": {
+        "description": "Biến học liệu thành bài học, bài trình chiếu, bài đánh giá, bài tập và hoạt động trực tiếp có thể chỉnh sửa mà vẫn giữ quyền quyết định cuối cùng.",
+        "title": "Dành cho nhà giáo dục"
+      },
+      "learners": {
+        "description": "Luyện tập cùng gia sư có hướng dẫn, công cụ học tập chuyên biệt, hỗ trợ ngôn ngữ và phản hồi giúp bạn hiểu bước tiếp theo thay vì chỉ chép đáp án.",
+        "title": "Dành cho người học"
+      }
+    },
+    "contact": {
+      "description": "EduFlow được đội ngũ reLearn phát triển cho Triển lãm Đồ án Capstone của Trường Khoa học, Kỹ thuật & Công nghệ RMIT. Khám phá câu chuyện dự án hoặc tìm hiểu cách trải nghiệm này được xây dựng.",
+      "eyebrow": "Liên hệ",
+      "repository": {
+        "cta": "Xem kho mã nguồn",
+        "description": "Khám phá mã nguồn, kiến trúc và quá trình phát triển EduFlow trên GitHub.",
+        "title": "Khám phá sản phẩm"
+      },
+      "showcase": {
+        "cta": "Xem triển lãm RMIT",
+        "description": "Gặp gỡ đội ngũ reLearn và tìm hiểu bối cảnh Capstone đã định hình EduFlow.",
+        "title": "Gặp gỡ đội ngũ"
+      },
+      "startFree": "Bắt đầu miễn phí",
+      "title": "Bạn muốn biết EduFlow bắt đầu từ đâu?"
+    },
+    "cta": {
+      "button": "Bắt đầu miễn phí",
+      "description": "Mang theo chủ đề, tài liệu hoặc ý tưởng lớp học tiếp theo. EduFlow giúp bạn biến chúng thành trải nghiệm để người học khám phá, luyện tập và ghi nhớ.",
+      "eyebrow": "Bài học tiếp theo",
+      "title": "Sẵn sàng đưa mỗi bài học vào chuyển động?"
+    },
+    "faq": {
+      "audience": {
+        "answer": "EduFlow dành cho nhà giáo dục xây dựng và quản lý trải nghiệm học tập, đồng thời hỗ trợ người học chủ động với hướng dẫn phù hợp trong suốt quá trình học.",
+        "question": "EduFlow dành cho ai?"
+      },
+      "content": {
+        "answer": "Bạn có thể tạo bài học có thể chỉnh sửa, bài trình chiếu, bài kiểm tra, bài tập, hoạt động luyện tập và trò chơi đố vui trực tiếp trong cùng một không gian.",
+        "question": "Tôi có thể tạo nội dung gì với EduFlow?"
+      },
+      "description": "Những câu trả lời rõ ràng về cách không gian này hỗ trợ giảng dạy và học tập chủ động.",
+      "eyebrow": "Câu hỏi thường gặp",
+      "languages": {
+        "answer": "Có. Giao diện hỗ trợ tiếng Anh và tiếng Việt. Trợ lý Tiếng Anh còn có dịch thuật, từ vựng, IPA, âm thanh, ngữ pháp và luyện phát âm.",
+        "question": "EduFlow có hỗ trợ tiếng Anh và tiếng Việt không?"
+      },
+      "materials": {
+        "answer": "Có. Thêm tệp khóa học và nội dung bài học, sau đó dùng chính ngữ cảnh đó để phác thảo bài học, bài trình chiếu, bài đánh giá và hoạt động học có hướng dẫn trước khi xuất bản.",
+        "question": "Tôi có thể xây dựng từ học liệu của mình không?"
+      },
+      "pricing": {
+        "answer": "Gói Starter hiện miễn phí. Các lựa chọn Educator và School đang ở giai đoạn truy cập sớm trong khi mức giá, giới hạn và phạm vi cung cấp được hoàn thiện.",
+        "question": "Mức giá truy cập sớm hoạt động như thế nào?"
+      },
+      "sharing": {
+        "answer": "Bạn có thể xuất bài trình chiếu sang PowerPoint và chia sẻ các cuộc trò chuyện AI hoặc nội dung học tương tác được hỗ trợ qua liên kết có kiểm soát.",
+        "question": "Tôi có thể xuất hoặc chia sẻ nội dung không?"
+      },
+      "socratic": {
+        "answer": "Chế độ Socratic hướng dẫn tư duy bằng câu hỏi, gợi ý và hỗ trợ theo từng bước. Người học được dẫn dắt để tự giải quyết vấn đề thay vì nhận ngay một đáp án hoàn chỉnh.",
+        "question": "Gia sư hướng dẫn người học hay chỉ đưa đáp án?"
+      },
+      "title": "Điều bạn có thể muốn biết trước khi bắt đầu"
+    },
+    "features": {
+      "assessments": {
+        "description": "Tạo bài kiểm tra và bài tập từ nội dung bài học. Duyệt câu hỏi và gợi ý của AI trước khi gửi phản hồi cho người học.",
+        "label": "Đánh giá",
+        "outcome": "Phản hồi hữu ích, dưới sự kiểm soát của giáo viên.",
+        "title": "Hiểu rõ người học đã nắm được gì"
+      },
+      "assistants": {
+        "description": "Cho người học không gian để hỏi, lập luận và thử lại. Gia sư Socratic cùng trợ lý học tập và viết dẫn dắt bước tiếp theo.",
+        "label": "Trợ lý AI",
+        "outcome": "Tiếp tục hiểu sâu hơn sau mỗi buổi học.",
+        "title": "Gợi mở từng bước tư duy"
+      },
+      "cta": "Trải nghiệm miễn phí",
+      "description": "Khám phá những cách một bài học có thể mở ra. Chọn công cụ để xem ví dụ.",
+      "english": {
+        "description": "Kết nối tiếng Anh và tiếng Việt qua dịch thuật, phát âm và ngữ pháp. Lưu từ hữu ích và luyện tập mỗi ngày.",
+        "label": "Tiếng Anh",
+        "outcome": "Hiểu nghĩa. Nghe rõ. Tự tin sử dụng.",
+        "title": "Từ một từ mới đến kỹ năng mới"
+      },
+      "eyebrow": "Một không gian liền mạch",
+      "games": {
+        "description": "Đưa câu hỏi từ bài học vào các vòng chơi có tính giờ. Cả lớp cùng tham gia, suy nghĩ và học hỏi từ kết quả.",
+        "label": "Trò chơi",
+        "outcome": "Lớp học sôi nổi, mục tiêu học tập luôn rõ ràng.",
+        "title": "Cùng biến giờ ôn tập thành cuộc chơi"
+      },
+      "lessons": {
+        "description": "Bắt đầu từ tài liệu khóa học. Xây dựng mục tiêu, nội dung và hoạt động, rồi chỉnh sửa từng chi tiết trước khi xuất bản.",
+        "label": "Bài học",
+        "outcome": "Học liệu của bạn. Quyết định cuối cùng vẫn là của bạn.",
+        "title": "Biến học liệu thành bài học sinh động"
+      },
+      "navigationLabel": "Khám phá tính năng EduFlow",
+      "presentations": {
+        "description": "Lập dàn ý, chọn phong cách và hoàn thiện mạch nội dung. Xem trước bài trình chiếu rồi xuất sang PowerPoint.",
+        "label": "Trình chiếu",
+        "outcome": "Mạch nội dung nhất quán, từ dàn ý đến lớp học.",
+        "title": "Đưa bài học lên màn hình lớn"
+      },
+      "preview": {
+        "assessments": {
+          "feedback": "Nhiệt cung cấp năng lượng để các phân tử nước chuyển thành hơi.",
+          "question": "Quá trình nào biến nước lỏng thành hơi nước?",
+          "questionNumber": "Câu 1 / 5",
+          "reviewed": "Giáo viên đã duyệt",
+          "workspace": "Soạn bài đánh giá"
+        },
+        "assistants": {
+          "hint": "Kết nối điều bạn từng thấy với kiến thức đang học.",
+          "response": "Hãy nghĩ về chiếc khăn ướt được phơi ngoài trời. Nhiệt có thể tác động thế nào đến các phân tử nước trên bề mặt?",
+          "source": "Ngữ cảnh: Vòng tuần hoàn của nước",
+          "student": "Tại sao vũng nước biến mất dù nước không sôi?",
+          "tutor": "Gia sư Socratic",
+          "workspace": "Học có hướng dẫn"
+        },
+        "condensation": "Ngưng tụ",
+        "english": {
+          "example": "“The sun speeds up the evaporation of water.”",
+          "phonetic": "/ɪˌvæpəˈreɪʃən/",
+          "practice": "Nghe và luyện tập",
+          "translation": "Tiếng Việt: sự bay hơi",
+          "word": "evaporation",
+          "wordType": "Danh từ · Tiếng Anh",
+          "workspace": "Luyện ngôn ngữ"
+        },
+        "evaporation": "Bay hơi",
+        "games": {
+          "footer": "Một câu hỏi. Cả lớp cùng suy nghĩ.",
+          "players": "24 người học",
+          "question": "Điều gì cung cấp năng lượng cho vòng tuần hoàn của nước?",
+          "rain": "Mưa",
+          "round": "Vòng 1",
+          "snow": "Tuyết",
+          "sun": "Mặt trời",
+          "timer": "20s",
+          "wind": "Gió",
+          "workspace": "Lớp học trực tiếp"
+        },
+        "lessons": {
+          "activity": "Thử sức: mô tả hành trình của một giọt nước.",
+          "editable": "Bản nháp chỉnh sửa được",
+          "module": "Khoa học · Bài 01",
+          "objective": "Khám phá cách nước di chuyển giữa mặt đất và bầu trời.",
+          "workspace": "Soạn bài học"
+        },
+        "precipitation": "Giáng thủy",
+        "presentations": {
+          "chapter": "Khoa học Trái Đất",
+          "cycle": "Vòng tuần hoàn",
+          "export": "Xuất PowerPoint",
+          "intro": "Giới thiệu",
+          "ready": "Sẵn sàng trình bày",
+          "reflection": "Suy ngẫm",
+          "subtitle": "Một giọt nước nhỏ. Một hành trình không ngừng.",
+          "workspace": "Soạn trình chiếu"
+        },
+        "sample": "Ví dụ minh họa",
+        "source": "Ghi chép khoa học.pdf",
+        "topic": "Vòng tuần hoàn của nước"
+      },
+      "title": "Kết nối mọi khoảnh khắc học tập"
+    },
+    "hero": {
+      "description": "EduFlow giúp nhà giáo dục biến học liệu thành bài học, bài trình chiếu, bài đánh giá và hoạt động trực tiếp có thể chỉnh sửa, đồng thời trao cho người học các công cụ có hướng dẫn để luyện tập và tư duy sâu hơn.",
+      "eyebrow": "Không gian AI cho giảng dạy và học tập chủ động",
+      "primaryCta": "Bắt đầu miễn phí",
+      "proof": {
+        "bilingual": "Tiếng Anh và tiếng Việt",
+        "sourceGrounded": "Bám sát học liệu khóa học",
+        "teacherControl": "Giáo viên toàn quyền chỉnh sửa"
+      },
+      "rail": {
+        "ariaLabel": "Một tài liệu khóa học được chuyển thành bài học có thể chỉnh sửa, gia sư có hướng dẫn và bài đánh giá.",
+        "assessment": {
+          "description": "Kiểm tra mức độ hiểu và xem lại kết quả.",
+          "label": "Đánh giá"
+        },
+        "lesson": {
+          "description": "Xây dựng bài học và bài trình chiếu có thể chỉnh sửa.",
+          "label": "Biên soạn"
+        },
+        "source": {
+          "description": "Bắt đầu từ học liệu bạn đã tin dùng.",
+          "label": "Đưa học liệu vào"
+        },
+        "tutor": {
+          "description": "Luyện tập với hỗ trợ hiểu đúng ngữ cảnh.",
+          "label": "Học tập"
+        }
+      },
+      "secondaryCta": "Xem cách hoạt động",
+      "title": "Biến học liệu thành một hành trình học tập"
+    },
+    "metadata": {
+      "description": "Tạo bài học, bài trình chiếu, bài đánh giá, trò chơi trực tiếp và trải nghiệm học có hướng dẫn trong một không gian AI song ngữ.",
+      "title": "Không gian AI cho giảng dạy và học tập"
+    },
+    "pricing": {
+      "description": "Bắt đầu ngay hôm nay với không gian cốt lõi. Các lựa chọn Educator và School đang được hoàn thiện cho nhu cầu lớp học rộng hơn.",
+      "educator": {
+        "cta": "Khám phá truy cập sớm",
+        "description": "Dành cho nhà giáo dục xây dựng trải nghiệm lớp học liền mạch.",
+        "feature1": "Tạo khóa học và bài học",
+        "feature2": "Bài trình chiếu, bài kiểm tra và bài tập",
+        "feature3": "Trò chơi trực tiếp và quy trình giáo viên duyệt",
+        "name": "Educator",
+        "price": "Truy cập sớm"
+      },
+      "eyebrow": "Mức giá",
+      "note": "Mức giá, giới hạn sử dụng và phạm vi cung cấp cho Educator và School vẫn đang được hoàn thiện. Trang này không thu bất kỳ khoản thanh toán nào.",
+      "recommended": "Phù hợp cho giảng dạy",
+      "school": {
+        "cta": "Kết nối với chúng tôi",
+        "description": "Dành cho trường học đang tìm hiểu một không gian học AI dùng chung.",
+        "feature1": "Quy trình khóa học cộng tác",
+        "feature2": "Quyền truy cập theo vai trò cho đội ngũ",
+        "feature3": "Trao đổi về áp dụng và triển khai",
+        "name": "School",
+        "price": "Cùng trao đổi"
+      },
+      "starter": {
+        "cta": "Bắt đầu miễn phí",
+        "description": "Dành cho cá nhân khám phá học tập có hướng dẫn và công cụ học AI.",
+        "feature1": "Gia sư Socratic, trợ lý học tập và viết",
+        "feature2": "Công cụ học tiếng Anh",
+        "feature3": "Không gian học tập cá nhân",
+        "name": "Starter",
+        "price": "Miễn phí"
+      },
+      "title": "Bắt đầu miễn phí. Phát triển cùng lớp học."
+    },
+    "trust": {
+      "bilingual": {
+        "description": "Sử dụng sản phẩm bằng tiếng Anh hoặc tiếng Việt và mở các công cụ học ngôn ngữ chuyên biệt khi cần.",
+        "title": "Song ngữ ngay từ thiết kế"
+      },
+      "description": "AI khởi tạo công việc. Nhà giáo dục quyết định nội dung nào sẵn sàng, người học luôn kết nối với nguồn và mọi trải nghiệm đều có thể được xem lại.",
+      "editable": {
+        "description": "Xem lại và tinh chỉnh bài học, trang chiếu, câu hỏi và phản hồi được tạo trước khi chuyển đến người học.",
+        "title": "Giữ quyền quyết định cuối cùng"
+      },
+      "eyebrow": "Chủ động và tin cậy",
+      "grounded": {
+        "description": "Dùng học liệu khóa học đã chọn làm ngữ cảnh và giúp người học lần theo ý tưởng về đúng nguồn.",
+        "title": "Luôn bám sát nguồn"
+      },
+      "title": "Hỗ trợ nhận định, không thay thế con người"
+    },
+    "workflow": {
+      "description": "Đi từ học liệu sẵn có đến một trải nghiệm dạy và học liền mạch mà không phải dựng lại cùng một ngữ cảnh trong nhiều công cụ riêng lẻ.",
+      "eyebrow": "Cách hoạt động",
+      "steps": {
+        "bring": {
+          "description": "Thêm tệp khóa học, nội dung bài học hoặc chủ đề bạn muốn giảng dạy.",
+          "title": "Đưa học liệu vào"
+        },
+        "engage": {
+          "description": "Xuất bản bài học, trình chiếu, giao bài hoặc tổ chức trò chơi đố vui trực tiếp.",
+          "title": "Dạy và luyện tập"
+        },
+        "shape": {
+          "description": "Tạo điểm khởi đầu, sau đó chỉnh sửa bài học, trang chiếu, câu hỏi và hoạt động.",
+          "title": "Tạo và xem lại"
+        },
+        "understand": {
+          "description": "Xem lại lượt làm bài, kết quả, phản hồi và những điểm học tập cần được chú ý.",
+          "title": "Thấy được bước tiếp theo"
+        }
+      },
+      "title": "Một nguồn học liệu. Nhiều cách để học."
+    }
+  },
   "LanguageSwitcher": {
     "label": "Ngôn ngữ",
     "system": "Hệ thống"
@@ -2482,6 +2769,35 @@
     "writingAssistant": "Trợ lý Viết",
     "yourInventory": "Kho học tập của bạn"
   },
+  "MarketingLayout": {
+    "footer": {
+      "account": "Bắt đầu",
+      "accountLabel": "Điều hướng tài khoản",
+      "apiDocs": "Tài liệu API",
+      "copyright": "© {year} EduFlow. Bảo lưu mọi quyền.",
+      "description": "Một không gian AI song ngữ để tạo bài học, hướng dẫn luyện tập và kết nối việc dạy với việc học trong cùng một mạch trải nghiệm.",
+      "explore": "Khám phá",
+      "exploreLabel": "Khám phá EduFlow",
+      "tagline": "Soạn bài tốt hơn. Giúp mỗi người học tư duy sâu hơn."
+    },
+    "homeLabel": "Trang giới thiệu EduFlow",
+    "login": "Đăng nhập",
+    "mobile": {
+      "description": "Khám phá không gian EduFlow và bắt đầu khi bạn sẵn sàng.",
+      "menu": "Mở trình đơn điều hướng",
+      "title": "Khám phá EduFlow"
+    },
+    "nav": {
+      "contact": "Liên hệ",
+      "faq": "Câu hỏi thường gặp",
+      "features": "Tính năng",
+      "howItWorks": "Cách hoạt động",
+      "pricing": "Mức giá"
+    },
+    "navLabel": "Điều hướng chính",
+    "skipToContent": "Bỏ qua để đến nội dung",
+    "startFree": "Bắt đầu miễn phí"
+  },
   "NavbarAvatar": {
     "actions": {
       "login": "Đăng nhập",
@@ -2497,6 +2813,7 @@
       "aiBadge": "AI",
       "darkMode": "Chế độ tối",
       "english": "English",
+      "guestSettings": "Cài đặt khách",
       "helpCenter": "Trung tâm trợ giúp",
       "language": "Ngôn ngữ",
       "languagePreference": "Tùy chọn ngôn ngữ",

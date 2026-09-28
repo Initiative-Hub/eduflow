@@ -20,6 +20,8 @@ export type RuntimeActor = {
   audience: LiveGameAudience;
   userId: string;
   role: string | null;
+  identityKind?: 'USER' | 'GUEST';
+  guestDisplayName?: string;
 };
 
 export class LiveGameRuntimeError extends Error {
@@ -75,6 +77,7 @@ function requirePhase(
 function requireHost(state: LiveGameRuntimeState, actor: RuntimeActor) {
   if (
     actor.audience !== 'HOST' ||
+    actor.identityKind === 'GUEST' ||
     (actor.userId !== state.session.hostId && actor.role !== 'ADMIN')
   ) {
     throw new LiveGameRuntimeError(
@@ -82,6 +85,14 @@ function requireHost(state: LiveGameRuntimeState, actor: RuntimeActor) {
       'Only the Game Session host can control this session.'
     );
   }
+}
+
+function participantForActor(state: LiveGameRuntimeState, actor: RuntimeActor) {
+  return state.participants.find((participant) =>
+    actor.identityKind === 'GUEST'
+      ? participant.guestId === actor.userId
+      : participant.userId === actor.userId
+  );
 }
 
 function openRound(round: RuntimeRound, now: Date) {
@@ -116,6 +127,20 @@ function finish(
   return true;
 }
 
+export function trustedLiveGameProfile(
+  actor: RuntimeActor,
+  profile: { displayName: string; image: string | null }
+) {
+  if (actor.identityKind !== 'GUEST') return profile;
+  if (!actor.guestDisplayName) {
+    throw new LiveGameRuntimeError(
+      'INVALID_GUEST_PROFILE',
+      'The guest connection has no signed name.'
+    );
+  }
+  return { displayName: actor.guestDisplayName, image: null };
+}
+
 export function joinLiveGame(
   state: LiveGameRuntimeState,
   actor: RuntimeActor,
@@ -125,9 +150,7 @@ export function joinLiveGame(
   if (actor.audience !== 'PARTICIPANT') {
     return null;
   }
-  const existing = state.participants.find(
-    (participant) => participant.userId === actor.userId
-  );
+  const existing = participantForActor(state, actor);
   if (existing) {
     existing.lastSeenAt = now.toISOString();
     existing.displayName = profile.displayName;
@@ -143,7 +166,8 @@ export function joinLiveGame(
   }
   const participant: RuntimeParticipant = {
     id: crypto.randomUUID(),
-    userId: actor.userId,
+    userId: actor.identityKind === 'GUEST' ? null : actor.userId,
+    guestId: actor.identityKind === 'GUEST' ? actor.userId : null,
     displayName: profile.displayName,
     image: profile.image,
     score: 0,
@@ -265,9 +289,7 @@ export function submitLiveGameAnswer(
       'Only participants can submit answers.'
     );
   }
-  const participant = state.participants.find(
-    (candidate) => candidate.userId === actor.userId
-  );
+  const participant = participantForActor(state, actor);
   if (!participant) {
     throw new LiveGameRuntimeError(
       'GAME_PARTICIPANT_NOT_FOUND',
@@ -395,10 +417,9 @@ export function projectLiveGameSnapshot(
 ): LiveGameSnapshot {
   const host =
     actor.audience === 'HOST' &&
+    actor.identityKind !== 'GUEST' &&
     (actor.userId === state.session.hostId || actor.role === 'ADMIN');
-  const participant = state.participants.find(
-    (candidate) => candidate.userId === actor.userId
-  );
+  const participant = participantForActor(state, actor);
   if (!host && !participant) {
     throw new LiveGameRuntimeError(
       'FORBIDDEN',
@@ -421,7 +442,7 @@ export function projectLiveGameSnapshot(
       displayName: candidate.displayName,
       image: candidate.image,
       score: candidate.score,
-      isOnline: onlineUserIds.has(candidate.userId),
+      isOnline: onlineUserIds.has(candidate.guestId ?? candidate.userId ?? ''),
       joinedAt: candidate.joinedAt,
     }));
   const myAnswer =

@@ -20,6 +20,7 @@ import {
   requestLiveGameTicket,
 } from './live-game-client';
 import type { LiveGameSession } from './live-game-session';
+import { clearLiveGameSession } from './live-game-session';
 
 const initialState: LiveGameClientState = {
   error: null,
@@ -51,18 +52,35 @@ export function useLiveGameClient(selection: LiveGameSession | null) {
     if (audience === 'PARTICIPANT' && !joinCode) {
       throw new Error('A participant join code is required.');
     }
-    const ticket =
-      audience === 'HOST'
-        ? await requestLiveGameTicket({ audience: 'HOST', sessionId })
-        : await requestLiveGameTicket({
-            audience: 'PARTICIPANT',
-            expectedSessionId: sessionId,
-            joinCode: joinCode!,
-          });
+    let ticket: LiveGameTicket;
+    try {
+      ticket =
+        audience === 'HOST'
+          ? await requestLiveGameTicket({ audience: 'HOST', sessionId })
+          : await requestLiveGameTicket({
+              audience: 'PARTICIPANT',
+              expectedSessionId: sessionId,
+              guestGrant:
+                selection?.audience === 'PARTICIPANT'
+                  ? selection.guestGrant
+                  : undefined,
+              joinCode: joinCode!,
+            });
+    } catch (error) {
+      if (
+        selection?.audience === 'PARTICIPANT' &&
+        selection.identityKind === 'GUEST' &&
+        [401, 403].includes((error as { status?: number }).status ?? 0)
+      ) {
+        clearLiveGameSession('PARTICIPANT', sessionId);
+        window.location.replace('/games/join');
+      }
+      throw error;
+    }
     profile.current = ticket.profile;
     avatarAccessToken.current = ticket.avatarAccessToken;
     return { token: ticket.token };
-  }, [audience, joinCode, sessionId]);
+  }, [audience, joinCode, selection, sessionId]);
 
   const onOpen = useCallback(() => {
     setState((current) => ({ ...current, error: null, status: 'CONNECTED' }));
@@ -139,6 +157,7 @@ export function useLiveGameClient(selection: LiveGameSession | null) {
     party: 'main',
     query,
     room: sessionId ?? 'live-game-unavailable',
+    shouldReconnectOnClose: (event) => event.code !== 4001,
   });
 
   useEffect(() => {
@@ -189,6 +208,10 @@ export function useLiveGameClient(selection: LiveGameSession | null) {
     socket.reconnect();
   }, [sessionId, socket]);
 
+  const disconnect = useCallback(() => {
+    socket.close(4001, 'GAME_SESSION_ENDED');
+  }, [socket]);
+
   const rawSnapshot = state.snapshot;
   const objectKeys = useMemo(
     () => liveGameAvatarObjectKeys(rawSnapshot),
@@ -223,5 +246,5 @@ export function useLiveGameClient(selection: LiveGameSession | null) {
     [rawSnapshot, signedUrls]
   );
 
-  return { ...state, reconnect, send, snapshot };
+  return { ...state, disconnect, reconnect, send, snapshot };
 }

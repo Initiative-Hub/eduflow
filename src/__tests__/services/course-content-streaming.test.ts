@@ -71,15 +71,20 @@ describe('course content stream', () => {
     const { readable, writable } = new TransformStream<string, string>();
     const readPromise = readNdjson(readable);
     const writer = writable.getWriter();
+    const file = {
+      arrayBuffer: vi
+        .fn()
+        .mockResolvedValue(new TextEncoder().encode('pdf').buffer),
+      name: 'reference.pdf',
+      type: 'application/pdf',
+    } as unknown as File;
 
     await CourseService.streamCourseContentToWriter(
       {
         userId: 'user-1',
         context: 'Assessment strategies',
         apiKey: 'test-api-key',
-        file: new File(['pdf'], 'reference.pdf', {
-          type: 'application/pdf',
-        }),
+        file,
       },
       writer
     );
@@ -97,5 +102,6 @@ describe('course content stream', () => {
     expect(mocks.streamText.mock.calls[0][0].prompt).toContain(
       'Reliable web reference'
     );
+    expect(file.arrayBuffer).toHaveBeenCalledOnce();
   });
 });

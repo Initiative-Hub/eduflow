@@ -1,6 +1,7 @@
+import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import * as z from 'zod';
-import { withAuth } from '@/lib/api/middlewares';
+import { auth } from '@/lib/auth';
 import { verifyLiveGameAvatarAccessToken } from '@/lib/game-quiz/live-game-security';
 import {
   createAvatarReadSignedUrl,
@@ -25,7 +26,8 @@ function bearerToken(request: Request) {
  *   post:
  *     tags: [Game Sessions]
  *     summary: Resolve live-game avatar object keys to temporary read URLs
- *     security: [{ SessionCookie: [] }, { BearerAuth: [] }]
+ *     security: [{ SessionCookie: [], BearerAuth: [] }, { BearerAuth: [] }]
+ *     description: User tokens also require the matching user session; guest tokens are room-bound bearer credentials.
  *     requestBody:
  *       required: true
  *       content:
@@ -37,9 +39,9 @@ function bearerToken(request: Request) {
  *       200: { description: Signed avatar URLs }
  *       400: { description: Invalid request }
  *       401: { description: Missing or invalid avatar access token }
- *       403: { description: Token does not belong to the authenticated user or session }
+ *       403: { description: Token does not belong to the user or game session }
  */
-export const POST = withAuth(async (request, session) => {
+export async function POST(request: Request) {
   const parsed = requestSchema.safeParse(
     await request.json().catch(() => null)
   );
@@ -64,9 +66,10 @@ export const POST = withAuth(async (request, session) => {
 
   try {
     const claims = await verifyLiveGameAvatarAccessToken(token, secret);
+    const session = await auth.api.getSession({ headers: await headers() });
     if (
-      claims.sub !== session.user.id ||
-      claims.sessionId !== parsed.data.sessionId
+      claims.sessionId !== parsed.data.sessionId ||
+      (claims.identityKind === 'USER' && claims.sub !== session?.user.id)
     ) {
       return NextResponse.json(
         {
@@ -100,5 +103,6 @@ export const POST = withAuth(async (request, session) => {
       signedUrl: await createAvatarReadSignedUrl({ objectKey }),
     }))
   );
+
   return NextResponse.json({ data });
-});
+}

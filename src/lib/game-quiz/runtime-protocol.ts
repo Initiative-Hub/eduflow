@@ -44,7 +44,8 @@ export const runtimeRoundSchema = z.object({
 
 export const runtimeParticipantSchema = z.object({
   id: z.uuid(),
-  userId: z.uuid(),
+  userId: z.uuid().nullable(),
+  guestId: z.uuid().nullable().optional(),
   displayName: z.string().trim().min(1).max(80),
   image: z.string().nullable(),
   score: z.number().int().min(0),
@@ -91,6 +92,13 @@ export const roomInitializationSchema = z.object({
 });
 
 export type RoomInitialization = z.infer<typeof roomInitializationSchema>;
+
+export const roomHostLeaveSchema = z.object({
+  reason: z.literal('HOST_LEFT'),
+  type: z.literal('session.terminate'),
+});
+
+export type RoomHostLeave = z.infer<typeof roomHostLeaveSchema>;
 export type RuntimeSession = z.infer<typeof runtimeSessionSchema>;
 export type RuntimeRound = z.infer<typeof runtimeRoundSchema>;
 export type RuntimeParticipant = z.infer<typeof runtimeParticipantSchema>;
@@ -102,8 +110,26 @@ export const liveGameTicketRequestSchema = z.discriminatedUnion('audience', [
     audience: z.literal('PARTICIPANT'),
     joinCode: z.string().regex(/^\d{6}$/),
     expectedSessionId: z.uuid().optional(),
+    displayName: z.string().trim().min(1).max(80).optional(),
+    guestGrant: z.string().min(1).optional(),
   }),
 ]);
+
+export const liveGameGuestGrantClaimsSchema = z.object({
+  iss: z.literal('eduflow-next'),
+  aud: z.literal('eduflow-live-game-guest'),
+  sub: z.uuid(),
+  sessionId: z.uuid(),
+  displayName: z.string().trim().min(1).max(80),
+  jti: z.uuid(),
+  iat: z.number().int(),
+  nbf: z.number().int(),
+  exp: z.number().int(),
+});
+
+export type LiveGameGuestGrantClaims = z.infer<
+  typeof liveGameGuestGrantClaimsSchema
+>;
 
 export const liveGameTicketClaimsSchema = z.object({
   iss: z.literal('eduflow-next'),
@@ -112,6 +138,8 @@ export const liveGameTicketClaimsSchema = z.object({
   sessionId: z.uuid(),
   audience: liveGameAudienceSchema,
   role: z.string().nullable(),
+  identityKind: z.enum(['USER', 'GUEST']).default('USER'),
+  guestDisplayName: z.string().trim().min(1).max(80).optional(),
   jti: z.uuid(),
   iat: z.number().int(),
   nbf: z.number().int(),
@@ -126,6 +154,7 @@ export const liveGameAvatarAccessClaimsSchema = z.object({
   sub: z.uuid(),
   sessionId: z.uuid(),
   audience: liveGameAudienceSchema,
+  identityKind: z.enum(['USER', 'GUEST']).default('USER'),
   jti: z.uuid(),
   iat: z.number().int(),
   nbf: z.number().int(),
@@ -274,6 +303,7 @@ const finalRoundSchema = z.object({
 export const finalizationParticipantSchema = runtimeParticipantSchema.pick({
   id: true,
   userId: true,
+  guestId: true,
   displayName: true,
   joinedAt: true,
 });

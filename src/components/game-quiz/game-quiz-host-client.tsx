@@ -28,6 +28,7 @@ import { GameQuizHostQuestionStage } from './game-quiz-host-question-stage';
 import { GameQuizJoinQrCode } from './game-quiz-join-qr-code';
 import { GameQuizPodium } from './game-quiz-podium';
 import { GameQuizHostScoreboard } from './game-quiz-scoreboard-stage';
+import { HostLeaveGameGuard } from './host-leave-game-guard';
 import { clearLiveGameSession } from './live-game-session';
 import type { GameSessionSnapshot } from './types';
 import { useLiveGameClient } from './use-live-game-client';
@@ -47,7 +48,7 @@ export function GameQuizHostClient({
   const hasCheckedTabOwnership = useRef(false);
   const [isSessionReady, setIsSessionReady] = useState(false);
   const [isCommandPending, setIsCommandPending] = useState(false);
-  const { error, reconnect, send, snapshot, status } =
+  const { disconnect, error, reconnect, send, snapshot, status } =
     useLiveGameClient(liveSession);
 
   const runCommand = async (
@@ -136,14 +137,30 @@ export function GameQuizHostClient({
   }
 
   const session = snapshot as GameSessionSnapshot;
+  const leaveGuard =
+    session.phase === 'LOBBY' ||
+    session.phase === 'QUESTION_OPEN' ||
+    session.phase === 'REVEAL' ||
+    session.phase === 'SCOREBOARD' ? (
+      <HostLeaveGameGuard
+        copy={copy}
+        disconnect={disconnect}
+        gameQuizId={gameQuizId}
+        isActive
+        sessionId={liveSession.sessionId}
+      />
+    ) : null;
   if (session.phase === 'LOBBY') {
     return (
-      <HostLobby
-        copy={copy}
-        isPending={isCommandPending}
-        onCommand={runCommand}
-        session={session}
-      />
+      <>
+        {leaveGuard}
+        <HostLobby
+          copy={copy}
+          isPending={isCommandPending}
+          onCommand={runCommand}
+          session={session}
+        />
+      </>
     );
   }
   if (session.phase === 'FINAL_CELEBRATION') {
@@ -163,23 +180,29 @@ export function GameQuizHostClient({
 
   if (session.phase === 'SCOREBOARD') {
     return (
-      <GameQuizHostScoreboard
-        copy={copy}
-        isPending={isCommandPending}
-        onNext={() => void runCommand('NEXT')}
-        session={session}
-      />
+      <>
+        {leaveGuard}
+        <GameQuizHostScoreboard
+          copy={copy}
+          isPending={isCommandPending}
+          onNext={() => void runCommand('NEXT')}
+          session={session}
+        />
+      </>
     );
   }
 
   return (
-    <GameQuizHostQuestionStage
-      answerCount={answerCount}
-      copy={copy}
-      isPending={isCommandPending}
-      onCommand={(actionToRun) => void runCommand(actionToRun)}
-      session={session}
-    />
+    <>
+      {leaveGuard}
+      <GameQuizHostQuestionStage
+        answerCount={answerCount}
+        copy={copy}
+        isPending={isCommandPending}
+        onCommand={(actionToRun) => void runCommand(actionToRun)}
+        session={session}
+      />
+    </>
   );
 }
 
