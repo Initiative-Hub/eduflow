@@ -3,7 +3,6 @@
 import {
   AlertCircle,
   Check,
-  CloudUpload,
   Copy,
   Download,
   Loader2,
@@ -14,6 +13,8 @@ import {
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
+import { DiOnedrive } from 'react-icons/di';
+import { SiGoogledrive } from 'react-icons/si';
 import { DialogTemplate } from '@/components/custom/dialog';
 import { Button } from '@/components/ui/button';
 import {
@@ -149,7 +150,7 @@ const InteractiveContentPreview = ({
               {isSavingToDrive ? (
                 <Loader2 className="size-4 animate-spin" />
               ) : (
-                <CloudUpload className="size-4" />
+                <SiGoogledrive className="size-4" />
               )}
             </PreviewActionButton>
           ) : null}
@@ -163,7 +164,7 @@ const InteractiveContentPreview = ({
               {isSavingToDrive ? (
                 <Loader2 className="size-4 animate-spin" />
               ) : (
-                <CloudUpload className="size-4" />
+                <DiOnedrive className="size-4 scale-125" />
               )}
             </PreviewActionButton>
           ) : null}

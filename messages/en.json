@@ -629,12 +629,12 @@
       "folderCreated": "Folder created.",
       "genericError": "Something went wrong. Try again.",
       "googleDriveImported": "Google Drive file imported.",
-      "oneDriveImported": "OneDrive file imported.",
       "invalidMove": "You cannot move a folder into itself.",
       "moved": "Item moved.",
       "nameConflictCreateFolder": "A file or folder with this name already exists here.",
       "nameConflictMove": "This destination already contains a file or folder with the same name.",
       "nameConflictRename": "Choose a different name. Another file or folder already uses it here.",
+      "oneDriveImported": "OneDrive file imported.",
       "previewUnavailable": "This file cannot be previewed right now.",
       "renamed": "Item renamed.",
       "shareBatchDescription": "Copied {count} share links to your clipboard.",
@@ -2147,15 +2147,6 @@
     "savedTo": "Saved to {destination}.",
     "success": "Saved to Google Drive."
   },
-  "OneDriveExport": {
-    "destinationError": "Choose a OneDrive export destination first.",
-    "failed": "Could not save to OneDrive.",
-    "legacyGamma": "Regenerate this Gamma presentation before saving it to OneDrive.",
-    "openInDrive": "Open in OneDrive",
-    "openIntegrations": "Open Integrations",
-    "savedTo": "Saved to {destination}.",
-    "success": "Saved to OneDrive."
-  },
   "GrammarAnalysis": {
     "analyzedSentence": "Analyzed Sentence",
     "analyzing": "Analyzing...",
@@ -2210,6 +2201,23 @@
       "title": "Google Drive",
       "useMyDrive": "Use My Drive"
     },
+    "notice": {
+      "connectedDescription": "You can now choose Google Drive files from upload and attachment menus.",
+      "connectedTitle": "Google Drive connected",
+      "errorDescription": "Google did not complete the authorization flow. Try connecting again.",
+      "errorTitle": "Connection failed",
+      "oneDriveConnectedDescription": "You can now choose OneDrive files from upload and attachment menus.",
+      "oneDriveConnectedTitle": "OneDrive connected",
+      "oneDriveErrorDescription": "Microsoft did not complete the authorization flow. Try connecting again.",
+      "oneDrivePickerAuthorizedDescription": "Click Choose destination again to browse and select a OneDrive folder.",
+      "oneDrivePickerAuthorizedTitle": "OneDrive Picker authorized",
+      "oneDrivePickerCanceledDescription": "Microsoft Picker authorization was canceled. You can authorize it when you choose a destination again.",
+      "oneDrivePickerCanceledTitle": "Picker authorization canceled",
+      "oneDrivePickerErrorDescription": "Microsoft could not authorize OneDrive Picker. Try choosing a destination again.",
+      "oneDrivePickerErrorTitle": "Picker authorization failed",
+      "oneDrivePickerMismatchDescription": "Sign in with the same Microsoft account that is already connected to EduFlow.",
+      "oneDrivePickerMismatchTitle": "Microsoft account does not match"
+    },
     "oneDrive": {
       "accountNote": "Your OneDrive account can be different from your EduFlow sign-in account.",
       "changeFolder": "Change folder",
@@ -2236,23 +2244,6 @@
       "title": "OneDrive",
       "useMyDrive": "Use My files"
     },
-    "notice": {
-      "connectedDescription": "You can now choose Google Drive files from upload and attachment menus.",
-      "connectedTitle": "Google Drive connected",
-      "errorDescription": "Google did not complete the authorization flow. Try connecting again.",
-      "errorTitle": "Connection failed",
-      "oneDriveConnectedDescription": "You can now choose OneDrive files from upload and attachment menus.",
-      "oneDriveConnectedTitle": "OneDrive connected",
-      "oneDriveErrorDescription": "Microsoft did not complete the authorization flow. Try connecting again.",
-      "oneDrivePickerAuthorizedDescription": "Click Choose destination again to browse and select a OneDrive folder.",
-      "oneDrivePickerAuthorizedTitle": "OneDrive Picker authorized",
-      "oneDrivePickerCanceledDescription": "Microsoft Picker authorization was canceled. You can authorize it when you choose a destination again.",
-      "oneDrivePickerCanceledTitle": "Picker authorization canceled",
-      "oneDrivePickerErrorDescription": "Microsoft could not authorize OneDrive Picker. Try choosing a destination again.",
-      "oneDrivePickerErrorTitle": "Picker authorization failed",
-      "oneDrivePickerMismatchDescription": "Sign in with the same Microsoft account that is already connected to EduFlow.",
-      "oneDrivePickerMismatchTitle": "Microsoft account does not match"
-    },
     "title": "Integrations",
     "toast": {
       "destinationFailed": "Could not update the Google Drive destination.",
@@ -2264,13 +2255,6 @@
       "oneDriveDisconnected": "OneDrive disconnected.",
       "oneDriveDisconnectFailed": "Could not disconnect OneDrive."
     }
-  },
-  "OneDrivePickerAuthorization": {
-    "authorize": "Authorize with Microsoft",
-    "cancel": "Cancel",
-    "description": "Microsoft requires one additional permission before EduFlow can browse your OneDrive folders.",
-    "detail": "This permission is used only by the Microsoft folder picker. EduFlow continues to validate and upload exports through your existing Microsoft Graph connection.",
-    "title": "Authorize OneDrive Picker"
   },
   "InventoryPage": {
     "actions": {
@@ -2406,12 +2390,12 @@
       "folderCreated": "Folder created.",
       "genericError": "Something went wrong. Try again.",
       "googleDriveImported": "Google Drive file imported.",
-      "oneDriveImported": "OneDrive file imported.",
       "invalidMove": "You cannot move a folder into itself.",
       "moved": "Item moved.",
       "nameConflictCreateFolder": "A file or folder with this name already exists here.",
       "nameConflictMove": "This destination already contains a file or folder with the same name.",
       "nameConflictRename": "Choose a different name. Another file or folder already uses it here.",
+      "oneDriveImported": "OneDrive file imported.",
       "previewUnavailable": "This file cannot be previewed right now.",
       "renamed": "Item renamed.",
       "shareBatchDescription": "Copied {count} share links to your clipboard.",
@@ -2829,6 +2813,22 @@
     "goBack": "Go Back Home",
     "title": "Lost in the Digital Void"
   },
+  "OneDriveExport": {
+    "destinationError": "Choose a OneDrive export destination first.",
+    "failed": "Could not save to OneDrive.",
+    "legacyGamma": "Regenerate this Gamma presentation before saving it to OneDrive.",
+    "openInDrive": "Open in OneDrive",
+    "openIntegrations": "Open Integrations",
+    "savedTo": "Saved to {destination}.",
+    "success": "Saved to OneDrive."
+  },
+  "OneDrivePickerAuthorization": {
+    "authorize": "Authorize with Microsoft",
+    "cancel": "Cancel",
+    "description": "Microsoft requires one additional permission before EduFlow can browse your OneDrive folders.",
+    "detail": "This permission is used only by the Microsoft folder picker. EduFlow continues to validate and upload exports through your existing Microsoft Graph connection.",
+    "title": "Authorize OneDrive Picker"
+  },
   "ProfilePage": {
     "actions": {
       "changePassword": "Change password",
@@ -3224,8 +3224,8 @@
         "saveError": "Could not save this activity to inventory.",
         "saveSuccess": "Activity saved to inventory.",
         "saveToDrive": "Save to Google Drive",
-        "saveToOneDrive": "Save to OneDrive",
         "saveToInventory": "Save to Inventory",
+        "saveToOneDrive": "Save to OneDrive",
         "savingToDrive": "Saving to Drive...",
         "savingToInventory": "Saving...",
         "share": "Share link",

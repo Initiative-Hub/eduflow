@@ -2,7 +2,6 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  Cloud,
   ExternalLink,
   FolderOpen,
   HardDrive,
@@ -11,6 +10,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
+import { DiOnedrive } from 'react-icons/di';
 import { toast } from 'sonner';
 import { OneDrivePickerAuthorizationDialog } from '@/components/onedrive-picker/onedrive-picker-authorization-dialog';
 import { OneDrivePickerHost } from '@/components/onedrive-picker/onedrive-picker-host';
@@ -108,7 +108,7 @@ export function OneDriveIntegrationCard({ email }: { email: string }) {
       />
       <CardHeader>
         <div className="flex size-10 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-          <Cloud />
+          <DiOnedrive className="scale-125" />
         </div>
         <CardTitle>{t('oneDrive.title')}</CardTitle>
         <CardDescription>{t('oneDrive.description')}</CardDescription>
@@ -236,7 +236,7 @@ export function OneDriveIntegrationCard({ email }: { email: string }) {
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex min-w-0 items-start gap-3">
                 <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-                  <Cloud />
+                  <DiOnedrive className="scale-125" />
                 </div>
                 <div className="min-w-0">
                   <div className="font-medium text-sm">

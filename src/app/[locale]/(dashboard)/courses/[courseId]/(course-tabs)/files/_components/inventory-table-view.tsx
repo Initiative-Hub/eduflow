@@ -2,7 +2,6 @@
 
 import { useQuery } from '@tanstack/react-query';
 import {
-  CloudUpload,
   Download,
   Edit2,
   Eye,
@@ -15,6 +14,8 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
+import { DiOnedrive } from 'react-icons/di';
+import { SiGoogledrive } from 'react-icons/si';
 import type {
   InventoryEntry,
   InventoryTranslations,
@@ -323,7 +324,7 @@ export function InventoryTableView({
                               className="cursor-pointer gap-2"
                               disabled={isSavingToDrive}
                             >
-                              <CloudUpload />
+                              <SiGoogledrive />
                               {isSavingToDrive
                                 ? t('actions.savingToDrive')
                                 : t('actions.saveToDrive')}
@@ -333,7 +334,7 @@ export function InventoryTableView({
                               className="cursor-pointer gap-2"
                               disabled={isSavingToDrive}
                             >
-                              <CloudUpload />
+                              <DiOnedrive className="scale-125" />
                               {isSavingToDrive
                                 ? t('actions.savingToDrive')
                                 : t('actions.saveToOneDrive')}

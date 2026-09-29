@@ -1,6 +1,4 @@
 import {
-  Cloud,
-  CloudUpload,
   Download,
   Edit2,
   FileIcon,
@@ -16,6 +14,8 @@ import {
   useCallback,
   useState,
 } from 'react';
+import { DiOnedrive } from 'react-icons/di';
+import { SiGoogledrive } from 'react-icons/si';
 import { toast } from 'sonner';
 import type {
   InventoryEntry,
@@ -322,7 +322,7 @@ export function InventoryDialogs({
                 {googleDriveImportPending || googleDrivePicker.isLoading ? (
                   <Loader2 data-icon="inline-start" className="animate-spin" />
                 ) : (
-                  <Cloud data-icon="inline-start" />
+                  <SiGoogledrive data-icon="inline-start" />
                 )}
                 {googleDriveImportPending
                   ? t('uploadDialog.importingGoogleDrive')
@@ -350,7 +350,7 @@ export function InventoryDialogs({
                 {oneDriveImportPending || oneDrivePicker.isLoading ? (
                   <Loader2 data-icon="inline-start" className="animate-spin" />
                 ) : (
-                  <Cloud data-icon="inline-start" />
+                  <DiOnedrive className="scale-125" data-icon="inline-start" />
                 )}
                 {oneDriveImportPending
                   ? t('uploadDialog.importingOneDrive')
@@ -677,7 +677,7 @@ export function InventoryDialogs({
                 {googleDriveExportPending ? (
                   <Loader2 data-icon="inline-start" className="animate-spin" />
                 ) : (
-                  <CloudUpload data-icon="inline-start" />
+                  <SiGoogledrive data-icon="inline-start" />
                 )}
                 {googleDriveExportPending
                   ? t('actions.savingToDrive')
@@ -694,7 +694,7 @@ export function InventoryDialogs({
                 {oneDriveExportPending ? (
                   <Loader2 data-icon="inline-start" className="animate-spin" />
                 ) : (
-                  <CloudUpload data-icon="inline-start" />
+                  <DiOnedrive className="scale-125" data-icon="inline-start" />
                 )}
                 {oneDriveExportPending
                   ? t('actions.savingToDrive')

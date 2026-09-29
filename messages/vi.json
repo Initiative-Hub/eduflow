@@ -629,12 +629,12 @@
       "folderCreated": "Đã tạo thư mục.",
       "genericError": "Đã xảy ra lỗi. Vui lòng thử lại.",
       "googleDriveImported": "Đã nhập tệp từ Google Drive.",
-      "oneDriveImported": "Đã nhập tệp từ OneDrive.",
       "invalidMove": "Bạn không thể di chuyển một thư mục vào chính nó.",
       "moved": "Đã di chuyển mục.",
       "nameConflictCreateFolder": "Đã có tệp hoặc thư mục khác dùng tên này tại đây.",
       "nameConflictMove": "Thư mục đích đã có tệp hoặc thư mục trùng tên.",
       "nameConflictRename": "Hãy chọn tên khác. Đã có tệp hoặc thư mục khác dùng tên này tại đây.",
+      "oneDriveImported": "Đã nhập tệp từ OneDrive.",
       "previewUnavailable": "Hiện tại không thể xem trước tệp này.",
       "renamed": "Đã đổi tên mục.",
       "shareBatchDescription": "Đã sao chép {count} liên kết chia sẻ vào clipboard.",
@@ -2147,15 +2147,6 @@
     "savedTo": "Đã lưu vào {destination}.",
     "success": "Đã lưu vào Google Drive."
   },
-  "OneDriveExport": {
-    "destinationError": "Hãy chọn nơi xuất tệp OneDrive trước.",
-    "failed": "Không thể lưu vào OneDrive.",
-    "legacyGamma": "Hãy tạo lại bài thuyết trình Gamma này trước khi lưu vào OneDrive.",
-    "openInDrive": "Mở trong OneDrive",
-    "openIntegrations": "Mở Tích hợp",
-    "savedTo": "Đã lưu vào {destination}.",
-    "success": "Đã lưu vào OneDrive."
-  },
   "GrammarAnalysis": {
     "analyzedSentence": "Câu được phân tích",
     "analyzing": "Đang phân tích...",
@@ -2210,6 +2201,23 @@
       "title": "Google Drive",
       "useMyDrive": "Dùng My Drive"
     },
+    "notice": {
+      "connectedDescription": "Bạn có thể chọn tệp Google Drive từ menu tải lên và đính kèm.",
+      "connectedTitle": "Đã kết nối Google Drive",
+      "errorDescription": "Google chưa hoàn tất luồng cấp quyền. Hãy thử kết nối lại.",
+      "errorTitle": "Kết nối thất bại",
+      "oneDriveConnectedDescription": "Bạn có thể chọn tệp OneDrive từ menu tải lên và đính kèm.",
+      "oneDriveConnectedTitle": "Đã kết nối OneDrive",
+      "oneDriveErrorDescription": "Microsoft chưa hoàn tất luồng cấp quyền. Hãy thử kết nối lại.",
+      "oneDrivePickerAuthorizedDescription": "Hãy nhấn Chọn nơi lưu lần nữa để duyệt và chọn thư mục OneDrive.",
+      "oneDrivePickerAuthorizedTitle": "Đã cấp quyền OneDrive Picker",
+      "oneDrivePickerCanceledDescription": "Bạn đã hủy cấp quyền Microsoft Picker. Bạn có thể cấp quyền khi chọn nơi lưu lần nữa.",
+      "oneDrivePickerCanceledTitle": "Đã hủy cấp quyền Picker",
+      "oneDrivePickerErrorDescription": "Microsoft không thể cấp quyền OneDrive Picker. Hãy thử chọn nơi lưu lần nữa.",
+      "oneDrivePickerErrorTitle": "Cấp quyền Picker thất bại",
+      "oneDrivePickerMismatchDescription": "Hãy đăng nhập bằng đúng tài khoản Microsoft đang kết nối với EduFlow.",
+      "oneDrivePickerMismatchTitle": "Tài khoản Microsoft không khớp"
+    },
     "oneDrive": {
       "accountNote": "Tài khoản OneDrive có thể khác với tài khoản đăng nhập EduFlow.",
       "changeFolder": "Đổi thư mục",
@@ -2236,23 +2244,6 @@
       "title": "OneDrive",
       "useMyDrive": "Dùng My files"
     },
-    "notice": {
-      "connectedDescription": "Bạn có thể chọn tệp Google Drive từ menu tải lên và đính kèm.",
-      "connectedTitle": "Đã kết nối Google Drive",
-      "errorDescription": "Google chưa hoàn tất luồng cấp quyền. Hãy thử kết nối lại.",
-      "errorTitle": "Kết nối thất bại",
-      "oneDriveConnectedDescription": "Bạn có thể chọn tệp OneDrive từ menu tải lên và đính kèm.",
-      "oneDriveConnectedTitle": "Đã kết nối OneDrive",
-      "oneDriveErrorDescription": "Microsoft chưa hoàn tất luồng cấp quyền. Hãy thử kết nối lại.",
-      "oneDrivePickerAuthorizedDescription": "Hãy nhấn Chọn nơi lưu lần nữa để duyệt và chọn thư mục OneDrive.",
-      "oneDrivePickerAuthorizedTitle": "Đã cấp quyền OneDrive Picker",
-      "oneDrivePickerCanceledDescription": "Bạn đã hủy cấp quyền Microsoft Picker. Bạn có thể cấp quyền khi chọn nơi lưu lần nữa.",
-      "oneDrivePickerCanceledTitle": "Đã hủy cấp quyền Picker",
-      "oneDrivePickerErrorDescription": "Microsoft không thể cấp quyền OneDrive Picker. Hãy thử chọn nơi lưu lần nữa.",
-      "oneDrivePickerErrorTitle": "Cấp quyền Picker thất bại",
-      "oneDrivePickerMismatchDescription": "Hãy đăng nhập bằng đúng tài khoản Microsoft đang kết nối với EduFlow.",
-      "oneDrivePickerMismatchTitle": "Tài khoản Microsoft không khớp"
-    },
     "title": "Tích hợp",
     "toast": {
       "destinationFailed": "Không thể cập nhật nơi lưu Google Drive.",
@@ -2264,13 +2255,6 @@
       "oneDriveDisconnected": "Đã ngắt kết nối OneDrive.",
       "oneDriveDisconnectFailed": "Không thể ngắt kết nối OneDrive."
     }
-  },
-  "OneDrivePickerAuthorization": {
-    "authorize": "Cấp quyền với Microsoft",
-    "cancel": "Hủy",
-    "description": "Microsoft yêu cầu thêm một quyền trước khi EduFlow có thể duyệt các thư mục OneDrive của bạn.",
-    "detail": "Quyền này chỉ được Microsoft folder picker sử dụng. EduFlow vẫn xác thực và tải tệp xuất lên qua kết nối Microsoft Graph hiện có.",
-    "title": "Cấp quyền OneDrive Picker"
   },
   "InventoryPage": {
     "actions": {
@@ -2406,12 +2390,12 @@
       "folderCreated": "Đã tạo thư mục.",
       "genericError": "Đã xảy ra lỗi. Vui lòng thử lại.",
       "googleDriveImported": "Đã nhập tệp từ Google Drive.",
-      "oneDriveImported": "Đã nhập tệp từ OneDrive.",
       "invalidMove": "Bạn không thể di chuyển một thư mục vào chính nó.",
       "moved": "Đã di chuyển mục.",
       "nameConflictCreateFolder": "Đã có tệp hoặc thư mục khác dùng tên này tại đây.",
       "nameConflictMove": "Thư mục đích đã có tệp hoặc thư mục trùng tên.",
       "nameConflictRename": "Hãy chọn tên khác. Đã có tệp hoặc thư mục khác dùng tên này tại đây.",
+      "oneDriveImported": "Đã nhập tệp từ OneDrive.",
       "previewUnavailable": "Hiện tại không thể xem trước tệp này.",
       "renamed": "Đã đổi tên mục.",
       "shareBatchDescription": "Đã sao chép {count} liên kết chia sẻ vào clipboard.",
@@ -2829,6 +2813,22 @@
     "goBack": "Quay lại Trang chủ",
     "title": "Lạc vào Hư vô Kỹ thuật số"
   },
+  "OneDriveExport": {
+    "destinationError": "Hãy chọn nơi xuất tệp OneDrive trước.",
+    "failed": "Không thể lưu vào OneDrive.",
+    "legacyGamma": "Hãy tạo lại bài thuyết trình Gamma này trước khi lưu vào OneDrive.",
+    "openInDrive": "Mở trong OneDrive",
+    "openIntegrations": "Mở Tích hợp",
+    "savedTo": "Đã lưu vào {destination}.",
+    "success": "Đã lưu vào OneDrive."
+  },
+  "OneDrivePickerAuthorization": {
+    "authorize": "Cấp quyền với Microsoft",
+    "cancel": "Hủy",
+    "description": "Microsoft yêu cầu thêm một quyền trước khi EduFlow có thể duyệt các thư mục OneDrive của bạn.",
+    "detail": "Quyền này chỉ được Microsoft folder picker sử dụng. EduFlow vẫn xác thực và tải tệp xuất lên qua kết nối Microsoft Graph hiện có.",
+    "title": "Cấp quyền OneDrive Picker"
+  },
   "ProfilePage": {
     "actions": {
       "changePassword": "Đổi mật khẩu",
@@ -3224,8 +3224,8 @@
         "saveError": "Không thể lưu hoạt động này vào kho tài liệu.",
         "saveSuccess": "Đã lưu hoạt động vào kho tài liệu.",
         "saveToDrive": "Lưu vào Google Drive",
-        "saveToOneDrive": "Lưu vào OneDrive",
         "saveToInventory": "Lưu vào tài liệu",
+        "saveToOneDrive": "Lưu vào OneDrive",
         "savingToDrive": "Đang lưu vào Drive...",
         "savingToInventory": "Đang lưu...",
         "share": "Chia sẻ liên kết",

@@ -14,6 +14,7 @@ import {
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
+import { SiGoogledrive } from 'react-icons/si';
 import { toast } from 'sonner';
 import { GoogleDrivePickerHost } from '@/components/google-drive-picker/google-drive-picker-host';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -186,7 +187,7 @@ export default function IntegrationsClient({ email }: { email: string }) {
       <Card>
         <CardHeader>
           <div className="flex size-10 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-            <Cloud />
+            <SiGoogledrive />
           </div>
           <CardTitle>{t('googleDrive.title')}</CardTitle>
           <CardDescription>{t('googleDrive.description')}</CardDescription>

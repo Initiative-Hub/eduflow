@@ -187,7 +187,6 @@ describe('inventory Google Drive export actions', () => {
   ])(
     'offers ready $name files that cannot be previewed all supported actions',
     async (file) => {
-      const user = userEvent.setup();
       const entry = { ...baseEntry, ...file };
       const { onDownload, onSaveToDrive, onShare, trigger } =
         renderInventoryCard(entry);

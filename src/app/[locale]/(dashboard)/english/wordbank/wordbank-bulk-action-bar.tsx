@@ -1,12 +1,8 @@
 'use client';
 
-import {
-  BookOpen,
-  ChevronDown,
-  CloudUpload,
-  FileDown,
-  Loader2,
-} from 'lucide-react';
+import { BookOpen, ChevronDown, FileDown, Loader2 } from 'lucide-react';
+import { DiOnedrive } from 'react-icons/di';
+import { SiGoogledrive } from 'react-icons/si';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -143,14 +139,14 @@ export function BulkActionBar({
             className="min-h-11 gap-2"
             onSelect={onExportCsvToDrive}
           >
-            <CloudUpload />
+            <SiGoogledrive />
             {t('saveCsvToDrive')}
           </DropdownMenuItem>
           <DropdownMenuItem
             className="min-h-11 gap-2"
             onSelect={onExportCsvToOneDrive}
           >
-            <CloudUpload />
+            <DiOnedrive className="scale-125" />
             {t('saveCsvToOneDrive')}
           </DropdownMenuItem>
         </DropdownMenuContent>

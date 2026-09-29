@@ -2,7 +2,6 @@
 
 import { useQuery } from '@tanstack/react-query';
 import {
-  CloudUpload,
   Download,
   Edit2,
   Eye,
@@ -20,6 +19,8 @@ import {
   Share2,
   Trash2,
 } from 'lucide-react';
+import { DiOnedrive } from 'react-icons/di';
+import { SiGoogledrive } from 'react-icons/si';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
@@ -281,14 +282,14 @@ export function InventoryCard({
                       onClick={() => onSaveToDrive?.(entry)}
                       className="cursor-pointer gap-2"
                     >
-                      <CloudUpload />
+                      <SiGoogledrive />
                       {t('actions.saveToDrive')}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => onSaveToOneDrive?.(entry)}
                       className="cursor-pointer gap-2"
                     >
-                      <CloudUpload />
+                      <DiOnedrive className="scale-125" />
                       {t('actions.saveToOneDrive')}
                     </DropdownMenuItem>
                   </>

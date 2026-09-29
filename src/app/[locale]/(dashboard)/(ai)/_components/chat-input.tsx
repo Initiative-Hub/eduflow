@@ -15,6 +15,8 @@ import {
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { type FormEvent, type ReactNode, useCallback, useState } from 'react';
+import { DiOnedrive } from 'react-icons/di';
+import { SiGoogledrive } from 'react-icons/si';
 import { toast } from 'sonner';
 import {
   PromptInput,
@@ -437,7 +439,7 @@ export function ChatInput({
             googleDrivePicker.isLoading ? (
               <Loader2 className="animate-spin" />
             ) : (
-              <Cloud />
+              <SiGoogledrive />
             ),
           onClick: openGoogleDrivePicker,
         },
@@ -447,7 +449,7 @@ export function ChatInput({
             oneDriveImportMutation.isPending || oneDrivePicker.isLoading ? (
               <Loader2 className="animate-spin" />
             ) : (
-              <Cloud />
+              <DiOnedrive className="scale-125" />
             ),
           onClick: openOneDrivePicker,
         },

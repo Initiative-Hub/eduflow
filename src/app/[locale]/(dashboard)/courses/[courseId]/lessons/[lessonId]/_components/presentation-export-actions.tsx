@@ -1,6 +1,8 @@
 'use client';
 
-import { ChevronDown, CloudUpload, Download, Loader2 } from 'lucide-react';
+import { ChevronDown, Download, Loader2 } from 'lucide-react';
+import { DiOnedrive } from 'react-icons/di';
+import { SiGoogledrive } from 'react-icons/si';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -65,7 +67,7 @@ export function PresentationExportActions({
             })
           }
         >
-          <CloudUpload aria-hidden="true" />
+          <SiGoogledrive aria-hidden="true" />
           {t('savePptxToDrive')}
         </DropdownMenuItem>
         <DropdownMenuItem
@@ -77,7 +79,7 @@ export function PresentationExportActions({
             })
           }
         >
-          <CloudUpload aria-hidden="true" />
+          <DiOnedrive aria-hidden="true" className="scale-125" />
           {t('savePptxToOneDrive')}
         </DropdownMenuItem>
       </DropdownMenuContent>
