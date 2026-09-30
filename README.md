@@ -67,6 +67,7 @@ EduFlow brings those workflows into one AI-integrated educational ecosystem. Its
 
 EduFlow is delivered as a responsive **Next.js** web application on **Vercel**, with Tailwind CSS and shadcn/ui providing the interface across desktop and mobile devices. Requests pass through authentication-aware edge middleware before reaching validated API route handlers and the service layer, keeping access control, request validation, and business logic clearly separated.
 
+
 The service layer reads and writes application data through **Prisma and PostgreSQL**, while **Redis** supports caching and guest chat data. External capabilities are integrated behind the backend boundary: the **Vercel AI SDK** connects EduFlow to language models through OpenRouter, AWS services provide translation, object storage, and authentication email delivery, and a **FastAPI** service deployed on Modal handles document conversion and slide-generation workloads.
 
 ## 🛠️ Technology
