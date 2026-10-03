@@ -6,7 +6,7 @@ on:
       - main
   pull_request:
     branches:
-      - 'main'
+      - "main"
     types:
       - opened
       - reopened
@@ -72,4 +72,4 @@ jobs:
             done
           fi
 
-          echo "All migration checks passed." 
+          echo "All migration checks passed."

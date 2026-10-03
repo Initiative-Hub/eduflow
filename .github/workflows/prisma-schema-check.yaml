@@ -6,7 +6,7 @@ on:
       - main
   pull_request:
     branches:
-      - 'main'
+      - "main"
     types:
       - opened
       - reopened
@@ -38,7 +38,7 @@ jobs:
 
     env:
       SHADOW_DATABASE_URL: postgresql://postgres:postgres@localhost:5433/eduflow_shadow?schema=public
-    
+
     steps:
       - uses: actions/checkout@v6
 

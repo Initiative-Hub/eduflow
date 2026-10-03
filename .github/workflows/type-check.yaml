@@ -6,7 +6,7 @@ on:
       - main
   pull_request:
     branches:
-      - 'main'
+      - "main"
     types:
       - opened
       - reopened
@@ -19,8 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     if: |
-      github.event_name != 'pull_request' || 
-      (github.head_ref != 'chore/trigger-vercel-deploy' && !startsWith(github.head_ref, 'fix/biome-formatting-'))
+      github.event_name != 'pull_request' || !startsWith(github.head_ref, 'fix/biome-formatting-')
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -29,7 +28,7 @@ jobs:
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
- 
+
       - name: Install dependencies
         run: bun install --frozen-lockfile
 

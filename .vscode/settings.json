@@ -7,9 +7,6 @@
   "editor.formatOnSave": true,
   "editor.formatOnSaveMode": "file",
   "editor.defaultFormatter": "biomejs.biome",
-  "[xml]": {
-    "editor.defaultFormatter": "biomejs.biome"
-  },
   "[css]": {
     "editor.defaultFormatter": "biomejs.biome"
   },
@@ -33,6 +30,9 @@
   },
   "[prisma]": {
     "editor.defaultFormatter": "Prisma.prisma"
+  },
+  "[github-actions-workflow]": {
+    "editor.defaultFormatter": "redhat.vscode-yaml"
   },
   "js/ts.autoClosingTags.enabled": true,
   "js/ts.experimental.useTsgo": true,
