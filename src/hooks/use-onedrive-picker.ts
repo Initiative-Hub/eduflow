@@ -1,7 +1,7 @@
 'use client';
 
 import { useMutation } from '@tanstack/react-query';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type {
   OneDrivePickedItem,
   OneDrivePickerHostProps,
@@ -28,6 +28,11 @@ type OneDrivePickerApiError = {
   code?: string;
   message?: string;
   status?: number;
+};
+
+type PickerSession = {
+  channelId: string;
+  pickerWindow: Window;
 };
 
 function getPickerErrorMessage(
@@ -74,14 +79,29 @@ export function useOneDrivePicker({
   onError?: (message: string) => void;
   onPicked: (items: OneDrivePickedItem[]) => void;
 }) {
-  const [tokenContext, setTokenContext] = useState<{
-    accessToken: string;
-    baseUrl: string;
-  } | null>(null);
+  const [tokenContext, setTokenContext] = useState<
+    | ({
+        accessToken: string;
+        baseUrl: string;
+      } & PickerSession)
+    | null
+  >(null);
   const [authorizationRequired, setAuthorizationRequired] = useState(false);
   const errorReportedRef = useRef(false);
+  const activeSessionRef = useRef<PickerSession | null>(null);
 
-  const closePicker = useCallback(() => setTokenContext(null), []);
+  const closePicker = useCallback(() => {
+    activeSessionRef.current?.pickerWindow.close();
+    activeSessionRef.current = null;
+    setTokenContext(null);
+  }, []);
+  useEffect(
+    () => () => {
+      activeSessionRef.current?.pickerWindow.close();
+      activeSessionRef.current = null;
+    },
+    []
+  );
   const reportError = useCallback(
     (message: string) => {
       if (errorReportedRef.current) return;
@@ -143,10 +163,19 @@ export function useOneDrivePicker({
 
   const { isPending: isPickerTokenPending, mutate: openWithToken } =
     useMutation({
-      mutationFn: async () => fetchPickerToken(),
-      onError: handleInitialTokenError,
-      onSuccess: (response) => {
+      mutationFn: async (_session: PickerSession) => fetchPickerToken(),
+      onError: (error: OneDrivePickerApiError, session) => {
+        if (activeSessionRef.current !== session) return;
+        handleInitialTokenError(error);
+      },
+      onSuccess: (response, session) => {
+        if (activeSessionRef.current !== session) return;
+        if (session.pickerWindow.closed) {
+          closePicker();
+          return;
+        }
         setTokenContext({
+          ...session,
           accessToken: response.data.accessToken,
           baseUrl: response.data.baseUrl,
         });
@@ -154,24 +183,57 @@ export function useOneDrivePicker({
     });
 
   const openPicker = useCallback(() => {
+    if (
+      activeSessionRef.current &&
+      !activeSessionRef.current.pickerWindow.closed
+    )
+      return;
     errorReportedRef.current = false;
     dismissAuthorization();
+    const channelId = crypto.randomUUID();
+    let pickerWindow: Window | null;
+    try {
+      pickerWindow = window.open(
+        '',
+        `OneDrivePicker-${channelId}`,
+        'width=1080,height=680'
+      );
+    } catch {
+      pickerWindow = null;
+    }
+    if (!pickerWindow) {
+      reportError(messages.unavailable);
+      return;
+    }
+    const session = { channelId, pickerWindow };
+    activeSessionRef.current = session;
+    setTokenContext(null);
     onBeforeOpen?.();
-    openWithToken();
-  }, [dismissAuthorization, onBeforeOpen, openWithToken]);
+    openWithToken(session);
+  }, [
+    dismissAuthorization,
+    messages.unavailable,
+    onBeforeOpen,
+    openWithToken,
+    reportError,
+  ]);
 
   const pickerProps = useMemo<OneDrivePickerHostProps | null>(() => {
     if (!tokenContext) return null;
     return {
       accessToken: tokenContext.accessToken,
       baseUrl: tokenContext.baseUrl,
+      channelId: tokenContext.channelId,
       mode,
+      pickerWindow: tokenContext.pickerWindow,
       onAuthenticate: async (input) => {
         try {
           const response = await fetchPickerToken(input);
           return response.data.accessToken;
         } catch (error) {
-          handleAuthenticateError(error as OneDrivePickerApiError);
+          if (activeSessionRef.current?.channelId === tokenContext.channelId) {
+            handleAuthenticateError(error as OneDrivePickerApiError);
+          }
           throw error;
         }
       },

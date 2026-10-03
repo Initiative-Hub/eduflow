@@ -10,7 +10,9 @@ export type OneDrivePickedItem = {
 export type OneDrivePickerHostProps = {
   accessToken: string;
   baseUrl: string;
+  channelId: string;
   mode: 'files' | 'folder';
+  pickerWindow: Window;
   onAuthenticate: (input: {
     command?: string;
     resource?: string;

@@ -31,8 +31,14 @@ function createWrapper() {
 }
 
 describe('useOneDrivePicker', () => {
+  let pickerWindow: Window & { close: ReturnType<typeof vi.fn> };
   beforeEach(() => {
     vi.clearAllMocks();
+    pickerWindow = {
+      close: vi.fn(),
+      closed: false,
+    } as unknown as typeof pickerWindow;
+    vi.spyOn(window, 'open').mockReturnValue(pickerWindow);
   });
 
   it('prepares host props with the connected server token', async () => {
@@ -74,6 +80,7 @@ describe('useOneDrivePicker', () => {
       { driveId: 'drive-1', itemId: 'file-1' },
     ]);
     expect(result.current.pickerProps).toBeNull();
+    expect(pickerWindow.close).toHaveBeenCalled();
   });
 
   it('opens explicit authorization without surfacing a generic error', async () => {
@@ -106,6 +113,7 @@ describe('useOneDrivePicker', () => {
     );
     expect(onError).not.toHaveBeenCalled();
     expect(result.current.pickerProps).toBeNull();
+    expect(pickerWindow.close).toHaveBeenCalled();
 
     act(() => result.current.dismissAuthorization());
     expect(result.current.authorizationRequired).toBe(false);
@@ -189,6 +197,138 @@ describe('useOneDrivePicker', () => {
 
     expect(onError).toHaveBeenCalledOnce();
     expect(onError).toHaveBeenCalledWith('unavailable');
+  });
+
+  it('reserves a unique popup synchronously while the token is pending', async () => {
+    let resolveToken!: (value: unknown) => void;
+    apiClientMock.post.mockReturnValue(
+      new Promise((resolve) => {
+        resolveToken = resolve;
+      })
+    );
+    const { result } = renderHook(
+      () => useOneDrivePicker({ onPicked: vi.fn() }),
+      { wrapper: createWrapper() }
+    );
+
+    act(() => result.current.openPicker());
+    expect(window.open).toHaveBeenCalledOnce();
+    expect(window.open).toHaveBeenCalledWith(
+      '',
+      expect.stringMatching(/^OneDrivePicker-/),
+      'width=1080,height=680'
+    );
+    expect(result.current.pickerProps).toBeNull();
+    await act(async () =>
+      resolveToken({
+        data: {
+          accessToken: 'token',
+          baseUrl: 'https://onedrive.live.com/picker',
+        },
+      })
+    );
+    await waitFor(() =>
+      expect(result.current.pickerProps?.pickerWindow).toBe(pickerWindow)
+    );
+    expect(window.open).toHaveBeenCalledOnce();
+  });
+
+  it('reports blocked popups before requesting a token', () => {
+    vi.mocked(window.open).mockReturnValue(null);
+    const onError = vi.fn();
+    const { result } = renderHook(
+      () => useOneDrivePicker({ onError, onPicked: vi.fn() }),
+      { wrapper: createWrapper() }
+    );
+    act(() => result.current.openPicker());
+    expect(onError).toHaveBeenCalledWith('OneDrive Picker is unavailable.');
+    expect(apiClientMock.post).not.toHaveBeenCalled();
+  });
+
+  it('closes a pending popup on unmount and ignores the late token', async () => {
+    let resolveToken!: (value: unknown) => void;
+    apiClientMock.post.mockReturnValue(
+      new Promise((resolve) => {
+        resolveToken = resolve;
+      })
+    );
+    const { result, unmount } = renderHook(
+      () => useOneDrivePicker({ onPicked: vi.fn() }),
+      { wrapper: createWrapper() }
+    );
+    act(() => result.current.openPicker());
+    await waitFor(() => expect(apiClientMock.post).toHaveBeenCalled());
+    unmount();
+    expect(pickerWindow.close).toHaveBeenCalledOnce();
+    await act(async () =>
+      resolveToken({
+        data: {
+          accessToken: 'token',
+          baseUrl: 'https://onedrive.live.com/picker',
+        },
+      })
+    );
+    expect(result.current.pickerProps).toBeNull();
+  });
+
+  it('does not mount the host if the reserved popup closes while loading', async () => {
+    apiClientMock.post.mockImplementation(async () => {
+      Object.defineProperty(pickerWindow, 'closed', { value: true });
+      return {
+        data: {
+          accessToken: 'token',
+          baseUrl: 'https://onedrive.live.com/picker',
+        },
+      };
+    });
+    const { result } = renderHook(
+      () => useOneDrivePicker({ onPicked: vi.fn() }),
+      { wrapper: createWrapper() }
+    );
+    act(() => result.current.openPicker());
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.pickerProps).toBeNull();
+  });
+
+  it('ignores a stale authentication failure after opening another picker', async () => {
+    const token = {
+      data: {
+        accessToken: 'token',
+        baseUrl: 'https://onedrive.live.com/picker',
+      },
+    };
+    apiClientMock.post.mockResolvedValue(token);
+    const { result } = renderHook(
+      () => useOneDrivePicker({ onPicked: vi.fn() }),
+      { wrapper: createWrapper() }
+    );
+    act(() => result.current.openPicker());
+    await waitFor(() => expect(result.current.pickerProps).not.toBeNull());
+    const oldProps = result.current.pickerProps!;
+    let rejectToken!: (reason: unknown) => void;
+    apiClientMock.post.mockImplementationOnce(
+      () =>
+        new Promise((_resolve, reject) => {
+          rejectToken = reject;
+        })
+    );
+    const pendingAuthentication = oldProps
+      .onAuthenticate({ command: 'authenticate' })
+      .catch(() => undefined);
+    act(() => oldProps.onCanceled());
+    const nextWindow = { close: vi.fn(), closed: false } as unknown as Window;
+    vi.mocked(window.open).mockReturnValue(nextWindow);
+    act(() => result.current.openPicker());
+    await waitFor(() =>
+      expect(result.current.pickerProps?.pickerWindow).toBe(nextWindow)
+    );
+    await act(async () => {
+      rejectToken({ code: 'ONEDRIVE_PICKER_AUTHORIZATION_REQUIRED' });
+      await pendingAuthentication;
+    });
+    expect(result.current.authorizationRequired).toBe(false);
+    expect(result.current.pickerProps?.pickerWindow).toBe(nextWindow);
+    expect(nextWindow.close).not.toHaveBeenCalled();
   });
 
   it('builds a Picker authorization URL for the current localized route', () => {

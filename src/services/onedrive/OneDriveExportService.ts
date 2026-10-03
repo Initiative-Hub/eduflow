@@ -10,6 +10,11 @@ import {
 } from './OneDriveMicrosoftSdkAdapter';
 import type { OneDriveAuthorizedContext } from './OneDriveOAuthTokenService';
 import type { OneDriveDestination } from './onedrive-types';
+import {
+  createExportFileName,
+  findExistingExport,
+  getDestinationPath,
+} from './onedrive-export-target';
 
 const SMALL_UPLOAD_MAX_BYTES = 4 * 1024 * 1024;
 const UPLOAD_SESSION_CHUNK_BYTES = 5 * 1024 * 1024;
@@ -21,24 +26,6 @@ export type OneDriveExportContext = Omit<
   destination: OneDriveDestination;
 };
 
-function sanitizeFileName(fileName: string) {
-  return (
-    fileName
-      .trim()
-      .replaceAll(/[\r\n]/g, ' ')
-      .replaceAll(/[\\/:*?"<>|]/g, '-')
-      .slice(0, 200) || 'export'
-  );
-}
-
-function encodeGraphId(value: string) {
-  return encodeURIComponent(value);
-}
-
-function encodePathSegment(value: string) {
-  return encodeURIComponent(value).replaceAll('%20', ' ');
-}
-
 function toUploadBlob(bytes: Uint8Array) {
   const copy = new Uint8Array(bytes.byteLength);
   copy.set(bytes);
@@ -47,14 +34,27 @@ function toUploadBlob(bytes: Uint8Array) {
 
 async function parseUploadSessionJson<T>(response: Response): Promise<T> {
   const text = await response.text();
-  const data = text ? JSON.parse(text) : {};
+  let data;
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    throw Object.assign(
+      new Error(
+        `Microsoft Graph request failed (${response.status}): ${text || response.statusText}`
+      ),
+      { statusCode: response.status }
+    );
+  }
   if (!response.ok) {
     const message =
-      typeof data.error?.message === 'string'
+      typeof data?.error?.message === 'string'
         ? data.error.message
         : text || response.statusText;
-    throw new Error(
-      `Microsoft Graph request failed (${response.status}): ${message}`
+    throw Object.assign(
+      new Error(
+        `Microsoft Graph request failed (${response.status}): ${message}`
+      ),
+      { statusCode: response.status }
     );
   }
   return data as T;
@@ -72,36 +72,20 @@ function throwExportError(error: unknown): never {
   throw new OneDriveExportError('DRIVE_UPLOAD_FAILED', message);
 }
 
-function getDestinationPath(
-  destination: OneDriveDestination,
-  fileName: string
-) {
-  const encodedFileName = encodePathSegment(fileName);
-  if (destination.folderId) {
-    return `/drives/${encodeGraphId(destination.driveId)}/items/${encodeGraphId(
-      destination.folderId
-    )}:/${encodedFileName}`;
-  }
-  return `/drives/${encodeGraphId(destination.driveId)}/root:/${encodedFileName}`;
-}
-
 async function uploadSmall(options: {
   artifact: CloudDriveExportArtifact;
   destination: OneDriveDestination;
   fileName: string;
   graph: Client;
 }) {
-  try {
-    const body = toUploadBlob(options.artifact.bytes);
-    return (await options.graph
-      .api(
-        `${getDestinationPath(options.destination, options.fileName)}:/content`
-      )
-      .header('Content-Type', options.artifact.mimeType)
-      .put(body)) as MicrosoftGraph.DriveItem;
-  } catch (error) {
-    throwExportError(error);
-  }
+  const body = toUploadBlob(options.artifact.bytes);
+  return (await options.graph
+    .api(
+      `${getDestinationPath(options.destination, options.fileName)}:/content`
+    )
+    .query({ '@microsoft.graph.conflictBehavior': 'fail' })
+    .header('Content-Type', options.artifact.mimeType)
+    .put(body)) as MicrosoftGraph.DriveItem;
 }
 
 async function createUploadSession(options: {
@@ -117,7 +101,7 @@ async function createUploadSession(options: {
       )}:/createUploadSession`
     )
     .post({
-      item: { '@microsoft.graph.conflictBehavior': 'rename' },
+      item: { '@microsoft.graph.conflictBehavior': 'fail' },
     })) as MicrosoftGraph.UploadSession;
 }
 
@@ -127,50 +111,47 @@ async function uploadLarge(options: {
   fileName: string;
   graph: Client;
 }) {
-  try {
-    const session = await createUploadSession(options);
-    if (!session.uploadUrl) {
-      throw new Error('OneDrive did not return an upload URL.');
-    }
-    const bytes = options.artifact.bytes;
-    let uploaded = 0;
-    let latest: MicrosoftGraph.DriveItem | null = null;
-
-    while (uploaded < bytes.byteLength) {
-      const endExclusive = Math.min(
-        uploaded + UPLOAD_SESSION_CHUNK_BYTES,
-        bytes.byteLength
-      );
-      const chunk = bytes.slice(uploaded, endExclusive);
-      const body = toUploadBlob(chunk);
-      const response = await fetch(session.uploadUrl, {
-        body,
-        headers: {
-          'Content-Length': String(chunk.byteLength),
-          'Content-Range': `bytes ${uploaded}-${endExclusive - 1}/${
-            bytes.byteLength
-          }`,
-        },
-        method: 'PUT',
-      });
-      const data =
-        await parseUploadSessionJson<MicrosoftGraph.DriveItem>(response);
-      latest = data;
-      uploaded = endExclusive;
-    }
-
-    if (!latest) {
-      throw new Error('OneDrive upload did not complete.');
-    }
-    return latest;
-  } catch (error) {
-    throwExportError(error);
+  const session = await createUploadSession(options);
+  if (!session.uploadUrl) {
+    throw new Error('OneDrive did not return an upload URL.');
   }
+  const bytes = options.artifact.bytes;
+  let uploaded = 0;
+  let latest: MicrosoftGraph.DriveItem | null = null;
+
+  while (uploaded < bytes.byteLength) {
+    const endExclusive = Math.min(
+      uploaded + UPLOAD_SESSION_CHUNK_BYTES,
+      bytes.byteLength
+    );
+    const chunk = bytes.slice(uploaded, endExclusive);
+    const body = toUploadBlob(chunk);
+    const response = await fetch(session.uploadUrl, {
+      body,
+      headers: {
+        'Content-Length': String(chunk.byteLength),
+        'Content-Range': `bytes ${uploaded}-${endExclusive - 1}/${
+          bytes.byteLength
+        }`,
+      },
+      method: 'PUT',
+    });
+    const data =
+      await parseUploadSessionJson<MicrosoftGraph.DriveItem>(response);
+    latest = data;
+    uploaded = endExclusive;
+  }
+
+  if (!latest) {
+    throw new Error('OneDrive upload did not complete.');
+  }
+  return latest;
 }
 
 function mapResult(options: {
   destination: OneDriveDestination;
   file: MicrosoftGraph.DriveItem;
+  reused: boolean;
 }) {
   if (!options.file.id) {
     throw new OneDriveExportError(
@@ -183,7 +164,7 @@ function mapResult(options: {
     fileId: options.file.id,
     mimeType: options.file.file?.mimeType ?? 'application/octet-stream',
     name: options.file.name ?? 'export',
-    reused: false,
+    reused: options.reused,
     size: typeof options.file.size === 'number' ? options.file.size : null,
     webViewLink: options.file.webUrl ?? null,
   };
@@ -206,22 +187,58 @@ export class OneDriveExportService {
     const context =
       options.context ??
       (await OneDriveDestinationService.getExportContext(options.userId));
-    const fileName = sanitizeFileName(options.artifact.fileName);
-    const file =
-      options.artifact.bytes.byteLength <= SMALL_UPLOAD_MAX_BYTES
-        ? await uploadSmall({
-            artifact: options.artifact,
-            destination: context.destination,
-            fileName,
-            graph: context.graph,
-          })
-        : await uploadLarge({
-            artifact: options.artifact,
-            destination: context.destination,
-            fileName,
-            graph: context.graph,
-          });
+    const fileName = createExportFileName({
+      fileName: options.artifact.fileName,
+      requestId: options.requestId,
+      userId: options.userId,
+    });
+    const target = {
+      destination: context.destination,
+      fileName,
+      graph: context.graph,
+    };
+    try {
+      const existing = await findExistingExport(target);
+      if (existing)
+        return mapResult({
+          destination: context.destination,
+          file: existing,
+          reused: true,
+        });
+      const file =
+        options.artifact.bytes.byteLength <= SMALL_UPLOAD_MAX_BYTES
+          ? await uploadSmall({
+              artifact: options.artifact,
+              destination: context.destination,
+              fileName,
+              graph: context.graph,
+            })
+          : await uploadLarge({
+              artifact: options.artifact,
+              destination: context.destination,
+              fileName,
+              graph: context.graph,
+            });
 
-    return mapResult({ destination: context.destination, file });
+      return mapResult({
+        destination: context.destination,
+        file,
+        reused: false,
+      });
+    } catch (error) {
+      // Recover a concurrent winner or an upload whose success response was lost.
+      try {
+        const existing = await findExistingExport(target);
+        if (existing)
+          return mapResult({
+            destination: context.destination,
+            file: existing,
+            reused: true,
+          });
+      } catch {
+        // Preserve the original failure when the recovery lookup also fails.
+      }
+      throwExportError(error);
+    }
   }
 }

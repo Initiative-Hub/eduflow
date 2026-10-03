@@ -156,7 +156,8 @@ export const inventoryService = {
         driveId: input.driveId,
         itemId: input.itemId,
         parentId: input.parentId ?? null,
-      }
+      },
+      { timeout: 300_000 }
     );
   },
 

@@ -39,14 +39,15 @@ const DESTINATION_ERROR_CODES = new Set([
 export function useOneDriveExport() {
   const t = useTranslations('OneDriveExport');
   const locale = useLocale();
-  const requestIds = useRef(new WeakMap<object, string>());
+  const requestIds = useRef(new Map<string, string>());
 
   return useMutation({
     mutationFn: async (source: OneDriveExportSource) => {
-      let requestId = requestIds.current.get(source);
+      const sourceKey = JSON.stringify(source);
+      let requestId = requestIds.current.get(sourceKey);
       if (!requestId) {
         requestId = crypto.randomUUID();
-        requestIds.current.set(source, requestId);
+        requestIds.current.set(sourceKey, requestId);
       }
       return apiClient.post<{ data: OneDriveExportResult }>(
         'v1/integrations/onedrive/exports',
@@ -78,10 +79,8 @@ export function useOneDriveExport() {
         }
       );
     },
-    onSettled: (_data, _error, source) => {
-      requestIds.current.delete(source);
-    },
-    onSuccess: ({ data }) => {
+    onSuccess: ({ data }, source) => {
+      requestIds.current.delete(JSON.stringify(source));
       toast.success(t('success'), {
         action: data.webViewLink
           ? {

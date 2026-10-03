@@ -7,6 +7,7 @@ import {
   type OneDriveExportContext,
   OneDriveExportService,
 } from '@/services/onedrive/OneDriveExportService';
+import { createExportFileName } from '@/services/onedrive/onedrive-export-target';
 
 vi.mock('@/services/onedrive/OneDriveDestinationService', () => ({
   OneDriveDestinationService: { getExportContext: vi.fn() },
@@ -19,9 +20,14 @@ const destinationService = OneDriveDestinationService as unknown as {
 const header = vi.fn();
 const put = vi.fn();
 const post = vi.fn();
+const get = vi.fn();
+const query = vi.fn();
+const select = vi.fn();
 
 function createRequest() {
-  const request = { header, post, put };
+  const request = { get, header, post, put, query, select };
+  query.mockReturnValue(request);
+  select.mockReturnValue(request);
   header.mockReturnValue(request);
   return request;
 }
@@ -52,7 +58,8 @@ const requestId = '9ed2dd42-989f-42d2-99ec-c01269108257';
 
 describe('OneDriveExportService', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
+    get.mockRejectedValue(new GraphError(404, 'itemNotFound'));
     vi.unstubAllGlobals();
     destinationService.getExportContext.mockResolvedValue(createContext());
     put.mockResolvedValue({
@@ -76,8 +83,11 @@ describe('OneDriveExportService', () => {
 
     expect(result).toMatchObject({ fileId: 'one-file-1', reused: false });
     expect(context.graph.api).toHaveBeenCalledWith(
-      '/drives/drive-1/items/folder-1:/wordbank.csv:/content'
+      `/drives/drive-1/items/folder-1:/${createExportFileName({ fileName: artifact.fileName, requestId, userId: 'user-1' })}:/content`
     );
+    expect(query).toHaveBeenCalledWith({
+      '@microsoft.graph.conflictBehavior': 'fail',
+    });
     expect(header).toHaveBeenCalledWith('Content-Type', 'text/csv');
     expect(put).toHaveBeenCalled();
   });
@@ -115,13 +125,98 @@ describe('OneDriveExportService', () => {
 
     expect(result.fileId).toBe('large-file');
     expect(context.graph.api).toHaveBeenCalledWith(
-      '/drives/drive-1/items/folder-1:/lesson.pptx:/createUploadSession'
+      `/drives/drive-1/items/folder-1:/${createExportFileName({ fileName: 'lesson.pptx', requestId, userId: 'user-1' })}:/createUploadSession`
     );
     expect(post).toHaveBeenCalledWith({
-      item: { '@microsoft.graph.conflictBehavior': 'rename' },
+      item: { '@microsoft.graph.conflictBehavior': 'fail' },
     });
     expect(fetchMock.mock.calls[0]?.[0]).toBe(
       'https://upload.example.test/session'
+    );
+  });
+
+  it('reuses a completed export before starting any upload', async () => {
+    get.mockResolvedValue({
+      id: 'existing-file',
+      name: 'wordbank.csv',
+      file: { mimeType: 'text/csv' },
+      size: 12,
+    });
+    const result = await OneDriveExportService.uploadArtifact({
+      artifact,
+      context: createContext(),
+      requestId,
+      userId: 'user-1',
+    });
+    expect(result).toMatchObject({ fileId: 'existing-file', reused: true });
+    expect(put).not.toHaveBeenCalled();
+    expect(post).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    new GraphError(409, 'nameAlreadyExists'),
+    new Error('response lost'),
+  ])(
+    'recovers a completed file after a conflicting or ambiguous upload failure',
+    async (error) => {
+      get
+        .mockRejectedValueOnce(new GraphError(404, 'itemNotFound'))
+        .mockResolvedValueOnce({
+          id: 'winner-file',
+          file: { mimeType: 'text/csv' },
+          name: 'wordbank.csv',
+        });
+      put.mockRejectedValue(error);
+      const result = await OneDriveExportService.uploadArtifact({
+        artifact,
+        context: createContext(),
+        requestId,
+        userId: 'user-1',
+      });
+      expect(result).toMatchObject({ fileId: 'winner-file', reused: true });
+      expect(put).toHaveBeenCalledOnce();
+    }
+  );
+
+  it('recovers a completed large upload when the final response is lost', async () => {
+    get
+      .mockRejectedValueOnce(new GraphError(404, 'itemNotFound'))
+      .mockResolvedValueOnce({
+        id: 'large-file',
+        file: {},
+        name: 'lesson.pptx',
+      });
+    post.mockResolvedValue({
+      uploadUrl: 'https://upload.example.test/session',
+    });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockRejectedValue(new Error('response lost'))
+    );
+    const result = await OneDriveExportService.uploadArtifact({
+      artifact: { ...artifact, bytes: new Uint8Array(4 * 1024 * 1024 + 1) },
+      context: createContext(),
+      requestId,
+      userId: 'user-1',
+    });
+    expect(result).toMatchObject({ fileId: 'large-file', reused: true });
+  });
+
+  it('uses distinct request markers for different requests and users while preserving the extension', () => {
+    const options = {
+      fileName: 'a'.repeat(200) + '.pptx',
+      requestId,
+      userId: 'user-1',
+    };
+    const name = createExportFileName(options);
+    expect(name).toBe(createExportFileName(options));
+    expect(name).toHaveLength(200);
+    expect(name.endsWith('.pptx')).toBe(true);
+    expect(
+      createExportFileName({ ...options, requestId: 'other-request' })
+    ).not.toBe(name);
+    expect(createExportFileName({ ...options, userId: 'user-2' })).not.toBe(
+      name
     );
   });
 

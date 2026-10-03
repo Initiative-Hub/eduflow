@@ -6,7 +6,6 @@ import {
   savedVocabularyListInclude,
   toSavedVocabularyItem,
 } from '@/services/english/wordbank/mappers';
-import { GoogleDriveExportError } from '@/services/google-drive/GoogleDriveExportError';
 import { LessonPresentationService } from '@/services/LessonPresentationService';
 import { LessonService } from '@/services/LessonService';
 import { StorageService } from '@/services/StorageService';
@@ -17,6 +16,7 @@ import {
 } from '@/utils/study-interactive-content';
 import { createWordbankCsvArtifact } from '@/utils/wordbank-csv';
 import type { CloudDriveExportArtifact } from './cloud-drive-export-types';
+import { CloudDriveExportArtifactError } from './CloudDriveExportArtifactError';
 
 const PPTX_MIME_TYPE =
   'application/vnd.openxmlformats-officedocument.presentationml.presentation';
@@ -40,8 +40,7 @@ async function resolveWordbank(
     where: { id: { in: source.vocabularyIds }, userId },
   });
   if (rows.length !== new Set(source.vocabularyIds).size) {
-    throw new GoogleDriveExportError(
-      'SOURCE_NOT_FOUND',
+    throw new CloudDriveExportArtifactError(
       'One or more vocabulary items could not be found.'
     );
   }
@@ -50,8 +49,7 @@ async function resolveWordbank(
   const orderedItems = source.vocabularyIds.map((id) => {
     const row = byId.get(id);
     if (!row) {
-      throw new GoogleDriveExportError(
-        'SOURCE_NOT_FOUND',
+      throw new CloudDriveExportArtifactError(
         'One or more vocabulary items could not be found.'
       );
     }
@@ -78,8 +76,7 @@ async function resolveStudyHtml(
     userId,
   });
   if (!resolved) {
-    throw new GoogleDriveExportError(
-      'SOURCE_NOT_FOUND',
+    throw new CloudDriveExportArtifactError(
       'Interactive study content could not be found.'
     );
   }
@@ -102,21 +99,18 @@ async function resolveLessonPresentation(
   try {
     lesson = await LessonService.getLessonById(source.lessonId, userId);
   } catch {
-    throw new GoogleDriveExportError(
-      'SOURCE_NOT_FOUND',
+    throw new CloudDriveExportArtifactError(
       'The lesson presentation could not be found.'
     );
   }
   if (!lesson.presentationDeckId) {
-    throw new GoogleDriveExportError(
-      'SOURCE_NOT_FOUND',
+    throw new CloudDriveExportArtifactError(
       'The lesson does not have a saved presentation.'
     );
   }
 
   if (lesson.presentationDeckId.startsWith('gamma:')) {
-    throw new GoogleDriveExportError(
-      'SOURCE_NOT_FOUND',
+    throw new CloudDriveExportArtifactError(
       'This legacy Gamma presentation is no longer supported. Please regenerate using System Slides.',
       { reason: 'LEGACY_GAMMA' }
     );
@@ -141,8 +135,7 @@ async function resolveInventoryFile(
   if (source.courseId) {
     const permissions = await getCoursePermissions(userId, source.courseId);
     if (permissions.withoutPermission(COURSE_PERMISSION.COURSE_FILES_VIEW)) {
-      throw new GoogleDriveExportError(
-        'SOURCE_NOT_FOUND',
+      throw new CloudDriveExportArtifactError(
         'The inventory file could not be found.'
       );
     }
@@ -157,8 +150,7 @@ async function resolveInventoryFile(
   });
   const file = files[0];
   if (!file) {
-    throw new GoogleDriveExportError(
-      'SOURCE_NOT_FOUND',
+    throw new CloudDriveExportArtifactError(
       'The inventory file could not be found.'
     );
   }
@@ -185,8 +177,7 @@ export class CloudDriveExportArtifactService {
       case 'inventory_file':
         return resolveInventoryFile(options.source, options.userId);
       default:
-        throw new GoogleDriveExportError(
-          'SOURCE_NOT_FOUND',
+        throw new CloudDriveExportArtifactError(
           'The export source could not be found.'
         );
     }

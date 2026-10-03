@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { POST } from '@/app/api/v1/integrations/onedrive/exports/route';
 import { CloudDriveExportArtifactService } from '@/services/cloud-drive/CloudDriveExportArtifactService';
 import { OneDriveDestinationService } from '@/services/onedrive/OneDriveDestinationService';
+import { CloudDriveExportArtifactError } from '@/services/cloud-drive/CloudDriveExportArtifactError';
 import { OneDriveExportService } from '@/services/onedrive/OneDriveExportService';
 
 vi.mock('@/lib/api/middlewares', () => ({
@@ -102,4 +103,33 @@ describe('OneDrive export route', () => {
       userId: 'user-1',
     });
   });
+  it.each([undefined, { reason: 'LEGACY_GAMMA' }])(
+    'preserves shared source errors and recovery details',
+    async (details) => {
+      artifactService.resolve.mockRejectedValue(
+        new CloudDriveExportArtifactError('Source unavailable.', details)
+      );
+      const response = await POST(
+        new Request(
+          'https://eduflow.test/api/v1/integrations/onedrive/exports',
+          {
+            body: JSON.stringify({
+              requestId: '9ed2dd42-989f-42d2-99ec-c01269108257',
+              source: {
+                kind: 'lesson_presentation',
+                lessonId: '2b25a6da-09bc-4783-8a0d-60811389d612',
+              },
+            }),
+            method: 'POST',
+          }
+        )
+      );
+      expect(response.status).toBe(404);
+      expect(await response.json()).toMatchObject({
+        code: 'SOURCE_NOT_FOUND',
+        ...(details ? { details } : {}),
+      });
+      expect(exportService.uploadArtifact).not.toHaveBeenCalled();
+    }
+  );
 });

@@ -76,6 +76,8 @@ describe('OneDrivePickerHostImplementation', () => {
       <OneDrivePickerHostImplementation
         accessToken="sharepoint-token"
         baseUrl="https://tenant-my.sharepoint.com"
+        channelId="channel-1"
+        pickerWindow={pickerWindow}
         mode="folder"
         onAuthenticate={vi.fn()}
         onCanceled={vi.fn()}
@@ -134,6 +136,8 @@ describe('OneDrivePickerHostImplementation', () => {
       <OneDrivePickerHostImplementation
         accessToken="personal-picker-token"
         baseUrl="https://onedrive.live.com/picker"
+        channelId="channel-1"
+        pickerWindow={pickerWindow}
         mode="folder"
         onAuthenticate={vi.fn()}
         onCanceled={vi.fn()}
@@ -161,49 +165,6 @@ describe('OneDrivePickerHostImplementation', () => {
     });
   });
 
-  it('uses a unique window name instead of reusing a cross-origin Picker', async () => {
-    const stalePickerWindow = {
-      close: vi.fn(),
-      closed: false,
-    } as unknown as PickerWindow;
-    Object.defineProperty(stalePickerWindow, 'document', {
-      get: () => {
-        throw new DOMException(
-          'Blocked a cross-origin frame.',
-          'SecurityError'
-        );
-      },
-    });
-    const pickerWindow = createPickerWindow();
-    const openPicker = vi
-      .spyOn(window, 'open')
-      .mockImplementation((_url, target) =>
-        target === 'OneDrivePicker' ? stalePickerWindow : pickerWindow
-      );
-    const onError = vi.fn();
-
-    render(
-      <OneDrivePickerHostImplementation
-        accessToken="personal-picker-token"
-        baseUrl="https://onedrive.live.com/picker"
-        mode="files"
-        onAuthenticate={vi.fn()}
-        onCanceled={vi.fn()}
-        onError={onError}
-        onPicked={vi.fn()}
-      />
-    );
-
-    await waitFor(() => expect(pickerWindow.submittedForm).toBeDefined());
-    expect(openPicker).toHaveBeenCalledWith(
-      '',
-      'OneDrivePicker-channel-1',
-      'width=1080,height=680'
-    );
-    expect(stalePickerWindow.close).not.toHaveBeenCalled();
-    expect(onError).not.toHaveBeenCalled();
-  });
-
   it('accepts initialization only from the normalized Picker origin', async () => {
     const pickerWindow = createPickerWindow();
     vi.spyOn(window, 'open').mockReturnValue(pickerWindow);
@@ -219,6 +180,8 @@ describe('OneDrivePickerHostImplementation', () => {
       <OneDrivePickerHostImplementation
         accessToken="sharepoint-token"
         baseUrl="https://tenant-my.sharepoint.com/personal/user"
+        channelId="channel-1"
+        pickerWindow={pickerWindow}
         mode="folder"
         onAuthenticate={vi.fn()}
         onCanceled={vi.fn()}
@@ -285,6 +248,8 @@ describe('OneDrivePickerHostImplementation', () => {
       <OneDrivePickerHostImplementation
         accessToken="personal-picker-token"
         baseUrl="https://onedrive.live.com/picker"
+        channelId="channel-1"
+        pickerWindow={pickerWindow}
         mode="folder"
         onAuthenticate={vi.fn()}
         onCanceled={vi.fn()}
@@ -314,6 +279,8 @@ describe('OneDrivePickerHostImplementation', () => {
         <OneDrivePickerHostImplementation
           accessToken="personal-picker-token"
           baseUrl="https://onedrive.live.com/picker"
+          channelId="channel-1"
+          pickerWindow={pickerWindow}
           mode="folder"
           onAuthenticate={vi.fn()}
           onCanceled={vi.fn()}
@@ -335,10 +302,10 @@ describe('OneDrivePickerHostImplementation', () => {
 
     expect(port.start).toHaveBeenCalledOnce();
     expect(port.postMessage).toHaveBeenCalledWith({ type: 'activate' });
-    expect(window.open).toHaveBeenCalledOnce();
+    expect(window.open).not.toHaveBeenCalled();
   });
 
-  it('closes the popup and port when the host unmounts', async () => {
+  it('closes the port when the host unmounts', async () => {
     const pickerWindow = createPickerWindow();
     vi.spyOn(window, 'open').mockReturnValue(pickerWindow);
     const { port } = createPickerPort();
@@ -346,6 +313,8 @@ describe('OneDrivePickerHostImplementation', () => {
       <OneDrivePickerHostImplementation
         accessToken="personal-picker-token"
         baseUrl="https://onedrive.live.com/picker"
+        channelId="channel-1"
+        pickerWindow={pickerWindow}
         mode="files"
         onAuthenticate={vi.fn()}
         onCanceled={vi.fn()}
@@ -370,7 +339,6 @@ describe('OneDrivePickerHostImplementation', () => {
       expect.any(Function)
     );
     expect(port.close).toHaveBeenCalledOnce();
-    expect(pickerWindow.close).toHaveBeenCalledOnce();
   });
 
   it('reports a manually closed popup as cancellation only once', async () => {
@@ -384,6 +352,8 @@ describe('OneDrivePickerHostImplementation', () => {
         <OneDrivePickerHostImplementation
           accessToken="personal-picker-token"
           baseUrl="https://onedrive.live.com/picker"
+          channelId="channel-1"
+          pickerWindow={pickerWindow}
           mode="files"
           onAuthenticate={vi.fn()}
           onCanceled={onCanceled}
@@ -399,7 +369,6 @@ describe('OneDrivePickerHostImplementation', () => {
       await act(() => vi.advanceTimersByTimeAsync(500));
 
       expect(onCanceled).toHaveBeenCalledOnce();
-      expect(pickerWindow.close).toHaveBeenCalledOnce();
     } finally {
       vi.useRealTimers();
     }
@@ -414,6 +383,8 @@ describe('OneDrivePickerHostImplementation', () => {
       <OneDrivePickerHostImplementation
         accessToken="personal-picker-token"
         baseUrl="https://onedrive.live.com/picker"
+        channelId="channel-1"
+        pickerWindow={pickerWindow}
         mode="files"
         onAuthenticate={vi.fn()}
         onCanceled={vi.fn()}
@@ -432,7 +403,6 @@ describe('OneDrivePickerHostImplementation', () => {
     window.dispatchEvent(initialize);
 
     expect(onError).toHaveBeenCalledOnce();
-    expect(pickerWindow.close).toHaveBeenCalledOnce();
   });
 
   it('acknowledges a pick before settling without reporting cancellation', async () => {
@@ -446,6 +416,8 @@ describe('OneDrivePickerHostImplementation', () => {
       <OneDrivePickerHostImplementation
         accessToken="personal-picker-token"
         baseUrl="https://onedrive.live.com/picker"
+        channelId="channel-1"
+        pickerWindow={pickerWindow}
         mode="files"
         onAuthenticate={vi.fn()}
         onCanceled={onCanceled}
@@ -487,30 +459,9 @@ describe('OneDrivePickerHostImplementation', () => {
       { driveId: 'drive-1', itemId: 'item-1' },
     ]);
     expect(onCanceled).not.toHaveBeenCalled();
-    expect(pickerWindow.close).toHaveBeenCalledOnce();
   });
 
-  it('reports popup and popup-document failures once', async () => {
-    const onPopupBlocked = vi.fn();
-    vi.spyOn(window, 'open').mockReturnValueOnce(null);
-
-    const blockedView = render(
-      <StrictMode>
-        <OneDrivePickerHostImplementation
-          accessToken="personal-picker-token"
-          baseUrl="https://onedrive.live.com/picker"
-          mode="files"
-          onAuthenticate={vi.fn()}
-          onCanceled={vi.fn()}
-          onError={onPopupBlocked}
-          onPicked={vi.fn()}
-        />
-      </StrictMode>
-    );
-    await waitFor(() => expect(onPopupBlocked).toHaveBeenCalledOnce());
-    expect(window.open).toHaveBeenCalledOnce();
-    blockedView.unmount();
-
+  it('reports popup-document failures once', async () => {
     const inaccessibleWindow = {
       close: vi.fn(),
       closed: false,
@@ -523,13 +474,15 @@ describe('OneDrivePickerHostImplementation', () => {
         );
       },
     });
-    vi.mocked(window.open).mockReturnValueOnce(inaccessibleWindow);
+
     const onDocumentError = vi.fn();
 
     render(
       <OneDrivePickerHostImplementation
         accessToken="personal-picker-token"
         baseUrl="https://onedrive.live.com/picker"
+        channelId="channel-1"
+        pickerWindow={inaccessibleWindow}
         mode="files"
         onAuthenticate={vi.fn()}
         onCanceled={vi.fn()}
@@ -539,6 +492,5 @@ describe('OneDrivePickerHostImplementation', () => {
     );
 
     await waitFor(() => expect(onDocumentError).toHaveBeenCalledOnce());
-    expect(inaccessibleWindow.close).toHaveBeenCalledOnce();
   });
 });
