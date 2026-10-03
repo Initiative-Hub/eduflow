@@ -18,8 +18,7 @@ jobs:
     name: Type Check
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    if: |
-      github.event_name != 'pull_request' || !startsWith(github.head_ref, 'fix/biome-formatting-')
+    if: github.event_name != 'pull_request' || !startsWith(github.head_ref, 'fix/biome-formatting-')
     steps:
       - name: Checkout code
         uses: actions/checkout@v6

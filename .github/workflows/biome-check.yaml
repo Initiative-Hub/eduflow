@@ -18,9 +18,7 @@ jobs:
     name: Biome Check
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    if: |
-      github.event_name != 'pull_request' || 
-      (github.head_ref != 'chore/trigger-vercel-deploy' && !startsWith(github.head_ref, 'fix/biome-formatting-'))
+    if: github.event_name != 'pull_request' || !startsWith(github.head_ref, 'fix/biome-formatting-')
     permissions:
       contents: write
       pull-requests: write

@@ -3,7 +3,6 @@ name: Branch Name Check
 on:
   push:
     branches-ignore:
-      - chore/trigger-vercel-deploy
       - fix/biome-formatting-*
       - main
       - staging
