@@ -24,11 +24,9 @@ describe('useOneDriveExport', () => {
 
   it('retains the request ID after failure for equivalent sources and renews it after success', async () => {
     const post = vi.mocked(apiClient.post);
-    post
-      .mockRejectedValueOnce({ message: 'response lost' })
-      .mockResolvedValue({
-        data: { destination: { name: 'My files' }, webViewLink: null },
-      });
+    post.mockRejectedValueOnce({ message: 'response lost' }).mockResolvedValue({
+      data: { destination: { name: 'My files' }, webViewLink: null },
+    });
     const source = {
       kind: 'lesson_presentation' as const,
       lessonId: '2b25a6da-09bc-4783-8a0d-60811389d612',
