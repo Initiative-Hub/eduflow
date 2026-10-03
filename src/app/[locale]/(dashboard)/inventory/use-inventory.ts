@@ -329,6 +329,29 @@ export function useInventory({
     },
   });
 
+  const oneDriveImportMutation = useMutation({
+    mutationFn: async (item: { driveId: string; itemId: string }) => {
+      const response = await inventoryService.importFromOneDrive({
+        driveId: item.driveId,
+        itemId: item.itemId,
+        parentId: currentFolderId,
+      });
+
+      return response.data;
+    },
+    onError: (error: ApiError) => {
+      toast.error(getInventoryErrorMessage(error, t));
+    },
+    onSuccess: async (entry) => {
+      await queryClient.invalidateQueries({ queryKey: INVENTORY_QUERY_KEY });
+      setUploadOpen(false);
+      setSelectedIds([]);
+      toast.success(t('toast.oneDriveImported'), {
+        description: entry.name,
+      });
+    },
+  });
+
   const renameMutation = useMutation({
     mutationFn: async ({ fileId, name }: { fileId: string; name: string }) => {
       const response = await inventoryService.updateEntry(fileId, { name });
@@ -549,6 +572,13 @@ export function useInventory({
     googleDriveImportMutation.mutate(fileId);
   };
 
+  const handleImportOneDriveFile = (item: {
+    driveId: string;
+    itemId: string;
+  }) => {
+    oneDriveImportMutation.mutate(item);
+  };
+
   const handlePreviewEntry = async (entry: InventoryEntry) => {
     try {
       const response = await inventoryService.shareEntry(entry.id);
@@ -643,6 +673,7 @@ export function useInventory({
     handleGoToBreadcrumb,
     handleUploadFiles,
     handleImportGoogleDriveFile,
+    handleImportOneDriveFile,
     handleMoveSubmit,
     handleNavigateIntoFolder,
     handleOpenEntry,
@@ -687,6 +718,7 @@ export function useInventory({
     uploadOpen,
     uploadPending: uploadMutation.isPending,
     googleDriveImportPending: googleDriveImportMutation.isPending,
+    oneDriveImportPending: oneDriveImportMutation.isPending,
     viewType,
   };
 }

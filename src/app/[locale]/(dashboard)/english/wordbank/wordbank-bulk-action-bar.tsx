@@ -1,12 +1,8 @@
 'use client';
 
-import {
-  BookOpen,
-  ChevronDown,
-  CloudUpload,
-  FileDown,
-  Loader2,
-} from 'lucide-react';
+import { BookOpen, ChevronDown, FileDown, Loader2 } from 'lucide-react';
+import { DiOnedrive } from 'react-icons/di';
+import { SiGoogledrive } from 'react-icons/si';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -37,7 +33,9 @@ export function BulkActionBar({
   onGenerateQuiz,
   onExportCsv,
   onExportCsvToDrive,
+  onExportCsvToOneDrive,
   isExportingCsvToDrive,
+  isExportingCsvToOneDrive,
   t,
 }: {
   selectedCount: number;
@@ -50,7 +48,9 @@ export function BulkActionBar({
   onGenerateQuiz: () => void;
   onExportCsv: () => void;
   onExportCsvToDrive: () => void;
+  onExportCsvToOneDrive: () => void;
   isExportingCsvToDrive: boolean;
+  isExportingCsvToOneDrive: boolean;
   t: WordbankTranslator;
 }) {
   if (selectedCount === 0 || selectedItems.length === 0) return null;
@@ -117,14 +117,16 @@ export function BulkActionBar({
             type="button"
             variant="outline"
             size="sm"
-            disabled={isExportingCsvToDrive}
+            disabled={isExportingCsvToDrive || isExportingCsvToOneDrive}
           >
-            {isExportingCsvToDrive ? (
+            {isExportingCsvToDrive || isExportingCsvToOneDrive ? (
               <Loader2 data-icon="inline-start" className="animate-spin" />
             ) : (
               <FileDown data-icon="inline-start" />
             )}
-            {isExportingCsvToDrive ? t('savingToDrive') : t('exportCsv')}
+            {isExportingCsvToDrive || isExportingCsvToOneDrive
+              ? t('savingToDrive')
+              : t('exportCsv')}
             <ChevronDown className="size-4" />
           </Button>
         </DropdownMenuTrigger>
@@ -137,8 +139,15 @@ export function BulkActionBar({
             className="min-h-11 gap-2"
             onSelect={onExportCsvToDrive}
           >
-            <CloudUpload />
+            <SiGoogledrive />
             {t('saveCsvToDrive')}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="min-h-11 gap-2"
+            onSelect={onExportCsvToOneDrive}
+          >
+            <DiOnedrive className="scale-125" />
+            {t('saveCsvToOneDrive')}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

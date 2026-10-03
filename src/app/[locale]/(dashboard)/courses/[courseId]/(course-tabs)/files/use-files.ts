@@ -286,6 +286,30 @@ export function useFiles({
     },
   });
 
+  const oneDriveImportMutation = useMutation({
+    mutationFn: async (item: { driveId: string; itemId: string }) => {
+      const response = await courseFilesService.importFromOneDrive({
+        courseId,
+        driveId: item.driveId,
+        itemId: item.itemId,
+        parentId: currentFolderId,
+      });
+
+      return response.data;
+    },
+    onSuccess: async (entry) => {
+      await queryClient.invalidateQueries({ queryKey: COURSE_FILES_QUERY_KEY });
+      setUploadOpen(false);
+      setSelectedIds([]);
+      toast.success(t('toast.oneDriveImported'), {
+        description: entry.name,
+      });
+    },
+    onError: (error: ApiError) => {
+      toast.error(getInventoryErrorMessage(error, t));
+    },
+  });
+
   const renameMutation = useMutation({
     mutationFn: async ({ fileId, name }: { fileId: string; name: string }) => {
       const response = await courseFilesService.updateEntry(courseId, fileId, {
@@ -398,6 +422,10 @@ export function useFiles({
     });
   };
 
+  const handleSelectSingleEntry = (entryId: string) => {
+    setSelectedIds([entryId]);
+  };
+
   const handleSelectAll = (checked: boolean) => {
     setSelectedIds(checked ? entries.map((entry) => entry.id) : []);
   };
@@ -474,6 +502,13 @@ export function useFiles({
 
   const handleImportGoogleDriveFile = (fileId: string) => {
     googleDriveImportMutation.mutate(fileId);
+  };
+
+  const handleImportOneDriveFile = (item: {
+    driveId: string;
+    itemId: string;
+  }) => {
+    oneDriveImportMutation.mutate(item);
   };
 
   const handlePreviewEntry = async (entry: InventoryEntry) => {
@@ -571,6 +606,7 @@ export function useFiles({
     handleGoToBreadcrumb,
     handleUploadFiles,
     handleImportGoogleDriveFile,
+    handleImportOneDriveFile,
     handleMoveSubmit,
     handleNavigateIntoFolder,
     handleOpenEntry,
@@ -584,6 +620,7 @@ export function useFiles({
     handleSearchChange,
     handleSelectAll,
     handleSelectEntry,
+    handleSelectSingleEntry,
     handleShareEntry,
     handleShareSelected,
     isFetching: listQuery.isFetching,
@@ -614,6 +651,7 @@ export function useFiles({
     uploadOpen,
     uploadPending: uploadMutation.isPending,
     googleDriveImportPending: googleDriveImportMutation.isPending,
+    oneDriveImportPending: oneDriveImportMutation.isPending,
     viewType,
   };
 }

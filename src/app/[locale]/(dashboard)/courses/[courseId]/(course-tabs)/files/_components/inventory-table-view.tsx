@@ -2,7 +2,6 @@
 
 import { useQuery } from '@tanstack/react-query';
 import {
-  CloudUpload,
   Download,
   Edit2,
   Eye,
@@ -15,11 +14,14 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
+import { DiOnedrive } from 'react-icons/di';
+import { SiGoogledrive } from 'react-icons/si';
 import type {
   InventoryEntry,
   InventoryTranslations,
 } from '@/app/[locale]/(dashboard)/inventory/inventory.types';
 import {
+  canPreviewInventoryEntry,
   formatDate,
   formatFileSize,
   getEntryTypeLabel,
@@ -42,6 +44,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { cn } from '@/lib/utils';
 import { courseFilesService } from '../course-files.service';
 
 function InventoryEntryPreview({
@@ -56,7 +59,7 @@ function InventoryEntryPreview({
     !entry.isFolder && Boolean(entry.mimeType?.startsWith('image/'));
 
   const previewUrlQuery = useQuery({
-    queryKey: ['inventory', 'preview-url', entry.id],
+    queryKey: ['course-files', courseId, 'preview-url', entry.id],
     queryFn: async () => {
       const response = await courseFilesService.shareEntry(courseId, entry.id);
       return response.data.signedUrl;
@@ -112,6 +115,7 @@ type InventoryTableViewProps = {
   onPreview: (entry: InventoryEntry) => void;
   onRename: (entry: InventoryEntry) => void;
   onSaveToDrive: (entry: InventoryEntry) => void;
+  onSaveToOneDrive: (entry: InventoryEntry) => void;
   onSelectAll: (checked: boolean) => void;
   onSelectEntry: (entryId: string, checked: boolean) => void;
   onShare: (entry: InventoryEntry) => void;
@@ -134,6 +138,7 @@ export function InventoryTableView({
   onPreview,
   onRename,
   onSaveToDrive,
+  onSaveToOneDrive,
   onSelectAll,
   onSelectEntry,
   onShare,
@@ -170,11 +175,16 @@ export function InventoryTableView({
         <TableBody>
           {entries.map((entry) => {
             const uploadProgress = getUploadProgress(entry.id);
+            const isUploading = entry.status === 'UPLOADING';
             return (
-              <TableRow key={entry.id}>
+              <TableRow
+                key={entry.id}
+                className={cn(isUploading && 'opacity-85')}
+              >
                 <TableCell>
                   <Checkbox
                     checked={selectedIds.includes(entry.id)}
+                    disabled={isUploading}
                     onCheckedChange={(checked) =>
                       onSelectEntry(entry.id, Boolean(checked))
                     }
@@ -184,8 +194,24 @@ export function InventoryTableView({
                 <TableCell>
                   <button
                     type="button"
-                    onClick={() => onOpen(entry)}
-                    className="flex items-center gap-3 text-left"
+                    disabled={isUploading}
+                    onClick={() => {
+                      if (!isUploading && entry.isFolder) onOpen(entry);
+                    }}
+                    onDoubleClick={() => {
+                      if (isUploading) return;
+
+                      if (entry.isFolder) {
+                        onNavigateIntoFolder(entry);
+                        return;
+                      }
+
+                      if (canPreviewInventoryEntry(entry)) onPreview(entry);
+                    }}
+                    className={cn(
+                      'flex items-center gap-3 text-left',
+                      isUploading && 'cursor-wait'
+                    )}
                   >
                     <div className="flex size-9 items-center justify-center rounded-md bg-muted text-muted-foreground">
                       <InventoryEntryPreview
@@ -221,7 +247,7 @@ export function InventoryTableView({
                           value={uploadProgress}
                           className="h-2 animate-pulse"
                         />
-                        {uploadProgress && (
+                        {typeof uploadProgress === 'number' && (
                           <div className="text-[11px] text-muted-foreground">
                             {t('fileCard.uploadProgress', {
                               progress: uploadProgress,
@@ -235,7 +261,11 @@ export function InventoryTableView({
                 <TableCell className="text-right">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon-sm">
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        disabled={isUploading}
+                      >
                         <MoreVertical />
                       </Button>
                     </DropdownMenuTrigger>
@@ -265,13 +295,15 @@ export function InventoryTableView({
                       ) : (
                         entry.status === 'READY' && (
                           <>
-                            <DropdownMenuItem
-                              onClick={() => onPreview(entry)}
-                              className="cursor-pointer gap-2"
-                            >
-                              <Eye />
-                              {t('actions.preview')}
-                            </DropdownMenuItem>
+                            {canPreviewInventoryEntry(entry) && (
+                              <DropdownMenuItem
+                                onClick={() => onPreview(entry)}
+                                className="cursor-pointer gap-2"
+                              >
+                                <Eye />
+                                {t('actions.preview')}
+                              </DropdownMenuItem>
+                            )}
 
                             <DropdownMenuItem
                               onClick={() => onShare(entry)}
@@ -292,10 +324,20 @@ export function InventoryTableView({
                               className="cursor-pointer gap-2"
                               disabled={isSavingToDrive}
                             >
-                              <CloudUpload />
+                              <SiGoogledrive />
                               {isSavingToDrive
                                 ? t('actions.savingToDrive')
                                 : t('actions.saveToDrive')}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => onSaveToOneDrive(entry)}
+                              className="cursor-pointer gap-2"
+                              disabled={isSavingToDrive}
+                            >
+                              <DiOnedrive className="scale-125" />
+                              {isSavingToDrive
+                                ? t('actions.savingToDrive')
+                                : t('actions.saveToOneDrive')}
                             </DropdownMenuItem>
                           </>
                         )

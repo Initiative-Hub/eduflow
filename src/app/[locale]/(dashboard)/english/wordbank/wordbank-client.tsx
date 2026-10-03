@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useGoogleDriveExport } from '@/hooks/use-google-drive-export';
+import { useOneDriveExport } from '@/hooks/use-onedrive-export';
 import type {
   SubmitReviewSessionResult,
   WordbankMasteryFilter,
@@ -68,6 +69,7 @@ export function WordbankClient() {
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const googleDriveExport = useGoogleDriveExport();
+  const oneDriveExport = useOneDriveExport();
   const { preferences, setPreferences } = useWordbankDisplayPreferences();
   const [search, setSearch] = useState(searchParams.get('q') ?? '');
   const [listId, setListId] = useState(searchParams.get('list') ?? 'all');
@@ -474,7 +476,20 @@ export function WordbankClient() {
                   vocabularyIds: selectedItems.map((item) => item.id),
                 });
               }}
+              onExportCsvToOneDrive={() => {
+                const csv = createWordbankCsvArtifact(
+                  selectedItems,
+                  exportLabels
+                );
+                oneDriveExport.mutate({
+                  kind: 'wordbank_csv',
+                  fileName: csv.fileName,
+                  labels: exportLabels,
+                  vocabularyIds: selectedItems.map((item) => item.id),
+                });
+              }}
               isExportingCsvToDrive={googleDriveExport.isPending}
+              isExportingCsvToOneDrive={oneDriveExport.isPending}
               t={t}
             />
           </>

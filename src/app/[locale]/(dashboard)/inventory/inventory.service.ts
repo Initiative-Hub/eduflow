@@ -46,6 +46,12 @@ interface ImportGoogleDriveInput {
   parentId?: string | null;
 }
 
+interface ImportOneDriveInput {
+  driveId: string;
+  itemId: string;
+  parentId?: string | null;
+}
+
 const buildSearchParams = (
   params: Record<string, string | number | null | undefined>
 ) => {
@@ -138,6 +144,20 @@ export const inventoryService = {
         fileId: input.fileId,
         parentId: input.parentId ?? null,
       }
+    );
+  },
+
+  importFromOneDrive: async (
+    input: ImportOneDriveInput
+  ): Promise<InventoryResponse<InventoryEntry>> => {
+    return apiClient.post<InventoryResponse<InventoryEntry>>(
+      'v1/storage/import/onedrive',
+      {
+        driveId: input.driveId,
+        itemId: input.itemId,
+        parentId: input.parentId ?? null,
+      },
+      { timeout: 300_000 }
     );
   },
 

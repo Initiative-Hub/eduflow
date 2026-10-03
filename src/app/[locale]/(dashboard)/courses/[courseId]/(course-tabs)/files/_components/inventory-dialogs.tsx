@@ -1,6 +1,4 @@
 import {
-  Cloud,
-  CloudUpload,
   Download,
   Edit2,
   FileIcon,
@@ -16,6 +14,8 @@ import {
   useCallback,
   useState,
 } from 'react';
+import { DiOnedrive } from 'react-icons/di';
+import { SiGoogledrive } from 'react-icons/si';
 import { toast } from 'sonner';
 import type {
   InventoryEntry,
@@ -28,6 +28,11 @@ import {
   getEntryTypeLabel,
 } from '@/app/[locale]/(dashboard)/inventory/inventory.utils';
 import { GoogleDrivePickerHost } from '@/components/google-drive-picker/google-drive-picker-host';
+import { OneDrivePickerAuthorizationDialog } from '@/components/onedrive-picker/onedrive-picker-authorization-dialog';
+import {
+  type OneDrivePickedItem,
+  OneDrivePickerHost,
+} from '@/components/onedrive-picker/onedrive-picker-host';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -66,6 +71,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useGoogleDrivePicker } from '@/hooks/use-google-drive-picker';
+import { useOneDrivePicker } from '@/hooks/use-onedrive-picker';
 import { courseFilesService } from '../course-files.service';
 
 const ROOT_OPTION_VALUE = '__root__';
@@ -120,9 +126,13 @@ type InventoryDialogsProps = {
   uploadPending: boolean;
   onUploadFiles: (files: File[]) => void;
   onImportGoogleDriveFile: (fileId: string) => void;
+  onImportOneDriveFile: (item: OneDrivePickedItem) => void;
   onSaveToDrive: (entry: InventoryEntry) => void;
+  onSaveToOneDrive: (entry: InventoryEntry) => void;
   googleDriveImportPending: boolean;
+  oneDriveImportPending: boolean;
   googleDriveExportPending: boolean;
+  oneDriveExportPending: boolean;
   maxFileSizeBytes: number;
 };
 
@@ -141,10 +151,14 @@ export function InventoryDialogs({
   moveOptions,
   movePending,
   onImportGoogleDriveFile,
+  onImportOneDriveFile,
   onSaveToDrive,
+  onSaveToOneDrive,
   onUploadFiles,
   googleDriveImportPending,
+  oneDriveImportPending,
   googleDriveExportPending,
+  oneDriveExportPending,
   maxFileSizeBytes,
   previewDialog,
   renameDialog,
@@ -192,12 +206,49 @@ export function InventoryDialogs({
     googleDriveImportPending ||
     isStorageLimitReached ||
     !googleDrivePicker.isConfigured;
+  const handleOneDrivePickerError = useCallback((message: string) => {
+    toast.error(message);
+  }, []);
+  const handleOneDrivePicked = useCallback(
+    (items: OneDrivePickedItem[]) => {
+      const [item] = items;
+      if (!item) return;
+
+      setUploadOpen(false);
+      onImportOneDriveFile(item);
+    },
+    [onImportOneDriveFile, setUploadOpen]
+  );
+  const oneDrivePicker = useOneDrivePicker({
+    messages: {
+      connectRequired: t('uploadDialog.oneDriveConnectRequired'),
+      sessionChanged: t('uploadDialog.oneDriveSessionChanged'),
+      tokenFailed: t('uploadDialog.oneDriveTokenFailed'),
+      unavailable: t('uploadDialog.oneDrivePickerUnavailable'),
+    },
+    onBeforeOpen: closeUploadBeforeGooglePicker,
+    onError: handleOneDrivePickerError,
+    onPicked: handleOneDrivePicked,
+  });
+  const oneDriveDisabled =
+    uploadPending ||
+    oneDriveImportPending ||
+    isStorageLimitReached ||
+    !oneDrivePicker.isConfigured;
 
   return (
     <>
       {googleDrivePicker.pickerProps && (
         <GoogleDrivePickerHost {...googleDrivePicker.pickerProps} />
       )}
+      {oneDrivePicker.pickerProps && (
+        <OneDrivePickerHost {...oneDrivePicker.pickerProps} />
+      )}
+      <OneDrivePickerAuthorizationDialog
+        isOpen={oneDrivePicker.authorizationRequired}
+        onAuthorize={oneDrivePicker.authorizePicker}
+        onDismiss={oneDrivePicker.dismissAuthorization}
+      />
       <Dialog open={uploadOpen} onOpenChange={(open) => setUploadOpen(open)}>
         <DialogContent className="sm:max-w-xl">
           <DialogHeader>
@@ -271,11 +322,39 @@ export function InventoryDialogs({
                 {googleDriveImportPending || googleDrivePicker.isLoading ? (
                   <Loader2 data-icon="inline-start" className="animate-spin" />
                 ) : (
-                  <Cloud data-icon="inline-start" />
+                  <SiGoogledrive data-icon="inline-start" />
                 )}
                 {googleDriveImportPending
                   ? t('uploadDialog.importingGoogleDrive')
                   : t('uploadDialog.googleDrive')}
+              </Button>
+            </div>
+          </div>
+          <div className="rounded-lg border bg-muted/30 p-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-1">
+                <div className="font-medium text-sm">
+                  {t('uploadDialog.oneDrive')}
+                </div>
+                <p className="text-muted-foreground text-sm">
+                  {t('uploadDialog.oneDriveDescription')}
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={oneDriveDisabled}
+                onClick={oneDrivePicker.openPicker}
+                className="shrink-0"
+              >
+                {oneDriveImportPending || oneDrivePicker.isLoading ? (
+                  <Loader2 data-icon="inline-start" className="animate-spin" />
+                ) : (
+                  <DiOnedrive className="scale-125" data-icon="inline-start" />
+                )}
+                {oneDriveImportPending
+                  ? t('uploadDialog.importingOneDrive')
+                  : t('uploadDialog.oneDrive')}
               </Button>
             </div>
           </div>
@@ -598,11 +677,28 @@ export function InventoryDialogs({
                 {googleDriveExportPending ? (
                   <Loader2 data-icon="inline-start" className="animate-spin" />
                 ) : (
-                  <CloudUpload data-icon="inline-start" />
+                  <SiGoogledrive data-icon="inline-start" />
                 )}
                 {googleDriveExportPending
                   ? t('actions.savingToDrive')
                   : t('actions.saveToDrive')}
+              </Button>
+            )}
+            {previewDialog && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onSaveToOneDrive(previewDialog.entry)}
+                disabled={oneDriveExportPending}
+              >
+                {oneDriveExportPending ? (
+                  <Loader2 data-icon="inline-start" className="animate-spin" />
+                ) : (
+                  <DiOnedrive className="scale-125" data-icon="inline-start" />
+                )}
+                {oneDriveExportPending
+                  ? t('actions.savingToDrive')
+                  : t('actions.saveToOneDrive')}
               </Button>
             )}
             {previewDialog && (

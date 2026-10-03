@@ -54,6 +54,13 @@ vi.mock(
   })
 );
 
+vi.mock(
+  '@/app/[locale]/(dashboard)/settings/integrations/onedrive-integration-card',
+  () => ({
+    OneDriveIntegrationCard: () => null,
+  })
+);
+
 const integrationsServiceMock = integrationsService as unknown as {
   getGoogleDriveStatus: ReturnType<typeof vi.fn>;
 };

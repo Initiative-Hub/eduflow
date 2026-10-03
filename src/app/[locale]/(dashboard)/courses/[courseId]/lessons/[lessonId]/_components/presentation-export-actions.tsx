@@ -1,6 +1,8 @@
 'use client';
 
-import { ChevronDown, CloudUpload, Download, Loader2 } from 'lucide-react';
+import { ChevronDown, Download, Loader2 } from 'lucide-react';
+import { DiOnedrive } from 'react-icons/di';
+import { SiGoogledrive } from 'react-icons/si';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -9,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useGoogleDriveExport } from '@/hooks/use-google-drive-export';
+import { useOneDriveExport } from '@/hooks/use-onedrive-export';
 
 type PresentationExportActionsProps = {
   isDownloading: boolean;
@@ -24,7 +27,9 @@ export function PresentationExportActions({
   t,
 }: PresentationExportActionsProps) {
   const googleDriveExport = useGoogleDriveExport();
-  const isPending = isDownloading || googleDriveExport.isPending;
+  const oneDriveExport = useOneDriveExport();
+  const isPending =
+    isDownloading || googleDriveExport.isPending || oneDriveExport.isPending;
 
   return (
     <DropdownMenu>
@@ -40,7 +45,7 @@ export function PresentationExportActions({
           ) : (
             <Download className="size-4" />
           )}
-          {googleDriveExport.isPending
+          {googleDriveExport.isPending || oneDriveExport.isPending
             ? t('savingToDrive')
             : isDownloading
               ? t('pptxDownloading')
@@ -62,8 +67,20 @@ export function PresentationExportActions({
             })
           }
         >
-          <CloudUpload aria-hidden="true" />
+          <SiGoogledrive aria-hidden="true" />
           {t('savePptxToDrive')}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          className="min-h-11"
+          onSelect={() =>
+            oneDriveExport.mutate({
+              kind: 'lesson_presentation',
+              lessonId,
+            })
+          }
+        >
+          <DiOnedrive aria-hidden="true" className="scale-125" />
+          {t('savePptxToOneDrive')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

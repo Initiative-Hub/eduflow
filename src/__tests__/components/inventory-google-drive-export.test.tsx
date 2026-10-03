@@ -157,6 +157,7 @@ function InventoryTableHarness({
       onPreview={vi.fn()}
       onRename={vi.fn()}
       onSaveToDrive={onSaveToDrive}
+      onSaveToOneDrive={vi.fn()}
       onSelectAll={vi.fn()}
       onSelectEntry={vi.fn()}
       onShare={vi.fn()}
@@ -184,8 +185,8 @@ describe('inventory Google Drive export actions', () => {
       name: 'archive.custom',
     },
   ])(
-    'offers ready $name files that cannot be previewed all file actions',
-    (file) => {
+    'offers ready $name files that cannot be previewed all supported actions',
+    async (file) => {
       const entry = { ...baseEntry, ...file };
       const { onDownload, onSaveToDrive, onShare, trigger } =
         renderInventoryCard(entry);

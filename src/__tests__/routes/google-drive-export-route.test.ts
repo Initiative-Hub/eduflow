@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { POST } from '@/app/api/v1/integrations/google-drive/exports/route';
+import { CloudDriveExportArtifactError } from '@/services/cloud-drive/CloudDriveExportArtifactError';
 import { GoogleDriveDestinationService } from '@/services/google-drive/GoogleDriveDestinationService';
 import { GoogleDriveExportArtifactService } from '@/services/google-drive/GoogleDriveExportArtifactService';
 import { GoogleDriveExportService } from '@/services/google-drive/GoogleDriveExportService';
@@ -117,5 +118,33 @@ describe('Google Drive export route', () => {
 
     expect(response.status).toBe(400);
     expect(artifactService.resolve).not.toHaveBeenCalled();
+  });
+  it('preserves provider-neutral source errors in Google Drive responses', async () => {
+    artifactService.resolve.mockRejectedValue(
+      new CloudDriveExportArtifactError('Source unavailable.', {
+        reason: 'LEGACY_GAMMA',
+      })
+    );
+    const response = await POST(
+      new Request(
+        'https://eduflow.test/api/v1/integrations/google-drive/exports',
+        {
+          body: JSON.stringify({
+            requestId: '9ed2dd42-989f-42d2-99ec-c01269108257',
+            source: {
+              kind: 'lesson_presentation',
+              lessonId: '2b25a6da-09bc-4783-8a0d-60811389d612',
+            },
+          }),
+          method: 'POST',
+        }
+      )
+    );
+    expect(response.status).toBe(404);
+    expect(await response.json()).toMatchObject({
+      code: 'SOURCE_NOT_FOUND',
+      details: { reason: 'LEGACY_GAMMA' },
+    });
+    expect(exportService.uploadArtifact).not.toHaveBeenCalled();
   });
 });

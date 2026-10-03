@@ -46,8 +46,10 @@ type InventoryBrowserProps = {
   onPreview: (entry: InventoryEntry) => void;
   onRename: (entry: InventoryEntry) => void;
   onSaveToDrive: (entry: InventoryEntry) => void;
+  onSaveToOneDrive: (entry: InventoryEntry) => void;
   onSelectAll: (checked: boolean) => void;
   onSelectEntry: (entryId: string, checked: boolean) => void;
+  onSelectSingleEntry: (entryId: string) => void;
   onShare: (entry: InventoryEntry) => void;
   onUploadOpen: () => void;
   isSavingToDrive: boolean;
@@ -85,8 +87,10 @@ export function InventoryBrowser({
   onPreview,
   onRename,
   onSaveToDrive,
+  onSaveToOneDrive,
   onSelectAll,
   onSelectEntry,
+  onSelectSingleEntry,
   onShare,
   onUploadOpen,
   isSavingToDrive,
@@ -142,12 +146,14 @@ export function InventoryBrowser({
                     key={entry.id}
                     entry={entry}
                     courseId={courseId}
+                    isSelected={selectedIds.includes(entry.id)}
                     locale={locale}
                     onOpen={onOpen}
                     onRename={onRename}
                     onMove={onMove}
                     onDelete={onDeleteEntry}
                     onNavigateIntoFolder={onNavigateIntoFolder}
+                    onSelectEntry={onSelectSingleEntry}
                   />
                 ))}
               </div>
@@ -159,6 +165,7 @@ export function InventoryBrowser({
                     key={entry.id}
                     entry={entry}
                     courseId={courseId}
+                    isSelected={selectedIds.includes(entry.id)}
                     locale={locale}
                     onRename={onRename}
                     onMove={onMove}
@@ -166,7 +173,9 @@ export function InventoryBrowser({
                     onPreview={onPreview}
                     onDownload={onDownload}
                     onSaveToDrive={onSaveToDrive}
+                    onSaveToOneDrive={onSaveToOneDrive}
                     onDelete={onDeleteEntry}
+                    onSelectEntry={onSelectSingleEntry}
                     uploadProgress={getUploadProgress(entry.id)}
                   />
                 ))}
@@ -190,6 +199,7 @@ export function InventoryBrowser({
             onPreview={onPreview}
             onRename={onRename}
             onSaveToDrive={onSaveToDrive}
+            onSaveToOneDrive={onSaveToOneDrive}
             onSelectAll={onSelectAll}
             onSelectEntry={onSelectEntry}
             onShare={onShare}

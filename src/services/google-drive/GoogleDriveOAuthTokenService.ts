@@ -1,13 +1,11 @@
-import {
-  createCipheriv,
-  createDecipheriv,
-  createHash,
-  randomBytes,
-  timingSafeEqual,
-} from 'node:crypto';
+import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { type Auth, type drive_v3, google } from 'googleapis';
 import { IntegrationProvider } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
+import {
+  decryptCloudDriveToken,
+  encryptCloudDriveToken,
+} from '@/services/cloud-drive/token-encryption';
 import {
   type GoogleDriveDestination,
   getGoogleDriveMetadataRecord,
@@ -21,7 +19,6 @@ const DRIVE_SCOPES = [
   'profile',
 ];
 const TOKEN_REFRESH_SKEW_MS = 60_000;
-const ENCRYPTION_PREFIX = 'v1';
 
 type GoogleDriveMetadata = ReturnType<typeof getGoogleDriveMetadataRecord>;
 
@@ -52,50 +49,9 @@ function createOAuthClient(redirectUri?: string) {
   });
 }
 
-function getEncryptionSecret() {
-  const secret = process.env.BETTER_AUTH_SECRET;
-  if (!secret) {
-    throw new Error('Encryption secret is not configured.');
-  }
-  return createHash('sha256').update(secret).digest();
-}
-
-function encryptToken(value: string) {
-  const iv = randomBytes(12);
-  const cipher = createCipheriv('aes-256-gcm', getEncryptionSecret(), iv);
-  const encrypted = Buffer.concat([
-    cipher.update(value, 'utf8'),
-    cipher.final(),
-  ]);
-  return [
-    ENCRYPTION_PREFIX,
-    iv.toString('base64url'),
-    cipher.getAuthTag().toString('base64url'),
-    encrypted.toString('base64url'),
-  ].join(':');
-}
-
-function decryptToken(value: string) {
-  const [version, ivValue, tagValue, encryptedValue] = value.split(':');
-  if (
-    version !== ENCRYPTION_PREFIX ||
-    !ivValue ||
-    !tagValue ||
-    !encryptedValue
-  ) {
-    throw new Error('Stored Google Drive token format is invalid.');
-  }
-  const decipher = createDecipheriv(
-    'aes-256-gcm',
-    getEncryptionSecret(),
-    Buffer.from(ivValue, 'base64url')
-  );
-  decipher.setAuthTag(Buffer.from(tagValue, 'base64url'));
-  return Buffer.concat([
-    decipher.update(Buffer.from(encryptedValue, 'base64url')),
-    decipher.final(),
-  ]).toString('utf8');
-}
+const encryptToken = encryptCloudDriveToken;
+const decryptToken = (value: string) =>
+  decryptCloudDriveToken(value, 'Google Drive');
 
 function toDate(expiryDate?: number | null) {
   return expiryDate ? new Date(expiryDate) : null;
@@ -245,12 +201,18 @@ export class GoogleDriveOAuthTokenService {
     if (!integration) throw new Error('Google Drive is not connected.');
 
     const auth = createOAuthClient();
+    const refreshToken = integration.refreshToken
+      ? decryptToken(integration.refreshToken)
+      : null;
+    if (!refreshToken) {
+      throw new Error('Google Drive refresh token is not configured.');
+    }
     auth.setCredentials({
       access_token: integration.accessToken
         ? decryptToken(integration.accessToken)
         : null,
       expiry_date: integration.expiresAt?.getTime() ?? null,
-      refresh_token: decryptToken(integration.refreshToken),
+      refresh_token: refreshToken,
       scope: integration.scope ?? undefined,
       token_type: integration.tokenType ?? undefined,
     });

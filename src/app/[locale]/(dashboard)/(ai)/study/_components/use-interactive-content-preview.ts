@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { useGoogleDriveExport } from '@/hooks/use-google-drive-export';
+import { useOneDriveExport } from '@/hooks/use-onedrive-export';
 import {
   createInteractiveContentDownloadFilename,
   createInteractiveContentInventoryFile,
@@ -53,6 +54,7 @@ export function useInteractiveContentPreview({
   );
   const queryClient = useQueryClient();
   const googleDriveExport = useGoogleDriveExport();
+  const oneDriveExport = useOneDriveExport();
 
   const saveToInventoryMutation = useMutation({
     mutationFn: async () => {
@@ -114,6 +116,23 @@ export function useInteractiveContentPreview({
     if (!share) return;
 
     googleDriveExport.mutate({
+      chatId: share.chatId,
+      content: {
+        description,
+        html,
+        title,
+      },
+      contentIndex: share.contentIndex,
+      fileName: createInteractiveContentDownloadFilename(title),
+      kind: 'study_interactive_html',
+      messageId: share.messageId,
+    });
+  };
+
+  const handleSaveToOneDrive = () => {
+    if (!share) return;
+
+    oneDriveExport.mutate({
       chatId: share.chatId,
       content: {
         description,
@@ -189,9 +208,10 @@ export function useInteractiveContentPreview({
     handleReset,
     handleSaveToInventory,
     handleSaveToDrive,
+    handleSaveToOneDrive,
     handleShare,
     isSavingToInventory: saveToInventoryMutation.isPending,
-    isSavingToDrive: googleDriveExport.isPending,
+    isSavingToDrive: googleDriveExport.isPending || oneDriveExport.isPending,
     isShareCopied,
     isShareDialogOpen,
     isSharing: shareMutation.isPending,

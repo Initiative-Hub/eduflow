@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { CloudDriveExportArtifactError } from '@/services/cloud-drive/CloudDriveExportArtifactError';
 import { errorResponse } from '@/lib/api/error-response';
 import { withAuth } from '@/lib/api/middlewares';
 import { googleDriveExportRequestSchema } from '@/lib/validations/google-drive-export.schema';
@@ -51,7 +52,10 @@ export const POST = withAuth(async (request, session) => {
     });
     return NextResponse.json({ data: result });
   } catch (error) {
-    if (error instanceof GoogleDriveExportError) {
+    if (
+      error instanceof GoogleDriveExportError ||
+      error instanceof CloudDriveExportArtifactError
+    ) {
       console.info('[GoogleDriveExport]', {
         durationMs: Date.now() - startedAt,
         resultCode: error.code,
