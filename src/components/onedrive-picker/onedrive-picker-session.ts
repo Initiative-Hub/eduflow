@@ -71,10 +71,10 @@ function getPickerOptions(channelId: string, mode: 'files' | 'folder') {
     selection: {
       mode: 'single',
     },
-    typesAndSources: {
-      filters: mode === 'folder' ? ['folder'] : ['file'],
-      mode: mode === 'folder' ? 'folders' : 'files',
-    },
+    typesAndSources:
+      mode === 'folder'
+        ? { filters: ['folder'], mode: 'folders' }
+        : { mode: 'files' },
   };
 }
 
