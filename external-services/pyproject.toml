@@ -5,12 +5,12 @@ description = "External services for the EduFlow application."
 readme = "README.md"
 requires-python = "==3.12.0"
 dependencies = [
-    "fastapi[standard]~=0.141.1",
-    "markitdown[pdf]~=0.1.7",
-    "modal~=1.5.4",
+    "fastapi[standard]~=0.142.2",
+    "markitdown[pdf]~=0.1.8",
+    "modal~=1.6.1",
     "slide-skills[svg-convert]~=0.2.67",
-    "tavily-python~=0.7.27",
-    "boto3~=1.43.71",
+    "tavily-python~=0.8.4",
+    "boto3~=1.43.108",
 ]
 
 [dependency-groups]

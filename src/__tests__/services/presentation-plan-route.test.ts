@@ -1,8 +1,8 @@
 import type { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import slideLayoutGuidance from '@/config/slide-layout-guidance.json';
 import { PresentationService } from '@/services/PresentationService';
 import { SlideService } from '@/services/SlideService';
-import slideLayoutGuidance from '../../../config/slide-layout-guidance.json';
 
 vi.mock('@/lib/api/middlewares', () => ({
   withAuth: (handler: any) => {

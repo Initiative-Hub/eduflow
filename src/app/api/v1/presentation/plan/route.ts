@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import * as z from 'zod';
+import slideLayoutGuidance from '@/config/slide-layout-guidance.json';
 import { withAuth } from '@/lib/api/middlewares';
 import { PresentationService } from '@/services/PresentationService';
 import { SlideService } from '@/services/SlideService';
-import slideLayoutGuidance from '../../../../../../config/slide-layout-guidance.json';
 
 export const maxDuration = 120;
 

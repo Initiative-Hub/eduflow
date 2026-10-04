@@ -1,6 +1,5 @@
 'use client';
 
-import slideLayoutGuidance from '@config/slide-layout-guidance.json';
 import {
   ArrowRight,
   ChevronLeft,
@@ -19,6 +18,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
+import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -34,8 +34,10 @@ import {
 } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
+import slideLayoutGuidance from '@/config/slide-layout-guidance.json';
 import { sanitizeSvgMarkup } from '@/lib/html-sanitizer';
 import { cn } from '@/lib/utils';
+import { DEFAULT_TEMPLATE_COLLECTION } from '@/services/SlideService';
 import type { TiptapDocument } from '@/utils/lesson-content';
 import {
   applySlideDropRuntime,
@@ -69,7 +71,6 @@ import {
   useSlideAiEdit,
 } from './use-slide-ai-edit';
 import { useSlideDrop } from './use-slide-drop';
-import { DEFAULT_TEMPLATE_COLLECTION } from '@/services/SlideService';
 
 const formatLayoutName = (layout: string, t: any) => {
   const map: Record<string, string> = {
@@ -235,7 +236,7 @@ function LayoutCategorySelect({
         position="popper"
         align="start"
         sideOffset={4}
-        className="!w-[540px] z-50 max-h-80 max-w-[92vw] overflow-hidden rounded-2xl border-border bg-popover/95 p-2 text-popover-foreground shadow-2xl backdrop-blur-xl"
+        className="z-50 max-h-80 w-135! max-w-[92vw] overflow-hidden rounded-2xl border-border bg-popover/95 p-2 text-popover-foreground shadow-2xl backdrop-blur-xl"
         onMouseLeave={() => setHoveredCategory(null)}
       >
         <div className="flex h-full w-full gap-2.5 p-1">
@@ -260,8 +261,8 @@ function LayoutCategorySelect({
           <div className="flex w-64 shrink-0 flex-col gap-2.5 rounded-xl border border-border/60 bg-muted/40 p-3">
             {activePreviewUrl ? (
               <>
-                <div className="relative aspect-[16/9] w-full overflow-hidden rounded-lg border border-border/60 bg-background shadow-xs">
-                  <img
+                <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-border/60 bg-background shadow-xs">
+                  <Image
                     src={activePreviewUrl}
                     alt={activeCategory}
                     className="h-full w-full object-cover"
